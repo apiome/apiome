@@ -5,15 +5,22 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import Avatar from '@mui/material/Avatar';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 type NavItem = { label: string; href: string };
 
-export default function TopHeader(): JSX.Element {
+const NAV_ITEMS: NavItem[] = [
+  { label: "Home", href: "/ade" },
+  { label: "Dashboard", href: "/ade/dashboard" },
+  { label: "Studio", href: "/ade/studio" },
+];
+
+export default function TopHeader() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const { data: session, status, update } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
 
   React.useEffect(() => {
     if (session) {
@@ -41,36 +48,70 @@ export default function TopHeader(): JSX.Element {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: 16,
-        padding: "12px 20px",
+        gap: 12,
+        padding: "8px 12px",
         borderBottom: "1px solid rgba(0,0,0,0.06)",
         background: "var(--geist-background, #fff)",
+        height: 48,
       }}
     >
       {/* Left: Logo / App Title */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div
           aria-hidden
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 8,
+            width: 28,
+            height: 28,
+            borderRadius: 6,
             background: "linear-gradient(135deg,#5b8def,#7b61ff)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             color: "white",
             fontWeight: 700,
-            fontSize: 14,
+            fontSize: 12,
           }}
         >
           O
         </div>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <span style={{ fontWeight: 700, color: 'black' }}>Objectified</span>
-          <small style={{ color: "rgba(0,0,0,0.5)" }}>Admin</small>
+        <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+          <span style={{ fontWeight: 700, color: 'black', fontSize: 13 }}>Objectified</span>
+          <small style={{ color: "rgba(0,0,0,0.5)", fontSize: 11 }}>Admin</small>
         </div>
       </div>
+
+      {/* Center: Navigation */}
+      <nav aria-label="Main navigation" style={{ flex: 1, textAlign: "center" }}>
+        <ul
+          style={{
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+            display: "inline-flex",
+            gap: 12,
+            alignItems: "center",
+            fontSize: 13,
+          }}
+        >
+          {NAV_ITEMS.map((item) => (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                className={`text-gray-800 hover:text-blue-600 transition-colors ${pathname === item.href ? 'underline' : ''}`}
+                style={{
+                  padding: "4px 6px",
+                  borderRadius: 6,
+                  transition: "background 0.12s",
+                  fontSize: 13,
+                  backgroundColor: pathname === item.href ? 'rgba(0,0,0,0.1)' : 'transparent',
+                }}
+              >
+                {item.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
       {/* Right: Profile / Selector */}
       <div ref={menuRef} style={{ position: "relative" }}>
@@ -81,17 +122,17 @@ export default function TopHeader(): JSX.Element {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 10,
-            padding: "6px 10px",
+            gap: 8,
+            padding: "4px 8px",
             borderRadius: 8,
             border: "1px solid rgba(0,0,0,0.06)",
             background: "transparent",
             cursor: "pointer",
           }}
         >
-          <Avatar/>
+          <Avatar sx={{ width: 28, height: 28 }} />
           <span style={{ display: "none" /* hidden on small, shown via CSS if desired */ }}>
-            {session?.user.name}
+            {session?.user?.name}
           </span>
         </button>
 
@@ -103,49 +144,30 @@ export default function TopHeader(): JSX.Element {
               position: "absolute",
               right: 0,
               marginTop: 8,
-              minWidth: 180,
+              minWidth: 160,
               background: "white",
               boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
               borderRadius: 8,
-              padding: 8,
+              padding: 4,
               zIndex: 50,
             }}
             className={'dark:text-black dark:bg-gray-800'}
           >
-            <Link href="/ade/profile" role="menuitem" style={menuItemStyle}>
+            <Link href="/ade/profile" role="menuitem" className="block px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-white rounded text-sm transition-colors text-black dark:text-black" style={{ textDecoration: "none" }}>
               View Profile
             </Link>
-            <Link href="/ade/account" role="menuitem" style={menuItemStyle}>
+            <Link href="/ade/account" role="menuitem" className="block px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-white rounded text-sm transition-colors text-black dark:text-black" style={{ textDecoration: "none" }}>
               Account
             </Link>
-            <div style={{ height: 1, background: "rgba(0,0,0,0.06)", margin: "8px 0" }} />
-            <button onClick={() => {
-              signOut()
-            }} style={menuItemButtonStyle}>
+            <div style={{ height: 1, background: "rgba(0,0,0,0.45)", margin: "4px 0" }} className="dark:bg-gray-600" />
+            <Link href="/ade/account" role="menuitem"
+                  onClick={() => signOut()}
+                  className="block px-3 py-2 hover:bg-red-100 dark:hover:bg-red-700 hover:text-white rounded text-sm transition-colors text-black dark:text-black" style={{ textDecoration: "none" }}>
               Sign out
-            </button>
+            </Link>
           </div>
         )}
       </div>
     </header>
   );
 }
-
-/* Inline styles for menu items kept outside component for clarity */
-const menuItemStyle: React.CSSProperties = {
-  display: "block",
-  padding: "8px 10px",
-  color: "inherit",
-  textDecoration: "none",
-  borderRadius: 6,
-  fontSize: 14,
-};
-
-const menuItemButtonStyle: React.CSSProperties = {
-  ...menuItemStyle,
-  width: "100%",
-  textAlign: "left",
-  background: "transparent",
-  border: "none",
-  cursor: "pointer",
-};
