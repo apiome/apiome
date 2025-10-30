@@ -67,13 +67,26 @@ export const authOptions: NextAuthOptions = {
         payload.session.user.user_id = payload.token.user_id;
       }
 
+      if (payload.token?.current_tenant_id) {
+        payload.session.user.current_tenant_id = payload.token.current_tenant_id;
+      }
+
+      console.log('Token', payload);
+
       return payload.session;
     },
     async jwt(payload: any) {
       const token = payload.token;
 
+      console.log('[JWT] JWT:', payload);
+
       if (payload.user) {
         token.user_id = payload.user.id;
+      }
+
+      if (payload.session) {
+        console.log('[JWT] Adjusting session:', payload.session);
+        token.current_tenant_id = payload.session.current_tenant_id;
       }
 
       return token;

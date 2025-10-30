@@ -147,12 +147,12 @@ const TopHeader = () => {
               zIndex: 50,
             }}
           >
-            <Link href="/ade/profile" role="menuitem" className="block px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white rounded text-sm transition-colors text-gray-700 dark:text-gray-300" style={{ textDecoration: "none" }}>
+            <Link href="/ade/dashboard/profile" role="menuitem" className="block px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white rounded text-sm transition-colors text-gray-700 dark:text-gray-300" style={{ textDecoration: "none" }}>
               View Profile
             </Link>
-            <Link href="/ade/account" role="menuitem" className="block px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white rounded text-sm transition-colors text-gray-700 dark:text-gray-300" style={{ textDecoration: "none" }}>
-              Account
-            </Link>
+            {/*<Link href="/ade/account" role="menuitem" className="block px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white rounded text-sm transition-colors text-gray-700 dark:text-gray-300" style={{ textDecoration: "none" }}>*/}
+            {/*  Account*/}
+            {/*</Link>*/}
             <div className="h-px bg-gray-200 dark:bg-gray-600 my-1" />
             <button
               onClick={() => signOut()}

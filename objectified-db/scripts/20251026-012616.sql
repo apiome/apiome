@@ -91,3 +91,10 @@ INSERT INTO odb.users (name, email, password, verified, enabled) VALUES
     ('Objectified Administrator', 'admin@objectified.dev',
      '$2a$12$.1v68JPMx8lR1KFO.nbZcegTSnb1Tqp0J86sK5junucFOSkyI.jHe',
      true, true);
+
+INSERT INTO odb.tenants (name, description, slug, enabled) VALUES
+    ('Objectified', 'The Objectified Project', 'objectified', true);
+
+INSERT INTO odb.tenant_users (user_id, tenant_id) VALUES
+    ((SELECT id FROM odb.users WHERE email='admin@objectified.dev'),
+     (SELECT id FROM odb.tenants WHERE slug='objectified'));

@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { User, Mail, Hash, Calendar, Clock } from 'lucide-react';
+import { User, Mail, Hash, Calendar, Clock, Building2 } from 'lucide-react';
 
 const Profile = () => {
   const { data: session } = useSession();
@@ -88,10 +88,27 @@ const Profile = () => {
                 User ID
               </label>
               <p className="text-lg font-mono text-gray-900 dark:text-white mt-1 break-all">
-                {user?.user_id || 'Not available'}
+                {(user as any)?.user_id || 'Not available'}
               </p>
             </div>
           </div>
+
+          {/* Current Tenant ID */}
+          {(user as any)?.current_tenant_id && (
+            <div className="flex items-start space-x-4">
+              <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-3">
+                <Building2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div className="flex-1">
+                <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Current Tenant ID
+                </label>
+                <p className="text-lg font-mono text-gray-900 dark:text-white mt-1 break-all">
+                  {(user as any)?.current_tenant_id}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Session Expiry */}
           <div className="flex items-start space-x-4">
@@ -100,7 +117,7 @@ const Profile = () => {
             </div>
             <div className="flex-1">
               <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Session Expires
+                Session Expiration
               </label>
               <p className="text-lg text-gray-900 dark:text-white mt-1">
                 {expiryDate.toLocaleString()}

@@ -15,7 +15,7 @@ const SSOButton = ({ provider, icon, onClick }: { provider: string; icon: React.
   <button
     type="button"
     onClick={onClick}
-    className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors"
+    className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors cursor-pointer"
   >
     {icon}
     <span className="text-sm font-medium text-gray-700">Continue with {provider}</span>
@@ -41,8 +41,6 @@ const Login = () => {
       console.log('Sign up with:', payload);
       setSignInEnabled(true);
     } else {
-      console.log('Login with:', payload);
-
       signIn('credentials', {
         payload: JSON.stringify(payload),
         callbackUrl: '/ade',
@@ -150,7 +148,7 @@ const Login = () => {
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
             >
               {isSignUp ? 'Sign Up' : 'Sign In'}
             </button>
@@ -237,7 +235,7 @@ const Login = () => {
                 type="button"
                 disabled={!signInEnabled}
                 onClick={() => setIsSignUp(!isSignUp)}
-                className="text-blue-600 font-semibold hover:text-blue-500"
+                className="text-blue-600 font-semibold hover:text-blue-500 cursor-pointer"
               >
                 {isSignUp ? 'Sign In' : 'Sign Up'}
               </button>
