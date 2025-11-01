@@ -153,6 +153,11 @@ const Versions = () => {
       return;
     }
 
+    if (!description.trim()) {
+      setErrorMessage('Description is required');
+      return;
+    }
+
     setIsLoading(true);
     setErrorMessage('');
 
@@ -196,6 +201,11 @@ const Versions = () => {
 
   const handleEditSubmit = async () => {
     if (!selectedVersion) return;
+
+    if (!description.trim()) {
+      setErrorMessage('Description is required');
+      return;
+    }
 
     setIsLoading(true);
     setErrorMessage('');
@@ -678,6 +688,8 @@ const Versions = () => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             disabled={isLoading}
+            required
+            helperText="Provide a brief description of this version"
             sx={{ mb: 2 }}
           />
           <TextField
@@ -738,6 +750,7 @@ const Versions = () => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             disabled={isLoading}
+            required
             sx={{ mb: 2 }}
           />
           <TextField

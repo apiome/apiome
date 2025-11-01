@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../../globals.css";
 import * as React from 'react';
-import DashboardSideNav from '@/app/components/ade/dashboard/DashboardSideNav';
+import StudioSideNav from '@/app/components/ade/studio/StudioSideNav';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <div style={{ display: "flex", height: "calc(100vh - 48px)" }}>
-      <DashboardSideNav/>
+      <StudioSideNav/>
 
       <main style={{ flex: 1, overflow: "auto" }}>
         {children}

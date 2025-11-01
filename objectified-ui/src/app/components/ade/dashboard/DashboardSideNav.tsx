@@ -27,7 +27,7 @@ interface NavSection {
   items: NavItem[];
 }
 
-const SideNav: React.FC = () => {
+const DashboardSideNav: React.FC = () => {
   const pathname = usePathname();
 
   const navSections: NavSection[] = [
@@ -136,4 +136,4 @@ const SideNav: React.FC = () => {
   );
 };
 
-export default SideNav;
+export default DashboardSideNav;
