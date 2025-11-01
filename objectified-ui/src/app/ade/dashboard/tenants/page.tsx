@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { getTenantsForUser, getTenantsAdministratedByUser, getTenantUsers, addTenantAdministrator, addTenantUser, removeTenantAdministrator, removeTenantUser } from '../../../../../lib/db/helper';
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Users, Shield, ChevronDown, ChevronUp, X, Building2 } from 'lucide-react';
+import { Plus, Trash2, Users, Shield, ChevronDown, ChevronUp, X, Building2, Edit2 } from 'lucide-react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -11,6 +11,8 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Alert from '@mui/material/Alert';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 interface Tenant {
   id: string;
@@ -44,15 +46,14 @@ const Tenants = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [adminTenants, setAdminTenants] = useState<AdminUser[]>([]);
   const [tenantUsers, setTenantUsers] = useState<Record<string, TenantUser[]>>({});
-  const [isAdminsExpanded, setIsAdminsExpanded] = useState(false);
-  const [isUsersExpanded, setIsUsersExpanded] = useState(false);
-  const [adminFilter, setAdminFilter] = useState('');
-  const [userFilter, setUserFilter] = useState('');
-  const [showAddAdminModal, setShowAddAdminModal] = useState(false);
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [isMembersExpanded, setIsMembersExpanded] = useState(false);
+  const [memberFilter, setMemberFilter] = useState('');
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [showEditMemberModal, setShowEditMemberModal] = useState(false);
   const [selectedTenantId, setSelectedTenantId] = useState<string>('');
-  const [adminEmail, setAdminEmail] = useState('');
-  const [userEmail, setUserEmail] = useState('');
+  const [memberEmail, setMemberEmail] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [editingMember, setEditingMember] = useState<{ userId: string; name: string; email: string; isAdmin: boolean } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const currentTenantId = (session?.user as any)?.current_tenant_id;
@@ -127,15 +128,16 @@ const Tenants = () => {
     });
   };
 
-  const handleAddAdmin = (tenantId: string) => {
+  const handleAddMember = (tenantId: string) => {
     setSelectedTenantId(tenantId);
-    setAdminEmail('');
+    setMemberEmail('');
+    setIsAdmin(false);
     setErrorMessage('');
-    setShowAddAdminModal(true);
+    setShowAddMemberModal(true);
   };
 
-  const handleAddAdminSubmit = async () => {
-    if (!adminEmail.trim()) {
+  const handleAddMemberSubmit = async () => {
+    if (!memberEmail.trim()) {
       setErrorMessage('Please enter an email address');
       return;
     }
@@ -144,16 +146,32 @@ const Tenants = () => {
     setErrorMessage('');
 
     try {
-      const result = await addTenantAdministrator(selectedTenantId, adminEmail.trim());
-      const response = JSON.parse(result);
+      // Add as tenant user first
+      const userResult = await addTenantUser(selectedTenantId, memberEmail.trim());
+      const userResponse = JSON.parse(userResult);
 
-      if (response.success) {
-        setShowAddAdminModal(false);
-        setAdminEmail('');
-        await refreshData();
-      } else {
-        setErrorMessage(response.error || 'Failed to add administrator');
+      if (!userResponse.success) {
+        setErrorMessage(userResponse.error || 'Failed to add member');
+        setIsLoading(false);
+        return;
       }
+
+      // If admin role is selected, also add as administrator
+      if (isAdmin) {
+        const adminResult = await addTenantAdministrator(selectedTenantId, memberEmail.trim());
+        const adminResponse = JSON.parse(adminResult);
+
+        if (!adminResponse.success) {
+          setErrorMessage(adminResponse.error || 'Failed to add administrator role');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      setShowAddMemberModal(false);
+      setMemberEmail('');
+      setIsAdmin(false);
+      await refreshData();
     } catch (error: any) {
       setErrorMessage(error.message || 'An error occurred');
     } finally {
@@ -161,52 +179,53 @@ const Tenants = () => {
     }
   };
 
-  const handleRemoveAdmin = async (adminId: string) => {
-    if (!confirm('Are you sure you want to remove this administrator?')) {
-      return;
-    }
-
-    try {
-      const result = await removeTenantAdministrator(adminId);
-      const response = JSON.parse(result);
-
-      if (response.success) {
-        await refreshData();
-      } else {
-        alert(response.error || 'Failed to remove administrator');
-      }
-    } catch (error: any) {
-      alert(error.message || 'An error occurred');
-    }
-  };
-
-  const handleAddUser = (tenantId: string) => {
-    setSelectedTenantId(tenantId);
-    setUserEmail('');
+  const handleEditMember = (member: { userId: string; name: string; email: string; isAdmin: boolean }) => {
+    setEditingMember(member);
+    setIsAdmin(member.isAdmin);
     setErrorMessage('');
-    setShowAddUserModal(true);
+    setShowEditMemberModal(true);
   };
 
-  const handleAddUserSubmit = async () => {
-    if (!userEmail.trim()) {
-      setErrorMessage('Please enter an email address');
-      return;
-    }
+  const handleEditMemberSubmit = async () => {
+    if (!editingMember) return;
 
     setIsLoading(true);
     setErrorMessage('');
 
     try {
-      const result = await addTenantUser(selectedTenantId, userEmail.trim());
-      const response = JSON.parse(result);
+      const members = getMembersForTenant(selectedTenantId);
+      const member = members.find((m: any) => m.userId === editingMember.userId);
 
-      if (response.success) {
-        setShowAddUserModal(false);
-        setUserEmail('');
-        await refreshData();
-      } else {
-        setErrorMessage(response.error || 'Failed to add user');
+      if (!member) {
+        setErrorMessage('Member not found');
+        setIsLoading(false);
+        return;
       }
+
+      // Handle admin role changes
+      if (isAdmin && !member.isAdmin) {
+        // Add admin role
+        const result = await addTenantAdministrator(selectedTenantId, member.email);
+        const response = JSON.parse(result);
+        if (!response.success) {
+          setErrorMessage(response.error || 'Failed to add administrator role');
+          setIsLoading(false);
+          return;
+        }
+      } else if (!isAdmin && member.isAdmin && member.adminRecordId) {
+        // Remove admin role
+        const result = await removeTenantAdministrator(member.adminRecordId);
+        const response = JSON.parse(result);
+        if (!response.success) {
+          setErrorMessage(response.error || 'Failed to remove administrator role');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      setShowEditMemberModal(false);
+      setEditingMember(null);
+      await refreshData();
     } catch (error: any) {
       setErrorMessage(error.message || 'An error occurred');
     } finally {
@@ -214,45 +233,97 @@ const Tenants = () => {
     }
   };
 
-  const handleRemoveUser = async (userRecordId: string) => {
-    if (!confirm('Are you sure you want to remove this user?')) {
+  const handleRemoveMember = async (member: { userId: string; name: string; isAdmin: boolean; adminRecordId?: string; userRecordId?: string }) => {
+    // Enhanced warning for administrators
+    const warningMessage = member.isAdmin
+      ? `Are you sure you want to remove ${member.name} from the tenant?\n\n⚠️ WARNING: This user is also an ADMINISTRATOR and will lose all administrative privileges.`
+      : `Are you sure you want to remove ${member.name} from the tenant?`;
+
+    if (!confirm(warningMessage)) {
       return;
     }
 
     try {
-      const result = await removeTenantUser(userRecordId);
-      const response = JSON.parse(result);
-
-      if (response.success) {
-        await refreshData();
-      } else {
-        alert(response.error || 'Failed to remove user');
+      // Remove admin role if exists
+      if (member.adminRecordId) {
+        const adminResult = await removeTenantAdministrator(member.adminRecordId);
+        const adminResponse = JSON.parse(adminResult);
+        if (!adminResponse.success) {
+          alert(adminResponse.error || 'Failed to remove administrator role');
+          return;
+        }
       }
+
+      // Remove user role if exists
+      if (member.userRecordId) {
+        const userResult = await removeTenantUser(member.userRecordId);
+        const userResponse = JSON.parse(userResult);
+        if (!userResponse.success) {
+          alert(userResponse.error || 'Failed to remove member');
+          return;
+        }
+      }
+
+      await refreshData();
     } catch (error: any) {
       alert(error.message || 'An error occurred');
     }
   };
 
-  const getAdminsForTenant = (tenantId: string) => {
-    const admins = adminTenants.filter((admin: AdminUser) => admin.tenant_id === tenantId);
-    if (!adminFilter) return admins;
-
-    const filterLower = adminFilter.toLowerCase();
-    return admins.filter((admin: AdminUser) =>
-      admin.name.toLowerCase().includes(filterLower) ||
-      admin.email.toLowerCase().includes(filterLower)
-    );
-  };
-
-  const getUsersForTenant = (tenantId: string) => {
+  const getMembersForTenant = (tenantId: string) => {
     const users = tenantUsers[tenantId] || [];
-    if (!userFilter) return users;
+    const admins = adminTenants.filter((admin: AdminUser) => admin.tenant_id === tenantId);
 
-    const filterLower = userFilter.toLowerCase();
-    return users.filter((user: TenantUser) =>
-      user.name.toLowerCase().includes(filterLower) ||
-      user.email.toLowerCase().includes(filterLower)
-    );
+    // Create a map of all members with their roles
+    const memberMap = new Map<string, { userId: string; name: string; email: string; isAdmin: boolean; isMember: boolean; adminRecordId?: string; userRecordId?: string }>();
+
+    // Add all users
+    users.forEach((user: TenantUser) => {
+      memberMap.set(user.user_id, {
+        userId: user.user_id,
+        name: user.name,
+        email: user.email,
+        isAdmin: false,
+        isMember: true,
+        userRecordId: user.id
+      });
+    });
+
+    // Add admin role to existing members or create new entries for admins
+    admins.forEach((admin: AdminUser) => {
+      if (memberMap.has(admin.user_id)) {
+        const member = memberMap.get(admin.user_id)!;
+        member.isAdmin = true;
+        member.adminRecordId = admin.id;
+      } else {
+        memberMap.set(admin.user_id, {
+          userId: admin.user_id,
+          name: admin.name,
+          email: admin.email,
+          isAdmin: true,
+          isMember: false,
+          adminRecordId: admin.id
+        });
+      }
+    });
+
+    let members = Array.from(memberMap.values());
+
+    // Apply filter
+    if (memberFilter) {
+      const filterLower = memberFilter.toLowerCase();
+      members = members.filter(member =>
+        member.name.toLowerCase().includes(filterLower) ||
+        member.email.toLowerCase().includes(filterLower)
+      );
+    }
+
+    // Sort: admins first, then alphabetically by name
+    return members.sort((a, b) => {
+      if (a.isAdmin && !b.isAdmin) return -1;
+      if (!a.isAdmin && b.isAdmin) return 1;
+      return a.name.localeCompare(b.name);
+    });
   };
 
   const isCurrentUserAdmin = (tenantId: string) => {
@@ -387,150 +458,147 @@ const Tenants = () => {
                 </h2>
 
                 <div className="space-y-6">
-                  {/* Administrators */}
+                  {/* Members (Users and Administrators Combined) */}
                   <div>
                     <div className="flex justify-between items-center mb-3">
                       <button
-                        onClick={() => setIsAdminsExpanded(!isAdminsExpanded)}
-                        className="text-lg font-semibold flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300"
-                      >
-                        <Shield className="h-5 w-5" />
-                        Administrators
-                        {isAdminsExpanded ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleAddAdmin(tenant.id)}
-                        className="flex items-center gap-1 bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 rounded cursor-pointer text-sm"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add Admin
-                      </button>
-                    </div>
-                    {isAdminsExpanded && (
-                      <>
-                        <div className="relative mb-3">
-                          <input
-                            type="text"
-                            placeholder="Filter by name or email..."
-                            value={adminFilter}
-                            onChange={(e) => setAdminFilter(e.target.value)}
-                            className="w-full p-2 pr-8 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                          {adminFilter && (
-                            <button
-                              onClick={() => setAdminFilter('')}
-                              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                        <ul className="space-y-2">
-                          {getAdminsForTenant(tenant.id).length === 0 ? (
-                            <li className="text-gray-500 text-sm italic p-3 bg-gray-50 dark:bg-gray-800 rounded">
-                              No administrators match the filter
-                            </li>
-                          ) : (
-                            getAdminsForTenant(tenant.id).map((admin: AdminUser) => (
-                          <li
-                            key={admin.id}
-                            className="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-3 rounded"
-                          >
-                            <div>
-                              <p className="font-medium">{admin.name}</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">{admin.email}</p>
-                            </div>
-                            {admin.user_id !== currentUserId && (
-                              <button
-                                onClick={() => handleRemoveAdmin(admin.id)}
-                                className="flex items-center gap-1 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded cursor-pointer text-sm"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                Remove
-                              </button>
-                            )}
-                            </li>
-                            ))
-                          )}
-                        </ul>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Tenant Users */}
-                  <div>
-                    <div className="flex justify-between items-center mb-3">
-                      <button
-                        onClick={() => setIsUsersExpanded(!isUsersExpanded)}
-                        className="text-lg font-semibold flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300"
+                        onClick={() => setIsMembersExpanded(!isMembersExpanded)}
+                        className="text-lg font-semibold flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                       >
                         <Users className="h-5 w-5" />
-                        Tenant Users
-                        {isUsersExpanded ? (
+                        Members
+                        {isMembersExpanded ? (
                           <ChevronUp className="h-4 w-4" />
                         ) : (
                           <ChevronDown className="h-4 w-4" />
                         )}
                       </button>
                       <button
-                        onClick={() => handleAddUser(tenant.id)}
-                        className="flex items-center gap-1 bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 rounded cursor-pointer text-sm"
+                        onClick={() => {
+                          setSelectedTenantId(tenant.id);
+                          handleAddMember(tenant.id);
+                        }}
+                        className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer text-sm transition-colors"
                       >
                         <Plus className="h-4 w-4" />
-                        Add User
+                        Add Member
                       </button>
                     </div>
-                    {isUsersExpanded && (
+                    {isMembersExpanded && (
                       <>
                         <div className="relative mb-3">
                           <input
                             type="text"
                             placeholder="Filter by name or email..."
-                            value={userFilter}
-                            onChange={(e) => setUserFilter(e.target.value)}
-                            className="w-full p-2 pr-8 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={memberFilter}
+                            onChange={(e) => setMemberFilter(e.target.value)}
+                            className="w-full p-2 pr-8 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
-                          {userFilter && (
+                          {memberFilter && (
                             <button
-                              onClick={() => setUserFilter('')}
-                              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                              onClick={() => setMemberFilter('')}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"
                             >
                               <X className="h-4 w-4" />
                             </button>
                           )}
                         </div>
-                        <ul className="space-y-2">
-                          {getUsersForTenant(tenant.id).length === 0 ? (
-                            <li className="text-gray-500 text-sm italic p-3 bg-gray-50 dark:bg-gray-800 rounded">
-                              No users match the filter
-                            </li>
-                          ) : (
-                            getUsersForTenant(tenant.id).map((user: TenantUser) => (
-                            <li
-                              key={user.id}
-                              className="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-3 rounded"
-                            >
-                              <div>
-                                <p className="font-medium">{user.name}</p>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
-                              </div>
-                              {user.user_id !== currentUserId && (
-                                <button
-                                  onClick={() => handleRemoveUser(user.id)}
-                                  className="flex items-center gap-1 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded cursor-pointer text-sm"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  Remove
-                                </button>
+                        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead className="bg-gray-50 dark:bg-gray-900">
+                              <tr>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                  Name
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                  Email
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                  Role
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                  Actions
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                              {getMembersForTenant(tenant.id).length === 0 ? (
+                                <tr>
+                                  <td colSpan={4} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400 text-sm italic">
+                                    No members match the filter
+                                  </td>
+                                </tr>
+                              ) : (
+                                getMembersForTenant(tenant.id).map((member) => (
+                                  <tr key={member.userId} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                        {member.name}
+                                      </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                                        {member.email}
+                                      </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                      <div className="flex gap-2">
+                                        {member.isAdmin && (
+                                          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                                            <Shield className="h-3 w-3" />
+                                            Admin
+                                          </span>
+                                        )}
+                                        {member.isMember && (
+                                          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                            <Users className="h-3 w-3" />
+                                            Member
+                                          </span>
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                      <div className="flex justify-end gap-2">
+                                        {member.userId !== currentUserId && (
+                                          <>
+                                            <button
+                                              onClick={() => {
+                                                setSelectedTenantId(tenant.id);
+                                                handleEditMember({
+                                                  userId: member.userId,
+                                                  name: member.name,
+                                                  email: member.email,
+                                                  isAdmin: member.isAdmin
+                                                });
+                                              }}
+                                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded cursor-pointer transition-colors"
+                                              title="Edit roles"
+                                            >
+                                              <Edit2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                            </button>
+                                            <button
+                                              onClick={() => handleRemoveMember({
+                                                userId: member.userId,
+                                                name: member.name,
+                                                isAdmin: member.isAdmin,
+                                                adminRecordId: member.adminRecordId,
+                                                userRecordId: member.userRecordId
+                                              })}
+                                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded cursor-pointer transition-colors"
+                                              title="Remove member"
+                                            >
+                                              <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                            </button>
+                                          </>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))
                               )}
-                              </li>
-                            ))
-                          )}
-                        </ul>
+                            </tbody>
+                          </table>
+                        </div>
                       </>
                     )}
                   </div>
@@ -541,14 +609,14 @@ const Tenants = () => {
         </div>
       )}
 
-      {/* Add Admin Modal */}
+      {/* Add Member Modal */}
       <Dialog
-        open={showAddAdminModal}
-        onClose={() => !isLoading && setShowAddAdminModal(false)}
+        open={showAddMemberModal}
+        onClose={() => !isLoading && setShowAddMemberModal(false)}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Add Administrator</DialogTitle>
+        <DialogTitle>Add Member</DialogTitle>
         <DialogContent>
           {errorMessage && (
             <Alert severity="error" sx={{ mb: 2 }}>
@@ -562,57 +630,111 @@ const Tenants = () => {
             type="email"
             fullWidth
             variant="outlined"
-            value={adminEmail}
-            onChange={(e) => setAdminEmail(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleAddAdminSubmit()}
+            value={memberEmail}
+            onChange={(e) => setMemberEmail(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleAddMemberSubmit()}
             placeholder="user@example.com"
             disabled={isLoading}
+            sx={{ mb: 2, mt: 1 }}
           />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={isAdmin}
+                onChange={(e) => setIsAdmin(e.target.checked)}
+                disabled={isLoading}
+                sx={{
+                  color: 'rgba(156, 163, 175, 1)',
+                  '&.Mui-checked': {
+                    color: '#3b82f6',
+                  },
+                  '&:hover': {
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  },
+                }}
+              />
+            }
+            label={
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                <Shield className="h-4 w-4" />
+                Administrator
+              </span>
+            }
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 ml-8">
+            Administrators can manage tenant members and settings. All members have access to the tenant.
+          </p>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAddAdminModal(false)} disabled={isLoading}>
+          <Button onClick={() => setShowAddMemberModal(false)} disabled={isLoading}>
             Cancel
           </Button>
-          <Button onClick={handleAddAdminSubmit} variant="contained" disabled={isLoading}>
-            {isLoading ? 'Adding...' : 'Add Administrator'}
+          <Button onClick={handleAddMemberSubmit} variant="contained" disabled={isLoading}>
+            {isLoading ? 'Adding...' : 'Add Member'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Add User Modal */}
+      {/* Edit Member Modal */}
       <Dialog
-        open={showAddUserModal}
-        onClose={() => !isLoading && setShowAddUserModal(false)}
+        open={showEditMemberModal}
+        onClose={() => !isLoading && setShowEditMemberModal(false)}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Add User</DialogTitle>
+        <DialogTitle>Edit Member Roles</DialogTitle>
         <DialogContent>
           {errorMessage && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {errorMessage}
             </Alert>
           )}
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Email Address"
-            type="email"
-            fullWidth
-            variant="outlined"
-            value={userEmail}
-            onChange={(e) => setUserEmail(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleAddUserSubmit()}
-            placeholder="user@example.com"
-            disabled={isLoading}
-          />
+          {editingMember && (
+            <>
+              <div className="mb-4 mt-2">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-600">
+                  {editingMember.name}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {editingMember.email}
+                </p>
+              </div>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={isAdmin}
+                    onChange={(e) => setIsAdmin(e.target.checked)}
+                    disabled={isLoading}
+                    sx={{
+                      color: 'rgba(156, 163, 175, 1)',
+                      '&.Mui-checked': {
+                        color: '#3b82f6',
+                      },
+                      '&:hover': {
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                      },
+                    }}
+                  />
+                }
+                label={
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                    <Shield className="h-4 w-4" />
+                    Administrator
+                  </span>
+                }
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 ml-8">
+                Toggle administrator privileges for this member.
+              </p>
+            </>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAddUserModal(false)} disabled={isLoading}>
+          <Button onClick={() => setShowEditMemberModal(false)} disabled={isLoading}>
             Cancel
           </Button>
-          <Button onClick={handleAddUserSubmit} variant="contained" disabled={isLoading}>
-            {isLoading ? 'Adding...' : 'Add User'}
+          <Button onClick={handleEditMemberSubmit} variant="contained" disabled={isLoading}>
+            {isLoading ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogActions>
       </Dialog>
