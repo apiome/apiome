@@ -89,6 +89,10 @@ const StudioContent = () => {
 
   // Class-property edit dialog state
   const [editPropertyDialogOpen, setEditPropertyDialogOpen] = useState(false);
+
+  // Class edit dialog state
+  const [classEditDialogOpen, setClassEditDialogOpen] = useState(false);
+  const [editingClassData, setEditingClassData] = useState<any>(null);
   const [editingClassProperty, setEditingClassProperty] = useState<any>(null);
   const [editPropName, setEditPropName] = useState('');
   const [editPropDescription, setEditPropDescription] = useState('');
@@ -217,6 +221,13 @@ const StudioContent = () => {
     }
   }, [selectedVersionId, layoutDirection, setNodes]);
 
+  // Handle class edit (double-click on node)
+  const handleClassEdit = useCallback(async (classData: any) => {
+    console.log('Editing class:', classData);
+    setEditingClassData(classData);
+    setClassEditDialogOpen(true);
+  }, []);
+
   // Handle property edit from class
   const handlePropertyEdit = useCallback(async (classId: string, classProperty: any) => {
     console.log('Editing class property:', classId, classProperty);
@@ -342,7 +353,8 @@ const StudioContent = () => {
         schema: cls.schema, // Pass schema for composition handles
         onPropertyDrop: handlePropertyDrop,
         onPropertyEdit: handlePropertyEdit,
-        onPropertyDelete: handlePropertyDelete
+        onPropertyDelete: handlePropertyDelete,
+        onClassEdit: handleClassEdit
       }
     }));
   };
@@ -634,7 +646,7 @@ const StudioContent = () => {
     };
 
     loadClasses();
-  }, [selectedVersionId, canvasRefreshKey, layoutDirection, setNodes, setEdges, fitView, handlePropertyDrop, handlePropertyEdit, handlePropertyDelete]);
+  }, [selectedVersionId, canvasRefreshKey, layoutDirection, setNodes, setEdges, fitView, handlePropertyDrop, handlePropertyEdit, handlePropertyDelete, handleClassEdit]);
 
   const loadProjects = async () => {
     if (!currentTenantId) return;
@@ -1053,6 +1065,187 @@ const StudioContent = () => {
           <Button onClick={() => setEditPropertyDialogOpen(false)}>Cancel</Button>
           <Button onClick={handleSaveEditedProperty} variant="contained">
             Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Class Edit Dialog */}
+      <Dialog
+        open={classEditDialogOpen}
+        onClose={() => setClassEditDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              height: '80vh',
+              maxHeight: '700px',
+            }
+          }
+        }}
+      >
+        <DialogTitle>
+          Edit Class: {editingClassData?.name}
+        </DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
+          {editingClassData && (() => {
+            // Helper function to extract class name from $ref
+            const extractClassNameFromRef = (ref: string): string | null => {
+              if (ref.includes('/')) {
+                const parts = ref.split('/');
+                return parts[parts.length - 1] || null;
+              }
+              return ref;
+            };
+
+            // Helper function to find all referenced class names
+            const findReferencedClasses = (obj: any, refs: Set<string>): void => {
+              if (!obj || typeof obj !== 'object') return;
+
+              if (obj.$ref && typeof obj.$ref === 'string') {
+                const className = extractClassNameFromRef(obj.$ref);
+                if (className) refs.add(className);
+              }
+
+              for (const key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                  findReferencedClasses(obj[key], refs);
+                }
+              }
+            };
+
+            // Helper function to build schema for a class
+            const buildClassSchema = (classData: any) => {
+              const schema = typeof classData.schema === 'string'
+                ? JSON.parse(classData.schema)
+                : (classData.schema || {});
+
+              const properties: any = {};
+              const required: string[] = [];
+
+              if (classData.properties && classData.properties.length > 0) {
+                classData.properties.forEach((prop: any) => {
+                  const propData = typeof prop.data === 'string' ? JSON.parse(prop.data) : prop.data;
+                  properties[prop.name] = propData;
+
+                  if (propData.required) {
+                    required.push(prop.name);
+                  }
+                });
+              }
+
+              const classSchema = {
+                type: 'object',
+                description: classData.description || undefined,
+                ...schema,
+                properties,
+                required: required.length > 0 ? required : undefined
+              };
+
+              // Remove undefined values
+              Object.keys(classSchema).forEach(key => {
+                if (classSchema[key] === undefined) {
+                  delete classSchema[key];
+                }
+              });
+
+              return classSchema;
+            };
+
+            // Build OpenAPI 3.2.0 schema from class data
+            const schema = typeof editingClassData.schema === 'string'
+              ? JSON.parse(editingClassData.schema)
+              : (editingClassData.schema || {});
+
+            // Build properties object from class_properties data
+            const properties: any = {};
+            const required: string[] = [];
+            const referencedClasses = new Set<string>();
+
+            if (editingClassData.properties && editingClassData.properties.length > 0) {
+              editingClassData.properties.forEach((prop: any) => {
+                const propData = typeof prop.data === 'string' ? JSON.parse(prop.data) : prop.data;
+                properties[prop.name] = propData;
+
+                // Find all $ref references in this property
+                findReferencedClasses(propData, referencedClasses);
+
+                // Check if property is required
+                if (propData.required) {
+                  required.push(prop.name);
+                }
+              });
+            }
+
+            // Find references in composition keywords (allOf/anyOf/oneOf)
+            findReferencedClasses(schema, referencedClasses);
+
+            // Construct the main class schema
+            const classSchema = buildClassSchema(editingClassData);
+
+            // Get all classes from nodes to find referenced ones
+            const allClasses = nodes.map(node => node.data).filter(data => data && data.name);
+
+            // Build schemas for referenced classes
+            const referencedSchemas: any = {};
+            referencedClasses.forEach(className => {
+              if (className !== editingClassData.name) {
+                // Find the class data from nodes
+                const referencedClassData = allClasses.find((cls: any) => cls.name === className);
+                if (referencedClassData) {
+                  referencedSchemas[className] = buildClassSchema(referencedClassData);
+                } else {
+                  // Fallback to placeholder if class not found
+                  referencedSchemas[className] = {
+                    type: 'object',
+                    description: `Referenced schema: ${className} (not loaded)`,
+                    properties: {}
+                  };
+                }
+              }
+            });
+
+            // Build complete OpenAPI document with components.schemas
+            const openApiDoc = {
+              openapi: '3.1.0',
+              info: {
+                title: `${editingClassData.name} Schema`,
+                version: '1.0.0',
+                description: 'OpenAPI 3.1.0 schema definition'
+              },
+              components: {
+                schemas: {
+                  [editingClassData.name]: classSchema,
+                  ...referencedSchemas
+                }
+              }
+            };
+
+            const schemaJson = JSON.stringify(openApiDoc, null, 2);
+
+            return (
+              <Editor
+                height="100%"
+                defaultLanguage="json"
+                value={schemaJson}
+                theme="vs-dark"
+                options={{
+                  readOnly: true,
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  fontSize: 13,
+                  wordWrap: 'on',
+                  lineNumbers: 'on',
+                  renderWhitespace: 'none',
+                  folding: true
+                }}
+              />
+            );
+          })()}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setClassEditDialogOpen(false)}>
+            Close
           </Button>
         </DialogActions>
       </Dialog>

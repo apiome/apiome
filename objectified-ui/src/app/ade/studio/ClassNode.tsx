@@ -20,6 +20,7 @@ type ClassNodeData = {
   onPropertyDrop?: (classId: string, propertyData: any) => void;
   onPropertyEdit?: (classId: string, classProperty: ClassProperty) => void;
   onPropertyDelete?: (classId: string, classPropertyId: string) => void;
+  onClassEdit?: (classData: any) => void;
 };
 
 function ClassNode({ data, selected }: NodeProps) {
@@ -84,11 +85,25 @@ function ClassNode({ data, selected }: NodeProps) {
     return !!(propData?.$ref || (propData?.type === 'array' && propData?.items?.$ref));
   };
 
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (typedData.onClassEdit) {
+      typedData.onClassEdit({
+        id: typedData.id,
+        name: typedData.name,
+        description: typedData.description,
+        schema: typedData.schema,
+        properties: typedData.properties
+      });
+    }
+  };
+
   return (
     <div
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onDoubleClick={handleDoubleClick}
       style={{
         borderRadius: '4px',
         border: `1px solid ${isDragOver ? '#10b981' : selected ? '#5b68ea' : '#d1d5db'}`,
