@@ -4,6 +4,8 @@ import { useCallback, useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import { useStudio } from './StudioContext';
+import { Copy, Download } from 'lucide-react';
+import * as yaml from 'js-yaml';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -82,6 +84,7 @@ const StudioContent = () => {
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const [isLoadingVersions, setIsLoadingVersions] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('canvas');
+  const [codeFormat, setCodeFormat] = useState<'json' | 'yaml'>('json');
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -1047,30 +1050,120 @@ const StudioContent = () => {
           <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
             <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    OpenAPI 3.1.0 Specification
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Complete schema definition for {selectedProject?.name} v{selectedVersion?.version_id}
-                  </p>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      OpenAPI 3.1.0 Specification
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Complete schema definition for {selectedProject?.name} v{selectedVersion?.version_id}
+                    </p>
+                  </div>
+
+                  {/* Format Toggle */}
+                  <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded overflow-hidden">
+                    <button
+                      onClick={() => setCodeFormat('json')}
+                      className={`px-3 py-1 text-xs font-medium transition-colors ${
+                        codeFormat === 'json'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      JSON
+                    </button>
+                    <button
+                      onClick={() => setCodeFormat('yaml')}
+                      className={`px-3 py-1 text-xs font-medium transition-colors border-l border-gray-300 dark:border-gray-600 ${
+                        codeFormat === 'yaml'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      YAML
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(openApiSpec);
-                    alert('OpenAPI specification copied to clipboard!');
-                  }}
-                  className="px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-                >
-                  Copy to Clipboard
-                </button>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      const content = codeFormat === 'json'
+                        ? openApiSpec
+                        : yaml.dump(JSON.parse(openApiSpec), { lineWidth: -1, noRefs: true });
+                      navigator.clipboard.writeText(content);
+                      alert(`OpenAPI specification (${codeFormat.toUpperCase()}) copied to clipboard!`);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                    title="Copy to clipboard"
+                  >
+                    <Copy size={14} />
+                    Copy
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Get content in selected format
+                      const content = codeFormat === 'json'
+                        ? openApiSpec
+                        : yaml.dump(JSON.parse(openApiSpec), { lineWidth: -1, noRefs: true });
+                      const mimeType = codeFormat === 'json' ? 'application/json' : 'text/yaml';
+                      const extension = codeFormat === 'json' ? 'json' : 'yaml';
+
+                      // Create a blob from the OpenAPI spec
+                      const blob = new Blob([content], { type: mimeType });
+                      const url = URL.createObjectURL(blob);
+
+                      // Create a temporary download link
+                      const link = document.createElement('a');
+                      link.href = url;
+
+                      // Generate filename from project and version
+                      const projectSlug = selectedProject?.slug || selectedProject?.name?.toLowerCase().replace(/\s+/g, '-') || 'api';
+                      const versionSlug = selectedVersion?.version_id?.replace(/\./g, '-') || '1-0-0';
+                      link.download = `${projectSlug}-${versionSlug}-openapi.${extension}`;
+
+                      // Trigger download
+                      document.body.appendChild(link);
+                      link.click();
+
+                      // Cleanup
+                      document.body.removeChild(link);
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                    title={`Download as ${codeFormat.toUpperCase()} file`}
+                  >
+                    <Download size={14} />
+                    Export
+                  </button>
+                </div>
               </div>
             </div>
             <div className="flex-1">
               <Editor
                 height="100%"
-                defaultLanguage="json"
-                value={openApiSpec || '{\n  "openapi": "3.1.0",\n  "info": {\n    "title": "No classes defined",\n    "version": "1.0.0"\n  },\n  "components": {\n    "schemas": {}\n  }\n}'}
+                language={codeFormat}
+                value={(() => {
+                  if (!openApiSpec) {
+                    const emptySpec = {
+                      openapi: '3.1.0',
+                      info: {
+                        title: 'No classes defined',
+                        version: '1.0.0'
+                      },
+                      components: {
+                        schemas: {}
+                      }
+                    };
+                    return codeFormat === 'json'
+                      ? JSON.stringify(emptySpec, null, 2)
+                      : yaml.dump(emptySpec, { lineWidth: -1, noRefs: true });
+                  }
+
+                  return codeFormat === 'json'
+                    ? openApiSpec
+                    : yaml.dump(JSON.parse(openApiSpec), { lineWidth: -1, noRefs: true });
+                })()}
                 theme="vs-dark"
                 options={{
                   readOnly: true,
