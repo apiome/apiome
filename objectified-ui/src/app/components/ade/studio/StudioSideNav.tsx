@@ -327,8 +327,13 @@ const StudioSideNav: React.FC<StudioSideNavProps> = ({
                     {filteredProperties.map((propertyItem) => (
                       <Box
                         key={propertyItem.id}
-                        draggable={true}
+                        draggable={!isReadOnly}
                         onDragStart={(e) => {
+                          // Prevent drag in read-only mode
+                          if (isReadOnly) {
+                            e.preventDefault();
+                            return;
+                          }
                           // Set the property data as the drag payload
                           e.dataTransfer.effectAllowed = 'copy';
                           e.dataTransfer.setData('application/json', JSON.stringify({
@@ -344,7 +349,7 @@ const StudioSideNav: React.FC<StudioSideNavProps> = ({
                           px: 2,
                           py: 1.5,
                           mb: 0.5,
-                          cursor: 'grab',
+                          cursor: isReadOnly ? 'default' : 'grab',
                           backgroundColor: selectedPropertyId === propertyItem.id
                             ? 'action.selected'
                             : 'transparent',

@@ -135,7 +135,7 @@ const StudioContent = () => {
     } catch (error) {
       console.error('Failed to reload classes:', error);
     }
-  }, [selectedVersionId, layoutDirection, setNodes, setEdges, projects, versions, generateOpenApiSpec]);
+  }, [selectedVersionId, layoutDirection, setNodes, setEdges, projects, versions, generateOpenApiSpec, isReadOnly]);
 
   // Apply auto-layout to current nodes and edges
   const onLayout = useCallback((direction: LayoutDirection) => {
@@ -151,6 +151,11 @@ const StudioContent = () => {
 
   // Handle property drop on class
   const handlePropertyDrop = useCallback(async (classId: string, propertyData: any) => {
+    // Prevent edits in read-only mode
+    if (isReadOnly) {
+      return;
+    }
+
     try {
       console.log('Property dropped on class:', classId, propertyData);
 
@@ -208,10 +213,15 @@ const StudioContent = () => {
       console.error('Error adding property to class:', error);
       alert('An error occurred while adding the property');
     }
-  }, [selectedVersionId, layoutDirection, setNodes]);
+  }, [selectedVersionId, layoutDirection, setNodes, isReadOnly]);
 
   // Handle property deletion from class
   const handlePropertyDelete = useCallback(async (classId: string, classPropertyId: string) => {
+    // Prevent edits in read-only mode
+    if (isReadOnly) {
+      return;
+    }
+
     try {
       console.log('Removing property from class:', classId, classPropertyId);
 
@@ -247,26 +257,41 @@ const StudioContent = () => {
       console.error('Error removing property from class:', error);
       alert('An error occurred while removing the property');
     }
-  }, [selectedVersionId, layoutDirection, setNodes]);
+  }, [selectedVersionId, layoutDirection, setNodes, isReadOnly]);
 
   // Handle class edit (double-click on node)
   const handleClassEdit = useCallback(async (classData: any) => {
+    // Prevent edits in read-only mode
+    if (isReadOnly) {
+      return;
+    }
+
     console.log('Editing class:', classData);
     setEditingClassData(classData);
     setClassEditDialogOpen(true);
-  }, []);
+  }, [isReadOnly]);
 
   // Handle property edit from class
   const handlePropertyEdit = useCallback(async (classId: string, classProperty: any) => {
+    // Prevent edits in read-only mode
+    if (isReadOnly) {
+      return;
+    }
+
     console.log('Editing class property:', classId, classProperty);
 
     // Load the full property data from the class_properties record
     setEditingClassProperty(classProperty);
     setEditPropertyDialogOpen(true);
-  }, []);
+  }, [isReadOnly]);
 
   // Handle class delete from canvas
   const handleClassDelete = useCallback(async (classId: string, className: string) => {
+    // Prevent deletes in read-only mode
+    if (isReadOnly) {
+      return;
+    }
+
     if (!confirm(`Are you sure you want to delete "${className}"? This action cannot be undone.`)) {
       return;
     }
@@ -288,7 +313,7 @@ const StudioContent = () => {
       console.error('Error deleting class:', error);
       alert('An error occurred while deleting the class');
     }
-  }, [reloadClasses, triggerSidebarRefresh]);
+  }, [reloadClasses, triggerSidebarRefresh, isReadOnly]);
 
   // Define custom node types
   const nodeTypes = {
@@ -557,6 +582,7 @@ const StudioContent = () => {
     } else {
       setVersions([]);
       setSelectedVersionId('');
+      setIsReadOnly(false); // Reset read-only flag when no project is selected
     }
   }, [selectedProjectId]);
 
@@ -619,7 +645,7 @@ const StudioContent = () => {
     };
 
     loadClasses();
-  }, [selectedVersionId, selectedProjectId, canvasRefreshKey, layoutDirection, setNodes, setEdges, fitView, handlePropertyDrop, handlePropertyEdit, handlePropertyDelete, handleClassEdit, generateOpenApiSpec, projects, versions]);
+  }, [selectedVersionId, selectedProjectId, canvasRefreshKey, layoutDirection, setNodes, setEdges, fitView, handlePropertyDrop, handlePropertyEdit, handlePropertyDelete, handleClassEdit, generateOpenApiSpec, projects, versions, isReadOnly]);
 
   const loadProjects = async () => {
     if (!currentTenantId) return;
@@ -645,7 +671,9 @@ const StudioContent = () => {
 
       // Auto-select the first version if available
       if (versionsData.length > 0) {
-        setSelectedVersionId(versionsData[0].id);
+        const firstVersion = versionsData[0];
+        setSelectedVersionId(firstVersion.id);
+        setIsReadOnly(firstVersion.published || false);
       }
     } catch (error) {
       console.error('Failed to load versions:', error);
@@ -657,6 +685,7 @@ const StudioContent = () => {
   const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedProjectId(e.target.value);
     setSelectedVersionId(''); // Reset version when project changes
+    setIsReadOnly(false); // Reset read-only flag when version is cleared
   };
 
   const handleVersionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -849,6 +878,11 @@ const StudioContent = () => {
             fitView
             attributionPosition="bottom-left"
             className="dark:bg-gray-900"
+            nodesDraggable={!isReadOnly}
+            nodesConnectable={!isReadOnly}
+            elementsSelectable={true}
+            nodesFocusable={true}
+            edgesFocusable={true}
           >
             <Background
               variant={BackgroundVariant.Dots}
@@ -861,7 +895,7 @@ const StudioContent = () => {
                 opacity: 0.5
               }}
             />
-            <Controls className="dark:bg-gray-800 dark:border-gray-700" />
+            <Controls />
             <MiniMap
               nodeStrokeColor={(node) => {
                 if (node.type === 'input') return '#3b82f6';
