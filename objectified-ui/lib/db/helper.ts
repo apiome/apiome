@@ -992,3 +992,153 @@ export async function importProjectFromOpenAPI(
   }
 }
 
+// API Key Management Functions
+
+export async function getApiKeysForTenant(tenantId: string) {
+  try {
+    const result = await connectionPool.query(
+      `SELECT id, tenant_id, name, description, key_prefix, last_used_at, expires_at, enabled, created_at, updated_at
+       FROM odb.api_keys
+       WHERE tenant_id = $1 AND deleted_at IS NULL
+       ORDER BY created_at DESC`,
+      [tenantId]
+    );
+
+    return JSON.stringify(result.rows);
+  } catch (error: any) {
+    return JSON.stringify([]);
+  }
+}
+
+export async function createApiKey(tenantId: string, name: string, description: string, expiresInDays: number | null) {
+  try {
+    if (!name || name.trim().length === 0) {
+      return JSON.stringify({ success: false, error: 'API key name is required' });
+    }
+
+    // Generate a random API key
+    const crypto = require('crypto');
+    const apiKey = 'sk_' + crypto.randomBytes(32).toString('hex');
+    const keyPrefix = apiKey.substring(0, 12) + '...';
+
+    // Hash the API key for storage
+    const saltRounds = 10;
+    const keyHash = await bcrypt.hash(apiKey, saltRounds);
+
+    // Calculate expiration date if provided
+    let expiresAt = null;
+    if (expiresInDays && expiresInDays > 0) {
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + expiresInDays);
+      expiresAt = expirationDate;
+    }
+
+    // Insert the API key
+    const result = await connectionPool.query(
+      `INSERT INTO odb.api_keys (tenant_id, name, description, key_hash, key_prefix, expires_at)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, key_prefix, created_at`,
+      [tenantId, name.trim(), description?.trim() || null, keyHash, keyPrefix, expiresAt]
+    );
+
+    // Return the plain API key (only time it will be visible)
+    return JSON.stringify({
+      success: true,
+      apiKey: apiKey,
+      id: result.rows[0].id,
+      keyPrefix: result.rows[0].key_prefix,
+      createdAt: result.rows[0].created_at
+    });
+  } catch (error: any) {
+    if (error.code === '23505') { // Unique constraint violation
+      return JSON.stringify({ success: false, error: 'An API key with this name already exists for this tenant' });
+    }
+    return JSON.stringify({ success: false, error: error.message });
+  }
+}
+
+export async function deleteApiKey(apiKeyId: string) {
+  try {
+    // Soft delete the API key
+    await connectionPool.query(
+      'UPDATE odb.api_keys SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1',
+      [apiKeyId]
+    );
+
+    return JSON.stringify({ success: true });
+  } catch (error: any) {
+    return JSON.stringify({ success: false, error: error.message });
+  }
+}
+
+export async function toggleApiKeyStatus(apiKeyId: string, enabled: boolean) {
+  try {
+    await connectionPool.query(
+      'UPDATE odb.api_keys SET enabled = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [enabled, apiKeyId]
+    );
+
+    return JSON.stringify({ success: true });
+  } catch (error: any) {
+    return JSON.stringify({ success: false, error: error.message });
+  }
+}
+
+export async function updateApiKeyLastUsed(apiKeyId: string) {
+  try {
+    await connectionPool.query(
+      'UPDATE odb.api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = $1',
+      [apiKeyId]
+    );
+
+    return JSON.stringify({ success: true });
+  } catch (error: any) {
+    return JSON.stringify({ success: false, error: error.message });
+  }
+}
+
+export async function validateApiKey(apiKey: string) {
+  try {
+    // Extract prefix for faster lookup
+    const keyPrefix = apiKey.substring(0, 12) + '...';
+
+    // Get all API keys with matching prefix
+    const result = await connectionPool.query(
+      `SELECT ak.id, ak.tenant_id, ak.key_hash, ak.expires_at, ak.enabled, t.id as tenant_id, t.name as tenant_name
+       FROM odb.api_keys ak
+       JOIN odb.tenants t ON ak.tenant_id = t.id
+       WHERE ak.key_prefix = $1 
+       AND ak.deleted_at IS NULL 
+       AND ak.enabled = true
+       AND t.deleted_at IS NULL
+       AND t.enabled = true`,
+      [keyPrefix]
+    );
+
+    // Check each result to find matching hash
+    for (const row of result.rows) {
+      const isValid = await bcrypt.compare(apiKey, row.key_hash);
+
+      if (isValid) {
+        // Check expiration
+        if (row.expires_at && new Date(row.expires_at) < new Date()) {
+          return JSON.stringify({ success: false, error: 'API key has expired' });
+        }
+
+        // Update last used timestamp
+        await updateApiKeyLastUsed(row.id);
+
+        return JSON.stringify({
+          success: true,
+          tenantId: row.tenant_id,
+          tenantName: row.tenant_name,
+          apiKeyId: row.id
+        });
+      }
+    }
+
+    return JSON.stringify({ success: false, error: 'Invalid API key' });
+  } catch (error: any) {
+    return JSON.stringify({ success: false, error: error.message });
+  }
+}

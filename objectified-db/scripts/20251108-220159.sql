@@ -24,8 +24,8 @@ END $$;
 -- Add comment to the column
 COMMENT ON COLUMN versions.visibility IS 'Visibility level of the version: public (accessible to all) or private (restricted access)';
 
--- Create API Keys table for external REST API access
-CREATE TABLE api_keys (
+-- Create API Keys table for external REST API access (only if it doesn't exist)
+CREATE TABLE IF NOT EXISTS api_keys (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
@@ -58,13 +58,13 @@ COMMENT ON COLUMN api_keys.deleted_at IS 'Soft delete timestamp - NULL means not
 COMMENT ON COLUMN api_keys.created_at IS 'Timestamp when the API key was created';
 COMMENT ON COLUMN api_keys.updated_at IS 'Timestamp when the API key was last updated';
 
--- Create indices for api_keys table
-CREATE INDEX idx_api_keys_tenant_id ON api_keys(tenant_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_api_keys_key_hash ON api_keys(key_hash) WHERE deleted_at IS NULL AND enabled = true;
-CREATE INDEX idx_api_keys_key_prefix ON api_keys(key_prefix) WHERE deleted_at IS NULL;
-CREATE INDEX idx_api_keys_enabled ON api_keys(enabled) WHERE deleted_at IS NULL;
-CREATE INDEX idx_api_keys_deleted_at ON api_keys(deleted_at);
-CREATE INDEX idx_api_keys_expires_at ON api_keys(expires_at) WHERE deleted_at IS NULL;
-CREATE INDEX idx_api_keys_last_used_at ON api_keys(last_used_at);
-CREATE INDEX idx_api_keys_created_at ON api_keys(created_at);
+-- Create indices for api_keys table (only if they don't exist)
+CREATE INDEX IF NOT EXISTS idx_api_keys_tenant_id ON api_keys(tenant_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_api_keys_key_hash ON api_keys(key_hash) WHERE deleted_at IS NULL AND enabled = true;
+CREATE INDEX IF NOT EXISTS idx_api_keys_key_prefix ON api_keys(key_prefix) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_api_keys_enabled ON api_keys(enabled) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_api_keys_deleted_at ON api_keys(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_api_keys_expires_at ON api_keys(expires_at) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_api_keys_last_used_at ON api_keys(last_used_at);
+CREATE INDEX IF NOT EXISTS idx_api_keys_created_at ON api_keys(created_at);
 

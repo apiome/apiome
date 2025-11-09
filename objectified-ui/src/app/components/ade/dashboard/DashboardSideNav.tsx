@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React from 'react';
-import { User, Building2, Folders, FileDigit } from 'lucide-react';
+import { User, Building2, Folders, FileDigit, Key } from 'lucide-react';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
@@ -39,6 +39,7 @@ const DashboardSideNav: React.FC = () => {
       header: 'Administration',
       items: [
         { label: 'Tenants', href: '/ade/dashboard/tenants', icon: Building2 },
+        { label: 'API Keys', href: '/ade/dashboard/api-keys', icon: Key },
       ],
     },
     {
