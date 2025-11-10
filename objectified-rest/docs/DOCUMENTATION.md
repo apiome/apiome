@@ -389,12 +389,13 @@ Use tools like:
 ### Docker
 
 Create `Dockerfile`:
+
 ```dockerfile
 FROM python:3.11-slim
 WORKDIR /app
-COPY requirements.txt .
+COPY ../requirements.txt .
 RUN pip install -r requirements.txt
-COPY src/ .
+COPY ../src .
 CMD ["python", "run.py"]
 ```
 

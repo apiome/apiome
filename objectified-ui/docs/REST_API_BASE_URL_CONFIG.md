@@ -155,7 +155,7 @@ This makes the table compact while providing full URLs for testing and external 
 
 ## See Also
 
-- [REST API Documentation](../../objectified-rest/README.md)
-- [API Key Authentication](../../objectified-rest/API_KEY_AUTHENTICATION.md)
+- [REST API Documentation](../../objectified-rest/docs/README.md)
+- [API Key Authentication](../../objectified-rest/docs/API_KEY_AUTHENTICATION.md)
 - [Next.js Environment Variables](https://nextjs.org/docs/basic-features/environment-variables)
 

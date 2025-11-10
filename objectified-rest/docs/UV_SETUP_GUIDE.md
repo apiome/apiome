@@ -280,6 +280,7 @@ export PYTHONPATH="${PYTHONPATH}:./src"
 ```
 
 ### Docker Integration
+
 ```dockerfile
 FROM python:3.11-slim
 
@@ -288,10 +289,10 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:$PATH"
 
 WORKDIR /app
-COPY pyproject.toml uv.lock ./
+COPY ../pyproject.toml uv.lock ./
 RUN uv sync --no-dev
 
-COPY . .
+COPY .. .
 CMD ["uv", "run", "-m", "app"]
 ```
 
