@@ -29,7 +29,8 @@
     "next-auth": "^4.24.11",
     "pg": "^8.16.3",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "swagger-ui-react": "^5.30.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -40,6 +41,7 @@
     "@types/pg": "^8",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/swagger-ui-react": "^5.18.0",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.0",

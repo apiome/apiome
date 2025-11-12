@@ -26,6 +26,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import 'swagger-ui-react/swagger-ui.css';
 import {
   getProjectsForTenant,
   getVersionsForProject,
@@ -48,6 +49,16 @@ const Editor = dynamic(() => import('@monaco-editor/react'), {
   ),
 });
 
+// Dynamically import Swagger UI with SSR disabled
+const SwaggerUI = dynamic(() => import('swagger-ui-react'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full flex items-center justify-center">
+      <div className="text-gray-500 dark:text-gray-400">Loading Swagger UI...</div>
+    </div>
+  ),
+});
+
 interface Project {
   id: string;
   name: string;
@@ -61,7 +72,7 @@ interface Version {
   published: boolean;
 }
 
-type ViewMode = 'canvas' | 'code';
+type ViewMode = 'canvas' | 'code' | 'swagger';
 
 const StudioContent = () => {
   const { data: session } = useSession();
@@ -819,6 +830,16 @@ const StudioContent = () => {
               >
                 Code
               </button>
+              <button
+                onClick={() => setViewMode('swagger')}
+                className={`px-3 py-1 text-xs font-medium transition-colors border-l border-gray-300 dark:border-gray-600 ${
+                  viewMode === 'swagger'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                }`}
+              >
+                Swagger
+              </button>
             </div>
           )}
 
@@ -972,7 +993,7 @@ const StudioContent = () => {
               </div>
             </Panel>
           </ReactFlow>
-        ) : (
+        ) : viewMode === 'code' ? (
           // Monaco Editor Code View - OpenAPI 3.1.0 Specification
           <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
             <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
@@ -1108,6 +1129,94 @@ const StudioContent = () => {
                   selectOnLineNumbers: true,
                 }}
               />
+            </div>
+          </div>
+        ) : (
+          // Swagger UI View - Interactive API Documentation
+          <div className="h-full flex flex-col bg-white dark:bg-gray-900">
+            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    Swagger UI - Interactive API Documentation
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Explore and test your API endpoints for {selectedProject?.name} v{selectedVersion?.version_id}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(openApiSpec);
+                      alert('OpenAPI specification (JSON) copied to clipboard!');
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                    title="Copy specification to clipboard"
+                  >
+                    <Copy size={14} />
+                    Copy Spec
+                  </button>
+                  <button
+                    onClick={() => {
+                      const blob = new Blob([openApiSpec], { type: 'application/json' });
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      const projectSlug = selectedProject?.slug || selectedProject?.name?.toLowerCase().replace(/\s+/g, '-') || 'api';
+                      const versionSlug = selectedVersion?.version_id?.replace(/\./g, '-') || '1-0-0';
+                      link.download = `${projectSlug}-${versionSlug}-openapi.json`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                    title="Download specification"
+                  >
+                    <Download size={14} />
+                    Export Spec
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto">
+              {openApiSpec ? (
+                <SwaggerUI
+                  spec={JSON.parse(openApiSpec)}
+                  docExpansion="list"
+                  defaultModelsExpandDepth={1}
+                  defaultModelExpandDepth={3}
+                  displayRequestDuration={true}
+                  filter={true}
+                  showExtensions={true}
+                  showCommonExtensions={true}
+                  tryItOutEnabled={true}
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <svg
+                      className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                      No OpenAPI Specification Available
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      Add classes and properties to generate API documentation
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
