@@ -26,7 +26,7 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
     if (status === 'loading') return; // Wait for session to load
 
     if (session) {
-      console.log('Session:', session, 'status:', status);
+      console.log('[AuthenticatedLayout] Session:', session, 'status:', status);
     }
 
     if (session === null) {
