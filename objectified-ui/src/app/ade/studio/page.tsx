@@ -471,20 +471,76 @@ const StudioContent = () => {
       cls.properties.forEach((prop: any) => {
         const propData = typeof prop.data === 'string' ? JSON.parse(prop.data) : prop.data;
         let refClassName: string | null = null;
+        let isSourceArray = false;
 
-        // Direct $ref
+        // Direct $ref (one-to-one or many-to-one)
         if (propData.$ref) {
           refClassName = extractClassNameFromRef(propData.$ref);
+          isSourceArray = false;
         }
-        // $ref in items (for array types)
+        // $ref in items (one-to-many or many-to-many)
         else if (propData.type === 'array' && propData.items?.$ref) {
           refClassName = extractClassNameFromRef(propData.items.$ref);
+          isSourceArray = true;
         }
 
         // Create edge if we found a reference to another class
         if (refClassName && classNameToId.has(refClassName)) {
           const targetClassId = classNameToId.get(refClassName)!;
-          const edgeColor = propData.type === 'array' ? '#8b5cf6' : '#3b82f6';
+          const targetClass = classes.find(c => c.id === targetClassId);
+
+          // Check if target class has a reference back to this class
+          let isTargetArray = false;
+          let hasReverseRef = false;
+
+          if (targetClass && targetClass.properties) {
+            const sourceClassName = cls.name;
+            targetClass.properties.forEach((targetProp: any) => {
+              const targetPropData = typeof targetProp.data === 'string' ? JSON.parse(targetProp.data) : targetProp.data;
+              const targetRefName = targetPropData.$ref
+                ? extractClassNameFromRef(targetPropData.$ref)
+                : (targetPropData.type === 'array' && targetPropData.items?.$ref
+                    ? extractClassNameFromRef(targetPropData.items.$ref)
+                    : null);
+
+              if (targetRefName === sourceClassName) {
+                hasReverseRef = true;
+                isTargetArray = targetPropData.type === 'array';
+              }
+            });
+          }
+
+          // Determine cardinality and styling
+          let cardinality: string;
+          let edgeColor: string;
+          let markerStart: any;
+          let markerEnd: any;
+
+          if (isSourceArray && isTargetArray) {
+            // Many-to-Many
+            cardinality = 'N:N';
+            edgeColor = '#ec4899'; // Pink
+            markerStart = { type: 'arrow', color: edgeColor, width: 20, height: 20 };
+            markerEnd = { type: 'arrow', color: edgeColor, width: 20, height: 20 };
+          } else if (isSourceArray && !isTargetArray) {
+            // One-to-Many (from target perspective) / Many-to-One (from source perspective)
+            cardinality = hasReverseRef ? '1:N' : 'N:1';
+            edgeColor = '#8b5cf6'; // Purple
+            markerStart = hasReverseRef ? { type: 'arrowclosed', color: edgeColor, width: 20, height: 20 } : undefined;
+            markerEnd = { type: 'arrow', color: edgeColor, width: 20, height: 20 };
+          } else if (!isSourceArray && isTargetArray) {
+            // Many-to-One (from target back to source)
+            cardinality = 'N:1';
+            edgeColor = '#f59e0b'; // Amber
+            markerStart = { type: 'arrow', color: edgeColor, width: 20, height: 20 };
+            markerEnd = { type: 'arrowclosed', color: edgeColor, width: 20, height: 20 };
+          } else {
+            // One-to-One
+            cardinality = hasReverseRef ? '1:1' : '1';
+            edgeColor = '#3b82f6'; // Blue
+            markerStart = hasReverseRef ? { type: 'arrowclosed', color: edgeColor, width: 20, height: 20 } : undefined;
+            markerEnd = { type: 'arrowclosed', color: edgeColor, width: 20, height: 20 };
+          }
 
           edges.push({
             id: `prop-${cls.id}-${prop.id}-${targetClassId}`,
@@ -493,17 +549,13 @@ const StudioContent = () => {
             target: targetClassId,
             type: 'smoothstep',
             animated: false,
-            label: prop.name,
+            label: `${prop.name} (${cardinality})`,
             style: {
               stroke: edgeColor,
               strokeWidth: 2
             },
-            markerEnd: {
-              type: 'arrowclosed',
-              color: edgeColor,
-              width: 20,
-              height: 20
-            },
+            markerStart,
+            markerEnd,
             labelStyle: {
               fill: '#6b7280',
               fontSize: 11,
