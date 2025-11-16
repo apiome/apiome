@@ -51,7 +51,6 @@ export function getLayoutedElements(
 
   // Add nodes to the graph
   nodes.forEach((node) => {
-    console.log('[layoutUtils] Node', node.measured);
     dagreGraph.setNode(node.id, {
       width: node.measured?.width ?? nodeWidth,
       height: node.measured?.height ?? nodeHeight,
