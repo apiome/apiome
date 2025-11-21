@@ -74,3 +74,45 @@ export const credentialsSignIn = (payload: any) => {
 
   return true;
 }
+
+/*
+ * Sign-in Steps:
+ * 1. User must exist.
+ *    If user is null, return 'User account not found'
+ * 2. Enabled must be true.
+ *    If not enabled, return 'Your account is currently disabled'
+ * 3. Verified must be true.
+ *    If not verified, return 'You have not yet verified your account e-mail address'
+ *
+ * TODO: Check licenses here.
+ *
+ * If all passes, true is returned.
+ */
+export const credentialsGithub = async (payload: any) => {
+  const user = payload.user;
+
+  console.log('[credentialsGithub] Handling github provider', user);
+  const results = await helper.getUserByEmail(user.email);
+
+  if (results.rowCount > 0) {
+    const userResult = results.rows[0];
+
+    console.log('[credentialsGithub] Retrieved user record from DB:', userResult);
+
+    if (!userResult.enabled) {
+      return '/login?error=Your account is currently disabled';
+    }
+
+    if (!userResult.verified) {
+      return '/login?error=You have not yet verified your account e-mail address';
+    }
+
+    console.log('[credentialsGithub] Login successful', user.email);
+
+    return true;
+  }
+
+  console.log('[credentialsGithub] User account not found for e-mail address:', user.email);
+
+  return false;
+}

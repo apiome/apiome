@@ -1,14 +1,20 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GithubProvider from 'next-auth/providers/github';
 import { NextAuthOptions } from 'next-auth';
-import { credentialsAuthorize, credentialsSignIn, ICredentials } from '../../../../../lib/auth/credentials';
+import {
+  credentialsAuthorize,
+  credentialsSignIn,
+  credentialsGithub,
+  ICredentials,
+} from '../../../../../lib/auth/credentials';
 
 export const authOptions: NextAuthOptions = {
   providers: [
-  // GithubProvider({
-  //     clientId: process.env.GITHUB_ID as string,
-  //     clientSecret: process.env.GITHUB_SECRET as string,
-  // }),
+    GithubProvider({
+      clientId: process.env.GITHUB_ID as string,
+      clientSecret: process.env.GITHUB_SECRET as string,
+    }),
   // GitlabProvider({
   //     clientId: process.env.GITLAB_CLIENT_ID as string,
   //     clientSecret: process.env.GITLAB_CLIENT_SECRET as string,
@@ -41,6 +47,10 @@ export const authOptions: NextAuthOptions = {
       // Handle different types of login providers here.
       if (loginProvider === 'credentials') {
         return credentialsSignIn(payload);
+      }
+
+      if (loginProvider === 'github') {
+        return credentialsGithub(payload);
       }
 
       console.log('[signIn] unsupported provider:', loginProvider, 'user:', user, 'payload:', payload);

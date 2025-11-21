@@ -1,11 +1,34 @@
 "use client";
 
 import { useState } from 'react';
-import { Mail, Lock, User, Info } from 'lucide-react';
+import { Mail, Lock, User, Info, Github } from 'lucide-react';
 import { signIn } from "next-auth/react";
 import { createSignupRequest } from '../../../lib/db/helper';
 
-const LoginClient = () => {
+interface SSOButtonProps {
+  provider: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+}
+
+const SSOButton: React.FC<SSOButtonProps> = ({ provider, icon, onClick }) => {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+    >
+      <span className="flex-shrink-0">{icon}</span>
+      <span className="text-gray-700 font-medium">Continue with {provider}</span>
+    </button>
+  );
+};
+
+interface LoginClientProps {
+  error?: string;
+}
+
+const LoginClient: React.FC<LoginClientProps> = ({ error }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [payload, setPayload] = useState<any>({
     email: '',
@@ -13,6 +36,31 @@ const LoginClient = () => {
   });
   const [signInEnabled, setSignInEnabled] = useState(true);
   const [signupMessage, setSignupMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+
+  // Handle OAuth error from URL
+  const getErrorMessage = (errorCode?: string): { type: 'error' | 'info'; text: string } | null => {
+    if (!errorCode) return null;
+
+    if (errorCode === 'AccessDenied') {
+      return {
+        type: 'error',
+        text: 'An issue occurred with the OAuth provider. Your account may not have been set up properly. Please contact support or try a different sign-in method.'
+      };
+    }
+
+    if (errorCode === 'CredentialsSignin') {
+      return {
+        type: 'error',
+        text: 'Your account could not be found or the credentials provided were incorrect. Please check your email and password, or sign up for a new account.'
+      };
+    }
+
+    // Generic error message for other error codes
+    return {
+      type: 'error',
+      text: `Authentication error: ${errorCode}. Please try again or contact support if the issue persists.`
+    };
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +79,7 @@ const LoginClient = () => {
         const response = JSON.parse(result);
 
         if (response.success) {
-          setSignupMessage({ type: 'success', text: response.message });
+          setSignupMessage({type: 'success', text: response.message});
           // Clear the form
           setPayload({
             email: '',
@@ -40,13 +88,13 @@ const LoginClient = () => {
             signupSource: '',
           });
         } else if (response.duplicate) {
-          setSignupMessage({ type: 'info', text: response.message });
+          setSignupMessage({type: 'info', text: response.message});
         } else {
-          setSignupMessage({ type: 'error', text: response.error || 'An error occurred during signup.' });
+          setSignupMessage({type: 'error', text: response.error || 'An error occurred during signup.'});
         }
       } catch (error) {
         console.error('Signup error:', error);
-        setSignupMessage({ type: 'error', text: 'An unexpected error occurred. Please try again.' });
+        setSignupMessage({type: 'error', text: 'An unexpected error occurred. Please try again.'});
       } finally {
         setSignInEnabled(true);
       }
@@ -58,6 +106,13 @@ const LoginClient = () => {
       }).finally(() => setSignInEnabled(true));
     }
   };
+
+  const handleSSOLogin = async (provider: string) => {
+    await signIn(provider, { callbackUrl: '/ade/dashboard' })
+      .then((x) => {
+        console.log('SSO sign-in initiated:', x);
+      });
+  }
 
   const handleChange = (e: any) => {
     setPayload({
@@ -90,18 +145,18 @@ const LoginClient = () => {
           </div>
 
           {/* Message Display */}
-          {signupMessage && (
+          {(signupMessage || getErrorMessage(error)) && (
             <div className={`mb-6 p-4 rounded-lg ${
-              signupMessage.type === 'success' ? 'bg-green-50 border border-green-200' :
-              signupMessage.type === 'info' ? 'bg-blue-50 border border-blue-200' :
+              (signupMessage || getErrorMessage(error))!.type === 'success' ? 'bg-green-50 border border-green-200' :
+              (signupMessage || getErrorMessage(error))!.type === 'info' ? 'bg-blue-50 border border-blue-200' :
               'bg-red-50 border border-red-200'
             }`}>
               <p className={`text-sm ${
-                signupMessage.type === 'success' ? 'text-green-800' :
-                signupMessage.type === 'info' ? 'text-blue-800' :
+                (signupMessage || getErrorMessage(error))!.type === 'success' ? 'text-green-800' :
+                (signupMessage || getErrorMessage(error))!.type === 'info' ? 'text-blue-800' :
                 'text-red-800'
               }`}>
-                {signupMessage.text}
+                {(signupMessage || getErrorMessage(error))!.text}
               </p>
             </div>
           )}
@@ -207,15 +262,14 @@ const LoginClient = () => {
             </button>
           </form>
 
-          {/* Divider */}
-          {/*<div className="relative my-6">*/}
-          {/*  <div className="absolute inset-0 flex items-center">*/}
-          {/*    <div className="w-full border-t border-gray-300"></div>*/}
-          {/*  </div>*/}
-          {/*  <div className="relative flex justify-center text-sm">*/}
-          {/*    <span className="px-2 bg-white text-gray-500">OR</span>*/}
-          {/*  </div>*/}
-          {/*</div>*/}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">OR</span>
+            </div>
+          </div>
 
           {/* SSO Buttons */}
           {/*<div className="space-y-3">*/}
@@ -244,11 +298,11 @@ const LoginClient = () => {
           {/*    onClick={() => handleSSOLogin('Google')}*/}
           {/*  />*/}
 
-          {/*  <SSOButton*/}
-          {/*    provider="GitHub"*/}
-          {/*    icon={<Github size={18} className="text-gray-700" />}*/}
-          {/*    onClick={() => handleSSOLogin('GitHub')}*/}
-          {/*  />*/}
+            <SSOButton
+              provider="GitHub"
+              icon={<Github size={18} className="text-gray-700" />}
+              onClick={() => handleSSOLogin('github')}
+            />
 
           {/*  <SSOButton*/}
           {/*    provider="GitLab"*/}
@@ -304,4 +358,3 @@ const LoginClient = () => {
 };
 
 export default LoginClient;
-
