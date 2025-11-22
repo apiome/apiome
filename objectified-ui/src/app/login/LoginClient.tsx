@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Mail, Lock, User, Info, Github } from 'lucide-react';
 import { signIn } from "next-auth/react";
 import { createSignupRequest } from '../../../lib/db/helper';
+import { SiGithub } from "react-icons/si";
 
 interface SSOButtonProps {
   provider: string;
@@ -300,7 +301,7 @@ const LoginClient: React.FC<LoginClientProps> = ({ error }) => {
 
             <SSOButton
               provider="GitHub"
-              icon={<Github size={18} className="text-gray-700" />}
+              icon={<SiGithub size={18} className="text-gray-700" />}
               onClick={() => handleSSOLogin('github')}
             />
 
