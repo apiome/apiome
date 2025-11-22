@@ -450,6 +450,8 @@ const StudioContent = () => {
     description: string | null;
     isArray: boolean;
     targetClassId: string | null;
+    targetClassIds?: string[];
+    compositionType?: string;
     minItems?: number;
     maxItems?: number;
     uniqueItems?: boolean;
@@ -462,7 +464,31 @@ const StudioContent = () => {
       // Build the data object for the reference
       const data: any = {};
 
-      if (referenceData.isArray) {
+      // Handle composition types (allOf/anyOf/oneOf)
+      if (referenceData.compositionType && referenceData.targetClassIds && referenceData.targetClassIds.length > 0) {
+        const compositionRefs = referenceData.targetClassIds.map(classId => {
+          const targetClass = nodes.find(n => n.id === classId);
+          if (targetClass) {
+            const targetClassName = (targetClass.data as any).name;
+            return { $ref: `#/components/schemas/${targetClassName}` };
+          }
+          return null;
+        }).filter(Boolean);
+
+        if (referenceData.isArray) {
+          data.type = 'array';
+          if (referenceData.minItems) data.minItems = referenceData.minItems;
+          if (referenceData.maxItems) data.maxItems = referenceData.maxItems;
+          if (referenceData.uniqueItems) data.uniqueItems = referenceData.uniqueItems;
+          data.items = {
+            [referenceData.compositionType]: compositionRefs
+          };
+        } else {
+          data[referenceData.compositionType] = compositionRefs;
+        }
+      }
+      // Handle single reference
+      else if (referenceData.isArray) {
         data.type = 'array';
         if (referenceData.minItems) data.minItems = referenceData.minItems;
         if (referenceData.maxItems) data.maxItems = referenceData.maxItems;
@@ -666,18 +692,110 @@ const StudioContent = () => {
 
       cls.properties.forEach((prop: any) => {
         const propData = typeof prop.data === 'string' ? JSON.parse(prop.data) : prop.data;
+        const isSourceArray = propData.type === 'array';
+
+        // Helper function to create composition edges
+        const createCompositionEdges = (compositionType: 'allOf' | 'anyOf' | 'oneOf', refs: any[]) => {
+          refs.forEach((item: any, index: number) => {
+            if (item.$ref) {
+              const refClassName = extractClassNameFromRef(item.$ref);
+              if (refClassName && classNameToId.has(refClassName)) {
+                const targetClassId = classNameToId.get(refClassName)!;
+
+                // Determine edge styling based on composition type
+                let edgeColor: string;
+                let strokeDasharray: string;
+                let label: string;
+
+                if (compositionType === 'allOf') {
+                  edgeColor = '#2563eb'; // Blue
+                  strokeDasharray = '0';
+                  label = 'allOf';
+                } else if (compositionType === 'anyOf') {
+                  edgeColor = '#ea580c'; // Orange
+                  strokeDasharray = '5,5';
+                  label = 'anyOf';
+                } else { // oneOf
+                  edgeColor = '#9333ea'; // Purple
+                  strokeDasharray = '2,3';
+                  label = 'oneOf';
+                }
+
+                edges.push({
+                  id: `prop-${compositionType}-${cls.id}-${prop.id}-${targetClassId}-${index}`,
+                  source: cls.id,
+                  sourceHandle: `prop-${prop.id}`,
+                  target: targetClassId,
+                  type: 'smoothstep',
+                  animated: false,
+                  label: `${prop.name} (${label}${isSourceArray ? '[]' : ''})`,
+                  style: {
+                    stroke: edgeColor,
+                    strokeWidth: 3,
+                    strokeDasharray
+                  },
+                  markerEnd: {
+                    type: 'arrowclosed',
+                    color: edgeColor,
+                    width: 15,
+                    height: 15
+                  },
+                  labelStyle: {
+                    fill: edgeColor,
+                    fontSize: 10,
+                    fontWeight: 600
+                  },
+                  labelBgStyle: {
+                    fill: 'white',
+                    fillOpacity: 0.95
+                  },
+                  zIndex: 10 + index
+                });
+              }
+            }
+          });
+        };
+
+        // Check for composition types at property level (direct)
+        if (propData.allOf && Array.isArray(propData.allOf)) {
+          createCompositionEdges('allOf', propData.allOf);
+          return; // Skip normal ref handling
+        }
+        if (propData.anyOf && Array.isArray(propData.anyOf)) {
+          createCompositionEdges('anyOf', propData.anyOf);
+          return; // Skip normal ref handling
+        }
+        if (propData.oneOf && Array.isArray(propData.oneOf)) {
+          createCompositionEdges('oneOf', propData.oneOf);
+          return; // Skip normal ref handling
+        }
+
+        // Check for composition types in array items
+        if (isSourceArray && propData.items) {
+          if (propData.items.allOf && Array.isArray(propData.items.allOf)) {
+            createCompositionEdges('allOf', propData.items.allOf);
+            return;
+          }
+          if (propData.items.anyOf && Array.isArray(propData.items.anyOf)) {
+            createCompositionEdges('anyOf', propData.items.anyOf);
+            return;
+          }
+          if (propData.items.oneOf && Array.isArray(propData.items.oneOf)) {
+            createCompositionEdges('oneOf', propData.items.oneOf);
+            return;
+          }
+        }
+
+        // Handle single $ref (existing logic)
         let refClassName: string | null = null;
-        let isSourceArray = false;
 
         // Direct $ref (one-to-one or many-to-one)
         if (propData.$ref) {
           refClassName = extractClassNameFromRef(propData.$ref);
-          isSourceArray = false;
         }
         // $ref in items (one-to-many or many-to-many)
         else if (propData.type === 'array' && propData.items?.$ref) {
           refClassName = extractClassNameFromRef(propData.items.$ref);
-          isSourceArray = true;
         }
 
         // Create edge if we found a reference to another class

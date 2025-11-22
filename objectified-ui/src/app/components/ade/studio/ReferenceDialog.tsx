@@ -17,12 +17,17 @@ import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import FormHelperText from '@mui/material/FormHelperText';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import Chip from '@mui/material/Chip';
 
 export interface ClassItem {
   id: string;
   name: string;
   description?: string;
 }
+
+type CompositionType = 'none' | 'allOf' | 'anyOf' | 'oneOf';
 
 interface ReferenceDialogProps {
   open: boolean;
@@ -33,6 +38,8 @@ interface ReferenceDialogProps {
     description: string | null;
     isArray: boolean;
     targetClassId: string | null;
+    targetClassIds?: string[];
+    compositionType?: CompositionType;
     minItems?: number;
     maxItems?: number;
     uniqueItems?: boolean;
@@ -48,7 +55,9 @@ export const ReferenceDialog: React.FC<ReferenceDialogProps> = ({
   const [referenceName, setReferenceName] = useState('');
   const [referenceDescription, setReferenceDescription] = useState('');
   const [isArray, setIsArray] = useState(false);
+  const [compositionType, setCompositionType] = useState<CompositionType>('none');
   const [targetClassId, setTargetClassId] = useState<string>('');
+  const [targetClassIds, setTargetClassIds] = useState<string[]>([]);
   const [minItems, setMinItems] = useState('');
   const [maxItems, setMaxItems] = useState('');
   const [uniqueItems, setUniqueItems] = useState(false);
@@ -61,7 +70,9 @@ export const ReferenceDialog: React.FC<ReferenceDialogProps> = ({
       setReferenceName('');
       setReferenceDescription('');
       setIsArray(false);
+      setCompositionType('none');
       setTargetClassId('');
+      setTargetClassIds([]);
       setMinItems('');
       setMaxItems('');
       setUniqueItems(false);
@@ -81,6 +92,16 @@ export const ReferenceDialog: React.FC<ReferenceDialogProps> = ({
       return;
     }
 
+    // Validate composition type references
+    if (compositionType !== 'none' && targetClassIds.length === 0) {
+      setError(`Please select at least one class for ${compositionType}`);
+      return;
+    }
+
+    if (compositionType === 'none' && targetClassId === '' && targetClassIds.length === 0) {
+      // Allow empty reference - will be connected later
+    }
+
     setIsSubmitting(true);
     setError('');
 
@@ -89,7 +110,9 @@ export const ReferenceDialog: React.FC<ReferenceDialogProps> = ({
         name: referenceName,
         description: referenceDescription || null,
         isArray,
-        targetClassId: targetClassId || null,
+        targetClassId: compositionType === 'none' ? (targetClassId || null) : null,
+        targetClassIds: compositionType !== 'none' ? targetClassIds : undefined,
+        compositionType: compositionType !== 'none' ? compositionType : undefined,
         minItems: minItems ? parseInt(minItems) : undefined,
         maxItems: maxItems ? parseInt(maxItems) : undefined,
         uniqueItems: isArray ? uniqueItems : undefined,
@@ -201,25 +224,157 @@ export const ReferenceDialog: React.FC<ReferenceDialogProps> = ({
           </Box>
         )}
 
-        <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
-          <InputLabel id="target-class-label">Target Class (Optional)</InputLabel>
-          <Select
-            labelId="target-class-label"
-            label="Target Class (Optional)"
-            value={targetClassId}
-            onChange={(e) => setTargetClassId(e.target.value)}
-          >
-            <MenuItem value="">
-              <em>No target (set later)</em>
-            </MenuItem>
-            {classes.map((cls) => (
-              <MenuItem key={cls.id} value={cls.id}>
-                {cls.name}
+        <Box sx={{ mb: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+            Reference Type
+          </Typography>
+          <FormControl component="fieldset">
+            <RadioGroup
+              value={compositionType}
+              onChange={(e) => {
+                setCompositionType(e.target.value as CompositionType);
+                // Clear selections when switching modes
+                if (e.target.value !== 'none') {
+                  setTargetClassId('');
+                } else {
+                  setTargetClassIds([]);
+                }
+              }}
+            >
+              <FormControlLabel
+                value="none"
+                control={<Radio />}
+                label={
+                  <Box>
+                    <Typography variant="body2" fontWeight={500}>Single Reference</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Reference a single class (can be set now or connected later)
+                    </Typography>
+                  </Box>
+                }
+              />
+              <FormControlLabel
+                value="allOf"
+                control={<Radio />}
+                label={
+                  <Box>
+                    <Typography variant="body2" fontWeight={500}>allOf (Composition/Inheritance)</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Must satisfy all referenced schemas (solid line, blue)
+                    </Typography>
+                  </Box>
+                }
+              />
+              <FormControlLabel
+                value="anyOf"
+                control={<Radio />}
+                label={
+                  <Box>
+                    <Typography variant="body2" fontWeight={500}>anyOf (Union)</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Can satisfy any of the referenced schemas (dashed line, orange)
+                    </Typography>
+                  </Box>
+                }
+              />
+              <FormControlLabel
+                value="oneOf"
+                control={<Radio />}
+                label={
+                  <Box>
+                    <Typography variant="body2" fontWeight={500}>oneOf (Exclusive)</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Must satisfy exactly one referenced schema (dotted line, purple)
+                    </Typography>
+                  </Box>
+                }
+              />
+            </RadioGroup>
+          </FormControl>
+        </Box>
+
+        {compositionType === 'none' ? (
+          <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
+            <InputLabel id="target-class-label">Target Class (Optional)</InputLabel>
+            <Select
+              labelId="target-class-label"
+              label="Target Class (Optional)"
+              value={targetClassId}
+              onChange={(e) => setTargetClassId(e.target.value)}
+            >
+              <MenuItem value="">
+                <em>No target (set later)</em>
               </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>Select a class to reference, or leave empty to set later via canvas connections</FormHelperText>
-        </FormControl>
+              {classes.map((cls) => (
+                <MenuItem key={cls.id} value={cls.id}>
+                  {cls.name}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>Select a class to reference, or leave empty to set later via canvas connections</FormHelperText>
+          </FormControl>
+        ) : (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+              Select Classes for {compositionType}
+            </Typography>
+            <FormControl fullWidth margin="dense" sx={{ mb: 1 }}>
+              <InputLabel id="add-class-label">Add Class</InputLabel>
+              <Select
+                labelId="add-class-label"
+                label="Add Class"
+                value=""
+                onChange={(e) => {
+                  const classId = e.target.value;
+                  if (classId && !targetClassIds.includes(classId)) {
+                    setTargetClassIds([...targetClassIds, classId]);
+                  }
+                }}
+              >
+                <MenuItem value="">
+                  <em>Select a class to add...</em>
+                </MenuItem>
+                {classes
+                  .filter(cls => !targetClassIds.includes(cls.id))
+                  .map((cls) => (
+                    <MenuItem key={cls.id} value={cls.id}>
+                      {cls.name}
+                    </MenuItem>
+                  ))}
+              </Select>
+              <FormHelperText>
+                {compositionType === 'allOf' && 'Add all classes that this property must satisfy'}
+                {compositionType === 'anyOf' && 'Add classes that this property can satisfy (one or more)'}
+                {compositionType === 'oneOf' && 'Add classes that this property must satisfy (exactly one)'}
+              </FormHelperText>
+            </FormControl>
+
+            {targetClassIds.length > 0 && (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                {targetClassIds.map((classId) => {
+                  const cls = classes.find(c => c.id === classId);
+                  return cls ? (
+                    <Chip
+                      key={classId}
+                      label={cls.name}
+                      onDelete={() => {
+                        setTargetClassIds(targetClassIds.filter(id => id !== classId));
+                      }}
+                      color="primary"
+                      variant="outlined"
+                    />
+                  ) : null;
+                })}
+              </Box>
+            )}
+
+            {targetClassIds.length === 0 && (
+              <Alert severity="info" sx={{ mt: 1 }}>
+                No classes selected. Add at least one class to create a {compositionType} reference.
+              </Alert>
+            )}
+          </Box>
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>

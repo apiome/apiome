@@ -72,7 +72,17 @@ function ClassNode({ data, selected }: NodeProps) {
 
   const hasRef = (prop: ClassProperty): boolean => {
     const d = parseData(prop);
-    return !!(d?.$ref || (d?.type === 'array' && d?.items?.$ref));
+    // Check for direct $ref
+    if (d?.$ref) return true;
+    // Check for array items $ref
+    if (d?.type === 'array' && d?.items?.$ref) return true;
+    // Check for composition types (allOf/anyOf/oneOf)
+    if (d?.allOf || d?.anyOf || d?.oneOf) return true;
+    // Check for composition types in array items
+    if (d?.type === 'array' && d?.items) {
+      if (d.items.allOf || d.items.anyOf || d.items.oneOf) return true;
+    }
+    return false;
   };
 
   const isInlineObjectContainer = (prop: ClassProperty): boolean => {
@@ -126,6 +136,28 @@ function ClassNode({ data, selected }: NodeProps) {
     }
 
     if (d?.type === 'array') {
+      // Handle composition in array items
+      if (d.items?.allOf && Array.isArray(d.items.allOf)) {
+        const types = d.items.allOf.map((item: any) => {
+          if (item.$ref) return item.$ref.split('/').pop();
+          return item.type || 'schema';
+        }).filter(Boolean);
+        return types.length > 0 ? `allOf(${types.join(', ')})[]` : 'allOf[]';
+      }
+      if (d.items?.anyOf && Array.isArray(d.items.anyOf)) {
+        const types = d.items.anyOf.map((item: any) => {
+          if (item.$ref) return item.$ref.split('/').pop();
+          return item.type || 'schema';
+        }).filter(Boolean);
+        return types.length > 0 ? `anyOf(${types.join(' | ')})[]` : 'anyOf[]';
+      }
+      if (d.items?.oneOf && Array.isArray(d.items.oneOf)) {
+        const types = d.items.oneOf.map((item: any) => {
+          if (item.$ref) return item.$ref.split('/').pop();
+          return item.type || 'schema';
+        }).filter(Boolean);
+        return types.length > 0 ? `oneOf(${types.join(' | ')})[]` : 'oneOf[]';
+      }
       if (d.items?.$ref) {
         const refName = d.items.$ref.split('/').pop();
         return `${refName}[]`;
