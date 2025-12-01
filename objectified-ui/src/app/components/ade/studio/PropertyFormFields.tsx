@@ -11,10 +11,13 @@ import Chip from '@mui/material/Chip';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
+import InputAdornment from '@mui/material/InputAdornment';
+import Tooltip from '@mui/material/Tooltip';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import Collapse from '@mui/material/Collapse';
 import { RegexTester } from './RegexTester';
 
@@ -91,6 +94,113 @@ export const PropertyFormFields: React.FC<PropertyFormFieldsProps> = ({
   const [enumInput, setEnumInput] = React.useState('');
   const [enumError, setEnumError] = React.useState('');
   const [objectPropsExpanded, setObjectPropsExpanded] = React.useState(false);
+
+  // Generate an example value based on the property schema
+  const generateExample = () => {
+    let exampleValue: any;
+
+    // If enum values exist, use the first one
+    if (data.enum && data.enum.length > 0) {
+      exampleValue = data.enum[0];
+      // Try to parse as number if baseType is number/integer
+      if (baseType === 'number' || baseType === 'integer') {
+        const numValue = Number(exampleValue);
+        if (!isNaN(numValue)) {
+          exampleValue = numValue;
+        }
+      }
+    } else {
+      // Generate based on type
+      switch (baseType) {
+        case 'string':
+          if (data.format === 'email') {
+            exampleValue = 'user@example.com';
+          } else if (data.format === 'uri' || data.format === 'url') {
+            exampleValue = 'https://example.com';
+          } else if (data.format === 'date') {
+            exampleValue = '2025-11-30';
+          } else if (data.format === 'date-time') {
+            exampleValue = '2025-11-30T12:00:00Z';
+          } else if (data.format === 'time') {
+            exampleValue = '12:00:00';
+          } else if (data.format === 'uuid') {
+            exampleValue = '123e4567-e89b-12d3-a456-426614174000';
+          } else if (data.pattern) {
+            // For patterns, provide a hint
+            exampleValue = `string matching pattern: ${data.pattern}`;
+          } else {
+            exampleValue = data.description || 'example string';
+          }
+          break;
+
+        case 'number':
+          if (data.minimum) {
+            exampleValue = parseFloat(data.minimum) + (data.exclusiveMinimum ? 0.1 : 0);
+          } else if (data.maximum) {
+            exampleValue = parseFloat(data.maximum) - (data.exclusiveMaximum ? 0.1 : 0);
+          } else {
+            exampleValue = 42.5;
+          }
+          break;
+
+        case 'integer':
+          if (data.minimum) {
+            exampleValue = Math.ceil(parseFloat(data.minimum) + (data.exclusiveMinimum ? 1 : 0));
+          } else if (data.maximum) {
+            exampleValue = Math.floor(parseFloat(data.maximum) - (data.exclusiveMaximum ? 1 : 0));
+          } else {
+            exampleValue = 42;
+          }
+          break;
+
+        case 'boolean':
+          exampleValue = true;
+          break;
+
+        case 'object':
+          exampleValue = {};
+          // Add nested properties if available
+          if (nestedProperties && nestedProperties.length > 0) {
+            nestedProperties.forEach(prop => {
+              const propData = typeof prop.data === 'string' ? JSON.parse(prop.data) : prop.data;
+              // Generate simple example for nested properties
+              if (propData.type === 'string') {
+                exampleValue[prop.name] = 'example';
+              } else if (propData.type === 'number') {
+                exampleValue[prop.name] = 0;
+              } else if (propData.type === 'boolean') {
+                exampleValue[prop.name] = true;
+              } else if (propData.type === 'array') {
+                exampleValue[prop.name] = [];
+              } else {
+                exampleValue[prop.name] = {};
+              }
+            });
+          } else {
+            exampleValue = { property: 'value' };
+          }
+          break;
+
+        case 'array':
+          exampleValue = [];
+          break;
+
+        default:
+          // For reference types (e.g., Person, Address)
+          exampleValue = { id: 1, name: `example ${baseType}` };
+          break;
+      }
+    }
+
+    // Wrap in array if isArray
+    if (isArray) {
+      exampleValue = [exampleValue];
+    }
+
+    // Convert to JSON string
+    const jsonString = JSON.stringify(exampleValue, null, 2);
+    onChange('example', jsonString);
+  };
 
   const handleAddEnum = () => {
     if (!enumInput.trim()) {
@@ -601,6 +711,22 @@ export const PropertyFormFields: React.FC<PropertyFormFieldsProps> = ({
             onChange={(e) => onChange('example', e.target.value)}
             helperText="JSON example value"
             sx={{ mt: 2 }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end" sx={{ alignSelf: 'flex-start', mt: 1 }}>
+                  <Tooltip title="Generate example based on property schema">
+                    <IconButton
+                      onClick={generateExample}
+                      size="small"
+                      edge="end"
+                      sx={{ color: 'primary.main' }}
+                    >
+                      <AutoAwesomeIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
           />
         </Box>
       )}
