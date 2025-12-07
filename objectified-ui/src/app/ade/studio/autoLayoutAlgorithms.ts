@@ -20,9 +20,7 @@ export type LayoutAlgorithm =
   | 'force-directed'   // Force-Directed/Spring Layout
   | 'circular'         // Circular Layout
   | 'grid'             // Grid Layout
-  | 'layered'          // Layered Layout
-  | 'tree'             // Organic Tree Layout
-  | 'radial';          // Radial Layout
+  | 'layered';         // Layered Layout
 
 // Default node dimensions
 const NODE_WIDTH = 280;
@@ -50,13 +48,6 @@ export interface LayoutOptions {
   sortAlphabetically?: boolean;
   // For layered
   layerHeight?: number;
-  // For tree
-  branchSeparation?: number;
-  levelSeparation?: number;
-  orientation?: 'vertical' | 'horizontal';
-  // For radial
-  radiusIncrement?: number;
-  angleSpacing?: number;
 }
 
 /**
@@ -86,10 +77,6 @@ export function applyAutoLayout(
       return gridLayout(nodes, edges, options);
     case 'layered':
       return layeredLayout(nodes, edges, options);
-    case 'tree':
-      return treeLayout(nodes, edges, options);
-    case 'radial':
-      return radialLayout(nodes, edges, options);
     default:
       return hierarchicalLayout(nodes, edges, { ...options, direction: 'TB' });
   }
@@ -573,288 +560,6 @@ function layeredLayout(
 }
 
 /**
- * Tree Layout (Organic)
- * Tree structure with adjustable branching
- */
-function treeLayout(
-  nodes: Node[],
-  edges: Edge[],
-  options: LayoutOptions
-): Node[] {
-  const {
-    branchSeparation = 120,
-    levelSeparation = 200,
-    orientation = 'vertical',
-  } = options;
-
-  if (nodes.length === 0) return nodes;
-
-  // Build adjacency list (parent -> children)
-  const children = new Map<string, string[]>();
-  const parents = new Map<string, string>();
-
-  nodes.forEach(node => {
-    children.set(node.id, []);
-  });
-
-  edges.forEach(edge => {
-    const childList = children.get(edge.source) || [];
-    childList.push(edge.target);
-    children.set(edge.source, childList);
-    parents.set(edge.target, edge.source);
-  });
-
-  // Find root nodes (nodes with no parents)
-  const roots = nodes.filter(node => !parents.has(node.id));
-  const rootNodes = roots.length > 0 ? roots : [nodes[0]];
-
-  // Calculate tree structure with positioning
-  const nodePositions = new Map<string, { x: number; y: number; level: number }>();
-
-  // Process each root as a separate tree
-  let currentX = 0;
-
-  rootNodes.forEach(root => {
-    const treeInfo = calculateTreeLayout(
-      root.id,
-      children,
-      nodes,
-      0,
-      currentX,
-      branchSeparation,
-      levelSeparation,
-      options
-    );
-
-    // Merge positions
-    treeInfo.positions.forEach((pos, id) => {
-      nodePositions.set(id, pos);
-    });
-
-    // Move to next tree position
-    currentX = treeInfo.maxX + branchSeparation * 3;
-  });
-
-  // Handle disconnected nodes
-  nodes.forEach(node => {
-    if (!nodePositions.has(node.id)) {
-      nodePositions.set(node.id, {
-        x: currentX,
-        y: 0,
-        level: 0,
-      });
-      currentX += branchSeparation;
-    }
-  });
-
-  // Apply positions based on orientation
-  return nodes.map(node => {
-    const pos = nodePositions.get(node.id) || { x: 0, y: 0, level: 0 };
-
-    if (orientation === 'horizontal') {
-      // Swap x and y for horizontal layout
-      return {
-        ...node,
-        position: {
-          x: pos.y, // Intentionally swapped
-          y: pos.x, // Intentionally swapped
-        },
-      };
-    } else {
-      return {
-        ...node,
-        position: {
-          x: pos.x,
-          y: pos.y,
-        },
-      };
-    }
-  });
-}
-
-/**
- * Helper for tree layout - calculates positions recursively
- */
-function calculateTreeLayout(
-  nodeId: string,
-  children: Map<string, string[]>,
-  allNodes: Node[],
-  level: number,
-  startX: number,
-  branchSeparation: number,
-  levelSeparation: number,
-  options: LayoutOptions
-): { positions: Map<string, { x: number; y: number; level: number }>; maxX: number; minX: number } {
-  const positions = new Map<string, { x: number; y: number; level: number }>();
-  const childIds = children.get(nodeId) || [];
-
-  if (childIds.length === 0) {
-    // Leaf node
-    positions.set(nodeId, { x: startX, y: level * levelSeparation, level });
-    return { positions, maxX: startX, minX: startX };
-  }
-
-  // Process children first
-  let currentX = startX;
-  const childResults: Array<{ positions: Map<string, any>; maxX: number; minX: number }> = [];
-
-  childIds.forEach(childId => {
-    const childNode = allNodes.find(n => n.id === childId);
-    if (!childNode) return;
-
-    const result = calculateTreeLayout(
-      childId,
-      children,
-      allNodes,
-      level + 1,
-      currentX,
-      branchSeparation,
-      levelSeparation,
-      options
-    );
-
-    childResults.push(result);
-
-    // Merge child positions
-    result.positions.forEach((pos, id) => {
-      positions.set(id, pos);
-    });
-
-    currentX = result.maxX + branchSeparation;
-  });
-
-  // Position current node centered above children
-  let minChildX = childResults[0]?.minX ?? startX;
-  let maxChildX = childResults[childResults.length - 1]?.maxX ?? startX;
-  const centerX = (minChildX + maxChildX) / 2;
-
-  positions.set(nodeId, { x: centerX, y: level * levelSeparation, level });
-
-  return {
-    positions,
-    maxX: maxChildX,
-    minX: minChildX,
-  };
-}
-
-/**
- * Radial Layout
- * Central node with others radiating outward in concentric circles
- */
-function radialLayout(
-  nodes: Node[],
-  edges: Edge[],
-  options: LayoutOptions
-): Node[] {
-  const {
-    radiusIncrement = 200,
-    angleSpacing = 0.3,
-  } = options;
-
-  if (nodes.length === 0) return nodes;
-  if (nodes.length === 1) {
-    return [{
-      ...nodes[0],
-      position: { x: 0, y: 0 },
-    }];
-  }
-
-  // Build adjacency list
-  const adjacency = new Map<string, Set<string>>();
-  nodes.forEach(node => {
-    adjacency.set(node.id, new Set());
-  });
-  edges.forEach(edge => {
-    adjacency.get(edge.source)?.add(edge.target);
-    adjacency.get(edge.target)?.add(edge.source);
-  });
-
-  // Find the most connected node as center
-  let centerNode = nodes[0];
-  let maxConnections = 0;
-
-  nodes.forEach(node => {
-    const connections = adjacency.get(node.id)?.size || 0;
-    if (connections > maxConnections) {
-      maxConnections = connections;
-      centerNode = node;
-    }
-  });
-
-  // Assign nodes to rings using BFS
-  const nodeToRing = new Map<string, number>();
-  const visited = new Set<string>();
-  const queue: { id: string; ring: number }[] = [];
-
-  queue.push({ id: centerNode.id, ring: 0 });
-  visited.add(centerNode.id);
-
-  while (queue.length > 0) {
-    const { id, ring } = queue.shift()!;
-    nodeToRing.set(id, ring);
-
-    const neighbors = adjacency.get(id) || new Set();
-    neighbors.forEach(neighborId => {
-      if (!visited.has(neighborId)) {
-        visited.add(neighborId);
-        queue.push({ id: neighborId, ring: ring + 1 });
-      }
-    });
-  }
-
-  // Handle disconnected nodes
-  nodes.forEach(node => {
-    if (!nodeToRing.has(node.id)) {
-      nodeToRing.set(node.id, 1);
-    }
-  });
-
-  // Group nodes by ring
-  const rings = new Map<number, Node[]>();
-  nodes.forEach(node => {
-    const ring = nodeToRing.get(node.id) || 0;
-    if (!rings.has(ring)) {
-      rings.set(ring, []);
-    }
-    rings.get(ring)!.push(node);
-  });
-
-  // Position nodes
-  return nodes.map(node => {
-    const ring = nodeToRing.get(node.id) || 0;
-    const nodesInRing = rings.get(ring) || [];
-    const indexInRing = nodesInRing.indexOf(node);
-
-    if (ring === 0) {
-      // Center node
-      return {
-        ...node,
-        position: { x: 0, y: 0 },
-      };
-    }
-
-    // Calculate position on ring
-    const radius = ring * radiusIncrement;
-    const angleStep = (2 * Math.PI) / nodesInRing.length;
-    const angle = indexInRing * angleStep - Math.PI / 2; // Start at top
-
-    const x = Math.cos(angle) * radius;
-    const y = Math.sin(angle) * radius;
-
-    const width = getNodeWidth(node, options.nodeWidth);
-    const height = getNodeHeight(node, options.nodeHeight);
-
-    return {
-      ...node,
-      position: {
-        x: x - width / 2,
-        y: y - height / 2,
-      },
-    };
-  });
-}
-
-/**
  * Helper function to order nodes by connectivity
  * Nodes with more connections are placed closer together
  */
@@ -936,10 +641,6 @@ export function getLayoutAlgorithmName(algorithm: LayoutAlgorithm): string {
       return 'Grid';
     case 'layered':
       return 'Layered';
-    case 'tree':
-      return 'Tree';
-    case 'radial':
-      return 'Radial';
     default:
       return 'Unknown';
   }
@@ -963,10 +664,6 @@ export function getLayoutAlgorithmDescription(algorithm: LayoutAlgorithm): strin
       return 'Places nodes in a regular grid pattern, alphabetically ordered';
     case 'layered':
       return 'Organizes nodes into horizontal layers based on dependency depth';
-    case 'tree':
-      return 'Organic tree structure with adjustable branching and natural hierarchy';
-    case 'radial':
-      return 'Central node with others radiating outward in concentric rings';
     default:
       return '';
   }

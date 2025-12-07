@@ -44,7 +44,7 @@ import {
 } from '../../../../lib/db/helper';
 import ClassNode from '../../components/ade/studio/ClassNode';
 import { getLayoutedElements, type LayoutDirection, applyAutoLayout, type LayoutAlgorithm } from './layoutUtils';
-import { getLayoutAlgorithmName, getLayoutAlgorithmDescription } from './autoLayoutAlgorithms';
+import { getLayoutAlgorithmName } from './autoLayoutAlgorithms';
 
 // Dynamically import Monaco Editor with SSR disabled
 const Editor = dynamic(() => import('@monaco-editor/react'), {
@@ -2043,14 +2043,7 @@ const StudioContent = () => {
                     <option value="circular">⭕ Circular</option>
                     <option value="grid">⊞ Grid</option>
                     <option value="layered">📚 Layered</option>
-                    <option value="tree">🌳 Tree</option>
-                    <option value="radial">🎯 Radial</option>
                   </select>
-                  {autoLayoutEnabled && (
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 px-1 leading-tight">
-                      {getLayoutAlgorithmDescription(layoutAlgorithm)}
-                    </p>
-                  )}
                 </div>
               </div>
             </Panel>

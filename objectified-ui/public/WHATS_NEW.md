@@ -24,8 +24,6 @@ We continue to improve the platform based on your feedback with improvements and
   - **Circular** - Nodes arranged in a circle, ideal for cyclic dependencies
   - **Grid** - Clean grid pattern with alphabetical ordering
   - **Layered** - Horizontal layers based on dependency depth
-  - **Tree** - Organic tree structure with adjustable branching
-  - **Radial** - Central node with others radiating outward in rings
   - Smooth animations between layout transitions for professional polish
 
 View our YouTube channel [here](https://www.youtube.com/@objectifieddev) for detailed tutorials and walkthroughs!
