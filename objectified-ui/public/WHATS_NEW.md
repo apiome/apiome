@@ -26,7 +26,20 @@ We continue to improve the platform based on your feedback with improvements and
   - **Layered** - Horizontal layers based on dependency depth
   - Smooth animations between layout transitions for professional polish
 - Generation tab:
-  - Generates Python Pydantic model code
+  - Generates Python Pydantic model code with comprehensive features:
+    - Full Pydantic v2 BaseModel support with runtime validation
+    - Enum support using Literal types for type-safe enumerations
+    - Regex pattern validation on string fields
+    - Field constraints (min/max length, numeric ranges, array sizes)
+    - Format validation (EmailStr, AnyUrl, UUID, date, datetime)
+    - Nested object models with proper type hints
+    - Array of objects with validated item types
+    - allOf support for class inheritance
+    - oneOf support for discriminated unions
+    - anyOf support for type unions
+    - Optional fields with proper defaults
+    - Field descriptions for documentation
+    - Copy to clipboard and export to file functionality
 
 View our YouTube channel [here](https://www.youtube.com/@objectifieddev) for detailed tutorials and walkthroughs!
 

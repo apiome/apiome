@@ -1575,10 +1575,12 @@ const StudioContent = () => {
             })
           );
 
+          // Get current project and version for metadata
+          const currentProject = projects.find(p => p.id === selectedProjectId);
+          const currentVersion = versions.find(v => v.id === selectedVersionId);
+
           if (viewMode === 'code') {
             // Generate fresh OpenAPI specification
-            const currentProject = projects.find(p => p.id === selectedProjectId);
-            const currentVersion = versions.find(v => v.id === selectedVersionId);
             const spec = generateOpenApiSpec(classesWithProperties, {
               projectName: currentProject?.name,
               version: currentVersion?.version_id
