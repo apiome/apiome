@@ -16,6 +16,7 @@ import { generateOpenApiSpec } from '../../utils/openapi';
 import { generateArazzoSpec } from '../../utils/arazzo';
 import { generateJsonSchema } from '../../utils/jsonschema';
 import { generatePythonDTOs } from '../../utils/python-dto';
+import { generateTypeScriptDTOs } from '../../utils/typescript-dto';
 import { useDialog } from '../../components/providers/DialogProvider';
 import {
   ReactFlow,
@@ -108,7 +109,9 @@ const StudioContent = () => {
 
   // Generate tab state
   const [generatedCode, setGeneratedCode] = useState<string>('');
-  const [generateLanguage, setGenerateLanguage] = useState<'python'>('python');
+  const [generatedPythonCode, setGeneratedPythonCode] = useState<string>('');
+  const [generatedTypeScriptCode, setGeneratedTypeScriptCode] = useState<string>('');
+  const [generateLanguage, setGenerateLanguage] = useState<'python' | 'typescript'>('python');
 
   const currentTenantId = (session?.user as any)?.current_tenant_id;
   const [currentTenantName, setCurrentTenantName] = useState<string>('');
@@ -295,13 +298,21 @@ const StudioContent = () => {
       });
       setJsonSchemaSpec(jsonSchemaContent);
 
-      // Generate Python DTOs
-      const pythonCode = generatePythonDTOs(classesWithProperties, {
+      // Generate DTOs for both languages
+      const dtoOptions = {
         projectName: currentProject?.name,
         version: currentVersion?.version_id,
         description: `Data Type Objects for ${currentProject?.name || 'API'}`
-      });
-      setGeneratedCode(pythonCode);
+      };
+      const pythonCode = generatePythonDTOs(classesWithProperties, dtoOptions);
+      const typeScriptCode = generateTypeScriptDTOs(classesWithProperties, dtoOptions);
+
+      // Cache both versions
+      setGeneratedPythonCode(pythonCode);
+      setGeneratedTypeScriptCode(typeScriptCode);
+
+      // Set generated code based on current language selection
+      setGeneratedCode(generateLanguage === 'typescript' ? typeScriptCode : pythonCode);
     } catch (error) {
       console.error('Failed to reload classes:', error);
     } finally {
@@ -1545,13 +1556,21 @@ const StudioContent = () => {
         });
         setJsonSchemaSpec(jsonSchemaContent);
 
-        // Generate Python DTOs
-        const pythonCode = generatePythonDTOs(classesWithProperties, {
+        // Generate DTOs for both languages
+        const dtoOptions = {
           projectName: currentProject?.name,
           version: currentVersion?.version_id,
           description: `Data Type Objects for ${currentProject?.name || 'API'}`
-        });
-        setGeneratedCode(pythonCode);
+        };
+        const pythonCode = generatePythonDTOs(classesWithProperties, dtoOptions);
+        const typeScriptCode = generateTypeScriptDTOs(classesWithProperties, dtoOptions);
+
+        // Cache both versions
+        setGeneratedPythonCode(pythonCode);
+        setGeneratedTypeScriptCode(typeScriptCode);
+
+        // Set generated code based on current language selection
+        setGeneratedCode(generateLanguage === 'typescript' ? typeScriptCode : pythonCode);
 
         setLoadingMessage('Generating Mermaid diagram...');
 
@@ -1630,14 +1649,21 @@ const StudioContent = () => {
             setJsonSchemaSpec(jsonSchemaContent);
             console.log('Regenerated OpenAPI, Arazzo, and JSON Schema specs for view mode:', viewMode);
           } else if (viewMode === 'generate') {
-            // Generate fresh Python DTOs
-            const pythonCode = generatePythonDTOs(classesWithProperties, {
+            // Generate fresh DTOs for both languages
+            const dtoOptions = {
               projectName: currentProject?.name,
               version: currentVersion?.version_id,
               description: `Data Type Objects for ${currentProject?.name || 'API'}`
-            });
-            setGeneratedCode(pythonCode);
-            console.log('Regenerated Python DTOs for view mode:', viewMode);
+            };
+            const pythonCode = generatePythonDTOs(classesWithProperties, dtoOptions);
+            const typeScriptCode = generateTypeScriptDTOs(classesWithProperties, dtoOptions);
+
+            // Cache both versions
+            setGeneratedPythonCode(pythonCode);
+            setGeneratedTypeScriptCode(typeScriptCode);
+
+            setGeneratedCode(generateLanguage === 'typescript' ? typeScriptCode : pythonCode);
+            console.log('Regenerated DTOs for view mode:', viewMode, 'language:', generateLanguage);
           } else if (viewMode === 'mermaid') {
             // Generate fresh Mermaid diagram
             const mermaid = generateMermaidDiagram(classesWithProperties);
@@ -1651,7 +1677,16 @@ const StudioContent = () => {
     };
 
     regenerateSpec();
-  }, [viewMode, selectedVersionId, selectedProjectId, projects, versions]);
+  }, [viewMode, selectedVersionId, selectedProjectId, projects, versions, generateLanguage]);
+
+  // Update generated code when language changes (use cached versions)
+  useEffect(() => {
+    if (generateLanguage === 'typescript' && generatedTypeScriptCode) {
+      setGeneratedCode(generatedTypeScriptCode);
+    } else if (generateLanguage === 'python' && generatedPythonCode) {
+      setGeneratedCode(generatedPythonCode);
+    }
+  }, [generateLanguage, generatedPythonCode, generatedTypeScriptCode]);
 
   const loadProjects = async () => {
     if (!currentTenantId) return;
@@ -2345,7 +2380,7 @@ const StudioContent = () => {
                 <div className="flex items-center gap-4">
                   <div>
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      Generated DTOs - {generateLanguage === 'python' ? 'Python' : generateLanguage}
+                      Generated DTOs - {generateLanguage === 'python' ? 'Python' : 'TypeScript'}
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                       Data Type Objects for {selectedProject?.name} v{selectedVersion?.version_id}
@@ -2356,10 +2391,11 @@ const StudioContent = () => {
                   <div className="flex items-center gap-2">
                     <select
                       value={generateLanguage}
-                      onChange={(e) => setGenerateLanguage(e.target.value as 'python')}
+                      onChange={(e) => setGenerateLanguage(e.target.value as 'python' | 'typescript')}
                       className="px-3 py-1.5 text-xs font-medium border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="python">Python</option>
+                      <option value="typescript">TypeScript</option>
                     </select>
                   </div>
                 </div>
@@ -2384,8 +2420,8 @@ const StudioContent = () => {
                   </button>
                   <button
                     onClick={() => {
-                      const extension = generateLanguage === 'python' ? 'py' : 'txt';
-                      const filename = generateLanguage === 'python' ? 'schema.py' : 'schema.txt';
+                      const extension = generateLanguage === 'python' ? 'py' : 'ts';
+                      const filename = generateLanguage === 'python' ? 'schema.py' : 'schema.ts';
                       const mimeType = 'text/plain';
 
                       // Create a blob from the generated code
@@ -2417,8 +2453,8 @@ const StudioContent = () => {
             <div className="flex-1">
               <Editor
                 height="100%"
-                language={generateLanguage}
-                value={generatedCode || '# No classes defined\n# Add classes to the canvas to generate DTOs'}
+                language={generateLanguage === 'typescript' ? 'typescript' : 'python'}
+                value={generatedCode || (generateLanguage === 'typescript' ? '// No classes defined\n// Add classes to the canvas to generate DTOs' : '# No classes defined\n# Add classes to the canvas to generate DTOs')}
                 theme="vs-dark"
                 options={{
                   readOnly: true,
