@@ -4,16 +4,6 @@
 > 
 > **Last Updated**: December 7, 2025
 
-## Recent Implementations
-
-### December 7, 2025
-- ✅ **TypeScript DTO Generation** - Added TypeScript interface/type generation to the Studio's Generate tab alongside Python
-  - Full support for composition (allOf, oneOf, anyOf)
-  - Nested object interfaces
-  - JSDoc comments with constraints
-  - Language switching with cached generation
-  - See: `/objectified-ui/docs/TYPESCRIPT_DTO_GENERATION.md`
-
 ---
 
 ## Table of Contents
@@ -598,7 +588,7 @@
   - **Go**: Structs with JSON tags
   - **Rust**: Structs with Serde
   - **GraphQL**: SDL schema definitions
-  - **SQL**: DDL CREATE TABLE statements
+  - **SQL**: ✅ DDL CREATE TABLE statements
 - Customizable generation templates
 - Code generation settings per language:
   - Naming conventions (camelCase, snake_case, PascalCase)
@@ -618,12 +608,12 @@
 
 **Database Schema Generation**
 - Generate SQL DDL from schemas:
-  - PostgreSQL
-  - MySQL
-  - SQL Server
-  - Oracle
-  - SQLite
-- Include indexes, constraints, foreign keys
+  - ✅ PostgreSQL
+  - ✅ MySQL
+  - ✅ SQL Server
+  - ✅ Oracle
+  - ✅ SQLite
+- ✅ Include indexes, constraints, foreign keys
 - Generate migration scripts (up/down)
 - Alembic/Flyway/Liquibase format
 - Database diff tool (compare schemas)

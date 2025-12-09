@@ -17,6 +17,7 @@ import { generateArazzoSpec } from '../../utils/arazzo';
 import { generateJsonSchema } from '../../utils/jsonschema';
 import { generatePythonDTOs } from '../../utils/python-dto';
 import { generateTypeScriptDTOs } from '../../utils/typescript-dto';
+import { generateSQL } from '../../utils/sql-generator';
 import { useDialog } from '../../components/providers/DialogProvider';
 import {
   ReactFlow,
@@ -111,7 +112,9 @@ const StudioContent = () => {
   const [generatedCode, setGeneratedCode] = useState<string>('');
   const [generatedPythonCode, setGeneratedPythonCode] = useState<string>('');
   const [generatedTypeScriptCode, setGeneratedTypeScriptCode] = useState<string>('');
-  const [generateLanguage, setGenerateLanguage] = useState<'python' | 'typescript'>('python');
+  const [generatedSQLCode, setGeneratedSQLCode] = useState<string>('');
+  const [generateLanguage, setGenerateLanguage] = useState<'python' | 'typescript' | 'sql'>('python');
+  const [sqlDialect, setSqlDialect] = useState<'postgresql' | 'mysql' | 'sqlserver' | 'oracle' | 'sqlite'>('postgresql');
 
   const currentTenantId = (session?.user as any)?.current_tenant_id;
   const [currentTenantName, setCurrentTenantName] = useState<string>('');
@@ -148,6 +151,7 @@ const StudioContent = () => {
   // Canvas loading state
   const [isLoadingCanvas, setIsLoadingCanvas] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [loadedClasses, setLoadedClasses] = useState<any[]>([]);
 
   // Copy button states
   const [codeCopied, setCodeCopied] = useState(false);
@@ -273,6 +277,9 @@ const StudioContent = () => {
       }
       setNodes(finalNodes);
 
+      // Store classes for SQL regeneration
+      setLoadedClasses(classesWithProperties);
+
       setLoadingMessage('Regenerating OpenAPI specification...');
 
       // Regenerate OpenAPI spec
@@ -307,12 +314,26 @@ const StudioContent = () => {
       const pythonCode = generatePythonDTOs(classesWithProperties, dtoOptions);
       const typeScriptCode = generateTypeScriptDTOs(classesWithProperties, dtoOptions);
 
-      // Cache both versions
+      // Generate SQL DDL
+      const sqlCode = generateSQL(classesWithProperties, sqlDialect, {
+        includeComments: true,
+        includeDropStatements: false,
+        namingConvention: 'snake_case'
+      });
+
+      // Cache all versions
       setGeneratedPythonCode(pythonCode);
       setGeneratedTypeScriptCode(typeScriptCode);
+      setGeneratedSQLCode(sqlCode);
 
       // Set generated code based on current language selection
-      setGeneratedCode(generateLanguage === 'typescript' ? typeScriptCode : pythonCode);
+      if (generateLanguage === 'typescript') {
+        setGeneratedCode(typeScriptCode);
+      } else if (generateLanguage === 'sql') {
+        setGeneratedCode(sqlCode);
+      } else {
+        setGeneratedCode(pythonCode);
+      }
     } catch (error) {
       console.error('Failed to reload classes:', error);
     } finally {
@@ -1649,7 +1670,7 @@ const StudioContent = () => {
             setJsonSchemaSpec(jsonSchemaContent);
             console.log('Regenerated OpenAPI, Arazzo, and JSON Schema specs for view mode:', viewMode);
           } else if (viewMode === 'generate') {
-            // Generate fresh DTOs for both languages
+            // Generate fresh DTOs for all languages
             const dtoOptions = {
               projectName: currentProject?.name,
               version: currentVersion?.version_id,
@@ -1657,12 +1678,25 @@ const StudioContent = () => {
             };
             const pythonCode = generatePythonDTOs(classesWithProperties, dtoOptions);
             const typeScriptCode = generateTypeScriptDTOs(classesWithProperties, dtoOptions);
+            const sqlCode = generateSQL(classesWithProperties, sqlDialect, {
+              includeComments: true,
+              includeDropStatements: false,
+              namingConvention: 'snake_case'
+            });
 
-            // Cache both versions
+            // Cache all versions
             setGeneratedPythonCode(pythonCode);
             setGeneratedTypeScriptCode(typeScriptCode);
+            setGeneratedSQLCode(sqlCode);
 
-            setGeneratedCode(generateLanguage === 'typescript' ? typeScriptCode : pythonCode);
+            // Set generated code based on current language selection
+            if (generateLanguage === 'typescript') {
+              setGeneratedCode(typeScriptCode);
+            } else if (generateLanguage === 'sql') {
+              setGeneratedCode(sqlCode);
+            } else {
+              setGeneratedCode(pythonCode);
+            }
             console.log('Regenerated DTOs for view mode:', viewMode, 'language:', generateLanguage);
           } else if (viewMode === 'mermaid') {
             // Generate fresh Mermaid diagram
@@ -1680,13 +1714,67 @@ const StudioContent = () => {
   }, [viewMode, selectedVersionId, selectedProjectId, projects, versions, generateLanguage]);
 
   // Update generated code when language changes (use cached versions)
+  // Note: This effect only runs when switching between languages (python/typescript/sql)
+  // It does NOT run when SQL dialect changes - that's handled by the dialect effect below
+  const previousLanguageRef = useRef(generateLanguage);
+
   useEffect(() => {
-    if (generateLanguage === 'typescript' && generatedTypeScriptCode) {
-      setGeneratedCode(generatedTypeScriptCode);
-    } else if (generateLanguage === 'python' && generatedPythonCode) {
-      setGeneratedCode(generatedPythonCode);
+    // Only switch code if language actually changed (not on initial mount or dialect changes)
+    if (previousLanguageRef.current !== generateLanguage) {
+      console.log('Language changed from', previousLanguageRef.current, 'to', generateLanguage);
+
+      if (generateLanguage === 'typescript' && generatedTypeScriptCode) {
+        setGeneratedCode(generatedTypeScriptCode);
+      } else if (generateLanguage === 'sql' && generatedSQLCode) {
+        setGeneratedCode(generatedSQLCode);
+      } else if (generateLanguage === 'python' && generatedPythonCode) {
+        setGeneratedCode(generatedPythonCode);
+      }
+
+      previousLanguageRef.current = generateLanguage;
     }
-  }, [generateLanguage, generatedPythonCode, generatedTypeScriptCode]);
+  }, [generateLanguage, generatedPythonCode, generatedTypeScriptCode, generatedSQLCode]);
+
+  // Regenerate SQL when dialect changes or when switching to SQL language
+  useEffect(() => {
+    const generateSQLCode = async () => {
+      if (generateLanguage === 'sql' && selectedVersionId) {
+        try {
+          let classesToUse = loadedClasses;
+
+          // If loadedClasses is empty, fetch classes directly
+          if (classesToUse.length === 0) {
+            console.log('[SQL Effect] Classes not loaded, fetching...');
+            const classesResult = await getClassesForVersion(selectedVersionId);
+            const classesData = JSON.parse(classesResult);
+
+            classesToUse = await Promise.all(
+              classesData.map(async (cls: any) => {
+                const propsResult = await getPropertiesForClass(cls.id);
+                const properties = JSON.parse(propsResult);
+                return { ...cls, properties };
+              })
+            );
+            console.log('[SQL Effect] Fetched', classesToUse.length, 'classes');
+          }
+
+          console.log('[SQL Effect] Generating with dialect:', sqlDialect, '| Classes:', classesToUse.length);
+          const sqlCode = generateSQL(classesToUse, sqlDialect, {
+            includeComments: true,
+            includeDropStatements: false,
+            namingConvention: 'snake_case'
+          });
+          console.log('[SQL Effect] Generated:', sqlCode.length, 'chars | Dialect:', sqlCode.substring(30, 60));
+          setGeneratedSQLCode(sqlCode);
+          setGeneratedCode(sqlCode);
+        } catch (error) {
+          console.error('[SQL Effect] Error:', error);
+        }
+      }
+    };
+
+    generateSQLCode();
+  }, [sqlDialect, generateLanguage, loadedClasses, selectedVersionId]);
 
   const loadProjects = async () => {
     if (!currentTenantId) return;
@@ -2380,10 +2468,16 @@ const StudioContent = () => {
                 <div className="flex items-center gap-4">
                   <div>
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      Generated DTOs - {generateLanguage === 'python' ? 'Python' : 'TypeScript'}
+                      {generateLanguage === 'sql'
+                        ? `Generated SQL DDL - ${sqlDialect.toUpperCase()}`
+                        : `Generated DTOs - ${generateLanguage === 'python' ? 'Python' : 'TypeScript'}`
+                      }
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      Data Type Objects for {selectedProject?.name} v{selectedVersion?.version_id}
+                      {generateLanguage === 'sql'
+                        ? `Database schema for ${selectedProject?.name} v${selectedVersion?.version_id}`
+                        : `Data Type Objects for ${selectedProject?.name} v${selectedVersion?.version_id}`
+                      }
                     </p>
                   </div>
 
@@ -2391,12 +2485,28 @@ const StudioContent = () => {
                   <div className="flex items-center gap-2">
                     <select
                       value={generateLanguage}
-                      onChange={(e) => setGenerateLanguage(e.target.value as 'python' | 'typescript')}
+                      onChange={(e) => setGenerateLanguage(e.target.value as 'python' | 'typescript' | 'sql')}
                       className="px-3 py-1.5 text-xs font-medium border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="python">Python</option>
                       <option value="typescript">TypeScript</option>
+                      <option value="sql">SQL</option>
                     </select>
+
+                    {/* SQL Dialect Selector - only show when SQL is selected */}
+                    {generateLanguage === 'sql' && (
+                      <select
+                        value={sqlDialect}
+                        onChange={(e) => setSqlDialect(e.target.value as any)}
+                        className="px-3 py-1.5 text-xs font-medium border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="postgresql">PostgreSQL</option>
+                        <option value="mysql">MySQL</option>
+                        <option value="sqlserver">SQL Server</option>
+                        <option value="oracle">Oracle</option>
+                        <option value="sqlite">SQLite</option>
+                      </select>
+                    )}
                   </div>
                 </div>
 
@@ -2420,8 +2530,16 @@ const StudioContent = () => {
                   </button>
                   <button
                     onClick={() => {
-                      const extension = generateLanguage === 'python' ? 'py' : 'ts';
-                      const filename = generateLanguage === 'python' ? 'schema.py' : 'schema.ts';
+                      let filename: string;
+
+                      if (generateLanguage === 'python') {
+                        filename = 'schema.py';
+                      } else if (generateLanguage === 'typescript') {
+                        filename = 'schema.ts';
+                      } else {
+                        filename = `schema_${sqlDialect}.sql`;
+                      }
+
                       const mimeType = 'text/plain';
 
                       // Create a blob from the generated code
@@ -2453,8 +2571,19 @@ const StudioContent = () => {
             <div className="flex-1">
               <Editor
                 height="100%"
-                language={generateLanguage === 'typescript' ? 'typescript' : 'python'}
-                value={generatedCode || (generateLanguage === 'typescript' ? '// No classes defined\n// Add classes to the canvas to generate DTOs' : '# No classes defined\n# Add classes to the canvas to generate DTOs')}
+                language={
+                  generateLanguage === 'typescript' ? 'typescript'
+                  : generateLanguage === 'sql' ? 'sql'
+                  : 'python'
+                }
+                value={
+                  generatedCode ||
+                  (generateLanguage === 'typescript'
+                    ? '// No classes defined\n// Add classes to the canvas to generate DTOs'
+                    : generateLanguage === 'sql'
+                    ? '-- No classes defined\n-- Add classes to the canvas to generate SQL DDL'
+                    : '# No classes defined\n# Add classes to the canvas to generate DTOs')
+                }
                 theme="vs-dark"
                 options={{
                   readOnly: true,

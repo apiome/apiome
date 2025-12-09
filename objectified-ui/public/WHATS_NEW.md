@@ -29,20 +29,15 @@ We continue to improve the platform based on your feedback with improvements and
 - Additional Canvas Updates:
   - Added the ability to tag classes
   - Class nodes now display tag names alongside the class name for better visual organization
-- **New: TypeScript DTO Generation** in the Generate tab:
-  - Generate TypeScript interfaces and types alongside Python Pydantic models
-  - Language selector dropdown to switch between Python and TypeScript output
-  - Full feature parity with Python generator:
-    - TypeScript interfaces for all classes
-    - Nested interfaces for inline object properties with consistent naming
-    - Union literal types for enumerations
-    - Intersection types (allOf) and union types (oneOf/anyOf) for composition
-    - Optional vs required property markers based on schema
-    - JSDoc comments with descriptions and validation constraints
-    - Reference type support for class relationships
-  - Instant code switching with cached generation for performance
-  - Export to .ts files ready for use in TypeScript projects
-  - Monaco Editor with TypeScript syntax highlighting
+- Generate tab now generates:
+  - Python Code with Pydantic models
+  - TypeScript interfaces
+  - SQL DDL Statements with dialects in
+    - PostgreSQL
+    - MySQL
+    - SQL Server
+    - Oracle
+    - SQLite
 
 View our YouTube channel [here](https://www.youtube.com/@objectifieddev) for detailed tutorials and walkthroughs!
 
