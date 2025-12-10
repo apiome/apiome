@@ -510,13 +510,21 @@ const StudioContent = () => {
           maxLength: propertyData.maxLength,
           minimum: propertyData.minimum,
           maximum: propertyData.maximum,
+          exclusiveMinimum: propertyData.exclusiveMinimum,
+          exclusiveMaximum: propertyData.exclusiveMaximum,
+          multipleOf: propertyData.multipleOf,
           minItems: propertyData.minItems,
           maxItems: propertyData.maxItems,
           uniqueItems: propertyData.uniqueItems,
           items: propertyData.items,
           enum: propertyData.enum,
           default: propertyData.default,
-          required: propertyData.required
+          required: propertyData.required,
+          readOnly: propertyData.readOnly,
+          writeOnly: propertyData.writeOnly,
+          deprecated: propertyData.deprecated,
+          example: propertyData.example,
+          additionalProperties: propertyData.additionalProperties
         },
         parentId || null
       );

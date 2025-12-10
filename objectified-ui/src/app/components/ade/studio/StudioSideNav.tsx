@@ -47,6 +47,12 @@ export interface PropertyItem {
   enum?: string[];
   default?: any;
   required?: boolean;
+  // Metadata fields
+  readOnly?: boolean;
+  writeOnly?: boolean;
+  deprecated?: boolean;
+  example?: any;
+  additionalProperties?: boolean | any;
 }
 
 export interface StudioSideNavCallbacks {

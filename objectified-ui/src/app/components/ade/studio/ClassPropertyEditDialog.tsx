@@ -241,8 +241,14 @@ export default function ClassPropertyEditDialog({ open, onClose, editingClassPro
         delete targetSchema.exclusiveMaximum;
       }
 
-      if (formData.multipleOf) targetSchema.multipleOf = parseFloat(formData.multipleOf);
-      else delete targetSchema.multipleOf;
+      if (formData.multipleOf && formData.multipleOf.trim()) {
+        const multipleOfValue = parseFloat(formData.multipleOf);
+        if (!isNaN(multipleOfValue) && multipleOfValue > 0) {
+          targetSchema.multipleOf = multipleOfValue;
+        }
+      } else {
+        delete targetSchema.multipleOf;
+      }
 
       // Array constraints (on array itself, not items)
       if (isArray) {

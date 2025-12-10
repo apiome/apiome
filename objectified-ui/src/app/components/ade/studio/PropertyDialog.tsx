@@ -47,6 +47,12 @@ export interface PropertyItem {
   enum?: string[];
   default?: any;
   required?: boolean;
+  // Metadata fields
+  readOnly?: boolean;
+  writeOnly?: boolean;
+  deprecated?: boolean;
+  example?: any;
+  additionalProperties?: boolean | any;
 }
 
 interface PropertyDialogProps {
@@ -129,6 +135,12 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
         maximumType = 'inclusive';
       }
 
+      // Determine additionalProperties value
+      let additionalPropsValue: 'default' | 'true' | 'false' = 'default';
+      if (minMaxSource.hasOwnProperty('additionalProperties')) {
+        additionalPropsValue = minMaxSource.additionalProperties === false ? 'false' : 'true';
+      }
+
       setFormData({
         title: property.title || '',
         description: property.description || '',
@@ -150,6 +162,13 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
         enum: minMaxSource.enum || [],
         default: minMaxSource.default?.toString() || '',
         required: property.required || false,
+        // Metadata fields
+        readOnly: property.readOnly || false,
+        writeOnly: property.writeOnly || false,
+        deprecated: property.deprecated || false,
+        example: property.example ? JSON.stringify(property.example) : '',
+        // Object constraints
+        additionalProperties: additionalPropsValue,
       });
       setPropertyError('');
     } else if (open && mode === 'add') {
@@ -169,6 +188,17 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
 
     if (formData.title) schema.title = formData.title;
     if (formData.description) schema.description = formData.description;
+    if (formData.readOnly) schema.readOnly = formData.readOnly;
+    if (formData.writeOnly) schema.writeOnly = formData.writeOnly;
+    if (formData.deprecated) schema.deprecated = formData.deprecated;
+    if (formData.example) {
+      try {
+        schema.example = JSON.parse(formData.example);
+      } catch (e) {
+        schema.example = formData.example;
+      }
+    }
+    if (formData.required) schema.required = formData.required;
 
     if (propertyIsArray) {
       schema.type = 'array';
@@ -203,9 +233,23 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
           }
         }
       }
-      if (formData.multipleOf) itemsSchema.multipleOf = parseFloat(formData.multipleOf);
+      if (formData.multipleOf && formData.multipleOf.trim()) {
+        const multipleOfValue = parseFloat(formData.multipleOf);
+        if (!isNaN(multipleOfValue) && multipleOfValue > 0) {
+          itemsSchema.multipleOf = multipleOfValue;
+        }
+      }
       if (formData.enum && formData.enum.length > 0) itemsSchema.enum = formData.enum;
       if (formData.default) itemsSchema.default = formData.default;
+
+      // Handle additionalProperties for array items that are objects
+      if (propertyType === 'object') {
+        if (formData.additionalProperties === 'true') {
+          itemsSchema.additionalProperties = true;
+        } else if (formData.additionalProperties === 'false') {
+          itemsSchema.additionalProperties = false;
+        }
+      }
 
       schema.items = itemsSchema;
     } else {
@@ -234,9 +278,23 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
           }
         }
       }
-      if (formData.multipleOf) schema.multipleOf = parseFloat(formData.multipleOf);
+      if (formData.multipleOf && formData.multipleOf.trim()) {
+        const multipleOfValue = parseFloat(formData.multipleOf);
+        if (!isNaN(multipleOfValue) && multipleOfValue > 0) {
+          schema.multipleOf = multipleOfValue;
+        }
+      }
       if (formData.enum && formData.enum.length > 0) schema.enum = formData.enum;
       if (formData.default) schema.default = formData.default;
+
+      // Handle additionalProperties for object types
+      if (propertyType === 'object') {
+        if (formData.additionalProperties === 'true') {
+          schema.additionalProperties = true;
+        } else if (formData.additionalProperties === 'false') {
+          schema.additionalProperties = false;
+        }
+      }
     }
 
     return schema;
@@ -258,79 +316,181 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
     setPropertyError('');
 
     try {
+      // Start with original property data in edit mode, or empty object in add mode
+      const originalData = (mode === 'edit' && property) ?
+        (typeof (property as any).data === 'string' ? JSON.parse((property as any).data) : ((property as any).data || {}))
+        : {};
+
       const dataObject: any = {
-        required: formData.required,
+        ...originalData, // Preserve ALL original fields
+        required: formData.required || false,
+        readOnly: formData.readOnly || false,
+        writeOnly: formData.writeOnly || false,
+        deprecated: formData.deprecated || false,
       };
 
       if (formData.title) dataObject.title = formData.title;
+      else delete dataObject.title;
+
+      if (formData.example) {
+        try {
+          dataObject.example = JSON.parse(formData.example);
+        } catch (e) {
+          dataObject.example = formData.example;
+        }
+      } else {
+        delete dataObject.example;
+      }
 
       if (propertyIsArray) {
         dataObject.type = 'array';
         if (formData.minItems) dataObject.minItems = parseInt(formData.minItems);
+        else delete dataObject.minItems;
         if (formData.maxItems) dataObject.maxItems = parseInt(formData.maxItems);
+        else delete dataObject.maxItems;
         if (formData.uniqueItems) dataObject.uniqueItems = true;
+        else delete dataObject.uniqueItems;
 
+        // Preserve original items schema if it exists
+        const originalItems = originalData.items || {};
         const itemsSchema: any = {
+          ...originalItems, // Preserve ALL original item fields
           type: propertyType
         };
         if (formData.format) itemsSchema.format = formData.format;
+        else delete itemsSchema.format;
         if (formData.pattern) itemsSchema.pattern = formData.pattern;
+        else delete itemsSchema.pattern;
         if (formData.minLength) itemsSchema.minLength = parseInt(formData.minLength);
+        else delete itemsSchema.minLength;
         if (formData.maxLength) itemsSchema.maxLength = parseInt(formData.maxLength);
+        else delete itemsSchema.maxLength;
+
+        // Handle minimum/maximum with exclusive support
         if (formData.minimum && formData.minimum.trim()) {
           const minValue = parseFloat(formData.minimum);
           if (!isNaN(minValue)) {
             if (formData.minimumType === 'exclusive') {
               itemsSchema.exclusiveMinimum = minValue;
+              delete itemsSchema.minimum;
             } else {
               itemsSchema.minimum = minValue;
+              delete itemsSchema.exclusiveMinimum;
             }
           }
+        } else {
+          delete itemsSchema.minimum;
+          delete itemsSchema.exclusiveMinimum;
         }
+
         if (formData.maximum && formData.maximum.trim()) {
           const maxValue = parseFloat(formData.maximum);
           if (!isNaN(maxValue)) {
             if (formData.maximumType === 'exclusive') {
               itemsSchema.exclusiveMaximum = maxValue;
+              delete itemsSchema.maximum;
             } else {
               itemsSchema.maximum = maxValue;
+              delete itemsSchema.exclusiveMaximum;
             }
           }
+        } else {
+          delete itemsSchema.maximum;
+          delete itemsSchema.exclusiveMaximum;
         }
-        if (formData.multipleOf) itemsSchema.multipleOf = parseFloat(formData.multipleOf);
+
+        if (formData.multipleOf && formData.multipleOf.trim()) {
+          const multipleOfValue = parseFloat(formData.multipleOf);
+          if (!isNaN(multipleOfValue) && multipleOfValue > 0) {
+            itemsSchema.multipleOf = multipleOfValue;
+          }
+        } else {
+          delete itemsSchema.multipleOf;
+        }
+
         if (formData.enum && formData.enum.length > 0) itemsSchema.enum = formData.enum;
+        else delete itemsSchema.enum;
         if (formData.default) itemsSchema.default = formData.default;
+        else delete itemsSchema.default;
+
+        // Handle additionalProperties for array items that are objects
+        if (propertyType === 'object') {
+          if (formData.additionalProperties === 'true') {
+            itemsSchema.additionalProperties = true;
+          } else if (formData.additionalProperties === 'false') {
+            itemsSchema.additionalProperties = false;
+          }
+        }
 
         dataObject.items = itemsSchema;
       } else {
         dataObject.type = propertyType;
         if (formData.format) dataObject.format = formData.format;
+        else delete dataObject.format;
         if (formData.pattern) dataObject.pattern = formData.pattern;
+        else delete dataObject.pattern;
         if (formData.minLength) dataObject.minLength = parseInt(formData.minLength);
+        else delete dataObject.minLength;
         if (formData.maxLength) dataObject.maxLength = parseInt(formData.maxLength);
+        else delete dataObject.maxLength;
+
+        // Handle minimum/maximum with exclusive support
         if (formData.minimum && formData.minimum.trim()) {
           const minValue = parseFloat(formData.minimum);
           if (!isNaN(minValue)) {
             if (formData.minimumType === 'exclusive') {
               dataObject.exclusiveMinimum = minValue;
+              delete dataObject.minimum;
             } else {
               dataObject.minimum = minValue;
+              delete dataObject.exclusiveMinimum;
             }
           }
+        } else {
+          delete dataObject.minimum;
+          delete dataObject.exclusiveMinimum;
         }
+
         if (formData.maximum && formData.maximum.trim()) {
           const maxValue = parseFloat(formData.maximum);
           if (!isNaN(maxValue)) {
             if (formData.maximumType === 'exclusive') {
               dataObject.exclusiveMaximum = maxValue;
+              delete dataObject.maximum;
             } else {
               dataObject.maximum = maxValue;
+              delete dataObject.exclusiveMaximum;
             }
           }
+        } else {
+          delete dataObject.maximum;
+          delete dataObject.exclusiveMaximum;
         }
-        if (formData.multipleOf) dataObject.multipleOf = parseFloat(formData.multipleOf);
+
+        if (formData.multipleOf && formData.multipleOf.trim()) {
+          const multipleOfValue = parseFloat(formData.multipleOf);
+          if (!isNaN(multipleOfValue) && multipleOfValue > 0) {
+            dataObject.multipleOf = multipleOfValue;
+          }
+        } else {
+          delete dataObject.multipleOf;
+        }
+
         if (formData.enum && formData.enum.length > 0) dataObject.enum = formData.enum;
+        else delete dataObject.enum;
         if (formData.default) dataObject.default = formData.default;
+        else delete dataObject.default;
+
+        // Handle additionalProperties for object types
+        if (propertyType === 'object') {
+          if (formData.additionalProperties === 'true') {
+            dataObject.additionalProperties = true;
+          } else if (formData.additionalProperties === 'false') {
+            dataObject.additionalProperties = false;
+          } else {
+            delete dataObject.additionalProperties;
+          }
+        }
       }
 
       await onSubmit({
