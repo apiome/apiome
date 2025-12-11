@@ -45,7 +45,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Added the ability to tag classes
   - Class nodes now display tag names alongside the class name for better visual organization
 - Generate tab now generates:
-  - Python Code with Pydantic models
+  - Python Code with Pydantic, Dataclass and SQLAlchemy models
   - TypeScript interfaces
   - GraphQL Type Definitions
   - Scala Case Classes with codec libraries:
@@ -58,6 +58,7 @@ We continue to improve the platform based on your feedback with improvements and
     - SQL Server
     - Oracle
     - SQLite
+  - Java DTOs as POJOs, Lombok, or Records class generation
 
 View our YouTube channel [here](https://www.youtube.com/@objectifieddev) for detailed tutorials and walkthroughs!
 
