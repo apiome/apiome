@@ -441,6 +441,7 @@ const StudioContent = () => {
           readOnly: propertyData.readOnly,
           writeOnly: propertyData.writeOnly,
           deprecated: propertyData.deprecated,
+          deprecationMessage: propertyData.deprecationMessage,
           example: propertyData.example,
           additionalProperties: propertyData.additionalProperties
         },

@@ -115,6 +115,7 @@ export default function ClassPropertyEditDialog({ open, onClose, editingClassPro
       description: editingClassProperty.description || '',
       required: !!propData.required,
       deprecated: !!propData.deprecated,
+      deprecationMessage: propData.deprecationMessage || '',
       readOnly: !!propData.readOnly,
       writeOnly: !!propData.writeOnly,
       example: propData.example ? JSON.stringify(propData.example) : '',
@@ -182,6 +183,13 @@ export default function ClassPropertyEditDialog({ open, onClose, editingClassPro
         readOnly: formData.readOnly,
         writeOnly: formData.writeOnly,
       };
+
+      // Handle deprecationMessage
+      if (formData.deprecated && formData.deprecationMessage?.trim()) {
+        updatedData.deprecationMessage = formData.deprecationMessage.trim();
+      } else {
+        delete updatedData.deprecationMessage;
+      }
 
       if (formData.example?.trim()) {
         try {

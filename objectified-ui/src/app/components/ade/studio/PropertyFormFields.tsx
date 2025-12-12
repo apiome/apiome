@@ -77,6 +77,7 @@ export interface PropertyFormData {
   readOnly?: boolean;
   writeOnly?: boolean;
   deprecated?: boolean;
+  deprecationMessage?: string;
   example?: string;
 
   // Object constraints
@@ -493,6 +494,20 @@ export const PropertyFormFields: React.FC<PropertyFormFieldsProps> = ({
               }
               label="Deprecated"
             />
+
+            {data.deprecated && (
+              <TextField
+                label="Deprecation Message (Optional)"
+                size={size}
+                fullWidth
+                multiline
+                rows={2}
+                value={data.deprecationMessage || ''}
+                onChange={(e) => onChange('deprecationMessage', e.target.value)}
+                helperText="Provide context about why it's deprecated and what to use instead"
+                sx={{ mt: 2, bgcolor: 'warning.lighter' }}
+              />
+            )}
 
             <TextField
               label="Example"

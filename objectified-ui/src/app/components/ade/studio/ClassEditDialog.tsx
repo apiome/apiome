@@ -79,6 +79,8 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
     discriminatorProperty: '',
     discriminatorUseAuto: true,
     additionalProperties: null as boolean | null,
+    deprecated: false,
+    deprecationMessage: '',
     selectedTags: [] as string[],
     error: ''
   });
@@ -115,6 +117,8 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
               discriminatorProperty: schema.discriminator?.propertyName || '',
               discriminatorUseAuto: !schema.discriminator?.mapping,
               additionalProperties: schema.additionalProperties !== undefined ? schema.additionalProperties : null,
+              deprecated: schema.deprecated || false,
+              deprecationMessage: schema.deprecationMessage || '',
               selectedTags: tagIds,
               error: ''
             });
@@ -129,6 +133,8 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
               discriminatorProperty: schema.discriminator?.propertyName || '',
               discriminatorUseAuto: !schema.discriminator?.mapping,
               additionalProperties: schema.additionalProperties !== undefined ? schema.additionalProperties : null,
+              deprecated: schema.deprecated || false,
+              deprecationMessage: schema.deprecationMessage || '',
               selectedTags: [],
               error: ''
             });
@@ -147,6 +153,8 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
           discriminatorProperty: '',
           discriminatorUseAuto: true,
           additionalProperties: null,
+          deprecated: false,
+          deprecationMessage: '',
           selectedTags: [],
           error: ''
         });
@@ -184,6 +192,14 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
     // Add additionalProperties if set
     if (formData.additionalProperties !== null) {
       schema.additionalProperties = formData.additionalProperties;
+    }
+
+    // Add deprecated if true
+    if (formData.deprecated) {
+      schema.deprecated = true;
+      if (formData.deprecationMessage.trim()) {
+        schema.deprecationMessage = formData.deprecationMessage.trim();
+      }
     }
 
     return schema;
@@ -859,6 +875,44 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
                   disabled={isReadOnly}
                 />
               </RadioGroup>
+            </Box>
+
+            {/* Deprecated */}
+            <Box sx={{ mt: 3, p: 2, bgcolor: 'warning.lighter', borderRadius: 1, border: 1, borderColor: 'warning.light' }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.deprecated}
+                    onChange={(e) => setFormData(prev => ({ ...prev, deprecated: e.target.checked }))}
+                    disabled={isReadOnly}
+                  />
+                }
+                label={
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      Mark as Deprecated
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Indicates this class should no longer be used
+                    </Typography>
+                  </Box>
+                }
+              />
+              {formData.deprecated && (
+                <TextField
+                  margin="dense"
+                  label="Deprecation Message (Optional)"
+                  fullWidth
+                  multiline
+                  rows={2}
+                  placeholder="e.g., Use NewClass instead. This will be removed in version 2.0."
+                  value={formData.deprecationMessage}
+                  onChange={(e) => setFormData(prev => ({ ...prev, deprecationMessage: e.target.value }))}
+                  helperText="Provide context about why it's deprecated and what to use instead"
+                  sx={{ mt: 1 }}
+                  disabled={isReadOnly}
+                />
+              )}
             </Box>
           </Box>
         )}

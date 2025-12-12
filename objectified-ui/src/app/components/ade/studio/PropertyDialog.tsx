@@ -51,6 +51,7 @@ export interface PropertyItem {
   readOnly?: boolean;
   writeOnly?: boolean;
   deprecated?: boolean;
+  deprecationMessage?: string;
   example?: any;
   additionalProperties?: boolean | any;
   // Tuple mode (OpenAPI 3.1)
@@ -189,6 +190,7 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
         readOnly: property.readOnly || false,
         writeOnly: property.writeOnly || false,
         deprecated: property.deprecated || false,
+        deprecationMessage: property.deprecationMessage || '',
         example: property.example ? JSON.stringify(property.example) : '',
         // Object constraints
         additionalProperties: additionalPropsValue,
@@ -213,7 +215,12 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
     if (formData.description) schema.description = formData.description;
     if (formData.readOnly) schema.readOnly = formData.readOnly;
     if (formData.writeOnly) schema.writeOnly = formData.writeOnly;
-    if (formData.deprecated) schema.deprecated = formData.deprecated;
+    if (formData.deprecated) {
+      schema.deprecated = formData.deprecated;
+      if (formData.deprecationMessage && formData.deprecationMessage.trim()) {
+        schema.deprecationMessage = formData.deprecationMessage.trim();
+      }
+    }
     if (formData.example) {
       try {
         schema.example = JSON.parse(formData.example);
@@ -391,6 +398,13 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
         writeOnly: formData.writeOnly || false,
         deprecated: formData.deprecated || false,
       };
+
+      // Handle deprecationMessage
+      if (formData.deprecated && formData.deprecationMessage && formData.deprecationMessage.trim()) {
+        dataObject.deprecationMessage = formData.deprecationMessage.trim();
+      } else {
+        delete dataObject.deprecationMessage;
+      }
 
       if (formData.title) dataObject.title = formData.title;
       else delete dataObject.title;

@@ -331,9 +331,14 @@ function ClassNode({ data, selected }: NodeProps) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: 'white', wordBreak: 'break-word' }}>
+          <div style={{ fontSize: '14px', fontWeight: 600, color: 'white', wordBreak: 'break-word', textDecoration: typedData.schema?.deprecated ? 'line-through' : 'none' }}>
             {typedData.name}
           </div>
+          {typedData.schema?.deprecated && (
+            <span style={{ fontSize: '10px', padding: '2px 5px', borderRadius: '3px', background: '#fef3c7', color: '#92400e', fontWeight: 600, border: '1px solid #fbbf24' }} title={typedData.schema?.deprecationMessage || 'Deprecated'}>
+              DEPRECATED
+            </span>
+          )}
           {/* Tags in header */}
           {typedData.tags && typedData.tags.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
@@ -467,7 +472,7 @@ function ClassNode({ data, selected }: NodeProps) {
                     )}
                   </div>
 
-                  <div style={{ fontWeight: depth > 0 ? 400 : 500, color: '#111827', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontWeight: depth > 0 ? 400 : 500, color: parseData(p)?.deprecated ? '#9ca3af' : '#111827', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: parseData(p)?.deprecated ? 'line-through' : 'none' }} title={parseData(p)?.deprecated ? (parseData(p)?.deprecationMessage || 'Deprecated') : undefined}>
                     {p.data.required && '* '} {p.name}
                     {children.length > 0 && <span style={{ color: '#6b7280', marginLeft: 4 }}>({children.length})</span>}
                   </div>
