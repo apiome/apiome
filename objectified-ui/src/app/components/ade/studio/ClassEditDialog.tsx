@@ -18,7 +18,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import Autocomplete from '@mui/material/Autocomplete';
-import { Copy, Download, RefreshCw, Check, Tag as TagIcon } from 'lucide-react';
+import { Copy, Download, RefreshCw, Check, Tag as TagIcon, ExternalLink } from 'lucide-react';
 import YAML from 'yaml';
 import jsf from 'json-schema-faker';
 import { generateClassOpenApiSpec } from '../../../utils/openapi';
@@ -84,6 +84,8 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
     deprecationMessage: '',
     selectedTags: [] as string[],
     extensions: {} as Record<string, any>,
+    externalDocsUrl: '',
+    externalDocsDescription: '',
     error: ''
   });
 
@@ -131,6 +133,8 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
               deprecationMessage: schema.deprecationMessage || '',
               selectedTags: tagIds,
               extensions,
+              externalDocsUrl: schema.externalDocs?.url || '',
+              externalDocsDescription: schema.externalDocs?.description || '',
               error: ''
             });
           } catch (error) {
@@ -148,6 +152,8 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
               deprecationMessage: schema.deprecationMessage || '',
               selectedTags: [],
               extensions,
+              externalDocsUrl: schema.externalDocs?.url || '',
+              externalDocsDescription: schema.externalDocs?.description || '',
               error: ''
             });
           }
@@ -169,6 +175,8 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
           deprecationMessage: '',
           selectedTags: [],
           extensions: {},
+          externalDocsUrl: '',
+          externalDocsDescription: '',
           error: ''
         });
       }
@@ -212,6 +220,16 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
       schema.deprecated = true;
       if (formData.deprecationMessage.trim()) {
         schema.deprecationMessage = formData.deprecationMessage.trim();
+      }
+    }
+
+    // Add externalDocs if URL is provided
+    if (formData.externalDocsUrl.trim()) {
+      schema.externalDocs = {
+        url: formData.externalDocsUrl.trim()
+      };
+      if (formData.externalDocsDescription.trim()) {
+        schema.externalDocs.description = formData.externalDocsDescription.trim();
       }
     }
 
@@ -933,6 +951,62 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
                   disabled={isReadOnly}
                 />
               )}
+            </Box>
+
+            {/* External Documentation */}
+            <Box sx={{ mt: 3, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                External Documentation
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                Link to additional documentation outside the OpenAPI specification
+              </Typography>
+
+              <TextField
+                margin="dense"
+                label="Documentation URL"
+                fullWidth
+                type="url"
+                value={formData.externalDocsUrl}
+                onChange={(e) => setFormData(prev => ({ ...prev, externalDocsUrl: e.target.value }))}
+                placeholder="https://docs.example.com/classes/user"
+                helperText="URL to external documentation"
+                sx={{ mb: 2 }}
+                disabled={isReadOnly}
+                slotProps={{
+                  input: {
+                    endAdornment: formData.externalDocsUrl.trim() && (
+                      <Button
+                        size="small"
+                        startIcon={<ExternalLink size={16} />}
+                        onClick={() => {
+                          const url = formData.externalDocsUrl.trim();
+                          if (url) {
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                          }
+                        }}
+                        disabled={isReadOnly}
+                        sx={{ ml: 1 }}
+                      >
+                        Check Link
+                      </Button>
+                    ),
+                  }
+                }}
+              />
+
+              <TextField
+                margin="dense"
+                label="Description (Optional)"
+                fullWidth
+                multiline
+                rows={2}
+                value={formData.externalDocsDescription}
+                onChange={(e) => setFormData(prev => ({ ...prev, externalDocsDescription: e.target.value }))}
+                placeholder="e.g., Detailed user guide with examples"
+                helperText="Optional description of the external documentation"
+                disabled={isReadOnly}
+              />
             </Box>
 
             {/* Extensions */}

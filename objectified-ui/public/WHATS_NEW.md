@@ -20,6 +20,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Added "minProperties" and "maxProperties" fields for object types
   - Added "constant" field for properties
   - Added support for custom "x-" tags and values to classes
+  - Added support for external documentation on a per-class level
   - Marking for deprecation is now available for properties and classes
   - prefixItems:
     - Define ordered schemas for specific array positions (e.g., `[string, number, boolean]`)
