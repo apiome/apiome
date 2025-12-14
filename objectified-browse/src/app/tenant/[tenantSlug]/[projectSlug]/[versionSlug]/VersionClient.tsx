@@ -104,18 +104,17 @@ export function VersionClient({
         )}
 
         {/* Specification Viewer */}
-        <div className="mb-6">
+        <div className="mb-8">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
             API Specification
           </h2>
+          <SpecViewer
+            tenantSlug={tenantSlug}
+            projectSlug={projectSlug}
+            versionSlug={versionSlug}
+            restApiBaseUrl={restApiBaseUrl}
+          />
         </div>
-
-        <SpecViewer
-          tenantSlug={tenantSlug}
-          projectSlug={projectSlug}
-          versionSlug={versionSlug}
-          restApiBaseUrl={restApiBaseUrl}
-        />
       </div>
     </div>
   );
