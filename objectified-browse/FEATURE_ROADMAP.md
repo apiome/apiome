@@ -312,14 +312,14 @@ This document outlines the planned features, improvements, and enhancements for 
 
 ## 📅 Release Timeline (Tentative)
 
-| Phase | Target | Status |
-|-------|--------|--------|
-| Phase 1 | Q1 2025 | 🟡 In Progress |
-| Phase 2 | Q2 2025 | ⚪ Planned |
-| Phase 3 | Q2-Q3 2025 | ⚪ Planned |
-| Phase 4 | Q3 2025 | ⚪ Planned |
-| Phase 5 | Q4 2025 | ⚪ Planned |
-| Phase 6 | 2026+ | ⚪ Future |
+| Phase   | Target      | Status         |
+|---------|-------------|----------------|
+| Phase 1 | Q1 2026     | 🟡 In Progress |
+| Phase 2 | Q2 2026     | ⚪ Planned      |
+| Phase 3 | Q2-Q3 2026  | ⚪ Planned      |
+| Phase 4 | Q3 2026     | ⚪ Planned      |
+| Phase 5 | Q4 2026     | ⚪ Planned      |
+| Phase 6 | 2027+       | ⚪ Future       |
 
 ---
 
