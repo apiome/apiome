@@ -53,6 +53,10 @@ export function findReferencedClasses(obj: any, refs: Set<string>): void {
 function buildPropertySchema(prop: any, allProperties: any[]): any {
   const propData = typeof prop.data === 'string' ? JSON.parse(prop.data) : { ...prop.data };
 
+  // Preserve the property's own required flag (boolean) - this indicates if THIS property is required
+  // It will be extracted by the caller and moved to the parent's required array
+  const selfRequired = propData.required;
+
   // Clean up description handling
   if (propData.description === null) {
     delete propData.description;
@@ -75,7 +79,7 @@ function buildPropertySchema(prop: any, allProperties: any[]): any {
         const childSchema = buildPropertySchema(child, allProperties);
 
         // Handle required flag for nested properties
-        if (childSchema.required) {
+        if (childSchema.required === true) {
           nestedRequired.push(child.name);
           delete childSchema.required;
         }
@@ -91,6 +95,11 @@ function buildPropertySchema(prop: any, allProperties: any[]): any {
 
       if (nestedRequired.length > 0) {
         propData.required = nestedRequired;
+      } else {
+        // Remove required if it was an array from nested (don't keep empty array)
+        if (Array.isArray(propData.required)) {
+          delete propData.required;
+        }
       }
     }
   }
@@ -110,7 +119,7 @@ function buildPropertySchema(prop: any, allProperties: any[]): any {
 
       children.forEach((child: any) => {
         const childSchema = buildPropertySchema(child, allProperties);
-        if (childSchema.required) {
+        if (childSchema.required === true) {
           nestedRequired.push(child.name);
           delete childSchema.required;
         }
@@ -128,6 +137,14 @@ function buildPropertySchema(prop: any, allProperties: any[]): any {
         delete propData.items.required;
       }
     }
+  }
+
+  // Restore the property's own required flag (boolean) for the caller to handle
+  // This is separate from the nested required array which is for child properties
+  if (selfRequired === true) {
+    propData.required = true;
+  } else if (selfRequired === false && !Array.isArray(propData.required)) {
+    propData.required = false;
   }
 
   return propData;
@@ -158,15 +175,15 @@ export function buildClassSchema(classData: any): any {
       const propSchema = buildPropertySchema(prop, classData.properties);
 
       // Handle required flag - it belongs in the class schema's required array, not the property
-      if (propSchema.required) {
+      // Check for boolean true specifically (not truthy, as required could be an array for nested props)
+      if (propSchema.required === true) {
         required.push(prop.name);
         delete propSchema.required;
-      }
-
-      // If property data explicitly sets required=false, remove the field
-      if (propSchema.required === false) {
+      } else if (propSchema.required === false) {
+        // If property data explicitly sets required=false, remove the field
         delete propSchema.required;
       }
+      // Note: If propSchema.required is an array (from nested properties), keep it as-is
 
       properties[prop.name] = propSchema;
     });
