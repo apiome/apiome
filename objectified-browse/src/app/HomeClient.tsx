@@ -14,6 +14,7 @@ export function HomeClient({ tenants }: { tenants: Tenant[] }) {
   return (
     <div className="py-8">
       <div className="container mx-auto px-4">
+
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -24,12 +25,6 @@ export function HomeClient({ tenants }: { tenants: Tenant[] }) {
               <p className="mt-1 text-zinc-600 dark:text-zinc-400">
                 Browse API specifications by organization
               </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-blue-50 px-4 py-2 dark:bg-blue-900/20">
-                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{tenants.length}</div>
-                <div className="text-xs text-blue-600/70 dark:text-blue-400/70">Organizations</div>
-              </div>
             </div>
           </div>
         </div>

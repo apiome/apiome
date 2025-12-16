@@ -8,10 +8,10 @@ Added links to the Objectified YouTube channel (https://www.youtube.com/@objecti
 ### Locations
 The YouTube link appears in two locations:
 
-1. **Navbar** - Icon button in the top navigation bar
-   - Positioned in the right side actions area, between the Quick Search and Settings button
-   - Displays as a YouTube icon button
-   - Includes hover effects and dark mode support
+1. **Home Page Hero Section** - Prominent button in the welcome banner
+   - Positioned alongside the "Login / Sign Up" button
+   - Labeled as "Watch Tutorials" with a YouTube icon
+   - Highly visible in the gradient banner at the top of the home page
 
 2. **Footer** - Text link in the footer navigation
    - Positioned as the first link in the footer links section
@@ -28,14 +28,14 @@ The YouTube link appears in two locations:
 ### Technical Changes
 
 #### Files Modified
-1. `src/app/components/Navbar.tsx`
-2. `src/app/components/ClientLayout.tsx`
+1. `src/app/HomeClient.tsx` - Added YouTube button in hero section
+2. `src/app/components/ClientLayout.tsx` - Added Tutorials link in footer
 
-#### Navbar Changes
-- Added a YouTube icon button next to the settings button in the navbar
+#### Home Page Changes
+- Added "Watch Tutorials" button in the hero action bar
 - Uses inline YouTube SVG icon (official YouTube logo path)
-- Includes hover effects that match existing navbar buttons
-- Added descriptive `aria-label` and `title` for accessibility
+- Styled to match the banner design with transparent white background
+- Opens in new tab for better user experience
 
 #### Footer Changes
 - Added "Tutorials" link as the first item in the footer links
@@ -57,8 +57,8 @@ The YouTube link appears in two locations:
 
 ## Testing
 To test the feature:
-1. Navigate to any page in the browse app
-2. Locate the YouTube icon button in the top-right of the navbar
+1. Navigate to the browse app home page
+2. Locate the "Watch Tutorials" button in the gradient banner
 3. Click the button and verify it opens the YouTube channel in a new tab
 4. Scroll to the footer
 5. Click the "Tutorials" link and verify it also opens the YouTube channel
