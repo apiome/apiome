@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import Divider from '@mui/material/Divider';
 import { useTheme, specThemes, SpecTheme } from './ThemeProvider';
 
 // Dynamically import Monaco Editor with SSR disabled
