@@ -1,36 +1,133 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Alert from '@mui/material/Alert';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
-import Autocomplete from '@mui/material/Autocomplete';
-import { useColorScheme } from '@mui/material/styles';
-import { Copy, Download, RefreshCw, Check, Tag as TagIcon, ExternalLink, Settings, Layers, FileText, AlertTriangle, Code, Plus, Trash2, Regex, Link, ListChecks } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../../ui/Dialog';
+import { Button } from '../../ui/Button';
+import { Input } from '../../ui/Input';
+import { Label } from '../../ui/Label';
+import { Textarea } from '../../ui/Textarea';
+import { Alert } from '../../ui/Alert';
+import { Badge } from '../../ui/Badge';
+import { Checkbox } from '../../ui/Checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/Tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/Select';
+import { Copy, Download, RefreshCw, Check, Tag as TagIcon, ExternalLink, Settings, Layers, FileText, AlertTriangle, Code, Plus, Trash2, Regex, Link, ListChecks, X, ChevronDown } from 'lucide-react';
 import YAML from 'yaml';
 import jsf from 'json-schema-faker';
 import { generateClassOpenApiSpec } from '../../../utils/openapi';
 import { createClass, updateClass, assignTagToClass, removeTagFromClass, getTagsForClass } from '../../../../../lib/db/helper';
-import Chip from '@mui/material/Chip';
 import { ExtensionsEditor } from './ExtensionsEditor';
 import ConditionalSchemaBuilder, {
   ConditionalRule,
   conditionalRulesToJsonSchema,
   jsonSchemaToConditionalRules
 } from './ConditionalSchemaBuilder';
+
+// Custom hook for dark mode detection
+const useDarkMode = () => {
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDark(document.documentElement.classList.contains('dark') ||
+        window.matchMedia('(prefers-color-scheme: dark)').matches);
+    };
+    checkDarkMode();
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', checkDarkMode);
+    return () => {
+      observer.disconnect();
+      mediaQuery.removeEventListener('change', checkDarkMode);
+    };
+  }, []);
+  return isDark;
+};
+
+// Multi-select component for class references
+interface MultiSelectProps {
+  options: string[];
+  value: string[];
+  onChange: (value: string[]) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  colorScheme?: 'indigo' | 'amber' | 'purple';
+}
+
+const MultiSelect = ({ options, value, onChange, placeholder = 'Select...', disabled = false, colorScheme = 'indigo' }: MultiSelectProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const colorClasses: Record<string, string> = {
+    indigo: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200',
+    amber: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200',
+    purple: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200',
+  };
+
+  const availableOptions = options.filter(opt => !value.includes(opt));
+
+  return (
+    <div ref={ref} className="relative">
+      <div
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`min-h-[38px] w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm cursor-pointer flex flex-wrap gap-1 items-center ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
+        {value.length === 0 ? (
+          <span className="text-gray-400">{placeholder}</span>
+        ) : (
+          value.map((v) => (
+            <span key={v} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${colorClasses[colorScheme]}`}>
+              {v}
+              {!disabled && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChange(value.filter(item => item !== v));
+                  }}
+                  className="hover:bg-black/10 rounded"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </span>
+          ))
+        )}
+        <ChevronDown className="h-4 w-4 ml-auto text-gray-400 shrink-0" />
+      </div>
+      {isOpen && availableOptions.length > 0 && (
+        <div className="absolute z-50 mt-1 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-auto">
+          {availableOptions.map((opt) => (
+            <div
+              key={opt}
+              onClick={() => onChange([...value, opt])}
+              className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              {opt}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // Dynamically import Monaco Editor with SSR disabled
 const Editor = dynamic(() => import('@monaco-editor/react'), {
@@ -69,10 +166,9 @@ interface ClassEditDialogProps {
 }
 
 const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = false, onSave, projectId = '', versionId = '', projectTags = [], projectMetadata }: ClassEditDialogProps) => {
-  const { mode: colorMode, systemMode } = useColorScheme();
-  const isDark = colorMode === 'dark' || (colorMode === 'system' && systemMode === 'dark');
+  const isDark = useDarkMode();
 
-  const [tabValue, setTabValue] = useState(0);
+  const [activeTab, setActiveTab] = useState('edit');
   const [exampleRefreshKey, setExampleRefreshKey] = useState(0);
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -108,7 +204,7 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
   // Reset view and form when dialog opens
   useEffect(() => {
     if (open) {
-      setTabValue(0);
+      setActiveTab('edit');
       setExampleRefreshKey(0);
 
       if (editingClassData) {
@@ -765,13 +861,11 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
 
   if (loadingOpenApiDoc || !openApiDoc) {
     schemaContent = '// Loading schema...';
-  } else if (tabValue === 1) {
-    // JSON view
+  } else if (activeTab === 'json') {
     schemaContent = JSON.stringify(openApiDoc, null, 2);
-  } else if (tabValue === 2) {
-    // YAML view
+  } else if (activeTab === 'yaml') {
     schemaContent = YAML.stringify(openApiDoc, { lineWidth: 0, aliasDuplicateObjects: false } as any);
-  } else if (tabValue === 3) {
+  } else if (activeTab === 'example') {
     // Example view - regenerate when exampleRefreshKey changes
     try {
       // Resolve all $ref references for json-schema-faker
@@ -806,8 +900,7 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
     if (!openApiDoc) return;
 
     let content: string;
-    if (tabValue === 3) {
-      // Example view
+    if (activeTab === 'example') {
       try {
         const resolvedSchema = resolveRefs(classSchema, openApiDoc.components.schemas);
         const fakeData = jsf.generate(resolvedSchema);
@@ -816,11 +909,9 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
         console.error('Error generating fake data:', error);
         content = JSON.stringify({ error: 'Could not generate example data' }, null, 2);
       }
-    } else if (tabValue === 2) {
-      // YAML view
+    } else if (activeTab === 'yaml') {
       content = YAML.stringify(openApiDoc, { lineWidth: 0, aliasDuplicateObjects: false } as any);
     } else {
-      // JSON view
       content = JSON.stringify(openApiDoc, null, 2);
     }
 
@@ -837,8 +928,7 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
     let mimeType: string;
     let extension: string;
 
-    if (tabValue === 3) {
-      // Example view
+    if (activeTab === 'example') {
       try {
         const resolvedSchema = resolveRefs(classSchema, openApiDoc.components.schemas);
         const fakeData = jsf.generate(resolvedSchema);
@@ -850,14 +940,12 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
       filenameSuffix = 'example';
       mimeType = 'application/json';
       extension = 'json';
-    } else if (tabValue === 2) {
-      // YAML view
+    } else if (activeTab === 'yaml') {
       content = YAML.stringify(openApiDoc, { lineWidth: 0, aliasDuplicateObjects: false } as any);
       filenameSuffix = 'schema';
       mimeType = 'text/yaml';
       extension = 'yaml';
     } else {
-      // JSON view
       content = JSON.stringify(openApiDoc, null, 2);
       filenameSuffix = 'schema';
       mimeType = 'application/json';
@@ -876,1094 +964,727 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      slotProps={{
-        paper: {
-          sx: {
-            height: '90vh',
-            maxHeight: '900px',
-            bgcolor: isDark ? '#1e293b' : 'background.paper',
-          }
-        }
-      }}
-    >
-      <DialogTitle sx={{ borderBottom: 1, borderColor: 'divider', pb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="h6" component="span">
-              {!editingClassData ? 'Add Class' : isReadOnly ? `View Class: ${formData.name || editingClassData.name}` : `Edit Class: ${formData.name || editingClassData.name}`}
-            </Typography>
-            {isReadOnly && (
-              <Typography
-                variant="caption"
-                sx={{
-                  color: '#000',
-                  bgcolor: '#fbbf24',
-                  px: 1.5,
-                  py: 0.5,
-                  borderRadius: 1,
-                  fontWeight: 600,
-                  fontSize: '0.75rem'
-                }}
-              >
-                Read Only
-              </Typography>
-            )}
-          </Box>
-        </Box>
-      </DialogTitle>
-
-      {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)}>
-          <Tab label="Edit" />
-          <Tab label="JSON" />
-          <Tab label="YAML" />
-          <Tab label="Example" />
-        </Tabs>
-      </Box>
-
-      <DialogContent sx={{ p: tabValue === 0 ? 0 : 0, overflow: tabValue === 0 ? 'auto' : 'hidden' }}>
-        {/* Tab 0: Edit Form */}
-        {tabValue === 0 && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {formData.error && <Alert severity="error" sx={{ m: 2, mb: 0 }}>{formData.error}</Alert>}
-
-            {/* ═══════════════════════════════════════════════════════════════════════════
-                SECTION 1: Basic Information
-                ═══════════════════════════════════════════════════════════════════════════ */}
-            <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <FileText size={18} style={{ color: '#6366f1' }} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: isDark ? '#e2e8f0' : 'inherit' }}>
-                  Basic Information
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 2fr' }, gap: 2 }}>
-                <TextField
-                  autoFocus
-                  label="Class Name"
-                  fullWidth
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value.replace(/[^A-Za-z0-9_]/g, '') }))}
-                  helperText="PascalCase recommended (e.g., UserAccount)"
-                  disabled={isReadOnly}
-                  size="small"
-                />
-
-                <TextField
-                  label="Description"
-                  fullWidth
-                  multiline
-                  rows={2}
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  helperText="Brief description of what this class represents"
-                  disabled={isReadOnly}
-                  size="small"
-                />
-              </Box>
-
-              {/* Tags - inline with basic info */}
-              {projectId && projectTags && projectTags.length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                  <Autocomplete
-                    multiple
-                    options={projectTags.map((tag: any) => tag.id)}
-                    value={formData.selectedTags}
-                    onChange={(_, newValue) => setFormData(prev => ({ ...prev, selectedTags: newValue }))}
-                    disabled={isReadOnly}
-                    size="small"
-                    getOptionLabel={(tagId) => {
-                      const tag = projectTags.find((t: any) => t.id === tagId);
-                      return tag ? tag.name : tagId;
-                    }}
-                    renderTags={(value, getTagProps) =>
-                      value.map((tagId, index) => {
-                        const tag = projectTags.find((t: any) => t.id === tagId);
-                        return (
-                          <Chip
-                            label={tag?.name || tagId}
-                            color={tag?.color as any || 'default'}
-                            size="small"
-                            {...getTagProps({ index })}
-                          />
-                        );
-                      })
-                    }
-                    renderOption={(props, tagId) => {
-                      const tag = projectTags.find((t: any) => t.id === tagId);
-                      return (
-                        <li {...props}>
-                          <Chip
-                            label={tag?.name || tagId}
-                            color={tag?.color as any || 'default'}
-                            size="small"
-                            sx={{ mr: 1 }}
-                          />
-                          {tag?.description || ''}
-                        </li>
-                      );
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Tags"
-                        placeholder="Select tags to organize this class..."
-                        InputProps={{
-                          ...params.InputProps,
-                          startAdornment: (
-                            <>
-                              <TagIcon size={16} style={{ marginLeft: 8, marginRight: 4, color: '#9ca3af' }} />
-                              {params.InputProps.startAdornment}
-                            </>
-                          ),
-                        }}
-                      />
-                    )}
-                  />
-                </Box>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()} modal={true}>
+      <DialogContent
+        className="max-w-4xl h-[90vh] max-h-[900px] p-0 flex flex-col overflow-hidden"
+        showCloseButton={true}
+        aria-describedby={undefined}
+      >
+        <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <DialogTitle className="text-lg font-semibold">
+                {!editingClassData ? 'Add Class' : isReadOnly ? `View Class: ${formData.name || editingClassData.name}` : `Edit Class: ${formData.name || editingClassData.name}`}
+              </DialogTitle>
+              {isReadOnly && (
+                <span className="px-2 py-0.5 bg-amber-400 text-black text-xs font-semibold rounded">
+                  Read Only
+                </span>
               )}
-            </Box>
+            </div>
+          </div>
+        </DialogHeader>
 
-            {/* ═══════════════════════════════════════════════════════════════════════════
-                SECTION 2: Schema Behavior (Two-column layout)
-                ═══════════════════════════════════════════════════════════════════════════ */}
-            <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', bgcolor: isDark ? '#0f172a' : '#fafafa' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <Settings size={18} style={{ color: '#6366f1' }} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: isDark ? '#e2e8f0' : 'inherit' }}>
-                  Schema Settings
-                </Typography>
-              </Box>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="px-6 border-b border-gray-200 dark:border-gray-700 rounded-none justify-start bg-transparent shrink-0">
+            <TabsTrigger value="edit">Edit</TabsTrigger>
+            <TabsTrigger value="json">JSON</TabsTrigger>
+            <TabsTrigger value="yaml">YAML</TabsTrigger>
+            <TabsTrigger value="example">Example</TabsTrigger>
+          </TabsList>
 
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-                {/* Additional Properties */}
-                <Box sx={{ p: 2, bgcolor: isDark ? '#1e293b' : 'white', borderRadius: 2, border: 1, borderColor: 'divider' }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5, color: isDark ? '#e2e8f0' : 'inherit' }}>
-                    Additional Properties
-                  </Typography>
-                  <RadioGroup
-                    value={formData.additionalPropertiesType}
-                    onChange={(e) => {
-                      const value = e.target.value as 'default' | 'allow' | 'disallow' | 'schema';
-                      setFormData(prev => ({
-                        ...prev,
-                        additionalPropertiesType: value,
-                        additionalProperties: value === 'default' ? null : value === 'allow' ? true : value === 'disallow' ? false : null,
-                        additionalPropertiesSchema: value === 'schema' ? prev.additionalPropertiesSchema : ''
-                      }));
-                    }}
-                    sx={{ gap: 0.5 }}
-                  >
-                    <FormControlLabel
-                      value="default"
-                      control={<Radio size="small" />}
-                      label={<Typography variant="body2">Not specified (default)</Typography>}
-                      disabled={isReadOnly}
-                      sx={{ m: 0 }}
-                    />
-                    <FormControlLabel
-                      value="allow"
-                      control={<Radio size="small" />}
-                      label={<Typography variant="body2">Allow Any (true)</Typography>}
-                      disabled={isReadOnly}
-                      sx={{ m: 0 }}
-                    />
-                    <FormControlLabel
-                      value="disallow"
-                      control={<Radio size="small" />}
-                      label={<Typography variant="body2">Disallow (false)</Typography>}
-                      disabled={isReadOnly}
-                      sx={{ m: 0 }}
-                    />
-                    <FormControlLabel
-                      value="schema"
-                      control={<Radio size="small" />}
-                      label={<Typography variant="body2">Must Match Schema</Typography>}
-                      disabled={isReadOnly}
-                      sx={{ m: 0 }}
-                    />
-                  </RadioGroup>
-                  {formData.additionalPropertiesType === 'schema' && (
-                    <Box sx={{ mt: 1.5, ml: 3 }}>
-                      <Autocomplete
-                        options={availableClasses}
-                        value={formData.additionalPropertiesSchema || null}
-                        onChange={(_, newValue) => setFormData(prev => ({ ...prev, additionalPropertiesSchema: newValue || '' }))}
-                        disabled={isReadOnly}
-                        size="small"
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Schema Reference"
-                            placeholder="Select a class..."
-                            helperText="Additional properties must conform to this schema"
-                          />
-                        )}
-                      />
-                    </Box>
-                  )}
-                </Box>
+          {/* Edit Tab */}
+          <TabsContent value="edit" className="flex-1 overflow-auto mt-0 p-0">
+            <div className="flex flex-col">
+              {formData.error && <Alert variant="error" className="m-4 mb-0">{formData.error}</Alert>}
 
-                {/* Deprecation Status */}
-                <Box sx={{
-                  p: 2,
-                  bgcolor: formData.deprecated ? (isDark ? '#78350f' : '#fef3c7') : (isDark ? '#1e293b' : 'white'),
-                  borderRadius: 2,
-                  border: 1,
-                  borderColor: formData.deprecated ? '#fbbf24' : 'divider',
-                  transition: 'all 0.2s ease'
-                }}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={formData.deprecated}
-                        onChange={(e) => setFormData(prev => ({ ...prev, deprecated: e.target.checked }))}
-                        disabled={isReadOnly}
-                        size="small"
-                      />
-                    }
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <AlertTriangle size={16} style={{ color: formData.deprecated ? '#d97706' : '#9ca3af' }} />
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: isDark ? '#e2e8f0' : 'inherit' }}>
-                          Mark as Deprecated
-                        </Typography>
-                      </Box>
-                    }
-                    sx={{ m: 0, mb: formData.deprecated ? 1.5 : 0 }}
-                  />
-                  {formData.deprecated && (
-                    <TextField
-                      label="Deprecation Message"
-                      fullWidth
-                      multiline
+              {/* SECTION 1: Basic Information */}
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText size={18} className="text-indigo-500" />
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Basic Information</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="className">Class Name *</Label>
+                    <Input
+                      id="className"
+                      autoFocus
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value.replace(/[^A-Za-z0-9_]/g, '') }))}
+                      placeholder="e.g., UserAccount"
+                      disabled={isReadOnly}
+                    />
+                    <p className="text-xs text-gray-500">PascalCase recommended</p>
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Brief description of what this class represents"
+                      disabled={isReadOnly}
                       rows={2}
-                      placeholder="e.g., Use NewClass instead. Will be removed in v2.0."
-                      value={formData.deprecationMessage}
-                      onChange={(e) => setFormData(prev => ({ ...prev, deprecationMessage: e.target.value }))}
-                      disabled={isReadOnly}
-                      size="small"
                     />
-                  )}
-                </Box>
-              </Box>
-            </Box>
+                  </div>
+                </div>
 
-            {/* ═══════════════════════════════════════════════════════════════════════════
-                SECTION 2.5: Pattern Properties
-                ═══════════════════════════════════════════════════════════════════════════ */}
-            <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Regex size={18} style={{ color: '#6366f1' }} />
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: isDark ? '#e2e8f0' : 'inherit' }}>
-                    Pattern Properties
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: isDark ? '#94a3b8' : 'text.secondary', ml: 1 }}>
-                    (Optional)
-                  </Typography>
-                </Box>
-                {!isReadOnly && (
-                  <Button
-                    size="small"
-                    startIcon={<Plus size={14} />}
-                    onClick={() => setFormData(prev => ({
-                      ...prev,
-                      patternProperties: [...prev.patternProperties, { pattern: '', schemaType: 'string', schemaRef: '' }]
-                    }))}
-                    variant="outlined"
-                  >
-                    Add Pattern
-                  </Button>
-                )}
-              </Box>
-              <Typography variant="caption" sx={{ display: 'block', mb: 2, color: isDark ? '#94a3b8' : 'text.secondary' }}>
-                Define regex patterns that map dynamic property names to schemas. Example: <code>^x-</code> matches all extension properties.
-              </Typography>
-
-              {formData.patternProperties.length === 0 ? (
-                <Box sx={{ p: 3, textAlign: 'center', bgcolor: isDark ? '#1e293b' : '#f8fafc', borderRadius: 2, border: '1px dashed', borderColor: isDark ? '#475569' : '#cbd5e1' }}>
-                  <Typography variant="body2" sx={{ color: isDark ? '#94a3b8' : 'text.secondary' }}>
-                    No pattern properties defined. Click "Add Pattern" to create one.
-                  </Typography>
-                </Box>
-              ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {formData.patternProperties.map((patternProp, index) => (
-                    <Box
-                      key={index}
-                      sx={{
-                        p: 2,
-                        bgcolor: isDark ? '#1e293b' : 'white',
-                        borderRadius: 2,
-                        border: 1,
-                        borderColor: 'divider',
-                        display: 'grid',
-                        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr auto' },
-                        gap: 2,
-                        alignItems: 'start'
-                      }}
-                    >
-                      <TextField
-                        label="Regex Pattern"
-                        value={patternProp.pattern}
-                        onChange={(e) => {
-                          const newPatternProps = [...formData.patternProperties];
-                          newPatternProps[index] = { ...newPatternProps[index], pattern: e.target.value };
-                          setFormData(prev => ({ ...prev, patternProperties: newPatternProps }));
-                        }}
-                        disabled={isReadOnly}
-                        size="small"
-                        placeholder="^x-.*$"
-                        helperText="JavaScript regex pattern"
-                        InputProps={{
-                          sx: { fontFamily: 'monospace' }
-                        }}
-                      />
-
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Autocomplete
-                          options={['string', 'number', 'integer', 'boolean', 'object', 'array', 'ref'] as const}
-                          value={patternProp.schemaType}
-                          onChange={(_, newValue) => {
-                            const newPatternProps = [...formData.patternProperties];
-                            newPatternProps[index] = {
-                              ...newPatternProps[index],
-                              schemaType: newValue || 'string',
-                              schemaRef: newValue === 'ref' ? newPatternProps[index].schemaRef : ''
-                            };
-                            setFormData(prev => ({ ...prev, patternProperties: newPatternProps }));
-                          }}
-                          disabled={isReadOnly}
-                          size="small"
-                          disableClearable
-                          sx={{ flex: 1 }}
-                          getOptionLabel={(option) => option === 'ref' ? 'Schema Reference' : option.charAt(0).toUpperCase() + option.slice(1)}
-                          renderInput={(params) => (
-                            <TextField {...params} label="Type" />
-                          )}
-                        />
-
-                        {patternProp.schemaType === 'ref' && (
-                          <Autocomplete
-                            options={availableClasses}
-                            value={patternProp.schemaRef || null}
-                            onChange={(_, newValue) => {
-                              const newPatternProps = [...formData.patternProperties];
-                              newPatternProps[index] = { ...newPatternProps[index], schemaRef: newValue || '' };
-                              setFormData(prev => ({ ...prev, patternProperties: newPatternProps }));
-                            }}
-                            disabled={isReadOnly}
-                            size="small"
-                            sx={{ flex: 1 }}
-                            renderInput={(params) => (
-                              <TextField {...params} label="Schema" placeholder="Select class..." />
+                {/* Tags */}
+                {projectId && projectTags && projectTags.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <Label>Tags</Label>
+                    <div className="flex flex-wrap gap-2 p-2 border border-gray-200 dark:border-gray-700 rounded-md min-h-[38px]">
+                      {formData.selectedTags.map((tagId) => {
+                        const tag = projectTags.find((t: any) => t.id === tagId);
+                        return tag ? (
+                          <Badge key={tagId} variant="secondary" className="gap-1">
+                            <span style={{ color: tag.color }}>●</span>
+                            {tag.name}
+                            {!isReadOnly && (
+                              <button type="button" onClick={() => setFormData(prev => ({ ...prev, selectedTags: prev.selectedTags.filter(id => id !== tagId) }))}>
+                                <X className="h-3 w-3" />
+                              </button>
                             )}
-                          />
-                        )}
-                      </Box>
-
-                      {!isReadOnly && (
-                        <Button
-                          size="small"
-                          color="error"
-                          onClick={() => {
-                            const newPatternProps = formData.patternProperties.filter((_, i) => i !== index);
-                            setFormData(prev => ({ ...prev, patternProperties: newPatternProps }));
+                          </Badge>
+                        ) : null;
+                      })}
+                      {!isReadOnly && projectTags.filter((t: any) => !formData.selectedTags.includes(t.id)).length > 0 && (
+                        <Select
+                          value=""
+                          onValueChange={(tagId) => {
+                            if (tagId && !formData.selectedTags.includes(tagId)) {
+                              setFormData(prev => ({ ...prev, selectedTags: [...prev.selectedTags, tagId] }));
+                            }
                           }}
-                          sx={{ minWidth: 'auto', p: 1 }}
                         >
-                          <Trash2 size={16} />
-                        </Button>
+                          <SelectTrigger className="w-auto h-7 text-xs border-dashed">
+                            <TagIcon className="h-3 w-3 mr-1" />
+                            Add Tag
+                          </SelectTrigger>
+                          <SelectContent>
+                            {projectTags.filter((t: any) => !formData.selectedTags.includes(t.id)).map((tag: any) => (
+                              <SelectItem key={tag.id} value={tag.id}>
+                                <span className="flex items-center gap-2">
+                                  <span style={{ color: tag.color }}>●</span>
+                                  {tag.name}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       )}
-                    </Box>
-                  ))}
-                </Box>
-              )}
-            </Box>
-
-            {/* ═══════════════════════════════════════════════════════════════════════════
-                SECTION 2.6: Dependent Schemas
-                ═══════════════════════════════════════════════════════════════════════════ */}
-            <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', bgcolor: isDark ? '#0f172a' : '#fafafa' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Link size={18} style={{ color: '#6366f1' }} />
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: isDark ? '#e2e8f0' : 'inherit' }}>
-                    Dependent Schemas
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: isDark ? '#94a3b8' : 'text.secondary', ml: 1 }}>
-                    (Optional)
-                  </Typography>
-                </Box>
-                {!isReadOnly && (
-                  <Button
-                    size="small"
-                    startIcon={<Plus size={14} />}
-                    onClick={() => setFormData(prev => ({
-                      ...prev,
-                      dependentSchemas: [...prev.dependentSchemas, { triggerProperty: '', schemaRef: '' }]
-                    }))}
-                    variant="outlined"
-                  >
-                    Add Dependency
-                  </Button>
+                    </div>
+                  </div>
                 )}
-              </Box>
-              <Typography variant="caption" sx={{ display: 'block', mb: 2, color: isDark ? '#94a3b8' : 'text.secondary' }}>
-                When a trigger property is present, apply additional schema constraints. Example: if "paymentMethod" is present, require credit card validation schema.
-              </Typography>
+              </div>
 
-              {formData.dependentSchemas.length === 0 ? (
-                <Box sx={{ p: 3, textAlign: 'center', bgcolor: isDark ? '#1e293b' : '#f8fafc', borderRadius: 2, border: '1px dashed', borderColor: isDark ? '#475569' : '#cbd5e1' }}>
-                  <Typography variant="body2" sx={{ color: isDark ? '#94a3b8' : 'text.secondary' }}>
-                    No dependent schemas defined. Click "Add Dependency" to create one.
-                  </Typography>
-                </Box>
-              ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {formData.dependentSchemas.map((depSchema, index) => (
-                    <Box
-                      key={index}
-                      sx={{
-                        p: 2,
-                        bgcolor: isDark ? '#1e293b' : 'white',
-                        borderRadius: 2,
-                        border: 1,
-                        borderColor: 'divider',
-                        display: 'grid',
-                        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr auto' },
-                        gap: 2,
-                        alignItems: 'start'
-                      }}
-                    >
-                      <TextField
-                        label="Trigger Property"
-                        value={depSchema.triggerProperty}
-                        onChange={(e) => {
-                          const newDeps = [...formData.dependentSchemas];
-                          newDeps[index] = { ...newDeps[index], triggerProperty: e.target.value };
-                          setFormData(prev => ({ ...prev, dependentSchemas: newDeps }));
-                        }}
-                        disabled={isReadOnly}
-                        size="small"
-                        placeholder="e.g., paymentMethod"
-                        helperText="Property name that triggers the schema"
-                      />
+              {/* SECTION 2: Schema Settings */}
+              <div className={`p-6 border-b border-gray-200 dark:border-gray-700 ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Settings size={18} className="text-indigo-500" />
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Schema Settings</h3>
+                </div>
 
-                      <Autocomplete
-                        options={availableClasses}
-                        value={depSchema.schemaRef || null}
-                        onChange={(_, newValue) => {
-                          const newDeps = [...formData.dependentSchemas];
-                          newDeps[index] = { ...newDeps[index], schemaRef: newValue || '' };
-                          setFormData(prev => ({ ...prev, dependentSchemas: newDeps }));
-                        }}
-                        disabled={isReadOnly}
-                        size="small"
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Required Schema"
-                            placeholder="Select class..."
-                            helperText="Schema to apply when property is present"
-                          />
-                        )}
-                      />
-
-                      {!isReadOnly && (
-                        <Button
-                          size="small"
-                          color="error"
-                          onClick={() => {
-                            const newDeps = formData.dependentSchemas.filter((_, i) => i !== index);
-                            setFormData(prev => ({ ...prev, dependentSchemas: newDeps }));
-                          }}
-                          sx={{ minWidth: 'auto', p: 1 }}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      )}
-                    </Box>
-                  ))}
-                </Box>
-              )}
-            </Box>
-
-            {/* ═══════════════════════════════════════════════════════════════════════════
-                SECTION 2.7: Dependent Required
-                ═══════════════════════════════════════════════════════════════════════════ */}
-            <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <ListChecks size={18} style={{ color: '#6366f1' }} />
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: isDark ? '#e2e8f0' : 'inherit' }}>
-                    Dependent Required
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: isDark ? '#94a3b8' : 'text.secondary', ml: 1 }}>
-                    (Optional)
-                  </Typography>
-                </Box>
-                {!isReadOnly && (
-                  <Button
-                    size="small"
-                    startIcon={<Plus size={14} />}
-                    onClick={() => setFormData(prev => ({
-                      ...prev,
-                      dependentRequired: [...prev.dependentRequired, { triggerProperty: '', requiredProperties: [] }]
-                    }))}
-                    variant="outlined"
-                  >
-                    Add Rule
-                  </Button>
-                )}
-              </Box>
-              <Typography variant="caption" sx={{ display: 'block', mb: 2, color: isDark ? '#94a3b8' : 'text.secondary' }}>
-                When a trigger property is present, other properties become required. Example: if "billingAddress" is present, "billingCity" and "billingZip" become required.
-              </Typography>
-
-              {formData.dependentRequired.length === 0 ? (
-                <Box sx={{ p: 3, textAlign: 'center', bgcolor: isDark ? '#1e293b' : '#f8fafc', borderRadius: 2, border: '1px dashed', borderColor: isDark ? '#475569' : '#cbd5e1' }}>
-                  <Typography variant="body2" sx={{ color: isDark ? '#94a3b8' : 'text.secondary' }}>
-                    No dependent required rules defined. Click "Add Rule" to create one.
-                  </Typography>
-                </Box>
-              ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {formData.dependentRequired.map((depReq, index) => (
-                    <Box
-                      key={index}
-                      sx={{
-                        p: 2,
-                        bgcolor: isDark ? '#1e293b' : 'white',
-                        borderRadius: 2,
-                        border: 1,
-                        borderColor: 'divider',
-                        display: 'grid',
-                        gridTemplateColumns: { xs: '1fr', md: '1fr 2fr auto' },
-                        gap: 2,
-                        alignItems: 'start'
-                      }}
-                    >
-                      <TextField
-                        label="Trigger Property"
-                        value={depReq.triggerProperty}
-                        onChange={(e) => {
-                          const newDeps = [...formData.dependentRequired];
-                          newDeps[index] = { ...newDeps[index], triggerProperty: e.target.value };
-                          setFormData(prev => ({ ...prev, dependentRequired: newDeps }));
-                        }}
-                        disabled={isReadOnly}
-                        size="small"
-                        placeholder="e.g., billingAddress"
-                        helperText="Property that triggers requirement"
-                      />
-
-                      <TextField
-                        label="Required Properties"
-                        value={depReq.requiredProperties.join(', ')}
-                        onChange={(e) => {
-                          const newDeps = [...formData.dependentRequired];
-                          const props = e.target.value.split(',').map(p => p.trim()).filter(p => p);
-                          newDeps[index] = { ...newDeps[index], requiredProperties: props };
-                          setFormData(prev => ({ ...prev, dependentRequired: newDeps }));
-                        }}
-                        disabled={isReadOnly}
-                        size="small"
-                        placeholder="e.g., billingCity, billingZip, billingCountry"
-                        helperText="Comma-separated list of properties that become required"
-                      />
-
-                      {!isReadOnly && (
-                        <Button
-                          size="small"
-                          color="error"
-                          onClick={() => {
-                            const newDeps = formData.dependentRequired.filter((_, i) => i !== index);
-                            setFormData(prev => ({ ...prev, dependentRequired: newDeps }));
-                          }}
-                          sx={{ minWidth: 'auto', p: 1 }}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      )}
-                    </Box>
-                  ))}
-                </Box>
-              )}
-            </Box>
-
-            {/* ═══════════════════════════════════════════════════════════════════════════
-                SECTION 3: Composition/Inheritance
-                ═══════════════════════════════════════════════════════════════════════════ */}
-            <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <Layers size={18} style={{ color: '#6366f1' }} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: isDark ? '#e2e8f0' : 'inherit' }}>
-                  Composition & Inheritance
-                </Typography>
-                <Typography variant="caption" sx={{ color: isDark ? '#94a3b8' : 'text.secondary', ml: 1 }}>
-                  (Optional)
-                </Typography>
-              </Box>
-              <Typography variant="caption" sx={{ display: 'block', mb: 2, color: isDark ? '#94a3b8' : 'text.secondary' }}>
-                Define relationships with other classes using OpenAPI composition keywords
-              </Typography>
-
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(3, 1fr)' }, gap: 2 }}>
-                {/* allOf */}
-                <Box sx={{ p: 2, bgcolor: isDark ? '#312e81' : '#eef2ff', borderRadius: 2, border: '1px solid #c7d2fe' }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: isDark ? '#c7d2fe' : '#4338ca' }}>
-                    allOf (Inheritance)
-                  </Typography>
-                  <Autocomplete
-                    multiple
-                    options={availableClasses}
-                    value={formData.allOf}
-                    onChange={(_, newValue) => setFormData(prev => ({ ...prev, allOf: newValue }))}
-                    disabled={isReadOnly}
-                    size="small"
-                    renderTags={(value, getTagProps) =>
-                      value.map((name, index) => (
-                        <Chip label={name} color="primary" size="small" {...getTagProps({ index })} />
-                      ))
-                    }
-                    renderInput={(params) => (
-                      <TextField {...params} placeholder="Select classes..." size="small" />
-                    )}
-                  />
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                    Must match ALL listed schemas
-                  </Typography>
-                </Box>
-
-                {/* anyOf */}
-                <Box sx={{ p: 2, bgcolor: isDark ? '#78350f' : '#fef3c7', borderRadius: 2, border: '1px solid #fcd34d' }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: isDark ? '#fcd34d' : '#b45309' }}>
-                    anyOf (Alternatives)
-                  </Typography>
-                  <Autocomplete
-                    multiple
-                    options={availableClasses}
-                    value={formData.anyOf}
-                    onChange={(_, newValue) => setFormData(prev => ({ ...prev, anyOf: newValue }))}
-                    disabled={isReadOnly}
-                    size="small"
-                    renderTags={(value, getTagProps) =>
-                      value.map((name, index) => (
-                        <Chip label={name} color="warning" size="small" {...getTagProps({ index })} />
-                      ))
-                    }
-                    renderInput={(params) => (
-                      <TextField {...params} placeholder="Select classes..." size="small" />
-                    )}
-                  />
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                    Must match AT LEAST one schema
-                  </Typography>
-                </Box>
-
-                {/* oneOf */}
-                <Box sx={{ p: 2, bgcolor: isDark ? '#581c87' : '#f3e8ff', borderRadius: 2, border: '1px solid #d8b4fe' }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: isDark ? '#e9d5ff' : '#7c3aed' }}>
-                    oneOf (Exclusive)
-                  </Typography>
-                  <Autocomplete
-                    multiple
-                    options={availableClasses}
-                    value={formData.oneOf}
-                    onChange={(_, newValue) => setFormData(prev => ({ ...prev, oneOf: newValue }))}
-                    disabled={isReadOnly}
-                    size="small"
-                    renderTags={(value, getTagProps) =>
-                      value.map((name, index) => (
-                        <Chip label={name} color="secondary" size="small" {...getTagProps({ index })} />
-                      ))
-                    }
-                    renderInput={(params) => (
-                      <TextField {...params} placeholder="Select classes..." size="small" />
-                    )}
-                  />
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                    Must match EXACTLY one schema
-                  </Typography>
-                </Box>
-              </Box>
-
-              {/* Discriminator - Only show when composition is used */}
-              {(formData.allOf.length > 0 || formData.anyOf.length > 0 || formData.oneOf.length > 0) && (
-                <Box sx={{ mt: 3, p: 2, bgcolor: isDark ? '#1e293b' : '#f8fafc', borderRadius: 2, border: isDark ? '1px dashed #475569' : '1px dashed #cbd5e1' }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: isDark ? '#e2e8f0' : 'inherit' }}>
-                    Discriminator Configuration
-                  </Typography>
-                  <Typography variant="caption" sx={{ display: 'block', mb: 2, color: isDark ? '#94a3b8' : 'text.secondary' }}>
-                    Helps tools understand which schema variant to use for polymorphic types
-                  </Typography>
-
-                  <TextField
-                    label="Discriminator Property"
-                    fullWidth
-                    size="small"
-                    placeholder="e.g., type, petType, kind"
-                    value={formData.discriminatorProperty}
-                    onChange={(e) => setFormData(prev => ({ ...prev, discriminatorProperty: e.target.value }))}
-                    helperText="Property name that indicates which schema variant applies"
-                    sx={{ mb: 2 }}
-                    disabled={isReadOnly}
-                  />
-
-                  {formData.discriminatorProperty && (
-                    <>
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={formData.discriminatorUseAuto}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Additional Properties */}
+                  <div className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <h4 className="text-sm font-semibold mb-3 text-gray-900 dark:text-gray-100">Additional Properties</h4>
+                    <div className="space-y-2">
+                      {(['default', 'allow', 'disallow', 'schema'] as const).map((value) => (
+                        <label key={value} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="additionalPropertiesType"
+                            value={value}
+                            checked={formData.additionalPropertiesType === value}
                             onChange={(e) => {
-                              const useAuto = e.target.checked;
+                              const val = e.target.value as typeof value;
                               setFormData(prev => ({
                                 ...prev,
-                                discriminatorUseAuto: useAuto,
-                                discriminatorMapping: useAuto ? {} : prev.discriminatorMapping
+                                additionalPropertiesType: val,
+                                additionalProperties: val === 'default' ? null : val === 'allow' ? true : val === 'disallow' ? false : null,
+                                additionalPropertiesSchema: val === 'schema' ? prev.additionalPropertiesSchema : ''
                               }));
                             }}
                             disabled={isReadOnly}
-                            size="small"
+                            className="w-4 h-4 text-indigo-600"
                           />
-                        }
-                        label={<Typography variant="body2">Use automatic mapping (based on schema names)</Typography>}
-                        sx={{ mb: 2 }}
-                      />
-
-                      {!formData.discriminatorUseAuto && (
-                        <Box sx={{ p: 2, bgcolor: isDark ? '#0f172a' : 'white', borderRadius: 1, border: 1, borderColor: 'divider' }}>
-                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: isDark ? '#e2e8f0' : 'inherit' }}>
-                            Explicit Mapping
-                          </Typography>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            {(() => {
-                              const schemas = formData.oneOf.length > 0 ? formData.oneOf :
-                                            formData.anyOf.length > 0 ? formData.anyOf :
-                                            formData.allOf;
-
-                              return schemas.map((schemaName) => {
-                                const currentValue = Object.entries(formData.discriminatorMapping)
-                                  .find(([_, name]) => name === schemaName)?.[0] || '';
-
-                                return (
-                                  <Box key={schemaName} sx={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 1, alignItems: 'center' }}>
-                                    <TextField
-                                      size="small"
-                                      placeholder={`e.g., ${schemaName.toLowerCase()}`}
-                                      value={currentValue}
-                                      onChange={(e) => {
-                                        const newValue = e.target.value;
-                                        setFormData(prev => {
-                                          const newMapping = { ...prev.discriminatorMapping };
-                                          Object.keys(newMapping).forEach(key => {
-                                            if (newMapping[key] === schemaName) {
-                                              delete newMapping[key];
-                                            }
-                                          });
-                                          if (newValue.trim()) {
-                                            newMapping[newValue.trim()] = schemaName;
-                                          }
-                                          return { ...prev, discriminatorMapping: newMapping };
-                                        });
-                                      }}
-                                      disabled={isReadOnly}
-                                      label="Value"
-                                    />
-                                    <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>→</Typography>
-                                    <Box sx={{ p: 1, bgcolor: 'primary.lighter', borderRadius: 1, border: 1, borderColor: 'primary.main', textAlign: 'center' }}>
-                                      <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{schemaName}</Typography>
-                                    </Box>
-                                  </Box>
-                                );
-                              });
-                            })()}
-                          </Box>
-
-                          {(() => {
-                            const schemas = formData.oneOf.length > 0 ? formData.oneOf :
-                                          formData.anyOf.length > 0 ? formData.anyOf :
-                                          formData.allOf;
-                            const mappedSchemas = new Set(Object.values(formData.discriminatorMapping));
-                            const unmappedSchemas = schemas.filter(s => !mappedSchemas.has(s));
-
-                            return unmappedSchemas.length > 0 && (
-                              <Alert severity="warning" sx={{ mt: 2 }} icon={<AlertTriangle size={16} />}>
-                                <Typography variant="caption">
-                                  <strong>Unmapped:</strong> {unmappedSchemas.join(', ')}
-                                </Typography>
-                              </Alert>
-                            );
-                          })()}
-                        </Box>
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                            {value === 'default' && 'Not specified (default)'}
+                            {value === 'allow' && 'Allow Any (true)'}
+                            {value === 'disallow' && 'Disallow (false)'}
+                            {value === 'schema' && 'Must Match Schema'}
+                          </span>
+                        </label>
+                      ))}
+                      {formData.additionalPropertiesType === 'schema' && (
+                        <div className="mt-2 pl-6">
+                          <Select
+                            value={formData.additionalPropertiesSchema || '__none__'}
+                            onValueChange={(val) => setFormData(prev => ({ ...prev, additionalPropertiesSchema: val === '__none__' ? '' : val }))}
+                            disabled={isReadOnly}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select a class..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">Select a class...</SelectItem>
+                              {availableClasses.map((cls) => (
+                                <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       )}
-                    </>
+                    </div>
+                  </div>
+
+                  {/* Deprecation Status */}
+                  <div className={`p-4 rounded-lg border transition-all ${formData.deprecated ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700'}`}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Checkbox
+                        id="deprecated"
+                        checked={formData.deprecated}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, deprecated: !!checked }))}
+                        disabled={isReadOnly}
+                      />
+                      <label htmlFor="deprecated" className="text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer flex items-center gap-2">
+                        <AlertTriangle size={16} className={formData.deprecated ? 'text-amber-600' : 'text-gray-400'} />
+                        Mark as Deprecated
+                      </label>
+                    </div>
+                    {formData.deprecated && (
+                      <Textarea
+                        value={formData.deprecationMessage}
+                        onChange={(e) => setFormData(prev => ({ ...prev, deprecationMessage: e.target.value }))}
+                        placeholder="e.g., Use NewClass instead. Will be removed in v2.0."
+                        disabled={isReadOnly}
+                        rows={2}
+                        className="mt-2"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2.5: Pattern Properties */}
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Regex size={18} className="text-indigo-500" />
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Pattern Properties</h3>
+                    <span className="text-xs text-gray-500">(Optional)</span>
+                  </div>
+                  {!isReadOnly && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        patternProperties: [...prev.patternProperties, { pattern: '', schemaType: 'string', schemaRef: '' }]
+                      }))}
+                    >
+                      <Plus size={14} className="mr-1" /> Add Pattern
+                    </Button>
                   )}
-                </Box>
-              )}
-            </Box>
+                </div>
+                <p className="text-xs text-gray-500 mb-4">Define regex patterns that map dynamic property names to schemas.</p>
 
-            {/* ═══════════════════════════════════════════════════════════════════════════
-                SECTION 3.5: Conditional Schema (if/then/else)
-                ═══════════════════════════════════════════════════════════════════════════ */}
-            <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', bgcolor: isDark ? '#0f172a' : '#fafafa' }}>
-              <ConditionalSchemaBuilder
-                rules={formData.conditionalRules}
-                onChange={(rules) => setFormData(prev => ({ ...prev, conditionalRules: rules }))}
-                availableProperties={
-                  editingClassData?.properties?.map((p: any) => p.name) || []
-                }
-                disabled={isReadOnly}
-              />
-            </Box>
+                {formData.patternProperties.length === 0 ? (
+                  <div className="p-6 text-center bg-gray-50 dark:bg-slate-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
+                    <p className="text-sm text-gray-500">No pattern properties defined.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {formData.patternProperties.map((patternProp, index) => (
+                      <div key={index} className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-700 flex gap-3 items-end">
+                        <div className="flex-1 flex flex-col md:flex-row gap-3">
+                          <div className="flex-1 space-y-1">
+                            <Label>Regex Pattern</Label>
+                            <Input
+                              value={patternProp.pattern}
+                              onChange={(e) => {
+                                const newPatternProps = [...formData.patternProperties];
+                                newPatternProps[index] = { ...newPatternProps[index], pattern: e.target.value };
+                                setFormData(prev => ({ ...prev, patternProperties: newPatternProps }));
+                              }}
+                              disabled={isReadOnly}
+                              placeholder="^x-.*$"
+                              className="font-mono"
+                            />
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            <Label>Type</Label>
+                            <Select
+                              value={patternProp.schemaType}
+                              onValueChange={(val) => {
+                                const newPatternProps = [...formData.patternProperties];
+                                newPatternProps[index] = { ...newPatternProps[index], schemaType: val as any, schemaRef: val === 'ref' ? patternProp.schemaRef : '' };
+                                setFormData(prev => ({ ...prev, patternProperties: newPatternProps }));
+                              }}
+                              disabled={isReadOnly}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="string">String</SelectItem>
+                                <SelectItem value="number">Number</SelectItem>
+                                <SelectItem value="integer">Integer</SelectItem>
+                                <SelectItem value="boolean">Boolean</SelectItem>
+                                <SelectItem value="object">Object</SelectItem>
+                                <SelectItem value="array">Array</SelectItem>
+                                <SelectItem value="ref">Schema Reference</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {patternProp.schemaType === 'ref' && (
+                            <div className="flex-1 space-y-1">
+                              <Label>Schema</Label>
+                              <Select
+                                value={patternProp.schemaRef || '__none__'}
+                                onValueChange={(val) => {
+                                  const newPatternProps = [...formData.patternProperties];
+                                  newPatternProps[index] = { ...newPatternProps[index], schemaRef: val === '__none__' ? '' : val };
+                                  setFormData(prev => ({ ...prev, patternProperties: newPatternProps }));
+                                }}
+                                disabled={isReadOnly}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="__none__">Select...</SelectItem>
+                                  {availableClasses.map((cls) => (
+                                    <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                        </div>
+                        {!isReadOnly && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 shrink-0 h-9 w-9"
+                            onClick={() => {
+                              const newPatternProps = formData.patternProperties.filter((_, i) => i !== index);
+                              setFormData(prev => ({ ...prev, patternProperties: newPatternProps }));
+                            }}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-            {/* ═══════════════════════════════════════════════════════════════════════════
-                SECTION 4: Documentation & Extensions (Two-column)
-                ═══════════════════════════════════════════════════════════════════════════ */}
-            <Box sx={{ p: 3, bgcolor: isDark ? '#0f172a' : '#fafafa' }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-                {/* External Documentation */}
-                <Box sx={{ p: 2, bgcolor: isDark ? '#1e293b' : 'white', borderRadius: 2, border: 1, borderColor: 'divider' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <ExternalLink size={16} style={{ color: '#6366f1' }} />
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: isDark ? '#e2e8f0' : 'inherit' }}>
-                      External Documentation
-                    </Typography>
-                  </Box>
+              {/* SECTION 2.6: Dependent Schemas */}
+              <div className={`p-6 border-b border-gray-200 dark:border-gray-700 ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Link size={18} className="text-indigo-500" />
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Dependent Schemas</h3>
+                    <span className="text-xs text-gray-500">(Optional)</span>
+                  </div>
+                  {!isReadOnly && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        dependentSchemas: [...prev.dependentSchemas, { triggerProperty: '', schemaRef: '' }]
+                      }))}
+                    >
+                      <Plus size={14} className="mr-1" /> Add Dependency
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mb-4">When a trigger property is present, apply additional schema constraints.</p>
 
-                  <TextField
-                    label="Documentation URL"
-                    fullWidth
-                    type="url"
-                    size="small"
-                    value={formData.externalDocsUrl}
-                    onChange={(e) => setFormData(prev => ({ ...prev, externalDocsUrl: e.target.value }))}
-                    placeholder="https://docs.example.com/..."
-                    sx={{ mb: 2 }}
-                    disabled={isReadOnly}
-                    InputProps={{
-                      endAdornment: formData.externalDocsUrl.trim() && (
-                        <Button
-                          size="small"
-                          onClick={() => {
-                            const url = formData.externalDocsUrl.trim();
-                            if (url) window.open(url, '_blank', 'noopener,noreferrer');
-                          }}
+                {formData.dependentSchemas.length === 0 ? (
+                  <div className="p-6 text-center bg-white dark:bg-slate-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
+                    <p className="text-sm text-gray-500">No dependent schemas defined.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {formData.dependentSchemas.map((depSchema, index) => (
+                      <div key={index} className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-700 flex gap-3 items-end">
+                        <div className="flex-1 flex flex-col md:flex-row gap-3">
+                          <div className="flex-1 space-y-1">
+                            <Label>Trigger Property</Label>
+                            <Input
+                              value={depSchema.triggerProperty}
+                              onChange={(e) => {
+                                const newDeps = [...formData.dependentSchemas];
+                                newDeps[index] = { ...newDeps[index], triggerProperty: e.target.value };
+                                setFormData(prev => ({ ...prev, dependentSchemas: newDeps }));
+                              }}
+                              disabled={isReadOnly}
+                              placeholder="e.g., paymentMethod"
+                            />
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            <Label>Required Schema</Label>
+                            <Select
+                              value={depSchema.schemaRef || '__none__'}
+                              onValueChange={(val) => {
+                                const newDeps = [...formData.dependentSchemas];
+                                newDeps[index] = { ...newDeps[index], schemaRef: val === '__none__' ? '' : val };
+                                setFormData(prev => ({ ...prev, dependentSchemas: newDeps }));
+                              }}
+                              disabled={isReadOnly}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select class..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">Select class...</SelectItem>
+                                {availableClasses.map((cls) => (
+                                  <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        {!isReadOnly && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 shrink-0 h-9 w-9"
+                            onClick={() => {
+                              const newDeps = formData.dependentSchemas.filter((_, i) => i !== index);
+                              setFormData(prev => ({ ...prev, dependentSchemas: newDeps }));
+                            }}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* SECTION 2.7: Dependent Required */}
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <ListChecks size={18} className="text-indigo-500" />
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Dependent Required</h3>
+                    <span className="text-xs text-gray-500">(Optional)</span>
+                  </div>
+                  {!isReadOnly && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        dependentRequired: [...prev.dependentRequired, { triggerProperty: '', requiredProperties: [] }]
+                      }))}
+                    >
+                      <Plus size={14} className="mr-1" /> Add Rule
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mb-4">When a trigger property is present, other properties become required.</p>
+
+                {formData.dependentRequired.length === 0 ? (
+                  <div className="p-6 text-center bg-gray-50 dark:bg-slate-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
+                    <p className="text-sm text-gray-500">No dependent required rules defined.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {formData.dependentRequired.map((depReq, index) => (
+                      <div key={index} className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-700 flex gap-3 items-end">
+                        <div className="flex-1 flex flex-col md:flex-row gap-3">
+                          <div className="flex-1 space-y-1">
+                            <Label>Trigger Property</Label>
+                            <Input
+                              value={depReq.triggerProperty}
+                              onChange={(e) => {
+                                const newDeps = [...formData.dependentRequired];
+                                newDeps[index] = { ...newDeps[index], triggerProperty: e.target.value };
+                                setFormData(prev => ({ ...prev, dependentRequired: newDeps }));
+                              }}
+                              disabled={isReadOnly}
+                              placeholder="e.g., billingAddress"
+                            />
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            <Label>Required Properties (comma-separated)</Label>
+                            <Input
+                              value={depReq.requiredProperties.join(', ')}
+                              onChange={(e) => {
+                                const newDeps = [...formData.dependentRequired];
+                                const props = e.target.value.split(',').map(p => p.trim()).filter(p => p);
+                                newDeps[index] = { ...newDeps[index], requiredProperties: props };
+                                setFormData(prev => ({ ...prev, dependentRequired: newDeps }));
+                              }}
+                              disabled={isReadOnly}
+                              placeholder="e.g., billingCity, billingZip"
+                            />
+                          </div>
+                        </div>
+                        {!isReadOnly && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 shrink-0 h-9 w-9"
+                            onClick={() => {
+                              const newDeps = formData.dependentRequired.filter((_, i) => i !== index);
+                              setFormData(prev => ({ ...prev, dependentRequired: newDeps }));
+                            }}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* SECTION 3: Composition & Inheritance */}
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-2">
+                  <Layers size={18} className="text-indigo-500" />
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Composition & Inheritance</h3>
+                  <span className="text-xs text-gray-500">(Optional)</span>
+                </div>
+                <p className="text-xs text-gray-500 mb-4">Define relationships with other classes using OpenAPI composition keywords</p>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  {/* allOf */}
+                  <div className={`p-4 rounded-lg border ${isDark ? 'bg-indigo-900/30 border-indigo-700' : 'bg-indigo-50 border-indigo-200'}`}>
+                    <h4 className={`text-sm font-semibold mb-2 ${isDark ? 'text-indigo-300' : 'text-indigo-700'}`}>allOf (Inheritance)</h4>
+                    <MultiSelect
+                      options={availableClasses}
+                      value={formData.allOf}
+                      onChange={(newValue) => setFormData(prev => ({ ...prev, allOf: newValue }))}
+                      placeholder="Select classes..."
+                      disabled={isReadOnly}
+                      colorScheme="indigo"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">Must match ALL listed schemas</p>
+                  </div>
+
+                  {/* anyOf */}
+                  <div className={`p-4 rounded-lg border ${isDark ? 'bg-amber-900/30 border-amber-700' : 'bg-amber-50 border-amber-200'}`}>
+                    <h4 className={`text-sm font-semibold mb-2 ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>anyOf (Alternatives)</h4>
+                    <MultiSelect
+                      options={availableClasses}
+                      value={formData.anyOf}
+                      onChange={(newValue) => setFormData(prev => ({ ...prev, anyOf: newValue }))}
+                      placeholder="Select classes..."
+                      disabled={isReadOnly}
+                      colorScheme="amber"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">Must match AT LEAST one schema</p>
+                  </div>
+
+                  {/* oneOf */}
+                  <div className={`p-4 rounded-lg border ${isDark ? 'bg-purple-900/30 border-purple-700' : 'bg-purple-50 border-purple-200'}`}>
+                    <h4 className={`text-sm font-semibold mb-2 ${isDark ? 'text-purple-300' : 'text-purple-700'}`}>oneOf (Exclusive)</h4>
+                    <MultiSelect
+                      options={availableClasses}
+                      value={formData.oneOf}
+                      onChange={(newValue) => setFormData(prev => ({ ...prev, oneOf: newValue }))}
+                      placeholder="Select classes..."
+                      disabled={isReadOnly}
+                      colorScheme="purple"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">Must match EXACTLY one schema</p>
+                  </div>
+                </div>
+
+                {/* Discriminator */}
+                {(formData.allOf.length > 0 || formData.anyOf.length > 0 || formData.oneOf.length > 0) && (
+                  <div className="mt-4 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
+                    <h4 className="text-sm font-semibold mb-2 text-gray-900 dark:text-gray-100">Discriminator Configuration</h4>
+                    <p className="text-xs text-gray-500 mb-3">Helps tools understand which schema variant to use for polymorphic types</p>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <Label>Discriminator Property</Label>
+                        <Input
+                          value={formData.discriminatorProperty}
+                          onChange={(e) => setFormData(prev => ({ ...prev, discriminatorProperty: e.target.value }))}
+                          placeholder="e.g., type, petType, kind"
                           disabled={isReadOnly}
-                          sx={{ minWidth: 'auto', px: 1 }}
-                        >
-                          <ExternalLink size={14} />
-                        </Button>
-                      ),
-                    }}
-                  />
+                        />
+                      </div>
+                      {formData.discriminatorProperty && (
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="discriminatorUseAuto"
+                            checked={formData.discriminatorUseAuto}
+                            onCheckedChange={(checked) => setFormData(prev => ({
+                              ...prev,
+                              discriminatorUseAuto: !!checked,
+                              discriminatorMapping: checked ? {} : prev.discriminatorMapping
+                            }))}
+                            disabled={isReadOnly}
+                          />
+                          <label htmlFor="discriminatorUseAuto" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                            Use automatic mapping (based on schema names)
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
-                  <TextField
-                    label="Description"
-                    fullWidth
-                    multiline
-                    rows={2}
-                    size="small"
-                    value={formData.externalDocsDescription}
-                    onChange={(e) => setFormData(prev => ({ ...prev, externalDocsDescription: e.target.value }))}
-                    placeholder="Brief description of external docs"
-                    disabled={isReadOnly}
-                  />
-                </Box>
+              {/* SECTION 3.5: Conditional Schema */}
+              <div className={`p-6 border-b border-gray-200 dark:border-gray-700 ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}>
+                <ConditionalSchemaBuilder
+                  rules={formData.conditionalRules}
+                  onChange={(rules) => setFormData(prev => ({ ...prev, conditionalRules: rules }))}
+                  availableProperties={editingClassData?.properties?.map((p: any) => p.name) || []}
+                  disabled={isReadOnly}
+                />
+              </div>
 
-                {/* Extensions */}
-                <Box sx={{ p: 2, bgcolor: isDark ? '#1e293b' : 'white', borderRadius: 2, border: 1, borderColor: 'divider' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <Code size={16} style={{ color: '#6366f1' }} />
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: isDark ? '#e2e8f0' : 'inherit' }}>
-                      Custom Extensions
-                    </Typography>
-                  </Box>
-                  <ExtensionsEditor
-                    value={formData.extensions}
-                    onChange={(extensions) => setFormData(prev => ({ ...prev, extensions }))}
-                    disabled={isReadOnly}
-                    size="small"
-                  />
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-        )}
+              {/* SECTION 4: Documentation & Extensions */}
+              <div className={`p-6 ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* External Documentation */}
+                  <div className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2 mb-3">
+                      <ExternalLink size={16} className="text-indigo-500" />
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">External Documentation</h4>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <Label>Documentation URL</Label>
+                        <Input
+                          type="url"
+                          value={formData.externalDocsUrl}
+                          onChange={(e) => setFormData(prev => ({ ...prev, externalDocsUrl: e.target.value }))}
+                          placeholder="https://docs.example.com/..."
+                          disabled={isReadOnly}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Description</Label>
+                        <Textarea
+                          value={formData.externalDocsDescription}
+                          onChange={(e) => setFormData(prev => ({ ...prev, externalDocsDescription: e.target.value }))}
+                          placeholder="Brief description of external docs"
+                          disabled={isReadOnly}
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  </div>
 
-        {/* Tab 1: JSON View */}
-        {tabValue === 1 && (
-          <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Box sx={{ display: 'flex', gap: 1, p: 2, borderBottom: 1, borderColor: 'divider' }}>
-              <Button
-                size="small"
-                startIcon={copied ? <Check size={16} /> : <Copy size={16} />}
-                onClick={handleCopy}
-                variant="outlined"
-                disabled={copied || loadingOpenApiDoc || !openApiDoc}
-              >
+                  {/* Extensions */}
+                  <div className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Code size={16} className="text-indigo-500" />
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Custom Extensions</h4>
+                    </div>
+                    <ExtensionsEditor
+                      value={formData.extensions}
+                      onChange={(extensions) => setFormData(prev => ({ ...prev, extensions }))}
+                      disabled={isReadOnly}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* JSON Tab */}
+          <TabsContent value="json" className="flex-1 flex flex-col mt-0 overflow-hidden">
+            <div className="flex gap-2 p-4 border-b border-gray-200 dark:border-gray-700">
+              <Button size="sm" variant="outline" onClick={handleCopy} disabled={copied || loadingOpenApiDoc || !openApiDoc}>
+                {copied ? <Check size={16} className="mr-1" /> : <Copy size={16} className="mr-1" />}
                 {copied ? 'Copied' : 'Copy'}
               </Button>
-              <Button
-                size="small"
-                startIcon={<Download size={16} />}
-                onClick={handleExport}
-                variant="contained"
-                disabled={loadingOpenApiDoc || !openApiDoc}
-              >
-                Export
+              <Button size="sm" onClick={handleExport} disabled={loadingOpenApiDoc || !openApiDoc}>
+                <Download size={16} className="mr-1" /> Export
               </Button>
-            </Box>
-            <Box sx={{ flex: 1 }}>
+            </div>
+            <div className="flex-1">
               <Editor
                 height="100%"
                 language="json"
                 value={schemaContent}
-                theme="vs-dark"
-                options={{
-                  readOnly: true,
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  fontSize: 13,
-                  wordWrap: 'on',
-                  lineNumbers: 'on',
-                  renderWhitespace: 'none',
-                  folding: true
-                }}
+                theme={isDark ? 'vs-dark' : 'light'}
+                options={{ readOnly: true, minimap: { enabled: false }, scrollBeyondLastLine: false, fontSize: 13, wordWrap: 'on' }}
               />
-            </Box>
-          </Box>
-        )}
+            </div>
+          </TabsContent>
 
-        {/* Tab 2: YAML View */}
-        {tabValue === 2 && (
-          <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Box sx={{ display: 'flex', gap: 1, p: 2, borderBottom: 1, borderColor: 'divider' }}>
-              <Button
-                size="small"
-                startIcon={copied ? <Check size={16} /> : <Copy size={16} />}
-                onClick={handleCopy}
-                variant="outlined"
-                disabled={copied || loadingOpenApiDoc || !openApiDoc}
-              >
+          {/* YAML Tab */}
+          <TabsContent value="yaml" className="flex-1 flex flex-col mt-0 overflow-hidden">
+            <div className="flex gap-2 p-4 border-b border-gray-200 dark:border-gray-700">
+              <Button size="sm" variant="outline" onClick={handleCopy} disabled={copied || loadingOpenApiDoc || !openApiDoc}>
+                {copied ? <Check size={16} className="mr-1" /> : <Copy size={16} className="mr-1" />}
                 {copied ? 'Copied' : 'Copy'}
               </Button>
-              <Button
-                size="small"
-                startIcon={<Download size={16} />}
-                onClick={handleExport}
-                variant="contained"
-                disabled={loadingOpenApiDoc || !openApiDoc}
-              >
-                Export
+              <Button size="sm" onClick={handleExport} disabled={loadingOpenApiDoc || !openApiDoc}>
+                <Download size={16} className="mr-1" /> Export
               </Button>
-            </Box>
-            <Box sx={{ flex: 1 }}>
+            </div>
+            <div className="flex-1">
               <Editor
                 height="100%"
                 language="yaml"
                 value={schemaContent}
-                theme="vs-dark"
-                options={{
-                  readOnly: true,
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  fontSize: 13,
-                  wordWrap: 'on',
-                  lineNumbers: 'on',
-                  renderWhitespace: 'none',
-                  folding: true
-                }}
+                theme={isDark ? 'vs-dark' : 'light'}
+                options={{ readOnly: true, minimap: { enabled: false }, scrollBeyondLastLine: false, fontSize: 13, wordWrap: 'on' }}
               />
-            </Box>
-          </Box>
-        )}
+            </div>
+          </TabsContent>
 
-        {/* Tab 3: Example View */}
-        {tabValue === 3 && (
-          <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Box sx={{ display: 'flex', gap: 1, p: 2, borderBottom: 1, borderColor: 'divider' }}>
-              <Button
-                size="small"
-                startIcon={<RefreshCw size={16} />}
-                onClick={() => setExampleRefreshKey(prev => prev + 1)}
-                variant="outlined"
-                title="Generate new example"
-                disabled={loadingOpenApiDoc || !openApiDoc}
-              >
-                Refresh
+          {/* Example Tab */}
+          <TabsContent value="example" className="flex-1 flex flex-col mt-0 overflow-hidden">
+            <div className="flex gap-2 p-4 border-b border-gray-200 dark:border-gray-700">
+              <Button size="sm" variant="outline" onClick={() => setExampleRefreshKey(prev => prev + 1)} disabled={loadingOpenApiDoc || !openApiDoc}>
+                <RefreshCw size={16} className="mr-1" /> Refresh
               </Button>
-              <Button
-                size="small"
-                startIcon={copied ? <Check size={16} /> : <Copy size={16} />}
-                onClick={handleCopy}
-                variant="outlined"
-                disabled={copied || loadingOpenApiDoc || !openApiDoc}
-              >
+              <Button size="sm" variant="outline" onClick={handleCopy} disabled={copied || loadingOpenApiDoc || !openApiDoc}>
+                {copied ? <Check size={16} className="mr-1" /> : <Copy size={16} className="mr-1" />}
                 {copied ? 'Copied' : 'Copy'}
               </Button>
-              <Button
-                size="small"
-                startIcon={<Download size={16} />}
-                onClick={handleExport}
-                variant="contained"
-                disabled={loadingOpenApiDoc || !openApiDoc}
-              >
-                Export
+              <Button size="sm" onClick={handleExport} disabled={loadingOpenApiDoc || !openApiDoc}>
+                <Download size={16} className="mr-1" /> Export
               </Button>
-            </Box>
-            <Box sx={{ flex: 1 }}>
+            </div>
+            <div className="flex-1">
               <Editor
                 key={`example-${exampleRefreshKey}`}
                 height="100%"
                 language="json"
                 value={schemaContent}
-                theme="vs-dark"
-                options={{
-                  readOnly: true,
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  fontSize: 13,
-                  wordWrap: 'on',
-                  lineNumbers: 'on',
-                  renderWhitespace: 'none',
-                  folding: true
-                }}
+                theme={isDark ? 'vs-dark' : 'light'}
+                options={{ readOnly: true, minimap: { enabled: false }, scrollBeyondLastLine: false, fontSize: 13, wordWrap: 'on' }}
               />
-            </Box>
-          </Box>
-        )}
-      </DialogContent>
+            </div>
+          </TabsContent>
+        </Tabs>
 
-      <DialogActions>
-        <Button onClick={onClose}>
-          Cancel
-        </Button>
-        {!isReadOnly && tabValue === 0 && (
-          <Button onClick={handleSave} variant="contained" disabled={saving}>
-            {saving ? 'Saving...' : 'Save'}
-          </Button>
-        )}
-        {tabValue !== 0 && (
-          <Button onClick={onClose} variant="contained">
-            Close
-          </Button>
-        )}
-      </DialogActions>
+        <DialogFooter className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          {!isReadOnly && activeTab === 'edit' && (
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : 'Save'}
+            </Button>
+          )}
+          {activeTab !== 'edit' && (
+            <Button onClick={onClose}>Close</Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 };
 
 export default ClassEditDialog;
-

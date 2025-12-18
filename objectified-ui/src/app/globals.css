@@ -9,6 +9,70 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
+
+  /* Animation keyframes for Radix UI */
+  --animate-in: enter 0.2s ease-out;
+  --animate-out: exit 0.15s ease-in;
+}
+
+/* Radix UI Dialog animations */
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes exit {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Animation utility classes */
+.animate-in {
+  animation: enter 0.2s ease-out;
+}
+
+.animate-out {
+  animation: exit 0.15s ease-in;
+}
+
+[data-state="open"] .animate-in,
+.data-\[state\=open\]\:animate-in[data-state="open"] {
+  animation: enter 0.2s ease-out;
+}
+
+[data-state="closed"] .animate-out,
+.data-\[state\=closed\]\:animate-out[data-state="closed"] {
+  animation: exit 0.15s ease-in;
+}
+
+.fade-in-0 {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.fade-out-0 {
+  animation: fadeOut 0.15s ease-in;
 }
 
 @media (prefers-color-scheme: dark) {
