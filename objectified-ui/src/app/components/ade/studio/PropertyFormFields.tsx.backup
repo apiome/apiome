@@ -303,7 +303,8 @@ export const PropertyFormFields: React.FC<PropertyFormFieldsProps> = ({
   size = 'medium',
   nestedProperties,
 }) => {
-  const isDark = useDarkMode();
+  const { mode: colorMode, systemMode } = useColorScheme();
+  const isDark = colorMode === 'dark' || (colorMode === 'system' && systemMode === 'dark');
 
   const [enumInput, setEnumInput] = React.useState('');
   const [enumError, setEnumError] = React.useState('');
@@ -553,50 +554,67 @@ export const PropertyFormFields: React.FC<PropertyFormFieldsProps> = ({
   };
 
   return (
-    <div className={cn(
-      'flex flex-col gap-0 min-h-full',
-      isDark ? 'bg-gray-900' : 'bg-gray-50'
-    )}>
+    <Box sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 0,
+      bgcolor: isDark ? '#0f172a' : '#f8fafc',
+      minHeight: '100%',
+    }}>
       {/* ═══════════════════════════════════════════════════════════════════════════
           SECTION 1: Basic Information
           ═══════════════════════════════════════════════════════════════════════════ */}
-      <div className={cn(
-        'p-6 border-b border-gray-200 dark:border-gray-700',
-        isDark ? 'bg-gray-800' : 'bg-white'
-      )}>
+      <Box sx={{
+        p: 3,
+        bgcolor: isDark ? '#1e293b' : 'white',
+        borderBottom: '1px solid #e2e8f0',
+      }}>
         <SectionHeader
-          icon={<Info className="text-indigo-600" size={18} />}
+          icon={<InfoOutlinedIcon sx={{ color: '#6366f1', fontSize: 18 }} />}
           title="Basic Information"
           subtitle="Core property details"
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 2fr' }, gap: 2.5 }}>
           {showTitle && (
-            <FormField
+            <TextField
               label="Title"
+              size={size}
+              fullWidth
+              value={data.title || ''}
+              onChange={(e) => onChange('title', e.target.value)}
               helperText="Display title"
-            >
-              <Input
-                value={data.title || ''}
-                onChange={(e) => onChange('title', e.target.value)}
-                className="rounded-lg"
-              />
-            </FormField>
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  transition: 'all 0.2s ease',
+                  '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.02)' },
+                  '&.Mui-focused': { bgcolor: 'rgba(99, 102, 241, 0.04)' },
+                },
+              }}
+            />
           )}
 
-          <FormField
+          <TextField
             label="Description"
+            size={size}
+            fullWidth
+            multiline
+            rows={2}
+            value={data.description || ''}
+            onChange={(e) => onChange('description', e.target.value)}
             helperText="What this property represents"
-            className={showTitle ? 'md:col-span-2' : 'md:col-span-3'}
-          >
-            <Textarea
-              rows={2}
-              value={data.description || ''}
-              onChange={(e) => onChange('description', e.target.value)}
-              className="rounded-lg"
-            />
-          </FormField>
-        </div>
+            sx={{
+              gridColumn: showTitle ? 'auto' : '1 / -1',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                transition: 'all 0.2s ease',
+                '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.02)' },
+                '&.Mui-focused': { bgcolor: 'rgba(99, 102, 241, 0.04)' },
+              },
+            }}
+          />
+        </Box>
 
         {/* Default and Example in a row */}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2.5, mt: 2.5 }}>
