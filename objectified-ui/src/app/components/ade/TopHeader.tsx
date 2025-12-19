@@ -7,6 +7,7 @@ import { signOut, useSession } from "next-auth/react";
 import Avatar from '@mui/material/Avatar';
 import { usePathname } from 'next/navigation';
 import WhatsNewDialog from './WhatsNewDialog';
+import { getTenantsForUser } from '../../../../lib/db/helper';
 
 // Import version from package.json
 const APP_VERSION = '01-2026';
@@ -22,9 +23,11 @@ const TopHeader = () => {
   const [open, setOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [currentTenantName, setCurrentTenantName] = useState<string>('');
   const menuRef = useRef<HTMLDivElement | null>(null);
   const { data: session } = useSession();
   const pathname = usePathname();
+  const currentTenantId = (session?.user as any)?.current_tenant_id;
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -61,6 +64,26 @@ const TopHeader = () => {
       mediaQuery.removeEventListener('change', checkDarkMode);
     };
   }, []);
+
+  // Load current tenant name
+  useEffect(() => {
+    const loadTenantName = async () => {
+      if (session && currentTenantId) {
+        try {
+          const userId = (session.user as any)?.user_id;
+          const result = await getTenantsForUser(userId);
+          const tenants = JSON.parse(result);
+          const currentTenant = tenants.find((t: any) => t.id === currentTenantId);
+          if (currentTenant) {
+            setCurrentTenantName(currentTenant.name);
+          }
+        } catch (error) {
+          console.error('Failed to load tenant name:', error);
+        }
+      }
+    };
+    loadTenantName();
+  }, [session, currentTenantId]);
 
   return (
     <header
@@ -137,6 +160,14 @@ const TopHeader = () => {
           })}
         </ul>
       </nav>
+
+      {/* Tenant Name Display */}
+      {currentTenantName && (
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg border border-indigo-100 dark:border-indigo-800/50">
+          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 animate-pulse" />
+          <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">{currentTenantName}</span>
+        </div>
+      )}
 
       {/* Right: Profile / Selector */}
       <div ref={menuRef} style={{ position: "relative" }}>
