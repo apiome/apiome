@@ -2,14 +2,13 @@
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, FolderOpen, AlertCircle, Lock } from 'lucide-react';
+  import { Plus, Edit2, Trash2, FolderOpen, Lock, Upload } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogDescription,
 } from '../../../components/ui/Dialog';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -20,6 +19,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../../components/ui
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/Select';
 import { getProjectsForTenant, createProject, updateProject, deleteProject } from '../../../../../lib/db/helper';
 import OpenAPIImportDialog from '../../../components/ade/dashboard/OpenAPIImportDialog';
+import ImportDialog from '../../../components/ade/dashboard/ImportDialog';
 import { useDialog } from '../../../components/providers/DialogProvider';
 import { filterSlugInput } from '../../../utils/slug';
 import { SPDX_LICENSES, getLicenseUrl, SPDXLicense } from '../../../utils/spdx-licenses';
@@ -53,7 +53,7 @@ const Projects = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
-  const [createTabValue, setCreateTabValue] = useState('scratch');
+  const [showNewImportDialog, setShowNewImportDialog] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
@@ -100,7 +100,6 @@ const Projects = () => {
     setProjectSlug('');
     setProjectEnabled(true);
     setErrorMessage('');
-    setCreateTabValue('scratch');
     setMetadataSummary('');
     setMetadataTermsOfService('');
     setMetadataContactName('');
@@ -270,9 +269,18 @@ const Projects = () => {
             <p className="text-gray-500 dark:text-gray-400 mt-1">Manage projects for the current tenant</p>
           </div>
         </div>
-        <Button onClick={handleCreateClick} className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700">
-          <Plus className="h-5 w-5" />New Project
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setShowNewImportDialog(true)}
+            variant="outline"
+            className="border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+          >
+            <Upload className="h-5 w-5" />Import
+          </Button>
+          <Button onClick={handleCreateClick} className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700">
+            <Plus className="h-5 w-5" />New Project
+          </Button>
+        </div>
       </div>
 
       {/* Projects List */}
@@ -343,47 +351,40 @@ const Projects = () => {
               Create New Project
             </DialogTitle>
           </DialogHeader>
-          <Tabs value={createTabValue} onValueChange={setCreateTabValue} className="mt-4">
-            <TabsList className="w-full">
-              <TabsTrigger value="scratch" className="flex-1">From Scratch</TabsTrigger>
-              <TabsTrigger value="import" className="flex-1">From OpenAPI Import</TabsTrigger>
-            </TabsList>
-            <TabsContent value="scratch" className="space-y-4 mt-4">
-              {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
-              <div className="space-y-2">
-                <Label htmlFor="projectName">Project Name *</Label>
-                <Input id="projectName" value={projectName} onChange={(e) => { setProjectName(e.target.value); if (!projectSlug || projectSlug === generateSlug(projectName)) setProjectSlug(generateSlug(e.target.value)); }} disabled={isLoading} autoFocus />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="projectSlug">Slug *</Label>
-                <Input id="projectSlug" value={projectSlug} onChange={(e) => setProjectSlug(filterSlugInput(e.target.value))} disabled={isLoading} className="font-mono" />
-                <p className="text-xs text-gray-500 dark:text-gray-400">URL-friendly identifier (lowercase letters, numbers, and dashes only)</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="projectDescription">Description</Label>
-                <Textarea id="projectDescription" value={projectDescription} onChange={(e) => setProjectDescription(e.target.value)} disabled={isLoading} rows={3} />
-              </div>
-            </TabsContent>
-            <TabsContent value="import" className="text-center py-8">
-              <div className="w-16 h-16 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-              </div>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">Import a project from an OpenAPI specification file.</p>
-              <Button onClick={() => { setShowCreateDialog(false); handleImportClick(); }}>Start Import</Button>
-            </TabsContent>
-          </Tabs>
+          <div className="space-y-4 mt-4">
+            {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
+            <div className="space-y-2">
+              <Label htmlFor="projectName">Project Name *</Label>
+              <Input id="projectName" value={projectName} onChange={(e) => { setProjectName(e.target.value); if (!projectSlug || projectSlug === generateSlug(projectName)) setProjectSlug(generateSlug(e.target.value)); }} disabled={isLoading} autoFocus />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="projectSlug">Slug *</Label>
+              <Input id="projectSlug" value={projectSlug} onChange={(e) => setProjectSlug(filterSlugInput(e.target.value))} disabled={isLoading} className="font-mono" />
+              <p className="text-xs text-gray-500 dark:text-gray-400">URL-friendly identifier (lowercase letters, numbers, and dashes only)</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="projectDescription">Description</Label>
+              <Textarea id="projectDescription" value={projectDescription} onChange={(e) => setProjectDescription(e.target.value)} disabled={isLoading} rows={3} />
+            </div>
+          </div>
           <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => setShowCreateDialog(false)} disabled={isLoading}>Cancel</Button>
-            {createTabValue === 'scratch' && (
-              <Button onClick={handleCreateSubmit} disabled={isLoading} className="bg-gradient-to-r from-purple-500 to-indigo-600">
-                {isLoading ? 'Creating...' : 'Create Project'}
-              </Button>
-            )}
+            <Button onClick={handleCreateSubmit} disabled={isLoading} className="bg-gradient-to-r from-purple-500 to-indigo-600">
+              {isLoading ? 'Creating...' : 'Create Project'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* OpenAPI Import Dialog */}
+      {/* New Import Dialog (Step 1 - Source Selection) */}
+      <ImportDialog
+        open={showNewImportDialog}
+        onClose={() => setShowNewImportDialog(false)}
+        tenantId={currentTenantId}
+        userId={currentUserId}
+      />
+
+      {/* OpenAPI Import Dialog (Legacy - will be replaced by multi-step flow) */}
       <OpenAPIImportDialog open={showImportDialog} onClose={() => setShowImportDialog(false)} onSuccess={handleImportSuccess} tenantId={currentTenantId} userId={currentUserId} />
 
       {/* Edit Project Dialog */}
