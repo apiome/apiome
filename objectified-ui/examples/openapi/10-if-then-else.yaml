@@ -2,7 +2,12 @@ openapi: 3.1.0
 info:
   title: If-Then-Else Composition Example
   version: 1.0.0
-  description: Demonstrates if/then/else conditional schemas
+  description: |
+    Demonstrates if/then/else conditional schemas.
+    
+    NOTE: This example shows nested if/then/else, which can be complex.
+    See 10b-if-then-else-separate-rules.yaml for a cleaner approach
+    using separate rules composed with allOf.
 
 components:
   schemas:

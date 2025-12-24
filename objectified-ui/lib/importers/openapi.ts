@@ -5,20 +5,33 @@ const extractDirectProperties = (schema: any): { properties: Record<string, any>
   const result = { properties: {} as Record<string, any>, required: [] as string[] };
   if (!schema) return result;
 
+  // First, always include top-level properties if they exist
+  if (schema.properties) {
+    Object.assign(result.properties, schema.properties);
+  }
+  if (Array.isArray(schema.required)) {
+    result.required.push(...schema.required);
+  }
+
+  // Then also check allOf for additional inline properties (not $refs)
   if (schema.allOf && Array.isArray(schema.allOf)) {
     for (const item of schema.allOf) {
+      // Skip $ref items - those are class references, not inline properties
       if (item.$ref) continue;
+      // Skip if/then/else conditional rules - those don't define properties to import
+      if (item.if !== undefined) continue;
+      // Include inline properties from allOf items
       if (item.properties) Object.assign(result.properties, item.properties);
       if (Array.isArray(item.required)) result.required.push(...item.required);
     }
+  }
+
+  // For anyOf/oneOf without top-level properties, return empty (these are variant types)
+  if ((schema.anyOf || schema.oneOf) && Object.keys(result.properties).length === 0) {
     return result;
   }
 
-  if (schema.anyOf || schema.oneOf) {
-    return result;
-  }
-
-  return { properties: schema.properties || {}, required: Array.isArray(schema.required) ? schema.required : [] };
+  return result;
 };
 
 const convertProperty = (propName: string, propSchema: any, required: string[] = []): NormalizedProperty => {

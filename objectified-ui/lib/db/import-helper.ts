@@ -79,6 +79,18 @@ function setProgress(job: JobState, phase: ProgressEvent['phase'], total: number
   job.percent = total > 0 ? Math.floor((completed / total) * 100) : 0;
 }
 
+// Stable JSON stringify that sorts object keys to ensure consistent signatures
+function stableStringify(obj: any): string {
+  if (obj === null || obj === undefined) return JSON.stringify(obj);
+  if (typeof obj !== 'object') return JSON.stringify(obj);
+  if (Array.isArray(obj)) {
+    return '[' + obj.map(item => stableStringify(item)).join(',') + ']';
+  }
+  const sortedKeys = Object.keys(obj).sort();
+  const pairs = sortedKeys.map(key => JSON.stringify(key) + ':' + stableStringify(obj[key]));
+  return '{' + pairs.join(',') + '}';
+}
+
 async function writeClassWithProperties(
   projectId: string,
   versionId: string,
@@ -96,8 +108,24 @@ async function writeClassWithProperties(
       let propertyId: string | null = null;
       const isReference = p.data.$ref || (p.data.type === 'array' && p.data.items?.$ref);
       if (!isReference) {
-        const sig = JSON.stringify(p.data);
+        const sig = stableStringify(p.data);
         propertyId = propertyIdMap.get(sig) || null;
+
+        // Database constraint requires: property_id IS NOT NULL OR data contains $ref
+        // If this is not a reference and we don't have a propertyId, skip with warning
+        if (propertyId === null) {
+          emit(job, 'warn', 'SKIP_PROPERTY', `Skipping property "${p.name}" in class "${cls.name}" - no library entry found`, {
+            className: cls.name,
+            propertyName: p.name,
+            dataType: p.data.type,
+            signature: sig.substring(0, 200)
+          });
+          // Still process children if any
+          if (p.children && p.children.length) {
+            emit(job, 'warn', 'SKIP_CHILDREN', `Also skipping ${p.children.length} child properties of "${p.name}"`);
+          }
+          continue;
+        }
       }
       emit(job, 'info', 'DEBUG_CLASS_PROPERTY', `Adding property to class: ${p.name}`, {
         description: p.description,
@@ -158,7 +186,7 @@ export async function startImport(input: ImportJobInput) {
         for (const p of props || []) {
           const isReference = p.data.$ref || (p.data.type === 'array' && p.data.items?.$ref);
           if (!isReference) {
-            const sig = JSON.stringify(p.data);
+            const sig = stableStringify(p.data);
             if (!propertyMap.has(sig)) {
               propertyMap.set(sig, { data: p.data, description: p.description, names: new Set<string>() });
             }
@@ -174,13 +202,24 @@ export async function startImport(input: ImportJobInput) {
       }
 
       // Create properties in the library using the first/most common name
+      // If name conflicts, append a numeric suffix
       emit(job, 'info', 'CREATING_PROPERTIES', `Creating ${propertyMap.size} unique properties in library`);
+      const usedNames = new Set<string>();
+
       for (const [sig, payload] of propertyMap.entries()) {
         if (job.canceled) throw new Error('Import canceled');
 
         // Use the first name from the set of names this property appears under
-        // This gives us a meaningful name instead of prop_0, prop_1, etc.
-        const propName = Array.from(payload.names)[0];
+        // If the name is already used, append a suffix
+        let baseName = Array.from(payload.names)[0];
+        let propName = baseName;
+        let suffix = 1;
+        while (usedNames.has(propName)) {
+          propName = `${baseName}_${suffix}`;
+          suffix++;
+        }
+        usedNames.add(propName);
+
         emit(job, 'info', 'DEBUG_PROPERTY', `Creating property: ${propName} (used as: ${Array.from(payload.names).join(', ')})`, {
           description: payload.description,
           dataType: payload.data.type
@@ -189,7 +228,8 @@ export async function startImport(input: ImportJobInput) {
           await createProperty(projectId, propName, payload.description || null, payload.data)
         );
         if (!resCreateProp.success) {
-          emit(job, 'warn', 'PROPERTY_CREATE_WARN', `Could not create property: ${resCreateProp.error}`);
+          // If it still fails (maybe due to existing property from a previous import), log and skip
+          emit(job, 'warn', 'PROPERTY_CREATE_WARN', `Could not create property "${propName}": ${resCreateProp.error}`);
           continue;
         }
         emit(job, 'info', 'DEBUG_PROPERTY_CREATED', `Property created with ID: ${resCreateProp.property.id}`);

@@ -832,77 +832,86 @@ export const conditionalRulesToJsonSchema = (rules: ConditionalRule[]): any[] =>
 };
 
 // Helper function to parse JSON Schema if/then/else back to ConditionalRule[]
+// Handles nested if/then/else by flattening them into separate rules
 export const jsonSchemaToConditionalRules = (allOfArray: any[]): ConditionalRule[] => {
   if (!allOfArray || !Array.isArray(allOfArray)) return [];
 
-  return allOfArray
-    .filter(item => item.if !== undefined)
-    .map(item => {
-      const rule: ConditionalRule = {
-        id: generateId(),
-        ifCondition: {
-          property: '',
-          operator: 'equals',
-          value: '',
-        },
-        thenSchema: {
-          requiredProperties: [],
-          propertyConstraints: [],
-        },
-      };
+  const rules: ConditionalRule[] = [];
 
-      // Parse IF condition
-      if (item.if?.properties) {
-        const propName = Object.keys(item.if.properties)[0];
-        if (propName) {
-          rule.ifCondition.property = propName;
-          const propSchema = item.if.properties[propName];
+  const parseIfThenElse = (item: any) => {
+    if (!item.if) return;
 
-          if (propSchema.const !== undefined) {
-            rule.ifCondition.operator = 'equals';
-            rule.ifCondition.value = String(propSchema.const);
-          } else if (propSchema.enum) {
-            rule.ifCondition.operator = 'enum';
-            rule.ifCondition.value = propSchema.enum.join(', ');
-          } else if (propSchema.type) {
-            rule.ifCondition.operator = 'type';
-            rule.ifCondition.value = propSchema.type;
-          } else if (propSchema.pattern) {
-            rule.ifCondition.operator = 'pattern';
-            rule.ifCondition.value = propSchema.pattern;
-          } else if (propSchema.minimum !== undefined) {
-            rule.ifCondition.operator = 'minimum';
-            rule.ifCondition.value = String(propSchema.minimum);
-          } else if (propSchema.maximum !== undefined) {
-            rule.ifCondition.operator = 'maximum';
-            rule.ifCondition.value = String(propSchema.maximum);
-          }
+    const rule: ConditionalRule = {
+      id: generateId(),
+      ifCondition: {
+        property: '',
+        operator: 'equals',
+        value: '',
+      },
+      thenSchema: {
+        requiredProperties: [],
+        propertyConstraints: [],
+      },
+    };
+
+    // Parse IF condition
+    if (item.if?.properties) {
+      const propName = Object.keys(item.if.properties)[0];
+      if (propName) {
+        rule.ifCondition.property = propName;
+        const propSchema = item.if.properties[propName];
+
+        if (propSchema.const !== undefined) {
+          rule.ifCondition.operator = 'equals';
+          rule.ifCondition.value = String(propSchema.const);
+        } else if (propSchema.enum) {
+          rule.ifCondition.operator = 'enum';
+          rule.ifCondition.value = propSchema.enum.join(', ');
+        } else if (propSchema.type) {
+          rule.ifCondition.operator = 'type';
+          rule.ifCondition.value = propSchema.type;
+        } else if (propSchema.pattern) {
+          rule.ifCondition.operator = 'pattern';
+          rule.ifCondition.value = propSchema.pattern;
+        } else if (propSchema.minimum !== undefined) {
+          rule.ifCondition.operator = 'minimum';
+          rule.ifCondition.value = String(propSchema.minimum);
+        } else if (propSchema.maximum !== undefined) {
+          rule.ifCondition.operator = 'maximum';
+          rule.ifCondition.value = String(propSchema.maximum);
         }
       }
-      if (item.if?.required && item.if.required.length > 0) {
-        rule.ifCondition.property = item.if.required[0];
-        rule.ifCondition.operator = 'required';
-        rule.ifCondition.value = '';
-      }
+    }
+    if (item.if?.required && item.if.required.length > 0) {
+      rule.ifCondition.property = item.if.required[0];
+      rule.ifCondition.operator = 'required';
+      rule.ifCondition.value = '';
+    }
 
-      // Parse THEN schema
-      if (item.then?.required) {
-        rule.thenSchema.requiredProperties = item.then.required;
-      }
-      if (item.then?.properties) {
-        Object.entries(item.then.properties).forEach(([prop, schema]: [string, any]) => {
-          Object.entries(schema).forEach(([constraint, value]) => {
-            rule.thenSchema.propertyConstraints.push({
-              property: prop,
-              constraint: constraint as any,
-              value: Array.isArray(value) ? value.join(', ') : String(value),
-            });
+    // Parse THEN schema
+    if (item.then?.required) {
+      rule.thenSchema.requiredProperties = item.then.required;
+    }
+    if (item.then?.properties) {
+      Object.entries(item.then.properties).forEach(([prop, schema]: [string, any]) => {
+        Object.entries(schema).forEach(([constraint, value]) => {
+          rule.thenSchema.propertyConstraints.push({
+            property: prop,
+            constraint: constraint as any,
+            value: Array.isArray(value) ? value.join(', ') : String(value),
           });
         });
-      }
+      });
+    }
 
-      // Parse ELSE schema
-      if (item.else) {
+    // Parse ELSE schema - check if it contains a nested if/then/else
+    if (item.else) {
+      if (item.else.if) {
+        // Nested if/then/else - recursively parse it as a separate rule
+        // Don't add an else to the current rule, just parse the nested one
+        parseIfThenElse(item.else);
+      } else {
+        // Simple else schema - add to current rule
         rule.elseSchema = {
           requiredProperties: item.else.required || [],
           propertyConstraints: [],
@@ -919,9 +928,16 @@ export const jsonSchemaToConditionalRules = (allOfArray: any[]): ConditionalRule
           });
         }
       }
+    }
 
-      return rule;
-    });
+    rules.push(rule);
+  };
+
+  allOfArray
+    .filter(item => item.if !== undefined)
+    .forEach(item => parseIfThenElse(item));
+
+  return rules;
 };
 
 export default ConditionalSchemaBuilder;
