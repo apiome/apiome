@@ -553,6 +553,14 @@ components:
             - wav
             - aac
             - flac
+            - mp4
+            - ogg
+            - m4a
+            - mod
+            - midi
+            - wma
+            - alac
+            - aiff
 
 paths:
   /payments:

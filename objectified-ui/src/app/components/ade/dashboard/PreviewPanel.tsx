@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Package, Search, Check, FileJson, FileCode2, List, ChevronRight } from 'lucide-react';
+import { Package, Search, Check, FileJson, FileCode2, List, ChevronRight, ArrowUpAZ, ArrowDownAZ } from 'lucide-react';
 import * as Checkbox from '@radix-ui/react-checkbox';
 import { AnalysisResult } from '../../../utils/openapi-analyzer';
 import YAML from 'yaml';
@@ -30,10 +30,13 @@ interface SchemaInfo {
   required: boolean;
 }
 
+const MAX_ENUM_DISPLAY = 4;
+
 export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelProps) {
   const [searchFilter, setSearchFilter] = useState('');
   const [selectedSchemaName, setSelectedSchemaName] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'summary' | 'json' | 'yaml'>('summary');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
   const [schemas, setSchemas] = useState<SchemaInfo[]>(() => {
     const schemaObj = analysis.document?.components?.schemas || analysis.document?.definitions || {};
     return Object.keys(schemaObj).map(name => ({
@@ -61,9 +64,13 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
        analysis.document?.definitions?.[selectedSchemaName])
     : null;
 
-  const filteredSchemas = schemas.filter(schema =>
-    schema.name.toLowerCase().includes(searchFilter.toLowerCase())
-  );
+  const filteredSchemas = schemas
+    .filter(schema => schema.name.toLowerCase().includes(searchFilter.toLowerCase()))
+    .sort((a, b) => {
+      if (sortOrder === 'asc') return a.name.localeCompare(b.name);
+      if (sortOrder === 'desc') return b.name.localeCompare(a.name);
+      return 0; // Keep original order if no sort applied
+    });
 
   const selectedCount = schemas.filter(s => s.selected).length;
 
@@ -124,6 +131,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
       const refName = prop.$ref.split('/').pop();
       return `$ref → ${refName}`;
     }
+
     if (prop.type === 'array') {
       if (prop.items?.$ref) {
         const refName = prop.items.$ref.split('/').pop();
@@ -131,8 +139,16 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
       }
       return `array<${prop.items?.type || 'any'}>`;
     }
+    
     if (prop.enum) {
-      return `enum`;
+      const enumValues = prop.enum.slice(0, MAX_ENUM_DISPLAY).join(', ');
+      const remaining = prop.enum.length - MAX_ENUM_DISPLAY;
+
+      if (remaining > 0) {
+        return `enum (${enumValues}, ... ${remaining} more)`;
+      }
+
+      return `enum (${enumValues})`;
     }
     return prop.type || 'any';
   };
@@ -177,9 +193,35 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
         {/* Left: Schema List - 1/3 width */}
         <div className="col-span-1 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
           <div className="border-b border-gray-200 dark:border-gray-700 p-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Schemas to Import
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Schemas to Import
+              </h3>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? null : 'asc')}
+                  className={`p-1.5 rounded transition-colors ${
+                    sortOrder === 'asc'
+                      ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                      : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                  title="Sort A → Z"
+                >
+                  <ArrowUpAZ className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setSortOrder(sortOrder === 'desc' ? null : 'desc')}
+                  className={`p-1.5 rounded transition-colors ${
+                    sortOrder === 'desc'
+                      ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                      : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                  title="Sort Z → A"
+                >
+                  <ArrowDownAZ className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
           </div>
           <div className="p-4 space-y-2 max-h-[400px] overflow-y-auto">
             {filteredSchemas.map((schema) => (
