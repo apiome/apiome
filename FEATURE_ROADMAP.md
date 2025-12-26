@@ -1537,7 +1537,6 @@ The import wizard adapts to smaller screens:
 
 | Ticket | Feature Description                          |
 |--------|----------------------------------------------|
-| [#212] | Property templates for geolocation           |
 | [#213] | Property templates for internationalization  |
 | [#214] | Property templates for pagination            |
 | [#215] | Property templates for search                |
