@@ -671,3 +671,221 @@ export async function getUsersNotInTenant(tenantId: string) {
     return errorResponse(error.message);
   }
 }
+
+// ==================== Property Template Management ====================
+
+/**
+ * Get all property templates (including system and tenant templates)
+ */
+export async function getAllPropertyTemplates() {
+  try {
+    const result = await connectionPool.query(
+      `SELECT pt.id, pt.name, pt.description, pt.category, pt.schema, pt.tags,
+              pt.tenant_id, pt.created_by, pt.is_system, pt.is_public,
+              pt.usage_count, pt.enabled, pt.created_at, pt.updated_at,
+              t.name as tenant_name,
+              u.name as creator_name, u.email as creator_email
+       FROM odb.property_templates pt
+       LEFT JOIN odb.tenants t ON pt.tenant_id = t.id
+       LEFT JOIN odb.users u ON pt.created_by = u.id
+       WHERE pt.deleted_at IS NULL
+       ORDER BY pt.is_system DESC, pt.category, pt.name`
+    );
+    return successResponse({ templates: result.rows });
+  } catch (error: any) {
+    console.error('Error fetching property templates:', error);
+    return errorResponse(error.message);
+  }
+}
+
+/**
+ * Get property template categories with counts (admin view - all templates)
+ */
+export async function getPropertyTemplateCategoriesAdmin() {
+  try {
+    const result = await connectionPool.query(
+      `SELECT category, COUNT(*) as count,
+              SUM(CASE WHEN is_system = true THEN 1 ELSE 0 END) as system_count,
+              SUM(CASE WHEN is_system = false THEN 1 ELSE 0 END) as tenant_count
+       FROM odb.property_templates
+       WHERE deleted_at IS NULL
+       GROUP BY category
+       ORDER BY category`
+    );
+    return successResponse({ categories: result.rows });
+  } catch (error: any) {
+    console.error('Error fetching property template categories:', error);
+    return errorResponse(error.message);
+  }
+}
+
+/**
+ * Create a new property template (admin can create system templates)
+ */
+export async function createPropertyTemplateAdmin(
+  name: string,
+  description: string | null,
+  category: string,
+  schema: any,
+  tags: string[] = [],
+  isSystem: boolean = false,
+  isPublic: boolean = true
+) {
+  try {
+    if (!name || name.trim().length === 0) {
+      return errorResponse('Template name is required');
+    }
+
+    if (!category || category.trim().length === 0) {
+      return errorResponse('Category is required');
+    }
+
+    if (!schema) {
+      return errorResponse('Schema is required');
+    }
+
+    const result = await connectionPool.query(
+      `INSERT INTO odb.property_templates 
+       (name, description, category, schema, tags, is_system, is_public, tenant_id, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, NULL)
+       RETURNING id, name, description, category, schema, tags, tenant_id, created_by,
+                 is_system, is_public, usage_count, enabled, created_at, updated_at`,
+      [name.trim(), description, category.trim(), JSON.stringify(schema), tags, isSystem, isPublic]
+    );
+
+    return successResponse({ template: result.rows[0] });
+  } catch (error: any) {
+    console.error('Error creating property template:', error);
+
+    if (error.code === '23505') {
+      return errorResponse('A template with this name already exists in this category');
+    }
+
+    return errorResponse(error.message);
+  }
+}
+
+/**
+ * Update a property template (admin can update any template including system)
+ */
+export async function updatePropertyTemplateAdmin(
+  templateId: string,
+  name: string,
+  description: string | null,
+  category: string,
+  schema: any,
+  tags: string[] = [],
+  isSystem: boolean = false,
+  isPublic: boolean = true,
+  enabled: boolean = true
+) {
+  try {
+    if (!name || name.trim().length === 0) {
+      return errorResponse('Template name is required');
+    }
+
+    if (!category || category.trim().length === 0) {
+      return errorResponse('Category is required');
+    }
+
+    if (!schema) {
+      return errorResponse('Schema is required');
+    }
+
+    const result = await connectionPool.query(
+      `UPDATE odb.property_templates 
+       SET name = $1, description = $2, category = $3, schema = $4, tags = $5, 
+           is_system = $6, is_public = $7, enabled = $8, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $9 AND deleted_at IS NULL
+       RETURNING id, name, description, category, schema, tags, tenant_id, created_by,
+                 is_system, is_public, usage_count, enabled, created_at, updated_at`,
+      [name.trim(), description, category.trim(), JSON.stringify(schema), tags, isSystem, isPublic, enabled, templateId]
+    );
+
+    if (result.rowCount === 0) {
+      return errorResponse('Template not found');
+    }
+
+    return successResponse({ template: result.rows[0] });
+  } catch (error: any) {
+    console.error('Error updating property template:', error);
+
+    if (error.code === '23505') {
+      return errorResponse('A template with this name already exists in this category');
+    }
+
+    return errorResponse(error.message);
+  }
+}
+
+/**
+ * Delete a property template (admin can delete any template)
+ */
+export async function deletePropertyTemplateAdmin(templateId: string) {
+  try {
+    const result = await connectionPool.query(
+      `UPDATE odb.property_templates 
+       SET deleted_at = CURRENT_TIMESTAMP 
+       WHERE id = $1 AND deleted_at IS NULL
+       RETURNING id, name`,
+      [templateId]
+    );
+
+    if (result.rowCount === 0) {
+      return errorResponse('Template not found');
+    }
+
+    return successResponse({ deleted: result.rows[0] });
+  } catch (error: any) {
+    console.error('Error deleting property template:', error);
+    return errorResponse(error.message);
+  }
+}
+
+/**
+ * Toggle property template enabled status
+ */
+export async function togglePropertyTemplateStatus(templateId: string, enabled: boolean) {
+  try {
+    const result = await connectionPool.query(
+      `UPDATE odb.property_templates 
+       SET enabled = $1, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $2 AND deleted_at IS NULL
+       RETURNING id, name, enabled`,
+      [enabled, templateId]
+    );
+
+    if (result.rowCount === 0) {
+      return errorResponse('Template not found');
+    }
+
+    return successResponse({ template: result.rows[0] });
+  } catch (error: any) {
+    console.error('Error toggling property template status:', error);
+    return errorResponse(error.message);
+  }
+}
+
+/**
+ * Get property template statistics
+ */
+export async function getPropertyTemplateStats() {
+  try {
+    const result = await connectionPool.query(
+      `SELECT 
+         COUNT(*) as total_templates,
+         SUM(CASE WHEN is_system = true THEN 1 ELSE 0 END) as system_templates,
+         SUM(CASE WHEN is_system = false THEN 1 ELSE 0 END) as tenant_templates,
+         SUM(CASE WHEN enabled = true THEN 1 ELSE 0 END) as enabled_templates,
+         SUM(CASE WHEN enabled = false THEN 1 ELSE 0 END) as disabled_templates,
+         SUM(usage_count) as total_usage,
+         COUNT(DISTINCT category) as category_count
+       FROM odb.property_templates
+       WHERE deleted_at IS NULL`
+    );
+    return successResponse({ stats: result.rows[0] });
+  } catch (error: any) {
+    console.error('Error fetching property template stats:', error);
+    return errorResponse(error.message);
+  }
+}

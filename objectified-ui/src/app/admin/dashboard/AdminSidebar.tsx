@@ -11,6 +11,7 @@ import {
   Database,
   Activity,
   Building2,
+  Package,
 } from 'lucide-react';
 
 interface SidebarItemProps {
@@ -66,6 +67,12 @@ export default function AdminSidebar() {
       path: '/admin/dashboard/tenants',
       icon: <Building2 className="w-5 h-5" />,
       title: 'Tenant Management',
+    },
+    {
+      id: 'templates',
+      path: '/admin/dashboard/templates',
+      icon: <Package className="w-5 h-5" />,
+      title: 'Property Templates',
     },
     {
       id: 'payments',

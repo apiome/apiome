@@ -99,7 +99,14 @@ export default function TenantManagementClient() {
       const result = await getTenantStats();
       const data = JSON.parse(result);
       if (data.success) {
-        setTenants(data.tenants);
+        // Convert string counts to numbers (PostgreSQL COUNT returns BigInt which serializes as string)
+        const tenantsWithNumbers = data.tenants.map((t: any) => ({
+          ...t,
+          user_count: Number(t.user_count) || 0,
+          admin_count: Number(t.admin_count) || 0,
+          project_count: Number(t.project_count) || 0,
+        }));
+        setTenants(tenantsWithNumbers);
       }
     } catch (error) {
       console.error('Error loading tenants:', error);

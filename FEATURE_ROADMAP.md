@@ -1505,7 +1505,7 @@ The import wizard adapts to smaller screens:
 
 ### Property Templates
 
-**Reusable Property Patterns** 📋 PLANNED
+**Reusable Property Patterns** ✅ PARTIALLY COMPLETE
 - Pre-built property templates for common fields:
   - 📋 **Identifiers**: UUID, ULID, nanoid, auto-increment
   - 📋 **Timestamps**: createdAt, updatedAt, deletedAt (soft delete)
@@ -1527,7 +1527,7 @@ The import wizard adapts to smaller screens:
 - 📋 Drag-and-drop property templates onto classes
 
 **Property Template Library** 📋 PLANNED
-- 📋 Browse property templates by category
+- ✅ Browse property templates by category
 - 📋 Search property templates
 - Preview property configuration
 - "Add to Class" quick action
@@ -1548,7 +1548,6 @@ The import wizard adapts to smaller screens:
 | [#214] | Property templates for pagination            |
 | [#215] | Property templates for search                |
 | [#216] | Properties templates store definitions       |
-| [#217] | Add property templates into sidebar          |
 | [#218] | Browse property template library by category |
 | [#219] | Add ability to search property templates     |
 
