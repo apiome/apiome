@@ -356,18 +356,17 @@ const Versions = () => {
     return (
       <div className="p-6 max-w-5xl mx-auto">
         <div className="relative">
-          <div className="absolute -top-10 -left-10 w-40 h-40 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 rounded-full blur-3xl opacity-60" />
-          <div className="relative bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-700/50 rounded-2xl p-8">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25 flex-shrink-0">
-                <AlertCircle className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-amber-900 dark:text-amber-100 mb-2">No Projects Available</h2>
-                <p className="text-amber-800 dark:text-amber-200 mb-4">Please create a project before managing versions.</p>
-                <Button asChild><a href="/ade/dashboard/projects">Go to Projects</a></Button>
-              </div>
+          <div className="absolute -top-10 -left-10 w-40 h-40 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-full blur-3xl opacity-60" />
+          <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 rounded-full blur-3xl opacity-60" />
+          <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-16 text-center shadow-xl">
+            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
+              <Package className="h-10 w-10 text-white" />
             </div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">No Projects Available</h3>
+            <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">Please create a project before managing versions.</p>
+            <Button asChild className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700">
+              <a href="/ade/dashboard/projects">Go to Projects</a>
+            </Button>
           </div>
         </div>
       </div>
@@ -411,7 +410,7 @@ const Versions = () => {
               <Package className="h-10 w-10 text-white" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">No Versions Yet</h3>
-            <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">Create your first version using the "New Version" button</p>
+            <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">Get started by creating your first version</p>
           </div>
         </div>
       ) : (
