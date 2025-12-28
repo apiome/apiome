@@ -27,7 +27,7 @@ interface Version {
   published: boolean;
 }
 
-type ViewMode = 'editor' | 'code';
+type ViewMode = 'editor' | 'paths' | 'code';
 
 interface StudioHeaderProps {
   projectTags?: any[];
