@@ -1900,49 +1900,6 @@ The import flow is designed as a multi-step wizard with clear visual progression
 
 > **Section Status**: 🚧 Partially Implemented (Key features complete)
 
-### Node Grouping & Organization
-
-**Group Containers** ✅ PARTIALLY IMPLEMENTED
-- ✅ Create visual containers to group related classes together
-- ✅ Color-coded groups with custom names (e.g., "Authentication Models", "Payment Services", "Core Domain")
-- 📋 Collapsible groups to reduce canvas clutter
-  - 📋 Click to collapse: shows only group title and count
-  - 📋 Expand/collapse all groups with keyboard shortcut
-  - 📋 Remember collapsed state per user
-- 📋 Nested groups for hierarchical organization
-  - 📋 Parent groups can contain child groups
-  - 📋 Breadcrumb navigation when drilling into nested groups
-  - 📋 Max depth of 3 levels to prevent confusion
-- 📋 Group-level operations:
-  - ✅ Move entire group with one drag
-  - 📋 Delete all classes in a group
-  - 📋 Export group as separate schema file
-  - 📋 Duplicate entire group with all classes
-  - 📋 Apply bulk property changes to all classes in group
-- ✅ Named groups with descriptions and metadata
-  - 📋 Group description shows on hover
-  - 📋 Tags for groups (searchable)
-  - 📋 Group owner and last modified timestamp
-- ✅ Visual styling:
-  - ✅ Rounded rectangle containers with subtle shadows
-  - ✅ Dashed or solid borders with custom colors
-  - ✅ Group headers with collapse/expand icons
-  - ✅ Background color/opacity customization
-  - 📋 Optional group icons from icon library
-
-| Ticket | Feature Description                                                                                     |
-|--------|---------------------------------------------------------------------------------------------------------|
-| [#154] | Collapsible groups to reduce canvas clutter                                                             |
-| [#155] | Nested groups for hierarchical organization                                                             |
-| [#156] | Group-level operations: move, delete, export, duplicate, bulk edit                                      |
-| [#159] | Pre-defined group templates for common patterns                                                         |
-| [#160] | Save and share custom group templates                                                                   |
-| [#161] | Share group templates across projects/tenants                                                           |
-| [#197] | Group classes by dragging group into canvas group                                                       |
-| [#190] | Create an export button to the canvas header                                                            |
-| [#284] | Dragging and dropping a node to a group will add it                                                     |
-| [#285] | Ungrouping nodes from a group by deleting it                                                            |
-
 **Group Templates**
 - Pre-defined group structures for common patterns:
   - REST Resource Group (Create, Read, Update, Delete classes)
@@ -1954,24 +1911,6 @@ The import flow is designed as a multi-step wizard with clear visual progression
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
-
-### Canvas Layout Management
-
-**Save & Load Layouts**
-- Save current canvas arrangement with a name
-- Multiple saved layouts per version:
-  - "Development Layout" - organized for development
-  - "Presentation Layout" - clean for stakeholder demos
-  - "Logical Layout" - grouped by business domain
-  - "Dependency Layout" - organized by dependencies
-- Auto-save layout changes every 30 seconds
-- Version control for layouts (track layout history)
-- Default layout setting per user or per team
-- Export layout as JSON for sharing
-- Import layouts from other versions/projects
-
-| Ticket | Feature Description                                  |
-|--------|------------------------------------------------------|
 
 **Layout Snapshots**
 - Take quick snapshots of current layout

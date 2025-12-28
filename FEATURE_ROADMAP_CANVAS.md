@@ -197,8 +197,6 @@
 | [#154] | Collapsible groups to reduce canvas clutter                        |
 | [#155] | Nested groups for hierarchical organization                        |
 | [#156] | Group-level operations: move, delete, export, duplicate, bulk edit |
-| [#197] ✅ | Group classes by dragging into canvas group                      |
-| [#284] ✅ | Drag and drop node to group to add it                            |
 | [#285] | Ungroup nodes by deleting the group                                |
 
 #### Group Templates 📋 PLANNED
