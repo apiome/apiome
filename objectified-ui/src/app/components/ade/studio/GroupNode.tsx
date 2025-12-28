@@ -118,6 +118,10 @@ const GroupNode = memo(({ id, data, selected }: NodeProps) => {
   // Get style options with defaults
   const styleOptions = { ...DEFAULT_STYLE_OPTIONS, ...groupData.styleOptions };
 
+  // Determine if we should use light text based on background darkness
+  const useLightText = true;
+  const textColorClass = useLightText ? 'text-white' : colorConfig.text;
+
   // Get the icon component
   const IconComponent = GROUP_ICONS.find(i => i.name === styleOptions.icon)?.icon || Folder;
 
@@ -211,7 +215,7 @@ const GroupNode = memo(({ id, data, selected }: NodeProps) => {
         <div
           className={`
             absolute -top-3 left-4 px-3 py-1 rounded-lg border ${shadowClass || 'shadow-sm'}
-            ${colorConfig.border} ${colorConfig.text}
+            ${colorConfig.border} ${textColorClass}
             flex items-center gap-2 cursor-move
           `}
           style={{
@@ -229,7 +233,7 @@ const GroupNode = memo(({ id, data, selected }: NodeProps) => {
                 onKeyDown={handleKeyDown}
                 className={`
                   px-2 py-0.5 text-sm font-medium rounded border-0 outline-none
-                  bg-white dark:bg-gray-800 ${colorConfig.text}
+                  bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-white
                   w-32
                 `}
                 autoFocus
@@ -237,15 +241,15 @@ const GroupNode = memo(({ id, data, selected }: NodeProps) => {
               />
               <button
                 onClick={handleSaveEdit}
-                className="p-1 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded transition-colors"
+                className={`p-1 rounded transition-colors ${useLightText ? 'hover:bg-white/30' : 'hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
               >
-                <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+                <Check className={`h-3 w-3 ${useLightText ? 'text-green-300' : 'text-green-600 dark:text-green-400'}`} />
               </button>
               <button
                 onClick={handleCancelEdit}
-                className="p-1 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded transition-colors"
+                className={`p-1 rounded transition-colors ${useLightText ? 'hover:bg-white/30' : 'hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
               >
-                <X className="h-3 w-3 text-red-600 dark:text-red-400" />
+                <X className={`h-3 w-3 ${useLightText ? 'text-red-300' : 'text-red-600 dark:text-red-400'}`} />
               </button>
             </div>
           ) : (
@@ -257,7 +261,7 @@ const GroupNode = memo(({ id, data, selected }: NodeProps) => {
 
           {/* Actions (visible when selected and not editing) */}
           {selected && !isEditing && !groupData.isReadOnly && (
-            <div className="flex items-center gap-1 ml-2 pl-2 border-l border-current/20">
+            <div className={`flex items-center gap-1 ml-2 pl-2 border-l ${useLightText ? 'border-white/30' : 'border-current/20'}`}>
               {/* Settings popover */}
               <Popover.Root open={settingsOpen} onOpenChange={setSettingsOpen}>
                 <Popover.Trigger asChild>
@@ -269,7 +273,7 @@ const GroupNode = memo(({ id, data, selected }: NodeProps) => {
                       setSettingsOpen(v => !v);
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
-                    className="p-1 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded transition-colors cursor-pointer"
+                    className={`p-1 rounded transition-colors cursor-pointer ${useLightText ? 'hover:bg-white/30' : 'hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
                     title="Style settings"
                   >
                     <Settings className="h-3.5 w-3.5" />
@@ -389,7 +393,7 @@ const GroupNode = memo(({ id, data, selected }: NodeProps) => {
                       setColorPickerOpen(v => !v);
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
-                    className="p-1 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded transition-colors cursor-pointer"
+                    className={`p-1 rounded transition-colors cursor-pointer ${useLightText ? 'hover:bg-white/30' : 'hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
                     title="Change color"
                   >
                     <Palette className="h-3.5 w-3.5" />
@@ -426,7 +430,7 @@ const GroupNode = memo(({ id, data, selected }: NodeProps) => {
                 onClick={handleStartEdit}
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="p-1 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded transition-colors"
+                className={`p-1 rounded transition-colors ${useLightText ? 'hover:bg-white/30' : 'hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
                 title="Rename group"
               >
                 <Edit2 className="h-3.5 w-3.5" />
@@ -437,7 +441,7 @@ const GroupNode = memo(({ id, data, selected }: NodeProps) => {
                 onClick={handleDelete}
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors text-red-600 dark:text-red-400"
+                className={`p-1 rounded transition-colors ${useLightText ? 'hover:bg-red-400/40 text-red-200' : 'hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400'}`}
                 title="Delete group"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -448,7 +452,7 @@ const GroupNode = memo(({ id, data, selected }: NodeProps) => {
 
         {/* Description (if any) */}
         {groupData.description && (
-          <div className={`absolute bottom-2 left-4 right-4 text-xs ${colorConfig.text} opacity-70 truncate`}>
+          <div className={`absolute bottom-2 left-4 right-4 text-xs ${textColorClass} opacity-70 truncate`}>
             {groupData.description}
           </div>
         )}
