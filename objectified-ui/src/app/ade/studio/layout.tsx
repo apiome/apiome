@@ -33,7 +33,7 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
   const { confirm: confirmDialog, alert: alertDialog } = useDialog();
   const pathname = usePathname();
   const currentTenantId = (session?.user as any)?.current_tenant_id;
-  const { selectedProjectId, selectedVersionId, triggerCanvasRefresh, sidebarRefreshKey, isReadOnly, zoomToClassFn, clickToFocusEnabled, groups, deleteGroup } = useStudio();
+  const { selectedProjectId, selectedVersionId, triggerCanvasRefresh, sidebarRefreshKey, isReadOnly, zoomToClassFn, createGroupFn, clickToFocusEnabled, groups, deleteGroup } = useStudio();
 
   // Check if we're on the code view - hide sidebar for code view
   const isCodeView = pathname?.includes('/code');
@@ -253,11 +253,10 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
     },
     onPropertyAdd: handlePropertyAdd, onPropertyEdit: handlePropertyEdit, onPropertyDelete: handlePropertyDelete, onPropertyTemplates: handlePropertyTemplates,
     onPropertySelect: (propertyItem) => console.log('Property selected:', propertyItem),
-    onGroupAdd: async () => {
-      await alertDialog({
-        message: 'To create a group, select one or more classes on the canvas and click the "Group" button in the canvas toolbar.',
-        variant: 'info'
-      });
+    onGroupAdd: () => {
+      if (createGroupFn) {
+        createGroupFn();
+      }
     },
     onGroupSelect: (groupId) => {
       // Zoom to the group node on the canvas

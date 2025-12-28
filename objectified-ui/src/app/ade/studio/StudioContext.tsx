@@ -43,6 +43,8 @@ interface StudioContextType {
   setIsReadOnly: (value: boolean) => void;
   zoomToClassFn: ((classId: string) => void) | null;
   setZoomToClassFn: (fn: ((classId: string) => void) | null) => void;
+  createGroupFn: (() => void) | null;
+  setCreateGroupFn: (fn: (() => void) | null) => void;
   clickToFocusEnabled: boolean;
   setClickToFocusEnabled: (value: boolean) => void;
   // Group management
@@ -64,6 +66,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState<number>(0);
   const [isReadOnly, setIsReadOnly] = useState<boolean>(false);
   const [zoomToClassFn, setZoomToClassFn] = useState<((classId: string) => void) | null>(null);
+  const [createGroupFn, setCreateGroupFn] = useState<(() => void) | null>(null);
   const [clickToFocusEnabled, setClickToFocusEnabled] = useState<boolean>(true);
   const [groups, setGroups] = useState<CanvasGroup[]>([]);
 
@@ -121,6 +124,8 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       setIsReadOnly,
       zoomToClassFn,
       setZoomToClassFn,
+      createGroupFn,
+      setCreateGroupFn,
       clickToFocusEnabled,
       setClickToFocusEnabled,
       groups,

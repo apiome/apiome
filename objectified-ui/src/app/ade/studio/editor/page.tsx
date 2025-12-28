@@ -133,6 +133,7 @@ const StudioContent = () => {
     isReadOnly,
     setIsReadOnly,
     setZoomToClassFn,
+    setCreateGroupFn,
     setClickToFocusEnabled: setContextClickToFocusEnabled,
     groups,
     setGroups,
@@ -180,7 +181,7 @@ const StudioContent = () => {
   const [layoutAlgorithm, setLayoutAlgorithm] = useState<LayoutAlgorithm>('hierarchical-tb');
   const [autoLayoutEnabled, setAutoLayoutEnabled] = useState<boolean>(false);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
-  const { fitView, setCenter, getViewport } = useReactFlow();
+  const { fitView, setCenter, getViewport, setViewport } = useReactFlow();
 
   // Zoom level state for level-of-detail rendering
   const [zoomLevel, setZoomLevel] = useState<number>(1);
@@ -1541,6 +1542,12 @@ const StudioContent = () => {
 
   }, [groups, isReadOnly, addGroup, generateGroupId, setNodes, getViewport, handleGroupRename, handleGroupDelete, handleGroupColorChange, handleGroupStyleChange]);
 
+  // Register handleCreateGroup function in context for sidebar access
+  useEffect(() => {
+    setCreateGroupFn(() => handleCreateGroup);
+    return () => setCreateGroupFn(null);
+  }, [handleCreateGroup, setCreateGroupFn]);
+
   // Update group dimensions when nodes move
   const handleGroupResize = useCallback((groupId: string, position: { x: number; y: number }, dimensions: { width: number; height: number }) => {
     updateGroup(groupId, { position, dimensions });
@@ -1795,9 +1802,9 @@ const StudioContent = () => {
 
       const layout = response.layout;
 
-      // Restore viewport
+      // Restore viewport using setViewport for accurate restoration
       if (layout.viewport) {
-        setCenter(layout.viewport.x, layout.viewport.y, { zoom: layout.viewport.zoom, duration: 800 });
+        setViewport({ x: layout.viewport.x, y: layout.viewport.y, zoom: layout.viewport.zoom }, { duration: 800 });
       }
 
       // Restore groups first
@@ -1892,7 +1899,7 @@ const StudioContent = () => {
       setLoadingMessage('');
       setLayoutDropdownOpen(false);
     }
-  }, [selectedVersionId, currentUserId, reloadClasses, setNodes, setGroups, setCenter, alertDialog, projectTags, isReadOnly, triggerSidebarRefresh]);
+  }, [selectedVersionId, currentUserId, reloadClasses, setNodes, setGroups, setViewport, alertDialog, projectTags, isReadOnly, triggerSidebarRefresh]);
 
   // ============================================================================
   // END LAYOUT SAVE/LOAD HANDLERS
@@ -3661,10 +3668,10 @@ const StudioContent = () => {
           // Mark this version as having initial layout applied
           initialLayoutAppliedRef.current = selectedVersionId;
 
-          // Restore viewport if available
+          // Restore viewport if available using setViewport for accurate restoration
           if (savedLayout.viewport) {
             setTimeout(() => {
-              setCenter(savedLayout.viewport.x, savedLayout.viewport.y, { zoom: savedLayout.viewport.zoom, duration: 800 });
+              setViewport({ x: savedLayout.viewport.x, y: savedLayout.viewport.y, zoom: savedLayout.viewport.zoom }, { duration: 800 });
             }, 100);
           }
 
@@ -3703,7 +3710,7 @@ const StudioContent = () => {
     };
 
     loadClasses();
-  }, [selectedVersionId, selectedProjectId, canvasRefreshKey, layoutDirection, autoLayoutEnabled, setNodes, setEdges, fitView, projects, versions, currentUserId, setGroups, setCenter, projectTags, isReadOnly, triggerSidebarRefresh]);
+  }, [selectedVersionId, selectedProjectId, canvasRefreshKey, layoutDirection, autoLayoutEnabled, setNodes, setEdges, fitView, projects, versions, currentUserId, setGroups, setViewport, projectTags, isReadOnly, triggerSidebarRefresh]);
 
   // Generate specs on-demand when switching views or when canvas changes
   useEffect(() => {
