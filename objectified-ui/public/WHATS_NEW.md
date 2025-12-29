@@ -23,6 +23,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Added Save and Load buttons for manual layout management (only available when auto-layout is disabled)
   - Layout algorithm buttons now apply layouts one time without enabling auto-layout
   - Added group styling options: custom icons, border styles (dashed/solid/dotted), shadow levels, and background opacity
+- Introduction to the Paths feature
 - Added property templates
   - Fixed property copying to a class that contains an object with nested properties
 
