@@ -85,40 +85,40 @@ This covers the feature sets for linting capabilities in the Objectified project
 
 **Validation Rules Engine**
 - **Naming Convention Rules**:
-    - Class names: PascalCase, singular nouns
-    - Property names: camelCase, descriptive
-    - No abbreviations without glossary entry
-    - Consistent terminology across schema
-    - Maximum name length constraints
+  - Class names: PascalCase, singular nouns
+  - Property names: camelCase, descriptive
+  - No abbreviations without glossary entry
+  - Consistent terminology across schema
+  - Maximum name length constraints
 - **Documentation Rules**:
-    - Required description for all classes (min 20 characters)
-    - Required description for all properties (min 10 characters)
-    - At least one example per class
-    - External documentation links for complex types
+  - Required description for all classes (min 20 characters)
+  - Required description for all properties (min 10 characters)
+  - At least one example per class
+  - External documentation links for complex types
 - **Schema Design Rules**:
-    - No circular dependencies
-    - Maximum nesting depth (default: 5 levels)
-    - Avoid primitive obsession (use composed types)
-    - Consistent use of composition (allOf) vs inheritance
-    - Required fields should be necessary, not excessive
+  - No circular dependencies
+  - Maximum nesting depth (default: 5 levels)
+  - Avoid primitive obsession (use composed types)
+  - Consistent use of composition (allOf) vs inheritance
+  - Required fields should be necessary, not excessive
 - **API Design Rules** (for Path spec):
-    - RESTful URL patterns (`/resources/{id}`)
-    - Proper HTTP methods (GET, POST, PUT, PATCH, DELETE)
-    - Consistent error response format
-    - Pagination for list endpoints
-    - Filtering, sorting query parameters
-    - API versioning strategy (URL or header)
+  - RESTful URL patterns (`/resources/{id}`)
+  - Proper HTTP methods (GET, POST, PUT, PATCH, DELETE)
+  - Consistent error response format
+  - Pagination for list endpoints
+  - Filtering, sorting query parameters
+  - API versioning strategy (URL or header)
 - **Security Rules**:
-    - Authentication required for non-public endpoints
-    - Sensitive data marked as `writeOnly`
-    - No PII in URL parameters
-    - Rate limiting configured
-    - HTTPS only (no HTTP)
+  - Authentication required for non-public endpoints
+  - Sensitive data marked as `writeOnly`
+  - No PII in URL parameters
+  - Rate limiting configured
+  - HTTPS only (no HTTP)
 - **Performance Rules**:
-    - Response size limits
-    - Required cache headers
-    - Compression support
-    - Conditional requests (ETag, If-Modified-Since)
+  - Response size limits
+  - Required cache headers
+  - Compression support
+  - Conditional requests (ETag, If-Modified-Since)
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
@@ -141,19 +141,19 @@ This covers the feature sets for linting capabilities in the Objectified project
 
 **Schema Metrics**
 - **Complexity Score**:
-    - Based on depth, property count, relationships
-    - Color-coded (green/yellow/red)
-    - Recommendations to reduce complexity
+  - Based on depth, property count, relationships
+  - Color-coded (green/yellow/red)
+  - Recommendations to reduce complexity
 - **Maintainability Index**:
-    - How easy to maintain this schema
-    - Based on documentation, consistency, size
+  - How easy to maintain this schema
+  - Based on documentation, consistency, size
 - **Reusability Score**:
-    - How reusable are the classes
-    - Based on dependencies, coupling
+  - How reusable are the classes
+  - Based on dependencies, coupling
 - **Coverage**:
-    - How much is documented
-    - How many examples provided
-    - How many tests
+  - How much is documented
+  - How many examples provided
+  - How many tests
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|

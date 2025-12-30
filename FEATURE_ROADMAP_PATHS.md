@@ -436,14 +436,15 @@ Each operation can override global defaults:
 #### 4.3 Server Definitions 📋 PLANNED
 
 **Server Configuration** ✅ PARTIALLY IMPLEMENTED
-- ✅ Multiple server definitions
+- 📋 Multiple server definitions
 - Server variables with enum values
 - Environment-specific servers (dev, staging, prod)
-- Server descriptions
-- Relative server paths
+- 📋 Server descriptions
+- 📋 Relative server paths
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
+| #565   | Add ability to define multiple servers |
 
 ---
 

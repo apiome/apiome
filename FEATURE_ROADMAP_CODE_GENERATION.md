@@ -31,10 +31,10 @@
 - Type hints for IDE support
 - Optional JSON serialization helpers
 - Configuration options:
-    - Frozen (immutable) classes
-    - Field defaults and factories
-    - Slots for memory optimization
-    - Post-init validation
+  - Frozen (immutable) classes
+  - Field defaults and factories
+  - Slots for memory optimization
+  - Post-init validation
 - Example output:
   ```python
   from dataclasses import dataclass, field
@@ -56,10 +56,10 @@
 - Automatic relationship mapping
 - Migration support via Alembic
 - Configuration options:
-    - Table names (auto-generated or custom)
-    - Index creation
-    - Cascade rules
-    - Lazy loading strategies
+  - Table names (auto-generated or custom)
+  - Index creation
+  - Cascade rules
+  - Lazy loading strategies
 - Example output:
   ```python
   from sqlalchemy import Column, Integer, String, ForeignKey
@@ -188,41 +188,41 @@
 
 **API Client Generation** 📋 PLANNED
 - **Client SDKs**:
-    - TypeScript/JavaScript (axios, fetch)
-    - Python (requests, httpx, aiohttp)
-    - Java (OkHttp, Retrofit)
-    - Go (net/http)
-    - C# (HttpClient)
-    - Swift (URLSession)
-    - Kotlin (Ktor, OkHttp)
+  - TypeScript/JavaScript (axios, fetch)
+  - Python (requests, httpx, aiohttp)
+  - Java (OkHttp, Retrofit)
+  - Go (net/http)
+  - C# (HttpClient)
+  - Swift (URLSession)
+  - Kotlin (Ktor, OkHttp)
 - **Client Features**:
-    - Type-safe request/response
-    - Authentication handling
-    - Error handling with typed errors
-    - Retry logic and timeouts
-    - Request/response interceptors
+  - Type-safe request/response
+  - Authentication handling
+  - Error handling with typed errors
+  - Retry logic and timeouts
+  - Request/response interceptors
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
 
 **Server Stub Generation** 📋 PLANNED
 - **Server Frameworks**:
-    - Node.js (Express, Fastify, Koa, NestJS)
-    - Python (FastAPI, Flask, Django REST)
-    - Java (Spring Boot, Micronaut, Quarkus)
-    - Go (Gin, Echo, Chi)
-    - Rust (Actix, Axum)
+  - Node.js (Express, Fastify, Koa, NestJS)
+  - Python (FastAPI, Flask, Django REST)
+  - Java (Spring Boot, Micronaut, Quarkus)
+  - Go (Gin, Echo, Chi)
+  - Rust (Actix, Axum)
 - **Stub Features**:
-    - Route handlers with type hints
-    - Request validation middleware
-    - Response serialization
-    - Error handling patterns
-    - OpenAPI validation middleware
+  - Route handlers with type hints
+  - Request validation middleware
+  - Response serialization
+  - Error handling patterns
+  - OpenAPI validation middleware
 - **Stubbing CRUD operations**:
-    - Auto-generate CRUD stubs from schemas
-    - RESTful endpoint patterns
-    - Request/response type safety
-    - Mock data generation
+  - Auto-generate CRUD stubs from schemas
+  - RESTful endpoint patterns
+  - Request/response type safety
+  - Mock data generation
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
@@ -231,11 +231,11 @@
 
 **Automatic CRUD Generation** 📋 PLANNED
 - **One-Click CRUD Creation**:
-    - Select schema/class and generate full CRUD operations
-    - Generate all 5 operations: Create, Read, Update, Delete, List
-    - RESTful URL patterns following best practices
-    - Proper HTTP methods and status codes
-    - Request/response schemas automatically configured
+  - Select schema/class and generate full CRUD operations
+  - Generate all 5 operations: Create, Read, Update, Delete, List
+  - RESTful URL patterns following best practices
+  - Proper HTTP methods and status codes
+  - Request/response schemas automatically configured
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
@@ -251,113 +251,113 @@
 |--------|--------------------------------------------------|
 
 - **Read/Get Single (GET /resources/{id})**:
-    - Path parameter: Resource ID
-    - Response: 200 OK with resource
-    - Error responses: 404 (not found), 403 (forbidden)
+  - Path parameter: Resource ID
+  - Response: 200 OK with resource
+  - Error responses: 404 (not found), 403 (forbidden)
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
 
 - **List/Get All (GET /resources)**:
-    - Query parameters: pagination (page, limit, offset)
-    - Query parameters: filtering, sorting
-    - Response: 200 OK with array of resources
-    - Pagination metadata in response
+  - Query parameters: pagination (page, limit, offset)
+  - Query parameters: filtering, sorting
+  - Response: 200 OK with array of resources
+  - Pagination metadata in response
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
 
 - **Update (PUT /resources/{id})**:
-    - Path parameter: Resource ID
-    - Request body: Full schema (replace entire resource)
-    - Response: 200 OK with updated resource
-    - Error responses: 404 (not found), 400 (validation), 409 (conflict)
+  - Path parameter: Resource ID
+  - Request body: Full schema (replace entire resource)
+  - Response: 200 OK with updated resource
+  - Error responses: 404 (not found), 400 (validation), 409 (conflict)
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
 
 - **Partial Update (PATCH /resources/{id})**:
-    - Path parameter: Resource ID
-    - Request body: Partial schema (only changed fields)
-    - Response: 200 OK with updated resource
-    - Error responses: 404 (not found), 400 (validation)
+  - Path parameter: Resource ID
+  - Request body: Partial schema (only changed fields)
+  - Response: 200 OK with updated resource
+  - Error responses: 404 (not found), 400 (validation)
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
 
 - **Delete (DELETE /resources/{id})**:
-    - Path parameter: Resource ID
-    - Response: 204 No Content or 200 OK with deleted resource
-    - Error responses: 404 (not found), 409 (conflict if dependencies)
+  - Path parameter: Resource ID
+  - Response: 204 No Content or 200 OK with deleted resource
+  - Error responses: 404 (not found), 409 (conflict if dependencies)
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
 
 - **Bulk Operations** (Optional):
-    - **Bulk Create (POST /resources/bulk)**
-    - **Bulk Update (PUT /resources/bulk)**
-    - **Bulk Delete (DELETE /resources/bulk)**
+  - **Bulk Create (POST /resources/bulk)**
+  - **Bulk Update (PUT /resources/bulk)**
+  - **Bulk Delete (DELETE /resources/bulk)**
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
 
 **CRUD Customization** 📋 PLANNED
 - **URL Pattern Customization**:
-    - Choose ID parameter name (id, userId, resourceId, etc.)
-    - Choose ID type (integer, UUID, string)
-    - Custom path segments (/api/v1/resources, /resources)
-    - Singular vs plural resource names
-    - Nested resources (/users/{userId}/posts)
+  - Choose ID parameter name (id, userId, resourceId, etc.)
+  - Choose ID type (integer, UUID, string)
+  - Custom path segments (/api/v1/resources, /resources)
+  - Singular vs plural resource names
+  - Nested resources (/users/{userId}/posts)
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
 
 - **Operation Selection**:
-    - Enable/disable specific operations
-    - Read-only APIs (GET operations only)
-    - Write-only APIs (POST operations only)
-    - Custom operation combinations
+  - Enable/disable specific operations
+  - Read-only APIs (GET operations only)
+  - Write-only APIs (POST operations only)
+  - Custom operation combinations
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
 
 - **Response Customization**:
-    - Choose response wrapper format
-    - Include/exclude metadata
-    - Custom pagination format
-    - Custom error response schema
-    - HATEOAS links (include navigation links)
+  - Choose response wrapper format
+  - Include/exclude metadata
+  - Custom pagination format
+  - Custom error response schema
+  - HATEOAS links (include navigation links)
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
 
 - **Request Validation**:
-    - Auto-generate validation rules from schema
-    - Custom validation messages
-    - Field-level validation
-    - Business rule validation hooks
-    - Async validation support
+  - Auto-generate validation rules from schema
+  - Custom validation messages
+  - Field-level validation
+  - Business rule validation hooks
+  - Async validation support
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
 
 **Mock Data Generation** 📋 PLANNED
 - **Stub Response Data**:
-    - Generate realistic mock data based on schema
-    - Faker.js integration for common fields
-    - Respect constraints (min/max, patterns, enums)
-    - Multiple example variations
-    - Configurable data set size
+  - Generate realistic mock data based on schema
+  - Faker.js integration for common fields
+  - Respect constraints (min/max, patterns, enums)
+  - Multiple example variations
+  - Configurable data set size
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
 
 - **Mock Data Strategies**:
-    - Static examples from schema
-    - Dynamic random generation
-    - Incremental IDs
-    - Timestamp generation
-    - Related data consistency (foreign keys)
+  - Static examples from schema
+  - Dynamic random generation
+  - Incremental IDs
+  - Timestamp generation
+  - Related data consistency (foreign keys)
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
@@ -399,13 +399,13 @@
       ```
 
 - **Stub Features**:
-    - TODO comments for implementation
-    - Mock data pre-populated
-    - Request validation enabled
-    - Response serialization configured
-    - Error handling implemented
-    - Logging statements included
-    - OpenAPI middleware integrated
+  - TODO comments for implementation
+  - Mock data pre-populated
+  - Request validation enabled
+  - Response serialization configured
+  - Error handling implemented
+  - Logging statements included
+  - OpenAPI middleware integrated
 
 ---
 
