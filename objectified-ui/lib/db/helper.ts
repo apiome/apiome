@@ -2859,7 +2859,7 @@ export async function usePropertyTemplate(
 export async function getCanvasLayoutsForVersion(versionId: string) {
   try {
     const result = await connectionPool.query(
-      `SELECT id, version_id, user_id, name, is_default, viewport, nodes, edges, groups, 
+      `SELECT id, version_id, user_id, name, is_default, viewport, nodes, edges, 
               grid_settings, minimap_settings, metadata, created_at, updated_at
        FROM odb.canvas_layouts 
        WHERE version_id = $1 
@@ -2879,7 +2879,7 @@ export async function getCanvasLayoutsForVersion(versionId: string) {
 export async function getCanvasLayout(layoutId: string) {
   try {
     const result = await connectionPool.query(
-      `SELECT id, version_id, user_id, name, is_default, viewport, nodes, edges, groups, 
+      `SELECT id, version_id, user_id, name, is_default, viewport, nodes, edges, 
               grid_settings, minimap_settings, metadata, created_at, updated_at
        FROM odb.canvas_layouts 
        WHERE id = $1`,
@@ -2903,7 +2903,7 @@ export async function getDefaultCanvasLayout(versionId: string, userId?: string)
     // First try to get user-specific default layout
     if (userId) {
       const userResult = await connectionPool.query(
-        `SELECT id, version_id, user_id, name, is_default, viewport, nodes, edges, groups, 
+        `SELECT id, version_id, user_id, name, is_default, viewport, nodes, edges,
                 grid_settings, minimap_settings, metadata, created_at, updated_at
          FROM odb.canvas_layouts 
          WHERE version_id = $1 AND user_id = $2 AND is_default = true`,
@@ -2916,7 +2916,7 @@ export async function getDefaultCanvasLayout(versionId: string, userId?: string)
 
     // Fall back to shared default layout (user_id IS NULL)
     const sharedResult = await connectionPool.query(
-      `SELECT id, version_id, user_id, name, is_default, viewport, nodes, edges, groups, 
+      `SELECT id, version_id, user_id, name, is_default, viewport, nodes, edges,
               grid_settings, minimap_settings, metadata, created_at, updated_at
        FROM odb.canvas_layouts 
        WHERE version_id = $1 AND user_id IS NULL AND is_default = true`,
@@ -2970,12 +2970,12 @@ export async function createCanvasLayout(
 
     const result = await connectionPool.query(
       `INSERT INTO odb.canvas_layouts 
-       (version_id, user_id, name, is_default, viewport, nodes, edges, groups, grid_settings, minimap_settings, metadata)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-       RETURNING id, version_id, user_id, name, is_default, viewport, nodes, edges, groups, 
+       (version_id, user_id, name, is_default, viewport, nodes, edges, grid_settings, minimap_settings, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       RETURNING id, version_id, user_id, name, is_default, viewport, nodes, edges,
                  grid_settings, minimap_settings, metadata, created_at, updated_at`,
       [versionId, userId, name, isDefault,
-       JSON.stringify(viewport), JSON.stringify(nodes), JSON.stringify(edges), JSON.stringify(groups),
+       JSON.stringify(viewport), JSON.stringify(nodes), JSON.stringify(edges),
        JSON.stringify(gridSettings), JSON.stringify(minimapSettings), JSON.stringify(metadata)]
     );
 
@@ -2997,7 +2997,6 @@ export async function updateCanvasLayout(
     viewport?: any;
     nodes?: any;
     edges?: any;
-    groups?: any;
     gridSettings?: any;
     minimapSettings?: any;
     metadata?: any;
@@ -3058,10 +3057,6 @@ export async function updateCanvasLayout(
       setClauses.push(`edges = $${paramIndex++}`);
       values.push(JSON.stringify(updates.edges));
     }
-    if (updates.groups !== undefined) {
-      setClauses.push(`groups = $${paramIndex++}`);
-      values.push(JSON.stringify(updates.groups));
-    }
     if (updates.gridSettings !== undefined) {
       setClauses.push(`grid_settings = $${paramIndex++}`);
       values.push(JSON.stringify(updates.gridSettings));
@@ -3085,7 +3080,7 @@ export async function updateCanvasLayout(
       `UPDATE odb.canvas_layouts 
        SET ${setClauses.join(', ')}
        WHERE id = $${paramIndex}
-       RETURNING id, version_id, user_id, name, is_default, viewport, nodes, edges, groups, 
+       RETURNING id, version_id, user_id, name, is_default, viewport, nodes, edges, 
                  grid_settings, minimap_settings, metadata, created_at, updated_at`,
       values
     );
@@ -3121,6 +3116,7 @@ export async function deleteCanvasLayout(layoutId: string) {
 /**
  * Save or update the default canvas layout for a version
  * This is a convenience function that creates or updates the default layout
+ * Note: Groups are stored separately in the groups table, use syncGroupsForVersion
  */
 export async function saveDefaultCanvasLayout(
   versionId: string,
@@ -3147,16 +3143,20 @@ export async function saveDefaultCanvasLayout(
 
     const existingResult = await connectionPool.query(existingQuery, existingParams);
 
+    // Sync groups to the dedicated table if provided
+    if (groups && Array.isArray(groups) && groups.length > 0) {
+      await syncGroupsForVersion(versionId, groups);
+    }
+
     if (existingResult.rowCount > 0) {
-      // Update existing default layout
+      // Update existing default layout (groups stored in separate table)
       return updateCanvasLayout(existingResult.rows[0].id, {
         viewport,
         nodes,
-        edges: edges || [],
-        groups: groups || []
+        edges: edges || []
       });
     } else {
-      // Create new default layout
+      // Create new default layout (groups stored in separate table)
       return createCanvasLayout(
         versionId,
         userId,
@@ -3165,7 +3165,7 @@ export async function saveDefaultCanvasLayout(
         viewport,
         nodes,
         edges || [],
-        groups || [],
+        null,
         { enabled: true, size: 20, snapToGrid: true, showGrid: true },
         { enabled: true, position: 'bottom-right', size: 'medium' },
         {}
@@ -3178,916 +3178,363 @@ export async function saveDefaultCanvasLayout(
 }
 
 // ============================================================================
-// API PATHS MANAGEMENT
-// API Paths functions have been moved to helper-paths.ts
-// Please import from '@/lib/db/helper-paths' for paths-related functions
-// ============================================================================
-// Functions for managing API paths (OpenAPI path items)
+// GROUPS MANAGEMENT
+// Functions for managing canvas groups stored in dedicated tables
 // ============================================================================
 
 /**
- * Get all API paths for a version
+ * Get all groups for a version with their member classes
  */
-export async function getApiPathsForVersion(versionId: string) {
+export async function getGroupsForVersion(versionId: string) {
   try {
-    const result = await connectionPool.query(
-      `SELECT * FROM odb.api_paths 
-       WHERE version_id = $1 AND deleted_at IS NULL 
-       ORDER BY sort_order ASC, path ASC`,
+    // Get all groups for the version
+    const groupsResult = await connectionPool.query(
+      `SELECT g.id, g.version_id, g.name, g.description, g.color,
+              g.position_x, g.position_y, g.width, g.height, g.z_index,
+              g.is_collapsed, g.is_locked, g.opacity, g.border_style, g.metadata,
+              g.created_at, g.updated_at
+       FROM odb.groups g
+       WHERE g.version_id = $1
+       ORDER BY g.z_index, g.created_at`,
       [versionId]
     );
-    return JSON.stringify(result.rows);
+
+    // Get member classes for each group
+    const groups = await Promise.all(groupsResult.rows.map(async (group: any) => {
+      const classesResult = await connectionPool.query(
+        `SELECT gc.class_id, gc.position_x, gc.position_y, gc.sort_order
+         FROM odb.group_classes gc
+         WHERE gc.group_id = $1
+         ORDER BY gc.sort_order`,
+        [group.id]
+      );
+
+      return {
+        id: group.id,
+        versionId: group.version_id,
+        name: group.name,
+        description: group.description,
+        color: group.color,
+        position: { x: group.position_x, y: group.position_y },
+        dimensions: { width: group.width, height: group.height },
+        zIndex: group.z_index,
+        isCollapsed: group.is_collapsed,
+        isLocked: group.is_locked,
+        opacity: group.opacity,
+        borderStyle: group.border_style,
+        metadata: group.metadata,
+        nodeIds: classesResult.rows.map((c: any) => c.class_id),
+        createdAt: group.created_at,
+        updatedAt: group.updated_at
+      };
+    }));
+
+    return JSON.stringify(groups);
   } catch (error: any) {
-    console.error('Error fetching API paths:', error);
+    console.error('Error fetching groups for version:', error);
     return JSON.stringify([]);
   }
 }
 
 /**
- * Get a single API path by ID
+ * Create a new group for a version
  */
-export async function getApiPathById(pathId: string) {
-  try {
-    const result = await connectionPool.query(
-      'SELECT * FROM odb.api_paths WHERE id = $1 AND deleted_at IS NULL',
-      [pathId]
-    );
-    return JSON.stringify(result.rows[0] || null);
-  } catch (error: any) {
-    console.error('Error fetching API path:', error);
-    return JSON.stringify(null);
-  }
-}
-
-/**
- * Create a new API path
- */
-export async function createApiPath(
+export async function createGroup(
   versionId: string,
-  path: string,
-  summary?: string,
-  description?: string,
-  servers?: any,
-  parameters?: any,
-  sortOrder?: number
-) {
-  try {
-    if (!path?.trim()) {
-      return errorResponse('Path cannot be empty');
-    }
-
-    // Check for duplicate path
-    const existing = await connectionPool.query(
-      'SELECT id FROM odb.api_paths WHERE version_id = $1 AND path = $2 AND deleted_at IS NULL',
-      [versionId, path.trim()]
-    );
-    if (existing.rowCount > 0) {
-      return errorResponse('A path with this pattern already exists in this version');
-    }
-
-    const result = await connectionPool.query(
-      `INSERT INTO odb.api_paths 
-       (version_id, path, summary, description, servers, parameters, sort_order) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7) 
-       RETURNING *`,
-      [
-        versionId,
-        path.trim(),
-        summary?.trim() || null,
-        description?.trim() || null,
-        servers ? JSON.stringify(servers) : null,
-        parameters ? JSON.stringify(parameters) : null,
-        sortOrder || 0
-      ]
-    );
-    return successResponse({ path: result.rows[0] });
-  } catch (error: any) {
-    console.error('Error creating API path:', error);
-    return errorResponse(error.message);
-  }
-}
-
-/**
- * Update an existing API path
- */
-export async function updateApiPath(
-  pathId: string,
-  updates: {
-    path?: string;
-    summary?: string;
-    description?: string;
-    servers?: any;
-    parameters?: any;
-    sortOrder?: number;
-    enabled?: boolean;
-  }
-) {
-  try {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
-
-    if (updates.path !== undefined) {
-      if (!updates.path.trim()) {
-        return errorResponse('Path cannot be empty');
-      }
-      fields.push(`path = $${paramIndex++}`);
-      values.push(updates.path.trim());
-    }
-    if (updates.summary !== undefined) {
-      fields.push(`summary = $${paramIndex++}`);
-      values.push(updates.summary?.trim() || null);
-    }
-    if (updates.description !== undefined) {
-      fields.push(`description = $${paramIndex++}`);
-      values.push(updates.description?.trim() || null);
-    }
-    if (updates.servers !== undefined) {
-      fields.push(`servers = $${paramIndex++}`);
-      values.push(updates.servers ? JSON.stringify(updates.servers) : null);
-    }
-    if (updates.parameters !== undefined) {
-      fields.push(`parameters = $${paramIndex++}`);
-      values.push(updates.parameters ? JSON.stringify(updates.parameters) : null);
-    }
-    if (updates.sortOrder !== undefined) {
-      fields.push(`sort_order = $${paramIndex++}`);
-      values.push(updates.sortOrder);
-    }
-    if (updates.enabled !== undefined) {
-      fields.push(`enabled = $${paramIndex++}`);
-      values.push(updates.enabled);
-    }
-
-    if (fields.length === 0) {
-      return errorResponse('No fields to update');
-    }
-
-    fields.push(`updated_at = CURRENT_TIMESTAMP`);
-    values.push(pathId);
-
-    const result = await connectionPool.query(
-      `UPDATE odb.api_paths SET ${fields.join(', ')} WHERE id = $${paramIndex} AND deleted_at IS NULL RETURNING *`,
-      values
-    );
-
-    if (result.rowCount === 0) {
-      return errorResponse('API path not found');
-    }
-
-    return successResponse({ path: result.rows[0] });
-  } catch (error: any) {
-    console.error('Error updating API path:', error);
-    return errorResponse(error.message);
-  }
-}
-
-/**
- * Delete an API path (soft delete)
- */
-export async function deleteApiPath(pathId: string) {
-  try {
-    const result = await connectionPool.query(
-      'UPDATE odb.api_paths SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 AND deleted_at IS NULL RETURNING id',
-      [pathId]
-    );
-    if (result.rowCount === 0) {
-      return errorResponse('API path not found');
-    }
-    return successResponse();
-  } catch (error: any) {
-    console.error('Error deleting API path:', error);
-    return errorResponse(error.message);
-  }
-}
-
-// ============================================================================
-// PATH OPERATIONS MANAGEMENT
-// Functions for managing HTTP operations on paths
-// ============================================================================
-
-/**
- * Get all operations for a path
- */
-export async function getOperationsForPath(pathId: string) {
-  try {
-    const result = await connectionPool.query(
-      `SELECT * FROM odb.path_operations 
-       WHERE path_id = $1 AND deleted_at IS NULL 
-       ORDER BY 
-         CASE method 
-           WHEN 'get' THEN 1 
-           WHEN 'post' THEN 2 
-           WHEN 'put' THEN 3 
-           WHEN 'patch' THEN 4 
-           WHEN 'delete' THEN 5 
-           WHEN 'options' THEN 6 
-           WHEN 'head' THEN 7 
-           WHEN 'trace' THEN 8 
-         END`,
-      [pathId]
-    );
-    return JSON.stringify(result.rows);
-  } catch (error: any) {
-    console.error('Error fetching path operations:', error);
-    return JSON.stringify([]);
-  }
-}
-
-/**
- * Get a single operation by ID
- */
-export async function getOperationById(operationId: string) {
-  try {
-    const result = await connectionPool.query(
-      'SELECT * FROM odb.path_operations WHERE id = $1 AND deleted_at IS NULL',
-      [operationId]
-    );
-    return JSON.stringify(result.rows[0] || null);
-  } catch (error: any) {
-    console.error('Error fetching operation:', error);
-    return JSON.stringify(null);
-  }
-}
-
-/**
- * Create a new operation for a path
- */
-export async function createPathOperation(
-  pathId: string,
-  method: string,
-  operationId?: string,
-  summary?: string,
-  description?: string,
-  externalDocs?: any,
-  deprecated?: boolean,
-  servers?: any
-) {
-  try {
-    const validMethods = ['get', 'post', 'put', 'delete', 'patch', 'options', 'head', 'trace'];
-    const normalizedMethod = method.toLowerCase();
-
-    if (!validMethods.includes(normalizedMethod)) {
-      return errorResponse('Invalid HTTP method');
-    }
-
-    // Check for duplicate method on this path
-    const existing = await connectionPool.query(
-      'SELECT id FROM odb.path_operations WHERE path_id = $1 AND method = $2 AND deleted_at IS NULL',
-      [pathId, normalizedMethod]
-    );
-    if (existing.rowCount > 0) {
-      return errorResponse('An operation with this method already exists for this path');
-    }
-
-    const result = await connectionPool.query(
-      `INSERT INTO odb.path_operations 
-       (path_id, method, operation_id, summary, description, external_docs, deprecated, servers) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-       RETURNING *`,
-      [
-        pathId,
-        normalizedMethod,
-        operationId?.trim() || null,
-        summary?.trim() || null,
-        description?.trim() || null,
-        externalDocs ? JSON.stringify(externalDocs) : null,
-        deprecated || false,
-        servers ? JSON.stringify(servers) : null
-      ]
-    );
-    return successResponse({ operation: result.rows[0] });
-  } catch (error: any) {
-    console.error('Error creating path operation:', error);
-    return errorResponse(error.message);
-  }
-}
-
-/**
- * Update an existing operation
- */
-export async function updatePathOperation(
-  operationId: string,
-  updates: {
-    operationId?: string;
-    summary?: string;
-    description?: string;
-    externalDocs?: any;
-    deprecated?: boolean;
-    deprecationMessage?: string;
-    servers?: any;
-    enabled?: boolean;
-  }
-) {
-  try {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
-
-    if (updates.operationId !== undefined) {
-      fields.push(`operation_id = $${paramIndex++}`);
-      values.push(updates.operationId?.trim() || null);
-    }
-    if (updates.summary !== undefined) {
-      fields.push(`summary = $${paramIndex++}`);
-      values.push(updates.summary?.trim() || null);
-    }
-    if (updates.description !== undefined) {
-      fields.push(`description = $${paramIndex++}`);
-      values.push(updates.description?.trim() || null);
-    }
-    if (updates.externalDocs !== undefined) {
-      fields.push(`external_docs = $${paramIndex++}`);
-      values.push(updates.externalDocs ? JSON.stringify(updates.externalDocs) : null);
-    }
-    if (updates.deprecated !== undefined) {
-      fields.push(`deprecated = $${paramIndex++}`);
-      values.push(updates.deprecated);
-    }
-    if (updates.deprecationMessage !== undefined) {
-      fields.push(`deprecation_message = $${paramIndex++}`);
-      values.push(updates.deprecationMessage?.trim() || null);
-    }
-    if (updates.servers !== undefined) {
-      fields.push(`servers = $${paramIndex++}`);
-      values.push(updates.servers ? JSON.stringify(updates.servers) : null);
-    }
-    if (updates.enabled !== undefined) {
-      fields.push(`enabled = $${paramIndex++}`);
-      values.push(updates.enabled);
-    }
-
-    if (fields.length === 0) {
-      return errorResponse('No fields to update');
-    }
-
-    fields.push(`updated_at = CURRENT_TIMESTAMP`);
-    values.push(operationId);
-
-    const result = await connectionPool.query(
-      `UPDATE odb.path_operations SET ${fields.join(', ')} WHERE id = $${paramIndex} AND deleted_at IS NULL RETURNING *`,
-      values
-    );
-
-    if (result.rowCount === 0) {
-      return errorResponse('Operation not found');
-    }
-
-    return successResponse({ operation: result.rows[0] });
-  } catch (error: any) {
-    console.error('Error updating operation:', error);
-    return errorResponse(error.message);
-  }
-}
-
-/**
- * Delete an operation (soft delete)
- */
-export async function deletePathOperation(operationId: string) {
-  try {
-    const result = await connectionPool.query(
-      'UPDATE odb.path_operations SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 AND deleted_at IS NULL RETURNING id',
-      [operationId]
-    );
-    if (result.rowCount === 0) {
-      return errorResponse('Operation not found');
-    }
-    return successResponse();
-  } catch (error: any) {
-    console.error('Error deleting operation:', error);
-    return errorResponse(error.message);
-  }
-}
-
-// ============================================================================
-// OPERATION PARAMETERS MANAGEMENT
-// Functions for managing operation parameters
-// ============================================================================
-
-/**
- * Get all parameters for an operation
- */
-export async function getParametersForOperation(operationId: string) {
-  try {
-    const result = await connectionPool.query(
-      `SELECT * FROM odb.operation_parameters 
-       WHERE operation_id = $1 
-       ORDER BY location ASC, sort_order ASC, name ASC`,
-      [operationId]
-    );
-    return JSON.stringify(result.rows);
-  } catch (error: any) {
-    console.error('Error fetching operation parameters:', error);
-    return JSON.stringify([]);
-  }
-}
-
-/**
- * Create a new parameter for an operation
- */
-export async function createOperationParameter(
-  operationId: string,
   name: string,
-  location: string,
-  description?: string,
-  required?: boolean,
-  deprecated?: boolean,
-  schemaClassId?: string,
-  schemaInline?: any,
-  example?: any,
-  sortOrder?: number
+  options: {
+    description?: string;
+    color?: string;
+    position?: { x: number; y: number };
+    dimensions?: { width: number; height: number };
+    zIndex?: number;
+    opacity?: number;
+    borderStyle?: string;
+    metadata?: any;
+  } = {}
 ) {
   try {
-    const validLocations = ['path', 'query', 'header', 'cookie'];
-    if (!validLocations.includes(location.toLowerCase())) {
-      return errorResponse('Invalid parameter location');
-    }
-
-    if (!name?.trim()) {
-      return errorResponse('Parameter name cannot be empty');
-    }
-
-    // Check for duplicate parameter
-    const existing = await connectionPool.query(
-      'SELECT id FROM odb.operation_parameters WHERE operation_id = $1 AND name = $2 AND location = $3',
-      [operationId, name.trim(), location.toLowerCase()]
-    );
-    if (existing.rowCount > 0) {
-      return errorResponse('A parameter with this name and location already exists');
-    }
+    const {
+      description = null,
+      color = '#3B82F6',
+      position = { x: 0, y: 0 },
+      dimensions = { width: 200, height: 200 },
+      zIndex = 0,
+      opacity = 1.0,
+      borderStyle = 'dashed',
+      metadata = {}
+    } = options;
 
     const result = await connectionPool.query(
-      `INSERT INTO odb.operation_parameters 
-       (operation_id, name, location, description, required, deprecated, schema_class_id, schema_inline, example, sort_order) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
-       RETURNING *`,
-      [
-        operationId,
-        name.trim(),
-        location.toLowerCase(),
-        description?.trim() || null,
-        required || false,
-        deprecated || false,
-        schemaClassId || null,
-        schemaInline ? JSON.stringify(schemaInline) : null,
-        example ? JSON.stringify(example) : null,
-        sortOrder || 0
-      ]
+      `INSERT INTO odb.groups 
+       (version_id, name, description, color, position_x, position_y, width, height, z_index, opacity, border_style, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       RETURNING id, version_id, name, description, color, position_x, position_y, width, height, 
+                 z_index, is_collapsed, is_locked, opacity, border_style, metadata, created_at, updated_at`,
+      [versionId, name, description, color, position.x, position.y, dimensions.width, dimensions.height,
+       zIndex, opacity, borderStyle, JSON.stringify(metadata)]
     );
-    return successResponse({ parameter: result.rows[0] });
+
+    const group = result.rows[0];
+    return successResponse({
+      group: {
+        id: group.id,
+        versionId: group.version_id,
+        name: group.name,
+        description: group.description,
+        color: group.color,
+        position: { x: group.position_x, y: group.position_y },
+        dimensions: { width: group.width, height: group.height },
+        zIndex: group.z_index,
+        isCollapsed: group.is_collapsed,
+        isLocked: group.is_locked,
+        opacity: group.opacity,
+        borderStyle: group.border_style,
+        metadata: group.metadata,
+        nodeIds: [],
+        createdAt: group.created_at,
+        updatedAt: group.updated_at
+      }
+    });
   } catch (error: any) {
-    console.error('Error creating operation parameter:', error);
+    console.error('Error creating group:', error);
     return errorResponse(error.message);
   }
 }
 
 /**
- * Update an existing parameter
+ * Update an existing group
  */
-export async function updateOperationParameter(
-  parameterId: string,
+export async function updateGroup(
+  groupId: string,
   updates: {
     name?: string;
     description?: string;
-    required?: boolean;
-    deprecated?: boolean;
-    schemaClassId?: string | null;
-    schemaInline?: any;
-    example?: any;
-    sortOrder?: number;
+    color?: string;
+    position?: { x: number; y: number };
+    dimensions?: { width: number; height: number };
+    zIndex?: number;
+    isCollapsed?: boolean;
+    isLocked?: boolean;
+    opacity?: number;
+    borderStyle?: string;
+    metadata?: any;
   }
 ) {
   try {
-    const fields: string[] = [];
+    const setClauses: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
 
     if (updates.name !== undefined) {
-      if (!updates.name.trim()) {
-        return errorResponse('Parameter name cannot be empty');
-      }
-      fields.push(`name = $${paramIndex++}`);
-      values.push(updates.name.trim());
+      setClauses.push(`name = $${paramIndex++}`);
+      values.push(updates.name);
     }
     if (updates.description !== undefined) {
-      fields.push(`description = $${paramIndex++}`);
-      values.push(updates.description?.trim() || null);
+      setClauses.push(`description = $${paramIndex++}`);
+      values.push(updates.description);
     }
-    if (updates.required !== undefined) {
-      fields.push(`required = $${paramIndex++}`);
-      values.push(updates.required);
+    if (updates.color !== undefined) {
+      setClauses.push(`color = $${paramIndex++}`);
+      values.push(updates.color);
     }
-    if (updates.deprecated !== undefined) {
-      fields.push(`deprecated = $${paramIndex++}`);
-      values.push(updates.deprecated);
+    if (updates.position !== undefined) {
+      setClauses.push(`position_x = $${paramIndex++}`);
+      values.push(updates.position.x);
+      setClauses.push(`position_y = $${paramIndex++}`);
+      values.push(updates.position.y);
     }
-    if (updates.schemaClassId !== undefined) {
-      fields.push(`schema_class_id = $${paramIndex++}`);
-      values.push(updates.schemaClassId);
+    if (updates.dimensions !== undefined) {
+      setClauses.push(`width = $${paramIndex++}`);
+      values.push(updates.dimensions.width);
+      setClauses.push(`height = $${paramIndex++}`);
+      values.push(updates.dimensions.height);
     }
-    if (updates.schemaInline !== undefined) {
-      fields.push(`schema_inline = $${paramIndex++}`);
-      values.push(updates.schemaInline ? JSON.stringify(updates.schemaInline) : null);
+    if (updates.zIndex !== undefined) {
+      setClauses.push(`z_index = $${paramIndex++}`);
+      values.push(updates.zIndex);
     }
-    if (updates.example !== undefined) {
-      fields.push(`example = $${paramIndex++}`);
-      values.push(updates.example ? JSON.stringify(updates.example) : null);
+    if (updates.isCollapsed !== undefined) {
+      setClauses.push(`is_collapsed = $${paramIndex++}`);
+      values.push(updates.isCollapsed);
     }
-    if (updates.sortOrder !== undefined) {
-      fields.push(`sort_order = $${paramIndex++}`);
-      values.push(updates.sortOrder);
+    if (updates.isLocked !== undefined) {
+      setClauses.push(`is_locked = $${paramIndex++}`);
+      values.push(updates.isLocked);
+    }
+    if (updates.opacity !== undefined) {
+      setClauses.push(`opacity = $${paramIndex++}`);
+      values.push(updates.opacity);
+    }
+    if (updates.borderStyle !== undefined) {
+      setClauses.push(`border_style = $${paramIndex++}`);
+      values.push(updates.borderStyle);
+    }
+    if (updates.metadata !== undefined) {
+      setClauses.push(`metadata = $${paramIndex++}`);
+      values.push(JSON.stringify(updates.metadata));
     }
 
-    if (fields.length === 0) {
-      return errorResponse('No fields to update');
+    if (setClauses.length === 0) {
+      return errorResponse('No updates provided');
     }
 
-    fields.push(`updated_at = CURRENT_TIMESTAMP`);
-    values.push(parameterId);
+    setClauses.push(`updated_at = CURRENT_TIMESTAMP AT TIME ZONE 'UTC'`);
+    values.push(groupId);
 
     const result = await connectionPool.query(
-      `UPDATE odb.operation_parameters SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+      `UPDATE odb.groups SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
       values
     );
 
     if (result.rowCount === 0) {
-      return errorResponse('Parameter not found');
+      return errorResponse('Group not found');
     }
 
-    return successResponse({ parameter: result.rows[0] });
+    return successResponse({ group: result.rows[0] });
   } catch (error: any) {
-    console.error('Error updating operation parameter:', error);
+    console.error('Error updating group:', error);
     return errorResponse(error.message);
   }
 }
 
 /**
- * Delete a parameter
+ * Delete a group
  */
-export async function deleteOperationParameter(parameterId: string) {
+export async function deleteGroup(groupId: string) {
   try {
     const result = await connectionPool.query(
-      'DELETE FROM odb.operation_parameters WHERE id = $1 RETURNING id',
-      [parameterId]
+      `DELETE FROM odb.groups WHERE id = $1 RETURNING id`,
+      [groupId]
     );
+
     if (result.rowCount === 0) {
-      return errorResponse('Parameter not found');
+      return errorResponse('Group not found');
     }
-    return successResponse();
+
+    return successResponse({ deleted: true });
   } catch (error: any) {
-    console.error('Error deleting operation parameter:', error);
+    console.error('Error deleting group:', error);
     return errorResponse(error.message);
   }
 }
 
-// ============================================================================
-// OPERATION RESPONSES MANAGEMENT
-// Functions for managing operation responses
-// ============================================================================
-
 /**
- * Get all responses for an operation
+ * Add a class to a group
  */
-export async function getResponsesForOperation(operationId: string) {
-  try {
-    const result = await connectionPool.query(
-      `SELECT * FROM odb.operation_responses 
-       WHERE operation_id = $1 
-       ORDER BY sort_order ASC, status_code ASC`,
-      [operationId]
-    );
-    return JSON.stringify(result.rows);
-  } catch (error: any) {
-    console.error('Error fetching operation responses:', error);
-    return JSON.stringify([]);
-  }
-}
-
-/**
- * Create a new response for an operation
- */
-export async function createOperationResponse(
-  operationId: string,
-  statusCode: string,
-  description: string,
-  headers?: any,
-  content?: any,
-  schemaClassId?: string,
-  links?: any,
-  sortOrder?: number
+export async function addClassToGroup(
+  groupId: string,
+  classId: string,
+  options: { positionX?: number; positionY?: number; sortOrder?: number } = {}
 ) {
   try {
-    if (!statusCode?.trim()) {
-      return errorResponse('Status code cannot be empty');
-    }
-
-    if (!description?.trim()) {
-      return errorResponse('Response description cannot be empty');
-    }
-
-    // Check for duplicate status code
-    const existing = await connectionPool.query(
-      'SELECT id FROM odb.operation_responses WHERE operation_id = $1 AND status_code = $2',
-      [operationId, statusCode.trim()]
-    );
-    if (existing.rowCount > 0) {
-      return errorResponse('A response with this status code already exists');
-    }
+    const { positionX = null, positionY = null, sortOrder = 0 } = options;
 
     const result = await connectionPool.query(
-      `INSERT INTO odb.operation_responses 
-       (operation_id, status_code, description, headers, content, schema_class_id, links, sort_order) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+      `INSERT INTO odb.group_classes (group_id, class_id, position_x, position_y, sort_order)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (group_id, class_id) DO UPDATE SET
+         position_x = EXCLUDED.position_x,
+         position_y = EXCLUDED.position_y,
+         sort_order = EXCLUDED.sort_order
        RETURNING *`,
-      [
-        operationId,
-        statusCode.trim(),
-        description.trim(),
-        headers ? JSON.stringify(headers) : null,
-        content ? JSON.stringify(content) : null,
-        schemaClassId || null,
-        links ? JSON.stringify(links) : null,
-        sortOrder || 0
-      ]
+      [groupId, classId, positionX, positionY, sortOrder]
     );
-    return successResponse({ response: result.rows[0] });
+
+    return successResponse({ groupClass: result.rows[0] });
   } catch (error: any) {
-    console.error('Error creating operation response:', error);
+    console.error('Error adding class to group:', error);
     return errorResponse(error.message);
   }
 }
 
 /**
- * Update an existing response
+ * Remove a class from a group
  */
-export async function updateOperationResponse(
-  responseId: string,
-  updates: {
-    statusCode?: string;
-    description?: string;
-    headers?: any;
-    content?: any;
-    schemaClassId?: string | null;
-    links?: any;
-    sortOrder?: number;
-  }
-) {
+export async function removeClassFromGroup(groupId: string, classId: string) {
   try {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
+    const result = await connectionPool.query(
+      `DELETE FROM odb.group_classes WHERE group_id = $1 AND class_id = $2 RETURNING id`,
+      [groupId, classId]
+    );
 
-    if (updates.statusCode !== undefined) {
-      if (!updates.statusCode.trim()) {
-        return errorResponse('Status code cannot be empty');
+    if (result.rowCount === 0) {
+      return errorResponse('Class not found in group');
+    }
+
+    return successResponse({ removed: true });
+  } catch (error: any) {
+    console.error('Error removing class from group:', error);
+    return errorResponse(error.message);
+  }
+}
+
+/**
+ * Sync all groups for a version (used when saving canvas state)
+ * This replaces all groups for a version with the provided groups
+ */
+export async function syncGroupsForVersion(versionId: string, groups: any[]) {
+  try {
+    // Start a transaction
+    await connectionPool.query('BEGIN');
+
+    // Delete all existing groups for this version (cascades to group_classes)
+    await connectionPool.query(
+      `DELETE FROM odb.groups WHERE version_id = $1`,
+      [versionId]
+    );
+
+    // Track mapping from client ID to database ID for returning
+    const idMapping: Record<string, string> = {};
+
+    // Insert new groups
+    for (const group of groups) {
+      const position = group.position || { x: 0, y: 0 };
+      const dimensions = group.dimensions || { width: 200, height: 200 };
+
+      // Let database generate UUID - don't use client-side ID
+      const groupResult = await connectionPool.query(
+        `INSERT INTO odb.groups 
+         (version_id, name, description, color, position_x, position_y, width, height, 
+          z_index, opacity, border_style, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+         RETURNING id`,
+        [
+          versionId,
+          group.name || 'Untitled Group',
+          group.description || null,
+          group.color || '#3B82F6',
+          position.x,
+          position.y,
+          dimensions.width,
+          dimensions.height,
+          group.zIndex || 0,
+          group.opacity ?? 1.0,
+          group.borderStyle || group.styleOptions?.borderStyle || 'dashed',
+          JSON.stringify(group.metadata || group.styleOptions || {})
+        ]
+      );
+
+      const newGroupId = groupResult.rows[0].id;
+      idMapping[group.id] = newGroupId;
+
+      // Insert group classes
+      const nodeIds = group.nodeIds || [];
+      for (let i = 0; i < nodeIds.length; i++) {
+        await connectionPool.query(
+          `INSERT INTO odb.group_classes (group_id, class_id, sort_order)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (group_id, class_id) DO NOTHING`,
+          [newGroupId, nodeIds[i], i]
+        );
       }
-      fields.push(`status_code = $${paramIndex++}`);
-      values.push(updates.statusCode.trim());
-    }
-    if (updates.description !== undefined) {
-      if (!updates.description.trim()) {
-        return errorResponse('Response description cannot be empty');
-      }
-      fields.push(`description = $${paramIndex++}`);
-      values.push(updates.description.trim());
-    }
-    if (updates.headers !== undefined) {
-      fields.push(`headers = $${paramIndex++}`);
-      values.push(updates.headers ? JSON.stringify(updates.headers) : null);
-    }
-    if (updates.content !== undefined) {
-      fields.push(`content = $${paramIndex++}`);
-      values.push(updates.content ? JSON.stringify(updates.content) : null);
-    }
-    if (updates.schemaClassId !== undefined) {
-      fields.push(`schema_class_id = $${paramIndex++}`);
-      values.push(updates.schemaClassId);
-    }
-    if (updates.links !== undefined) {
-      fields.push(`links = $${paramIndex++}`);
-      values.push(updates.links ? JSON.stringify(updates.links) : null);
-    }
-    if (updates.sortOrder !== undefined) {
-      fields.push(`sort_order = $${paramIndex++}`);
-      values.push(updates.sortOrder);
     }
 
-    if (fields.length === 0) {
-      return errorResponse('No fields to update');
-    }
-
-    fields.push(`updated_at = CURRENT_TIMESTAMP`);
-    values.push(responseId);
-
-    const result = await connectionPool.query(
-      `UPDATE odb.operation_responses SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
-      values
-    );
-
-    if (result.rowCount === 0) {
-      return errorResponse('Response not found');
-    }
-
-    return successResponse({ response: result.rows[0] });
+    await connectionPool.query('COMMIT');
+    return successResponse({ synced: true, count: groups.length, idMapping });
   } catch (error: any) {
-    console.error('Error updating operation response:', error);
-    return errorResponse(error.message);
-  }
-}
-
-/**
- * Delete a response
- */
-export async function deleteOperationResponse(responseId: string) {
-  try {
-    const result = await connectionPool.query(
-      'DELETE FROM odb.operation_responses WHERE id = $1 RETURNING id',
-      [responseId]
-    );
-    if (result.rowCount === 0) {
-      return errorResponse('Response not found');
-    }
-    return successResponse();
-  } catch (error: any) {
-    console.error('Error deleting operation response:', error);
-    return errorResponse(error.message);
-  }
-}
-
-// ============================================================================
-// OPERATION REQUEST BODY MANAGEMENT
-// Functions for managing operation request bodies
-// ============================================================================
-
-/**
- * Get request body for an operation
- */
-export async function getRequestBodyForOperation(operationId: string) {
-  try {
-    const result = await connectionPool.query(
-      `SELECT rb.*, 
-              json_agg(
-                json_build_object(
-                  'id', rbc.id,
-                  'content_type', rbc.content_type,
-                  'schema_class_id', rbc.schema_class_id,
-                  'schema_inline', rbc.schema_inline,
-                  'example', rbc.example,
-                  'examples', rbc.examples,
-                  'encoding', rbc.encoding
-                )
-              ) FILTER (WHERE rbc.id IS NOT NULL) as content_types
-       FROM odb.operation_request_bodies rb
-       LEFT JOIN odb.operation_request_body_content rbc ON rb.id = rbc.request_body_id
-       WHERE rb.operation_id = $1
-       GROUP BY rb.id`,
-      [operationId]
-    );
-    return JSON.stringify(result.rows[0] || null);
-  } catch (error: any) {
-    console.error('Error fetching request body:', error);
-    return JSON.stringify(null);
-  }
-}
-
-/**
- * Create a request body for an operation
- */
-export async function createOperationRequestBody(
-  operationId: string,
-  description?: string,
-  required?: boolean
-) {
-  try {
-    // Check if request body already exists
-    const existing = await connectionPool.query(
-      'SELECT id FROM odb.operation_request_bodies WHERE operation_id = $1',
-      [operationId]
-    );
-    if (existing.rowCount > 0) {
-      return errorResponse('Request body already exists for this operation');
-    }
-
-    const result = await connectionPool.query(
-      `INSERT INTO odb.operation_request_bodies 
-       (operation_id, description, required) 
-       VALUES ($1, $2, $3) 
-       RETURNING *`,
-      [operationId, description?.trim() || null, required || false]
-    );
-    return successResponse({ requestBody: result.rows[0] });
-  } catch (error: any) {
-    console.error('Error creating request body:', error);
-    return errorResponse(error.message);
-  }
-}
-
-/**
- * Update a request body
- */
-export async function updateOperationRequestBody(
-  requestBodyId: string,
-  updates: {
-    description?: string;
-    required?: boolean;
-  }
-) {
-  try {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
-
-    if (updates.description !== undefined) {
-      fields.push(`description = $${paramIndex++}`);
-      values.push(updates.description?.trim() || null);
-    }
-    if (updates.required !== undefined) {
-      fields.push(`required = $${paramIndex++}`);
-      values.push(updates.required);
-    }
-
-    if (fields.length === 0) {
-      return errorResponse('No fields to update');
-    }
-
-    fields.push(`updated_at = CURRENT_TIMESTAMP`);
-    values.push(requestBodyId);
-
-    const result = await connectionPool.query(
-      `UPDATE odb.operation_request_bodies SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
-      values
-    );
-
-    if (result.rowCount === 0) {
-      return errorResponse('Request body not found');
-    }
-
-    return successResponse({ requestBody: result.rows[0] });
-  } catch (error: any) {
-    console.error('Error updating request body:', error);
-    return errorResponse(error.message);
-  }
-}
-
-/**
- * Delete a request body
- */
-export async function deleteOperationRequestBody(requestBodyId: string) {
-  try {
-    const result = await connectionPool.query(
-      'DELETE FROM odb.operation_request_bodies WHERE id = $1 RETURNING id',
-      [requestBodyId]
-    );
-    if (result.rowCount === 0) {
-      return errorResponse('Request body not found');
-    }
-    return successResponse();
-  } catch (error: any) {
-    console.error('Error deleting request body:', error);
-    return errorResponse(error.message);
-  }
-}
-
-/**
- * Add content type to request body
- */
-export async function addRequestBodyContentType(
-  requestBodyId: string,
-  contentType: string,
-  schemaClassId?: string,
-  schemaInline?: any,
-  example?: any
-) {
-  try {
-    if (!contentType?.trim()) {
-      return errorResponse('Content type cannot be empty');
-    }
-
-    // Check for duplicate content type
-    const existing = await connectionPool.query(
-      'SELECT id FROM odb.operation_request_body_content WHERE request_body_id = $1 AND content_type = $2',
-      [requestBodyId, contentType.trim()]
-    );
-    if (existing.rowCount > 0) {
-      return errorResponse('This content type already exists for this request body');
-    }
-
-    const result = await connectionPool.query(
-      `INSERT INTO odb.operation_request_body_content 
-       (request_body_id, content_type, schema_class_id, schema_inline, example) 
-       VALUES ($1, $2, $3, $4, $5) 
-       RETURNING *`,
-      [
-        requestBodyId,
-        contentType.trim(),
-        schemaClassId || null,
-        schemaInline ? JSON.stringify(schemaInline) : null,
-        example ? JSON.stringify(example) : null
-      ]
-    );
-    return successResponse({ content: result.rows[0] });
-  } catch (error: any) {
-    console.error('Error adding request body content type:', error);
+    await connectionPool.query('ROLLBACK');
+    console.error('Error syncing groups for version:', error);
     return errorResponse(error.message);
   }
 }
