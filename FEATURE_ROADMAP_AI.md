@@ -31,21 +31,21 @@ This outlines the AI features that are planned for the Objectified platform.
 
 **Chatbot Panel** 📋 PLANNED
 - 📋 **Panel Location**:
-    - 📋 Slide-out panel from right side of Studio
-    - 📋 Floating chat bubble option
-    - 📋 Full-screen chat mode for complex conversations
-    - 📋 Keyboard shortcut to toggle (`Cmd+Shift+A`)
-    - 📋 Bottom right-hand corner of the canvas opens the AI Chatbot
+  - 📋 Slide-out panel from right side of Studio
+  - 📋 Floating chat bubble option
+  - 📋 Full-screen chat mode for complex conversations
+  - 📋 Keyboard shortcut to toggle (`Cmd+Shift+A`)
+  - 📋 Bottom right-hand corner of the canvas opens the AI Chatbot
 - 📋 **Chat Interface**:
-    - 📋 Modern chat UI with message bubbles
-    - 📋 User messages vs AI responses clearly distinguished
-    - 📋 Typing indicators while AI processes
-    - 📋 Markdown rendering in responses
-    - 📋 Code blocks with syntax highlighting
-    - 📋 Copy button for code snippets
-    - 📋 Regenerate response button
-    - 📋 Thumbs up/down for feedback
-    - 📋 OpenAPI Specifications are parsed using ```json``` markers, click button to view/accept import
+  - 📋 Modern chat UI with message bubbles
+  - 📋 User messages vs AI responses clearly distinguished
+  - 📋 Typing indicators while AI processes
+  - 📋 Markdown rendering in responses
+  - 📋 Code blocks with syntax highlighting
+  - 📋 Copy button for code snippets
+  - 📋 Regenerate response button
+  - 📋 Thumbs up/down for feedback
+  - 📋 OpenAPI Specifications are parsed using ```json``` markers, click button to view/accept import
 
 | Ticket | Feature Description              |
 |--------|----------------------------------|
@@ -54,22 +54,22 @@ This outlines the AI features that are planned for the Objectified platform.
 
 **Conversation Features** 📋 PLANNED
 - 📋 **Conversation History**:
-    - 📋 Persist conversations per project/version
-    - 📋 Browse past conversations
-    - 📋 Search conversation history
-    - 📋 Export conversations as markdown
-    - 📋 Clear conversation option
+  - 📋 Persist conversations per project/version
+  - 📋 Browse past conversations
+  - 📋 Search conversation history
+  - 📋 Export conversations as markdown
+  - 📋 Clear conversation option
 - 📋 **Context Awareness**:
-    - 📋 AI knows current project, version, classes
-    - 📋 AI can reference existing schemas in responses
-    - 📋 AI understands selected items on canvas
-    - 📋 AI can see property definitions
-    - 📋 Automatic context injection into prompts
+  - 📋 AI knows current project, version, classes
+  - 📋 AI can reference existing schemas in responses
+  - 📋 AI understands selected items on canvas
+  - 📋 AI can see property definitions
+  - 📋 Automatic context injection into prompts
 - 📋 **Multi-Turn Conversations**:
-    - 📋 Follow-up questions with context
-    - 📋 Clarification requests
-    - 📋 Iterative refinement of schemas
-    - 📋 "Make it more like X" type instructions
+  - 📋 Follow-up questions with context
+  - 📋 Clarification requests
+  - 📋 Iterative refinement of schemas
+  - 📋 "Make it more like X" type instructions
 - Add guardrails to prevent sensitive data exposure
 - Add guardrails to prevent malicious code generation
 
@@ -213,21 +213,21 @@ This outlines the AI features that are planned for the Objectified platform.
 
 **Smart Property Recommendations** 📋 PLANNED
 - 📋 **Trigger Conditions**:
-    - 📋 When creating a new class
-    - 📋 When class name is entered
-    - 📋 On-demand via chat or button
-    - 📋 After adding first few properties
+  - 📋 When creating a new class
+  - 📋 When class name is entered
+  - 📋 On-demand via chat or button
+  - 📋 After adding first few properties
 - 📋 **Suggestion Types**:
-    - 📋 Common properties for class type (e.g., "User" → email, password, name)
-    - 📋 Missing standard properties (e.g., id, createdAt, updatedAt)
-    - 📋 Related properties based on existing ones
-    - 📋 Industry-standard properties (FHIR for healthcare, etc.)
+  - 📋 Common properties for class type (e.g., "User" → email, password, name)
+  - 📋 Missing standard properties (e.g., id, createdAt, updatedAt)
+  - 📋 Related properties based on existing ones
+  - 📋 Industry-standard properties (FHIR for healthcare, etc.)
 - 📋 **Suggestion UI**:
-    - 📋 Property suggestion dropdown
-    - 📋 Bulk accept/reject
-    - 📋 Customize before adding
-    - 📋 "Add all suggested" button
-    - 📋 Explanation for each suggestion
+  - 📋 Property suggestion dropdown
+  - 📋 Bulk accept/reject
+  - 📋 Customize before adding
+  - 📋 "Add all suggested" button
+  - 📋 Explanation for each suggestion
 
 | Ticket | Feature Description                                |
 |--------|----------------------------------------------------|
@@ -242,16 +242,16 @@ This outlines the AI features that are planned for the Objectified platform.
 
 **Type and Constraint Inference** 📋 PLANNED
 - 📋 Suggest type based on property name:
-    - 📋 `email` → string with email format
-    - 📋 `createdAt` → string with date-time format
-    - 📋 `age` → integer with minimum 0
-    - 📋 `price` → number with minimum 0
-    - 📋 `isActive` → boolean
+  - 📋 `email` → string with email format
+  - 📋 `createdAt` → string with date-time format
+  - 📋 `age` → integer with minimum 0
+  - 📋 `price` → number with minimum 0
+  - 📋 `isActive` → boolean
 - 📋 Suggest constraints:
-    - 📋 String length limits
-    - 📋 Numeric ranges
-    - 📋 Pattern validation
-    - 📋 Required vs optional
+  - 📋 String length limits
+  - 📋 Numeric ranges
+  - 📋 Pattern validation
+  - 📋 Required vs optional
 
 | Ticket | Feature Description                        |
 |--------|--------------------------------------------|
@@ -310,41 +310,66 @@ This outlines the AI features that are planned for the Objectified platform.
 | #255   | Estimated score impact for each fix    |
 | #256   | Add bulk apply recommendations         |
 
+### AI Properties Insights
+
+**Property Creation Suggestions** 📋 PLANNED
+- 📋 Common property sets for specific class types
+- 📋 Industry-standard property recommendations
+- 📋 Context-aware property suggestions based on existing schema
+- 📋 Property naming convention analysis
+
+| Ticket | Feature Description              |
+|--------|----------------------------------|
+| #609   | AI Property Creation Suggestions |
+
 ### AI Schema Health Insights
 
-**Schema Complexity Analysis**
-- Cognitive complexity score per class
-- Dependency graph complexity
-- Cyclomatic complexity for conditional schemas
-- Maintainability index
-- Technical debt metrics
+**Schema Complexity Analysis** 📋 PLANNED
+- 📋 Cognitive complexity score per class
+- 📋 Dependency graph complexity
+- 📋 Cyclomatic complexity for conditional schemas
+- 📋 Maintainability index
+- 📋 Technical debt metrics
 
-| Ticket | Feature Description                              |
-|--------|--------------------------------------------------|
+| Ticket | Feature Description                           |
+|--------|-----------------------------------------------|
+| #610   | AI Schema Complexity Analysis                 |
+| #611   | Dependency Graph Complexity                   |
+| #612   | Cyclomatic Complexity for Conditional Schemas |
+| #613   | Maintainability Index                         |
+| #614   | Technical Debt Metrics                        |
 
-**Best Practice Suggestions**
-- Context-aware tips based on schema type:
+**Best Practice Suggestions** 📋 PLANNED
+- 📋 Context-aware tips based on schema type:
   - E-commerce: "Consider adding inventory tracking"
   - Authentication: "Implement refresh token pattern"
   - Multi-tenant: "Add tenant isolation fields"
-- Industry-specific patterns
+- 📋 Industry-specific patterns
 - Security hardening suggestions
 - Performance optimization tips
 
-| Ticket | Feature Description                              |
-|--------|--------------------------------------------------|
+| Ticket | Feature Description            |
+|--------|--------------------------------|
+| #615   | AI Best Practice Suggestions   |
+| #616   | Industry-specific Patterns     |
+| #617   | Security Hardening Suggestions |
+| #618   | Performance Optimization Tips  |
 
 ### AI Documentation Generation
 
 **Auto-Generate Descriptions** 📋 PLANNED
-- Generate property descriptions from names and types
-- Generate class descriptions from properties
-- Generate operation summaries from path and method
-- Generate example values that make sense
+- 📋 Generate property descriptions from names and types
+- 📋 Generate class descriptions from properties
+- 📋 Generate operation summaries from path and method
+- 📋 Generate example values that make sense
 - Support multiple languages (i18n)
 
-| Ticket | Feature Description                              |
-|--------|--------------------------------------------------|
+| Ticket | Feature Description                                        |
+|--------|------------------------------------------------------------|
+| #619   | Auto-Generate Descriptions                                 |
+| #620   | Auto-Generate descriptions for classes                     |
+| #621   | Operations summaries and descriptions from path and method |
+| #622   | Generate example values that make sense                    |
 
 **API Usage Examples** 📋 PLANNED
 - Generate curl commands for each operation
@@ -402,6 +427,7 @@ This outlines the AI features that are planned for the Objectified platform.
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
+|| #623   | Intelligent Layout Suggestions                  |
 
 ### AI Configuration
 
