@@ -104,21 +104,34 @@ interface FormatDetectionResult {
 function detectFormat(doc: any): FormatDetectionResult {
   // OpenAPI 3.x
   if (doc.openapi) {
+    const version = doc.openapi;
+    // Only OpenAPI 3.1.x is fully supported
+    const isSupported = version.startsWith('3.1');
+    let displayName = `OpenAPI ${version}`;
+
+    if (!isSupported) {
+      if (version.startsWith('3.0')) {
+        displayName = `OpenAPI ${version} (not yet supported - upgrade to 3.1.x recommended)`;
+      } else {
+        displayName = `OpenAPI ${version} (unsupported version)`;
+      }
+    }
+
     return {
       format: 'openapi',
-      version: doc.openapi,
-      supported: true,
-      displayName: `OpenAPI ${doc.openapi}`
+      version: version,
+      supported: isSupported,
+      displayName
     };
   }
 
-  // Swagger 2.x
+  // Swagger 2.x (OpenAPI 2.0)
   if (doc.swagger) {
     return {
       format: 'swagger',
       version: doc.swagger,
-      supported: true,
-      displayName: `Swagger ${doc.swagger}`
+      supported: false,
+      displayName: `Swagger ${doc.swagger} (not yet supported - upgrade to OpenAPI 3.1.x recommended)`
     };
   }
 
@@ -465,6 +478,35 @@ function validateMetaSchema(doc: any, format: string): { valid: boolean; errors:
 function findWarnings(doc: any): AnalysisIssue[] {
   const warnings: AnalysisIssue[] = [];
   const schemas = doc.components?.schemas || doc.definitions || {};
+
+  // Check for unsupported OpenAPI versions
+  if (doc.openapi && !doc.openapi.startsWith('3.1')) {
+    if (doc.openapi.startsWith('3.0')) {
+      warnings.push({
+        type: 'warning',
+        message: `OpenAPI ${doc.openapi} is detected but not yet supported for import. Please upgrade to OpenAPI 3.1.x for full compatibility.`,
+        path: 'openapi',
+        severity: 'high'
+      });
+    } else {
+      warnings.push({
+        type: 'warning',
+        message: `OpenAPI ${doc.openapi} is not supported. Please upgrade to OpenAPI 3.1.x.`,
+        path: 'openapi',
+        severity: 'high'
+      });
+    }
+  }
+
+  // Check for Swagger 2.x (OpenAPI 2.0)
+  if (doc.swagger) {
+    warnings.push({
+      type: 'warning',
+      message: `Swagger ${doc.swagger} (OpenAPI 2.0) is detected but not yet supported for import. Please upgrade to OpenAPI 3.1.x for full compatibility.`,
+      path: 'swagger',
+      severity: 'high'
+    });
+  }
 
   // Check for missing descriptions
   Object.entries(schemas).forEach(([name, schema]: [string, any]) => {

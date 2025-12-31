@@ -47,6 +47,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   const [importComplete, setImportComplete] = useState(false);
   const [urlContent, setUrlContent] = useState<string | null>(null);
   const [urlFilename, setUrlFilename] = useState<string | null>(null);
+  const [urlMetadata, setUrlMetadata] = useState<FileMetadataPreview | null>(null);
   const [clipboardContent, setClipboardContent] = useState<string | null>(null);
   const [clipboardFilename, setClipboardFilename] = useState<string | null>(null);
 
@@ -74,6 +75,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       setFileMetadata(null);
       setUrlContent(null);
       setUrlFilename(null);
+      setUrlMetadata(null);
       setClipboardContent(null);
       setClipboardFilename(null);
     }
@@ -106,6 +108,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     setImportComplete(false);
     setUrlContent(null);
     setUrlFilename(null);
+    setUrlMetadata(null);
     setClipboardContent(null);
     setClipboardFilename(null);
     onClose();
@@ -139,22 +142,11 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     }
   };
 
-  const handleUrlSpecificationFetched = async (content: string, filename: string) => {
+  const handleUrlSpecificationFetched = (content: string, filename: string, metadata?: FileMetadataPreview) => {
     setUrlContent(content);
     setUrlFilename(filename);
-
-    // Auto-analyze when URL content is fetched
-    setIsAnalyzing(true);
-    try {
-      const result = await analyzeSpecification(content, filename);
-      console.log('URL content analysis complete:', result);
-      setAnalysisResult(result);
-      setCurrentStep('analysis');
-    } catch (error) {
-      console.error('URL content analysis error:', error);
-    } finally {
-      setIsAnalyzing(false);
-    }
+    setUrlMetadata(metadata || null);
+    // Don't auto-analyze - user needs to click "Analyze →" button
   };
 
   const handleClipboardSpecificationReady = (content: string, filename: string) => {
@@ -894,6 +886,15 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
                   <Button
                     onClick={handleAnalyze}
                     disabled={!selectedFile || isAnalyzing || (fileMetadata !== null && !fileMetadata.formatSupported)}
+                    className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+                  >
+                    {isAnalyzing ? 'Analyzing...' : 'Analyze →'}
+                  </Button>
+                )}
+                {currentStep === 'file-upload' && selectedSource === 'url' && (
+                  <Button
+                    onClick={handleAnalyze}
+                    disabled={!urlContent || isAnalyzing || (urlMetadata !== null && !urlMetadata.formatSupported)}
                     className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
                   >
                     {isAnalyzing ? 'Analyzing...' : 'Analyze →'}

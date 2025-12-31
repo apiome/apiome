@@ -7,7 +7,7 @@ import { fetchSpecificationFromUrl, validateImportUrl, UrlImportOptions, UrlImpo
 import { extractFileMetadata, FileMetadataPreview } from '../../../utils/openapi-analyzer';
 
 interface UrlImportPanelProps {
-  onSpecificationFetched: (content: string, filename: string) => void;
+  onSpecificationFetched: (content: string, filename: string, metadata?: FileMetadataPreview) => void;
 }
 
 type AuthType = 'none' | 'bearer' | 'apiKey' | 'basic';
@@ -32,6 +32,9 @@ export const UrlImportPanel: React.FC<UrlImportPanelProps> = ({
   const [isFetching, setIsFetching] = useState(false);
   const [fetchResult, setFetchResult] = useState<UrlImportResult | null>(null);
   const [fileMetadata, setFileMetadata] = useState<FileMetadataPreview | null>(null);
+  const [fetchedContent, setFetchedContent] = useState<string | null>(null);
+  const [fetchedFilename, setFetchedFilename] = useState<string | null>(null);
+  const [urlTested, setUrlTested] = useState(false);
 
   // Validate URL on change
   useEffect(() => {
@@ -60,13 +63,16 @@ export const UrlImportPanel: React.FC<UrlImportPanelProps> = ({
     timeout: 30000
   });
 
-  // Fetch specification
-  const handleFetchSpecification = async () => {
+  // Test URL - fetches and validates but doesn't proceed to analysis
+  const handleTestUrl = async () => {
     if (!url.trim() || urlError) return;
 
     setIsFetching(true);
     setFetchResult(null);
     setFileMetadata(null);
+    setFetchedContent(null);
+    setFetchedFilename(null);
+    setUrlTested(false);
 
     try {
       const result = await fetchSpecificationFromUrl(buildOptions());
@@ -77,8 +83,14 @@ export const UrlImportPanel: React.FC<UrlImportPanelProps> = ({
         const metadata = extractFileMetadata(result.content);
         setFileMetadata(metadata);
 
-        // Call the callback to proceed
-        onSpecificationFetched(result.content, result.filename || 'openapi-spec.yaml');
+        // Store content for later use when user clicks Analyze
+        setFetchedContent(result.content);
+        setFetchedFilename(result.filename || 'openapi-spec.yaml');
+        setUrlTested(true);
+
+        // Notify parent that content is ready (for enabling Analyze button)
+        // Pass metadata so parent can check format support
+        onSpecificationFetched(result.content, result.filename || 'openapi-spec.yaml', metadata);
       }
     } catch (error) {
       setFetchResult({
@@ -89,6 +101,15 @@ export const UrlImportPanel: React.FC<UrlImportPanelProps> = ({
       setIsFetching(false);
     }
   };
+
+  // Reset tested state when URL or auth changes
+  useEffect(() => {
+    setUrlTested(false);
+    setFetchResult(null);
+    setFileMetadata(null);
+    setFetchedContent(null);
+    setFetchedFilename(null);
+  }, [url, authType, token, apiKeyHeader, username, password]);
 
   return (
     <div className="space-y-6">
@@ -465,20 +486,46 @@ export const UrlImportPanel: React.FC<UrlImportPanelProps> = ({
       {/* Action Buttons */}
       <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
         <Button
-          onClick={handleFetchSpecification}
+          onClick={handleTestUrl}
           disabled={!url.trim() || !!urlError || isFetching}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          variant={urlTested && fetchResult?.success ? 'outline' : 'default'}
+          className={urlTested && fetchResult?.success
+            ? 'border-green-500 text-green-600 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-900/20'
+            : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+          }
         >
           {isFetching ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
               Testing...
             </>
+          ) : urlTested && fetchResult?.success ? (
+            <>
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              URL Tested Successfully
+            </>
           ) : (
             'Test URL'
           )}
         </Button>
       </div>
+
+      {/* Help text for next steps */}
+      {urlTested && fetchResult?.success && fileMetadata?.formatSupported && (
+        <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <div>
+              <div className="font-medium text-green-900 dark:text-green-200">
+                URL verified successfully
+              </div>
+              <div className="text-sm text-green-700 dark:text-green-300 mt-1">
+                Click &quot;Analyze →&quot; below to proceed with the import.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

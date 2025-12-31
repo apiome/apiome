@@ -48,8 +48,9 @@ The import system provides comprehensive, enterprise-level capabilities for impo
 
 ##### OpenAPI Specifications
 - ✅ **OpenAPI 3.1.x**: Full JSON Schema Draft 2020-12 support
-- 📋 **OpenAPI 3.0.x**: Backward compatible import with upgrade path
-- 📋 **OpenAPI 2.0 (Swagger)**: Legacy support with automatic conversion
+- ✅ Warn on older versions of OpenAPI Specification
+- ⚠️ **OpenAPI 3.0.x**: Detected but not yet supported (upgrade path planned)
+- ⚠️ **OpenAPI 2.0 (Swagger)**: Detected but not yet supported (automatic conversion planned)
 - **Multi-File Specs**: Support for $ref across multiple files
 - **External References**: Resolve external $ref URLs
 
