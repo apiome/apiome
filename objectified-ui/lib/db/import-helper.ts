@@ -1,9 +1,22 @@
 'use server';
 
-import { createProject, createVersion, createClass, addPropertyToClass, createProperty } from './helper';
-import { ImportSourceKind, getImporter, NormalizedClass } from '../importers';
+import {
+  PoolClient,
+  getTransactionClient,
+  beginTransaction,
+  commitTransaction,
+  rollbackTransaction,
+  releaseClient,
+  createProjectTx,
+  createVersionTx,
+  createPropertyTx,
+  createClassTx,
+  addPropertyToClassTx,
+  getClassesWithPropertiesAndTagsTx
+} from './import-transaction';
+import { ImportSourceKind, getImporter, NormalizedClass, NormalizedProperty } from '../importers';
 
-export type ImportJobState = 'queued' | 'running' | 'completed' | 'failed' | 'canceled';
+export type ImportJobState = 'queued' | 'running' | 'pending-approval' | 'committing' | 'completed' | 'failed' | 'canceled' | 'rolled-back';
 
 export type ImportLogLevel = 'info' | 'warn' | 'error';
 
@@ -24,6 +37,7 @@ export interface ProgressEvent {
     | 'creating-properties'
     | 'creating-classes'
     | 'linking-properties'
+    | 'verifying'
     | 'finalizing';
   total: number;
   completed: number;
@@ -63,6 +77,9 @@ interface JobState {
   percent: number;
   result?: { projectId?: string; versionId?: string };
   canceled?: boolean;
+  // Transaction state
+  transactionClient?: PoolClient;
+  transactionPending?: boolean;
   summary?: {
     classesCreated: number;
     propertiesCreated: number;
@@ -73,6 +90,19 @@ interface JobState {
     projectName?: string;
     versionId?: string;
     classes: Array<{ name: string; status: 'success' | 'warning' | 'failed' }>;
+    verification?: {
+      passed: boolean;
+      classesVerified: number;
+      propertiesVerified: number;
+      mismatches: Array<{
+        type: 'missing_class' | 'missing_property' | 'property_mismatch' | 'schema_mismatch';
+        className: string;
+        propertyName?: string;
+        expected?: any;
+        actual?: any;
+        message: string;
+      }>;
+    };
   };
 }
 
@@ -106,14 +136,229 @@ function stableStringify(obj: any): string {
   return '{' + pairs.join(',') + '}';
 }
 
+// Normalize property data for comparison - removes volatile fields and normalizes structure
+function normalizePropertyData(data: any): any {
+  if (!data || typeof data !== 'object') return data;
+
+  const normalized: any = {};
+  const keysToSkip = ['description']; // Description is stored separately
+
+  for (const key of Object.keys(data).sort()) {
+    if (keysToSkip.includes(key)) continue;
+    const value = data[key];
+    if (value === null || value === undefined) continue;
+    if (typeof value === 'object') {
+      normalized[key] = normalizePropertyData(value);
+    } else {
+      normalized[key] = value;
+    }
+  }
+
+  return normalized;
+}
+
+// Compare two property data objects for equivalence
+function comparePropertyData(expected: any, actual: any): { match: boolean; diff?: string } {
+  const expectedNorm = normalizePropertyData(expected);
+  const actualNorm = normalizePropertyData(actual);
+
+  const expectedStr = stableStringify(expectedNorm);
+  const actualStr = stableStringify(actualNorm);
+
+  if (expectedStr === actualStr) {
+    return { match: true };
+  }
+
+  return {
+    match: false,
+    diff: `Expected: ${expectedStr.substring(0, 200)}... Actual: ${actualStr.substring(0, 200)}...`
+  };
+}
+
+// Build a property tree from flat database properties
+function buildPropertyTree(properties: any[]): Map<string, any> {
+  const byId = new Map<string, any>();
+  const roots = new Map<string, any>();
+
+  // First pass: index by id
+  for (const p of properties) {
+    byId.set(p.id, { ...p, children: [] });
+  }
+
+  // Second pass: build tree
+  for (const p of properties) {
+    const node = byId.get(p.id)!;
+    if (p.parent_id && byId.has(p.parent_id)) {
+      byId.get(p.parent_id)!.children.push(node);
+    } else {
+      roots.set(p.name, node);
+    }
+  }
+
+  return roots;
+}
+
+// Verify a single class against its expected normalized form
+function verifyClass(
+  expectedClass: NormalizedClass,
+  dbClass: any,
+  mismatches: Array<any>
+): { propertiesVerified: number } {
+  let propertiesVerified = 0;
+
+  // Build property tree from database
+  const dbPropertyTree = buildPropertyTree(dbClass.properties || []);
+
+  // Verify each expected property exists in database
+  const verifyProperties = (expectedProps: NormalizedProperty[], dbProps: Map<string, any>, path: string = '') => {
+    for (const expectedProp of expectedProps) {
+      const fullPath = path ? `${path}.${expectedProp.name}` : expectedProp.name;
+      const dbProp = dbProps.get(expectedProp.name);
+
+      if (!dbProp) {
+        // Check if this property might have been skipped (no library entry)
+        // This is a warning case, not a failure
+        mismatches.push({
+          type: 'missing_property',
+          className: expectedClass.name,
+          propertyName: fullPath,
+          expected: expectedProp.data,
+          message: `Property "${fullPath}" not found in database for class "${expectedClass.name}"`
+        });
+        continue;
+      }
+
+      propertiesVerified++;
+
+      // Compare property data
+      const comparison = comparePropertyData(expectedProp.data, dbProp.data);
+      if (!comparison.match) {
+        mismatches.push({
+          type: 'property_mismatch',
+          className: expectedClass.name,
+          propertyName: fullPath,
+          expected: expectedProp.data,
+          actual: dbProp.data,
+          message: `Property data mismatch for "${fullPath}" in class "${expectedClass.name}": ${comparison.diff}`
+        });
+      }
+
+      // Recursively verify children
+      if (expectedProp.children && expectedProp.children.length > 0) {
+        const childMap = new Map<string, any>();
+        for (const child of dbProp.children || []) {
+          childMap.set(child.name, child);
+        }
+        verifyProperties(expectedProp.children, childMap, fullPath);
+      }
+    }
+  };
+
+  verifyProperties(expectedClass.properties || [], dbPropertyTree);
+
+  return { propertiesVerified };
+}
+
+// Main verification function - verifies imported data matches the original schema
+async function verifyImport(
+  client: PoolClient,
+  versionId: string,
+  normalizedClasses: NormalizedClass[],
+  job: JobState
+): Promise<{
+  passed: boolean;
+  classesVerified: number;
+  propertiesVerified: number;
+  mismatches: Array<any>;
+}> {
+  const mismatches: Array<any> = [];
+  let classesVerified = 0;
+  let totalPropertiesVerified = 0;
+
+  emit(job, 'info', 'VERIFY_START', `Starting import verification for ${normalizedClasses.length} classes`);
+
+  // Fetch all classes with properties from database using transaction client
+  const dbClassesJson = await getClassesWithPropertiesAndTagsTx(client, versionId);
+  const dbClasses = JSON.parse(dbClassesJson);
+
+  // Build a map of database classes by name
+  const dbClassMap = new Map<string, any>();
+  for (const dbClass of dbClasses) {
+    dbClassMap.set(dbClass.name, dbClass);
+  }
+
+  // Verify each expected class
+  for (const expectedClass of normalizedClasses) {
+    const dbClass = dbClassMap.get(expectedClass.name);
+
+    if (!dbClass) {
+      mismatches.push({
+        type: 'missing_class',
+        className: expectedClass.name,
+        message: `Class "${expectedClass.name}" not found in database after import`
+      });
+      continue;
+    }
+
+    classesVerified++;
+
+    // Verify class schema matches (basic check on discriminator and type)
+    if (expectedClass.schema) {
+      const expectedHasDiscriminator = !!expectedClass.schema.discriminator;
+      const dbSchema = dbClass.schema || {};
+      const dbHasDiscriminator = !!dbSchema.discriminator;
+
+      if (expectedHasDiscriminator !== dbHasDiscriminator) {
+        mismatches.push({
+          type: 'schema_mismatch',
+          className: expectedClass.name,
+          expected: { hasDiscriminator: expectedHasDiscriminator },
+          actual: { hasDiscriminator: dbHasDiscriminator },
+          message: `Schema discriminator mismatch for class "${expectedClass.name}"`
+        });
+      }
+    }
+
+    // Verify properties
+    const result = verifyClass(expectedClass, dbClass, mismatches);
+    totalPropertiesVerified += result.propertiesVerified;
+  }
+
+  // Check for extra classes in database that weren't expected
+  for (const dbClass of dbClasses) {
+    const wasExpected = normalizedClasses.some(nc => nc.name === dbClass.name);
+    if (!wasExpected) {
+      emit(job, 'warn', 'VERIFY_EXTRA_CLASS', `Database contains class "${dbClass.name}" that was not in import`);
+    }
+  }
+
+  const passed = mismatches.length === 0;
+
+  if (passed) {
+    emit(job, 'info', 'VERIFY_PASS', `Verification passed: ${classesVerified} classes, ${totalPropertiesVerified} properties verified`);
+  } else {
+    emit(job, 'error', 'VERIFY_FAIL', `Verification failed with ${mismatches.length} mismatches`, {
+      mismatches: mismatches.slice(0, 10) // Limit to first 10 for logging
+    });
+  }
+
+  return {
+    passed,
+    classesVerified,
+    propertiesVerified: totalPropertiesVerified,
+    mismatches
+  };
+}
+
 async function writeClassWithProperties(
+  client: PoolClient,
   projectId: string,
   versionId: string,
   cls: NormalizedClass,
   job: JobState,
   propertyIdMap: Map<string, string>
 ) {
-  const resClass = JSON.parse(await createClass(versionId, cls.name, cls.description || null, cls.schema || { type: 'object' }));
+  const resClass = JSON.parse(await createClassTx(client, versionId, cls.name, cls.description || null, cls.schema || { type: 'object' }));
   if (!resClass.success) throw new Error(resClass.error || 'Failed to create class');
   const classId = resClass.class.id as string;
 
@@ -148,7 +393,7 @@ async function writeClassWithProperties(
         parentId
       });
       const addRes = JSON.parse(
-        await addPropertyToClass(classId, propertyId, p.name, p.description || null, p.data, parentId)
+        await addPropertyToClassTx(client, classId, propertyId, p.name, p.description || null, p.data, parentId)
       );
       if (!addRes.success) throw new Error(addRes.error || 'Failed to add property');
       const newId = addRes.classProperty.id as string;
@@ -167,6 +412,7 @@ export async function startImport(input: ImportJobInput) {
     state: 'queued',
     events: [],
     percent: 0,
+    transactionPending: false,
     summary: {
       classesCreated: 0,
       propertiesCreated: 0,
@@ -181,10 +427,21 @@ export async function startImport(input: ImportJobInput) {
   jobs.set(jobId, job);
 
   (async () => {
+    let client: PoolClient | null = null;
+
     try {
       job.state = 'running';
       emit(job, 'info', 'INIT', 'Initializing import job');
       setProgress(job, 'initializing', 1, 0);
+
+      // Get a transaction client
+      client = await getTransactionClient();
+      job.transactionClient = client;
+
+      // Begin transaction
+      await beginTransaction(client);
+      job.transactionPending = true;
+      emit(job, 'info', 'TRANSACTION_STARTED', 'Database transaction started - changes will be committed only after approval');
 
       const importer = getImporter(input.sourceKind);
       if (!importer) throw new Error(`No importer registered for ${input.sourceKind}`);
@@ -203,7 +460,7 @@ export async function startImport(input: ImportJobInput) {
       if (job.canceled) throw new Error('Import canceled');
 
       setProgress(job, 'creating-project', 1, 0, input.project.name);
-      const resProj = JSON.parse(await createProject(input.tenantId, input.userId, input.project.name, input.project.description || '', input.project.slug));
+      const resProj = JSON.parse(await createProjectTx(client, input.tenantId, input.userId, input.project.name, input.project.description || '', input.project.slug));
       if (!resProj.success) throw new Error(resProj.error || 'Failed to create project');
       const projectId = resProj.project.id as string;
       emit(job, 'info', 'PROJECT_CREATED', `Created project: ${input.project.name}`, { projectId });
@@ -211,7 +468,7 @@ export async function startImport(input: ImportJobInput) {
       if (job.canceled) throw new Error('Import canceled');
 
       setProgress(job, 'creating-version', 2, 1, input.version.versionId);
-      const resVer = JSON.parse(await createVersion(projectId, input.userId, input.version.versionId, input.version.description || '', 'Imported from specification'));
+      const resVer = JSON.parse(await createVersionTx(client, projectId, input.userId, input.version.versionId, input.version.description || '', 'Imported from specification'));
       if (!resVer.success) throw new Error(resVer.error || 'Failed to create version');
       const versionId = resVer.version.id as string;
       emit(job, 'info', 'VERSION_CREATED', `Created version: ${input.version.versionId}`, { versionId });
@@ -265,7 +522,7 @@ export async function startImport(input: ImportJobInput) {
           dataType: payload.data.type
         });
         const resCreateProp = JSON.parse(
-          await createProperty(projectId, propName, payload.description || null, payload.data)
+          await createPropertyTx(client, projectId, propName, payload.description || null, payload.data)
         );
         if (!resCreateProp.success) {
           // If it still fails (maybe due to existing property from a previous import), log and skip
@@ -285,7 +542,7 @@ export async function startImport(input: ImportJobInput) {
         if (job.canceled) throw new Error('Import canceled');
         setProgress(job, 'creating-classes', 2 + norm.classes.length, 2 + classCount, cls.name);
         try {
-          await writeClassWithProperties(projectId, versionId, cls, job, propertyIdMap);
+          await writeClassWithProperties(client, projectId, versionId, cls, job, propertyIdMap);
           emit(job, 'info', 'CLASS_CREATED', `Imported class: ${cls.name}`);
           if (job.summary) {
             job.summary.classesCreated++;
@@ -301,14 +558,56 @@ export async function startImport(input: ImportJobInput) {
         classCount++;
       }
 
-      setProgress(job, 'finalizing', 2 + norm.classes.length, 2 + norm.classes.length);
-      job.state = 'completed';
+      // Verification phase - sanity check imported data matches schema
+      if (job.canceled) throw new Error('Import canceled');
+      setProgress(job, 'verifying', 3 + norm.classes.length, 2 + norm.classes.length, 'Verifying import...');
+
+      const verificationResult = await verifyImport(client, versionId, norm.classes, job);
+
+      if (job.summary) {
+        job.summary.verification = verificationResult;
+      }
+
+      // If verification failed, mark the import as failed (will trigger rollback)
+      if (!verificationResult.passed) {
+        throw new Error(`Import verification failed: ${verificationResult.mismatches.length} mismatches found. ` +
+          `First mismatch: ${verificationResult.mismatches[0]?.message || 'Unknown'}`);
+      }
+
+      setProgress(job, 'finalizing', 3 + norm.classes.length, 3 + norm.classes.length);
+
+      // Set state to pending-approval - waiting for user to accept or reject
+      job.state = 'pending-approval';
       job.result = { projectId, versionId };
       if (job.summary) {
         job.summary.totalTime = Date.now() - startTime;
       }
-      emit(job, 'info', 'DONE', 'Import completed successfully', job.result);
+      emit(job, 'info', 'PENDING_APPROVAL', 'Import ready for review. Accept to commit changes or reject to rollback.', job.result);
+
+      // Note: Transaction is NOT committed here - it stays open until user accepts or rejects
+
     } catch (err: any) {
+      // Rollback transaction on any error
+      if (client && job.transactionPending) {
+        try {
+          await rollbackTransaction(client);
+          job.transactionPending = false;
+          emit(job, 'info', 'TRANSACTION_ROLLED_BACK', 'Transaction rolled back due to error');
+        } catch (rollbackErr) {
+          emit(job, 'error', 'ROLLBACK_FAILED', `Failed to rollback transaction: ${rollbackErr}`);
+        }
+      }
+
+      // Release client on error
+      if (client) {
+        try {
+          await releaseClient(client);
+          job.transactionClient = undefined;
+        } catch (releaseErr) {
+          emit(job, 'error', 'RELEASE_FAILED', `Failed to release client: ${releaseErr}`);
+        }
+      }
+
       if (job.canceled) {
         job.state = 'canceled';
         emit(job, 'warn', 'CANCELED', 'Import canceled by user');
@@ -322,16 +621,137 @@ export async function startImport(input: ImportJobInput) {
   return { jobId };
 }
 
+/**
+ * Commit the import transaction - called when user accepts the import
+ */
+export async function commitImport(jobId: string): Promise<{ success: boolean; error?: string }> {
+  const job = jobs.get(jobId);
+  if (!job) {
+    return { success: false, error: 'Job not found' };
+  }
+
+  if (job.state !== 'pending-approval') {
+    return { success: false, error: `Cannot commit import in state: ${job.state}` };
+  }
+
+  if (!job.transactionClient || !job.transactionPending) {
+    return { success: false, error: 'No pending transaction to commit' };
+  }
+
+  try {
+    job.state = 'committing';
+    emit(job, 'info', 'COMMITTING', 'Committing import transaction...');
+
+    await commitTransaction(job.transactionClient);
+    job.transactionPending = false;
+
+    emit(job, 'info', 'COMMITTED', 'Import transaction committed successfully');
+
+    // Release the client
+    await releaseClient(job.transactionClient);
+    job.transactionClient = undefined;
+
+    job.state = 'completed';
+    emit(job, 'info', 'DONE', 'Import completed successfully', job.result);
+
+    return { success: true };
+  } catch (err: any) {
+    emit(job, 'error', 'COMMIT_FAILED', `Failed to commit transaction: ${err?.message}`);
+    job.state = 'failed';
+
+    // Try to release the client
+    if (job.transactionClient) {
+      try {
+        await releaseClient(job.transactionClient);
+        job.transactionClient = undefined;
+      } catch (releaseErr) {
+        // Ignore release errors
+      }
+    }
+
+    return { success: false, error: err?.message || 'Failed to commit transaction' };
+  }
+}
+
+/**
+ * Rollback the import transaction - called when user rejects the import or closes dialog
+ */
+export async function rollbackImport(jobId: string): Promise<{ success: boolean; error?: string }> {
+  const job = jobs.get(jobId);
+  if (!job) {
+    return { success: false, error: 'Job not found' };
+  }
+
+  // Allow rollback from pending-approval or running states
+  if (job.state !== 'pending-approval' && job.state !== 'running') {
+    // Already finished (completed, failed, canceled, rolled-back)
+    return { success: true };
+  }
+
+  if (!job.transactionClient || !job.transactionPending) {
+    // No pending transaction
+    job.state = 'rolled-back';
+    return { success: true };
+  }
+
+  try {
+    emit(job, 'info', 'ROLLING_BACK', 'Rolling back import transaction...');
+
+    await rollbackTransaction(job.transactionClient);
+    job.transactionPending = false;
+
+    emit(job, 'info', 'ROLLED_BACK', 'Import transaction rolled back - no changes were saved');
+
+    // Release the client
+    await releaseClient(job.transactionClient);
+    job.transactionClient = undefined;
+
+    job.state = 'rolled-back';
+    job.canceled = true;
+
+    return { success: true };
+  } catch (err: any) {
+    emit(job, 'error', 'ROLLBACK_FAILED', `Failed to rollback transaction: ${err?.message}`);
+
+    // Try to release the client
+    if (job.transactionClient) {
+      try {
+        await releaseClient(job.transactionClient);
+        job.transactionClient = undefined;
+      } catch (releaseErr) {
+        // Ignore release errors
+      }
+    }
+
+    return { success: false, error: err?.message || 'Failed to rollback transaction' };
+  }
+}
+
 export async function getImportStatus(jobId: string) {
   const job = jobs.get(jobId);
   if (!job) return { jobId, state: 'failed' as ImportJobState, percent: 0, events: [{ id: rndId(), ts: now(), level: 'error' as ImportLogLevel, code: 'NOT_FOUND', message: 'Job not found' }] };
-  return { jobId, state: job.state, percent: job.percent, events: job.events.slice(-200), progress: job.progress, summary: job.summary };
+  return {
+    jobId,
+    state: job.state,
+    percent: job.percent,
+    events: job.events.slice(-200),
+    progress: job.progress,
+    summary: job.summary,
+    transactionPending: job.transactionPending
+  };
 }
 
 export async function cancelImport(jobId: string) {
   const job = jobs.get(jobId);
   if (!job) return { success: false };
+
   job.canceled = true;
+
+  // If there's a pending transaction, roll it back
+  if (job.transactionClient && job.transactionPending) {
+    return rollbackImport(jobId);
+  }
+
   return { success: true };
 }
 

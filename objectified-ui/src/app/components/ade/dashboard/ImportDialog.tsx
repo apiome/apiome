@@ -16,7 +16,7 @@ import ImportExecutionPanel from './ImportExecutionPanel';
 import ImportCompletePanel from './ImportCompletePanel';
 import UrlImportPanel from './UrlImportPanel';
 import ClipboardImportPanel from './ClipboardImportPanel';
-import { startImport, getImportStatus } from '../../../../../lib/db/import-actions';
+import { startImport, getImportStatus, rollbackImport } from '../../../../../lib/db/import-actions';
 
 interface ImportDialogProps {
   open: boolean;
@@ -79,7 +79,16 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     }
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
+    // If there's a pending import job (during import step), roll back the transaction
+    if (jobId && currentStep === 'import') {
+      try {
+        await rollbackImport(jobId);
+      } catch (e) {
+        console.error('Failed to rollback import on close:', e);
+      }
+    }
+
     // Call onSuccess callback if import completed successfully
     if (importSucceeded && onSuccess) {
       onSuccess();
@@ -850,16 +859,25 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
                 ← Back
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleClose}>
-                  {importComplete ? 'Close' : 'Cancel'}
-                </Button>
-                {importComplete && (
-                  <Button
-                    onClick={() => setCurrentStep('done')}
-                    className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
-                  >
-                    Next →
+                {/* If import complete but failed/rolled back, just show Cancel */}
+                {importComplete && !importSucceeded ? (
+                  <Button variant="outline" onClick={handleClose}>
+                    Cancel
                   </Button>
+                ) : (
+                  <>
+                    <Button variant="outline" onClick={handleClose}>
+                      {importComplete ? 'Close' : 'Cancel'}
+                    </Button>
+                    {importComplete && importSucceeded && (
+                      <Button
+                        onClick={() => setCurrentStep('done')}
+                        className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+                      >
+                        Next →
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             </>

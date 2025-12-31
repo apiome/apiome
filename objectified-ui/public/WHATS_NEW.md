@@ -20,6 +20,7 @@ We continue to improve the platform based on your feedback with improvements and
   - URL imports with tokens and authentication
   - Clipboard-based copy/paste editor
   - Class import now supports file, URL, and clipboard import sources
+  - Import performs a sanity check to make sure all class imports are valid
 - Canvas improvements
   - Added the ability to import a class directly using the same import system 
   - Added ability to persist layout settings for versions

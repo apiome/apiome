@@ -12,12 +12,26 @@ import {
   FileText,
   Download,
   Plus,
-  Clock
+  Clock,
+  ShieldCheck,
+  ShieldX
 } from 'lucide-react';
 import { getImportStatus } from '../../../../../lib/db/import-actions';
 
 interface ImportCompletePanelProps {
   jobId: string;
+}
+
+interface VerificationResult {
+  passed: boolean;
+  classesVerified: number;
+  propertiesVerified: number;
+  mismatches: Array<{
+    type: string;
+    className: string;
+    propertyName?: string;
+    message: string;
+  }>;
 }
 
 interface ImportSummary {
@@ -33,6 +47,7 @@ interface ImportSummary {
     name: string;
     status: 'success' | 'warning' | 'failed';
   }>;
+  verification?: VerificationResult;
 }
 
 export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps) {
@@ -61,7 +76,13 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
             schemas: rawSummary.classes?.map((c: any) => ({
               name: c.name,
               status: c.status
-            })) || []
+            })) || [],
+            verification: rawSummary.verification ? {
+              passed: rawSummary.verification.passed,
+              classesVerified: rawSummary.verification.classesVerified,
+              propertiesVerified: rawSummary.verification.propertiesVerified,
+              mismatches: rawSummary.verification.mismatches || []
+            } : undefined
           });
         }
       } catch (e) {
@@ -165,6 +186,59 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
             </div>
           </div>
         </div>
+
+        {/* Verification Status */}
+        {summary?.verification && (
+          <div className={`rounded-lg p-4 mb-6 border ${
+            summary.verification.passed 
+              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+              : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+          }`}>
+            <div className="flex items-center gap-3 mb-2">
+              {summary.verification.passed ? (
+                <ShieldCheck className="h-6 w-6 text-green-600 dark:text-green-400" />
+              ) : (
+                <ShieldX className="h-6 w-6 text-red-600 dark:text-red-400" />
+              )}
+              <div className={`font-semibold ${
+                summary.verification.passed 
+                  ? 'text-green-900 dark:text-green-200'
+                  : 'text-red-900 dark:text-red-200'
+              }`}>
+                {summary.verification.passed ? 'Import Verification Passed' : 'Import Verification Failed'}
+              </div>
+            </div>
+            <div className={`text-sm ${
+              summary.verification.passed 
+                ? 'text-green-700 dark:text-green-300'
+                : 'text-red-700 dark:text-red-300'
+            }`}>
+              {summary.verification.passed ? (
+                <span>
+                  Successfully verified {summary.verification.classesVerified} classes and{' '}
+                  {summary.verification.propertiesVerified} properties match the imported schema.
+                </span>
+              ) : (
+                <div className="space-y-2">
+                  <span>
+                    Found {summary.verification.mismatches.length} mismatches during verification.
+                  </span>
+                  {summary.verification.mismatches.slice(0, 5).map((mismatch, idx) => (
+                    <div key={idx} className="pl-4 border-l-2 border-red-300 dark:border-red-700 text-xs">
+                      <div className="font-medium">{mismatch.className}{mismatch.propertyName ? `.${mismatch.propertyName}` : ''}</div>
+                      <div className="text-red-600 dark:text-red-400">{mismatch.message}</div>
+                    </div>
+                  ))}
+                  {summary.verification.mismatches.length > 5 && (
+                    <div className="text-xs italic">
+                      ...and {summary.verification.mismatches.length - 5} more
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Metadata */}
         <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">

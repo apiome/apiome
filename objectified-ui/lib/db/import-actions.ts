@@ -14,5 +14,13 @@ export async function cancelImport(jobId: string) {
   return importHelper.cancelImport(jobId);
 }
 
+export async function commitImport(jobId: string) {
+  return importHelper.commitImport(jobId);
+}
+
+export async function rollbackImport(jobId: string) {
+  return importHelper.rollbackImport(jobId);
+}
+
 export type { ImportJobInput, ImportStatus, ImportEvent, ProgressEvent, ImportJobState, ImportLogLevel } from './import-helper';
 
