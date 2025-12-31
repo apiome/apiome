@@ -56,36 +56,39 @@ This contains feature sets for property and schema templates, both system-define
 ---
 
 #### Template Library 📋 PLANNED
-- Pre-built schema templates:
-  - REST API (CRUD operations)
-  - E-commerce (Product, Cart, Order)
-  - Authentication (User, Role, Permission)
-  - Blog (Post, Comment, Author)
-  - CRM (Contact, Lead, Opportunity)
-  - Inventory (Product, Stock, Location)
-  - Healthcare (Patient, Appointment, Record)
-  - Education (Course, Student, Enrollment)
-- Community template marketplace
-- Import templates from GitHub
-- Template versioning
-- Template categories and tags
-- Template ratings and reviews
-- Fork and customize templates
+- 📋 Pre-built schema templates:
+  - 📋 E-commerce (Product, Cart, Order)
+  - 📋 Authentication (User, Role, Permission)
+  - 📋 Blog (Post, Comment, Author)
+  - 📋 CRM (Contact, Lead, Opportunity)
+  - 📋 Inventory (Product, Stock, Location)
+  - 📋 Healthcare (Patient, Appointment, Record)
+  - 📋 Education (Course, Student, Enrollment)
+- 📋 Community template marketplace
+- 📋 Template categories and tags
+- 📋 Template ratings and reviews
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
+| #602   | Pre-built schema templates for common domains    |
+| #603   | Community template marketplace                   |
+| #604   | Template categories and tags                     |
+| #605   | Template ratings and reviews                     |
 
 ---
 
 #### Custom Templates 📋 PLANNED
-- Create templates from existing schemas
+- 📋 Create templates from existing schemas
 - Template variables (placeholders)
-- Template documentation
-- Share templates privately or publicly
+- 📋 Template documentation
+- 📋 Share templates privately or publicly
 - Template monetization (premium templates)
 
-| Ticket | Feature Description                              |
-|--------|--------------------------------------------------|
+| Ticket | Feature Description                    |
+|--------|----------------------------------------|
+| #606   | Create templates from existing schemas |
+| #607   | Template documentation                |
+| #608   | Share templates privately or publicly  |
 
 ---
 
