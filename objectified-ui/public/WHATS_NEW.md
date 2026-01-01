@@ -15,6 +15,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Fixed if/then/else in comprehension section of schemas
   - Fixed additionalProperties in property editor to allow for types and schemas
   - Fixed overall application layout to use less memory and split out sections into separate paths
+  - Fixed side-by-side diff comparison view for versions
 - Implemented a more advanced import system
   - File imports
   - URL imports with tokens and authentication
