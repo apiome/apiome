@@ -751,15 +751,78 @@ const Versions = () => {
                   <div className="text-sm text-gray-600 dark:text-gray-400">v{versions.find(v => v.id === compareVersion1Id)?.version_id} → v{versions.find(v => v.id === compareVersion2Id)?.version_id}</div>
                 </div>
                 <div className="border border-gray-300 dark:border-gray-600 rounded overflow-auto font-mono text-xs" style={{ maxHeight: 'calc(70vh - 120px)' }}>
-                  {diffResult.map((part, i) => (
-                    <div key={i} className={part.added ? 'bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200' : part.removed ? 'bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-200' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'}>
-                      {part.value.split('\n').filter(Boolean).map((line, j) => (
-                        <div key={j} className="px-3 py-0.5" style={{ whiteSpace: 'pre-wrap' }}>
-                          {part.added && '+ '}{part.removed && '- '}{line}
+                  {diffViewMode === 'overlay' ? (
+                    // Overlay/Unified diff view
+                    diffResult.map((part, i) => (
+                      <div key={i} className={part.added ? 'bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200' : part.removed ? 'bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-200' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'}>
+                        {part.value.split('\n').filter(Boolean).map((line, j) => (
+                          <div key={j} className="px-3 py-0.5" style={{ whiteSpace: 'pre-wrap' }}>
+                            {part.added && '+ '}{part.removed && '- '}{line}
+                          </div>
+                        ))}
+                      </div>
+                    ))
+                  ) : (
+                    // Side-by-side view
+                    <div className="flex">
+                      {/* Left panel - Version 1 (Base) */}
+                      <div
+                        ref={leftPanelRef}
+                        onScroll={handleLeftScroll}
+                        className="w-1/2 border-r border-gray-300 dark:border-gray-600 overflow-auto"
+                        style={{ maxHeight: 'calc(70vh - 120px)' }}
+                      >
+                        <div className="sticky top-0 bg-gray-100 dark:bg-gray-700 px-3 py-1 text-xs font-semibold border-b border-gray-300 dark:border-gray-600">
+                          v{versions.find(v => v.id === compareVersion1Id)?.version_id} (Base)
                         </div>
-                      ))}
+                        {(() => {
+                          const content1 = compareFormat === 'json' ? compareSpec1 : YAML.stringify(JSON.parse(compareSpec1));
+                          return content1.split('\n').map((line, i) => {
+                            // Check if this line was removed (exists in base but not in compare)
+                            const isRemoved = diffResult.some(part => part.removed && part.value.includes(line));
+                            return (
+                              <div
+                                key={i}
+                                className={`px-3 py-0.5 ${isRemoved ? 'bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-200' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'}`}
+                                style={{ whiteSpace: 'pre-wrap' }}
+                              >
+                                <span className="text-gray-400 dark:text-gray-500 select-none mr-2 inline-block w-8 text-right">{i + 1}</span>
+                                {line || ' '}
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                      {/* Right panel - Version 2 (Compare To) */}
+                      <div
+                        ref={rightPanelRef}
+                        onScroll={handleRightScroll}
+                        className="w-1/2 overflow-auto"
+                        style={{ maxHeight: 'calc(70vh - 120px)' }}
+                      >
+                        <div className="sticky top-0 bg-gray-100 dark:bg-gray-700 px-3 py-1 text-xs font-semibold border-b border-gray-300 dark:border-gray-600">
+                          v{versions.find(v => v.id === compareVersion2Id)?.version_id} (Compare To)
+                        </div>
+                        {(() => {
+                          const content2 = compareFormat === 'json' ? compareSpec2 : YAML.stringify(JSON.parse(compareSpec2));
+                          return content2.split('\n').map((line, i) => {
+                            // Check if this line was added (exists in compare but not in base)
+                            const isAdded = diffResult.some(part => part.added && part.value.includes(line));
+                            return (
+                              <div
+                                key={i}
+                                className={`px-3 py-0.5 ${isAdded ? 'bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'}`}
+                                style={{ whiteSpace: 'pre-wrap' }}
+                              >
+                                <span className="text-gray-400 dark:text-gray-500 select-none mr-2 inline-block w-8 text-right">{i + 1}</span>
+                                {line || ' '}
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}
