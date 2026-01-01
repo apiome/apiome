@@ -49,6 +49,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Cancel and Save buttons for explicit change control
   - Deprecated paths show visual strikethrough and red warning badge
   - Enhanced deprecated checkbox with prominent styling and warning message
+  - Tags multi-select using project-defined tags with color-coded badges
 
 View our YouTube channel [here](https://www.youtube.com/@objectifieddev) for detailed tutorials and walkthroughs!
 

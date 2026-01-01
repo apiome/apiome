@@ -13,6 +13,12 @@ import {
   deletePathOperation
 } from '../../../../../lib/db/helper-paths';
 
+import { getTagsForProject } from '../../../../../lib/db/helper';
+
+export async function getTagsForProjectAction(projectId: string) {
+  return await getTagsForProject(projectId);
+}
+
 export async function getPathsForVersionAction(versionId: string) {
   return await getApiPathsForVersion(versionId);
 }

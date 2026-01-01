@@ -47,13 +47,12 @@ structure immediately recognizable.
 - ✅ Summary and description (markdown support with Monaco Editor)
 - 📋 Server overrides for multi-environment routing
 - ✅ Deprecated flag with visual strikethrough and warning badge
-- 📋 Path tags for logical grouping
+- ✅ Path tags for logical grouping (multi-select from project-defined tags)
 - 📋 Common parameters inherited by all operations
 - 📋 External documentation links
 
 | Ticket | Feature                                                              |
 |--------|----------------------------------------------------------------------|
-| #354   | Add deprecated flag to support deprecation with visual strikethrough |
 | #355   | Add tags to paths for visual grouping                                |
 | #356   | Add external documentation links for paths                           |
 

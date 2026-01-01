@@ -1,11 +1,20 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, Check, ChevronDown } from 'lucide-react';
 import * as ScrollArea from '@radix-ui/react-scroll-area';
+import * as Popover from '@radix-ui/react-popover';
 import Editor from '@monaco-editor/react';
 import { extractPathVariables, PathVariable, PathNodeData } from '@/app/components/ade/paths/PathNode';
-import { updatePathAction, deletePathAction } from '../actions';
+import { updatePathAction, deletePathAction, getTagsForProjectAction } from '../actions';
+import { useStudio } from '../../StudioContext';
+
+interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+}
 
 interface PropertiesPanelProps {
   selectedNode: any | null;
@@ -13,15 +22,18 @@ interface PropertiesPanelProps {
 }
 
 export default function PropertiesPanel({ selectedNode, onClose }: PropertiesPanelProps) {
+  const { selectedProjectId } = useStudio();
   const [pathPattern, setPathPattern] = useState('');
   const [pathVariables, setPathVariables] = useState<PathVariable[]>([]);
   const [summary, setSummary] = useState('');
   const [description, setDescription] = useState('');
-  const [tags, setTags] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]); // Array of tag IDs
   const [deprecated, setDeprecated] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
 
   // Store original values for cancel functionality
   const [originalValues, setOriginalValues] = useState({
@@ -29,9 +41,30 @@ export default function PropertiesPanel({ selectedNode, onClose }: PropertiesPan
     pathVariables: [] as PathVariable[],
     summary: '',
     description: '',
-    tags: '',
+    selectedTags: [] as string[],
     deprecated: false,
   });
+
+  // Load available tags for the project
+  useEffect(() => {
+    if (!selectedProjectId) {
+      setAvailableTags([]);
+      return;
+    }
+
+    const loadTags = async () => {
+      try {
+        const result = await getTagsForProjectAction(selectedProjectId);
+        const tags = JSON.parse(result);
+        setAvailableTags(tags);
+      } catch (error) {
+        console.error('Error loading tags:', error);
+        setAvailableTags([]);
+      }
+    };
+
+    loadTags();
+  }, [selectedProjectId]);
 
   // Detect dark mode from system preferences
   useEffect(() => {
@@ -54,14 +87,14 @@ export default function PropertiesPanel({ selectedNode, onClose }: PropertiesPan
       const newPathVariables = data.pathVariables || [];
       const newSummary = data.summary || '';
       const newDescription = data.description || '';
-      const newTags = data.tags?.join(', ') || '';
+      const newSelectedTags = data.tags || []; // Array of tag IDs
       const newDeprecated = data.deprecated || false;
 
       setPathPattern(newPathPattern);
       setPathVariables(newPathVariables);
       setSummary(newSummary);
       setDescription(newDescription);
-      setTags(newTags);
+      setSelectedTags(newSelectedTags);
       setDeprecated(newDeprecated);
 
       // Store original values
@@ -70,7 +103,7 @@ export default function PropertiesPanel({ selectedNode, onClose }: PropertiesPan
         pathVariables: JSON.parse(JSON.stringify(newPathVariables)), // Deep copy
         summary: newSummary,
         description: newDescription,
-        tags: newTags,
+        selectedTags: [...newSelectedTags],
         deprecated: newDeprecated,
       });
 
@@ -141,7 +174,7 @@ export default function PropertiesPanel({ selectedNode, onClose }: PropertiesPan
     setPathVariables(JSON.parse(JSON.stringify(originalValues.pathVariables)));
     setSummary(originalValues.summary);
     setDescription(originalValues.description);
-    setTags(originalValues.tags);
+    setSelectedTags([...originalValues.selectedTags]);
     setDeprecated(originalValues.deprecated);
     setHasUnsavedChanges(false);
   };
@@ -161,7 +194,7 @@ export default function PropertiesPanel({ selectedNode, onClose }: PropertiesPan
           pathVariables: pathVariables,
           summary: summary,
           description: description,
-          tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+          tags: selectedTags,
           deprecated: deprecated,
         });
       }
@@ -181,7 +214,7 @@ export default function PropertiesPanel({ selectedNode, onClose }: PropertiesPan
         pathVariables: JSON.parse(JSON.stringify(pathVariables)),
         summary,
         description,
-        tags,
+        selectedTags: [...selectedTags],
         deprecated,
       });
 
@@ -383,18 +416,91 @@ export default function PropertiesPanel({ selectedNode, onClose }: PropertiesPan
                     </div>
                     <div>
                       <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
-                        Tags (comma-separated)
+                        Tags
                       </label>
-                      <input
-                        type="text"
-                        value={tags}
-                        onChange={(e) => {
-                          setTags(e.target.value);
-                          handleFieldChange('tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean));
-                        }}
-                        placeholder="user, authentication"
-                        className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                      />
+                      <Popover.Root open={isTagDropdownOpen} onOpenChange={setIsTagDropdownOpen}>
+                        <Popover.Trigger asChild>
+                          <button
+                            type="button"
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-left flex items-center justify-between hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                          >
+                            <div className="flex-1 flex flex-wrap gap-1">
+                              {selectedTags.length === 0 ? (
+                                <span className="text-gray-400 dark:text-gray-500">Select tags...</span>
+                              ) : (
+                                selectedTags.map(tagId => {
+                                  const tag = availableTags.find(t => t.id === tagId);
+                                  return tag ? (
+                                    <span
+                                      key={tagId}
+                                      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                      style={{
+                                        backgroundColor: `${tag.color}20`,
+                                        color: tag.color,
+                                        border: `1px solid ${tag.color}40`
+                                      }}
+                                    >
+                                      {tag.name}
+                                    </span>
+                                  ) : null;
+                                })
+                              )}
+                            </div>
+                            <ChevronDown className="h-4 w-4 text-gray-400 shrink-0 ml-2" />
+                          </button>
+                        </Popover.Trigger>
+                        <Popover.Portal>
+                          <Popover.Content
+                            className="z-[9999] w-[260px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden"
+                            sideOffset={4}
+                            align="start"
+                          >
+                            <div className="max-h-[200px] overflow-y-auto p-1">
+                              {availableTags.length === 0 ? (
+                                <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 text-center">
+                                  No tags defined for this project
+                                </div>
+                              ) : (
+                                availableTags.map(tag => {
+                                  const isSelected = selectedTags.includes(tag.id);
+                                  return (
+                                    <button
+                                      key={tag.id}
+                                      type="button"
+                                      onClick={() => {
+                                        const newTags = isSelected
+                                          ? selectedTags.filter(id => id !== tag.id)
+                                          : [...selectedTags, tag.id];
+                                        setSelectedTags(newTags);
+                                        setHasUnsavedChanges(true);
+                                      }}
+                                      className={`w-full px-3 py-2 flex items-center gap-2 text-left text-sm rounded transition-colors ${
+                                        isSelected 
+                                          ? 'bg-indigo-50 dark:bg-indigo-900/30' 
+                                          : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                                      }`}
+                                    >
+                                      <div
+                                        className="w-3 h-3 rounded-full shrink-0"
+                                        style={{ backgroundColor: tag.color }}
+                                      />
+                                      <span className="flex-1 text-gray-900 dark:text-white truncate">
+                                        {tag.name}
+                                      </span>
+                                      {isSelected && (
+                                        <Check className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                                      )}
+                                    </button>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </Popover.Content>
+                        </Popover.Portal>
+                      </Popover.Root>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Select tags to group this path logically
+                      </p>
                     </div>
                   </div>
                 </div>
