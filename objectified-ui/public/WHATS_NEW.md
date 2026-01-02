@@ -53,6 +53,8 @@ We continue to improve the platform based on your feedback with improvements and
   - External documentation links with URL and description fields, clickable link preview
   - HTTP method nodes with auto-generate operation ID from path and verb (e.g., getUserById, createOrder)
   - Method node properties: operation ID, summary, description with Monaco Editor
+  - Paths and operations load from database on canvas initialization with automatic connections
+  - Operations saved to database when connected to paths or via Save button
 
 View our YouTube channel [here](https://www.youtube.com/@objectifieddev) for detailed tutorials and walkthroughs!
 

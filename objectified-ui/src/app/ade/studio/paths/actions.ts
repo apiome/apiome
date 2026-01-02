@@ -8,6 +8,7 @@ import {
   createApiPath,
   updateApiPath,
   deleteApiPath,
+  getOperationsForPath,
   createPathOperation,
   updatePathOperation,
   deletePathOperation
@@ -21,6 +22,10 @@ export async function getTagsForProjectAction(projectId: string) {
 
 export async function getPathsForVersionAction(versionId: string) {
   return await getApiPathsForVersion(versionId);
+}
+
+export async function getOperationsForPathAction(pathId: string) {
+  return await getOperationsForPath(pathId);
 }
 
 export async function createPathAction(

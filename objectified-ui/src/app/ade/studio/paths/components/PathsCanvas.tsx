@@ -17,7 +17,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import PathNode, { PathNodeData, PathVariable } from '@/app/components/ade/paths/PathNode';
-import { getPathsForVersionAction, createPathAction, createOperationAction } from '../actions';
+import { getPathsForVersionAction, createPathAction, createOperationAction, getOperationsForPathAction } from '../actions';
 import { useStudio } from '../../StudioContext';
 
 interface PathsCanvasProps {
@@ -46,6 +46,7 @@ function PathsCanvasInner({ onNodeSelect, onNodeUpdate }: PathsCanvasProps) {
   useEffect(() => {
     if (!selectedVersionId) {
       setNodes([]);
+      setEdges([]);
       return;
     }
 
@@ -55,9 +56,15 @@ function PathsCanvasInner({ onNodeSelect, onNodeUpdate }: PathsCanvasProps) {
         const paths = JSON.parse(result);
 
         if (Array.isArray(paths) && paths.length > 0) {
-          // Convert database paths to ReactFlow nodes
-          const pathNodes: Node[] = paths.map((path: any, index: number) => {
-            const nodeData: PathNodeData = {
+          const allNodes: Node[] = [];
+          const allEdges: any[] = [];
+
+          // Load paths and their operations
+          for (let index = 0; index < paths.length; index++) {
+            const path = paths[index];
+
+            // Create path node
+            const pathNodeData: PathNodeData = {
               label: path.path,
               nodeType: 'path',
               dbPathId: path.id,
@@ -69,15 +76,64 @@ function PathsCanvasInner({ onNodeSelect, onNodeUpdate }: PathsCanvasProps) {
               pathVariables: [], // Will be extracted from path pattern
             };
 
-            return {
+            const pathNode: Node = {
               id: `db-path-${path.id}`,
               type: 'pathNode',
-              position: { x: 100, y: 100 + index * 150 }, // Stack vertically
-              data: nodeData as unknown as Record<string, unknown>,
+              position: { x: 100, y: 100 + index * 250 }, // More space for methods
+              data: pathNodeData as unknown as Record<string, unknown>,
             };
-          });
 
-          setNodes(pathNodes);
+            allNodes.push(pathNode);
+
+            // Load operations for this path
+            try {
+              const opsResult = await getOperationsForPathAction(path.id);
+              const operations = JSON.parse(opsResult);
+
+              if (Array.isArray(operations) && operations.length > 0) {
+                operations.forEach((op: any, opIndex: number) => {
+                  // Create method node for each operation
+                  const methodNodeData: PathNodeData = {
+                    label: op.method.toUpperCase(),
+                    nodeType: 'method',
+                    dbOperationId: op.id,
+                    connectedPathId: path.id,
+                    method: op.method.toUpperCase(),
+                    operationId: op.operation_id || '',
+                    summary: op.summary || '',
+                    description: op.description || '',
+                    deprecated: op.deprecated || false,
+                    pendingDbSave: false, // Already saved
+                  };
+
+                  const methodNode: Node = {
+                    id: `db-operation-${op.id}`,
+                    type: 'pathNode',
+                    position: {
+                      x: 100 + (opIndex * 180),
+                      y: 100 + index * 250 + 120
+                    }, // Position below path
+                    data: methodNodeData as unknown as Record<string, unknown>,
+                  };
+
+                  allNodes.push(methodNode);
+
+                  // Create edge from path to method
+                  allEdges.push({
+                    id: `edge-${path.id}-${op.id}`,
+                    source: `db-path-${path.id}`,
+                    target: `db-operation-${op.id}`,
+                    type: 'default',
+                  });
+                });
+              }
+            } catch (error) {
+              console.error(`Error loading operations for path ${path.id}:`, error);
+            }
+          }
+
+          setNodes(allNodes);
+          setEdges(allEdges);
         }
       } catch (error) {
         console.error('Error loading paths:', error);
@@ -85,11 +141,74 @@ function PathsCanvasInner({ onNodeSelect, onNodeUpdate }: PathsCanvasProps) {
     };
 
     loadPaths();
-  }, [selectedVersionId, setNodes]);
+  }, [selectedVersionId, setNodes, setEdges]);
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    async (params: Connection) => {
+      setEdges((eds) => addEdge(params, eds));
+
+      // If connecting a method to a path, set connectedPathId and try to save
+      const sourceNode = nodes.find(n => n.id === params.source);
+      const targetNode = nodes.find(n => n.id === params.target);
+
+      // Check if source is path and target is method (path -> method)
+      if (sourceNode?.data?.nodeType === 'path' && targetNode?.data?.nodeType === 'method') {
+        const pathDbId = sourceNode.data.dbPathId as string | undefined;
+        if (pathDbId && targetNode.data.pendingDbSave) {
+          // Update the method node with the connected path
+          setNodes((nds) =>
+            nds.map((node) => {
+              if (node.id === targetNode.id) {
+                return {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    connectedPathId: pathDbId,
+                  },
+                };
+              }
+              return node;
+            })
+          );
+
+          // Try to save the operation to database
+          try {
+            const result = await createOperationAction(
+              pathDbId,
+              (targetNode.data.method as string) || 'get',
+              (targetNode.data.operationId as string) || '',
+              (targetNode.data.summary as string) || '',
+              (targetNode.data.description as string) || '',
+              undefined, // externalDocs
+              false, // deprecated
+              undefined // servers
+            );
+            const parsedResult = JSON.parse(result);
+            if (parsedResult.success && parsedResult.operation) {
+              // Update node with database ID
+              setNodes((nds) =>
+                nds.map((node) => {
+                  if (node.id === targetNode.id) {
+                    return {
+                      ...node,
+                      data: {
+                        ...node.data,
+                        dbOperationId: parsedResult.operation.id,
+                        pendingDbSave: false,
+                      },
+                    };
+                  }
+                  return node;
+                })
+              );
+            }
+          } catch (error) {
+            console.error('Error creating operation when connecting:', error);
+          }
+        }
+      }
+    },
+    [setEdges, nodes, setNodes]
   );
 
   // Handle node click to select it

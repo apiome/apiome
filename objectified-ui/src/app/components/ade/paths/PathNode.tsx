@@ -10,6 +10,7 @@ export interface PathNodeData {
   // Database IDs
   dbPathId?: string; // ID in odb.api_paths
   dbOperationId?: string; // ID in odb.path_operations
+  connectedPathId?: string; // For method nodes: which path they're connected to
   pendingDbSave?: boolean; // Flag for nodes that need to be saved to DB
   // Path-specific data
   path?: string;

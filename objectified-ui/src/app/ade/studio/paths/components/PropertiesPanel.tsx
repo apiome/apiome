@@ -6,7 +6,13 @@ import * as ScrollArea from '@radix-ui/react-scroll-area';
 import * as Popover from '@radix-ui/react-popover';
 import Editor from '@monaco-editor/react';
 import { extractPathVariables, PathVariable, PathNodeData, ExternalDocs } from '@/app/components/ade/paths/PathNode';
-import { updatePathAction, deletePathAction, getTagsForProjectAction } from '../actions';
+import {
+  updatePathAction,
+  deletePathAction,
+  getTagsForProjectAction,
+  createOperationAction,
+  updateOperationAction
+} from '../actions';
 import { useStudio } from '../../StudioContext';
 
 /**
@@ -341,6 +347,52 @@ export default function PropertiesPanel({ selectedNode, onClose }: PropertiesPan
           description: description,
         };
         await updatePathAction(selectedNode.data.dbPathId, updates);
+      }
+
+      // Save to database for method nodes
+      if (nodeType === 'method') {
+        const connectedPathId = selectedNode?.data?.connectedPathId;
+        const dbOperationId = selectedNode?.data?.dbOperationId;
+        const method = selectedNode?.data?.method;
+
+        if (connectedPathId && method) {
+          if (dbOperationId) {
+            // Update existing operation
+            const updates: any = {
+              operationId: operationId,
+              summary: summary,
+              description: description,
+            };
+            await updateOperationAction(dbOperationId, updates);
+          } else if (!selectedNode?.data?.pendingDbSave) {
+            // Create new operation only if not pending
+            // (pendingDbSave means it needs to be connected to a path first)
+            const result = await createOperationAction(
+              connectedPathId,
+              method,
+              operationId,
+              summary,
+              description,
+              undefined, // externalDocs
+              false, // deprecated
+              undefined // servers
+            );
+            const parsedResult = JSON.parse(result);
+            if (parsedResult.success && parsedResult.operation) {
+              // Store the database ID in the node
+              if (selectedNode?.updateData) {
+                selectedNode.updateData({
+                  dbOperationId: parsedResult.operation.id,
+                  pendingDbSave: false,
+                });
+              }
+            } else {
+              console.error('Failed to create operation in database:', parsedResult.error);
+            }
+          }
+        } else if (!connectedPathId) {
+          console.warn('Method node is not connected to a path. Cannot save to database.');
+        }
       }
 
       // Update original values to match saved values
