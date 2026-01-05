@@ -1,0 +1,98 @@
+"""
+Schema demonstrating interface types for polymorphism
+"""
+
+"""
+Base interface for all nodes in the system
+"""
+interface Node {
+  "Global unique identifier"
+  id: ID!
+
+  "When the record was created"
+  createdAt: String!
+
+  "When the record was last updated"
+  updatedAt: String!
+}
+
+"""
+Interface for entities that can be owned by a user
+"""
+interface Ownable {
+  "The owner of this entity"
+  owner: User!
+}
+
+"""
+Interface for entities that can be published
+"""
+interface Publishable {
+  "Whether this is published"
+  isPublished: Boolean!
+
+  "When it was published"
+  publishedAt: String
+}
+
+"""
+A user in the system
+"""
+type User implements Node {
+  id: ID!
+  createdAt: String!
+  updatedAt: String!
+  name: String!
+  email: String!
+}
+
+"""
+A blog post
+"""
+type Post implements Node & Ownable & Publishable {
+  id: ID!
+  createdAt: String!
+  updatedAt: String!
+  owner: User!
+  isPublished: Boolean!
+  publishedAt: String
+  title: String!
+  content: String!
+  excerpt: String
+  tags: [String!]!
+  comments: [Comment!]!
+}
+
+"""
+A comment on a post
+"""
+type Comment implements Node & Ownable {
+  id: ID!
+  createdAt: String!
+  updatedAt: String!
+  owner: User!
+  post: Post!
+  content: String!
+  likes: Int!
+}
+
+"""
+A media file
+"""
+type Media implements Node & Ownable {
+  id: ID!
+  createdAt: String!
+  updatedAt: String!
+  owner: User!
+  filename: String!
+  mimeType: String!
+  size: Int!
+  url: String!
+}
+
+type Query {
+  node(id: ID!): Node
+  post(id: ID!): Post
+  posts(published: Boolean): [Post!]!
+}
+

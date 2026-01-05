@@ -1,0 +1,109 @@
+"""
+Schema demonstrating custom scalars
+"""
+
+"ISO 8601 date-time string"
+scalar DateTime
+
+"Date string (YYYY-MM-DD)"
+scalar Date
+
+"Time string (HH:MM:SS)"
+scalar Time
+
+"UUID string"
+scalar UUID
+
+"URL string"
+scalar URL
+
+"Email address"
+scalar Email
+
+"JSON object"
+scalar JSON
+
+"JSON object (alias)"
+scalar JSONObject
+
+"64-bit integer"
+scalar BigInt
+
+"Decimal number as string"
+scalar Decimal
+
+"Currency code (ISO 4217)"
+scalar Currency
+
+"File upload"
+scalar Upload
+
+"""
+User with various custom scalar fields
+"""
+type User {
+  id: UUID!
+  email: Email!
+  profileUrl: URL
+  metadata: JSON
+  createdAt: DateTime!
+  lastLoginAt: DateTime
+}
+
+"""
+Financial transaction
+"""
+type Transaction {
+  id: UUID!
+  amount: Decimal!
+  currency: Currency!
+  timestamp: DateTime!
+  metadata: JSONObject
+}
+
+"""
+Scheduled event
+"""
+type Event {
+  id: UUID!
+  title: String!
+  description: String
+  date: Date!
+  startTime: Time!
+  endTime: Time
+  createdAt: DateTime!
+}
+
+"""
+Analytics data point
+"""
+type DataPoint {
+  id: BigInt!
+  timestamp: DateTime!
+  value: Decimal!
+  metadata: JSON
+}
+
+"""
+File attachment
+"""
+type Attachment {
+  id: UUID!
+  filename: String!
+  mimeType: String!
+  size: BigInt!
+  url: URL!
+  uploadedAt: DateTime!
+}
+
+type Query {
+  user(id: UUID!): User
+  transaction(id: UUID!): Transaction
+  events(date: Date!): [Event!]!
+  analytics(from: DateTime!, to: DateTime!): [DataPoint!]!
+}
+
+type Mutation {
+  uploadFile(file: Upload!): Attachment!
+}
+

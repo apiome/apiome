@@ -1,0 +1,136 @@
+"""
+}
+  ): PostConnection!
+    publishedBefore: String
+    publishedAfter: String
+    tags: [String!]
+    authorId: ID
+    after: String
+    first: Int = 10
+    query: String!
+  searchPosts(
+  """
+  Search for posts
+  """
+
+  ): UserConnection!
+    isActive: Boolean = true
+    "Filter by active status"
+    nameContains: String
+    "Filter by name"
+    after: String
+    "Cursor for pagination"
+    first: Int = 20
+    "Number of users to return (max 100)"
+  users(
+  """
+  List users with pagination
+  """
+
+  ): User
+    id: ID!
+    "The unique ID of the user"
+  user(
+  """
+  Get a single user by ID
+  """
+type Query {
+
+}
+  likes: Int!
+  post: Post!
+  author: User!
+  content: String!
+  id: ID!
+type Comment {
+
+}
+  LIKES_DESC
+  CREATED_AT_DESC
+  CREATED_AT_ASC
+enum CommentOrderBy {
+
+}
+  pageInfo: PageInfo!
+  edges: [CommentEdge!]!
+type CommentConnection {
+
+}
+  cursor: String!
+  node: Comment!
+type CommentEdge {
+
+}
+  ): CommentConnection!
+    orderBy: CommentOrderBy = CREATED_AT_DESC
+    after: String
+    first: Int = 20
+  comments(
+
+  author: User!
+  content: String!
+  title: String!
+  id: ID!
+type Post {
+
+}
+  LIKES_DESC
+  TITLE_DESC
+  TITLE_ASC
+  CREATED_AT_DESC
+  CREATED_AT_ASC
+enum PostOrderBy {
+
+}
+  pageInfo: PageInfo!
+  edges: [PostEdge!]!
+type PostConnection {
+
+}
+  cursor: String!
+  node: Post!
+type PostEdge {
+
+}
+  following(first: Int = 20, after: String): UserConnection!
+  followers(first: Int = 20, after: String): UserConnection!
+
+  ): PostConnection!
+    orderBy: PostOrderBy = CREATED_AT_DESC
+    "Sort order"
+    published: Boolean
+    "Filter by published status"
+    after: String
+    "Return items after this cursor"
+    first: Int = 10
+    "Number of items to return"
+  posts(
+  email: String!
+  name: String!
+  id: ID!
+type User {
+
+}
+  pageInfo: PageInfo!
+  edges: [UserEdge!]!
+type UserConnection {
+
+}
+  cursor: String!
+  node: User!
+type UserEdge {
+
+}
+  totalCount: Int!
+  endCursor: String
+  startCursor: String
+  hasPreviousPage: Boolean!
+  hasNextPage: Boolean!
+type PageInfo {
+"""
+Pagination connection pattern (Relay-style)
+"""
+
+"""
+Schema demonstrating arguments and default values
+

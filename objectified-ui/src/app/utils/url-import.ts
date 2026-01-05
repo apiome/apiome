@@ -101,7 +101,7 @@ function extractFilename(url: string, headers?: Headers): string {
 /**
  * Detects file type from content type header or content
  */
-function detectFileType(contentType: string | null, content: string): 'yaml' | 'json' | 'unknown' {
+function detectFileType(contentType: string | null, content: string): 'yaml' | 'json' | 'graphql' | 'unknown' {
   // Check content type header
   if (contentType) {
     const lowerType = contentType.toLowerCase();
@@ -111,6 +111,9 @@ function detectFileType(contentType: string | null, content: string): 'yaml' | '
     if (lowerType.includes('json')) {
       return 'json';
     }
+    if (lowerType.includes('graphql')) {
+      return 'graphql';
+    }
   }
 
   // Detect from content
@@ -119,6 +122,21 @@ function detectFileType(contentType: string | null, content: string): 'yaml' | '
   // JSON starts with { or [
   if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
     return 'json';
+  }
+
+  // GraphQL SDL patterns
+  const graphqlPatterns = [
+    /^\s*type\s+\w+/m,
+    /^\s*input\s+\w+/m,
+    /^\s*interface\s+\w+/m,
+    /^\s*enum\s+\w+/m,
+    /^\s*union\s+\w+/m,
+    /^\s*scalar\s+\w+/m,
+    /^\s*schema\s*\{/m,
+  ];
+
+  if (graphqlPatterns.some(pattern => pattern.test(trimmed))) {
+    return 'graphql';
   }
 
   // YAML indicators

@@ -6,12 +6,13 @@
 import YAML from 'yaml';
 import { convertSwaggerToOpenAPI, isSwagger2 } from './swagger-converter';
 import { convertJsonSchemaToOpenAPI, isJsonSchema } from './jsonschema-converter';
+import { convertGraphQLToOpenAPI, isGraphQL, isGraphQLIntrospection, convertGraphQLIntrospectionToOpenAPI } from './graphql-converter';
 
 export interface AnalysisResult {
   isValid: boolean;
-  format: 'openapi' | 'swagger' | 'jsonschema' | 'arazzo' | 'raml' | 'asyncapi' | 'unknown';
+  format: 'openapi' | 'swagger' | 'jsonschema' | 'graphql' | 'arazzo' | 'raml' | 'asyncapi' | 'unknown';
   version: string;
-  syntax: 'json' | 'yaml';
+  syntax: 'json' | 'yaml' | 'graphql';
   syntaxValid: boolean;
   schemaValid: boolean;
   formatSupported: boolean;
@@ -59,12 +60,16 @@ export interface AnalysisIssue {
 }
 
 /**
- * Detect file format (JSON or YAML)
+ * Detect file format (JSON, YAML, or GraphQL)
  */
-function detectSyntax(content: string): 'json' | 'yaml' {
+function detectSyntax(content: string): 'json' | 'yaml' | 'graphql' {
   const trimmed = content.trim();
   if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
     return 'json';
+  }
+  // Check for GraphQL SDL patterns
+  if (isGraphQL(trimmed)) {
+    return 'graphql';
   }
   return 'yaml';
 }
@@ -72,11 +77,14 @@ function detectSyntax(content: string): 'json' | 'yaml' {
 /**
  * Parse content based on detected format
  */
-function parseContent(content: string, syntax: 'json' | 'yaml'): { valid: boolean; data: any; error?: string } {
+function parseContent(content: string, syntax: 'json' | 'yaml' | 'graphql'): { valid: boolean; data: any; error?: string; isGraphQL?: boolean } {
   try {
     if (syntax === 'json') {
       const data = JSON.parse(content);
       return { valid: true, data };
+    } else if (syntax === 'graphql') {
+      // For GraphQL, we return a marker object - actual parsing happens in conversion
+      return { valid: true, data: { __graphql_sdl: content }, isGraphQL: true };
     } else {
       const data = YAML.parse(content);
       return { valid: true, data };
@@ -94,7 +102,7 @@ function parseContent(content: string, syntax: 'json' | 'yaml'): { valid: boolea
  * Format detection result with support status
  */
 interface FormatDetectionResult {
-  format: 'openapi' | 'swagger' | 'jsonschema' | 'arazzo' | 'raml' | 'asyncapi' | 'unknown';
+  format: 'openapi' | 'swagger' | 'jsonschema' | 'graphql' | 'arazzo' | 'raml' | 'asyncapi' | 'unknown';
   version: string;
   supported: boolean;
   displayName: string;
@@ -104,6 +112,16 @@ interface FormatDetectionResult {
  * Detect specification format and version
  */
 function detectFormat(doc: any): FormatDetectionResult {
+  // GraphQL SDL (marked by parseContent)
+  if (doc.__graphql_sdl) {
+    return {
+      format: 'graphql',
+      version: 'SDL',
+      supported: true,
+      displayName: 'GraphQL Schema'
+    };
+  }
+
   // OpenAPI 3.x
   if (doc.openapi) {
     const version = doc.openapi;
@@ -176,6 +194,16 @@ function detectFormat(doc: any): FormatDetectionResult {
       version: doc.asyncapi,
       supported: false,
       displayName: `AsyncAPI ${doc.asyncapi}`
+    };
+  }
+
+  // GraphQL introspection result
+  if (isGraphQLIntrospection(doc)) {
+    return {
+      format: 'graphql',
+      version: 'introspection',
+      supported: true,
+      displayName: 'GraphQL Introspection Result'
     };
   }
 
@@ -705,7 +733,120 @@ export async function analyzeSpecification(fileContent: string, fileName: string
     ];
   }
 
-  // Detect format (will now show OpenAPI 3.1.0 for converted Swagger specs)
+  // Convert GraphQL SDL to OpenAPI 3.1.x if needed
+  if (doc.__graphql_sdl) {
+    const graphqlContent = doc.__graphql_sdl;
+    const conversionResult = convertGraphQLToOpenAPI(graphqlContent, fileName);
+
+    if (!conversionResult.success) {
+      return {
+        isValid: false,
+        format: 'graphql',
+        version: 'SDL',
+        syntax,
+        syntaxValid: true,
+        schemaValid: false,
+        formatSupported: false,
+        formatDisplayName: 'GraphQL Schema (conversion failed)',
+        metrics: {
+          schemaCount: 0,
+          propertyCount: 0,
+          referenceCount: 0,
+          pathCount: 0,
+          externalReferences: [],
+          circularReferences: [],
+          customExtensions: [],
+          compositionSchemas: { allOf: 0, oneOf: 0, anyOf: 0 }
+        },
+        qualityScore: {
+          overall: 0,
+          grade: 'F',
+          completeness: 0,
+          consistency: 0,
+          bestPractices: 0,
+          security: 0
+        },
+        errors: [{
+          type: 'error',
+          message: `GraphQL conversion failed: ${conversionResult.error}`,
+          severity: 'critical'
+        }],
+        warnings: [],
+        document: null
+      };
+    }
+
+    // Use the converted document for analysis
+    doc = conversionResult.document;
+
+    // Add conversion warnings
+    conversionWarnings = [
+      ...conversionWarnings,
+      ...conversionResult.warnings.map(warning => ({
+        type: 'warning' as const,
+        message: warning,
+        severity: 'low' as const
+      }))
+    ];
+  }
+
+  // Convert GraphQL introspection result to OpenAPI 3.1.x if needed
+  if (isGraphQLIntrospection(doc)) {
+    const conversionResult = convertGraphQLIntrospectionToOpenAPI(doc, fileName);
+
+    if (!conversionResult.success) {
+      return {
+        isValid: false,
+        format: 'graphql',
+        version: 'introspection',
+        syntax,
+        syntaxValid: true,
+        schemaValid: false,
+        formatSupported: false,
+        formatDisplayName: 'GraphQL Introspection (conversion failed)',
+        metrics: {
+          schemaCount: 0,
+          propertyCount: 0,
+          referenceCount: 0,
+          pathCount: 0,
+          externalReferences: [],
+          circularReferences: [],
+          customExtensions: [],
+          compositionSchemas: { allOf: 0, oneOf: 0, anyOf: 0 }
+        },
+        qualityScore: {
+          overall: 0,
+          grade: 'F',
+          completeness: 0,
+          consistency: 0,
+          bestPractices: 0,
+          security: 0
+        },
+        errors: [{
+          type: 'error',
+          message: `GraphQL introspection conversion failed: ${conversionResult.error}`,
+          severity: 'critical'
+        }],
+        warnings: [],
+        document: null
+      };
+    }
+
+    // Use the converted document for analysis
+    doc = conversionResult.document;
+
+    // Add conversion warnings
+    conversionWarnings = [
+      ...conversionWarnings,
+      ...conversionResult.warnings.map(warning => ({
+        type: 'warning' as const,
+        message: warning,
+        severity: 'low' as const
+      }))
+    ];
+  }
+
+  // Detect format (will now show OpenAPI 3.1.0 for converted specs)
   const formatDetection = detectFormat(doc);
 
   // Validate meta-schema
@@ -755,8 +896,8 @@ export async function analyzeSpecification(fileContent: string, fileName: string
  */
 export interface FileMetadataPreview {
   syntaxValid: boolean;
-  syntax: 'json' | 'yaml';
-  format: 'openapi' | 'swagger' | 'jsonschema' | 'arazzo' | 'raml' | 'asyncapi' | 'unknown';
+  syntax: 'json' | 'yaml' | 'graphql';
+  format: 'openapi' | 'swagger' | 'jsonschema' | 'graphql' | 'arazzo' | 'raml' | 'asyncapi' | 'unknown';
   version: string;
   formatDisplayName: string;
   formatSupported: boolean;

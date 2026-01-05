@@ -1,0 +1,124 @@
+"""
+Schema demonstrating nested types and relationships
+"""
+
+"""
+A company with departments and employees
+"""
+type Company {
+  id: ID!
+  name: String!
+  founded: Int
+  headquarters: Address!
+  departments: [Department!]!
+  employees: [Employee!]!
+  ceo: Employee
+}
+
+"""
+Physical address
+"""
+type Address {
+  street: String!
+  city: String!
+  state: String!
+  postalCode: String!
+  country: String!
+  coordinates: Coordinates
+}
+
+"""
+Geographic coordinates
+"""
+type Coordinates {
+  latitude: Float!
+  longitude: Float!
+}
+
+"""
+A department within a company
+"""
+type Department {
+  id: ID!
+  name: String!
+  code: String!
+  company: Company!
+  manager: Employee
+  employees: [Employee!]!
+  budget: Budget
+}
+
+"""
+Department budget
+"""
+type Budget {
+  fiscalYear: Int!
+  amount: Float!
+  currency: String!
+  spent: Float!
+  remaining: Float!
+}
+
+"""
+An employee of a company
+"""
+type Employee {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  email: String!
+  phone: String
+  hireDate: String!
+  title: String!
+  department: Department!
+  company: Company!
+  manager: Employee
+  directReports: [Employee!]!
+  contact: ContactInfo!
+  salary: Salary
+}
+
+"""
+Contact information
+"""
+type ContactInfo {
+  email: String!
+  phone: String
+  mobile: String
+  address: Address
+  emergencyContact: EmergencyContact
+}
+
+"""
+Emergency contact
+"""
+type EmergencyContact {
+  name: String!
+  relationship: String!
+  phone: String!
+}
+
+"""
+Salary information
+"""
+type Salary {
+  amount: Float!
+  currency: String!
+  payFrequency: PayFrequency!
+}
+
+enum PayFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  ANNUALLY
+}
+
+type Query {
+  company(id: ID!): Company
+  companies: [Company!]!
+  department(id: ID!): Department
+  employee(id: ID!): Employee
+  employees(companyId: ID, departmentId: ID): [Employee!]!
+}
+

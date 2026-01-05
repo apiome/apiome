@@ -1,0 +1,83 @@
+"""
+Schema demonstrating enum types in GraphQL
+"""
+
+"""
+User role in the system
+"""
+enum UserRole {
+  "Regular user with limited permissions"
+  USER
+
+  "Administrator with full access"
+  ADMIN
+
+  "Moderator with content management permissions"
+  MODERATOR
+
+  "Guest with read-only access"
+  GUEST
+}
+
+"""
+Order status enumeration
+"""
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+"""
+Priority levels
+"""
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+  CRITICAL
+}
+
+"""
+User account type
+"""
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  role: UserRole!
+}
+
+"""
+Order with status
+"""
+type Order {
+  id: ID!
+  userId: ID!
+  status: OrderStatus!
+  priority: Priority
+  items: [OrderItem!]!
+  createdAt: String!
+}
+
+"""
+Item in an order
+"""
+type OrderItem {
+  productId: ID!
+  productName: String!
+  quantity: Int!
+  unitPrice: Float!
+}
+
+type Query {
+  user(id: ID!): User
+  order(id: ID!): Order
+  ordersByStatus(status: OrderStatus!): [Order!]!
+}
+

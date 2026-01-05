@@ -8,6 +8,7 @@
 import YAML from 'yaml';
 import { convertSwaggerToOpenAPI, isSwagger2 } from './swagger-converter';
 import { convertJsonSchemaToOpenAPI, isJsonSchema } from './jsonschema-converter';
+import { convertGraphQLToOpenAPI, isGraphQL, isGraphQLIntrospection, convertGraphQLIntrospectionToOpenAPI } from './graphql-converter';
 
 export interface ParsedProperty {
   name: string;
@@ -265,6 +266,31 @@ export function parseOpenAPISpec(specContent: string): OpenAPIParseResult {
   try {
     let spec: any;
 
+    // Check if this is GraphQL SDL content first
+    if (isGraphQL(specContent)) {
+      const conversionResult = convertGraphQLToOpenAPI(specContent);
+
+      if (!conversionResult.success) {
+        return {
+          success: false,
+          classes: [],
+          warnings: conversionResult.warnings,
+          error: `GraphQL conversion failed: ${conversionResult.error}`
+        };
+      }
+
+      // Use the converted spec
+      spec = conversionResult.document;
+
+      // Add conversion warnings to global warnings
+      const globalWarnings = conversionResult.warnings.length > 0
+        ? [`Converted from GraphQL Schema to OpenAPI 3.1.x with ${conversionResult.warnings.length} conversion notes`]
+        : ['Successfully converted from GraphQL Schema to OpenAPI 3.1.x'];
+
+      // Continue with the converted spec
+      return parseOpenAPISpecInternal(spec, globalWarnings);
+    }
+
     // Try to parse as JSON first, then YAML
     try {
       spec = JSON.parse(specContent);
@@ -323,8 +349,35 @@ export function parseOpenAPISpec(specContent: string): OpenAPIParseResult {
       return parseOpenAPISpecInternal(spec, globalWarnings);
     }
 
+    // Check for GraphQL introspection result and convert if needed
+    if (isGraphQLIntrospection(spec)) {
+      const conversionResult = convertGraphQLIntrospectionToOpenAPI(spec);
+
+      if (!conversionResult.success) {
+        return {
+          success: false,
+          classes: [],
+          warnings: conversionResult.warnings,
+          error: `GraphQL introspection conversion failed: ${conversionResult.error}`
+        };
+      }
+
+      // Use the converted spec
+      spec = conversionResult.document;
+
+      // Add conversion warnings to global warnings
+      const globalWarnings = conversionResult.warnings.length > 0
+        ? [`Converted from GraphQL introspection to OpenAPI 3.1.x with ${conversionResult.warnings.length} conversion notes`]
+        : ['Successfully converted from GraphQL introspection to OpenAPI 3.1.x'];
+
+      // Continue with the converted spec
+      return parseOpenAPISpecInternal(spec, globalWarnings);
+    }
+
     // Validate OpenAPI version
     if (!spec.openapi || !spec.openapi.startsWith('3.')) {
+      // Check if this might be GraphQL SDL that wasn't parsed yet
+      // (This shouldn't normally happen as YAML.parse would fail on GraphQL SDL)
       return {
         success: false,
         classes: [],

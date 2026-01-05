@@ -83,7 +83,7 @@ The import system provides comprehensive, enterprise-level capabilities for impo
 - ✅ OpenAPI 3.1.x
 - ✅ JSON Schema
 - Postman Collections
-- 📋 GraphQL SDL
+- ✅ GraphQL SDL
 - 📋 AsyncAPI
 - 📋 RAML
 - API Blueprint
@@ -96,7 +96,6 @@ The import system provides comprehensive, enterprise-level capabilities for impo
 | Ticket | Feature Description         |
 |--------|-----------------------------|
 | #233   | Import from OpenAPI 3.0/3.1 |
-| #235   | Import from GraphQL SDL     |
 | #236   | Import from AsyncAPI        |
 | #237   | Import from RAML            |
 | #238   | Import from Protobuf        |

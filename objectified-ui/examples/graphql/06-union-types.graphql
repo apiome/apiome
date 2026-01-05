@@ -1,0 +1,132 @@
+"""
+Schema demonstrating union types for polymorphic results
+"""
+
+"""
+Search result that can be any of several types
+"""
+union SearchResult = User | Post | Product | Category
+
+"""
+Timeline item that can be different event types
+"""
+union TimelineItem = PostEvent | CommentEvent | LikeEvent | FollowEvent
+
+"""
+Payment method union
+"""
+union PaymentMethod = CreditCard | BankAccount | PayPal | Crypto
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  posts: [Post!]!
+}
+
+type Post {
+  id: ID!
+  title: String!
+  content: String!
+  author: User!
+}
+
+type Product {
+  id: ID!
+  name: String!
+  price: Float!
+  category: Category
+}
+
+type Category {
+  id: ID!
+  name: String!
+  products: [Product!]!
+}
+
+"""
+Event when a post is created
+"""
+type PostEvent {
+  id: ID!
+  timestamp: String!
+  user: User!
+  post: Post!
+}
+
+"""
+Event when a comment is made
+"""
+type CommentEvent {
+  id: ID!
+  timestamp: String!
+  user: User!
+  comment: String!
+  post: Post!
+}
+
+"""
+Event when something is liked
+"""
+type LikeEvent {
+  id: ID!
+  timestamp: String!
+  user: User!
+  targetId: ID!
+  targetType: String!
+}
+
+"""
+Event when a user follows another
+"""
+type FollowEvent {
+  id: ID!
+  timestamp: String!
+  follower: User!
+  followed: User!
+}
+
+"""
+Credit card payment method
+"""
+type CreditCard {
+  id: ID!
+  lastFour: String!
+  expiryMonth: Int!
+  expiryYear: Int!
+  brand: String!
+}
+
+"""
+Bank account payment method
+"""
+type BankAccount {
+  id: ID!
+  bankName: String!
+  accountType: String!
+  lastFour: String!
+}
+
+"""
+PayPal payment method
+"""
+type PayPal {
+  id: ID!
+  email: String!
+}
+
+"""
+Cryptocurrency payment method
+"""
+type Crypto {
+  id: ID!
+  currency: String!
+  walletAddress: String!
+}
+
+type Query {
+  search(query: String!): [SearchResult!]!
+  timeline(userId: ID!): [TimelineItem!]!
+  paymentMethods: [PaymentMethod!]!
+}
+

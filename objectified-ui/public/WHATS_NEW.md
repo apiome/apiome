@@ -37,6 +37,7 @@ We continue to improve the platform based on your feedback with improvements and
     - OpenAPI 3.1.x
     - Swagger 2.0
     - JSON Schema Draft 7, 2019-09, 2020-12
+    - GraphQL SDL
 - Canvas improvements
   - Added per-class theming: customize colors for individual class nodes
     - 16 predefined color themes in a 4x4 grid (Slate, Gray, Red, Orange, Yellow, Green, Teal, Cyan, Blue, Indigo, Violet, Purple, and more)

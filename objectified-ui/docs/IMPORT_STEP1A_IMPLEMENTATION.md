@@ -57,7 +57,7 @@ Features:
 - Upload icon (changes color on drag)
 - "Drop files here or" text
 - "Browse Files" button (styled as primary action)
-- Supported file types listed below: ".yaml, .yml, .json, .zip"
+- Supported file types listed below: ".yaml, .yml, .json, .zip, .graphql, .gql"
 
 When file is selected:
 - Shows file icon with filename

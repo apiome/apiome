@@ -173,8 +173,9 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
   };
 
   const handleFileSelect = async (selectedFile: File) => {
-    if (!selectedFile.name.endsWith('.json') && !selectedFile.name.endsWith('.yaml') && !selectedFile.name.endsWith('.yml')) {
-      setErrorMessage('Please select a JSON or YAML file');
+    const fileName = selectedFile.name.toLowerCase();
+    if (!fileName.endsWith('.json') && !fileName.endsWith('.yaml') && !fileName.endsWith('.yml') && !fileName.endsWith('.graphql') && !fileName.endsWith('.gql')) {
+      setErrorMessage('Please select a JSON, YAML, or GraphQL file');
       return;
     }
 
@@ -534,7 +535,7 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
                 <input
                   id="openapi-file-input"
                   type="file"
-                  accept=".json,.yaml,.yml"
+                  accept=".json,.yaml,.yml,.graphql,.gql"
                   style={{ display: 'none' }}
                   onChange={handleFileInputChange}
                 />

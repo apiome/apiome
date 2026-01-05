@@ -202,7 +202,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   };
 
   const handleFileSelect = async (file: File) => {
-    const validExtensions = ['.yaml', '.yml', '.json', '.zip'];
+    const validExtensions = ['.yaml', '.yml', '.json', '.zip', '.graphql', '.gql'];
     const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
 
     if (validExtensions.includes(fileExtension)) {
@@ -652,7 +652,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
                           <input
                             type="file"
                             className="hidden"
-                            accept=".yaml,.yml,.json,.zip"
+                            accept=".yaml,.yml,.json,.zip,.graphql,.gql"
                             onChange={handleFileInputChange}
                           />
                           <span className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors shadow-sm">
@@ -662,7 +662,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
                         </label>
 
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Supports: .yaml, .yml, .json, .zip
+                          Supports: .yaml, .yml, .json, .zip, .graphql, .gql
                         </p>
                       </>
                     )}

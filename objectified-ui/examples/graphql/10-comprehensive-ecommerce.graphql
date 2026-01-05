@@ -1,0 +1,430 @@
+"""
+Comprehensive e-commerce GraphQL schema
+Demonstrates all major GraphQL features combined
+"""
+
+# Custom scalars
+scalar DateTime
+scalar Decimal
+scalar JSON
+scalar URL
+scalar UUID
+
+# Enumerations
+enum UserRole {
+  CUSTOMER
+  VENDOR
+  ADMIN
+  SUPPORT
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+enum Currency {
+  USD
+  EUR
+  GBP
+  JPY
+  CAD
+}
+
+# Interfaces
+interface Node {
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+interface Timestamped {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+# Base types
+type Money {
+  amount: Decimal!
+  currency: Currency!
+}
+
+type Address {
+  id: UUID!
+  firstName: String!
+  lastName: String!
+  company: String
+  line1: String!
+  line2: String
+  city: String!
+  state: String!
+  postalCode: String!
+  country: String!
+  phone: String
+  isDefault: Boolean!
+}
+
+type Image {
+  url: URL!
+  alt: String
+  width: Int
+  height: Int
+}
+
+# User types
+type User implements Node {
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  email: String!
+  firstName: String!
+  lastName: String!
+  phone: String
+  role: UserRole!
+  addresses: [Address!]!
+  defaultBillingAddress: Address
+  defaultShippingAddress: Address
+  orders: [Order!]!
+  cart: Cart
+  wishlist: [Product!]!
+  reviews: [Review!]!
+}
+
+# Product types
+type Category implements Node {
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  slug: String!
+  description: String
+  image: Image
+  parent: Category
+  children: [Category!]!
+  products(first: Int, after: String): ProductConnection!
+}
+
+type Product implements Node {
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  sku: String!
+  name: String!
+  slug: String!
+  description: String!
+  shortDescription: String
+  price: Money!
+  compareAtPrice: Money
+  images: [Image!]!
+  category: Category
+  tags: [String!]!
+  variants: [ProductVariant!]!
+  attributes: [ProductAttribute!]!
+  inventory: Inventory!
+  reviews: [Review!]!
+  averageRating: Float
+  reviewCount: Int!
+  isAvailable: Boolean!
+  relatedProducts: [Product!]!
+}
+
+type ProductVariant implements Node {
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  sku: String!
+  name: String!
+  price: Money!
+  compareAtPrice: Money
+  attributes: [VariantAttribute!]!
+  inventory: Inventory!
+  image: Image
+}
+
+type ProductAttribute {
+  name: String!
+  value: String!
+}
+
+type VariantAttribute {
+  name: String!
+  value: String!
+}
+
+type Inventory {
+  quantity: Int!
+  reserved: Int!
+  available: Int!
+  trackInventory: Boolean!
+  allowBackorder: Boolean!
+}
+
+type ProductEdge {
+  node: Product!
+  cursor: String!
+}
+
+type ProductConnection {
+  edges: [ProductEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+# Review types
+type Review implements Node {
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  author: User!
+  product: Product!
+  rating: Int!
+  title: String
+  content: String!
+  isVerifiedPurchase: Boolean!
+  helpfulCount: Int!
+}
+
+# Cart types
+type Cart {
+  id: UUID!
+  user: User
+  items: [CartItem!]!
+  subtotal: Money!
+  discount: Money
+  tax: Money!
+  shipping: Money
+  total: Money!
+  couponCode: String
+  itemCount: Int!
+}
+
+type CartItem {
+  id: UUID!
+  product: Product!
+  variant: ProductVariant
+  quantity: Int!
+  unitPrice: Money!
+  totalPrice: Money!
+}
+
+# Order types
+type Order implements Node {
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  orderNumber: String!
+  user: User!
+  status: OrderStatus!
+  items: [OrderItem!]!
+  shippingAddress: Address!
+  billingAddress: Address!
+  subtotal: Money!
+  discount: Money
+  tax: Money!
+  shipping: Money!
+  total: Money!
+  payment: Payment
+  shipments: [Shipment!]!
+  notes: String
+}
+
+type OrderItem {
+  id: UUID!
+  product: Product!
+  variant: ProductVariant
+  productName: String!
+  variantName: String
+  sku: String!
+  quantity: Int!
+  unitPrice: Money!
+  totalPrice: Money!
+}
+
+# Payment types
+union PaymentMethod = CreditCard | BankAccount | PayPalAccount
+
+type CreditCard {
+  id: UUID!
+  brand: String!
+  lastFour: String!
+  expiryMonth: Int!
+  expiryYear: Int!
+}
+
+type BankAccount {
+  id: UUID!
+  bankName: String!
+  accountType: String!
+  lastFour: String!
+}
+
+type PayPalAccount {
+  id: UUID!
+  email: String!
+}
+
+type Payment implements Node {
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  order: Order!
+  amount: Money!
+  status: PaymentStatus!
+  method: PaymentMethod!
+  transactionId: String
+}
+
+# Shipping types
+type Shipment implements Node {
+  id: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  order: Order!
+  trackingNumber: String
+  carrier: String!
+  status: String!
+  estimatedDelivery: DateTime
+  items: [ShipmentItem!]!
+}
+
+type ShipmentItem {
+  orderItem: OrderItem!
+  quantity: Int!
+}
+
+# Input types
+input CreateUserInput {
+  email: String!
+  password: String!
+  firstName: String!
+  lastName: String!
+  phone: String
+}
+
+input AddressInput {
+  firstName: String!
+  lastName: String!
+  company: String
+  line1: String!
+  line2: String
+  city: String!
+  state: String!
+  postalCode: String!
+  country: String!
+  phone: String
+  isDefault: Boolean = false
+}
+
+input AddToCartInput {
+  productId: UUID!
+  variantId: UUID
+  quantity: Int! = 1
+}
+
+input CheckoutInput {
+  shippingAddressId: UUID!
+  billingAddressId: UUID!
+  paymentMethodId: UUID!
+  couponCode: String
+  notes: String
+}
+
+input ProductFilterInput {
+  categoryId: UUID
+  minPrice: Decimal
+  maxPrice: Decimal
+  tags: [String!]
+  inStock: Boolean
+  searchQuery: String
+}
+
+# Root types
+type Query {
+  # User queries
+  me: User
+  user(id: UUID!): User
+
+  # Product queries
+  product(id: UUID!): Product
+  productBySlug(slug: String!): Product
+  products(
+    first: Int = 20
+    after: String
+    filter: ProductFilterInput
+    sortBy: String
+  ): ProductConnection!
+
+  # Category queries
+  category(id: UUID!): Category
+  categoryBySlug(slug: String!): Category
+  categories(parentId: UUID): [Category!]!
+
+  # Cart queries
+  cart: Cart
+
+  # Order queries
+  order(id: UUID!): Order
+  orders(
+    first: Int = 20
+    after: String
+    status: OrderStatus
+  ): [Order!]!
+
+  # Search
+  search(query: String!, first: Int = 20): [Product!]!
+}
+
+type Mutation {
+  # User mutations
+  register(input: CreateUserInput!): User!
+  updateProfile(firstName: String, lastName: String, phone: String): User!
+  addAddress(input: AddressInput!): Address!
+  updateAddress(id: UUID!, input: AddressInput!): Address!
+  deleteAddress(id: UUID!): Boolean!
+
+  # Cart mutations
+  addToCart(input: AddToCartInput!): Cart!
+  updateCartItem(itemId: UUID!, quantity: Int!): Cart!
+  removeFromCart(itemId: UUID!): Cart!
+  clearCart: Cart!
+  applyCoupon(code: String!): Cart!
+  removeCoupon: Cart!
+
+  # Order mutations
+  checkout(input: CheckoutInput!): Order!
+  cancelOrder(id: UUID!): Order!
+
+  # Review mutations
+  createReview(productId: UUID!, rating: Int!, title: String, content: String!): Review!
+  deleteReview(id: UUID!): Boolean!
+
+  # Wishlist mutations
+  addToWishlist(productId: UUID!): [Product!]!
+  removeFromWishlist(productId: UUID!): [Product!]!
+}
+
+type Subscription {
+  orderStatusChanged(orderId: UUID!): Order!
+  cartUpdated: Cart!
+}
+

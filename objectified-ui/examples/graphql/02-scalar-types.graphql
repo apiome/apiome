@@ -1,0 +1,73 @@
+"""
+Schema demonstrating various scalar types in GraphQL
+"""
+
+"Custom scalar for date/time"
+scalar DateTime
+
+"Custom scalar for JSON data"
+scalar JSON
+
+"""
+Product with various field types
+"""
+type Product {
+  "Product identifier"
+  id: ID!
+
+  "Product name"
+  name: String!
+
+  "Product description"
+  description: String
+
+  "Price in cents"
+  price: Int!
+
+  "Price with decimals"
+  priceFloat: Float!
+
+  "Whether product is available"
+  inStock: Boolean!
+
+  "Product rating (0-5)"
+  rating: Float
+
+  "Number of items in stock"
+  stockCount: Int
+
+  "Product tags"
+  tags: [String!]!
+
+  "Product metadata"
+  metadata: JSON
+
+  "When the product was created"
+  createdAt: DateTime!
+
+  "When the product was last updated"
+  updatedAt: DateTime
+}
+
+"""
+Product dimensions
+"""
+type Dimensions {
+  "Length in centimeters"
+  length: Float!
+
+  "Width in centimeters"
+  width: Float!
+
+  "Height in centimeters"
+  height: Float!
+
+  "Weight in kilograms"
+  weight: Float
+}
+
+type Query {
+  product(id: ID!): Product
+  products(limit: Int, offset: Int): [Product!]!
+}
+
