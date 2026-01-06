@@ -56,6 +56,7 @@ import {
 } from '../../../../../lib/db/helper';
 import ClassNode from '../../../components/ade/studio/ClassNode';
 import GroupNode, { GROUP_COLORS } from '../../../components/ade/studio/GroupNode';
+import { applyAutoLayout } from '../../../utils/canvas-auto-layout';
 
 // Import extracted components
 import { useExportFunctions } from './components';
@@ -2235,6 +2236,44 @@ const StudioContent = () => {
     }
   }, [selectedVersionId, currentUserId, reloadClasses, setNodes, setGroups, setViewport, alertDialog, projectTags, isReadOnly, triggerSidebarRefresh]);
 
+  // Auto-arrange nodes using hierarchical layout algorithm
+  const handleAutoArrange = useCallback(() => {
+    if (nodes.length === 0) return;
+
+    setLoadingMessage('Arranging nodes...');
+    setIsLoadingCanvas(true);
+
+    // Use setTimeout to allow the loading state to render
+    setTimeout(() => {
+      try {
+        // Apply auto-layout algorithm
+        const layoutedNodes = applyAutoLayout(nodes, edges, {
+          nodeSpacingX: 100,
+          nodeSpacingY: 150,
+          direction: 'TB', // Top to bottom
+          padding: 80,
+          centerNodes: true,
+          minimizeCrossings: true,
+        });
+
+        // Update nodes with new positions
+        setNodes(layoutedNodes);
+
+        // Fit view to show all nodes after a short delay
+        setTimeout(() => {
+          fitView({ padding: 0.1, duration: 300 });
+        }, 100);
+
+        setLayoutDropdownOpen(false);
+      } catch (error) {
+        console.error('Error auto-arranging nodes:', error);
+      } finally {
+        setIsLoadingCanvas(false);
+        setLoadingMessage('');
+      }
+    }, 50);
+  }, [nodes, edges, setNodes, fitView]);
+
   // ============================================================================
   // END LAYOUT SAVE/LOAD HANDLERS
   // ============================================================================
@@ -4380,6 +4419,30 @@ const StudioContent = () => {
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                           Save or load your canvas layout per version
+                        </p>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="border-t border-gray-200 dark:border-gray-700 mx-4" />
+
+                      {/* Auto-arrange Section */}
+                      <div className="px-4 py-3">
+                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                          Auto Layout
+                        </h4>
+                        <button
+                          onClick={handleAutoArrange}
+                          disabled={nodes.filter(n => n.type !== 'groupNode').length === 0}
+                          className="w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/50 border border-teal-200 dark:border-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Automatically arrange classes in a hierarchical layout"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                          </svg>
+                          <span>Auto-arrange</span>
+                        </button>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          Automatically arrange classes hierarchically based on relationships
                         </p>
                       </div>
                     </div>

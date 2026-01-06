@@ -27,18 +27,19 @@
 - 📋 Default layout setting per user or per team
 - 📋 Export layout as JSON for sharing
 - 📋 Import layouts from other versions/projects
+- ✅ Add simple orthagonal edge routing after auto-layout
 
-| Ticket | Feature                                      |
-|--------|----------------------------------------------|
-| #564   | Re-introduce canvas auto-layout algorithms   |
-| #163   | Multiple saved layouts per version           |
-| #164   | Auto-save layout changes (tuneable interval) |
-| #165   | Version control for layouts                  |
-| #166   | Default layout setting per user or per team  |
-| #167   | Export/import layouts as JSON                |
-| #314   | Canvas snapshots                             |
-| #315   | Canvas auto-save of layout                   |
-| #316   | Export/import canvas layouts                 |
+| Ticket | Feature                                       |
+|--------|-----------------------------------------------|
+| #564   | Re-introduce canvas auto-layout algorithms    |
+| #163   | Multiple saved layouts per version            |
+| #164   | Auto-save layout changes (tuneable interval)  |
+| #165   | Version control for layouts                   |
+| #166   | Default layout setting per user or per team   |
+| #167   | Export/import layouts as JSON                 |
+| #314   | Canvas snapshots                              |
+| #315   | Canvas auto-save of layout                    |
+| #316   | Export/import canvas layouts                  |
 
 #### Layout Snapshots 📋 PLANNED
 - 📋 Take quick snapshots of current layout
