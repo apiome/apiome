@@ -305,16 +305,19 @@ const StudioContent = () => {
   // Handle theme changes for a class node
   const handleThemeChange = useCallback(async (classId: string, theme: any) => {
     try {
-      // Get current node to preserve position and other metadata
-      const currentNode = nodes.find(n => n.id === classId);
-      if (!currentNode) return;
-
-      // Get existing canvas_metadata or create new one
-      const existingMetadata = (currentNode.data as any).canvas_metadata || {};
+      // Use functional form to get current node
+      let currentMetadata = {};
+      setNodes((currentNodes) => {
+        const currentNode = currentNodes.find(n => n.id === classId);
+        if (currentNode) {
+          currentMetadata = (currentNode.data as any).canvas_metadata || {};
+        }
+        return currentNodes; // No change yet
+      });
 
       // Update canvas_metadata with new theme
       const updatedMetadata = {
-        ...existingMetadata,
+        ...currentMetadata,
         style: theme
       };
 
@@ -342,7 +345,7 @@ const StudioContent = () => {
     } catch (error) {
       console.error('Error updating class theme:', error);
     }
-  }, [nodes, setNodes]);
+  }, []);
 
   // Keep ref updated
   handleThemeChangeRef.current = handleThemeChange;
@@ -362,21 +365,23 @@ const StudioContent = () => {
         },
       }))
     );
-  }, [globalExpandedProperties, isReadOnly, zoomLevel, lodEnabled, setNodes]);
+  }, [globalExpandedProperties, isReadOnly, zoomLevel, lodEnabled]);
 
   // Handle expand all properties
   const handleExpandAll = useCallback(() => {
-    const allPropertyIds = new Set<string>();
-    nodes.forEach((node) => {
-      const properties = (node.data as any)?.properties || [];
-      properties.forEach((prop: any) => {
-        allPropertyIds.add(prop.id);
+    setNodes((currentNodes) => {
+      const allPropertyIds = new Set<string>();
+      currentNodes.forEach((node) => {
+        const properties = (node.data as any)?.properties || [];
+        properties.forEach((prop: any) => {
+          allPropertyIds.add(prop.id);
+        });
       });
+      setGlobalExpandedProperties(allPropertyIds);
+      // Also reflect immediately into node data
+      return currentNodes.map((n) => ({ ...n, data: { ...(n.data as any), expandedProperties: allPropertyIds } }));
     });
-    setGlobalExpandedProperties(allPropertyIds);
-    // Also reflect immediately into node data
-    setNodes((prev) => prev.map((n) => ({ ...n, data: { ...(n.data as any), expandedProperties: allPropertyIds } })));
-  }, [nodes, setNodes]);
+  }, []);
 
   // Handle collapse all properties
   const handleCollapseAll = useCallback(() => {
@@ -384,29 +389,36 @@ const StudioContent = () => {
     setGlobalExpandedProperties(empty);
     // Also reflect immediately into node data
     setNodes((prev) => prev.map((n) => ({ ...n, data: { ...(n.data as any), expandedProperties: empty } })));
-  }, [setNodes]);
+  }, []);
 
   // Handle zoom to class when selected in sidebar
   const zoomToClass = useCallback((classId: string) => {
-    const node = nodes.find(n => n.id === classId);
-    if (!node) return;
+    let targetNode: Node | undefined;
 
-    // Highlight the node by adding a temporary selected state
-    setNodes((prev) => prev.map((n) => ({
-      ...n,
-      selected: n.id === classId,
-    })));
+    // Get node data using functional setState
+    setNodes((currentNodes) => {
+      targetNode = currentNodes.find(n => n.id === classId);
+      if (!targetNode) return currentNodes;
+
+      // Highlight the node by adding a temporary selected state
+      return currentNodes.map((n) => ({
+        ...n,
+        selected: n.id === classId,
+      }));
+    });
+
+    if (!targetNode) return;
 
     // Center the view on the node with smooth animation
-    const x = node.position.x + (node.width || 200) / 2;
-    const y = node.position.y + (node.height || 150) / 2;
+    const x = targetNode.position.x + (targetNode.width || 200) / 2;
+    const y = targetNode.position.y + (targetNode.height || 150) / 2;
     const currentZoom = getViewport().zoom;
 
     // Zoom to 1.5x if currently zoomed out, otherwise keep current zoom
     const targetZoom = currentZoom < 1 ? 1.5 : currentZoom;
 
     setCenter(x, y, { zoom: targetZoom, duration: 250 });
-  }, [nodes, setNodes, setCenter, getViewport]);
+  }, [setCenter, getViewport]);
 
   // Register zoomToClass function in context on mount
   useEffect(() => {
@@ -429,8 +441,13 @@ const StudioContent = () => {
 
       setLoadingMessage('Updating nodes and edges...');
 
-      // Preserve existing node positions when reloading
-      const existingPositions = new Map(nodes.map(n => [n.id, n.position]));
+      // Get existing positions using functional setState
+      let existingPositions = new Map<string, { x: number; y: number }>();
+      setNodes((currentNodes) => {
+        existingPositions = new Map(currentNodes.map(n => [n.id, n.position]));
+        return currentNodes; // No change yet
+      });
+
       const newNodes = await classesToNodes(classesWithProperties);
       // Restore positions from existing nodes
       newNodes.forEach(node => {
@@ -449,7 +466,7 @@ const StudioContent = () => {
       setIsLoadingCanvas(false);
       setLoadingMessage('');
     }
-  }, [selectedVersionId, setNodes, setEdges, projects, versions, nodes]);
+  }, [selectedVersionId, projects, versions]);
 
 // Helper function to extract inline properties from a property schema
   const extractInlineProperties = (propData: any): { name: string; data: any; description?: string }[] => {
@@ -3137,16 +3154,23 @@ const StudioContent = () => {
 
         setLoadingMessage('Updating nodes and edges...');
 
-        // Preserve existing node positions when reloading
-        const existingPositions = new Map(nodes.map(n => [n.id, n.position]));
+        // Create new nodes
         const newNodes = await classesToNodes(classesWithProperties);
-        // Restore positions from existing nodes
-        newNodes.forEach(node => {
-          const existingPos = existingPositions.get(node.id);
-          if (existingPos) {
-            node.position = existingPos;
+
+        // Preserve existing node positions if they exist (using functional state read)
+        setNodes((currentNodes) => {
+          if (currentNodes.length > 0) {
+            const existingPositions = new Map(currentNodes.map(n => [n.id, n.position]));
+            newNodes.forEach(node => {
+              const existingPos = existingPositions.get(node.id);
+              if (existingPos) {
+                node.position = existingPos;
+              }
+            });
           }
+          return currentNodes; // Return current for now, will set after loading groups
         });
+
         const newEdges = createAllEdges(classesWithProperties);
         setEdges(newEdges);
 
@@ -3266,42 +3290,56 @@ const StudioContent = () => {
     };
 
     loadClasses();
-  }, [selectedVersionId, selectedProjectId, canvasRefreshKey, setNodes, setEdges, fitView, projects, versions, currentUserId, setGroups, setViewport, projectTags, isReadOnly, triggerSidebarRefresh]);
+  }, [selectedVersionId, selectedProjectId, canvasRefreshKey, projects, versions, currentUserId, projectTags, isReadOnly]);
 
   // Regenerate edges when edge styling or routing preferences change
   useEffect(() => {
-    if (nodes.length > 0 && selectedVersionId) {
-      // Extract class data from nodes
-      const classesWithProperties = nodes
-        .filter(n => n.type !== 'groupNode')
-        .map(node => ({
-          id: node.id,
-          name: (node.data as any).name,
-          properties: (node.data as any).properties || [],
-          schema: (node.data as any).schema,
-        }));
+    if (!selectedVersionId) return;
 
-      // Regenerate edges with new styling/routing
-      const newEdges = createAllEdges(classesWithProperties);
-      setEdges(newEdges);
-    }
-  }, [edgeStyling, edgeRouting, edgeAnimation]);
+    // Use functional setState to access current nodes
+    setNodes((currentNodes) => {
+      if (currentNodes.length > 0) {
+        // Extract class data from nodes
+        const classesWithProperties = currentNodes
+          .filter(n => n.type !== 'groupNode')
+          .map(node => ({
+            id: node.id,
+            name: (node.data as any).name,
+            properties: (node.data as any).properties || [],
+            schema: (node.data as any).schema,
+          }));
+
+        // Regenerate edges with new styling/routing
+        const newEdges = createAllEdges(classesWithProperties);
+        setEdges(newEdges);
+      }
+      return currentNodes; // No change to nodes
+    });
+  }, [edgeStyling, edgeRouting, edgeAnimation, selectedVersionId]);
 
   // Generate specs on-demand when switching views or when canvas changes
   useEffect(() => {
     const generateSpec = async () => {
-      if (!selectedVersionId) return;
+      if (!selectedVersionId || viewMode !== 'code') return;
 
       try {
-        // Convert current nodes to classes format
-        const classesWithProperties = nodes.map(node => ({
-          id: node.id,
-          name: (node.data as any).name,
-          description: (node.data as any).description,
-          properties: (node.data as any).properties || [],
-          schema: (node.data as any).schema,
-          tags: (node.data as any).tags || []
-        }));
+        // Get current nodes using functional state access
+        let classesWithProperties: any[] = [];
+        setNodes((currentNodes) => {
+          classesWithProperties = currentNodes
+            .filter(n => n.type !== 'groupNode')
+            .map(node => ({
+              id: node.id,
+              name: (node.data as any).name,
+              description: (node.data as any).description,
+              properties: (node.data as any).properties || [],
+              schema: (node.data as any).schema,
+              tags: (node.data as any).tags || []
+            }));
+          return currentNodes; // No change
+        });
+
+        if (classesWithProperties.length === 0) return;
 
         // Get current project and version for metadata
         const currentProject = projects.find(p => p.id === selectedProjectId);
@@ -3341,7 +3379,7 @@ const StudioContent = () => {
     };
 
     generateSpec();
-  }, [viewMode, codeDisplayFormat, selectedVersionId, selectedProjectId, projects, versions, nodes]);
+  }, [viewMode, codeDisplayFormat, selectedVersionId, selectedProjectId, projects, versions]);
 
   const loadProjects = async () => {
     if (!currentTenantId) return;

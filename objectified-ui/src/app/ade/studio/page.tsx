@@ -1,14 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function StudioPage() {
-  const router = useRouter();
-
   useEffect(() => {
-    router.replace('/ade/studio/editor');
-  }, [router]);
+    // Direct navigation to avoid router issues
+    window.location.href = '/ade/studio/editor';
+  }, []);
 
   return (
     <div className="h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
