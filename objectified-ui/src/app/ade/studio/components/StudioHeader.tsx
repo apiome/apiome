@@ -73,7 +73,9 @@ export default function StudioHeader({ onProjectTagsLoaded }: StudioHeaderProps)
     smartGuidesEnabled,
     setSmartGuidesEnabled,
     edgeStyling,
-    setEdgeStyling
+    setEdgeStyling,
+    edgeRouting,
+    setEdgeRouting
   } = useStudio();
 
   const [projects, setProjects] = React.useState<Project[]>([]);
@@ -700,6 +702,83 @@ export default function StudioHeader({ onProjectTagsLoaded }: StudioHeaderProps)
                           </Popover.Root>
                         </div>
                       </div>
+                    </div>
+
+                    <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
+
+                    {/* Edge Routing */}
+                    <div className="px-3 py-3">
+                      <div className="flex items-center gap-2 mb-3">
+                        <svg className="w-4 h-4 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                        </svg>
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Edge Routing</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => setEdgeRouting('straight')}
+                          className={`px-3 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
+                            edgeRouting === 'straight'
+                              ? 'bg-indigo-500 text-white shadow-sm'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          }`}
+                          title="Direct straight lines between nodes"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <line x1="4" y1="4" x2="20" y2="20" />
+                          </svg>
+                          Straight
+                        </button>
+                        <button
+                          onClick={() => setEdgeRouting('bezier')}
+                          className={`px-3 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
+                            edgeRouting === 'bezier'
+                              ? 'bg-indigo-500 text-white shadow-sm'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          }`}
+                          title="Smooth curved bezier lines"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <path d="M4 4 C 10 4, 14 20, 20 20" />
+                          </svg>
+                          Curved
+                        </button>
+                        <button
+                          onClick={() => setEdgeRouting('orthogonal')}
+                          className={`px-3 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
+                            edgeRouting === 'orthogonal'
+                              ? 'bg-indigo-500 text-white shadow-sm'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          }`}
+                          title="Right-angle orthogonal routing"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <path d="M4 4 L 4 12 L 20 12 L 20 20" />
+                          </svg>
+                          Orthogonal
+                        </button>
+                        <button
+                          onClick={() => setEdgeRouting('smart')}
+                          className={`px-3 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
+                            edgeRouting === 'smart'
+                              ? 'bg-indigo-500 text-white shadow-sm'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          }`}
+                          title="Smart routing that avoids node overlap"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <path d="M4 4 L 4 8 L 12 8 L 12 16 L 20 16 L 20 20" />
+                            <rect x="8" y="10" width="4" height="4" fill="currentColor" opacity="0.3" />
+                          </svg>
+                          Smart
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        {edgeRouting === 'straight' && 'Direct lines between connected nodes'}
+                        {edgeRouting === 'bezier' && 'Smooth curved connections'}
+                        {edgeRouting === 'orthogonal' && 'Right-angle paths (horizontal/vertical only)'}
+                        {edgeRouting === 'smart' && 'Automatically routes around other nodes'}
+                      </p>
                     </div>
                   </DropdownMenu.Content>
                 </DropdownMenu.Portal>

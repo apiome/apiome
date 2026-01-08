@@ -259,17 +259,16 @@
   - ✅ Double lines for bidirectional
 - ✅ Edge colors customizable
 - 📋 Edge labels (show property name on relationship)
-- 📋 Edge routing options:
-  - Straight lines
-  - Curved (Bezier)
-  - Orthogonal (right angles)
-  - Smart routing (avoid node overlap)
+- ✅ Edge routing options:
+  - ✅ Straight lines
+  - ✅ Curved (Bezier)
+  - ✅ Orthogonal (right angles)
+  - ✅ Smart routing (avoid node overlap)
 - 📋 Arrow styles: Standard, Diamond, Circle, Open arrow
 - 📋 Animated edges (flowing dots for data flow)
 
 | Ticket | Feature Description                   |
 |--------|---------------------------------------|
-| #346   | Adds edge routing styles              |
 | #347   | Adds edge arrow styles                |
 | #348   | Adds animation to edges               |
 | #349   | Adds edge hover effects               |

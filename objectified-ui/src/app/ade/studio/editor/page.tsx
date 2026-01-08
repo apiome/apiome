@@ -56,6 +56,7 @@ import {
 } from '../../../../../lib/db/helper';
 import ClassNode from '../../../components/ade/studio/ClassNode';
 import GroupNode, { GROUP_COLORS } from '../../../components/ade/studio/GroupNode';
+import SmartEdge from '../../../components/ade/studio/SmartEdge';
 import { applyAutoLayout } from '../../../utils/canvas-auto-layout';
 import { applyEdgeStyling } from '../../../utils/edge-styling';
 
@@ -151,6 +152,7 @@ const StudioContent = () => {
     setClickToFocusEnabled: setContextClickToFocusEnabled,
     lodEnabled,
     edgeStyling,
+    edgeRouting,
     gridSize,
     snapToGrid,
     gridStyle,
@@ -2311,6 +2313,11 @@ const StudioContent = () => {
     groupNode: GroupNode,
   };
 
+  // Define custom edge types
+  const edgeTypes = {
+    smart: SmartEdge,
+  };
+
   // Helper function to convert classes to React Flow nodes
   const classesToNodes = async (classes: any[]): Promise<Node[]> => {
     return classes.map((cls, index) => {
@@ -2357,6 +2364,22 @@ const StudioContent = () => {
       return parts[parts.length - 1] || null;
     }
     return ref;
+  };
+
+  // Helper function to get React Flow edge type from routing setting
+  const getEdgeType = (): string => {
+    switch (edgeRouting) {
+      case 'straight':
+        return 'straight';
+      case 'bezier':
+        return 'default'; // React Flow's default is bezier
+      case 'orthogonal':
+        return 'smoothstep'; // smoothstep creates orthogonal paths
+      case 'smart':
+        return 'smart'; // Custom SmartEdge that avoids node overlap
+      default:
+        return 'default';
+    }
   };
 
   // Helper function to create edges from property $ref relationships
@@ -2408,9 +2431,10 @@ const StudioContent = () => {
                   source: cls.id,
                   sourceHandle: `prop-${prop.id}`,
                   target: targetClassId,
-                  type: 'smoothstep',
+                  type: getEdgeType(),
                   animated: false,
                   label: `${prop.name} (${label}:${refClassName}${isSourceArray ? '[]' : ''})`,
+                  data: { sourceNodeId: cls.id, targetNodeId: targetClassId },
                   style: {
                     stroke: edgeColor,
                     strokeWidth: 3,
@@ -2541,9 +2565,10 @@ const StudioContent = () => {
             source: cls.id,
             sourceHandle: `prop-${prop.id}`,
             target: targetClassId,
-            type: 'smoothstep',
+            type: getEdgeType(),
             animated: false,
             label: `${prop.name} (${cardinality})`,
+            data: { sourceNodeId: cls.id, targetNodeId: targetClassId },
             style: {
               stroke: edgeColor,
               strokeWidth: 2
@@ -2583,14 +2608,16 @@ const StudioContent = () => {
           if (item.$ref) {
             const refClassName = extractClassNameFromRef(item.$ref);
             if (refClassName && classNameToId.has(refClassName)) {
+              const targetId = classNameToId.get(refClassName)!;
               edges.push({
                 id: `allOf-${cls.id}-${refClassName}-${index}`,
                 source: cls.id,
                 sourceHandle: 'comp-bottom', // Use single composition handle
-                target: classNameToId.get(refClassName)!,
-                type: 'smoothstep',
+                target: targetId,
+                type: getEdgeType(),
                 animated: false,
                 label: `allOf:${refClassName}`,
+                data: { sourceNodeId: cls.id, targetNodeId: targetId },
                 style: {
                   stroke: '#2563eb',
                   strokeWidth: 3,
@@ -2625,14 +2652,16 @@ const StudioContent = () => {
           if (item.$ref) {
             const refClassName = extractClassNameFromRef(item.$ref);
             if (refClassName && classNameToId.has(refClassName)) {
+              const targetId = classNameToId.get(refClassName)!;
               edges.push({
                 id: `anyOf-${cls.id}-${refClassName}-${index}`,
                 source: cls.id,
                 sourceHandle: 'comp-bottom', // Use single composition handle
-                target: classNameToId.get(refClassName)!,
-                type: 'smoothstep',
+                target: targetId,
+                type: getEdgeType(),
                 animated: false,
                 label: `anyOf:${refClassName}`,
+                data: { sourceNodeId: cls.id, targetNodeId: targetId },
                 style: {
                   stroke: '#ea580c',
                   strokeWidth: 3,
@@ -2666,14 +2695,16 @@ const StudioContent = () => {
           if (item.$ref) {
             const refClassName = extractClassNameFromRef(item.$ref);
             if (refClassName && classNameToId.has(refClassName)) {
+              const targetId = classNameToId.get(refClassName)!;
               edges.push({
                 id: `oneOf-${cls.id}-${refClassName}-${index}`,
                 source: cls.id,
                 sourceHandle: 'comp-bottom', // Use single composition handle
-                target: classNameToId.get(refClassName)!,
-                type: 'smoothstep',
+                target: targetId,
+                type: getEdgeType(),
                 animated: false,
                 label: `oneOf:${refClassName}`,
+                data: { sourceNodeId: cls.id, targetNodeId: targetId },
                 style: {
                   stroke: '#9333ea',
                   strokeWidth: 3,
@@ -3210,7 +3241,7 @@ const StudioContent = () => {
     loadClasses();
   }, [selectedVersionId, selectedProjectId, canvasRefreshKey, setNodes, setEdges, fitView, projects, versions, currentUserId, setGroups, setViewport, projectTags, isReadOnly, triggerSidebarRefresh]);
 
-  // Regenerate edges when edge styling preferences change
+  // Regenerate edges when edge styling or routing preferences change
   useEffect(() => {
     if (nodes.length > 0 && selectedVersionId) {
       // Extract class data from nodes
@@ -3223,11 +3254,11 @@ const StudioContent = () => {
           schema: (node.data as any).schema,
         }));
 
-      // Regenerate edges with new styling
+      // Regenerate edges with new styling/routing
       const newEdges = createAllEdges(classesWithProperties);
       setEdges(newEdges);
     }
-  }, [edgeStyling]);
+  }, [edgeStyling, edgeRouting]);
 
   // Generate specs on-demand when switching views or when canvas changes
   useEffect(() => {
@@ -3929,6 +3960,7 @@ const StudioContent = () => {
               nodes={nodes}
               edges={edges}
               nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
               onNodesChange={handleNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}

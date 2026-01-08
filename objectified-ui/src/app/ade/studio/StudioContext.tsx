@@ -33,6 +33,9 @@ export interface CanvasGroup {
 // Edge styling options
 export type EdgeStyleType = 'solid' | 'dashed' | 'dotted' | 'double';
 
+// Edge routing options
+export type EdgeRoutingType = 'straight' | 'bezier' | 'orthogonal' | 'smart';
+
 export interface EdgeStylingOptions {
   directReferences: EdgeStyleType;
   optionalReferences: EdgeStyleType;
@@ -78,6 +81,9 @@ interface StudioContextType {
   // Edge styling
   edgeStyling: EdgeStylingOptions;
   setEdgeStyling: (options: EdgeStylingOptions) => void;
+  // Edge routing
+  edgeRouting: EdgeRoutingType;
+  setEdgeRouting: (routing: EdgeRoutingType) => void;
   // Group management
   groups: CanvasGroup[];
   setGroups: (groups: CanvasGroup[]) => void;
@@ -178,6 +184,16 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     return defaults;
   });
 
+  const [edgeRouting, setEdgeRouting] = useState<EdgeRoutingType>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('edgeRouting');
+      if (saved && ['straight', 'bezier', 'orthogonal', 'smart'].includes(saved)) {
+        return saved as EdgeRoutingType;
+      }
+    }
+    return 'bezier'; // Default to curved/bezier
+  });
+
   const [groups, setGroups] = useState<CanvasGroup[]>([]);
 
   // Persist grid settings to localStorage
@@ -210,6 +226,12 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('edgeStyling', JSON.stringify(edgeStyling));
     }
   }, [edgeStyling]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('edgeRouting', edgeRouting);
+    }
+  }, [edgeRouting]);
 
   const triggerCanvasRefresh = () => {
     setCanvasRefreshKey(prev => prev + 1);
@@ -283,6 +305,8 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       setSmartGuidesEnabled,
       edgeStyling,
       setEdgeStyling,
+      edgeRouting,
+      setEdgeRouting,
       groups,
       setGroups,
       addGroup,

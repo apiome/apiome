@@ -66,6 +66,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Added edge styling:
     - Styling for direct, optional, weak, and bidirectional relationships
     - Color selection for edges
+    - Styling for edge connectors including smart edge routing
 - Added property templates
   - Fixed property copying to a class that contains an object with nested properties
 - Dashboard improvements
