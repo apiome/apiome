@@ -15,10 +15,10 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useStudio } from '../../StudioContext';
+import { useDialog } from '../../../../components/providers/DialogProvider';
 import {
   getOperationsForPath,
   createOperation,
-  deleteOperation,
 } from '../../../../../../lib/db/helper-path-operations';
 
 // Operation Node Component
@@ -64,6 +64,7 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect }: PathsCanvasInne
     gridStyle,
   } = useStudio();
 
+  const { alert: alertDialog } = useDialog();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, , onEdgesChange] = useEdgesState<Edge>([]);
@@ -156,7 +157,11 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect }: PathsCanvasInne
       event.preventDefault();
 
       if (!selectedPathId) {
-        alert('Please select a path first before adding operations.');
+        await alertDialog({
+          title: 'No Path Selected',
+          message: 'Please select a path from the sidebar before adding operations to the canvas.',
+          variant: 'warning',
+        });
         return;
       }
 
@@ -195,11 +200,15 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect }: PathsCanvasInne
           setNodes((nds) => [...nds, newNode]);
         } catch (error) {
           console.error('Error creating operation:', error);
-          alert('Failed to add operation. Please try again.');
+          await alertDialog({
+            title: 'Error',
+            message: 'Failed to add operation. Please try again.',
+            variant: 'error',
+          });
         }
       }
     },
-    [screenToFlowPosition, setNodes, selectedPathId]
+    [screenToFlowPosition, setNodes, selectedPathId, alertDialog]
   );
 
   return (

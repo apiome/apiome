@@ -7,6 +7,7 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import { Close, Save } from '@mui/icons-material';
 import { useDarkMode } from '../../../../hooks/useDarkMode';
+import { useDialog } from '../../../../components/providers/DialogProvider';
 import {
   getOperationDescription,
   upsertOperationDescription,
@@ -27,6 +28,7 @@ export default function OperationPropertiesPanel({
   onClose,
 }: OperationPropertiesPanelProps) {
   const isDark = useDarkMode();
+  const { alert: alertDialog } = useDialog();
   const [summary, setSummary] = useState('');
   const [description, setDescription] = useState('');
   const [operationIdName, setOperationIdName] = useState('');
@@ -81,7 +83,11 @@ export default function OperationPropertiesPanel({
       onClose();
     } catch (error) {
       console.error('Error saving operation description:', error);
-      alert('Failed to save operation description. Please try again.');
+      await alertDialog({
+        title: 'Error',
+        message: 'Failed to save operation description. Please try again.',
+        variant: 'error',
+      });
     } finally {
       setIsSaving(false);
     }
