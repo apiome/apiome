@@ -13,11 +13,42 @@ import { Hash } from 'lucide-react';
 import { useDarkMode } from '../../../../hooks/useDarkMode';
 import { useDialog } from '../../../../components/providers/DialogProvider';
 import {
-  getParametersForOperation,
-  updatePathParameter,
-  deletePathParameter,
-} from '../../../../../../lib/db/helper-path-parameters';
+  getLinkedParametersForOperation,
+  updateSharedPathParameter,
+  unlinkParameterFromOperation,
+} from '../../../../../../lib/db/helper-shared-path-parameters';
 import { extractPathParameters } from '../../../../../../lib/utils/path-params';
+
+// Simple types allowed for path parameters (no 'object')
+const SCHEMA_TYPES = [
+  { value: 'string', label: 'String' },
+  { value: 'integer', label: 'Integer' },
+  { value: 'number', label: 'Number' },
+  { value: 'boolean', label: 'Boolean' },
+  { value: 'array', label: 'Array' },
+] as const;
+
+// Common string formats
+const STRING_FORMATS = [
+  { value: '', label: 'None' },
+  { value: 'date', label: 'Date (YYYY-MM-DD)' },
+  { value: 'date-time', label: 'DateTime (ISO 8601)' },
+  { value: 'time', label: 'Time (HH:MM:SS)' },
+  { value: 'email', label: 'Email' },
+  { value: 'uri', label: 'URI' },
+  { value: 'uuid', label: 'UUID' },
+  { value: 'hostname', label: 'Hostname' },
+  { value: 'ipv4', label: 'IPv4' },
+  { value: 'ipv6', label: 'IPv6' },
+];
+
+// Array item types
+const ARRAY_ITEM_TYPES = [
+  { value: 'string', label: 'String' },
+  { value: 'integer', label: 'Integer' },
+  { value: 'number', label: 'Number' },
+  { value: 'boolean', label: 'Boolean' },
+];
 
 interface ParameterPropertiesPanelProps {
   parameterId: string | null;
@@ -46,6 +77,18 @@ export default function ParameterPropertiesPanel({
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
   const [availablePathParams, setAvailablePathParams] = useState<string[]>([]);
 
+  // Schema state
+  const [schemaType, setSchemaType] = useState<'string' | 'integer' | 'number' | 'boolean' | 'array'>('string');
+  const [schemaFormat, setSchemaFormat] = useState('');
+  const [schemaMinimum, setSchemaMinimum] = useState<string>('');
+  const [schemaMaximum, setSchemaMaximum] = useState<string>('');
+  const [schemaMinLength, setSchemaMinLength] = useState<string>('');
+  const [schemaMaxLength, setSchemaMaxLength] = useState<string>('');
+  const [schemaPattern, setSchemaPattern] = useState('');
+  const [schemaDefault, setSchemaDefault] = useState('');
+  const [schemaEnum, setSchemaEnum] = useState('');
+  const [schemaArrayItemType, setSchemaArrayItemType] = useState<'string' | 'integer' | 'number' | 'boolean'>('string');
+
   // Load parameter details when parameterId changes
   useEffect(() => {
     if (!parameterId || !operationId) {
@@ -54,13 +97,24 @@ export default function ParameterPropertiesPanel({
       setSummary('');
       setDescription('');
       setRequired(true);
+      // Reset schema state
+      setSchemaType('string');
+      setSchemaFormat('');
+      setSchemaMinimum('');
+      setSchemaMaximum('');
+      setSchemaMinLength('');
+      setSchemaMaxLength('');
+      setSchemaPattern('');
+      setSchemaDefault('');
+      setSchemaEnum('');
+      setSchemaArrayItemType('string');
       return;
     }
 
     const loadParameter = async () => {
       setIsLoading(true);
       try {
-        const result = await getParametersForOperation(operationId);
+        const result = await getLinkedParametersForOperation(operationId);
         const data = JSON.parse(result);
 
         if (data.success && data.parameters) {
@@ -70,7 +124,35 @@ export default function ParameterPropertiesPanel({
             setInLocation(param.in_location);
             setSummary(param.summary || '');
             setDescription(param.description || '');
-            setRequired(param.metadata?.required ?? (param.in_location === 'path'));
+
+            // Load schema from param.data column
+            const schema = param.data;
+            if (schema) {
+              setSchemaType(schema.type || 'string');
+              setSchemaFormat(schema.format || '');
+              setSchemaMinimum(schema.minimum !== undefined ? String(schema.minimum) : '');
+              setSchemaMaximum(schema.maximum !== undefined ? String(schema.maximum) : '');
+              setSchemaMinLength(schema.minLength !== undefined ? String(schema.minLength) : '');
+              setSchemaMaxLength(schema.maxLength !== undefined ? String(schema.maxLength) : '');
+              setSchemaPattern(schema.pattern || '');
+              setSchemaDefault(schema.default !== undefined ? String(schema.default) : '');
+              setSchemaEnum(schema.enum ? schema.enum.join(', ') : '');
+              setSchemaArrayItemType(schema.items?.type || 'string');
+              // Read required from data field
+              setRequired(schema.required ?? (param.in_location === 'path'));
+            } else {
+              // Reset to defaults if no schema
+              setSchemaType('string');
+              setSchemaFormat('');
+              setSchemaMinimum('');
+              setSchemaMaximum('');
+              setSchemaMinLength('');
+              setSchemaMaxLength('');
+              setSchemaPattern('');
+              setSchemaDefault('');
+              setSchemaEnum('');
+              setSchemaArrayItemType('string');
+            }
           }
         }
       } catch (error) {
@@ -97,23 +179,53 @@ export default function ParameterPropertiesPanel({
     setIsSaving(true);
     setSaveStatus('idle');
     try {
-      const metadata = {
-        required,
-        schema: {
-          type: 'string',
-        },
-      };
+      // Build the JSON Schema for the parameter
+      const schemaData: Record<string, any> = { type: schemaType };
 
-      const result = await updatePathParameter(parameterId, {
+      if (schemaType === 'string') {
+        if (schemaFormat) schemaData.format = schemaFormat;
+        if (schemaMinLength) schemaData.minLength = parseInt(schemaMinLength, 10);
+        if (schemaMaxLength) schemaData.maxLength = parseInt(schemaMaxLength, 10);
+        if (schemaPattern) schemaData.pattern = schemaPattern;
+      } else if (schemaType === 'integer' || schemaType === 'number') {
+        if (schemaMinimum) schemaData.minimum = schemaType === 'integer' ? parseInt(schemaMinimum, 10) : parseFloat(schemaMinimum);
+        if (schemaMaximum) schemaData.maximum = schemaType === 'integer' ? parseInt(schemaMaximum, 10) : parseFloat(schemaMaximum);
+      } else if (schemaType === 'array') {
+        schemaData.items = { type: schemaArrayItemType };
+      }
+
+      // Handle enum values (comma-separated)
+      if (schemaEnum.trim()) {
+        schemaData.enum = schemaEnum.split(',').map(v => v.trim()).filter(v => v);
+      }
+
+      // Handle default value
+      if (schemaDefault.trim()) {
+        if (schemaType === 'integer') {
+          schemaData.default = parseInt(schemaDefault, 10);
+        } else if (schemaType === 'number') {
+          schemaData.default = parseFloat(schemaDefault);
+        } else if (schemaType === 'boolean') {
+          schemaData.default = schemaDefault.toLowerCase() === 'true';
+        } else {
+          schemaData.default = schemaDefault;
+        }
+      }
+
+      // Add required to schema data
+      schemaData.required = required;
+
+      const result = await updateSharedPathParameter(parameterId, {
         name: name.trim(),
         inLocation,
         summary: summary.trim() || undefined,
         description: description.trim() || undefined,
-        metadata,
+        data: schemaData,
       });
 
       const parsed = JSON.parse(result);
       if (parsed.success) {
+
         // Show "Saved" in button briefly
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 2000);
@@ -141,28 +253,23 @@ export default function ParameterPropertiesPanel({
   };
 
   const handleDelete = async () => {
-    if (!parameterId) return;
+    if (!parameterId || !operationId) return;
 
     const confirmed = await confirmDialog({
-      title: 'Delete Parameter',
-      message: `Are you sure you want to delete the parameter "${name}"?`,
+      title: 'Unlink Parameter',
+      message: `Are you sure you want to unlink the parameter "${name}" from this operation? The parameter will still be available for other operations.`,
       variant: 'danger',
-      confirmLabel: 'Delete',
+      confirmLabel: 'Unlink',
       cancelLabel: 'Cancel',
     });
 
     if (!confirmed) return;
 
     try {
-      const result = await deletePathParameter(parameterId);
+      const result = await unlinkParameterFromOperation(operationId, parameterId);
       const parsed = JSON.parse(result);
 
       if (parsed.success) {
-        await alertDialog({
-          title: 'Success',
-          message: 'Parameter deleted successfully',
-          variant: 'success',
-        });
         // Close the panel and refresh the canvas
         onClose();
         if (onRefresh) {
@@ -171,15 +278,15 @@ export default function ParameterPropertiesPanel({
       } else {
         await alertDialog({
           title: 'Error',
-          message: parsed.error || 'Failed to delete parameter',
+          message: parsed.error || 'Failed to unlink parameter',
           variant: 'error',
         });
       }
     } catch (error) {
-      console.error('Error deleting parameter:', error);
+      console.error('Error unlinking parameter:', error);
       await alertDialog({
         title: 'Error',
-        message: 'Failed to delete parameter. Please try again.',
+        message: 'Failed to unlink parameter. Please try again.',
         variant: 'error',
       });
     }
@@ -386,6 +493,289 @@ export default function ParameterPropertiesPanel({
                   }}
                 />
               </Box>
+
+              {/* Schema Section */}
+              <Box sx={{ mt: 2, pt: 2, borderTop: isDark ? '1px solid #334155' : '1px solid #e2e8f0' }}>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Schema Definition
+                </label>
+
+                {/* Schema Type */}
+                <Box sx={{ mb: 2 }}>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Type
+                  </label>
+                  <TextField
+                    fullWidth
+                    select
+                    size="small"
+                    value={schemaType}
+                    onChange={(e) => setSchemaType(e.target.value as any)}
+                    sx={{
+                      '& .MuiInputBase-root': {
+                        fontSize: '0.875rem',
+                        backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#f1f5f9' : '#0f172a',
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: isDark ? '#334155' : '#e2e8f0',
+                      },
+                    }}
+                  >
+                    {SCHEMA_TYPES.map((t) => (
+                      <MenuItem key={t.value} value={t.value}>
+                        {t.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
+
+                {/* String-specific options */}
+                {schemaType === 'string' && (
+                  <>
+                    <Box sx={{ mb: 2 }}>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Format
+                      </label>
+                      <TextField
+                        fullWidth
+                        select
+                        size="small"
+                        value={schemaFormat}
+                        onChange={(e) => setSchemaFormat(e.target.value)}
+                        sx={{
+                          '& .MuiInputBase-root': {
+                            fontSize: '0.875rem',
+                            backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                            color: isDark ? '#f1f5f9' : '#0f172a',
+                          },
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: isDark ? '#334155' : '#e2e8f0',
+                          },
+                        }}
+                      >
+                        {STRING_FORMATS.map((f) => (
+                          <MenuItem key={f.value} value={f.value}>
+                            {f.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                      <Box sx={{ flex: 1 }}>
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Min Length
+                        </label>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          type="number"
+                          value={schemaMinLength}
+                          onChange={(e) => setSchemaMinLength(e.target.value)}
+                          placeholder="0"
+                          sx={{
+                            '& .MuiInputBase-root': {
+                              fontSize: '0.875rem',
+                              backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                              color: isDark ? '#f1f5f9' : '#0f172a',
+                            },
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: isDark ? '#334155' : '#e2e8f0',
+                            },
+                          }}
+                        />
+                      </Box>
+                      <Box sx={{ flex: 1 }}>
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Max Length
+                        </label>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          type="number"
+                          value={schemaMaxLength}
+                          onChange={(e) => setSchemaMaxLength(e.target.value)}
+                          placeholder="∞"
+                          sx={{
+                            '& .MuiInputBase-root': {
+                              fontSize: '0.875rem',
+                              backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                              color: isDark ? '#f1f5f9' : '#0f172a',
+                            },
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: isDark ? '#334155' : '#e2e8f0',
+                            },
+                          }}
+                        />
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ mb: 2 }}>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Pattern (Regex)
+                      </label>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        value={schemaPattern}
+                        onChange={(e) => setSchemaPattern(e.target.value)}
+                        placeholder="e.g., ^[a-z]+$"
+                        sx={{
+                          '& .MuiInputBase-root': {
+                            fontSize: '0.875rem',
+                            fontFamily: 'monospace',
+                            backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                            color: isDark ? '#f1f5f9' : '#0f172a',
+                          },
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: isDark ? '#334155' : '#e2e8f0',
+                          },
+                        }}
+                      />
+                    </Box>
+                  </>
+                )}
+
+                {/* Number/Integer-specific options */}
+                {(schemaType === 'integer' || schemaType === 'number') && (
+                  <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                    <Box sx={{ flex: 1 }}>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Minimum
+                      </label>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        type="number"
+                        value={schemaMinimum}
+                        onChange={(e) => setSchemaMinimum(e.target.value)}
+                        placeholder="-∞"
+                        sx={{
+                          '& .MuiInputBase-root': {
+                            fontSize: '0.875rem',
+                            backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                            color: isDark ? '#f1f5f9' : '#0f172a',
+                          },
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: isDark ? '#334155' : '#e2e8f0',
+                          },
+                        }}
+                      />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Maximum
+                      </label>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        type="number"
+                        value={schemaMaximum}
+                        onChange={(e) => setSchemaMaximum(e.target.value)}
+                        placeholder="∞"
+                        sx={{
+                          '& .MuiInputBase-root': {
+                            fontSize: '0.875rem',
+                            backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                            color: isDark ? '#f1f5f9' : '#0f172a',
+                          },
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: isDark ? '#334155' : '#e2e8f0',
+                          },
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Array-specific options */}
+                {schemaType === 'array' && (
+                  <Box sx={{ mb: 2 }}>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Array Item Type
+                    </label>
+                    <TextField
+                      fullWidth
+                      select
+                      size="small"
+                      value={schemaArrayItemType}
+                      onChange={(e) => setSchemaArrayItemType(e.target.value as any)}
+                      sx={{
+                        '& .MuiInputBase-root': {
+                          fontSize: '0.875rem',
+                          backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                          color: isDark ? '#f1f5f9' : '#0f172a',
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: isDark ? '#334155' : '#e2e8f0',
+                        },
+                      }}
+                    >
+                      {ARRAY_ITEM_TYPES.map((t) => (
+                        <MenuItem key={t.value} value={t.value}>
+                          {t.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Box>
+                )}
+
+                {/* Enum values (for string, integer, number) */}
+                {(schemaType === 'string' || schemaType === 'integer' || schemaType === 'number') && (
+                  <Box sx={{ mb: 2 }}>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Allowed Values (comma-separated)
+                    </label>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      value={schemaEnum}
+                      onChange={(e) => setSchemaEnum(e.target.value)}
+                      placeholder="e.g., active, pending, completed"
+                      sx={{
+                        '& .MuiInputBase-root': {
+                          fontSize: '0.875rem',
+                          backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                          color: isDark ? '#f1f5f9' : '#0f172a',
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: isDark ? '#334155' : '#e2e8f0',
+                        },
+                      }}
+                    />
+                  </Box>
+                )}
+
+                {/* Default value */}
+                <Box>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Default Value
+                  </label>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={schemaDefault}
+                    onChange={(e) => setSchemaDefault(e.target.value)}
+                    placeholder={
+                      schemaType === 'boolean' ? 'true or false' :
+                      schemaType === 'integer' ? 'e.g., 0' :
+                      schemaType === 'number' ? 'e.g., 0.0' :
+                      'e.g., default value'
+                    }
+                    sx={{
+                      '& .MuiInputBase-root': {
+                        fontSize: '0.875rem',
+                        backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#f1f5f9' : '#0f172a',
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: isDark ? '#334155' : '#e2e8f0',
+                      },
+                    }}
+                  />
+                </Box>
+              </Box>
             </Box>
           </Box>
 
@@ -435,7 +825,7 @@ export default function ParameterPropertiesPanel({
                 },
               }}
             >
-              Delete Parameter
+              Unlink Parameter
             </Button>
           </Box>
         </>

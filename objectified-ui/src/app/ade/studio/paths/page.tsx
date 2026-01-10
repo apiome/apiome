@@ -98,6 +98,7 @@ export default function PathsPage() {
               operationId={selectedOperation.id}
               operation={selectedOperation.operation}
               pathname={selectedPath.pathname}
+              versionPathId={selectedPathId}
               onClose={() => setSelectedOperation(null)}
               onRefresh={handleCanvasRefresh}
             />

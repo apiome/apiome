@@ -110,6 +110,7 @@ CREATE TABLE IF NOT EXISTS path_parameter (
     summary VARCHAR(4096),
     description TEXT,
     metadata JSONB,
+    data JSONB NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(path_operation_id, name, in_location)
@@ -126,6 +127,7 @@ COMMENT ON COLUMN path_parameter.in_location IS 'The location of the parameter (
 COMMENT ON COLUMN path_parameter.summary IS 'A brief summary of the parameter';
 COMMENT ON COLUMN path_parameter.description IS 'A detailed description of the parameter';
 COMMENT ON COLUMN path_parameter.metadata IS 'Additional metadata for the parameter in JSONB format';
+COMMENT ON COLUMN path_parameter.data IS 'The JSONB representation of the parameter in JSON Schema format';
 COMMENT ON COLUMN path_parameter.created_at IS 'Timestamp when this parameter record was created';
 COMMENT ON COLUMN path_parameter.updated_at IS 'Timestamp when this parameter record was last modified';
 
@@ -134,14 +136,14 @@ CREATE INDEX idx_path_parameter_path_operation_id ON path_parameter(path_operati
 CREATE INDEX idx_path_parameter_created_at ON path_parameter(created_at);
 
 -- Path parameter class
-DROP INDEX IF EXISTS idx_path_parameter_schema_path_parameter_id CASCADE;
-DROP INDEX IF EXISTS idx_path_parameter_schema_property_id CASCADE;
-DROP INDEX IF EXISTS idx_path_parameter_schema_name CASCADE;
-DROP TABLE IF EXISTS path_parameter_schema CASCADE;
+DROP INDEX IF EXISTS idx_path_operation_schema_path_parameter_id CASCADE;
+DROP INDEX IF EXISTS idx_path_operation_schema_property_id CASCADE;
+DROP INDEX IF EXISTS idx_path_operation_schema_name CASCADE;
+DROP TABLE IF EXISTS path_operation_schema CASCADE;
 
-CREATE TABLE path_parameter_schema (
+CREATE TABLE path_operation_schema (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    path_parameter_id UUID NOT NULL REFERENCES path_parameter(id) ON DELETE CASCADE,
+    path_operation_id UUID NOT NULL REFERENCES path_operation(id) ON DELETE CASCADE,
     class_id UUID NULL REFERENCES classes(id) ON DELETE CASCADE,
     property_id UUID NOT NULL REFERENCES properties(id),
     name VARCHAR(255) NOT NULL,
@@ -149,25 +151,25 @@ CREATE TABLE path_parameter_schema (
     data JSONB NOT NULL,
 
     -- Ensure property names are unique within each class
-    CONSTRAINT path_parameter_schema_name_unique UNIQUE (path_parameter_id, name)
+    CONSTRAINT path_path_operation_schema_unique UNIQUE (path_parameter_id, name)
 );
 
 -- Table comment
 COMMENT ON TABLE path_parameter_schema IS 'Schema definitions for path parameters using class-property structure';
 
 -- Column comments
-COMMENT ON COLUMN path_parameter_schema.id IS 'Unique identifier for the path parameter schema record';
-COMMENT ON COLUMN path_parameter_schema.path_parameter_id IS 'Foreign key reference to the parent path parameter (cascades on deletion)';
-COMMENT ON COLUMN path_parameter_schema.class_id IS 'Foreign key reference to the associated class (cascades on deletion) - if null, this is a freeform property';
-COMMENT ON COLUMN path_parameter_schema.property_id IS 'Foreign key reference to the associated property';
-COMMENT ON COLUMN path_parameter_schema.name IS 'The name of the schema element';
-COMMENT ON COLUMN path_parameter_schema.description IS 'A detailed description of the schema element';
-COMMENT ON COLUMN path_parameter_schema.data IS 'The JSONB representation of the schema data';
+COMMENT ON COLUMN path_operation_schema.id IS 'Unique identifier for the path parameter schema record';
+COMMENT ON COLUMN path_operation_schema.path_parameter_id IS 'Foreign key reference to the parent path parameter (cascades on deletion)';
+COMMENT ON COLUMN path_operation_schema.class_id IS 'Foreign key reference to the associated class (cascades on deletion) - if null, this is a freeform property';
+COMMENT ON COLUMN path_operation_schema.property_id IS 'Foreign key reference to the associated property';
+COMMENT ON COLUMN path_operation_schema.name IS 'The name of the schema element';
+COMMENT ON COLUMN path_operation_schema.description IS 'A detailed description of the schema element';
+COMMENT ON COLUMN path_operation_schema.data IS 'The JSONB representation of the schema data';
 
 -- Indices for performance optimization
-CREATE INDEX idx_path_parameter_schema_path_parameter_id ON path_parameter_schema(path_parameter_id);
-CREATE INDEX idx_path_parameter_schema_property_id ON path_parameter_schema(property_id);
-CREATE INDEX idx_path_parameter_schema_name ON path_parameter_schema(name);
+CREATE INDEX idx_path_operation_schema_path_operation_id ON path_operation_schema(path_operation_id);
+CREATE INDEX idx_path_operation_schema_property_id ON path_operation_schema(property_id);
+CREATE INDEX idx_path_operation_schema_name ON path_operation_schema(name);
 
 -- Path responses
 DROP INDEX IF EXISTS idx_path_response_path_operation_id CASCADE;

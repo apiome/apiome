@@ -25,9 +25,10 @@ import {
   createOperation,
 } from '../../../../../../lib/db/helper-path-operations';
 import {
-  getParametersForOperation,
-} from '../../../../../../lib/db/helper-path-parameters';
-import { getPathById } from '../../../../../../lib/db/helper-paths';
+  getLinkedParametersForOperation,
+  linkParameterToOperation,
+  unlinkParameterFromOperation,
+} from '../../../../../../lib/db/helper-shared-path-parameters';
 import PathParameterNode from './PathParameterNode';
 
 // Operation Node Component with Handle
@@ -83,6 +84,9 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
   const {
     gridSize,
     gridStyle,
+    snapToGrid,
+    edgeRouting,
+    edgeAnimation,
   } = useStudio();
 
   const { alert: alertDialog } = useDialog();
@@ -124,7 +128,7 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
         let paramYOffset = 250;
 
         for (const op of operations) {
-          const paramsResponse = await getParametersForOperation(op.id);
+          const paramsResponse = await getLinkedParametersForOperation(op.id);
           const paramsData = JSON.parse(paramsResponse);
 
           if (paramsData.success && paramsData.parameters) {
@@ -144,22 +148,30 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
                   inLocation: param.in_location,
                   summary: param.summary,
                   description: param.description,
-                  required: param.metadata?.required ?? (param.in_location === 'path'),
+                  required: param.data?.required ?? (param.in_location === 'path'),
                   dbParameterId: param.id,
                   operationId: op.id,
                 },
               });
 
               // Create edge from operation to parameter
+              const edgeType = edgeRouting === 'straight' ? 'straight'
+                : edgeRouting === 'bezier' ? 'default'
+                : 'smoothstep';
+
               allEdges.push({
                 id: `edge-${op.id}-${param.id}`,
                 source: op.id,
                 sourceHandle: 'operation-output',
                 target: paramNodeId,
                 targetHandle: 'parameter-input',
-                type: 'smoothstep',
-                animated: false,
-                style: { stroke: '#9ca3af', strokeWidth: 2 },
+                type: edgeType,
+                animated: edgeAnimation !== 'none',
+                style: {
+                  stroke: '#9ca3af',
+                  strokeWidth: 2,
+                  strokeDasharray: edgeAnimation === 'dash' ? '5,5' : undefined,
+                },
               });
             });
 
@@ -177,7 +189,7 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
     };
 
     loadOperationsAndParameters();
-  }, [selectedPathId, setNodes, setEdges, refreshKey]);
+  }, [selectedPathId, setNodes, setEdges, refreshKey, edgeRouting, edgeAnimation]);
 
   // Detect dark mode
   useEffect(() => {
@@ -238,15 +250,115 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
 
   // Handle connecting nodes
   const onConnect = useCallback(
-    (connection: Connection) => {
+    async (connection: Connection) => {
+      // Get edge type based on settings
+      const edgeType = edgeRouting === 'straight' ? 'straight'
+        : edgeRouting === 'bezier' ? 'default'
+        : 'smoothstep';
+
+      // Add edge to UI first
       setEdges((eds) => addEdge({
         ...connection,
-        type: 'smoothstep',
-        animated: false,
-        style: { stroke: '#9ca3af', strokeWidth: 2 },
+        type: edgeType,
+        animated: edgeAnimation !== 'none',
+        style: {
+          stroke: '#9ca3af',
+          strokeWidth: 2,
+          strokeDasharray: edgeAnimation === 'dash' ? '5,5' : undefined,
+        },
       }, eds));
+
+      // Save link to database if connecting operation to parameter (either direction)
+      if (connection.source && connection.target) {
+        const sourceNode = nodes.find(n => n.id === connection.source);
+        const targetNode = nodes.find(n => n.id === connection.target);
+
+        let operationId: string | undefined;
+        let parameterId: string | undefined;
+
+        // Check if we're connecting operation to parameter (either direction)
+        if (sourceNode?.type === 'operation' && targetNode?.type === 'parameter') {
+          operationId = (sourceNode.data as any)?.dbOperationId;
+          parameterId = (targetNode.data as any)?.dbParameterId;
+        } else if (sourceNode?.type === 'parameter' && targetNode?.type === 'operation') {
+          operationId = (targetNode.data as any)?.dbOperationId;
+          parameterId = (sourceNode.data as any)?.dbParameterId;
+        }
+
+        if (operationId && parameterId) {
+          try {
+            const result = await linkParameterToOperation(operationId, parameterId, undefined);
+            const parsed = JSON.parse(result);
+
+            if (!parsed.success) {
+              console.error('Failed to link parameter to operation:', parsed.error);
+              await alertDialog({
+                title: 'Error',
+                message: parsed.error || 'Failed to link parameter to operation',
+                variant: 'error',
+              });
+              // Remove the edge from UI since DB save failed
+              setEdges((eds) => eds.filter(e =>
+                !(e.source === connection.source && e.target === connection.target)
+              ));
+            }
+          } catch (error) {
+            console.error('Error linking parameter to operation:', error);
+            await alertDialog({
+              title: 'Error',
+              message: 'Failed to link parameter to operation',
+              variant: 'error',
+            });
+            // Remove the edge from UI since DB save failed
+            setEdges((eds) => eds.filter(e =>
+              !(e.source === connection.source && e.target === connection.target)
+            ));
+          }
+        }
+      }
     },
-    [setEdges]
+    [setEdges, nodes, alertDialog, edgeRouting, edgeAnimation]
+  );
+
+  // Handle deleting edges (unlinking parameters from operations)
+  const onEdgesDelete = useCallback(
+    async (edgesToDelete: Edge[]) => {
+      for (const edge of edgesToDelete) {
+        const sourceNode = nodes.find(n => n.id === edge.source);
+        const targetNode = nodes.find(n => n.id === edge.target);
+
+        let operationId: string | undefined;
+        let parameterId: string | undefined;
+
+        // Check if we're unlinking operation from parameter (either direction)
+        if (sourceNode?.type === 'operation' && targetNode?.type === 'parameter') {
+          operationId = (sourceNode.data as any)?.dbOperationId;
+          parameterId = (targetNode.data as any)?.dbParameterId;
+        } else if (sourceNode?.type === 'parameter' && targetNode?.type === 'operation') {
+          operationId = (targetNode.data as any)?.dbOperationId;
+          parameterId = (sourceNode.data as any)?.dbParameterId;
+        }
+
+        if (operationId && parameterId) {
+          try {
+            const result = await unlinkParameterFromOperation(operationId, parameterId);
+            const parsed = JSON.parse(result);
+
+            if (!parsed.success) {
+              console.error('Failed to unlink parameter from operation:', parsed.error);
+              await alertDialog({
+                title: 'Error',
+                message: parsed.error || 'Failed to unlink parameter from operation',
+                variant: 'error',
+              });
+            }
+          } catch (error) {
+            console.error('Error unlinking parameter from operation:', error);
+          }
+        }
+      }
+    },
+    [nodes, alertDialog]
   );
 
   // Handle drop
@@ -316,21 +428,34 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
   );
 
   return (
-    <div ref={reactFlowWrapper} className="flex-1 flex flex-col h-full bg-gray-100 dark:bg-gray-900">
+    <div ref={reactFlowWrapper} className="flex-1 flex flex-col h-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onEdgesDelete={onEdgesDelete}
         onDrop={onDrop}
         onDragOver={onDragOver}
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
+        snapToGrid={snapToGrid}
+        snapGrid={[gridSize, gridSize]}
         fitView
+        attributionPosition="bottom-left"
+        className={isDark ? 'bg-gray-900' : ''}
         nodesDraggable={true}
         nodesConnectable={true}
         elementsSelectable={true}
+        selectionOnDrag={true}
+        nodesFocusable={true}
+        edgesFocusable={true}
+        style={{
+          background: isDark
+            ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)'
+            : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%)'
+        }}
       >
         <Background
           variant={backgroundVariant(gridStyle)}
@@ -338,17 +463,15 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
           size={1.5}
           color="currentColor"
           style={{
-            color: isDark ? 'rgb(148, 163, 184)' : 'rgb(99, 102, 241)',
-            opacity: isDark ? 0.3 : 0.2
+            color: 'rgb(99, 102, 241)',
+            opacity: isDark ? 0.25 : 0.15
           }}
         />
         <Controls
           className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden"
           style={{
-            bottom: 20,
-            left: 20,
-            right: 'auto',
-            top: 'auto',
+            borderRadius: '12px',
+            overflow: 'hidden',
           }}
         />
       </ReactFlow>

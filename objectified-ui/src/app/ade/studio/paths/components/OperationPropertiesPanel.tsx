@@ -15,16 +15,19 @@ import {
 } from '../../../../../../lib/db/helper-path-operation-descriptions';
 import { generateOperationId } from '../../../../../../lib/utils/path-utils';
 import {
-  getParametersForOperation,
-  createPathParameter,
-  deletePathParameter,
-} from '../../../../../../lib/db/helper-path-parameters';
+  getLinkedParametersForOperation,
+  createSharedPathParameter,
+  linkParameterToOperation,
+  unlinkParameterFromOperation,
+  getSharedPathParameters,
+} from '../../../../../../lib/db/helper-shared-path-parameters';
 import { extractPathParameters } from '../../../../../../lib/utils/path-params';
 
 interface OperationPropertiesPanelProps {
   operationId: string | null;
   operation: string;
   pathname: string;
+  versionPathId: string | null;
   onClose: () => void;
   onRefresh?: () => void;
 }
@@ -36,6 +39,7 @@ export default function OperationPropertiesPanel({
   operationId,
   operation,
   pathname,
+  versionPathId,
   onClose,
   onRefresh,
 }: OperationPropertiesPanelProps) {
@@ -76,6 +80,11 @@ export default function OperationPropertiesPanel({
 
     const loadDescription = async () => {
       setIsLoading(true);
+      // Clear existing values immediately when loading new operation
+      setSummary('');
+      setDescription('');
+      setOperationIdName('');
+
       try {
         const result = await getOperationDescription(operationId);
         const desc = JSON.parse(result);
@@ -108,7 +117,7 @@ export default function OperationPropertiesPanel({
     const loadParameters = async () => {
       setParametersLoading(true);
       try {
-        const result = await getParametersForOperation(operationId);
+        const result = await getLinkedParametersForOperation(operationId);
         const data = JSON.parse(result);
         if (data.success) {
           setParameters(data.parameters || []);
@@ -174,40 +183,62 @@ export default function OperationPropertiesPanel({
   };
 
   const handleSaveParameter = async () => {
-    if (!operationId || !newParamName.trim()) return;
+    if (!operationId || !newParamName.trim() || !versionPathId) return;
 
     setIsSaving(true);
     try {
-      const result = await createPathParameter(
-        operationId,
+      // Schema with required field included
+      const schemaData = {
+        type: 'string',
+        required: newParamRequired,
+      };
+
+      // Create or get existing shared parameter
+      const paramResult = await createSharedPathParameter(
+        versionPathId,
         newParamName.trim(),
         newParamLocation,
         newParamSummary.trim() || undefined,
         newParamDescription.trim() || undefined,
-        { required: newParamRequired }
+        schemaData
       );
-      const parsed = JSON.parse(result);
+      const paramParsed = JSON.parse(paramResult);
 
-      if (parsed.success) {
-        // Reload parameters list locally
-        const paramsResult = await getParametersForOperation(operationId);
-        const paramsData = JSON.parse(paramsResult);
-        if (paramsData.success) {
-          setParameters(paramsData.parameters || []);
-        }
+      if (paramParsed.success) {
+        // Link the shared parameter to this operation
+        const linkResult = await linkParameterToOperation(
+          operationId,
+          paramParsed.parameter.id
+        );
+        const linkParsed = JSON.parse(linkResult);
 
-        // Switch back to operation view
-        setViewMode('operation');
-        resetNewParamForm();
+        if (linkParsed.success) {
+          // Reload parameters list locally
+          const paramsResult = await getLinkedParametersForOperation(operationId);
+          const paramsData = JSON.parse(paramsResult);
+          if (paramsData.success) {
+            setParameters(paramsData.parameters || []);
+          }
 
-        // Trigger canvas refresh if callback provided
-        if (onRefresh) {
-          onRefresh();
+          // Switch back to operation view
+          setViewMode('operation');
+          resetNewParamForm();
+
+          // Trigger canvas refresh if callback provided
+          if (onRefresh) {
+            onRefresh();
+          }
+        } else {
+          await alertDialog({
+            title: 'Error',
+            message: linkParsed.error || 'Failed to link parameter to operation',
+            variant: 'error',
+          });
         }
       } else {
         await alertDialog({
           title: 'Error',
-          message: parsed.error || 'Failed to add parameter',
+          message: paramParsed.error || 'Failed to create parameter',
           variant: 'error',
         });
       }
@@ -224,18 +255,20 @@ export default function OperationPropertiesPanel({
   };
 
   const handleDeleteParameter = async (paramId: string, paramName: string) => {
+    if (!operationId) return;
+
     const confirmed = await confirmDialog({
-      title: 'Delete Parameter',
-      message: `Are you sure you want to delete the parameter "${paramName}"?`,
+      title: 'Unlink Parameter',
+      message: `Are you sure you want to unlink the parameter "${paramName}" from this operation? The parameter will still be available for other operations.`,
       variant: 'danger',
-      confirmLabel: 'Delete',
+      confirmLabel: 'Unlink',
       cancelLabel: 'Cancel',
     });
 
     if (!confirmed) return;
 
     try {
-      const result = await deletePathParameter(paramId);
+      const result = await unlinkParameterFromOperation(operationId, paramId);
       const parsed = JSON.parse(result);
 
       if (parsed.success) {
@@ -249,12 +282,12 @@ export default function OperationPropertiesPanel({
       } else {
         await alertDialog({
           title: 'Error',
-          message: parsed.error || 'Failed to delete parameter',
+          message: parsed.error || 'Failed to unlink parameter',
           variant: 'error',
         });
       }
     } catch (error) {
-      console.error('Error deleting parameter:', error);
+      console.error('Error unlinking parameter:', error);
     }
   };
 
@@ -672,7 +705,7 @@ export default function OperationPropertiesPanel({
                             {param.name}
                           </div>
                           <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                            {param.in_location} • {param.metadata?.required ? 'required' : 'optional'}
+                            {param.in_location} • {param.data?.required ? 'required' : 'optional'}
                           </div>
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>

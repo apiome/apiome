@@ -17,6 +17,7 @@ export async function getParametersForOperation(operationId: string): Promise<st
       summary,
       description,
       metadata,
+      data,
       created_at,
       updated_at
     FROM odb.path_parameter
@@ -50,13 +51,17 @@ export async function createPathParameter(
   inLocation: 'path' | 'query' | 'header' | 'cookie',
   summary?: string,
   description?: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>,
+  data?: Record<string, any>
 ): Promise<string> {
+  // Default schema if not provided
+  const schemaData = data || { type: 'string' };
+
   const query = `
     INSERT INTO odb.path_parameter 
-    (path_operation_id, name, in_location, summary, description, metadata)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING id, path_operation_id, name, in_location, summary, description, metadata, created_at, updated_at
+    (path_operation_id, name, in_location, summary, description, metadata, data)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING id, path_operation_id, name, in_location, summary, description, metadata, data, created_at, updated_at
   `;
 
   try {
@@ -67,6 +72,7 @@ export async function createPathParameter(
       summary || null,
       description || null,
       metadata ? JSON.stringify(metadata) : null,
+      JSON.stringify(schemaData),
     ]);
     return JSON.stringify({ success: true, parameter: result.rows[0] });
   } catch (error: any) {
@@ -92,6 +98,7 @@ export async function updatePathParameter(
     summary?: string;
     description?: string;
     metadata?: Record<string, any>;
+    data?: Record<string, any>;
   }
 ): Promise<string> {
   const setClauses: string[] = ['updated_at = CURRENT_TIMESTAMP'];
@@ -118,12 +125,16 @@ export async function updatePathParameter(
     setClauses.push(`metadata = $${++paramIndex}`);
     params.push(JSON.stringify(updates.metadata));
   }
+  if (updates.data !== undefined) {
+    setClauses.push(`data = $${++paramIndex}`);
+    params.push(JSON.stringify(updates.data));
+  }
 
   const query = `
     UPDATE odb.path_parameter
     SET ${setClauses.join(', ')}
     WHERE id = $1
-    RETURNING id, path_operation_id, name, in_location, summary, description, metadata, created_at, updated_at
+    RETURNING id, path_operation_id, name, in_location, summary, description, metadata, data, created_at, updated_at
   `;
 
   try {
