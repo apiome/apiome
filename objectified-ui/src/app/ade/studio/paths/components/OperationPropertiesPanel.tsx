@@ -21,6 +21,12 @@ import {
   unlinkParameterFromOperation,
   getSharedPathParameters,
 } from '../../../../../../lib/db/helper-shared-path-parameters';
+import {
+  getLinkedResponsesForOperation,
+  createSharedPathResponse,
+  linkResponseToOperation,
+  unlinkResponseFromOperation,
+} from '../../../../../../lib/db/helper-shared-path-responses';
 import { extractPathParameters } from '../../../../../../lib/utils/path-params';
 
 interface OperationPropertiesPanelProps {
@@ -33,7 +39,7 @@ interface OperationPropertiesPanelProps {
 }
 
 // View modes for the panel
-type ViewMode = 'operation' | 'add-parameter';
+type ViewMode = 'operation' | 'add-parameter' | 'add-response';
 
 export default function OperationPropertiesPanel({
   operationId,
@@ -62,12 +68,20 @@ export default function OperationPropertiesPanel({
   const [parametersLoading, setParametersLoading] = useState(false);
   const [availablePathParams, setAvailablePathParams] = useState<string[]>([]);
 
+  // Responses list state
+  const [responses, setResponses] = useState<any[]>([]);
+  const [responsesLoading, setResponsesLoading] = useState(false);
+
   // New parameter form state
   const [newParamName, setNewParamName] = useState('');
   const [newParamLocation, setNewParamLocation] = useState<'path' | 'query' | 'header' | 'cookie'>('path');
   const [newParamSummary, setNewParamSummary] = useState('');
   const [newParamDescription, setNewParamDescription] = useState('');
   const [newParamRequired, setNewParamRequired] = useState(true);
+
+  // New response form state
+  const [newResponseStatusCode, setNewResponseStatusCode] = useState('200');
+  const [newResponseDescription, setNewResponseDescription] = useState('');
 
   // Load operation description when operationId changes
   useEffect(() => {
@@ -132,6 +146,31 @@ export default function OperationPropertiesPanel({
     loadParameters();
   }, [operationId]);
 
+  // Load responses when operationId changes
+  useEffect(() => {
+    if (!operationId) {
+      setResponses([]);
+      return;
+    }
+
+    const loadResponses = async () => {
+      setResponsesLoading(true);
+      try {
+        const result = await getLinkedResponsesForOperation(operationId);
+        const data = JSON.parse(result);
+        if (data.success) {
+          setResponses(data.responses || []);
+        }
+      } catch (error) {
+        console.error('Error loading responses:', error);
+      } finally {
+        setResponsesLoading(false);
+      }
+    };
+
+    loadResponses();
+  }, [operationId]);
+
   // Extract available path parameters from pathname
   useEffect(() => {
     if (pathname) {
@@ -144,6 +183,7 @@ export default function OperationPropertiesPanel({
   useEffect(() => {
     setViewMode('operation');
     resetNewParamForm();
+    resetNewResponseForm();
   }, [operationId]);
 
   const resetNewParamForm = () => {
@@ -153,6 +193,11 @@ export default function OperationPropertiesPanel({
     setNewParamSummary('');
     setNewParamDescription('');
     setNewParamRequired(availablePathParams.length > 0);
+  };
+
+  const resetNewResponseForm = () => {
+    setNewResponseStatusCode('200');
+    setNewResponseDescription('');
   };
 
   const handleSaveOperation = async () => {
@@ -291,6 +336,109 @@ export default function OperationPropertiesPanel({
     }
   };
 
+  const handleSaveResponse = async () => {
+    if (!operationId || !newResponseStatusCode.trim() || !versionPathId) return;
+
+    setIsSaving(true);
+    try {
+      // First, create or get the shared response
+      const sharedResponseResult = await createSharedPathResponse(
+        versionPathId,
+        newResponseStatusCode.trim(),
+        newResponseDescription.trim() || undefined
+      );
+      const sharedResponseParsed = JSON.parse(sharedResponseResult);
+
+      if (!sharedResponseParsed.success) {
+        await alertDialog({
+          title: 'Error',
+          message: sharedResponseParsed.error || 'Failed to create response',
+          variant: 'error',
+        });
+        setIsSaving(false);
+        return;
+      }
+
+      // Then link it to the operation
+      const linkResult = await linkResponseToOperation(
+        operationId,
+        sharedResponseParsed.response.id
+      );
+      const linkParsed = JSON.parse(linkResult);
+
+      if (linkParsed.success) {
+        // Reload responses list locally
+        const responsesResult = await getLinkedResponsesForOperation(operationId);
+        const responsesData = JSON.parse(responsesResult);
+        if (responsesData.success) {
+          setResponses(responsesData.responses || []);
+        }
+
+        // Switch back to operation view
+        setViewMode('operation');
+        resetNewResponseForm();
+
+        // Trigger canvas refresh if callback provided
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        await alertDialog({
+          title: 'Error',
+          message: linkParsed.error || 'Failed to link response',
+          variant: 'error',
+        });
+      }
+    } catch (error) {
+      console.error('Error adding response:', error);
+      await alertDialog({
+        title: 'Error',
+        message: 'Failed to add response. Please try again.',
+        variant: 'error',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteResponse = async (responseId: string, statusCode: string) => {
+    if (!operationId) return;
+
+    const confirmed = await confirmDialog({
+      title: 'Unlink Response',
+      message: `Are you sure you want to unlink the ${statusCode} response from this operation? The response will still be available for other operations.`,
+      variant: 'danger',
+      confirmLabel: 'Unlink',
+      cancelLabel: 'Cancel',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const result = await unlinkResponseFromOperation(operationId, responseId);
+      const parsed = JSON.parse(result);
+
+      if (parsed.success) {
+        // Update local state
+        setResponses(resps => resps.filter(r => r.id !== responseId));
+
+        // Trigger canvas refresh if callback provided
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        await alertDialog({
+          title: 'Error',
+          message: parsed.error || 'Failed to unlink response',
+          variant: 'error',
+        });
+      }
+    } catch (error) {
+      console.error('Error unlinking response:', error);
+    }
+  };
+
+
   const handleAddParameterClick = () => {
     resetNewParamForm();
     setViewMode('add-parameter');
@@ -360,6 +508,94 @@ export default function OperationPropertiesPanel({
         <Box sx={{ p: 3, display: 'flex', justifyContent: 'center' }}>
           <span className="text-sm text-gray-500 dark:text-gray-400">Loading...</span>
         </Box>
+      ) : viewMode === 'add-response' ? (
+        /* Add Response Form */
+        <>
+          <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {/* Status Code */}
+              <Box>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Status Code <span className="text-red-500">*</span>
+                </label>
+                <TextField
+                  fullWidth
+                  size="small"
+                  value={newResponseStatusCode}
+                  onChange={(e) => setNewResponseStatusCode(e.target.value)}
+                  placeholder="200, 2XX, 404, etc."
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      fontSize: '0.875rem',
+                      backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                      color: isDark ? '#f1f5f9' : '#0f172a',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: isDark ? '#334155' : '#e2e8f0',
+                    },
+                  }}
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  HTTP status code or pattern (e.g., 200, 2XX for all 2xx responses)
+                </p>
+              </Box>
+
+              {/* Description */}
+              <Box>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Description
+                </label>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  size="small"
+                  value={newResponseDescription}
+                  onChange={(e) => setNewResponseDescription(e.target.value)}
+                  placeholder="Describe when this response is returned..."
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      fontSize: '0.875rem',
+                      backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                      color: isDark ? '#f1f5f9' : '#0f172a',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: isDark ? '#334155' : '#e2e8f0',
+                    },
+                  }}
+                />
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Footer with Save button */}
+          <Box
+            sx={{
+              p: 2,
+              borderTop: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+            }}
+          >
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={handleSaveResponse}
+              disabled={isSaving || !newResponseStatusCode.trim()}
+              startIcon={<Save />}
+              sx={{
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%)',
+                },
+                '&:disabled': {
+                  background: isDark ? '#334155' : '#e2e8f0',
+                  color: isDark ? '#64748b' : '#94a3b8',
+                },
+              }}
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        </>
       ) : viewMode === 'add-parameter' ? (
         /* Add Parameter Form */
         <>
@@ -731,6 +967,110 @@ export default function OperationPropertiesPanel({
                           <IconButton
                             size="small"
                             onClick={() => handleDeleteParameter(param.id, param.name)}
+                            sx={{
+                              color: '#ef4444',
+                              p: 0.5,
+                              '&:hover': { backgroundColor: 'rgba(239, 68, 68, 0.1)' },
+                            }}
+                          >
+                            <Delete sx={{ fontSize: 14 }} />
+                          </IconButton>
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+              </Box>
+
+              {/* Responses Section */}
+              <Box sx={{ mt: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Responses
+                  </label>
+                  <Button
+                    size="small"
+                    startIcon={<Add />}
+                    onClick={() => setViewMode('add-response')}
+                    sx={{
+                      fontSize: '0.75rem',
+                      textTransform: 'none',
+                      color: '#6366f1',
+                      '&:hover': {
+                        backgroundColor: isDark ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.05)',
+                      },
+                    }}
+                  >
+                    Add Response
+                  </Button>
+                </Box>
+
+                {responsesLoading ? (
+                  <Box sx={{ py: 2, textAlign: 'center' }}>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Loading responses...</span>
+                  </Box>
+                ) : responses.length === 0 ? (
+                  <Box
+                    sx={{
+                      py: 3,
+                      px: 2,
+                      textAlign: 'center',
+                      border: isDark ? '1px dashed #334155' : '1px dashed #e2e8f0',
+                      borderRadius: 1,
+                    }}
+                  >
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      No responses defined yet
+                    </span>
+                  </Box>
+                ) : (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {responses.map((response) => (
+                      <Box
+                        key={response.id}
+                        sx={{
+                          p: 1.5,
+                          border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+                          borderRadius: 1,
+                          backgroundColor: isDark ? '#0f172a' : '#f9fafb',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'start',
+                        }}
+                      >
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <div className="text-xs font-medium text-gray-900 dark:text-white truncate">
+                            {response.status_code}
+                          </div>
+                          {response.description && (
+                            <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+                              {response.description}
+                            </div>
+                          )}
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            sx={{
+                              px: 1,
+                              py: 0.5,
+                              borderRadius: 0.5,
+                              fontSize: '0.625rem',
+                              fontWeight: 600,
+                              color: '#fff',
+                              backgroundColor:
+                                response.status_code.startsWith('2') ? '#10b981' :
+                                response.status_code.startsWith('3') ? '#3b82f6' :
+                                response.status_code.startsWith('4') ? '#f59e0b' :
+                                '#ef4444',
+                            }}
+                          >
+                            {response.status_code.startsWith('2') ? '✓' :
+                             response.status_code.startsWith('3') ? '→' :
+                             response.status_code.startsWith('4') ? '!' : '✗'}
+                          </Box>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDeleteResponse(response.id, response.status_code)}
                             sx={{
                               color: '#ef4444',
                               p: 0.5,

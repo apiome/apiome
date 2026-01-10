@@ -33,7 +33,15 @@ import {
   getSharedPathParameters,
   deleteSharedPathParameter,
 } from '../../../../../../lib/db/helper-shared-path-parameters';
+import {
+  getLinkedResponsesForOperation,
+  getSharedPathResponses,
+  deleteSharedPathResponse,
+  unlinkResponseFromOperation,
+  linkResponseToOperation,
+} from '../../../../../../lib/db/helper-shared-path-responses';
 import PathParameterNode from './PathParameterNode';
+import PathResponseNode from './PathResponseNode';
 import { Trash2 } from 'lucide-react';
 
 // Operation Node Component with Handle and Delete button
@@ -77,6 +85,7 @@ function OperationNode({ data }: { data: { operation: string; color: string; onD
 const nodeTypes = {
   operation: OperationNode,
   parameter: PathParameterNode,
+  response: PathResponseNode,
 };
 
 // Define custom edge types
@@ -193,6 +202,44 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
     }
   }, [confirmDialog, alertDialog, setNodes, setEdges, onRefresh]);
 
+  // Handle delete response
+  const handleDeleteResponse = useCallback(async (responseId: string, statusCode: string, operationId: string) => {
+    const confirmed = await confirmDialog({
+      title: 'Unlink Response',
+      message: `Are you sure you want to unlink the ${statusCode} response from this operation? The response will still be available for other operations.`,
+      variant: 'danger',
+      confirmLabel: 'Unlink',
+      cancelLabel: 'Cancel',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const result = await unlinkResponseFromOperation(operationId, responseId);
+      const parsed = JSON.parse(result);
+
+      if (parsed.success) {
+        // Refresh the canvas to reload all data
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        await alertDialog({
+          title: 'Error',
+          message: parsed.error || 'Failed to unlink response',
+          variant: 'error',
+        });
+      }
+    } catch (error) {
+      console.error('Error unlinking response:', error);
+      await alertDialog({
+        title: 'Error',
+        message: 'Failed to unlink response',
+        variant: 'error',
+      });
+    }
+  }, [confirmDialog, alertDialog, onRefresh]);
+
   // Load operations and parameters when path is selected
   useEffect(() => {
     if (!selectedPathId) {
@@ -289,7 +336,73 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
           }
         }
 
-        setNodes([...operationNodes, ...allParameterNodes]);
+        // Now load responses for all operations and create response nodes
+        // Load ALL shared responses for this path (not just linked ones)
+        const allResponsesResponse = await getSharedPathResponses(selectedPathId);
+        const allResponsesData = JSON.parse(allResponsesResponse);
+
+        const allResponseNodes: Node[] = [];
+
+        if (allResponsesData.success && allResponsesData.responses) {
+          // Create nodes for all responses
+          allResponsesData.responses.forEach((response: any, responseIndex: number) => {
+            const responseNodeId = `response-${response.id}`;
+
+            allResponseNodes.push({
+              id: responseNodeId,
+              type: 'response',
+              position: {
+                x: 700,
+                y: 100 + (responseIndex * 150),
+              },
+              data: {
+                statusCode: response.status_code,
+                description: response.description,
+                dbResponseId: response.id,
+                // No onDelete - responses are shared, unlink via edges or properties panel
+              },
+            });
+          });
+        }
+
+        // Now load linked responses to create edges
+        for (const op of operations) {
+          const linkedResponsesResponse = await getLinkedResponsesForOperation(op.id);
+          const linkedResponsesData = JSON.parse(linkedResponsesResponse);
+
+          if (linkedResponsesData.success && linkedResponsesData.responses) {
+            linkedResponsesData.responses.forEach((response: any) => {
+              const responseNodeId = `response-${response.id}`;
+
+              // Create edge from operation to response
+              const edgeType = edgeRouting === 'straight' ? 'straight'
+                : edgeRouting === 'bezier' ? 'default'
+                : edgeRouting === 'smart' ? 'smart'
+                : 'smoothstep';
+
+              allEdges.push({
+                id: `edge-op-resp-${op.id}-${response.id}`,
+                source: op.id,
+                sourceHandle: 'operation-output',
+                target: responseNodeId,
+                targetHandle: 'response-input',
+                type: edgeType,
+                animated: edgeAnimation !== 'none',
+                style: {
+                  stroke: '#a78bfa',
+                  strokeWidth: 2,
+                  strokeDasharray: edgeAnimation === 'dash' ? '5,5' : undefined,
+                },
+                data: {
+                  sourceNodeId: op.id,
+                  targetNodeId: responseNodeId,
+                },
+              });
+            });
+          }
+        }
+
+        setNodes([...operationNodes, ...allParameterNodes, ...allResponseNodes]);
         setEdges(allEdges);
       } catch (error) {
         console.error('Error loading operations and parameters:', error);
@@ -297,7 +410,7 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
     };
 
     loadOperationsAndParameters();
-  }, [selectedPathId, setNodes, setEdges, refreshKey, edgeRouting, edgeAnimation, handleDeleteOperation, handleDeleteParameter]);
+  }, [selectedPathId, setNodes, setEdges, refreshKey, edgeRouting, edgeAnimation, handleDeleteOperation, handleDeleteParameter, handleDeleteResponse]);
 
   // Detect dark mode
   useEffect(() => {
@@ -381,13 +494,14 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
         },
       }, eds));
 
-      // Save link to database if connecting operation to parameter (either direction)
+      // Save link to database if connecting operation to parameter or response (either direction)
       if (connection.source && connection.target) {
         const sourceNode = nodes.find(n => n.id === connection.source);
         const targetNode = nodes.find(n => n.id === connection.target);
 
         let operationId: string | undefined;
         let parameterId: string | undefined;
+        let responseId: string | undefined;
 
         // Check if we're connecting operation to parameter (either direction)
         if (sourceNode?.type === 'operation' && targetNode?.type === 'parameter') {
@@ -397,7 +511,16 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
           operationId = (targetNode.data as any)?.dbOperationId;
           parameterId = (sourceNode.data as any)?.dbParameterId;
         }
+        // Check if we're connecting operation to response (either direction)
+        else if (sourceNode?.type === 'operation' && targetNode?.type === 'response') {
+          operationId = (sourceNode.data as any)?.dbOperationId;
+          responseId = (targetNode.data as any)?.dbResponseId;
+        } else if (sourceNode?.type === 'response' && targetNode?.type === 'operation') {
+          operationId = (targetNode.data as any)?.dbOperationId;
+          responseId = (sourceNode.data as any)?.dbResponseId;
+        }
 
+        // Handle parameter linking
         if (operationId && parameterId) {
           try {
             const result = await linkParameterToOperation(operationId, parameterId, undefined);
@@ -428,12 +551,43 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
             ));
           }
         }
+        // Handle response linking
+        else if (operationId && responseId) {
+          try {
+            const result = await linkResponseToOperation(operationId, responseId, undefined);
+            const parsed = JSON.parse(result);
+
+            if (!parsed.success) {
+              console.error('Failed to link response to operation:', parsed.error);
+              await alertDialog({
+                title: 'Error',
+                message: parsed.error || 'Failed to link response to operation',
+                variant: 'error',
+              });
+              // Remove the edge from UI since DB save failed
+              setEdges((eds) => eds.filter(e =>
+                !(e.source === connection.source && e.target === connection.target)
+              ));
+            }
+          } catch (error) {
+            console.error('Error linking response to operation:', error);
+            await alertDialog({
+              title: 'Error',
+              message: 'Failed to link response to operation',
+              variant: 'error',
+            });
+            // Remove the edge from UI since DB save failed
+            setEdges((eds) => eds.filter(e =>
+              !(e.source === connection.source && e.target === connection.target)
+            ));
+          }
+        }
       }
     },
     [setEdges, nodes, alertDialog, edgeRouting, edgeAnimation]
   );
 
-  // Handle deleting edges (unlinking parameters from operations)
+  // Handle deleting edges (unlinking parameters and responses from operations)
   const onEdgesDelete = useCallback(
     async (edgesToDelete: Edge[]) => {
       for (const edge of edgesToDelete) {
@@ -442,6 +596,7 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
 
         let operationId: string | undefined;
         let parameterId: string | undefined;
+        let responseId: string | undefined;
 
         // Check if we're unlinking operation from parameter (either direction)
         if (sourceNode?.type === 'operation' && targetNode?.type === 'parameter') {
@@ -451,7 +606,16 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
           operationId = (targetNode.data as any)?.dbOperationId;
           parameterId = (sourceNode.data as any)?.dbParameterId;
         }
+        // Check if we're unlinking operation from response (either direction)
+        else if (sourceNode?.type === 'operation' && targetNode?.type === 'response') {
+          operationId = (sourceNode.data as any)?.dbOperationId;
+          responseId = (targetNode.data as any)?.dbResponseId;
+        } else if (sourceNode?.type === 'response' && targetNode?.type === 'operation') {
+          operationId = (targetNode.data as any)?.dbOperationId;
+          responseId = (sourceNode.data as any)?.dbResponseId;
+        }
 
+        // Handle parameter unlinking
         if (operationId && parameterId) {
           try {
             const result = await unlinkParameterFromOperation(operationId, parameterId);
@@ -467,6 +631,24 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
             }
           } catch (error) {
             console.error('Error unlinking parameter from operation:', error);
+          }
+        }
+        // Handle response unlinking
+        else if (operationId && responseId) {
+          try {
+            const result = await unlinkResponseFromOperation(operationId, responseId);
+            const parsed = JSON.parse(result);
+
+            if (!parsed.success) {
+              console.error('Failed to unlink response from operation:', parsed.error);
+              await alertDialog({
+                title: 'Error',
+                message: parsed.error || 'Failed to unlink response from operation',
+                variant: 'error',
+              });
+            }
+          } catch (error) {
+            console.error('Error unlinking response from operation:', error);
           }
         }
       }
