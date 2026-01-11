@@ -316,12 +316,8 @@ function ClassNode({ data, selected }: NodeProps) {
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const related = e.relatedTarget as HTMLElement | null;
-    const current = e.currentTarget as HTMLElement;
-    if (!related || !current.contains(related)) {
-      setDragTarget(null);
-      setDragOverPropertyId(null);
-    }
+    setDragTarget(null);
+    setDragOverPropertyId(null);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -362,14 +358,8 @@ function ClassNode({ data, selected }: NodeProps) {
   const handlePropertyDragLeave = (e: React.DragEvent, propertyId: string, isObject: boolean) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isObject) {
-      const related = e.relatedTarget as HTMLElement | null;
-      const current = e.currentTarget as HTMLElement;
-      if (!related || !current.contains(related)) {
-        setDragOverPropertyId(null);
-        setDragTarget('node');
-      }
-    }
+    setDragTarget(null);
+    setDragOverPropertyId(null);
   };
 
   const handlePropertyDrop = (e: React.DragEvent, parentPropertyId: string) => {
