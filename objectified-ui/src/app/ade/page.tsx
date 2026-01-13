@@ -63,10 +63,11 @@ const Ade = () => {
       name: 'Browser',
       description: 'Browse and explore published schemas',
       icon: <Globe className="w-8 h-8" />,
-      href: '/ade/browser',
-      enabled: false,
+      href: 'https://brwose.objectified.dev/',
+      enabled: true,
       color: 'text-cyan-600 dark:text-cyan-400',
       gradient: 'from-cyan-500 to-blue-600',
+      openInNewWindow: true,
     },
   ];
 
