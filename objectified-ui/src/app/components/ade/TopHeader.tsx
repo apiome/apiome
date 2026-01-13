@@ -14,13 +14,16 @@ import { getTenantsForUser } from '../../../../lib/db/helper';
 // Import version from package.json
 const APP_VERSION = '02-2026';
 
-type NavItem = { label: string; href: string; enabled?: boolean };
+type NavItem = { label: string; href: string; enabled?: boolean; opensNewBrowser?: boolean };
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Home", href: "/ade" },
-  // { label: "Dashboard", href: "/ade/dashboard" },
-  // { label: "Studio", href: "/ade/studio" },
-  // { label: "Database", href: "/ade/database", enabled: false },
+  { label: "Control Panel", href: "/ade/dashboard" },
+  { label: "Studio", href: "/ade/studio" },
+  { label: "Browser", href: "https://browse.objectified.dev", opensNewBrowser: true },
+  { label: "Database", href: "/ade/database", enabled: false },
+  { label: "ETL", href: "/ade/etl", enabled: false },
+  { label: "Explorer", href: "/ade/database/explorer", enabled: false },
 ];
 
 const TopHeader = () => {
@@ -146,6 +149,8 @@ const TopHeader = () => {
                 ) : (
                   <Link
                     href={item.href}
+                    target={item.opensNewBrowser ? '_blank' : undefined}
+                    rel={item.opensNewBrowser ? 'noopener noreferrer' : undefined}
                     className={`text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors ${
                       isActive ? 'underline bg-gray-200 dark:bg-gray-600' : ''
                     }`}
