@@ -153,6 +153,7 @@
   - 📋 **Scala**: Case classes with play-json support
   - ✅ **GraphQL**: SDL schema definitions
   - ✅ **SQL**: DDL CREATE TABLE statements (PostgreSQL, MySQL, SQLite, SQL Server, Oracle)
+  - ✅ **AsyncAPI**: Event-driven API specification with channels, messages, and operations
   - 📋 **Markdown**: Documentation tables and properties in MSON format (see ticket)
 - Customizable generation templates
 - 📋 Code generation settings per language:
@@ -166,7 +167,6 @@
 
 | Ticket | Feature Description                       |
 |--------|-------------------------------------------|
-| #222   | Export to AsyncAPI                        |
 | #223   | Export to TypeScript                      |
 | #224   | Export to Python models                   |
 | #225   | Export to Java                            |

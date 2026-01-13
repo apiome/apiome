@@ -26,8 +26,9 @@ We continue to improve the platform based on your feedback with improvements and
   - Condensed property flags into a compact horizontal layout.
   - Class node styling changes were not persisting properly, this is now fixed.
 - Code Generation:
-  - Improved GraphQL code generation - added support for input types, enums, and interfaces.
-  - Improved SQL DDL code generation - added support for indexes, constraints, and foreign keys.
+  - Added GraphQL - added support for input types, enums, and interfaces.
+  - Added SQL DDL - added support for indexes, constraints, and foreign keys.
+  - Added AsyncAPI 3.0.0 - generate event-driven API specifications with channels, messages, operations, and schema definitions for Kafka, AMQP, MQTT, WebSocket, and HTTP protocols.
 
 View our YouTube channel [here](https://www.youtube.com/@objectifieddev) for detailed tutorials and walkthroughs!
 

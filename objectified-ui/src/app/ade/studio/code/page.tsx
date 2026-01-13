@@ -14,6 +14,7 @@ import { generateArazzoSpec } from '../../../utils/arazzo';
 import { generateJsonSchema } from '../../../utils/jsonschema';
 import { generateGraphQLSchema } from '../../../utils/graphql';
 import { generateSQL, SQLDialect } from '../../../utils/sql-generator';
+import { generateAsyncAPISpec } from '../../../utils/asyncapi-generator';
 import {
   getProjectsForTenant,
   getVersionsForProject,
@@ -67,13 +68,14 @@ export default function CodePage() {
 
   // Code view state
   const [codeFormat, setCodeFormat] = useState<'json' | 'yaml'>('json');
-  const [codeDisplayFormat, setCodeDisplayFormat] = useState<'openapi' | 'arazzo' | 'jsonschema' | 'graphql' | 'sql'>('openapi');
+  const [codeDisplayFormat, setCodeDisplayFormat] = useState<'openapi' | 'arazzo' | 'jsonschema' | 'graphql' | 'sql' | 'asyncapi'>('openapi');
   const [sqlDialect, setSqlDialect] = useState<SQLDialect>('postgresql');
   const [openApiSpec, setOpenApiSpec] = useState<string>('');
   const [arazzoSpec, setArazzoSpec] = useState<string>('');
   const [jsonSchemaSpec, setJsonSchemaSpec] = useState<string>('');
   const [graphqlSpec, setGraphqlSpec] = useState<string>('');
   const [sqlSpec, setSqlSpec] = useState<string>('');
+  const [asyncApiSpec, setAsyncApiSpec] = useState<string>('');
   const [codeCopied, setCodeCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -157,6 +159,7 @@ export default function CodePage() {
         setJsonSchemaSpec('');
         setGraphqlSpec('');
         setSqlSpec('');
+        setAsyncApiSpec('');
         return;
       }
 
@@ -205,6 +208,15 @@ export default function CodePage() {
           namingConvention: 'snake_case'
         });
         setSqlSpec(sqlContent);
+
+        // Generate AsyncAPI
+        const asyncApiContent = generateAsyncAPISpec(classesWithProperties, {
+          projectName: currentProject?.name || 'Event API',
+          version: currentVersion?.version_id || '1.0.0',
+          description: currentVersion?.description || '',
+          protocol: 'kafka'
+        });
+        setAsyncApiSpec(asyncApiContent);
       } catch (error) {
         console.error('Failed to generate specs:', error);
       } finally {
@@ -228,6 +240,8 @@ export default function CodePage() {
       ? graphqlSpec
       : codeDisplayFormat === 'sql'
       ? sqlSpec
+      : codeDisplayFormat === 'asyncapi'
+      ? asyncApiSpec
       : jsonSchemaSpec;
 
     if (!specContent) return '';
@@ -244,7 +258,7 @@ export default function CodePage() {
     } catch {
       return specContent;
     }
-  }, [codeDisplayFormat, openApiSpec, arazzoSpec, jsonSchemaSpec, graphqlSpec, sqlSpec, codeFormat]);
+  }, [codeDisplayFormat, openApiSpec, arazzoSpec, jsonSchemaSpec, graphqlSpec, sqlSpec, asyncApiSpec, codeFormat]);
 
   // Handle copy
   const handleCopy = useCallback(() => {
@@ -294,7 +308,7 @@ export default function CodePage() {
       return;
     }
 
-    // Handle other formats (OpenAPI, Arazzo, JSON Schema)
+    // Handle other formats (OpenAPI, AsyncAPI, Arazzo, JSON Schema)
     const mimeType = codeFormat === 'json' ? 'application/json' : 'text/yaml';
     const extension = codeFormat === 'json' ? 'json' : 'yaml';
 
@@ -306,7 +320,7 @@ export default function CodePage() {
 
     const projectSlug = selectedProject?.slug || selectedProject?.name?.toLowerCase().replace(/\s+/g, '-') || 'api';
     const versionSlug = selectedVersion?.version_id?.replace(/\./g, '-') || '1-0-0';
-    const specType = codeDisplayFormat === 'openapi' ? 'openapi' : codeDisplayFormat === 'arazzo' ? 'arazzo' : 'jsonschema';
+    const specType = codeDisplayFormat === 'openapi' ? 'openapi' : codeDisplayFormat === 'asyncapi' ? 'asyncapi' : codeDisplayFormat === 'arazzo' ? 'arazzo' : 'jsonschema';
     link.download = `${projectSlug}-${versionSlug}-${specType}.${extension}`;
 
     document.body.appendChild(link);
@@ -363,6 +377,8 @@ export default function CodePage() {
                       ? 'GraphQL SDL'
                       : codeDisplayFormat === 'sql'
                       ? `SQL DDL (${sqlDialect.charAt(0).toUpperCase() + sqlDialect.slice(1)})`
+                      : codeDisplayFormat === 'asyncapi'
+                      ? 'AsyncAPI 3.0.0'
                       : 'JSON Schema'}
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -373,7 +389,7 @@ export default function CodePage() {
 
               {/* Display Format Selector */}
               <div className="flex items-center gap-3 pl-5 border-l border-gray-200 dark:border-gray-700">
-                <Select.Root value={codeDisplayFormat} onValueChange={(value) => setCodeDisplayFormat(value as 'openapi' | 'arazzo' | 'jsonschema' | 'graphql' | 'sql')}>
+                <Select.Root value={codeDisplayFormat} onValueChange={(value) => setCodeDisplayFormat(value as 'openapi' | 'arazzo' | 'jsonschema' | 'graphql' | 'sql' | 'asyncapi')}>
                   <Select.Trigger className="inline-flex items-center justify-between gap-2 px-3 py-2 text-sm font-medium border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 min-w-[200px]">
                     <Select.Value />
                     <Select.Icon>
@@ -387,6 +403,12 @@ export default function CodePage() {
                       <Select.Viewport className="p-1">
                         <Select.Item value="openapi" className="relative flex items-center px-8 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
                           <Select.ItemText>OpenAPI Specification</Select.ItemText>
+                          <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
+                            <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                          </Select.ItemIndicator>
+                        </Select.Item>
+                        <Select.Item value="asyncapi" className="relative flex items-center px-8 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
+                          <Select.ItemText>AsyncAPI Specification</Select.ItemText>
                           <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
                             <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                           </Select.ItemIndicator>
