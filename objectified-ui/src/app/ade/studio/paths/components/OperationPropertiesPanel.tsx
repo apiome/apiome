@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -194,13 +194,25 @@ export default function OperationPropertiesPanel({
     resetNewResponseForm();
   }, [operationId]);
 
+  // Compute available path parameters that are NOT already linked to this operation
+  const unlinkedPathParams = useMemo(() => {
+    // Get the names of parameters that are already linked
+    const linkedParamNames = new Set(
+      parameters
+        .filter((p: any) => p.in_location === 'path')
+        .map((p: any) => p.name)
+    );
+    // Filter out already-linked parameters
+    return availablePathParams.filter((param) => !linkedParamNames.has(param));
+  }, [availablePathParams, parameters]);
+
   const resetNewParamForm = () => {
     setNewParamName('');
-    // Default to 'query' if no path parameters available, otherwise 'path'
-    setNewParamLocation(availablePathParams.length > 0 ? 'path' : 'query');
+    // Default to 'query' if no unlinked path parameters available, otherwise 'path'
+    setNewParamLocation(unlinkedPathParams.length > 0 ? 'path' : 'query');
     setNewParamSummary('');
     setNewParamDescription('');
-    setNewParamRequired(availablePathParams.length > 0);
+    setNewParamRequired(unlinkedPathParams.length > 0);
   };
 
   const resetNewResponseForm = () => {
@@ -614,7 +626,7 @@ export default function OperationPropertiesPanel({
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Parameter Name <span className="text-red-500">*</span>
                 </label>
-                {newParamLocation === 'path' && availablePathParams.length > 0 ? (
+                {newParamLocation === 'path' && unlinkedPathParams.length > 0 ? (
                   <TextField
                     fullWidth
                     select
@@ -633,7 +645,7 @@ export default function OperationPropertiesPanel({
                     }}
                   >
                     <MenuItem value="">Select a path parameter</MenuItem>
-                    {availablePathParams.map((param) => (
+                    {unlinkedPathParams.map((param) => (
                       <MenuItem key={param} value={param}>
                         {param}
                       </MenuItem>
@@ -663,7 +675,7 @@ export default function OperationPropertiesPanel({
                     }}
                   />
                 )}
-                {newParamLocation === 'path' && availablePathParams.length > 0 && (
+                {newParamLocation === 'path' && unlinkedPathParams.length > 0 && (
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Select from path parameters in: {pathname}
                   </p>
@@ -677,7 +689,7 @@ export default function OperationPropertiesPanel({
                 </label>
                 <div className="grid grid-cols-4 gap-1">
                   {(['path', 'query', 'header', 'cookie'] as const).map((loc) => {
-                    const isPathDisabled = loc === 'path' && availablePathParams.length === 0;
+                    const isPathDisabled = loc === 'path' && unlinkedPathParams.length === 0;
                     return (
                       <button
                         key={loc}
@@ -697,7 +709,7 @@ export default function OperationPropertiesPanel({
                               ? 'bg-purple-500 text-white'
                               : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
-                        title={isPathDisabled ? 'No path parameters in this route' : undefined}
+                        title={isPathDisabled ? (availablePathParams.length === 0 ? 'No path parameters in this route' : 'All path parameters are already linked') : undefined}
                       >
                         {loc}
                       </button>
@@ -708,6 +720,14 @@ export default function OperationPropertiesPanel({
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Path has no parameters (e.g., {'{'}userId{'}'})
                   </p>
+                )}
+                {availablePathParams.length > 0 && unlinkedPathParams.length === 0 && (
+                  <div className="mt-2 p-2 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                    <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                      <span className="text-amber-500">⚠</span>
+                      All path parameters are already linked to this operation
+                    </p>
+                  </div>
                 )}
               </Box>
 
