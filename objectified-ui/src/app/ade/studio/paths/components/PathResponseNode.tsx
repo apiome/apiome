@@ -33,6 +33,7 @@ export interface PathResponseData {
   onDelete?: () => void;
   onUnlink?: (operationId: string) => void; // Unlink from a specific operation
   onClassDrop?: (responseId: string, classData: any) => void;
+  onPropertyDrop?: (responseId: string, propertyData: any) => void; // NEW: Handle property drops
   onClassUnlink?: (responseId: string) => void; // Unlink attached class from response
   onSchemaTypeChange?: (responseId: string, schemaMode: 'object' | 'primitive' | 'array', schemaType?: string) => void;
   attachedClassId?: string;
@@ -177,12 +178,19 @@ export default function PathResponseNode({ data }: { data: PathResponseData }) {
     setDragOver(false);
 
     const dataStr = e.dataTransfer.getData('application/json');
-    if (!dataStr || !data.dbResponseId || !data.onClassDrop) return;
+    if (!dataStr || !data.dbResponseId) return;
 
     try {
       const dropData = JSON.parse(dataStr);
-      if (dropData.type === 'class') {
+      
+      // Handle class drops
+      if (dropData.type === 'class' && data.onClassDrop) {
         data.onClassDrop(data.dbResponseId, dropData);
+      }
+      
+      // Handle property drops - NEW FUNCTIONALITY
+      if (dropData.type === 'property' && data.onPropertyDrop) {
+        data.onPropertyDrop(data.dbResponseId, dropData);
       }
     } catch (error) {
       console.error('PathResponseNode: Error parsing drop data:', error);
@@ -398,7 +406,7 @@ export default function PathResponseNode({ data }: { data: PathResponseData }) {
             </div>
           ) : (
             <div className={`text-[10px] ${dragOver ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 italic'}`}>
-              {dragOver ? 'Drop class here' : '(none)'}
+              {dragOver ? 'Drop class or property here' : '(none)'}
             </div>
           )}
 

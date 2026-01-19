@@ -412,12 +412,13 @@ export default function PathRequestBodyNode({ data }: { data: PathRequestBodyDat
 
   return (
     <>
-      {/* Input handle at TOP for vertical flow */}
+      {/* Input handle at TOP - not connectable (request bodies don't have inputs) */}
       <Handle
         type="target"
         position={Position.Top}
         id="request-body-input"
-        className="!w-3 !h-2 !rounded-t-md !rounded-b-none bg-indigo-500"
+        isConnectable={false}
+        className="!w-3 !h-2 !rounded-t-md !rounded-b-none bg-indigo-500 !cursor-not-allowed opacity-50"
       />
 
       <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-indigo-500 shadow-xl min-w-[240px] max-w-[320px] cursor-pointer relative group">

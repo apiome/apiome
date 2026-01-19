@@ -524,12 +524,13 @@ export default function PathResponseBodyNode({ data }: { data: PathResponseBodyD
 
   return (
     <>
-      {/* Input handle at TOP - connects from operations for vertical flow */}
+      {/* Input handle at TOP - connects from parent response (not from operations) */}
       <Handle
         type="target"
         position={Position.Top}
         id="response-input"
-        className="!w-3 !h-2 !rounded-t-md !rounded-b-none bg-emerald-500"
+        isConnectable={false}
+        className="!w-3 !h-2 !rounded-t-md !rounded-b-none bg-emerald-500 !cursor-not-allowed opacity-50"
       />
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border-2 border-emerald-500 dark:border-emerald-600 min-w-[320px] max-w-[400px]">
@@ -657,12 +658,13 @@ export default function PathResponseBodyNode({ data }: { data: PathResponseBodyD
         </div>
       </div>
 
-      {/* Output handle at BOTTOM for vertical flow */}
+      {/* Output handle at BOTTOM - not connectable manually */}
       <Handle
         type="source"
         position={Position.Bottom}
         id="response-output"
-        className="!w-3 !h-2 !rounded-b-md !rounded-t-none bg-emerald-500"
+        isConnectable={false}
+        className="!w-3 !h-2 !rounded-b-md !rounded-t-none bg-emerald-500 !cursor-not-allowed opacity-50"
       />
     </>
   );

@@ -74,6 +74,7 @@ import {
   addPropertyToResponseInlineSchema,
   updateResponseInlineSchemaProperty,
   deleteResponseInlineSchemaProperty,
+  deleteResponseContentType,
 } from '../../../../../../lib/db/helper-shared-path-responses-content';
 
 // Enhanced Operation Node Component with Schema Drop Zones - Vertical Layout
@@ -462,17 +463,119 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
     schemaType?: string
   ) => {
     try {
+      let contentTypesToDelete: string[] = [];
+      
+      // Load the current response to check for inline properties and class references
+      const responsesResponse = await getSharedPathResponses(selectedPathId || '');
+      const responsesData = JSON.parse(responsesResponse);
+
+      if (responsesData.success && responsesData.responses) {
+        const response = responsesData.responses.find((r: any) => r.id === responseId);
+        
+        if (response) {
+          // Check if switching away from class mode
+          if (schemaMode !== 'object' && response.schema_mode === 'class' && response.class_id) {
+            const confirmed = await confirmDialog({
+              title: 'Remove Class Reference?',
+              message: `This response currently references the class "${response.class_name || 'Unknown'}". Switching to ${schemaMode} type will remove this class reference. Continue?`,
+              variant: 'warning',
+              confirmLabel: 'Switch Type',
+              cancelLabel: 'Cancel',
+            });
+
+            if (!confirmed) return;
+          }
+
+          // Check if switching away from object mode with inline properties
+          if (schemaMode !== 'object') {
+            const contentTypes = response.content_types || [];
+            
+            // Check if any content type has inline properties or object schemas
+            const contentTypesWithSchemas = contentTypes.filter((ct: any) => {
+              const schema = typeof ct.inline_schema === 'string' 
+                ? JSON.parse(ct.inline_schema) 
+                : ct.inline_schema;
+              // Check for object schemas with or without properties
+              return schema?.type === 'object' || (schema?.properties && schema.properties.length > 0);
+            });
+
+            // Also check response-level inline_schema
+            let responseHasInlineProperties = false;
+            if (response.inline_schema) {
+              try {
+                const schema = typeof response.inline_schema === 'string'
+                  ? JSON.parse(response.inline_schema)
+                  : response.inline_schema;
+                responseHasInlineProperties = schema?.type === 'object' && 
+                  schema?.properties && 
+                  schema.properties.length > 0;
+              } catch (e) {
+                // Ignore parse errors
+              }
+            }
+
+            if (contentTypesWithSchemas.length > 0 || responseHasInlineProperties) {
+              // Count actual properties
+              const propertyCount = contentTypes.reduce((count: number, ct: any) => {
+                const schema = typeof ct.inline_schema === 'string' 
+                  ? JSON.parse(ct.inline_schema) 
+                  : ct.inline_schema;
+                return count + (schema?.properties?.length || 0);
+              }, 0);
+
+              // Build warning message
+              let warningMessage = '';
+              if (propertyCount > 0) {
+                warningMessage = `This response currently has ${propertyCount} inline ${propertyCount === 1 ? 'property' : 'properties'}. Switching to ${schemaMode} type will delete ${propertyCount === 1 ? 'this property' : 'these properties'}. This action cannot be undone. Continue?`;
+              } else {
+                warningMessage = `This response currently has an object schema. Switching to ${schemaMode} type will remove the object schema. Continue?`;
+              }
+
+              const confirmed = await confirmDialog({
+                title: 'Delete Inline Schema?',
+                message: warningMessage,
+                variant: 'danger',
+                confirmLabel: 'Switch Type',
+                cancelLabel: 'Cancel',
+              });
+
+              if (!confirmed) return;
+              
+              // Mark these content types for deletion
+              contentTypesToDelete = contentTypesWithSchemas.map((ct: any) => ct.id);
+            }
+          }
+        }
+      } else {
+        // Failed to load responses, but continue with the type change
+        console.warn('Could not load response data for validation');
+      }
+
+      // Delete content types with inline schemas BEFORE updating the response
+      for (const contentTypeId of contentTypesToDelete) {
+        try {
+          await deleteResponseContentType(contentTypeId);
+        } catch (error) {
+          console.error('Error deleting content type:', contentTypeId, error);
+        }
+      }
+
       let data: Record<string, any> | null = null;
       let inlineSchema: Record<string, any> | null = null;
 
       if (schemaMode === 'primitive') {
         // Set primitive type in data field
         data = { type: schemaType || 'string' };
+        // Clear inline_schema
+        inlineSchema = null;
       } else if (schemaMode === 'array') {
         // Set array type in data field
         data = { type: 'array', items: { type: schemaType || 'string' } };
+        // Clear inline_schema
+        inlineSchema = null;
       } else {
-        // Object mode - use inline_schema
+        // Object mode - clear data and initialize empty inline_schema
+        data = null;
         inlineSchema = { type: 'object', properties: [] };
       }
 
@@ -504,7 +607,7 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
         variant: 'error',
       });
     }
-  }, [alertDialog, onRefresh]);
+  }, [selectedPathId, alertDialog, confirmDialog, onRefresh]);
 
   // Handle delete class from canvas (remove from all responses using it)
   const handleDeleteClassFromCanvas = useCallback(async (classId: string) => {
@@ -1017,6 +1120,173 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
     }
   }, [alertDialog, onRefresh]);
 
+  // Handle property drop directly on response node (NEW FUNCTIONALITY)
+  const handlePropertyDropOnResponse = useCallback(async (
+    responseId: string,
+    propertyData: any
+  ) => {
+    console.log('[PathsCanvasView] handlePropertyDropOnResponse called');
+    console.log('[PathsCanvasView] responseId:', responseId);
+    console.log('[PathsCanvasView] propertyData:', propertyData);
+
+    try {
+      // First, get the response to check its content types
+      const responsesResponse = await getSharedPathResponses(selectedPathId || '');
+      const responsesData = JSON.parse(responsesResponse);
+
+      if (!responsesData.success || !responsesData.responses) {
+        await alertDialog({
+          title: 'Error',
+          message: 'Failed to load response data',
+          variant: 'error',
+        });
+        return;
+      }
+
+      const response = responsesData.responses.find((r: any) => r.id === responseId);
+      if (!response) {
+        await alertDialog({
+          title: 'Error',
+          message: 'Response not found',
+          variant: 'error',
+        });
+        return;
+      }
+
+      const contentTypes = response.content_types || [];
+
+      // Check if response is in class mode - if so, warn and switch to object mode
+      if (response.schema_mode === 'class' && response.class_id) {
+        const confirmed = await confirmDialog({
+          title: 'Switch to Inline Schema',
+          message: 'This response currently uses a class reference. Switching to an inline schema will remove the class reference. Continue?',
+          variant: 'warning',
+          confirmLabel: 'Switch to Inline',
+          cancelLabel: 'Cancel',
+        });
+
+        if (!confirmed) return;
+
+        // Clear the class reference and switch to object mode
+        await updateSharedPathResponse(responseId, {
+          classId: null,
+          schemaMode: 'object',
+          data: null,
+        });
+      }
+
+      // Check if response is in primitive or array mode with properties
+      if ((response.schema_mode === 'primitive' || response.schema_mode === 'array')) {
+        const confirmed = await confirmDialog({
+          title: 'Switch to Object Schema',
+          message: `This response is currently set to ${response.schema_mode} type. Switching to object type will allow you to add properties. Continue?`,
+          variant: 'warning',
+          confirmLabel: 'Switch to Object',
+          cancelLabel: 'Cancel',
+        });
+
+        if (!confirmed) return;
+
+        // Switch to object mode
+        await updateSharedPathResponse(responseId, {
+          schemaMode: 'object',
+          classId: null,
+          data: null,
+        });
+      }
+
+      // Extract the actual property from the drop data
+      const actualProperty = propertyData.property || propertyData;
+
+      // Check if there's an existing content type with object schema
+      const objectContentType = contentTypes.find((ct: any) => {
+        const schema = typeof ct.inline_schema === 'string' 
+          ? JSON.parse(ct.inline_schema) 
+          : ct.inline_schema;
+        return ct.media_type === 'application/json' && schema?.type === 'object';
+      });
+
+      if (objectContentType) {
+        // Add property to existing content type
+        console.log('[PathsCanvasView] Adding property to existing content type:', objectContentType.id);
+        const propResult = await addPropertyToResponseInlineSchema(
+          objectContentType.id,
+          {
+            name: actualProperty.propertyName || actualProperty.name || 'newProperty',
+            description: actualProperty.description,
+            data: actualProperty.data || { type: 'string' },
+            parent_id: null,
+          }
+        );
+        const propParsed = JSON.parse(propResult);
+
+        if (!propParsed.success) {
+          await alertDialog({
+            title: 'Error',
+            message: propParsed.error || 'Failed to add property',
+            variant: 'error',
+          });
+          return;
+        }
+      } else {
+        // Create new content type with the property
+        console.log('[PathsCanvasView] Creating new content type with property');
+        const createResult = await addResponseContentType(
+          responseId,
+          'application/json',
+          undefined, // no class_id
+          { type: 'object', properties: [] }, // empty inline schema
+          undefined // no examples
+        );
+        const createParsed = JSON.parse(createResult);
+
+        if (!createParsed.success) {
+          await alertDialog({
+            title: 'Error',
+            message: createParsed.error || 'Failed to create content type',
+            variant: 'error',
+          });
+          return;
+        }
+
+        const contentId = createParsed.content.id;
+
+        // Add the property to the new content type
+        const propResult = await addPropertyToResponseInlineSchema(
+          contentId,
+          {
+            name: actualProperty.propertyName || actualProperty.name || 'newProperty',
+            description: actualProperty.description,
+            data: actualProperty.data || { type: 'string' },
+            parent_id: null,
+          }
+        );
+        const propParsed = JSON.parse(propResult);
+
+        if (!propParsed.success) {
+          await alertDialog({
+            title: 'Error',
+            message: propParsed.error || 'Failed to add property',
+            variant: 'error',
+          });
+          return;
+        }
+      }
+
+      // Refresh the canvas to show the updated response
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (error) {
+      console.error('Error handling property drop on response:', error);
+      await alertDialog({
+        title: 'Error',
+        message: 'Failed to add property to response',
+        variant: 'error',
+      });
+    }
+  }, [selectedPathId, alertDialog, confirmDialog, onRefresh]);
+
   // Keep refs updated with latest handler implementations
   // Update synchronously (not in useEffect) to avoid render loops
   handleResponseBodyPropertyDropRef.current = handleResponseBodyPropertyDrop;
@@ -1351,6 +1621,7 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
                   handleUnlinkResponse(response.id, operationId, linkedOp?.operation);
                 },
                 onClassDrop: handleClassDropOnResponse,
+                onPropertyDrop: handlePropertyDropOnResponse, // NEW: Add property drop handler
                 onSchemaTypeChange: handleSchemaTypeChange,
                 onClassUnlink: handleClassUnlinkFromResponse,
               },
@@ -1648,7 +1919,7 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
     };
 
     loadOperationsAndParameters();
-  }, [selectedPathId, selectedVersionId, setNodes, setEdges, refreshKey, edgeRouting, edgeAnimation, handleDeleteOperation, handleDeleteParameter, handleDeleteResponse, handleDeleteSharedResponse, handleUnlinkResponse, handleClassDropOnResponse, handleClassUnlinkFromResponse, handleSchemaTypeChange, handleDeleteRequestBody, stableHandleRequestBodyPropertyDrop, stableHandleRequestBodyPropertyDelete, stableHandleResponseBodyPropertyDrop, stableHandleResponseBodyPropertyDelete, stableHandleCreateContentTypeWithProperty]);
+  }, [selectedPathId, selectedVersionId, setNodes, setEdges, refreshKey, edgeRouting, edgeAnimation, handleDeleteOperation, handleDeleteParameter, handleDeleteResponse, handleDeleteSharedResponse, handleUnlinkResponse, handleClassDropOnResponse, handlePropertyDropOnResponse, handleClassUnlinkFromResponse, handleSchemaTypeChange, handleDeleteRequestBody, stableHandleRequestBodyPropertyDrop, stableHandleRequestBodyPropertyDelete, stableHandleResponseBodyPropertyDrop, stableHandleResponseBodyPropertyDelete, stableHandleCreateContentTypeWithProperty]);
 
   // Detect dark mode
   useEffect(() => {
@@ -1732,6 +2003,61 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
   // Handle connecting nodes
   const onConnect = useCallback(
     async (connection: Connection) => {
+      if (connection.source && connection.target) {
+        const sourceNode = nodes.find(n => n.id === connection.source);
+        const targetNode = nodes.find(n => n.id === connection.target);
+
+        // VALIDATION: Prevent invalid connections
+        // Operations should NOT connect to response body nodes or request body nodes
+        if (sourceNode?.type === 'operation' && (targetNode?.type === 'responseBody' || targetNode?.type === 'requestBody')) {
+          await alertDialog({
+            title: 'Invalid Connection',
+            message: 'Operations can only connect to Response status codes (200, 404, etc.), not to schema nodes. The response node contains the schema reference.',
+            variant: 'warning',
+          });
+          return;
+        }
+        
+        // Also prevent reverse connection
+        if (targetNode?.type === 'operation' && (sourceNode?.type === 'responseBody' || sourceNode?.type === 'requestBody')) {
+          await alertDialog({
+            title: 'Invalid Connection',
+            message: 'Operations can only connect to Response status codes (200, 404, etc.), not to schema nodes. The response node contains the schema reference.',
+            variant: 'warning',
+          });
+          return;
+        }
+
+        // Prevent connecting response body to anything except its parent response
+        if (sourceNode?.type === 'responseBody' || targetNode?.type === 'responseBody') {
+          await alertDialog({
+            title: 'Invalid Connection',
+            message: 'Response body nodes are automatically connected to their parent response. Manual connections are not allowed.',
+            variant: 'warning',
+          });
+          return;
+        }
+
+        // Prevent connecting request body to anything except operations
+        if (sourceNode?.type === 'requestBody' && targetNode?.type !== 'operation') {
+          await alertDialog({
+            title: 'Invalid Connection',
+            message: 'Request body nodes can only connect to operations (POST, PUT, PATCH).',
+            variant: 'warning',
+          });
+          return;
+        }
+        
+        if (targetNode?.type === 'requestBody' && sourceNode?.type !== 'operation') {
+          await alertDialog({
+            title: 'Invalid Connection',
+            message: 'Request body nodes can only connect to operations (POST, PUT, PATCH).',
+            variant: 'warning',
+          });
+          return;
+        }
+      }
+
       // Get edge type based on settings
       const edgeType = edgeRouting === 'straight' ? 'straight'
         : edgeRouting === 'bezier' ? 'default'
