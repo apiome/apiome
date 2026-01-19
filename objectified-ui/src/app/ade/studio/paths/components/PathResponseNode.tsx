@@ -3,7 +3,7 @@
 'use client';
 
 import React from 'react';
-import { Check, AlertTriangle, X, Activity, Trash2 } from 'lucide-react';
+import { Check, AlertTriangle, X, Activity, Trash2, Unlink } from 'lucide-react';
 import { Handle, Position } from '@xyflow/react';
 
 export interface ContentTypeInfo {
@@ -28,8 +28,13 @@ export interface PathResponseData {
   description?: string;
   dbResponseId?: string;
   operationId?: string;
+  schemaMode?: 'class' | 'object' | 'primitive' | 'array'; // Explicit schema mode
+  linkedOperations?: Array<{ id: string; operation: string }>; // Operations this response is linked to
   onDelete?: () => void;
+  onUnlink?: (operationId: string) => void; // Unlink from a specific operation
   onClassDrop?: (responseId: string, classData: any) => void;
+  onClassUnlink?: (responseId: string) => void; // Unlink attached class from response
+  onSchemaTypeChange?: (responseId: string, schemaMode: 'object' | 'primitive' | 'array', schemaType?: string) => void;
   attachedClassId?: string;
   attachedClassName?: string;
   contentTypes?: ContentTypeInfo[];
@@ -202,6 +207,10 @@ export default function PathResponseNode({ data }: { data: PathResponseData }) {
 
   // Determine what content to show
   const hasContentTypes = data.contentTypes && data.contentTypes.length > 0;
+  // Check if content types have actual schema data
+  const hasContentTypesWithSchema = hasContentTypes && data.contentTypes!.some(ct =>
+    ct.class_name || ct.class_id || (ct.inline_schema && (ct.inline_schema.type || ct.inline_schema.$ref))
+  );
   const hasInlineSchema = data.inlineSchema && (
     (data.inlineSchema.properties?.length ?? 0) > 0 ||
     data.inlineSchema.type ||
@@ -209,6 +218,22 @@ export default function PathResponseNode({ data }: { data: PathResponseData }) {
   );
   const hasAttachedClass = !!data.attachedClassName;
   const hasHeaders = data.headers && data.headers.length > 0;
+
+  // For primitive/array types, prioritize inlineSchema display
+  const showInlineSchemaFirst = hasInlineSchema && !hasAttachedClass &&
+    data.inlineSchema?.type &&
+    ['string', 'number', 'integer', 'boolean', 'null', 'array'].includes(data.inlineSchema.type);
+
+  // Debug logging
+  console.log('[PathResponseNode]', data.statusCode, {
+    hasContentTypes,
+    hasContentTypesWithSchema,
+    hasInlineSchema,
+    hasAttachedClass,
+    showInlineSchemaFirst,
+    inlineSchema: data.inlineSchema,
+    schemaMode: data.schemaMode,
+  });
 
   return (
     <>
@@ -253,7 +278,26 @@ export default function PathResponseNode({ data }: { data: PathResponseData }) {
         <div className="p-3">
           <div className="text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1.5">Content:</div>
 
-          {hasContentTypes ? (
+          {/* Priority 1: Primitive/Array types from inlineSchema */}
+          {showInlineSchemaFirst ? (
+            (() => {
+              const schemaDisplay = getSchemaDisplayText(data.inlineSchema);
+              return (
+                <div className="text-[10px]">
+                  <div className="flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
+                    <span className="text-gray-400">○</span>
+                    <span className="font-mono">application/json</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 ml-3 mt-0.5 text-gray-600 dark:text-gray-400">
+                    <span className="text-gray-400">└─</span>
+                    <span className="font-medium text-amber-600 dark:text-amber-400 font-mono">
+                      {schemaDisplay.text || data.inlineSchema?.type}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()
+          ) : hasContentTypesWithSchema ? (
             <div className="space-y-1.5">
               {data.contentTypes!.map((ct) => {
                 const schemaDisplay = getSchemaDisplayText(ct.inline_schema);
@@ -333,18 +377,52 @@ export default function PathResponseNode({ data }: { data: PathResponseData }) {
                 <span className="text-gray-400">○</span>
                 <span className="font-mono">application/json</span>
               </div>
-              <div className="flex items-center gap-1.5 ml-3 mt-0.5 text-gray-600 dark:text-gray-400">
-                <span className="text-gray-400">└─</span>
-                <span className="text-gray-400">{'{ }'}</span>
-                <span className="font-medium text-indigo-600 dark:text-indigo-400">
-                  {data.attachedClassName}
-                </span>
+              <div className="flex items-center justify-between ml-3 mt-0.5">
+                <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
+                  <span className="text-gray-400">└─</span>
+                  <span className="text-gray-400">{'{ }'}</span>
+                  <span className="font-medium text-indigo-600 dark:text-indigo-400">
+                    {data.attachedClassName}
+                  </span>
+                </div>
+                {data.onClassUnlink && data.dbResponseId && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); data.onClassUnlink?.(data.dbResponseId!); }}
+                    className="text-gray-400 hover:text-red-500 transition-colors p-0.5"
+                    title={`Unlink ${data.attachedClassName} from response`}
+                  >
+                    <Unlink size={10} />
+                  </button>
+                )}
               </div>
             </div>
           ) : (
             <div className={`text-[10px] ${dragOver ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 italic'}`}>
               {dragOver ? 'Drop class here' : '(none)'}
             </div>
+          )}
+
+          {/* Linked Operations Section */}
+          {data.linkedOperations && data.linkedOperations.length > 0 && (
+            <>
+              <div className="text-[10px] font-medium text-gray-600 dark:text-gray-400 mt-3 mb-1">Linked to:</div>
+              <div className="space-y-1">
+                {data.linkedOperations.map((op) => (
+                  <div key={op.id} className="flex items-center justify-between text-[10px] bg-gray-50 dark:bg-gray-700/50 rounded px-2 py-1">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{op.operation}</span>
+                    {data.onUnlink && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); data.onUnlink?.(op.id); }}
+                        className="text-gray-400 hover:text-red-500 transition-colors"
+                        title={`Unlink from ${op.operation}`}
+                      >
+                        <Unlink size={10} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
 
           {/* Headers Section */}

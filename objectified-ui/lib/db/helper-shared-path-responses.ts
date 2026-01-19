@@ -18,6 +18,7 @@ export async function getSharedPathResponses(versionPathId: string): Promise<str
       spr.class_id,
       c.name as class_name,
       spr.inline_schema,
+      spr.schema_mode,
       spr.created_at,
       spr.updated_at,
       COALESCE(
@@ -39,7 +40,7 @@ export async function getSharedPathResponses(versionPathId: string): Promise<str
     LEFT JOIN odb.classes rc_class ON rc.class_id = rc_class.id
     WHERE spr.version_path_id = $1
     GROUP BY spr.id, spr.version_path_id, spr.status_code, spr.description, spr.data,
-             spr.class_id, c.name, spr.inline_schema, spr.created_at, spr.updated_at
+             spr.class_id, c.name, spr.inline_schema, spr.schema_mode, spr.created_at, spr.updated_at
     ORDER BY spr.status_code ASC
   `;
 
@@ -66,6 +67,7 @@ export async function getLinkedResponsesForOperation(operationId: string): Promi
       spr.class_id,
       c.name as class_name,
       spr.inline_schema,
+      spr.schema_mode,
       spr.created_at,
       spr.updated_at,
       porl.metadata as link_metadata,
@@ -89,7 +91,7 @@ export async function getLinkedResponsesForOperation(operationId: string): Promi
     LEFT JOIN odb.classes rc_class ON rc.class_id = rc_class.id
     WHERE porl.path_operation_id = $1
     GROUP BY spr.id, spr.version_path_id, spr.status_code, spr.description, spr.data, 
-             spr.class_id, c.name, spr.inline_schema, spr.created_at, spr.updated_at, porl.metadata
+             spr.class_id, c.name, spr.inline_schema, spr.schema_mode, spr.created_at, spr.updated_at, porl.metadata
     ORDER BY spr.status_code ASC
   `;
 
@@ -113,7 +115,7 @@ export async function createSharedPathResponse(
 ): Promise<string> {
   // Check if response already exists
   const checkQuery = `
-    SELECT id, version_path_id, status_code, description, data, inline_schema, class_id, created_at, updated_at
+    SELECT id, version_path_id, status_code, description, data, inline_schema, class_id, schema_mode, created_at, updated_at
     FROM odb.shared_path_response
     WHERE version_path_id = $1 AND status_code = $2
   `;
@@ -125,14 +127,27 @@ export async function createSharedPathResponse(
       return JSON.stringify({ success: true, response: checkResult.rows[0], existed: true });
     }
 
+    // Determine schema_mode based on data
+    let schemaMode = 'object'; // default
+    if (data) {
+      const dataType = data.type;
+      if (dataType === 'array') {
+        schemaMode = 'array';
+      } else if (['string', 'number', 'integer', 'boolean', 'null'].includes(dataType)) {
+        schemaMode = 'primitive';
+      } else if (dataType === 'object' || data.properties) {
+        schemaMode = 'object';
+      }
+    }
+
     // Create new response
     // The constraint requires at least one of: class_id, inline_schema, or data
     // If no data is provided, create with an empty inline schema
     const insertQuery = `
       INSERT INTO odb.shared_path_response 
-      (version_path_id, status_code, description, data, inline_schema)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING id, version_path_id, status_code, description, data, inline_schema, class_id, created_at, updated_at
+      (version_path_id, status_code, description, data, inline_schema, schema_mode)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id, version_path_id, status_code, description, data, inline_schema, class_id, schema_mode, created_at, updated_at
     `;
 
     // Use data if provided, otherwise use empty inline_schema to satisfy constraint
@@ -145,6 +160,7 @@ export async function createSharedPathResponse(
       description || null,
       hasData ? JSON.stringify(data) : null,
       inlineSchema,
+      schemaMode,
     ]);
 
     return JSON.stringify({ success: true, response: result.rows[0], existed: false });
@@ -216,8 +232,10 @@ export async function updateSharedPathResponse(
   updates: {
     statusCode?: string;
     description?: string;
-    data?: Record<string, any>;
+    data?: Record<string, any> | null;
     inlineSchema?: Record<string, any> | null;
+    schemaMode?: 'class' | 'object' | 'primitive' | 'array';
+    classId?: string | null;
   }
 ): Promise<string> {
   const setClauses: string[] = ['updated_at = CURRENT_TIMESTAMP'];
@@ -231,6 +249,14 @@ export async function updateSharedPathResponse(
   if (updates.description !== undefined) {
     setClauses.push(`description = $${++paramIndex}`);
     params.push(updates.description);
+  }
+  if (updates.schemaMode !== undefined) {
+    setClauses.push(`schema_mode = $${++paramIndex}`);
+    params.push(updates.schemaMode);
+  }
+  if (updates.classId !== undefined) {
+    setClauses.push(`class_id = $${++paramIndex}`);
+    params.push(updates.classId);
   }
   if (updates.data !== undefined) {
     setClauses.push(`data = $${++paramIndex}::jsonb`);
@@ -263,7 +289,7 @@ export async function updateSharedPathResponse(
     UPDATE odb.shared_path_response
     SET ${setClauses.join(', ')}
     WHERE id = $1
-    RETURNING id, version_path_id, status_code, description, data, inline_schema, class_id, created_at, updated_at
+    RETURNING id, version_path_id, status_code, description, data, inline_schema, class_id, schema_mode, created_at, updated_at
   `;
 
   try {

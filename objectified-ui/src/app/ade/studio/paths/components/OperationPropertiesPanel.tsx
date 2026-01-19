@@ -86,6 +86,8 @@ export default function OperationPropertiesPanel({
   // New response form state
   const [newResponseStatusCode, setNewResponseStatusCode] = useState('200');
   const [newResponseDescription, setNewResponseDescription] = useState('');
+  const [newResponseSchemaType, setNewResponseSchemaType] = useState<'object' | 'string' | 'number' | 'integer' | 'boolean' | 'array'>('object');
+  const [newResponseArrayItemType, setNewResponseArrayItemType] = useState<'string' | 'number' | 'integer' | 'boolean'>('string');
 
   // Request body schema state
   const [requestBodySchema, setRequestBodySchema] = useState<any>(null);
@@ -218,6 +220,8 @@ export default function OperationPropertiesPanel({
   const resetNewResponseForm = () => {
     setNewResponseStatusCode('200');
     setNewResponseDescription('');
+    setNewResponseSchemaType('object');
+    setNewResponseArrayItemType('string');
   };
 
   const handleSaveOperation = async () => {
@@ -361,11 +365,23 @@ export default function OperationPropertiesPanel({
 
     setIsSaving(true);
     try {
+      // Build schema data based on selected type
+      let schemaData: Record<string, any> | undefined;
+      if (newResponseSchemaType === 'object') {
+        schemaData = { type: 'object', properties: [] };
+      } else if (newResponseSchemaType === 'array') {
+        schemaData = { type: 'array', items: { type: newResponseArrayItemType } };
+      } else {
+        // Primitive types: string, number, integer, boolean
+        schemaData = { type: newResponseSchemaType };
+      }
+
       // First, create or get the shared response
       const sharedResponseResult = await createSharedPathResponse(
         versionPathId,
         newResponseStatusCode.trim(),
-        newResponseDescription.trim() || undefined
+        newResponseDescription.trim() || undefined,
+        schemaData // Pass the schema data
       );
       const sharedResponseParsed = JSON.parse(sharedResponseResult);
 
@@ -585,6 +601,74 @@ export default function OperationPropertiesPanel({
                   }}
                 />
               </Box>
+
+              {/* Schema Type */}
+              <Box>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Response Schema Type
+                </label>
+                <TextField
+                  fullWidth
+                  select
+                  size="small"
+                  value={newResponseSchemaType}
+                  onChange={(e) => setNewResponseSchemaType(e.target.value as any)}
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      fontSize: '0.875rem',
+                      backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                      color: isDark ? '#f1f5f9' : '#0f172a',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: isDark ? '#334155' : '#e2e8f0',
+                    },
+                  }}
+                >
+                  <MenuItem value="object">Object (default)</MenuItem>
+                  <MenuItem value="string">String</MenuItem>
+                  <MenuItem value="number">Number</MenuItem>
+                  <MenuItem value="integer">Integer</MenuItem>
+                  <MenuItem value="boolean">Boolean</MenuItem>
+                  <MenuItem value="array">Array</MenuItem>
+                </TextField>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  The type of data returned in the response body
+                </p>
+              </Box>
+
+              {/* Array Item Type (only shown when array is selected) */}
+              {newResponseSchemaType === 'array' && (
+                <Box>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Array Item Type
+                  </label>
+                  <TextField
+                    fullWidth
+                    select
+                    size="small"
+                    value={newResponseArrayItemType}
+                    onChange={(e) => setNewResponseArrayItemType(e.target.value as any)}
+                    sx={{
+                      '& .MuiInputBase-root': {
+                        fontSize: '0.875rem',
+                        backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#f1f5f9' : '#0f172a',
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: isDark ? '#334155' : '#e2e8f0',
+                      },
+                    }}
+                  >
+                    <MenuItem value="string">String</MenuItem>
+                    <MenuItem value="number">Number</MenuItem>
+                    <MenuItem value="integer">Integer</MenuItem>
+                    <MenuItem value="boolean">Boolean</MenuItem>
+                  </TextField>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    The type of items in the array
+                  </p>
+                </Box>
+              )}
             </Box>
           </Box>
 
@@ -1165,6 +1249,7 @@ export default function OperationPropertiesPanel({
                                 console.error('Error reloading responses:', error);
                               }
                             }}
+                            onRefresh={onRefresh}
                           />
                         </Box>
                       </Box>

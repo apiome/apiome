@@ -410,6 +410,102 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
     }
   }, [selectedPathId, selectedVersionId, alertDialog, onRefresh]);
 
+  // Handle unlink class from response
+  const handleClassUnlinkFromResponse = useCallback(async (responseId: string) => {
+    const confirmed = await confirmDialog({
+      title: 'Unlink Class',
+      message: 'Are you sure you want to remove the class reference from this response?',
+      variant: 'warning',
+      confirmLabel: 'Unlink',
+      cancelLabel: 'Cancel',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      // Clear the class reference and reset to object mode
+      const result = await updateSharedPathResponse(responseId, {
+        classId: null, // Clear class reference
+        schemaMode: 'object', // Reset to object mode
+        data: null, // Clear any data
+        inlineSchema: { type: 'object', properties: [] }, // Reset to empty object schema
+      });
+
+      const parsed = JSON.parse(result);
+
+      if (parsed.success) {
+        // Refresh canvas to update the display
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        await alertDialog({
+          title: 'Error',
+          message: parsed.error || 'Failed to unlink class from response',
+          variant: 'error',
+        });
+      }
+    } catch (error) {
+      console.error('Error unlinking class from response:', error);
+      await alertDialog({
+        title: 'Error',
+        message: 'Failed to unlink class from response',
+        variant: 'error',
+      });
+    }
+  }, [confirmDialog, alertDialog, onRefresh]);
+
+  // Handle changing response schema type
+  const handleSchemaTypeChange = useCallback(async (
+    responseId: string,
+    schemaMode: 'object' | 'primitive' | 'array',
+    schemaType?: string
+  ) => {
+    try {
+      let data: Record<string, any> | null = null;
+      let inlineSchema: Record<string, any> | null = null;
+
+      if (schemaMode === 'primitive') {
+        // Set primitive type in data field
+        data = { type: schemaType || 'string' };
+      } else if (schemaMode === 'array') {
+        // Set array type in data field
+        data = { type: 'array', items: { type: schemaType || 'string' } };
+      } else {
+        // Object mode - use inline_schema
+        inlineSchema = { type: 'object', properties: [] };
+      }
+
+      const result = await updateSharedPathResponse(responseId, {
+        schemaMode,
+        classId: null, // Clear any class reference
+        data,
+        inlineSchema,
+      });
+
+      const parsed = JSON.parse(result);
+
+      if (parsed.success) {
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        await alertDialog({
+          title: 'Error',
+          message: parsed.error || 'Failed to change schema type',
+          variant: 'error',
+        });
+      }
+    } catch (error) {
+      console.error('Error changing schema type:', error);
+      await alertDialog({
+        title: 'Error',
+        message: 'Failed to change schema type',
+        variant: 'error',
+      });
+    }
+  }, [alertDialog, onRefresh]);
+
   // Handle delete class from canvas (remove from all responses using it)
   const handleDeleteClassFromCanvas = useCallback(async (classId: string) => {
     const confirmed = await confirmDialog({
@@ -548,6 +644,93 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
       });
     }
   }, [confirmDialog, alertDialog, onRefresh]);
+
+  // Handle delete shared response (delete the response entirely, not just unlink)
+  const handleDeleteSharedResponse = useCallback(async (responseId: string, statusCode?: string) => {
+    const confirmed = await confirmDialog({
+      title: 'Delete Response',
+      message: `Are you sure you want to delete the ${statusCode || ''} response? This will unlink it from all operations and delete it permanently.`,
+      variant: 'danger',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const result = await deleteSharedPathResponse(responseId);
+      const parsed = JSON.parse(result);
+
+      if (parsed.success) {
+        // Remove from UI
+        setNodes((nds) => nds.filter((n) =>
+          n.id !== `response-${responseId}` && n.id !== `response-body-${responseId}`
+        ));
+        setEdges((eds) => eds.filter((e) =>
+          !e.id.includes(responseId)
+        ));
+        // Refresh the canvas to reload all data
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        await alertDialog({
+          title: 'Error',
+          message: parsed.error || 'Failed to delete response',
+          variant: 'error',
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting response:', error);
+      await alertDialog({
+        title: 'Error',
+        message: 'Failed to delete response',
+        variant: 'error',
+      });
+    }
+  }, [confirmDialog, alertDialog, setNodes, setEdges, onRefresh]);
+
+  // Handle unlink response from specific operation
+  const handleUnlinkResponse = useCallback(async (responseId: string, operationId: string, operationName?: string) => {
+    const confirmed = await confirmDialog({
+      title: 'Unlink Response',
+      message: `Are you sure you want to unlink this response from the ${operationName || 'operation'}? The response will still be available for other operations.`,
+      variant: 'warning',
+      confirmLabel: 'Unlink',
+      cancelLabel: 'Cancel',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const result = await unlinkResponseFromOperation(operationId, responseId);
+      const parsed = JSON.parse(result);
+
+      if (parsed.success) {
+        // Remove the edge from the canvas
+        setEdges((eds) => eds.filter((e) =>
+          !(e.source === operationId && e.target === `response-${responseId}`)
+        ));
+        // Refresh the canvas to reload all data
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        await alertDialog({
+          title: 'Error',
+          message: parsed.error || 'Failed to unlink response',
+          variant: 'error',
+        });
+      }
+    } catch (error) {
+      console.error('Error unlinking response:', error);
+      await alertDialog({
+        title: 'Error',
+        message: 'Failed to unlink response',
+        variant: 'error',
+      });
+    }
+  }, [confirmDialog, alertDialog, setEdges, onRefresh]);
 
   // Handle delete request body
   const handleDeleteRequestBody = useCallback(async (requestBodyId: string, requestBodyName: string) => {
@@ -1052,6 +1235,21 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
         const allResponsesResponse = await getSharedPathResponses(selectedPathId);
         const allResponsesData = JSON.parse(allResponsesResponse);
 
+        // Build a map of response ID -> linked operations
+        const responseLinkedOpsMap = new Map<string, Array<{ id: string; operation: string }>>();
+        for (const op of operations) {
+          const linkedResponsesResponse = await getLinkedResponsesForOperation(op.id);
+          const linkedResponsesData = JSON.parse(linkedResponsesResponse);
+          if (linkedResponsesData.success && linkedResponsesData.responses) {
+            for (const resp of linkedResponsesData.responses) {
+              if (!responseLinkedOpsMap.has(resp.id)) {
+                responseLinkedOpsMap.set(resp.id, []);
+              }
+              responseLinkedOpsMap.get(resp.id)!.push({ id: op.id, operation: op.operation });
+            }
+          }
+        }
+
         const allResponseNodes: Node[] = [];
         const allClassNodes: Node[] = [];
         const classNodesMap = new Map<string, Node>(); // Track class nodes by classId
@@ -1061,35 +1259,9 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
           allResponsesData.responses.forEach((response: any, responseIndex: number) => {
             const responseNodeId = `response-${response.id}`;
 
-            // Extract class reference from response data
+            // Initialize class reference variables
             let attachedClassId: string | undefined;
             let attachedClassName: string | undefined;
-            
-            // Check for direct class_id on response
-            if (response.class_id) {
-              attachedClassId = response.class_id;
-              attachedClassName = response.class_name;
-            } else if (response.data) {
-              try {
-                const responseData = typeof response.data === 'string' 
-                  ? JSON.parse(response.data) 
-                  : response.data;
-                
-                // Check for $ref in schema
-                const schema = responseData?.content?.['application/json']?.schema || responseData?.schema;
-                if (schema?.$ref) {
-                  // Extract class name from $ref (format: #/components/schemas/ClassName)
-                  const className = schema.$ref.split('/').pop();
-                  const classEntry = Array.from(classesMap.values()).find(c => c.name === className);
-                  if (classEntry) {
-                    attachedClassId = classEntry.id;
-                    attachedClassName = classEntry.name;
-                  }
-                }
-              } catch (error) {
-                console.error('Error parsing response data:', error);
-              }
-            }
 
             // Parse content types
             const contentTypes = (response.content_types || []).map((ct: any) => ({
@@ -1105,63 +1277,55 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
                 : ct.examples,
             }));
 
-            // Parse schema - check response.data FIRST since that's where user-set schemas are stored
-            // The inline_schema column often contains a default empty object, so data takes priority
+            // Use schema_mode to definitively determine how to display the response
+            // This eliminates ambiguity when determining response schema type
+            const schemaMode = response.schema_mode || 'object';
+            console.log('[PathsCanvasView] Response', response.status_code, 'schema_mode:', schemaMode);
+
             let inlineSchema = null;
 
-            // First, check response.data for schema type (this is where primitives are stored)
-            if (response.data) {
-              try {
-                const responseData = typeof response.data === 'string'
-                  ? JSON.parse(response.data)
-                  : response.data;
-
-                // Check if data has a type field directly (primitive schema like { type: 'string' })
-                if (responseData?.type) {
-                  inlineSchema = responseData;
-                  console.log('[PathsCanvasView] Response', response.status_code, 'schema from data:', inlineSchema);
-                } else if (responseData?.content?.['application/json']?.schema) {
-                  // Extract schema from OpenAPI-style content
-                  inlineSchema = responseData.content['application/json'].schema;
-                  console.log('[PathsCanvasView] Response', response.status_code, 'schema from data.content:', inlineSchema);
-                } else if (responseData?.schema) {
-                  inlineSchema = responseData.schema;
-                  console.log('[PathsCanvasView] Response', response.status_code, 'schema from data.schema:', inlineSchema);
-                }
-              } catch (error) {
-                console.error('Error parsing response data for schema:', error);
+            // Based on schema_mode, extract the appropriate schema
+            if (schemaMode === 'class') {
+              // Class reference - get from class_id
+              if (response.class_id) {
+                attachedClassId = response.class_id;
+                attachedClassName = response.class_name;
               }
-            }
-
-            // Only fall back to inline_schema if data didn't have a schema
-            if (!inlineSchema && response.inline_schema) {
-              try {
-                const parsedInlineSchema = typeof response.inline_schema === 'string'
-                  ? JSON.parse(response.inline_schema)
-                  : response.inline_schema;
-
-                // Only use inline_schema if it's not the default empty object
-                const isDefaultEmpty = parsedInlineSchema?.type === 'object' &&
-                  (!parsedInlineSchema?.properties ||
-                   (Array.isArray(parsedInlineSchema.properties) && parsedInlineSchema.properties.length === 0));
-
-                if (!isDefaultEmpty) {
-                  inlineSchema = parsedInlineSchema;
-                  console.log('[PathsCanvasView] Response', response.status_code, 'inline_schema:', inlineSchema);
+              console.log('[PathsCanvasView] Response', response.status_code, 'is CLASS mode, class:', attachedClassName);
+            } else if (schemaMode === 'primitive' || schemaMode === 'array') {
+              // Primitive or array - get from data field, NO class reference
+              attachedClassId = undefined;
+              attachedClassName = undefined;
+              if (response.data) {
+                try {
+                  const responseData = typeof response.data === 'string'
+                    ? JSON.parse(response.data)
+                    : response.data;
+                  inlineSchema = responseData;
+                  console.log('[PathsCanvasView] Response', response.status_code, 'is', schemaMode.toUpperCase(), 'mode, schema:', inlineSchema);
+                } catch (error) {
+                  console.error('Error parsing response data:', error);
                 }
-              } catch (error) {
-                console.error('Error parsing inline_schema:', error);
+              }
+            } else {
+              // Object mode - check inline_schema, NO class reference
+              attachedClassId = undefined;
+              attachedClassName = undefined;
+              if (response.inline_schema) {
+                try {
+                  inlineSchema = typeof response.inline_schema === 'string'
+                    ? JSON.parse(response.inline_schema)
+                    : response.inline_schema;
+                  console.log('[PathsCanvasView] Response', response.status_code, 'is OBJECT mode, inline_schema:', inlineSchema);
+                } catch (error) {
+                  console.error('Error parsing inline_schema:', error);
+                }
               }
             }
 
             // Also log content types with inline schemas
             if (contentTypes.length > 0) {
               console.log('[PathsCanvasView] Response', response.status_code, 'has', contentTypes.length, 'content types');
-              contentTypes.forEach((ct: any, idx: number) => {
-                if (ct.inline_schema) {
-                  console.log('[PathsCanvasView] ContentType', idx, 'inline_schema:', ct.inline_schema);
-                }
-              });
             }
 
             allResponseNodes.push({
@@ -1175,11 +1339,20 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
                 statusCode: response.status_code,
                 description: response.description,
                 dbResponseId: response.id,
+                schemaMode,
                 attachedClassId,
                 attachedClassName,
                 contentTypes,
                 inlineSchema,
+                linkedOperations: responseLinkedOpsMap.get(response.id) || [],
+                onDelete: () => handleDeleteSharedResponse(response.id, response.status_code),
+                onUnlink: (operationId: string) => {
+                  const linkedOp = responseLinkedOpsMap.get(response.id)?.find(op => op.id === operationId);
+                  handleUnlinkResponse(response.id, operationId, linkedOp?.operation);
+                },
                 onClassDrop: handleClassDropOnResponse,
+                onSchemaTypeChange: handleSchemaTypeChange,
+                onClassUnlink: handleClassUnlinkFromResponse,
               },
             });
 
@@ -1210,42 +1383,129 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
           });
         }
 
-        // Now load linked responses to create edges
-        for (const op of operations) {
-          const linkedResponsesResponse = await getLinkedResponsesForOperation(op.id);
-          const linkedResponsesData = JSON.parse(linkedResponsesResponse);
+        // Create response body nodes for responses with content types (for inline schema editing)
+        const allResponseBodyNodes: Node[] = [];
+        if (allResponsesData.success && allResponsesData.responses) {
+          allResponsesData.responses.forEach((response: any, responseIndex: number) => {
+            // Get content types for this response
+            const contentTypes = (response.content_types || []).map((ct: any) => ({
+              id: ct.id,
+              media_type: ct.media_type,
+              class_id: ct.class_id,
+              class_name: ct.class_name,
+              inline_schema: typeof ct.inline_schema === 'string'
+                ? JSON.parse(ct.inline_schema)
+                : ct.inline_schema,
+              examples: typeof ct.examples === 'string'
+                ? JSON.parse(ct.examples)
+                : ct.examples,
+            }));
 
-          if (linkedResponsesData.success && linkedResponsesData.responses) {
-            linkedResponsesData.responses.forEach((response: any) => {
-              const responseNodeId = `response-${response.id}`;
+            // Check if response itself has an object schema (from inline_schema column)
+            let responseInlineSchema = null;
+            if (response.inline_schema) {
+              try {
+                responseInlineSchema = typeof response.inline_schema === 'string'
+                  ? JSON.parse(response.inline_schema)
+                  : response.inline_schema;
+              } catch (e) {
+                // Ignore parse errors
+              }
+            }
 
-              // Create edge from operation to response
-              const edgeType = edgeRouting === 'straight' ? 'straight'
-                : edgeRouting === 'bezier' ? 'default'
-                : edgeRouting === 'smart' ? 'smart'
-                : 'smoothstep';
+            // Create response body node if:
+            // 1. There are content types with object schemas or class references
+            // 2. OR the response itself has an object type schema
+            const hasContentTypeWithObjectSchema = contentTypes.some((ct: any) =>
+              ct.inline_schema?.type === 'object' || ct.class_id
+            );
+            const hasResponseObjectSchema = responseInlineSchema?.type === 'object';
 
-              allEdges.push({
-                id: `edge-op-resp-${op.id}-${response.id}`,
-                source: op.id,
-                sourceHandle: 'operation-output',
-                target: responseNodeId,
-                targetHandle: 'response-input',
-                type: edgeType,
-                animated: edgeAnimation !== 'none',
-                style: {
-                  stroke: '#a78bfa',
-                  strokeWidth: 2,
-                  strokeDasharray: edgeAnimation === 'dash' ? '5,5' : undefined,
+            if (contentTypes.length > 0 || hasContentTypeWithObjectSchema || hasResponseObjectSchema) {
+              const responseBodyNodeId = `response-body-${response.id}`;
+              allResponseBodyNodes.push({
+                id: responseBodyNodeId,
+                type: 'responseBody',
+                position: {
+                  x: 400 + (responseIndex * 300), // Offset to the right of response nodes
+                  y: 550 + (responseIndex * 50), // Slightly below and staggered
                 },
                 data: {
-                  sourceNodeId: op.id,
-                  targetNodeId: responseNodeId,
-                },
+                  id: response.id,
+                  status_code: response.status_code,
+                  description: response.description,
+                  contentTypes,
+                  onDelete: () => handleDeleteSharedResponse(response.id, response.status_code),
+                  onPropertyDrop: stableHandleResponseBodyPropertyDrop,
+                  onPropertyDelete: stableHandleResponseBodyPropertyDelete,
+                  onCreateContentTypeWithProperty: stableHandleCreateContentTypeWithProperty,
+                } as PathResponseBodyData,
               });
+            }
+          });
+        }
+
+        // Create edges from response nodes to response body nodes
+        allResponseBodyNodes.forEach((responseBodyNode) => {
+          const responseId = (responseBodyNode.data as any).id;
+          const responseNodeId = `response-${responseId}`;
+
+          // Only create edge if response node exists
+          if (allResponseNodes.some(n => n.id === responseNodeId)) {
+            const edgeType = edgeRouting === 'straight' ? 'straight'
+              : edgeRouting === 'bezier' ? 'default'
+              : edgeRouting === 'smart' ? 'smart'
+              : 'smoothstep';
+
+            allEdges.push({
+              id: `edge-resp-body-${responseId}`,
+              source: responseNodeId,
+              sourceHandle: 'response-class-output', // Use existing output handle
+              target: responseBodyNode.id,
+              targetHandle: 'response-input', // PathResponseBodyNode uses this
+              type: edgeType,
+              animated: edgeAnimation !== 'none',
+              style: {
+                stroke: '#60a5fa', // Blue for response-to-body edges
+                strokeWidth: 2,
+                strokeDasharray: edgeAnimation === 'dash' ? '5,5' : undefined,
+              },
             });
           }
-        }
+        });
+
+        // Create edges from operations to responses using the already-collected linked operations
+        responseLinkedOpsMap.forEach((linkedOps, responseId) => {
+          const responseNodeId = `response-${responseId}`;
+          linkedOps.forEach((op) => {
+            console.log('[PathsCanvasView] Creating edge from', op.id, 'to', responseNodeId);
+
+            // Create edge from operation to response
+            const edgeType = edgeRouting === 'straight' ? 'straight'
+              : edgeRouting === 'bezier' ? 'default'
+              : edgeRouting === 'smart' ? 'smart'
+              : 'smoothstep';
+
+            allEdges.push({
+              id: `edge-op-resp-${op.id}-${responseId}`,
+              source: op.id,
+              sourceHandle: 'operation-output',
+              target: responseNodeId,
+              targetHandle: 'response-input',
+              type: edgeType,
+              animated: edgeAnimation !== 'none',
+              style: {
+                stroke: '#a78bfa',
+                strokeWidth: 2,
+                strokeDasharray: edgeAnimation === 'dash' ? '5,5' : undefined,
+              },
+              data: {
+                sourceNodeId: op.id,
+                targetNodeId: responseNodeId,
+              },
+            });
+          });
+        });
 
         // Create edges from response nodes to class nodes
         // Make sure we create edges for ALL responses that have the same class
@@ -1377,10 +1637,10 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
           }
         }
 
-        // Response body nodes are now merged into response nodes, so we don't need separate nodes
-        // The schema/content types are shown directly in the PathResponseNode
+        // Response body nodes are created for responses that have content types with inline schemas
+        // These allow users to add/edit properties in the inline schema
 
-        setNodes([...operationNodes, ...allParameterNodes, ...allResponseNodes, ...allClassNodes, ...allRequestBodyNodes]);
+        setNodes([...operationNodes, ...allParameterNodes, ...allResponseNodes, ...allResponseBodyNodes, ...allClassNodes, ...allRequestBodyNodes]);
         setEdges(allEdges);
       } catch (error) {
         console.error('Error loading operations and parameters:', error);
@@ -1388,7 +1648,7 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
     };
 
     loadOperationsAndParameters();
-  }, [selectedPathId, selectedVersionId, setNodes, setEdges, refreshKey, edgeRouting, edgeAnimation, handleDeleteOperation, handleDeleteParameter, handleDeleteResponse, handleClassDropOnResponse, handleDeleteRequestBody, stableHandleRequestBodyPropertyDrop, stableHandleRequestBodyPropertyDelete, stableHandleResponseBodyPropertyDrop, stableHandleResponseBodyPropertyDelete, stableHandleCreateContentTypeWithProperty]);
+  }, [selectedPathId, selectedVersionId, setNodes, setEdges, refreshKey, edgeRouting, edgeAnimation, handleDeleteOperation, handleDeleteParameter, handleDeleteResponse, handleDeleteSharedResponse, handleUnlinkResponse, handleClassDropOnResponse, handleClassUnlinkFromResponse, handleSchemaTypeChange, handleDeleteRequestBody, stableHandleRequestBodyPropertyDrop, stableHandleRequestBodyPropertyDelete, stableHandleResponseBodyPropertyDrop, stableHandleResponseBodyPropertyDelete, stableHandleCreateContentTypeWithProperty]);
 
   // Detect dark mode
   useEffect(() => {

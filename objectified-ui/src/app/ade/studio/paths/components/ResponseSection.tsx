@@ -28,6 +28,9 @@ import {
   updateResponseInlineSchemaProperty,
   deleteResponseInlineSchemaProperty,
 } from '../../../../../../lib/db/helper-shared-path-responses-content';
+import {
+  updateSharedPathResponse,
+} from '../../../../../../lib/db/helper-shared-path-responses';
 import { getClassesWithPropertiesAndTags } from '../../../../../../lib/db/helper';
 import {
   buildPropertyTreeFromInlineSchema,
@@ -53,11 +56,17 @@ interface ResponseInfo {
   status_code: string;
   description?: string;
   content_types: ContentTypeInfo[];
+  schema_mode?: 'class' | 'object' | 'primitive' | 'array';
+  data?: Record<string, any> | null;
+  inline_schema?: InlineSchema | null;
+  class_id?: string | null;
+  class_name?: string | null;
 }
 
 interface ResponseSectionProps {
   response: ResponseInfo;
   onUpdate: () => void;
+  onRefresh?: () => void; // Callback to refresh the canvas
 }
 
 // =============================================================================
@@ -142,7 +151,7 @@ function PropertyTreeNodeComponent({
 // RESPONSE SECTION COMPONENT
 // =============================================================================
 
-export default function ResponseSection({ response, onUpdate }: ResponseSectionProps) {
+export default function ResponseSection({ response, onUpdate, onRefresh }: ResponseSectionProps) {
   const isDark = useDarkMode();
   const { selectedVersionId } = useStudio();
 
@@ -154,7 +163,11 @@ export default function ResponseSection({ response, onUpdate }: ResponseSectionP
   const [newPropertyName, setNewPropertyName] = useState('');
   const [newPropertyType, setNewPropertyType] = useState('string');
   const [newMediaType, setNewMediaType] = useState('application/json');
-  const [schemaMode, setSchemaMode] = useState<'class' | 'inline'>('class');
+  // Updated to support all 4 schema modes: class, object (inline), primitive, array
+  const [schemaMode, setSchemaMode] = useState<'class' | 'object' | 'primitive' | 'array'>('object');
+  const [primitiveType, setPrimitiveType] = useState<'string' | 'number' | 'integer' | 'boolean'>('string');
+  const [arrayItemType, setArrayItemType] = useState<'string' | 'number' | 'integer' | 'boolean'>('string');
+  const [isSavingSchemaMode, setIsSavingSchemaMode] = useState(false);
 
   // Load content types
   const loadContentTypes = useCallback(async () => {
@@ -193,16 +206,48 @@ export default function ResponseSection({ response, onUpdate }: ResponseSectionP
   // Get current content type
   const currentContentType = contentTypes[selectedContentTypeIndex];
 
-  // Determine schema mode based on current content type
+  // Determine schema mode based on response.schema_mode or infer from data
   useEffect(() => {
+    // First check if response has an explicit schema_mode
+    if (response.schema_mode) {
+      setSchemaMode(response.schema_mode);
+      // If primitive, try to determine the type
+      if (response.schema_mode === 'primitive' && response.data) {
+        try {
+          const data = typeof response.data === 'string'
+            ? JSON.parse(response.data)
+            : response.data;
+          if (data?.type && ['string', 'number', 'integer', 'boolean'].includes(data.type)) {
+            setPrimitiveType(data.type);
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+      // If array, try to determine the item type
+      if (response.schema_mode === 'array' && response.data) {
+        try {
+          const data = typeof response.data === 'string'
+            ? JSON.parse(response.data)
+            : response.data;
+          if (data?.items?.type && ['string', 'number', 'integer', 'boolean'].includes(data.items.type)) {
+            setArrayItemType(data.items.type);
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+      return;
+    }
+    // Fall back to inferring from content type
     if (currentContentType) {
       if (currentContentType.class_id) {
         setSchemaMode('class');
       } else if (currentContentType.inline_schema) {
-        setSchemaMode('inline');
+        setSchemaMode('object');
       }
     }
-  }, [currentContentType]);
+  }, [response, currentContentType]);
 
   // Add content type
   const handleAddContentType = async () => {
@@ -243,7 +288,103 @@ export default function ResponseSection({ response, onUpdate }: ResponseSectionP
     }
   };
 
-  // Switch schema mode
+  // Switch schema mode - updates the response's schema_mode in the database
+  const handleSchemaModeChange = async (mode: 'class' | 'object' | 'primitive' | 'array') => {
+    setIsSavingSchemaMode(true);
+
+    try {
+      let data: Record<string, any> | null = null;
+      let inlineSchema: Record<string, any> | null = null;
+
+      if (mode === 'primitive') {
+        data = { type: primitiveType };
+      } else if (mode === 'array') {
+        data = { type: 'array', items: { type: arrayItemType } };
+      } else if (mode === 'object') {
+        inlineSchema = { type: 'object', properties: [] };
+      }
+      // For 'class' mode, classId will be set separately via handleSetClassReference
+
+      const result = await updateSharedPathResponse(response.id, {
+        schemaMode: mode,
+        classId: mode === 'class' ? undefined : null, // Only clear if not class mode
+        data,
+        inlineSchema,
+      });
+
+      const parsed = JSON.parse(result);
+      if (parsed.success) {
+        setSchemaMode(mode);
+        onUpdate();
+        // Refresh the canvas to show the updated schema type
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        console.error('Error updating schema mode:', parsed.error);
+      }
+    } catch (error) {
+      console.error('Error updating schema mode:', error);
+    } finally {
+      setIsSavingSchemaMode(false);
+    }
+  };
+
+  // Save primitive type change
+  const handlePrimitiveTypeChange = async (type: 'string' | 'number' | 'integer' | 'boolean') => {
+    setPrimitiveType(type);
+
+    if (schemaMode === 'primitive') {
+      try {
+        const result = await updateSharedPathResponse(response.id, {
+          schemaMode: 'primitive',
+          data: { type },
+          classId: null,
+          inlineSchema: null,
+        });
+
+        const parsed = JSON.parse(result);
+        if (parsed.success) {
+          onUpdate();
+          // Refresh the canvas to show the updated primitive type
+          if (onRefresh) {
+            onRefresh();
+          }
+        }
+      } catch (error) {
+        console.error('Error updating primitive type:', error);
+      }
+    }
+  };
+
+  // Save array item type change
+  const handleArrayItemTypeChange = async (type: 'string' | 'number' | 'integer' | 'boolean') => {
+    setArrayItemType(type);
+
+    if (schemaMode === 'array') {
+      try {
+        const result = await updateSharedPathResponse(response.id, {
+          schemaMode: 'array',
+          data: { type: 'array', items: { type } },
+          classId: null,
+          inlineSchema: null,
+        });
+
+        const parsed = JSON.parse(result);
+        if (parsed.success) {
+          onUpdate();
+          // Refresh the canvas to show the updated array type
+          if (onRefresh) {
+            onRefresh();
+          }
+        }
+      } catch (error) {
+        console.error('Error updating array item type:', error);
+      }
+    }
+  };
+
+  // Legacy schema mode handler for content type conversion
   const handleSchemaMode = async (mode: 'class' | 'inline') => {
     if (!currentContentType) return;
 
@@ -373,12 +514,89 @@ export default function ResponseSection({ response, onUpdate }: ResponseSectionP
         </Box>
       )}
 
-      {/* Content Type Details */}
-      {currentContentType && (
+      {/* Response Schema Mode - This affects the response directly, not content types */}
+      <Box sx={{ mb: 3, p: 2, backgroundColor: isDark ? '#1e293b' : '#f8fafc', borderRadius: 1 }}>
+        <Box sx={{ fontSize: '0.875rem', fontWeight: 600, mb: 1.5 }}>Response Schema</Box>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+          <Button
+            size="small"
+            variant={schemaMode === 'class' ? 'contained' : 'outlined'}
+            onClick={() => handleSchemaModeChange('class')}
+            disabled={isSavingSchemaMode}
+          >
+            Class
+          </Button>
+          <Button
+            size="small"
+            variant={schemaMode === 'object' ? 'contained' : 'outlined'}
+            onClick={() => handleSchemaModeChange('object')}
+            disabled={isSavingSchemaMode}
+          >
+            Object
+          </Button>
+          <Button
+            size="small"
+            variant={schemaMode === 'primitive' ? 'contained' : 'outlined'}
+            onClick={() => handleSchemaModeChange('primitive')}
+            disabled={isSavingSchemaMode}
+          >
+            Primitive
+          </Button>
+          <Button
+            size="small"
+            variant={schemaMode === 'array' ? 'contained' : 'outlined'}
+            onClick={() => handleSchemaModeChange('array')}
+            disabled={isSavingSchemaMode}
+          >
+            Array
+          </Button>
+        </Box>
+
+        {/* Primitive Type Selector */}
+        {schemaMode === 'primitive' && (
+          <Box sx={{ mt: 2 }}>
+            <TextField
+              select
+              fullWidth
+              size="small"
+              label="Primitive Type"
+              value={primitiveType}
+              onChange={(e) => handlePrimitiveTypeChange(e.target.value as any)}
+            >
+              <MenuItem value="string">String</MenuItem>
+              <MenuItem value="number">Number</MenuItem>
+              <MenuItem value="integer">Integer</MenuItem>
+              <MenuItem value="boolean">Boolean</MenuItem>
+            </TextField>
+          </Box>
+        )}
+
+        {/* Array Item Type Selector */}
+        {schemaMode === 'array' && (
+          <Box sx={{ mt: 2 }}>
+            <TextField
+              select
+              fullWidth
+              size="small"
+              label="Array Item Type"
+              value={arrayItemType}
+              onChange={(e) => handleArrayItemTypeChange(e.target.value as any)}
+            >
+              <MenuItem value="string">String</MenuItem>
+              <MenuItem value="number">Number</MenuItem>
+              <MenuItem value="integer">Integer</MenuItem>
+              <MenuItem value="boolean">Boolean</MenuItem>
+            </TextField>
+          </Box>
+        )}
+      </Box>
+
+      {/* Content Type Details - Only show for class and object modes */}
+      {(schemaMode === 'class' || schemaMode === 'object') && currentContentType && (
         <Box>
-          {/* Schema Mode Toggle */}
+          {/* Legacy Schema Mode Toggle for content types */}
           <Box sx={{ mb: 2 }}>
-            <Box sx={{ fontSize: '0.875rem', fontWeight: 600, mb: 1 }}>Schema Type</Box>
+            <Box sx={{ fontSize: '0.875rem', fontWeight: 600, mb: 1 }}>Content Type Schema</Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button
                 size="small"
@@ -389,7 +607,7 @@ export default function ResponseSection({ response, onUpdate }: ResponseSectionP
               </Button>
               <Button
                 size="small"
-                variant={schemaMode === 'inline' ? 'contained' : 'outlined'}
+                variant={schemaMode === 'object' ? 'contained' : 'outlined'}
                 onClick={() => handleSchemaMode('inline')}
               >
                 Inline Schema
@@ -423,7 +641,7 @@ export default function ResponseSection({ response, onUpdate }: ResponseSectionP
                   <Button
                     size="small"
                     startIcon={<Refresh />}
-                    onClick={() => handleSchemaMode('inline')}
+                    onClick={() => handleSchemaModeChange('object')}
                   >
                     Convert to Inline Schema
                   </Button>
@@ -433,7 +651,7 @@ export default function ResponseSection({ response, onUpdate }: ResponseSectionP
           )}
 
           {/* Inline Schema Mode */}
-          {schemaMode === 'inline' && (
+          {schemaMode === 'object' && (
             <Box>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
                 <Box sx={{ fontSize: '0.875rem', fontWeight: 600 }}>Properties</Box>
