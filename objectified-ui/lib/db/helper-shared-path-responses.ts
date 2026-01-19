@@ -217,6 +217,7 @@ export async function updateSharedPathResponse(
     statusCode?: string;
     description?: string;
     data?: Record<string, any>;
+    inlineSchema?: Record<string, any> | null;
   }
 ): Promise<string> {
   const setClauses: string[] = ['updated_at = CURRENT_TIMESTAMP'];
@@ -253,12 +254,16 @@ export async function updateSharedPathResponse(
     }
     params.push(dataValue);
   }
+  if (updates.inlineSchema !== undefined) {
+    setClauses.push(`inline_schema = $${++paramIndex}::jsonb`);
+    params.push(updates.inlineSchema ? JSON.stringify(updates.inlineSchema) : null);
+  }
 
   const query = `
     UPDATE odb.shared_path_response
     SET ${setClauses.join(', ')}
     WHERE id = $1
-    RETURNING id, version_path_id, status_code, description, data, created_at, updated_at
+    RETURNING id, version_path_id, status_code, description, data, inline_schema, class_id, created_at, updated_at
   `;
 
   try {
@@ -277,7 +282,15 @@ export async function updateSharedPathResponse(
         // If it's already an object, leave it as is
       }
     }
-    
+    // Ensure inline_schema is properly parsed if it's a string
+    if (response.inline_schema && typeof response.inline_schema === 'string') {
+      try {
+        response.inline_schema = JSON.parse(response.inline_schema);
+      } catch (e) {
+        // If it's already an object, leave it as is
+      }
+    }
+
     return JSON.stringify({ success: true, response });
   } catch (error: any) {
     console.error('Error updating shared response:', error);

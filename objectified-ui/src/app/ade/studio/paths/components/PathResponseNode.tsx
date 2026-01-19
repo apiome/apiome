@@ -16,6 +16,9 @@ export interface ContentTypeInfo {
     items?: { type?: string; $ref?: string };
     properties?: any[];
     $ref?: string;
+    format?: string;
+    enum?: (string | number | boolean | null)[];
+    default?: unknown;
   } | null;
   examples?: any[] | null;
 }
@@ -35,13 +38,21 @@ export interface PathResponseData {
     items?: { type?: string; $ref?: string };
     properties?: any[];
     $ref?: string;
+    format?: string;
+    enum?: (string | number | boolean | null)[];
+    default?: unknown;
   } | null;
   headers?: Array<{ name: string; description?: string }>;
 }
 
 // Helper to get schema display text for primitives and arrays
 const getSchemaDisplayText = (schema: ContentTypeInfo['inline_schema'] | PathResponseData['inlineSchema']): { text: string; isObject: boolean } => {
-  if (!schema) return { text: '', isObject: false };
+  if (!schema) {
+    console.log('[PathResponseNode] getSchemaDisplayText: schema is null/undefined');
+    return { text: '', isObject: false };
+  }
+
+  console.log('[PathResponseNode] getSchemaDisplayText input:', JSON.stringify(schema));
 
   const schemaType = schema.type?.toLowerCase();
 
@@ -63,13 +74,17 @@ const getSchemaDisplayText = (schema: ContentTypeInfo['inline_schema'] | PathRes
 
   // Handle object type
   if (schemaType === 'object') {
-    const propCount = schema.properties?.length || 0;
+    const propCount = Array.isArray(schema.properties) ? schema.properties.length : 0;
     return { text: propCount > 0 ? `Object (${propCount} props)` : 'Object', isObject: true };
   }
 
-  // Handle primitive types
+  // Handle primitive types with optional format
   if (schemaType && ['string', 'number', 'integer', 'boolean', 'null'].includes(schemaType)) {
-    return { text: schemaType, isObject: false };
+    let text = schemaType;
+    if (schema.format) {
+      text = `${schemaType} (${schema.format})`;
+    }
+    return { text, isObject: false };
   }
 
   return { text: '', isObject: false };

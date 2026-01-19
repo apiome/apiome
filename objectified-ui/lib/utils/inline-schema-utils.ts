@@ -17,13 +17,38 @@ export interface InlineSchemaProperty {
   parent_id: string | null;
 }
 
+// Schema type that supports primitives, objects, and arrays
+export type SchemaType = 'object' | 'array' | 'string' | 'number' | 'integer' | 'boolean' | 'null';
+
 export interface InlineSchema {
-  type: 'object';
+  type: SchemaType;
   description?: string;
-  properties: InlineSchemaProperty[];
+  // For object type
+  properties?: InlineSchemaProperty[];
+  // For array type
+  items?: {
+    type?: SchemaType;
+    $ref?: string;
+    properties?: InlineSchemaProperty[];
+  };
+  // For references
+  $ref?: string;
+  // Composition patterns
   allOf?: any[];
   oneOf?: any[];
   anyOf?: any[];
+  // String constraints
+  format?: string;
+  pattern?: string;
+  minLength?: number;
+  maxLength?: number;
+  // Number constraints
+  minimum?: number;
+  maximum?: number;
+  // Enum values
+  enum?: (string | number | boolean | null)[];
+  // Default value
+  default?: unknown;
 }
 
 export interface PropertyTreeNode extends InlineSchemaProperty {

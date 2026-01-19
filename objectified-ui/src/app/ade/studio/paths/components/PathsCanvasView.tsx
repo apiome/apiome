@@ -1105,16 +1105,63 @@ function PathsCanvasInner({ selectedPathId, onOperationSelect, onParameterSelect
                 : ct.examples,
             }));
 
-            // Parse inline_schema from response itself
+            // Parse schema - check response.data FIRST since that's where user-set schemas are stored
+            // The inline_schema column often contains a default empty object, so data takes priority
             let inlineSchema = null;
-            if (response.inline_schema) {
+
+            // First, check response.data for schema type (this is where primitives are stored)
+            if (response.data) {
               try {
-                inlineSchema = typeof response.inline_schema === 'string'
+                const responseData = typeof response.data === 'string'
+                  ? JSON.parse(response.data)
+                  : response.data;
+
+                // Check if data has a type field directly (primitive schema like { type: 'string' })
+                if (responseData?.type) {
+                  inlineSchema = responseData;
+                  console.log('[PathsCanvasView] Response', response.status_code, 'schema from data:', inlineSchema);
+                } else if (responseData?.content?.['application/json']?.schema) {
+                  // Extract schema from OpenAPI-style content
+                  inlineSchema = responseData.content['application/json'].schema;
+                  console.log('[PathsCanvasView] Response', response.status_code, 'schema from data.content:', inlineSchema);
+                } else if (responseData?.schema) {
+                  inlineSchema = responseData.schema;
+                  console.log('[PathsCanvasView] Response', response.status_code, 'schema from data.schema:', inlineSchema);
+                }
+              } catch (error) {
+                console.error('Error parsing response data for schema:', error);
+              }
+            }
+
+            // Only fall back to inline_schema if data didn't have a schema
+            if (!inlineSchema && response.inline_schema) {
+              try {
+                const parsedInlineSchema = typeof response.inline_schema === 'string'
                   ? JSON.parse(response.inline_schema)
                   : response.inline_schema;
+
+                // Only use inline_schema if it's not the default empty object
+                const isDefaultEmpty = parsedInlineSchema?.type === 'object' &&
+                  (!parsedInlineSchema?.properties ||
+                   (Array.isArray(parsedInlineSchema.properties) && parsedInlineSchema.properties.length === 0));
+
+                if (!isDefaultEmpty) {
+                  inlineSchema = parsedInlineSchema;
+                  console.log('[PathsCanvasView] Response', response.status_code, 'inline_schema:', inlineSchema);
+                }
               } catch (error) {
                 console.error('Error parsing inline_schema:', error);
               }
+            }
+
+            // Also log content types with inline schemas
+            if (contentTypes.length > 0) {
+              console.log('[PathsCanvasView] Response', response.status_code, 'has', contentTypes.length, 'content types');
+              contentTypes.forEach((ct: any, idx: number) => {
+                if (ct.inline_schema) {
+                  console.log('[PathsCanvasView] ContentType', idx, 'inline_schema:', ct.inline_schema);
+                }
+              });
             }
 
             allResponseNodes.push({

@@ -242,6 +242,100 @@ export async function initializeResponseInlineSchema(contentId: string): Promise
 }
 
 /**
+ * Set a primitive type schema for a content type (string, number, integer, boolean, null)
+ */
+export async function setResponsePrimitiveSchema(
+  contentId: string,
+  schemaType: 'string' | 'number' | 'integer' | 'boolean' | 'null',
+  options?: {
+    format?: string;
+    description?: string;
+    enum?: (string | number | boolean | null)[];
+    default?: unknown;
+  }
+): Promise<string> {
+  try {
+    const primitiveSchema: Record<string, unknown> = {
+      type: schemaType,
+    };
+
+    if (options?.format) {
+      primitiveSchema.format = options.format;
+    }
+    if (options?.description) {
+      primitiveSchema.description = options.description;
+    }
+    if (options?.enum && options.enum.length > 0) {
+      primitiveSchema.enum = options.enum;
+    }
+    if (options?.default !== undefined) {
+      primitiveSchema.default = options.default;
+    }
+
+    const query = `
+      UPDATE odb.shared_path_response_content
+      SET class_id = NULL, inline_schema = $1
+      WHERE id = $2
+      RETURNING id, inline_schema
+    `;
+    const result = await connectionPool.query(query, [JSON.stringify(primitiveSchema), contentId]);
+
+    if (result.rows.length === 0) {
+      return JSON.stringify({ success: false, error: 'Content type not found' });
+    }
+
+    return JSON.stringify({ success: true, schema: primitiveSchema });
+  } catch (error: unknown) {
+    console.error('Error setting primitive schema:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return JSON.stringify({ success: false, error: message });
+  }
+}
+
+/**
+ * Set an array type schema for a content type
+ */
+export async function setResponseArraySchema(
+  contentId: string,
+  itemType: 'string' | 'number' | 'integer' | 'boolean' | 'object',
+  options?: {
+    itemRef?: string; // For object items that reference a class
+    description?: string;
+  }
+): Promise<string> {
+  try {
+    const arraySchema: Record<string, unknown> = {
+      type: 'array',
+      items: itemType === 'object' && options?.itemRef
+        ? { $ref: `#/components/schemas/${options.itemRef}` }
+        : { type: itemType },
+    };
+
+    if (options?.description) {
+      arraySchema.description = options.description;
+    }
+
+    const query = `
+      UPDATE odb.shared_path_response_content
+      SET class_id = NULL, inline_schema = $1
+      WHERE id = $2
+      RETURNING id, inline_schema
+    `;
+    const result = await connectionPool.query(query, [JSON.stringify(arraySchema), contentId]);
+
+    if (result.rows.length === 0) {
+      return JSON.stringify({ success: false, error: 'Content type not found' });
+    }
+
+    return JSON.stringify({ success: true, schema: arraySchema });
+  } catch (error: unknown) {
+    console.error('Error setting array schema:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return JSON.stringify({ success: false, error: message });
+  }
+}
+
+/**
  * Set a class reference for a content type (replacing inline schema if present)
  */
 export async function setResponseContentTypeClassReference(
