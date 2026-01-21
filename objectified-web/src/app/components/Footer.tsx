@@ -45,15 +45,15 @@ export function Footer() {
                 <Github className="h-5 w-5" />
               </a>
               */}
-              <a
-                href="https://twitter.com/objectifieddev"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                aria-label="Twitter"
-              >
-                <Twitter className="h-5 w-5" />
-              </a>
+              {/*<a*/}
+              {/*  href="https://twitter.com/objectifieddev"*/}
+              {/*  target="_blank"*/}
+              {/*  rel="noopener noreferrer"*/}
+              {/*  className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"*/}
+              {/*  aria-label="Twitter"*/}
+              {/*>*/}
+              {/*  <Twitter className="h-5 w-5" />*/}
+              {/*</a>*/}
               <a
                 href="https://www.youtube.com/@objectifieddev"
                 target="_blank"
@@ -63,15 +63,15 @@ export function Footer() {
               >
                 <Youtube className="h-5 w-5" />
               </a>
-              <a
-                href="https://linkedin.com/company/objectified"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="h-5 w-5" />
-              </a>
+              {/*<a*/}
+              {/*  href="https://linkedin.com/company/objectified"*/}
+              {/*  target="_blank"*/}
+              {/*  rel="noopener noreferrer"*/}
+              {/*  className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"*/}
+              {/*  aria-label="LinkedIn"*/}
+              {/*>*/}
+              {/*  <Linkedin className="h-5 w-5" />*/}
+              {/*</a>*/}
             </div>
           </div>
 
@@ -101,16 +101,16 @@ export function Footer() {
                   Browse APIs
                 </a>
               </li>
-              <li>
-                <a
-                  href="https://docs.objectified.dev"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-                >
-                  Documentation
-                </a>
-              </li>
+              {/*<li>*/}
+              {/*  <a*/}
+              {/*    href="https://docs.objectified.dev"*/}
+              {/*    target="_blank"*/}
+              {/*    rel="noopener noreferrer"*/}
+              {/*    className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"*/}
+              {/*  >*/}
+              {/*    Documentation*/}
+              {/*  </a>*/}
+              {/*</li>*/}
             </ul>
           </div>
 
