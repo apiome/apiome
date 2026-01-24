@@ -95,7 +95,6 @@ class PrimitiveSchema(BaseModel):
     is_system: bool = False
     is_public: bool = False
     usage_count: int = 0
-    enabled: bool = True
     created_at: Optional[Union[datetime, str]] = None
     updated_at: Optional[Union[datetime, str]] = None
 
@@ -122,7 +121,6 @@ class PrimitiveUpdateRequest(BaseModel):
     category: Optional[str] = None
     schema: Optional[Dict[str, Any]] = None
     tags: Optional[List[str]] = None
-    enabled: Optional[bool] = None
 
     class Config:
         from_attributes = True

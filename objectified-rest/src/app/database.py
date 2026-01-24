@@ -381,10 +381,10 @@ class Database:
         """Get all primitives for a specific tenant."""
         query = """
             SELECT id, tenant_id, name, description, category, schema, tags,
-                   created_by, is_system, is_public, usage_count, enabled,
+                   created_by, is_system, is_public, usage_count,
                    created_at, updated_at
             FROM odb.primitives
-            WHERE tenant_id = %s AND deleted_at IS NULL AND enabled = true
+            WHERE tenant_id = %s
         """
         params = [tenant_id]
 
@@ -399,10 +399,10 @@ class Database:
         """Get a specific primitive by ID, ensuring it belongs to the tenant."""
         query = """
             SELECT id, tenant_id, name, description, category, schema, tags,
-                   created_by, is_system, is_public, usage_count, enabled,
+                   created_by, is_system, is_public, usage_count,
                    created_at, updated_at
             FROM odb.primitives
-            WHERE id = %s AND tenant_id = %s AND deleted_at IS NULL
+            WHERE id = %s AND tenant_id = %s
         """
         results = self.execute_query(query, (primitive_id, tenant_id))
         return results[0] if results else None
@@ -423,7 +423,7 @@ class Database:
             (tenant_id, name, description, category, schema, tags, created_by)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING id, tenant_id, name, description, category, schema, tags,
-                      created_by, is_system, is_public, usage_count, enabled,
+                      created_by, is_system, is_public, usage_count,
                       created_at, updated_at
         """
 
@@ -472,9 +472,6 @@ class Database:
         if 'tags' in updates and updates['tags'] is not None:
             update_fields.append("tags = %s")
             params.append(updates['tags'])
-        if 'enabled' in updates and updates['enabled'] is not None:
-            update_fields.append("enabled = %s")
-            params.append(updates['enabled'])
 
         if not update_fields:
             # Nothing to update, return current primitive
@@ -484,9 +481,9 @@ class Database:
         query = f"""
             UPDATE odb.primitives
             SET {', '.join(update_fields)}
-            WHERE id = %s AND tenant_id = %s AND deleted_at IS NULL
+            WHERE id = %s AND tenant_id = %s
             RETURNING id, tenant_id, name, description, category, schema, tags,
-                      created_by, is_system, is_public, usage_count, enabled,
+                      created_by, is_system, is_public, usage_count,
                       created_at, updated_at
         """
 
@@ -502,11 +499,10 @@ class Database:
             raise e
 
     def delete_primitive(self, primitive_id: str, tenant_id: str) -> bool:
-        """Soft delete a primitive, ensuring it belongs to the tenant."""
+        """Delete a primitive, ensuring it belongs to the tenant."""
         query = """
-            UPDATE odb.primitives
-            SET deleted_at = CURRENT_TIMESTAMP
-            WHERE id = %s AND tenant_id = %s AND deleted_at IS NULL AND is_system = false
+            DELETE FROM odb.primitives
+            WHERE id = %s AND tenant_id = %s AND is_system = false
         """
         conn = self.connect()
         try:

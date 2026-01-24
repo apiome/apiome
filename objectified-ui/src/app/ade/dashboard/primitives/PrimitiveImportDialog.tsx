@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { Upload, AlertCircle, CheckCircle, FileCode } from 'lucide-react';
+import { useState, useCallback, useRef } from 'react';
+import { Upload, AlertCircle, CheckCircle, FileCode, FileJson, X } from 'lucide-react';
 import { Button } from '@/app/components/ui/Button';
 import { Label } from '@/app/components/ui/Label';
 import { Alert } from '@/app/components/ui/Alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/app/components/ui/Dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/app/components/ui/Tabs';
 import dynamic from 'next/dynamic';
+import yaml from 'yaml';
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
@@ -23,6 +25,11 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }
   const [selectedDefs, setSelectedDefs] = useState<Set<string>>(new Set());
   const [parseError, setParseError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [importMethod, setImportMethod] = useState<'file' | 'paste'>('file');
+  const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isLoadingFile, setIsLoadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSchemaChange = (value: string | undefined) => {
     const newValue = value || '';
@@ -33,9 +40,240 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }
     setSelectedDefs(new Set());
   };
 
+  const parseSchemaContent = (content: string): Record<string, unknown> | null => {
+    // First try to parse as JSON
+    try {
+      return JSON.parse(content);
+    } catch {
+      // If JSON parsing fails, try YAML
+      try {
+        const parsed = yaml.parse(content);
+        if (typeof parsed === 'object' && parsed !== null) {
+          return parsed as Record<string, unknown>;
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    }
+  };
+
+  /**
+   * Extract a primitive name from a standalone JSON Schema.
+   * Priority: $id (last path segment) > title (slugified) > filename (without extension)
+   */
+  const extractPrimitiveNameFromSchema = (
+    schema: Record<string, unknown>,
+    filename?: string
+  ): string => {
+    // Try to extract from $id
+    if (schema.$id && typeof schema.$id === 'string') {
+      const idPath = schema.$id.split('/');
+      const lastSegment = idPath[idPath.length - 1];
+      if (lastSegment) {
+        // Convert to snake_case/camelCase if needed
+        return lastSegment.replace(/-/g, '_');
+      }
+    }
+
+    // Try to extract from title
+    if (schema.title && typeof schema.title === 'string') {
+      // Convert title to a valid identifier (snake_case)
+      return schema.title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/^_+|_+$/g, '');
+    }
+
+    // Fall back to filename
+    if (filename) {
+      const baseName = filename.replace(/\.(json|yaml|yml)$/i, '');
+      return baseName.replace(/-/g, '_').replace(/\s+/g, '_');
+    }
+
+    return 'imported_primitive';
+  };
+
+  /**
+   * Check if a schema is a standalone primitive schema (not a container with $defs)
+   * Handles schemas with: type, anyOf, oneOf, allOf, enum, or const
+   */
+  const isStandalonePrimitiveSchema = (schema: Record<string, unknown>): boolean => {
+    // If it has $defs or definitions, it's a container schema
+    const hasDefs = schema.$defs || schema.definitions;
+    if (hasDefs) {
+      return false;
+    }
+
+    // Check for various JSON Schema type indicators
+    const hasType = 'type' in schema;
+    const hasAnyOf = 'anyOf' in schema;
+    const hasOneOf = 'oneOf' in schema;
+    const hasAllOf = 'allOf' in schema;
+    const hasEnum = 'enum' in schema;
+    const hasConst = 'const' in schema;
+
+    return hasType || hasAnyOf || hasOneOf || hasAllOf || hasEnum || hasConst;
+  };
+
+  /**
+   * Determine the category for a schema (for primitives)
+   */
+  const determineCategoryFromSchema = (schema: Record<string, unknown>): string => {
+    // If type is explicitly set, use it
+    if (schema.type) {
+      const schemaType = schema.type;
+      if (typeof schemaType === 'string') {
+        return schemaType;
+      }
+      if (Array.isArray(schemaType) && schemaType.length > 0) {
+        return schemaType[0];
+      }
+    }
+
+    // For anyOf/oneOf with const values, it's typically a string enum
+    if (schema.anyOf || schema.oneOf) {
+      const options = (schema.anyOf || schema.oneOf) as Record<string, unknown>[];
+      if (options.length > 0 && 'const' in options[0]) {
+        const firstConst = options[0].const;
+        return typeof firstConst === 'string' ? 'string' : typeof firstConst;
+      }
+    }
+
+    // For enum, check the type of the first value
+    if (schema.enum && Array.isArray(schema.enum) && schema.enum.length > 0) {
+      return typeof schema.enum[0];
+    }
+
+    // For const, check its type
+    if ('const' in schema) {
+      return typeof schema.const;
+    }
+
+    // Default to object
+    return 'object';
+  };
+
+  const handleFileSelect = useCallback(async (selectedFile: File) => {
+    const fileName = selectedFile.name.toLowerCase();
+    if (!fileName.endsWith('.json') && !fileName.endsWith('.yaml') && !fileName.endsWith('.yml')) {
+      setParseError('Please select a JSON or YAML file');
+      return;
+    }
+
+    setFile(selectedFile);
+    setIsLoadingFile(true);
+    setParseError(null);
+
+    try {
+      const content = await selectedFile.text();
+      const parsed = parseSchemaContent(content);
+
+      if (!parsed) {
+        setParseError('Failed to parse file. Please ensure it contains valid JSON or YAML.');
+        setFile(null);
+        return;
+      }
+
+      // Convert to formatted JSON for the editor
+      const jsonString = JSON.stringify(parsed, null, 2);
+      setSchemaJson(jsonString);
+
+      // Check if this is a standalone primitive schema
+      if (isStandalonePrimitiveSchema(parsed)) {
+        // Extract a name for this primitive
+        const primitiveName = extractPrimitiveNameFromSchema(parsed, selectedFile.name);
+
+        // Use the entire schema as the definition
+        const defs = {
+          [primitiveName]: parsed
+        };
+
+        setDefinitions(defs as Record<string, Record<string, unknown>>);
+        setSelectedDefs(new Set([primitiveName]));
+        setShowPreview(true);
+        return;
+      }
+
+      // Otherwise, look for $defs or definitions
+      const defs = {
+        ...((parsed.$defs as Record<string, unknown>) || {}),
+        ...((parsed.definitions as Record<string, unknown>) || {})
+      };
+
+      if (Object.keys(defs).length === 0) {
+        setParseError('No definitions found. Schema must contain $defs, definitions, or be a standalone type definition.');
+        return;
+      }
+
+      setDefinitions(defs as Record<string, Record<string, unknown>>);
+      setSelectedDefs(new Set(Object.keys(defs)));
+      setShowPreview(true);
+    } catch (err) {
+      const error = err as Error;
+      setParseError(`Error reading file: ${error.message}`);
+      setFile(null);
+    } finally {
+      setIsLoadingFile(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  }, [handleFileSelect]);
+
+  const clearFile = () => {
+    setFile(null);
+    setSchemaJson('');
+    setDefinitions({});
+    setSelectedDefs(new Set());
+    setShowPreview(false);
+    setParseError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleParseSchema = () => {
     try {
       const parsed = JSON.parse(schemaJson);
+
+      // Check if this is a standalone primitive schema
+      if (isStandalonePrimitiveSchema(parsed)) {
+        // Extract a name for this primitive
+        const primitiveName = extractPrimitiveNameFromSchema(parsed);
+
+        // Use the entire schema as the definition
+        const defs = {
+          [primitiveName]: parsed
+        };
+
+        setDefinitions(defs);
+        setSelectedDefs(new Set([primitiveName]));
+        setShowPreview(true);
+        setParseError(null);
+        return;
+      }
 
       // Extract $defs or definitions
       const defs = {
@@ -44,7 +282,7 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }
       };
 
       if (Object.keys(defs).length === 0) {
-        setParseError('No definitions found. Schema must contain $defs or definitions.');
+        setParseError('No definitions found. Schema must contain $defs, definitions, or be a standalone type definition.');
         return;
       }
 
@@ -77,11 +315,20 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }
     setImporting(true);
 
     try {
+      // Construct a schema with $defs from our definitions
+      // This handles both standalone schemas (which we've already converted to definitions)
+      // and schemas that already had $defs/definitions
+      const schemaForApi = {
+        $defs: Object.fromEntries(
+          Array.from(selectedDefs).map(defName => [defName, definitions[defName]])
+        )
+      };
+
       const response = await fetch('/api/primitives/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          schema: JSON.parse(schemaJson),
+          schema: schemaForApi,
           selected_definitions: Array.from(selectedDefs),
         }),
       });
@@ -126,37 +373,122 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }
 
         <div className="space-y-4 py-4">
           {!showPreview ? (
-            <>
-              <div className="space-y-2">
-                <Label>JSON Schema with $defs or definitions</Label>
-                <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
-                  <MonacoEditor
-                    height="400px"
-                    language="json"
-                    theme="vs-dark"
-                    value={schemaJson}
-                    onChange={handleSchemaChange}
-                    options={{
-                      minimap: { enabled: false },
-                      scrollBeyondLastLine: false,
-                      fontSize: 13,
-                    }}
-                  />
-                </div>
-                {parseError && (
-                  <Alert variant="error">
-                    <AlertCircle className="h-4 w-4" />
-                    <span>{parseError}</span>
-                  </Alert>
-                )}
-              </div>
+            <Tabs value={importMethod} onValueChange={(v) => setImportMethod(v as 'file' | 'paste')}>
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="file" className="flex items-center gap-2">
+                  <FileJson className="w-4 h-4" />
+                  Upload File
+                </TabsTrigger>
+                <TabsTrigger value="paste" className="flex items-center gap-2">
+                  <FileCode className="w-4 h-4" />
+                  Paste JSON
+                </TabsTrigger>
+              </TabsList>
 
-              <div className="flex justify-end">
-                <Button onClick={handleParseSchema} disabled={!schemaJson.trim()}>
-                  Parse Schema
-                </Button>
-              </div>
-            </>
+              <TabsContent value="file">
+                <div className="space-y-4">
+                  {!file ? (
+                    <div
+                      className={`
+                        border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+                        transition-colors duration-200
+                        ${isDragging
+                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                          : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'
+                        }
+                      `}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
+                      <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                        Drag & Drop or Click to Select
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        JSON Schema file (.json, .yaml, .yml) with $defs or definitions
+                      </p>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".json,.yaml,.yml"
+                        className="hidden"
+                        onChange={(e) => {
+                          const selectedFile = e.target.files?.[0];
+                          if (selectedFile) {
+                            handleFileSelect(selectedFile);
+                          }
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <FileJson className="w-8 h-8 text-green-500" />
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-white">{file.name}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {(file.size / 1024).toFixed(1)} KB
+                            </p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={clearFile}>
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      {isLoadingFile && (
+                        <p className="text-sm text-indigo-600 dark:text-indigo-400">
+                          Processing file...
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {parseError && (
+                    <Alert variant="error">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{parseError}</span>
+                    </Alert>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="paste">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>JSON Schema with $defs or definitions</Label>
+                    <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+                      <MonacoEditor
+                        height="400px"
+                        language="json"
+                        theme="vs-dark"
+                        value={schemaJson}
+                        onChange={handleSchemaChange}
+                        options={{
+                          minimap: { enabled: false },
+                          scrollBeyondLastLine: false,
+                          fontSize: 13,
+                        }}
+                      />
+                    </div>
+                    {parseError && (
+                      <Alert variant="error">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>{parseError}</span>
+                      </Alert>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button onClick={handleParseSchema} disabled={!schemaJson.trim()}>
+                      Parse Schema
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           ) : (
             <>
               <Alert variant="default">
@@ -168,8 +500,9 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }
                 <div className="max-h-96 overflow-y-auto">
                   {Object.entries(definitions).map(([defName, defSchema]) => {
                     const schema = defSchema as Record<string, unknown>;
-                    const schemaType = (schema.type as string) || 'object';
+                    const schemaType = determineCategoryFromSchema(schema);
                     const schemaDescription = schema.description as string | undefined;
+                    const schemaTitle = schema.title as string | undefined;
 
                     return (
                       <div
@@ -191,10 +524,13 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }
                                 ({schemaType})
                               </span>
                             </div>
+                            {schemaTitle && schemaTitle !== defName && (
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{schemaTitle}</p>
+                            )}
                             {schemaDescription && (
                               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{schemaDescription}</p>
                             )}
-                            <pre className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto">
+                            <pre className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto max-h-48 overflow-y-auto">
                               {JSON.stringify(defSchema, null, 2)}
                             </pre>
                           </div>
@@ -233,6 +569,9 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }
                 setShowPreview(false);
                 setDefinitions({});
                 setSelectedDefs(new Set());
+                if (importMethod === 'file') {
+                  clearFile();
+                }
               }}
             >
               Back

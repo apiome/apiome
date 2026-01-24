@@ -21,6 +21,78 @@ from .auth import validate_authentication, get_authenticated_user_id
 router = APIRouter(prefix="/v1/primitives", tags=["primitives"])
 
 
+def determine_category_from_schema(schema: Dict[str, Any]) -> str:
+    """
+    Determine the category for a JSON Schema definition.
+
+    Handles schemas with:
+    - type: Direct type specification
+    - anyOf/oneOf: Union types, infers from const values
+    - allOf: Intersection types
+    - enum: Enumeration values
+    - const: Single constant value
+
+    Args:
+        schema: The JSON Schema definition
+
+    Returns:
+        The category string (e.g., 'string', 'number', 'object')
+    """
+    # If type is explicitly set, use it
+    if 'type' in schema:
+        schema_type = schema['type']
+        if isinstance(schema_type, str):
+            return schema_type
+        if isinstance(schema_type, list) and len(schema_type) > 0:
+            return schema_type[0]
+
+    # For anyOf/oneOf with const values, infer type from the first const
+    for key in ('anyOf', 'oneOf'):
+        if key in schema:
+            options = schema[key]
+            if isinstance(options, list) and len(options) > 0:
+                first_option = options[0]
+                if isinstance(first_option, dict) and 'const' in first_option:
+                    const_value = first_option['const']
+                    if isinstance(const_value, str):
+                        return 'string'
+                    elif isinstance(const_value, bool):
+                        return 'boolean'
+                    elif isinstance(const_value, int):
+                        return 'integer'
+                    elif isinstance(const_value, float):
+                        return 'number'
+
+    # For enum, check the type of the first value
+    if 'enum' in schema:
+        enum_values = schema['enum']
+        if isinstance(enum_values, list) and len(enum_values) > 0:
+            first_value = enum_values[0]
+            if isinstance(first_value, str):
+                return 'string'
+            elif isinstance(first_value, bool):
+                return 'boolean'
+            elif isinstance(first_value, int):
+                return 'integer'
+            elif isinstance(first_value, float):
+                return 'number'
+
+    # For const, check its type
+    if 'const' in schema:
+        const_value = schema['const']
+        if isinstance(const_value, str):
+            return 'string'
+        elif isinstance(const_value, bool):
+            return 'boolean'
+        elif isinstance(const_value, int):
+            return 'integer'
+        elif isinstance(const_value, float):
+            return 'number'
+
+    # Default to object
+    return 'object'
+
+
 @router.get("/{tenant_slug}")
 async def list_primitives(
     tenant_slug: str,
@@ -310,17 +382,15 @@ async def import_primitives(
 
     for def_name, def_schema in definitions.items():
         try:
-            # Determine category from schema type
-            schema_type = def_schema.get('type', 'object')
-            if isinstance(schema_type, list):
-                schema_type = schema_type[0] if schema_type else 'object'
+            # Determine category from schema
+            schema_type = determine_category_from_schema(def_schema)
 
-            # Create primitive
+            # Create primitive - the full schema with all metadata is stored
             primitive = db.create_primitive(
                 tenant_id=auth_data['tenant_id'],
                 name=def_name,
                 category=schema_type,
-                schema=def_schema,
+                schema=def_schema,  # Full schema including x-license, x-links, $comment, examples, title, etc.
                 description=def_schema.get('description'),
                 tags=def_schema.get('tags', []),
                 created_by=created_by
