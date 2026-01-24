@@ -221,7 +221,7 @@ export default function PrimitivesManagementClient() {
                 Primitives
               </h2>
               <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-                Manage reusable JSON Schema primitive definitions
+                Manage your tenant&apos;s reusable JSON Schema primitive definitions
               </p>
             </div>
             <div className="flex items-center gap-3">
