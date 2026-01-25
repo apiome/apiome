@@ -39,6 +39,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Orders classes: Cart, EnhancedOrderItem, Refund, Shipment, Invoice
   - Payments classes: PaymentIntent, PaymentMethod, Subscription, Transaction, Payout
   - Products classes: ProductVariant, Inventory, ProductCategory, ProductReview, ProductPrice
+  - Scheduling classes: Appointment, Availability, Calendar, Reminder
   - Security classes: Session, APIKeyAuth, SecurityEvent, IPWhiteList, RateLimit
   - User/Auth classes: EnhancedUserProfile, Role, Permission, TwoFactorAuth, PasswordReset
 - Import Improvements:
