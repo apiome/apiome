@@ -205,3 +205,58 @@ class ProjectUpdateRequest(BaseModel):
         from_attributes = True
 
 
+# ==================== Version Models ====================
+
+class VersionSchema(BaseModel):
+    """Pydantic model for a version."""
+    id: str
+    project_id: str
+    creator_id: Optional[str] = None
+    version_id: str
+    description: Optional[str] = None
+    change_log: Optional[str] = None
+    visibility: str = "private"
+    published: bool = False
+    published_at: Optional[Union[datetime, str]] = None
+    enabled: bool = True
+    creator_name: Optional[str] = None
+    creator_email: Optional[str] = None
+    project_name: Optional[str] = None
+    project_slug: Optional[str] = None
+    created_at: Optional[Union[datetime, str]] = None
+    updated_at: Optional[Union[datetime, str]] = None
+
+    class Config:
+        from_attributes = True
+
+
+class VersionCreateRequest(BaseModel):
+    """Request model for creating a version."""
+    version_id: Optional[str] = None  # Optional - auto-generated if not provided
+    description: Optional[str] = None
+    change_log: Optional[str] = None
+    source_version_id: Optional[str] = None  # Copy classes from this version
+    bump_strategy: Optional[str] = None  # 'patch' or 'minor' for auto-versioning
+
+    class Config:
+        from_attributes = True
+
+
+class VersionUpdateRequest(BaseModel):
+    """Request model for updating a version."""
+    description: Optional[str] = None
+    change_log: Optional[str] = None
+    enabled: Optional[bool] = None
+
+    class Config:
+        from_attributes = True
+
+
+class VersionPublishRequest(BaseModel):
+    """Request model for publishing a version."""
+    visibility: Optional[str] = "private"  # 'public' or 'private'
+
+    class Config:
+        from_attributes = True
+
+

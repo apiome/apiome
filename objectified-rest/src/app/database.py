@@ -851,6 +851,310 @@ class Database:
             conn.rollback()
             raise e
 
+    # ==================== Version CRUD Operations ====================
+
+    def get_versions_for_project(self, project_id: str, tenant_id: str) -> List[Dict[str, Any]]:
+        """Get all versions for a project, ensuring project belongs to tenant."""
+        query = """
+            SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
+                   v.change_log, v.visibility, v.published, v.published_at,
+                   v.enabled, v.created_at, v.updated_at,
+                   u.name as creator_name, u.email as creator_email,
+                   p.name as project_name, p.slug as project_slug
+            FROM odb.versions v
+            JOIN odb.projects p ON v.project_id = p.id
+            LEFT JOIN odb.users u ON v.creator_id = u.id
+            WHERE v.project_id = %s
+              AND p.tenant_id = %s
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+            ORDER BY v.created_at DESC
+        """
+        return self.execute_query(query, (project_id, tenant_id))
+
+    def get_version_by_id(self, version_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific version by ID, ensuring it belongs to the tenant."""
+        query = """
+            SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
+                   v.change_log, v.visibility, v.published, v.published_at,
+                   v.enabled, v.created_at, v.updated_at,
+                   u.name as creator_name, u.email as creator_email,
+                   p.name as project_name, p.slug as project_slug
+            FROM odb.versions v
+            JOIN odb.projects p ON v.project_id = p.id
+            LEFT JOIN odb.users u ON v.creator_id = u.id
+            WHERE v.id = %s
+              AND p.tenant_id = %s
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+        """
+        results = self.execute_query(query, (version_id, tenant_id))
+        return results[0] if results else None
+
+    def get_version_by_version_id(self, project_id: str, version_id_str: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific version by version_id string (e.g., '1.0.0'), ensuring it belongs to tenant."""
+        query = """
+            SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
+                   v.change_log, v.visibility, v.published, v.published_at,
+                   v.enabled, v.created_at, v.updated_at,
+                   u.name as creator_name, u.email as creator_email,
+                   p.name as project_name, p.slug as project_slug
+            FROM odb.versions v
+            JOIN odb.projects p ON v.project_id = p.id
+            LEFT JOIN odb.users u ON v.creator_id = u.id
+            WHERE v.project_id = %s
+              AND v.version_id = %s
+              AND p.tenant_id = %s
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+        """
+        results = self.execute_query(query, (project_id, version_id_str, tenant_id))
+        return results[0] if results else None
+
+    def get_latest_version_for_project(self, project_id: str, tenant_id: str) -> Optional[str]:
+        """Get the latest version_id string for a project."""
+        query = """
+            SELECT v.version_id
+            FROM odb.versions v
+            JOIN odb.projects p ON v.project_id = p.id
+            WHERE v.project_id = %s
+              AND p.tenant_id = %s
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+            ORDER BY v.created_at DESC
+            LIMIT 1
+        """
+        results = self.execute_query(query, (project_id, tenant_id))
+        return results[0]['version_id'] if results else None
+
+    def create_version(
+        self,
+        project_id: str,
+        creator_id: Optional[str],
+        version_id: str,
+        description: Optional[str] = None,
+        change_log: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Create a new version."""
+        query = """
+            INSERT INTO odb.versions
+            (project_id, creator_id, version_id, description, change_log)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id, project_id, creator_id, version_id, description,
+                      change_log, visibility, published, published_at,
+                      enabled, created_at, updated_at
+        """
+
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    query,
+                    (project_id, creator_id, version_id, description, change_log)
+                )
+                result = cursor.fetchone()
+                conn.commit()
+                return result
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def update_version(
+        self,
+        version_record_id: str,
+        tenant_id: str,
+        updates: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Update an existing version, ensuring it belongs to the tenant."""
+        # First verify the version belongs to the tenant and is not published
+        existing = self.get_version_by_id(version_record_id, tenant_id)
+        if not existing:
+            return None
+
+        if existing.get('published'):
+            raise Exception("Cannot edit a published version. Published versions are frozen.")
+
+        # Build dynamic update query
+        update_fields = []
+        params = []
+
+        if 'description' in updates:
+            update_fields.append("description = %s")
+            params.append(updates['description'])
+        if 'change_log' in updates:
+            update_fields.append("change_log = %s")
+            params.append(updates['change_log'])
+        if 'enabled' in updates and updates['enabled'] is not None:
+            update_fields.append("enabled = %s")
+            params.append(updates['enabled'])
+
+        if not update_fields:
+            # Nothing to update, return current version
+            return existing
+
+        # Always update updated_at
+        update_fields.append("updated_at = CURRENT_TIMESTAMP")
+
+        params.append(version_record_id)
+        query = f"""
+            UPDATE odb.versions
+            SET {', '.join(update_fields)}
+            WHERE id = %s AND deleted_at IS NULL
+            RETURNING id, project_id, creator_id, version_id, description,
+                      change_log, visibility, published, published_at,
+                      enabled, created_at, updated_at
+        """
+
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, tuple(params))
+                result = cursor.fetchone()
+                conn.commit()
+                return result
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def publish_version(self, version_record_id: str, tenant_id: str, user_id: str, visibility: str = "private") -> Optional[Dict[str, Any]]:
+        """Publish a version (only owner or tenant admin can publish)."""
+        query = """
+            UPDATE odb.versions v
+            SET published = true,
+                published_at = CURRENT_TIMESTAMP,
+                visibility = %s,
+                updated_at = CURRENT_TIMESTAMP
+            FROM odb.projects p
+            WHERE v.id = %s
+              AND v.project_id = p.id
+              AND p.tenant_id = %s
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+              AND (
+                v.creator_id = %s
+                OR EXISTS (
+                  SELECT 1 FROM odb.tenant_administrators ta
+                  WHERE ta.tenant_id = p.tenant_id AND ta.user_id = %s
+                )
+              )
+            RETURNING v.id, v.project_id, v.creator_id, v.version_id, v.description,
+                      v.change_log, v.visibility, v.published, v.published_at,
+                      v.enabled, v.created_at, v.updated_at
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, (visibility, version_record_id, tenant_id, user_id, user_id))
+                result = cursor.fetchone()
+                conn.commit()
+                return result
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def unpublish_version(self, version_record_id: str, tenant_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        """Unpublish a version (only owner or tenant admin can unpublish)."""
+        query = """
+            UPDATE odb.versions v
+            SET published = false,
+                published_at = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            FROM odb.projects p
+            WHERE v.id = %s
+              AND v.project_id = p.id
+              AND p.tenant_id = %s
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+              AND (
+                v.creator_id = %s
+                OR EXISTS (
+                  SELECT 1 FROM odb.tenant_administrators ta
+                  WHERE ta.tenant_id = p.tenant_id AND ta.user_id = %s
+                )
+              )
+            RETURNING v.id, v.project_id, v.creator_id, v.version_id, v.description,
+                      v.change_log, v.visibility, v.published, v.published_at,
+                      v.enabled, v.created_at, v.updated_at
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, (version_record_id, tenant_id, user_id, user_id))
+                result = cursor.fetchone()
+                conn.commit()
+                return result
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def delete_version(self, version_record_id: str, tenant_id: str) -> bool:
+        """Soft delete a version, ensuring it belongs to the tenant."""
+        query = """
+            UPDATE odb.versions v
+            SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+            FROM odb.projects p
+            WHERE v.id = %s
+              AND v.project_id = p.id
+              AND p.tenant_id = %s
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, (version_record_id, tenant_id))
+                conn.commit()
+                return cursor.rowcount > 0
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def copy_classes_from_version(self, source_version_id: str, target_version_id: str) -> Dict[str, Any]:
+        """Copy all classes from source version to target version."""
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                # Copy classes
+                cursor.execute("""
+                    INSERT INTO odb.classes (version_id, name, description, schema, enabled, canvas_metadata)
+                    SELECT %s, name, description, schema, enabled, canvas_metadata
+                    FROM odb.classes
+                    WHERE version_id = %s AND deleted_at IS NULL
+                    RETURNING id, name
+                """, (target_version_id, source_version_id))
+
+                copied_classes = cursor.fetchall()
+                copied_count = len(copied_classes)
+
+                # For each copied class, copy its properties
+                for copied_class in copied_classes:
+                    new_class_id = copied_class['id']
+                    class_name = copied_class['name']
+
+                    # Find original class ID
+                    cursor.execute("""
+                        SELECT id FROM odb.classes
+                        WHERE version_id = %s AND name = %s AND deleted_at IS NULL
+                    """, (source_version_id, class_name))
+
+                    original = cursor.fetchone()
+                    if original:
+                        original_class_id = original['id']
+
+                        # Copy class properties (simple copy without nested property mapping for now)
+                        cursor.execute("""
+                            INSERT INTO odb.class_properties (class_id, property_id, name, description, data)
+                            SELECT %s, property_id, name, description, data
+                            FROM odb.class_properties
+                            WHERE class_id = %s AND parent_id IS NULL
+                        """, (new_class_id, original_class_id))
+
+                conn.commit()
+                return {"success": True, "copied_count": copied_count}
+        except Exception as e:
+            conn.rollback()
+            return {"success": False, "error": str(e)}
+
 
 # Global database instance
 db = Database()

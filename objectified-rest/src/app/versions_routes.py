@@ -1,0 +1,501 @@
+"""
+Versions API Routes
+
+Provides CRUD endpoints for managing versions within projects.
+All endpoints are tenant and project-scoped and require authentication via JWT token or API key.
+"""
+
+import re
+from fastapi import APIRouter, HTTPException, Query, Depends
+from typing import Optional, List, Dict, Any
+
+from .database import db
+from .models import (
+    VersionSchema,
+    VersionCreateRequest,
+    VersionUpdateRequest,
+    VersionPublishRequest
+)
+from .auth import validate_authentication, get_authenticated_user_id
+
+router = APIRouter(prefix="/v1/versions", tags=["versions"])
+
+
+def parse_semantic_version(version: str) -> Optional[Dict[str, int]]:
+    """Parse a semantic version string into components."""
+    match = re.match(r'^(\d+)\.(\d+)\.(\d+)$', version)
+    if match:
+        return {
+            'major': int(match.group(1)),
+            'minor': int(match.group(2)),
+            'patch': int(match.group(3))
+        }
+    return None
+
+
+def bump_patch_version(version: str) -> str:
+    """Increment the patch version."""
+    parsed = parse_semantic_version(version)
+    if parsed:
+        return f"{parsed['major']}.{parsed['minor']}.{parsed['patch'] + 1}"
+    return '0.1.0'
+
+
+def bump_minor_version(version: str) -> str:
+    """Increment the minor version and reset patch to 0."""
+    parsed = parse_semantic_version(version)
+    if parsed:
+        return f"{parsed['major']}.{parsed['minor'] + 1}.0"
+    return '0.1.0'
+
+
+@router.get("/{tenant_slug}/{project_id}")
+async def list_versions(
+    tenant_slug: str,
+    project_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication)
+) -> List[VersionSchema]:
+    """
+    List all versions for a project.
+
+    Supports authentication via:
+    - JWT token in Authorization header (Bearer token)
+    - API key in X-API-Key header
+
+    Args:
+        tenant_slug: The tenant slug
+        project_id: The project ID
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        List of versions for the project
+    """
+    # Verify project belongs to tenant
+    project = db.get_project_by_id(project_id, auth_data['tenant_id'])
+    if not project:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Project not found: {project_id}"
+        )
+
+    versions = db.get_versions_for_project(project_id, auth_data['tenant_id'])
+
+    return [VersionSchema(**v) for v in versions]
+
+
+@router.get("/{tenant_slug}/{project_id}/{version_record_id}")
+async def get_version(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication)
+) -> VersionSchema:
+    """
+    Get a specific version by ID.
+
+    Supports authentication via JWT token or API key.
+
+    Args:
+        tenant_slug: The tenant slug
+        project_id: The project ID
+        version_record_id: The version record ID (UUID)
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        The version details
+    """
+    version = db.get_version_by_id(version_record_id, auth_data['tenant_id'])
+
+    if not version:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Version not found: {version_record_id}"
+        )
+
+    # Verify version belongs to the specified project
+    if version['project_id'] != project_id:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Version not found in project: {project_id}"
+        )
+
+    return VersionSchema(**version)
+
+
+@router.get("/{tenant_slug}/{project_id}/by-version/{version_id}")
+async def get_version_by_version_id(
+    tenant_slug: str,
+    project_id: str,
+    version_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication)
+) -> VersionSchema:
+    """
+    Get a specific version by version ID string (e.g., '1.0.0').
+
+    Supports authentication via JWT token or API key.
+
+    Args:
+        tenant_slug: The tenant slug
+        project_id: The project ID
+        version_id: The version ID string (e.g., '1.0.0')
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        The version details
+    """
+    version = db.get_version_by_version_id(project_id, version_id, auth_data['tenant_id'])
+
+    if not version:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Version '{version_id}' not found in project"
+        )
+
+    return VersionSchema(**version)
+
+
+@router.post("/{tenant_slug}/{project_id}")
+async def create_version(
+    tenant_slug: str,
+    project_id: str,
+    request: VersionCreateRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication)
+) -> VersionSchema:
+    """
+    Create a new version.
+
+    Supports authentication via JWT token or API key.
+    When using JWT, the creator_id field will be set to the authenticated user.
+
+    If version_id is not provided, it will be auto-generated by bumping the latest version.
+    Use bump_strategy='minor' for minor version bump, or 'patch' (default) for patch bump.
+
+    If source_version_id is provided, classes will be copied from that version.
+
+    Args:
+        tenant_slug: The tenant slug
+        project_id: The project ID
+        request: Version creation data
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        The created version
+    """
+    # Verify project belongs to tenant
+    project = db.get_project_by_id(project_id, auth_data['tenant_id'])
+    if not project:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Project not found: {project_id}"
+        )
+
+    # Determine version_id
+    version_id = request.version_id
+    if not version_id or not version_id.strip():
+        # Auto-generate by bumping latest version
+        latest_version = db.get_latest_version_for_project(project_id, auth_data['tenant_id'])
+        if latest_version:
+            if request.bump_strategy == 'minor':
+                version_id = bump_minor_version(latest_version)
+            else:
+                version_id = bump_patch_version(latest_version)
+        else:
+            version_id = '0.1.0'
+    else:
+        version_id = version_id.strip()
+
+    # Validate semantic versioning format
+    if not parse_semantic_version(version_id):
+        raise HTTPException(
+            status_code=400,
+            detail="Version ID must follow semantic versioning format (e.g., 1.0.0)"
+        )
+
+    try:
+        # Get creator_id from auth data (will be None for API key auth)
+        creator_id = get_authenticated_user_id(auth_data)
+
+        # Create version
+        version = db.create_version(
+            project_id=project_id,
+            creator_id=creator_id,
+            version_id=version_id,
+            description=request.description.strip() if request.description else None,
+            change_log=request.change_log.strip() if request.change_log else None
+        )
+
+        response_data = {**version}
+
+        # If source version was provided, copy classes
+        if request.source_version_id and request.source_version_id.strip():
+            source_version = db.get_version_by_id(request.source_version_id, auth_data['tenant_id'])
+            if not source_version:
+                # Still return the version but with a warning
+                response_data['copy_warning'] = f"Source version not found: {request.source_version_id}"
+            else:
+                copy_result = db.copy_classes_from_version(request.source_version_id, version['id'])
+                if copy_result.get('success'):
+                    response_data['copied_classes'] = copy_result.get('copied_count', 0)
+                else:
+                    response_data['copy_warning'] = copy_result.get('error')
+
+        return VersionSchema(**response_data)
+    except Exception as e:
+        # Check for unique constraint violation
+        if "unique constraint" in str(e).lower() or "23505" in str(e):
+            raise HTTPException(
+                status_code=409,
+                detail=f"A version with ID '{version_id}' already exists in this project"
+            )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/{tenant_slug}/{project_id}/{version_record_id}")
+async def update_version(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    request: VersionUpdateRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication)
+) -> VersionSchema:
+    """
+    Update an existing version.
+
+    Supports authentication via JWT token or API key.
+    Published versions cannot be updated (they are frozen).
+
+    Args:
+        tenant_slug: The tenant slug
+        project_id: The project ID
+        version_record_id: The version record ID
+        request: Version update data
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        The updated version
+    """
+    # Check if version exists
+    existing = db.get_version_by_id(version_record_id, auth_data['tenant_id'])
+    if not existing:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Version not found: {version_record_id}"
+        )
+
+    # Verify version belongs to the specified project
+    if existing['project_id'] != project_id:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Version not found in project: {project_id}"
+        )
+
+    try:
+        # Build updates dict from request
+        updates = {}
+        if request.description is not None:
+            updates['description'] = request.description.strip() if request.description else None
+        if request.change_log is not None:
+            updates['change_log'] = request.change_log.strip() if request.change_log else None
+        if request.enabled is not None:
+            updates['enabled'] = request.enabled
+
+        # Update version
+        version = db.update_version(
+            version_record_id,
+            auth_data['tenant_id'],
+            updates
+        )
+
+        if not version:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Version not found: {version_record_id}"
+            )
+
+        return VersionSchema(**version)
+    except HTTPException:
+        raise
+    except Exception as e:
+        if "published" in str(e).lower() and "frozen" in str(e).lower():
+            raise HTTPException(
+                status_code=403,
+                detail="Cannot edit a published version. Published versions are frozen."
+            )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{tenant_slug}/{project_id}/{version_record_id}/publish")
+async def publish_version(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    request: VersionPublishRequest = None,
+    auth_data: Dict[str, Any] = Depends(validate_authentication)
+) -> VersionSchema:
+    """
+    Publish a version.
+
+    Only the version creator or a tenant administrator can publish a version.
+    Published versions are frozen and cannot be modified.
+
+    Args:
+        tenant_slug: The tenant slug
+        project_id: The project ID
+        version_record_id: The version record ID
+        request: Optional publish options (visibility)
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        The published version
+    """
+    # Check if version exists
+    existing = db.get_version_by_id(version_record_id, auth_data['tenant_id'])
+    if not existing:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Version not found: {version_record_id}"
+        )
+
+    # Verify version belongs to the specified project
+    if existing['project_id'] != project_id:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Version not found in project: {project_id}"
+        )
+
+    if existing.get('published'):
+        raise HTTPException(
+            status_code=400,
+            detail="Version is already published"
+        )
+
+    # Get user_id from auth data
+    user_id = get_authenticated_user_id(auth_data)
+    if not user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Publishing requires user authentication (JWT token)"
+        )
+
+    visibility = request.visibility if request else "private"
+    if visibility not in ("public", "private"):
+        visibility = "private"
+
+    version = db.publish_version(version_record_id, auth_data['tenant_id'], user_id, visibility)
+
+    if not version:
+        raise HTTPException(
+            status_code=403,
+            detail="Only the version creator or a tenant administrator can publish this version"
+        )
+
+    return VersionSchema(**version)
+
+
+@router.post("/{tenant_slug}/{project_id}/{version_record_id}/unpublish")
+async def unpublish_version(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication)
+) -> VersionSchema:
+    """
+    Unpublish a version.
+
+    Only the version creator or a tenant administrator can unpublish a version.
+
+    Args:
+        tenant_slug: The tenant slug
+        project_id: The project ID
+        version_record_id: The version record ID
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        The unpublished version
+    """
+    # Check if version exists
+    existing = db.get_version_by_id(version_record_id, auth_data['tenant_id'])
+    if not existing:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Version not found: {version_record_id}"
+        )
+
+    # Verify version belongs to the specified project
+    if existing['project_id'] != project_id:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Version not found in project: {project_id}"
+        )
+
+    if not existing.get('published'):
+        raise HTTPException(
+            status_code=400,
+            detail="Version is not published"
+        )
+
+    # Get user_id from auth data
+    user_id = get_authenticated_user_id(auth_data)
+    if not user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Unpublishing requires user authentication (JWT token)"
+        )
+
+    version = db.unpublish_version(version_record_id, auth_data['tenant_id'], user_id)
+
+    if not version:
+        raise HTTPException(
+            status_code=403,
+            detail="Only the version creator or a tenant administrator can unpublish this version"
+        )
+
+    return VersionSchema(**version)
+
+
+@router.delete("/{tenant_slug}/{project_id}/{version_record_id}")
+async def delete_version(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication)
+) -> Dict[str, str]:
+    """
+    Delete a version (soft delete).
+
+    Supports authentication via JWT token or API key.
+
+    Args:
+        tenant_slug: The tenant slug
+        project_id: The project ID
+        version_record_id: The version record ID
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        Success message
+    """
+    # Check if version exists
+    existing = db.get_version_by_id(version_record_id, auth_data['tenant_id'])
+    if not existing:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Version not found: {version_record_id}"
+        )
+
+    # Verify version belongs to the specified project
+    if existing['project_id'] != project_id:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Version not found in project: {project_id}"
+        )
+
+    # Delete the version
+    success = db.delete_version(version_record_id, auth_data['tenant_id'])
+
+    if not success:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to delete version"
+        )
+
+    return {"message": f"Version '{existing['version_id']}' deleted successfully"}

@@ -14,12 +14,13 @@ from .models import OpenAPIResponse
 from .primitives_routes import router as primitives_router
 from .classes_routes import router as classes_router
 from .projects_routes import router as projects_router
+from .versions_routes import router as versions_router
 
 # Create FastAPI app
 app = FastAPI(
     title="Objectified REST API",
     description="REST API for serving OpenAPI specifications from the Objectified database",
-    version="1.0.0"
+    version="1.0.4"
 )
 
 app.add_middleware(
@@ -38,6 +39,7 @@ app.add_middleware(
 app.include_router(primitives_router)
 app.include_router(classes_router)
 app.include_router(projects_router)
+app.include_router(versions_router)
 
 
 @app.on_event("startup")
