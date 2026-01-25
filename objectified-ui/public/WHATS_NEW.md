@@ -35,6 +35,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Orders classes: Cart, EnhancedOrderItem, Refund, Shipment, Invoice
   - Payments classes: PaymentIntent, PaymentMethod, Subscription, Transaction, Payout
   - Products classes: ProductVariant, Inventory, ProductCategory, ProductReview, ProductPrice
+  - Security classes: Session, APIKeyAuth, SecurityEvent, IPWhiteList, RateLimit
 - Import Improvements:
   - Adds AI Assistant to help create an OpenAPI specification from a natural language query.
   - Adds SwaggerHub import support.
