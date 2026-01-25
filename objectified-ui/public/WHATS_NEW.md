@@ -26,6 +26,11 @@ We continue to improve the platform based on your feedback with improvements and
     - Ability to link existing classes to path responses.
     - Ability to define class request bodies for operations with class definitions and property definitions.
     - Ability to create CRUD operations at the time a path is created.
+- Template Improvements:
+  - Address classes: BillingAddress, ShippingAddress, AddressValidation
+  - Common classes: Money, Coordinates, DateRange, FileUpload, Pagination, SortOptions, AuditTimestamps
+  - Content classes: MediaGallery, COntentTag, ContentComment, Rating, Article, FAQ
+  
 - Import Improvements:
   - Adds AI Assistant to help create an OpenAPI specification from a natural language query.
   - Adds SwaggerHub import support.
