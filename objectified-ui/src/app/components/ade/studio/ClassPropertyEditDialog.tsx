@@ -1,19 +1,34 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Alert from '@mui/material/Alert';
-import Chip from '@mui/material/Chip';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../../ui/Dialog';
+import { Button } from '../../ui/Button';
+import { Input } from '../../ui/Input';
+import { Label } from '../../ui/Label';
+import { Textarea } from '../../ui/Textarea';
+import { Alert } from '../../ui/Alert';
+import { Badge } from '../../ui/Badge';
+import { Checkbox } from '../../ui/Checkbox';
 import { PropertyFormFields, PropertyFormData } from './PropertyFormFields';
+import { PrimitiveSelector } from './PrimitiveSelector';
 import ExtractToClassDialog from './ExtractToClassDialog';
-import CallSplitIcon from '@mui/icons-material/CallSplit';
+import { useDarkMode } from '@/app/hooks/useDarkMode';
+import {
+  GitBranch,
+  FileText,
+  Settings,
+  Code,
+  AlertTriangle,
+  Info,
+  ExternalLink,
+  Sparkles,
+} from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -35,6 +50,7 @@ interface Props {
 }
 
 export default function ClassPropertyEditDialog({ open, onClose, editingClassProperty, onSaved, allClassProperties, existingClassNames = [] }: Props) {
+  const isDark = useDarkMode();
   const [editPropName, setEditPropName] = useState('');
   const [editPropertyError, setEditPropertyError] = useState('');
   const [extractDialogOpen, setExtractDialogOpen] = useState(false);
@@ -686,114 +702,422 @@ export default function ClassPropertyEditDialog({ open, onClose, editingClassPro
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Edit Property in Class</DialogTitle>
-      <DialogContent>
-        {editPropertyError && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {editPropertyError}
-          </Alert>
-        )}
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()} modal={true}>
+      <DialogContent
+        className="max-w-6xl h-[90vh] max-h-[900px] p-0 flex flex-col overflow-hidden"
+        showCloseButton={true}
+        aria-describedby={undefined}
+      >
+        <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <DialogTitle className="text-lg font-semibold">
+                Edit Property in Class
+              </DialogTitle>
+            </div>
+          </div>
+        </DialogHeader>
 
-        <Alert severity="info" sx={{ mb: 2 }}>
-          When editing a property that is a member of a class, only the name and constraints can be modified. The type and base type are read-only.
-        </Alert>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {editPropertyError && (
+            <Alert variant="error" className="m-4 mb-0">
+              {editPropertyError}
+            </Alert>
+          )}
 
-        {/* Type Information - Read Only */}
-        {editingClassProperty && (
-          <Box sx={{ mb: 3, p: 2, bgcolor: 'action.hover', borderRadius: 1, border: 1, borderColor: 'divider' }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-              Property Type (Read-Only)
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <Chip
-                label={getPropertyTypeInfo().type}
-                color="primary"
-                size="small"
-                sx={{ fontFamily: 'monospace' }}
-              />
-              {getPropertyTypeInfo().hasRef && (
-                <Typography variant="caption" color="text.secondary">
-                  (References another class)
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        )}
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 divide-x divide-gray-200 dark:divide-gray-700 overflow-hidden min-h-0">
+            {/* LEFT COLUMN - Basic Configuration */}
+            <div className="flex flex-col overflow-y-auto min-h-0">
+              {/* SECTION 1: Property Information */}
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText size={18} className="text-indigo-500" />
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Property Information</h3>
+                </div>
 
-        <TextField
-          autoFocus
-          margin="dense"
-          label="Property Name"
-          type="text"
-          fullWidth
-          required
-          value={editPropName}
-          onChange={(e) => setEditPropName(e.target.value)}
-          sx={{ mb: 2 }}
-        />
+                {/* Info Alert */}
+                <div className="mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-start gap-2">
+                    <Info size={16} className="text-blue-500 mt-0.5 shrink-0" />
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      When editing a property that is a member of a class, only the name and constraints can be modified. The type is read-only.
+                    </p>
+                  </div>
+                </div>
 
+                {/* Type Information - Read Only */}
+                {editingClassProperty && (
+                  <div className={`mb-4 p-4 rounded-lg border ${isDark ? 'bg-slate-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                    <Label className="text-sm font-semibold mb-2 block">Property Type (Read-Only)</Label>
+                    <div className="flex gap-2 items-center">
+                      <Badge variant="secondary" className="font-mono text-sm px-3 py-1">
+                        {getPropertyTypeInfo().type}
+                      </Badge>
+                      {getPropertyTypeInfo().hasRef && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          (References another class)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
 
-        {/* Constraints Section */}
-        {editingClassProperty && (() => {
-          const typeInfo = getPropertyTypeInfo();
-          const propData = typeof editingClassProperty.data === 'string'
-            ? JSON.parse(editingClassProperty.data)
-            : (editingClassProperty.data || {});
-          const schema = typeInfo.isArray ? (propData.items || {}) : propData;
-          const baseType = schema.$ref ? 'reference' : (schema.type || 'object');
+                {/* Property Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="propertyName">Property Name *</Label>
+                  <Input
+                    id="propertyName"
+                    autoFocus
+                    value={editPropName}
+                    onChange={(e) => setEditPropName(e.target.value)}
+                    placeholder="e.g., userName"
+                  />
+                  <p className="text-xs text-gray-500">camelCase recommended</p>
+                </div>
 
+                {/* Description */}
+                {editingClassProperty && (() => {
+                  const typeInfo = getPropertyTypeInfo();
+                  const propData = typeof editingClassProperty.data === 'string'
+                    ? JSON.parse(editingClassProperty.data)
+                    : (editingClassProperty.data || {});
+                  const schema = typeInfo.isArray ? (propData.items || {}) : propData;
 
-          // Only show constraints for non-reference types
-          if (schema.$ref) return null;
+                  // Only show for non-reference types
+                  if (schema.$ref) return null;
 
-          return (
-            <>
-              <Typography variant="subtitle2" sx={{ mt: 3, mb: 1, fontWeight: 600 }}>
-                Property Details
-              </Typography>
+                  return (
+                    <div className="mt-4 space-y-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Brief description of this property"
+                        rows={2}
+                      />
+                    </div>
+                  );
+                })()}
+              </div>
 
-              <PropertyFormFields
-                baseType={baseType}
-                isArray={typeInfo.isArray}
-                data={formData}
-                onChange={(field, value) => {
-                  setFormData(prev => ({ ...prev, [field]: value }));
-                }}
-                showMetadata={true}
-                showTitle={false}
-                size="small"
-                nestedProperties={
-                  baseType === 'object'
-                    ? (allClassProperties || []).filter(p => p.parent_id === editingClassProperty.id)
-                    : undefined
+              {/* Apply from Primitive - Only show for applicable types */}
+              {editingClassProperty && (() => {
+                const typeInfo = getPropertyTypeInfo();
+                const propData = typeof editingClassProperty.data === 'string'
+                  ? JSON.parse(editingClassProperty.data)
+                  : (editingClassProperty.data || {});
+                const schema = typeInfo.isArray ? (propData.items || {}) : propData;
+                const baseType = schema.$ref ? 'reference' : (schema.type || 'object');
+
+                // Only show for applicable types (string, number, integer, array) and non-reference
+                if (schema.$ref) return null;
+                if (!['string', 'number', 'integer', 'array'].includes(baseType)) return null;
+                if (formData.tupleMode) return null;
+
+                return (
+                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div className={`p-4 rounded-lg border ${isDark ? 'bg-indigo-900/10 border-indigo-700/30' : 'bg-indigo-50/50 border-indigo-200'}`}>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg ${isDark ? 'bg-indigo-900/30' : 'bg-indigo-100'}`}>
+                            <Sparkles size={18} className="text-indigo-500" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
+                              Apply from Primitive
+                            </h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Quickly apply format, pattern, and constraints from a predefined primitive type
+                            </p>
+                          </div>
+                        </div>
+                        <PrimitiveSelector
+                          formData={formData}
+                          onChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
+                          propertyType={baseType}
+                          size="small"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* SECTION 2: Property Flags */}
+              {editingClassProperty && (() => {
+                const typeInfo = getPropertyTypeInfo();
+                const propData = typeof editingClassProperty.data === 'string'
+                  ? JSON.parse(editingClassProperty.data)
+                  : (editingClassProperty.data || {});
+                const schema = typeInfo.isArray ? (propData.items || {}) : propData;
+
+                // Only show for non-reference types
+                if (schema.$ref) return null;
+
+                return (
+                  <div className={`p-6 border-b border-gray-200 dark:border-gray-700 ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Settings size={18} className="text-indigo-500" />
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Property Flags</h3>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Required */}
+                      <div className={`p-3 rounded-lg border ${formData.required ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700'}`}>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="required"
+                            checked={formData.required || false}
+                            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, required: !!checked }))}
+                          />
+                          <label htmlFor="required" className="text-sm font-medium cursor-pointer">
+                            Required
+                          </label>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 ml-6">Must be provided</p>
+                      </div>
+
+                      {/* Nullable */}
+                      <div className={`p-3 rounded-lg border ${formData.nullable ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700'}`}>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="nullable"
+                            checked={formData.nullable || false}
+                            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, nullable: !!checked }))}
+                          />
+                          <label htmlFor="nullable" className="text-sm font-medium cursor-pointer">
+                            Nullable
+                          </label>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 ml-6">Can be null</p>
+                      </div>
+
+                      {/* Read Only */}
+                      <div className={`p-3 rounded-lg border ${formData.readOnly ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700'}`}>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="readOnly"
+                            checked={formData.readOnly || false}
+                            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, readOnly: !!checked }))}
+                          />
+                          <label htmlFor="readOnly" className="text-sm font-medium cursor-pointer">
+                            Read Only
+                          </label>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 ml-6">Only in responses</p>
+                      </div>
+
+                      {/* Write Only */}
+                      <div className={`p-3 rounded-lg border ${formData.writeOnly ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-300 dark:border-purple-700' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700'}`}>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="writeOnly"
+                            checked={formData.writeOnly || false}
+                            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, writeOnly: !!checked }))}
+                          />
+                          <label htmlFor="writeOnly" className="text-sm font-medium cursor-pointer">
+                            Write Only
+                          </label>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 ml-6">Only in requests</p>
+                      </div>
+                    </div>
+
+                    {/* Deprecation */}
+                    <div className={`mt-4 p-3 rounded-lg border flex flex-col gap-3 ${formData.deprecated ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700'}`}>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="deprecated"
+                          checked={formData.deprecated || false}
+                          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, deprecated: !!checked }))}
+                        />
+                        <label htmlFor="deprecated" className="text-sm font-medium cursor-pointer flex items-center gap-1">
+                          <AlertTriangle size={14} className={formData.deprecated ? 'text-amber-500' : 'text-gray-400'} />
+                          Deprecated
+                        </label>
+                      </div>
+                      {formData.deprecated && (
+                        <Input
+                          value={formData.deprecationMessage || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, deprecationMessage: e.target.value }))}
+                          placeholder="Deprecation message (e.g., Use newProperty instead)"
+                          className="text-sm"
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* SECTION 3: Default & Constant Values */}
+              {editingClassProperty && (() => {
+                const typeInfo = getPropertyTypeInfo();
+                const propData = typeof editingClassProperty.data === 'string'
+                  ? JSON.parse(editingClassProperty.data)
+                  : (editingClassProperty.data || {});
+                const schema = typeInfo.isArray ? (propData.items || {}) : propData;
+
+                // Only show for non-reference types
+                if (schema.$ref) return null;
+
+                return (
+                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Code size={18} className="text-indigo-500" />
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Default & Constant Values</h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Default Value */}
+                      <div className="space-y-2">
+                        <Label htmlFor="defaultValue">Default Value</Label>
+                        <Input
+                          id="defaultValue"
+                          value={formData.default || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, default: e.target.value }))}
+                          placeholder="JSON value (e.g., &quot;hello&quot;, 123, true)"
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-gray-500">Used when no value is provided</p>
+                      </div>
+
+                      {/* Constant Value */}
+                      <div className="space-y-2">
+                        <Label htmlFor="constValue">Constant Value</Label>
+                        <Input
+                          id="constValue"
+                          value={formData.const || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, const: e.target.value }))}
+                          placeholder="Fixed value (mutually exclusive with enum)"
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-gray-500">Must always equal this value</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* RIGHT COLUMN - Advanced Configuration */}
+            <div className="flex flex-col overflow-y-auto min-h-0">
+              {/* Advanced Header */}
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <div className="flex items-center gap-3 mb-2">
+                  <Settings size={20} className="text-purple-500" />
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Advanced Constraints</h3>
+                  <span className="px-2 py-0.5 rounded text-xs bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">Optional</span>
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Configure type-specific validation rules and advanced constraints.</p>
+              </div>
+
+              {/* Property Constraints Section */}
+              {editingClassProperty && (() => {
+                const typeInfo = getPropertyTypeInfo();
+                const propData = typeof editingClassProperty.data === 'string'
+                  ? JSON.parse(editingClassProperty.data)
+                  : (editingClassProperty.data || {});
+                const schema = typeInfo.isArray ? (propData.items || {}) : propData;
+                const baseType = schema.$ref ? 'reference' : (schema.type || 'object');
+
+                // Only show constraints for non-reference types
+                if (schema.$ref) {
+                  return (
+                    <div className="p-6 flex-1 flex items-center justify-center">
+                      <div className="text-center">
+                        <GitBranch size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                        <p className="text-gray-500 dark:text-gray-400">
+                          This property references another class.<br />
+                          Constraints are not applicable.
+                        </p>
+                      </div>
+                    </div>
+                  );
                 }
-                availableClasses={existingClassNames}
-              />
-            </>
-          );
-        })()}
-      </DialogContent>
-      <DialogActions>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-          <Box>
-            {canExtractToClass() && (
-              <Button
-                onClick={() => setExtractDialogOpen(true)}
-                startIcon={<CallSplitIcon />}
-                color="secondary"
-                variant="outlined"
-              >
-                Extract to Class
+
+                return (
+                  <div className="p-6 flex-1 overflow-y-auto">
+                    <PropertyFormFields
+                      baseType={baseType}
+                      isArray={typeInfo.isArray}
+                      data={formData}
+                      onChange={(field, value) => {
+                        setFormData(prev => ({ ...prev, [field]: value }));
+                      }}
+                      showMetadata={false}
+                      showTitle={false}
+                      size="small"
+                      nestedProperties={
+                        baseType === 'object'
+                          ? (allClassProperties || []).filter(p => p.parent_id === editingClassProperty.id)
+                          : undefined
+                      }
+                      availableClasses={existingClassNames}
+                    />
+
+                    {/* External Documentation - inside scrollable area */}
+                    <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-2 mb-4">
+                        <ExternalLink size={18} className="text-purple-500" />
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">External Documentation</h3>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="externalDocsUrl">URL</Label>
+                          <Input
+                            id="externalDocsUrl"
+                            value={formData.externalDocsUrl || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, externalDocsUrl: e.target.value }))}
+                            placeholder="https://docs.example.com/property"
+                            type="url"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="externalDocsDescription">Description</Label>
+                          <Input
+                            id="externalDocsDescription"
+                            value={formData.externalDocsDescription || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, externalDocsDescription: e.target.value }))}
+                            placeholder="Link to property documentation"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <DialogFooter className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 shrink-0">
+          <div className="flex justify-between w-full items-center">
+            <div>
+              {canExtractToClass() && (
+                <Button
+                  onClick={() => setExtractDialogOpen(true)}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <GitBranch size={16} />
+                  Extract to Class
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onClose}>
+                Cancel
               </Button>
-            )}
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button onClick={onClose}>Cancel</Button>
-            <Button onClick={handleSave} variant="contained">Save</Button>
-          </Box>
-        </Box>
-      </DialogActions>
+              <Button onClick={handleSave}>
+                Save
+              </Button>
+            </div>
+          </div>
+        </DialogFooter>
+      </DialogContent>
 
       {/* Extract to Class Dialog */}
       <ExtractToClassDialog

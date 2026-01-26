@@ -2,19 +2,32 @@
 
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Alert from '@mui/material/Alert';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../../ui/Dialog';
+import { Button } from '../../ui/Button';
+import { Input } from '../../ui/Input';
+import { Label } from '../../ui/Label';
+import { Textarea } from '../../ui/Textarea';
+import { Alert } from '../../ui/Alert';
+import { Checkbox } from '../../ui/Checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/Tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/Select';
 import { useDarkMode } from '@/app/hooks/useDarkMode';
 import { PropertyFormFields, PropertyFormData } from './PropertyFormFields';
+import { PrimitiveSelector } from './PrimitiveSelector';
+import {
+  FileText,
+  Settings,
+  Code,
+  AlertTriangle,
+  ExternalLink,
+  Sparkles,
+} from 'lucide-react';
 
 // Dynamically import Monaco Editor with SSR disabled
 const Editor = dynamic(() => import('@monaco-editor/react'), {
@@ -1028,145 +1041,352 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      slotProps={{
-        paper: {
-          sx: {
-            height: '90vh',
-            maxHeight: '90vh',
-            bgcolor: isDark ? '#1e293b' : 'background.paper',
-          }
-        }
-      }}
-    >
-      <DialogTitle>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>{mode === 'add' ? 'Add Property' : 'Edit Property'}</span>
-          <Box sx={{ display: 'flex', border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
-            <Button
-              size="small"
-              variant={viewMode === 'form' ? 'contained' : 'text'}
-              onClick={() => setViewMode('form')}
-              sx={{ borderRadius: 0, minWidth: 'auto', px: 2 }}
-            >
-              Form
-            </Button>
-            <Box sx={{ width: '1px', bgcolor: 'divider' }} />
-            <Button
-              size="small"
-              variant={viewMode === 'json' ? 'contained' : 'text'}
-              onClick={() => setViewMode('json')}
-              sx={{ borderRadius: 0, minWidth: 'auto', px: 2 }}
-            >
-              JSON
-            </Button>
-          </Box>
-        </Box>
-      </DialogTitle>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()} modal={true}>
       <DialogContent
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'auto',
-        }}
+        className="max-w-6xl h-[90vh] max-h-[900px] p-0 flex flex-col overflow-hidden"
+        showCloseButton={true}
+        aria-describedby={undefined}
       >
-        {propertyError && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {propertyError}
-          </Alert>
-        )}
+        <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <DialogTitle className="text-lg font-semibold">
+                {mode === 'add' ? 'Add Property' : 'Edit Property'}
+              </DialogTitle>
+            </div>
+          </div>
+        </DialogHeader>
 
-        {viewMode === 'form' ? (
-          <>
-            {/* Basic Information */}
-            <TextField
-              autoFocus
-              margin="dense"
-              label="Property Name"
-              type="text"
-              fullWidth
-              required
-              value={propertyName}
-              onChange={(e) => {
-                // Only allow A-Za-z0-9_ characters
-                const filteredValue = e.target.value.replace(/[^A-Za-z0-9_]/g, '');
-                setPropertyName(filteredValue);
-              }}
-              helperText="Only letters, numbers, and underscores are allowed. Suggest camelCase property names."
-              sx={{ mb: 2 }}
-            />
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'form' | 'json')} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="px-6 border-b border-gray-200 dark:border-gray-700 rounded-none justify-start bg-transparent shrink-0">
+            <TabsTrigger value="form">Form</TabsTrigger>
+            <TabsTrigger value="json">JSON</TabsTrigger>
+          </TabsList>
 
-            {/* Type Selector with Array Checkbox */}
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', mb: 2 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={propertyIsArray}
-                    onChange={(e) => setPropertyIsArray(e.target.checked)}
-                    disabled={mode === 'edit'}
+          {/* Form Tab */}
+          <TabsContent value="form" className="flex-1 flex flex-col overflow-hidden mt-0 p-0">
+            {propertyError && <Alert variant="error" className="m-4 mb-0">{propertyError}</Alert>}
+
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 divide-x divide-gray-200 dark:divide-gray-700 overflow-hidden min-h-0">
+              {/* LEFT COLUMN - Basic Configuration */}
+              <div className="flex flex-col overflow-y-auto min-h-0">
+                {/* SECTION 1: Property Information */}
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 mb-4">
+                    <FileText size={18} className="text-indigo-500" />
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Property Information</h3>
+                  </div>
+
+                  {/* Property Name */}
+                  <div className="space-y-2 mb-4">
+                    <Label htmlFor="propertyName">Property Name *</Label>
+                    <Input
+                      id="propertyName"
+                      autoFocus
+                      value={propertyName}
+                      onChange={(e) => {
+                        const filteredValue = e.target.value.replace(/[^A-Za-z0-9_]/g, '');
+                        setPropertyName(filteredValue);
+                      }}
+                      placeholder="e.g., userName"
+                    />
+                    <p className="text-xs text-gray-500">Only letters, numbers, and underscores. camelCase recommended.</p>
+                  </div>
+
+                  {/* Type Selector */}
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className={`p-3 rounded-lg border ${propertyIsArray ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-700' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700'}`}>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="isArray"
+                          checked={propertyIsArray}
+                          onCheckedChange={(checked) => setPropertyIsArray(!!checked)}
+                          disabled={mode === 'edit'}
+                        />
+                        <label htmlFor="isArray" className="text-sm font-medium cursor-pointer">
+                          Array
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 ml-6">An array of...</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="propertyType">Type *</Label>
+                      <Select
+                        value={propertyType}
+                        onValueChange={setPropertyType}
+                        disabled={mode === 'edit'}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select type..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="string">string</SelectItem>
+                          <SelectItem value="number">number</SelectItem>
+                          <SelectItem value="integer">integer</SelectItem>
+                          <SelectItem value="boolean">boolean</SelectItem>
+                          <SelectItem value="object">object</SelectItem>
+                          <SelectItem value="null">null</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {mode === 'edit' && (
+                        <p className="text-xs text-gray-500">Type cannot be changed after creation</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Brief description of this property"
+                      rows={2}
+                    />
+                  </div>
+
+                  {/* Title (optional) */}
+                  <div className="mt-4 space-y-2">
+                    <Label htmlFor="title">Title (Optional)</Label>
+                    <Input
+                      id="title"
+                      value={formData.title || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="Human-readable title"
+                    />
+                    <p className="text-xs text-gray-500">A human-readable title for documentation</p>
+                  </div>
+                </div>
+
+                {/* Apply from Primitive - Only show for applicable types */}
+                {(propertyType === 'string' || propertyType === 'number' || propertyType === 'integer' || propertyType === 'array') && !formData.tupleMode && (
+                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div className={`p-4 rounded-lg border ${isDark ? 'bg-indigo-900/10 border-indigo-700/30' : 'bg-indigo-50/50 border-indigo-200'}`}>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg ${isDark ? 'bg-indigo-900/30' : 'bg-indigo-100'}`}>
+                            <Sparkles size={18} className="text-indigo-500" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
+                              Apply from Primitive
+                            </h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Quickly apply format, pattern, and constraints from a predefined primitive type
+                            </p>
+                          </div>
+                        </div>
+                        <PrimitiveSelector
+                          formData={formData}
+                          onChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
+                          propertyType={propertyType}
+                          size="small"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* SECTION 2: Property Flags */}
+                <div className={`p-6 border-b border-gray-200 dark:border-gray-700 ${isDark ? 'bg-slate-900' : 'bg-gray-50'}`}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Settings size={18} className="text-indigo-500" />
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Property Flags</h3>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Required */}
+                    <div className={`p-3 rounded-lg border ${formData.required ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700'}`}>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="required"
+                          checked={formData.required || false}
+                          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, required: !!checked }))}
+                        />
+                        <label htmlFor="required" className="text-sm font-medium cursor-pointer">
+                          Required
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 ml-6">Must be provided</p>
+                    </div>
+
+                    {/* Nullable */}
+                    <div className={`p-3 rounded-lg border ${formData.nullable ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700'}`}>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="nullable"
+                          checked={formData.nullable || false}
+                          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, nullable: !!checked }))}
+                        />
+                        <label htmlFor="nullable" className="text-sm font-medium cursor-pointer">
+                          Nullable
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 ml-6">Can be null</p>
+                    </div>
+
+                    {/* Read Only */}
+                    <div className={`p-3 rounded-lg border ${formData.readOnly ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700'}`}>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="readOnly"
+                          checked={formData.readOnly || false}
+                          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, readOnly: !!checked }))}
+                        />
+                        <label htmlFor="readOnly" className="text-sm font-medium cursor-pointer">
+                          Read Only
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 ml-6">Only in responses</p>
+                    </div>
+
+                    {/* Write Only */}
+                    <div className={`p-3 rounded-lg border ${formData.writeOnly ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-300 dark:border-purple-700' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700'}`}>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="writeOnly"
+                          checked={formData.writeOnly || false}
+                          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, writeOnly: !!checked }))}
+                        />
+                        <label htmlFor="writeOnly" className="text-sm font-medium cursor-pointer">
+                          Write Only
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 ml-6">Only in requests</p>
+                    </div>
+                  </div>
+
+                  {/* Deprecation */}
+                  <div className={`mt-4 p-3 rounded-lg border flex flex-col gap-3 ${formData.deprecated ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700'}`}>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="deprecated"
+                        checked={formData.deprecated || false}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, deprecated: !!checked }))}
+                      />
+                      <label htmlFor="deprecated" className="text-sm font-medium cursor-pointer flex items-center gap-1">
+                        <AlertTriangle size={14} className={formData.deprecated ? 'text-amber-500' : 'text-gray-400'} />
+                        Deprecated
+                      </label>
+                    </div>
+                    {formData.deprecated && (
+                      <Input
+                        value={formData.deprecationMessage || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, deprecationMessage: e.target.value }))}
+                        placeholder="Deprecation message (e.g., Use newProperty instead)"
+                        className="text-sm"
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* SECTION 3: Default & Constant Values */}
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Code size={18} className="text-indigo-500" />
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Default & Constant Values</h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Default Value */}
+                    <div className="space-y-2">
+                      <Label htmlFor="defaultValue">Default Value</Label>
+                      <Input
+                        id="defaultValue"
+                        value={formData.default || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, default: e.target.value }))}
+                        placeholder='JSON value (e.g., "hello", 123, true)'
+                        className="font-mono text-sm"
+                      />
+                      <p className="text-xs text-gray-500">Used when no value is provided</p>
+                    </div>
+
+                    {/* Constant Value */}
+                    <div className="space-y-2">
+                      <Label htmlFor="constValue">Constant Value</Label>
+                      <Input
+                        id="constValue"
+                        value={formData.const || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, const: e.target.value }))}
+                        placeholder="Fixed value (mutually exclusive with enum)"
+                        className="font-mono text-sm"
+                      />
+                      <p className="text-xs text-gray-500">Must always equal this value</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN - Advanced Configuration */}
+              <div className="flex flex-col overflow-y-auto min-h-0">
+                {/* Advanced Header */}
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Settings size={20} className="text-purple-500" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Advanced Constraints</h3>
+                    <span className="px-2 py-0.5 rounded text-xs bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">Optional</span>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Configure type-specific validation rules and advanced constraints.</p>
+                </div>
+
+                {/* Property Constraints Section */}
+                <div className="p-6 flex-1 overflow-y-auto">
+                  <PropertyFormFields
+                    baseType={propertyType}
+                    isArray={propertyIsArray}
+                    data={formData}
+                    onChange={(field, value) => {
+                      setFormData(prev => ({ ...prev, [field]: value }));
+                    }}
+                    showMetadata={false}
+                    showTitle={false}
+                    showPrimitiveSelector={false}
+                    size="small"
+                    availableClasses={availableClasses}
                   />
-                }
-                label={'An array of ...'}
-                sx={{ mt: 1, whiteSpace: 'nowrap' }}
-              />
 
-              <TextField
-                select
-                margin="dense"
-                label="Type"
-                required
-                value={propertyType}
-                onChange={(e) => {
-                  const newType = e.target.value;
-                  setPropertyType(newType);
-                }}
-                SelectProps={{ native: true }}
-                disabled={mode === 'edit'}
-                helperText={mode === 'edit' ? 'Type cannot be changed after creation' : ''}
-                sx={{ flex: 1 }}
-              >
-                <option value="string">string</option>
-                <option value="number">number</option>
-                <option value="integer">integer</option>
-                <option value="boolean">boolean</option>
-                <option value="object">object</option>
-                <option value="null">null</option>
-              </TextField>
-            </Box>
+                  {/* External Documentation - inside scrollable area */}
+                  <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2 mb-4">
+                      <ExternalLink size={18} className="text-purple-500" />
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">External Documentation</h3>
+                    </div>
 
-            <PropertyFormFields
-              baseType={propertyType}
-              isArray={propertyIsArray}
-              data={formData}
-              onChange={(field, value) => {
-                setFormData(prev => ({ ...prev, [field]: value }));
-              }}
-              showMetadata={true}
-              showTitle={true}
-              size="medium"
-              availableClasses={availableClasses}
-            />
-          </>
-        ) : (
-          /* JSON View */
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              JSON Schema 2020-12 Definition
-            </Typography>
-            <Box
-              sx={{
-                flex: 1,
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1,
-                overflow: 'hidden',
-                minHeight: '300px',
-              }}
-            >
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="externalDocsUrl">URL</Label>
+                        <Input
+                          id="externalDocsUrl"
+                          value={formData.externalDocsUrl || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, externalDocsUrl: e.target.value }))}
+                          placeholder="https://docs.example.com/property"
+                          type="url"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="externalDocsDescription">Description</Label>
+                        <Input
+                          id="externalDocsDescription"
+                          value={formData.externalDocsDescription || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, externalDocsDescription: e.target.value }))}
+                          placeholder="Link to property documentation"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* JSON Tab */}
+          <TabsContent value="json" className="flex-1 flex flex-col overflow-hidden mt-0 p-6">
+            <div className="mb-2">
+              <p className="text-sm text-gray-500 dark:text-gray-400">JSON Schema 2020-12 Definition</p>
+            </div>
+            <div className="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden min-h-[300px]">
               <Editor
                 height="100%"
                 defaultLanguage="json"
@@ -1192,19 +1412,25 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
                   },
                 }}
               />
-            </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5 }}>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
               This is the JSON Schema representation of your property definition. Switch back to Form view to make changes.
-            </Typography>
-          </Box>
-        )}
+            </p>
+          </TabsContent>
+        </Tabs>
+
+        {/* Footer */}
+        <DialogFooter className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 shrink-0">
+          <div className="flex justify-end w-full gap-2">
+            <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
+              {mode === 'add' ? 'Add' : 'Save'}
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={isSubmitting}>
-          {mode === 'add' ? 'Add' : 'Save'}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };

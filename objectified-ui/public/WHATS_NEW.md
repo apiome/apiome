@@ -63,6 +63,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Fixed edges in canvas so they don't overlap over the top of classes, but go underneath
   - Fixes theming issues with system mode (following light/dark modes)
   - Fixed template properties to indicate optional when type includes null
+  - Fixed Properties Forms layouts to match design of Class Forms (separate general and advanced properties)
   - Compacted the look and feel of the Class nodes to reduce visual clutter and improve readability
   - Class Template Library now shows the schema preview
   - Properties and Class Template Form now includes a "close" button

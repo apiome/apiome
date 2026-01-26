@@ -354,6 +354,7 @@ export interface PropertyFormFieldsProps {
   // Optional: Show/hide certain fields
   showMetadata?: boolean;
   showTitle?: boolean;
+  showPrimitiveSelector?: boolean;
   size?: 'small' | 'medium';
 
   // Object type information
@@ -375,6 +376,7 @@ export const PropertyFormFields: React.FC<PropertyFormFieldsProps> = ({
                                                                         onChange,
                                                                         showMetadata = true,
                                                                         showTitle = true,
+                                                                        showPrimitiveSelector = true,
                                                                         size = 'medium',
                                                                         nestedProperties,
                                                                         availableClasses = [],
@@ -989,7 +991,7 @@ export const PropertyFormFields: React.FC<PropertyFormFieldsProps> = ({
         />
 
         {/* Apply Primitive - Quick apply constraints from predefined primitives */}
-        {(baseType === 'string' || baseType === 'number' || baseType === 'integer' || baseType === 'array') && !data.tupleMode && (
+        {showPrimitiveSelector && (baseType === 'string' || baseType === 'number' || baseType === 'integer' || baseType === 'array') && !data.tupleMode && (
           <Box sx={{
             mb: 2.5,
             p: 2,

@@ -1,31 +1,27 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-import Chip from '@mui/material/Chip';
-import InputAdornment from '@mui/material/InputAdornment';
-import IconButton from '@mui/material/IconButton';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
-import List from '@mui/material/List';
-import ListItemButton from '@mui/material/ListItemButton';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Tooltip from '@mui/material/Tooltip';
-import SearchIcon from '@mui/icons-material/Search';
-import ShieldIcon from '@mui/icons-material/Shield';
-import PersonIcon from '@mui/icons-material/Person';
-import ClearIcon from '@mui/icons-material/Clear';
-import DataObjectIcon from '@mui/icons-material/DataObject';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../../ui/Dialog';
+import { Button } from '../../ui/Button';
+import { Input } from '../../ui/Input';
+import { Checkbox } from '../../ui/Checkbox';
 import { useDarkMode } from '@/app/hooks/useDarkMode';
 import { PropertyFormData } from './PropertyFormFields';
+import {
+  Search,
+  X,
+  Shield,
+  User,
+  Sparkles,
+  Database,
+  Loader2,
+} from 'lucide-react';
 
 export interface Primitive {
   id: string;
@@ -287,343 +283,209 @@ export const PrimitiveSelector: React.FC<PrimitiveSelectorProps> = ({
   return (
     <>
       {/* Trigger Button */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <div className="flex items-center gap-2">
         <Button
-          variant="outlined"
-          size={size}
+          variant="outline"
+          size={size === 'small' ? 'sm' : 'default'}
           onClick={() => setDialogOpen(true)}
-          startIcon={<AutoAwesomeIcon fontSize="small" />}
-          sx={{
-            borderColor: isDark ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.5)',
-            color: isDark ? '#a5b4fc' : '#6366f1',
-            textTransform: 'none',
-            '&:hover': {
-              borderColor: '#6366f1',
-              bgcolor: isDark ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.05)',
-            },
-          }}
+          className="gap-2"
         >
-          Apply Primitive
+          <Sparkles size={14} />
+          Select
         </Button>
-        <Tooltip title="Apply a predefined primitive type to automatically set format, pattern, and constraints">
-          <Typography variant="caption" sx={{ color: isDark ? '#94a3b8' : '#64748b', cursor: 'help' }}>
-            ⓘ
-          </Typography>
-        </Tooltip>
-      </Box>
+        <span
+          className="text-xs text-gray-500 dark:text-gray-400 cursor-help"
+          title="Apply a predefined primitive type to automatically set format, pattern, and constraints"
+        >
+          ⓘ
+        </span>
+      </div>
 
       {/* Selection Dialog */}
-      <Dialog
-        open={dialogOpen}
-        onClose={() => {
+      <Dialog open={dialogOpen} onOpenChange={(isOpen) => {
+        if (!isOpen) {
           setDialogOpen(false);
           setSelectedPrimitive(null);
           setSearchQuery('');
-        }}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: isDark ? '#1e293b' : '#ffffff',
-            maxHeight: '80vh',
-          },
-        }}
-      >
-        <DialogTitle sx={{
-          borderBottom: '1px solid',
-          borderColor: isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-        }}>
-          <AutoAwesomeIcon sx={{ color: '#6366f1' }} />
-          <Typography component="span" variant="h6" sx={{ flex: 1 }}>
-            Apply Primitive
-          </Typography>
-          <IconButton onClick={() => setDialogOpen(false)} size="small">
-            <ClearIcon />
-          </IconButton>
-        </DialogTitle>
+        }
+      }} modal={true}>
+        <DialogContent
+          className="max-w-3xl h-[80vh] max-h-[700px] p-0 flex flex-col overflow-hidden"
+          showCloseButton={true}
+          aria-describedby={undefined}
+        >
+          <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
+            <div className="flex items-center gap-2">
+              <Sparkles size={20} className="text-indigo-500" />
+              <DialogTitle className="text-lg font-semibold">Apply Primitive</DialogTitle>
+            </div>
+          </DialogHeader>
 
-        <DialogContent sx={{ p: 0 }}>
           {/* Search and Filters */}
-          <Box sx={{
-            p: 2,
-            borderBottom: '1px solid',
-            borderColor: isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-          }}>
-            <TextField
-              placeholder="Search primitives by name, description, or tags..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              size="small"
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: isDark ? '#94a3b8' : '#64748b' }} />
-                  </InputAdornment>
-                ),
-                endAdornment: searchQuery && (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setSearchQuery('')}>
-                      <ClearIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                bgcolor: isDark ? '#0f172a' : '#f8fafc',
-                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-              }}
-            />
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 space-y-3">
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Search primitives by name, description, or tags..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-9"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
 
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={showSystemPrimitives}
-                    onChange={(e) => setShowSystemPrimitives(e.target.checked)}
-                    size="small"
-                    sx={{ color: '#10b981', '&.Mui-checked': { color: '#10b981' } }}
-                  />
-                }
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <ShieldIcon sx={{ fontSize: 16, color: '#10b981' }} />
-                    <Typography variant="body2">System Primitives</Typography>
-                  </Box>
-                }
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={showTenantPrimitives}
-                    onChange={(e) => setShowTenantPrimitives(e.target.checked)}
-                    size="small"
-                    sx={{ color: '#6366f1', '&.Mui-checked': { color: '#6366f1' } }}
-                  />
-                }
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <PersonIcon sx={{ fontSize: 16, color: '#6366f1' }} />
-                    <Typography variant="body2">Tenant Primitives</Typography>
-                  </Box>
-                }
-              />
-              <Chip
-                label={`Showing ${filteredPrimitives.length} primitive${filteredPrimitives.length !== 1 ? 's' : ''}`}
-                size="small"
-                variant="outlined"
-                sx={{ ml: 'auto' }}
-              />
-            </Box>
-          </Box>
+            <div className="flex items-center gap-4 flex-wrap">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={showSystemPrimitives}
+                  onCheckedChange={(checked) => setShowSystemPrimitives(!!checked)}
+                />
+                <Shield size={14} className="text-emerald-500" />
+                <span className="text-sm">System Primitives</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={showTenantPrimitives}
+                  onCheckedChange={(checked) => setShowTenantPrimitives(!!checked)}
+                />
+                <User size={14} className="text-indigo-500" />
+                <span className="text-sm">Tenant Primitives</span>
+              </label>
+              <span className="ml-auto text-xs text-gray-500 dark:text-gray-400 px-2 py-1 rounded border border-gray-200 dark:border-gray-700">
+                Showing {filteredPrimitives.length} primitive{filteredPrimitives.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+          </div>
 
           {/* Primitives List */}
-          <Box sx={{ minHeight: 300, maxHeight: 400, overflow: 'auto' }}>
+          <div className="flex-1 overflow-y-auto min-h-0">
             {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
-                <CircularProgress size={32} />
-              </Box>
+              <div className="flex justify-center items-center py-16">
+                <Loader2 size={32} className="animate-spin text-indigo-500" />
+              </div>
             ) : error ? (
-              <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Typography color="error">{error}</Typography>
-                <Button onClick={fetchPrimitives} sx={{ mt: 2 }}>Retry</Button>
-              </Box>
+              <div className="p-8 text-center">
+                <p className="text-red-500 mb-4">{error}</p>
+                <Button onClick={fetchPrimitives} variant="outline">Retry</Button>
+              </div>
             ) : filteredPrimitives.length === 0 ? (
-              <Box sx={{ p: 4, textAlign: 'center' }}>
-                <DataObjectIcon sx={{ fontSize: 48, color: isDark ? '#475569' : '#cbd5e1', mb: 2 }} />
-                <Typography variant="body1" sx={{ color: isDark ? '#94a3b8' : '#64748b' }}>
+              <div className="p-8 text-center">
+                <Database size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                <p className="text-gray-600 dark:text-gray-400">
                   {searchQuery ? 'No primitives match your search' : `No ${propertyType} primitives available`}
-                </Typography>
-                <Typography variant="body2" sx={{ color: isDark ? '#64748b' : '#94a3b8', mt: 1 }}>
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
                   {searchQuery ? 'Try a different search term' : 'Create primitives in the Primitives Management section'}
-                </Typography>
-              </Box>
+                </p>
+              </div>
             ) : (
-              <List disablePadding>
+              <div className="divide-y divide-gray-100 dark:divide-gray-800">
                 {filteredPrimitives.map((primitive) => (
-                  <ListItemButton
+                  <button
                     key={primitive.id}
-                    selected={selectedPrimitive?.id === primitive.id}
                     onClick={() => setSelectedPrimitive(primitive)}
                     onDoubleClick={() => applyPrimitive(primitive)}
-                    sx={{
-                      borderBottom: '1px solid',
-                      borderColor: isDark ? 'rgba(148, 163, 184, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                      py: 1.5,
-                      px: 2,
-                      '&.Mui-selected': {
-                        bgcolor: isDark ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.08)',
-                        '&:hover': {
-                          bgcolor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.12)',
-                        },
-                      },
-                      '&:hover': {
-                        bgcolor: isDark ? 'rgba(99, 102, 241, 0.08)' : 'rgba(99, 102, 241, 0.04)',
-                      },
-                    }}
+                    className={`w-full text-left px-4 py-3 transition-colors ${
+                      selectedPrimitive?.id === primitive.id
+                        ? 'bg-indigo-50 dark:bg-indigo-900/20'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                    }`}
                   >
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        {primitive.is_system ? (
-                          <Tooltip title="System Primitive">
-                            <ShieldIcon sx={{ fontSize: 16, color: '#10b981' }} />
-                          </Tooltip>
-                        ) : (
-                          <Tooltip title="Tenant Primitive">
-                            <PersonIcon sx={{ fontSize: 16, color: '#6366f1' }} />
-                          </Tooltip>
-                        )}
-                        <Typography
-                          variant="subtitle2"
-                          sx={{
-                            fontWeight: 600,
-                            color: isDark ? '#e2e8f0' : '#1e293b',
-                          }}
-                        >
-                          {primitive.name}
-                        </Typography>
-                        <Chip
-                          label={primitive.category}
-                          size="small"
-                          sx={{
-                            height: 20,
-                            fontSize: '0.7rem',
-                            bgcolor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.1)',
-                            color: isDark ? '#a5b4fc' : '#6366f1',
-                          }}
-                        />
-                        {primitive.usage_count > 0 && (
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: isDark ? '#64748b' : '#94a3b8',
-                              ml: 'auto',
-                            }}
+                    <div className="flex items-center gap-2 mb-1">
+                      {primitive.is_system ? (
+                        <span title="System Primitive">
+                          <Shield size={14} className="text-emerald-500" />
+                        </span>
+                      ) : (
+                        <span title="Tenant Primitive">
+                          <User size={14} className="text-indigo-500" />
+                        </span>
+                      )}
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">
+                        {primitive.name}
+                      </span>
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
+                        {primitive.category}
+                      </span>
+                      {primitive.usage_count > 0 && (
+                        <span className="ml-auto text-xs text-gray-500">
+                          Used {primitive.usage_count}×
+                        </span>
+                      )}
+                    </div>
+
+                    {primitive.description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 truncate mb-1">
+                        {primitive.description}
+                      </p>
+                    )}
+
+                    <p className="text-xs text-gray-500 dark:text-gray-500 font-mono truncate">
+                      {renderSchemaPreview(primitive.schema)}
+                    </p>
+
+                    {primitive.tags.length > 0 && (
+                      <div className="flex gap-1 mt-1.5 flex-wrap">
+                        {primitive.tags.slice(0, 5).map((tag) => (
+                          <span
+                            key={tag}
+                            className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
                           >
-                            Used {primitive.usage_count}×
-                          </Typography>
+                            {tag}
+                          </span>
+                        ))}
+                        {primitive.tags.length > 5 && (
+                          <span className="text-xs text-gray-500">
+                            +{primitive.tags.length - 5} more
+                          </span>
                         )}
-                      </Box>
-
-                      {primitive.description && (
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: isDark ? '#94a3b8' : '#64748b',
-                            mb: 0.5,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {primitive.description}
-                        </Typography>
-                      )}
-
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: isDark ? '#64748b' : '#94a3b8',
-                          fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-                          fontSize: '0.7rem',
-                        }}
-                      >
-                        {renderSchemaPreview(primitive.schema)}
-                      </Typography>
-
-                      {primitive.tags.length > 0 && (
-                        <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
-                          {primitive.tags.slice(0, 5).map((tag) => (
-                            <Chip
-                              key={tag}
-                              label={tag}
-                              size="small"
-                              sx={{
-                                height: 18,
-                                fontSize: '0.65rem',
-                                bgcolor: isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                                color: isDark ? '#94a3b8' : '#64748b',
-                              }}
-                            />
-                          ))}
-                          {primitive.tags.length > 5 && (
-                            <Typography variant="caption" sx={{ color: isDark ? '#64748b' : '#94a3b8' }}>
-                              +{primitive.tags.length - 5} more
-                            </Typography>
-                          )}
-                        </Box>
-                      )}
-                    </Box>
-                  </ListItemButton>
+                      </div>
+                    )}
+                  </button>
                 ))}
-              </List>
+              </div>
             )}
-          </Box>
+          </div>
 
           {/* Selected Primitive Preview */}
           {selectedPrimitive && (
-            <Box sx={{
-              p: 2,
-              borderTop: '1px solid',
-              borderColor: isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-              bgcolor: isDark ? 'rgba(99, 102, 241, 0.05)' : 'rgba(99, 102, 241, 0.02)',
-            }}>
-              <Typography variant="subtitle2" sx={{ mb: 1, color: isDark ? '#e2e8f0' : '#1e293b' }}>
-                Schema Preview
-              </Typography>
-              <Box
-                component="pre"
-                sx={{
-                  bgcolor: isDark ? '#0f172a' : '#f8fafc',
-                  borderRadius: 1,
-                  p: 1.5,
-                  fontSize: '0.75rem',
-                  fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-                  overflow: 'auto',
-                  maxHeight: 150,
-                  color: isDark ? '#e2e8f0' : '#1e293b',
-                  margin: 0,
+            <div className={`px-4 py-3 border-t border-gray-200 dark:border-gray-700 ${isDark ? 'bg-indigo-900/10' : 'bg-indigo-50/50'}`}>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Schema Preview</p>
+              <pre className={`text-xs font-mono p-3 rounded-lg overflow-auto max-h-32 ${isDark ? 'bg-slate-900 text-gray-300' : 'bg-gray-100 text-gray-800'}`}>
+                {JSON.stringify(selectedPrimitive.schema, null, 2)}
+              </pre>
+            </div>
+          )}
+
+          {/* Footer */}
+          <DialogFooter className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 shrink-0">
+            <div className="flex justify-end gap-2 w-full">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDialogOpen(false);
+                  setSelectedPrimitive(null);
+                  setSearchQuery('');
                 }}
               >
-                {JSON.stringify(selectedPrimitive.schema, null, 2)}
-              </Box>
-            </Box>
-          )}
+                Cancel
+              </Button>
+              <Button
+                disabled={!selectedPrimitive}
+                onClick={() => selectedPrimitive && applyPrimitive(selectedPrimitive)}
+              >
+                Apply Primitive
+              </Button>
+            </div>
+          </DialogFooter>
         </DialogContent>
-
-        <DialogActions sx={{
-          p: 2,
-          borderTop: '1px solid',
-          borderColor: isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-        }}>
-          <Button
-            onClick={() => {
-              setDialogOpen(false);
-              setSelectedPrimitive(null);
-              setSearchQuery('');
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            disabled={!selectedPrimitive}
-            onClick={() => selectedPrimitive && applyPrimitive(selectedPrimitive)}
-            sx={{
-              bgcolor: '#6366f1',
-              '&:hover': { bgcolor: '#4f46e5' },
-              '&.Mui-disabled': { bgcolor: isDark ? '#475569' : '#cbd5e1' },
-            }}
-          >
-            Apply Primitive
-          </Button>
-        </DialogActions>
       </Dialog>
     </>
   );
