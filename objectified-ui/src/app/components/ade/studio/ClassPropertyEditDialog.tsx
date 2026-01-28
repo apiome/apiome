@@ -47,9 +47,11 @@ interface Props {
   }>;
   // For extract to class feature
   existingClassNames?: string[];
+  // Available classes for reference selection (id, name pairs)
+  availableClasses?: Array<{ id: string; name: string }>;
 }
 
-export default function ClassPropertyEditDialog({ open, onClose, editingClassProperty, onSaved, allClassProperties, existingClassNames = [] }: Props) {
+export default function ClassPropertyEditDialog({ open, onClose, editingClassProperty, onSaved, allClassProperties, existingClassNames = [], availableClasses = [] }: Props) {
   const isDark = useDarkMode();
   const [editPropName, setEditPropName] = useState('');
   const [editPropertyError, setEditPropertyError] = useState('');
@@ -57,6 +59,17 @@ export default function ClassPropertyEditDialog({ open, onClose, editingClassPro
 
   // Use shared form data structure
   const [formData, setFormData] = useState<PropertyFormData>({});
+
+  // Reference-specific state
+  type CompositionType = 'none' | 'allOf' | 'anyOf' | 'oneOf';
+  const [refDescription, setRefDescription] = useState('');
+  const [refIsArray, setRefIsArray] = useState(false);
+  const [refCompositionType, setRefCompositionType] = useState<CompositionType>('none');
+  const [refTargetClassId, setRefTargetClassId] = useState<string>('');
+  const [refTargetClassIds, setRefTargetClassIds] = useState<string[]>([]);
+  const [refMinItems, setRefMinItems] = useState('');
+  const [refMaxItems, setRefMaxItems] = useState('');
+  const [refUniqueItems, setRefUniqueItems] = useState(false);
 
   // Helper to get property type display
   const getPropertyTypeInfo = () => {
@@ -279,9 +292,97 @@ export default function ClassPropertyEditDialog({ open, onClose, editingClassPro
       externalDocsDescription: propData.externalDocs?.description || '',
     });
 
+    // Initialize reference-specific fields
+    const isArrayType = actualType === 'array';
+    const refSchema = isArrayType ? (propData.items || {}) : propData;
+
+    // Set description for references
+    setRefDescription(editingClassProperty.description || propData.description || '');
+
+    // Set array state
+    setRefIsArray(isArrayType);
+    setRefMinItems(propData.minItems?.toString() || '');
+    setRefMaxItems(propData.maxItems?.toString() || '');
+    setRefUniqueItems(!!propData.uniqueItems);
+
+    // Determine composition type and target classes
+    if (refSchema.$ref) {
+      // Single reference
+      setRefCompositionType('none');
+      // Extract class name from $ref
+      const refClassName = refSchema.$ref.split('/').pop() || '';
+      // Find matching class ID from availableClasses
+      const matchingClass = availableClasses.find(c => c.name === refClassName);
+      setRefTargetClassId(matchingClass?.id || '');
+      setRefTargetClassIds([]);
+    } else if (refSchema.allOf && Array.isArray(refSchema.allOf)) {
+      setRefCompositionType('allOf');
+      setRefTargetClassId('');
+      // Extract all class IDs from allOf refs
+      const classIds = refSchema.allOf
+        .filter((item: any) => item.$ref)
+        .map((item: any) => {
+          const className = item.$ref.split('/').pop() || '';
+          const matchingClass = availableClasses.find(c => c.name === className);
+          return matchingClass?.id;
+        })
+        .filter(Boolean);
+      setRefTargetClassIds(classIds);
+    } else if (refSchema.anyOf && Array.isArray(refSchema.anyOf)) {
+      // Check if this is a nullable reference (anyOf with null type)
+      const hasNullType = refSchema.anyOf.some((item: any) => item.type === 'null');
+      const refItems = refSchema.anyOf.filter((item: any) => item.$ref);
+      if (hasNullType && refItems.length === 1) {
+        // This is a nullable single reference
+        setRefCompositionType('none');
+        const refClassName = refItems[0].$ref.split('/').pop() || '';
+        const matchingClass = availableClasses.find(c => c.name === refClassName);
+        setRefTargetClassId(matchingClass?.id || '');
+        setRefTargetClassIds([]);
+      } else {
+        setRefCompositionType('anyOf');
+        setRefTargetClassId('');
+        const classIds = refItems
+          .map((item: any) => {
+            const className = item.$ref.split('/').pop() || '';
+            const matchingClass = availableClasses.find(c => c.name === className);
+            return matchingClass?.id;
+          })
+          .filter(Boolean);
+        setRefTargetClassIds(classIds);
+      }
+    } else if (refSchema.oneOf && Array.isArray(refSchema.oneOf)) {
+      // Check if this is a nullable reference (oneOf with null type)
+      const hasNullType = refSchema.oneOf.some((item: any) => item.type === 'null');
+      const refItems = refSchema.oneOf.filter((item: any) => item.$ref);
+      if (hasNullType && refItems.length === 1) {
+        // This is a nullable single reference
+        setRefCompositionType('none');
+        const refClassName = refItems[0].$ref.split('/').pop() || '';
+        const matchingClass = availableClasses.find(c => c.name === refClassName);
+        setRefTargetClassId(matchingClass?.id || '');
+        setRefTargetClassIds([]);
+      } else {
+        setRefCompositionType('oneOf');
+        setRefTargetClassId('');
+        const classIds = refItems
+          .map((item: any) => {
+            const className = item.$ref.split('/').pop() || '';
+            const matchingClass = availableClasses.find(c => c.name === className);
+            return matchingClass?.id;
+          })
+          .filter(Boolean);
+        setRefTargetClassIds(classIds);
+      }
+    } else {
+      // Default - no reference
+      setRefCompositionType('none');
+      setRefTargetClassId('');
+      setRefTargetClassIds([]);
+    }
 
     setEditPropertyError('');
-  }, [editingClassProperty]);
+  }, [editingClassProperty, availableClasses]);
 
   const handleSave = async () => {
     if (!editingClassProperty) {
@@ -676,6 +777,104 @@ export default function ClassPropertyEditDialog({ open, onClose, editingClassPro
         delete updatedData.externalDocs;
       }
 
+      // Handle reference properties specially
+      const originalSchema = isArray ? (originalData.items || {}) : originalData;
+      const isReferenceType = originalSchema.$ref ||
+        (originalSchema.allOf && Array.isArray(originalSchema.allOf) && originalSchema.allOf.some((item: any) => item.$ref)) ||
+        (originalSchema.anyOf && Array.isArray(originalSchema.anyOf) && originalSchema.anyOf.some((item: any) => item.$ref)) ||
+        (originalSchema.oneOf && Array.isArray(originalSchema.oneOf) && originalSchema.oneOf.some((item: any) => item.$ref));
+
+      if (isReferenceType) {
+        // Build the reference schema based on user selections
+        let newRefSchema: any = {};
+
+        if (refCompositionType === 'none') {
+          // Single reference
+          if (refTargetClassId) {
+            const targetClass = availableClasses.find(c => c.id === refTargetClassId);
+            if (targetClass) {
+              newRefSchema = { $ref: `#/components/schemas/${targetClass.name}` };
+            }
+          } else {
+            // Keep existing $ref if no new class selected
+            if (originalSchema.$ref) {
+              newRefSchema = { $ref: originalSchema.$ref };
+            } else if (originalSchema.oneOf) {
+              const refItem = originalSchema.oneOf.find((item: any) => item.$ref);
+              if (refItem) {
+                newRefSchema = { $ref: refItem.$ref };
+              }
+            }
+          }
+        } else {
+          // Composition type (allOf, anyOf, oneOf)
+          const refs = refTargetClassIds
+            .map(classId => {
+              const targetClass = availableClasses.find(c => c.id === classId);
+              return targetClass ? { $ref: `#/components/schemas/${targetClass.name}` } : null;
+            })
+            .filter(Boolean);
+
+          if (refs.length > 0) {
+            newRefSchema = { [refCompositionType]: refs };
+          } else {
+            // Keep existing composition if no classes selected
+            if (originalSchema[refCompositionType]) {
+              newRefSchema = { [refCompositionType]: originalSchema[refCompositionType] };
+            }
+          }
+        }
+
+        // Handle nullable for references
+        if (formData.nullable && newRefSchema.$ref) {
+          // Convert single ref to oneOf with null
+          newRefSchema = {
+            oneOf: [
+              { $ref: newRefSchema.$ref },
+              { type: 'null' }
+            ]
+          };
+        }
+
+        // Build the final updated data for references
+        if (refIsArray) {
+          // Array of references
+          updatedData.type = 'array';
+          updatedData.items = newRefSchema;
+
+          // Array constraints
+          if (refMinItems) updatedData.minItems = parseInt(refMinItems);
+          else delete updatedData.minItems;
+
+          if (refMaxItems) updatedData.maxItems = parseInt(refMaxItems);
+          else delete updatedData.maxItems;
+
+          if (refUniqueItems) updatedData.uniqueItems = true;
+          else delete updatedData.uniqueItems;
+
+          // Clean up top-level ref properties
+          delete updatedData.$ref;
+          delete updatedData.allOf;
+          delete updatedData.anyOf;
+          delete updatedData.oneOf;
+        } else {
+          // Single reference (not array)
+          delete updatedData.type;
+          delete updatedData.items;
+          delete updatedData.minItems;
+          delete updatedData.maxItems;
+          delete updatedData.uniqueItems;
+
+          // Apply the reference schema
+          Object.assign(updatedData, newRefSchema);
+        }
+
+        // Set description for reference
+        if (refDescription?.trim()) {
+          updatedData.description = refDescription.trim();
+        }
+      }
+
       // Update via REST API
       const response = await fetch(`/api/classes/${editingClassProperty.class_id}/properties/${editingClassProperty.id}`, {
         method: 'PUT',
@@ -1021,16 +1220,243 @@ export default function ClassPropertyEditDialog({ open, onClose, editingClassPro
                 const schema = typeInfo.isArray ? (propData.items || {}) : propData;
                 const baseType = schema.$ref ? 'reference' : (schema.type || 'object');
 
-                // Only show constraints for non-reference types
-                if (schema.$ref) {
+                // Check if this is a reference type (single $ref, allOf, anyOf, or oneOf with refs)
+                const isReferenceType = schema.$ref ||
+                  (schema.allOf && Array.isArray(schema.allOf) && schema.allOf.some((item: any) => item.$ref)) ||
+                  (schema.anyOf && Array.isArray(schema.anyOf) && schema.anyOf.some((item: any) => item.$ref)) ||
+                  (schema.oneOf && Array.isArray(schema.oneOf) && schema.oneOf.some((item: any) => item.$ref));
+
+                // Show reference editing UI for reference types
+                if (isReferenceType) {
                   return (
-                    <div className="p-6 flex-1 flex items-center justify-center">
-                      <div className="text-center">
-                        <GitBranch size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-                        <p className="text-gray-500 dark:text-gray-400">
-                          This property references another class.<br />
-                          Constraints are not applicable.
-                        </p>
+                    <div className="p-6 flex-1 overflow-y-auto space-y-6">
+                      {/* Reference Type Header */}
+                      <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
+                        <GitBranch size={20} />
+                        <span className="font-medium">Reference Configuration</span>
+                      </div>
+
+                      {/* Description */}
+                      <div className="space-y-2">
+                        <Label htmlFor="refDescription">Description</Label>
+                        <Textarea
+                          id="refDescription"
+                          value={refDescription}
+                          onChange={(e) => setRefDescription(e.target.value)}
+                          placeholder="Description of this reference property"
+                          rows={2}
+                        />
+                      </div>
+
+                      {/* Array Toggle */}
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="refIsArray"
+                          checked={refIsArray}
+                          onCheckedChange={(checked) => setRefIsArray(checked === true)}
+                        />
+                        <Label htmlFor="refIsArray" className="cursor-pointer">
+                          Array of references
+                        </Label>
+                      </div>
+
+                      {/* Array Constraints */}
+                      {refIsArray && (
+                        <div className="pl-6 space-y-4 border-l-2 border-gray-200 dark:border-gray-700">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Array constraints:</p>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="refMinItems">Min Items</Label>
+                              <Input
+                                id="refMinItems"
+                                type="number"
+                                value={refMinItems}
+                                onChange={(e) => setRefMinItems(e.target.value)}
+                                placeholder="0"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="refMaxItems">Max Items</Label>
+                              <Input
+                                id="refMaxItems"
+                                type="number"
+                                value={refMaxItems}
+                                onChange={(e) => setRefMaxItems(e.target.value)}
+                                placeholder="No limit"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="refUniqueItems"
+                              checked={refUniqueItems}
+                              onCheckedChange={(checked) => setRefUniqueItems(checked === true)}
+                            />
+                            <Label htmlFor="refUniqueItems" className="cursor-pointer text-sm">
+                              Unique items (all elements must be distinct)
+                            </Label>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Reference Type Selection */}
+                      <div className="space-y-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <Label className="font-medium">Reference Type</Label>
+                        <div className="space-y-2">
+                          <label className="flex items-start gap-3 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="refType"
+                              value="none"
+                              checked={refCompositionType === 'none'}
+                              onChange={() => {
+                                setRefCompositionType('none');
+                                setRefTargetClassIds([]);
+                              }}
+                              className="mt-1"
+                            />
+                            <div>
+                              <span className="font-medium text-sm">Single Reference</span>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Reference a single class</p>
+                            </div>
+                          </label>
+                          <label className="flex items-start gap-3 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="refType"
+                              value="allOf"
+                              checked={refCompositionType === 'allOf'}
+                              onChange={() => {
+                                setRefCompositionType('allOf');
+                                setRefTargetClassId('');
+                              }}
+                              className="mt-1"
+                            />
+                            <div>
+                              <span className="font-medium text-sm">allOf (Composition)</span>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Must satisfy all referenced schemas</p>
+                            </div>
+                          </label>
+                          <label className="flex items-start gap-3 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="refType"
+                              value="anyOf"
+                              checked={refCompositionType === 'anyOf'}
+                              onChange={() => {
+                                setRefCompositionType('anyOf');
+                                setRefTargetClassId('');
+                              }}
+                              className="mt-1"
+                            />
+                            <div>
+                              <span className="font-medium text-sm">anyOf (Union)</span>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Can satisfy any of the referenced schemas</p>
+                            </div>
+                          </label>
+                          <label className="flex items-start gap-3 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="refType"
+                              value="oneOf"
+                              checked={refCompositionType === 'oneOf'}
+                              onChange={() => {
+                                setRefCompositionType('oneOf');
+                                setRefTargetClassId('');
+                              }}
+                              className="mt-1"
+                            />
+                            <div>
+                              <span className="font-medium text-sm">oneOf (Exclusive)</span>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Must satisfy exactly one referenced schema</p>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Target Class Selection */}
+                      {refCompositionType === 'none' ? (
+                        <div className="space-y-2">
+                          <Label htmlFor="targetClass">Target Class</Label>
+                          <select
+                            id="targetClass"
+                            value={refTargetClassId}
+                            onChange={(e) => setRefTargetClassId(e.target.value)}
+                            className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                          >
+                            <option value="">Select a class...</option>
+                            {availableClasses.map((cls) => (
+                              <option key={cls.id} value={cls.id}>
+                                {cls.name}
+                              </option>
+                            ))}
+                          </select>
+                          <p className="text-xs text-gray-500">Select the class this property references</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <Label>Select Classes for {refCompositionType}</Label>
+                          <select
+                            value=""
+                            onChange={(e) => {
+                              const classId = e.target.value;
+                              if (classId && !refTargetClassIds.includes(classId)) {
+                                setRefTargetClassIds([...refTargetClassIds, classId]);
+                              }
+                            }}
+                            className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                          >
+                            <option value="">Add a class...</option>
+                            {availableClasses
+                              .filter(cls => !refTargetClassIds.includes(cls.id))
+                              .map((cls) => (
+                                <option key={cls.id} value={cls.id}>
+                                  {cls.name}
+                                </option>
+                              ))}
+                          </select>
+                          {refTargetClassIds.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {refTargetClassIds.map((classId) => {
+                                const cls = availableClasses.find(c => c.id === classId);
+                                return cls ? (
+                                  <Badge
+                                    key={classId}
+                                    variant="secondary"
+                                    className="flex items-center gap-1"
+                                  >
+                                    {cls.name}
+                                    <button
+                                      type="button"
+                                      onClick={() => setRefTargetClassIds(refTargetClassIds.filter(id => id !== classId))}
+                                      className="ml-1 hover:text-red-500"
+                                    >
+                                      ×
+                                    </button>
+                                  </Badge>
+                                ) : null;
+                              })}
+                            </div>
+                          )}
+                          {refTargetClassIds.length === 0 && (
+                            <Alert variant="default" className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                              <Info className="h-4 w-4" />
+                              <span className="ml-2 text-sm">Add at least one class for {refCompositionType}</span>
+                            </Alert>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Nullable Option */}
+                      <div className="flex items-center space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <Checkbox
+                          id="refNullable"
+                          checked={formData.nullable || false}
+                          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, nullable: checked === true }))}
+                        />
+                        <Label htmlFor="refNullable" className="cursor-pointer">
+                          Nullable (can be null)
+                        </Label>
                       </div>
                     </div>
                   );

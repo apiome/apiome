@@ -4805,6 +4805,10 @@ const StudioContent = () => {
             : []
         }
         existingClassNames={nodes.map(n => (n.data as any).name).filter(Boolean)}
+        availableClasses={nodes.map(n => ({
+          id: n.id,
+          name: (n.data as any).name
+        })).filter(c => c.name)}
       />
 
       {/* Reference Dialog */}
