@@ -3167,7 +3167,9 @@ const StudioContent = () => {
 
               // Apply saved node positions
               if (savedLayout.nodes && Array.isArray(savedLayout.nodes)) {
-                const savedPositions = new Map(savedLayout.nodes.map((n: any) => [n.id, n.position]));
+                const savedPositions = new Map<string, { x: number; y: number }>(
+                  savedLayout.nodes.map((n: any) => [n.id, n.position])
+                );
                 finalNodes = finalNodes.map(node => {
                   // First check if position is in classPositionsInGroups (groups take priority)
                   if (classPositionsInGroups[node.id]) {
@@ -3178,11 +3180,11 @@ const StudioContent = () => {
                   }
                   // Otherwise apply saved layout position
                   const savedPos = savedPositions.get(node.id);
-                  if (savedPos) {
-                    return { ...node, position: savedPos };
+                  if (savedPos && typeof savedPos.x === 'number' && typeof savedPos.y === 'number') {
+                    return { ...node, position: { x: savedPos.x, y: savedPos.y } };
                   }
                   return node;
-                });
+                }) as Node[];
               }
 
               setHasExistingLayout(true);
