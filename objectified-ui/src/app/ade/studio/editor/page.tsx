@@ -49,6 +49,7 @@ import ClassPropertyEditDialog from '../../../components/ade/studio/ClassPropert
 import ReferenceDialog from '../../../components/ade/studio/ReferenceDialog';
 import TagManager from '../../../components/ade/studio/TagManager';
 import ClassEditDialog from '../../../components/ade/studio/ClassEditDialog';
+import ExportWizard from '../../../components/ade/studio/ExportWizard';
 import { generateOpenApiSpec } from '@/app/utils/openapi';
 import { generateArazzoSpec } from '@/app/utils/arazzo';
 import { generateJsonSchema } from '@/app/utils/jsonschema';
@@ -292,10 +293,9 @@ const StudioContent = () => {
   // Track whether this is the first load for a given version (to apply saved layout only once)
   const initialLayoutAppliedRef = useRef<string | null>(null);
 
-  // Export dropdown state
-  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
+  // Export wizard state
+  const [exportWizardOpen, setExportWizardOpen] = useState(false);
   const [layoutDropdownOpen, setLayoutDropdownOpen] = useState(false);
-  const exportDropdownRef = useRef<HTMLDivElement>(null);
   const layoutDropdownRef = useRef<HTMLDivElement>(null);
 
   // Canvas search state
@@ -2580,7 +2580,7 @@ const StudioContent = () => {
   // END LAYOUT SAVE/LOAD HANDLERS
   // ============================================================================
 
-  // Use extracted export functions hook
+  // Use extracted export functions hook (legacy - kept for backward compatibility)
   const {
     handleExportPng,
     handleExportSvg,
@@ -2602,7 +2602,7 @@ const StudioContent = () => {
     alertDialog,
     setLoadingMessage,
     setIsLoadingCanvas,
-    setExportDropdownOpen,
+    setExportDropdownOpen: setExportWizardOpen, // Use the wizard state
   });
 
   // Define custom node types
@@ -3092,25 +3092,22 @@ const StudioContent = () => {
   }, [currentTenantId]);
 
 
-  // Handle clicking outside export dropdown to close it
+  // Handle clicking outside layout dropdown to close it
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as HTMLElement)) {
-        setExportDropdownOpen(false);
-      }
       if (layoutDropdownRef.current && !layoutDropdownRef.current.contains(event.target as HTMLElement)) {
         setLayoutDropdownOpen(false);
       }
     };
 
-    if (exportDropdownOpen || layoutDropdownOpen) {
+    if (layoutDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [exportDropdownOpen, layoutDropdownOpen]);
+  }, [layoutDropdownOpen]);
 
   // Load versions when project is selected
   useEffect(() => {
@@ -4695,92 +4692,27 @@ const StudioContent = () => {
               position="top-right"
               className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/80 dark:border-gray-700/80"
             >
-              <div className="relative" ref={exportDropdownRef}>
-                <button
-                  onClick={() => setExportDropdownOpen(!exportDropdownOpen)}
-                  className="p-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all duration-200 shadow-sm hover:shadow-md"
-                  title="Export canvas"
-                >
-                  <Download className="w-5 h-5" />
-                </button>
-
-                {/* Dropdown Menu */}
-                {exportDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-[1002]">
-                    <div className="py-1">
-                      <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Export Canvas
-                      </div>
-                      <button
-                        onClick={handleExportPng}
-                        className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
-                      >
-                        <Image className="w-4 h-4" />
-                        <span>PNG Image</span>
-                      </button>
-                      <button
-                        onClick={handleExportJpeg}
-                        className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
-                      >
-                        <Image className="w-4 h-4" />
-                        <span>JPEG Image</span>
-                      </button>
-                      <button
-                        onClick={handleExportSvg}
-                        className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
-                      >
-                        <FileCode className="w-4 h-4" />
-                        <span>SVG Image</span>
-                      </button>
-                      <button
-                        onClick={handleExportPdf}
-                        className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
-                      >
-                        <FileText className="w-4 h-4" />
-                        <span>PDF Document</span>
-                      </button>
-                      <button
-                        onClick={handleExportJson}
-                        className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
-                      >
-                        <FileCode className="w-4 h-4" />
-                        <span>JSON Data</span>
-                      </button>
-                      <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
-                      <button
-                        onClick={handleExportMermaid}
-                        className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
-                      >
-                        <BarChart3 className="w-4 h-4" />
-                        <span>Mermaid Diagram</span>
-                      </button>
-                      <button
-                        onClick={handleExportPlantUml}
-                        className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
-                      >
-                        <Layout className="w-4 h-4" />
-                        <span>PlantUML Diagram</span>
-                      </button>
-                      <button
-                        onClick={handleExportGraphMl}
-                        className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
-                      >
-                        <Network className="w-4 h-4" />
-                        <span>GraphML Graph</span>
-                      </button>
-                      <button
-                        onClick={handleExportDot}
-                        className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
-                      >
-                        <Zap className="w-4 h-4" />
-                        <span>DOT (GraphViz)</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <button
+                onClick={() => setExportWizardOpen(true)}
+                className="p-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all duration-200 shadow-sm hover:shadow-md"
+                title="Export canvas"
+              >
+                <Download className="w-5 h-5" />
+              </button>
             </Panel>
           </ReactFlow>
+
+          {/* Export Wizard Dialog */}
+          <ExportWizard
+            open={exportWizardOpen}
+            onClose={() => setExportWizardOpen(false)}
+            nodes={nodes}
+            edges={edges}
+            isDark={isDark}
+            projectName={projects.find(p => p.id === selectedProjectId)?.name || 'canvas'}
+            versionId={versions.find(v => v.version_id === selectedVersionId)?.version_id || '1'}
+            alertDialog={alertDialog}
+          />
           </>
         ) : viewMode === 'code' ? (
           // Monaco Editor Code View - OpenAPI 3.1.0 Specification

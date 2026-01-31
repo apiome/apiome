@@ -84,8 +84,13 @@
 - ✅ **Pan & Drag**: Middle-click or space+drag, smooth panning
   - ✅ Pan with middle mouse button or space+drag
   - ✅ Pan to edges on node drag
-- 📋 **Global Search** (Cmd+F): Find classes with highlighting
-- **Search Focus Mode**: Dim everything except search results
+- ✅ **Canvas Search** (Cmd+F): Search for classes with highlighting
+  - ✅ Search box opens with Cmd+F / Ctrl+F keyboard shortcut
+  - ✅ Type to filter - matching nodes highlighted
+  - ✅ Non-matching nodes dimmed (search focus mode)
+  - ✅ Shows count of matching nodes
+  - ✅ Close with Escape key or X button
+- 📋 **Search Focus Mode**: Dim everything except search results
 - **Canvas Bookmarks**: Named bookmarks with thumbnails, keyboard shortcuts (Cmd+1-9)
 - **Canvas Layers**: Background, Node, Edge, Annotation, UI layers with toggle/lock
 - **Node Visibility**: Hide/show nodes, "ghosts mode" for hidden nodes
@@ -93,16 +98,16 @@
 
 | Ticket | Feature Description                                          |
 |--------|--------------------------------------------------------------|
-| #317   | Add the ability to search for classes inside the canvas view |
 | #318   | Canvas search focus mode                                     |
 
 ---
 
 ### 2. Canvas Navigation & Controls
 
-#### Search & Focus 📋 PLANNED
-- 📋 Global search box (`Cmd+F`) to find classes
-- 📋 Search as you type with highlighting
+#### Search & Focus ✅ PARTIALLY IMPLEMENTED
+- ✅ Global search box (`Cmd+F`) to find classes
+- ✅ Search as you type with highlighting
+- ✅ Matching nodes highlighted, non-matching nodes dimmed
 - 📋 Click result to focus and zoom to class on canvas
 - 📋 "Focus Mode": Dim everything except search results
   - Isolate selected classes and immediate relationships
@@ -121,8 +126,8 @@
 | #186   | Clicking a class in the sidebar focuses it on canvas |
 | #187   | Regex search support                                 |
 | #188   | Search within property names/descriptions            |
-| #194   | Search highlighting on canvas                        |
-| #195   | Focus mode - dim non-matching results                |
+| #194   | ✅ Search highlighting on canvas                     |
+| #195   | ✅ Focus mode - dim non-matching results             |
 | #196   | Search history with clear option                     |
 
 #### Node Visibility Controls 📋 PLANNED
@@ -406,7 +411,7 @@
 
 ### 8. Canvas Export
 
-#### Export Options 📋 PLANNED
+#### Export Options ✅ PARTIALLY IMPLEMENTED
 
 **Canvas Export Options**
 - **Export Formats**:
@@ -419,8 +424,13 @@
   - ✅ GraphML (for yEd, Gephi)
   - ✅ DOT (Graphviz)
   - ✅ JSON (raw data)
+- **Export Wizard**: ✅ IMPLEMENTED
+  - ✅ Modal dialog with sidebar for export format selection
+  - ✅ Live preview of export
+  - ✅ Format-specific options (resolution, quality, page size, etc.)
+  - ✅ Categories: Images, Documents, Diagram Code
 - **High-Resolution Export**:
-  - 📋 1x (default), 2x, 4x, 8x resolution
+  - ✅ 1x (default), 2x, 4x resolution options
   - 📋 Customizable DPI (72, 150, 300, 600)
   - 📋 Export dimensions in pixels or cm/inches
 - **Selective Export**:
@@ -429,11 +439,12 @@
   - 📋 Export specific groups
   - 📋 Export entire canvas
 - **Export Options**:
+  - ✅ Export wizard interface (replaces dropdown)
   - 📋 Include/exclude UI elements
   - 📋 Include/exclude grid
   - Include/exclude annotations
   - Include/exclude hidden nodes
-  - Background color/transparency
+  - ✅ Background color/transparency toggle
   - 📋 Add watermark
   - 📋 Add timestamp and metadata
 - **Batch Export**:
@@ -448,7 +459,7 @@
 
 | Ticket | Feature Description                        |
 |--------|--------------------------------------------|
-| #402   | Adds resolution specifications for exports |
+| #402   | ✅ Adds resolution specifications for exports |
 | #403   | Export the current viewport                |
 | #404   | Export specific groups                     |
 | #405   | Export entire canvas                       |

@@ -9,6 +9,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Canvas Improvements:
   - Added top-to-bottom and left-to-right layout options
   - Added focused searching functionality for focused searching in canvases with large structures
+  - Added export form for exporting canvas diagrams with multiple output options
 - Bug fixes:
   - Fixed AI generation bug when creating $ref objects: was referring to properties, not the object itself.
   - Fixed $ref editing in classes - was opening a blank editing panel, now corrected.
