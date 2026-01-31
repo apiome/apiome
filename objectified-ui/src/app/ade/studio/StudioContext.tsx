@@ -39,6 +39,30 @@ export type EdgeRoutingType = 'straight' | 'bezier' | 'orthogonal' | 'smart';
 // Edge animation options
 export type EdgeAnimationType = 'none' | 'flow' | 'pulse' | 'dash';
 
+// Edge arrow style options
+export type EdgeArrowStyle = 'arrow' | 'diamond' | 'circle' | 'open';
+
+// Canvas background types
+export type CanvasBackgroundType = 'solid' | 'grid' | 'image' | 'gradient' | 'texture';
+export type GradientDirection = 'to-r' | 'to-l' | 'to-t' | 'to-b' | 'to-tr' | 'to-tl' | 'to-br' | 'to-bl';
+export type TextureType = 'noise' | 'paper' | 'fabric' | 'carbon' | 'concrete' | 'wood';
+
+export interface CanvasBackgroundOptions {
+  type: CanvasBackgroundType;
+  solidColor: string;
+  gridColor: string;
+  gridOpacity: number;
+  imageUrl: string;
+  imageOpacity: number;
+  imageFit: 'cover' | 'contain' | 'tile' | 'center';
+  gradientFrom: string;
+  gradientTo: string;
+  gradientDirection: GradientDirection;
+  textureType: TextureType;
+  textureOpacity: number;
+  textureColor: string;
+}
+
 export interface EdgeStylingOptions {
   directReferences: EdgeStyleType;
   optionalReferences: EdgeStyleType;
@@ -48,6 +72,11 @@ export interface EdgeStylingOptions {
   optionalColor: string;
   weakColor: string;
   bidirectionalColor: string;
+  // Arrow styles
+  directArrowStyle: EdgeArrowStyle;
+  optionalArrowStyle: EdgeArrowStyle;
+  weakArrowStyle: EdgeArrowStyle;
+  bidirectionalArrowStyle: EdgeArrowStyle;
 }
 
 interface StudioContextType {
@@ -90,6 +119,9 @@ interface StudioContextType {
   // Edge animation
   edgeAnimation: EdgeAnimationType;
   setEdgeAnimation: (animation: EdgeAnimationType) => void;
+  // Canvas background
+  canvasBackground: CanvasBackgroundOptions;
+  setCanvasBackground: (options: CanvasBackgroundOptions) => void;
   // Group management
   groups: CanvasGroup[];
   setGroups: (groups: CanvasGroup[]) => void;
@@ -160,7 +192,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   });
 
   const [edgeStyling, setEdgeStyling] = useState<EdgeStylingOptions>(() => {
-    const defaults = {
+    const defaults: EdgeStylingOptions = {
       directReferences: 'solid' as const,
       optionalReferences: 'dashed' as const,
       weakReferences: 'dotted' as const,
@@ -169,6 +201,11 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       optionalColor: '#f97316', // Orange
       weakColor: '#8b5cf6', // Purple
       bidirectionalColor: '#ec4899', // Pink
+      // Arrow styles - default to standard arrow
+      directArrowStyle: 'arrow' as const,
+      optionalArrowStyle: 'arrow' as const,
+      weakArrowStyle: 'arrow' as const,
+      bidirectionalArrowStyle: 'arrow' as const,
     };
 
     if (typeof window !== 'undefined') {
@@ -208,6 +245,39 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       }
     }
     return 'none'; // Default to no animation
+  });
+
+  // Canvas background settings
+  const defaultCanvasBackground: CanvasBackgroundOptions = {
+    type: 'grid',
+    solidColor: '#f8fafc',
+    gridColor: '#6366f1',
+    gridOpacity: 0.15,
+    imageUrl: '',
+    imageOpacity: 0.5,
+    imageFit: 'cover',
+    gradientFrom: '#f8fafc',
+    gradientTo: '#e2e8f0',
+    gradientDirection: 'to-br',
+    textureType: 'noise',
+    textureOpacity: 0.1,
+    textureColor: '#64748b',
+  };
+
+  const [canvasBackground, setCanvasBackground] = useState<CanvasBackgroundOptions>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('canvasBackground');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          return { ...defaultCanvasBackground, ...parsed };
+        } catch (e) {
+          console.error('Failed to parse canvas background from localStorage:', e);
+          return defaultCanvasBackground;
+        }
+      }
+    }
+    return defaultCanvasBackground;
   });
 
   const [groups, setGroups] = useState<CanvasGroup[]>([]);
@@ -254,6 +324,12 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('edgeAnimation', edgeAnimation);
     }
   }, [edgeAnimation]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('canvasBackground', JSON.stringify(canvasBackground));
+    }
+  }, [canvasBackground]);
 
   const triggerCanvasRefresh = () => {
     setCanvasRefreshKey(prev => prev + 1);
@@ -331,6 +407,8 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       setEdgeRouting,
       edgeAnimation,
       setEdgeAnimation,
+      canvasBackground,
+      setCanvasBackground,
       groups,
       setGroups,
       addGroup,

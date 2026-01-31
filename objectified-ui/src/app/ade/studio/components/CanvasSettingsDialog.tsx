@@ -14,6 +14,7 @@ import type {
   EdgeStylingOptions,
   EdgeRoutingType,
   EdgeAnimationType,
+  EdgeArrowStyle,
 } from '../StudioContext';
 import {
   ReactFlow,
@@ -484,17 +485,29 @@ export default function CanvasSettingsDialog({
                 </h3>
                 <div className="space-y-3">
                   {/* Direct References */}
-                  <div className="flex items-center justify-between gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-24">Direct</span>
+                  <div className="flex items-center justify-between gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-20">Direct</span>
                     <select
                       value={localEdgeStyling.directReferences}
                       onChange={(e) => setLocalEdgeStyling({ ...localEdgeStyling, directReferences: e.target.value as any })}
-                      className="px-2 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex-1"
+                      className="px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex-1"
+                      title="Line style"
                     >
                       <option value="solid">Solid</option>
                       <option value="dashed">Dashed</option>
                       <option value="dotted">Dotted</option>
                       <option value="double">Double</option>
+                    </select>
+                    <select
+                      value={localEdgeStyling.directArrowStyle || 'arrow'}
+                      onChange={(e) => setLocalEdgeStyling({ ...localEdgeStyling, directArrowStyle: e.target.value as EdgeArrowStyle })}
+                      className="px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 w-20"
+                      title="Arrow style"
+                    >
+                      <option value="arrow">Arrow</option>
+                      <option value="diamond">Diamond</option>
+                      <option value="circle">Circle</option>
+                      <option value="open">Open</option>
                     </select>
                     <Popover.Root>
                       <Popover.Trigger asChild>
@@ -530,17 +543,29 @@ export default function CanvasSettingsDialog({
                   </div>
 
                   {/* Optional References */}
-                  <div className="flex items-center justify-between gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-24">Optional</span>
+                  <div className="flex items-center justify-between gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-20">Optional</span>
                     <select
                       value={localEdgeStyling.optionalReferences}
                       onChange={(e) => setLocalEdgeStyling({ ...localEdgeStyling, optionalReferences: e.target.value as any })}
-                      className="px-2 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex-1"
+                      className="px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex-1"
+                      title="Line style"
                     >
                       <option value="solid">Solid</option>
                       <option value="dashed">Dashed</option>
                       <option value="dotted">Dotted</option>
                       <option value="double">Double</option>
+                    </select>
+                    <select
+                      value={localEdgeStyling.optionalArrowStyle || 'arrow'}
+                      onChange={(e) => setLocalEdgeStyling({ ...localEdgeStyling, optionalArrowStyle: e.target.value as EdgeArrowStyle })}
+                      className="px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 w-20"
+                      title="Arrow style"
+                    >
+                      <option value="arrow">Arrow</option>
+                      <option value="diamond">Diamond</option>
+                      <option value="circle">Circle</option>
+                      <option value="open">Open</option>
                     </select>
                     <Popover.Root>
                       <Popover.Trigger asChild>
@@ -576,17 +601,29 @@ export default function CanvasSettingsDialog({
                   </div>
 
                   {/* Weak References */}
-                  <div className="flex items-center justify-between gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-24">Weak</span>
+                  <div className="flex items-center justify-between gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-20">Weak</span>
                     <select
                       value={localEdgeStyling.weakReferences}
                       onChange={(e) => setLocalEdgeStyling({ ...localEdgeStyling, weakReferences: e.target.value as any })}
-                      className="px-2 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex-1"
+                      className="px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex-1"
+                      title="Line style"
                     >
                       <option value="solid">Solid</option>
                       <option value="dashed">Dashed</option>
                       <option value="dotted">Dotted</option>
                       <option value="double">Double</option>
+                    </select>
+                    <select
+                      value={localEdgeStyling.weakArrowStyle || 'arrow'}
+                      onChange={(e) => setLocalEdgeStyling({ ...localEdgeStyling, weakArrowStyle: e.target.value as EdgeArrowStyle })}
+                      className="px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 w-20"
+                      title="Arrow style"
+                    >
+                      <option value="arrow">Arrow</option>
+                      <option value="diamond">Diamond</option>
+                      <option value="circle">Circle</option>
+                      <option value="open">Open</option>
                     </select>
                     <Popover.Root>
                       <Popover.Trigger asChild>
@@ -622,17 +659,29 @@ export default function CanvasSettingsDialog({
                   </div>
 
                   {/* Bidirectional */}
-                  <div className="flex items-center justify-between gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-24">Bidirectional</span>
+                  <div className="flex items-center justify-between gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-20">Bidir.</span>
                     <select
                       value={localEdgeStyling.bidirectional}
                       onChange={(e) => setLocalEdgeStyling({ ...localEdgeStyling, bidirectional: e.target.value as any })}
-                      className="px-2 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex-1"
+                      className="px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex-1"
+                      title="Line style"
                     >
                       <option value="solid">Solid</option>
                       <option value="dashed">Dashed</option>
                       <option value="dotted">Dotted</option>
                       <option value="double">Double</option>
+                    </select>
+                    <select
+                      value={localEdgeStyling.bidirectionalArrowStyle || 'arrow'}
+                      onChange={(e) => setLocalEdgeStyling({ ...localEdgeStyling, bidirectionalArrowStyle: e.target.value as EdgeArrowStyle })}
+                      className="px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 w-20"
+                      title="Arrow style"
+                    >
+                      <option value="arrow">Arrow</option>
+                      <option value="diamond">Diamond</option>
+                      <option value="circle">Circle</option>
+                      <option value="open">Open</option>
                     </select>
                     <Popover.Root>
                       <Popover.Trigger asChild>

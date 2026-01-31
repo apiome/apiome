@@ -193,6 +193,7 @@ const StudioContent = () => {
     gridStyle,
     smartGuidesEnabled,
     setSmartGuidesEnabled,
+    canvasBackground,
     groups,
     setGroups,
     addGroup,
@@ -539,6 +540,85 @@ const StudioContent = () => {
       return edge;
     });
   }, [edges, canvasSearchQuery, canvasSearchOpen, matchingNodeIds]);
+
+  // Compute canvas background style based on settings
+  const canvasBackgroundStyle = useMemo(() => {
+    const gradientDirectionMap: Record<string, string> = {
+      'to-r': '90deg',
+      'to-l': '270deg',
+      'to-t': '0deg',
+      'to-b': '180deg',
+      'to-tr': '45deg',
+      'to-tl': '315deg',
+      'to-br': '135deg',
+      'to-bl': '225deg',
+    };
+
+    switch (canvasBackground.type) {
+      case 'solid':
+        return {
+          background: isDark ? '#0f172a' : canvasBackground.solidColor,
+        };
+      case 'gradient':
+        const direction = gradientDirectionMap[canvasBackground.gradientDirection] || '135deg';
+        return {
+          background: isDark
+            ? `linear-gradient(${direction}, #0f172a 0%, #1e293b 50%, #0f172a 100%)`
+            : `linear-gradient(${direction}, ${canvasBackground.gradientFrom} 0%, ${canvasBackground.gradientTo} 100%)`,
+        };
+      case 'image':
+        if (canvasBackground.imageUrl) {
+          const fitStyles: Record<string, string> = {
+            'cover': 'cover',
+            'contain': 'contain',
+            'tile': 'auto',
+            'center': 'auto',
+          };
+          const repeatStyles: Record<string, string> = {
+            'cover': 'no-repeat',
+            'contain': 'no-repeat',
+            'tile': 'repeat',
+            'center': 'no-repeat',
+          };
+          const positionStyles: Record<string, string> = {
+            'cover': 'center',
+            'contain': 'center',
+            'tile': 'top left',
+            'center': 'center',
+          };
+          return {
+            backgroundImage: `url(${canvasBackground.imageUrl})`,
+            backgroundSize: fitStyles[canvasBackground.imageFit],
+            backgroundRepeat: repeatStyles[canvasBackground.imageFit],
+            backgroundPosition: positionStyles[canvasBackground.imageFit],
+            backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+          };
+        }
+        return { background: isDark ? '#0f172a' : '#f8fafc' };
+      case 'texture':
+        // Textures are implemented with CSS patterns
+        const texturePatterns: Record<string, string> = {
+          'noise': `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+          'paper': `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='${encodeURIComponent(canvasBackground.textureColor)}' fill-opacity='${canvasBackground.textureOpacity}'%3E%3Cpath opacity='.5' d='M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          'fabric': `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cg fill='${encodeURIComponent(canvasBackground.textureColor)}' fill-opacity='${canvasBackground.textureOpacity}'%3E%3Cpath d='M0 0h10v10H0zM10 10h10v10H10z'/%3E%3C/g%3E%3C/svg%3E")`,
+          'carbon': `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cg fill='${encodeURIComponent(canvasBackground.textureColor)}' fill-opacity='${canvasBackground.textureOpacity}'%3E%3Cpath d='M0 0h4v4H0V0zm4 4h4v4H4V4z'/%3E%3C/g%3E%3C/svg%3E")`,
+          'concrete': `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='${encodeURIComponent(canvasBackground.textureColor)}' fill-opacity='${canvasBackground.textureOpacity}'%3E%3Cpath d='M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          'wood': `url("data:image/svg+xml,%3Csvg width='42' height='44' viewBox='0 0 42 44' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='${encodeURIComponent(canvasBackground.textureColor)}' fill-opacity='${canvasBackground.textureOpacity}'%3E%3Cpath d='M0 0h42v44H0V0zm1 1h40v20H1V1zM0 23h20v20H0V23zm22 0h20v20H22V23z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        };
+        return {
+          backgroundColor: isDark ? '#0f172a' : canvasBackground.solidColor || '#f8fafc',
+          backgroundImage: texturePatterns[canvasBackground.textureType] || texturePatterns['noise'],
+        };
+      case 'grid':
+      default:
+        // Grid uses the Background component, so we just set the base color
+        return {
+          background: isDark
+            ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)'
+            : `linear-gradient(135deg, ${canvasBackground.solidColor || '#f8fafc'} 0%, #f1f5f9 50%, #e2e8f0 100%)`,
+        };
+    }
+  }, [canvasBackground, isDark]);
 
   // Handle zoom to class when selected in sidebar
   const zoomToClass = useCallback((classId: string) => {
@@ -4133,7 +4213,7 @@ const StudioContent = () => {
               snapGrid={[gridSize, gridSize]}
               fitView
               attributionPosition="bottom-left"
-              className={`${isDark ? 'bg-gray-900' : ''} ${isAnimating ? 'layout-animating' : ''}`}
+              className={isAnimating ? 'layout-animating' : ''}
               nodesDraggable={true}
               nodesConnectable={!isReadOnly}
               elementsSelectable={true}
@@ -4141,12 +4221,62 @@ const StudioContent = () => {
               selectionMode={SelectionMode.Partial}
               nodesFocusable={true}
               edgesFocusable={true}
-              style={{
-                background: isDark
-                  ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)'
-                  : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%)'
-              }}
+              style={canvasBackgroundStyle}
             >
+            {/* Custom SVG marker definitions for arrow styles */}
+            <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+              <defs>
+                {/* Generate diamond and circle markers for each edge color */}
+                {[
+                  edgeStyling.directColor,
+                  edgeStyling.optionalColor,
+                  edgeStyling.weakColor,
+                  edgeStyling.bidirectionalColor,
+                ].map((color) => {
+                  const colorId = color.replace('#', '');
+                  return (
+                    <g key={colorId}>
+                      {/* Diamond marker */}
+                      <marker
+                        id={`diamond-marker-${colorId}`}
+                        viewBox="0 0 12 12"
+                        refX="6"
+                        refY="6"
+                        markerWidth="12"
+                        markerHeight="12"
+                        orient="auto-start-reverse"
+                      >
+                        <path
+                          d="M 6 0 L 12 6 L 6 12 L 0 6 Z"
+                          fill={color}
+                          stroke={color}
+                          strokeWidth="1"
+                        />
+                      </marker>
+                      {/* Circle marker */}
+                      <marker
+                        id={`circle-marker-${colorId}`}
+                        viewBox="0 0 10 10"
+                        refX="5"
+                        refY="5"
+                        markerWidth="10"
+                        markerHeight="10"
+                        orient="auto-start-reverse"
+                      >
+                        <circle
+                          cx="5"
+                          cy="5"
+                          r="4"
+                          fill={color}
+                          stroke={color}
+                          strokeWidth="1"
+                        />
+                      </marker>
+                    </g>
+                  );
+                })}
+              </defs>
+            </svg>
             <Background
               variant={
                 gridStyle === 'dots'

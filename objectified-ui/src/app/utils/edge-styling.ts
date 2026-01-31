@@ -4,7 +4,41 @@
  * Converts edge style types to CSS stroke properties
  */
 
-import type { EdgeStyleType } from '../ade/studio/StudioContext';
+import type { EdgeStyleType, EdgeArrowStyle } from '../ade/studio/StudioContext';
+
+/**
+ * Convert edge arrow style to ReactFlow marker type
+ */
+export function getMarkerType(arrowStyle: EdgeArrowStyle): string {
+  switch (arrowStyle) {
+    case 'arrow':
+      return 'arrowclosed';
+    case 'diamond':
+      return 'arrowclosed'; // We'll use SVG markers for diamond
+    case 'circle':
+      return 'arrowclosed'; // We'll use SVG markers for circle
+    case 'open':
+      return 'arrow';
+    default:
+      return 'arrowclosed';
+  }
+}
+
+/**
+ * Get custom marker ID for non-standard arrow styles
+ * These markers should be defined as SVG defs in the canvas
+ */
+export function getCustomMarkerId(arrowStyle: EdgeArrowStyle, color: string): string | null {
+  const colorId = color.replace('#', '');
+  switch (arrowStyle) {
+    case 'diamond':
+      return `diamond-marker-${colorId}`;
+    case 'circle':
+      return `circle-marker-${colorId}`;
+    default:
+      return null;
+  }
+}
 
 /**
  * Convert edge style type to strokeDasharray value
@@ -105,28 +139,37 @@ export function applyEdgeStyling(
     optionalColor: string;
     weakColor: string;
     bidirectionalColor: string;
+    directArrowStyle?: EdgeArrowStyle;
+    optionalArrowStyle?: EdgeArrowStyle;
+    weakArrowStyle?: EdgeArrowStyle;
+    bidirectionalArrowStyle?: EdgeArrowStyle;
   }
 ): any {
   const category = categorizeEdge(edge);
   let styleType: EdgeStyleType;
   let color: string;
+  let arrowStyle: EdgeArrowStyle;
 
   switch (category) {
     case 'direct':
       styleType = edgeStylingOptions.directReferences;
       color = edgeStylingOptions.directColor;
+      arrowStyle = edgeStylingOptions.directArrowStyle || 'arrow';
       break;
     case 'optional':
       styleType = edgeStylingOptions.optionalReferences;
       color = edgeStylingOptions.optionalColor;
+      arrowStyle = edgeStylingOptions.optionalArrowStyle || 'arrow';
       break;
     case 'weak':
       styleType = edgeStylingOptions.weakReferences;
       color = edgeStylingOptions.weakColor;
+      arrowStyle = edgeStylingOptions.weakArrowStyle || 'arrow';
       break;
     case 'bidirectional':
       styleType = edgeStylingOptions.bidirectional;
       color = edgeStylingOptions.bidirectionalColor;
+      arrowStyle = edgeStylingOptions.bidirectionalArrowStyle || 'arrow';
       break;
   }
 
@@ -136,9 +179,39 @@ export function applyEdgeStyling(
   // Apply the styling with custom color
   const strokeStyle = getEdgeStrokeStyle(styleType, color, currentStrokeWidth);
 
-  // Update marker colors to match edge color
-  const updatedMarkerStart = edge.markerStart ? { ...edge.markerStart, color } : undefined;
-  const updatedMarkerEnd = edge.markerEnd ? { ...edge.markerEnd, color } : undefined;
+  // Determine marker type based on arrow style
+  const markerType = getMarkerType(arrowStyle);
+  const customMarkerId = getCustomMarkerId(arrowStyle, color);
+
+  // Update marker colors and types to match edge settings
+  let updatedMarkerStart = undefined;
+  let updatedMarkerEnd = undefined;
+
+  if (edge.markerStart) {
+    if (customMarkerId) {
+      // Use custom SVG marker for diamond/circle
+      updatedMarkerStart = `url(#${customMarkerId})`;
+    } else {
+      updatedMarkerStart = {
+        ...edge.markerStart,
+        type: markerType,
+        color,
+      };
+    }
+  }
+
+  if (edge.markerEnd) {
+    if (customMarkerId) {
+      // Use custom SVG marker for diamond/circle
+      updatedMarkerEnd = `url(#${customMarkerId})`;
+    } else {
+      updatedMarkerEnd = {
+        ...edge.markerEnd,
+        type: markerType,
+        color,
+      };
+    }
+  }
 
   return {
     ...edge,

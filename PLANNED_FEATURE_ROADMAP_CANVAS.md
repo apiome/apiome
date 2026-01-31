@@ -257,7 +257,7 @@
 | #342   | Add node border configuration     |
 | #343   | Add custom node label styling     |
 
-#### Edge/Relationship Styling 📋 PLANNED
+#### Edge/Relationship Styling ✅ PARTIALLY IMPLEMENTED
 - ✅ Different line styles for relationship types:
   - ✅ Solid for direct references
   - ✅ Dashed for optional references
@@ -270,21 +270,20 @@
   - ✅ Curved (Bezier)
   - ✅ Orthogonal (right angles)
   - ✅ Smart routing (avoid node overlap)
-- 📋 Arrow styles: Standard, Diamond, Circle, Open arrow
+- ✅ Arrow styles: Standard, Diamond, Circle, Open arrow
 - ✅ Animated edges (flowing dots for data flow)
 
 | Ticket | Feature Description                   |
 |--------|---------------------------------------|
-| #347   | Adds edge arrow styles                |
 | #349   | Adds edge hover effects               |
 
-#### Canvas Background 📋 PLANNED
-- 📋 Background options (solid color, grid pattern, custom image, gradient, textures)
+#### Canvas Background ✅ IMPLEMENTED
+- ✅ Background options (solid color, grid pattern, custom image, gradient, textures)
 - 📋 Background opacity and blur
 
 | Ticket | Feature Description                  |
 |--------|--------------------------------------|
-| #329   | Add background options to the canvas |
+| #329   | ✅ Add background options to the canvas |
 | #330   | Add background opacity and blur      |
 
 ---
