@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -8,8 +8,12 @@ import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import { Close, Save } from '@mui/icons-material';
-import { Hash } from 'lucide-react';
+import { Hash, Sparkles, Search, Shield, User, Loader2, Database } from 'lucide-react';
 import { useDarkMode } from '../../../../hooks/useDarkMode';
 import { useDialog } from '../../../../components/providers/DialogProvider';
 import {
@@ -51,6 +55,19 @@ const ARRAY_ITEM_TYPES = [
   { value: 'boolean', label: 'Boolean' },
 ];
 
+// Primitive from REST API (for Apply from primitive template)
+interface PrimitiveTemplate {
+  id: string;
+  tenant_id: string;
+  name: string;
+  description: string | null;
+  category: string;
+  schema: Record<string, unknown>;
+  tags: string[];
+  is_system: boolean;
+  usage_count: number;
+}
+
 interface ParameterPropertiesPanelProps {
   parameterId: string | null;
   operationId?: string; // Optional when opened from path variable click
@@ -91,6 +108,16 @@ export default function ParameterPropertiesPanel({
   const [schemaDefault, setSchemaDefault] = useState('');
   const [schemaEnum, setSchemaEnum] = useState('');
   const [schemaArrayItemType, setSchemaArrayItemType] = useState<'string' | 'integer' | 'number' | 'boolean'>('string');
+
+  // Primitive template dialog state (Apply from REST primitives)
+  const [primitiveDialogOpen, setPrimitiveDialogOpen] = useState(false);
+  const [primitives, setPrimitives] = useState<PrimitiveTemplate[]>([]);
+  const [primitiveLoading, setPrimitiveLoading] = useState(false);
+  const [primitiveError, setPrimitiveError] = useState<string | null>(null);
+  const [primitiveSearch, setPrimitiveSearch] = useState('');
+  const [showSystemPrimitives, setShowSystemPrimitives] = useState(true);
+  const [showTenantPrimitives, setShowTenantPrimitives] = useState(true);
+  const [selectedPrimitive, setSelectedPrimitive] = useState<PrimitiveTemplate | null>(null);
 
   // Load parameter details when parameterId changes (from operation link or from path variable click)
   useEffect(() => {
@@ -185,6 +212,70 @@ export default function ParameterPropertiesPanel({
       setAvailablePathParams(params);
     }
   }, [pathname]);
+
+  // Fetch primitives when primitive dialog opens (from REST service)
+  useEffect(() => {
+    if (!primitiveDialogOpen) return;
+    const category = schemaType; // string | integer | number | boolean | array
+    setPrimitiveLoading(true);
+    setPrimitiveError(null);
+    setSelectedPrimitive(null);
+    setPrimitiveSearch('');
+    fetch(`/api/primitives?category=${encodeURIComponent(category)}`)
+      .then((res) => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch primitives')))
+      .then((data: { success?: boolean; primitives?: PrimitiveTemplate[]; error?: string }) => {
+        if (data.success && Array.isArray(data.primitives)) {
+          setPrimitives(data.primitives);
+        } else {
+          setPrimitiveError(data.error || 'Failed to load primitives');
+          setPrimitives([]);
+        }
+      })
+      .catch((err) => {
+        setPrimitiveError(err instanceof Error ? err.message : 'Failed to load primitives');
+        setPrimitives([]);
+      })
+      .finally(() => setPrimitiveLoading(false));
+  }, [primitiveDialogOpen, schemaType]);
+
+  // Filter primitives by search and visibility
+  const filteredPrimitives = useMemo(() => {
+    let list = primitives;
+    if (!showSystemPrimitives) list = list.filter((p) => !p.is_system);
+    if (!showTenantPrimitives) list = list.filter((p) => p.is_system);
+    if (primitiveSearch.trim()) {
+      const q = primitiveSearch.toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.description || '').toLowerCase().includes(q) ||
+          p.tags.some((t) => t.toLowerCase().includes(q))
+      );
+    }
+    return list.sort((a, b) => (a.is_system === b.is_system ? 0 : a.is_system ? 1 : -1));
+  }, [primitives, primitiveSearch, showSystemPrimitives, showTenantPrimitives]);
+
+  // Apply primitive schema to parameter form (type, format, pattern, constraints)
+  const applyPrimitiveToParameter = (primitive: PrimitiveTemplate) => {
+    const schema = primitive.schema as Record<string, unknown>;
+    const type = schema.type as string | undefined;
+    const pathTypes = ['string', 'integer', 'number', 'boolean', 'array'];
+    if (type && pathTypes.includes(type)) setSchemaType(type as 'string' | 'integer' | 'number' | 'boolean' | 'array');
+    if (schema.format !== undefined) setSchemaFormat(String(schema.format));
+    if (schema.pattern !== undefined) setSchemaPattern(String(schema.pattern));
+    if (schema.minimum !== undefined) setSchemaMinimum(String(schema.minimum));
+    if (schema.maximum !== undefined) setSchemaMaximum(String(schema.maximum));
+    if (schema.minLength !== undefined) setSchemaMinLength(String(schema.minLength));
+    if (schema.maxLength !== undefined) setSchemaMaxLength(String(schema.maxLength));
+    if (schema.enum !== undefined && Array.isArray(schema.enum)) setSchemaEnum((schema.enum as unknown[]).map(String).join(', '));
+    if (schema.default !== undefined) setSchemaDefault(String(schema.default));
+    if (schema.items && typeof schema.items === 'object' && schema.items !== null && 'type' in schema.items) {
+      setSchemaArrayItemType((schema.items as { type: string }).type as 'string' | 'integer' | 'number' | 'boolean');
+    }
+    if (primitive.description && !description) setDescription(primitive.description);
+    setPrimitiveDialogOpen(false);
+    setSelectedPrimitive(null);
+  };
 
   const handleSave = async () => {
     if (!parameterId || !name.trim()) return;
@@ -512,6 +603,33 @@ export default function ParameterPropertiesPanel({
                 <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Schema Definition
                 </label>
+
+                {/* Apply from primitive template (REST service primitives) */}
+                <Box sx={{ mb: 2 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<Sparkles style={{ width: 14, height: 14 }} />}
+                    onClick={() => setPrimitiveDialogOpen(true)}
+                    sx={{
+                      borderColor: isDark ? '#6366f1' : '#8b5cf6',
+                      color: isDark ? '#a5b4fc' : '#7c3aed',
+                      fontSize: '0.75rem',
+                      '&:hover': {
+                        borderColor: isDark ? '#818cf8' : '#7c3aed',
+                        backgroundColor: isDark ? 'rgba(99, 102, 241, 0.1)' : 'rgba(139, 92, 246, 0.08)',
+                      },
+                    }}
+                  >
+                    Apply from primitive template
+                  </Button>
+                  <span
+                    className="text-[10px] text-gray-500 dark:text-gray-400 ml-1.5 align-middle cursor-help"
+                    title="Apply format, pattern, and constraints from a primitive defined in the REST service"
+                  >
+                    ⓘ
+                  </span>
+                </Box>
 
                 {/* Schema Type */}
                 <Box sx={{ mb: 2 }}>
@@ -845,6 +963,165 @@ export default function ParameterPropertiesPanel({
           </Box>
         </>
       )}
+
+      {/* Primitive template selection dialog (REST service primitives) */}
+      <Dialog
+        open={primitiveDialogOpen}
+        onClose={() => {
+          setPrimitiveDialogOpen(false);
+          setSelectedPrimitive(null);
+          setPrimitiveSearch('');
+        }}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            background: isDark ? 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)' : undefined,
+            border: isDark ? '1px solid #334155' : undefined,
+          },
+        }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '1rem' }}>
+          <Sparkles size={18} style={{ color: '#8b5cf6' }} />
+          Apply from primitive template
+        </DialogTitle>
+        <DialogContent dividers>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+            Select a primitive from the REST service to apply its format, pattern, and constraints to this parameter.
+          </p>
+          <Box sx={{ mb: 2 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Search primitives by name, description, or tags..."
+              value={primitiveSearch}
+              onChange={(e) => setPrimitiveSearch(e.target.value)}
+              InputProps={{
+                startAdornment: <Search size={14} style={{ marginRight: 8, color: isDark ? '#94a3b8' : '#64748b' }} />,
+              }}
+              sx={{
+                '& .MuiInputBase-root': {
+                  fontSize: '0.875rem',
+                  backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+                  borderRadius: 1,
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  checked={showSystemPrimitives}
+                  onChange={(e) => setShowSystemPrimitives(e.target.checked)}
+                  sx={{ color: isDark ? '#64748b' : '#94a3b8', '&.Mui-checked': { color: '#10b981' } }}
+                />
+              }
+              label={<span className="text-xs flex items-center gap-1"><Shield size={12} /> System</span>}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  checked={showTenantPrimitives}
+                  onChange={(e) => setShowTenantPrimitives(e.target.checked)}
+                  sx={{ color: isDark ? '#64748b' : '#94a3b8', '&.Mui-checked': { color: '#8b5cf6' } }}
+                />
+              }
+              label={<span className="text-xs flex items-center gap-1"><User size={12} /> Tenant</span>}
+            />
+            <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-auto">
+              {filteredPrimitives.length} primitive{filteredPrimitives.length !== 1 ? 's' : ''}
+            </span>
+          </Box>
+          <Box sx={{ maxHeight: 320, overflowY: 'auto', border: isDark ? '1px solid #334155' : '1px solid #e2e8f0', borderRadius: 1 }}>
+            {primitiveLoading ? (
+              <Box sx={{ py: 4, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Loader2 size={24} className="animate-spin text-indigo-500" />
+              </Box>
+            ) : primitiveError ? (
+              <Box sx={{ p: 3, textAlign: 'center' }}>
+                <p className="text-sm text-red-500 dark:text-red-400 mb-2">{primitiveError}</p>
+                <Button size="small" variant="outlined" onClick={() => primitiveDialogOpen && setPrimitiveDialogOpen(false)}>
+                  Close
+                </Button>
+              </Box>
+            ) : filteredPrimitives.length === 0 ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Database size={32} style={{ color: isDark ? '#475569' : '#cbd5e1', marginBottom: 8 }} />
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {primitiveSearch ? 'No primitives match your search' : `No ${schemaType} primitives available`}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  {primitiveSearch ? 'Try a different search term' : 'Create primitives in the Primitives Management section'}
+                </p>
+              </Box>
+            ) : (
+              filteredPrimitives.map((primitive) => (
+                <button
+                  key={primitive.id}
+                  type="button"
+                  onClick={() => setSelectedPrimitive(primitive)}
+                  className={`w-full text-left px-3 py-2.5 transition-colors border-b last:border-b-0 ${
+                    selectedPrimitive?.id === primitive.id
+                      ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 border-gray-100 dark:border-gray-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-0.5">
+                    {primitive.is_system ? <Shield size={12} style={{ color: '#10b981' }} /> : <User size={12} style={{ color: '#8b5cf6' }} />}
+                    <span className="font-medium text-sm text-gray-900 dark:text-gray-100">{primitive.name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
+                      {primitive.category}
+                    </span>
+                    {primitive.usage_count > 0 && (
+                      <span className="text-[10px] text-gray-500 ml-auto">Used {primitive.usage_count}×</span>
+                    )}
+                  </div>
+                  {primitive.description && (
+                    <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{primitive.description}</p>
+                  )}
+                  <p className="text-[10px] text-gray-500 dark:text-gray-500 font-mono truncate mt-0.5">
+                    {[
+                      primitive.schema.format && `format: ${primitive.schema.format}`,
+                      primitive.schema.pattern && 'pattern',
+                      primitive.schema.minimum !== undefined && `min: ${primitive.schema.minimum}`,
+                      primitive.schema.maximum !== undefined && `max: ${primitive.schema.maximum}`,
+                      primitive.schema.enum && Array.isArray(primitive.schema.enum) && `enum(${primitive.schema.enum.length})`,
+                    ].filter(Boolean).join(', ') || 'No constraints'}
+                  </p>
+                </button>
+              ))
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 2, py: 1.5, borderTop: isDark ? '1px solid #334155' : '1px solid #e2e8f0' }}>
+          <Button
+            size="small"
+            onClick={() => {
+              setPrimitiveDialogOpen(false);
+              setSelectedPrimitive(null);
+              setPrimitiveSearch('');
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="small"
+            variant="contained"
+            disabled={!selectedPrimitive}
+            onClick={() => selectedPrimitive && applyPrimitiveToParameter(selectedPrimitive)}
+            sx={{
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%)',
+              '&:hover': { background: 'linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%)' },
+            }}
+          >
+            Apply primitive
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

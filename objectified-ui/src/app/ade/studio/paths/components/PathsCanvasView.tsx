@@ -38,6 +38,7 @@ import {
   unlinkParameterFromOperation,
   getSharedPathParameters,
   createSharedPathParameter,
+  updateSharedPathParameter,
   deleteSharedPathParameter,
 } from '../../../../../../lib/db/helper-shared-path-parameters';
 import { extractPathParameters } from '../../../../../../lib/utils/path-params';
@@ -338,6 +339,10 @@ function PathsCanvasInner({ selectedPathId, pathname, onOperationSelect, onParam
   const [classDropDialogOpen, setClassDropDialogOpen] = useState(false);
   const [classDropDialogClassName, setClassDropDialogClassName] = useState('');
   const [classDropDialogCallback, setClassDropDialogCallback] = useState<((action: 'copy' | 'reference') => void) | null>(null);
+
+  // State for path variable drop target (property drag from sidebar for type binding)
+  const [dragOverPathVariable, setDragOverPathVariable] = useState<string | null>(null);
+  const pathVariableDragCounterRef = useRef(0);
 
   // Refs to hold the latest handler functions
   // This prevents stale closures when nodes are moved or canvas is refreshed
@@ -756,6 +761,77 @@ function PathsCanvasInner({ selectedPathId, pathname, onOperationSelect, onParam
       }
     },
     [selectedPathId, onParameterSelect, onRefresh, alertDialog]
+  );
+
+  // Map property schema to path parameter schema (path params: string, integer, number, boolean, array only)
+  const propertyDataToParameterSchema = useCallback((propertyData: Record<string, any> | undefined): Record<string, any> => {
+    const data = propertyData || { type: 'string' };
+    const type = data.type || 'string';
+    const pathParamTypes = ['string', 'integer', 'number', 'boolean', 'array'];
+    const paramType = pathParamTypes.includes(type) ? type : 'string';
+    const schema: Record<string, any> = { type: paramType, required: true };
+    if (data.format != null) schema.format = data.format;
+    if (Array.isArray(data.enum)) schema.enum = data.enum;
+    if (data.minimum != null) schema.minimum = data.minimum;
+    if (data.maximum != null) schema.maximum = data.maximum;
+    if (data.minLength != null) schema.minLength = data.minLength;
+    if (data.maxLength != null) schema.maxLength = data.maxLength;
+    if (data.pattern != null) schema.pattern = data.pattern;
+    if (paramType === 'array' && data.items != null) schema.items = data.items;
+    return schema;
+  }, []);
+
+  // Handle property drop on path variable: bind property type/schema to the parameter
+  const handlePropertyDropOnPathVariable = useCallback(
+    async (variableName: string, dropData: any) => {
+      if (!selectedPathId || dropData?.type !== 'property') return;
+      const propertyData = dropData.data || { type: 'string' };
+      const schema = propertyDataToParameterSchema(propertyData);
+      try {
+        const createResult = await createSharedPathParameter(
+          selectedPathId,
+          variableName,
+          'path',
+          undefined,
+          undefined,
+          schema
+        );
+        const createParsed = JSON.parse(createResult);
+        if (!createParsed.success || !createParsed.parameter) {
+          await alertDialog({
+            title: 'Error',
+            message: createParsed.error || 'Failed to bind property to parameter',
+            variant: 'error',
+          });
+          return;
+        }
+        const param = createParsed.parameter;
+        if (createParsed.existed) {
+          const updateResult = await updateSharedPathParameter(param.id, { data: schema });
+          const updateParsed = JSON.parse(updateResult);
+          if (!updateParsed.success) {
+            await alertDialog({
+              title: 'Error',
+              message: updateParsed.error || 'Failed to update parameter schema',
+              variant: 'error',
+            });
+            return;
+          }
+        }
+        if (onRefresh) onRefresh();
+        if (onParameterSelect) {
+          onParameterSelect({ id: param.id, name: variableName, operationId: '' });
+        }
+      } catch (error) {
+        console.error('Error binding property to path variable:', error);
+        await alertDialog({
+          title: 'Error',
+          message: 'Failed to bind property to parameter',
+          variant: 'error',
+        });
+      }
+    },
+    [selectedPathId, propertyDataToParameterSchema, onRefresh, onParameterSelect, alertDialog]
   );
 
   // Handle delete response
@@ -3016,11 +3092,11 @@ function PathsCanvasInner({ selectedPathId, pathname, onOperationSelect, onParam
 
   return (
     <div ref={reactFlowWrapper} className="flex-1 flex flex-col h-full">
-      {/* Path header with clickable variables - click a variable to open schema editor */}
+      {/* Path header with clickable variables - click to edit schema, or drag a property here for type binding */}
       {selectedPathId && pathname && extractPathParameters(pathname).length > 0 && (
         <div
           className="flex-shrink-0 px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 flex items-center gap-1 flex-wrap font-mono text-sm"
-          title="Click a variable to edit its schema"
+          title="Click a variable to edit its schema, or drag a property from the sidebar for type binding"
         >
           <span className="text-gray-500 dark:text-gray-400 mr-1">Path:</span>
           {parsePathSegments(pathname).map((seg, i) =>
@@ -3036,8 +3112,46 @@ function PathsCanvasInner({ selectedPathId, pathname, onOperationSelect, onParam
                   e.stopPropagation();
                   handlePathVariableClick(seg.value);
                 }}
-                className="px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-800/50 font-medium cursor-pointer transition-colors"
-                title={`Edit schema for ${seg.value}`}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  pathVariableDragCounterRef.current++;
+                  setDragOverPathVariable(seg.value);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.dataTransfer.dropEffect = 'copy';
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  pathVariableDragCounterRef.current--;
+                  if (pathVariableDragCounterRef.current === 0) {
+                    setDragOverPathVariable(null);
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  pathVariableDragCounterRef.current = 0;
+                  setDragOverPathVariable(null);
+                  const dataStr = e.dataTransfer.getData('application/json');
+                  if (dataStr) {
+                    try {
+                      const dropData = JSON.parse(dataStr);
+                      handlePropertyDropOnPathVariable(seg.value, dropData);
+                    } catch (err) {
+                      console.error('Failed to parse drop data:', err);
+                    }
+                  }
+                }}
+                className={`px-1.5 py-0.5 rounded font-medium cursor-pointer transition-colors ${
+                  dragOverPathVariable === seg.value
+                    ? 'bg-indigo-300 dark:bg-indigo-600 text-indigo-900 dark:text-indigo-100 ring-2 ring-indigo-500 dark:ring-indigo-400'
+                    : 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-800/50'
+                }`}
+                title={`Edit schema for ${seg.value}, or drop a property here for type binding`}
               >
                 {seg.value}
               </button>

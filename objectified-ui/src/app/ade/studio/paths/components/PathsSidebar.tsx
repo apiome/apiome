@@ -784,8 +784,8 @@ export default function PathsSidebar({
                     ) : (
                       <>
                         <Box sx={{ px: 0.5, mb: 0.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-                          <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Drag to Canvas
+                          <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" title="Drag to canvas or onto path variables for type binding">
+                            Drag to Canvas / Path Variables
                           </span>
                           <span className="text-[10px] text-gray-400 dark:text-gray-500">
                             {properties.filter(p =>
@@ -811,22 +811,35 @@ export default function PathsSidebar({
                           }));
                         };
 
-                        // Get a display-friendly type name from the property data
+                        // Whether the property is optional (nullable or type includes null)
+                        const isOptional = (() => {
+                          if (!prop.data) return false;
+                          const { type, nullable } = prop.data;
+                          if (nullable === true) return true;
+                          const typeArr = Array.isArray(type) ? type : type != null ? [type] : [];
+                          return typeArr.some((t: unknown) => t === 'null' || t == null);
+                        })();
+
+                        // Get a display-friendly type name from the property data (handles type array)
                         const getTypeDisplay = () => {
                           if (!prop.data) return 'string';
                           const { type, format, enum: enumValues, items } = prop.data;
+                          const typeArr = Array.isArray(type) ? type : type != null ? [type] : [];
+                          const primaryTypes = typeArr.filter((t: unknown) => t != null && t !== 'null');
+                          const baseType = primaryTypes[0] ?? 'string';
 
                           if (enumValues && Array.isArray(enumValues) && enumValues.length > 0) {
                             return `enum (${enumValues.length})`;
                           }
-                          if (type === 'array' && items) {
-                            const itemType = items.type || 'any';
+                          if (baseType === 'array' && items) {
+                            const raw = (items && typeof items === 'object' && 'type' in items && (items as { type?: unknown }).type);
+                            const itemType = raw != null && raw !== 'null' ? String(raw) : 'any';
                             return `${itemType}[]`;
                           }
                           if (format) {
-                            return `${type} (${format})`;
+                            return `${baseType} (${format})`;
                           }
-                          return type || 'string';
+                          return baseType || 'string';
                         };
 
                         const typeDisplay = getTypeDisplay();
@@ -878,7 +891,26 @@ export default function PathsSidebar({
                                 }}
                               />
                               <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <div className="font-medium text-sm truncate">{prop.name}</div>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                                  <span className="font-medium text-sm truncate">{prop.name}</span>
+                                  {isOptional && (
+                                    <Box
+                                      component="span"
+                                      sx={{
+                                        flexShrink: 0,
+                                        fontSize: '10px',
+                                        fontWeight: 600,
+                                        px: 1,
+                                        py: 0.25,
+                                        borderRadius: 1,
+                                        backgroundColor: isDark ? 'rgba(148, 163, 184, 0.25)' : 'rgba(148, 163, 184, 0.2)',
+                                        color: isDark ? '#94a3b8' : '#64748b',
+                                      }}
+                                    >
+                                      optional
+                                    </Box>
+                                  )}
+                                </Box>
                                 <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 font-mono">
                                   {typeDisplay}
                                 </div>
