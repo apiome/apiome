@@ -309,6 +309,14 @@ def build_operation_for_openapi(operation: Dict[str, Any], options: Optional[Dic
                     'url': external_docs['url'],
                     **({'description': external_docs['description']} if external_docs.get('description') else {}),
                 }
+        # Custom x-* extensions: copy any x-* keys from metadata to the operation
+        metadata = description.get('metadata')
+        if metadata:
+            metadata = parse_json_field(metadata) if isinstance(metadata, str) else metadata
+            if isinstance(metadata, dict):
+                for key, value in metadata.items():
+                    if key.startswith('x-') and key != 'x-private':
+                        result[key] = value
 
     # Add parameters
     parameters = operation.get('parameters', [])

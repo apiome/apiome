@@ -76,23 +76,6 @@ structure immediately recognizable.
 | HEAD     | Gray   | Metadata retrieval            |
 | OPTIONS  | Gray   | CORS preflight                |
 
-**Configurable Properties**:
-- ✅ Operation ID (auto-generated from method + path)
-- ✅ Tags for API grouping
-- ✅ Summary and description
-- ✅ Request body schema binding
-- ✅ Response definitions (status codes + schemas)
-- ✅ Parameters (query, header, cookie)
-- ✅ Security requirements
-- ✅ Deprecated flag
-- ✅ Private flag (unexposed endpoints)
-- ✅ External docs
-- 📋 Custom `x-*` extensions
-
-| Ticket | Feature                                                  | Status   |
-|--------|----------------------------------------------------------|----------|
-| #371   | Add custom x-* extensions to HTTP Operation              |          |
-
 #### 2.3 Schema Reference Nodes 📋 PLANNED
 
 **Visual Design**: Compact card showing schema name, type, and property count
@@ -783,6 +766,19 @@ DROP TARGET STATE:
 ### 9.1 Studio Layout Structure ✅ FINISHED
 
 ### 9.2 Library Panel Structure ✅ FINISHED
+
+**Configurable Properties**:
+- ✅ Operation ID (auto-generated from method + path)
+- ✅ Tags for API grouping
+- ✅ Summary and description
+- ✅ Request body schema binding
+- ✅ Response definitions (status codes + schemas)
+- ✅ Parameters (query, header, cookie)
+- ✅ Security requirements
+- ✅ Deprecated flag
+- ✅ Private flag (unexposed endpoints)
+- ✅ External docs
+- ✅ Custom `x-*` extensions
 
 *This roadmap positions Objectified UI as a comprehensive visual API design platform,
 bridging the gap between schema definition and full OpenAPI specification authoring while

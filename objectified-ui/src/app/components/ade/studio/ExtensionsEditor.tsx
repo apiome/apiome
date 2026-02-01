@@ -8,7 +8,6 @@ import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
-import Button from '@mui/material/Button';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Alert from '@mui/material/Alert';
@@ -163,15 +162,20 @@ export const ExtensionsEditor: React.FC<ExtensionsEditorProps> = ({
             disabled={disabled}
             helperText="Enter valid JSON or plain text"
           />
-          <Button
+          <IconButton
             onClick={handleAdd}
-            variant="contained"
             disabled={!keyInput.trim() || !valueInput.trim() || disabled}
-            startIcon={<AddIcon />}
-            sx={{ height: size === 'small' ? 40 : 56 }}
+            sx={{
+              height: size === 'small' ? 40 : 56,
+              width: size === 'small' ? 40 : 56,
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+              '&:hover': { bgcolor: 'primary.dark' },
+              '&.Mui-disabled': { bgcolor: 'action.disabledBackground', color: 'action.disabled' },
+            }}
           >
-            Add
-          </Button>
+            <AddIcon />
+          </IconButton>
         </Box>
       </Box>
 

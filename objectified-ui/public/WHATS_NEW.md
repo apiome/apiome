@@ -20,6 +20,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Added the ability to mark operations as deprecated
   - Added the ability to mark operations as private (exclusion from Swagger)
   - Added external documentation to operations
+  - Added x-* extension tags to HTTP Operation definitions
   - Dragging a property to a variable chip in the header will apply that property's primitive settings to the bound variable
 - OpenAPI Support:
   - Now at 100% support for class and properties definitions
@@ -41,5 +42,5 @@ We'd love to hear your thoughts! Your feedback helps us make Objectified better.
 
 **Thank you for using Objectified!**
 
-*Last updated: January 29, 2026*
+*Last updated: February 1, 2026*
 
