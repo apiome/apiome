@@ -57,7 +57,7 @@ import PathClassNode, { PathClassNodeData } from './PathClassNode';
 import PathRequestBodyNode, { PathRequestBodyData } from './PathRequestBodyNode';
 import PathResponseBodyNode, { PathResponseBodyData } from './PathResponseBodyNode';
 import ClassDropChoiceDialog, { ClassDropAction } from '../../../../components/dialogs/ClassDropChoiceDialog';
-import { Trash2, Lock, AlertTriangle } from 'lucide-react';
+import { Trash2, Lock, Unlock, AlertTriangle } from 'lucide-react';
 import {
   getClassesWithPropertiesAndTags,
 } from '../../../../../../lib/db/helper';
@@ -271,7 +271,16 @@ function OperationNode({ data }: {
             </div>
           </div>
 
-          {/* Security badges: OR = separate badges; within each, schemes are AND. Show scopes for OAuth2/OpenID. */}
+          {/* Security badges: Public (unsecured), or OR = separate badges; within each, schemes are AND. */}
+          {data.security && data.security.length === 0 && (
+            <span
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+              title="Public endpoint — no authentication required"
+            >
+              <Unlock size={10} />
+              Public
+            </span>
+          )}
           {data.security && data.security.length > 0 && (
             <div className="flex flex-wrap gap-1 items-center">
               {data.security.map((req, i) => {
@@ -1751,7 +1760,8 @@ function PathsCanvasInner({ selectedPathId, pathname, onOperationSelect, onParam
               }
               const meta = descData.metadata;
               const sec = meta?.security;
-              if (Array.isArray(sec) && sec.length > 0) {
+              // Pass security when defined: [] = unsecured (public), non-empty = requirements
+              if (Array.isArray(sec)) {
                 operationSecurityMap.set(op.id, sec);
               }
               if (meta?.deprecated === true) {

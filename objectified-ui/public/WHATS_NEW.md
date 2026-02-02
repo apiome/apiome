@@ -31,6 +31,7 @@ We continue to improve the platform based on your feedback with improvements and
     - Adds custom security schema options
   - Added ability to apply multiple security schemes to HTTP Operations (and/or)
   - Added ability to specify different security scopes on a per-operation basis
+  - Added ability to mark an endpoint as public (i.e. requires no security)
   - Configure required OAuth2/OpenID Connect scopes per operation (#421)
   - Dragging a property to a variable chip in the header will apply that property's primitive settings to the bound variable
 - OpenAPI Support:

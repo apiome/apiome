@@ -266,12 +266,11 @@ Each operation can override global defaults:
 
 - ✅ Apply multiple security schemes (AND/OR logic)
 - ✅ Configure required scopes per operation
-- 📋 Mark operation as unsecured (public endpoint)
+- ✅ Mark operation as unsecured (public endpoint)
 - 📋 Add security descriptions for documentation
 
 | Ticket | Feature                                         |
 |--------|-------------------------------------------------|
-| #422   | Mark operation as unsafe/public                 |
 | #423   | Add security descriptions for documentation     |
 
 #### 4.3 Server Definitions 📋 PLANNED

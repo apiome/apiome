@@ -9,7 +9,7 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import { Close, Save, Add, Delete, ArrowBack } from '@mui/icons-material';
-import { Lock, ExternalLink } from 'lucide-react';
+import { Lock, Unlock, ExternalLink } from 'lucide-react';
 import { useDarkMode } from '../../../../hooks/useDarkMode';
 import { useDialog } from '../../../../components/providers/DialogProvider';
 import {
@@ -108,6 +108,8 @@ export default function OperationPropertiesPanel({
 
   // Security requirements state (OpenAPI security array)
   const [security, setSecurity] = useState<SecurityRequirement[]>([]);
+  /** When true, operation is explicitly public (OpenAPI security: []) */
+  const [unsecured, setUnsecured] = useState(false);
   const [loadedMetadata, setLoadedMetadata] = useState<Record<string, unknown>>({});
 
   // Deprecated flag state
@@ -130,6 +132,7 @@ export default function OperationPropertiesPanel({
       setDescription('');
       setOperationIdName('');
       setSecurity([]);
+      setUnsecured(false);
       setLoadedMetadata({});
       setDeprecated(false);
       setXPrivate(false);
@@ -146,6 +149,7 @@ export default function OperationPropertiesPanel({
       setDescription('');
       setOperationIdName('');
       setSecurity([]);
+      setUnsecured(false);
       setLoadedMetadata({});
       setDeprecated(false);
       setXPrivate(false);
@@ -168,9 +172,14 @@ export default function OperationPropertiesPanel({
             : {};
           setLoadedMetadata(meta);
           const sec = meta.security;
-          setSecurity(
-            Array.isArray(sec) ? sec : sec ? [sec] : []
-          );
+          // Explicit security: [] = unsecured (public); undefined = inherit; array with items = secured
+          if (Array.isArray(sec) && sec.length === 0) {
+            setUnsecured(true);
+            setSecurity([]);
+          } else {
+            setUnsecured(false);
+            setSecurity(Array.isArray(sec) ? sec : sec ? [sec] : []);
+          }
           setDeprecated(meta.deprecated === true);
           setXPrivate(meta['x-private'] === true || meta.x_private === true);
           const extDocs = meta.external_docs ?? meta.externalDocs;
@@ -350,8 +359,10 @@ export default function OperationPropertiesPanel({
               })
               .filter((req) => Object.keys(req).length > 0)
           : undefined;
+      // Unsecured = explicit security: [] (public); otherwise omit or set requirements
+      const securityValue = unsecured ? [] : (sanitizedSecurity?.length ? sanitizedSecurity : undefined);
       const metadata: Record<string, unknown> = {
-        security: sanitizedSecurity,
+        security: securityValue,
         deprecated: deprecated ? true : false,
         'x-private': xPrivate ? true : false,
         external_docs:
@@ -363,6 +374,7 @@ export default function OperationPropertiesPanel({
             : undefined,
         ...extensions,
       };
+      // Keep security when explicitly [] (unsecured) or when we have requirements
       if (metadata.security === undefined) {
         delete metadata.security;
       }
@@ -1606,26 +1618,69 @@ export default function OperationPropertiesPanel({
                     <Lock size={14} className="text-amber-500" />
                     Security
                   </label>
-                  <Button
-                    size="small"
-                    startIcon={<Add />}
-                    onClick={handleAddSecurity}
+                  {!unsecured && (
+                    <Button
+                      size="small"
+                      startIcon={<Add />}
+                      onClick={handleAddSecurity}
+                      sx={{
+                        fontSize: '0.75rem',
+                        textTransform: 'none',
+                        color: '#6366f1',
+                        '&:hover': {
+                          backgroundColor: isDark ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.05)',
+                        },
+                      }}
+                    >
+                      Add requirement (OR)
+                    </Button>
+                  )}
+                </Box>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={unsecured}
+                      onChange={(_, checked) => {
+                        setUnsecured(checked);
+                        if (checked) setSecurity([]);
+                      }}
+                      size="small"
+                      sx={{
+                        color: isDark ? '#94a3b8' : '#64748b',
+                        '&.Mui-checked': { color: '#22c55e' },
+                      }}
+                    />
+                  }
+                  label={
+                    <span className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                      <Unlock size={12} />
+                      Unsecured (public endpoint — no authentication)
+                    </span>
+                  }
+                  sx={{ mb: 1.5 }}
+                />
+                {!unsecured && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    OR = alternative options; within an option, schemes are AND (all required).
+                  </p>
+                )}
+                {unsecured ? (
+                  <Box
                     sx={{
-                      fontSize: '0.75rem',
-                      textTransform: 'none',
-                      color: '#6366f1',
-                      '&:hover': {
-                        backgroundColor: isDark ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.05)',
-                      },
+                      py: 2,
+                      px: 2,
+                      textAlign: 'center',
+                      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+                      borderRadius: 1,
+                      backgroundColor: isDark ? 'rgba(34, 197, 94, 0.08)' : 'rgba(34, 197, 94, 0.06)',
                     }}
                   >
-                    Add requirement (OR)
-                  </Button>
-                </Box>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                  OR = alternative options; within an option, schemes are AND (all required).
-                </p>
-                {security.length === 0 ? (
+                    <span className="text-xs text-green-700 dark:text-green-400 flex items-center justify-center gap-1.5">
+                      <Unlock size={14} />
+                      Public endpoint — no authentication required
+                    </span>
+                  </Box>
+                ) : security.length === 0 ? (
                   <Box
                     sx={{
                       py: 2,

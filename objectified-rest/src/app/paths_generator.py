@@ -310,13 +310,14 @@ def build_operation_for_openapi(operation: Dict[str, Any], options: Optional[Dic
                     **({'description': external_docs['description']} if external_docs.get('description') else {}),
                 }
         # Security requirements (OpenAPI Operation.security)
+        # Explicit security: [] = public (no auth); omit = inherit from document
         security = description.get('security')
         if not security and description.get('metadata'):
             metadata = parse_json_field(description['metadata']) if isinstance(description['metadata'], str) else description['metadata']
             if isinstance(metadata, dict):
                 security = metadata.get('security')
-        if security and isinstance(security, list) and len(security) > 0:
-            result['security'] = security
+        if security is not None and isinstance(security, list):
+            result['security'] = security  # [] = unsecured (public), non-empty = requirements
 
         # Custom x-* extensions: copy any x-* keys from metadata to the operation
         metadata = description.get('metadata')
