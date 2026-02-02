@@ -104,16 +104,16 @@ export async function createServer(
 
 function rowToServerRecord(row: Record<string, unknown>): VersionServerRecord {
   return {
-    id: row.id,
-    version_id: row.version_id,
-    name: row.name,
-    url: row.url,
-    description: row.description,
+    id: row.id as string,
+    version_id: row.version_id as string,
+    name: row.name as string | null,
+    url: row.url as string,
+    description: row.description as string | null,
     sort_order: Number(row.sort_order) || 0,
     variables: row.variables ? (typeof row.variables === 'string' ? JSON.parse(row.variables as string) : row.variables) as Record<string, ServerVariable> : null,
-    environment: row.environment,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
+    environment: row.environment as string | null,
+    created_at: row.created_at as string,
+    updated_at: row.updated_at as string,
   };
 }
 
