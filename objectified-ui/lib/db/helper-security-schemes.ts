@@ -38,6 +38,29 @@ export interface HttpSchemeInput {
   description?: string;
 }
 
+/** OAuth2 flow types (OpenAPI 3.1) */
+export type OAuth2FlowType = 'authorizationCode' | 'implicit' | 'clientCredentials' | 'password';
+
+/** Single OAuth2 flow config: URLs and scopes (scope name -> description) */
+export interface OAuth2FlowConfig {
+  authorizationUrl?: string;
+  tokenUrl?: string;
+  refreshUrl?: string;
+  scopes: Record<string, string>;
+}
+
+/** OpenAPI OAuth2 scheme: flows object stored in data */
+export interface OAuth2SchemeInput {
+  scheme_name: string;
+  description?: string;
+  flows: {
+    authorizationCode?: OAuth2FlowConfig;
+    implicit?: OAuth2FlowConfig;
+    clientCredentials?: OAuth2FlowConfig;
+    password?: OAuth2FlowConfig;
+  };
+}
+
 /** OpenAPI security scheme definition for export */
 export interface OpenAPISecurityScheme {
   type: 'apiKey' | 'http' | 'oauth2' | 'openIdConnect' | 'mutualTLS';
@@ -312,6 +335,155 @@ export async function updateHttpSecurityScheme(
 }
 
 /**
+ * Build OAuth2 flows object for OpenAPI (only include non-empty flows with required fields)
+ */
+function buildOAuth2FlowsForStorage(flows: OAuth2SchemeInput['flows']): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (flows.authorizationCode?.authorizationUrl && flows.authorizationCode?.tokenUrl) {
+    out.authorizationCode = {
+      authorizationUrl: flows.authorizationCode.authorizationUrl.trim(),
+      tokenUrl: flows.authorizationCode.tokenUrl.trim(),
+      ...(flows.authorizationCode.refreshUrl?.trim() && { refreshUrl: flows.authorizationCode.refreshUrl.trim() }),
+      scopes: flows.authorizationCode.scopes && typeof flows.authorizationCode.scopes === 'object' ? flows.authorizationCode.scopes : {},
+    };
+  }
+  if (flows.implicit?.authorizationUrl) {
+    out.implicit = {
+      authorizationUrl: flows.implicit.authorizationUrl.trim(),
+      ...(flows.implicit.refreshUrl?.trim() && { refreshUrl: flows.implicit.refreshUrl.trim() }),
+      scopes: flows.implicit.scopes && typeof flows.implicit.scopes === 'object' ? flows.implicit.scopes : {},
+    };
+  }
+  if (flows.clientCredentials?.tokenUrl) {
+    out.clientCredentials = {
+      tokenUrl: flows.clientCredentials.tokenUrl.trim(),
+      ...(flows.clientCredentials.refreshUrl?.trim() && { refreshUrl: flows.clientCredentials.refreshUrl.trim() }),
+      scopes: flows.clientCredentials.scopes && typeof flows.clientCredentials.scopes === 'object' ? flows.clientCredentials.scopes : {},
+    };
+  }
+  if (flows.password?.tokenUrl) {
+    out.password = {
+      tokenUrl: flows.password.tokenUrl.trim(),
+      ...(flows.password.refreshUrl?.trim() && { refreshUrl: flows.password.refreshUrl.trim() }),
+      scopes: flows.password.scopes && typeof flows.password.scopes === 'object' ? flows.password.scopes : {},
+    };
+  }
+  return out;
+}
+
+/**
+ * Create an OAuth2 security scheme (Authorization Code, Implicit, Client Credentials, Password flows)
+ */
+export async function createOAuth2SecurityScheme(
+  versionId: string,
+  input: OAuth2SchemeInput
+): Promise<{ success: boolean; scheme?: SecuritySchemeRecord; error?: string }> {
+  try {
+    const flowsData = buildOAuth2FlowsForStorage(input.flows);
+    if (Object.keys(flowsData).length === 0) {
+      return { success: false, error: 'At least one OAuth2 flow with required URLs must be defined.' };
+    }
+    const dataJson = JSON.stringify({ flows: flowsData });
+    const result = await connectionPool.query(
+      `INSERT INTO odb.version_security_scheme (version_id, scheme_name, scheme_type, description, data)
+       VALUES ($1, $2, 'oauth2', $3, $4::jsonb)
+       RETURNING id, version_id, scheme_name, scheme_type, in_location, param_name, http_scheme, description, data, created_at, updated_at`,
+      [versionId, input.scheme_name.trim(), input.description?.trim() || null, dataJson]
+    );
+    const row = result.rows[0];
+    return {
+      success: true,
+      scheme: {
+        id: row.id,
+        version_id: row.version_id,
+        scheme_name: row.scheme_name,
+        scheme_type: row.scheme_type,
+        in_location: row.in_location,
+        param_name: row.param_name,
+        http_scheme: row.http_scheme,
+        description: row.description,
+        data: row.data ? (typeof row.data === 'string' ? JSON.parse(row.data) : row.data) : {},
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+      },
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return { success: false, error: msg };
+  }
+}
+
+/**
+ * Update an OAuth2 security scheme
+ */
+export async function updateOAuth2SecurityScheme(
+  schemeId: string,
+  input: Partial<OAuth2SchemeInput>
+): Promise<{ success: boolean; scheme?: SecuritySchemeRecord; error?: string }> {
+  try {
+    const updates: string[] = [];
+    const values: unknown[] = [];
+    let idx = 1;
+
+    if (input.scheme_name !== undefined) {
+      updates.push(`scheme_name = $${idx++}`);
+      values.push(input.scheme_name.trim());
+    }
+    if (input.description !== undefined) {
+      updates.push(`description = $${idx++}`);
+      values.push(input.description.trim() || null);
+    }
+    if (input.flows !== undefined) {
+      const flowsData = buildOAuth2FlowsForStorage(input.flows);
+      if (Object.keys(flowsData).length === 0) {
+        return { success: false, error: 'At least one OAuth2 flow with required URLs must be defined.' };
+      }
+      updates.push(`data = $${idx++}::jsonb`);
+      values.push(JSON.stringify({ flows: flowsData }));
+    }
+
+    if (updates.length === 0) {
+      return { success: false, error: 'No updates provided' };
+    }
+
+    updates.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(schemeId);
+
+    const result = await connectionPool.query(
+      `UPDATE odb.version_security_scheme SET ${updates.join(', ')}
+       WHERE id = $${idx} AND scheme_type = 'oauth2'
+       RETURNING id, version_id, scheme_name, scheme_type, in_location, param_name, http_scheme, description, data, created_at, updated_at`,
+      values
+    );
+
+    if (result.rows.length === 0) {
+      return { success: false, error: 'Scheme not found or not an OAuth2 scheme' };
+    }
+
+    const row = result.rows[0];
+    return {
+      success: true,
+      scheme: {
+        id: row.id,
+        version_id: row.version_id,
+        scheme_name: row.scheme_name,
+        scheme_type: row.scheme_type,
+        in_location: row.in_location,
+        param_name: row.param_name,
+        http_scheme: row.http_scheme,
+        description: row.description,
+        data: row.data ? (typeof row.data === 'string' ? JSON.parse(row.data) : row.data) : {},
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+      },
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return { success: false, error: msg };
+  }
+}
+
+/**
  * Delete a security scheme
  */
 export async function deleteSecurityScheme(schemeId: string): Promise<{ success: boolean; error?: string }> {
@@ -349,8 +521,17 @@ export async function securitySchemesToOpenAPI(schemes: SecuritySchemeRecord[]):
       const bearerFormat = (s.data as { bearerFormat?: string })?.bearerFormat;
       if (bearerFormat) httpScheme.bearerFormat = bearerFormat;
       result[s.scheme_name] = httpScheme;
+    } else if (s.scheme_type === 'oauth2') {
+      const flows = (s.data as { flows?: Record<string, unknown> })?.flows;
+      if (flows && typeof flows === 'object' && Object.keys(flows).length > 0) {
+        result[s.scheme_name] = {
+          type: 'oauth2',
+          flows,
+          description: s.description || undefined,
+        };
+      }
     }
-    // Future: oauth2, openIdConnect, mutualTLS
+    // Future: openIdConnect, mutualTLS
   }
   return result;
 }
