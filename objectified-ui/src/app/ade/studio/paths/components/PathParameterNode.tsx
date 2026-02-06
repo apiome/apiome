@@ -80,7 +80,7 @@ export default function PathParameterNode({ data }: { data: PathParameterData })
         style={{ backgroundColor: config.color }}
       />
 
-      <div className={`bg-white dark:bg-gray-800 rounded-lg border-2 ${config.borderClass} shadow-md min-w-[180px] max-w-[240px] cursor-pointer relative group`}>
+      <div className={`bg-white dark:bg-gray-800 rounded-lg border-2 ${config.borderClass} shadow-md min-w-[180px] max-w-[240px] cursor-pointer relative`}>
         {/* Delete button */}
         {data.onDelete && (
           <button
@@ -88,7 +88,7 @@ export default function PathParameterNode({ data }: { data: PathParameterData })
               e.stopPropagation();
               data.onDelete?.();
             }}
-            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600 z-10"
+            className="absolute top-2 right-2 rounded p-1 text-gray-600 dark:text-white hover:opacity-80 z-10"
             title="Delete parameter"
           >
             <Trash2 size={12} />

@@ -166,7 +166,7 @@ function OperationNode({ data }: {
       />
 
       <div 
-        className={`bg-white dark:bg-gray-800 rounded-xl border-2 shadow-xl min-w-[220px] max-w-[280px] cursor-pointer relative group ${
+        className={`bg-white dark:bg-gray-800 rounded-xl border-2 shadow-xl min-w-[220px] max-w-[280px] cursor-pointer relative ${
           data.deprecated ? 'border-dashed opacity-75' : ''
         } ${data.xPrivate ? 'ring-2 ring-indigo-400/50 ring-offset-2 ring-offset-white dark:ring-offset-gray-900' : ''}`}
         style={{ borderColor: data.deprecated ? '#f59e0b' : data.color }}
@@ -178,7 +178,7 @@ function OperationNode({ data }: {
               e.stopPropagation();
               data.onDelete?.();
             }}
-            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600 z-20"
+            className="absolute top-2 right-2 rounded p-1 text-white hover:opacity-80 z-20"
             title="Delete operation"
           >
             <Trash2 size={14} />
@@ -3243,6 +3243,18 @@ function PathsCanvasInner({ selectedPathId, pathname, onOperationSelect, onParam
       }
 
       if (dropData.type === 'operation') {
+        const existingOp = nodes.some(
+          (n) => n.type === 'operation' && (n.data as { operation?: string })?.operation === dropData.operation
+        );
+        if (existingOp) {
+          await alertDialog({
+            title: 'Operation Already Exists',
+            message: `A ${dropData.operation} operation already exists on this path.`,
+            variant: 'warning',
+          });
+          return;
+        }
+
         const position = screenToFlowPosition({
           x: event.clientX,
           y: event.clientY,

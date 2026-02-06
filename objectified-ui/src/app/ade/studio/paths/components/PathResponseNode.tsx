@@ -202,7 +202,7 @@ export default function PathResponseNode({ data }: { data: PathResponseData }) {
       />
 
       <div 
-        className={`bg-white dark:bg-gray-800 rounded-lg border-2 ${config.borderColor} shadow-lg min-w-[200px] max-w-[280px] cursor-pointer relative group ${
+        className={`bg-white dark:bg-gray-800 rounded-lg border-2 ${config.borderColor} shadow-lg min-w-[200px] max-w-[280px] cursor-pointer relative ${
           dragOver ? 'ring-2 ring-indigo-500 ring-offset-2' : ''
         }`}
         onDragOver={(e) => { e.stopPropagation(); handleDragOver(e); }}
@@ -213,7 +213,7 @@ export default function PathResponseNode({ data }: { data: PathResponseData }) {
         {data.onDelete && (
           <button
             onClick={(e) => { e.stopPropagation(); data.onDelete?.(); }}
-            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600 z-10"
+            className="absolute top-2 right-2 rounded p-1 text-white hover:opacity-80 z-10"
             title="Delete response"
           >
             <Trash2 size={12} />
