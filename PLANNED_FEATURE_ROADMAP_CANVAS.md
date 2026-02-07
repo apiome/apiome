@@ -19,16 +19,16 @@
 - ✅ **Layout Controls**: Compact button with dropdown menu
 - ✅ **Database Table**: Create a database table to store layouts
 - ✅ **Auto-load Layout on First Load**: Automatically applies saved layout when canvas loads for the first time
-- 📋 Multiple saved layouts per version:
+- 📋 [TODO] Multiple saved layouts per version:
     - "Development Layout" - organized for development work
     - "Presentation Layout" - clean arrangement for stakeholder demos
     - "Logical Layout" - grouped by business domain
     - "Dependency Layout" - organized by relationships
-- 📋 Auto-save layout changes every 30 seconds (configurable)
-- 📋 Version control for layouts (track layout history)
-- 📋 Default layout setting per user or per team
-- 📋 Export layout as JSON for sharing
-- 📋 Import layouts from other versions/projects
+- 📋 [TODO] Auto-save layout changes every 30 seconds (configurable)
+- 📋 [TODO] Version control for layouts (track layout history)
+- 📋 [TODO] Default layout setting per user or per team
+- 📋 [TODO] Export layout as JSON for sharing
+- 📋 [TODO] Import layouts from other versions/projects
 - ✅ Add simple orthagonal edge routing after auto-layout
 
 | Ticket | Feature                                       |
@@ -43,13 +43,13 @@
 | #316   | Export/import canvas layouts                  |
 
 #### Layout Snapshots 📋 PLANNED
-- 📋 Take quick snapshots of current layout
-- 📋 Thumbnail preview of each snapshot
-- 📋 Restore any snapshot with one click
-- 📋 Compare two snapshots side-by-side
-- 📋 Snapshot gallery view with search/filter
-- 📋 Auto-snapshots before major changes
-- 📋 Snapshot metadata: timestamp, author, description
+- 📋 [TODO] Take quick snapshots of current layout
+- 📋 [TODO] Thumbnail preview of each snapshot
+- 📋 [TODO] Restore any snapshot with one click
+- 📋 [TODO] Compare two snapshots side-by-side
+- 📋 [TODO] Snapshot gallery view with search/filter
+- 📋 [TODO] Auto-snapshots before major changes
+- 📋 [TODO] Snapshot metadata: timestamp, author, description
 
 | Ticket | Feature                                           |
 |--------|---------------------------------------------------|
@@ -61,11 +61,11 @@
 | #173   | Snapshot metadata: timestamp, author, description |
 
 #### Layout Sharing 📋 PLANNED
-- 📋 Share layout configurations with team members
-- 📋 "Pin" layout as team default
-- 📋 Layout permissions (view, edit, delete)
-- 📋 Layout comments and annotations
-- 📋 Layout versioning with diff viewer
+- 📋 [TODO] Share layout configurations with team members
+- 📋 [TODO] "Pin" layout as team default
+- 📋 [TODO] Layout permissions (view, edit, delete)
+- 📋 [TODO] Layout comments and annotations
+- 📋 [TODO] Layout versioning with diff viewer
 
 | Ticket | Feature                                       |
 |--------|-----------------------------------------------|
@@ -83,16 +83,16 @@
 - ✅ Global search box (`Cmd+F`) to find classes
 - ✅ Search as you type with highlighting
 - ✅ Matching nodes highlighted, non-matching nodes dimmed
-- 📋 Click result to focus and zoom to class on canvas
-- 📋 "Focus Mode": Dim everything except search results
-  - Isolate selected classes and immediate relationships
-  - Blur/dim non-focused nodes
-  - Show only 1st-degree connections (or 2nd, 3rd degree)
-  - Expand focus incrementally
-  - Focus on group (show only group members)
-  - Exit focus mode (Esc key)
-- 📋 Search history (recent searches)
-- 📋 Search filters: by type, group, properties
+- 📋 [TODO] Click result to focus and zoom to class on canvas
+- 📋 [TODO] "Focus Mode": Dim everything except search results
+  - [TODO] Isolate selected classes and immediate relationships
+  - [TODO] Blur/dim non-focused nodes
+  - [TODO] Show only 1st-degree connections (or 2nd, 3rd degree)
+  - [TODO] Expand focus incrementally
+  - [TODO] Focus on group (show only group members)
+  - [TODO] Exit focus mode (Esc key)
+- 📋 [TODO] Search history (recent searches)
+- 📋 [TODO] Search filters: by type, group, properties
 - ✅ Regex search support
 - ✅ Search within property names/descriptions
 
@@ -103,15 +103,15 @@
 | #196   | Search history with clear option                     |
 
 #### Node Visibility Controls 📋 PLANNED
-- 📋 Hide/show individual nodes
-- 📋 Hide all nodes except selected
-- 📋 Hide by criteria:
-  - Hide all empty classes (no properties)
-  - Hide all classes without relationships
-  - Hide deprecated classes
-  - Hide by group membership
-- 📋 "Ghosts mode": Show hidden nodes as semi-transparent
-- 📋 Quick restore hidden nodes
+- 📋 [TODO] Hide/show individual nodes
+- 📋 [TODO] Hide all nodes except selected
+- 📋 [TODO] Hide by criteria:
+  - [TODO] Hide all empty classes (no properties)
+  - [TODO] Hide all classes without relationships
+  - [TODO] Hide deprecated classes
+  - [TODO] Hide by group membership
+- 📋 [TODO] "Ghosts mode": Show hidden nodes as semi-transparent
+- 📋 [TODO] Quick restore hidden nodes
 
 | Ticket | Feature Description            |
 |--------|--------------------------------|
@@ -122,12 +122,12 @@
 | #485   | Quick restore hidden nodes     |
 
 #### Focus Mode 📋 PLANNED
-- 📋 Isolate selected classes and immediate relationships
-- 📋 Blur/dim non-focused nodes
-- 📋 Show only 1st-degree connections (or 2nd, 3rd degree)
-- 📋 Expand focus incrementally
-- 📋 Focus on group (show only group members)
-- 📋 Exit focus mode with Esc key
+- 📋 [TODO] Isolate selected classes and immediate relationships
+- 📋 [TODO] Blur/dim non-focused nodes
+- 📋 [TODO] Show only 1st-degree connections (or 2nd, 3rd degree)
+- 📋 [TODO] Expand focus incrementally
+- 📋 [TODO] Focus on group (show only group members)
+- 📋 [TODO] Exit focus mode with Esc key
 
 | Ticket | Feature Description                        |
 |--------|--------------------------------------------|
@@ -139,10 +139,10 @@
 | #491   | Exit focus mode with Esc key               |
 
 #### Visual Feedback
-- 📋 **Dropzone highlighting**: Visual cues for valid drop targets
-- 📋 **Ghost preview**: Show preview while dragging
-- 📋 **Invalid drop indicator**: Clear feedback for invalid drops
-- 📋 **Snap indicators**: Show snap points during drag
+- 📋 [TODO] **Dropzone highlighting**: Visual cues for valid drop targets
+- 📋 [TODO] **Ghost preview**: Show preview while dragging
+- 📋 [TODO] **Invalid drop indicator**: Clear feedback for invalid drops
+- 📋 [TODO] **Snap indicators**: Show snap points during drag
 
 | Ticket | Feature Description                              |
 |--------|--------------------------------------------------|
@@ -165,19 +165,19 @@
 - ✅ Moving a group moves all contained classes together
 - ✅ Nodes stay within group when partially overlapping - only ungroup when completely outside
 - ✅ Grouped nodes are locked to group bounds during dragging - cannot escape unless dragged completely outside
-- 📋 Collapsible groups to reduce canvas clutter
-  - 📋 Click to collapse: shows only group title and count
-  - 📋 Expand/collapse all groups with keyboard shortcut
-  - 📋 Remember collapsed state per user
-- 📋 Nested groups for hierarchical organization (max 3 levels)
-- 📋 Group-level operations:
+- 📋 [TODO] Collapsible groups to reduce canvas clutter
+  - 📋 [TODO] Click to collapse: shows only group title and count
+  - 📋 [TODO] Expand/collapse all groups with keyboard shortcut
+  - 📋 [TODO] Remember collapsed state per user
+- 📋 [TODO] Nested groups for hierarchical organization (max 3 levels)
+- 📋 [TODO] Group-level operations:
   - ✅ Move entire group with one drag
-  - 📋 Delete all classes in a group
+  - 📋 [TODO] Delete all classes in a group
 - ✅ Named groups with descriptions and metadata
 - ✅ Visual styling options:
   - ✅ Rounded rectangle containers with subtle shadows
   - ✅ Dashed or solid borders with custom colors
-  - 📋 Group headers with collapse/expand icons
+  - 📋 [TODO] Group headers with collapse/expand icons
   - ✅ Background color/opacity customization
   - ✅ Optional group icons from icon library
 - ✅ Group object is drag-and-drop to the canvas
@@ -202,25 +202,25 @@
   - ✅ Color by stereotype (entity, service, DTO)
   - ✅ Color gradients for nodes
   - ✅ Color themes (Material, Pastel, Corporate)
-- 📋 **Node Icons**:
-  - 📋 Built-in icon library (1000+ icons)
-  - 📋 Custom icon upload
-  - 📋 Icons from icon packs (Font Awesome, Material Icons)
-  - 📋 Icon position (left, center, badge)
-- 📋 **Node Sizing**:
-  - 📋 Auto-size based on content
-  - 📋 Fixed size (small, medium, large, extra-large)
-  - 📋 Custom width and height
-  - 📋 Size by property count
-  - 📋 Compact mode (show only class name)
-- 📋 **Node Shapes**:
-  - 📋 Rectangle (default), Rounded rectangle
-  - 📋 Circle/ellipse, Hexagon, Diamond
-  - 📋 Custom SVG shapes
-- 📋 **Node Borders**:
-  - 📋 Border thickness (1-5px)
-  - 📋 Border style (solid, dashed, dotted)
-  - 📋 Shadow effects (drop shadow, inner shadow)
+- 📋 [TODO] **Node Icons**:
+  - 📋 [TODO] Built-in icon library (1000+ icons)
+  - 📋 [TODO] Custom icon upload
+  - 📋 [TODO] Icons from icon packs (Font Awesome, Material Icons)
+  - 📋 [TODO] Icon position (left, center, badge)
+- 📋 [TODO] **Node Sizing**:
+  - 📋 [TODO] Auto-size based on content
+  - 📋 [TODO] Fixed size (small, medium, large, extra-large)
+  - 📋 [TODO] Custom width and height
+  - 📋 [TODO] Size by property count
+  - 📋 [TODO] Compact mode (show only class name)
+- 📋 [TODO] **Node Shapes**:
+  - 📋 [TODO] Rectangle (default), Rounded rectangle
+  - 📋 [TODO] Circle/ellipse, Hexagon, Diamond
+  - 📋 [TODO] Custom SVG shapes
+- 📋 [TODO] **Node Borders**:
+  - 📋 [TODO] Border thickness (1-5px)
+  - 📋 [TODO] Border style (solid, dashed, dotted)
+  - 📋 [TODO] Shadow effects (drop shadow, inner shadow)
 
 | Ticket | Feature Description               |
 |--------|-----------------------------------|
@@ -236,7 +236,7 @@
   - ✅ Dotted for weak references
   - ✅ Double lines for bidirectional
 - ✅ Edge colors customizable
-- 📋 Edge labels (show property name on relationship)
+- 📋 [TODO] Edge labels (show property name on relationship)
 - ✅ Edge routing options:
   - ✅ Straight lines
   - ✅ Curved (Bezier)
@@ -251,7 +251,7 @@
 
 #### Canvas Background ✅ IMPLEMENTED
 - ✅ Background options (solid color, grid pattern, custom image, gradient, textures)
-- 📋 Background opacity and blur
+- 📋 [TODO] Background opacity and blur
 
 | Ticket | Feature Description                  |
 |--------|--------------------------------------|
@@ -263,9 +263,9 @@
 
 **Intelligent Layout Suggestions** ✅ PARTIALLY IMPLEMENTED
 - ✅ "Auto-organize" button with multiple suggestions (8 layout algorithms)
-- 📋 Preview suggestions before applying
-- Rating system for suggestions (thumbs up/down to improve)
-- Machine learning from user preferences
+- 📋 [TODO] Preview suggestions before applying
+- [TODO] Rating system for suggestions (thumbs up/down to improve)
+- [TODO] Machine learning from user preferences
 
 | Ticket | Feature Description                        |
 |--------|--------------------------------------------|
@@ -274,21 +274,21 @@
 **Canvas Analysis** ✅ PARTIALLY IMPLEMENTED
 - **Schema Metrics**:
   - ✅ Total classes, properties, relationships
-  - 📋 Average properties per class
-  - 📋 Most connected classes (hubs)
-  - 📋 Isolated classes (no relationships)
-  - 📋 Deepest dependency chains
-  - 📋 Circular dependencies count
+  - 📋 [TODO] Average properties per class
+  - 📋 [TODO] Most connected classes (hubs)
+  - 📋 [TODO] Isolated classes (no relationships)
+  - 📋 [TODO] Deepest dependency chains
+  - 📋 [TODO] Circular dependencies count
 - **Layout Quality Score**:
-  - 📋 Edge crossing count (lower is better)
-  - 📋 Node spacing uniformity
-  - 📋 Layout symmetry
-  - 📋 Visual balance
+  - 📋 [TODO] Edge crossing count (lower is better)
+  - 📋 [TODO] Node spacing uniformity
+  - 📋 [TODO] Layout symmetry
+  - 📋 [TODO] Visual balance
 - **Suggestions**:
-  - 📋 "Reduce edge crossings by switching to hierarchical layout"
-  - 📋 "Group these 5 classes - they're all related"
-  - 📋 "Class X is isolated - consider adding relationships"
-  - 📋 "Large clusters detected - consider splitting into groups"
+  - 📋 [TODO] "Reduce edge crossings by switching to hierarchical layout"
+  - 📋 [TODO] "Group these 5 classes - they're all related"
+  - 📋 [TODO] "Class X is isolated - consider adding relationships"
+  - 📋 [TODO] "Large clusters detected - consider splitting into groups"
 
 | Ticket | Feature Description                    |
 |--------|----------------------------------------|
@@ -301,13 +301,13 @@
   - ✅ Render only visible nodes (viewport culling)
   - ✅ Node pooling and recycling
   - ✅ Progressive rendering for large schemas (1000+ nodes)
-  - Canvas split into chunks/tiles
+  - [TODO] Canvas split into chunks/tiles
 - **Level of Detail (LOD)**: ✅ IMPLEMENTED
   - ✅ When zoomed out >200%, show simplified nodes
   - ✅ At high zoom, hide property details, show only class names
   - ✅ Dynamic detail based on zoom level
   - ✅ Fade transitions between LOD levels
-  - Show canvas node detail for properties that reference others even when collapsed
+  - [TODO] Show canvas node detail for properties that reference others even when collapsed
   - ✅ Level of detail toggling mode
 - **Caching**:
   - ✅ Cache rendered node SVG/Canvas elements
@@ -315,19 +315,19 @@
   - ✅ Cache relationship paths
   - ✅ Invalidate cache only on changes
 - **Web Workers**:
-  - Layout calculations in background thread
-  - Node rendering in worker (OffscreenCanvas)
-  - Relationship path calculations async
-  - Non-blocking canvas operations
+  - [TODO] Layout calculations in background thread
+  - [TODO] Node rendering in worker (OffscreenCanvas)
+  - [TODO] Relationship path calculations async
+  - [TODO] Non-blocking canvas operations
 - **Request Animation Frame**:
   - ✅ Smooth 60fps animations
   - ✅ Batch DOM updates
   - ✅ Throttle mouse move events
 - **Memory Management**:
-  - 📋 Lazy load node properties
-  - Unload off-screen nodes
-  - Garbage collect unused elements
-  - 📋 Memory profiling tools
+  - 📋 [TODO] Lazy load node properties
+  - [TODO] Unload off-screen nodes
+  - [TODO] Garbage collect unused elements
+  - 📋 [TODO] Memory profiling tools
 
 | Ticket | Feature Description                                          |
 |--------|--------------------------------------------------------------|
@@ -340,12 +340,12 @@
 ### 5. Annotations & Documentation
 
 #### Presentation Mode 📋 PLANNED
-- 📋 Full-screen canvas mode with hidden UI
-  - 📋 Hide all toolbars and UI
-  - 📋 Slide-show of bookmarked areas
-  - 📋 Presentation notes (speaker view)
-  - 📋 Timer and slide counter
-  - 📋 Presenter controls (keyboard shortcuts)
+- 📋 [TODO] Full-screen canvas mode with hidden UI
+  - 📋 [TODO] Hide all toolbars and UI
+  - 📋 [TODO] Slide-show of bookmarked areas
+  - 📋 [TODO] Presentation notes (speaker view)
+  - 📋 [TODO] Timer and slide counter
+  - 📋 [TODO] Presenter controls (keyboard shortcuts)
 
 | Ticket | Feature Description                  |
 |--------|--------------------------------------|
@@ -354,8 +354,8 @@
 #### Charts & Metrics ✅ PARTIALLY COMPLETE
 - ✅ **Quality score gauge**: Visual score indicator (0-100)
 - ✅ **Complexity charts**: Schema complexity visualization
-- 📋 **Relationship graphs**: Visual dependency maps
-- 📋 **Timeline views**: Schema evolution over time
+- 📋 [TODO] **Relationship graphs**: Visual dependency maps
+- 📋 [TODO] **Timeline views**: Schema evolution over time
 
 | Ticket | Feature Description                          |
 |--------|----------------------------------------------|
@@ -388,31 +388,31 @@
   - ✅ Categories: Images, Documents, Diagram Code
 - **High-Resolution Export**:
   - ✅ 1x (default), 2x, 4x resolution options
-  - 📋 Customizable DPI (72, 150, 300, 600)
-  - 📋 Export dimensions in pixels or cm/inches
+  - 📋 [TODO] Customizable DPI (72, 150, 300, 600)
+  - 📋 [TODO] Export dimensions in pixels or cm/inches
 - **Selective Export**:
-  - Export only selected nodes
-  - 📋 Export current viewport
-  - 📋 Export specific groups
+  - [TODO] Export only selected nodes
+  - 📋 [TODO] Export current viewport
+  - 📋 [TODO] Export specific groups
   - ✅ Export entire canvas
 - **Export Options**:
   - ✅ Export wizard interface (replaces dropdown)
-  - 📋 Include/exclude UI elements
-  - 📋 Include/exclude grid
-  - Include/exclude annotations
-  - Include/exclude hidden nodes
+  - 📋 [TODO] Include/exclude UI elements
+  - 📋 [TODO] Include/exclude grid
+  - [TODO] Include/exclude annotations
+  - [TODO] Include/exclude hidden nodes
   - ✅ Background color/transparency toggle
-  - 📋 Add watermark
-  - 📋 Add timestamp and metadata
+  - 📋 [TODO] Add watermark
+  - 📋 [TODO] Add timestamp and metadata
 - **Batch Export**:
-  - Export all groups separately
-  - Export each layout snapshot
-  - Export multiple formats at once
+  - [TODO] Export all groups separately
+  - [TODO] Export each layout snapshot
+  - [TODO] Export multiple formats at once
 - **Animated Export**:
-  - Export layout transitions as animated GIF
-  - Export canvas walkthrough as video (WebM, MP4)
-  - Adjustable frame rate and duration
-  - Add narration (audio recording)
+  - [TODO] Export layout transitions as animated GIF
+  - [TODO] Export canvas walkthrough as video (WebM, MP4)
+  - [TODO] Adjustable frame rate and duration
+  - [TODO] Add narration (audio recording)
 
 | Ticket | Feature Description                        |
 |--------|--------------------------------------------|
@@ -427,33 +427,40 @@
 
 ### Canvas Keyboard Shortcuts Reference
 
-| Shortcut               | Action               |
-|------------------------|----------------------|
-| `Cmd/Ctrl + Z`         | Undo                 |
-| `Cmd/Ctrl + Shift + Z` | Redo                 |
-| `Cmd/Ctrl + F`         | Search canvas        |
-| `Cmd/Ctrl + H`         | Toggle history panel |
-| `M`                    | Toggle minimap       |
-| `Cmd/Ctrl + 1-9`       | Jump to bookmark     |
-| `Space + Drag`         | Pan canvas           |
-| `Scroll`               | Zoom in/out          |
-| `Esc`                  | Exit focus mode      |
-| `Delete`               | Delete selected      |
-| `Cmd/Ctrl + G`         | Group selected nodes |
-| `Cmd/Ctrl + Shift + G` | Ungroup              |
+| Shortcut               | Action               | Status |
+|------------------------|----------------------|--------|
+| `Cmd/Ctrl + Z`         | Undo                 | [TODO] |
+| `Cmd/Ctrl + Shift + Z` | Redo                 | [TODO] |
+| `Cmd/Ctrl + F`         | Search canvas        | ✅     |
+| `Cmd/Ctrl + H`         | Toggle history panel | [TODO] |
+| `M`                    | Toggle minimap       | [TODO] |
+| `Cmd/Ctrl + 1-9`       | Jump to bookmark     | [TODO] |
+| `Space + Drag`         | Pan canvas           | ✅     |
+| `Scroll`               | Zoom in/out          | ✅     |
+| `Esc`                  | Exit focus mode / close search | ✅ |
+| `Delete`               | Delete selected      | [TODO] |
+| `Cmd/Ctrl + G`         | Group selected nodes | [TODO] |
+| `Cmd/Ctrl + Shift + G` | Ungroup              | [TODO] |
+| `Cmd/Ctrl + C`         | Copy selected nodes  | [TODO] |
+| `Cmd/Ctrl + V`         | Paste nodes          | [TODO] |
+| `Cmd/Ctrl + D`         | Duplicate selected   | [TODO] |
+| `Cmd/Ctrl + A`         | Select all nodes     | [TODO] |
+| `Cmd/Ctrl + E`         | Open export wizard   | [TODO] |
+| `Cmd/Ctrl + S`         | Save layout          | [TODO] |
+| `Cmd/Ctrl + K`         | Command palette      | [TODO] |
 
 ---
 
 ### 10. Schema Visualization & Analytics
 
 #### Dependency Visualization 📋 PLANNED
-- 📋 Interactive dependency graph overlay on canvas
-- 📋 Highlight circular dependencies with warning indicators
-- 📋 Show dependency depth levels (1st, 2nd, 3rd degree)
-- 📋 "Impact Analysis" mode: Show all affected classes when changing one
-- 📋 Upstream/downstream dependency toggles
-- 📋 Dependency path highlighting (click to trace full chain)
-- 📋 Dependency metrics per class (in-degree, out-degree, betweenness)
+- 📋 [TODO] Interactive dependency graph overlay on canvas
+- 📋 [TODO] Highlight circular dependencies with warning indicators
+- 📋 [TODO] Show dependency depth levels (1st, 2nd, 3rd degree)
+- 📋 [TODO] "Impact Analysis" mode: Show all affected classes when changing one
+- 📋 [TODO] Upstream/downstream dependency toggles
+- 📋 [TODO] Dependency path highlighting (click to trace full chain)
+- 📋 [TODO] Dependency metrics per class (in-degree, out-degree, betweenness)
 
 | Ticket | Feature                                                             |
 |--------|---------------------------------------------------------------------|
@@ -466,18 +473,18 @@
 | #553   | Dependency metrics per class (in-degree, out-degree, betweenness)   |
 
 #### Schema Metrics Dashboard 📋 PLANNED
-- 📋 Real-time metrics overlay on canvas:
-  - 📋 Total classes, properties, relationships count
-  - 📋 Schema complexity score
-  - 📋 Documentation coverage percentage
-  - 📋 Naming convention compliance
-- 📋 Per-node metrics badges (property count, relationship count)
-- 📋 Heatmap visualization:
-  - 📋 By complexity (more complex = warmer color)
-  - 📋 By change frequency (recently modified = highlighted)
-  - 📋 By usage/reference count
-  - 📋 By documentation completeness
-- 📋 Trend indicators (improving/declining metrics)
+- 📋 [TODO] Real-time metrics overlay on canvas:
+  - 📋 [TODO] Total classes, properties, relationships count
+  - 📋 [TODO] Schema complexity score
+  - 📋 [TODO] Documentation coverage percentage
+  - 📋 [TODO] Naming convention compliance
+- 📋 [TODO] Per-node metrics badges (property count, relationship count)
+- 📋 [TODO] Heatmap visualization:
+  - 📋 [TODO] By complexity (more complex = warmer color)
+  - 📋 [TODO] By change frequency (recently modified = highlighted)
+  - 📋 [TODO] By usage/reference count
+  - 📋 [TODO] By documentation completeness
+- 📋 [TODO] Trend indicators (improving/declining metrics)
 
 | Ticket | Feature                                        |
 |--------|------------------------------------------------|
@@ -572,3 +579,176 @@
 - ✅ Dynamic detail based on zoom level
 - ✅ Fade transitions between LOD levels
 - ✅ Show property references even when nodes are collapsed
+
+---
+
+---
+
+## Suggested Enterprise Improvements
+
+> The following features were identified by reviewing the current canvas implementation against enterprise user expectations. They are organized by priority.
+
+### 11. Undo/Redo System 📋 PLANNED
+
+[TODO] The canvas currently has **no undo/redo** capability. This is the single most critical missing feature for enterprise use, as any accidental class deletion, edge removal, node move, or property edit is irreversible without reloading.
+
+- [TODO] **Undo stack** with configurable depth (default 50, max 500 operations)
+- [TODO] **Tracked operations**: class create/delete/rename/move, property add/edit/delete, edge create/delete, group operations, layout changes
+- [TODO] **Keyboard shortcuts**: `Cmd/Ctrl + Z` (Undo), `Cmd/Ctrl + Shift + Z` (Redo)
+- [TODO] **History panel** (`Cmd/Ctrl + H`): Visual timeline of all changes with the ability to jump to any point
+- [TODO] **Operation coalescing**: Rapid sequential moves of the same node are collapsed into a single undo entry
+- [TODO] **Persistent undo across sessions**: Optionally persist undo stack to database so changes survive page reload
+
+---
+
+### 12. Command Palette 📋 PLANNED
+
+[TODO] A quick-access command palette (like VS Code `Cmd+K`) to search and execute any canvas action by name, improving discoverability and keyboard-driven workflows.
+
+- [TODO] **Trigger**: `Cmd/Ctrl + K` opens an overlay search box
+- [TODO] **Action index**: All canvas actions searchable by name (e.g., "Save Layout", "Export as PNG", "Auto-organize", "Toggle Grid", "Create Group", "Zoom to Fit")
+- [TODO] **Fuzzy matching**: Matches partial and out-of-order terms
+- [TODO] **Recent actions**: Show recently used commands at the top
+- [TODO] **Contextual commands**: Show different commands based on what is selected (e.g., when a node is selected, show "Delete Class", "Edit Properties", "Change Color")
+- [TODO] **Keyboard navigation**: Arrow keys to move, Enter to execute, Esc to dismiss
+
+---
+
+### 13. Copy/Paste & Duplicate Nodes 📋 PLANNED
+
+[TODO] Enterprise users expect standard clipboard operations on the canvas.
+
+- [TODO] **Copy** (`Cmd/Ctrl + C`): Copy selected class nodes to an internal clipboard (including properties and schema)
+- [TODO] **Paste** (`Cmd/Ctrl + V`): Paste copied nodes onto the canvas at the cursor position with de-duplicated names (e.g., "User" becomes "User (Copy)")
+- [TODO] **Duplicate** (`Cmd/Ctrl + D`): In-place duplicate of selected nodes offset by a small amount
+- [TODO] **Cross-version paste**: Copy a class from one version and paste into another
+- [TODO] **Multi-select copy**: Copy multiple classes with their inter-relationships preserved
+
+---
+
+### 14. Canvas Annotations & Comments 📋 PLANNED
+
+[TODO] No annotation or comment system exists on the canvas. Enterprise design reviews and architecture discussions require the ability to leave comments on the schema.
+
+- [TODO] **Sticky notes**: Freeform text notes placeable anywhere on the canvas (distinct from class nodes)
+- [TODO] **Pin comments to nodes**: Attach a comment bubble to a specific class or property
+- [TODO] **Comment threads**: Reply to comments, mark as resolved
+- [TODO] **@Mentions**: Tag team members in comments to notify them
+- [TODO] **Rich text**: Markdown support in comments with code snippets
+- [TODO] **Comment visibility toggle**: Show/hide all annotations without deleting them
+- [TODO] **Comment export**: Include or exclude annotations when exporting canvas images
+
+---
+
+### 15. Canvas Bookmarks & Waypoints 📋 PLANNED
+
+[TODO] Large schemas (50+ classes) require spatial navigation aids beyond the minimap.
+
+- [TODO] **Bookmarks** (`Cmd/Ctrl + 1-9`): Save up to 9 named viewport positions (x, y, zoom) per version
+- [TODO] **Bookmark panel**: List all bookmarks with thumbnail previews
+- [TODO] **Jump to bookmark**: Smooth animated pan/zoom to bookmarked position
+- [TODO] **Bookmark sharing**: Bookmarks saved per-user but shareable as deep links
+- [TODO] **Auto-bookmarks**: Auto-create bookmarks for each group centroid
+
+---
+
+### 16. Real-Time Collaboration 📋 PLANNED
+
+[TODO] The canvas has no multi-user collaboration support. For enterprise teams, concurrent editing is expected.
+
+- [TODO] **Presence indicators**: Show avatar badges of users currently viewing the canvas
+- [TODO] **Live cursors**: Display other users' cursor positions on the canvas in real time
+- [TODO] **Operational Transform or CRDT**: Conflict-free concurrent edits to nodes, edges, and properties
+- [TODO] **Change attribution**: Show who last modified each class (tooltip or badge)
+- [TODO] **Conflict resolution UI**: When two users edit the same class simultaneously, present a merge dialog
+- [TODO] **Activity feed**: Sidebar showing a live stream of canvas changes by all users
+- [TODO] **Follow mode**: Click a user's avatar to lock your viewport to their position
+
+---
+
+### 17. Canvas Audit Trail 📋 PLANNED
+
+[TODO] Enterprise compliance requires knowing who changed what and when on the canvas.
+
+- [TODO] **Change log per class**: Every create, update, delete, move recorded with timestamp + user
+- [TODO] **Change log per version**: Aggregated changelog across all classes in a version
+- [TODO] **Canvas diff playback**: Step through the change history chronologically to see the canvas evolve
+- [TODO] **Blame view**: Color-code nodes by last editor (who touched it most recently)
+- [TODO] **Export audit trail**: CSV/JSON export of all changes for compliance reporting
+- [TODO] **Retention policy**: Configurable how long audit entries are kept
+
+---
+
+### 18. Improved Editor Page Architecture 📋 PLANNED
+
+[TODO] The main editor page (`page.tsx`) is approximately 5,100 lines. This hurts maintainability, code review velocity, and bundle splitting.
+
+- [TODO] **Extract custom hooks**: Move canvas interaction handlers into dedicated hooks (`useCanvasInteractions`, `useCanvasSearch`, `useCanvasGroups`, `useCanvasLayout`, `useCanvasKeyboard`)
+- [TODO] **Extract sub-components**: Break the render into smaller components (`CanvasToolbar`, `CanvasSearchPanel`, `CanvasSettingsSheet`, `CanvasStatusBar`)
+- [TODO] **Lazy-load dialogs**: Code-split heavy dialogs (export wizard, settings, class edit) so they do not bloat the initial canvas bundle
+- [TODO] **Reduce re-renders**: Audit `useEffect` dependency arrays and memoize expensive computations (the file has numerous large dependency arrays that likely trigger unnecessary re-renders)
+- [TODO] **Performance profiling**: Add React DevTools Profiler markers for layout calculations, node rendering, and search filtering to identify bottlenecks on large canvases
+
+---
+
+### 19. Canvas-Level Validation & Linting 📋 PLANNED
+
+[TODO] Provide real-time feedback on schema design quality directly on the canvas, beyond the existing quality score.
+
+- [TODO] **Dangling reference warnings**: Highlight properties that reference non-existent classes with a red badge on the edge
+- [TODO] **Circular dependency detection**: When a circular reference is created, show a warning toast and highlight the cycle on the canvas
+- [TODO] **Naming convention lint**: Warn when class or property names violate configurable naming rules (e.g., PascalCase for classes, camelCase for properties)
+- [TODO] **Unused class detection**: Dim or badge classes that are not referenced by any other class
+- [TODO] **Required property audit**: Badge classes where required properties have no description or no type
+- [TODO] **Schema complexity warnings**: Warn when a single class exceeds a configurable property count threshold (e.g., 30+ properties suggests the class should be decomposed)
+- [TODO] **Lint panel**: A toggleable sidebar listing all lint warnings with click-to-navigate
+
+---
+
+### 20. Canvas Accessibility 📋 PLANNED
+
+[TODO] Enterprise products are expected to meet WCAG 2.1 AA accessibility standards.
+
+- [TODO] **Keyboard-only navigation**: Tab/Shift+Tab to cycle through nodes, arrow keys to move selected node, Enter to open edit dialog
+- [TODO] **Screen reader announcements**: ARIA live regions for canvas state changes (node created, deleted, moved)
+- [TODO] **High-contrast edge colors**: Ensure all edge colors meet 4.5:1 contrast ratio in both light and dark modes
+- [TODO] **Focus ring indicators**: Visible focus outlines on selected nodes and edges for keyboard users
+- [TODO] **Reduced motion mode**: Respect `prefers-reduced-motion` OS setting; disable edge animations and LOD transitions
+- [TODO] **Zoom with keyboard**: `+` / `-` keys to zoom in/out, `0` to reset zoom
+
+---
+
+### 21. Canvas Import from External Tools 📋 PLANNED
+
+[TODO] Enterprise teams migrate from existing diagramming tools. Support importing canvas layouts from common formats.
+
+- [TODO] **Import from Draw.io / diagrams.net**: Parse `.drawio` XML and create classes + relationships on canvas
+- [TODO] **Import from Lucidchart**: Parse exported JSON/CSV and map to canvas nodes
+- [TODO] **Import from Mermaid**: Parse Mermaid class diagram syntax and create corresponding schema
+- [TODO] **Import from PlantUML**: Parse PlantUML class diagram and create corresponding schema
+- [TODO] **Import from ERD tools** (dbdiagram.io, pgModeler): Parse SQL DDL or DBML and map to classes
+
+---
+
+### 22. Canvas Minimap Enhancements 📋 PLANNED
+
+[TODO] The minimap is functional but could be improved for large schemas.
+
+- [TODO] **Group highlighting in minimap**: Color-code minimap regions by group
+- [TODO] **Minimap node badges**: Show tiny color indicators for validation warnings
+- [TODO] **Minimap click-to-zoom**: Click a region in the minimap to zoom into that area (currently pans only)
+- [TODO] **Minimap resizable**: Allow users to resize the minimap or dock it to a sidebar
+- [TODO] **Minimap toggle shortcut**: `M` key to show/hide minimap
+
+---
+
+### 23. Version Comparison on Canvas 📋 PLANNED
+
+[TODO] Version comparison currently works as a side-by-side code diff. Enterprise users need a visual diff directly on the canvas.
+
+- [TODO] **Canvas overlay diff**: Overlay two versions on the same canvas with added nodes in green, removed in red, modified in yellow
+- [TODO] **Side-by-side canvas diff**: Two linked canvases (left = old version, right = new) that pan/zoom together
+- [TODO] **Diff badges on nodes**: Per-class badge showing "Added", "Modified", "Removed"
+- [TODO] **Property-level diff**: Expand a modified class to see which properties changed (inline green/red/yellow)
+- [TODO] **Diff navigation**: "Next change" / "Previous change" buttons to jump between differences
+- [TODO] **Cherry-pick merge**: Select individual changes from a diff to apply to the current version
