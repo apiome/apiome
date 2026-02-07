@@ -16,19 +16,6 @@
 Each OpenAPI concept is represented as a distinct node type with color-coded visual identity, making API 
 structure immediately recognizable.
 
-#### 2.4 Parameter Nodes ✅ IMPLEMENTED
-
-**Visual Design**: Small chips/tags color-coded by parameter location
-
-| Location | Color  | Icon       |
-|----------|--------|------------|
-| Query    | Blue   | ? icon     |
-| Path     | Green  | {} icon (Braces) |
-| Header   | Purple | H icon     |
-| Cookie   | Orange | 🍪 icon    |
-
-Implemented in `PathParameterNode.tsx`: compact chip layout with location-based background/border colors, Lucide Braces for path, tooltip for type/required/default/description.
-
 #### 2.5 Request Body Nodes 📋 PLANNED
 
 **Visual Design**: Input port icon with blue accent, shows content types
@@ -563,6 +550,19 @@ DROP TARGET STATE:
 | DELETE   | Red    | Resource deletion             |
 | HEAD     | Gray   | Metadata retrieval            |
 | OPTIONS  | Gray   | CORS preflight                |
+
+#### 2.4 Parameter Nodes ✅ IMPLEMENTED
+
+**Visual Design**: Small chips/tags color-coded by parameter location
+
+| Location | Color  | Icon       |
+|----------|--------|------------|
+| Query    | Blue   | ? icon     |
+| Path     | Green  | {} icon (Braces) |
+| Header   | Purple | H icon     |
+| Cookie   | Orange | 🍪 icon    |
+
+Implemented in `PathParameterNode.tsx`: compact chip layout with location-based background/border colors, Lucide Braces for path, tooltip for type/required/default/description.
 
 #### 2.5 Request Body Nodes ✅ IMPLEMENTED
 
