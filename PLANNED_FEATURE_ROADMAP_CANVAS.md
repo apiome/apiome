@@ -99,7 +99,7 @@
 | #485   | Quick restore hidden nodes     |
 
 #### Focus Mode 📋 PLANNED
-- 📋 [TODO] Isolate selected classes and immediate relationships
+- ✅ Isolate selected classes and immediate relationships
 - 📋 [TODO] Blur/dim non-focused nodes
 - 📋 [TODO] Show only 1st-degree connections (or 2nd, 3rd degree)
 - 📋 [TODO] Expand focus incrementally
@@ -108,7 +108,6 @@
 
 | Ticket | Feature Description                        |
 |--------|--------------------------------------------|
-| #486   | Isolate selected classes and relationships |
 | #487   | Blur/dim non-focused nodes                 |
 | #488   | Show only Nth-degree connections           |
 | #489   | Expand focus incrementally                 |

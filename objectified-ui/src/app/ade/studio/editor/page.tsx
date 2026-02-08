@@ -39,6 +39,7 @@ import {
   MoveHorizontal,
   Search,
   X,
+  Focus,
   Activity,
   History,
   Trash2,
@@ -260,6 +261,10 @@ const StudioContent = () => {
 
   // Selected nodes for spacing tools
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
+
+  // Focus mode: isolate selected classes and their immediate relationships (frozen at enter)
+  const [focusModeEnabled, setFocusModeEnabled] = useState(false);
+  const [focusModeFrozenNodeIds, setFocusModeFrozenNodeIds] = useState<string[]>([]);
 
   // Spacing indicators state
   const [spacingIndicators, setSpacingIndicators] = useState<{
@@ -670,7 +675,33 @@ const StudioContent = () => {
     }
   }, [searchFiltersOpen]);
 
-  // Keyboard shortcut for canvas search (Cmd+F or Ctrl+F)
+  // Focus mode: frozen set for quick lookup when applying dimming
+  const focusModeFrozenSet = useMemo(() => new Set(focusModeFrozenNodeIds), [focusModeFrozenNodeIds]);
+
+  // Enter focus mode: isolate selected classes and their immediate relationships (1st-degree)
+  const enterFocusMode = useCallback(() => {
+    const classNodeIds = selectedNodeIds.filter(id => {
+      const node = nodes.find(n => n.id === id);
+      return node && node.type !== 'groupNode';
+    });
+    if (classNodeIds.length === 0) return;
+    const focusedSet = new Set<string>(classNodeIds);
+    edges.forEach(edge => {
+      if (focusedSet.has(edge.source) || focusedSet.has(edge.target)) {
+        focusedSet.add(edge.source);
+        focusedSet.add(edge.target);
+      }
+    });
+    setFocusModeFrozenNodeIds(Array.from(focusedSet));
+    setFocusModeEnabled(true);
+  }, [selectedNodeIds, nodes, edges]);
+
+  const exitFocusMode = useCallback(() => {
+    setFocusModeEnabled(false);
+    setFocusModeFrozenNodeIds([]);
+  }, []);
+
+  // Keyboard shortcut for canvas search (Cmd+F or Ctrl+F) and focus mode (Esc)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only handle in canvas view mode
@@ -682,64 +713,94 @@ const StudioContent = () => {
         openCanvasSearch();
       }
 
-      // Escape to close search
-      if (e.key === 'Escape' && canvasSearchOpen) {
-        closeCanvasSearch();
+      // Escape: exit focus mode first, then close search
+      if (e.key === 'Escape') {
+        if (focusModeEnabled) {
+          exitFocusMode();
+          e.preventDefault();
+        } else if (canvasSearchOpen) {
+          closeCanvasSearch();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [viewMode, canvasSearchOpen, openCanvasSearch, closeCanvasSearch]);
+  }, [viewMode, canvasSearchOpen, openCanvasSearch, closeCanvasSearch, focusModeEnabled, exitFocusMode]);
 
-  // Compute nodes with search styling applied
+  // Compute nodes with search and/or focus mode styling applied
   const displayNodes = useMemo(() => {
-    // If no search is active, return nodes as-is
-    if (!canvasSearchQuery.trim() || !canvasSearchOpen) {
-      return nodes;
-    }
+    let result = nodes;
 
-    // Apply search classes to nodes
-    return nodes.map(node => {
-      if (node.type === 'groupNode') {
-        // Dim groups if none of their nodes match
-        return node;
-      }
-
-      const isMatch = matchingNodeIds.has(node.id);
-      const existingClassName = node.className || '';
-      const searchClass = isMatch ? 'search-highlighted' : 'search-dimmed';
-
-      return {
-        ...node,
-        className: `${existingClassName} ${searchClass}`.trim()
-      };
-    });
-  }, [nodes, canvasSearchQuery, canvasSearchOpen, matchingNodeIds]);
-
-  // Compute edges with search styling applied
-  const displayEdges = useMemo(() => {
-    // If no search is active, return edges as-is
-    if (!canvasSearchQuery.trim() || !canvasSearchOpen) {
-      return edges;
-    }
-
-    // Dim edges that don't connect to matching nodes
-    return edges.map(edge => {
-      const sourceMatch = matchingNodeIds.has(edge.source);
-      const targetMatch = matchingNodeIds.has(edge.target);
-      const isConnectedToMatch = sourceMatch || targetMatch;
-
-      if (!isConnectedToMatch) {
-        const existingClassName = edge.className || '';
+    // Apply search classes when search is active
+    if (canvasSearchQuery.trim() && canvasSearchOpen) {
+      result = result.map(node => {
+        if (node.type === 'groupNode') return node;
+        const isMatch = matchingNodeIds.has(node.id);
+        const existingClassName = node.className || '';
+        const searchClass = isMatch ? 'search-highlighted' : 'search-dimmed';
         return {
-          ...edge,
-          className: `${existingClassName} search-dimmed`.trim()
+          ...node,
+          className: `${existingClassName} ${searchClass}`.trim()
         };
-      }
-      return edge;
-    });
-  }, [edges, canvasSearchQuery, canvasSearchOpen, matchingNodeIds]);
+      });
+    }
+
+    // Apply focus mode dimming when focus mode is on (isolate selected + immediate relationships)
+    if (focusModeEnabled && focusModeFrozenSet.size > 0) {
+      result = result.map(node => {
+        if (node.type === 'groupNode') return node;
+        const inFocus = focusModeFrozenSet.has(node.id);
+        const existingClassName = node.className || '';
+        const focusClass = inFocus ? '' : 'focus-dimmed';
+        return {
+          ...node,
+          className: `${existingClassName} ${focusClass}`.trim()
+        };
+      });
+    }
+
+    return result;
+  }, [nodes, canvasSearchQuery, canvasSearchOpen, matchingNodeIds, focusModeEnabled, focusModeFrozenSet]);
+
+  // Compute edges with search and/or focus mode styling applied
+  const displayEdges = useMemo(() => {
+    let result = edges;
+
+    // Dim edges that don't connect to matching nodes when search is active
+    if (canvasSearchQuery.trim() && canvasSearchOpen) {
+      result = result.map(edge => {
+        const sourceMatch = matchingNodeIds.has(edge.source);
+        const targetMatch = matchingNodeIds.has(edge.target);
+        const isConnectedToMatch = sourceMatch || targetMatch;
+        if (!isConnectedToMatch) {
+          const existingClassName = edge.className || '';
+          return {
+            ...edge,
+            className: `${existingClassName} search-dimmed`.trim()
+          };
+        }
+        return edge;
+      });
+    }
+
+    // Dim edges not between focused nodes when focus mode is on
+    if (focusModeEnabled && focusModeFrozenSet.size > 0) {
+      result = result.map(edge => {
+        const bothFocused = focusModeFrozenSet.has(edge.source) && focusModeFrozenSet.has(edge.target);
+        if (!bothFocused) {
+          const existingClassName = edge.className || '';
+          return {
+            ...edge,
+            className: `${existingClassName} focus-dimmed`.trim()
+          };
+        }
+        return edge;
+      });
+    }
+
+    return result;
+  }, [edges, canvasSearchQuery, canvasSearchOpen, matchingNodeIds, focusModeEnabled, focusModeFrozenSet]);
 
   // Compute canvas background style based on settings (shared util for preview + main canvas)
   const canvasBackgroundStyle = useMemo(
@@ -4061,6 +4122,17 @@ const StudioContent = () => {
             opacity: 0.15 !important;
             transition: opacity 0.2s ease !important;
           }
+
+          /* Focus mode - dim non-focused nodes and edges (same visual as search) */
+          .react-flow__node.focus-dimmed {
+            opacity: 0.25 !important;
+            filter: grayscale(50%) !important;
+            transition: opacity 0.2s ease, filter 0.2s ease !important;
+          }
+          .react-flow__edge.focus-dimmed path {
+            opacity: 0.15 !important;
+            transition: opacity 0.2s ease !important;
+          }
         `}</style>
 
       {/* Header with Project and Version Selectors - spans full width including over sidebar */}
@@ -4739,6 +4811,24 @@ const StudioContent = () => {
               </Panel>
             )}
 
+            {/* Focus mode indicator - exit with Esc or X */}
+            {focusModeEnabled && (
+              <Panel position="top-center" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-full shadow-lg border border-gray-200/80 dark:border-gray-700/80 px-4 py-2">
+                <div className="flex items-center gap-2">
+                  <Focus className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Focus mode</span>
+                  <button
+                    onClick={exitFocusMode}
+                    className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                    title="Exit focus mode (Esc)"
+                    aria-label="Exit focus mode"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </Panel>
+            )}
+
             {/* Read Only Indicator */}
             {isReadOnly && (
               <Panel position="top-left" className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/30 dark:to-yellow-900/30 text-amber-800 dark:text-amber-200 rounded-xl shadow-lg px-4 py-2 border border-amber-200/80 dark:border-amber-700/50 backdrop-blur-sm">
@@ -4781,6 +4871,16 @@ const StudioContent = () => {
                 >
                   <Search className="h-3.5 w-3.5" />
                   <span>Search</span>
+                </button>
+                {/* Focus Mode: isolate selected classes and immediate relationships */}
+                <button
+                  onClick={enterFocusMode}
+                  disabled={selectedNodeIds.length === 0}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 border border-transparent disabled:opacity-50 disabled:cursor-not-allowed bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:hover:bg-gray-50 disabled:hover:text-gray-700 dark:disabled:hover:bg-gray-700 dark:disabled:hover:text-gray-300"
+                  title="Focus mode: isolate selected classes and their immediate relationships (Esc to exit)"
+                >
+                  <Focus className="h-3.5 w-3.5" />
+                  <span>Focus</span>
                 </button>
                 {/* Manage Tags Button */}
                 {!isReadOnly && (
