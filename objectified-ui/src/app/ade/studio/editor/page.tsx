@@ -40,6 +40,9 @@ import {
   Search,
   X,
   Focus,
+  Plus,
+  Minus,
+  RotateCcw,
   Activity,
   History,
   Trash2,
@@ -264,6 +267,9 @@ const StudioContent = () => {
 
   // Focus mode: isolate selected classes and their immediate relationships (live from current selection)
   const [focusModeEnabled, setFocusModeEnabled] = useState(false);
+  // #489: Focus degree (1 = selection + 1st-degree neighbors, 2 = + 2nd-degree, etc.); user can expand incrementally
+  const [focusModeDegree, setFocusModeDegree] = useState(1);
+  const FOCUS_MODE_MAX_DEGREE = 10;
 
   // #488: Show only connected nodes (hide nodes with no edges)
   const [showOnlyConnectedNodes, setShowOnlyConnectedNodes] = useState(false);
@@ -687,7 +693,7 @@ const StudioContent = () => {
     return set;
   }, [edges]);
 
-  // Focus mode: focused set = current selection + immediate neighbors (updates when selection changes)
+  // Focus mode: focused set = current selection + neighbors up to focusModeDegree steps (BFS)
   const focusModeFocusedSet = useMemo(() => {
     if (!focusModeEnabled) return new Set<string>();
     const classNodeIds = selectedNodeIds.filter(id => {
@@ -696,14 +702,22 @@ const StudioContent = () => {
     });
     if (classNodeIds.length === 0) return new Set<string>();
     const focusedSet = new Set<string>(classNodeIds);
-    edges.forEach(edge => {
-      if (focusedSet.has(edge.source) || focusedSet.has(edge.target)) {
-        focusedSet.add(edge.source);
-        focusedSet.add(edge.target);
+    let current = new Set<string>(classNodeIds);
+    for (let d = 0; d < focusModeDegree; d++) {
+      const next = new Set<string>();
+      for (const id of current) {
+        for (const edge of edges) {
+          const other = edge.source === id ? edge.target : edge.source;
+          if (edge.source === id || edge.target === id) {
+            focusedSet.add(other);
+            next.add(other);
+          }
+        }
       }
-    });
+      current = next;
+    }
     return focusedSet;
-  }, [focusModeEnabled, selectedNodeIds, nodes, edges]);
+  }, [focusModeEnabled, focusModeDegree, selectedNodeIds, nodes, edges]);
 
   const toggleFocusMode = useCallback(() => {
     setFocusModeEnabled(prev => !prev);
@@ -711,6 +725,19 @@ const StudioContent = () => {
 
   const exitFocusMode = useCallback(() => {
     setFocusModeEnabled(false);
+    setFocusModeDegree(1);
+  }, []);
+
+  const expandFocusDegree = useCallback(() => {
+    setFocusModeDegree(prev => Math.min(prev + 1, FOCUS_MODE_MAX_DEGREE));
+  }, []);
+
+  const reduceFocusDegree = useCallback(() => {
+    setFocusModeDegree(prev => Math.max(1, prev - 1));
+  }, []);
+
+  const resetFocusDegree = useCallback(() => {
+    setFocusModeDegree(1);
   }, []);
 
   // Keyboard shortcut for canvas search (Cmd+F or Ctrl+F) and focus mode (Esc)
@@ -4846,12 +4873,44 @@ const StudioContent = () => {
               </Panel>
             )}
 
-            {/* Focus mode indicator - exit with Esc or X */}
+            {/* Focus mode indicator - expand/reduce degree (#489), exit with Esc or X */}
             {focusModeEnabled && (
               <Panel position="top-center" className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-full shadow-lg border border-gray-200/80 dark:border-gray-700/80 px-4 py-2">
                 <div className="flex items-center gap-2">
-                  <Focus className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  <Focus className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Focus mode</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+                    {focusModeDegree === 1 ? '1st' : focusModeDegree === 2 ? '2nd' : focusModeDegree === 3 ? '3rd' : `${focusModeDegree}th`} degree
+                  </span>
+                  <div className="flex items-center gap-0.5 border border-gray-200 dark:border-gray-600 rounded-md overflow-hidden">
+                    <button
+                      onClick={reduceFocusDegree}
+                      disabled={focusModeDegree <= 1}
+                      className="p-1.5 rounded-none hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 disabled:opacity-40 disabled:pointer-events-none"
+                      title="Reduce focus (fewer connections)"
+                      aria-label="Reduce focus degree"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={expandFocusDegree}
+                      disabled={focusModeDegree >= FOCUS_MODE_MAX_DEGREE}
+                      className="p-1.5 rounded-none hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 disabled:opacity-40 disabled:pointer-events-none"
+                      title="Expand focus (include more connections)"
+                      aria-label="Expand focus degree"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <button
+                    onClick={resetFocusDegree}
+                    disabled={focusModeDegree <= 1}
+                    className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400 disabled:opacity-40 disabled:pointer-events-none"
+                    title="Reset focus to 1st degree"
+                    aria-label="Reset focus degree"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  </button>
                   <button
                     onClick={exitFocusMode}
                     className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
