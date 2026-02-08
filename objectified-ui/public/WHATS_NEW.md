@@ -17,6 +17,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Added memory profiling and performance improvements for large canvases
   - Added icons to class nodes for better visual distinction of nodes
   - Added focus mode to allow nodes to be selected, and to show only the associated nodes and relationships
+  - Increased zoom out resolution to 10%
   - Nodes now show property references even when not expanded
   - Improved search to include properties and descriptions in the results
   - Canvas changes also apply to the Paths canvas

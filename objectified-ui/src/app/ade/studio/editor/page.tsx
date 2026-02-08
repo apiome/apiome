@@ -4397,6 +4397,8 @@ const StudioContent = () => {
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
               defaultEdgeOptions={{ zIndex: 0 }}
+              minZoom={0.1}
+              maxZoom={2}
               onNodesChange={handleNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
