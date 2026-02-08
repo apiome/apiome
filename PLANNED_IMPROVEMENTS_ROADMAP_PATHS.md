@@ -437,13 +437,13 @@ The Paths Designer is a fully implemented visual API design tool built on React 
 
 [TODO] The left sidebar provides access to paths, operations, classes, properties, security, and servers. Several improvements would make it more developer-friendly.
 
-### Sidebar Tabs Redesign
+### 12.1 Sidebar Tabs Redesign
 
 - [TODO] **Icon-Only Tabs**: Replace text tabs with icon-only tabs (with tooltips) to save vertical space: 🛤️ Paths, ⚡ Operations, 📦 Classes, 🔑 Security, 🌐 Servers
 - [TODO] **Collapsible Sidebar**: Collapse the sidebar to a thin icon rail (~48px) with tooltips, maximizing canvas space; expand on click or `Cmd+B`
 - [TODO] **Pinned Sidebar**: Toggle to pin/unpin the sidebar; when unpinned, it auto-collapses when the canvas is clicked
 
-### Path Tree View
+### 12.2 Path Tree View
 
 - [TODO] **Hierarchical Path Tree**: Display paths as a tree structure grouped by path segments:
   ```
@@ -465,7 +465,7 @@ The Paths Designer is a fully implemented visual API design tool built on React 
 - [TODO] **Click to Navigate**: Click an operation in the tree to pan the canvas to that node and select it
 - [TODO] **Double-Click to Edit**: Double-click to open the editor overlay directly
 
-### Drag-and-Drop Improvements
+### 12.3 Drag-and-Drop Improvements
 
 - [TODO] **Drag Preview**: Show a ghost preview of the node being dragged, with its method color and path
 - [TODO] **Drop Zone Highlighting**: Highlight valid drop targets on the canvas when dragging (e.g., highlight an operation node when dragging a parameter to indicate it can be dropped on that operation)
