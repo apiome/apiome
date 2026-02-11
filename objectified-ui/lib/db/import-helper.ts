@@ -68,6 +68,8 @@ export interface ImportJobInput {
     createRelationships?: boolean;
     applyNamingConvention?: boolean;
     dryRun?: boolean;
+    /** When true, commit each class separately and skip failures (no single transaction). */
+    incrementalMode?: boolean;
   };
 }
 
@@ -92,6 +94,8 @@ interface JobState {
     projectName?: string;
     versionId?: string;
     dryRun?: boolean;
+    /** True when import was run in incremental mode (skip failures, commit as we go). */
+    incrementalMode?: boolean;
     classes: Array<{ name: string; status: 'success' | 'warning' | 'failed' }>;
     verification?: {
       passed: boolean;
@@ -522,6 +526,8 @@ export async function startImport(input: ImportJobInput) {
         return;
       }
 
+      const incrementalMode = input.options.incrementalMode === true;
+
       // Get a transaction client (with retry for transient connection errors)
       client = await withRetry(() => getTransactionClient(), {
         maxAttempts: 3,
@@ -530,7 +536,122 @@ export async function startImport(input: ImportJobInput) {
       });
       job.transactionClient = client;
 
-      // Begin transaction (with retry for transient DB errors)
+      if (incrementalMode) {
+        // Incremental mode: no single transaction; commit as we go and skip failures
+        emit(job, 'info', 'INCREMENTAL_MODE', 'Importing in incremental mode — each class is committed separately; failed classes are skipped.');
+        // Project and version run in autocommit (no BEGIN)
+        if (job.canceled) throw new Error('Import canceled');
+        setProgress(job, 'creating-project', 1, 0, input.project.name);
+        const resProj = JSON.parse(
+          await withRetry(
+            () => createProjectTx(client!, input.tenantId, input.userId, input.project.name, input.project.description || '', input.project.slug),
+            { maxAttempts: 3, initialDelayMs: 500, label: 'createProject' }
+          )
+        );
+        if (!resProj.success) throw new Error(resProj.error || 'Failed to create project');
+        const projectId = resProj.project.id as string;
+        emit(job, 'info', 'PROJECT_CREATED', `Created project: ${input.project.name}`, { projectId });
+        if (job.canceled) throw new Error('Import canceled');
+        setProgress(job, 'creating-version', 2, 1, input.version.versionId);
+        const resVer = JSON.parse(
+          await withRetry(
+            () => createVersionTx(client!, projectId, input.userId, input.version.versionId, input.version.description || '', 'Imported from specification'),
+            { maxAttempts: 3, initialDelayMs: 500, label: 'createVersion' }
+          )
+        );
+        if (!resVer.success) throw new Error(resVer.error || 'Failed to create version');
+        const versionId = resVer.version.id as string;
+        emit(job, 'info', 'VERSION_CREATED', `Created version: ${input.version.versionId}`, { versionId });
+
+        const propertyMapInc = new Map<string, { data: any; description?: string; names: Set<string> }>();
+        const propertyIdMapInc = new Map<string, string>();
+        const collectPropertiesInc = (props: any[]) => {
+          for (const p of props || []) {
+            const isReference = p.data.$ref || (p.data.type === 'array' && p.data.items?.$ref);
+            if (!isReference) {
+              const sig = stableStringify(p.data);
+              if (!propertyMapInc.has(sig)) {
+                propertyMapInc.set(sig, { data: p.data, description: p.description, names: new Set<string>() });
+              }
+              propertyMapInc.get(sig)!.names.add(p.name);
+            }
+            if (p.children) collectPropertiesInc(p.children);
+          }
+        };
+        for (const cls of norm.classes) collectPropertiesInc(cls.properties || []);
+
+        emit(job, 'info', 'CREATING_PROPERTIES', `Creating ${propertyMapInc.size} unique properties in library`);
+        const usedNamesInc = new Set<string>();
+        for (const [sig, payload] of propertyMapInc.entries()) {
+          if (job.canceled) throw new Error('Import canceled');
+          let baseName = Array.from(payload.names)[0];
+          let propName = baseName;
+          let suffix = 1;
+          while (usedNamesInc.has(propName)) {
+            propName = `${baseName}_${suffix}`;
+            suffix++;
+          }
+          usedNamesInc.add(propName);
+          emit(job, 'info', 'DEBUG_PROPERTY', `Creating property: ${propName}`, { dataType: payload.data.type });
+          const resProp = JSON.parse(
+            await createPropertyTx(client!, projectId, propName, payload.description || null, payload.data)
+          );
+          if (!resProp.success) {
+            emit(job, 'warn', 'PROPERTY_CREATE_WARN', `Could not create property "${propName}": ${resProp.error}`);
+            continue;
+          }
+          propertyIdMapInc.set(sig, resProp.property.id);
+          if (job.summary) job.summary.propertiesCreated++;
+        }
+        emit(job, 'info', 'PROPERTIES_CREATED', `Created ${propertyIdMapInc.size} properties in library`);
+
+        setProgress(job, 'creating-classes', 2 + norm.classes.length, 2);
+        let classCountInc = 0;
+        for (const cls of norm.classes) {
+          if (job.canceled) throw new Error('Import canceled');
+          setProgress(job, 'creating-classes', 2 + norm.classes.length, 2 + classCountInc, cls.name);
+          try {
+            await beginTransaction(client!);
+            await writeClassWithProperties(client!, projectId, versionId, cls, job, propertyIdMapInc);
+            await commitTransaction(client!);
+            emit(job, 'info', 'CLASS_CREATED', `Imported class: ${cls.name}`);
+            if (job.summary) {
+              job.summary.classesCreated++;
+              job.summary.classes.push({ name: cls.name, status: 'success' });
+            }
+          } catch (classErr: any) {
+            try {
+              await rollbackTransaction(client!);
+            } catch (_) { /* ignore */ }
+            emit(job, 'error', 'CLASS_FAILED', `Failed to create class ${cls.name}: ${classErr?.message}`);
+            if (job.summary) {
+              job.summary.failed++;
+              job.summary.classes.push({ name: cls.name, status: 'failed' });
+            }
+          }
+          classCountInc++;
+        }
+
+        if (job.canceled) throw new Error('Import canceled');
+        setProgress(job, 'verifying', 3 + norm.classes.length, 2 + norm.classes.length, 'Verifying import...');
+        const verificationResultInc = await verifyImport(client!, versionId, norm.classes, job);
+        if (job.summary) job.summary.verification = verificationResultInc;
+        if (!verificationResultInc.passed && job.summary) job.summary.warnings++;
+
+        setProgress(job, 'finalizing', 3 + norm.classes.length, 3 + norm.classes.length);
+        job.state = 'completed';
+        job.result = { projectId, versionId };
+        if (job.summary) {
+          job.summary.totalTime = Date.now() - startTime;
+          job.summary.incrementalMode = true;
+        }
+        emit(job, 'info', 'INCREMENTAL_COMPLETE', 'Incremental import complete. Successful classes were saved; failed classes were skipped.', job.result);
+        await releaseClient(client!);
+        job.transactionClient = undefined;
+        return;
+      }
+
+      // Transaction mode: single transaction, pending-approval to commit or rollback
       await withRetry(() => beginTransaction(client!), {
         maxAttempts: 3,
         initialDelayMs: 300,

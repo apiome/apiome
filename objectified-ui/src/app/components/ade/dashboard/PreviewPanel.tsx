@@ -37,6 +37,8 @@ export interface ImportOptions {
   selectedSchemas: string[];
   /** When true, preview changes without committing (dry run). */
   dryRun?: boolean;
+  /** When true, import all available and skip failures (each class committed separately). */
+  incrementalMode?: boolean;
 }
 
 interface SchemaInfo {
@@ -1371,6 +1373,24 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
             </label>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Simulate the import and show what would be created. No project or data is saved.
+            </p>
+          </div>
+
+          {/* Incremental mode: skip failures */}
+          <div className="col-span-4 flex items-start gap-3 pt-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={importOptions.incrementalMode ?? false}
+                onChange={(e) => handleOptionChange('incrementalMode', e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700"
+              />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Incremental mode (skip failures)
+              </span>
+            </label>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Import all available classes and skip any that fail. Changes are saved as each class is imported; no single transaction.
             </p>
           </div>
         </div>

@@ -249,6 +249,21 @@ export default function ImportExecutionPanel({ jobId, onComplete, onRetry, isRev
           </div>
         )}
 
+        {/* Incremental mode complete notice */}
+        {state === 'completed' && summary?.incrementalMode && !summary?.dryRun && (
+          <div className="mt-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+            <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-200">
+              <CheckCircle2 className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                Incremental import complete.
+              </span>
+            </div>
+            <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1 ml-6">
+              Successful classes were saved; failed classes were skipped. You can open the project in Canvas or close this dialog.
+            </p>
+          </div>
+        )}
+
         {/* Transaction pending notice */}
         {transactionPending && state === 'pending-approval' && (
           <div className="mt-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">

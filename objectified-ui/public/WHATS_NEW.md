@@ -102,6 +102,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Adds rollback support for partially committed imports
   - Adds the ability to download import results
   - Adds dry run support to test imports before importing data
+  - Adds incremental mode that will import all available, but skip failures
 - OpenAPI Support:
   - Now at 100% support for class and properties definitions
   - Improved import support for paths and securitySchemes

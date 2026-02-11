@@ -47,6 +47,7 @@ interface ImportSummary {
   projectId?: string;
   versionId?: string;
   dryRun?: boolean;
+  incrementalMode?: boolean;
   schemas?: Array<{
     name: string;
     status: 'success' | 'warning' | 'failed';
@@ -83,6 +84,7 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
             projectId: result?.projectId ?? rawSummary.projectId,
             versionId: result?.versionId ?? rawSummary.versionId,
             dryRun: rawSummary.dryRun === true,
+            incrementalMode: rawSummary.incrementalMode === true,
             schemas: rawSummary.classes?.map((c: any) => ({
               name: c.name,
               status: c.status
@@ -163,6 +165,7 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
 
   const isSuccess = state === 'completed';
   const isDryRun = isSuccess && summary?.dryRun === true;
+  const isIncremental = isSuccess && summary?.incrementalMode === true && !summary?.dryRun;
   const isFailed = state === 'failed';
   const isRolledBack = state === 'rolled-back';
 
@@ -197,6 +200,11 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
             No project or data was created. To import for real, go back and run again with &quot;Dry run (preview only)&quot; unchecked.
           </p>
         )}
+        {isIncremental && (summary?.failed ?? 0) > 0 && (
+          <p className="text-gray-600 dark:text-gray-400 mt-2 text-center max-w-md">
+            {summary?.success ?? 0} class(es) imported; {summary?.failed ?? 0} skipped due to errors.
+          </p>
+        )}
         {isRolledBack && (
           <p className="text-gray-600 dark:text-gray-400 mt-2">
             The completed import was undone. The created project and all imported data have been removed.
@@ -217,6 +225,9 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Import Summary</h3>
           {isDryRun && (
             <Badge variant="secondary" className="text-xs">Preview only</Badge>
+          )}
+          {isIncremental && (
+            <Badge variant="secondary" className="text-xs">Incremental</Badge>
           )}
         </div>
 

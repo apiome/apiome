@@ -346,7 +346,8 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       },
       options: {
         selectedSchemas: importOptions.selectedSchemas,
-        dryRun: importOptions.dryRun ?? false
+        dryRun: importOptions.dryRun ?? false,
+        incrementalMode: importOptions.incrementalMode ?? false
       }
     });
 

@@ -199,11 +199,7 @@ The import system provides comprehensive, enterprise-level capabilities for impo
 ##### Execution Options ✅ PARTIALLY IMPLEMENTED
 - ✅ **Dry Run Mode**: Preview changes without committing
 - ✅ **Transaction Mode**: All-or-nothing import
-- 📋 **Incremental Mode**: Import available, skip failures
-
-| Ticket | Feature Description                        |
-|--------|--------------------------------------------|
-| #730   | Incremental mode: import but skip failures |
+- ✅ **Incremental Mode**: Import available, skip failures
 
 ##### Real-Time Feedback ✅ PARTIALLY IMPLEMENTED
 - ✅ **Live Log**: Streaming import log

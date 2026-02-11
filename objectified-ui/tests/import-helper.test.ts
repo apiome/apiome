@@ -356,6 +356,35 @@ describe('Import Helper - ImportStatus Structure', () => {
     expect((status.summary as any).classes?.length).toBe(2);
   });
 
+  test('should create valid ImportStatus for completed incremental mode with summary.incrementalMode (#730)', () => {
+    const status: ImportStatus = {
+      jobId: 'job-incremental',
+      state: 'completed',
+      percent: 100,
+      events: [],
+      summary: {
+        classesCreated: 2,
+        propertiesCreated: 4,
+        warnings: 0,
+        failed: 0,
+        incrementalMode: true,
+        totalTime: 150,
+        sourceName: 'Test',
+        projectName: 'Incremental Project',
+        versionId: '1.0.0',
+        classes: [
+          { name: 'User', status: 'success' },
+          { name: 'Product', status: 'success' }
+        ]
+      }
+    };
+
+    expect(status.state).toBe('completed');
+    expect(status.summary).toBeDefined();
+    expect((status.summary as any).incrementalMode).toBe(true);
+    expect((status.summary as any).classesCreated).toBe(2);
+  });
+
   test('should create valid ImportStatus for failed state', () => {
     const status: ImportStatus = {
       jobId: 'job-fail',

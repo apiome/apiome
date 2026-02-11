@@ -223,6 +223,41 @@ describe('Import Actions - startImport Integration', () => {
     );
     expect(result).toEqual({ jobId: 'job-dry-run' });
   });
+
+  test('should pass incrementalMode: true to import-helper for incremental import (#730)', async () => {
+    const { startImport } = await import('../lib/db/import-actions');
+    const importHelper = await import('../lib/db/import-helper');
+
+    const mockInput: ImportJobInput = {
+      tenantId: 'tenant-123',
+      userId: 'user-456',
+      sourceKind: 'openapi' as any,
+      document: { openapi: '3.1.0' },
+      project: { name: 'Incremental Project', slug: 'incremental-project' },
+      version: { versionId: '1.0.0' },
+      options: {
+        selectedSchemas: ['User', 'Product'],
+        dryRun: false,
+        incrementalMode: true
+      }
+    };
+
+    (importHelper.startImport as jest.Mock).mockResolvedValue({ jobId: 'job-incremental' });
+
+    const result = await startImport(mockInput);
+
+    expect(importHelper.startImport).toHaveBeenCalledWith(mockInput);
+    expect(importHelper.startImport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({
+          dryRun: false,
+          incrementalMode: true,
+          selectedSchemas: ['User', 'Product']
+        })
+      })
+    );
+    expect(result).toEqual({ jobId: 'job-incremental' });
+  });
 });
 
 describe('Import Actions - getImportStatus Integration', () => {
