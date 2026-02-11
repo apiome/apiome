@@ -1,4 +1,5 @@
 import { Importer, ImportSourceKind, NormalizeOptions, NormalizeResult, NormalizedClass, NormalizedProperty } from './index';
+import { applyNamingConventionToClasses } from '../../src/app/utils/naming-conventions';
 
 // Utility: extract direct properties and nested inline children similar to src/app/utils/openapi-import.ts
 const extractDirectProperties = (schema: any): { properties: Record<string, any>; required: string[] } => {
@@ -100,7 +101,17 @@ export const openApiImporter: Importer = {
 
     if (classes.length === 0) warnings.push('No selected schemas to import.');
 
-    return { classes, warnings };
+    // Apply naming convention enforcement (#581)
+    const applyNaming = options.applyNamingConvention === true;
+    const finalClasses = applyNaming
+      ? applyNamingConventionToClasses(classes, {
+          classNamingConvention: options.classNamingConvention ?? 'PascalCase',
+          propertyNamingConvention: options.propertyNamingConvention ?? 'camelCase',
+          applyNamingConvention: true,
+        })
+      : classes;
+
+    return { classes: finalClasses, warnings };
   }
 };
 

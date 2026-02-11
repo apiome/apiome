@@ -51,16 +51,10 @@ The import system provides comprehensive, enterprise-level capabilities for impo
 - [TODO] **JSON Schema Draft 04**: Legacy support
 - [TODO] **Bundled Schemas**: Multi-schema documents
 
-| Ticket | Feature Description                              |
-|--------|--------------------------------------------------|
-
 ##### Data Formats
 - [TODO] **YAML**: Full YAML 1.2 support with anchors/aliases
 - [TODO] **JSON**: Standard JSON with comments support (JSONC)
 - [TODO] **JSON5**: Extended JSON format support
-
-| Ticket | Feature Description                              |
-|--------|--------------------------------------------------|
 
 ##### Schema Import/Export
 
@@ -108,13 +102,12 @@ The import system provides comprehensive, enterprise-level capabilities for impo
 ##### Name Mapping 📋 PLANNED
 - 📋 **Auto-Generated Names**: Smart naming from schema context
 - 📋 **Custom Name Override**: Manual name assignment
-- 📋 **Naming Convention Enforcement**: camelCase, PascalCase, etc.
+- ✅ **Naming Convention Enforcement**: camelCase, PascalCase, etc.
 - 📋 **Prefix/Suffix Rules**: Apply consistent naming patterns
 - [TODO] **Reserved Name Detection**: Prevent conflicts with keywords
 
 | Ticket | Feature Description                          |
 |--------|----------------------------------------------|
-| #581   | Enforce naming conventions during import     |
 | #753   | Class type name mapping from schema context  |
 | #754   | Custom name override for imported classes    |
 | #755   | Prefix/suffix rules for imported class names |

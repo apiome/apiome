@@ -113,6 +113,9 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
   const [gitContent, setGitContent] = useState<string | null>(null);
   const [gitFilename, setGitFilename] = useState<string | null>(null);
   const [gitMetadata, setGitMetadata] = useState<FileMetadataPreview | null>(null);
+  const [applyNamingConvention, setApplyNamingConvention] = useState(true);
+  const [classNamingConvention, setClassNamingConvention] = useState<'PascalCase' | 'camelCase' | 'snake_case' | 'kebab-case' | 'none'>('PascalCase');
+  const [propertyNamingConvention, setPropertyNamingConvention] = useState<'PascalCase' | 'camelCase' | 'snake_case' | 'kebab-case' | 'none'>('camelCase');
 
   const existingNamesSet = new Set(existingClassNames.map(n => n.toLowerCase()));
 
@@ -165,6 +168,9 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
     setGitContent(null);
     setGitFilename(null);
     setGitMetadata(null);
+    setApplyNamingConvention(true);
+    setClassNamingConvention('PascalCase');
+    setPropertyNamingConvention('camelCase');
     onClose();
   };
 
@@ -345,6 +351,9 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
         projectId,
         document,
         selectedSchemas,
+        applyNamingConvention,
+        classNamingConvention,
+        propertyNamingConvention,
       });
       setImportResult(result);
       setCurrentStep('done');
@@ -1142,6 +1151,54 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* Import Options: Naming Convention (#581) */}
+              <div className="mt-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Import Options</h4>
+                <label className="flex items-center gap-2 cursor-pointer mb-3">
+                  <input
+                    type="checkbox"
+                    checked={applyNamingConvention}
+                    onChange={(e) => setApplyNamingConvention(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700"
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Apply naming convention
+                  </span>
+                </label>
+                {applyNamingConvention && (
+                  <div className="flex flex-wrap gap-4 pl-6">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Classes</label>
+                      <select
+                        value={classNamingConvention}
+                        onChange={(e) => setClassNamingConvention(e.target.value as typeof classNamingConvention)}
+                        className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      >
+                        <option value="PascalCase">PascalCase</option>
+                        <option value="camelCase">camelCase</option>
+                        <option value="snake_case">snake_case</option>
+                        <option value="kebab-case">kebab-case</option>
+                        <option value="none">None (keep original)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Properties</label>
+                      <select
+                        value={propertyNamingConvention}
+                        onChange={(e) => setPropertyNamingConvention(e.target.value as typeof propertyNamingConvention)}
+                        className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      >
+                        <option value="PascalCase">PascalCase</option>
+                        <option value="camelCase">camelCase</option>
+                        <option value="snake_case">snake_case</option>
+                        <option value="kebab-case">kebab-case</option>
+                        <option value="none">None (keep original)</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

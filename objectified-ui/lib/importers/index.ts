@@ -14,8 +14,17 @@ export interface NormalizedClass {
   properties: NormalizedProperty[];
 }
 
+/** Naming convention for classes (e.g. PascalCase) and properties (e.g. camelCase) during import (#581) */
+export type NamingConvention = 'PascalCase' | 'camelCase' | 'snake_case' | 'kebab-case' | 'none';
+
 export interface NormalizeOptions {
   selectedSchemas: string[];
+  /** When true, apply naming convention to class and property names */
+  applyNamingConvention?: boolean;
+  /** Convention for class names (default: PascalCase) */
+  classNamingConvention?: NamingConvention;
+  /** Convention for property names (default: camelCase) */
+  propertyNamingConvention?: NamingConvention;
 }
 
 export interface NormalizeResult {

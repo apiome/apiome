@@ -66,7 +66,12 @@ export interface ImportJobInput {
     selectedSchemas: string[];
     autoLayout?: boolean;
     createRelationships?: boolean;
+    /** When true, apply naming convention to class and property names (#581) */
     applyNamingConvention?: boolean;
+    /** Convention for class names (default: PascalCase) */
+    classNamingConvention?: 'PascalCase' | 'camelCase' | 'snake_case' | 'kebab-case' | 'none';
+    /** Convention for property names (default: camelCase) */
+    propertyNamingConvention?: 'PascalCase' | 'camelCase' | 'snake_case' | 'kebab-case' | 'none';
     dryRun?: boolean;
     /** When true, commit each class separately and skip failures (no single transaction). */
     incrementalMode?: boolean;
@@ -462,7 +467,15 @@ export async function startImport(input: ImportJobInput) {
 
       const importer = getImporter(input.sourceKind);
       if (!importer) throw new Error(`No importer registered for ${input.sourceKind}`);
-      const norm = importer.normalize({ document: input.document, options: { selectedSchemas: input.options.selectedSchemas } });
+      const norm = importer.normalize({
+        document: input.document,
+        options: {
+          selectedSchemas: input.options.selectedSchemas,
+          applyNamingConvention: input.options.applyNamingConvention,
+          classNamingConvention: input.options.classNamingConvention,
+          propertyNamingConvention: input.options.propertyNamingConvention,
+        },
+      });
       if (norm.warnings.length) emit(job, 'warn', 'NORMALIZE_WARN', norm.warnings.join('\n'));
 
       // Log normalized class info for debugging

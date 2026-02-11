@@ -9,6 +9,12 @@ export interface ImportClassesInput {
   projectId: string;
   document: any;
   selectedSchemas: string[];
+  /** When true, apply naming convention to class and property names (#581) */
+  applyNamingConvention?: boolean;
+  /** Convention for class names (default: PascalCase) */
+  classNamingConvention?: 'PascalCase' | 'camelCase' | 'snake_case' | 'kebab-case' | 'none';
+  /** Convention for property names (default: camelCase) */
+  propertyNamingConvention?: 'PascalCase' | 'camelCase' | 'snake_case' | 'kebab-case' | 'none';
 }
 
 export interface ImportClassesResult {
@@ -89,7 +95,15 @@ export async function importClassesToVersion(input: ImportClassesInput): Promise
       return { success: false, error: 'OpenAPI importer not available' };
     }
 
-    const norm = importer.normalize({ document, options: { selectedSchemas } });
+    const norm = importer.normalize({
+      document,
+      options: {
+        selectedSchemas,
+        applyNamingConvention: input.applyNamingConvention ?? true,
+        classNamingConvention: input.classNamingConvention ?? 'PascalCase',
+        propertyNamingConvention: input.propertyNamingConvention ?? 'camelCase',
+      },
+    });
     if (norm.warnings.length) {
       console.log('Normalization warnings:', norm.warnings);
     }
@@ -157,16 +171,11 @@ export async function importClassesToVersion(input: ImportClassesInput): Promise
       }
     }
 
-    // Import selected classes
+    // Import classes (importer already filtered by selectedSchemas; names may be transformed by naming convention)
     const importedClasses: string[] = [];
     let skippedCount = 0;
 
     for (const cls of norm.classes) {
-      if (!selectedSchemas.includes(cls.name)) {
-        skippedCount++;
-        continue;
-      }
-
       try {
         await writeClassWithProperties(projectId, versionId, cls, propertyIdMap);
         importedClasses.push(cls.name);

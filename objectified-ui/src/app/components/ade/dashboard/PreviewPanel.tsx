@@ -29,12 +29,21 @@ interface PreviewPanelProps {
   onImportOptionsChange?: (options: ImportOptions) => void;
 }
 
+/** Naming convention for classes and properties during import (#581) */
+export type ImportNamingConvention = 'PascalCase' | 'camelCase' | 'snake_case' | 'kebab-case' | 'none';
+
 export interface ImportOptions {
   projectName: string;
   projectSlug: string;
   versionSource: 'spec' | 'manual';
   targetVersion: string;
   selectedSchemas: string[];
+  /** When true, apply naming convention to class and property names */
+  applyNamingConvention?: boolean;
+  /** Convention for class names (default: PascalCase) */
+  classNamingConvention?: ImportNamingConvention;
+  /** Convention for property names (default: camelCase) */
+  propertyNamingConvention?: ImportNamingConvention;
   /** When true, preview changes without committing (dry run). */
   dryRun?: boolean;
   /** When true, import all available and skip failures (each class committed separately). */
@@ -434,6 +443,9 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
       versionSource: 'spec',
       targetVersion: analysis.document?.info?.version || '1.0.0',
       selectedSchemas: schemas.map(s => s.name),
+      applyNamingConvention: true,
+      classNamingConvention: 'PascalCase',
+      propertyNamingConvention: 'camelCase',
       dryRun: false
     };
   });
@@ -1356,6 +1368,56 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                   : 'Allowed: 0-9, A-Z, a-z, . (dot), - (dash)'}
               </div>
             </div>
+          </div>
+
+          {/* Naming convention enforcement (#581) */}
+          <div className="col-span-4 flex flex-col gap-3 pt-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={importOptions.applyNamingConvention ?? true}
+                onChange={(e) => handleOptionChange('applyNamingConvention', e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700"
+              />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Apply naming convention
+              </span>
+            </label>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Convert class and property names to match your chosen conventions (e.g. PascalCase for classes, camelCase for properties).
+            </p>
+            {(importOptions.applyNamingConvention ?? true) && (
+              <div className="flex flex-wrap gap-4 pl-6">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Classes</label>
+                  <select
+                    value={importOptions.classNamingConvention ?? 'PascalCase'}
+                    onChange={(e) => handleOptionChange('classNamingConvention', e.target.value as ImportNamingConvention)}
+                    className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="PascalCase">PascalCase</option>
+                    <option value="camelCase">camelCase</option>
+                    <option value="snake_case">snake_case</option>
+                    <option value="kebab-case">kebab-case</option>
+                    <option value="none">None (keep original)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Properties</label>
+                  <select
+                    value={importOptions.propertyNamingConvention ?? 'camelCase'}
+                    onChange={(e) => handleOptionChange('propertyNamingConvention', e.target.value as ImportNamingConvention)}
+                    className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="PascalCase">PascalCase</option>
+                    <option value="camelCase">camelCase</option>
+                    <option value="snake_case">snake_case</option>
+                    <option value="kebab-case">kebab-case</option>
+                    <option value="none">None (keep original)</option>
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Dry run: preview without committing */}
