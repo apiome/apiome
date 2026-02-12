@@ -27,6 +27,8 @@ export interface ImportConflict {
   message: string;
   /** Optional detail (e.g. property name, path) */
   detail?: string;
+  /** What will change if this conflict is resolved (#597) */
+  impactIfResolved?: string;
 }
 
 const CONFLICT_KIND_LABELS: Record<ImportConflictKind, string> = {
@@ -43,6 +45,15 @@ const CONFLICT_KIND_ICONS: Record<ImportConflictKind, typeof Package> = {
   reference_conflict: Link2Off,
   type_mismatch: Type,
   semantic_conflict: Shuffle,
+};
+
+/** Default impact description when conflict is resolved (#597) */
+const DEFAULT_IMPACT_IF_RESOLVED: Record<ImportConflictKind, string> = {
+  duplicate_schema: 'If renamed: a new class is created and the existing one is unchanged. If overwritten: the existing class is replaced by the imported definition.',
+  property_conflict: 'The chosen property definition will be applied; the other will be discarded or merged per strategy.',
+  reference_conflict: 'References will be updated or remapped so they point to valid schemas in the project.',
+  type_mismatch: 'The chosen type will be applied; property type will be updated in the imported schema.',
+  semantic_conflict: 'The chosen constraints or semantics will be applied; conflicting rules will be updated.',
 };
 
 interface ConflictReportProps {
@@ -123,6 +134,16 @@ export function ConflictReport({ conflicts, defaultOpen = true, className = '' }
               })}
             </div>
 
+            {/* Impact analysis (#597): what will change if resolved */}
+            <div className="mb-4">
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Impact if resolved
+              </h4>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Below, each conflict includes what will change when you resolve it (e.g. by renaming, overwriting, or applying a resolution strategy).
+              </p>
+            </div>
+
             {/* Table of conflicts */}
             <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
               <table className="w-full text-sm">
@@ -137,11 +158,15 @@ export function ConflictReport({ conflicts, defaultOpen = true, className = '' }
                     <th className="text-left py-2.5 px-3 font-semibold text-gray-700 dark:text-gray-300">
                       Description
                     </th>
+                    <th className="text-left py-2.5 px-3 font-semibold text-gray-700 dark:text-gray-300 min-w-[200px]">
+                      What will change if resolved
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {conflicts.map((c, idx) => {
                     const Icon = CONFLICT_KIND_ICONS[c.kind];
+                    const impact = c.impactIfResolved ?? DEFAULT_IMPACT_IF_RESOLVED[c.kind];
                     return (
                       <tr
                         key={`${c.schemaName}-${c.kind}-${idx}`}
@@ -163,6 +188,9 @@ export function ConflictReport({ conflicts, defaultOpen = true, className = '' }
                               {c.detail}
                             </span>
                           )}
+                        </td>
+                        <td className="py-2 px-3 text-gray-600 dark:text-gray-400 text-xs">
+                          {impact}
                         </td>
                       </tr>
                     );

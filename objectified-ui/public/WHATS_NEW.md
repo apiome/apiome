@@ -115,7 +115,9 @@ We continue to improve the platform based on your feedback with improvements and
   - Adds the ability to override the required field during property mapping at import
   - Adds/modifies descriptions for property mapping during import
   - Adds automatic generation of examples during import where examples don't otherwise exist
-  - Adds a conflict report that shows an overall of all detected conflicts
+  - Adds a conflict report that shows:
+    - An overall of all detected conflicts
+    - In the impact analysis portion, show what will change if resolved
 - OpenAPI Support:
   - Now at 100% support for class and properties definitions
   - Improved import support for paths and securitySchemes

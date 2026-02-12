@@ -147,14 +147,13 @@ The import system provides comprehensive, enterprise-level capabilities for impo
 
 ##### Conflict Report
 - ✅ **Conflict Summary**: Overview of all detected conflicts
-- 📋 **Impact Analysis**: What will change if resolved
+- ✅ **Impact Analysis**: What will change if resolved
 - [TODO] **Resolution Recommendations**: AI-suggested resolutions
 - [TODO] **Batch Resolution**: Apply same strategy to similar conflicts
 - 📋 **Conflict Export**: Export conflict report for review
 
 | Ticket | Feature Description                     |
 |--------|-----------------------------------------|
-| #597   | Impact analysis of conflict resolutions |
 | #598   | Conflict export for review              |
 
 #### 4.6 Import Execution 📋 PLANNED

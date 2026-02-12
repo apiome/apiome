@@ -434,7 +434,7 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
   const newCount = schemas.filter(s => !s.exists).length;
   const conflictCount = schemas.filter(s => s.exists).length;
 
-  /** Conflict report data for #596: overview of all detected conflicts */
+  /** Conflict report data for #596: overview of all detected conflicts; #597: impact if resolved */
   const conflictReportItems: ImportConflict[] = useMemo(
     () =>
       schemas
@@ -443,6 +443,8 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
           kind: 'duplicate_schema' as const,
           schemaName: s.name,
           message: `A class named "${s.name}" already exists in this version. Importing will overwrite or you can rename.`,
+          impactIfResolved:
+            'Use the class name override (when you select a different schema) to import under a new name: a new class will be created and the existing one will be unchanged. You cannot import with the same name.',
         })),
     [schemas]
   );
