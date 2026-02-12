@@ -103,12 +103,11 @@ The import system provides comprehensive, enterprise-level capabilities for impo
 - ✅ **Auto-Generated Names**: Smart naming from schema context
 - ✅ **Custom Name Override**: Manual name assignment
 - ✅ **Naming Convention Enforcement**: camelCase, PascalCase, etc.
-- 📋 **Prefix/Suffix Rules**: Apply consistent naming patterns
+- ✅ **Prefix/Suffix Rules**: Apply consistent naming patterns
 - [TODO] **Reserved Name Detection**: Prevent conflicts with keywords
 
 | Ticket | Feature Description                          |
 |--------|----------------------------------------------|
-| #755   | Prefix/suffix rules for imported class names |
 | #756   | Reserved name detection to prevent conflicts |
 
 ##### Property Mapping 📋 PLANNED

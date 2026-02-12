@@ -110,13 +110,53 @@ export const openApiImporter: Importer = {
 
     // Apply naming convention enforcement (#581)
     const applyNaming = options.applyNamingConvention === true;
-    const finalClasses = applyNaming
+    let finalClasses = applyNaming
       ? applyNamingConventionToClasses(classes, {
           classNamingConvention: options.classNamingConvention ?? 'PascalCase',
           propertyNamingConvention: options.propertyNamingConvention ?? 'camelCase',
           applyNamingConvention: true,
         })
       : classes;
+
+    // Apply prefix/suffix rules to class names (#755)
+    const prefix = (options.classPrefix ?? '').trim();
+    const suffix = (options.classSuffix ?? '').trim();
+    if (prefix || suffix) {
+      const nameToFinal = new Map<string, string>();
+      for (const cls of finalClasses) {
+        const finalName = prefix + cls.name + suffix;
+        nameToFinal.set(cls.name, finalName);
+        if (cls.originalSchemaKey && cls.originalSchemaKey !== cls.name) nameToFinal.set(cls.originalSchemaKey, finalName);
+      }
+      const updateRefs = (data: any): any => {
+        if (!data || typeof data !== 'object') return data;
+        const result = { ...data };
+        if (typeof result.$ref === 'string') {
+          const match = result.$ref.match(/#\/components\/schemas\/(.+)$/);
+          if (match && nameToFinal.has(match[1])) {
+            result.$ref = `#/components/schemas/${nameToFinal.get(match[1])}`;
+          }
+        }
+        if (result.items && typeof result.items === 'object' && result.items.$ref) {
+          const match = result.items.$ref.match(/#\/components\/schemas\/(.+)$/);
+          if (match && nameToFinal.has(match[1])) {
+            result.items = { ...result.items, $ref: `#/components/schemas/${nameToFinal.get(match[1])}` };
+          }
+        }
+        return result;
+      };
+      const transformProp = (p: NormalizedProperty): NormalizedProperty => {
+        const newData = p.data ? updateRefs(p.data) : p.data;
+        const result: NormalizedProperty = { ...p, data: newData };
+        if (p.children?.length) result.children = p.children.map(transformProp);
+        return result;
+      };
+      finalClasses = finalClasses.map((cls) => ({
+        ...cls,
+        name: prefix + cls.name + suffix,
+        properties: cls.properties?.map(transformProp) ?? cls.properties,
+      }));
+    }
 
     return { classes: finalClasses, warnings };
   }

@@ -29,6 +29,10 @@ export interface NormalizeOptions {
   propertyNamingConvention?: NamingConvention;
   /** Optional map: schema key → class name. Applied before naming convention (#753). */
   classNameMap?: Record<string, string>;
+  /** Optional prefix applied to every class name after naming convention (#755). */
+  classPrefix?: string;
+  /** Optional suffix applied to every class name after naming convention (#755). */
+  classSuffix?: string;
 }
 
 export interface NormalizeResult {

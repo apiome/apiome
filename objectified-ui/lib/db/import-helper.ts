@@ -74,6 +74,10 @@ export interface ImportJobInput {
     propertyNamingConvention?: 'PascalCase' | 'camelCase' | 'snake_case' | 'kebab-case' | 'none';
     /** Optional map: schema key → class name (#753) */
     classNameMap?: Record<string, string>;
+    /** Optional prefix applied to every class name after naming convention (#755) */
+    classPrefix?: string;
+    /** Optional suffix applied to every class name after naming convention (#755) */
+    classSuffix?: string;
     dryRun?: boolean;
     /** When true, commit each class separately and skip failures (no single transaction). */
     incrementalMode?: boolean;
@@ -477,6 +481,8 @@ export async function startImport(input: ImportJobInput) {
           classNamingConvention: input.options.classNamingConvention,
           propertyNamingConvention: input.options.propertyNamingConvention,
           classNameMap: input.options.classNameMap,
+          classPrefix: input.options.classPrefix,
+          classSuffix: input.options.classSuffix,
         },
       });
       if (norm.warnings.length) emit(job, 'warn', 'NORMALIZE_WARN', norm.warnings.join('\n'));

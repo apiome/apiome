@@ -45,6 +45,10 @@ export interface ImportOptions {
   classNamingConvention?: ImportNamingConvention;
   /** Convention for property names (default: camelCase) */
   propertyNamingConvention?: ImportNamingConvention;
+  /** Optional prefix applied to every class name after naming convention (#755) */
+  classPrefix?: string;
+  /** Optional suffix applied to every class name after naming convention (#755) */
+  classSuffix?: string;
   /** When true, preview changes without committing (dry run). */
   dryRun?: boolean;
   /** When true, import all available and skip failures (each class committed separately). */
@@ -449,6 +453,8 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
       applyNamingConvention: true,
       classNamingConvention: 'PascalCase',
       propertyNamingConvention: 'camelCase',
+      classPrefix: '',
+      classSuffix: '',
       dryRun: false
     };
   });
@@ -1454,6 +1460,31 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                 </div>
               </div>
             )}
+            <div className="flex flex-wrap gap-4 pl-6 pt-2 border-t border-gray-100 dark:border-gray-700 mt-3 pt-3">
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Class name prefix</label>
+                <input
+                  type="text"
+                  value={importOptions.classPrefix ?? ''}
+                  onChange={(e) => handleOptionChange('classPrefix', e.target.value)}
+                  placeholder="e.g. Api"
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                />
+              </div>
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Class name suffix</label>
+                <input
+                  type="text"
+                  value={importOptions.classSuffix ?? ''}
+                  onChange={(e) => handleOptionChange('classSuffix', e.target.value)}
+                  placeholder="e.g. Dto"
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 pl-6 mt-1">
+              Prefix and suffix are applied to every imported class name (e.g. Api + User + Dto → ApiUserDto).
+            </p>
           </div>
 
           {/* Dry run: preview without committing */}

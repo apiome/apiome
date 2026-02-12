@@ -119,6 +119,9 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
   const [propertyNamingConvention, setPropertyNamingConvention] = useState<'PascalCase' | 'camelCase' | 'snake_case' | 'kebab-case' | 'none'>('camelCase');
   /** Per-schema class name overrides for import (#753). When absent, smart name from schema context is used. */
   const [classNameOverrides, setClassNameOverrides] = useState<Record<string, string>>({});
+  /** Prefix/suffix applied to every class name after naming convention (#755). */
+  const [classPrefix, setClassPrefix] = useState('');
+  const [classSuffix, setClassSuffix] = useState('');
 
   const existingNamesSet = new Set(existingClassNames.map(n => n.toLowerCase()));
 
@@ -175,6 +178,8 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
     setClassNamingConvention('PascalCase');
     setPropertyNamingConvention('camelCase');
     setClassNameOverrides({});
+    setClassPrefix('');
+    setClassSuffix('');
     onClose();
   };
 
@@ -368,6 +373,8 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
         classNamingConvention,
         propertyNamingConvention,
         classNameMap: Object.keys(classNameMap).length > 0 ? classNameMap : undefined,
+        classPrefix: classPrefix.trim() || undefined,
+        classSuffix: classSuffix.trim() || undefined,
       });
       setImportResult(result);
       setCurrentStep('done');
@@ -1241,6 +1248,31 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
                     </div>
                   </div>
                 )}
+                <div className="flex flex-wrap gap-4 pl-6 pt-2 border-t border-gray-100 dark:border-gray-700 mt-3 pt-3">
+                  <div className="flex-1 min-w-[140px]">
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Class name prefix (#755)</label>
+                    <input
+                      type="text"
+                      value={classPrefix}
+                      onChange={(e) => setClassPrefix(e.target.value)}
+                      placeholder="e.g. Api"
+                      className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-[140px]">
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Class name suffix (#755)</label>
+                    <input
+                      type="text"
+                      value={classSuffix}
+                      onChange={(e) => setClassSuffix(e.target.value)}
+                      placeholder="e.g. Dto"
+                      className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 pl-6 mt-1">
+                  Prefix and suffix are applied to every imported class name (e.g. Api + User + Dto → ApiUserDto).
+                </p>
               </div>
             </div>
           )}

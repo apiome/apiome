@@ -108,6 +108,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Importing rules are enforced: Enforce naming conventions (camelCase, PascalCase, snake_case)
   - Added application of smart naming from the schema context
   - Adds rules to allow for the custom name to be applied as an override on classes
+  - Adds support to add prefix and suffix rules to names to apply consistent naming patterns
 - OpenAPI Support:
   - Now at 100% support for class and properties definitions
   - Improved import support for paths and securitySchemes
