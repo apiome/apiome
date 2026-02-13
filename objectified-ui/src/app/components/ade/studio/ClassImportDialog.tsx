@@ -151,8 +151,12 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
   const [classSuffix, setClassSuffix] = useState('');
   /** Type mapping: external type key → internal JSON Schema (#757). */
   const [typeMapping, setTypeMapping] = useState<Record<string, any>>({});
-  /** When true, allow selecting existing classes to replace with imported schema (#587). */
-  const [overwriteExisting, setOverwriteExisting] = useState(false);
+  /** How to resolve duplicate class names: keep (skip), replace (#587), or merge (#588). */
+  const [conflictResolution, setConflictResolution] = useState<'keep' | 'replace' | 'merge'>('keep');
+  /** When conflictResolution is 'merge', strategy: additive (add new, keep existing) or override (imported wins, constraints merged). */
+  const [mergeStrategy, setMergeStrategy] = useState<'additive' | 'override'>('additive');
+  /** When true, existing classes can be selected and will be replaced or merged. */
+  const overwriteExisting = conflictResolution === 'replace' || conflictResolution === 'merge';
 
   const handleSourceClick = (source: 'file' | 'url' | 'clipboard' | 'git') => {
     setSelectedSource(source);
@@ -209,7 +213,8 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
     setClassNameOverrides({});
     setClassPrefix('');
     setClassSuffix('');
-    setOverwriteExisting(false);
+    setConflictResolution('keep');
+    setMergeStrategy('additive');
     onClose();
   };
 
@@ -411,6 +416,7 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
         typeMapping: Object.keys(typeMapping).length > 0 ? typeMapping : undefined,
         requiredOverrides: undefined,
         overwriteExisting: overwriteExisting || undefined,
+        mergeStrategy: conflictResolution === 'merge' ? mergeStrategy : undefined,
       });
       setImportResult(result);
       setCurrentStep('done');
@@ -1211,7 +1217,9 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
                             {schema.name}
                             {schema.exists && (
                               <span className="ml-2 text-xs font-normal text-amber-600 dark:text-amber-400 no-underline">
-                                {overwriteExisting ? '(exists – will replace)' : '(exists)'}
+                                {conflictResolution === 'replace' && '(exists – will replace)'}
+                                {conflictResolution === 'merge' && `(exists – will merge ${mergeStrategy})`}
+                                {conflictResolution === 'keep' && '(exists)'}
                               </span>
                             )}
                           </div>
@@ -1271,9 +1279,9 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
                           {schemas.find(s => s.name === selectedSchemaName)?.exists && (
                             <div className="mb-3 p-2 rounded bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
                               <p className="text-sm text-amber-700 dark:text-amber-300">
-                                {overwriteExisting
-                                  ? 'Will replace the existing class with the imported schema.'
-                                  : '⚠️ A class with this name already exists in this version and cannot be imported.'}
+                                {conflictResolution === 'replace' && 'Will replace the existing class with the imported schema.'}
+                                {conflictResolution === 'merge' && `Will merge with existing (${mergeStrategy}: ${mergeStrategy === 'additive' ? 'add new properties, keep existing' : 'imported wins, constraints merged'}).`}
+                                {conflictResolution === 'keep' && '⚠️ A class with this name already exists in this version and cannot be imported.'}
                               </p>
                             </div>
                           )}
@@ -1311,23 +1319,57 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
                 </div>
               </div>
 
-              {/* Import Options: Naming Convention (#581), Overwrite existing (#587) */}
+              {/* Import Options: Conflict resolution (#587, #588), Naming Convention (#581) */}
               <div className="mt-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Import Options</h4>
-                <label className="flex items-center gap-2 cursor-pointer mb-3">
-                  <input
-                    type="checkbox"
-                    checked={overwriteExisting}
-                    onChange={(e) => setOverwriteExisting(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700"
-                  />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Replace existing classes with imported schema
-                  </span>
-                </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 pl-6">
-                  When enabled, you can select classes that already exist; the imported schema will replace the current definition.
-                </p>
+                <div className="mb-3">
+                  <span className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">When a class with the same name exists</span>
+                  <div className="flex flex-wrap gap-4 pl-0">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="conflictResolution"
+                        checked={conflictResolution === 'keep'}
+                        onChange={() => setConflictResolution('keep')}
+                        className="w-4 h-4 border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700"
+                      />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Keep existing (skip)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="conflictResolution"
+                        checked={conflictResolution === 'replace'}
+                        onChange={() => setConflictResolution('replace')}
+                        className="w-4 h-4 border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700"
+                      />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Replace with imported</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="conflictResolution"
+                        checked={conflictResolution === 'merge'}
+                        onChange={() => setConflictResolution('merge')}
+                        className="w-4 h-4 border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700"
+                      />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Merge</span>
+                    </label>
+                  </div>
+                  {conflictResolution === 'merge' && (
+                    <div className="mt-2 pl-6">
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Merge strategy (#588)</label>
+                      <select
+                        value={mergeStrategy}
+                        onChange={(e) => setMergeStrategy(e.target.value as 'additive' | 'override')}
+                        className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      >
+                        <option value="additive">Additive: add new properties, keep existing</option>
+                        <option value="override">Override: imported wins, constraints merged</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
                 <label className="flex items-center gap-2 cursor-pointer mb-3">
                   <input
                     type="checkbox"

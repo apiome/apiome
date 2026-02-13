@@ -1,8 +1,9 @@
 'use server';
 
-import { createClass, addPropertyToClass, updateClass, getClassesForVersion, deleteClassPropertiesForClass } from './helper';
-import { getImporter, NormalizedClass } from '../importers';
+import { createClass, addPropertyToClass, updateClass, getClassesForVersion, getClassWithPropertiesAndTags, deleteClassPropertiesForClass } from './helper';
+import { getImporter, NormalizedClass, type NormalizedProperty } from '../importers';
 import { cookies } from 'next/headers';
+import { mergeClasses, type MergeStrategy } from '../../src/app/utils/schema-merge';
 
 export interface ImportClassesInput {
   versionId: string;
@@ -36,6 +37,8 @@ export interface ImportClassesInput {
   generateExamples?: boolean;
   /** When true, replace existing classes with the same name using the imported schema (#587). */
   overwriteExisting?: boolean;
+  /** When set with overwriteExisting, merge existing with imported instead of full replace (#588). */
+  mergeStrategy?: MergeStrategy;
 }
 
 export interface ImportClassesResult {
@@ -46,6 +49,35 @@ export interface ImportClassesResult {
   importedClasses?: string[];
   /** Normalization warnings (e.g. reserved name detection #756). */
   warnings?: string[];
+}
+
+/** Convert DB class (from getClassWithPropertiesAndTags) to NormalizedClass for merge (#588). */
+function dbClassToNormalized(raw: any): NormalizedClass {
+  const schema = typeof raw.schema === 'string' ? JSON.parse(raw.schema) : raw.schema;
+  const props = raw.properties || [];
+  const byParent = new Map<string | null, any[]>();
+  byParent.set(null, []);
+  for (const p of props) {
+    const key = p.parent_id ?? null;
+    if (!byParent.has(key)) byParent.set(key, []);
+    byParent.get(key)!.push(p);
+  }
+  function buildChildren(parentId: string | null): NormalizedProperty[] {
+    const list = byParent.get(parentId) || [];
+    return list.map((p: any) => ({
+      name: p.name,
+      data: p.data || {},
+      description: p.description ?? undefined,
+      children: byParent.has(p.id) && byParent.get(p.id)!.length > 0 ? buildChildren(p.id) : undefined,
+    }));
+  }
+  const rootChildren = buildChildren(null);
+  return {
+    name: raw.name,
+    description: raw.description ?? undefined,
+    schema: schema || { type: 'object' },
+    properties: rootChildren,
+  };
 }
 
 // Stable JSON stringify that sorts object keys to ensure consistent signatures
@@ -140,7 +172,7 @@ async function overwriteClassWithProperties(
 
 export async function importClassesToVersion(input: ImportClassesInput): Promise<ImportClassesResult> {
   try {
-    const { versionId, projectId, document, selectedSchemas, overwriteExisting } = input;
+    const { versionId, projectId, document, selectedSchemas, overwriteExisting, mergeStrategy } = input;
 
     if (!versionId || !projectId) {
       return { success: false, error: 'Version ID and Project ID are required' };
@@ -208,6 +240,22 @@ export async function importClassesToVersion(input: ImportClassesInput): Promise
       collectProperties(cls.properties || []);
     }
 
+    // When merging (#588), load existing classes and merge; collect properties from merged result
+    const mergedClassesByName = new Map<string, NormalizedClass>();
+    if (overwriteExisting && mergeStrategy) {
+      for (const cls of norm.classes) {
+        const existingId = existingNameToId.get(cls.name);
+        if (!existingId) continue;
+        const existingJson = await getClassWithPropertiesAndTags(existingId);
+        const existingRaw = JSON.parse(existingJson);
+        if (!existingRaw) continue;
+        const existingNorm = dbClassToNormalized(existingRaw);
+        const merged = mergeClasses(existingNorm, cls, mergeStrategy);
+        mergedClassesByName.set(cls.name, merged);
+        collectProperties(merged.properties || []);
+      }
+    }
+
     // Create properties in the library via REST API (through Next.js API route)
     const cookieStore = await cookies();
     // Build cookie header string from cookies
@@ -255,13 +303,14 @@ export async function importClassesToVersion(input: ImportClassesInput): Promise
 
     for (const cls of norm.classes) {
       const existingClassId = overwriteExisting ? existingNameToId.get(cls.name) : undefined;
+      const classToWrite = mergedClassesByName.get(cls.name) ?? cls;
       try {
         if (existingClassId) {
-          await overwriteClassWithProperties(existingClassId, cls, propertyIdMap);
-          importedClasses.push(cls.name);
+          await overwriteClassWithProperties(existingClassId, classToWrite, propertyIdMap);
+          importedClasses.push(classToWrite.name);
         } else {
-          await writeClassWithProperties(projectId, versionId, cls, propertyIdMap);
-          importedClasses.push(cls.name);
+          await writeClassWithProperties(projectId, versionId, classToWrite, propertyIdMap);
+          importedClasses.push(classToWrite.name);
         }
       } catch (error: any) {
         // If class already exists and we weren't overwriting, skip it

@@ -76,16 +76,14 @@ The import system provides comprehensive, enterprise-level capabilities for impo
 #### 4.5 Conflict Resolution 📋 PLANNED
 
 ##### Resolution Strategies
-- [TODO] **Keep Existing**: Preserve current schema, skip import
+- ✅ **Keep Existing**: Preserve current schema, skip import
 - 📋 **Replace**: Overwrite existing with imported schema
-- 📋 **Merge**: Intelligently merge properties and constraints
+- ✅ **Merge**: Intelligently merge properties and constraints
 - 📋 **Rename**: Import with modified name to avoid conflict
 - 📋 **Create Version**: Import as new version of existing schema
 
 | Ticket | Feature Description                          |
 |--------|----------------------------------------------|
-| #587   | Replace existing schema with imported schema |
-| #588   | Merge strategy                               |
 | #589   | Rename imported schema to avoid conflict     |
 | #590   | Import as new version of existing schema     |
 
