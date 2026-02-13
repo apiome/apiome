@@ -39,6 +39,8 @@ export interface ImportClassesInput {
   overwriteExisting?: boolean;
   /** When set with overwriteExisting, merge existing with imported instead of full replace (#588). */
   mergeStrategy?: MergeStrategy;
+  /** Per-property merge strategy (#593): schema key → property path (dot for nested) → strategy. Missing = use mergeStrategy. */
+  propertyMergeStrategies?: Record<string, Record<string, MergeStrategy>>;
 }
 
 export interface ImportClassesResult {
@@ -172,7 +174,7 @@ async function overwriteClassWithProperties(
 
 export async function importClassesToVersion(input: ImportClassesInput): Promise<ImportClassesResult> {
   try {
-    const { versionId, projectId, document, selectedSchemas, overwriteExisting, mergeStrategy } = input;
+    const { versionId, projectId, document, selectedSchemas, overwriteExisting, mergeStrategy, propertyMergeStrategies } = input;
 
     if (!versionId || !projectId) {
       return { success: false, error: 'Version ID and Project ID are required' };
@@ -250,7 +252,10 @@ export async function importClassesToVersion(input: ImportClassesInput): Promise
         const existingRaw = JSON.parse(existingJson);
         if (!existingRaw) continue;
         const existingNorm = dbClassToNormalized(existingRaw);
-        const merged = mergeClasses(existingNorm, cls, mergeStrategy);
+        const merged = mergeClasses(existingNorm, cls, mergeStrategy, {
+          schemaKey: cls.originalSchemaKey,
+          propertyMergeStrategies,
+        });
         mergedClassesByName.set(cls.name, merged);
         collectProperties(merged.properties || []);
       }

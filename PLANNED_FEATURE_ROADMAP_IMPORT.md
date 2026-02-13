@@ -78,13 +78,12 @@ The import system provides comprehensive, enterprise-level capabilities for impo
 ##### Merge Options
 - ✅ **Additive Merge**: Add new properties, keep existing
 - ✅ **Override Merge**: Imported values take precedence
-- 📋 **Selective Merge**: Choose per-property merge strategy
+- ✅ **Selective Merge**: Choose per-property merge strategy (#593)
 - 📋 **Deep Merge**: Recursively merge nested objects
 - 📋 **Array Merge Strategies**: Append, replace, or deduplicate
 
 | Ticket | Feature Description                                  |
 |--------|------------------------------------------------------|
-| #593   | Selective per-property merge strategy                |
 | #594   | Deep merge for nested objects                        |
 | #595   | Array merge strategies: append, replace, deduplicate |
 

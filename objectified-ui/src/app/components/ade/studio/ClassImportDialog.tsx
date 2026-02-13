@@ -54,6 +54,22 @@ interface SchemaInfo {
   tags: string[];
 }
 
+/** Top-level property names from a schema (for per-property merge #593). */
+function getSchemaPropertyNames(schema: any): string[] {
+  const names = new Set<string>();
+  if (schema?.properties && typeof schema.properties === 'object') {
+    Object.keys(schema.properties).forEach((k) => names.add(k));
+  }
+  if (schema?.allOf && Array.isArray(schema.allOf)) {
+    schema.allOf.forEach((item: any) => {
+      if (item?.properties && typeof item.properties === 'object') {
+        Object.keys(item.properties).forEach((k) => names.add(k));
+      }
+    });
+  }
+  return Array.from(names).sort();
+}
+
 // Helper function to count properties including those from allOf/oneOf/anyOf
 function countSchemaProperties(schema: any): number {
   let count = 0;
@@ -160,6 +176,8 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
   const [prereleaseSuffix, setPrereleaseSuffix] = useState('b');
   /** When conflictResolution is 'merge', strategy: additive (add new, keep existing) or override (imported wins, constraints merged). */
   const [mergeStrategy, setMergeStrategy] = useState<'additive' | 'override'>('additive');
+  /** Per-property merge strategy (#593): schema key → property name → strategy. Only set when user overrides default. */
+  const [propertyMergeStrategies, setPropertyMergeStrategies] = useState<Record<string, Record<string, 'additive' | 'override'>>>({});
   /** When true, existing classes can be selected and will be replaced or merged. */
   const overwriteExisting = conflictResolution === 'replace' || conflictResolution === 'merge';
   /** When true, existing (conflicting) classes can be selected—either to overwrite, import under a new name, or import into a new version. */
@@ -227,6 +245,7 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
     setPrereleaseSuffix('b');
     setCreatedVersionLabel(null);
     setMergeStrategy('additive');
+    setPropertyMergeStrategies({});
     onClose();
   };
 
@@ -468,6 +487,8 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
         requiredOverrides: undefined,
         overwriteExisting: conflictResolution === 'createVersion' ? false : (overwriteExisting || undefined),
         mergeStrategy: conflictResolution === 'merge' ? mergeStrategy : undefined,
+        propertyMergeStrategies:
+          conflictResolution === 'merge' && Object.keys(propertyMergeStrategies).length > 0 ? propertyMergeStrategies : undefined,
       });
       setImportResult(result);
       setCurrentStep('done');
@@ -1463,16 +1484,82 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
                     </div>
                   )}
                   {conflictResolution === 'merge' && (
-                    <div className="mt-2 pl-6">
-                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Merge strategy (#588)</label>
-                      <select
-                        value={mergeStrategy}
-                        onChange={(e) => setMergeStrategy(e.target.value as 'additive' | 'override')}
-                        className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      >
-                        <option value="additive">Additive: add new properties, keep existing</option>
-                        <option value="override">Override: imported wins, constraints merged</option>
-                      </select>
+                    <div className="mt-2 pl-6 space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Merge strategy (#588)</label>
+                        <select
+                          value={mergeStrategy}
+                          onChange={(e) => setMergeStrategy(e.target.value as 'additive' | 'override')}
+                          className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        >
+                          <option value="additive">Additive: add new properties, keep existing</option>
+                          <option value="override">Override: imported wins, constraints merged</option>
+                        </select>
+                      </div>
+                      <Collapsible>
+                        <CollapsibleTrigger className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">
+                          <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
+                          Customize per property (#593)
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-2 pl-4 border-l-2 border-gray-200 dark:border-gray-600">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                            Override the default merge strategy for individual properties on conflicting classes.
+                          </p>
+                          {schemas.filter((s) => s.exists && s.selected).length === 0 ? (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 italic">Select conflicting classes above to customize.</p>
+                          ) : (
+                            <div className="space-y-3">
+                              {schemas
+                                .filter((s) => s.exists && s.selected)
+                                .map((schema) => {
+                                  const schemaKey = schema.name;
+                                  const raw = analysisResult?.document?.components?.schemas?.[schemaKey] ?? analysisResult?.document?.definitions?.[schemaKey];
+                                  const propNames = raw ? getSchemaPropertyNames(raw) : [];
+                                  if (propNames.length === 0) return null;
+                                  return (
+                                    <div key={schemaKey} className="space-y-1.5">
+                                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{schemaKey}</span>
+                                      <div className="space-y-1 pl-2">
+                                        {propNames.map((propName) => {
+                                          const value = propertyMergeStrategies[schemaKey]?.[propName] ?? '';
+                                          return (
+                                            <div key={propName} className="flex items-center gap-2">
+                                              <span className="text-xs font-mono text-gray-600 dark:text-gray-400 w-32 truncate" title={propName}>
+                                                {propName}
+                                              </span>
+                                              <select
+                                                value={value}
+                                                onChange={(e) => {
+                                                  const v = e.target.value as '' | 'additive' | 'override';
+                                                  setPropertyMergeStrategies((prev) => {
+                                                    const next = { ...prev };
+                                                    if (!next[schemaKey]) next[schemaKey] = { ...(prev[schemaKey] || {}) };
+                                                    if (v === '') {
+                                                      delete next[schemaKey][propName];
+                                                      if (Object.keys(next[schemaKey]).length === 0) delete next[schemaKey];
+                                                    } else {
+                                                      next[schemaKey] = { ...next[schemaKey], [propName]: v };
+                                                    }
+                                                    return next;
+                                                  });
+                                                }}
+                                                className="flex-1 min-w-0 text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                              >
+                                                <option value="">Use default ({mergeStrategy})</option>
+                                                <option value="additive">Additive</option>
+                                                <option value="override">Override</option>
+                                              </select>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                          )}
+                        </CollapsibleContent>
+                      </Collapsible>
                     </div>
                   )}
                 </div>

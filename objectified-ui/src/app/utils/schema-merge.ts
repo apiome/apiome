@@ -1,11 +1,20 @@
 /**
  * Intelligent merge of schema properties and constraints (#588).
  * Supports additive merge (add new, keep existing) and override merge (imported wins; constraints merged strictly).
+ * #593: Selective merge — per-property strategy via propertyMergeStrategies (schema key → property path → strategy).
  */
 
 import type { NormalizedClass, NormalizedProperty } from '../../../lib/importers';
 
 export type MergeStrategy = 'additive' | 'override';
+
+/** Options for selective per-property merge (#593). */
+export interface MergeOptions {
+  /** Schema key (e.g. components/schemas key) for looking up per-property strategies. */
+  schemaKey?: string;
+  /** Per-property merge strategy: schema key → property path (dot for nested) → strategy. Missing = use default strategy. */
+  propertyMergeStrategies?: Record<string, Record<string, MergeStrategy>>;
+}
 
 /**
  * Merge two JSON Schema constraint objects for the same property.
@@ -99,68 +108,88 @@ function mergeConstraints(existing: any, imported: any): any {
 }
 
 /**
+ * Resolve effective merge strategy for a property (#593). Uses per-property override when present.
+ */
+function getPropertyStrategy(
+  schemaKey: string | undefined,
+  propertyPath: string,
+  defaultStrategy: MergeStrategy,
+  options: MergeOptions | undefined
+): MergeStrategy {
+  const perProp = options?.propertyMergeStrategies?.[schemaKey ?? ''];
+  if (perProp && propertyPath in perProp) return perProp[propertyPath];
+  return defaultStrategy;
+}
+
+/**
  * Merge two NormalizedProperty lists at one level.
  * - additive: existing first, then imported properties whose name is not in existing. Same name → keep existing.
  * - override: by name, imported wins; for same name merge constraints. Then add existing names not in imported.
+ * #593: When options.propertyMergeStrategies is set, each property uses its per-property strategy (keyed by path).
  */
 function mergePropertyLists(
   existingList: NormalizedProperty[],
   importedList: NormalizedProperty[],
-  strategy: MergeStrategy
+  strategy: MergeStrategy,
+  options?: MergeOptions,
+  parentPath?: string
 ): NormalizedProperty[] {
   const byNameExisting = new Map<string, NormalizedProperty>();
   for (const p of existingList) byNameExisting.set(p.name, p);
   const byNameImported = new Map<string, NormalizedProperty>();
   for (const p of importedList) byNameImported.set(p.name, p);
 
+  const allNames = new Set([...byNameExisting.keys(), ...byNameImported.keys()]);
   const result: NormalizedProperty[] = [];
-  const seen = new Set<string>();
+  const schemaKey = options?.schemaKey;
 
-  if (strategy === 'additive') {
-    // Additive (#591): add new properties, keep existing. At each level: keep existing first,
-    // then add from imported only if name not present. For same name, keep existing property
-    // but recursively merge children additively when both have nested properties.
-    for (const p of existingList) {
-      seen.add(p.name);
-      const importedProp = byNameImported.get(p.name);
-      if (importedProp?.children?.length && p.children?.length) {
-        const mergedChildren = mergePropertyLists(p.children, importedProp.children, strategy);
-        result.push({ ...p, children: mergedChildren });
-      } else {
-        result.push(p);
-      }
-    }
-    for (const p of importedList) {
-      if (seen.has(p.name)) continue;
-      seen.add(p.name);
-      result.push(p);
-    }
-    return result;
-  }
+  // Preserve order: existing first, then imported-only (additive order); when override, we still build by iterating names and push in stable order (existing order for existing names, then imported-only)
+  const existingOrder = existingList.map((p) => p.name);
+  const importedOnly = importedList.filter((p) => !byNameExisting.has(p.name)).map((p) => p.name);
+  const orderedNames = [...existingOrder];
+  for (const n of importedOnly) if (!orderedNames.includes(n)) orderedNames.push(n);
 
-  // override: for each name, take imported if present (with constraint merge), else existing
-  for (const [name, importedProp] of byNameImported) {
+  for (const name of orderedNames) {
+    const path = parentPath ? `${parentPath}.${name}` : name;
+    const effectiveStrategy = getPropertyStrategy(schemaKey, path, strategy, options);
     const existingProp = byNameExisting.get(name);
-    if (existingProp) {
-      const mergedData = mergeConstraints(existingProp.data, importedProp.data);
-      const mergedChildren =
-        (existingProp.children?.length || importedProp.children?.length) &&
-        mergePropertyLists(existingProp.children || [], importedProp.children || [], strategy);
-      result.push({
-        name: importedProp.name,
-        data: mergedData,
-        description: importedProp.description ?? existingProp.description,
-        children: mergedChildren?.length ? mergedChildren : undefined,
-      });
-    } else {
-      result.push(importedProp);
+    const importedProp = byNameImported.get(name);
+
+    if (effectiveStrategy === 'additive') {
+      if (existingProp) {
+        if (importedProp?.children?.length && existingProp.children?.length) {
+          const mergedChildren = mergePropertyLists(existingProp.children, importedProp.children, strategy, options, path);
+          result.push({ ...existingProp, children: mergedChildren });
+        } else {
+          result.push(existingProp);
+        }
+      } else if (importedProp) {
+        result.push(importedProp);
+      }
+      continue;
     }
-    seen.add(name);
+
+    // override for this property
+    if (importedProp) {
+      if (existingProp) {
+        const mergedData = mergeConstraints(existingProp.data, importedProp.data);
+        const mergedChildren =
+          (existingProp.children?.length || importedProp.children?.length) &&
+          mergePropertyLists(existingProp.children || [], importedProp.children || [], strategy, options, path);
+        result.push({
+          name: importedProp.name,
+          data: mergedData,
+          description: importedProp.description ?? existingProp.description,
+          children: mergedChildren?.length ? mergedChildren : undefined,
+        });
+      } else {
+        result.push(importedProp);
+      }
+    } else if (existingProp) {
+      result.push(existingProp);
+    }
   }
-  for (const [name, existingProp] of byNameExisting) {
-    if (seen.has(name)) continue;
-    result.push(existingProp);
-  }
+
   return result;
 }
 
@@ -168,13 +197,15 @@ function mergePropertyLists(
  * Intelligently merge an existing class with an imported one (#588).
  * - additive: add new properties from imported, keep all existing; class metadata from imported (name, description) can be kept or overridden by imported - we keep existing name/description and add only new properties.
  * - override: imported wins for metadata; properties merged by name with constraint merge for same name.
+ * #593: Optional options.propertyMergeStrategies for per-property strategy.
  */
 export function mergeClasses(
   existing: NormalizedClass,
   imported: NormalizedClass,
-  strategy: MergeStrategy
+  strategy: MergeStrategy,
+  options?: MergeOptions
 ): NormalizedClass {
-  const properties = mergePropertyLists(existing.properties || [], imported.properties || [], strategy);
+  const properties = mergePropertyLists(existing.properties || [], imported.properties || [], strategy, options);
 
   if (strategy === 'additive') {
     return {

@@ -8,7 +8,12 @@ import { describe, it, expect } from '@jest/globals';
 import { mergeClasses, type MergeStrategy } from '../../src/app/utils/schema-merge';
 import type { NormalizedClass, NormalizedProperty } from '../../lib/importers';
 
-function prop(name: string, data: any, opts?: { description?: string; children?: NormalizedProperty[] }): NormalizedProperty {
+function prop(
+  name: string,
+  data: any,
+  optsOrChildren?: { description?: string; children?: NormalizedProperty[] } | NormalizedProperty[]
+): NormalizedProperty {
+  const opts = Array.isArray(optsOrChildren) ? { children: optsOrChildren } : optsOrChildren ?? {};
   return { name, data: data ?? {}, ...opts };
 }
 
@@ -385,5 +390,203 @@ describe('schema-merge edge cases', () => {
     const merged = mergeClasses(existing, imported, 'additive');
 
     expect((merged as any).schema).toEqual({ type: 'object', additionalProperties: false });
+  });
+});
+
+describe('schema-merge selective per-property merge (#593)', () => {
+  it('uses per-property override when set: one property override, rest additive', () => {
+    const existing = cls('User', [
+      prop('id', { type: 'string', maxLength: 50 }),
+      prop('name', { type: 'string' }),
+    ]);
+    const imported = cls('User', [
+      prop('id', { type: 'string', maxLength: 100 }),
+      prop('email', { type: 'string' }),
+    ]);
+    const options = {
+      schemaKey: 'User',
+      propertyMergeStrategies: {
+        User: { id: 'override' as const },
+      },
+    };
+
+    const merged = mergeClasses(existing, imported, 'additive', options);
+
+    expect(merged.properties).toHaveLength(3);
+    const idProp = merged.properties.find((p) => p.name === 'id');
+    expect(idProp?.data.maxLength).toBe(50);
+    const nameProp = merged.properties.find((p) => p.name === 'name');
+    expect(nameProp).toBeDefined();
+    expect(nameProp?.data).toEqual({ type: 'string' });
+    const emailProp = merged.properties.find((p) => p.name === 'email');
+    expect(emailProp).toBeDefined();
+  });
+
+  it('uses per-property additive when default is override: keep existing for that property', () => {
+    const existing = cls('Pet', [
+      prop('id', { type: 'integer' }),
+      prop('name', { type: 'string', minLength: 1 }),
+    ]);
+    const imported = cls('Pet', [
+      prop('id', { type: 'integer' }),
+      prop('name', { type: 'string' }),
+    ]);
+    const options = {
+      schemaKey: 'Pet',
+      propertyMergeStrategies: {
+        Pet: { name: 'additive' as const },
+      },
+    };
+
+    const merged = mergeClasses(existing, imported, 'override', options);
+
+    const nameProp = merged.properties.find((p) => p.name === 'name');
+    expect(nameProp?.data.minLength).toBe(1);
+  });
+
+  it('falls back to default strategy when property not in propertyMergeStrategies', () => {
+    const existing = cls('A', [prop('x', { type: 'string' })]);
+    const imported = cls('A', [prop('x', { type: 'number' })]);
+    const options = {
+      schemaKey: 'A',
+      propertyMergeStrategies: { A: {} },
+    };
+
+    const merged = mergeClasses(existing, imported, 'additive', options);
+
+    expect(merged.properties.find((p) => p.name === 'x')?.data.type).toBe('string');
+  });
+
+  it('applies per-property strategy for nested path when provided', () => {
+    const existing = cls('User', [
+      prop('address', { type: 'object' }, [
+        prop('street', { type: 'string', maxLength: 50 }),
+        prop('city', { type: 'string' }),
+      ]),
+    ]);
+    const imported = cls('User', [
+      prop('address', { type: 'object' }, [
+        prop('street', { type: 'string', maxLength: 200 }),
+        prop('zip', { type: 'string' }),
+      ]),
+    ]);
+    const options = {
+      schemaKey: 'User',
+      propertyMergeStrategies: {
+        User: { 'address.street': 'override' as const },
+      },
+    };
+
+    const merged = mergeClasses(existing, imported, 'additive', options);
+
+    const address = merged.properties.find((p) => p.name === 'address');
+    expect(address?.children).toBeDefined();
+    const street = address?.children!.find((c) => c.name === 'street');
+    expect(street?.data.maxLength).toBe(50);
+    const city = address?.children!.find((c) => c.name === 'city');
+    expect(city).toBeDefined();
+    const zip = address?.children!.find((c) => c.name === 'zip');
+    expect(zip).toBeDefined();
+  });
+
+  it('when options is undefined, behaves like no per-property overrides', () => {
+    const existing = cls('X', [prop('a', { type: 'string' })]);
+    const imported = cls('X', [prop('a', { type: 'number' })]);
+
+    const mergedWithOptions = mergeClasses(existing, imported, 'additive', undefined);
+    const mergedWithoutOptions = mergeClasses(existing, imported, 'additive');
+
+    expect(mergedWithOptions.properties[0].data.type).toBe('string');
+    expect(mergedWithoutOptions.properties[0].data.type).toBe('string');
+  });
+
+  it('when schemaKey is missing in options, all properties use default strategy', () => {
+    const existing = cls('User', [prop('id', { type: 'string' })]);
+    const imported = cls('User', [prop('id', { type: 'number' })]);
+    const options = {
+      schemaKey: undefined,
+      propertyMergeStrategies: { User: { id: 'override' as const } },
+    };
+
+    const merged = mergeClasses(existing, imported, 'additive', options);
+
+    expect(merged.properties.find((p) => p.name === 'id')?.data.type).toBe('string');
+  });
+
+  it('mixed strategies: some additive, some override, preserves property order', () => {
+    const existing = cls('Item', [
+      prop('a', { type: 'string' }),
+      prop('b', { type: 'string' }),
+      prop('c', { type: 'string' }),
+    ]);
+    const imported = cls('Item', [
+      prop('a', { type: 'number' }),
+      prop('b', { type: 'number' }),
+      prop('c', { type: 'number' }),
+      prop('d', { type: 'string' }),
+    ]);
+    const options = {
+      schemaKey: 'Item',
+      propertyMergeStrategies: {
+        Item: {
+          a: 'additive' as const,
+          b: 'override' as const,
+        },
+      },
+    };
+
+    const merged = mergeClasses(existing, imported, 'additive', options);
+
+    expect(merged.properties.map((p) => p.name)).toEqual(['a', 'b', 'c', 'd']);
+    expect(merged.properties.find((p) => p.name === 'a')?.data.type).toBe('string');
+    expect(merged.properties.find((p) => p.name === 'b')?.data.type).toBe('number');
+    expect(merged.properties.find((p) => p.name === 'c')?.data.type).toBe('string');
+    expect(merged.properties.find((p) => p.name === 'd')?.data.type).toBe('string');
+  });
+
+  it('per-property override with only existing property (no imported): keeps existing', () => {
+    const existing = cls('S', [prop('only', { type: 'string', maxLength: 10 })]);
+    const imported = cls('S', []);
+    const options = {
+      schemaKey: 'S',
+      propertyMergeStrategies: { S: { only: 'override' as const } },
+    };
+
+    const merged = mergeClasses(existing, imported, 'additive', options);
+
+    expect(merged.properties).toHaveLength(1);
+    expect(merged.properties[0].name).toBe('only');
+    expect(merged.properties[0].data.maxLength).toBe(10);
+  });
+
+  it('per-property additive with only imported property: adds imported', () => {
+    const existing = cls('T', []);
+    const imported = cls('T', [prop('new', { type: 'integer' })]);
+    const options = {
+      schemaKey: 'T',
+      propertyMergeStrategies: { T: { new: 'additive' as const } },
+    };
+
+    const merged = mergeClasses(existing, imported, 'override', options);
+
+    expect(merged.properties).toHaveLength(1);
+    expect(merged.properties[0].name).toBe('new');
+    expect(merged.properties[0].data.type).toBe('integer');
+  });
+
+  it('multiple schemas in propertyMergeStrategies: only matching schemaKey used', () => {
+    const existing = cls('Alpha', [prop('x', { type: 'string' })]);
+    const imported = cls('Alpha', [prop('x', { type: 'number' })]);
+    const options = {
+      schemaKey: 'Alpha',
+      propertyMergeStrategies: {
+        Alpha: { x: 'override' as const },
+        Beta: { x: 'additive' as const },
+      },
+    };
+
+    const merged = mergeClasses(existing, imported, 'additive', options);
+
+    expect(merged.properties.find((p) => p.name === 'x')?.data.type).toBe('number');
   });
 });
