@@ -123,6 +123,19 @@ describe('#593 Selective per-property merge strategy', () => {
       };
       expect(input.propertyMergeStrategies).toEqual({ A: { id: 'override' } });
     });
+
+    it('accepts optional arrayMergeStrategy (#595)', () => {
+      const input: ImportClassesInput = {
+        versionId: 'v1',
+        projectId: 'p1',
+        document: {},
+        selectedSchemas: ['A'],
+        overwriteExisting: true,
+        mergeStrategy: 'override',
+        arrayMergeStrategy: 'deduplicate',
+      };
+      expect(input.arrayMergeStrategy).toBe('deduplicate');
+    });
   });
 
   describe('when overwriteExisting and mergeStrategy are set', () => {
@@ -145,7 +158,44 @@ describe('#593 Selective per-property merge strategy', () => {
       expect(options).toEqual({
         schemaKey: 'Pet',
         propertyMergeStrategies,
+        arrayMergeStrategy: undefined,
       });
+    });
+
+    it('calls mergeClasses with arrayMergeStrategy when provided (#595)', async () => {
+      await importClassesToVersion(
+        defaultInput({
+          overwriteExisting: true,
+          mergeStrategy: 'override',
+          arrayMergeStrategy: 'deduplicate',
+        })
+      );
+
+      expect(mockMergeClasses).toHaveBeenCalledTimes(1);
+      const [, , , options] = mockMergeClasses.mock.calls[0];
+      expect(options).toEqual({
+        schemaKey: 'Pet',
+        propertyMergeStrategies: undefined,
+        arrayMergeStrategy: 'deduplicate',
+      });
+    });
+
+    it('calls mergeClasses with both propertyMergeStrategies and arrayMergeStrategy when provided', async () => {
+      const propertyMergeStrategies = { Pet: { id: 'override' as const } };
+
+      await importClassesToVersion(
+        defaultInput({
+          overwriteExisting: true,
+          mergeStrategy: 'additive',
+          propertyMergeStrategies,
+          arrayMergeStrategy: 'append',
+        })
+      );
+
+      expect(mockMergeClasses).toHaveBeenCalledTimes(1);
+      const [, , , options] = mockMergeClasses.mock.calls[0];
+      expect(options?.propertyMergeStrategies).toEqual(propertyMergeStrategies);
+      expect(options?.arrayMergeStrategy).toBe('append');
     });
 
     it('calls mergeClasses with schemaKey from normalized class originalSchemaKey', async () => {
@@ -202,6 +252,7 @@ describe('#593 Selective per-property merge strategy', () => {
       expect(options).toEqual({
         schemaKey: 'Pet',
         propertyMergeStrategies: undefined,
+        arrayMergeStrategy: undefined,
       });
     });
   });

@@ -178,6 +178,8 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
   const [mergeStrategy, setMergeStrategy] = useState<'additive' | 'override'>('additive');
   /** Per-property merge strategy (#593): schema key → property name → strategy. Only set when user overrides default. */
   const [propertyMergeStrategies, setPropertyMergeStrategies] = useState<Record<string, Record<string, 'additive' | 'override'>>>({});
+  /** Array merge strategy (#595): how to merge required/enum arrays when merging. */
+  const [arrayMergeStrategy, setArrayMergeStrategy] = useState<'append' | 'replace' | 'deduplicate'>('replace');
   /** When true, existing classes can be selected and will be replaced or merged. */
   const overwriteExisting = conflictResolution === 'replace' || conflictResolution === 'merge';
   /** When true, existing (conflicting) classes can be selected—either to overwrite, import under a new name, or import into a new version. */
@@ -246,6 +248,7 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
     setCreatedVersionLabel(null);
     setMergeStrategy('additive');
     setPropertyMergeStrategies({});
+    setArrayMergeStrategy('replace');
     onClose();
   };
 
@@ -489,6 +492,7 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
         mergeStrategy: conflictResolution === 'merge' ? mergeStrategy : undefined,
         propertyMergeStrategies:
           conflictResolution === 'merge' && Object.keys(propertyMergeStrategies).length > 0 ? propertyMergeStrategies : undefined,
+        arrayMergeStrategy: conflictResolution === 'merge' ? arrayMergeStrategy : undefined,
       });
       setImportResult(result);
       setCurrentStep('done');
@@ -1495,6 +1499,21 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
                           <option value="additive">Additive: add new properties, keep existing</option>
                           <option value="override">Override: imported wins, constraints merged</option>
                         </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Array merge (#595)</label>
+                        <select
+                          value={arrayMergeStrategy}
+                          onChange={(e) => setArrayMergeStrategy(e.target.value as 'append' | 'replace' | 'deduplicate')}
+                          className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        >
+                          <option value="replace">Replace: use imported arrays (required, enum)</option>
+                          <option value="append">Append: existing then imported</option>
+                          <option value="deduplicate">Deduplicate: union, no duplicates</option>
+                        </select>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Applies to array-valued schema fields (e.g. required, enum) when merging constraints.
+                        </p>
                       </div>
                       <Collapsible>
                         <CollapsibleTrigger className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">

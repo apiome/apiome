@@ -3,7 +3,7 @@
 import { createClass, addPropertyToClass, updateClass, getClassesForVersion, getClassWithPropertiesAndTags, deleteClassPropertiesForClass } from './helper';
 import { getImporter, NormalizedClass, type NormalizedProperty } from '../importers';
 import { cookies } from 'next/headers';
-import { mergeClasses, type MergeStrategy } from '../../src/app/utils/schema-merge';
+import { mergeClasses, type MergeStrategy, type ArrayMergeStrategy } from '../../src/app/utils/schema-merge';
 
 export interface ImportClassesInput {
   versionId: string;
@@ -41,6 +41,8 @@ export interface ImportClassesInput {
   mergeStrategy?: MergeStrategy;
   /** Per-property merge strategy (#593): schema key → property path (dot for nested) → strategy. Missing = use mergeStrategy. */
   propertyMergeStrategies?: Record<string, Record<string, MergeStrategy>>;
+  /** How to merge array-valued schema fields (required, enum) when merging (#595). Default: replace. */
+  arrayMergeStrategy?: ArrayMergeStrategy;
 }
 
 export interface ImportClassesResult {
@@ -174,7 +176,7 @@ async function overwriteClassWithProperties(
 
 export async function importClassesToVersion(input: ImportClassesInput): Promise<ImportClassesResult> {
   try {
-    const { versionId, projectId, document, selectedSchemas, overwriteExisting, mergeStrategy, propertyMergeStrategies } = input;
+    const { versionId, projectId, document, selectedSchemas, overwriteExisting, mergeStrategy, propertyMergeStrategies, arrayMergeStrategy } = input;
 
     if (!versionId || !projectId) {
       return { success: false, error: 'Version ID and Project ID are required' };
@@ -255,6 +257,7 @@ export async function importClassesToVersion(input: ImportClassesInput): Promise
         const merged = mergeClasses(existingNorm, cls, mergeStrategy, {
           schemaKey: cls.originalSchemaKey,
           propertyMergeStrategies,
+          arrayMergeStrategy,
         });
         mergedClassesByName.set(cls.name, merged);
         collectProperties(merged.properties || []);

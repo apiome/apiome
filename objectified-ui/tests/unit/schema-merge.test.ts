@@ -830,3 +830,164 @@ describe('schema-merge selective per-property merge (#593)', () => {
     expect(merged.properties.find((p) => p.name === 'x')?.data.type).toBe('number');
   });
 });
+
+describe('#595 Array merge strategies (required, enum)', () => {
+  it('replace: uses imported required and enum arrays', () => {
+    const existing = cls('S', [
+      prop('obj', { type: 'object', required: ['a', 'b'], properties: {} }),
+      prop('kind', { type: 'string', enum: ['x', 'y'] }),
+    ]);
+    const imported = cls('S', [
+      prop('obj', { type: 'object', required: ['b', 'c'], properties: {} }),
+      prop('kind', { type: 'string', enum: ['y', 'z'] }),
+    ]);
+
+    const merged = mergeClasses(existing, imported, 'override', { arrayMergeStrategy: 'replace' });
+
+    const obj = merged.properties.find((p) => p.name === 'obj');
+    expect(obj?.data.required).toEqual(['b', 'c']);
+    const kind = merged.properties.find((p) => p.name === 'kind');
+    expect(kind?.data.enum).toEqual(['y', 'z']);
+  });
+
+  it('append: existing then imported for required and enum', () => {
+    const existing = cls('S', [
+      prop('obj', { type: 'object', required: ['a', 'b'], properties: {} }),
+      prop('kind', { type: 'string', enum: ['x', 'y'] }),
+    ]);
+    const imported = cls('S', [
+      prop('obj', { type: 'object', required: ['b', 'c'], properties: {} }),
+      prop('kind', { type: 'string', enum: ['y', 'z'] }),
+    ]);
+
+    const merged = mergeClasses(existing, imported, 'override', { arrayMergeStrategy: 'append' });
+
+    const obj = merged.properties.find((p) => p.name === 'obj');
+    expect(obj?.data.required).toEqual(['a', 'b', 'b', 'c']);
+    const kind = merged.properties.find((p) => p.name === 'kind');
+    expect(kind?.data.enum).toEqual(['x', 'y', 'y', 'z']);
+  });
+
+  it('deduplicate: union of required and enum with no duplicates', () => {
+    const existing = cls('S', [
+      prop('obj', { type: 'object', required: ['a', 'b'], properties: {} }),
+      prop('kind', { type: 'string', enum: ['x', 'y'] }),
+    ]);
+    const imported = cls('S', [
+      prop('obj', { type: 'object', required: ['b', 'c'], properties: {} }),
+      prop('kind', { type: 'string', enum: ['y', 'z'] }),
+    ]);
+
+    const merged = mergeClasses(existing, imported, 'override', { arrayMergeStrategy: 'deduplicate' });
+
+    const obj = merged.properties.find((p) => p.name === 'obj');
+    expect(obj?.data.required).toEqual(['a', 'b', 'c']);
+    const kind = merged.properties.find((p) => p.name === 'kind');
+    expect(kind?.data.enum).toEqual(['x', 'y', 'z']);
+  });
+
+  it('default (no option): replace behavior for required', () => {
+    const existing = cls('S', [prop('obj', { type: 'object', required: ['a'], properties: {} })]);
+    const imported = cls('S', [prop('obj', { type: 'object', required: ['b'], properties: {} })]);
+
+    const merged = mergeClasses(existing, imported, 'override');
+
+    expect(merged.properties[0].data.required).toEqual(['b']);
+  });
+
+  it('array merge strategy applies in nested object merge', () => {
+    const existing = cls('S', [
+      prop('nested', {
+        type: 'object',
+        properties: {
+          inner: { type: 'object', required: ['p', 'q'], properties: {} },
+        },
+      }),
+    ]);
+    const imported = cls('S', [
+      prop('nested', {
+        type: 'object',
+        properties: {
+          inner: { type: 'object', required: ['q', 'r'], properties: {} },
+        },
+      }),
+    ]);
+
+    const merged = mergeClasses(existing, imported, 'override', { arrayMergeStrategy: 'deduplicate' });
+
+    const inner = merged.properties[0].data.properties?.inner;
+    expect(inner?.required).toEqual(['p', 'q', 'r']);
+  });
+
+  it('replace with empty imported array: keeps existing array', () => {
+    const existing = cls('S', [prop('obj', { type: 'object', required: ['a', 'b'], properties: {} })]);
+    const imported = cls('S', [prop('obj', { type: 'object', required: [], properties: {} })]);
+
+    const merged = mergeClasses(existing, imported, 'override', { arrayMergeStrategy: 'replace' });
+
+    expect(merged.properties[0].data.required).toEqual(['a', 'b']);
+  });
+
+  it('replace with empty existing array: uses imported array', () => {
+    const existing = cls('S', [prop('obj', { type: 'object', required: [], properties: {} })]);
+    const imported = cls('S', [prop('obj', { type: 'object', required: ['x', 'y'], properties: {} })]);
+
+    const merged = mergeClasses(existing, imported, 'override', { arrayMergeStrategy: 'replace' });
+
+    expect(merged.properties[0].data.required).toEqual(['x', 'y']);
+  });
+
+  it('append with empty existing: result is imported only', () => {
+    const existing = cls('S', [prop('kind', { type: 'string', enum: [] })]);
+    const imported = cls('S', [prop('kind', { type: 'string', enum: ['a', 'b'] })]);
+
+    const merged = mergeClasses(existing, imported, 'override', { arrayMergeStrategy: 'append' });
+
+    expect(merged.properties[0].data.enum).toEqual(['a', 'b']);
+  });
+
+  it('append with empty imported: result is existing only', () => {
+    const existing = cls('S', [prop('kind', { type: 'string', enum: ['x', 'y'] })]);
+    const imported = cls('S', [prop('kind', { type: 'string', enum: [] })]);
+
+    const merged = mergeClasses(existing, imported, 'override', { arrayMergeStrategy: 'append' });
+
+    expect(merged.properties[0].data.enum).toEqual(['x', 'y']);
+  });
+
+  it('deduplicate with enum of numbers', () => {
+    const existing = cls('S', [prop('code', { type: 'integer', enum: [1, 2, 3] })]);
+    const imported = cls('S', [prop('code', { type: 'integer', enum: [2, 3, 4] })]);
+
+    const merged = mergeClasses(existing, imported, 'override', { arrayMergeStrategy: 'deduplicate' });
+
+    expect(merged.properties[0].data.enum).toEqual([1, 2, 3, 4]);
+  });
+
+  it('deduplicate preserves order: existing first then new from imported', () => {
+    const existing = cls('S', [prop('tags', { type: 'string', enum: ['b', 'a'] })]);
+    const imported = cls('S', [prop('tags', { type: 'string', enum: ['a', 'c'] })]);
+
+    const merged = mergeClasses(existing, imported, 'override', { arrayMergeStrategy: 'deduplicate' });
+
+    expect(merged.properties[0].data.enum).toEqual(['b', 'a', 'c']);
+  });
+
+  it('only existing has required: result uses existing (no merge)', () => {
+    const existing = cls('S', [prop('obj', { type: 'object', required: ['only'], properties: {} })]);
+    const imported = cls('S', [prop('obj', { type: 'object', properties: {} })]);
+
+    const merged = mergeClasses(existing, imported, 'override', { arrayMergeStrategy: 'deduplicate' });
+
+    expect(merged.properties[0].data.required).toEqual(['only']);
+  });
+
+  it('only imported has enum: result uses imported (no merge)', () => {
+    const existing = cls('S', [prop('status', { type: 'string' })]);
+    const imported = cls('S', [prop('status', { type: 'string', enum: ['draft', 'published'] })]);
+
+    const merged = mergeClasses(existing, imported, 'override', { arrayMergeStrategy: 'append' });
+
+    expect(merged.properties[0].data.enum).toEqual(['draft', 'published']);
+  });
+});
