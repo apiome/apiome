@@ -3,6 +3,8 @@
 import * as React from 'react';
 import { BarChart3, ChevronDown, ChevronUp, X, Link2, Unlink, GitBranch, RefreshCw, Layout, Gauge, Lightbulb, LayoutGrid, Box, Layers } from 'lucide-react';
 import * as Tooltip from '@radix-ui/react-tooltip';
+import * as Popover from '@radix-ui/react-popover';
+import { cn } from '../../../../../lib/utils';
 import type { LayoutQualityResult } from '@/app/utils/layout-quality';
 import type { SchemaMetricsResult } from '@/app/utils/schema-metrics';
 import type { CanvasSuggestion } from '@/app/utils/canvas-suggestions';
@@ -57,6 +59,9 @@ export default function SchemaMetricsPanel({
     deepestChainLength,
     circularDependencyCount,
     circularSampleNames,
+    complexityScore,
+    complexityLabel,
+    complexityBreakdown,
   } = metrics;
 
   const hasHubs = hubNames.length > 0;
@@ -71,7 +76,7 @@ export default function SchemaMetricsPanel({
           className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400"
         >
           <BarChart3 className="w-4 h-4 shrink-0" />
-          <span className="tabular-nums">{classCount} classes · {totalProperties} properties · {relationshipCount} relationships</span>
+          <span className="tabular-nums">{classCount} classes · {totalProperties} props · {relationshipCount} rels · complexity {complexityScore}</span>
           <ChevronUp className="w-3 h-3 shrink-0" />
         </button>
       </div>
@@ -139,6 +144,89 @@ export default function SchemaMetricsPanel({
               </div>
             </div>
           </div>
+          {/* Realtime schema complexity score (#556); click to see why */}
+          <Popover.Root>
+            <Popover.Trigger asChild>
+              <button
+                type="button"
+                className="mt-2 w-full rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 dark:border dark:border-indigo-800/30 px-3 py-2 text-left cursor-pointer hover:from-indigo-100 hover:to-purple-100 dark:hover:from-indigo-800/30 dark:hover:to-purple-800/30 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800"
+                aria-label="Schema complexity score; click to see breakdown"
+                title="Click to see why this score"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Gauge className="w-4 h-4 text-indigo-500 shrink-0" aria-hidden />
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Schema complexity
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold text-gray-800 dark:text-gray-200 tabular-nums">
+                      {complexityScore}
+                    </span>
+                    <span className={cn(
+                      'text-xs font-medium px-1.5 py-0.5 rounded',
+                      complexityLabel === 'Low' && 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
+                      complexityLabel === 'Medium' && 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+                      complexityLabel === 'High' && 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300'
+                    )}>
+                      {complexityLabel}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-1.5 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                  <div
+                    className={cn(
+                      'h-full rounded-full transition-all duration-300',
+                      complexityLabel === 'Low' && 'bg-emerald-500',
+                      complexityLabel === 'Medium' && 'bg-amber-500',
+                      complexityLabel === 'High' && 'bg-rose-500'
+                    )}
+                    style={{ width: `${complexityScore}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Click for breakdown</p>
+              </button>
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content
+                className="z-[10000] w-72 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg p-3 focus:outline-none"
+                sideOffset={6}
+                align="start"
+              >
+                <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                  Why is this score?
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-3">
+                  Each factor contributes (value × weight) to the raw total, then capped to 0–100.
+                </p>
+                <table className="w-full text-[11px] text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-600">
+                      <th className="py-1 pr-2 font-medium text-gray-600 dark:text-gray-400">Factor</th>
+                      <th className="py-1 pr-2 font-medium text-gray-600 dark:text-gray-400 text-right">Value</th>
+                      <th className="py-1 pr-2 font-medium text-gray-600 dark:text-gray-400 text-right">× weight</th>
+                      <th className="py-1 font-medium text-gray-600 dark:text-gray-400 text-right">Points</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {complexityBreakdown.map((row, i) => (
+                      <tr key={i} className="border-b border-gray-100 dark:border-gray-700/80">
+                        <td className="py-1 pr-2 text-gray-700 dark:text-gray-300">{row.label}</td>
+                        <td className="py-1 pr-2 text-right tabular-nums text-gray-700 dark:text-gray-300">{row.value}</td>
+                        <td className="py-1 pr-2 text-right tabular-nums text-gray-500 dark:text-gray-400">{row.weight}</td>
+                        <td className="py-1 text-right tabular-nums font-medium text-gray-800 dark:text-gray-200">{row.contribution.toFixed(1)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600 flex justify-between text-[11px]">
+                  <span className="text-gray-500 dark:text-gray-400">Raw sum → capped</span>
+                  <span className="font-semibold text-gray-800 dark:text-gray-200 tabular-nums">{complexityScore}/100</span>
+                </div>
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
         </div>
 
         {/* Scrollable body */}

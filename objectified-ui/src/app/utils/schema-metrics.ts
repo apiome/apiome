@@ -28,6 +28,19 @@ export interface SchemaMetricsResult {
   circularDependencyCount: number;
   /** Optional: class names involved in cycles (sample) for tooltip */
   circularSampleNames: string[];
+  /** Realtime schema complexity score 0–100 (#556) */
+  complexityScore: number;
+  /** Human-readable complexity band for display */
+  complexityLabel: 'Low' | 'Medium' | 'High';
+  /** Per-factor contribution for "why is this score" breakdown */
+  complexityBreakdown: ComplexityBreakdownItem[];
+}
+
+export interface ComplexityBreakdownItem {
+  label: string;
+  value: number;
+  weight: number;
+  contribution: number;
 }
 
 function getClassNodes(nodes: Node[]): Node[] {
@@ -195,6 +208,15 @@ export function computeSchemaMetrics(nodes: Node[], edges: Edge[]): SchemaMetric
     .filter(Boolean)
     .map((n) => getNodeName(n!));
 
+  const { complexityScore, complexityLabel, complexityBreakdown } = computeComplexityScore({
+    classCount,
+    totalProperties,
+    averagePropertiesPerClass,
+    relationshipCount: edges.length,
+    deepestChainLength,
+    circularDependencyCount,
+  });
+
   return {
     classCount,
     totalProperties,
@@ -207,5 +229,47 @@ export function computeSchemaMetrics(nodes: Node[], edges: Edge[]): SchemaMetric
     deepestChainLength,
     circularDependencyCount,
     circularSampleNames,
+    complexityScore,
+    complexityLabel,
+    complexityBreakdown,
   };
+}
+
+/**
+ * Compute a 0–100 schema complexity score, label, and per-factor breakdown (#556).
+ * Based on class count, property count, relationships, depth, and cycles.
+ */
+function computeComplexityScore(metrics: {
+  classCount: number;
+  totalProperties: number;
+  averagePropertiesPerClass: number;
+  relationshipCount: number;
+  deepestChainLength: number;
+  circularDependencyCount: number;
+}): {
+  complexityScore: number;
+  complexityLabel: 'Low' | 'Medium' | 'High';
+  complexityBreakdown: ComplexityBreakdownItem[];
+} {
+  const weights = {
+    classCount: 1.5,
+    totalProperties: 0.3,
+    relationshipCount: 1.2,
+    averagePropertiesPerClass: 1.5,
+    deepestChainLength: 4,
+    circularDependencyCount: 6,
+  };
+  const breakdown: ComplexityBreakdownItem[] = [
+    { label: 'Classes', value: metrics.classCount, weight: weights.classCount, contribution: metrics.classCount * weights.classCount },
+    { label: 'Total properties', value: metrics.totalProperties, weight: weights.totalProperties, contribution: metrics.totalProperties * weights.totalProperties },
+    { label: 'Relationships', value: metrics.relationshipCount, weight: weights.relationshipCount, contribution: metrics.relationshipCount * weights.relationshipCount },
+    { label: 'Avg properties/class', value: metrics.averagePropertiesPerClass, weight: weights.averagePropertiesPerClass, contribution: metrics.averagePropertiesPerClass * weights.averagePropertiesPerClass },
+    { label: 'Deepest chain (steps)', value: metrics.deepestChainLength, weight: weights.deepestChainLength, contribution: metrics.deepestChainLength * weights.deepestChainLength },
+    { label: 'Circular dependencies', value: metrics.circularDependencyCount, weight: weights.circularDependencyCount, contribution: metrics.circularDependencyCount * weights.circularDependencyCount },
+  ];
+  const raw = breakdown.reduce((sum, b) => sum + b.contribution, 0);
+  const complexityScore = Math.min(100, Math.max(0, Math.round(raw)));
+  const complexityLabel: 'Low' | 'Medium' | 'High' =
+    complexityScore <= 33 ? 'Low' : complexityScore <= 66 ? 'Medium' : 'High';
+  return { complexityScore, complexityLabel, complexityBreakdown: breakdown };
 }

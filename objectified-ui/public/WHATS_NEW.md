@@ -27,6 +27,7 @@ We continue to improve the platform based on your feedback with improvements and
     - Circular dependencies
     - Layout quality score
     - Layout suggestions
+    - Schema complexity score with explanation
   - Added icons to class nodes for better visual distinction of nodes
   - Added node styling to change the border thickness and style
   - Added node styling to change font attributes
