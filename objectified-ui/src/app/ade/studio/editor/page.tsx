@@ -48,7 +48,8 @@ import {
   History,
   Trash2,
   Filter,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Flame
 } from 'lucide-react';
 import * as Select from '@radix-ui/react-select';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
@@ -107,7 +108,7 @@ import { getCanvasBackgroundStyle } from '@/app/utils/canvas-background-style';
 import { applyEdgeStyling } from '@/app/utils/edge-styling';
 import { computeCanvasSuggestions } from '@/app/utils/canvas-suggestions';
 import { computeLayoutQuality } from '@/app/utils/layout-quality';
-import { computeSchemaMetrics } from '@/app/utils/schema-metrics';
+import { computeSchemaMetrics, computeHeatmapValues } from '@/app/utils/schema-metrics';
 import DraggablePanel from '../components/DraggablePanel';
 import MemoryProfiler from '../components/MemoryProfiler';
 import SchemaMetricsPanel from '../components/SchemaMetricsPanel';
@@ -284,6 +285,7 @@ const StudioContent = () => {
   const [focusModeGroupId, setFocusModeGroupId] = useState<string | null>(null);
   // Inline hover expansion for "Focus on group" list (show groups inside dropdown on hover)
   const [focusOnGroupHovered, setFocusOnGroupHovered] = useState(false);
+  const [heatMapSubmenuHovered, setHeatMapSubmenuHovered] = useState(false);
 
   // #488: Show only connected nodes (hide nodes with no edges)
   const [showOnlyConnectedNodes, setShowOnlyConnectedNodes] = useState(false);
@@ -381,12 +383,30 @@ const StudioContent = () => {
   const [schemaMetricsOpen, setSchemaMetricsOpen] = useState(false);
   const [schemaMetricsMinimized, setSchemaMetricsMinimized] = useState(false);
 
+  // Heatmap visualization (#560): off | complexity | changeFrequency | usage | documentation
+  type HeatmapMode = 'off' | 'complexity' | 'changeFrequency' | 'usage' | 'documentation';
+  const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('heatmapMode');
+      if (saved && ['off', 'complexity', 'changeFrequency', 'usage', 'documentation'].includes(saved)) {
+        return saved as HeatmapMode;
+      }
+    }
+    return 'off';
+  });
+  useEffect(() => {
+    if (typeof window !== 'undefined') localStorage.setItem('heatmapMode', heatmapMode);
+  }, [heatmapMode]);
+
   // Schema metrics (for Schema Metrics panel #472)
   const schemaMetrics = useMemo(() => {
     const classNodes = nodes.filter((n) => n.type !== 'groupNode');
     if (classNodes.length === 0) return null;
     return computeSchemaMetrics(nodes, edges);
   }, [nodes, edges]);
+
+  // Per-node heatmap values (#560) for complexity, change frequency, usage, documentation
+  const heatmapValues = useMemo(() => computeHeatmapValues(nodes, edges), [nodes, edges]);
 
   // Layout quality (#473): edge crossings, spacing uniformity, symmetry, balance
   const layoutQuality = useMemo(() => {
@@ -892,8 +912,45 @@ const StudioContent = () => {
       });
     }
 
+    // #560: Apply heatmap visualization (complexity, change frequency, usage, documentation)
+    if (heatmapMode !== 'off') {
+      const key = heatmapMode === 'changeFrequency' ? 'changeRecency' : heatmapMode === 'usage' ? 'usage' : heatmapMode;
+      const labelByMode: Record<string, string> = {
+        complexity: 'Complexity',
+        changeRecency: 'Recently modified',
+        usage: 'Usage / references',
+        documentation: 'Documentation',
+      };
+      const label = labelByMode[key] || key;
+      result = result.map(node => {
+        if (node.type === 'groupNode') return node;
+        const values = heatmapValues.get(node.id);
+        const value = values ? (values as Record<string, number>)[key] ?? 0.5 : 0.5;
+        const valuePct = Math.round(value * 100);
+        return {
+          ...node,
+          data: {
+            ...(node.data as object),
+            heatmapMode,
+            heatmapValue: value,
+            heatmapLabel: `${label}: ${valuePct}%`,
+          },
+        };
+      });
+    } else {
+      result = result.map(node => {
+        if (node.type === 'groupNode') return node;
+        const d = node.data as Record<string, unknown>;
+        if (d.heatmapMode != null || d.heatmapValue != null || d.heatmapLabel != null) {
+          const { heatmapMode: _m, heatmapValue: _v, heatmapLabel: _l, ...rest } = d;
+          return { ...node, data: rest };
+        }
+        return node;
+      });
+    }
+
     return result;
-  }, [nodes, layoutPreviewNodes, showOnlyConnectedNodes, groups, connectedNodeIds, canvasSearchQuery, canvasSearchOpen, matchingNodeIds, focusModeEnabled, focusModeFocusedSet]);
+  }, [nodes, layoutPreviewNodes, showOnlyConnectedNodes, groups, connectedNodeIds, canvasSearchQuery, canvasSearchOpen, matchingNodeIds, focusModeEnabled, focusModeFocusedSet, heatmapMode, heatmapValues]);
 
   // Compute edges with search and/or focus mode styling applied
   const displayEdges = useMemo(() => {
@@ -3150,6 +3207,7 @@ const StudioContent = () => {
           properties: cls.properties || [],
           schema: cls.schema, // Pass schema for composition handles
           tags: cls.tags || [], // Pass tags for display
+          updated_at: cls.updated_at, // For heatmap: change frequency (#560)
           theme: theme, // Pass theme from canvas_metadata
           // Use refs to avoid triggering re-renders when callbacks change
           onPropertyDrop: (...args: any[]) => handlePropertyDropRef.current?.(...args),
@@ -5276,7 +5334,7 @@ const StudioContent = () => {
                   <DropdownMenu.Trigger asChild>
                     <button
                       className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 border ${
-                        focusModeEnabled || showOnlyConnectedNodes
+                        focusModeEnabled || showOnlyConnectedNodes || heatmapMode !== 'off'
                           ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700'
                           : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-transparent hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400'
                       }`}
@@ -5357,6 +5415,47 @@ const StudioContent = () => {
                         <Network className="h-4 w-4 shrink-0" />
                         <span>Connected</span>
                       </DropdownMenu.CheckboxItem>
+                      {/* Heat Map submenu (#560) */}
+                      <div
+                        className="relative rounded-md"
+                        onMouseEnter={() => setHeatMapSubmenuHovered(true)}
+                        onMouseLeave={() => setHeatMapSubmenuHovered(false)}
+                      >
+                        <div className="flex items-center gap-3 px-3 py-2 text-sm rounded-md outline-none cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                          <Flame className={`h-4 w-4 shrink-0 ${heatmapMode !== 'off' ? 'text-amber-500' : ''}`} />
+                          <span>Heat Map</span>
+                          <ChevronRight className="h-4 w-4 ml-auto shrink-0" />
+                        </div>
+                        {heatMapSubmenuHovered && (
+                          <div className="absolute left-full top-0 ml-0.5 min-w-[240px] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 py-1 z-10">
+                            {(['off', 'complexity', 'changeFrequency', 'usage', 'documentation'] as const).map((mode) => (
+                              <button
+                                key={mode}
+                                type="button"
+                                className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 outline-none mx-0.5"
+                                onClick={() => setHeatmapMode(mode)}
+                              >
+                                {heatmapMode === mode ? (
+                                  <Check className="h-4 w-4 shrink-0 text-indigo-600 dark:text-indigo-400" />
+                                ) : (
+                                  <span className="w-4 shrink-0" />
+                                )}
+                                <span>
+                                  {mode === 'off'
+                                    ? 'Off'
+                                    : mode === 'complexity'
+                                      ? 'By complexity (warmer = more complex)'
+                                      : mode === 'changeFrequency'
+                                        ? 'By change frequency (recent = highlighted)'
+                                        : mode === 'usage'
+                                          ? 'By usage / reference count'
+                                          : 'By documentation completeness'}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </DropdownMenu.Content>
                   </DropdownMenu.Portal>
                 </DropdownMenu.Root>

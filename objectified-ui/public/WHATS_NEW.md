@@ -43,6 +43,7 @@ We continue to improve the platform based on your feedback with improvements and
     - Focus mode includes groups
     - Connected mode now only shows connected nodes
     - View Mode is now a dropdown that combines these modes that can be toggled easily
+    - Heat map toggle is now added to the canvas
   - Increased zoom out resolution to 10%
   - Improved edge information view when hovering over edges from one class to another
   - Nodes now show property references even when not expanded

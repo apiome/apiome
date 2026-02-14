@@ -353,16 +353,15 @@
   - ✅ Documentation coverage percentage
   - ✅ Naming convention compliance
 - ✅ Per-node metrics badges (property count, relationship count)
-- 📋 [TODO] Heatmap visualization:
-  - 📋 [TODO] By complexity (more complex = warmer color)
-  - 📋 [TODO] By change frequency (recently modified = highlighted)
-  - 📋 [TODO] By usage/reference count
-  - 📋 [TODO] By documentation completeness
+- ✅ Heatmap visualization (#560):
+  - ✅ By complexity (more complex = warmer color)
+  - ✅ By change frequency (recently modified = highlighted)
+  - ✅ By usage/reference count
+  - ✅ By documentation completeness
 - 📋 [TODO] Trend indicators (improving/declining metrics)
 
 | Ticket | Feature                                        |
 |--------|------------------------------------------------|
-| #560   | Heatmap visualization to version dashboard     |
 | #561   | Trend indicators (improving/declining metrics) |
 
 ---

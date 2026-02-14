@@ -407,3 +407,98 @@ function computeComplexityScore(metrics: {
     complexityScore <= 33 ? 'Low' : complexityScore <= 66 ? 'Medium' : 'High';
   return { complexityScore, complexityLabel, complexityBreakdown: breakdown };
 }
+
+/** Per-node heatmap value set for #560 (complexity, change frequency, usage, documentation). */
+export interface HeatmapValues {
+  /** 0–1: higher = more complex (props + relationships + depth factor). */
+  complexity: number;
+  /** 0–1: higher = more recently modified (from updated_at). */
+  changeRecency: number;
+  /** 0–1: higher = more references (degree / max degree). */
+  usage: number;
+  /** 0–1: higher = better documentation (class + properties with description). */
+  documentation: number;
+}
+
+/**
+ * Compute per-class heatmap values for canvas visualization (#560).
+ * Returns a map of node id -> { complexity, changeRecency, usage, documentation } (all 0–1).
+ */
+export function computeHeatmapValues(nodes: Node[], edges: Edge[]): Map<string, HeatmapValues> {
+  const classNodes = getClassNodes(nodes);
+  const result = new Map<string, HeatmapValues>();
+  if (classNodes.length === 0) return result;
+
+  const degreeMap = getDegreePerNode(classNodes, edges);
+  const adj = buildDirectedAdjacency(edges);
+  const nodeIds = new Set(classNodes.map((n) => n.id));
+  const maxDegree = Math.max(1, ...Array.from(degreeMap.values()));
+
+  // Per-class documentation: class + its properties with non-empty description
+  const docPerClass = new Map<string, number>();
+  for (const node of classNodes) {
+    const data = node.data as {
+      name?: string;
+      description?: string;
+      properties?: Array<{ name?: string; description?: string }>;
+    };
+    let documented = 0;
+    let total = 0;
+    total += 1;
+    documented += hasDocumentation(data?.description) ? 1 : 0;
+    const props = data?.properties;
+    if (Array.isArray(props)) {
+      for (const p of props) {
+        total += 1;
+        documented += hasDocumentation(p?.description) ? 1 : 0;
+      }
+    }
+    docPerClass.set(node.id, total === 0 ? 1 : documented / total);
+  }
+
+  // Per-class complexity: property count + degree + depth contribution, normalized to 0–1
+  const depthFromNode = (nodeId: string): number =>
+    longestPathFrom(nodeId, adj, new Set());
+  const maxDepth = Math.max(1, ...classNodes.map((n) => depthFromNode(n.id)));
+  let maxComplexityRaw = 0;
+  const complexityRaw = new Map<string, number>();
+  for (const node of classNodes) {
+    const propCount = getPropertyCount(node);
+    const degree = degreeMap.get(node.id) ?? 0;
+    const depth = depthFromNode(node.id);
+    const raw = propCount * 2 + degree * 1.5 + depth * 3;
+    complexityRaw.set(node.id, raw);
+    if (raw > maxComplexityRaw) maxComplexityRaw = raw;
+  }
+  maxComplexityRaw = Math.max(1, maxComplexityRaw);
+
+  // updated_at timestamps for change recency (optional on node data)
+  const timestamps: number[] = [];
+  for (const node of classNodes) {
+    const updatedAt = (node.data as { updated_at?: string })?.updated_at;
+    if (updatedAt) timestamps.push(new Date(updatedAt).getTime());
+  }
+  const minTs = timestamps.length > 0 ? Math.min(...timestamps) : 0;
+  const maxTs = timestamps.length > 1 ? Math.max(...timestamps) - minTs : 1;
+
+  for (const node of classNodes) {
+    const usage = (degreeMap.get(node.id) ?? 0) / maxDegree;
+    const documentation = docPerClass.get(node.id) ?? 0;
+    const complexity = Math.min(1, (complexityRaw.get(node.id) ?? 0) / maxComplexityRaw);
+    const updatedAt = (node.data as { updated_at?: string })?.updated_at;
+    let changeRecency = 0.5;
+    if (updatedAt && maxTs > 0) {
+      const t = new Date(updatedAt).getTime();
+      changeRecency = (t - minTs) / maxTs;
+    }
+
+    result.set(node.id, {
+      complexity,
+      changeRecency,
+      usage,
+      documentation,
+    });
+  }
+
+  return result;
+}

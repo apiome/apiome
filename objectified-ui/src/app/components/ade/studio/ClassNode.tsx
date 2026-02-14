@@ -436,6 +436,10 @@ type ClassNodeData = {
   theme?: ClassNodeTheme; // Custom theme from canvas_metadata
   /** #559: Number of edges connected to this node (source or target) for badge display */
   relationshipCount?: number;
+  /** #560: Heatmap visualization mode (when set, heatmapValue is 0–1) */
+  heatmapMode?: 'off' | 'complexity' | 'changeFrequency' | 'usage' | 'documentation';
+  heatmapValue?: number;
+  heatmapLabel?: string;
 };
 
 function ClassNode({ id, data, selected }: NodeProps) {
@@ -968,6 +972,25 @@ function ClassNode({ id, data, selected }: NodeProps) {
   const isDropTarget = dragTarget === 'node' || dragTarget === 'property';
   const showValidDropOverlay = isDropTarget && !invalidDropReason;
 
+  // #560: Heatmap overlay color (cool = low, warm = high). Value 0–1 → blue/green to orange/red.
+  const heatmapOverlayStyle: React.CSSProperties | null =
+    typedData.heatmapMode && typedData.heatmapMode !== 'off' && typeof typedData.heatmapValue === 'number'
+      ? (() => {
+          const v = Math.max(0, Math.min(1, typedData.heatmapValue));
+          const opacity = 0.2 + v * 0.4;
+          const r = Math.round(59 + (239 - 59) * v);
+          const g = Math.round(130 + (68 - 130) * v);
+          const b = Math.round(246 + (68 - 246) * v);
+          return {
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            borderRadius: '10px',
+            background: `rgba(${r}, ${g}, ${b}, ${opacity})`,
+          };
+        })()
+      : null;
+
   return (
     <div
       ref={nodeRef}
@@ -995,7 +1018,10 @@ function ClassNode({ id, data, selected }: NodeProps) {
         fontSize: '12px',
         position: 'relative',
       }}
+      title={typedData.heatmapLabel}
     >
+      {/* #560: Heatmap overlay (cool → warm by metric value) */}
+      {heatmapOverlayStyle && <div style={{ ...heatmapOverlayStyle, zIndex: 0 }} aria-hidden />}
       {/* #479: Invalid drop indicator - entire node; shows when drop would be duplicate or read-only */}
       {invalidDropReason && (
         <div
