@@ -1,0 +1,41 @@
+name: Objectified REST
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'objectified-rest/package.json'
+  workflow_dispatch:
+
+env:
+  REGISTRY: registry.objectified.dev
+  IMAGE_NAME: objectified-rest
+
+jobs:
+  build-and-push:
+    name: Build and push objectified-rest image
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to registry
+        run: docker login ${{ env.REGISTRY }} -u ${{ env.DOCKER_USERNAME }} -p ${{ env.DOCKER_PASSWORD }}
+
+      - name: Extract metadata and build
+        uses: docker/build-push-action@v6
+        with:
+          context: ./objectified-rest
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

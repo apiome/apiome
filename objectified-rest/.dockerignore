@@ -1,0 +1,41 @@
+# Virtual env and caches
+.venv
+venv
+__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Environment
+.env
+.env.*
+
+# Tests
+test_*.py
+tests/
+
+# Documentation
+docs/
+*.md
+
+# IDE and misc
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI and build
+.github
+Dockerfile
+.dockerignore
+docker-compose*.yml
+uv.lock
