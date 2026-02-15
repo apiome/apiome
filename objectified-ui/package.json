@@ -1,6 +1,6 @@
 {
   "name": "objectified-ui",
-  "version": "0.7.54",
+  "version": "0.7.55",
   "private": true,
   "scripts": {
     "dev": "next dev",
