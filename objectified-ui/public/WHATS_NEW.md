@@ -62,6 +62,7 @@ We continue to improve the platform based on your feedback with improvements and
   - "Impact Analysis" mode: Show all affected classes when changing one
   - Adds upstream/downstream dependency toggles in dependency graph mode
   - Adds dependency path highlighting
+  - Shows dependency metrics per class
 - Paths Improvements:
   - Added API Key security schemes: define header, query, or cookie-based API keys in the Security tab and use them on operations (#410)
   - Added inline variable editor that can click parameters in the header of the path studio

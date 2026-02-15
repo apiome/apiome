@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { BarChart3, ChevronDown, ChevronUp, X, Link2, Unlink, GitBranch, RefreshCw, Layout, Gauge, Lightbulb, LayoutGrid, Box, Layers, FileText, Type } from 'lucide-react';
+import { BarChart3, ChevronDown, ChevronUp, X, Link2, Unlink, GitBranch, RefreshCw, Layout, Gauge, Lightbulb, LayoutGrid, Box, Layers, FileText, Type, Network } from 'lucide-react';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import * as Popover from '@radix-ui/react-popover';
 import { cn } from '../../../../../lib/utils';
@@ -66,6 +66,7 @@ export default function SchemaMetricsPanel({
     classesMissingDocumentation,
     propertiesMissingDocumentation,
     namingCompliance,
+    dependencyMetricsPerClass = [],
   } = metrics;
 
   const hasHubs = hubNames.length > 0;
@@ -550,6 +551,47 @@ export default function SchemaMetricsPanel({
               </p>
             )}
           </div>
+
+          {/* #553: Dependency metrics per class (in-degree, out-degree, betweenness) */}
+          {dependencyMetricsPerClass.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                <Network className="w-3 h-3" />
+                Dependency metrics per class
+              </div>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-2">
+                In = refs into this class; Out = refs from this class; Betweenness = bridge score.
+              </p>
+              <div className="rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden max-h-48 overflow-y-auto">
+                <table className="w-full text-[11px] border-collapse">
+                  <thead className="sticky top-0 bg-gray-50 dark:bg-gray-700/80 text-left">
+                    <tr>
+                      <th className="py-1.5 px-2 font-medium text-gray-600 dark:text-gray-400">Class</th>
+                      <th className="py-1.5 px-2 font-medium text-gray-600 dark:text-gray-400 text-right w-12">In</th>
+                      <th className="py-1.5 px-2 font-medium text-gray-600 dark:text-gray-400 text-right w-12">Out</th>
+                      <th className="py-1.5 px-2 font-medium text-gray-600 dark:text-gray-400 text-right w-14">Between</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...dependencyMetricsPerClass]
+                      .sort((a, b) => b.betweenness - a.betweenness || (b.inDegree + b.outDegree) - (a.inDegree + a.outDegree))
+                      .map((row, i) => (
+                        <tr key={row.classId} className={i % 2 === 0 ? 'bg-white dark:bg-gray-800/50' : 'bg-gray-50/80 dark:bg-gray-700/30'}>
+                          <td className="py-1 px-2 truncate max-w-[120px] text-gray-800 dark:text-gray-200 font-medium" title={row.className}>
+                            {row.className}
+                          </td>
+                          <td className="py-1 px-2 text-right tabular-nums text-gray-600 dark:text-gray-400">{row.inDegree}</td>
+                          <td className="py-1 px-2 text-right tabular-nums text-gray-600 dark:text-gray-400">{row.outDegree}</td>
+                          <td className="py-1 px-2 text-right tabular-nums text-gray-600 dark:text-gray-400">
+                            {row.betweenness.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Layout Quality (#473) */}
           {layoutQuality && (

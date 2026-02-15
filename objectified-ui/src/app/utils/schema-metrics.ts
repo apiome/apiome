@@ -45,6 +45,17 @@ export interface SchemaMetricsResult {
   propertiesMissingDocumentation: { className: string; propertyName: string }[];
   /** Naming convention compliance (#558): camelCase, snake_case, PascalCase breakdown */
   namingCompliance: NamingComplianceResult;
+  /** #553: Per-class dependency metrics (in-degree, out-degree, betweenness) on dependency graph */
+  dependencyMetricsPerClass: DependencyClassMetricsEntry[];
+}
+
+/** #553: One row of dependency metrics for a class (in-degree, out-degree, betweenness). */
+export interface DependencyClassMetricsEntry {
+  classId: string;
+  className: string;
+  inDegree: number;
+  outDegree: number;
+  betweenness: number;
 }
 
 /** Naming convention counts and compliance percentage (#558) */
@@ -160,6 +171,96 @@ function getDegreePerNode(nodes: Node[], edges: Edge[]): Map<string, number> {
     count.set(e.target, (count.get(e.target) ?? 0) + 1);
   }
   return count;
+}
+
+/** #553: Dependency edges are prop-$ref and allOf/anyOf/oneOf (same classification as editor). */
+function isDependencyEdge(e: Edge): boolean {
+  const id = e.id ?? '';
+  return /^(prop-|allOf-|anyOf-|oneOf-)/.test(id);
+}
+
+/**
+ * #553: In-degree and out-degree per node for a directed edge set.
+ * inDegree[v] = number of edges with target v; outDegree[v] = number of edges with source v.
+ */
+function getInOutDegreePerNode(
+  nodeIds: Set<string>,
+  edges: Edge[]
+): { inDegree: Map<string, number>; outDegree: Map<string, number> } {
+  const inDegree = new Map<string, number>();
+  const outDegree = new Map<string, number>();
+  for (const id of nodeIds) {
+    inDegree.set(id, 0);
+    outDegree.set(id, 0);
+  }
+  for (const e of edges) {
+    if (!nodeIds.has(e.source) || !nodeIds.has(e.target)) continue;
+    outDegree.set(e.source, (outDegree.get(e.source) ?? 0) + 1);
+    inDegree.set(e.target, (inDegree.get(e.target) ?? 0) + 1);
+  }
+  return { inDegree, outDegree };
+}
+
+/**
+ * #553: Betweenness centrality (Brandes) for directed unweighted graph.
+ * Returns map nodeId -> betweenness (sum over s,t of fraction of shortest s-t paths passing through node).
+ */
+function computeBetweennessCentrality(
+  adj: Map<string, string[]>,
+  nodeIds: Set<string>
+): Map<string, number> {
+  const betweenness = new Map<string, number>();
+  for (const id of nodeIds) betweenness.set(id, 0);
+
+  const nodes = Array.from(nodeIds);
+  for (const s of nodes) {
+    const S: string[] = [];
+    const P = new Map<string, string[]>();
+    const sigma = new Map<string, number>();
+    const d = new Map<string, number>();
+    for (const id of nodeIds) {
+      P.set(id, []);
+      sigma.set(id, 0);
+      d.set(id, -1);
+    }
+    sigma.set(s, 1);
+    d.set(s, 0);
+    const Q: string[] = [s];
+
+    while (Q.length > 0) {
+      const v = Q.shift()!;
+      S.push(v);
+      for (const w of adj.get(v) ?? []) {
+        if (!nodeIds.has(w)) continue;
+        if (d.get(w)! < 0) {
+          Q.push(w);
+          d.set(w, d.get(v)! + 1);
+        }
+        if (d.get(w) === d.get(v)! + 1) {
+          sigma.set(w, (sigma.get(w) ?? 0) + (sigma.get(v) ?? 0));
+          P.get(w)!.push(v);
+        }
+      }
+    }
+
+    const delta = new Map<string, number>();
+    for (const id of nodeIds) delta.set(id, 0);
+    while (S.length > 0) {
+      const w = S.pop()!;
+      for (const v of P.get(w) ?? []) {
+        const sigmaW = sigma.get(w) ?? 1;
+        const sigmaV = sigma.get(v) ?? 0;
+        delta.set(
+          v,
+          (delta.get(v) ?? 0) + (sigmaW > 0 ? (sigmaV / sigmaW) * (1 + (delta.get(w) ?? 0)) : 0)
+        );
+      }
+      if (w !== s) {
+        betweenness.set(w, (betweenness.get(w) ?? 0) + (delta.get(w) ?? 0));
+      }
+    }
+  }
+  return betweenness;
 }
 
 /**
@@ -351,6 +452,19 @@ export function computeSchemaMetrics(nodes: Node[], edges: Edge[]): SchemaMetric
   const docResult = computeDocumentationCompletion(classNodes);
   const namingCompliance = computeNamingCompliance(classNodes);
 
+  // #553: Dependency metrics per class (in-degree, out-degree, betweenness) on dependency graph only
+  const dependencyEdges = edges.filter(isDependencyEdge);
+  const depAdj = buildDirectedAdjacency(dependencyEdges);
+  const { inDegree: inDegreeMap, outDegree: outDegreeMap } = getInOutDegreePerNode(nodeIds, dependencyEdges);
+  const betweennessMap = computeBetweennessCentrality(depAdj, nodeIds);
+  const dependencyMetricsPerClass: DependencyClassMetricsEntry[] = classNodes.map((n) => ({
+    classId: n.id,
+    className: getNodeName(n),
+    inDegree: inDegreeMap.get(n.id) ?? 0,
+    outDegree: outDegreeMap.get(n.id) ?? 0,
+    betweenness: betweennessMap.get(n.id) ?? 0,
+  }));
+
   return {
     classCount,
     totalProperties,
@@ -371,6 +485,7 @@ export function computeSchemaMetrics(nodes: Node[], edges: Edge[]): SchemaMetric
     classesMissingDocumentation: docResult.classesMissing,
     propertiesMissingDocumentation: docResult.propertiesMissing,
     namingCompliance,
+    dependencyMetricsPerClass,
   };
 }
 

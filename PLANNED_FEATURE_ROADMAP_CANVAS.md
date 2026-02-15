@@ -327,19 +327,6 @@
 
 ### 10. Schema Visualization & Analytics
 
-#### Dependency Visualization 🚧 PARTIAL
-- ✅ Interactive dependency graph overlay on canvas
-- ✅ Highlight circular dependencies with warning indicators
-- ✅ Show dependency depth levels (1st, 2nd, 3rd degree)
-- ✅ "Impact Analysis" mode: Show all affected classes when changing one
-- ✅ Upstream/downstream dependency toggles
-- ✅ Dependency path highlighting (click to trace full chain) — #552
-- 📋 [TODO] Dependency metrics per class (in-degree, out-degree, betweenness)
-
-| Ticket | Feature                                                             |
-|--------|---------------------------------------------------------------------|
-| #553   | Dependency metrics per class (in-degree, out-degree, betweenness)   |
-
 #### Schema Metrics Dashboard 📋 PLANNED
 - 📋 [TODO] Trend indicators (improving/declining metrics)
 
@@ -510,3 +497,14 @@
   - ✅ By change frequency (recently modified = highlighted)
   - ✅ By usage/reference count
   - ✅ By documentation completeness
+
+### 10. Schema Visualization & Analytics
+
+#### Dependency Visualization 🚧 PARTIAL
+- ✅ Interactive dependency graph overlay on canvas
+- ✅ Highlight circular dependencies with warning indicators
+- ✅ Show dependency depth levels (1st, 2nd, 3rd degree)
+- ✅ "Impact Analysis" mode: Show all affected classes when changing one
+- ✅ Upstream/downstream dependency toggles
+- ✅ Dependency path highlighting (click to trace full chain)
+- ✅ Dependency metrics per class (in-degree, out-degree, betweenness) (#553)
