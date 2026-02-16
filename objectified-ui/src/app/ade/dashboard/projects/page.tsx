@@ -273,8 +273,11 @@ const Projects = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const formatDateTime = (dateString: string) => {
+    const d = new Date(dateString);
+    const datePart = d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
+    const timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return `${datePart} ${timePart}`;
   };
 
   const handleLicenseSelect = (identifier: string) => {
@@ -435,19 +438,13 @@ const Projects = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500 dark:text-gray-400" title={new Date(project.created_at).toLocaleString()}>
-                        {new Date(project.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </div>
-                      <div className="text-xs text-gray-400 dark:text-gray-500">
-                        {new Date(project.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                      <div className="text-sm text-gray-500 dark:text-gray-400" title={formatDateTime(project.created_at)}>
+                        {formatDateTime(project.created_at)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500 dark:text-gray-400" title={new Date(project.updated_at).toLocaleString()}>
-                        {new Date(project.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </div>
-                      <div className="text-xs text-gray-400 dark:text-gray-500">
-                        {new Date(project.updated_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                      <div className="text-sm text-gray-500 dark:text-gray-400" title={formatDateTime(project.updated_at)}>
+                        {formatDateTime(project.updated_at)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -556,13 +553,19 @@ const Projects = () => {
               Create New Project
             </DialogTitle>
           </DialogHeader>
-          <Tabs value={createDialogTab} onValueChange={(v) => setCreateDialogTab(v as 'manual' | 'ai')} className="flex-1 flex flex-col min-h-0 mt-4">
-            <TabsList className="grid w-full grid-cols-2 max-w-md">
-              <TabsTrigger value="manual" className="flex items-center gap-2">
+          <Tabs value={createDialogTab} onValueChange={(v) => setCreateDialogTab(v as 'manual' | 'ai')} className="flex-1 flex flex-col min-h-0 mt-0">
+            <TabsList className="w-full h-auto p-0 rounded-none bg-transparent border-b border-gray-200 dark:border-gray-700 justify-start gap-0">
+              <TabsTrigger
+                value="manual"
+                className="flex items-center gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none -mb-px"
+              >
                 <FileEdit className="h-4 w-4" />
                 Create manually
               </TabsTrigger>
-              <TabsTrigger value="ai" className="flex items-center gap-2">
+              <TabsTrigger
+                value="ai"
+                className="flex items-center gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none -mb-px"
+              >
                 <Bot className="h-4 w-4" />
                 Design with AI
               </TabsTrigger>
@@ -749,6 +752,41 @@ const Projects = () => {
             <DialogTitle>Edit Project</DialogTitle>
           </DialogHeader>
           {errorMessage && <Alert variant="error" className="mt-4">{errorMessage}</Alert>}
+          {selectedProject && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 p-3">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Status</div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  {selectedProject.deleted_at ? (
+                    <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400">
+                      <Trash2 className="w-4 h-4" /> Deleted
+                    </span>
+                  ) : selectedProject.enabled ? (
+                    <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Enabled
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-400" /> Disabled
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 p-3">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Created by</div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={selectedProject.creator_name}>{selectedProject.creator_name}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={selectedProject.creator_email}>{selectedProject.creator_email}</div>
+              </div>
+              <div className="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 p-3">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Created</div>
+                <div className="text-sm text-gray-900 dark:text-white">{formatDateTime(selectedProject.created_at)}</div>
+              </div>
+              <div className="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 p-3">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Updated</div>
+                <div className="text-sm text-gray-900 dark:text-white">{formatDateTime(selectedProject.updated_at)}</div>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 divide-x divide-gray-200 dark:divide-gray-700 mt-4">
             {/* Left: Basic Information */}
             <div className="flex flex-col pr-4 lg:pr-6">

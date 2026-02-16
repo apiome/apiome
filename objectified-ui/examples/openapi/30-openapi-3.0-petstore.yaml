@@ -7,8 +7,43 @@ servers:
   - url: https://api.example.com/v1
 paths:
   /pets:
+    parameters:
+      - name: X-Request-ID
+        in: header
+        required: false
+        description: Idempotency or correlation ID
+        schema:
+          type: string
+          format: uuid
     get:
       summary: List all pets
+      operationId: listPets
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of pets to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          required: false
+          description: Number of pets to skip for pagination
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: tags
+          in: query
+          required: false
+          description: Filter by tags (comma-separated)
+          schema:
+            type: array
+            items:
+              type: string
       responses:
         '200':
           description: Success
@@ -18,9 +53,66 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Pet'
+    post:
+      summary: Create a new pet
+      operationId: createPet
+      requestBody:
+        required: true
+        description: Pet to add to the store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                tag:
+                  type: string
+                age:
+                  type: integer
+              required:
+                - name
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
   /pets/{petId}:
     get:
       summary: Get a pet by ID
+      operationId: getPetById
       parameters:
         - name: petId
           in: path
@@ -35,6 +127,74 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Pet'
+        '404':
+          description: Pet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: NOT_FOUND
+                  message:
+                    type: string
+    put:
+      summary: Update a pet by ID
+      operationId: updatePet
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Pet not found
+    delete:
+      summary: Delete a pet
+      operationId: deletePet
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: No content
+        '404':
+          description: Pet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
 components:
   schemas:
     Pet:

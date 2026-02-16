@@ -161,8 +161,10 @@ const ApiKeys = () => {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Never';
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    const d = new Date(dateString);
+    const datePart = d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
+    const timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return `${datePart} ${timePart}`;
   };
 
   const isExpired = (expiresAt: string | null) => {

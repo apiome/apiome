@@ -238,7 +238,7 @@ const Versions = () => {
     const ver = versions.find(v => v.id === versionRecordId);
     if (!ver) { await alertDialog({ message: 'Version not found', variant: 'error' }); return; }
     if (ver.creator_id !== currentUserId && !effectiveIsAdmin) { await alertDialog({ message: 'Only owner or admin can publish', variant: 'warning' }); return; }
-    const confirmed = await confirmDialog({ title: 'Publish Version', message: 'Once published, it cannot be edited.', variant: 'info', confirmLabel: 'Publish', cancelLabel: 'Cancel' });
+    const confirmed = await confirmDialog({ title: 'Publish Version', message: 'Once published, this version will become read-only.  To make any additional edits after publishing, either create a new version, or unpublish this version.\n\nAre you sure?', variant: 'info', confirmLabel: 'Publish', cancelLabel: 'Cancel' });
     if (!confirmed) return;
     try {
       const result = await publishVersion(versionRecordId, currentUserId);
@@ -374,7 +374,12 @@ const Versions = () => {
     requestAnimationFrame(() => { isSyncingScroll.current = false; });
   };
 
-  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const formatDate = (dateString: string) => {
+    const d = new Date(dateString);
+    const datePart = d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
+    const timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return `${datePart} ${timePart}`;
+  };
   const canModify = (version: Version) => version.creator_id === currentUserId || !!effectiveIsAdmin;
 
   const handleRowAction = async (action: string, version: Version) => {

@@ -500,7 +500,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
         </div>
 
         {/* Scrollable Content Area */}
-        <div className="overflow-y-auto py-6 px-6 h-[60vh]">
+        <div className="flex flex-col min-h-0 overflow-y-auto py-6 px-6 h-[60vh]">
           {errorMessage && (
             <Alert variant="error" className="mb-4 flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 shrink-0" />
@@ -1027,10 +1027,12 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
             } else if (currentStep === 'file-upload' && selectedSource === 'git') {
               console.log('Rendering: Git import panel');
               return (
-                <GitImportPanel
-                  userId={userId}
-                  onSpecificationFetched={handleGitSpecificationFetched}
-                />
+                <div className="flex flex-col flex-1 min-h-0">
+                  <GitImportPanel
+                    userId={userId}
+                    onSpecificationFetched={handleGitSpecificationFetched}
+                  />
+                </div>
               );
             } else if (currentStep === 'file-upload' && selectedSource === 'swaggerhub') {
               console.log('Rendering: SwaggerHub import panel');

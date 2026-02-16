@@ -658,13 +658,13 @@ export default function PrimitiveEditorDialog({ primitive, onClose, onSave, onMe
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl h-[90vh] min-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>{primitive ? 'Edit Primitive' : 'Create Primitive'}</DialogTitle>
         </DialogHeader>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
           <button
             onClick={() => setActiveTab('form')}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
@@ -689,7 +689,7 @@ export default function PrimitiveEditorDialog({ primitive, onClose, onSave, onMe
           </button>
         </div>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 pr-[10px] flex-1 min-h-0 overflow-y-auto">
           {validationError && (
             <Alert variant="error">
               <AlertCircle className="h-4 w-4" />
@@ -825,9 +825,9 @@ export default function PrimitiveEditorDialog({ primitive, onClose, onSave, onMe
                     </span>
                   ) : null}
                 </div>
-                <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+                <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden min-h-[60vh]">
                   <MonacoEditor
-                    height="400px"
+                    height="60vh"
                     language="json"
                     theme="vs-dark"
                     value={advancedJson}
@@ -843,7 +843,6 @@ export default function PrimitiveEditorDialog({ primitive, onClose, onSave, onMe
                 {schemaError && <p className="text-xs text-red-600">{schemaError}</p>}
               </div>
               <Alert variant="default">
-                <AlertCircle className="h-4 w-4" />
                 <span>Changes in Advanced mode will override the form. Switch to Form tab to use the visual editor.</span>
               </Alert>
             </div>

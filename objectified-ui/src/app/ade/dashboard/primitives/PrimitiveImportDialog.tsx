@@ -26,7 +26,7 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }
   const [selectedDefs, setSelectedDefs] = useState<Set<string>>(new Set());
   const [parseError, setParseError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [importMethod, setImportMethod] = useState<'file' | 'url' | 'paste'>('file');
+  const [importMethod, setImportMethod] = useState<'fileOrUrl' | 'paste'>('fileOrUrl');
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoadingFile, setIsLoadingFile] = useState(false);
@@ -442,7 +442,7 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl h-[70vh] min-h-[70vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="w-5 h-5" />
@@ -450,103 +450,107 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 flex-1 min-h-0 overflow-y-auto">
           {!showPreview ? (
-            <Tabs value={importMethod} onValueChange={(v) => setImportMethod(v as 'file' | 'url' | 'paste')}>
-              <TabsList className="grid w-full grid-cols-3 mb-4">
-                <TabsTrigger value="file" className="flex items-center gap-2">
-                  <FileJson className="w-4 h-4" />
-                  Upload File
+            <Tabs value={importMethod} onValueChange={(v) => setImportMethod(v as 'fileOrUrl' | 'paste')}>
+              <TabsList className="w-full h-auto p-0 rounded-none bg-transparent border-b border-gray-200 dark:border-gray-700 justify-start gap-0 mb-4">
+                <TabsTrigger
+                  value="fileOrUrl"
+                  className="flex items-center gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none -mb-px"
+                >
+                  <Upload className="w-4 h-4" />
+                  File or URL
                 </TabsTrigger>
-                <TabsTrigger value="url" className="flex items-center gap-2">
-                  <Link className="w-4 h-4" />
-                  From URL
-                </TabsTrigger>
-                <TabsTrigger value="paste" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="paste"
+                  className="flex items-center gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none -mb-px"
+                >
                   <FileCode className="w-4 h-4" />
                   Paste JSON
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="file">
-                <div className="space-y-4">
-                  {!file ? (
-                    <div
-                      className={`
-                        border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-                        transition-colors duration-200
-                        ${isDragging
-                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                          : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'
-                        }
-                      `}
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
-                      <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                        Drag & Drop or Click to Select
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        JSON Schema file (.json, .yaml, .yml) with $defs or definitions
-                      </p>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".json,.yaml,.yml"
-                        className="hidden"
-                        onChange={(e) => {
-                          const selectedFile = e.target.files?.[0];
-                          if (selectedFile) {
-                            handleFileSelect(selectedFile);
+              <TabsContent value="fileOrUrl" className="mt-0">
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <Label className="text-base">Upload file</Label>
+                    {!file ? (
+                      <div
+                        className={`
+                          border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+                          transition-colors duration-200
+                          ${isDragging
+                            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                            : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'
                           }
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <FileJson className="w-8 h-8 text-green-500" />
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white">{file.name}</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {(file.size / 1024).toFixed(1)} KB
-                            </p>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="icon" onClick={clearFile}>
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      {isLoadingFile && (
-                        <p className="text-sm text-indigo-600 dark:text-indigo-400">
-                          Processing file...
+                        `}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
+                        <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                          Drag & Drop or Click to Select
                         </p>
-                      )}
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          JSON Schema file (.json, .yaml, .yml) with $defs or definitions
+                        </p>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept=".json,.yaml,.yml"
+                          className="hidden"
+                          onChange={(e) => {
+                            const selectedFile = e.target.files?.[0];
+                            if (selectedFile) {
+                              handleFileSelect(selectedFile);
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <FileJson className="w-8 h-8 text-green-500" />
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">{file.name}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {(file.size / 1024).toFixed(1)} KB
+                              </p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={clearFile}>
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        {isLoadingFile && (
+                          <p className="text-sm text-indigo-600 dark:text-indigo-400">
+                            Processing file...
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                      <div className="w-full border-t border-gray-200 dark:border-gray-600" />
                     </div>
-                  )}
+                    <div className="relative flex justify-center text-sm">
+                      <span className="bg-white dark:bg-gray-800 px-2 text-gray-500 dark:text-gray-400">or</span>
+                    </div>
+                  </div>
 
-                  {parseError && (
-                    <Alert variant="error">
-                      <AlertCircle className="h-4 w-4" />
-                      <span>{parseError}</span>
-                    </Alert>
-                  )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="url">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Schema URL</Label>
+                  <div className="space-y-4">
+                    <Label htmlFor="schema-url" className="text-base">Fetch from URL</Label>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       Enter the URL of a JSON Schema file to import primitives from
                     </p>
                     <div className="flex gap-2">
                       <Input
+                        id="schema-url"
                         type="url"
                         placeholder="https://example.com/schema.json"
                         value={urlInput}
@@ -581,7 +585,7 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }
                 </div>
               </TabsContent>
 
-              <TabsContent value="paste">
+              <TabsContent value="paste" className="mt-0">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>JSON Schema with $defs or definitions</Label>
@@ -696,10 +700,11 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }
                 setDefinitions({});
                 setSelectedDefs(new Set());
                 setParseError(null);
-                if (importMethod === 'file') {
+                if (importMethod === 'fileOrUrl') {
                   clearFile();
-                } else if (importMethod === 'url') {
                   setUrlInput('');
+                  setSchemaJson('');
+                } else {
                   setSchemaJson('');
                 }
               }}

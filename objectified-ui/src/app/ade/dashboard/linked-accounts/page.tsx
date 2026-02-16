@@ -2,7 +2,7 @@
 
 import { useSession, signIn } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Link as LinkIcon, Check, Key } from 'lucide-react';
+import { Plus, Trash2, Link as LinkIcon, Key } from 'lucide-react';
 import { SiGithub, SiGitlab, SiGoogle, SiAmazon } from 'react-icons/si';
 import {
   Dialog,
@@ -28,7 +28,8 @@ interface LinkedAccount {
   provider_user_id: string;
   provider_email: string;
   provider_username: string | null;
-  access_token?: string | null;
+  /** Last 6 characters of PAT when set (for display only; full token never sent to client) */
+  access_token_suffix?: string | null;
   created_at: string;
   last_login_at: string | null;
 }
@@ -164,7 +165,7 @@ const LinkedAccounts = () => {
       const result = await updatePersonalAccessToken(userId, editingAccountId, patToken);
       const response = JSON.parse(result);
       if (response.success) {
-        setSuccessMessage(`Successfully ${linkedAccounts.find(a => a.id === editingAccountId)?.access_token ? 'updated' : 'added'} Personal Access Token`);
+        setSuccessMessage(`Successfully ${linkedAccounts.find(a => a.id === editingAccountId)?.access_token_suffix ? 'updated' : 'added'} Personal Access Token`);
         await loadLinkedAccounts();
         handleClosePatDialog();
       } else {
@@ -212,9 +213,10 @@ const LinkedAccounts = () => {
   const isProviderLinked = (provider: string) => linkedAccounts.some((account) => account.provider === provider);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
-    });
+    const d = new Date(dateString);
+    const datePart = d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
+    const timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return `${datePart} ${timePart}`;
   };
 
   if (!session) {
@@ -226,141 +228,180 @@ const LinkedAccounts = () => {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      {/* Page Header */}
+    <div className="p-6 max-w-7xl mx-auto">
+      {/* Page Header - same design as Published */}
       <div className="flex items-center gap-4 mb-8">
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/25">
           <LinkIcon className="h-7 w-7 text-white" />
         </div>
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Linked Accounts</h1>
-          <p className="text-gray-500 dark:text-gray-300 mt-1">Link external accounts to enable single sign-on (SSO) authentication</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Link external accounts for single sign-on (SSO) and repository access.</p>
         </div>
       </div>
 
-      {/* Success Message */}
+      {/* Success / Error */}
       {successMessage && <Alert variant="success" className="mb-4" onClose={() => setSuccessMessage('')}>{successMessage}</Alert>}
-
-      {/* Error Message */}
       {errorMessage && <Alert variant="error" className="mb-4" onClose={() => setErrorMessage('')}>{errorMessage}</Alert>}
 
-      {/* Linked Accounts List */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-4 pb-3 border-b border-indigo-100 dark:border-indigo-900/30">
-          <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
-            <Check className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-          </div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Your Linked Accounts</h2>
-        </div>
-
+      {/* Linked Accounts - same list container as Published */}
+      <section className="mb-10">
         {linkedAccounts.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <div className="w-16 h-16 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mx-auto mb-4">
-                <LinkIcon className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div className="p-16 text-center">
+              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                <LinkIcon className="h-10 w-10 text-white" />
               </div>
-              <h3 className="font-semibold text-gray-700 dark:text-gray-200 mb-1">No linked accounts</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Link an external account below to enable SSO authentication</p>
-            </CardContent>
-          </Card>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">No Linked Accounts</h3>
+              <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">Link a provider below to sign in with SSO and manage repository access.</p>
+            </div>
+          </div>
         ) : (
-          <div className="space-y-3">
-            {linkedAccounts.map((account) => {
-              const Icon = getProviderIcon(account.provider);
-              const displayName = getProviderDisplayName(account.provider);
-              const config = providerConfigs[account.provider];
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-700">
+                <thead className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-900 dark:to-gray-800">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Account</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Linked</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last login</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
+                  {linkedAccounts.map((account) => {
+                    const Icon = getProviderIcon(account.provider);
+                    const displayName = getProviderDisplayName(account.provider);
+                    const config = providerConfigs[account.provider];
 
-              return (
-                <Card key={account.id} className="transition-all duration-200 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/10">
-                  <CardContent className="p-5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${config?.color}15 0%, ${config?.color}25 100%)`, border: `1px solid ${config?.color}30` }}>
-                          <Icon size={28} color={config?.color} />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900 dark:text-white">{displayName}</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{account.provider_username || account.provider_email}</p>
-                          <div className="flex gap-2 mt-2 flex-wrap">
-                            <Badge variant="default" className="text-xs">Linked {formatDate(account.created_at)}</Badge>
-                            {account.last_login_at && <Badge variant="success" className="text-xs">Last login: {formatDate(account.last_login_at)}</Badge>}
+                    return (
+                      <tr key={account.id} className="hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all duration-200">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700"
+                              style={{ color: config?.color }}
+                            >
+                              <Icon size={20} />
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold text-gray-900 dark:text-white">{displayName}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">{account.provider_username || account.provider_email}</div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                      <Button variant="destructive" size="sm" onClick={() => handleUnlinkAccount(account)} disabled={isLoading}>
-                        <Trash2 className="h-4 w-4" />
-                        Unlink
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {formatDate(account.created_at)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {account.last_login_at ? formatDate(account.last_login_at) : '—'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <Button variant="outline" size="sm" onClick={() => handleUnlinkAccount(account)} disabled={isLoading} className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300">
+                            <Trash2 className="h-4 w-4" />
+                            Unlink
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Available Providers */}
-      <div>
-        <div className="flex items-center gap-3 mb-4 pb-3 border-b border-purple-100 dark:border-purple-900/30">
-          <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-            <Plus className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-          </div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Available Providers</h2>
-        </div>
+      {/* Available providers */}
+      <section>
+        <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Add a provider</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {Object.values(providerConfigs).map((provider) => {
             const Icon = provider.icon;
             const isLinked = isProviderLinked(provider.name);
             const isAvailable = provider.available;
             const linkedAccount = linkedAccounts.find(a => a.provider === provider.name);
-            const hasPAT = !!linkedAccount?.access_token;
+            const hasPAT = !!linkedAccount?.access_token_suffix;
 
             return (
-              <Card key={provider.name} className={cn("transition-all duration-300", !isAvailable && "opacity-60", isLinked && "border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-900/10", isAvailable && "hover:-translate-y-0.5 hover:shadow-lg")}>
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${provider.color}10 0%, ${provider.color}20 100%)`, border: `1px solid ${provider.color}25` }}>
-                        <Icon size={24} color={provider.color} />
+              <Card
+                key={provider.name}
+                className={cn(
+                  'transition-colors',
+                  !isAvailable && 'opacity-50',
+                  isAvailable && 'hover:border-gray-300 dark:hover:border-gray-600'
+                )}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700"
+                        style={{ color: provider.color }}
+                      >
+                        <Icon size={20} />
                       </div>
-                      <div>
-                        <p className="font-bold text-gray-900 dark:text-white">{provider.displayName}</p>
-                        {!isAvailable && <Badge variant="secondary" className="text-xs mt-0.5">Coming soon</Badge>}
-                        {hasPAT && <Badge variant="warning" className="text-xs mt-0.5"><Key className="h-3 w-3 mr-1" />PAT Active</Badge>}
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 dark:text-white">{provider.displayName}</p>
+                        <div className="mt-0.5 flex flex-wrap gap-1.5">
+                          {!isAvailable && <Badge variant="secondary" className="text-xs">Coming soon</Badge>}
+                          {isLinked && <Badge variant="success" className="text-xs">Linked</Badge>}
+                          {hasPAT && (
+                            <Badge variant="secondary" className="text-xs font-mono">
+                              <Key className="h-3 w-3 mr-0.5 inline" />
+                              PAT ••••••{linkedAccount?.access_token_suffix}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    {isLinked ? (
-                      <Badge variant="success" className="text-xs font-bold"><Check className="h-3 w-3 mr-1" />Linked</Badge>
-                    ) : (
-                      <Button variant="outline" size="sm" onClick={() => handleLinkAccount(provider.name)} disabled={isLoading || !isAvailable}>
-                        <Plus className="h-4 w-4" />Link
+                    {isLinked ? null : (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleLinkAccount(provider.name)}
+                        disabled={isLoading || !isAvailable}
+                        className="shrink-0"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Link
                       </Button>
                     )}
                   </div>
 
-                  {/* Personal Access Token Section */}
+                  {/* PAT for GitHub/GitLab when linked */}
                   {(provider.name === 'github' || provider.name === 'gitlab') && isAvailable && isLinked && (
-                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                          <Key className="h-3.5 w-3.5 text-amber-500" />Personal Access Token
-                        </span>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => handleOpenPatDialog(provider.name, linkedAccount?.id)} disabled={isLoading} className="text-xs h-7 px-2 border-amber-300 text-amber-600 hover:bg-amber-50">
-                            <Key className="h-3 w-3" />{linkedAccount?.access_token ? 'Update' : 'Add'} PAT
-                          </Button>
-                          {linkedAccount?.access_token && (
-                            <Button variant="destructive" size="sm" onClick={() => handleRemovePatToken(provider.name, linkedAccount.id)} disabled={isLoading} className="text-xs h-7 px-2">
-                              <Trash2 className="h-3 w-3" />Remove
-                            </Button>
-                          )}
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                          <Key className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400 shrink-0" />
+                          Personal Access Token
                         </div>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          {linkedAccount?.access_token_suffix ? (
+                            <>PAT set (ends in <span className="font-mono font-medium text-gray-700 dark:text-gray-300">••••••{linkedAccount.access_token_suffix}</span>).</>
+                          ) : (
+                            'Optional: add a PAT for direct repo access.'
+                          )}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {linkedAccount?.access_token ? 'PAT configured for direct repository access' : 'Add a PAT for direct repository access'}
-                      </p>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenPatDialog(provider.name, linkedAccount?.id)}
+                          disabled={isLoading}
+                          className="text-xs h-7"
+                        >
+                          {linkedAccount?.access_token_suffix ? 'Update' : 'Add'}
+                        </Button>
+                        {linkedAccount?.access_token_suffix && (
+                          <Button variant="ghost" size="sm" onClick={() => handleRemovePatToken(provider.name, linkedAccount.id)} disabled={isLoading} className="text-xs h-7 text-red-600 hover:text-red-700 dark:text-red-400">
+                            Remove
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -369,49 +410,41 @@ const LinkedAccounts = () => {
           })}
         </div>
 
-        {/* Info Alert */}
         <Alert variant="info" className="mt-6">
-          <strong>Note:</strong> You can link multiple provider accounts to your Objectified account.
-          Once linked, you can sign in using any of these providers.
+          You can link multiple providers. Once linked, you can sign in with any of them.
         </Alert>
-      </div>
+      </section>
 
       {/* Personal Access Token Dialog */}
       <Dialog open={patDialogOpen} onOpenChange={(open) => !open && handleClosePatDialog()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30">
-                <Key className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-              </div>
-              {linkedAccounts.find(a => a.id === editingAccountId)?.access_token ? 'Update' : 'Add'} Personal Access Token
-            </DialogTitle>
+            <DialogTitle>{linkedAccounts.find(a => a.id === editingAccountId)?.access_token_suffix ? 'Update' : 'Add'} Personal Access Token</DialogTitle>
             <DialogDescription>
-              {patProvider && `${providerConfigs[patProvider]?.displayName} • ${linkedAccounts.find(a => a.id === editingAccountId)?.provider_username || linkedAccounts.find(a => a.id === editingAccountId)?.provider_email}`}
+              {patProvider && `${providerConfigs[patProvider]?.displayName} · ${linkedAccounts.find(a => a.id === editingAccountId)?.provider_username || linkedAccounts.find(a => a.id === editingAccountId)?.provider_email}`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="patToken">Personal Access Token</Label>
-              <Input id="patToken" type="password" value={patToken} onChange={(e) => setPatToken(e.target.value)} placeholder="Enter your token" autoFocus />
-              <p className="text-xs text-gray-500 dark:text-gray-400">The token used to authenticate with {providerConfigs[patProvider]?.displayName || 'the provider'}'s API</p>
+              <Label htmlFor="patToken">Token</Label>
+              <Input id="patToken" type="password" value={patToken} onChange={(e) => setPatToken(e.target.value)} placeholder="Paste your token" autoFocus />
+              <p className="text-xs text-gray-500 dark:text-gray-400">Used to authenticate with {providerConfigs[patProvider]?.displayName || 'the provider'}'s API.</p>
             </div>
-
             {patProvider === 'github' && (
               <Alert variant="info">
-                <strong>Required GitHub scopes:</strong> repo (or public_repo), read:org, read:user, user:email
+                <strong>GitHub scopes:</strong> repo (or public_repo), read:org, read:user, user:email
               </Alert>
             )}
             {patProvider === 'gitlab' && (
               <Alert variant="info">
-                <strong>Required GitLab scopes:</strong> read_api, read_repository, read_user
+                <strong>GitLab scopes:</strong> read_api, read_repository, read_user
               </Alert>
             )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={handleClosePatDialog}>Cancel</Button>
-            <Button onClick={handleSavePatToken} disabled={isLoading} className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600">
-              {linkedAccounts.find(a => a.id === editingAccountId)?.access_token ? 'Update Token' : 'Add Token'}
+            <Button onClick={handleSavePatToken} disabled={isLoading}>
+              {linkedAccounts.find(a => a.id === editingAccountId)?.access_token_suffix ? 'Update token' : 'Add token'}
             </Button>
           </DialogFooter>
         </DialogContent>

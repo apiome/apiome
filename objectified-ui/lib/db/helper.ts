@@ -2033,8 +2033,9 @@ export async function createSignupRequest(name: string, email: string, password:
 export async function getLinkedAccountsForUser(userId: string) {
   try {
     const result = await connectionPool.query(
-      `SELECT id, provider, provider_user_id, provider_email, provider_username, 
-              access_token, created_at, last_login_at
+      `SELECT id, provider, provider_user_id, provider_email, provider_username,
+              (CASE WHEN access_token IS NOT NULL THEN RIGHT(access_token, 6) ELSE NULL END) AS access_token_suffix,
+              created_at, last_login_at
        FROM odb.external_auth_providers
        WHERE user_id = $1
        ORDER BY created_at DESC`,

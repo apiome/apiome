@@ -250,10 +250,10 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col flex-1 min-h-0 gap-4">
       {/* Error Message */}
       {errorMessage && (
-        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+        <div className="flex-shrink-0 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
             <div className="text-sm text-red-700 dark:text-red-300">{errorMessage}</div>
@@ -261,8 +261,8 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
         </div>
       )}
 
-      {/* Three-Column Browser */}
-      <div className="flex h-[400px] border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
+      {/* Three-Column Browser - fills remaining form height */}
+      <div className="flex flex-1 min-h-0 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
         {/* Column 1: Accounts */}
         <div className="w-1/3 min-w-[200px] max-w-[300px] border-r border-gray-200 dark:border-gray-700 flex flex-col min-h-0">
           <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex-shrink-0">
@@ -486,7 +486,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
 
       {/* File Metadata Preview */}
       {fetchedContent && fileMetadata && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex-shrink-0 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <FileCode className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             File Preview: {fetchedFilename}
