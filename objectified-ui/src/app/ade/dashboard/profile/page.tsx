@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { User, Mail, Hash, Clock, Building2, Edit2, Key } from 'lucide-react';
+import { User, Mail, Hash, Clock, Building2, Edit2, Key, Shield } from 'lucide-react';
 import { useState } from 'react';
 import {
   Dialog,
@@ -15,6 +15,7 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Label } from '../../../components/ui/Label';
 import { Alert } from '../../../components/ui/Alert';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../../components/ui/Card';
 import { updateUserName, updateUserPassword } from '../../../../../lib/db/helper';
 
 const Profile = () => {
@@ -24,7 +25,6 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Password change state
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -43,23 +43,16 @@ const Profile = () => {
       setErrorMessage('Name cannot be empty');
       return;
     }
-
     setIsLoading(true);
     setErrorMessage('');
-
     try {
       const userId = (session?.user as any)?.user_id;
       const result = await updateUserName(userId, editedName.trim());
       const response = JSON.parse(result);
-
       if (response.success) {
-        // Update the session with the new name
         await update({
           ...session,
-          user: {
-            ...session?.user,
-            name: editedName.trim()
-          }
+          user: { ...session?.user, name: editedName.trim() },
         });
         setShowEditDialog(false);
       } else {
@@ -81,36 +74,30 @@ const Profile = () => {
   };
 
   const handleSavePassword = async () => {
-    // Validate inputs
     if (!currentPassword) {
       setPasswordError('Please enter your current password');
       return;
     }
-
     if (!newPassword) {
       setPasswordError('Please enter a new password');
       return;
     }
-
     if (newPassword !== confirmPassword) {
       setPasswordError('New passwords do not match');
       return;
     }
-
     setIsLoading(true);
     setPasswordError('');
-
     try {
       const userId = (session?.user as any)?.user_id;
       const result = await updateUserPassword(userId, currentPassword, newPassword);
       const response = JSON.parse(result);
-
       if (response.success) {
         setShowPasswordDialog(false);
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
-        setSuccessMessage('Password changed successfully!');
+        setSuccessMessage('Password changed successfully.');
       } else {
         setPasswordError(response.error || 'Failed to update password');
       }
@@ -123,8 +110,11 @@ const Profile = () => {
 
   if (!session) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-64">
-        <p className="text-gray-500 dark:text-gray-400">Loading profile...</p>
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="flex flex-col items-center justify-center min-h-[320px] gap-4">
+          <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading profile…</p>
+        </div>
       </div>
     );
   }
@@ -132,181 +122,174 @@ const Profile = () => {
   const { user, expires } = session;
   const expiryDate = new Date(expires);
 
+  const InfoRow = ({
+    icon: Icon,
+    iconClassName,
+    label,
+    value,
+    mono,
+    action,
+  }: {
+    icon: React.ElementType;
+    iconClassName: string;
+    label: string;
+    value: React.ReactNode;
+    mono?: boolean;
+    action?: React.ReactNode;
+  }) => (
+    <div className="flex items-start gap-4 py-4 first:pt-0 last:pb-0 border-b border-gray-100 dark:border-gray-700/50 last:border-0">
+      <div className={`rounded-lg p-2.5 flex-shrink-0 ${iconClassName}`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">{label}</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className={mono ? 'text-sm font-mono text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 px-2.5 py-1.5 rounded-md break-all' : 'text-base font-medium text-gray-900 dark:text-white'}>
+            {value}
+          </p>
+          {action}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      {/* Page Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-            <User className="h-7 w-7 text-white" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Profile</h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
-              View and manage your account information
-            </p>
-          </div>
+    <div className="p-6 max-w-7xl mx-auto">
+      {/* Page header */}
+      <div className="flex items-center gap-4 mb-8">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+          <User className="h-7 w-7 text-white" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Profile</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            Manage your account and security settings
+          </p>
         </div>
       </div>
 
-      {/* Success Message */}
       {successMessage && (
         <Alert variant="success" className="mb-6" onClose={() => setSuccessMessage('')}>
           {successMessage}
         </Alert>
       )}
 
-      {/* Profile Details Card */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div className="px-8 py-8 space-y-6">
-          {/* Name */}
-          <div className="flex items-start space-x-5 p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all duration-200 -mx-4">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl p-3.5 shadow-sm">
-              <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div className="flex-1">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                Full Name
-              </label>
-              <div className="flex items-center gap-3 mt-1.5">
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {user?.name || 'Not provided'}
-                </p>
+      <div className="space-y-6">
+        {/* Account card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-indigo-500" />
+              Account
+            </CardTitle>
+            <CardDescription>Your identity and session information</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-0">
+            <InfoRow
+              icon={User}
+              iconClassName="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+              label="Full name"
+              value={user?.name || 'Not set'}
+              action={
                 <button
                   onClick={handleEditClick}
-                  className="p-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg cursor-pointer transition-all duration-200 group"
+                  className="p-1.5 rounded-md hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                   title="Edit name"
                 >
-                  <Edit2 className="h-4 w-4 text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
+                  <Edit2 className="h-4 w-4" />
                 </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="border-t border-gray-100 dark:border-gray-700/50"></div>
-
-          {/* Email */}
-          <div className="flex items-start space-x-5 p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all duration-200 -mx-4">
-            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/30 rounded-xl p-3.5 shadow-sm">
-              <Mail className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div className="flex-1">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                Email Address
-              </label>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white mt-1.5">
-                {user?.email || 'Not provided'}
-              </p>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="border-t border-gray-100 dark:border-gray-700/50"></div>
-
-          {/* User ID */}
-          <div className="flex items-start space-x-5 p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all duration-200 -mx-4">
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-xl p-3.5 shadow-sm">
-              <Hash className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-            </div>
-            <div className="flex-1">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                User ID
-              </label>
-              <p className="text-sm font-mono text-gray-700 dark:text-gray-300 mt-1.5 break-all bg-gray-50 dark:bg-gray-900/50 px-3 py-2 rounded-lg">
-                {(user as any)?.user_id || 'Not available'}
-              </p>
-            </div>
-          </div>
-
-          {/* Current Tenant ID */}
-          {(user as any)?.current_tenant_id && (
-            <>
-              {/* Divider */}
-              <div className="border-t border-gray-100 dark:border-gray-700/50"></div>
-
-              <div className="flex items-start space-x-5 p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all duration-200 -mx-4">
-                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/30 dark:to-indigo-800/30 rounded-xl p-3.5 shadow-sm">
-                  <Building2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                </div>
-                <div className="flex-1">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                    Current Tenant ID
-                  </label>
-                  <p className="text-sm font-mono text-gray-700 dark:text-gray-300 mt-1.5 break-all bg-gray-50 dark:bg-gray-900/50 px-3 py-2 rounded-lg">
-                    {(user as any)?.current_tenant_id}
-                  </p>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Divider */}
-          <div className="border-t border-gray-100 dark:border-gray-700/50"></div>
-
-          {/* Session Expiry */}
-          <div className="flex items-start space-x-5 p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all duration-200 -mx-4">
-            <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 rounded-xl p-3.5 shadow-sm">
-              <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div className="flex-1">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                Session Expiration
-              </label>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white mt-1.5">
-                {expiryDate.toLocaleString()}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {expiryDate.toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer Actions */}
-        <div className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-900/50 dark:to-gray-800/50 px-8 py-5 border-t border-gray-100 dark:border-gray-700/50">
-          <div className="flex justify-end space-x-3">
-            <Button onClick={handleEditClick}>
-              <Edit2 className="h-4 w-4" />
-              Edit Name
+              }
+            />
+            <InfoRow
+              icon={Mail}
+              iconClassName="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+              label="Email"
+              value={user?.email || 'Not set'}
+            />
+            <InfoRow
+              icon={Hash}
+              iconClassName="bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400"
+              label="User ID"
+              value={(user as any)?.user_id ?? '—'}
+              mono
+            />
+            {(user as any)?.current_tenant_id && (
+              <InfoRow
+                icon={Building2}
+                iconClassName="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                label="Current tenant"
+                value={(user as any).current_tenant_id}
+                mono
+              />
+            )}
+            <InfoRow
+              icon={Clock}
+              iconClassName="bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+              label="Session expires"
+              value={
+                <>
+                  {expiryDate.toLocaleString()}
+                  <span className="block text-sm font-normal text-gray-500 dark:text-gray-400 mt-0.5">
+                    {expiryDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  </span>
+                </>
+              }
+            />
+          </CardContent>
+          <CardFooter className="flex flex-wrap gap-2 border-t border-gray-100 dark:border-gray-700/50 pt-6">
+            <Button variant="outline" size="sm" onClick={handleEditClick}>
+              <Edit2 className="h-4 w-4 mr-2" />
+              Edit name
             </Button>
-            <Button variant="success" onClick={handlePasswordChangeClick}>
-              <Key className="h-4 w-4" />
-              Change Password
+          </CardFooter>
+        </Card>
+
+        {/* Security card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-emerald-500" />
+              Security
+            </CardTitle>
+            <CardDescription>Password and account security</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Use a strong, unique password. Change it periodically or if you suspect it has been compromised.
+            </p>
+          </CardContent>
+          <CardFooter className="border-t border-gray-100 dark:border-gray-700/50 pt-6">
+            <Button size="sm" onClick={handlePasswordChangeClick}>
+              <Key className="h-4 w-4 mr-2" />
+              Change password
             </Button>
-          </div>
-        </div>
+          </CardFooter>
+        </Card>
       </div>
 
-      {/* Edit Name Dialog */}
+      {/* Edit name dialog */}
       <Dialog open={showEditDialog} onOpenChange={(open) => !isLoading && setShowEditDialog(open)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Name</DialogTitle>
-            <DialogDescription>
-              Update your display name below.
-            </DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-900/40">
+                <Edit2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              Edit name
+            </DialogTitle>
+            <DialogDescription>Update your display name.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {errorMessage && (
-              <Alert variant="error">
-                {errorMessage}
-              </Alert>
-            )}
+            {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">Full name</Label>
               <Input
                 id="name"
                 value={editedName}
                 onChange={(e) => setEditedName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSaveName()}
                 disabled={isLoading}
-                placeholder="Enter your name"
+                placeholder="Your name"
                 autoFocus
               />
             </div>
@@ -316,40 +299,38 @@ const Profile = () => {
               Cancel
             </Button>
             <Button onClick={handleSaveName} disabled={isLoading}>
-              {isLoading ? 'Saving...' : 'Save'}
+              {isLoading ? 'Saving…' : 'Save'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Change Password Dialog */}
+      {/* Change password dialog */}
       <Dialog open={showPasswordDialog} onOpenChange={(open) => !isLoading && setShowPasswordDialog(open)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Change Password</DialogTitle>
-            <DialogDescription>
-              Enter your current password and choose a new one.
-            </DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
+                <Key className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              Change password
+            </DialogTitle>
+            <DialogDescription>Enter your current password and choose a new one.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {passwordError && (
-              <Alert variant="error">
-                {passwordError}
-              </Alert>
-            )}
+            {passwordError && <Alert variant="error">{passwordError}</Alert>}
             <Alert variant="info">
               <div>
-                <p className="font-medium mb-2">Password must contain:</p>
-                <ul className="list-disc list-inside text-sm space-y-1">
+                <p className="font-medium mb-2">Password requirements</p>
+                <ul className="list-disc list-inside text-sm space-y-1 text-gray-600 dark:text-gray-400">
                   <li>At least 8 characters</li>
-                  <li>One uppercase letter</li>
-                  <li>One lowercase letter</li>
+                  <li>One uppercase and one lowercase letter</li>
                   <li>One number or special character</li>
                 </ul>
               </div>
             </Alert>
             <div className="space-y-2">
-              <Label htmlFor="currentPassword">Current Password</Label>
+              <Label htmlFor="currentPassword">Current password</Label>
               <Input
                 id="currentPassword"
                 type="password"
@@ -360,7 +341,7 @@ const Profile = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="newPassword">New Password</Label>
+              <Label htmlFor="newPassword">New password</Label>
               <Input
                 id="newPassword"
                 type="password"
@@ -370,7 +351,7 @@ const Profile = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Label htmlFor="confirmPassword">Confirm new password</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -386,7 +367,7 @@ const Profile = () => {
               Cancel
             </Button>
             <Button onClick={handleSavePassword} disabled={isLoading}>
-              {isLoading ? 'Changing...' : 'Change Password'}
+              {isLoading ? 'Updating…' : 'Change password'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -396,4 +377,3 @@ const Profile = () => {
 };
 
 export default Profile;
-
