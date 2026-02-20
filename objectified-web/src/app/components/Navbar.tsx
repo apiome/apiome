@@ -56,6 +56,12 @@ export function Navbar() {
             >
               For Teams
             </Link>
+            <Link
+              href="/pricing"
+              className="hidden rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 sm:inline-flex"
+            >
+              Pricing
+            </Link>
 
             {/* Theme Toggle */}
             <button

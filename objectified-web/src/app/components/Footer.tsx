@@ -112,6 +112,14 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link
+                  href="/pricing"
+                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                >
+                  Pricing
+                </Link>
+              </li>
+              <li>
                 <a
                   href="https://browse.objectified.dev"
                   target="_blank"
