@@ -63,9 +63,13 @@ function getInitialFormData(schema: Record<string, unknown>): Record<string, unk
   const out: Record<string, unknown> = {};
   for (const [key, propSchema] of Object.entries(props)) {
     if (typeof propSchema !== 'object' || propSchema === null) continue;
-    const def = propSchema.default;
+    // Prefer default, then const (single allowed value); deep-clone objects/arrays so form state is independent
+    const def = propSchema.default !== undefined ? propSchema.default : propSchema.const;
     if (def !== undefined) {
-      out[key] = def;
+      out[key] =
+        typeof def === 'object' && def !== null
+          ? JSON.parse(JSON.stringify(def))
+          : def;
       continue;
     }
     const type = getPropertyType(propSchema);
@@ -128,8 +132,9 @@ export default function InsertStubModal({
         if (data.success && data.schema) {
           const s = data.schema as Record<string, unknown>;
           setSchema(s);
-          setFormData(getInitialFormData(s));
-          setJsonText(JSON.stringify(getInitialFormData(s), null, 2));
+          const initial = getInitialFormData(s);
+          setFormData(initial);
+          setJsonText(JSON.stringify(initial, null, 2));
         } else {
           setSchemaError(data.error ?? 'Failed to load schema');
         }
