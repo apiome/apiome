@@ -54,9 +54,28 @@ function buildClassSkeletonSystem(options: {
   return CLASS_SKELETON_SYSTEM + extra;
 }
 
+const DATA_QUERY_SYSTEM = `You are an expert at helping users query and search structured data. The user is asking questions about data stored in tables (each table corresponds to a class/schema in their version). Your job is to:
+
+1. Interpret their natural language question.
+2. Suggest how to find the data: e.g. which table(s) to look at, what field or criteria might match (e.g. "search for records where name contains X", "filter by status = active").
+3. If they ask for something that would require a specific query or filter, describe the filter or search in plain language and optionally as a simple JSON structure (e.g. { "field": "name", "op": "contains", "value": "..." }).
+
+You do NOT have direct access to run queries. You are assisting the user to formulate their search. Be concise. If the user's question is ambiguous, ask for clarification. Vectorization and semantic search may be added later; for now suggest keyword or field-based search.`;
+
+function buildDataQuerySystem(options: { tableNames?: string[]; currentTableName?: string }): string {
+  let s = DATA_QUERY_SYSTEM;
+  if (options.tableNames?.length) {
+    s += `\n\n# Available tables in this version\n${options.tableNames.join(', ')}`;
+  }
+  if (options.currentTableName) {
+    s += `\n\n# Table currently selected by the user\n${options.currentTableName}`;
+  }
+  return s;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { model, messages, task, existingClassNames, existingProperties } = await request.json();
+    const { model, messages, task, existingClassNames, existingProperties, tableNames, currentTableName } = await request.json();
 
     if (!model || !messages || !Array.isArray(messages)) {
       return new Response(
@@ -66,6 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     const isClassSkeleton = task === 'class_skeleton';
+    const isDataQuery = task === 'data_query';
 
     // Create a system message to guide the LLM
     const systemContent = isClassSkeleton
@@ -73,7 +93,12 @@ export async function POST(request: NextRequest) {
           existingClassNames: Array.isArray(existingClassNames) ? existingClassNames : undefined,
           existingProperties: Array.isArray(existingProperties) ? existingProperties : undefined,
         })
-      : `You are an expert API designer and OpenAPI specification generator. Your task is to help users create OpenAPI 3.1.0 specifications based on their natural language descriptions.
+      : isDataQuery
+        ? buildDataQuerySystem({
+            tableNames: Array.isArray(tableNames) ? tableNames : undefined,
+            currentTableName: typeof currentTableName === 'string' ? currentTableName : undefined,
+          })
+        : `You are an expert API designer and OpenAPI specification generator. Your task is to help users create OpenAPI 3.1.0 specifications based on their natural language descriptions.
 
 # Rules
 

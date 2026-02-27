@@ -22,7 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Control Panel", href: "/ade/dashboard" },
   { label: "Designer", href: "/ade/studio" },
   { label: "Browser", href: "https://browse.objectified.dev", opensNewBrowser: true },
-  { label: "Database", href: "/ade/database", enabled: false },
+  { label: "Database", href: "/ade/database", enabled: true },
   { label: "ETL", href: "/ade/etl", enabled: false },
   { label: "Explorer", href: "/ade/database/explorer", enabled: false },
 ];
