@@ -5,6 +5,7 @@ from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import register_adapter, AsIs, adapt
 from typing import Optional, List, Dict, Any
 from .config import settings
+from .jsonschema_generator import generate_class_jsonschema_spec
 
 
 class Database:
@@ -1336,7 +1337,7 @@ class Database:
             raise e
 
     def publish_version(self, version_record_id: str, tenant_id: str, user_id: str, visibility: str = "private") -> Optional[Dict[str, Any]]:
-        """Publish a version (only owner or tenant admin can publish)."""
+        """Publish a version (only owner or tenant admin can publish). Captures class schemas to odb.class_schema."""
         query = """
             UPDATE odb.versions v
             SET published = true,
@@ -1365,14 +1366,53 @@ class Database:
             with conn.cursor() as cursor:
                 cursor.execute(query, (visibility, version_record_id, tenant_id, user_id, user_id))
                 result = cursor.fetchone()
+                if result:
+                    # Capture frozen JSON Schema 2020-12 per class into class_schema
+                    cursor.execute("""
+                        SELECT v.version_id, p.slug AS project_slug, t.slug AS tenant_slug
+                        FROM odb.versions v
+                        JOIN odb.projects p ON v.project_id = p.id
+                        JOIN odb.tenants t ON p.tenant_id = t.id
+                        WHERE v.id = %s
+                    """, (version_record_id,))
+                    slug_row = cursor.fetchone()
+                    if slug_row:
+                        classes = self.get_classes_with_properties_and_tags_for_version(version_record_id)
+                        for class_data in classes:
+                            schema_dict = generate_class_jsonschema_spec(
+                                slug_row['tenant_slug'],
+                                slug_row['project_slug'],
+                                slug_row['version_id'],
+                                class_data,
+                                class_data.get('properties', []),
+                            )
+                            schema_json = json.dumps(schema_dict)
+                            cursor.execute("""
+                                INSERT INTO odb.class_schema (version_id, class_id, schema, updated_at)
+                                VALUES (%s, %s, %s::jsonb, CURRENT_TIMESTAMP)
+                                ON CONFLICT (version_id, class_id)
+                                DO UPDATE SET schema = EXCLUDED.schema, updated_at = CURRENT_TIMESTAMP
+                            """, (version_record_id, class_data['id'], schema_json))
                 conn.commit()
                 return result
         except Exception as e:
             conn.rollback()
             raise e
 
+    def version_has_data_records(self, version_record_id: str) -> bool:
+        """Return True if any data_record exists for class_schema rows belonging to this version."""
+        query = """
+            SELECT 1
+            FROM odb.data_record dr
+            JOIN odb.class_schema cs ON dr.class_schema_id = cs.id
+            WHERE cs.version_id = %s
+            LIMIT 1
+        """
+        results = self.execute_query(query, (version_record_id,))
+        return len(results) > 0
+
     def unpublish_version(self, version_record_id: str, tenant_id: str, user_id: str) -> Optional[Dict[str, Any]]:
-        """Unpublish a version (only owner or tenant admin can unpublish)."""
+        """Unpublish a version (only owner or tenant admin can unpublish). Call version_has_data_records before this to block when data exists."""
         query = """
             UPDATE odb.versions v
             SET published = false,

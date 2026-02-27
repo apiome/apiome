@@ -24,8 +24,6 @@ import {
   createVersion,
   updateVersion,
   deleteVersion,
-  publishVersion,
-  unpublishVersion,
   getClassesForVersion,
   getPropertiesForClass,
   getTenantsAdministratedByUser
@@ -248,9 +246,18 @@ const Versions = () => {
 
   const handlePublishConfirm = async () => {
     if (!publishVersionId) return;
+    const version = versions.find((v) => v.id === publishVersionId);
+    if (!version) {
+      await alertDialog({ message: 'Version not found', variant: 'error' });
+      return;
+    }
     try {
-      const result = await publishVersion(publishVersionId, currentUserId, publishVisibility);
-      const response = JSON.parse(result);
+      const res = await fetch(`/api/versions/${publishVersionId}/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: version.project_id, visibility: publishVisibility }),
+      });
+      const response = await res.json();
       if (response.success) {
         setShowPublishDialog(false);
         setPublishVersionId(null);
@@ -258,23 +265,27 @@ const Versions = () => {
       } else {
         await alertDialog({ message: response.error || 'Failed to publish', variant: 'error' });
       }
-    } catch (error: any) {
-      await alertDialog({ message: error.message || 'An error occurred', variant: 'error' });
+    } catch (error: unknown) {
+      await alertDialog({ message: error instanceof Error ? error.message : 'An error occurred', variant: 'error' });
     }
   };
 
   const handleUnpublish = async (versionRecordId: string) => {
-    const ver = versions.find(v => v.id === versionRecordId);
+    const ver = versions.find((v) => v.id === versionRecordId);
     if (!ver) { await alertDialog({ message: 'Version not found', variant: 'error' }); return; }
     if (ver.creator_id !== currentUserId && !effectiveIsAdmin) { await alertDialog({ message: 'Only owner or admin can unpublish', variant: 'warning' }); return; }
     const confirmed = await confirmDialog({ title: 'Unpublish Version', message: 'Best practice is to keep it published. Are you sure?', variant: 'danger', confirmLabel: 'Unpublish', cancelLabel: 'Cancel' });
     if (!confirmed) return;
     try {
-      const result = await unpublishVersion(versionRecordId, currentUserId);
-      const response = JSON.parse(result);
+      const res = await fetch(`/api/versions/${versionRecordId}/unpublish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: ver.project_id }),
+      });
+      const response = await res.json();
       if (response.success) await loadVersions();
       else await alertDialog({ message: response.error || 'Failed to unpublish', variant: 'error' });
-    } catch (error: any) { await alertDialog({ message: error.message || 'An error occurred', variant: 'error' }); }
+    } catch (error: unknown) { await alertDialog({ message: error instanceof Error ? error.message : 'An error occurred', variant: 'error' }); }
   };
 
   const handleDelete = async (versionRecordId: string) => {

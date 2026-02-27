@@ -681,6 +681,22 @@ export async function publishVersion(versionRecordId: string, userId: string, vi
 
 export async function unpublishVersion(versionRecordId: string, userId: string) {
   try {
+    const dataCheck = await connectionPool.query(
+      `SELECT 1
+       FROM odb.data_record dr
+       JOIN odb.class_schema cs ON dr.class_schema_id = cs.id
+       WHERE cs.version_id = $1
+       LIMIT 1`,
+      [versionRecordId]
+    );
+    if (dataCheck.rowCount && dataCheck.rowCount > 0) {
+      return JSON.stringify({
+        success: false,
+        error: 'This version has data records and cannot be unpublished. Create a new version or a new minor version to make changes.',
+        code: 'VERSION_HAS_DATA',
+      });
+    }
+
     const result = await connectionPool.query(
       `UPDATE odb.versions v
        SET published = false, published_at = NULL, updated_at = CURRENT_TIMESTAMP

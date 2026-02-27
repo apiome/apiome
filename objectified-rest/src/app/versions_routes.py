@@ -434,6 +434,16 @@ async def unpublish_version(
             detail="Version is not published"
         )
 
+    # Block unpublish if any data_record exists for this version's class schemas
+    if db.version_has_data_records(version_record_id):
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "VERSION_HAS_DATA",
+                "message": "This version has data records and cannot be unpublished. Create a new version or a new minor version to make changes."
+            }
+        )
+
     # Get user_id from auth data
     user_id = get_authenticated_user_id(auth_data)
     if not user_id:

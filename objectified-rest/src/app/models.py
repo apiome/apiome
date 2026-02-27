@@ -1,6 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, List, Union
+from typing import Optional, Dict, Any, List, Union, Literal
 
 
 class TagSchema(BaseModel):
@@ -505,6 +505,49 @@ class LinkOperationRequest(BaseModel):
 class CopyClassToInlineSchemaRequest(BaseModel):
     """Request model for copying class properties to inline schema."""
     class_id: str
+
+    class Config:
+        from_attributes = True
+
+
+# ==================== Database Data Storage (class_schema, data_record, data_snapshot) ====================
+
+class FrozenClassSchemaModel(BaseModel):
+    """Pydantic model for odb.class_schema (frozen JSON Schema 2020-12 per class per version)."""
+    id: str
+    version_id: str
+    class_id: str
+    schema: Dict[str, Any]
+    created_at: Optional[Union[datetime, str]] = None
+    updated_at: Optional[Union[datetime, str]] = None
+
+    class Config:
+        from_attributes = True
+
+
+class DataRecordModel(BaseModel):
+    """Pydantic model for odb.data_record (event log: created/updated/deleted per logical record)."""
+    id: str
+    record_id: str
+    class_schema_id: str
+    action: Literal["created", "updated", "deleted"]
+    record_sequence: int
+    data: Optional[Dict[str, Any]] = None
+    tenant_id: str
+    created_at: Optional[Union[datetime, str]] = None
+    created_by: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class DataSnapshotModel(BaseModel):
+    """Pydantic model for odb.data_snapshot (current state per logical record)."""
+    record_id: str
+    class_schema_id: str
+    data: Dict[str, Any]
+    tenant_id: str
+    updated_at: Optional[Union[datetime, str]] = None
 
     class Config:
         from_attributes = True
