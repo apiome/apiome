@@ -9,6 +9,7 @@ and delete/restore record logic.
 import json
 import pytest
 from pathlib import Path
+from typing import Optional
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
@@ -60,9 +61,17 @@ class TestVersionHasDataRecords:
 # Unpublish endpoint: 409 when version has data records
 # ---------------------------------------------------------------------------
 
-def _fake_validate_authentication(*args, **kwargs):
-    """Fake auth that returns tenant and user for testing."""
-    return {'tenant_id': 'tenant-1', 'user_id': 'user-1'}
+def _fake_validate_authentication(
+    tenant_slug: str,
+    authorization: Optional[str] = None,
+    x_api_key: Optional[str] = None,
+):
+    """Fake auth that returns tenant and user for testing. Signature matches validate_authentication."""
+    return {
+        'tenant_id': 'tenant-1',
+        'user_id': 'user-1',
+        'auth_method': 'jwt',
+    }
 
 
 class TestUnpublishVersionHasDataGuard:

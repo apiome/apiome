@@ -123,6 +123,7 @@ class PrimitiveSchema(BaseModel):
     usage_count: int = 0
     created_at: Optional[Union[datetime, str]] = None
     updated_at: Optional[Union[datetime, str]] = None
+    enabled: bool = True
 
     class Config:
         from_attributes = True
