@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useDatabase } from '../DatabaseContext';
-import { List, Search, Sparkles, Plus, Database, Info, FileJson, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { List, Search, Sparkles, Plus, Database, Info, FileJson, ArrowUp, ArrowDown, ArrowUpDown, Trash2 } from 'lucide-react';
 import type { SnapshotQueryFilters } from './query-manager-types';
 import InsertStubModal from './InsertStubModal';
 import QueryUsingAIPanel from './QueryUsingAIPanel';
@@ -91,6 +91,7 @@ export default function QueryManager() {
   const [viewRecord, setViewRecord] = React.useState<SnapshotRow | null>(null);
   const [sortBy, setSortBy] = React.useState<SortColumn>('updated_at');
   const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
   const classSchemaId = selectedTable?.classSchemaId ?? null;
 
@@ -177,6 +178,31 @@ export default function QueryManager() {
     } else {
       runQuery({ classSchemaId }, page, PAGE_SIZE, undefined, column, nextDir);
     }
+  };
+
+  const handleDelete = (recordId: string) => {
+    if (!classSchemaId || isReadOnly) return;
+    if (!window.confirm('Delete this record? The data will be stored in the event log and can be restored later.')) return;
+    setDeletingId(recordId);
+    fetch(`/api/database/snapshot/${encodeURIComponent(recordId)}?classSchemaId=${encodeURIComponent(classSchemaId)}`, {
+      method: 'DELETE',
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) {
+          loadCount();
+          if (viewMode === 'viewAll') runQuery({ classSchemaId }, page, PAGE_SIZE, undefined, sortBy, sortDir);
+          if (viewMode === 'search') runQuery({ classSchemaId }, page, PAGE_SIZE, searchQ, sortBy, sortDir);
+          refreshTableCount(classSchemaId);
+        } else {
+          alert(data.error ?? 'Delete failed');
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        alert(err instanceof Error ? err.message : 'Delete failed');
+      })
+      .finally(() => setDeletingId(null));
   };
 
   if (!selectedProjectId || !selectedVersionId) {
@@ -319,14 +345,28 @@ export default function QueryManager() {
                           </span>
                         </td>
                         <td className="py-2 px-2">
-                          <button
-                            type="button"
-                            onClick={() => setViewRecord(row)}
-                            className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                          >
-                            <FileJson className="w-3.5 h-3.5" />
-                            View
-                          </button>
+                          <div className="inline-flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setViewRecord(row)}
+                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                              <FileJson className="w-3.5 h-3.5" />
+                              View
+                            </button>
+                            {!isReadOnly && (
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(row.record_id)}
+                                disabled={deletingId === row.record_id}
+                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-xs text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40 disabled:opacity-50"
+                                title="Delete record (data stored in event log for restore)"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Delete
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

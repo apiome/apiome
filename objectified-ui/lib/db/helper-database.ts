@@ -414,21 +414,94 @@ export async function updateDataRecord(
 }
 
 /**
+ * Delete a record: read current state from data_snapshot, append data_record with action 'deleted'
+ * (same record_id, incremented record_sequence, data = snapshot so restore can use it), then remove the snapshot row.
+ * Throws if tenant has no access or record not found.
+ */
+export async function deleteDataRecord(
+  recordId: string,
+  classSchemaId: string,
+  tenantId: string,
+  deletedBy?: string | null
+): Promise<void> {
+  const hasAccess = await assertClassSchemaTenantAccess(classSchemaId, tenantId);
+  if (!hasAccess) {
+    throw new Error('Access denied to class schema');
+  }
+  const client = await connectionPool.connect();
+  try {
+    await client.query('BEGIN');
+    const snapshotResult = await client.query(
+      `SELECT data FROM odb.data_snapshot
+       WHERE record_id = $1 AND class_schema_id = $2 AND tenant_id = $3`,
+      [recordId, classSchemaId, tenantId]
+    );
+    if (snapshotResult.rowCount === 0 || !snapshotResult.rows[0]) {
+      await client.query('ROLLBACK');
+      throw new Error('Record not found');
+    }
+    const currentData = snapshotResult.rows[0].data as Record<string, unknown>;
+    const seqResult = await client.query(
+      `SELECT COALESCE(MAX(record_sequence), 0) + 1 AS next_seq
+       FROM odb.data_record WHERE record_id = $1 AND class_schema_id = $2 AND tenant_id = $3`,
+      [recordId, classSchemaId, tenantId]
+    );
+    const nextSeq = seqResult.rows[0]?.next_seq ?? 1;
+    await client.query(
+      `INSERT INTO odb.data_record (record_id, class_schema_id, action, record_sequence, data, tenant_id, created_by)
+       VALUES ($1, $2, 'deleted', $3, $4::jsonb, $5, $6)`,
+      [recordId, classSchemaId, nextSeq, JSON.stringify(currentData), tenantId, deletedBy ?? null]
+    );
+    await client.query(
+      `DELETE FROM odb.data_snapshot
+       WHERE record_id = $1 AND class_schema_id = $2 AND tenant_id = $3`,
+      [recordId, classSchemaId, tenantId]
+    );
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * Update the embedding (and metadata) for a data_snapshot row.
  * Used after insert/update to store vectorization from Ollama.
+ * If the pgvector extension is not installed (type "vector" does not exist), logs once and no-ops.
  */
+let _vectorTypeMissingLogged = false;
+
 export async function updateDataSnapshotEmbedding(
   recordId: string,
   embedding: number[],
   model: string
 ): Promise<void> {
   if (embedding.length === 0) return;
-  // pgvector accepts string format '[x,y,z,...]'
+  // pgvector type lives in public; qualify so it resolves when search_path is e.g. only odb
   const vectorStr = '[' + embedding.join(',') + ']';
-  await connectionPool.query(
-    `UPDATE odb.data_snapshot
-     SET embedding = $1::vector, embedding_model = $2, embedding_updated_at = CURRENT_TIMESTAMP
-     WHERE record_id = $3`,
-    [vectorStr, model, recordId]
-  );
+  try {
+    await connectionPool.query(
+      `UPDATE odb.data_snapshot
+       SET embedding = $1::public.vector, embedding_model = $2, embedding_updated_at = CURRENT_TIMESTAMP
+       WHERE record_id = $3`,
+      [vectorStr, model, recordId]
+    );
+  } catch (err: unknown) {
+    const code = (err as { code?: string }).code;
+    const message = (err as { message?: string }).message ?? '';
+    const isVectorTypeMissing = code === '42704' || /type\s+["']?vector["']?\s+does not exist/i.test(message);
+    if (isVectorTypeMissing) {
+      if (!_vectorTypeMissingLogged) {
+        _vectorTypeMissingLogged = true;
+        console.warn(
+          '[updateDataSnapshotEmbedding] pgvector extension not available (type "vector" does not exist). ' +
+            'Run migration 20260227-140000.sql (and ensure pgvector is installed). Embedding updates will be skipped.'
+        );
+      }
+      return;
+    }
+    throw err;
+  }
 }
