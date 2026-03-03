@@ -18,11 +18,11 @@
 
 ---
 
-## REST API Foundation
+## 1. REST API Foundation
 
 > **Section Status**: Implement in objectified-rest (or equivalent OSS service). No UI in these tickets.
 
-### Users, Tenants, and Auth
+### 1.1 Users, Tenants, and Auth
 
 **Core data model & authentication**
 - Implement REST routes for **users**: list (admin), get by id, create (signup), update, deactivate (no hard delete if audit needed).
@@ -45,7 +45,7 @@
 
 ---
 
-### Projects & Versions with History
+### 1.2 Projects & Versions with History
 
 **Projects and versioned schema with historical storage**
 - **Projects**: Create, list by tenant, get, update, delete; tenant-scoped; creator tracking; slug/name uniqueness per tenant.
@@ -55,6 +55,24 @@
 - [DONE] **DB**: projects table; versions table; version_history or version_snapshots table for rollback and branch.
 - **Reference**: `objectified-rest/src/app/projects_routes.py`, `versions_routes.py`; add history tables and `/v1/versions/{id}/history`, get-by-revision.
 
+**Enterprise and advanced (Projects)**
+- **Project lifecycle**: Soft delete or archive projects (retain data for audit); restore archived project; project status (active, archived, locked).
+- **Project metadata and governance**: Owner, team, or cost-center metadata; project tags/labels for filtering and catalog; optional project templates or blueprints for quick setup.
+- **Quotas and limits**: Configurable per-tenant or per-project quotas (e.g. max versions per project, max classes per version) with clear errors and optional dashboard visibility.
+
+**Enterprise and advanced (Versions)**
+- **Version locking**: Lock version to prevent further edits (freeze); optional unlock by authorized role; lock state in version metadata.
+- **Version tags and promotion**: Tags or labels on versions (e.g. `staging`, `production`, semantic version); list/filter by tag; optional promotion workflow (promote version to tag).
+- **Version comparison**: REST endpoint to diff two versions (or two revisions) and return structural delta (classes/properties added, removed, changed) for review and compliance.
+
+**Enterprise and advanced (Version history)**
+- **Revision metadata**: Store author (user_id), optional commit message, and optional external id (e.g. CI run id, ticket id) per revision for audit and traceability.
+- **History retention and export**: Optional retention policy (e.g. keep last N revisions or by age); export version history (or range) for compliance or backup; immutable append-only revisions where required.
+
+**Enterprise and advanced (Publish)**
+- **Publish channels or targets**: Publish to named targets (e.g. `dev`, `staging`, `production`); list what is published where; unpublish per target.
+- **Publish artifacts and integrity**: Optional checksum or signed manifest for published schema; webhook or event on publish for downstream systems (API gateways, codegen, Backstage).
+
 | Ticket | Feature Description |
 |--------|---------------------|
 | #22    | Create projects services |
@@ -62,10 +80,20 @@
 | #24    | Create version history services |
 | #25    | Create publish services |
 | #26    | Modify REST services endpoints to match names |
+|        | Add project soft delete/archive and restore with status (active, archived, locked) |
+|        | Add project metadata (owner, team, tags/labels) and optional project templates or blueprints |
+|        | Add per-tenant or per-project quotas (max versions, max classes) with enforcement and visibility |
+|        | Add version locking (freeze edits) with optional unlock by role |
+|        | Add version tags/labels and promotion workflow (e.g. staging, production) |
+|        | Add version comparison/diff endpoint (structural delta between two versions or revisions) |
+|        | Add revision metadata (author, commit message, optional CI/ticket id) and immutable append-only option |
+|        | Add history retention policy and export for compliance or backup |
+|        | Add publish channels/targets (e.g. dev, staging, production) and list-by-target |
+|        | Add publish artifact integrity (checksum/signed manifest) and webhook or event on publish |
 
 ---
 
-### Classes, Properties, Class-Property (Ticket 3)
+### 1.3 Classes, Properties, Class-Property (Ticket 3)
 
 **Schema entities and bulk read for canvas**
 - **Classes**: Create, list by version, get, update (metadata + `canvas_metadata`: position, dimensions, style, group), delete. Version-scoped.
@@ -85,7 +113,7 @@
 
 ---
 
-### OpenAPI 3.2.0 & JSON Schema 2020-12 (Ticket 4)
+### 1.4 OpenAPI 3.2.0 & JSON Schema 2020-12 (Ticket 4)
 
 **Validation, export, and import**
 - **Validation**: On create/update of class or property, validate `schema`/`data` against OpenAPI 3.2.0 schema object and JSON Schema 2020-12; return 400 with error details if invalid.
@@ -103,7 +131,7 @@
 
 ---
 
-### Version Commit, Push, Pull, Merge (Ticket 5)
+### 1.5 Version Commit, Push, Pull, Merge (Ticket 5)
 
 **Git-like version workflow APIs**
 - **Commit**: Endpoint that accepts full version payload (classes, properties, class_properties, canvas_metadata) and writes to DB and version history; returns new revision id.
@@ -124,11 +152,11 @@
 
 ---
 
-## UI: REST-Only (No Helpers)
+## 2 UI: REST-Only (No Helpers)
 
 > **Section Status**: All canvas and dashboard code must call REST only; no `lib/db/helper` or server-side DB access from UI.
 
-### Remove Helpers and Introduce REST Client (Ticket 6)
+### 2.1 Remove Helpers and Introduce REST Client (Ticket 6)
 
 **Replace all helper usage with REST client**
 - **Audit**: List every use of `lib/db/helper` and `lib/db/helper-*` in canvas and dashboard (grep `@lib/db/helper` and helper imports).
@@ -148,11 +176,11 @@
 
 ---
 
-## UI: Dashboard
+## 3 UI: Dashboard
 
 > **Section Status**: Dashboard layout and all list/manage pages use REST only.
 
-### Dashboard Shell & Navigation (Ticket 7)
+### 3.1 Dashboard Shell & Navigation (Ticket 7)
 
 **Layout, nav, theme, routes**
 - **Layout**: Main content area and responsive shell; sidebar with links to Dashboard home, Projects, Versions, Tenants, Users (if admin), Profile. Active state and responsive behavior.
@@ -168,7 +196,7 @@
 
 ---
 
-### Users, Tenants, Tenant-Admins (Ticket 8)
+### 3.2 Users, Tenants, Tenant-Admins (Ticket 8)
 
 **User and tenant management via REST**
 - **Users**: List (admin only), create (signup), edit, deactivate; all via REST users API.
@@ -188,7 +216,7 @@
 
 ---
 
-### Projects & Versions List (Ticket 9)
+### 3.3 Projects & Versions List (Ticket 9)
 
 **Projects and versions CRUD and publish**
 - **Projects**: List by tenant via REST; create project dialog (name, slug, description, metadata); edit dialog; delete / permanent delete; dropdown actions. Reference: `objectified-ui/src/app/ade/dashboard/projects/page.tsx`.
@@ -209,11 +237,11 @@
 
 ---
 
-## UI: Local-First Version & Workflow
+## 4 UI: Local-First Version & Workflow
 
 > **Section Status**: Version edits live in browser until commit; push/pull/merge with conflict resolution.
 
-### Local Version State & Undo/Redo (Ticket 10)
+### 4.1 Local Version State & Undo/Redo (Ticket 10)
 
 **In-browser version state and undo stack**
 - **State shape**: Single source of truth: versionId, classes[], properties[], class_properties[] (order and overrides), canvas_metadata per class, groups. Reference: StudioContext, editor types.
@@ -232,7 +260,7 @@
 
 ---
 
-### Commit, Push, Pull, Merge Workflow (Ticket 11)
+### 4.2 Commit, Push, Pull, Merge Workflow (Ticket 11)
 
 **Toolbar actions and conflict resolution**
 - **Toolbar/menu**: Commit (snapshot local state, optional message; reset undo or keep one pre-commit); Push; Pull; Merge (enabled when pull indicates diverged or conflicts). Reference: EditorToolbar, StudioHeader.
@@ -252,7 +280,7 @@
 
 ---
 
-### Version History – Rollback, Remove, Branch (Ticket 12)
+### 4.3 Version History – Rollback, Remove, Branch (Ticket 12)
 
 **History panel and version actions**
 - **History panel**: List revisions (id, timestamp, optional message) via REST; show in dashboard or Studio.
@@ -271,11 +299,11 @@
 
 ---
 
-## UI: Schema Canvas (Class Diagram)
+## 5 UI: Schema Canvas (Class Diagram)
 
 > **Section Status**: React Flow canvas; all data from local version state; no per-move REST.
 
-### Canvas Container & Selectors (Ticket 13a)
+### 5.1 Canvas Container & Selectors (Ticket 13a)
 
 **Project/version selector and canvas shell**
 - **Project/version selector**: In toolbar; load projects and versions via REST; on switch, reload local state and canvas. Reference: EditorToolbar project/version Select.
@@ -290,7 +318,7 @@
 
 ---
 
-### Class Nodes & Edges (Ticket 13b)
+### 5.2 Class Nodes & Edges (Ticket 13b)
 
 **Nodes and edges from local state**
 - **Class nodes**: Render from local state; position, dimensions, style from canvas_metadata. Reference: ClassNode.tsx, NodeData.
@@ -307,7 +335,7 @@
 
 ---
 
-### Groups (Ticket 13c)
+### 5.3 Groups (Ticket 13c)
 
 **Group nodes and class membership**
 - **Create group**: From toolbar or at drop position; add/remove class nodes; rename, color, style. Reference: GroupNode.tsx, handleCreateGroup, handleCreateGroupAtPosition.
@@ -320,7 +348,7 @@
 
 ---
 
-### Canvas Search & Focus (Ticket 13d)
+### 5.4 Canvas Search & Focus (Ticket 13d)
 
 **Search and focus mode**
 - **Canvas search**: Query input; regex toggle; filters: type (class/allOf/oneOf/anyOf), group, has properties, property name. Reference: canvasSearchQuery, searchFilterType, searchFilterGroup.
@@ -335,7 +363,7 @@
 
 ---
 
-### Layout & Dependency (Ticket 13e)
+### 5.5 Layout & Dependency (Ticket 13e)
 
 **Layout and dependency overlay**
 - **Layout**: Save default layout (per version/user); load default on version load. Auto-layout (e.g. dagre); layout preview then apply. Reference: saveDefaultCanvasLayout, getDefaultCanvasLayout, canvas-auto-layout.ts, layoutPreviewNodes.
@@ -352,7 +380,7 @@
 
 ---
 
-### Export & Canvas Settings (Ticket 13f)
+### 5.6 Export & Canvas Settings (Ticket 13f)
 
 **Export and settings dialog**
 - **Export**: PNG, SVG, JPEG, PDF, Mermaid, PlantUML, DOT, GraphML, JSON. Reference: useExportFunctions, EditorToolbar.
@@ -367,7 +395,7 @@
 
 ---
 
-### Class Actions & Sidebar (Ticket 13g)
+### 5.7 Class Actions & Sidebar (Ticket 13g)
 
 **Add/delete/copy/reference and sidebar**
 - **Add class**: Toolbar or context menu; create in local state; place on canvas.
@@ -388,11 +416,11 @@
 
 ---
 
-## UI: Class & Property Forms
+## 6 UI: Class & Property Forms
 
 > **Section Status**: Forms drive local state (or REST on submit); 100% OpenAPI 3.2.0 / JSON Schema 2020-12 coverage for in-scope subset.
 
-### Class Form (Ticket 14a)
+### 6.1 Class Form (Ticket 14a)
 
 **Class edit dialog and schema**
 - **Class edit dialog**: Name, description; open from canvas double-click or sidebar. Reference: ClassEditDialog.tsx.
@@ -407,7 +435,7 @@
 
 ---
 
-### Property Form – Core & Types (Ticket 14b)
+### 6.2 Property Form – Core & Types (Ticket 14b)
 
 **Property dialog and type-specific fields**
 - **Property dialog**: Create/edit; name, type (string/number/integer/boolean/object/array/null), description, required. Reference: PropertyDialog.tsx, PropertyFormFields.tsx.
@@ -428,7 +456,7 @@
 
 ---
 
-### Property Form – Metadata & Class-Property (Ticket 14c)
+### 6.3 Property Form – Metadata & Class-Property (Ticket 14c)
 
 **Metadata, conditionals, extensions, class-property overrides**
 - **Metadata**: readOnly, writeOnly, deprecated, nullable, title; default; examples (array). Reference: propertyFlags, values section.
@@ -444,6 +472,171 @@
 | #112   | Add extensions to the property form |
 | #113   | Add additional class-property editing features |
 | #114   | Add validation to client-side for properties |
+
+---
+
+## 7 Schema Designer: Enterprise, Code Generation & Mode Switching
+
+> **Section Status**: Schema-designer features for OSS release: enterprise capabilities, code generation support, and OpenAPI vs SQL schema mode. Ticket numbers to be assigned in GitHub.
+
+### 7.1 Schema Mode: OpenAPI vs SQL
+
+**Mode switching and ID-based references**
+- Allow the schema designer to operate in **OpenAPI mode** (current: JSON Schema / OpenAPI 3.2.0) or **SQL mode**.
+- In **SQL mode**, references between schema objects (classes) are expressed by **ID** (e.g. foreign-key style: `user_id`, `tenant_id`, `parent_id`) rather than (or in addition to) nested `$ref`; support defining and editing these ID-based references in the class/property forms and on the canvas.
+- Persist the selected mode per version or project; validate and export appropriately (OpenAPI doc in OpenAPI mode; DDL or relational model in SQL mode).
+- **Reference**: ClassEditDialog, PropertyFormFields, canvas edges; add mode selector in toolbar or project/version settings; extend schema storage for ID-reference metadata.
+
+| Ticket | Feature Description |
+|--------|---------------------|
+| #115   | Add schema mode selector (OpenAPI vs SQL) in the schema designer |
+| #116   | Implement ID-based references between classes in SQL mode (e.g. foreign-key style properties) |
+| #117   | Persist and validate schema according to selected mode; export OpenAPI or SQL/DDL accordingly |
+| #118   | Extend class and property forms to define and edit ID-based references when in SQL mode |
+
+---
+
+### 7.2 Code Generation from Schema
+
+**Templates, preview, and versioning for codegen**
+- **Code generation templates**: Configurable templates for generating code from the current schema (e.g. TypeScript/JavaScript types, Prisma schema, SQL DDL, GraphQL schema, Go structs, Pydantic models). Store templates in project or workspace; allow custom templates (e.g. Mustache/Handlebars or a small DSL).
+- **Code generation preview**: In the schema designer, a panel or dialog to preview generated code for the selected template and target (e.g. “TypeScript types for this version”). Refresh on schema change; copy or download output.
+- **Schema version tag for codegen**: Tag or label schema versions for code generation (e.g. `v1`, `api-v2`); generate against a chosen version or the current working version.
+- **Validation rules export**: Export validation rules (required, format, pattern, min/max, enum, etc.) in a form suitable for code generation or documentation (e.g. JSON or structured format for client validators).
+- **Reference**: New UI under Studio or Dashboard (e.g. “Generate code” action); template registry; reuse existing export/generator patterns where applicable.
+
+| Ticket | Feature Description |
+|--------|---------------------|
+| #119   | Add configurable code generation templates (TypeScript, Prisma, SQL DDL, GraphQL, etc.) |
+| #120   | Add code generation preview panel in schema designer with copy/download |
+| #121   | Add schema version tagging for code generation and generate against chosen version |
+| #122   | Export validation rules in a structured format for code generation and documentation |
+
+---
+
+### 7.3 Enterprise Schema Designer Features
+
+**Annotations, multi-schema, and audit**
+- **Schema annotations for codegen**: Support `x-*` or custom annotations on classes and properties that drive code generation (e.g. table name, column name, ORM hints, serialization name). Edit in class/property forms; include in exports and codegen templates.
+- **Multi-schema workspace**: Support viewing or comparing multiple schemas (or versions) in one workspace (e.g. side-by-side or diff) for comparison and code generation across versions.
+- **Audit log for schema changes**: Optional audit trail of schema changes (who changed what, when) for compliance; store in version history or separate audit table; expose in dashboard or version history UI.
+- **Documentation generation**: Generate API documentation (e.g. OpenAPI document, Markdown, or static site) from the schema designer with optional branding and tenant-specific styling.
+- **Reference**: ClassEditDialog, PropertyDialog, version history; new “Annotations” or “Codegen” section in forms; audit tables and REST endpoints; docs generator.
+
+| Ticket | Feature Description |
+|--------|---------------------|
+| #123   | Add schema annotations (x-* / custom) for code generation in class and property forms |
+| #124   | Add multi-schema workspace view for comparison and code generation across versions |
+| #125   | Add optional audit log for schema changes (who, what, when) with dashboard visibility |
+| #126   | Add documentation generation from schema (OpenAPI, Markdown, or static site) with optional branding |
+
+---
+
+## 8 Enterprise & Developer Experience
+
+> **Section Status**: Enterprise readiness and development-friendly capabilities. Ticket numbers to be assigned in GitHub.
+
+### 8.1 Security, Auth & Permissions
+
+**Enterprise auth and fine-grained access**
+- **SSO / OIDC / SAML**: Optional integration with identity providers (e.g. Okta, Auth0, Azure AD) for login and user provisioning; support OIDC discovery and SAML metadata for enterprise deployments.
+- **RBAC**: Fine-grained roles and permissions beyond tenant-admin (e.g. schema-editor, viewer, publisher, auditor); permission checks on REST endpoints and UI; optional resource-level permissions (per project or version).
+- **API key scopes**: Scope API keys by tenant, project, or role (e.g. read-only vs full) for CI/CD and external integrations.
+- **Reference**: auth routes, middleware; new tables or config for roles/permissions; document in OpenAPI.
+
+| Ticket | Feature Description |
+|--------|---------------------|
+| #127   | Add optional SSO integration (OIDC / SAML) for enterprise identity providers |
+| #128   | Implement RBAC with configurable roles and permissions (schema-editor, viewer, publisher, auditor) |
+| #129   | Add API key scopes (tenant, project, role) for CI/CD and integrations |
+
+---
+
+### 8.2 Observability, Reliability & Operations
+
+**Health, metrics, and operational controls**
+- **Health and readiness**: REST endpoints for liveness and readiness (e.g. `/health`, `/ready`) for Kubernetes and load balancers; optional DB and dependency checks.
+- **Structured logging and tracing**: Structured logs (e.g. JSON) with request id, tenant, user; optional OpenTelemetry or trace-id for debugging and observability.
+- **Rate limiting and quotas**: Configurable rate limits per tenant or API key; optional quotas for projects/versions for fair use and cost control.
+- **Backup and restore**: Documented backup/restore procedures for version history and audit data; optional export/import for disaster recovery.
+- **Reference**: new health routes; logging middleware; rate-limit middleware; ops runbook or docs.
+
+| Ticket | Feature Description |
+|--------|---------------------|
+| #130   | Add health and readiness endpoints for orchestration and load balancers |
+| #131   | Add structured logging and optional OpenTelemetry tracing |
+| #132   | Add configurable rate limiting and optional quotas per tenant or API key |
+| #133   | Document backup/restore and optional export/import for disaster recovery |
+
+---
+
+### 8.3 Developer-Friendly Integrations
+
+**CLI, webhooks, catalog API, and promotion**
+- **Developer CLI / SDK**: CLI or SDK (e.g. Node or Python) for scripting: pull/push schema, export OpenAPI, trigger code generation; usable in CI/CD pipelines and local dev.
+- **Webhooks**: Configurable webhooks on schema events (e.g. version committed, published, branch created); payload with version/project metadata; retry and secret for signing.
+- **Schema catalog API**: Public or authenticated catalog API to list projects, versions, and published schemas (by tenant or org) for discovery, Backstage catalog sync, or API gateways.
+- **Schema promotion and environments**: Optional promotion workflow (e.g. dev → staging → prod) with environment or deployment targets; track which version is “live” per environment.
+- **Reference**: new CLI package or script; webhook table and delivery job; catalog endpoints; environment/promotion metadata.
+
+| Ticket | Feature Description |
+|--------|---------------------|
+| #134   | Add developer CLI or SDK for pull/push, export, and codegen in CI/CD |
+| #135   | Add configurable webhooks for schema events (commit, publish, branch) with retry and signing |
+| #136   | Add schema catalog API for discovery and integration with API gateways or IDPs |
+| #137   | Add optional schema promotion workflow (dev/staging/prod) with deployment targets |
+
+---
+
+### 8.4 Developer Onboarding & Tooling
+
+**Quickstart, samples, and IDE support**
+- **Quickstart and samples**: One-command or script to run Objectified locally (e.g. Docker Compose); sample project(s) with example schemas and versions for onboarding.
+- **API playground**: Interactive API docs (e.g. Swagger UI or Stoplight) from the published OpenAPI spec; try-it-out for key endpoints with auth.
+- **IDE or editor integration**: Optional VS Code (or other) extension for schema validation, snippet generation, or “open in Objectified” from local OpenAPI/JSON Schema files.
+- **Reference**: docker-compose, sample data seeds; OpenAPI UI; extension repo or spec.
+
+| Ticket | Feature Description |
+|--------|---------------------|
+| #138   | Add quickstart (e.g. Docker Compose) and sample projects for onboarding |
+| #139   | Add API playground (Swagger UI or similar) from OpenAPI spec with try-it-out |
+| #140   | Add optional IDE/editor integration (e.g. VS Code extension) for schema validation and links to Objectified |
+
+---
+
+## 9 Backstage IDP Plugin
+
+> **Section Status**: Plugin for use within Backstage (Internal Developer Portal). Enables schema discovery, documentation, and workflow from the IDP. Ticket numbers to be assigned in GitHub.
+
+### 9.1 Backstage Plugin – Core
+
+**Plugin package and integration**
+- **Backstage plugin package**: Create a Backstage plugin (e.g. `@internal/objectified-plugin` or OSS name) that can be added to a Backstage app; plugin exposes one or more pages and optional entity cards.
+- **Configuration and auth**: Plugin config for Objectified REST base URL and auth (API key or Backstage proxy with user identity); support Backstage’s proxy for secure backend calls.
+- **Entity integration**: Define Backstage catalog entity kind(s) for “Schema” or “API” (e.g. `objectified-schema.v1`) with spec pointing to project/version; optional entity provider to sync from Objectified catalog API into Backstage Software Catalog.
+- **Reference**: Backstage plugin API; `createPlugin`, `createRouteRef`; Backstage auth and proxy; catalog `Entity` and provider interfaces.
+
+| Ticket | Feature Description |
+|--------|---------------------|
+| #141   | Create Backstage plugin package with page(s) and configuration for Objectified REST URL and auth |
+| #142   | Add Backstage proxy support for secure calls to Objectified API |
+| #143   | Define Backstage catalog entity kind for Schema/API and optional entity provider to sync from Objectified |
+
+---
+
+### 9.2 Backstage Plugin – Features
+
+**Schema discovery, docs, and actions**
+- **Schema overview page**: Plugin page that lists projects and versions (by tenant or org); link to open schema in Objectified or show read-only summary (classes, last updated).
+- **TechDocs integration**: Option to publish generated schema documentation (OpenAPI, Markdown) to Backstage TechDocs so schema docs appear alongside other docs in the IDP.
+- **Entity card and actions**: Catalog entity card for Schema/API entities showing version, last published, link to Objectified; optional “Open in Objectified” and “Export OpenAPI” actions.
+- **Reference**: Backstage frontend components; TechDocs API; catalog entity page extensions.
+
+| Ticket | Feature Description |
+|--------|---------------------|
+| #144   | Add plugin page for schema overview (projects, versions) with links to Objectified |
+| #145   | Add optional TechDocs integration to publish schema documentation into Backstage |
+| #146   | Add catalog entity card and actions (Open in Objectified, Export OpenAPI) for Schema/API entities |
 
 ---
 
