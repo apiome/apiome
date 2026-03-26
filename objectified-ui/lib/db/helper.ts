@@ -3027,8 +3027,7 @@ export async function getDefaultCanvasLayout(versionId: string, userId?: string)
 export async function getNamedCanvasLayoutsForVersion(versionId: string, userId?: string) {
   try {
     const result = await connectionPool.query(
-      `SELECT id, version_id, user_id, name, is_default, viewport, nodes, edges,
-              grid_settings, minimap_settings, metadata, created_at, updated_at
+      `SELECT id, version_id, user_id, name, is_default, created_at, updated_at
        FROM odb.canvas_layouts
        WHERE version_id = $1
          AND name IS NOT NULL
