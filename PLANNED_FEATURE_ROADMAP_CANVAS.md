@@ -99,16 +99,6 @@
 | #484   | "Ghosts mode" for hidden nodes |
 | #485   | Quick restore hidden nodes     |
 
-#### Visual Feedback
-- ✅ **Dropzone highlighting**: Visual cues for valid drop targets
-- 📋 [TODO] **Ghost preview**: Show preview while dragging
-- ✅ **Invalid drop indicator**: Clear feedback for invalid drops
-- ✅ **Snap indicators**: Show snap points during drag
-
-| Ticket | Feature Description                              |
-|--------|--------------------------------------------------|
-| #478   | Show ghost preview of node while dragging        |
-
 ---
 
 ### 3. Node Grouping & Organization
@@ -330,3 +320,9 @@
 
 #### Schema Metrics Dashboard 📋 PLANNED
 - 📋 [TODO] Trend indicators (improving/declining metrics)
+
+#### Visual Feedback
+- ✅ **Dropzone highlighting**: Visual cues for valid drop targets
+- ✅ **Ghost preview**: Show preview while dragging
+- ✅ **Invalid drop indicator**: Clear feedback for invalid drops
+- ✅ **Snap indicators**: Show snap points during drag

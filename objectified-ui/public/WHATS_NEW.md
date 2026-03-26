@@ -30,6 +30,7 @@ Bug Fixes:
   - Class nodes show the name of the singular reference - arrays were already correct
   - Class form was displaying a prompt for dependent schemas - this has been corrected
   - Class template library form is wider to show better detail
+  - Class nodes show ghost preview of node while dragging
   - Property template button now appears properly when in dark mode
   - Property template form is also now wider to show better detail
   - Renaming a property no longer rearranges the entire canvas
