@@ -9,14 +9,14 @@ When the user invokes **handle-ticket** with an issue number (for example `/hand
 
 ## 1. Load the issue into context
 
-- Fetch the full issue **title, body, labels, and any linked/previous discussion** needed to understand scope. Prefer the **user-github** MCP (or `gh issue view <number> --json ...`) so the ticket text is summarized and available in the conversation.
+- Fetch the full issue **title, body, labels, and any linked/previous discussion** needed to understand scope. Prefer the **github** MCP so the ticket text is summarized and available in the conversation.
 - **Do not invent** requirements; implement only what the issue and agreed clarifications describe.
 
 ## 2. Create and use branch `ticket-<number>`
 
-- Ensure you have the latest **default branch** (usually `main`): `git fetch origin` and `git checkout main` (or the repo’s default), then `git pull`.
+- Ensure you have the latest **default branch** (usually `main`) via Github MCP: fetch origin and checkout main (or the repo’s default), then pull.
 - Create and switch to **`ticket-<number>`** (example: issue `124` → `ticket-124`):
-  - `git checkout -b ticket-<number>`
+  - checkout -b ticket-<number>
 - All implementation commits for this ticket belong on this branch.
 
 ## 3. Implement
@@ -51,25 +51,22 @@ When the user invokes **handle-ticket** with an issue number (for example `/hand
 ## 6. Commit and push
 
 - **Commit** with a clear message that references the issue (e.g. `Fix #124 — …` or `Addresses #124 — …`).
-- **Push** the branch: `git push -u origin ticket-<number>` (use `-u` on first push).
+- **Push** the branch
 
 ## 7. Open a pull request
 
-- Create a PR **from `ticket-<number>`** into the **default branch** using `gh pr create` or the GitHub UI.
+- Create a PR **from `ticket-<number>`** into the **default branch** using the GitHub MCP.
 - **PR title:** concise; include or reference the issue number.
 - **PR body:** summarize **what was done**, **why**, **how to test**, and **risk/notes**. Use a markdown checklist if it helps. Link the issue (e.g. `Closes #124` or `Fixes #124` if the team uses auto-close semantics).
 
 ## 8. Assign Copilot as reviewer
 
-- **Request a review from GitHub Copilot** on the PR. Use the same reviewer login your org uses when typing **@Copilot** in the GitHub reviewer field (often the Copilot PR-review bot account—confirm via UI or org docs). Examples to try:
-  - `gh pr edit <pr-number> --add-reviewer <copilot-reviewer-login>`
-  - or pass `--reviewer <copilot-reviewer-login>` at `gh pr create` if supported.
-- If CLI assignment fails, use the **GitHub web UI** to add **Copilot** as a reviewer and note that in a comment if needed.
+- **Request a review from GitHub Copilot** on the PR. Use the same reviewer login your org uses when typing **@Copilot** in the GitHub reviewer field (often the Copilot PR-review bot account—confirm via UI or org docs).  Use Github MCP to add **Copilot** as a reviewer and note that in a comment if needed.
 
 ## 9. Return to default branch
 
 - After the PR is created (and push is complete), switch back locally:
-  - `git checkout main` (or the repo default branch), then optionally `git pull` so the workspace matches upstream.
+  - checkout main (or the repo default branch), then optionally pull so the workspace matches upstream.
 
 ## Constraints
 
