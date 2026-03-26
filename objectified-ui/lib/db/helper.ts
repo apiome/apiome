@@ -3021,6 +3021,147 @@ export async function getDefaultCanvasLayout(versionId: string, userId?: string)
 }
 
 /**
+ * Get all named canvas layouts for a version, preferring user-specific layouts.
+ * Returns at most one layout per name.
+ */
+export async function getNamedCanvasLayoutsForVersion(versionId: string, userId?: string) {
+  try {
+    const result = await connectionPool.query(
+      `SELECT id, version_id, user_id, name, is_default, created_at, updated_at
+       FROM odb.canvas_layouts
+       WHERE version_id = $1
+         AND name IS NOT NULL
+         AND is_default = false
+         AND (user_id = $2 OR user_id IS NULL)
+       ORDER BY name ASC, (user_id = $2) DESC NULLS LAST, updated_at DESC`,
+      [versionId, userId || null]
+    );
+
+    const byName = new Map<string, any>();
+    result.rows.forEach((row: any) => {
+      if (!row.name || typeof row.name !== 'string') return;
+      const normalizedName = row.name.trim();
+      if (!normalizedName) return;
+      if (!byName.has(normalizedName)) {
+        byName.set(normalizedName, {
+          ...row,
+          name: normalizedName
+        });
+      }
+    });
+
+    return successResponse({ layouts: Array.from(byName.values()) });
+  } catch (error: any) {
+    console.error('Error fetching named canvas layouts:', error);
+    return errorResponse(error.message);
+  }
+}
+
+/**
+ * Get a named canvas layout for a version, preferring user-specific layout.
+ */
+export async function getNamedCanvasLayout(versionId: string, userId: string | null, name: string) {
+  try {
+    const nameValue = name.trim();
+    if (!nameValue) {
+      return successResponse({ layout: null });
+    }
+
+    const result = await connectionPool.query(
+      `SELECT id, version_id, user_id, name, is_default, viewport, nodes, edges,
+              grid_settings, minimap_settings, metadata, created_at, updated_at
+       FROM odb.canvas_layouts
+       WHERE version_id = $1
+         AND name = $2
+         AND (user_id = $3 OR user_id IS NULL)
+       ORDER BY (user_id = $3) DESC NULLS LAST, updated_at DESC
+       LIMIT 1`,
+      [versionId, nameValue, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return successResponse({ layout: null });
+    }
+
+    return successResponse({ layout: result.rows[0] });
+  } catch (error: any) {
+    console.error('Error fetching named canvas layout:', error);
+    return errorResponse(error.message);
+  }
+}
+
+/**
+ * Save or update a named canvas layout for a version.
+ */
+export async function saveNamedCanvasLayout(
+  versionId: string,
+  userId: string | null,
+  name: string,
+  viewport: any,
+  nodes: any,
+  edges?: any,
+  groups?: any
+) {
+  try {
+    const nameValue = name.trim();
+    if (!nameValue) {
+      return errorResponse('Layout name is required');
+    }
+
+    const existingResult = await connectionPool.query(
+      `SELECT id FROM odb.canvas_layouts
+       WHERE version_id = $1
+         AND name = $2
+         AND user_id IS NOT DISTINCT FROM $3
+       LIMIT 1`,
+      [versionId, nameValue, userId]
+    );
+
+    // Keep group storage behavior aligned with default layout saves.
+    if (groups && Array.isArray(groups)) {
+      const nodePositions: Record<string, { x: number; y: number }> = {};
+      if (nodes && Array.isArray(nodes)) {
+        nodes.forEach((node: any) => {
+          if (node.id && node.position && node.type !== 'groupNode') {
+            nodePositions[node.id] = { x: node.position.x, y: node.position.y };
+          }
+        });
+      }
+      const syncResult = await syncGroupsForVersion(versionId, groups, nodePositions);
+      const parsedSyncResult = JSON.parse(syncResult);
+      if (!parsedSyncResult.success) {
+        return errorResponse(parsedSyncResult.error || 'Failed to sync groups for layout save');
+      }
+    }
+
+    if (existingResult.rowCount > 0) {
+      return updateCanvasLayout(existingResult.rows[0].id, {
+        viewport,
+        nodes,
+        edges: edges || []
+      });
+    }
+
+    return createCanvasLayout(
+      versionId,
+      userId,
+      nameValue,
+      false,
+      viewport,
+      nodes,
+      edges || [],
+      null,
+      { enabled: true, size: 20, snapToGrid: true, showGrid: true },
+      { enabled: true, position: 'bottom-right', size: 'medium' },
+      {}
+    );
+  } catch (error: any) {
+    console.error('Error saving named canvas layout:', error);
+    return errorResponse(error.message);
+  }
+}
+
+/**
  * Create a new canvas layout
  */
 export async function createCanvasLayout(

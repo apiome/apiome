@@ -90,7 +90,9 @@ import {
   updateClassPropertyRef,
   getTagsForProject,
   saveDefaultCanvasLayout,
-  getDefaultCanvasLayout,
+  getNamedCanvasLayout,
+  getNamedCanvasLayoutsForVersion,
+  saveNamedCanvasLayout,
   getGroupsForVersion,
   addClassToGroup,
   updateClassPositionInGroup
@@ -131,6 +133,10 @@ const Editor = dynamic(() => import('@monaco-editor/react'), {
 });
 
 const StudioContent = () => {
+  const BUILTIN_LAYOUT_NAMES = useMemo(
+    () => ['Development Layout', 'Presentation Layout', 'Logical Layout', 'Dependency Layout'],
+    []
+  );
   const { data: session } = useSession();
   const searchParams = useSearchParams();
 
@@ -335,9 +341,16 @@ const StudioContent = () => {
   // Layout saved state
   const [layoutSaved, setLayoutSaved] = useState(false);
   const [hasExistingLayout, setHasExistingLayout] = useState(false);
+  const [selectedLayoutName, setSelectedLayoutName] = useState('Development Layout');
+  const [availableLayoutNames, setAvailableLayoutNames] = useState<string[]>(BUILTIN_LAYOUT_NAMES);
+  const selectedLayoutNameRef = useRef(selectedLayoutName);
 
   // Track whether this is the first load for a given version (to apply saved layout only once)
   const initialLayoutAppliedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    selectedLayoutNameRef.current = selectedLayoutName;
+  }, [selectedLayoutName]);
 
   // Export wizard state
   const [exportWizardOpen, setExportWizardOpen] = useState(false);
@@ -3041,10 +3054,11 @@ const StudioContent = () => {
         targetHandle: edge.targetHandle
       }));
 
-      // Save to database
-      const result = await saveDefaultCanvasLayout(
+      // Save selected named layout to database
+      const result = await saveNamedCanvasLayout(
         selectedVersionId,
         currentUserId,
+        selectedLayoutName,
         viewport,
         nodeData,
         edgeData,
@@ -3057,6 +3071,10 @@ const StudioContent = () => {
         // Show "Saved" state temporarily
         setLayoutSaved(true);
         setHasExistingLayout(true);
+        setAvailableLayoutNames(prev => {
+          if (prev.includes(selectedLayoutName)) return prev;
+          return [...prev, selectedLayoutName];
+        });
         setTimeout(() => {
           setLayoutSaved(false);
         }, 2000);
@@ -3076,7 +3094,7 @@ const StudioContent = () => {
       setIsLoadingCanvas(false);
       setLoadingMessage('');
     }
-  }, [isReadOnly, selectedVersionId, currentUserId, nodes, edges, groups, getViewport, alertDialog]);
+  }, [isReadOnly, selectedVersionId, currentUserId, selectedLayoutName, nodes, edges, groups, getViewport, alertDialog]);
 
   // Load saved canvas layout
   const handleLoadLayout = useCallback(async () => {
@@ -3086,13 +3104,13 @@ const StudioContent = () => {
       setLoadingMessage('Loading canvas layout...');
       setIsLoadingCanvas(true);
 
-      // Fetch saved layout from database
-      const result = await getDefaultCanvasLayout(selectedVersionId, currentUserId);
+      // Fetch selected named layout from database
+      const result = await getNamedCanvasLayout(selectedVersionId, currentUserId, selectedLayoutName);
       const response = JSON.parse(result);
 
       if (!response.success || !response.layout) {
         await alertDialog({
-          message: 'No saved layout found for this version',
+          message: `No saved "${selectedLayoutName}" found for this version`,
           variant: 'warning',
         });
         setIsLoadingCanvas(false);
@@ -3264,7 +3282,7 @@ const StudioContent = () => {
       setLoadingMessage('');
       setLayoutDropdownOpen(false);
     }
-  }, [selectedVersionId, currentUserId, reloadClasses, setNodes, setGroups, setViewport, alertDialog, projectTags, isReadOnly, triggerSidebarRefresh, updateNodeInternals]);
+  }, [selectedVersionId, currentUserId, selectedLayoutName, reloadClasses, setNodes, setGroups, setViewport, alertDialog, projectTags, isReadOnly, triggerSidebarRefresh, updateNodeInternals]);
 
   // #471: Preview layout before applying — compute layout and show preview (do not commit)
   const handlePreviewLayout = useCallback((direction: 'TB' | 'LR') => {
@@ -4074,11 +4092,16 @@ const StudioContent = () => {
           return node;
         });
 
-        // On first load, check if there's a saved layout and apply it
+        // On first load, check if selected layout exists and apply it
         if (isFirstLoad && currentUserId) {
           try {
             setLoadingMessage('Checking for saved layout...');
-            const layoutResult = await getDefaultCanvasLayout(selectedVersionId, currentUserId);
+            const layoutNameForInitialLoad = selectedLayoutNameRef.current;
+            const layoutResult = await getNamedCanvasLayout(
+              selectedVersionId,
+              currentUserId,
+              layoutNameForInitialLoad
+            );
             const layoutResponse = JSON.parse(layoutResult);
 
             if (layoutResponse.success && layoutResponse.layout) {
@@ -4151,26 +4174,43 @@ const StudioContent = () => {
     loadClasses();
   }, [selectedVersionId, selectedProjectId, canvasRefreshKey, projects, versions, currentUserId, projectTags, isReadOnly, updateNodeInternals, setViewport]);
 
-  // Check if a saved layout exists when version changes
+  // Check layout availability when version or selected layout changes
   useEffect(() => {
     const checkLayoutExists = async () => {
       if (!selectedVersionId || !currentUserId) {
         setHasExistingLayout(false);
+        setAvailableLayoutNames(BUILTIN_LAYOUT_NAMES);
         return;
       }
 
       try {
-        const result = await getDefaultCanvasLayout(selectedVersionId, currentUserId);
-        const response = JSON.parse(result);
-        setHasExistingLayout(response.success && response.layout !== null);
+        const allLayoutsResult = await getNamedCanvasLayoutsForVersion(
+          selectedVersionId,
+          currentUserId
+        );
+        const allLayoutsResponse = JSON.parse(allLayoutsResult);
+        const dbLayoutNames = (allLayoutsResponse.layouts || [])
+          .map((layout: any) => layout.name)
+          .filter((name: string | null): name is string => Boolean(name));
+        setAvailableLayoutNames(
+          Array.from(new Set([...BUILTIN_LAYOUT_NAMES, ...dbLayoutNames]))
+        );
+
+        const hasExistingLayoutForSelection =
+          !!selectedLayoutName &&
+          (allLayoutsResponse.layouts || []).some(
+            (layout: any) => layout.name === selectedLayoutName
+          );
+        setHasExistingLayout(hasExistingLayoutForSelection);
       } catch (error) {
         console.error('Error checking layout existence:', error);
         setHasExistingLayout(false);
+        setAvailableLayoutNames(BUILTIN_LAYOUT_NAMES);
       }
     };
 
     checkLayoutExists();
-  }, [selectedVersionId, currentUserId]);
+  }, [selectedVersionId, currentUserId, selectedLayoutName, BUILTIN_LAYOUT_NAMES]);
 
   // Regenerate edges when edge styling or routing preferences change
   useEffect(() => {
@@ -6109,6 +6149,26 @@ const StudioContent = () => {
                         <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
                           Canvas Layout
                         </h4>
+                        <div className="mb-3">
+                          <label
+                            htmlFor="layout-name-select"
+                            className="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                          >
+                            Layout Name
+                          </label>
+                          <select
+                            id="layout-name-select"
+                            value={selectedLayoutName}
+                            onChange={(e) => setSelectedLayoutName(e.target.value)}
+                            className="w-full px-2.5 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            {availableLayoutNames.map((layoutName) => (
+                              <option key={layoutName} value={layoutName}>
+                                {layoutName}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             onClick={handleSaveLayout}
@@ -6151,7 +6211,7 @@ const StudioContent = () => {
                           </button>
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                          Save or load your canvas layout per version
+                          Save and load multiple named layouts per version
                         </p>
                       </div>
 
