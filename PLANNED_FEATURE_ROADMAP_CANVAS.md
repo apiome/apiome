@@ -79,7 +79,7 @@
 ### 2. Canvas Navigation & Controls
 
 #### Node Visibility Controls 📋 PLANNED
-- 📋 [TODO] Hide/show individual nodes
+- ✅ Hide/show individual nodes
 - 📋 [TODO] Hide all nodes except selected
 - 📋 [TODO] Hide by criteria:
   - [TODO] Hide all empty classes (no properties)
@@ -91,7 +91,6 @@
 
 | Ticket | Feature Description            |
 |--------|--------------------------------|
-| #481   | Hide/show individual nodes     |
 | #482   | Hide all nodes except selected |
 | #483   | Hide by criteria               |
 | #484   | "Ghosts mode" for hidden nodes |

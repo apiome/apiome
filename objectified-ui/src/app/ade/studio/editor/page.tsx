@@ -209,6 +209,8 @@ const StudioContent = () => {
     isReadOnly,
     setIsReadOnly,
     setZoomToClassFn,
+    setToggleClassVisibilityFn,
+    setHiddenClassIds,
     setCreateGroupFn,
     setCreateGroupAtPositionFn,
     clickToFocusEnabled,
@@ -252,6 +254,8 @@ const StudioContent = () => {
   const selectedVersionId = contextVersionId || '';
   const setSelectedProjectId = setContextProjectId;
   const setSelectedVersionId = setContextVersionId;
+  const [hiddenNodeIds, setHiddenNodeIdsState] = useState<Set<string>>(new Set());
+  const getHiddenNodesStorageKey = useCallback((versionId: string) => `studio:hiddenNodes:${versionId}`, []);
 
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const [isLoadingVersions, setIsLoadingVersions] = useState(false);
@@ -969,6 +973,9 @@ const StudioContent = () => {
   const displayNodes = useMemo(() => {
     let result = layoutPreviewNodes ?? nodes;
 
+    // #481: Hide individually toggled nodes from canvas display
+    result = result.filter((node) => node.type === 'groupNode' || !hiddenNodeIds.has(node.id));
+
     // #488: Show only nodes that have at least one connection (hide isolated nodes)
     if (showOnlyConnectedNodes) {
       const visibleGroupIds = new Set(
@@ -1128,7 +1135,7 @@ const StudioContent = () => {
     }
 
     return result;
-  }, [nodes, layoutPreviewNodes, showOnlyConnectedNodes, groups, connectedNodeIds, canvasSearchQuery, canvasSearchOpen, matchingNodeIds, focusModeEnabled, focusModeFocusedSet, showDependencyOverlay, dependencyView, dependencyFocalNodeId, dependencyUpstreamIds, dependencyDownstreamIds, dependencyPathChain, nodesWithDependencyIds, dependencyDepthMap, circularNodeIdsSet, impactAnalysisMode, impactAnalysisSourceId, affectedClassIds]);
+  }, [nodes, layoutPreviewNodes, hiddenNodeIds, showOnlyConnectedNodes, groups, connectedNodeIds, canvasSearchQuery, canvasSearchOpen, matchingNodeIds, focusModeEnabled, focusModeFocusedSet, showDependencyOverlay, dependencyView, dependencyFocalNodeId, dependencyUpstreamIds, dependencyDownstreamIds, dependencyPathChain, nodesWithDependencyIds, dependencyDepthMap, circularNodeIdsSet, impactAnalysisMode, impactAnalysisSourceId, affectedClassIds]);
 
   // Compute edges with search and/or focus mode styling applied
   const displayEdges = useMemo(() => {
@@ -1281,11 +1288,56 @@ const StudioContent = () => {
     setCenter(x, y, { zoom: targetZoom, duration: 250 });
   }, [setCenter, getViewport]);
 
+  const setClassVisibility = useCallback((classId: string, visible?: boolean) => {
+    setHiddenNodeIdsState((prev) => {
+      const next = new Set(prev);
+      const shouldHide = visible === undefined ? !next.has(classId) : !visible;
+      if (shouldHide) {
+        next.add(classId);
+      } else {
+        next.delete(classId);
+      }
+      return next;
+    });
+  }, []);
+
   // Register zoomToClass function in context on mount
   useEffect(() => {
     setZoomToClassFn(() => zoomToClass);
     return () => setZoomToClassFn(null);
   }, [zoomToClass, setZoomToClassFn]);
+
+  useEffect(() => {
+    setToggleClassVisibilityFn(() => setClassVisibility);
+    return () => setToggleClassVisibilityFn(null);
+  }, [setClassVisibility, setToggleClassVisibilityFn]);
+
+  useEffect(() => {
+    if (!selectedVersionId) {
+      setHiddenNodeIdsState(new Set());
+      setHiddenClassIds([]);
+      return;
+    }
+    const key = getHiddenNodesStorageKey(selectedVersionId);
+    try {
+      const raw = localStorage.getItem(key);
+      const parsed = raw ? JSON.parse(raw) : [];
+      const ids = Array.isArray(parsed) ? parsed.filter((id) => typeof id === 'string') : [];
+      setHiddenNodeIdsState(new Set(ids));
+      setHiddenClassIds(ids);
+    } catch {
+      setHiddenNodeIdsState(new Set());
+      setHiddenClassIds([]);
+    }
+  }, [selectedVersionId, getHiddenNodesStorageKey, setHiddenClassIds]);
+
+  useEffect(() => {
+    const ids = Array.from(hiddenNodeIds);
+    setHiddenClassIds(ids);
+    if (!selectedVersionId) return;
+    const key = getHiddenNodesStorageKey(selectedVersionId);
+    localStorage.setItem(key, JSON.stringify(ids));
+  }, [hiddenNodeIds, selectedVersionId, getHiddenNodesStorageKey, setHiddenClassIds]);
 
 
   // Helper to reload classes for current selectedVersionId (used after edits)
@@ -3587,6 +3639,7 @@ const StudioContent = () => {
           onClassDelete: (...args: any[]) => handleClassDeleteRef.current?.(...args),
           onCreateReference: (...args: any[]) => handleCreateReferenceRef.current?.(...args),
           onThemeChange: (...args: any[]) => handleThemeChangeRef.current?.(...args),
+          onToggleVisibility: (classId: string, visible?: boolean) => setClassVisibility(classId, visible),
           isReadOnly: isReadOnly,
           expandedProperties: globalExpandedProperties,
           onTogglePropertyExpansion: (...args: any[]) => handleTogglePropertyExpansionRef.current?.(...args),

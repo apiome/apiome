@@ -503,6 +503,7 @@ type ClassNodeData = {
   onClassDelete?: (classId: string, className: string) => void;
   onCreateReference?: (classOrCompositeId: string) => void;
   onThemeChange?: (classId: string, theme: ClassNodeTheme) => void;
+  onToggleVisibility?: (classId: string, visible?: boolean) => void;
   isReadOnly?: boolean;
   expandedProperties?: Set<string>; // Global expanded properties state
   onTogglePropertyExpansion?: (propertyId: string) => void; // Callback to toggle property expansion
@@ -1805,6 +1806,40 @@ function ClassNode({ id, data, selected }: NodeProps) {
                 </Popover.Content>
               </Popover.Portal>
             </Popover.Root>
+
+            {/* Hide node button (#481) */}
+            <button
+              style={{
+                background: 'rgba(255, 255, 255, 0.12)',
+                border: '1px solid rgba(255, 255, 255, 0.18)',
+                borderRadius: '5px',
+                padding: '4px',
+                cursor: 'pointer',
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontSize: '12px',
+                lineHeight: 1,
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                typedData.onToggleVisibility?.(typedData.id, false);
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(37, 99, 235, 0.8)';
+                e.currentTarget.style.borderColor = 'rgba(37, 99, 235, 0.9)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.18)';
+              }}
+              title="Hide class"
+            >
+              <EyeOff size={12} />
+            </button>
 
             {/* Delete button */}
             <button

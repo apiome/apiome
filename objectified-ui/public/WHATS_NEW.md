@@ -38,6 +38,7 @@ Bug Fixes:
   - Now handles multiple saved layouts per version
   - Adds auto-save layout changes every 30 seconds (configurable)
   - Adds the ability to save custom layout names per version
+  - Introduces the ability to hide/show individual nodes
 - Project form:
   - Now includes the metadata section
   - Moved AI Assistant here

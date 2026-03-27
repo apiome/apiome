@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
-import { Search, Plus, Pencil, Trash2, Trash2 as DeleteSweep, Upload, Library, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, Trash2 as DeleteSweep, Upload, Library, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
 import { getPropertiesForClass } from '../../../../../lib/db/helper';
 import { useDarkMode } from '@/app/hooks/useDarkMode';
 
@@ -55,6 +55,7 @@ export interface StudioSideNavCallbacks {
   onClassEdit?: (classItem: ClassItem) => void;
   onClassDelete?: (classId: string) => void;
   onClassSelect?: (classItem: ClassItem) => void;
+  onClassVisibilityToggle?: (classId: string, visible?: boolean) => void;
   onClassImport?: () => void;
   onClassTemplates?: () => void;
 
@@ -88,6 +89,7 @@ interface StudioSideNavProps {
   selectedProjectId?: string | null; // Currently selected project from canvas
   selectedVersionId?: string | null; // Currently selected version from canvas
   isReadOnly?: boolean; // Whether the current version is published (read-only)
+  hiddenClassIds?: string[];
   // classWarnings?: Record<string, boolean>; // removed, computed locally
   [key: string]: any; // allow future, non-breaking props from parent
 }
@@ -101,6 +103,7 @@ const StudioSideNav: React.FC<StudioSideNavProps> = ({
   selectedProjectId = null,
   selectedVersionId = null,
   isReadOnly = false,
+  hiddenClassIds = [],
 }) => {
   // Dark mode detection using shared hook
   const isDark = useDarkMode();
@@ -331,7 +334,9 @@ const StudioSideNav: React.FC<StudioSideNavProps> = ({
                   </div>
                 ) : (
                   <ul className="py-1 space-y-1 list-none p-0 m-0">
-                    {filteredClasses.map((classItem) => (
+                    {filteredClasses.map((classItem) => {
+                      const isHidden = hiddenClassIds.includes(classItem.id);
+                      return (
                       <li key={classItem.id} className="mb-1 flex items-stretch rounded-lg group">
                         <button
                           type="button"
@@ -340,7 +345,7 @@ const StudioSideNav: React.FC<StudioSideNavProps> = ({
                             selectedClassId === classItem.id
                               ? 'bg-indigo-500/10 border-l-[3px] border-indigo-500 hover:bg-indigo-500/15'
                               : 'hover:bg-indigo-500/5 border-l-[3px] border-transparent'
-                          }`}
+                          } ${isHidden ? 'opacity-60' : ''}`}
                         >
                           <span className="flex items-center gap-1.5 min-w-0">
                             <span
@@ -359,8 +364,19 @@ const StudioSideNav: React.FC<StudioSideNavProps> = ({
                           {classItem.description && (
                             <span className="block text-xs truncate mt-0.5 text-slate-500 dark:text-slate-400">{classItem.description}</span>
                           )}
+                          {isHidden && (
+                            <span className="block text-[10px] mt-0.5 text-slate-500 dark:text-slate-400">Hidden on canvas</span>
+                          )}
                         </button>
                         <div className="flex items-center gap-0.5 opacity-60 group-hover:opacity-100">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); callbacks.onClassVisibilityToggle?.(classItem.id, isHidden); }}
+                            title={isHidden ? 'Show class on canvas' : 'Hide class on canvas'}
+                            className="p-1.5 rounded hover:bg-slate-500/10 hover:text-slate-600 dark:hover:text-slate-300"
+                          >
+                            {isHidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                          </button>
                           <button
                             type="button"
                             disabled={!selectedVersionId || isReadOnly}
@@ -381,7 +397,8 @@ const StudioSideNav: React.FC<StudioSideNavProps> = ({
                           </button>
                         </div>
                       </li>
-                    ))}
+                      );
+                    })}
                   </ul>
                 )}
               </div>

@@ -95,6 +95,10 @@ interface StudioContextType {
   setIsReadOnly: (value: boolean) => void;
   zoomToClassFn: ((classId: string) => void) | null;
   setZoomToClassFn: (fn: ((classId: string) => void) | null) => void;
+  toggleClassVisibilityFn: ((classId: string, visible?: boolean) => void) | null;
+  setToggleClassVisibilityFn: (fn: ((classId: string, visible?: boolean) => void) | null) => void;
+  hiddenClassIds: string[];
+  setHiddenClassIds: (ids: string[]) => void;
   createGroupFn: (() => void) | null;
   setCreateGroupFn: (fn: (() => void) | null) => void;
   createGroupAtPositionFn: ((position: { x: number; y: number }) => void) | null;
@@ -162,6 +166,8 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState<number>(0);
   const [isReadOnly, setIsReadOnly] = useState<boolean>(false);
   const [zoomToClassFn, setZoomToClassFn] = useState<((classId: string) => void) | null>(null);
+  const [toggleClassVisibilityFn, setToggleClassVisibilityFn] = useState<((classId: string, visible?: boolean) => void) | null>(null);
+  const [hiddenClassIds, setHiddenClassIds] = useState<string[]>([]);
   const [createGroupFn, setCreateGroupFn] = useState<(() => void) | null>(null);
   const [createGroupAtPositionFn, setCreateGroupAtPositionFn] = useState<((position: { x: number; y: number }) => void) | null>(null);
   const [clickToFocusEnabled, setClickToFocusEnabled] = useState<boolean>(() => {
@@ -468,6 +474,10 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       setIsReadOnly,
       zoomToClassFn,
       setZoomToClassFn,
+      toggleClassVisibilityFn,
+      setToggleClassVisibilityFn,
+      hiddenClassIds,
+      setHiddenClassIds,
       createGroupFn,
       setCreateGroupFn,
       createGroupAtPositionFn,

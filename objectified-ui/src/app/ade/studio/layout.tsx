@@ -36,7 +36,7 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
   const pathname = usePathname();
   const currentTenantId = (session?.user as any)?.current_tenant_id;
   const currentUserId = (session?.user as any)?.user_id;
-  const { selectedProjectId, selectedVersionId, triggerCanvasRefresh, triggerSidebarRefresh, sidebarRefreshKey, isReadOnly, zoomToClassFn, createGroupFn, clickToFocusEnabled, groups, deleteGroup, updateGroup } = useStudio();
+  const { selectedProjectId, selectedVersionId, triggerCanvasRefresh, triggerSidebarRefresh, sidebarRefreshKey, isReadOnly, zoomToClassFn, toggleClassVisibilityFn, hiddenClassIds, createGroupFn, clickToFocusEnabled, groups, deleteGroup, updateGroup } = useStudio();
 
   // Check if we're on the code or paths view - hide sidebar for these views
   const isCodeView = pathname?.includes('/code') || pathname?.includes('/paths');
@@ -306,6 +306,10 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
         zoomToClassFn(classItem.id);
       }
     },
+    onClassVisibilityToggle: (classId, visible) => {
+      toggleClassVisibilityFn?.(classId, visible);
+      triggerCanvasRefresh();
+    },
     onPropertyAdd: handlePropertyAdd, onPropertyEdit: handlePropertyEdit, onPropertyDelete: handlePropertyDelete, onPropertyTemplates: handlePropertyTemplates,
     onPropertySelect: (propertyItem) => console.log('Property selected:', propertyItem),
     onGroupAdd: () => {
@@ -416,6 +420,7 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
         {/* Only show sidebar for canvas/editor view, not for code view */}
         {!isCodeView && currentTenantId && selectedProjectId && selectedVersionId && (
           <StudioSideNav classes={classes} properties={properties} groups={sidebarGroups} callbacks={callbacks} refreshKey={refreshKey}
+                         hiddenClassIds={hiddenClassIds}
                          selectedProjectId={selectedProjectId} selectedVersionId={selectedVersionId} isReadOnly={isReadOnly} />
         )}
 
