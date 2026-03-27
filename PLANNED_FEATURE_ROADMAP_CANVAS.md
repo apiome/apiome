@@ -41,7 +41,6 @@
 | #314   | Canvas snapshots                               |
 | #315   | Canvas auto-save of layout                     |
 | #316   | Export/import canvas layouts                   |
-| #825   | Add ability to save layouts with a custom name |
 
 #### Layout Snapshots 📋 PLANNED
 - 📋 [TODO] Take quick snapshots of current layout
