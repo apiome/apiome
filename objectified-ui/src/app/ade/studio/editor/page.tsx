@@ -52,7 +52,9 @@ import {
   ArrowUp,
   ArrowDown,
   Route,
-  BoxSelect
+  BoxSelect,
+  Braces,
+  Ban
 } from 'lucide-react';
 import * as Select from '@radix-ui/react-select';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
@@ -113,6 +115,10 @@ import { getCanvasBackgroundStyle } from '@/app/utils/canvas-background-style';
 import { applyEdgeStyling } from '@/app/utils/edge-styling';
 import { computeCanvasSuggestions } from '@/app/utils/canvas-suggestions';
 import { getVisibleNodeIdsForIsolateSelection } from '@/app/utils/canvas-node-visibility';
+import {
+  computeClassIdsPassingHideCriteria,
+  groupNodeIdIsVisible,
+} from '@/app/utils/canvas-display-visibility';
 import { computeLayoutQuality } from '@/app/utils/layout-quality';
 import { computeSchemaMetrics, getCircularDependencyEdgeIds, getDependencyDepthMap, getAffectedClassIds, getUpstreamClassIds, getDependencyChainNodeAndEdgeIds } from '@/app/utils/schema-metrics';
 import DraggablePanel from '../components/DraggablePanel';
@@ -304,6 +310,24 @@ const StudioContent = () => {
 
   // #488: Show only connected nodes (hide nodes with no edges)
   const [showOnlyConnectedNodes, setShowOnlyConnectedNodes] = useState(false);
+  // #483: Additional hide criteria (persisted per version with showOnlyConnectedNodes)
+  const [hideEmptyClasses, setHideEmptyClasses] = useState(false);
+  const [hideDeprecatedClasses, setHideDeprecatedClasses] = useState(false);
+  const [hiddenCanvasGroupIds, setHiddenCanvasGroupIds] = useState<Set<string>>(new Set());
+
+  const getHideCriteriaStorageKey = useCallback((versionId: string) => `studio:canvasHideCriteria:${versionId}`, []);
+
+  const toggleHiddenCanvasGroup = useCallback((groupId: string) => {
+    setHiddenCanvasGroupIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
+  }, []);
+
+  /** Avoid clobbering localStorage on hydrate: save effect runs after load in the same tick. */
+  const skipNextHideCriteriaPersistRef = useRef(false);
 
   // #482: Hide all class nodes except the current selection (and group frames that contain them)
   const [isolateSelectionEnabled, setIsolateSelectionEnabled] = useState(false);
@@ -884,6 +908,34 @@ const StudioContent = () => {
     return set;
   }, [edges]);
 
+  // #483: Class IDs visible after manual per-node hide and hide criteria
+  const visibleClassIdsAfterHideCriteria = useMemo(() => {
+    const baseNodes = layoutPreviewNodes ?? nodes;
+    const classNodes = baseNodes.filter((n) => n.type !== 'groupNode');
+    const passing = computeClassIdsPassingHideCriteria(
+      classNodes,
+      groups,
+      connectedNodeIds,
+      {
+        hideEmptyClasses,
+        hideUnconnectedClasses: showOnlyConnectedNodes,
+        hideDeprecatedClasses,
+        hiddenGroupIds: hiddenCanvasGroupIds,
+      }
+    );
+    return new Set([...passing].filter((id) => !hiddenNodeIds.has(id)));
+  }, [
+    layoutPreviewNodes,
+    nodes,
+    groups,
+    connectedNodeIds,
+    hideEmptyClasses,
+    showOnlyConnectedNodes,
+    hideDeprecatedClasses,
+    hiddenCanvasGroupIds,
+    hiddenNodeIds,
+  ]);
+
   // Focus mode: focused set = either group members (#490) or selection + neighbors up to degree (BFS)
   const focusModeFocusedSet = useMemo(() => {
     if (!focusModeEnabled) return new Set<string>();
@@ -988,20 +1040,15 @@ const StudioContent = () => {
   const displayNodes = useMemo(() => {
     let result = layoutPreviewNodes ?? nodes;
 
-    // #481: Hide individually toggled nodes from canvas display
-    result = result.filter((node) => node.type === 'groupNode' || !hiddenNodeIds.has(node.id));
-
-    // #488: Show only nodes that have at least one connection (hide isolated nodes)
-    if (showOnlyConnectedNodes) {
-      const visibleGroupIds = new Set(
-        groups.filter(g => g.nodeIds.some(id => connectedNodeIds.has(id))).map(g => g.id)
-      );
-      result = result.filter(node =>
-        node.type === 'groupNode'
-          ? visibleGroupIds.has(node.id)
-          : connectedNodeIds.has(node.id)
-      );
-    }
+    // #481 + #483: Manual hide, empty/unconnected/deprecated/group criteria — group frame if any member visible
+    const groupMap = new Map(groups.map((g) => [g.id, g]));
+    result = result.filter((node) => {
+      if (node.type === 'groupNode') {
+        const g = groupMap.get(node.id);
+        return g ? groupNodeIdIsVisible(g, visibleClassIdsAfterHideCriteria) : false;
+      }
+      return visibleClassIdsAfterHideCriteria.has(node.id);
+    });
 
     // #482: Show only selected classes and group containers that include them
     if (isolateSelectionEnabled && selectedNodeIds.length > 0) {
@@ -1156,18 +1203,18 @@ const StudioContent = () => {
     }
 
     return result;
-  }, [nodes, layoutPreviewNodes, hiddenNodeIds, showOnlyConnectedNodes, isolateSelectionEnabled, selectedNodeIds, groups, connectedNodeIds, canvasSearchQuery, canvasSearchOpen, matchingNodeIds, focusModeEnabled, focusModeFocusedSet, showDependencyOverlay, dependencyView, dependencyFocalNodeId, dependencyUpstreamIds, dependencyDownstreamIds, dependencyPathChain, nodesWithDependencyIds, dependencyDepthMap, circularNodeIdsSet, impactAnalysisMode, impactAnalysisSourceId, affectedClassIds]);
+  }, [nodes, layoutPreviewNodes, visibleClassIdsAfterHideCriteria, isolateSelectionEnabled, selectedNodeIds, groups, canvasSearchQuery, canvasSearchOpen, matchingNodeIds, focusModeEnabled, focusModeFocusedSet, showDependencyOverlay, dependencyView, dependencyFocalNodeId, dependencyUpstreamIds, dependencyDownstreamIds, dependencyPathChain, nodesWithDependencyIds, dependencyDepthMap, circularNodeIdsSet, impactAnalysisMode, impactAnalysisSourceId, affectedClassIds]);
 
   // Compute edges with search and/or focus mode styling applied
   const displayEdges = useMemo(() => {
     let result = edges;
 
-    // #488: Show only edges between visible (connected) nodes when filter is on
-    if (showOnlyConnectedNodes) {
-      result = result.filter(
-        edge => connectedNodeIds.has(edge.source) && connectedNodeIds.has(edge.target)
-      );
-    }
+    // #483 / #488: Only edges between class nodes that remain visible after hide criteria
+    result = result.filter(
+      (edge) =>
+        visibleClassIdsAfterHideCriteria.has(edge.source) &&
+        visibleClassIdsAfterHideCriteria.has(edge.target)
+    );
 
     if (isolateSelectionEnabled && selectedNodeIds.length > 0) {
       const visibleIds = getVisibleNodeIdsForIsolateSelection(groups, new Set(selectedNodeIds));
@@ -1261,7 +1308,7 @@ const StudioContent = () => {
     }
 
     return result;
-  }, [edges, showOnlyConnectedNodes, isolateSelectionEnabled, selectedNodeIds, groups, connectedNodeIds, canvasSearchQuery, canvasSearchOpen, matchingNodeIds, focusModeEnabled, focusModeFocusedSet, showDependencyOverlay, dependencyView, dependencyFocalNodeId, dependencyUpstreamIds, dependencyDownstreamIds, dependencyPathChain, dependencyEdgeIds, circularEdgeIds, impactAnalysisMode, impactAnalysisSourceId, affectedClassIds]);
+  }, [edges, visibleClassIdsAfterHideCriteria, isolateSelectionEnabled, selectedNodeIds, groups, canvasSearchQuery, canvasSearchOpen, matchingNodeIds, focusModeEnabled, focusModeFocusedSet, showDependencyOverlay, dependencyView, dependencyFocalNodeId, dependencyUpstreamIds, dependencyDownstreamIds, dependencyPathChain, dependencyEdgeIds, circularEdgeIds, impactAnalysisMode, impactAnalysisSourceId, affectedClassIds]);
 
   // #349: Apply hover highlight to the hovered edge (thicker stroke, higher zIndex)
   const edgesWithHover = useMemo(() => {
@@ -1367,6 +1414,70 @@ const StudioContent = () => {
     localStorage.setItem(key, JSON.stringify(ids));
   }, [hiddenNodeIds, selectedVersionId, getHiddenNodesStorageKey, setHiddenClassIds]);
 
+  useEffect(() => {
+    if (!selectedVersionId) {
+      setHideEmptyClasses(false);
+      setHideDeprecatedClasses(false);
+      setShowOnlyConnectedNodes(false);
+      setHiddenCanvasGroupIds(new Set());
+      skipNextHideCriteriaPersistRef.current = false;
+      return;
+    }
+    const key = getHideCriteriaStorageKey(selectedVersionId);
+    try {
+      const raw = localStorage.getItem(key);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed && typeof parsed === 'object') {
+        setHideEmptyClasses(!!(parsed as { hideEmpty?: boolean }).hideEmpty);
+        setHideDeprecatedClasses(!!(parsed as { hideDeprecated?: boolean }).hideDeprecated);
+        setShowOnlyConnectedNodes(!!(parsed as { hideUnconnected?: boolean }).hideUnconnected);
+        const gids = (parsed as { hiddenGroupIds?: unknown }).hiddenGroupIds;
+        setHiddenCanvasGroupIds(
+          Array.isArray(gids)
+            ? new Set(gids.filter((x): x is string => typeof x === 'string'))
+            : new Set()
+        );
+      } else {
+        setHideEmptyClasses(false);
+        setHideDeprecatedClasses(false);
+        setShowOnlyConnectedNodes(false);
+        setHiddenCanvasGroupIds(new Set());
+      }
+    } catch {
+      setHideEmptyClasses(false);
+      setHideDeprecatedClasses(false);
+      setShowOnlyConnectedNodes(false);
+      setHiddenCanvasGroupIds(new Set());
+      // Remove corrupt or unparsable hide-criteria from storage so it doesn't cause repeated parse failures
+      localStorage.removeItem(key);
+    }
+    skipNextHideCriteriaPersistRef.current = true;
+  }, [selectedVersionId, getHideCriteriaStorageKey]);
+
+  useEffect(() => {
+    if (!selectedVersionId) return;
+    if (skipNextHideCriteriaPersistRef.current) {
+      skipNextHideCriteriaPersistRef.current = false;
+      return;
+    }
+    const key = getHideCriteriaStorageKey(selectedVersionId);
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        hideEmpty: hideEmptyClasses,
+        hideDeprecated: hideDeprecatedClasses,
+        hideUnconnected: showOnlyConnectedNodes,
+        hiddenGroupIds: Array.from(hiddenCanvasGroupIds),
+      })
+    );
+  }, [
+    hideEmptyClasses,
+    hideDeprecatedClasses,
+    showOnlyConnectedNodes,
+    hiddenCanvasGroupIds,
+    selectedVersionId,
+    getHideCriteriaStorageKey,
+  ]);
 
   // Helper to reload classes for current selectedVersionId (used after edits)
   const reloadClasses = useCallback(async (applyLayout = false) => {
@@ -5944,7 +6055,12 @@ const StudioContent = () => {
                   <DropdownMenu.Trigger asChild>
                     <button
                       className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 border ${
-                        focusModeEnabled || showOnlyConnectedNodes || isolateSelectionEnabled
+                        focusModeEnabled ||
+                        showOnlyConnectedNodes ||
+                        isolateSelectionEnabled ||
+                        hideEmptyClasses ||
+                        hideDeprecatedClasses ||
+                        hiddenCanvasGroupIds.size > 0
                           ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700'
                           : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-transparent hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400'
                       }`}
@@ -6013,18 +6129,86 @@ const StudioContent = () => {
                           </div>
                         )}
                       </div>
+                      <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
+                      <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Hide on canvas
+                      </div>
+                      <DropdownMenu.CheckboxItem
+                        checked={hideEmptyClasses}
+                        onCheckedChange={(checked) => setHideEmptyClasses(!!checked)}
+                        className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700"
+                        onSelect={(e) => e.preventDefault()}
+                        title="Hide classes that have no properties"
+                      >
+                        <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
+                          <Check className="h-4 w-4" />
+                        </DropdownMenu.ItemIndicator>
+                        <Braces className="h-4 w-4 shrink-0" />
+                        <span>Empty classes</span>
+                      </DropdownMenu.CheckboxItem>
                       <DropdownMenu.CheckboxItem
                         checked={showOnlyConnectedNodes}
                         onCheckedChange={(checked) => setShowOnlyConnectedNodes(!!checked)}
                         className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700"
                         onSelect={(e) => e.preventDefault()}
+                        title="Hide classes with no relationships (no edges on the canvas)"
                       >
                         <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
                           <Check className="h-4 w-4" />
                         </DropdownMenu.ItemIndicator>
                         <Network className="h-4 w-4 shrink-0" />
-                        <span>Connected</span>
+                        <span>Unconnected classes</span>
                       </DropdownMenu.CheckboxItem>
+                      <DropdownMenu.CheckboxItem
+                        checked={hideDeprecatedClasses}
+                        onCheckedChange={(checked) => setHideDeprecatedClasses(!!checked)}
+                        className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700"
+                        onSelect={(e) => e.preventDefault()}
+                        title="Hide classes marked deprecated in schema"
+                      >
+                        <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
+                          <Check className="h-4 w-4" />
+                        </DropdownMenu.ItemIndicator>
+                        <Ban className="h-4 w-4 shrink-0" />
+                        <span>Deprecated classes</span>
+                      </DropdownMenu.CheckboxItem>
+                      <DropdownMenu.Sub>
+                        <DropdownMenu.SubTrigger className="flex items-center gap-3 px-3 py-2 text-sm rounded-md outline-none cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-700">
+                          <Folder className="h-4 w-4 shrink-0" />
+                          <span>Hide group members</span>
+                          <ChevronRight className="h-4 w-4 ml-auto shrink-0" />
+                        </DropdownMenu.SubTrigger>
+                        <DropdownMenu.SubContent
+                          className="min-w-[200px] max-w-[260px] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 py-1 z-50 overflow-x-hidden"
+                          sideOffset={4}
+                          alignOffset={-4}
+                        >
+                          {groups.length === 0 ? (
+                            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No groups</div>
+                          ) : (
+                            <div className="max-h-[240px] overflow-y-auto overflow-x-hidden">
+                              {groups.map((g) => (
+                                <button
+                                  key={g.id}
+                                  type="button"
+                                  className="w-full min-w-0 flex items-center gap-2 px-3 py-2 text-sm text-left text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 outline-none mx-0.5"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    toggleHiddenCanvasGroup(g.id);
+                                  }}
+                                >
+                                  <span className="inline-flex w-5 shrink-0 items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                    {hiddenCanvasGroupIds.has(g.id) ? <Check className="h-4 w-4" /> : null}
+                                  </span>
+                                  <span className="truncate min-w-0">{g.name}</span>
+                                  <span className="text-xs text-gray-400 tabular-nums shrink-0">({g.nodeIds.length})</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </DropdownMenu.SubContent>
+                      </DropdownMenu.Sub>
+                      <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
                       <DropdownMenu.CheckboxItem
                         checked={isolateSelectionEnabled}
                         disabled={selectedNodeIds.length === 0}
