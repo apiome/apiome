@@ -48,22 +48,28 @@ When the user invokes **handle-ticket** with an issue number (for example `/hand
 - Tests should be thorough.
 - Don't Repeat Yourself.
 
-## 6. Commit and push
+## 6. Note the work
+
+- After completing the work, mark it complete in the ROADMAP file and remove the entry from the issues list in the ROADMAP file that matches the issue number.
+- Add a one line summary of the work that was performed to the public/WHATS_NEW.md file.
+
+## 7. Commit and push
 
 - **Commit** with a clear message that references the issue (e.g. `Fix #124 — …` or `Addresses #124 — …`).
 - **Push** the branch
 
-## 7. Open a pull request
+## 8. Open a pull request
 
 - Create a PR **from `ticket-<number>`** into the **default branch** using the GitHub MCP.
 - **PR title:** concise; include or reference the issue number.
 - **PR body:** summarize **what was done**, **why**, **how to test**, and **risk/notes**. Use a markdown checklist if it helps. Link the issue (e.g. `Closes #124` or `Fixes #124` if the team uses auto-close semantics).
+- **Issue:** Mark "Work completed as directed" in the issue.
 
-## 8. Assign Copilot as reviewer
+## 9. Assign Copilot as reviewer
 
 - **Request a review from GitHub Copilot** on the PR. Use the same reviewer login your org uses when typing **@Copilot** in the GitHub reviewer field (often the Copilot PR-review bot account—confirm via UI or org docs).  Use Github MCP to add **Copilot** as a reviewer and note that in a comment if needed.
 
-## 9. Remain in the branch
+## 10. Remain in the branch
 
 - After the PR is created, remain in the branch that was created.
 
