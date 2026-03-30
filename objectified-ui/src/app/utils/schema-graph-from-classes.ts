@@ -1,7 +1,7 @@
 /**
  * Build React Flow nodes and edges from persisted class rows for schema metrics (#323).
  * Mirrors the studio editor’s dependency graph (property $refs + schema allOf/anyOf/oneOf)
- * without canvas styling or animation so {@link computeSchemaMetrics} matches the canvas.
+ * for use by {@link computeSchemaMetrics}; output may include visual styling metadata.
  */
 
 import type { Edge, Node } from '@xyflow/react';

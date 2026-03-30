@@ -122,13 +122,14 @@ export async function updateClassCanvasMetadataWithSession(
 /**
  * Get classes with properties and tags for a version via REST API
  */
-async function getClassesWithPropertiesAndTags(versionId: string): Promise<{ success: boolean; classes?: any[]; error?: string }> {
+async function getClassesWithPropertiesAndTags(versionId: string, signal?: AbortSignal): Promise<{ success: boolean; classes?: any[]; error?: string }> {
   try {
     const response = await fetch(`/api/classes/version/${versionId}/with-properties-tags`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
+      signal,
     });
 
     if (!response.ok) {
@@ -173,9 +174,10 @@ async function getClassWithPropertiesAndTags(classId: string): Promise<{ success
  * Get classes with properties and tags for a version (convenience wrapper)
  */
 export async function getClassesWithPropertiesAndTagsWithSession(
-  versionId: string
+  versionId: string,
+  signal?: AbortSignal
 ): Promise<{ success: boolean; classes?: any[]; error?: string }> {
-  return getClassesWithPropertiesAndTags(versionId);
+  return getClassesWithPropertiesAndTags(versionId, signal);
 }
 
 /**

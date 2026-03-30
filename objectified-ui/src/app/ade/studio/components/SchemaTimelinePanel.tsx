@@ -42,7 +42,11 @@ function normalizeSeries(values: number[]): number[] {
   const max = Math.max(...values);
   const span = max - min;
   if (span <= 0) return values.map(() => CHART_H / 2);
-  return values.map((v) => PAD + ((v - min) / span) * (CHART_H - 2 * PAD));
+  return values.map((v) => {
+    const t = (v - min) / span; // 0 at min, 1 at max
+    // Invert for SVG: larger values should be nearer the top (smaller y)
+    return PAD + (1 - t) * (CHART_H - 2 * PAD);
+  });
 }
 
 function buildPolylinePoints(xs: number[], ys: number[]): string {
@@ -64,8 +68,10 @@ export default function SchemaTimelinePanel({
   const sortedVersions = React.useMemo(() => {
     const copy = [...versions];
     copy.sort((a, b) => {
-      const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+      const rawA = a.created_at ? Date.parse(a.created_at) : NaN;
+      const rawB = b.created_at ? Date.parse(b.created_at) : NaN;
+      const ta = Number.isFinite(rawA) ? rawA : 0;
+      const tb = Number.isFinite(rawB) ? rawB : 0;
       if (ta !== tb) return ta - tb;
       return (a.version_id || '').localeCompare(b.version_id || '');
     });
@@ -79,7 +85,8 @@ export default function SchemaTimelinePanel({
       return;
     }
 
-    let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
     setLoading(true);
     setGlobalError(null);
 
@@ -87,8 +94,8 @@ export default function SchemaTimelinePanel({
       const next: TimelinePoint[] = [];
       try {
         for (const v of sortedVersions) {
-          const res = await getClassesWithPropertiesAndTagsWithSession(v.id);
-          if (cancelled) return;
+          const res = await getClassesWithPropertiesAndTagsWithSession(v.id, signal);
+          if (signal.aborted) return;
           if (!res.success) {
             next.push({
               versionId: v.id,
@@ -117,23 +124,23 @@ export default function SchemaTimelinePanel({
             });
           }
         }
-        if (!cancelled) {
+        if (!signal.aborted) {
           setPoints(next);
           setGlobalError(null);
         }
       } catch (e) {
-        if (!cancelled) {
+        if (!signal.aborted) {
           setGlobalError(e instanceof Error ? e.message : 'Failed to load timeline');
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!signal.aborted) setLoading(false);
       }
     };
 
     run();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [sortedVersions]);
 
@@ -294,7 +301,7 @@ export default function SchemaTimelinePanel({
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium text-gray-800 dark:text-gray-200 truncate">
                       v{p.label}
-                      {p.createdAt && (
+                      {p.createdAt && Number.isFinite(Date.parse(p.createdAt)) && (
                         <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
                           · {new Date(p.createdAt).toLocaleDateString()}
                         </span>
