@@ -543,6 +543,8 @@ function ClassNode({ id, data, selected }: NodeProps) {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [iconSearchQuery, setIconSearchQuery] = useState('');
+  /** #854: Property row shows type by default; edit/delete replace type on hover (editable canvas only). */
+  const [hoveredPropertyRowId, setHoveredPropertyRowId] = useState<string | null>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
 
   // Use ResizeObserver to detect when the node's actual DOM size changes
@@ -1997,6 +1999,9 @@ function ClassNode({ id, data, selected }: NodeProps) {
               const currentIndex = rowIndex++;
               const isRequired = p.data?.required;
               const isDeprecated = parseData(p)?.deprecated;
+              const canShowPropertyActions =
+                !typedData.isReadOnly && !!(typedData.onPropertyEdit || typedData.onPropertyDelete);
+              const showPropertyRowActions = canShowPropertyActions && hoveredPropertyRowId === p.id;
 
               const row: React.JSX.Element[] = [];
               row.push(
@@ -2007,7 +2012,7 @@ function ClassNode({ id, data, selected }: NodeProps) {
                   onDrop={container && !typedData.isReadOnly ? (e) => handlePropertyDrop(e, p.id) : undefined}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '16px 1fr auto 36px',
+                    gridTemplateColumns: '16px 1fr auto',
                     alignItems: 'center',
                     padding: '5px 10px',
                     paddingLeft: `${10 + depth * 14}px`,
@@ -2024,11 +2029,13 @@ function ClassNode({ id, data, selected }: NodeProps) {
                     minHeight: '28px',
                   }}
                   onMouseEnter={(e) => {
+                    setHoveredPropertyRowId(p.id);
                     if (!isInDropZone) {
                       e.currentTarget.style.background = '#f8fafc';
                     }
                   }}
                   onMouseLeave={(e) => {
+                    setHoveredPropertyRowId((prev) => (prev === p.id ? null : prev));
                     if (!isInDropZone) {
                       e.currentTarget.style.background = 'transparent';
                     }
@@ -2105,90 +2112,106 @@ function ClassNode({ id, data, selected }: NodeProps) {
                     )}
                   </div>
 
-                  <div style={{
-                    fontSize: '9px',
-                    color: '#64748b',
-                    fontFamily: '"SF Mono", Monaco, "Cascadia Code", monospace',
-                    whiteSpace: 'nowrap',
-                    background: '#f1f5f9',
-                    padding: '1px 6px',
-                    borderRadius: '3px',
-                    fontWeight: 500,
-                    letterSpacing: '-0.02em',
-                  }}>
-                    {getPropertyType(p)}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      alignItems: 'center',
+                      gap: '4px',
+                      minWidth: 0,
+                    }}
+                  >
+                    {showPropertyRowActions ? (
+                      <div style={{ display: 'flex', gap: '2px', justifyContent: 'flex-end' }}>
+                        {typedData.onPropertyEdit && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); typedData.onPropertyEdit!(typedData.id, p); }}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '3px',
+                              borderRadius: '3px',
+                              color: '#94a3b8',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.12s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#e0e7ff';
+                              e.currentTarget.style.color = '#6366f1';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'transparent';
+                              e.currentTarget.style.color = '#94a3b8';
+                            }}
+                            type="button"
+                            aria-label="Edit property"
+                            title="Edit property"
+                          >
+                            <Edit size={11} />
+                          </button>
+                        )}
+                        {typedData.onPropertyDelete && (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const confirmed = await confirmDialog({
+                                title: 'Remove Property',
+                                message: `Remove "${p.name}" from this class?`,
+                                variant: 'warning',
+                                confirmLabel: 'Remove',
+                                cancelLabel: 'Cancel',
+                              });
+                              if (confirmed) typedData.onPropertyDelete!(typedData.id, p.id);
+                            }}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '3px',
+                              borderRadius: '3px',
+                              color: '#94a3b8',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.12s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#fee2e2';
+                              e.currentTarget.style.color = '#ef4444';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'transparent';
+                              e.currentTarget.style.color = '#94a3b8';
+                            }}
+                            type="button"
+                            aria-label="Remove property from class"
+                            title="Remove property from class"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          fontSize: '9px',
+                          color: '#64748b',
+                          fontFamily: '"SF Mono", Monaco, "Cascadia Code", monospace',
+                          whiteSpace: 'nowrap',
+                          background: '#f1f5f9',
+                          padding: '1px 6px',
+                          borderRadius: '3px',
+                          fontWeight: 500,
+                          letterSpacing: '-0.02em',
+                        }}
+                      >
+                        {getPropertyType(p)}
+                      </div>
+                    )}
                   </div>
-
-                  {!typedData.isReadOnly && (
-                    <div style={{ display: 'flex', gap: '2px', justifyContent: 'flex-end' }}>
-                      {typedData.onPropertyEdit && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); typedData.onPropertyEdit!(typedData.id, p); }}
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: '3px',
-                            borderRadius: '3px',
-                            color: '#94a3b8',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.12s ease',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#e0e7ff';
-                            e.currentTarget.style.color = '#6366f1';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.color = '#94a3b8';
-                          }}
-                          title="Edit property"
-                        >
-                          <Edit size={11} />
-                        </button>
-                      )}
-                      {typedData.onPropertyDelete && (
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            const confirmed = await confirmDialog({
-                              title: 'Remove Property',
-                              message: `Remove "${p.name}" from this class?`,
-                              variant: 'warning',
-                              confirmLabel: 'Remove',
-                              cancelLabel: 'Cancel',
-                            });
-                            if (confirmed) typedData.onPropertyDelete!(typedData.id, p.id);
-                          }}
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: '3px',
-                            borderRadius: '3px',
-                            color: '#94a3b8',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.12s ease',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#fee2e2';
-                            e.currentTarget.style.color = '#ef4444';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.color = '#94a3b8';
-                          }}
-                          title="Remove property from class"
-                        >
-                          <Trash2 size={11} />
-                        </button>
-                      )}
-                    </div>
-                  )}
 
                   {/* Property reference handle: only show for properties with $ref */}
                   {hasRef(p) && (
