@@ -4358,11 +4358,15 @@ const StudioContent = () => {
             for (const [movedGid, delta] of groupDeltas) {
               if (node.id === movedGid) continue;
               if (isStrictDescendantGroup(movedGid, node.id, byId)) {
+                const newX = node.position.x + delta.dx;
+                const newY = node.position.y + delta.dy;
+                // Keep groupPositionsRef in sync so the next drag computes correct deltas
+                groupPositionsRef.current.set(node.id, { x: newX, y: newY });
                 return {
                   ...node,
                   position: {
-                    x: node.position.x + delta.dx,
-                    y: node.position.y + delta.dy,
+                    x: newX,
+                    y: newY,
                   },
                 };
               }

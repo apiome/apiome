@@ -62,16 +62,20 @@ export function computeClassIdsPassingHideCriteria(
   return visible;
 }
 
-/** Group frame is visible if any member class passes criteria or a visible nested child group does (#155). */
+/** Group frame is visible if any member class passes criteria or a visible nested child group does (#155). Safe against cycles via a visited set. */
 export function groupNodeIdIsVisible(
   group: CanvasGroupForVisibility,
   visibleClassIds: Set<string>,
-  allGroups?: CanvasGroupForVisibility[]
+  allGroups?: CanvasGroupForVisibility[],
+  _visited: Set<string> = new Set()
 ): boolean {
+  if (_visited.has(group.id)) return false; // cycle guard
+  _visited.add(group.id);
+
   if (group.nodeIds.some((id) => visibleClassIds.has(id))) return true;
   if (allGroups) {
     for (const cg of allGroups) {
-      if (cg.parentId === group.id && groupNodeIdIsVisible(cg, visibleClassIds, allGroups)) {
+      if (cg.parentId === group.id && groupNodeIdIsVisible(cg, visibleClassIds, allGroups, _visited)) {
         return true;
       }
     }

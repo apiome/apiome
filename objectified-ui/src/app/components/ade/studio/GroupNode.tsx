@@ -321,7 +321,7 @@ const GroupNode = memo(({ id, data, selected }: NodeProps) => {
               <ChevronDown className="h-4 w-4" />
             )}
           </button>
-          {groupData.onDrillInto && !groupData.isReadOnly && (
+          {groupData.onDrillInto && (
             <button
               type="button"
               onClick={(e) => {

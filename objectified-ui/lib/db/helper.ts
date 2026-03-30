@@ -1,6 +1,7 @@
 'use server';
 
 import { getAuthSession } from '../auth/server-session';
+import { sortGroupsParentsBeforeChildren } from '../utils/group-sort';
 
 const connectionPool = require('./db');
 const bcrypt = require('bcrypt');
@@ -4475,23 +4476,6 @@ export async function updateClassPositionInGroup(
  */
 export async function syncGroupsForVersion(versionId: string, groups: any[], nodePositions?: Record<string, { x: number; y: number }>) {
   try {
-    const sortGroupsParentsBeforeChildren = (list: any[]): any[] => {
-      const byId = new Map(list.map((g: any) => [g.id, g]));
-      const memo = new Map<string, number>();
-      const depthKey = (gid: string): number => {
-        if (memo.has(gid)) return memo.get(gid)!;
-        const g = byId.get(gid);
-        if (!g || !g.parentId || !byId.has(g.parentId)) {
-          memo.set(gid, 0);
-          return 0;
-        }
-        const d = 1 + depthKey(g.parentId);
-        memo.set(gid, d);
-        return d;
-      };
-      return [...list].sort((a, b) => depthKey(a.id) - depthKey(b.id));
-    };
-
     // Start a transaction
     await connectionPool.query('BEGIN');
 

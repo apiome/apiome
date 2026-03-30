@@ -3,6 +3,7 @@
  */
 
 import type { CanvasGroup } from '@/app/ade/studio/StudioContext';
+export { sortGroupsParentsBeforeChildren } from '@lib/utils/group-sort';
 
 /** Allowed group depths: level 1 (root) … level 3 (deepest). */
 export const MAX_CANVAS_GROUP_DEPTH = 3;
@@ -11,23 +12,29 @@ export function groupById(groups: CanvasGroup[]): Map<string, CanvasGroup> {
   return new Map(groups.map((g) => [g.id, g]));
 }
 
-/** Depth 1 = top-level (no parent). */
+/** Depth 1 = top-level (no parent). Safe against cycles via a visited set. */
 export function getGroupDepth(groupId: string, byId: Map<string, CanvasGroup>): number {
   let depth = 1;
   let cur = byId.get(groupId);
+  const visited = new Set<string>();
+  visited.add(groupId);
   while (cur?.parentId) {
+    if (visited.has(cur.parentId)) break; // cycle guard
+    visited.add(cur.parentId);
     depth += 1;
     cur = byId.get(cur.parentId);
   }
   return depth;
 }
 
-/** Longest chain of child groups strictly below `groupId` (edge count to deepest descendant group). */
-export function maxChildGroupChainLength(groupId: string, groups: CanvasGroup[]): number {
+/** Longest chain of child groups strictly below `groupId` (edge count to deepest descendant group). Safe against cycles via a visited set. */
+export function maxChildGroupChainLength(groupId: string, groups: CanvasGroup[], _visited: Set<string> = new Set()): number {
+  if (_visited.has(groupId)) return 0; // cycle guard
+  _visited.add(groupId);
   let maxBelow = 0;
   for (const g of groups) {
     if (g.parentId === groupId) {
-      maxBelow = Math.max(maxBelow, 1 + maxChildGroupChainLength(g.id, groups));
+      maxBelow = Math.max(maxBelow, 1 + maxChildGroupChainLength(g.id, groups, _visited));
     }
   }
   return maxBelow;
@@ -49,15 +56,19 @@ export function wouldNestExceedMaxDepth(
   return baseDepth + tail > maxDepth;
 }
 
-/** True if `maybeDescendantId` is a strict descendant group of `ancestorId` (walks parent chain from the former). */
+/** True if `maybeDescendantId` is a strict descendant group of `ancestorId` (walks parent chain from the former). Safe against cycles via a visited set. */
 export function isStrictDescendantGroup(
   ancestorId: string,
   maybeDescendantId: string,
   byId: Map<string, CanvasGroup>
 ): boolean {
   let cur = byId.get(maybeDescendantId);
+  const visited = new Set<string>();
+  visited.add(maybeDescendantId);
   while (cur?.parentId) {
     if (cur.parentId === ancestorId) return true;
+    if (visited.has(cur.parentId)) break; // cycle guard
+    visited.add(cur.parentId);
     cur = byId.get(cur.parentId);
   }
   return false;
@@ -152,26 +163,4 @@ export function findInnermostGroupAtPosition(
     }
   }
   return best?.id ?? null;
-}
-
-/**
- * Topologically sort groups so every parent appears before its children (for DB sync inserts).
- */
-export function sortGroupsParentsBeforeChildren(groups: CanvasGroup[]): CanvasGroup[] {
-  const byId = groupById(groups);
-  const memo = new Map<string, number>();
-
-  function depthKey(gid: string): number {
-    if (memo.has(gid)) return memo.get(gid)!;
-    const g = byId.get(gid);
-    if (!g || !g.parentId || !byId.has(g.parentId)) {
-      memo.set(gid, 0);
-      return 0;
-    }
-    const d = 1 + depthKey(g.parentId);
-    memo.set(gid, d);
-    return d;
-  }
-
-  return [...groups].sort((a, b) => depthKey(a.id) - depthKey(b.id));
 }
