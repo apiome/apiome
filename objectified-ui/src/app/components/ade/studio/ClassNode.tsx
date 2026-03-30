@@ -170,6 +170,7 @@ import {
 } from 'lucide-react';
 import { useDialog } from '../../providers/DialogProvider';
 import * as Popover from '@radix-ui/react-popover';
+import { cn } from '../../../../../lib/utils';
 
 // Icon options for class nodes - curated list organized by category
 const NODE_ICON_OPTIONS: Array<{ name: string; icon: LucideIcon; category: string }> = [
@@ -545,6 +546,8 @@ function ClassNode({ id, data, selected }: NodeProps) {
   const [iconSearchQuery, setIconSearchQuery] = useState('');
   /** #854: Property row shows type by default; edit/delete replace type on hover (editable canvas only). */
   const [hoveredPropertyRowId, setHoveredPropertyRowId] = useState<string | null>(null);
+  /** #853: Hover on class node shows editing actions outside the card (popover open keeps toolbar visible). */
+
   const nodeRef = useRef<HTMLDivElement>(null);
 
   // Use ResizeObserver to detect when the node's actual DOM size changes
@@ -1194,6 +1197,335 @@ function ClassNode({ id, data, selected }: NodeProps) {
 
   return (
     <div
+      className="relative group"
+    >
+      {!typedData.isReadOnly && (
+        <div
+          className={cn(
+            'absolute -right-1.5 -top-1.5 z-[35]',
+            'flex items-center gap-0.5',
+            'rounded-lg border border-slate-200/90',
+            'bg-white/95 py-0.5 pl-0.5 pr-0.5',
+            'shadow-lg backdrop-blur-sm',
+            'dark:border-slate-600/90 dark:bg-slate-900/95',
+            'transition-opacity pointer-events-none opacity-0',
+            'group-hover:pointer-events-auto group-hover:opacity-100',
+            'focus-within:pointer-events-auto focus-within:opacity-100',
+            (colorPickerOpen || iconPickerOpen) && '!opacity-100 !pointer-events-auto',
+          )}
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div className="relative z-[1] flex items-center gap-0.5">
+            {/* Color picker button using Popover */}
+            <Popover.Root open={colorPickerOpen} onOpenChange={setColorPickerOpen}>
+              <Popover.Trigger asChild>
+                <button
+                  type="button"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-slate-200 bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
+                  onClick={(e) => e.stopPropagation()}
+                  title="Change colors"
+                >
+                  <Palette size={12} />
+                </button>
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Content
+                  className="z-[9999] bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-3 min-w-[200px]"
+                  sideOffset={5}
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Presets</div>
+                  <div className="grid grid-cols-6 gap-1">
+                    {colorThemes.map((color) => (
+                      <button
+                        key={color.name}
+                        onClick={() => handleThemeSelect(color)}
+                        className="w-7 h-7 rounded border-2 border-gray-300 dark:border-gray-600 transition-all hover:scale-105 hover:ring-2 hover:ring-offset-1 hover:ring-gray-400 dark:hover:ring-gray-500"
+                        style={{ backgroundColor: color.hex }}
+                        title={color.name}
+                      />
+                    ))}
+                  </div>
+                  {/* Custom color picker */}
+                  <div className="mt-2.5 pt-2.5 border-t border-gray-100 dark:border-gray-700">
+                    <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Custom color</div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={customColorValue}
+                        onChange={(e) => handleCustomColorChange(e.target.value)}
+                        className="w-8 h-8 rounded border-2 border-gray-300 dark:border-gray-600 cursor-pointer p-0.5 bg-white dark:bg-gray-700"
+                        title="Pick a color"
+                      />
+                      <input
+                        type="text"
+                        value={customColorValue}
+                        onChange={(e) => {
+                          const v = e.target.value.trim();
+                          if (/^#[0-9a-fA-F]{3,6}$/.test(v) || /^[0-9a-fA-F]{3,6}$/.test(v)) {
+                            const hex = v.startsWith('#') ? v : '#' + v;
+                            handleCustomColorChange(hex);
+                          }
+                        }}
+                        className="flex-1 min-w-0 px-2 py-1.5 text-xs rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono"
+                        placeholder="#6366f1"
+                        spellCheck={false}
+                      />
+                    </div>
+                  </div>
+                  {/* Border configuration (#342) */}
+                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
+                    <div className="text-xs font-medium text-gray-600 dark:text-gray-400">Border</div>
+                    <div>
+                      <div className="text-[10px] text-gray-500 dark:text-gray-500 mb-1">Thickness</div>
+                      <div className="flex gap-1">
+                        {BORDER_WIDTH_OPTIONS.map((w) => (
+                          <button
+                            key={w}
+                            onClick={() => handleBorderChange({ borderWidth: w })}
+                            className={`flex-1 min-w-0 py-1 text-[10px] font-medium rounded transition-all ${
+                              (typedData.theme?.borderWidth ?? 1.5) === w
+                                ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
+                          >
+                            {w}px
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-gray-500 dark:text-gray-500 mb-1">Style</div>
+                      <div className="flex gap-1">
+                        {BORDER_STYLE_OPTIONS.map((s) => (
+                          <button
+                            key={s.name}
+                            onClick={() => handleBorderChange({ borderStyle: s.name })}
+                            className={`flex-1 min-w-0 py-1 text-[10px] font-medium rounded transition-all ${
+                              (typedData.theme?.borderStyle ?? 'solid') === s.name
+                                ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Label styling (#343) */}
+                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
+                    <div className="text-xs font-medium text-gray-600 dark:text-gray-400">Label</div>
+                    <div className="flex gap-2">
+                      <div className="w-1/2 min-w-0">
+                        <div className="text-[10px] text-gray-500 dark:text-gray-500 mb-1">Font size</div>
+                        <select
+                          value={typedData.theme?.labelFontSize ?? 13}
+                          onChange={(e) => handleLabelStyleChange({ labelFontSize: Number(e.target.value) })}
+                          className="w-full px-2 py-1.5 text-xs rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        >
+                          {LABEL_FONT_SIZE_OPTIONS.map((s) => (
+                            <option key={s} value={s}>{s}px</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="w-1/2 min-w-0">
+                        <div className="text-[10px] text-gray-500 dark:text-gray-500 mb-1">Font family</div>
+                        <select
+                          value={typedData.theme?.labelFontFamily ?? 'inherit'}
+                          onChange={(e) => handleLabelStyleChange({ labelFontFamily: e.target.value })}
+                          className="w-full px-2 py-1.5 text-xs rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        >
+                          {LABEL_FONT_FAMILY_OPTIONS.map((f) => (
+                            <option key={f.value} value={f.value}>{f.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => handleLabelStyleChange({ labelFontWeight: (typedData.theme?.labelFontWeight ?? 'bold') === 'bold' ? 'normal' : 'bold' })}
+                        className={`flex-1 py-1 text-[10px] font-medium rounded transition-all ${
+                          (typedData.theme?.labelFontWeight ?? 'bold') === 'bold'
+                            ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        Bold
+                      </button>
+                      <button
+                        onClick={() => handleLabelStyleChange({ labelFontStyle: (typedData.theme?.labelFontStyle ?? 'normal') === 'italic' ? 'normal' : 'italic' })}
+                        className={`flex-1 py-1 text-[10px] font-medium rounded transition-all ${
+                          (typedData.theme?.labelFontStyle ?? 'normal') === 'italic'
+                            ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        Italic
+                      </button>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-gray-500 dark:text-gray-500 mb-1">Position</div>
+                      <div className="flex gap-1">
+                        {(['left', 'center', 'right'] as const).map((align) => (
+                          <button
+                            key={align}
+                            onClick={() => handleLabelStyleChange({ labelTextAlign: align })}
+                            className={`flex-1 min-w-0 py-1 text-[10px] font-medium rounded transition-all capitalize ${
+                              (typedData.theme?.labelTextAlign ?? 'left') === align
+                                ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
+                          >
+                            {align}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <button
+                        onClick={() => handleLabelStyleChange({ labelMultiLine: !(typedData.theme?.labelMultiLine ?? false) })}
+                        className={`w-full py-1 text-[10px] font-medium rounded transition-all ${
+                          typedData.theme?.labelMultiLine
+                            ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        Multi-line {typedData.theme?.labelMultiLine ? 'on' : 'off'}
+                      </button>
+                    </div>
+                  </div>
+                  <Popover.Arrow className="fill-white dark:fill-gray-800" />
+                </Popover.Content>
+              </Popover.Portal>
+            </Popover.Root>
+
+            {/* Icon picker button using Popover */}
+            <Popover.Root open={iconPickerOpen} onOpenChange={(open) => {
+              setIconPickerOpen(open);
+              if (!open) setIconSearchQuery('');
+            }}>
+              <Popover.Trigger asChild>
+                <button
+                  type="button"
+                  className={
+                    typedData.theme?.icon
+                      ? 'relative flex h-7 w-7 shrink-0 items-center justify-center rounded border border-indigo-300 bg-indigo-100 text-indigo-700 transition-colors hover:bg-indigo-200 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-200 dark:hover:bg-indigo-900/60'
+                      : 'relative flex h-7 w-7 shrink-0 items-center justify-center rounded border border-slate-200 bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600'
+                  }
+                  onClick={(e) => e.stopPropagation()}
+                  title={typedData.theme?.icon ? `Icon: ${typedData.theme.icon}` : "Change icon"}
+                >
+                  {(() => {
+                    const CurrentIcon = getIconComponent();
+                    return CurrentIcon ? <CurrentIcon size={12} /> : <Smile size={12} />;
+                  })()}
+                  {/* Active indicator dot */}
+                  {typedData.theme?.icon && (
+                    <span
+                      className="absolute -right-0.5 -top-0.5 size-1.5 rounded-full border border-white/80 bg-green-500 dark:border-white/80"
+                    />
+                  )}
+                </button>
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Content
+                  className="z-[9999] bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-3 w-72"
+                  sideOffset={5}
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="space-y-2">
+                    {/* Search input */}
+                    <input
+                      type="text"
+                      placeholder="Search icons..."
+                      value={iconSearchQuery}
+                      onChange={(e) => setIconSearchQuery(e.target.value)}
+                      className="w-full px-2 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+
+                    {/* Remove icon button */}
+                    {typedData.theme?.icon && (
+                      <button
+                        onClick={() => handleIconSelect(null)}
+                        className="w-full px-2 py-1 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors text-left"
+                      >
+                        ✕ Remove icon (show initials)
+                      </button>
+                    )}
+
+                    {/* Icon list - vertical scroll only, no horizontal scroll */}
+                    <div className="max-h-48 overflow-y-auto overflow-x-hidden">
+                      <div className="grid grid-cols-6 gap-1 w-full min-w-0">
+                        {filteredIcons.map((iconOpt) => {
+                          const IconComp = iconOpt.icon;
+                          const isSelected = typedData.theme?.icon === iconOpt.name;
+                          return (
+                            <button
+                              key={iconOpt.name}
+                              onClick={() => handleIconSelect(iconOpt.name)}
+                              className={`w-7 h-7 rounded flex items-center justify-center transition-all hover:scale-110 ${
+                                isSelected 
+                                  ? 'bg-indigo-500 text-white ring-2 ring-indigo-300' 
+                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                              }`}
+                              title={iconOpt.name}
+                            >
+                              <IconComp size={14} />
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {filteredIcons.length === 0 && (
+                        <div className="text-xs text-gray-400 dark:text-gray-500 text-center py-4">
+                          No icons found
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Category hint */}
+                    <div className="text-[10px] text-gray-400 dark:text-gray-500 pt-1 border-t border-gray-100 dark:border-gray-700">
+                      Search by name or category (People, Commerce, Storage, Files, Security, etc.)
+                    </div>
+                  </div>
+                  <Popover.Arrow className="fill-white dark:fill-gray-800" />
+                </Popover.Content>
+              </Popover.Portal>
+            </Popover.Root>
+
+            {/* Hide node button (#481) */}
+            <button
+              type="button"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-slate-200 bg-slate-100 text-slate-700 transition-colors hover:border-blue-300 hover:bg-blue-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-blue-900/30"
+              onClick={(e) => {
+                e.stopPropagation();
+                typedData.onToggleVisibility?.(typedData.id, false);
+              }}
+              title="Hide class"
+            >
+              <EyeOff size={12} />
+            </button>
+
+            {/* Delete button */}
+            <button
+              type="button"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-slate-200 bg-slate-100 text-slate-700 transition-colors hover:border-red-300 hover:bg-red-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-red-900/40"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (typedData.onClassDelete) typedData.onClassDelete(typedData.id, typedData.name);
+              }}
+              title="Delete class"
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
+        </div>
+      )}
+    <div
       ref={nodeRef}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -1469,415 +1801,6 @@ function ClassNode({ id, data, selected }: NodeProps) {
           );
         })()}
 
-        {!typedData.isReadOnly && (
-          <div style={{ display: 'flex', gap: '3px', alignItems: 'center', position: 'relative', zIndex: 1 }}>
-            {/* Color picker button using Popover */}
-            <Popover.Root open={colorPickerOpen} onOpenChange={setColorPickerOpen}>
-              <Popover.Trigger asChild>
-                <button
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.12)',
-                    border: '1px solid rgba(255, 255, 255, 0.18)',
-                    borderRadius: '5px',
-                    padding: '4px',
-                    cursor: 'pointer',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontSize: '12px',
-                    lineHeight: 1,
-                    transition: 'all 0.15s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.22)';
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.35)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.18)';
-                  }}
-                  title="Change colors"
-                >
-                  <Palette size={12} />
-                </button>
-              </Popover.Trigger>
-              <Popover.Portal>
-                <Popover.Content
-                  className="z-[9999] bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-3 min-w-[200px]"
-                  sideOffset={5}
-                  onOpenAutoFocus={(e) => e.preventDefault()}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Presets</div>
-                  <div className="grid grid-cols-6 gap-1">
-                    {colorThemes.map((color) => (
-                      <button
-                        key={color.name}
-                        onClick={() => handleThemeSelect(color)}
-                        className="w-7 h-7 rounded border-2 border-gray-300 dark:border-gray-600 transition-all hover:scale-105 hover:ring-2 hover:ring-offset-1 hover:ring-gray-400 dark:hover:ring-gray-500"
-                        style={{ backgroundColor: color.hex }}
-                        title={color.name}
-                      />
-                    ))}
-                  </div>
-                  {/* Custom color picker */}
-                  <div className="mt-2.5 pt-2.5 border-t border-gray-100 dark:border-gray-700">
-                    <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Custom color</div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={customColorValue}
-                        onChange={(e) => handleCustomColorChange(e.target.value)}
-                        className="w-8 h-8 rounded border-2 border-gray-300 dark:border-gray-600 cursor-pointer p-0.5 bg-white dark:bg-gray-700"
-                        title="Pick a color"
-                      />
-                      <input
-                        type="text"
-                        value={customColorValue}
-                        onChange={(e) => {
-                          const v = e.target.value.trim();
-                          if (/^#[0-9a-fA-F]{3,6}$/.test(v) || /^[0-9a-fA-F]{3,6}$/.test(v)) {
-                            const hex = v.startsWith('#') ? v : '#' + v;
-                            handleCustomColorChange(hex);
-                          }
-                        }}
-                        className="flex-1 min-w-0 px-2 py-1.5 text-xs rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono"
-                        placeholder="#6366f1"
-                        spellCheck={false}
-                      />
-                    </div>
-                  </div>
-                  {/* Border configuration (#342) */}
-                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
-                    <div className="text-xs font-medium text-gray-600 dark:text-gray-400">Border</div>
-                    <div>
-                      <div className="text-[10px] text-gray-500 dark:text-gray-500 mb-1">Thickness</div>
-                      <div className="flex gap-1">
-                        {BORDER_WIDTH_OPTIONS.map((w) => (
-                          <button
-                            key={w}
-                            onClick={() => handleBorderChange({ borderWidth: w })}
-                            className={`flex-1 min-w-0 py-1 text-[10px] font-medium rounded transition-all ${
-                              (typedData.theme?.borderWidth ?? 1.5) === w
-                                ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                            }`}
-                          >
-                            {w}px
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] text-gray-500 dark:text-gray-500 mb-1">Style</div>
-                      <div className="flex gap-1">
-                        {BORDER_STYLE_OPTIONS.map((s) => (
-                          <button
-                            key={s.name}
-                            onClick={() => handleBorderChange({ borderStyle: s.name })}
-                            className={`flex-1 min-w-0 py-1 text-[10px] font-medium rounded transition-all ${
-                              (typedData.theme?.borderStyle ?? 'solid') === s.name
-                                ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                            }`}
-                          >
-                            {s.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  {/* Label styling (#343) */}
-                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
-                    <div className="text-xs font-medium text-gray-600 dark:text-gray-400">Label</div>
-                    <div className="flex gap-2">
-                      <div className="w-1/2 min-w-0">
-                        <div className="text-[10px] text-gray-500 dark:text-gray-500 mb-1">Font size</div>
-                        <select
-                          value={typedData.theme?.labelFontSize ?? 13}
-                          onChange={(e) => handleLabelStyleChange({ labelFontSize: Number(e.target.value) })}
-                          className="w-full px-2 py-1.5 text-xs rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        >
-                          {LABEL_FONT_SIZE_OPTIONS.map((s) => (
-                            <option key={s} value={s}>{s}px</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="w-1/2 min-w-0">
-                        <div className="text-[10px] text-gray-500 dark:text-gray-500 mb-1">Font family</div>
-                        <select
-                          value={typedData.theme?.labelFontFamily ?? 'inherit'}
-                          onChange={(e) => handleLabelStyleChange({ labelFontFamily: e.target.value })}
-                          className="w-full px-2 py-1.5 text-xs rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        >
-                          {LABEL_FONT_FAMILY_OPTIONS.map((f) => (
-                            <option key={f.value} value={f.value}>{f.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => handleLabelStyleChange({ labelFontWeight: (typedData.theme?.labelFontWeight ?? 'bold') === 'bold' ? 'normal' : 'bold' })}
-                        className={`flex-1 py-1 text-[10px] font-medium rounded transition-all ${
-                          (typedData.theme?.labelFontWeight ?? 'bold') === 'bold'
-                            ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        Bold
-                      </button>
-                      <button
-                        onClick={() => handleLabelStyleChange({ labelFontStyle: (typedData.theme?.labelFontStyle ?? 'normal') === 'italic' ? 'normal' : 'italic' })}
-                        className={`flex-1 py-1 text-[10px] font-medium rounded transition-all ${
-                          (typedData.theme?.labelFontStyle ?? 'normal') === 'italic'
-                            ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        Italic
-                      </button>
-                    </div>
-                    <div>
-                      <div className="text-[10px] text-gray-500 dark:text-gray-500 mb-1">Position</div>
-                      <div className="flex gap-1">
-                        {(['left', 'center', 'right'] as const).map((align) => (
-                          <button
-                            key={align}
-                            onClick={() => handleLabelStyleChange({ labelTextAlign: align })}
-                            className={`flex-1 min-w-0 py-1 text-[10px] font-medium rounded transition-all capitalize ${
-                              (typedData.theme?.labelTextAlign ?? 'left') === align
-                                ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                            }`}
-                          >
-                            {align}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <button
-                        onClick={() => handleLabelStyleChange({ labelMultiLine: !(typedData.theme?.labelMultiLine ?? false) })}
-                        className={`w-full py-1 text-[10px] font-medium rounded transition-all ${
-                          typedData.theme?.labelMultiLine
-                            ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        Multi-line {typedData.theme?.labelMultiLine ? 'on' : 'off'}
-                      </button>
-                    </div>
-                  </div>
-                  <Popover.Arrow className="fill-white dark:fill-gray-800" />
-                </Popover.Content>
-              </Popover.Portal>
-            </Popover.Root>
-
-            {/* Icon picker button using Popover */}
-            <Popover.Root open={iconPickerOpen} onOpenChange={(open) => {
-              setIconPickerOpen(open);
-              if (!open) setIconSearchQuery('');
-            }}>
-              <Popover.Trigger asChild>
-                <button
-                  style={{
-                    background: typedData.theme?.icon
-                      ? 'rgba(99, 102, 241, 0.3)'
-                      : 'rgba(255, 255, 255, 0.12)',
-                    border: typedData.theme?.icon
-                      ? '1px solid rgba(99, 102, 241, 0.5)'
-                      : '1px solid rgba(255, 255, 255, 0.18)',
-                    borderRadius: '5px',
-                    padding: '4px',
-                    cursor: 'pointer',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontSize: '12px',
-                    lineHeight: 1,
-                    transition: 'all 0.15s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    position: 'relative',
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = typedData.theme?.icon
-                      ? 'rgba(99, 102, 241, 0.4)'
-                      : 'rgba(255, 255, 255, 0.22)';
-                    e.currentTarget.style.borderColor = typedData.theme?.icon
-                      ? 'rgba(99, 102, 241, 0.6)'
-                      : 'rgba(255, 255, 255, 0.35)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = typedData.theme?.icon
-                      ? 'rgba(99, 102, 241, 0.3)'
-                      : 'rgba(255, 255, 255, 0.12)';
-                    e.currentTarget.style.borderColor = typedData.theme?.icon
-                      ? 'rgba(99, 102, 241, 0.5)'
-                      : 'rgba(255, 255, 255, 0.18)';
-                  }}
-                  title={typedData.theme?.icon ? `Icon: ${typedData.theme.icon}` : "Change icon"}
-                >
-                  {(() => {
-                    const CurrentIcon = getIconComponent();
-                    return CurrentIcon ? <CurrentIcon size={12} /> : <Smile size={12} />;
-                  })()}
-                  {/* Active indicator dot */}
-                  {typedData.theme?.icon && (
-                    <span style={{
-                      position: 'absolute',
-                      top: '-2px',
-                      right: '-2px',
-                      width: '6px',
-                      height: '6px',
-                      background: '#22c55e',
-                      borderRadius: '50%',
-                      border: '1px solid rgba(255, 255, 255, 0.8)',
-                    }} />
-                  )}
-                </button>
-              </Popover.Trigger>
-              <Popover.Portal>
-                <Popover.Content
-                  className="z-[9999] bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-3 w-72"
-                  sideOffset={5}
-                  onOpenAutoFocus={(e) => e.preventDefault()}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="space-y-2">
-                    {/* Search input */}
-                    <input
-                      type="text"
-                      placeholder="Search icons..."
-                      value={iconSearchQuery}
-                      onChange={(e) => setIconSearchQuery(e.target.value)}
-                      className="w-full px-2 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-
-                    {/* Remove icon button */}
-                    {typedData.theme?.icon && (
-                      <button
-                        onClick={() => handleIconSelect(null)}
-                        className="w-full px-2 py-1 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors text-left"
-                      >
-                        ✕ Remove icon (show initials)
-                      </button>
-                    )}
-
-                    {/* Icon list - vertical scroll only, no horizontal scroll */}
-                    <div className="max-h-48 overflow-y-auto overflow-x-hidden">
-                      <div className="grid grid-cols-6 gap-1 w-full min-w-0">
-                        {filteredIcons.map((iconOpt) => {
-                          const IconComp = iconOpt.icon;
-                          const isSelected = typedData.theme?.icon === iconOpt.name;
-                          return (
-                            <button
-                              key={iconOpt.name}
-                              onClick={() => handleIconSelect(iconOpt.name)}
-                              className={`w-7 h-7 rounded flex items-center justify-center transition-all hover:scale-110 ${
-                                isSelected 
-                                  ? 'bg-indigo-500 text-white ring-2 ring-indigo-300' 
-                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                              }`}
-                              title={iconOpt.name}
-                            >
-                              <IconComp size={14} />
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {filteredIcons.length === 0 && (
-                        <div className="text-xs text-gray-400 dark:text-gray-500 text-center py-4">
-                          No icons found
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Category hint */}
-                    <div className="text-[10px] text-gray-400 dark:text-gray-500 pt-1 border-t border-gray-100 dark:border-gray-700">
-                      Search by name or category (People, Commerce, Storage, Files, Security, etc.)
-                    </div>
-                  </div>
-                  <Popover.Arrow className="fill-white dark:fill-gray-800" />
-                </Popover.Content>
-              </Popover.Portal>
-            </Popover.Root>
-
-            {/* Hide node button (#481) */}
-            <button
-              style={{
-                background: 'rgba(255, 255, 255, 0.12)',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
-                borderRadius: '5px',
-                padding: '4px',
-                cursor: 'pointer',
-                color: 'rgba(255, 255, 255, 0.9)',
-                fontSize: '12px',
-                lineHeight: 1,
-                transition: 'all 0.15s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                typedData.onToggleVisibility?.(typedData.id, false);
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(37, 99, 235, 0.8)';
-                e.currentTarget.style.borderColor = 'rgba(37, 99, 235, 0.9)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.18)';
-              }}
-              title="Hide class"
-            >
-              <EyeOff size={12} />
-            </button>
-
-            {/* Delete button */}
-            <button
-              style={{
-                background: 'rgba(255, 255, 255, 0.12)',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
-                borderRadius: '5px',
-                padding: '4px',
-                cursor: 'pointer',
-                color: 'rgba(255, 255, 255, 0.9)',
-                fontSize: '12px',
-                lineHeight: 1,
-                transition: 'all 0.15s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (typedData.onClassDelete) typedData.onClassDelete(typedData.id, typedData.name);
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.8)';
-                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.9)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.18)';
-              }}
-              title="Delete class"
-            >
-              <Trash2 size={12} />
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Description / Drop zone */}
@@ -2304,6 +2227,7 @@ function ClassNode({ id, data, selected }: NodeProps) {
           />
         ) : null;
       })()}
+    </div>
     </div>
   );
 }
