@@ -7,6 +7,7 @@ cd "$(dirname "$0")"
 # Checks if the virtual environment is activated
 if [ -f .venv/bin/activate ]; then
     source .venv/bin/activate
+    uv sync
 fi
 
 # Run the app using uv
