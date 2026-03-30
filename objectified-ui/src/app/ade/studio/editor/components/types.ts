@@ -11,6 +11,8 @@ export interface Version {
   version_id: string;
   description: string;
   published: boolean;
+  /** ISO timestamp for timeline / sorting (#323) */
+  created_at?: string;
 }
 
 export type ViewMode = 'canvas' | 'code';

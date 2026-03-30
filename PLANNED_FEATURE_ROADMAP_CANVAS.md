@@ -204,11 +204,7 @@
 - ✅ **Quality score gauge**: Visual score indicator (0-100)
 - ✅ **Complexity charts**: Schema complexity visualization
 - ✅ **Relationship graphs**: Visual dependency maps
-- 📋 [TODO] **Timeline views**: Schema evolution over time
-
-| Ticket | Feature Description                          |
-|--------|----------------------------------------------|
-| #323   | Timeline view of schema changes over time    |
+- ✅ **Timeline views**: Schema evolution over time (#323 — studio canvas schema timeline panel)
 
 ---
 

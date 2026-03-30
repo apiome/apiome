@@ -5,6 +5,7 @@
 
 import type { Node, Edge } from '@xyflow/react';
 import { detectNamingConvention } from './naming-conventions';
+import { buildGraphForSchemaMetrics } from './schema-graph-from-classes';
 
 export interface SchemaMetricsResult {
   /** Total number of class nodes (excludes group nodes) */
@@ -406,6 +407,14 @@ function computeNamingCompliance(classNodes: Node[]): NamingComplianceResult {
     classesNonPascal,
     propertiesNonCamel,
   };
+}
+
+/**
+ * Compute schema metrics from persisted class rows (same shape as the studio canvas API) — #323 timeline.
+ */
+export function computeSchemaMetricsFromClasses(classes: unknown[]): SchemaMetricsResult {
+  const { nodes, edges } = buildGraphForSchemaMetrics(classes);
+  return computeSchemaMetrics(nodes, edges);
 }
 
 /**
