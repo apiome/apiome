@@ -59,7 +59,8 @@ import {
   Braces,
   Ban,
   Ghost,
-  Undo2
+  Undo2,
+  TrendingUp
 } from 'lucide-react';
 import * as Select from '@radix-ui/react-select';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
@@ -151,6 +152,7 @@ import { toPng } from 'html-to-image';
 import DraggablePanel from '../components/DraggablePanel';
 import MemoryProfiler from '../components/MemoryProfiler';
 import SchemaMetricsPanel from '../components/SchemaMetricsPanel';
+import SchemaTimelinePanel from '../components/SchemaTimelinePanel';
 import { useSearchHistory } from '../hooks/useSearchHistory';
 
 // Import extracted components
@@ -526,6 +528,8 @@ const StudioContent = () => {
   const [memoryProfilerMinimized, setMemoryProfilerMinimized] = useState(false);
   const [schemaMetricsOpen, setSchemaMetricsOpen] = useState(false);
   const [schemaMetricsMinimized, setSchemaMetricsMinimized] = useState(false);
+  const [schemaTimelineOpen, setSchemaTimelineOpen] = useState(false);
+  const [schemaTimelineMinimized, setSchemaTimelineMinimized] = useState(false);
 
   // #547: Interactive dependency graph overlay – highlight $ref / allOf/anyOf/oneOf edges, dim the rest
   const [showDependencyOverlay, setShowDependencyOverlay] = useState(() => {
@@ -7651,6 +7655,15 @@ const StudioContent = () => {
                   <BarChart3 className="w-5 h-5" />
                 </button>
               )}
+              {!schemaTimelineOpen && (
+                <button
+                  onClick={() => setSchemaTimelineOpen(true)}
+                  className="p-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all duration-200 shadow-sm hover:shadow-md"
+                  title="Schema timeline — evolution across versions"
+                >
+                  <TrendingUp className="w-5 h-5" />
+                </button>
+              )}
               {!memoryProfilerOpen && (
                 <button
                   onClick={() => setMemoryProfilerOpen(true)}
@@ -7694,6 +7707,25 @@ const StudioContent = () => {
                 onClose={() => setMemoryProfilerOpen(false)}
                 isMinimized={memoryProfilerMinimized}
                 onMinimizeToggle={() => setMemoryProfilerMinimized(!memoryProfilerMinimized)}
+              />
+            </DraggablePanel>
+          )}
+          {schemaTimelineOpen && (
+            <DraggablePanel
+              storageKey="schema-timeline-panel"
+              defaultPosition={{ left: 20, top: 280 }}
+            >
+              <SchemaTimelinePanel
+                versions={versions}
+                selectedVersionId={selectedVersionId}
+                onSelectVersion={(versionId) => {
+                  setSelectedVersionId(versionId);
+                  const v = versions.find((x) => x.id === versionId);
+                  setIsReadOnly(v?.published ?? false);
+                }}
+                onClose={() => setSchemaTimelineOpen(false)}
+                isMinimized={schemaTimelineMinimized}
+                onMinimizeToggle={() => setSchemaTimelineMinimized(!schemaTimelineMinimized)}
               />
             </DraggablePanel>
           )}
