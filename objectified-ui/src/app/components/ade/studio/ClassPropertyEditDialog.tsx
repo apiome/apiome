@@ -963,13 +963,16 @@ export default function ClassPropertyEditDialog({ open, onClose, editingClassPro
         showCloseButton={true}
         aria-describedby={undefined}
       >
-        <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        <DialogHeader className="pl-6 pr-10 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <div className="flex items-center gap-3 min-w-0">
               <DialogTitle className="text-lg font-semibold">
                 Edit Property in Class
               </DialogTitle>
             </div>
+            <p className="text-xs text-amber-700 dark:text-amber-300 shrink-0 max-w-md sm:text-right">
+              Amber-highlighted sections indicate values that differ from defaults.
+            </p>
           </div>
         </DialogHeader>
 
@@ -1529,6 +1532,7 @@ export default function ClassPropertyEditDialog({ open, onClose, editingClassPro
                       }}
                       showMetadata={false}
                       showTitle={false}
+                      showHint={false}
                       size="small"
                       nestedProperties={
                         baseType === 'object'

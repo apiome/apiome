@@ -1439,9 +1439,9 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
         showCloseButton={true}
         aria-describedby={undefined}
       >
-        <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        <DialogHeader className="pl-6 pr-10 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
+          <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+            <div className="flex items-center gap-3 flex-wrap min-w-0">
               {showAIChatMode ? (
                 <>
                   <Button
@@ -1483,6 +1483,11 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
                 </span>
               )}
             </div>
+            {!showAIChatMode && (
+              <p className="text-xs text-amber-700 dark:text-amber-300 shrink-0 max-w-md sm:text-right">
+                Amber-highlighted sections indicate values that differ from defaults.
+              </p>
+            )}
           </div>
         </DialogHeader>
 
@@ -1633,7 +1638,7 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
         ) : (
         <>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex flex-nowrap items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-700 px-6 shrink-0">
+          <div className="flex flex-nowrap items-center border-b border-gray-200 dark:border-gray-700 px-6 shrink-0">
             <TabsList className="h-auto p-0 rounded-none bg-transparent justify-start gap-0 -ml-2 shrink-0">
               <TabsTrigger
               value="edit"
@@ -1660,9 +1665,6 @@ const ClassEditDialog = ({ open, onClose, editingClassData, nodes, isReadOnly = 
               Example
             </TabsTrigger>
             </TabsList>
-            <p className="text-xs text-amber-700 dark:text-amber-300 shrink-0 py-3 whitespace-nowrap">
-              Amber-highlighted sections indicate values that differ from defaults.
-            </p>
           </div>
 
           {/* Edit Tab */}
