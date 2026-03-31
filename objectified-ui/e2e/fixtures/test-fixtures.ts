@@ -173,18 +173,22 @@ export class StudioPage {
     return this.page.getByTitle('Layout options');
   }
 
-  // Expand/Collapse buttons
+  /** Opens the upper-left canvas tools drawer (Expand, Search, View Mode, …). */
+  get canvasToolsTrigger() {
+    return this.page.getByRole('button', { name: /^tools$/i });
+  }
+
+  // Expand/Collapse — inside the canvas tools mini drawer (#842)
   get expandAllButton() {
-    return this.page.getByRole('button', { name: /expand/i });
+    return this.page.getByRole('button', { name: /^expand$/i });
   }
 
   get collapseAllButton() {
-    return this.page.getByRole('button', { name: /collapse/i });
+    return this.page.getByRole('button', { name: /^collapse$/i });
   }
 
-  // Tags button
   get tagsButton() {
-    return this.page.getByRole('button', { name: /tags/i });
+    return this.page.getByRole('button', { name: /^tags$/i });
   }
 
   // ReactFlow canvas

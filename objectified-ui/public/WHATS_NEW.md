@@ -5,6 +5,7 @@ We continue to improve the platform based on your feedback with improvements and
 ---
 
 Improvements:
+- Canvas: Expand, Collapse, Search, View Mode, and Tags live in a left slide-out drawer opened from the **Tools** control in the upper-left (#842)
 - Canvas: group edit controls (style, color, rename, export, duplicate, bulk, delete) sit in a compact floating card above the frame (`-top-6`, `right: -2px`) so the title row stays readable on hover or when selected (#859)
 - Studio: the amber “differs from defaults” hint appears in the dialog header next to the title for class and property editors so it stays visible (#856)
 - Canvas: class node color, icon, hide, and delete controls appear in a compact bar attached to the upper-right outside the card while hovering (or while a popover is open) (#853)

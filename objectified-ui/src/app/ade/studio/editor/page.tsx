@@ -62,11 +62,13 @@ import {
   Undo2,
   TrendingUp,
   Presentation,
+  PanelLeft,
 } from 'lucide-react';
 import * as Select from '@radix-ui/react-select';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import * as Collapsible from '@radix-ui/react-collapsible';
 import YAML from 'yaml';
 import ClassPropertyEditDialog from '../../../components/ade/studio/ClassPropertyEditDialog';
 import ReferenceDialog from '../../../components/ade/studio/ReferenceDialog';
@@ -397,7 +399,6 @@ const StudioContent = () => {
   // #490: When set, focus mode shows only this group's members ("Focus on group")
   const [focusModeGroupId, setFocusModeGroupId] = useState<string | null>(null);
   // Inline hover expansion for "Focus on group" list (show groups inside dropdown on hover)
-  const [focusOnGroupHovered, setFocusOnGroupHovered] = useState(false);
 
   // #488: Show only connected nodes (hide nodes with no edges)
   const [showOnlyConnectedNodes, setShowOnlyConnectedNodes] = useState(false);
@@ -642,6 +643,7 @@ const StudioContent = () => {
   // Canvas search state
   const [canvasSearchQuery, setCanvasSearchQuery] = useState('');
   const [canvasSearchOpen, setCanvasSearchOpen] = useState(false);
+  const [canvasToolsDrawerOpen, setCanvasToolsDrawerOpen] = useState(false);
   const [canvasSearchUseRegex, setCanvasSearchUseRegex] = useState(false);
   const [searchHistoryOpen, setSearchHistoryOpen] = useState(false);
   const [searchFiltersOpen, setSearchFiltersOpen] = useState(false);
@@ -1244,7 +1246,6 @@ const StudioContent = () => {
   const focusOnGroup = useCallback((groupId: string) => {
     setFocusModeEnabled(true);
     setFocusModeGroupId(groupId);
-    setFocusOnGroupHovered(false);
   }, []);
 
   const focusOnSelection = useCallback(() => {
@@ -7734,249 +7735,288 @@ const StudioContent = () => {
               </Panel>
             )}
 
-            {/* Expand/Collapse All Controls */}
+            {/* Canvas tools: compact mini drawer in upper-left (#842) */}
             {!canvasPresentationActive && (
-            <Panel
-              position="top-left"
-              className={`bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/80 dark:border-gray-700/80 ${isReadOnly ? 'mt-14' : ''}`}
-            >
-              <div className="flex gap-1.5 p-1.5">
-                <button
-                  onClick={handleExpandAll}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 border border-transparent hover:border-indigo-200 dark:hover:border-indigo-700"
-                  title="Expand all properties"
+              <>
+                <Panel
+                  position="top-left"
+                  className={`bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/80 dark:border-gray-700/80 ${isReadOnly ? 'mt-14' : ''}`}
                 >
-                  <ChevronDown className="h-3.5 w-3.5" />
-                  <span>Expand</span>
-                </button>
-                <button
-                  onClick={handleCollapseAll}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 border border-transparent hover:border-indigo-200 dark:hover:border-indigo-700"
-                  title="Collapse all properties"
-                >
-                  <ChevronUp className="h-3.5 w-3.5" />
-                  <span>Collapse</span>
-                </button>
-                {/* Search Button */}
-                <button
-                  onClick={openCanvasSearch}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 border border-transparent hover:border-indigo-200 dark:hover:border-indigo-700"
-                  title="Search classes (Cmd+F)"
-                >
-                  <Search className="h-3.5 w-3.5" />
-                  <span>Search</span>
-                </button>
-                {/* View Mode: dropdown with Focus, Focus on group (inline hover list), and Connected options */}
-                <DropdownMenu.Root>
-                  <DropdownMenu.Trigger asChild>
-                    <button
-                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 border ${
-                        canvasVisibilityRestricted
-                          ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700'
-                          : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-transparent hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400'
-                      }`}
-                      title="View mode options"
-                      aria-label="View mode"
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                      <span>View Mode</span>
-                      <ChevronDown className="h-3.5 w-3.5 opacity-70" />
-                    </button>
-                  </DropdownMenu.Trigger>
-                  <DropdownMenu.Portal>
-                    <DropdownMenu.Content
-                      className="min-w-[200px] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-1 z-[9999] overflow-visible"
-                      sideOffset={5}
-                      align="start"
-                    >
-                      <DropdownMenu.CheckboxItem
-                        checked={focusModeEnabled}
-                        onCheckedChange={(checked) => {
-                          setFocusModeEnabled(!!checked);
-                          if (!checked) {
-                            setFocusModeGroupId(null);
-                            setFocusModeDegree(1);
-                          }
-                        }}
-                        className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700"
-                        onSelect={(e) => e.preventDefault()}
-                      >
-                        <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
-                          <Check className="h-4 w-4" />
-                        </DropdownMenu.ItemIndicator>
-                        <Focus className="h-4 w-4 shrink-0" />
-                        <span>Focus</span>
-                      </DropdownMenu.CheckboxItem>
-                      {/* Focus on group: hover shows list to the right (side flyout) so other menu items stay easy to reach */}
-                      <div
-                        className="relative rounded-md"
-                        onMouseEnter={() => setFocusOnGroupHovered(true)}
-                        onMouseLeave={() => setFocusOnGroupHovered(false)}
-                      >
-                        <div className="flex items-center gap-3 px-3 py-2 text-sm rounded-md outline-none cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                          <Folder className="h-4 w-4 shrink-0" />
-                          <span>Focus on group</span>
-                          <ChevronRight className="h-4 w-4 ml-auto shrink-0" />
-                        </div>
-                        {focusOnGroupHovered && (
-                          <div className="absolute left-full top-0 ml-0.5 min-w-[180px] max-w-[240px] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 py-1 z-10 overflow-x-hidden">
-                            {groups.length === 0 ? (
-                              <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No groups</div>
-                            ) : (
-                              <div className="max-h-[240px] overflow-y-auto overflow-x-hidden">
-                                {groups.map((g) => (
-                                  <button
-                                    key={g.id}
-                                    type="button"
-                                    className="w-full min-w-0 flex items-center justify-between gap-2 px-3 py-2 text-sm text-left text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 outline-none mx-0.5"
-                                    onClick={() => focusOnGroup(g.id)}
-                                  >
-                                    <span className="truncate min-w-0">{g.name}</span>
-                                    <span className="text-xs text-gray-400 tabular-nums shrink-0">({g.nodeIds.length})</span>
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
-                      <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        Hide on canvas
-                      </div>
-                      <DropdownMenu.CheckboxItem
-                        checked={hideEmptyClasses}
-                        onCheckedChange={(checked) => setHideEmptyClasses(!!checked)}
-                        className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700"
-                        onSelect={(e) => e.preventDefault()}
-                        title="Hide classes that have no properties"
-                      >
-                        <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
-                          <Check className="h-4 w-4" />
-                        </DropdownMenu.ItemIndicator>
-                        <Braces className="h-4 w-4 shrink-0" />
-                        <span>Empty classes</span>
-                      </DropdownMenu.CheckboxItem>
-                      <DropdownMenu.CheckboxItem
-                        checked={showOnlyConnectedNodes}
-                        onCheckedChange={(checked) => setShowOnlyConnectedNodes(!!checked)}
-                        className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700"
-                        onSelect={(e) => e.preventDefault()}
-                        title="Hide classes with no relationships (no edges on the canvas)"
-                      >
-                        <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
-                          <Check className="h-4 w-4" />
-                        </DropdownMenu.ItemIndicator>
-                        <Network className="h-4 w-4 shrink-0" />
-                        <span>Unconnected classes</span>
-                      </DropdownMenu.CheckboxItem>
-                      <DropdownMenu.CheckboxItem
-                        checked={hideDeprecatedClasses}
-                        onCheckedChange={(checked) => setHideDeprecatedClasses(!!checked)}
-                        className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700"
-                        onSelect={(e) => e.preventDefault()}
-                        title="Hide classes marked deprecated in schema"
-                      >
-                        <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
-                          <Check className="h-4 w-4" />
-                        </DropdownMenu.ItemIndicator>
-                        <Ban className="h-4 w-4 shrink-0" />
-                        <span>Deprecated classes</span>
-                      </DropdownMenu.CheckboxItem>
-                      <DropdownMenu.Sub>
-                        <DropdownMenu.SubTrigger className="flex items-center gap-3 px-3 py-2 text-sm rounded-md outline-none cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-700">
-                          <Folder className="h-4 w-4 shrink-0" />
-                          <span>Hide group members</span>
-                          <ChevronRight className="h-4 w-4 ml-auto shrink-0" />
-                        </DropdownMenu.SubTrigger>
-                        <DropdownMenu.SubContent
-                          className="min-w-[200px] max-w-[260px] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 py-1 z-50 overflow-x-hidden"
-                          sideOffset={4}
-                          alignOffset={-4}
+                  <Collapsible.Root open={canvasToolsDrawerOpen} onOpenChange={setCanvasToolsDrawerOpen}>
+                    <div className="flex items-stretch gap-1.5 p-1.5">
+                      <Collapsible.Trigger asChild>
+                        <button
+                          type="button"
+                          aria-expanded={canvasToolsDrawerOpen}
+                          aria-controls="ade-canvas-tools-mini-drawer"
+                          title="Canvas tools"
+                          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-2 border ${
+                            canvasVisibilityRestricted
+                              ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700'
+                              : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-transparent hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-700'
+                          }`}
                         >
-                          {groups.length === 0 ? (
-                            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No groups</div>
-                          ) : (
-                            <div className="max-h-[240px] overflow-y-auto overflow-x-hidden">
-                              {groups.map((g) => (
-                                <button
-                                  key={g.id}
-                                  type="button"
-                                  className="w-full min-w-0 flex items-center gap-2 px-3 py-2 text-sm text-left text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 outline-none mx-0.5"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    toggleHiddenCanvasGroup(g.id);
+                          <PanelLeft className="h-4 w-4 shrink-0" aria-hidden />
+                          <span>Tools</span>
+                          <ChevronRight
+                            className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${canvasToolsDrawerOpen ? 'rotate-180' : ''}`}
+                            aria-hidden
+                          />
+                        </button>
+                      </Collapsible.Trigger>
+
+                      <Collapsible.Content
+                        id="ade-canvas-tools-mini-drawer"
+                        className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-left-2 data-[state=closed]:slide-out-to-left-2 duration-200"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={handleExpandAll}
+                            className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 border border-transparent hover:border-indigo-200 dark:hover:border-indigo-700"
+                            title="Expand all properties"
+                          >
+                            <ChevronDown className="h-3.5 w-3.5" />
+                            <span>Expand</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCollapseAll}
+                            className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 border border-transparent hover:border-indigo-200 dark:hover:border-indigo-700"
+                            title="Collapse all properties"
+                          >
+                            <ChevronUp className="h-3.5 w-3.5" />
+                            <span>Collapse</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCanvasToolsDrawerOpen(false);
+                              openCanvasSearch();
+                            }}
+                            className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 border border-transparent hover:border-indigo-200 dark:hover:border-indigo-700"
+                            title="Search classes (Cmd+F)"
+                          >
+                            <Search className="h-3.5 w-3.5" />
+                            <span>Search</span>
+                          </button>
+
+                          <DropdownMenu.Root>
+                            <DropdownMenu.Trigger asChild>
+                              <button
+                                type="button"
+                                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 border ${
+                                  canvasVisibilityRestricted
+                                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700'
+                                    : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-transparent hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400'
+                                }`}
+                                title="View mode options"
+                                aria-label="View mode"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                <span>View Mode</span>
+                                <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                              </button>
+                            </DropdownMenu.Trigger>
+                            <DropdownMenu.Portal>
+                              <DropdownMenu.Content
+                                className="min-w-[200px] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-1 z-[9999] overflow-visible"
+                                sideOffset={5}
+                                align="start"
+                              >
+                                <DropdownMenu.CheckboxItem
+                                  checked={focusModeEnabled}
+                                  onCheckedChange={(checked) => {
+                                    setFocusModeEnabled(!!checked);
+                                    if (!checked) {
+                                      setFocusModeGroupId(null);
+                                      setFocusModeDegree(1);
+                                    }
                                   }}
+                                  className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700"
+                                  onSelect={(e) => e.preventDefault()}
                                 >
-                                  <span className="inline-flex w-5 shrink-0 items-center justify-center text-indigo-600 dark:text-indigo-400">
-                                    {hiddenCanvasGroupIds.has(g.id) ? <Check className="h-4 w-4" /> : null}
-                                  </span>
-                                  <span className="truncate min-w-0">{g.name}</span>
-                                  <span className="text-xs text-gray-400 tabular-nums shrink-0">({g.nodeIds.length})</span>
-                                </button>
-                              ))}
-                            </div>
+                                  <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
+                                    <Check className="h-4 w-4" />
+                                  </DropdownMenu.ItemIndicator>
+                                  <Focus className="h-4 w-4 shrink-0" />
+                                  <span>Focus</span>
+                                </DropdownMenu.CheckboxItem>
+                                <DropdownMenu.Sub>
+                                  <DropdownMenu.SubTrigger className="flex items-center gap-3 px-3 py-2 text-sm rounded-md outline-none cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-700">
+                                    <Folder className="h-4 w-4 shrink-0" />
+                                    <span>Focus on group</span>
+                                    <ChevronRight className="h-4 w-4 ml-auto shrink-0" />
+                                  </DropdownMenu.SubTrigger>
+                                  <DropdownMenu.SubContent
+                                    className="min-w-[180px] max-w-[240px] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 py-1 z-50 overflow-x-hidden"
+                                    sideOffset={4}
+                                    alignOffset={-4}
+                                  >
+                                    {groups.length === 0 ? (
+                                      <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No groups</div>
+                                    ) : (
+                                      <div className="max-h-[240px] overflow-y-auto overflow-x-hidden">
+                                        {groups.map((g) => (
+                                          <button
+                                            key={g.id}
+                                            type="button"
+                                            className="w-full min-w-0 flex items-center justify-between gap-2 px-3 py-2 text-sm text-left text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 outline-none mx-0.5"
+                                            onClick={() => focusOnGroup(g.id)}
+                                          >
+                                            <span className="truncate min-w-0">{g.name}</span>
+                                            <span className="text-xs text-gray-400 tabular-nums shrink-0">({g.nodeIds.length})</span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </DropdownMenu.SubContent>
+                                </DropdownMenu.Sub>
+                                <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
+                                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                  Hide on canvas
+                                </div>
+                                <DropdownMenu.CheckboxItem
+                                  checked={hideEmptyClasses}
+                                  onCheckedChange={(checked) => setHideEmptyClasses(!!checked)}
+                                  className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700"
+                                  onSelect={(e) => e.preventDefault()}
+                                  title="Hide classes that have no properties"
+                                >
+                                  <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
+                                    <Check className="h-4 w-4" />
+                                  </DropdownMenu.ItemIndicator>
+                                  <Braces className="h-4 w-4 shrink-0" />
+                                  <span>Empty classes</span>
+                                </DropdownMenu.CheckboxItem>
+                                <DropdownMenu.CheckboxItem
+                                  checked={showOnlyConnectedNodes}
+                                  onCheckedChange={(checked) => setShowOnlyConnectedNodes(!!checked)}
+                                  className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700"
+                                  onSelect={(e) => e.preventDefault()}
+                                  title="Hide classes with no relationships (no edges on the canvas)"
+                                >
+                                  <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
+                                    <Check className="h-4 w-4" />
+                                  </DropdownMenu.ItemIndicator>
+                                  <Network className="h-4 w-4 shrink-0" />
+                                  <span>Unconnected classes</span>
+                                </DropdownMenu.CheckboxItem>
+                                <DropdownMenu.CheckboxItem
+                                  checked={hideDeprecatedClasses}
+                                  onCheckedChange={(checked) => setHideDeprecatedClasses(!!checked)}
+                                  className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700"
+                                  onSelect={(e) => e.preventDefault()}
+                                  title="Hide classes marked deprecated in schema"
+                                >
+                                  <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
+                                    <Check className="h-4 w-4" />
+                                  </DropdownMenu.ItemIndicator>
+                                  <Ban className="h-4 w-4 shrink-0" />
+                                  <span>Deprecated classes</span>
+                                </DropdownMenu.CheckboxItem>
+                                <DropdownMenu.Sub>
+                                  <DropdownMenu.SubTrigger className="flex items-center gap-3 px-3 py-2 text-sm rounded-md outline-none cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-700">
+                                    <Folder className="h-4 w-4 shrink-0" />
+                                    <span>Hide group members</span>
+                                    <ChevronRight className="h-4 w-4 ml-auto shrink-0" />
+                                  </DropdownMenu.SubTrigger>
+                                  <DropdownMenu.SubContent
+                                    className="min-w-[200px] max-w-[260px] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 py-1 z-50 overflow-x-hidden"
+                                    sideOffset={4}
+                                    alignOffset={-4}
+                                  >
+                                    {groups.length === 0 ? (
+                                      <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No groups</div>
+                                    ) : (
+                                      <div className="max-h-[240px] overflow-y-auto overflow-x-hidden">
+                                        {groups.map((g) => (
+                                          <button
+                                            key={g.id}
+                                            type="button"
+                                            className="w-full min-w-0 flex items-center gap-2 px-3 py-2 text-sm text-left text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 outline-none mx-0.5"
+                                            onClick={(e) => {
+                                              e.preventDefault();
+                                              toggleHiddenCanvasGroup(g.id);
+                                            }}
+                                          >
+                                            <span className="inline-flex w-5 shrink-0 items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                              {hiddenCanvasGroupIds.has(g.id) ? <Check className="h-4 w-4" /> : null}
+                                            </span>
+                                            <span className="truncate min-w-0">{g.name}</span>
+                                            <span className="text-xs text-gray-400 tabular-nums shrink-0">({g.nodeIds.length})</span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </DropdownMenu.SubContent>
+                                </DropdownMenu.Sub>
+                                <DropdownMenu.CheckboxItem
+                                  checked={nodeGhostsModeEnabled}
+                                  onCheckedChange={(checked) => setNodeGhostsModeEnabled(!!checked)}
+                                  className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700"
+                                  onSelect={(e) => e.preventDefault()}
+                                  title="Show nodes hidden by filters or manual hide as semi-transparent instead of removing them"
+                                >
+                                  <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
+                                    <Check className="h-4 w-4" />
+                                  </DropdownMenu.ItemIndicator>
+                                  <Ghost className="h-4 w-4 shrink-0" />
+                                  <span>Node ghosts</span>
+                                </DropdownMenu.CheckboxItem>
+                                <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
+                                <DropdownMenu.CheckboxItem
+                                  checked={isolateSelectionEnabled}
+                                  disabled={selectedNodeIds.length === 0}
+                                  onCheckedChange={(checked) => setIsolateSelectionEnabled(!!checked)}
+                                  className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700 data-[disabled]:opacity-50 data-[disabled]:pointer-events-none"
+                                  onSelect={(e) => e.preventDefault()}
+                                  title={
+                                    selectedNodeIds.length === 0
+                                      ? 'Select one or more class nodes on the canvas first'
+                                      : 'Show only selected classes (Esc to clear)'
+                                  }
+                                >
+                                  <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
+                                    <Check className="h-4 w-4" />
+                                  </DropdownMenu.ItemIndicator>
+                                  <BoxSelect className="h-4 w-4 shrink-0" />
+                                  <span>Selected only</span>
+                                </DropdownMenu.CheckboxItem>
+                                <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
+                                <DropdownMenu.Item
+                                  className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700 data-[disabled]:opacity-40 data-[disabled]:pointer-events-none"
+                                  disabled={!canvasVisibilityRestricted}
+                                  title="Show every class again: clear manual hides, hide filters, node ghosts, isolate selection, and focus mode"
+                                  onSelect={() => restoreCanvasVisibility()}
+                                >
+                                  <Undo2 className="h-4 w-4 shrink-0" />
+                                  <span>Show all nodes</span>
+                                </DropdownMenu.Item>
+                              </DropdownMenu.Content>
+                            </DropdownMenu.Portal>
+                          </DropdownMenu.Root>
+
+                          {!isReadOnly && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCanvasToolsDrawerOpen(false);
+                                setTagManagerOpen(true);
+                              }}
+                              className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-600 dark:hover:text-amber-400 flex items-center gap-1.5 border border-transparent hover:border-amber-200 dark:hover:border-amber-700"
+                              title="Manage project tags"
+                            >
+                              <Tag className="h-3.5 w-3.5" />
+                              <span>Tags</span>
+                            </button>
                           )}
-                        </DropdownMenu.SubContent>
-                      </DropdownMenu.Sub>
-                      <DropdownMenu.CheckboxItem
-                        checked={nodeGhostsModeEnabled}
-                        onCheckedChange={(checked) => setNodeGhostsModeEnabled(!!checked)}
-                        className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700"
-                        onSelect={(e) => e.preventDefault()}
-                        title="Show nodes hidden by filters or manual hide as semi-transparent instead of removing them"
-                      >
-                        <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
-                          <Check className="h-4 w-4" />
-                        </DropdownMenu.ItemIndicator>
-                        <Ghost className="h-4 w-4 shrink-0" />
-                        <span>Node ghosts</span>
-                      </DropdownMenu.CheckboxItem>
-                      <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
-                      <DropdownMenu.CheckboxItem
-                        checked={isolateSelectionEnabled}
-                        disabled={selectedNodeIds.length === 0}
-                        onCheckedChange={(checked) => setIsolateSelectionEnabled(!!checked)}
-                        className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700 data-[disabled]:opacity-50 data-[disabled]:pointer-events-none"
-                        onSelect={(e) => e.preventDefault()}
-                        title={
-                          selectedNodeIds.length === 0
-                            ? 'Select one or more class nodes on the canvas first'
-                            : 'Show only selected classes (Esc to clear)'
-                        }
-                      >
-                        <DropdownMenu.ItemIndicator className="inline-flex w-5 items-center justify-center">
-                          <Check className="h-4 w-4" />
-                        </DropdownMenu.ItemIndicator>
-                        <BoxSelect className="h-4 w-4 shrink-0" />
-                        <span>Selected only</span>
-                      </DropdownMenu.CheckboxItem>
-                      <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
-                      <DropdownMenu.Item
-                        className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700 data-[disabled]:opacity-40 data-[disabled]:pointer-events-none"
-                        disabled={!canvasVisibilityRestricted}
-                        title="Show every class again: clear manual hides, hide filters, node ghosts, isolate selection, and focus mode"
-                        onSelect={() => restoreCanvasVisibility()}
-                      >
-                        <Undo2 className="h-4 w-4 shrink-0" />
-                        <span>Show all nodes</span>
-                      </DropdownMenu.Item>
-                    </DropdownMenu.Content>
-                  </DropdownMenu.Portal>
-                </DropdownMenu.Root>
-                {/* Manage Tags Button */}
-                {!isReadOnly && (
-                  <button
-                    onClick={() => setTagManagerOpen(true)}
-                    className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-600 dark:hover:text-amber-400 flex items-center gap-1.5 border border-transparent hover:border-amber-200 dark:hover:border-amber-700"
-                    title="Manage project tags"
-                  >
-                    <Tag className="h-3.5 w-3.5" />
-                    <span>Tags</span>
-                  </button>
-                )}
-              </div>
-            </Panel>
+                        </div>
+                      </Collapsible.Content>
+                    </div>
+                  </Collapsible.Root>
+                </Panel>
+              </>
             )}
 
             {/* Canvas Search Panel */}
