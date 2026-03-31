@@ -7767,7 +7767,7 @@ const StudioContent = () => {
 
                       <Collapsible.Content
                         id="ade-canvas-tools-mini-drawer"
-                        className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-left-2 data-[state=closed]:slide-out-to-left-2 duration-200"
+                        className="overflow-hidden"
                       >
                         <div className="flex items-center gap-1.5">
                           <button
