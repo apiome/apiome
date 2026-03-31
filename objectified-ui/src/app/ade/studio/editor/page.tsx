@@ -7759,16 +7759,13 @@ const StudioContent = () => {
                           <PanelLeft className="h-4 w-4 shrink-0" aria-hidden />
                           <span>Tools</span>
                           <ChevronRight
-                            className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${canvasToolsDrawerOpen ? 'rotate-180' : ''}`}
+                            className={`h-3.5 w-3.5 shrink-0 ${canvasToolsDrawerOpen ? 'rotate-180' : ''}`}
                             aria-hidden
                           />
                         </button>
                       </Collapsible.Trigger>
 
-                      <Collapsible.Content
-                        id="ade-canvas-tools-mini-drawer"
-                        className="data-[state=open]:animate-in data-[state=closed]:animate-out"
-                      >
+                      <Collapsible.Content id="ade-canvas-tools-mini-drawer">
                         <div className="flex items-center gap-1.5">
                           <button
                             type="button"
