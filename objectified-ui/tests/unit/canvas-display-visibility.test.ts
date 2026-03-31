@@ -114,6 +114,20 @@ describe('canvas-display-visibility (#483)', () => {
     expect(groupNodeIdIsVisible(nested[0], new Set(['c']), nested)).toBe(true);
     expect(groupNodeIdIsVisible(nested[0], new Set(['a']), nested)).toBe(false);
   });
+
+  it('groupNodeIdIsVisible is true for empty leaf group so new frames render (#848)', () => {
+    const empty = { id: 'gNew', nodeIds: [] as string[], parentId: null as string | null };
+    expect(groupNodeIdIsVisible(empty, new Set(), [empty])).toBe(true);
+    expect(groupNodeIdIsVisible(empty, new Set(['x']), [empty])).toBe(true);
+  });
+
+  it('groupNodeIdIsVisible stays false when parent is empty but every nested group is hidden (#848)', () => {
+    const nested = [
+      { id: 'g1', nodeIds: [], parentId: null },
+      { id: 'g2', nodeIds: ['c'], parentId: 'g1' },
+    ];
+    expect(groupNodeIdIsVisible(nested[0], new Set(), nested)).toBe(false);
+  });
 });
 
 const allOff = {

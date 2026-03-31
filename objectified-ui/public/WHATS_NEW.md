@@ -18,6 +18,7 @@ Improvements:
 - Canvas: layout import and named layout load restore edge handle routing when saved edge IDs match the canvas (#316)
 
 Bug Fixes:
+- Canvas: empty group frames from drag-to-canvas now appear (visibility treated empty leaf groups as visible) (#848)
 - Import now handles paths properly
 - Improved Markdown rendering
 - Improved layout of primitives form
