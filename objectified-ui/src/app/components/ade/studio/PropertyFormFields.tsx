@@ -26,6 +26,10 @@ import { RegexTester } from './RegexTester';
 import { PrefixItemsEditor } from './PrefixItemsEditor';
 import { ExtensionsEditor } from './ExtensionsEditor';
 import { PrimitiveSelector } from './PrimitiveSelector';
+import { Input } from '../../ui/Input';
+import { Label } from '../../ui/Label';
+import { Badge } from '../../ui/Badge';
+import { Checkbox as ShadcnCheckbox } from '../../ui/Checkbox';
 
 // Radix/native stubs replacing MUI (no MUI dependency)
 const spacing = (n: number) => (typeof n === 'number' ? n * 8 : 0);
@@ -2071,52 +2075,42 @@ value={data.format || ''}
 
         {/* Object Constraints */}
         {baseType === 'object' && (
-          <Box sx={{
-            p: 2.5,
-            bgcolor: isDark ? 'linear-gradient(135deg, #14532d 0%, #166534 100%)' : 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-            background: isDark ? 'linear-gradient(135deg, #14532d 0%, #166534 100%)' : 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-            borderRadius: 2.5,
-            border: '1px solid rgba(34, 197, 94, 0.3)',
-            boxShadow: '0 2px 8px rgba(34, 197, 94, 0.1)',
-          }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, mb: 2, color: isDark ? '#86efac' : '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box component="span" sx={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                bgcolor: '#22c55e',
-              }} />
-              Object Constraints
-            </Typography>
-
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.5, mb: 2.5 }}>
-              <TextField
-                label="Min Properties"
-                type="number"
-                size={size}
-                fullWidth
-                value={data.minProperties || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange('minProperties', e.target.value)}
-                inputProps={{ min: 0 }}
-                sx={{
-                  bgcolor: isDark ? '#0f172a' : 'white',
-                  '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                }}
-              />
-              <TextField
-                label="Max Properties"
-                type="number"
-                size={size}
-                fullWidth
-                value={data.maxProperties || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange('maxProperties', e.target.value)}
-                inputProps={{ min: 0 }}
-                sx={{
-                  bgcolor: isDark ? '#0f172a' : 'white',
-                  '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                }}
-              />
-            </Box>
+          <div className="mt-3 space-y-4 w-full min-w-0">
+            <div className="p-4 rounded-lg border bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 w-full min-w-0">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Settings className="h-4 w-4 shrink-0 text-indigo-500" />
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Object Constraints</h4>
+                </div>
+                <Badge variant="secondary" className="text-xs shrink-0">OpenAPI 3.1</Badge>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1 min-w-0">
+                  <Label htmlFor="prop-min-properties">Min Properties</Label>
+                  <Input
+                    id="prop-min-properties"
+                    type="number"
+                    min={0}
+                    value={data.minProperties ?? ''}
+                    onChange={(e) => onChange('minProperties', e.target.value)}
+                    placeholder="e.g., 1"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Minimum number of properties required</p>
+                </div>
+                <div className="space-y-1 min-w-0">
+                  <Label htmlFor="prop-max-properties">Max Properties</Label>
+                  <Input
+                    id="prop-max-properties"
+                    type="number"
+                    min={0}
+                    value={data.maxProperties ?? ''}
+                    onChange={(e) => onChange('maxProperties', e.target.value)}
+                    placeholder="e.g., 10"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Maximum number of properties allowed</p>
+                </div>
+              </div>
+            </div>
 
             <Box sx={{
               p: 2,
@@ -2124,9 +2118,9 @@ value={data.format || ''}
               borderRadius: 2,
               border: isDark ? '1px solid #475569' : '1px solid #e2e8f0',
             }}>
-              <Typography variant="caption" sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#64748b', display: 'block', mb: 1.5 }}>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
                 Additional Properties
-              </Typography>
+              </p>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <FormControlLabel
                   control={<Radio checked={data.additionalProperties === 'default' || !data.additionalProperties} onChange={() => onChange('additionalProperties', 'default')} size="small" sx={{ '&.Mui-checked': { color: '#6366f1' } }} />}
@@ -3268,7 +3262,7 @@ value={data.format || ''}
                 </Box>
               </Box>
             )}
-          </Box>
+          </div>
         )}
       </Box>
 
@@ -3613,172 +3607,101 @@ value={data.format || ''}
           </Box>
         </Box>
 
-        {/* XML Object (OpenAPI 3.1) */}
-        <Box sx={{
-          mt: 3,
-          p: 2.5,
-          width: '100%',
-          minWidth: 0,
-          bgcolor: isDark ? '#0f172a' : 'white',
-          borderRadius: 2.5,
-          border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-        }}>
-          <Box sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            mb: 2,
-            pb: 1.5,
-            borderBottom: '1px solid rgba(99, 102, 241, 0.15)',
-          }}>
-            <Box sx={{
-              p: 0.75,
-              borderRadius: 1.5,
-              bgcolor: 'rgba(234, 88, 12, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <CodeIcon sx={{ color: '#ea580c', fontSize: 16 }} />
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: isDark ? '#e2e8f0' : '#1e293b' }}>
-                XML Representation
-              </Typography>
-              <Typography variant="caption" sx={{ color: isDark ? '#94a3b8' : '#64748b' }}>
-                Control XML serialization for this property
-              </Typography>
-            </Box>
-            <Typography variant="caption" sx={{
-              px: 1,
-              py: 0.25,
-              bgcolor: 'rgba(234, 88, 12, 0.1)',
-              color: '#ea580c',
-              borderRadius: 1,
-              fontWeight: 600,
-              fontSize: '0.65rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}>
+        {/* XML Object (OpenAPI 3.1) — match ClassEditDialog section styling */}
+        <div className="mt-3 w-full min-w-0 p-4 rounded-lg border bg-white dark:bg-slate-800 border-orange-200 dark:border-orange-900">
+          <div className="flex items-center justify-between mb-3 gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <Code className="h-4 w-4 shrink-0 text-orange-500" />
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">XML Representation</h4>
+            </div>
+            <Badge variant="secondary" className="text-xs shrink-0 bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300">
               OpenAPI 3.1
-            </Typography>
-          </Box>
+            </Badge>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+            Configure how this property is serialized to XML format
+          </p>
 
-          <Typography variant="caption" sx={{ color: isDark ? '#94a3b8' : '#64748b', display: 'block', mb: 2 }}>
-            Configure how this property is represented when serialized to XML format. These settings are useful for APIs that support both JSON and XML content types.
-          </Typography>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 w-full min-w-0">
+            <div className="space-y-1 min-w-0">
+              <Label htmlFor="prop-xml-name">XML Name</Label>
+              <Input
+                id="prop-xml-name"
+                value={data.xmlName ?? ''}
+                onChange={(e) => onChange('xmlName', e.target.value)}
+                placeholder="e.g., CustomName"
+              />
+            </div>
+            <div className="space-y-1 min-w-0">
+              <Label htmlFor="prop-xml-namespace">Namespace</Label>
+              <Input
+                id="prop-xml-namespace"
+                value={data.xmlNamespace ?? ''}
+                onChange={(e) => onChange('xmlNamespace', e.target.value)}
+                placeholder="http://example.com/ns"
+              />
+            </div>
+            <div className="space-y-1 min-w-0">
+              <Label htmlFor="prop-xml-prefix">Prefix</Label>
+              <Input
+                id="prop-xml-prefix"
+                value={data.xmlPrefix ?? ''}
+                onChange={(e) => onChange('xmlPrefix', e.target.value)}
+                placeholder="e.g., ns1"
+              />
+            </div>
+          </div>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2, mb: 2, width: '100%', minWidth: 0 }}>
-            <TextField
-              label="XML Name"
-              size={size}
-              fullWidth
-              value={data.xmlName || ''}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange('xmlName', e.target.value)}
-              placeholder="e.g., customName"
-              helperText="Replaces element/attribute name"
-              sx={{
-                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                '& .MuiFormHelperText-root': { fontSize: '0.7rem' },
-              }}
-            />
-            <TextField
-              label="Namespace"
-              size={size}
-              fullWidth
-              value={data.xmlNamespace || ''}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange('xmlNamespace', e.target.value)}
-              placeholder="e.g., http://example.com/ns"
-              helperText="URI of namespace"
-              sx={{
-                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                '& .MuiFormHelperText-root': { fontSize: '0.7rem' },
-              }}
-            />
-            <TextField
-              label="Prefix"
-              size={size}
-              fullWidth
-              value={data.xmlPrefix || ''}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange('xmlPrefix', e.target.value)}
-              placeholder="e.g., ns1"
-              helperText="Prefix for the name"
-              sx={{
-                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                '& .MuiFormHelperText-root': { fontSize: '0.7rem' },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={data.xmlAttribute || false}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange('xmlAttribute', e.target.checked)}
-                  size="small"
-                  sx={{ '&.Mui-checked': { color: '#ea580c' } }}
-                />
-              }
-              label={
-                <Box>
-                  <Typography variant="body2" sx={{ color: isDark ? '#e2e8f0' : '#334155' }}>
-                    Attribute
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: isDark ? '#94a3b8' : '#64748b' }}>
-                    Render as XML attribute instead of element
-                  </Typography>
-                </Box>
-              }
-              sx={{ m: 0, alignItems: 'flex-start' }}
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={data.xmlWrapped || false}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange('xmlWrapped', e.target.checked)}
-                  size="small"
-                  disabled={!isArray}
-                  sx={{ '&.Mui-checked': { color: '#ea580c' } }}
-                />
-              }
-              label={
-                <Box>
-                  <Typography variant="body2" sx={{ color: isDark ? '#e2e8f0' : '#334155', opacity: isArray ? 1 : 0.5 }}>
-                    Wrapped
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: isDark ? '#94a3b8' : '#64748b', opacity: isArray ? 1 : 0.5 }}>
-                    Wrap array items in container element {!isArray && '(arrays only)'}
-                  </Typography>
-                </Box>
-              }
-              sx={{ m: 0, alignItems: 'flex-start' }}
-            />
-          </Box>
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-start gap-2 min-w-0">
+              <ShadcnCheckbox
+                id="prop-xml-attribute"
+                className="mt-0.5"
+                checked={data.xmlAttribute || false}
+                onCheckedChange={(c) => onChange('xmlAttribute', c === true)}
+              />
+              <div className="space-y-0.5 min-w-0">
+                <Label htmlFor="prop-xml-attribute" className="text-sm font-medium cursor-pointer">
+                  Attribute
+                </Label>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Render as XML attribute instead of element
+                </p>
+              </div>
+            </div>
+            <div className={`flex items-start gap-2 min-w-0 ${!isArray ? 'opacity-50' : ''}`}>
+              <ShadcnCheckbox
+                id="prop-xml-wrapped"
+                className="mt-0.5"
+                checked={data.xmlWrapped || false}
+                disabled={!isArray}
+                onCheckedChange={(c) => onChange('xmlWrapped', c === true)}
+              />
+              <div className="space-y-0.5 min-w-0">
+                <Label htmlFor="prop-xml-wrapped" className={`text-sm font-medium cursor-pointer ${!isArray ? 'cursor-not-allowed' : ''}`}>
+                  Wrapped
+                </Label>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Wrap array items in container element{!isArray ? ' (arrays only)' : ''}
+                </p>
+              </div>
+            </div>
+          </div>
 
           {(data.xmlName || data.xmlNamespace || data.xmlPrefix || data.xmlAttribute || data.xmlWrapped) && (
-            <Box sx={{
-              mt: 2,
-              p: 1.5,
-              bgcolor: 'rgba(234, 88, 12, 0.06)',
-              borderRadius: 1.5,
-              border: '1px solid rgba(234, 88, 12, 0.2)',
-            }}>
-              <Typography variant="caption" sx={{ color: '#ea580c', fontFamily: '"JetBrains Mono", monospace', display: 'block' }}>
-                XML Output Preview:
-              </Typography>
-              <Typography variant="caption" sx={{ color: isDark ? '#e2e8f0' : '#334155', fontFamily: '"JetBrains Mono", monospace', display: 'block', mt: 0.5 }}>
+            <div className="mt-3 p-3 rounded-md border border-orange-200 dark:border-orange-800 bg-orange-50/60 dark:bg-orange-950/40">
+              <p className="text-xs font-mono text-orange-700 dark:text-orange-300">XML Output Preview:</p>
+              <p className="text-xs font-mono text-gray-800 dark:text-gray-200 mt-1 break-all">
                 {data.xmlAttribute
                   ? `<parent ${data.xmlPrefix ? `${data.xmlPrefix}:` : ''}${data.xmlName || 'propertyName'}="value" />`
                   : data.xmlWrapped && isArray
                     ? `<${data.xmlPrefix ? `${data.xmlPrefix}:` : ''}${data.xmlName || 'propertyName'}><item>...</item></${data.xmlPrefix ? `${data.xmlPrefix}:` : ''}${data.xmlName || 'propertyName'}>`
                     : `<${data.xmlPrefix ? `${data.xmlPrefix}:` : ''}${data.xmlName || 'propertyName'}${data.xmlNamespace ? ` xmlns="${data.xmlNamespace}"` : ''}>value</${data.xmlPrefix ? `${data.xmlPrefix}:` : ''}${data.xmlName || 'propertyName'}>`
                 }
-              </Typography>
-            </Box>
+              </p>
+            </div>
           )}
-        </Box>
+        </div>
 
         {/* Schema Metadata (JSON Schema 2020-12) */}
         <Box sx={{

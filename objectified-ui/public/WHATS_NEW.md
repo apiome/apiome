@@ -20,6 +20,7 @@ Improvements:
 - Canvas: layout import and named layout load restore edge handle routing when saved edge IDs match the canvas (#316)
 
 Bug Fixes:
+- Studio: property editor XML section and object min/max properties use the same card, typography, and helper text patterns as the class form (#852)
 - Canvas: empty group frames from drag-to-canvas now appear (visibility treated empty leaf groups as visible) (#848)
 - Import now handles paths properly
 - Improved Markdown rendering
