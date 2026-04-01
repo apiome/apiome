@@ -8586,7 +8586,7 @@ const StudioContent = () => {
                             Quick snapshots
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 leading-snug">
-                            Save the current canvas to this browser only—no layout name or server save. Use for ad-hoc checkpoints; restore and gallery are planned next.
+                            Save the current canvas to this browser only—no layout name or server save. Each capture keeps a thumbnail preview below; restore is planned next (#170).
                           </p>
                           <button
                             type="button"
@@ -8620,32 +8620,47 @@ const StudioContent = () => {
                             )}
                           </button>
                           {quickLayoutSnapshots.length > 0 ? (
-                            <div className="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/40 px-2.5 py-2 max-h-32 overflow-y-auto overscroll-contain">
-                              <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
+                            <div className="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/40 px-2.5 py-2 max-h-60 overflow-y-auto overscroll-contain">
+                              <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                                 Recent ({quickLayoutSnapshots.length})
                               </p>
-                              <ul className="space-y-1.5">
-                                {quickLayoutSnapshots.slice(0, 6).map((s) => (
-                                  <li key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                                    {s.thumbnailDataUrl ? (
-                                      <img
-                                        src={s.thumbnailDataUrl}
-                                        alt=""
-                                        className="h-9 w-14 shrink-0 rounded object-cover border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800"
-                                      />
-                                    ) : (
-                                      <span className="h-9 w-14 shrink-0 rounded border border-dashed border-gray-300 dark:border-gray-600 bg-gray-100/50 dark:bg-gray-800/50" />
-                                    )}
-                                    <span className="tabular-nums truncate" title={s.createdAt}>
-                                      {new Date(s.createdAt).toLocaleString(undefined, {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                      })}
-                                    </span>
-                                  </li>
-                                ))}
+                              <ul className="grid grid-cols-2 gap-2">
+                                {quickLayoutSnapshots.map((s) => {
+                                  const caption = new Date(s.createdAt).toLocaleString(undefined, {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  });
+                                  return (
+                                    <li
+                                      key={s.id}
+                                      className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800/70 shadow-sm"
+                                      title={`Quick snapshot — ${s.createdAt}`}
+                                    >
+                                      <div className="relative aspect-[5/3] w-full bg-gray-100 dark:bg-gray-900">
+                                        {s.thumbnailDataUrl ? (
+                                          <img
+                                            src={s.thumbnailDataUrl}
+                                            alt=""
+                                            className="absolute inset-0 h-full w-full object-cover"
+                                          />
+                                        ) : (
+                                          <div
+                                            className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-1 text-center text-gray-400 dark:text-gray-500"
+                                            aria-label="No preview image for this snapshot"
+                                          >
+                                            <Image className="h-5 w-5 shrink-0 opacity-60" aria-hidden />
+                                            <span className="text-[9px] leading-tight">No preview</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <p className="border-t border-gray-100 dark:border-gray-700/80 px-1.5 py-1 text-[10px] tabular-nums text-gray-600 dark:text-gray-300 truncate">
+                                        {caption}
+                                      </p>
+                                    </li>
+                                  );
+                                })}
                               </ul>
                             </div>
                           ) : null}
