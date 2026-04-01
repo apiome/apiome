@@ -3578,7 +3578,7 @@ export async function pinTeamDefaultQuickSnapshot(
       `SELECT 1 FROM odb.tenant_administrators WHERE tenant_id = $1 AND user_id = $2`,
       [tenantId, actingUserId]
     );
-    if (!adminCheck.rowCount) {
+    if (!adminCheck.rows.length) {
       return errorResponse('Only tenant administrators can pin a team default layout');
     }
     const verCheck = await connectionPool.query(
@@ -3587,7 +3587,7 @@ export async function pinTeamDefaultQuickSnapshot(
        WHERE v.id = $1 AND p.tenant_id = $2 AND v.deleted_at IS NULL AND p.deleted_at IS NULL`,
       [versionId, tenantId]
     );
-    if (!verCheck.rowCount) {
+    if (!verCheck.rows.length) {
       return errorResponse('Version not found for this tenant');
     }
 
