@@ -125,6 +125,7 @@ import {
   duplicateClassesInGroup,
   bulkApplyEditsToGroupClasses,
   pinTeamDefaultQuickSnapshot,
+  deleteNamedCanvasLayout,
 } from '../../../../../lib/db/helper';
 import { expandClassesForGroupExport, downloadTextFile } from '@/app/utils/group-schema-export';
 import { mapEdgesForLayoutSave, mapNodesForLayoutSave } from '../lib/canvasLayoutPayload';
@@ -616,6 +617,10 @@ const StudioContent = () => {
   const [availableLayoutNames, setAvailableLayoutNames] = useState<string[]>(BUILTIN_LAYOUT_NAMES);
   /** Data URLs for saved layout snapshots keyed by trimmed layout name */
   const [namedLayoutSnapshotDataUrls, setNamedLayoutSnapshotDataUrls] = useState<Record<string, string>>({});
+  /** Lightweight ownership/permission metadata per saved layout name. */
+  const [namedLayoutAccessByName, setNamedLayoutAccessByName] = useState<
+    Record<string, { isShared: boolean; canEdit: boolean; canDelete: boolean }>
+  >({});
   /** Local quick snapshots for this version (#168); restore UI follows in #170. */
   const [quickLayoutSnapshots, setQuickLayoutSnapshots] = useState<QuickLayoutSnapshot[]>([]);
   const [quickSnapshotSavedFlash, setQuickSnapshotSavedFlash] = useState(false);
@@ -4483,6 +4488,40 @@ const StudioContent = () => {
   // LAYOUT SAVE/LOAD HANDLERS
   // ============================================================================
 
+  const selectedLayoutNameTrimmed = selectedLayoutName.trim();
+  const selectedLayoutAccess = selectedLayoutNameTrimmed
+    ? namedLayoutAccessByName[selectedLayoutNameTrimmed]
+    : undefined;
+  const selectedLayoutIsShared = Boolean(selectedLayoutAccess?.isShared);
+  const selectedLayoutCanEdit =
+    !isReadOnly &&
+    Boolean(currentUserId) &&
+    (!selectedLayoutIsShared || Boolean(effectiveIsTenantAdmin && currentTenantId));
+  const selectedLayoutCanDelete =
+    !isReadOnly &&
+    Boolean(currentUserId) &&
+    Boolean(
+      selectedLayoutAccess &&
+        (selectedLayoutAccess.canDelete ||
+          (selectedLayoutAccess.isShared && effectiveIsTenantAdmin && currentTenantId))
+    );
+  const selectedLayoutSaveBlockedReason = isReadOnly
+    ? 'Cannot save in read-only mode'
+    : !currentUserId
+      ? 'Sign in to save layouts'
+      : selectedLayoutIsShared && !(effectiveIsTenantAdmin && currentTenantId)
+        ? 'View-only: only tenant administrators can edit shared team layouts'
+        : 'Save current layout';
+  const selectedLayoutDeleteBlockedReason = isReadOnly
+    ? 'Cannot delete in read-only mode'
+    : !currentUserId
+      ? 'Sign in to delete layouts'
+      : !hasExistingLayout
+        ? 'No saved layout available'
+        : selectedLayoutIsShared && !(effectiveIsTenantAdmin && currentTenantId)
+          ? 'View-only: only tenant administrators can delete shared team layouts'
+          : 'Delete this saved layout';
+
   // Save current canvas layout
   const handleSaveLayout = useCallback(async () => {
     if (isReadOnly || !selectedVersionId || !currentUserId) return;
@@ -4491,6 +4530,16 @@ const StudioContent = () => {
     if (!layoutName) {
       await alertDialog({
         message: 'Please enter a layout name.',
+        variant: 'warning',
+      });
+      return;
+    }
+    const selectedAccess = namedLayoutAccessByName[layoutName];
+    const selectedIsShared = Boolean(selectedAccess?.isShared);
+    const canEditLayout = !selectedIsShared || Boolean(effectiveIsTenantAdmin && currentTenantId);
+    if (!canEditLayout) {
+      await alertDialog({
+        message: 'This shared layout is view-only for your account. Only tenant administrators can edit it.',
         variant: 'warning',
       });
       return;
@@ -4548,6 +4597,10 @@ const StudioContent = () => {
         // Show "Saved" state temporarily
         setLayoutSaved(true);
         setHasExistingLayout(true);
+        setNamedLayoutAccessByName((prev) => ({
+          ...prev,
+          [layoutName]: { isShared: false, canEdit: true, canDelete: true },
+        }));
         setAvailableLayoutNames(prev => {
           if (prev.includes(layoutName)) return prev;
           return [...prev, layoutName];
@@ -4571,7 +4624,90 @@ const StudioContent = () => {
       setIsLoadingCanvas(false);
       setLoadingMessage('');
     }
-  }, [isReadOnly, selectedVersionId, currentUserId, selectedLayoutName, nodes, edges, groups, getViewport, alertDialog, isDark]);
+  }, [
+    isReadOnly,
+    selectedVersionId,
+    currentUserId,
+    selectedLayoutName,
+    namedLayoutAccessByName,
+    effectiveIsTenantAdmin,
+    currentTenantId,
+    nodes,
+    edges,
+    groups,
+    getViewport,
+    alertDialog,
+    isDark,
+  ]);
+
+  const handleDeleteLayout = useCallback(async () => {
+    if (isReadOnly || !selectedVersionId || !currentUserId) return;
+    const layoutName = selectedLayoutName.trim();
+    if (!layoutName) {
+      await alertDialog({ message: 'Please enter a layout name.', variant: 'warning' });
+      return;
+    }
+    const selectedAccess = namedLayoutAccessByName[layoutName];
+    const selectedIsShared = Boolean(selectedAccess?.isShared);
+    const canDelete =
+      Boolean(selectedAccess) && (!selectedIsShared || Boolean(effectiveIsTenantAdmin && currentTenantId));
+    if (!canDelete) {
+      await alertDialog({
+        message: selectedIsShared
+          ? 'This shared layout is view-only for your account. Only tenant administrators can delete it.'
+          : 'No saved layout exists for this name.',
+        variant: 'warning',
+      });
+      return;
+    }
+    const ok = await confirmDialog({
+      title: 'Delete layout',
+      message: `Delete saved layout "${layoutName}"? This cannot be undone.`,
+    });
+    if (!ok) return;
+    try {
+      const result = await deleteNamedCanvasLayout(
+        selectedVersionId,
+        layoutName,
+        currentTenantId || undefined
+      );
+      const parsed = JSON.parse(result);
+      if (!parsed.success) {
+        await alertDialog({ message: parsed.error || 'Could not delete layout', variant: 'error' });
+        return;
+      }
+      setAvailableLayoutNames((prev) =>
+        BUILTIN_LAYOUT_NAMES.includes(layoutName) ? prev : prev.filter((n) => n !== layoutName)
+      );
+      setNamedLayoutSnapshotDataUrls((prev) => {
+        const next = { ...prev };
+        delete next[layoutName];
+        return next;
+      });
+      setNamedLayoutAccessByName((prev) => {
+        const next = { ...prev };
+        delete next[layoutName];
+        return next;
+      });
+      setHasExistingLayout(false);
+      setSelectedLayoutName('Development Layout');
+      await alertDialog({ message: `Deleted layout "${layoutName}".`, variant: 'success' });
+    } catch (error) {
+      console.error('Error deleting named layout:', error);
+      await alertDialog({ message: 'Could not delete layout.', variant: 'error' });
+    }
+  }, [
+    isReadOnly,
+    selectedVersionId,
+    currentUserId,
+    selectedLayoutName,
+    namedLayoutAccessByName,
+    effectiveIsTenantAdmin,
+    currentTenantId,
+    confirmDialog,
+    alertDialog,
+    BUILTIN_LAYOUT_NAMES,
+  ]);
 
   const openQuickSnapshotCaptureDialog = useCallback(async () => {
     if (!selectedVersionId) {
@@ -6531,6 +6667,7 @@ const StudioContent = () => {
         setHasExistingLayout(false);
         setAvailableLayoutNames(BUILTIN_LAYOUT_NAMES);
         setNamedLayoutSnapshotDataUrls({});
+        setNamedLayoutAccessByName({});
         return;
       }
 
@@ -6548,13 +6685,23 @@ const StudioContent = () => {
         );
 
         const snapMap: Record<string, string> = {};
+        const accessByName: Record<string, { isShared: boolean; canEdit: boolean; canDelete: boolean }> = {};
         for (const layout of allLayoutsResponse.layouts || []) {
           const n = typeof layout.name === 'string' ? layout.name.trim() : '';
+          if (!n) continue;
+          const isShared = layout.user_id === null;
+          const canMutate = !isShared || Boolean(effectiveIsTenantAdmin && currentTenantId);
+          accessByName[n] = {
+            isShared,
+            canEdit: canMutate,
+            canDelete: canMutate,
+          };
           if (n && layout.snapshotImageBase64) {
             snapMap[n] = `data:image/png;base64,${layout.snapshotImageBase64}`;
           }
         }
         setNamedLayoutSnapshotDataUrls(snapMap);
+        setNamedLayoutAccessByName(accessByName);
 
         const trimmedSelection = selectedLayoutName.trim();
         const hasExistingLayoutForSelection =
@@ -6568,11 +6715,19 @@ const StudioContent = () => {
         setHasExistingLayout(false);
         setAvailableLayoutNames(BUILTIN_LAYOUT_NAMES);
         setNamedLayoutSnapshotDataUrls({});
+        setNamedLayoutAccessByName({});
       }
     };
 
     checkLayoutExists();
-  }, [selectedVersionId, currentUserId, selectedLayoutName, BUILTIN_LAYOUT_NAMES]);
+  }, [
+    selectedVersionId,
+    currentUserId,
+    selectedLayoutName,
+    BUILTIN_LAYOUT_NAMES,
+    effectiveIsTenantAdmin,
+    currentTenantId,
+  ]);
 
   // Regenerate edges when edge styling or routing preferences change
   useEffect(() => {
@@ -8789,21 +8944,39 @@ const StudioContent = () => {
                               </span>
                             </div>
                           ) : null}
+                          {hasExistingLayout && selectedLayoutNameTrimmed ? (
+                            <div className="mt-2 flex items-center gap-1.5">
+                              <span
+                                className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                                  selectedLayoutIsShared
+                                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300'
+                                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                }`}
+                              >
+                                {selectedLayoutIsShared ? 'Shared' : 'Personal'}
+                              </span>
+                              <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                                Permissions: view
+                                {selectedLayoutCanEdit ? ', edit' : ''}
+                                {selectedLayoutCanDelete ? ', delete' : ''}
+                              </span>
+                            </div>
+                          ) : null}
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-2">
                           <button
                             onClick={handleSaveLayout}
-                            disabled={isReadOnly || layoutSaved}
+                            disabled={!selectedLayoutCanEdit || layoutSaved}
                             className={`
                               px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2
                               ${layoutSaved
                                 ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700'
-                                : !isReadOnly
+                                : selectedLayoutCanEdit
                                 ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-700'
                                 : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-200 dark:border-gray-600'
                               }
                             `}
-                            title={layoutSaved ? 'Layout saved!' : isReadOnly ? 'Cannot save in read-only mode' : 'Save current layout'}
+                            title={layoutSaved ? 'Layout saved!' : selectedLayoutSaveBlockedReason}
                           >
                             {layoutSaved ? (
                               <>
@@ -8819,9 +8992,9 @@ const StudioContent = () => {
                           </button>
                           <button
                             onClick={handleLoadLayout}
-                            disabled={!hasExistingLayout}
+                            disabled={!hasExistingLayout || !selectedLayoutNameTrimmed}
                             className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${
-                              hasExistingLayout
+                              hasExistingLayout && selectedLayoutNameTrimmed
                                 ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 border border-purple-200 dark:border-purple-700'
                                 : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-200 dark:border-gray-600'
                             }`}
@@ -8829,6 +9002,19 @@ const StudioContent = () => {
                           >
                             <Upload className="w-4 h-4" />
                             <span>Load</span>
+                          </button>
+                          <button
+                            onClick={() => void handleDeleteLayout()}
+                            disabled={!selectedLayoutCanDelete || !hasExistingLayout}
+                            className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${
+                              selectedLayoutCanDelete && hasExistingLayout
+                                ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-700'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-200 dark:border-gray-600'
+                            }`}
+                            title={selectedLayoutDeleteBlockedReason}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span>Delete</span>
                           </button>
                         </div>
                         <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">

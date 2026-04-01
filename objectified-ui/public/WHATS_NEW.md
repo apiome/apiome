@@ -5,6 +5,7 @@ We continue to improve the platform based on your feedback with improvements and
 ---
 
 Improvements:
+- Canvas: layout permissions added for named layouts (#176) — Layout panel now shows view/edit/delete capability, enforces view-only behavior for shared layouts, and allows shared layout deletion only for tenant administrators
 - Canvas: tenant administrators can pin a quick snapshot as the team default from the gallery (Share → Pin as team default); saves a shared named layout for the API version (#175)
 - Canvas: share quick layout snapshots with teammates via JSON (copy or download from the gallery) and import shared files or pasted JSON for the same API version (#174)
 - Canvas: quick snapshots store timestamp, author (from your session), a required short summary, and optional description; capture opens a short form before saving (#173)

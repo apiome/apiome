@@ -4188,6 +4188,84 @@ export async function deleteCanvasLayout(layoutId: string) {
 }
 
 /**
+ * Delete a named layout visible to the current user.
+ * - Personal layout: owner can delete.
+ * - Shared layout (user_id null): tenant admins can delete when the version belongs to that tenant.
+ */
+export async function deleteNamedCanvasLayout(
+  versionId: string,
+  name: string,
+  tenantId?: string
+) {
+  const session = await getAuthSession();
+  const actingUserId = (session?.user as any)?.user_id;
+  if (!actingUserId) {
+    return errorResponse('Unauthorized');
+  }
+  const nameValue = name.trim();
+  if (!nameValue) {
+    return errorResponse('Layout name is required');
+  }
+  try {
+    const candidateResult = await connectionPool.query(
+      `SELECT id, user_id, name
+       FROM odb.canvas_layouts
+       WHERE version_id = $1
+         AND name = $2
+         AND (user_id = $3 OR user_id IS NULL)
+       ORDER BY (user_id = $3) DESC NULLS LAST, updated_at DESC
+       LIMIT 1`,
+      [versionId, nameValue, actingUserId]
+    );
+    if (candidateResult.rowCount === 0) {
+      return errorResponse('Layout not found');
+    }
+    const candidate = candidateResult.rows[0];
+    const ownerUserId = candidate.user_id as string | null;
+
+    if (ownerUserId === null) {
+      const trimmedTenantId = tenantId?.trim();
+      if (!trimmedTenantId) {
+        return errorResponse('Tenant id is required to delete shared layouts');
+      }
+      const tenantOwnsVersionResult = await connectionPool.query(
+        `SELECT 1
+         FROM odb.versions v
+         JOIN odb.projects p ON p.id = v.project_id
+         WHERE v.id = $1
+           AND p.tenant_id = $2`,
+        [versionId, trimmedTenantId]
+      );
+      if (tenantOwnsVersionResult.rowCount === 0) {
+        return errorResponse('Version does not belong to the provided tenant');
+      }
+      const adminResult = await connectionPool.query(
+        `SELECT 1 FROM odb.tenant_administrators WHERE tenant_id = $1 AND user_id = $2`,
+        [trimmedTenantId, actingUserId]
+      );
+      if (adminResult.rowCount === 0) {
+        return errorResponse('Only tenant administrators can delete shared layouts');
+      }
+    } else if (ownerUserId !== actingUserId) {
+      return errorResponse('You can only delete your own layouts');
+    }
+
+    const result = await connectionPool.query(
+      `DELETE FROM odb.canvas_layouts WHERE id = $1 RETURNING id`,
+      [candidate.id]
+    );
+
+    if (result.rowCount === 0) {
+      return errorResponse('Layout not found');
+    }
+    return successResponse({ deleted: true, name: nameValue });
+  } catch (error: any) {
+    console.error('Error deleting named canvas layout:', error);
+    return errorResponse(error.message);
+  }
+}
+
+/**
  * Save or update the default canvas layout for a version
  * This is a convenience function that creates or updates the default layout
  * Note: Groups are stored separately in the groups table, use syncGroupsForVersion

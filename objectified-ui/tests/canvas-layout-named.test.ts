@@ -547,6 +547,51 @@ describe('Database Helper - default named canvas layout preference', () => {
     );
   });
 
+  test('deleteNamedCanvasLayout deletes personal layout owned by current user', async () => {
+    const { deleteNamedCanvasLayout } = await import('../lib/db/helper');
+
+    mockQuery
+      .mockResolvedValueOnce({
+        rowCount: 1,
+        rows: [{ id: 'layout-1', user_id: 'user-1', name: 'My Layout' }],
+      })
+      .mockResolvedValueOnce({ rowCount: 1, rows: [{ id: 'layout-1' }] });
+
+    const result = await deleteNamedCanvasLayout('version-1', 'My Layout', 'tenant-1');
+    const parsed = JSON.parse(result);
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.deleted).toBe(true);
+    expect(mockQuery).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('FROM odb.canvas_layouts'),
+      ['version-1', 'My Layout', 'user-1']
+    );
+    expect(mockQuery).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('DELETE FROM odb.canvas_layouts'),
+      ['layout-1']
+    );
+  });
+
+  test('deleteNamedCanvasLayout rejects shared delete for non-admin', async () => {
+    const { deleteNamedCanvasLayout } = await import('../lib/db/helper');
+
+    mockQuery
+      .mockResolvedValueOnce({
+        rowCount: 1,
+        rows: [{ id: 'layout-shared-1', user_id: null, name: 'Shared Layout' }],
+      })
+      .mockResolvedValueOnce({ rowCount: 1, rows: [{ '?column?': 1 }] }) // version belongs to tenant
+      .mockResolvedValueOnce({ rowCount: 0, rows: [] }); // not admin
+
+    const result = await deleteNamedCanvasLayout('version-1', 'Shared Layout', 'tenant-1');
+    const parsed = JSON.parse(result);
+
+    expect(parsed.success).toBe(false);
+    expect(parsed.error).toContain('tenant administrators');
+  });
+
   test('getClassIdsForVersion returns ids for non-deleted classes in version', async () => {
     const { getClassIdsForVersion } = await import('../lib/db/helper');
 
