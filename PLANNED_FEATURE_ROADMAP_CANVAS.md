@@ -13,14 +13,13 @@
 
 #### Layout Sharing 📋 PARTIALLY IMPLEMENTED
 - ✅ Share layout configurations with team members (#174) — quick snapshot gallery: copy/download JSON envelope, import shared JSON for same API version
-- 📋 [TODO] "Pin" layout as team default
+- ✅ "Pin" layout as team default (#175) — tenant admins: Share → Pin as team default saves a shared named layout and sets tenant default for the version
 - 📋 [TODO] Layout permissions (view, edit, delete)
 - 📋 [TODO] Layout comments and annotations
 - 📋 [TODO] Layout versioning with diff viewer
 
 | Ticket | Feature                                       |
 |--------|-----------------------------------------------|
-| #175   | "Pin" layout as team default                  |
 | #176   | Layout permissions (view, edit, delete)       |
 | #177   | Layout comments and annotations               |
 | #178   | Layout versioning with diff viewer            |

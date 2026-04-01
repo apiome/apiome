@@ -14,6 +14,7 @@ import {
   quickSnapshotOptionLabel,
   stringifyQuickLayoutShareEnvelope,
   QUICK_LAYOUT_SHARE_KIND,
+  TEAM_QUICK_SNAPSHOT_PINNED_LAYOUT_NAME,
   type QuickLayoutSnapshot,
 } from '@/app/ade/studio/editor/lib/quick-layout-snapshots';
 
@@ -35,6 +36,11 @@ function makeSnapshot(id: string, createdAt: string): QuickLayoutSnapshot {
 }
 
 describe('quick-layout-snapshots', () => {
+  it('TEAM_QUICK_SNAPSHOT_PINNED_LAYOUT_NAME is a stable reserved layout name', () => {
+    expect(TEAM_QUICK_SNAPSHOT_PINNED_LAYOUT_NAME).toMatch(/quick snapshot/i);
+    expect(TEAM_QUICK_SNAPSHOT_PINNED_LAYOUT_NAME.trim().length).toBeGreaterThan(0);
+  });
+
   const versionId = 'ver-quick-snap-1';
   const userId = 'user-42';
 

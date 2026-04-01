@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
-import { X, LayoutGrid, Search, Image as ImageIcon, Share2, Upload } from 'lucide-react';
+import { X, LayoutGrid, Search, Image as ImageIcon, Share2, Upload, Pin } from 'lucide-react';
 import {
   formatQuickSnapshotCaption,
   quickSnapshotAuthorDisplay,
@@ -36,6 +36,9 @@ export interface QuickSnapshotGalleryDialogProps {
   /** Persist a shared JSON envelope; return success or an error message for the user. */
   onImportSharedJson: (jsonText: string) => Promise<ImportSharedQuickSnapshotResult>;
   alertDialog: (opts: { message: string; variant: QuickSnapshotGalleryAlertVariant }) => Promise<void>;
+  /** Tenant admins can pin a snapshot as the team default for this API version (shared named layout + tenant preference). */
+  pinTeamDefaultEnabled?: boolean;
+  onPinTeamDefault?: (snapshot: QuickLayoutSnapshot) => void | Promise<void>;
 }
 
 export function QuickSnapshotGalleryDialog({
@@ -48,6 +51,8 @@ export function QuickSnapshotGalleryDialog({
   versionId,
   onImportSharedJson,
   alertDialog,
+  pinTeamDefaultEnabled = false,
+  onPinTeamDefault,
 }: QuickSnapshotGalleryDialogProps) {
   const [query, setQuery] = useState('');
   const [previewFilter, setPreviewFilter] = useState<QuickSnapshotPreviewFilter>('all');
@@ -172,7 +177,8 @@ export function QuickSnapshotGalleryDialog({
                 <Dialog.Description className="mt-1 text-xs leading-snug text-gray-500 dark:text-gray-400">
                   Search by summary, author, description, time, snapshot id, or layout counts. Filter by preview image.
                   Newest captures appear first by default. Use Share on a tile to copy or download JSON for teammates on this
-                  version; Import adds a shared file or pasted JSON to your local gallery.
+                  version; Import adds a shared file or pasted JSON to your local gallery. Tenant administrators can pin a
+                  snapshot as the team default from the Share menu (saves a shared named layout for this version).
                 </Dialog.Description>
               </div>
             </div>
@@ -335,6 +341,17 @@ export function QuickSnapshotGalleryDialog({
                                   >
                                     Download JSON
                                   </DropdownMenu.Item>
+                                  {pinTeamDefaultEnabled && onPinTeamDefault ? (
+                                    <DropdownMenu.Item
+                                      className="cursor-pointer rounded px-2 py-1.5 outline-none hover:bg-gray-100 focus:bg-gray-100 dark:hover:bg-gray-800 dark:focus:bg-gray-800"
+                                      onSelect={() => void onPinTeamDefault(s)}
+                                    >
+                                      <span className="flex items-center gap-2">
+                                        <Pin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                        Pin as team default
+                                      </span>
+                                    </DropdownMenu.Item>
+                                  ) : null}
                                 </DropdownMenu.Content>
                               </DropdownMenu.Portal>
                             </DropdownMenu.Root>

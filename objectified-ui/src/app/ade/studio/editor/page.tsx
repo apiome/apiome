@@ -134,6 +134,7 @@ import {
   makeQuickLayoutSnapshotId,
   parseQuickLayoutShareText,
   QUICK_LAYOUT_SNAPSHOTS_SCHEMA_VERSION,
+  TEAM_QUICK_SNAPSHOT_PINNED_LAYOUT_NAME,
   type QuickLayoutSnapshot,
 } from './lib/quick-layout-snapshots';
 import {
@@ -4831,6 +4832,92 @@ const StudioContent = () => {
     alertDialog,
   ]);
 
+  /** Save snapshot geometry as a shared named layout and point tenant default at it (#175). */
+  const handlePinQuickSnapshotAsTeamDefault = useCallback(
+    async (snapshot: QuickLayoutSnapshot) => {
+      if (
+        isReadOnly ||
+        !selectedVersionId ||
+        !currentUserId ||
+        !currentTenantId ||
+        !effectiveIsTenantAdmin
+      ) {
+        return;
+      }
+      const ok = await confirmDialog({
+        title: 'Pin as team default',
+        message: `Save this snapshot as the shared named layout "${TEAM_QUICK_SNAPSHOT_PINNED_LAYOUT_NAME}" and set it as the team default for this API version? Members who have not chosen a personal default will load this layout when they open the version.`,
+      });
+      if (!ok) return;
+      try {
+        setLoadingMessage('Pinning team layout…');
+        setIsLoadingCanvas(true);
+        const { viewport, nodes, edges, groups } = snapshot.payload;
+        let snapshotBase64: string | undefined;
+        const thumb = snapshot.thumbnailDataUrl;
+        if (thumb?.startsWith('data:image/png;base64,')) {
+          snapshotBase64 = thumb.slice('data:image/png;base64,'.length);
+        }
+        const saveResult = await saveNamedCanvasLayout(
+          selectedVersionId,
+          null,
+          TEAM_QUICK_SNAPSHOT_PINNED_LAYOUT_NAME,
+          viewport,
+          nodes,
+          edges,
+          groups,
+          snapshotBase64
+        );
+        const saveParsed = JSON.parse(saveResult);
+        if (!saveParsed.success) {
+          await alertDialog({
+            message: saveParsed.error || 'Could not save the shared layout.',
+            variant: 'error',
+          });
+          return;
+        }
+        const tenantResult = await setTenantCanvasLayoutDefaultName(
+          selectedVersionId,
+          currentTenantId,
+          TEAM_QUICK_SNAPSHOT_PINNED_LAYOUT_NAME
+        );
+        const tenantParsed = JSON.parse(tenantResult);
+        if (!tenantParsed.success) {
+          await alertDialog({
+            message:
+              tenantParsed.error ||
+              'Layout was saved, but the team default could not be updated.',
+            variant: 'error',
+          });
+          return;
+        }
+        setSelectedLayoutName(TEAM_QUICK_SNAPSHOT_PINNED_LAYOUT_NAME);
+        await alertDialog({
+          message: `Team default for this version is now "${TEAM_QUICK_SNAPSHOT_PINNED_LAYOUT_NAME}".`,
+          variant: 'success',
+        });
+      } catch (e) {
+        console.error('Pin quick snapshot as team default failed:', e);
+        await alertDialog({
+          message: 'Could not pin this snapshot as the team default.',
+          variant: 'error',
+        });
+      } finally {
+        setIsLoadingCanvas(false);
+        setLoadingMessage('');
+      }
+    },
+    [
+      isReadOnly,
+      selectedVersionId,
+      currentUserId,
+      currentTenantId,
+      effectiveIsTenantAdmin,
+      confirmDialog,
+      alertDialog,
+    ]
+  );
+
   const autoSaveDefaultLayout = useCallback(async () => {
     if (
       !autoSaveLayoutEnabled ||
@@ -9486,6 +9573,15 @@ const StudioContent = () => {
             versionId={selectedVersionId}
             onImportSharedJson={handleImportSharedQuickSnapshotJson}
             alertDialog={alertDialog}
+            pinTeamDefaultEnabled={Boolean(
+              selectedVersionId &&
+                currentUserId &&
+                currentTenantId &&
+                effectiveIsTenantAdmin &&
+                !isReadOnly &&
+                !isLoadingCanvas
+            )}
+            onPinTeamDefault={(s) => void handlePinQuickSnapshotAsTeamDefault(s)}
           />
           <ExportWizard
             open={exportWizardOpen}

@@ -7,6 +7,12 @@ export const QUICK_LAYOUT_SNAPSHOTS_SCHEMA_VERSION = 1 as const;
 
 export const DEFAULT_MAX_QUICK_LAYOUT_SNAPSHOTS = 20;
 
+/**
+ * Reserved named layout on the server when a tenant admin pins a quick snapshot as the team default (#175).
+ * Stored as a shared layout (`user_id` null) so every member resolves the same geometry for this name.
+ */
+export const TEAM_QUICK_SNAPSHOT_PINNED_LAYOUT_NAME = 'Team default (quick snapshot)';
+
 export interface QuickLayoutSnapshotPayload {
   schemaVersion: typeof QUICK_LAYOUT_SNAPSHOTS_SCHEMA_VERSION;
   viewport: { x: number; y: number; zoom: number };

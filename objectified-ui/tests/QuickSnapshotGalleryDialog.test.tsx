@@ -1,5 +1,5 @@
 /**
- * Tests for QuickSnapshotGalleryDialog (#172, #174)
+ * Tests for QuickSnapshotGalleryDialog (#172, #174, #175)
  */
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
@@ -170,6 +170,33 @@ describe('QuickSnapshotGalleryDialog', () => {
 
     await waitFor(() => expect(alertCalls.length).toBeGreaterThan(0));
     expect(alertCalls[0].variant).toBe('success');
+  });
+
+  test('Share → Pin as team default calls onPinTeamDefault when enabled', async () => {
+    const user = userEvent.setup();
+    const onPinTeamDefault = jest.fn();
+    const snapshot = makeSnapshot('pin-snap', '2026-03-01T10:00:00.000Z');
+
+    render(
+      <QuickSnapshotGalleryDialog
+        open
+        onOpenChange={() => {}}
+        snapshots={[snapshot]}
+        onRestore={() => {}}
+        restoreDisabled={false}
+        versionId="version-1"
+        onImportSharedJson={noopImport}
+        alertDialog={noopAlert}
+        pinTeamDefaultEnabled
+        onPinTeamDefault={onPinTeamDefault}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /Share snapshot/i }));
+    const pinItem = await screen.findByText('Pin as team default');
+    await user.click(pinItem);
+    expect(onPinTeamDefault).toHaveBeenCalledTimes(1);
+    expect(onPinTeamDefault).toHaveBeenCalledWith(expect.objectContaining({ id: 'pin-snap' }));
   });
 
   test('Import flow: success — calls onImportSharedJson and closes modal', async () => {
