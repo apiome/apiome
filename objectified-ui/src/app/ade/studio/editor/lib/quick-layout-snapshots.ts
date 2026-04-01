@@ -18,10 +18,19 @@ export interface QuickLayoutSnapshotPayload {
 export interface QuickLayoutSnapshot {
   id: string;
   createdAt: string;
+  /** Display name or email captured at save time (#173). */
+  author?: string;
+  /** Short label entered when capturing (#173). */
+  summary?: string;
+  /** Optional longer notes (#173). */
+  description?: string;
   /** PNG data URL for preview; omitted if capture failed or was too large. */
   thumbnailDataUrl?: string;
   payload: QuickLayoutSnapshotPayload;
 }
+
+export const QUICK_SNAPSHOT_SUMMARY_MAX_LEN = 120;
+export const QUICK_SNAPSHOT_DESCRIPTION_MAX_LEN = 2000;
 
 /** Locale-aware caption for UI lists and search (same formatting across gallery and compare). */
 export function formatQuickSnapshotCaption(createdAt: string): string {
@@ -43,6 +52,26 @@ export function quickSnapshotCountsSummary(s: QuickLayoutSnapshot): string {
   return `${n} nodes · ${e} edges · ${g} groups`;
 }
 
+/** One-line label for selects and compact lists: summary, else formatted time. */
+export function quickSnapshotListLabel(snapshot: QuickLayoutSnapshot): string {
+  const sum = snapshot.summary?.trim();
+  if (sum) return sum;
+  return formatQuickSnapshotCaption(snapshot.createdAt);
+}
+
+/** Dropdown / compare selector: "Summary · Mar 3, 10:00" or caption only when no summary. */
+export function quickSnapshotOptionLabel(snapshot: QuickLayoutSnapshot): string {
+  const cap = formatQuickSnapshotCaption(snapshot.createdAt);
+  const sum = snapshot.summary?.trim();
+  if (sum) return `${sum} · ${cap}`;
+  return cap;
+}
+
+export function quickSnapshotAuthorDisplay(snapshot: QuickLayoutSnapshot): string | undefined {
+  const a = snapshot.author?.trim();
+  return a || undefined;
+}
+
 /**
  * Case-insensitive match: every whitespace-separated token must appear in id, ISO time,
  * formatted caption, or counts summary.
@@ -55,6 +84,9 @@ export function quickSnapshotMatchesSearch(snapshot: QuickLayoutSnapshot, query:
     snapshot.createdAt,
     formatQuickSnapshotCaption(snapshot.createdAt),
     quickSnapshotCountsSummary(snapshot),
+    snapshot.author ?? '',
+    snapshot.summary ?? '',
+    snapshot.description ?? '',
   ]
     .join('\n')
     .toLowerCase();
@@ -91,6 +123,9 @@ export function isQuickLayoutSnapshot(raw: unknown): raw is QuickLayoutSnapshot 
   if (p.schemaVersion !== QUICK_LAYOUT_SNAPSHOTS_SCHEMA_VERSION) return false;
   if (!isViewport(p.viewport)) return false;
   if (!Array.isArray(p.nodes) || !Array.isArray(p.edges) || !Array.isArray(p.groups)) return false;
+  if (o.author !== undefined && typeof o.author !== 'string') return false;
+  if (o.summary !== undefined && typeof o.summary !== 'string') return false;
+  if (o.description !== undefined && typeof o.description !== 'string') return false;
   if (o.thumbnailDataUrl !== undefined) {
     if (typeof o.thumbnailDataUrl !== 'string') return false;
     if (!o.thumbnailDataUrl.startsWith('data:image/png;base64,')) return false;

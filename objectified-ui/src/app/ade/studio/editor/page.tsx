@@ -189,6 +189,7 @@ import {
 } from '@/app/utils/canvas-layout-json';
 import { computeSchemaMetrics, getCircularDependencyEdgeIds, getDependencyDepthMap, getAffectedClassIds, getUpstreamClassIds, getDependencyChainNodeAndEdgeIds } from '@/app/utils/schema-metrics';
 import { toPng } from 'html-to-image';
+import { QuickSnapshotCaptureDialog } from './components/QuickSnapshotCaptureDialog';
 import { QuickSnapshotCompareDialog } from './components/QuickSnapshotCompareDialog';
 import { QuickSnapshotGalleryDialog } from './components/QuickSnapshotGalleryDialog';
 import DraggablePanel from '../components/DraggablePanel';
@@ -365,6 +366,14 @@ const StudioContent = () => {
   const currentTenantId = (session?.user as any)?.current_tenant_id;
   const currentUserId = (session?.user as any)?.user_id;
   const sessionIsTenantAdmin = Boolean((session?.user as any)?.is_tenant_admin);
+  const quickSnapshotAuthorLabel = useMemo(() => {
+    const u = session?.user as { name?: string | null; email?: string | null } | undefined;
+    const name = u?.name?.trim();
+    if (name) return name;
+    const email = u?.email?.trim();
+    if (email) return email;
+    return 'Anonymous';
+  }, [session]);
   const [effectiveIsTenantAdmin, setEffectiveIsTenantAdmin] = useState(false);
 
   useEffect(() => {
@@ -606,6 +615,8 @@ const StudioContent = () => {
   /** Local quick snapshots for this version (#168); restore UI follows in #170. */
   const [quickLayoutSnapshots, setQuickLayoutSnapshots] = useState<QuickLayoutSnapshot[]>([]);
   const [quickSnapshotSavedFlash, setQuickSnapshotSavedFlash] = useState(false);
+  const [quickSnapshotCaptureOpen, setQuickSnapshotCaptureOpen] = useState(false);
+  const [quickSnapshotCaptureSaving, setQuickSnapshotCaptureSaving] = useState(false);
   const [quickSnapshotCompareOpen, setQuickSnapshotCompareOpen] = useState(false);
   const [quickSnapshotGalleryOpen, setQuickSnapshotGalleryOpen] = useState(false);
   const canvasCaptureAreaRef = useRef<HTMLDivElement>(null);
@@ -4558,8 +4569,7 @@ const StudioContent = () => {
     }
   }, [isReadOnly, selectedVersionId, currentUserId, selectedLayoutName, nodes, edges, groups, getViewport, alertDialog, isDark]);
 
-  /** Capture a local quick snapshot (viewport, nodes, edges, groups, optional PNG thumb) without naming. */
-  const handleQuickLayoutSnapshot = useCallback(async () => {
+  const openQuickSnapshotCaptureDialog = useCallback(async () => {
     if (!selectedVersionId) {
       await alertDialog({
         message: 'Open a version to capture a layout snapshot.',
@@ -4567,92 +4577,108 @@ const StudioContent = () => {
       });
       return;
     }
-    try {
-      setLoadingMessage('Capturing quick snapshot...');
-      setIsLoadingCanvas(true);
-      let thumbnailDataUrl: string | undefined;
-      const captureEl = canvasCaptureAreaRef.current;
-      if (captureEl) {
-        try {
-          const dataUrl = await toPng(captureEl, {
-            pixelRatio: 0.4,
-            cacheBust: true,
-            backgroundColor: isDark ? '#111827' : '#f8fafc',
-          });
-          const comma = dataUrl.indexOf(',');
-          if (comma !== -1 && dataUrl.slice(0, comma).includes('image/png')) {
-            const base64Part = dataUrl.slice(comma + 1);
-            if (base64Part.length <= 240_000) {
-              thumbnailDataUrl = dataUrl;
+    setQuickSnapshotCaptureOpen(true);
+  }, [selectedVersionId, alertDialog]);
+
+  /** Capture a local quick snapshot (viewport, nodes, edges, groups, optional PNG thumb) with metadata (#173). */
+  const performQuickLayoutSnapshotCapture = useCallback(
+    async (meta: { summary: string; description: string }) => {
+      if (!selectedVersionId) return;
+      try {
+        setQuickSnapshotCaptureSaving(true);
+        setLoadingMessage('Capturing quick snapshot...');
+        setIsLoadingCanvas(true);
+        let thumbnailDataUrl: string | undefined;
+        const captureEl = canvasCaptureAreaRef.current;
+        if (captureEl) {
+          try {
+            const dataUrl = await toPng(captureEl, {
+              pixelRatio: 0.4,
+              cacheBust: true,
+              backgroundColor: isDark ? '#111827' : '#f8fafc',
+            });
+            const comma = dataUrl.indexOf(',');
+            if (comma !== -1 && dataUrl.slice(0, comma).includes('image/png')) {
+              const base64Part = dataUrl.slice(comma + 1);
+              if (base64Part.length <= 240_000) {
+                thumbnailDataUrl = dataUrl;
+              }
             }
+          } catch (snapErr) {
+            console.warn('Quick snapshot thumbnail failed:', snapErr);
           }
-        } catch (snapErr) {
-          console.warn('Quick snapshot thumbnail failed:', snapErr);
         }
-      }
-      const viewportRaw = getViewport();
-      const viewport = {
-        x: typeof viewportRaw.x === 'number' && Number.isFinite(viewportRaw.x) ? viewportRaw.x : 0,
-        y: typeof viewportRaw.y === 'number' && Number.isFinite(viewportRaw.y) ? viewportRaw.y : 0,
-        zoom: typeof viewportRaw.zoom === 'number' && Number.isFinite(viewportRaw.zoom) ? viewportRaw.zoom : 1,
-      };
-      const nodeData = mapNodesForLayoutSave(nodes);
-      const edgeData = mapEdgesForLayoutSave(edges);
-      const groupsPlain = groups.map((g) => ({
-        id: g.id,
-        name: g.name,
-        description: g.description,
-        color: g.color,
-        nodeIds: [...g.nodeIds],
-        parentId: g.parentId ?? null,
-        tags: g.tags ? g.tags.map((t) => ({ ...t })) : undefined,
-        position: { ...g.position },
-        dimensions: { ...g.dimensions },
-        styleOptions: g.styleOptions ? { ...g.styleOptions } : undefined,
-      }));
-      const snapshot: QuickLayoutSnapshot = {
-        id: makeQuickLayoutSnapshotId(),
-        createdAt: new Date().toISOString(),
-        ...(thumbnailDataUrl ? { thumbnailDataUrl } : {}),
-        payload: {
-          schemaVersion: QUICK_LAYOUT_SNAPSHOTS_SCHEMA_VERSION,
-          viewport,
-          nodes: nodeData,
-          edges: edgeData,
-          groups: groupsPlain,
-        },
-      };
-      const { snapshots: next, persisted } = appendQuickLayoutSnapshot(selectedVersionId, currentUserId, snapshot);
-      setQuickLayoutSnapshots(next);
-      if (persisted) {
-        setQuickSnapshotSavedFlash(true);
-        window.setTimeout(() => setQuickSnapshotSavedFlash(false), 2000);
-      } else {
+        const viewportRaw = getViewport();
+        const viewport = {
+          x: typeof viewportRaw.x === 'number' && Number.isFinite(viewportRaw.x) ? viewportRaw.x : 0,
+          y: typeof viewportRaw.y === 'number' && Number.isFinite(viewportRaw.y) ? viewportRaw.y : 0,
+          zoom: typeof viewportRaw.zoom === 'number' && Number.isFinite(viewportRaw.zoom) ? viewportRaw.zoom : 1,
+        };
+        const nodeData = mapNodesForLayoutSave(nodes);
+        const edgeData = mapEdgesForLayoutSave(edges);
+        const groupsPlain = groups.map((g) => ({
+          id: g.id,
+          name: g.name,
+          description: g.description,
+          color: g.color,
+          nodeIds: [...g.nodeIds],
+          parentId: g.parentId ?? null,
+          tags: g.tags ? g.tags.map((t) => ({ ...t })) : undefined,
+          position: { ...g.position },
+          dimensions: { ...g.dimensions },
+          styleOptions: g.styleOptions ? { ...g.styleOptions } : undefined,
+        }));
+        const snapshot: QuickLayoutSnapshot = {
+          id: makeQuickLayoutSnapshotId(),
+          createdAt: new Date().toISOString(),
+          author: quickSnapshotAuthorLabel,
+          summary: meta.summary,
+          description: meta.description,
+          ...(thumbnailDataUrl ? { thumbnailDataUrl } : {}),
+          payload: {
+            schemaVersion: QUICK_LAYOUT_SNAPSHOTS_SCHEMA_VERSION,
+            viewport,
+            nodes: nodeData,
+            edges: edgeData,
+            groups: groupsPlain,
+          },
+        };
+        const { snapshots: next, persisted } = appendQuickLayoutSnapshot(selectedVersionId, currentUserId, snapshot);
+        setQuickLayoutSnapshots(next);
+        if (persisted) {
+          setQuickSnapshotSavedFlash(true);
+          window.setTimeout(() => setQuickSnapshotSavedFlash(false), 2000);
+          setQuickSnapshotCaptureOpen(false);
+        } else {
+          await alertDialog({
+            message: 'Quick snapshot could not be saved (storage quota may be full). Try clearing old snapshots.',
+            variant: 'warning',
+          });
+        }
+      } catch (error) {
+        console.error('Error capturing quick layout snapshot:', error);
         await alertDialog({
-          message: 'Quick snapshot could not be saved (storage quota may be full). Try clearing old snapshots.',
-          variant: 'warning',
+          message: 'Could not save quick snapshot. Please try again.',
+          variant: 'error',
         });
+      } finally {
+        setQuickSnapshotCaptureSaving(false);
+        setIsLoadingCanvas(false);
+        setLoadingMessage('');
       }
-    } catch (error) {
-      console.error('Error capturing quick layout snapshot:', error);
-      await alertDialog({
-        message: 'Could not save quick snapshot. Please try again.',
-        variant: 'error',
-      });
-    } finally {
-      setIsLoadingCanvas(false);
-      setLoadingMessage('');
-    }
-  }, [
-    selectedVersionId,
-    currentUserId,
-    nodes,
-    edges,
-    groups,
-    getViewport,
-    isDark,
-    alertDialog,
-  ]);
+    },
+    [
+      selectedVersionId,
+      currentUserId,
+      nodes,
+      edges,
+      groups,
+      getViewport,
+      isDark,
+      alertDialog,
+      quickSnapshotAuthorLabel,
+    ]
+  );
 
   const handleSetMyDefaultLayoutName = useCallback(async () => {
     if (isReadOnly || !selectedVersionId || !currentUserId) return;
@@ -8692,12 +8718,14 @@ const StudioContent = () => {
                             Quick snapshots
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 leading-snug">
-                            Save the current canvas to this browser only—no layout name or server save. Click a thumbnail to restore that capture (sign-in required; confirms before replacing the canvas).
+                            Save the current canvas to this browser only—no layout name or server save. Capture asks for a
+                            short summary and optional description; author and timestamp are stored automatically. Open the
+                            gallery to restore (sign-in required; confirms before replacing the canvas).
                           </p>
                           <div className="grid grid-cols-2 gap-2">
                             <button
                               type="button"
-                              onClick={() => void handleQuickLayoutSnapshot()}
+                              onClick={() => void openQuickSnapshotCaptureDialog()}
                               disabled={!selectedVersionId}
                               className={`w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 border ${
                                 quickSnapshotSavedFlash
@@ -9377,6 +9405,16 @@ const StudioContent = () => {
           )}
 
           {/* Compare Snapshots & Export Wizard Dialogs */}
+          <QuickSnapshotCaptureDialog
+            open={quickSnapshotCaptureOpen}
+            onOpenChange={(open) => {
+              if (!open && quickSnapshotCaptureSaving) return;
+              setQuickSnapshotCaptureOpen(open);
+            }}
+            authorLabel={quickSnapshotAuthorLabel}
+            isSaving={quickSnapshotCaptureSaving}
+            onConfirm={(meta) => void performQuickLayoutSnapshotCapture(meta)}
+          />
           <QuickSnapshotCompareDialog
             open={quickSnapshotCompareOpen}
             onOpenChange={setQuickSnapshotCompareOpen}

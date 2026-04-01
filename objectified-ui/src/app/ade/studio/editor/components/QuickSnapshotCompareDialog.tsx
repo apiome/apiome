@@ -5,7 +5,9 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { X, Columns2, ArrowLeftRight, Image as ImageIcon } from 'lucide-react';
 import {
   formatQuickSnapshotCaption,
+  quickSnapshotAuthorDisplay,
   quickSnapshotCountsSummary,
+  quickSnapshotOptionLabel,
   type QuickLayoutSnapshot,
 } from '../lib/quick-layout-snapshots';
 
@@ -99,7 +101,9 @@ export function QuickSnapshotCompareDialog({
                       { label: 'Left', id: leftId, setId: setLeftId, snap: left },
                       { label: 'Right', id: rightId, setId: setRightId, snap: right },
                     ] as const
-                  ).map(({ label, id, setId, snap }) => (
+                  ).map(({ label, id, setId, snap }) => {
+                    const snapAuthor = snap ? quickSnapshotAuthorDisplay(snap) : undefined;
+                    return (
                     <div key={label} className="flex min-w-0 flex-col gap-2">
                       <label
                         htmlFor={`snapshot-select-${label.toLowerCase()}`}
@@ -115,7 +119,7 @@ export function QuickSnapshotCompareDialog({
                       >
                         {snapshots.map((s) => (
                           <option key={s.id} value={s.id}>
-                            {formatQuickSnapshotCaption(s.createdAt)}
+                            {quickSnapshotOptionLabel(s)}
                           </option>
                         ))}
                       </select>
@@ -142,7 +146,14 @@ export function QuickSnapshotCompareDialog({
                           {snap ? (
                             <>
                               <p className="font-medium tabular-nums">{formatQuickSnapshotCaption(snap.createdAt)}</p>
+                              {snapAuthor ? <p className="text-gray-600 dark:text-gray-300">{snapAuthor}</p> : null}
+                              {snap.summary?.trim() ? (
+                                <p className="font-medium text-gray-800 dark:text-gray-100">{snap.summary.trim()}</p>
+                              ) : null}
                               <p className="text-gray-500 dark:text-gray-400">{quickSnapshotCountsSummary(snap)}</p>
+                              {snap.description?.trim() ? (
+                                <p className="line-clamp-3 text-gray-500 dark:text-gray-400">{snap.description.trim()}</p>
+                              ) : null}
                             </>
                           ) : (
                             <p className="text-gray-500">Select a snapshot</p>
@@ -150,7 +161,8 @@ export function QuickSnapshotCompareDialog({
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

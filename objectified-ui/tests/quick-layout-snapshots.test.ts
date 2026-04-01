@@ -6,7 +6,9 @@ import {
   DEFAULT_MAX_QUICK_LAYOUT_SNAPSHOTS,
   formatQuickSnapshotCaption,
   quickSnapshotCountsSummary,
+  quickSnapshotListLabel,
   quickSnapshotMatchesSearch,
+  quickSnapshotOptionLabel,
   type QuickLayoutSnapshot,
 } from '@/app/ade/studio/editor/lib/quick-layout-snapshots';
 
@@ -153,6 +155,30 @@ describe('quick-layout-snapshots', () => {
     ).toBe(true);
   });
 
+  it('isQuickLayoutSnapshot accepts snapshot with metadata strings', () => {
+    expect(
+      isQuickLayoutSnapshot({
+        id: '1',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        author: 'Ada',
+        summary: 'Baseline',
+        description: 'Before edits',
+        payload: samplePayload,
+      })
+    ).toBe(true);
+  });
+
+  it('isQuickLayoutSnapshot rejects non-string metadata fields', () => {
+    expect(
+      isQuickLayoutSnapshot({
+        id: '1',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        author: 1,
+        payload: samplePayload,
+      })
+    ).toBe(false);
+  });
+
   it('formatQuickSnapshotCaption handles invalid dates', () => {
     expect(formatQuickSnapshotCaption('not-a-date')).toBe('Unknown time');
   });
@@ -184,5 +210,32 @@ describe('quick-layout-snapshots', () => {
     expect(quickSnapshotMatchesSearch(snap, '3 nodes')).toBe(true);
     expect(quickSnapshotMatchesSearch(snap, '2026-06-15 3 nodes')).toBe(true);
     expect(quickSnapshotMatchesSearch(snap, 'nomatch-xyz-123')).toBe(false);
+  });
+
+  it('quickSnapshotMatchesSearch matches author, summary, and description', () => {
+    const snap = makeSnapshot('x', '2026-01-01T00:00:00.000Z');
+    snap.author = 'River Tam';
+    snap.summary = 'Auth refactor';
+    snap.description = 'Moved guards to middleware';
+    expect(quickSnapshotMatchesSearch(snap, 'river')).toBe(true);
+    expect(quickSnapshotMatchesSearch(snap, 'refactor')).toBe(true);
+    expect(quickSnapshotMatchesSearch(snap, 'middleware')).toBe(true);
+  });
+
+  it('quickSnapshotListLabel prefers trimmed summary over formatted time', () => {
+    const snap = makeSnapshot('x', '2026-06-15T12:30:00.000Z');
+    snap.summary = '  My label  ';
+    expect(quickSnapshotListLabel(snap)).toBe('My label');
+    delete snap.summary;
+    expect(quickSnapshotListLabel(snap)).toBe(formatQuickSnapshotCaption(snap.createdAt));
+  });
+
+  it('quickSnapshotOptionLabel joins summary and caption', () => {
+    const snap = makeSnapshot('x', '2026-06-15T12:30:00.000Z');
+    const cap = formatQuickSnapshotCaption(snap.createdAt);
+    snap.summary = 'Beta';
+    expect(quickSnapshotOptionLabel(snap)).toBe(`Beta · ${cap}`);
+    delete snap.summary;
+    expect(quickSnapshotOptionLabel(snap)).toBe(cap);
   });
 });

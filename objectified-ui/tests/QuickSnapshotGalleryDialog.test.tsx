@@ -46,9 +46,10 @@ describe('QuickSnapshotGalleryDialog', () => {
     expect(screen.getByText(/No quick snapshots yet/i)).toBeInTheDocument();
   });
 
-  test('filters by search query', async () => {
+  test('filters by search query on summary text', async () => {
     const user = userEvent.setup();
     const a = makeSnapshot('alpha-snap', '2026-03-01T10:00:00.000Z', { nodeCount: 2 });
+    a.summary = 'Payment flow draft';
     const b = makeSnapshot('beta-snap', '2026-03-02T10:00:00.000Z', { nodeCount: 5 });
 
     render(
@@ -63,7 +64,7 @@ describe('QuickSnapshotGalleryDialog', () => {
 
     expect(screen.getByText(/Showing 2 of 2/i)).toBeInTheDocument();
     const search = screen.getByRole('searchbox', { name: /Search quick snapshots/i });
-    await user.type(search, 'beta');
+    await user.type(search, 'payment');
     expect(screen.getByText(/Showing 1 of 2/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Restore quick snapshot/i)).toBeInTheDocument();
   });

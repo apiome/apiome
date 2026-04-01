@@ -6,6 +6,7 @@ import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import { X, LayoutGrid, Search, Image as ImageIcon } from 'lucide-react';
 import {
   formatQuickSnapshotCaption,
+  quickSnapshotAuthorDisplay,
   quickSnapshotCountsSummary,
   quickSnapshotMatchesSearch,
   type QuickLayoutSnapshot,
@@ -76,8 +77,8 @@ export function QuickSnapshotGalleryDialog({
                   Quick snapshot gallery
                 </Dialog.Title>
                 <Dialog.Description className="mt-1 text-xs leading-snug text-gray-500 dark:text-gray-400">
-                  Search by time, snapshot id, or layout counts. Filter by preview image. Newest captures appear first by
-                  default.
+                  Search by summary, author, description, time, snapshot id, or layout counts. Filter by preview image.
+                  Newest captures appear first by default.
                 </Dialog.Description>
               </div>
             </div>
@@ -174,24 +175,30 @@ export function QuickSnapshotGalleryDialog({
               <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {filteredSorted.map((s) => {
                   const caption = formatQuickSnapshotCaption(s.createdAt);
-                  const summary = quickSnapshotCountsSummary(s);
+                  const countsLine = quickSnapshotCountsSummary(s);
+                  const userSummary = s.summary?.trim();
+                  const summaryLine = userSummary || countsLine;
+                  const author = quickSnapshotAuthorDisplay(s);
+                  const desc = s.description?.trim();
+                  const titleParts = [
+                    desc || undefined,
+                    !restoreDisabled ? `Restore canvas from ${caption}` : restoreDisabledReason ?? 'Cannot restore',
+                  ]
+                    .filter(Boolean)
+                    .join('\n\n');
                   return (
                     <li key={s.id} className="list-none">
                       <button
                         type="button"
                         disabled={restoreDisabled}
                         onClick={() => onRestore(s)}
-                        aria-label={`Restore quick snapshot from ${caption}`}
+                        aria-label={`Restore quick snapshot: ${summaryLine}, ${caption}`}
                         className={`w-full overflow-hidden rounded-lg border border-gray-200 bg-white text-left shadow-sm transition-opacity dark:border-gray-600 dark:bg-gray-800/70 ${
                           restoreDisabled
                             ? 'cursor-not-allowed opacity-50'
                             : 'hover:ring-2 hover:ring-indigo-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:ring-indigo-500'
                         }`}
-                        title={
-                          restoreDisabled
-                            ? restoreDisabledReason ?? 'Cannot restore'
-                            : `Restore canvas from ${caption}`
-                        }
+                        title={titleParts}
                       >
                         <div className="relative aspect-[5/3] w-full bg-gray-100 dark:bg-gray-900 pointer-events-none">
                           {s.thumbnailDataUrl ? (
@@ -217,7 +224,16 @@ export function QuickSnapshotGalleryDialog({
                           <p className="truncate text-[10px] font-medium tabular-nums text-gray-700 dark:text-gray-200">
                             {caption}
                           </p>
-                          <p className="truncate text-[9px] text-gray-500 dark:text-gray-400">{summary}</p>
+                          {author ? (
+                            <p className="truncate text-[9px] text-gray-500 dark:text-gray-400">{author}</p>
+                          ) : null}
+                          <p className="truncate text-[9px] font-medium text-gray-700 dark:text-gray-200">{summaryLine}</p>
+                          {userSummary ? (
+                            <p className="truncate text-[9px] text-gray-500 dark:text-gray-400">{countsLine}</p>
+                          ) : null}
+                          {desc ? (
+                            <p className="line-clamp-2 text-[9px] leading-tight text-gray-500 dark:text-gray-400">{desc}</p>
+                          ) : null}
                           <p className="mt-0.5 truncate font-mono text-[9px] text-gray-400 dark:text-gray-500">{s.id}</p>
                         </div>
                       </button>

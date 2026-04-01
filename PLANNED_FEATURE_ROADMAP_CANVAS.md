@@ -19,11 +19,7 @@
 - ✅ Compare two snapshots side-by-side (#171)
 - ✅ Snapshot gallery view with search/filter (#172)
 - 📋 [TODO] Auto-snapshots before major changes
-- 📋 [TODO] Snapshot metadata: timestamp, author, description
-
-| Ticket | Feature                                           |
-|--------|---------------------------------------------------|
-| #173   | Snapshot metadata: timestamp, author, description |
+- ✅ Snapshot metadata: timestamp, author, summary, and description on capture (#173)
 
 #### Layout Sharing 📋 PLANNED
 - 📋 [TODO] Share layout configurations with team members

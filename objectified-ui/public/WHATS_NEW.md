@@ -5,6 +5,7 @@ We continue to improve the platform based on your feedback with improvements and
 ---
 
 Improvements:
+- Canvas: quick snapshots store timestamp, author (from your session), a required short summary, and optional description; capture opens a short form before saving (#173)
 - Canvas: quick snapshot gallery in the Layout panel—browse captures in a scrollable grid with search, preview filters (all / with image / no image), and newest-or-oldest sort (#172)
 - Canvas: project and version dropdowns show a loading spinner and label while projects or versions are being fetched (#866)
 - Canvas: layout auto-save interval and on/off switch moved into the layout menu; auto-save stays off by default and is only available after you have saved a layout for the current name (#831)
