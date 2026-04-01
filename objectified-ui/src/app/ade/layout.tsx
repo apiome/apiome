@@ -31,34 +31,30 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+    <div className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <NextThemesProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        storageKey="theme"
       >
-        <NextThemesProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          storageKey="theme"
+        <RadixTheme
+          accentColor="indigo"
+          grayColor="slate"
+          panelBackground="solid"
+          radius="medium"
+          scaling="100%"
         >
-          <RadixTheme
-            accentColor="indigo"
-            grayColor="slate"
-            panelBackground="solid"
-            radius="medium"
-            scaling="100%"
-          >
-            <ThemeProvider>
-              <SessionWrapper>
-                <AuthenticatedLayout>
-                  <ConditionalHeader />
-                  {children}
-                </AuthenticatedLayout>
-              </SessionWrapper>
-            </ThemeProvider>
-          </RadixTheme>
-        </NextThemesProvider>
-      </body>
-    </html>
+          <ThemeProvider>
+            <SessionWrapper>
+              <AuthenticatedLayout>
+                <ConditionalHeader />
+                {children}
+              </AuthenticatedLayout>
+            </SessionWrapper>
+          </ThemeProvider>
+        </RadixTheme>
+      </NextThemesProvider>
+    </div>
   );
 }
