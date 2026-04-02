@@ -4257,6 +4257,39 @@ export async function restoreCanvasLayoutFromRevision(
 }
 
 /**
+ * Fetch full revision data (viewport, nodes, edges, settings) for diff comparison.
+ * Access is restricted to layouts belonging to `versionId` owned by `userId` or shared.
+ */
+export async function getCanvasLayoutRevisionData(
+  revisionId: string,
+  layoutId: string,
+  versionId: string,
+  userId: string | null
+) {
+  try {
+    const result = await connectionPool.query(
+      `SELECT r.id, r.revision, r.viewport, r.nodes, r.edges,
+              r.grid_settings, r.minimap_settings, r.created_at, r.created_by
+       FROM odb.canvas_layout_revisions r
+       JOIN odb.canvas_layouts cl ON cl.id = r.canvas_layout_id
+       WHERE r.id = $1
+         AND r.canvas_layout_id = $2
+         AND cl.version_id = $3
+         AND (cl.user_id = $4 OR cl.user_id IS NULL)`,
+      [revisionId, layoutId, versionId, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return errorResponse('Revision not found');
+    }
+    return successResponse({ revision: result.rows[0] });
+  } catch (error: any) {
+    console.error('Error fetching canvas layout revision data:', error);
+    return errorResponse(error.message);
+  }
+}
+
+/**
  * Delete a canvas layout
  */
 export async function deleteCanvasLayout(layoutId: string) {

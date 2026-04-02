@@ -5,6 +5,7 @@ We continue to improve the platform based on your feedback with improvements and
 ---
 
 Improvements:
+- Canvas: compare any two layout revisions (or the current layout) in a structured diff viewer showing nodes added/removed/moved, edges changed, viewport and settings differences (#178)
 - Canvas: named layouts now support a short comment and longer annotations in the Layout panel, saved per layout name and restored when selected (#177)
 - Canvas: layout permissions added for named layouts (#176) — Layout panel now shows view/edit/delete capability, enforces view-only behavior for shared layouts, and allows shared layout deletion only for tenant administrators
 - Canvas: tenant administrators can pin a quick snapshot as the team default from the gallery (Share → Pin as team default); saves a shared named layout for the API version (#175)

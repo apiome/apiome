@@ -67,6 +67,7 @@ import {
   Camera,
   Columns2,
   LayoutGrid,
+  GitCompareArrows,
 } from 'lucide-react';
 import * as Select from '@radix-ui/react-select';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
@@ -116,6 +117,7 @@ import {
   saveNamedCanvasLayout,
   listCanvasLayoutRevisions,
   restoreCanvasLayoutFromRevision,
+  getCanvasLayoutRevisionData,
   getGroupsForVersion,
   getClassIdsForVersion,
   syncGroupsForVersion,
@@ -197,6 +199,7 @@ import { toPng } from 'html-to-image';
 import { QuickSnapshotCaptureDialog } from './components/QuickSnapshotCaptureDialog';
 import { QuickSnapshotCompareDialog } from './components/QuickSnapshotCompareDialog';
 import { QuickSnapshotGalleryDialog } from './components/QuickSnapshotGalleryDialog';
+import { LayoutRevisionDiffDialog } from './components/LayoutRevisionDiffDialog';
 import DraggablePanel from '../components/DraggablePanel';
 import MemoryProfiler from '../components/MemoryProfiler';
 import SchemaMetricsPanel from '../components/SchemaMetricsPanel';
@@ -683,6 +686,7 @@ const StudioContent = () => {
     Array<{ id: string; revision: number; created_at: string }>
   >([]);
   const [layoutHistoryLoading, setLayoutHistoryLoading] = useState(false);
+  const [layoutDiffOpen, setLayoutDiffOpen] = useState(false);
 
   // #517: Canvas presentation — fullscreen slideshow of viewport bookmarks, speaker notes, timer
   const [canvasPresentationActive, setCanvasPresentationActive] = useState(false);
@@ -5771,6 +5775,51 @@ const StudioContent = () => {
     selectedLayoutName,
   ]);
 
+  const currentLayoutStateForDiff = useMemo(() => {
+    const viewport = getViewport();
+    return {
+      viewport,
+      nodes: mapNodesForLayoutSave(nodes),
+      edges: mapEdgesForLayoutSave(edges),
+      grid_settings: { size: gridSize, snapToGrid, showGrid, gridStyle },
+      minimap_settings: null,
+    };
+  }, [nodes, edges, getViewport, gridSize, snapToGrid, showGrid, gridStyle]);
+
+  const handleFetchRevisionDataForDiff = useCallback(
+    async (revisionId: string) => {
+      if (!selectedVersionId || !currentUserId) return null;
+      const name = selectedLayoutName.trim();
+      if (!name) return null;
+      try {
+        const layoutRes = await getNamedCanvasLayout(selectedVersionId, currentUserId, name);
+        const layoutParsed = JSON.parse(layoutRes);
+        if (!layoutParsed.success || !layoutParsed.layout) return null;
+
+        const res = await getCanvasLayoutRevisionData(
+          revisionId,
+          layoutParsed.layout.id,
+          selectedVersionId,
+          currentUserId
+        );
+        const parsed = JSON.parse(res);
+        if (!parsed.success || !parsed.revision) return null;
+
+        return {
+          viewport: parsed.revision.viewport,
+          nodes: parsed.revision.nodes,
+          edges: parsed.revision.edges,
+          grid_settings: parsed.revision.grid_settings,
+          minimap_settings: parsed.revision.minimap_settings,
+        };
+      } catch (err) {
+        console.error('Error fetching revision data for diff:', err);
+        return null;
+      }
+    },
+    [selectedVersionId, currentUserId, selectedLayoutName]
+  );
+
   // #471: Preview layout before applying — compute layout and show preview (do not commit)
   const handlePreviewLayout = useCallback((direction: 'TB' | 'LR') => {
     if (nodes.length === 0) return;
@@ -9469,6 +9518,16 @@ const StudioContent = () => {
                                     </button>
                                   </div>
                                 ))}
+                              {!layoutHistoryLoading && layoutHistoryRevisions.length >= 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setLayoutDiffOpen(true)}
+                                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                                >
+                                  <GitCompareArrows className="h-3.5 w-3.5" aria-hidden />
+                                  Compare revisions
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
@@ -9830,6 +9889,13 @@ const StudioContent = () => {
             open={quickSnapshotCompareOpen}
             onOpenChange={setQuickSnapshotCompareOpen}
             snapshots={quickLayoutSnapshots}
+          />
+          <LayoutRevisionDiffDialog
+            open={layoutDiffOpen}
+            onOpenChange={setLayoutDiffOpen}
+            revisions={layoutHistoryRevisions}
+            currentLayout={currentLayoutStateForDiff}
+            onFetchRevisionData={handleFetchRevisionDataForDiff}
           />
           <QuickSnapshotGalleryDialog
             open={quickSnapshotGalleryOpen}
