@@ -62,9 +62,9 @@ const DashboardSideNav: React.FC = () => {
   const isActive = (href: string) => pathname === href;
 
   const sidebarBg = isDark
-    ? 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)'
+    ? 'linear-gradient(180deg, #172033 0%, #0f172a 100%)'
     : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)';
-  const sidebarShadow = isDark ? '4px 0 24px rgba(0, 0, 0, 0.3)' : '4px 0 24px rgba(0, 0, 0, 0.06)';
+  const sidebarShadow = isDark ? '4px 0 18px rgba(2, 6, 23, 0.32)' : '4px 0 18px rgba(15, 23, 42, 0.06)';
 
   return (
     <aside
@@ -78,11 +78,11 @@ const DashboardSideNav: React.FC = () => {
         boxShadow: sidebarShadow,
       }}
     >
-      <div className="overflow-auto p-5">
+      <div className="overflow-auto p-4">
         {navSections.map((section, index) => (
           <div key={section.header} className={index < navSections.length - 1 ? 'mb-6' : ''}>
             <div
-              className="px-3 py-2 flex items-center gap-2 font-bold text-[0.65rem] uppercase tracking-wider"
+              className="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em]"
               style={{ color: isDark ? '#94a3b8' : '#64748b' }}
             >
               <span
@@ -91,7 +91,7 @@ const DashboardSideNav: React.FC = () => {
               />
               {section.header}
             </div>
-            <ul className="mt-1 space-y-1 list-none p-0 m-0">
+            <ul className="m-0 mt-1 list-none space-y-1 p-0">
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
@@ -100,7 +100,7 @@ const DashboardSideNav: React.FC = () => {
                   <li key={item.href} className="mb-1">
                     {item.disabled ? (
                       <div
-                        className="flex items-center gap-3 py-2.5 px-3 rounded-lg opacity-40 cursor-not-allowed"
+                        className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 opacity-40"
                         style={{
                           color: isDark ? '#e2e8f0' : '#334155',
                         }}
@@ -111,14 +111,11 @@ const DashboardSideNav: React.FC = () => {
                     ) : (
                       <Link
                         href={item.href}
-                        className={`flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-indigo-500/10 hover:translate-x-1 ${
+                        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10 ${
                           active
-                            ? 'bg-indigo-500/10 border-l-[3px] border-indigo-500 -ml-0.5 pl-5 rounded-l-none'
+                            ? 'border border-indigo-200 bg-indigo-500/10 dark:border-indigo-700/70'
                             : ''
                         }`}
-                        style={{
-                          borderLeftColor: active ? '#6366f1' : 'transparent',
-                        }}
                       >
                         <Icon
                           size={20}
@@ -133,12 +130,7 @@ const DashboardSideNav: React.FC = () => {
                         >
                           {item.label}
                         </span>
-                        {active && (
-                          <span
-                            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: '#6366f1', boxShadow: '0 0 8px rgba(99, 102, 241, 0.5)' }}
-                          />
-                        )}
+                        {active && <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-500" />}
                       </Link>
                     )}
                   </li>

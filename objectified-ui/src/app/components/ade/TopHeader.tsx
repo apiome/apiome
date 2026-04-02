@@ -81,51 +81,28 @@ const TopHeader = () => {
 
   return (
     <header
-      className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        padding: "8px 12px",
-        height: 48,
-        position: "relative",
-        zIndex: 2000,
-      }}
+      className="relative z-[2000] flex h-12 items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-3 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/95"
     >
       {/* Left: Logo */}
-      <div style={{ display: "flex", alignItems: "center", height: 40, gap: 8 }}>
+      <div className="flex h-10 items-center gap-2">
         <img
           src={isDark ? "/Objectified-05.png" : "/Objectified-02.png"}
           alt="Objectified Logo"
-          style={{ height: "100%", width: "auto", objectFit: "contain" }}
+          className="h-full w-auto object-contain"
         />
         <button
           onClick={() => setShowWhatsNew(true)}
-          className="text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="cursor-pointer rounded-md border border-slate-300 px-2 py-1 text-[11px] font-medium tracking-[0.02em] text-slate-500 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
           title="View What's New"
-          style={{
-            border: "1px solid currentColor",
-            fontFamily: "monospace",
-            fontWeight: 500
-          }}
         >
           v{APP_VERSION}
         </button>
       </div>
 
       {/* Center: Navigation */}
-      <nav aria-label="Main navigation" style={{ flex: 1, textAlign: "center" }}>
+      <nav aria-label="Main navigation" className="flex-1 text-center">
         <ul
-          style={{
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            display: "inline-flex",
-            gap: 12,
-            alignItems: "center",
-            fontSize: 13,
-          }}
+          className="m-0 inline-flex list-none items-center gap-2 p-0 text-[13px]"
         >
           {NAV_ITEMS.map((item) => {
             // Check if current path matches or is a subdirectory of this nav item
@@ -138,12 +115,7 @@ const TopHeader = () => {
               <li key={item.href}>
                 {item.enabled === false ? (
                   <span
-                    className="text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                    style={{
-                      padding: "4px 6px",
-                      borderRadius: 6,
-                      fontSize: 13,
-                    }}
+                    className="cursor-not-allowed rounded-md px-2 py-1 text-[13px] text-slate-400 dark:text-slate-500"
                     title="Coming soon"
                   >
                     {item.label}
@@ -153,14 +125,9 @@ const TopHeader = () => {
                     href={item.href}
                     target={item.opensNewBrowser ? '_blank' : undefined}
                     rel={item.opensNewBrowser ? 'noopener noreferrer' : undefined}
-                    className={`text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors ${
-                      isActive ? 'underline bg-gray-200 dark:bg-gray-600' : ''
+                    className={`rounded-md px-2 py-1 text-[13px] text-slate-700 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-indigo-400 ${
+                      isActive ? 'bg-slate-200/80 font-medium text-slate-900 dark:bg-slate-700 dark:text-white' : ''
                     }`}
-                    style={{
-                      padding: "4px 6px",
-                      borderRadius: 6,
-                      fontSize: 13,
-                    }}
                   >
                     {item.label}
                   </Link>
@@ -173,28 +140,19 @@ const TopHeader = () => {
 
       {/* Tenant Name Display */}
       {currentTenantName && (
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg border border-indigo-100 dark:border-indigo-800/50">
-          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 animate-pulse" />
+        <div className="hidden items-center gap-2 rounded-lg border border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50 px-3 py-1.5 dark:border-indigo-800/50 dark:from-indigo-900/20 dark:to-purple-900/20 md:flex">
+          <div className="h-2 w-2 animate-pulse rounded-full bg-gradient-to-r from-indigo-500 to-purple-500" />
           <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">{currentTenantName}</span>
         </div>
       )}
 
       {/* Right: Profile / Selector */}
-      <div ref={menuRef} style={{ position: "relative" }}>
+      <div ref={menuRef} className="relative">
         <button
           aria-haspopup="menu"
           aria-expanded={open}
           onClick={() => setOpen((s) => !s)}
-          className="border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "4px 8px",
-            borderRadius: 8,
-            background: "transparent",
-            cursor: "pointer",
-          }}
+          className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-transparent px-2 py-1 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
         >
           <div
             className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-medium"
@@ -202,7 +160,7 @@ const TopHeader = () => {
           >
             {session?.user?.name ? String(session.user.name).slice(0, 1).toUpperCase() : '?'}
           </div>
-          <span style={{ display: "none" /* hidden on small, shown via CSS if desired */ }}>
+          <span className="hidden">
             {session?.user?.name}
           </span>
         </button>
@@ -211,18 +169,9 @@ const TopHeader = () => {
           <div
             role="menu"
             aria-label="Profile menu"
-            className="bg-white dark:bg-gray-800 shadow-lg dark:shadow-gray-900/50"
-            style={{
-              position: "absolute",
-              right: 0,
-              marginTop: 8,
-              minWidth: 240,
-              borderRadius: 8,
-              padding: 4,
-              zIndex: 2001,
-            }}
+            className="absolute right-0 z-[2001] mt-2 min-w-[240px] rounded-lg bg-white p-1 shadow-lg shadow-slate-900/15 dark:bg-slate-800 dark:shadow-gray-900/50"
           >
-            <Link href="/ade/dashboard/profile" role="menuitem" className="block px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white rounded text-sm transition-colors text-gray-700 dark:text-gray-300" style={{ textDecoration: "none" }} onClick={() => setOpen(false)}>
+            <Link href="/ade/dashboard/profile" role="menuitem" className="block rounded px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white" style={{ textDecoration: "none" }} onClick={() => setOpen(false)}>
               View Profile
             </Link>
             <div className="h-px bg-gray-200 dark:bg-gray-600 my-1" />
@@ -234,7 +183,7 @@ const TopHeader = () => {
               }}
               role="menuitem"
               className="w-full text-left flex items-center justify-between px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white rounded text-sm transition-colors text-gray-700 dark:text-gray-300"
-              style={{ border: "none", cursor: "pointer" }}
+              style={{ border: "none" }}
             >
               <span className="flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -250,7 +199,7 @@ const TopHeader = () => {
             <button
               onClick={() => signOut()}
               className="w-full text-left block px-3 py-2 hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-700 dark:hover:text-red-300 rounded text-sm transition-colors text-gray-700 dark:text-gray-300"
-              style={{ border: "none", cursor: "pointer" }}
+              style={{ border: "none" }}
             >
               Sign out
             </button>

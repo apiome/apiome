@@ -16,12 +16,13 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'flex h-10 w-full items-center justify-between rounded-lg border border-gray-300 dark:border-gray-600',
-      'bg-white dark:bg-gray-800 px-3 py-2 text-sm',
-      'text-gray-900 dark:text-white',
-      'ring-offset-white placeholder:text-gray-400 dark:placeholder:text-gray-500',
-      'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
+      'flex h-10 w-full items-center justify-between rounded-lg border border-slate-300/90 dark:border-slate-600',
+      'bg-white/95 dark:bg-slate-800 px-3 py-2 text-sm',
+      'text-slate-900 dark:text-slate-100',
+      'ring-offset-white placeholder:text-slate-400 dark:placeholder:text-slate-500',
+      'focus:outline-none focus:ring-2 focus:ring-indigo-500/80 focus:ring-offset-2',
       'disabled:cursor-not-allowed disabled:opacity-50',
+      'shadow-[0_1px_2px_rgba(2,6,23,0.04)]',
       '[&>span]:line-clamp-1',
       className
     )}
@@ -71,8 +72,8 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        'relative z-[10000] max-h-96 min-w-[8rem] overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700',
-        'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-md',
+        'relative z-[10000] max-h-96 min-w-[8rem] overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700',
+        'bg-white/95 dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-lg shadow-slate-900/10',
         position === 'popper' &&
           'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
         className
@@ -116,7 +117,7 @@ const SelectItem = React.forwardRef<
     ref={ref}
     className={cn(
       'relative flex w-full cursor-default select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none',
-      'focus:bg-gray-100 dark:focus:bg-gray-700 focus:text-gray-900 dark:focus:text-gray-100',
+      'focus:bg-slate-100 dark:focus:bg-slate-700 focus:text-slate-900 dark:focus:text-slate-100',
       'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className
     )}

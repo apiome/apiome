@@ -6,6 +6,11 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --border-subtle: #e2e8f0;
+  --focus-ring: #6366f1;
+  --text-muted: #475569;
 }
 
 /* ===== THEME SYSTEM ===== */
@@ -14,12 +19,20 @@
 [data-theme="light"] {
   --background: #ffffff;
   --foreground: #171717;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --border-subtle: #e2e8f0;
+  --text-muted: #475569;
 }
 
 .theme-whiteboard,
 [data-theme="whiteboard"] {
   --background: #fafafa;
   --foreground: #212121;
+  --surface: #ffffff;
+  --surface-muted: #f6f7f9;
+  --border-subtle: #dbe1e8;
+  --text-muted: #465466;
 }
 
 /* Dark themes - also add .dark class for Tailwind compatibility */
@@ -27,36 +40,60 @@
 [data-theme="dark"] {
   --background: #0a0a0a;
   --foreground: #ededed;
+  --surface: #111827;
+  --surface-muted: #0f172a;
+  --border-subtle: #334155;
+  --text-muted: #cbd5e1;
 }
 
 .theme-high-contrast,
 [data-theme="high-contrast"] {
   --background: #000000;
   --foreground: #ffffff;
+  --surface: #000000;
+  --surface-muted: #111111;
+  --border-subtle: #ffffff;
+  --text-muted: #f3f4f6;
 }
 
 .theme-blueprint,
 [data-theme="blueprint"] {
   --background: #0c1e3a;
   --foreground: #e3f2fd;
+  --surface: #102645;
+  --surface-muted: #0b1e36;
+  --border-subtle: #33527a;
+  --text-muted: #cde0ef;
 }
 
 .theme-solarized,
 [data-theme="solarized"] {
   --background: #002b36;
   --foreground: #839496;
+  --surface: #073642;
+  --surface-muted: #002530;
+  --border-subtle: #3f6470;
+  --text-muted: #93a1a1;
 }
 
 .theme-nord,
 [data-theme="nord"] {
   --background: #2e3440;
   --foreground: #eceff4;
+  --surface: #3b4252;
+  --surface-muted: #2b313d;
+  --border-subtle: #4c566a;
+  --text-muted: #d8dee9;
 }
 
 .theme-darcula,
 [data-theme="darcula"] {
   --background: #2b2b2b;
   --foreground: #a9b7c6;
+  --surface: #333842;
+  --surface-muted: #262a31;
+  --border-subtle: #4b5563;
+  --text-muted: #b6c2d0;
 }
 
 /* Override background colors for each theme using data-theme */
@@ -179,10 +216,40 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.45;
+  letter-spacing: 0.002em;
+  text-rendering: optimizeLegibility;
 }
 
 button {
   text-transform: none;
+}
+
+h1, h2, h3, h4 {
+  letter-spacing: -0.015em;
+}
+
+h1 {
+  font-size: clamp(1.4rem, 1.15rem + 1.1vw, 2rem);
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: clamp(1.2rem, 1.06rem + 0.6vw, 1.55rem);
+  line-height: 1.25;
+}
+
+p {
+  color: var(--text-muted);
+}
+
+input, textarea, select, button {
+  font: inherit;
+}
+
+*:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus-ring) 30%, transparent);
 }
 
 /* Layout Animation Styles */

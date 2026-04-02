@@ -380,7 +380,11 @@ export function EditorToolbar({
                 </Tooltip.Root>
 
                 {layoutDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[1002]">
+                  <div className="absolute right-0 mt-2 w-64 rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800 z-[1002]">
+                    <div
+                      aria-hidden="true"
+                      className="absolute -top-2 right-5 h-3.5 w-3.5 rotate-45 border-l border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+                    />
                     <div className="p-2">
                       <button
                         onClick={handleSaveLayout}
