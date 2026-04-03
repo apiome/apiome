@@ -7,6 +7,14 @@
  * All requests are proxied through Next.js API routes which handle authentication.
  */
 
+function isAbortError(error: unknown): boolean {
+  return (
+    error instanceof DOMException
+      ? error.name === 'AbortError'
+      : error instanceof Error && error.name === 'AbortError'
+  );
+}
+
 /**
  * Delete a class via REST API (proxied through Next.js API route)
  */
@@ -140,6 +148,10 @@ async function getClassesWithPropertiesAndTags(versionId: string, signal?: Abort
     const data = await response.json();
     return data.success ? { success: true, classes: data.classes } : { success: false, error: data.error };
   } catch (error: any) {
+    if (isAbortError(error) || signal?.aborted) {
+      // Effect cleanups intentionally abort in-flight requests; do not log as a real error.
+      return { success: false, error: 'Request cancelled' };
+    }
     console.error('Error getting classes with properties and tags via REST API:', error);
     return { success: false, error: error.message || 'Failed to get classes' };
   }
