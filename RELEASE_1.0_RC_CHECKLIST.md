@@ -6,12 +6,6 @@
 
 ---
 
-## 1. Completed / Applied in This Pass
-
-1.3 - **E2E fixtures:** `e2e/fixtures/test-fixtures.ts` disables `react-hooks/rules-of-hooks` with a comment; the `use` in `async ({ page }, use) => { await use(...) }` is Playwright’s fixture API, not React’s hook.
-
----
-
 ## 2. Lint and TypeScript (Small Fixes)
 
 2.1 - **paths-client.ts:** Many `@typescript-eslint/no-explicit-any` violations. For RC, either:
