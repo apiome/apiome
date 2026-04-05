@@ -111,10 +111,10 @@ Part of Epic: Real-Time Validation Engine
 | 2.4 (#1728) | Historical Score Tracking              | Persist quality score snapshot on each schema version save; display trend chart   | `enhancement`, `mvp`, `linting`, `rest` | Yes | No     |
 | 2.5 (#1730) | Color-Coded Score Indicator            | Green (90–100), Yellow (70–89), Orange (50–69), Red (0–49) badge on score display | `enhancement`, `mvp`, `linting`       | Yes | Yes      |
 | 2.6 (#1732) | Animated Score Gauge                   | Radial gauge component with smooth transition animations when score changes        | `enhancement`, `linting`              | No  | Yes      |
-| 2.7 (#1733) | Score Comparison Across Versions       | Side-by-side or overlay chart comparing quality scores across schema versions     | `enhancement`, `linting`              | No  | Yes      |
-| 2.8 (#1734) | Team Average Score Benchmarking        | Display org-wide average score alongside project score for context                | `enhancement`, `linting`              | No  | Yes      |
-| 2.9 (#1735) | Score Report Export as PDF             | Generate a PDF report of the quality score breakdown and historical trend         | `enhancement`, `linting`              | No  | Yes      |
-| 2.10 (#1736) | Schema Statistics Dashboard            | API surface area, class count, property count, depth distribution summary        | `enhancement`, `linting`              | No  | Yes      |
+| 2.7 | Score Comparison Across Versions       | Side-by-side or overlay chart comparing quality scores across schema versions     | `enhancement`, `linting`              | No  | Yes      |
+| 2.8 | Team Average Score Benchmarking        | Display org-wide average score alongside project score for context                | `enhancement`, `linting`              | No  | Yes      |
+| 2.9 | Score Report Export as PDF             | Generate a PDF report of the quality score breakdown and historical trend         | `enhancement`, `linting`              | No  | Yes      |
+| 2.10 | Schema Statistics Dashboard            | API surface area, class count, property count, depth distribution summary        | `enhancement`, `linting`              | No  | Yes      |
 
 ### Detailed Issue Descriptions
 
@@ -182,27 +182,27 @@ Part of Epic: Quality Scoring System
 
 ---
 
-## Epic 3 (#1737): Validation Rules Engine
+## Epic 3: Validation Rules Engine
 
 ### Summary Table
 
 | #   | Title                                      | Description                                                                      | Labels                           | MVP | Parallel |
 |-----|--------------------------------------------|----------------------------------------------------------------------------------|----------------------------------|-----|----------|
-| 3.1 (#1738) | Naming Convention Rules Set                | PascalCase classes, camelCase properties, no abbreviations, max length          | `enhancement`, `mvp`, `linting` | Yes | Yes      |
-| 3.2 (#1739) | Documentation Rules Set                    | Min description length per class/property, at least one example per class       | `enhancement`, `mvp`, `linting` | Yes | Yes      |
-| 3.3 (#1740) | Schema Design Rules Set                    | Max nesting depth, no primitive obsession, consistent composition patterns       | `enhancement`, `linting`        | No  | Yes      |
-| 3.4 (#1741) | API Design Rules Set                       | RESTful URL patterns, correct HTTP methods, pagination required for lists       | `enhancement`, `linting`        | No  | Yes      |
-| 3.5 (#1742) | Security Rules Set                         | Auth required for non-public endpoints, sensitive fields writeOnly, no PII in URLs | `enhancement`, `linting`, `security` | No | Yes |
-| 3.6 (#1743) | Performance Rules Set                      | Response size limits, cache headers required, ETag/conditional requests support | `enhancement`, `linting`        | No  | Yes      |
-| 3.7 (#1744) | Lint Rule Configuration UI                 | Per-project rule toggle, severity override (error → warning), and global defaults | `enhancement`, `linting`       | No  | No       |
-| 3.8 (#1745) | Custom Rule Builder                        | UI and TypeScript sandbox for authoring custom validation rules                 | `enhancement`, `linting`        | No  | No       |
-| 3.9 (#1746) | Shared Lint Configurations                 | Save and share named rule configurations across projects and teams              | `enhancement`, `linting`        | No  | Yes      |
-| 3.10 (#1747) | Rule Set Import/Export                    | Export rule configs as JSON; import from file or URL                            | `enhancement`, `linting`        | No  | Yes      |
-| 3.11 (#1748) | Rule Templates Library                    | Pre-built rule configs: REST API Best Practices, Healthcare, Finance, etc.      | `enhancement`, `linting`        | No  | Yes      |
+| 3.1 | Naming Convention Rules Set                | PascalCase classes, camelCase properties, no abbreviations, max length          | `enhancement`, `mvp`, `linting` | Yes | Yes      |
+| 3.2 | Documentation Rules Set                    | Min description length per class/property, at least one example per class       | `enhancement`, `mvp`, `linting` | Yes | Yes      |
+| 3.3 | Schema Design Rules Set                    | Max nesting depth, no primitive obsession, consistent composition patterns       | `enhancement`, `linting`        | No  | Yes      |
+| 3.4 | API Design Rules Set                       | RESTful URL patterns, correct HTTP methods, pagination required for lists       | `enhancement`, `linting`        | No  | Yes      |
+| 3.5 | Security Rules Set                         | Auth required for non-public endpoints, sensitive fields writeOnly, no PII in URLs | `enhancement`, `linting`, `security` | No | Yes |
+| 3.6 | Performance Rules Set                      | Response size limits, cache headers required, ETag/conditional requests support | `enhancement`, `linting`        | No  | Yes      |
+| 3.7 | Lint Rule Configuration UI                 | Per-project rule toggle, severity override (error → warning), and global defaults | `enhancement`, `linting`       | No  | No       |
+| 3.8 | Custom Rule Builder                        | UI and TypeScript sandbox for authoring custom validation rules                 | `enhancement`, `linting`        | No  | No       |
+| 3.9 | Shared Lint Configurations                 | Save and share named rule configurations across projects and teams              | `enhancement`, `linting`        | No  | Yes      |
+| 3.10 | Rule Set Import/Export                    | Export rule configs as JSON; import from file or URL                            | `enhancement`, `linting`        | No  | Yes      |
+| 3.11 | Rule Templates Library                    | Pre-built rule configs: REST API Best Practices, Healthcare, Finance, etc.      | `enhancement`, `linting`        | No  | Yes      |
 
 ### Detailed Issue Descriptions
 
-#### 3.7 (#1744) — Lint Rule Configuration UI
+#### 3.7 — Lint Rule Configuration UI
 
 Provide a settings page (`/settings/linting`) where project owners can toggle individual rules on/off, override severity (change an error to a warning or silence it), and set rule parameters (e.g., minimum description length). Changes apply immediately to real-time validation. Configuration is stored per-project in `lint_config_json` on the project record.
 
@@ -234,7 +234,7 @@ Part of Epic: Validation Rules Engine
 
 ---
 
-#### 3.8 (#1745) — Custom Rule Builder
+#### 3.8 — Custom Rule Builder
 
 Provide a sandboxed TypeScript editor where developers can write custom validation rules. Each rule is a TypeScript function receiving the schema graph and returning `ValidationResult[]`. Rules are compiled and run in a secure sandboxed environment (VM module or isolated iframe). The builder includes a test panel for running the rule against the current schema.
 
@@ -265,25 +265,25 @@ Part of Epic: Validation Rules Engine
 
 ---
 
-## Epic 4 (#1749): Schema Intelligence & Analysis
+## Epic 4: Schema Intelligence & Analysis
 
 ### Summary Table
 
 | #   | Title                               | Description                                                                    | Labels                           | MVP | Parallel |
 |-----|-------------------------------------|--------------------------------------------------------------------------------|----------------------------------|-----|----------|
-| 4.1 (#1750) | Complexity Score Metric             | Per-schema complexity: depth × property count × relationship count, color coded | `enhancement`, `linting`        | No  | Yes      |
-| 4.2 (#1751) | Maintainability Index               | Composite score: documentation coverage + consistency + size penalties         | `enhancement`, `linting`        | No  | Yes      |
-| 4.3 (#1752) | Reusability Score                   | Measure coupling and dependency count to assess how reusable classes are        | `enhancement`, `linting`        | No  | Yes      |
-| 4.4 (#1753) | Documentation Coverage Metric       | Percentage of classes and properties with descriptions and examples            | `enhancement`, `mvp`, `linting` | Yes | Yes      |
-| 4.5 (#1754) | Dependency Graph Visualization      | Interactive directed graph showing class-to-class relationships and depth      | `enhancement`, `linting`        | No  | No       |
-| 4.6 (#1755) | Orphaned Property Detection         | Detect properties with no type reference and no usage in any schema path       | `enhancement`, `linting`        | No  | Yes      |
-| 4.7 (#1756) | Duplicate Class Detection           | Flag classes with > 80% structural similarity as potential duplicates           | `enhancement`, `linting`        | No  | Yes      |
-| 4.8 (#1757) | Breaking Change Detection           | Compare schema versions and flag any removals or type changes as breaking      | `enhancement`, `linting`, `rest` | No | Yes      |
-| 4.9 (#1758) | API Surface Area Calculation        | Count of public endpoints, operations, and request/response type coverage      | `enhancement`, `linting`        | No  | Yes      |
+| 4.1 | Complexity Score Metric             | Per-schema complexity: depth × property count × relationship count, color coded | `enhancement`, `linting`        | No  | Yes      |
+| 4.2 | Maintainability Index               | Composite score: documentation coverage + consistency + size penalties         | `enhancement`, `linting`        | No  | Yes      |
+| 4.3 | Reusability Score                   | Measure coupling and dependency count to assess how reusable classes are        | `enhancement`, `linting`        | No  | Yes      |
+| 4.4 | Documentation Coverage Metric       | Percentage of classes and properties with descriptions and examples            | `enhancement`, `mvp`, `linting` | Yes | Yes      |
+| 4.5 | Dependency Graph Visualization      | Interactive directed graph showing class-to-class relationships and depth      | `enhancement`, `linting`        | No  | No       |
+| 4.6 | Orphaned Property Detection         | Detect properties with no type reference and no usage in any schema path       | `enhancement`, `linting`        | No  | Yes      |
+| 4.7 | Duplicate Class Detection           | Flag classes with > 80% structural similarity as potential duplicates           | `enhancement`, `linting`        | No  | Yes      |
+| 4.8 | Breaking Change Detection           | Compare schema versions and flag any removals or type changes as breaking      | `enhancement`, `linting`, `rest` | No | Yes      |
+| 4.9 | API Surface Area Calculation        | Count of public endpoints, operations, and request/response type coverage      | `enhancement`, `linting`        | No  | Yes      |
 
 ### Detailed Issue Descriptions
 
-#### 4.5 (#1754) — Dependency Graph Visualization
+#### 4.5 — Dependency Graph Visualization
 
 Render the schema's class dependency graph as an interactive force-directed or hierarchical layout. Nodes represent classes; edges represent relationships. Node color indicates complexity score (green → red). Clicking a node highlights its direct dependencies and dependents. Zoom, pan, and filter by subsystem.
 
@@ -315,7 +315,7 @@ Part of Epic: Schema Intelligence & Analysis
 
 ---
 
-#### 4.8 (#1757) — Breaking Change Detection
+#### 4.8 — Breaking Change Detection
 
 Compare two schema versions and produce a diff report categorizing each change as: `non-breaking` (additive), `potentially-breaking` (deprecation, type widening), or `breaking` (removal, type narrowing, rename). Surface breaking changes as errors in the validation panel and expose via REST for CI integration.
 

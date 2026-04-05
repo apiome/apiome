@@ -21,18 +21,20 @@
 
 ## Epic 1: Profile Information & Account Settings
 
+**GitHub Epic:** #2408
+
 ### Summary Table
 
-| #   | Title                                    | Description                                                                        | Labels                                    | MVP | Parallel |
-|-----|------------------------------------------|------------------------------------------------------------------------------------|-------------------------------------------|-----|----------|
-| 1.1 | Profile Avatar Upload                    | Upload, crop, and store a profile photo (S3-backed); serve via CDN                | `enhancement`, `mvp`, `profile`          | Yes | Yes      |
-| 1.2 | Extended Profile Fields                  | Job title, department/team, phone (with country code), bio, social links           | `enhancement`, `mvp`, `profile`, `rest`  | Yes | No       |
-| 1.3 | Timezone & Locale Preferences            | Store user timezone and locale; apply to all timestamps and date formatting        | `enhancement`, `mvp`, `profile`          | Yes | Yes      |
-| 1.4 | Email Change with Verification           | Initiate email change; verify new address via token before committing              | `enhancement`, `mvp`, `profile`, `rest`  | Yes | No       |
-| 1.5 | Session Management UI                    | List all active sessions with device/IP/geolocation; revoke individual sessions   | `enhancement`, `mvp`, `profile`, `rest`  | Yes | No       |
-| 1.6 | Login History                            | Paginated list of login attempts: timestamp, IP, device, geolocation, success/fail| `enhancement`, `mvp`, `profile`          | Yes | Yes      |
-| 1.7 | Account Deletion Request                 | Initiate account deletion; 7-day cool-down period with cancellation option        | `enhancement`, `mvp`, `profile`, `rest`  | Yes | No       |
-| 1.8 | GDPR Data Export                         | Generate a ZIP archive of all user data: profile, schemas, activity, audit events | `enhancement`, `mvp`, `profile`, `rest`  | Yes | No       |
+| #   | Title                                    | Description                                                                        | Labels                                    | MVP | Parallel | Issue  |
+|-----|------------------------------------------|------------------------------------------------------------------------------------|-------------------------------------------|-----|----------|--------|
+| 1.1 | Profile Avatar Upload                    | Upload, crop, and store a profile photo (S3-backed); serve via CDN                | `enhancement`, `mvp`, `profile`          | Yes | Yes      | #2414  |
+| 1.2 | Extended Profile Fields                  | Job title, department/team, phone (with country code), bio, social links           | `enhancement`, `mvp`, `profile`, `rest`  | Yes | No       | #2415  |
+| 1.3 | Timezone & Locale Preferences            | Store user timezone and locale; apply to all timestamps and date formatting        | `enhancement`, `mvp`, `profile`          | Yes | Yes      | #2416  |
+| 1.4 | Email Change with Verification           | Initiate email change; verify new address via token before committing              | `enhancement`, `mvp`, `profile`, `rest`  | Yes | No       | #2417  |
+| 1.5 | Session Management UI                    | List all active sessions with device/IP/geolocation; revoke individual sessions   | `enhancement`, `mvp`, `profile`, `rest`  | Yes | No       | #2418  |
+| 1.6 | Login History                            | Paginated list of login attempts: timestamp, IP, device, geolocation, success/fail| `enhancement`, `mvp`, `profile`          | Yes | Yes      | #2419  |
+| 1.7 | Account Deletion Request                 | Initiate account deletion; 7-day cool-down period with cancellation option        | `enhancement`, `mvp`, `profile`, `rest`  | Yes | No       | #2421  |
+| 1.8 | GDPR Data Export                         | Generate a ZIP archive of all user data: profile, schemas, activity, audit events | `enhancement`, `mvp`, `profile`, `rest`  | Yes | No       | #2420  |
 
 ### Detailed Issue Descriptions
 
@@ -59,7 +61,7 @@ PUT  /api/v1/profile          → 200: UserProfile
 
 **Tech Stack:** PostgreSQL migration, libphonenumber-js for phone validation
 
-Part of Epic: Profile Information & Account Settings
+Part of Epic: Profile Information & Account Settings (#2408)
 
 ---
 
@@ -83,7 +85,7 @@ DELETE /api/v1/profile/deletion-request
 - All API keys revoked immediately on deletion request (not after cool-down)
 - #535 addressed by this issue
 
-Part of Epic: Profile Information & Account Settings
+Part of Epic: Profile Information & Account Settings (#2408)
 
 ---
 
@@ -107,38 +109,42 @@ GET /api/v1/profile/data-export/{job_id}
 - Export request itself logged in audit log
 - #536 addressed by this issue
 
-Part of Epic: Profile Information & Account Settings
+Part of Epic: Profile Information & Account Settings (#2408)
 
 ---
 
 ## Epic 2: Notification Preferences
 
+**GitHub Epic:** #2409
+
 ### Summary Table
 
-| #   | Title                                      | Description                                                                       | Labels                           | MVP | Parallel |
-|-----|--------------------------------------------|-----------------------------------------------------------------------------------|----------------------------------|-----|----------|
-| 2.1 | Per-Event Email Notification Toggles       | Enable/disable email notifications per event type (review, mention, approval)    | `enhancement`, `mvp`, `profile` | Yes | No       |
-| 2.2 | In-App Notification Preferences            | Toggle in-app notification categories; configure unread badge visibility         | `enhancement`, `profile`        | No  | Yes      |
-| 2.3 | Digest Frequency Setting                   | Choose: instant, daily digest, weekly digest per event category                  | `enhancement`, `profile`        | No  | Yes      |
-| 2.4 | Quiet Hours / Do Not Disturb               | Define time windows (per timezone) when no notifications are sent                | `enhancement`, `profile`        | No  | Yes      |
-| 2.5 | Slack/Teams Integration Preferences        | Link personal Slack/Teams handle for direct message notifications                | `enhancement`, `profile`        | No  | Yes      |
-| 2.6 | Webhook Notifications for Account Events   | POST to a personal webhook URL on account events (login, key created, etc.)      | `enhancement`, `profile`, `rest` | No | Yes     |
+| #   | Title                                      | Description                                                                       | Labels                           | MVP | Parallel | Issue  |
+|-----|--------------------------------------------|-----------------------------------------------------------------------------------|----------------------------------|-----|----------|--------|
+| 2.1 | Per-Event Email Notification Toggles       | Enable/disable email notifications per event type (review, mention, approval)    | `enhancement`, `mvp`, `profile` | Yes | No       | #2422  |
+| 2.2 | In-App Notification Preferences            | Toggle in-app notification categories; configure unread badge visibility         | `enhancement`, `profile`        | No  | Yes      | #2423  |
+| 2.3 | Digest Frequency Setting                   | Choose: instant, daily digest, weekly digest per event category                  | `enhancement`, `profile`        | No  | Yes      | #2424  |
+| 2.4 | Quiet Hours / Do Not Disturb               | Define time windows (per timezone) when no notifications are sent                | `enhancement`, `profile`        | No  | Yes      | #2425  |
+| 2.5 | Slack/Teams Integration Preferences        | Link personal Slack/Teams handle for direct message notifications                | `enhancement`, `profile`        | No  | Yes      | #2427  |
+| 2.6 | Webhook Notifications for Account Events   | POST to a personal webhook URL on account events (login, key created, etc.)      | `enhancement`, `profile`, `rest` | No | Yes     | #2426  |
 
 ---
 
 ## Epic 3: Security Settings
 
+**GitHub Epic:** #2410
+
 ### Summary Table
 
-| #   | Title                                      | Description                                                                       | Labels                                      | MVP | Parallel |
-|-----|--------------------------------------------|-----------------------------------------------------------------------------------|---------------------------------------------|-----|----------|
-| 3.1 | TOTP Two-Factor Authentication             | Enroll and verify TOTP (Google Authenticator, Authy); enforce on login            | `enhancement`, `mvp`, `profile`, `security` | Yes | No       |
-| 3.2 | Backup / Recovery Codes                    | Generate 10 single-use recovery codes on 2FA enrollment; regenerate on demand    | `enhancement`, `mvp`, `profile`, `security` | Yes | Yes      |
-| 3.3 | WebAuthn Security Keys (FIDO2)             | Register hardware security keys (YubiKey, etc.) as 2FA or passwordless method    | `enhancement`, `profile`, `security`        | No  | No       |
-| 3.4 | Trusted Devices Management                 | Mark a device as trusted to skip 2FA for 30 days; view and revoke trusted devices| `enhancement`, `profile`, `security`        | No  | Yes      |
-| 3.5 | Password Strength Indicator                | Real-time strength meter on password change; enforce minimum score of "Good"     | `enhancement`, `mvp`, `profile`             | Yes | Yes      |
-| 3.6 | Security Activity Log                      | Last 30 days of security-relevant events: logins, 2FA changes, key activity      | `enhancement`, `mvp`, `profile`             | Yes | Yes      |
-| 3.7 | Suspicious Activity Alerts                 | Email alert when login occurs from a new country or unusual IP geolocation       | `enhancement`, `mvp`, `profile`             | Yes | Yes      |
+| #   | Title                                      | Description                                                                       | Labels                                      | MVP | Parallel | Issue  |
+|-----|--------------------------------------------|-----------------------------------------------------------------------------------|---------------------------------------------|-----|----------|--------|
+| 3.1 | TOTP Two-Factor Authentication             | Enroll and verify TOTP (Google Authenticator, Authy); enforce on login            | `enhancement`, `mvp`, `profile`, `security` | Yes | No       | #2428  |
+| 3.2 | Backup / Recovery Codes                    | Generate 10 single-use recovery codes on 2FA enrollment; regenerate on demand    | `enhancement`, `mvp`, `profile`, `security` | Yes | Yes      | #2429  |
+| 3.3 | WebAuthn Security Keys (FIDO2)             | Register hardware security keys (YubiKey, etc.) as 2FA or passwordless method    | `enhancement`, `profile`, `security`        | No  | No       | #2430  |
+| 3.4 | Trusted Devices Management                 | Mark a device as trusted to skip 2FA for 30 days; view and revoke trusted devices| `enhancement`, `profile`, `security`        | No  | Yes      | #2431  |
+| 3.5 | Password Strength Indicator                | Real-time strength meter on password change; enforce minimum score of "Good"     | `enhancement`, `mvp`, `profile`             | Yes | Yes      | #2432  |
+| 3.6 | Security Activity Log                      | Last 30 days of security-relevant events: logins, 2FA changes, key activity      | `enhancement`, `mvp`, `profile`             | Yes | Yes      | #2433  |
+| 3.7 | Suspicious Activity Alerts                 | Email alert when login occurs from a new country or unusual IP geolocation       | `enhancement`, `mvp`, `profile`             | Yes | Yes      | #2434  |
 
 ### Detailed Issue Descriptions
 
@@ -164,55 +170,61 @@ Enrollment Flow:
 
 **Tech Stack:** otplib, QRCode.js, AES-256-GCM secret encryption
 
-Part of Epic: Security Settings
+Part of Epic: Security Settings (#2410)
 
 ---
 
 ## Epic 4: Personalization
 
+**GitHub Epic:** #2411
+
 ### Summary Table
 
-| #   | Title                                   | Description                                                                        | Labels                           | MVP | Parallel |
-|-----|-----------------------------------------|------------------------------------------------------------------------------------|----------------------------------|-----|----------|
-| 4.1 | Theme Preference (Light/Dark/System)    | User-selectable theme; system tracks OS preference; persisted server-side          | `enhancement`, `mvp`, `profile` | Yes | Yes      |
-| 4.2 | Default Landing Page After Login        | Choose where to land: dashboard, last project, specific project/page               | `enhancement`, `mvp`, `profile` | Yes | Yes      |
-| 4.3 | Keyboard Shortcut Customization         | Override default keyboard shortcuts from a settings panel                          | `enhancement`, `profile`        | No  | Yes      |
-| 4.4 | Favorite Projects Quick Access List     | Pin up to 10 projects; visible in nav sidebar for one-click access                 | `enhancement`, `mvp`, `profile` | Yes | Yes      |
+| #   | Title                                   | Description                                                                        | Labels                           | MVP | Parallel | Issue  |
+|-----|-----------------------------------------|------------------------------------------------------------------------------------|----------------------------------|-----|----------|--------|
+| 4.1 | Theme Preference (Light/Dark/System)    | User-selectable theme; system tracks OS preference; persisted server-side          | `enhancement`, `mvp`, `profile` | Yes | Yes      | #2435  |
+| 4.2 | Default Landing Page After Login        | Choose where to land: dashboard, last project, specific project/page               | `enhancement`, `mvp`, `profile` | Yes | Yes      | #2436  |
+| 4.3 | Keyboard Shortcut Customization         | Override default keyboard shortcuts from a settings panel                          | `enhancement`, `profile`        | No  | Yes      | #2437  |
+| 4.4 | Favorite Projects Quick Access List     | Pin up to 10 projects; visible in nav sidebar for one-click access                 | `enhancement`, `mvp`, `profile` | Yes | Yes      | #2438  |
 
 ---
 
 ## Epic 5: Developer Settings
 
+**GitHub Epic:** #2412
+
 ### Summary Table
 
-| #   | Title                                   | Description                                                                        | Labels                                    | MVP | Parallel |
-|-----|-----------------------------------------|------------------------------------------------------------------------------------|-------------------------------------------|-----|----------|
-| 5.1 | Personal API Keys (User-Scoped)         | User-scoped API keys that only inherit the user's permissions, not tenant admin    | `enhancement`, `mvp`, `profile`, `rest`  | Yes | No       |
-| 5.2 | SSH Keys for Git Operations             | Upload SSH public keys for Git-based schema sync workflows                         | `enhancement`, `profile`, `rest`         | No  | Yes      |
-| 5.3 | Personal Webhook Endpoints              | Configure webhooks for personal-account events (schema edit, review assigned)     | `enhancement`, `profile`, `rest`         | No  | Yes      |
-| 5.4 | CLI / SDK Authentication Tokens         | Generate long-lived CLI tokens with narrower scopes than API keys                  | `enhancement`, `profile`, `rest`         | No  | Yes      |
-| 5.5 | API Usage Statistics (Personal)         | Per-user breakdown of API call volume across personal and tenant keys             | `enhancement`, `profile`                 | No  | Yes      |
+| #   | Title                                   | Description                                                                        | Labels                                    | MVP | Parallel | Issue  |
+|-----|-----------------------------------------|------------------------------------------------------------------------------------|-------------------------------------------|-----|----------|--------|
+| 5.1 | Personal API Keys (User-Scoped)         | User-scoped API keys that only inherit the user's permissions, not tenant admin    | `enhancement`, `mvp`, `profile`, `rest`  | Yes | No       | #2439  |
+| 5.2 | SSH Keys for Git Operations             | Upload SSH public keys for Git-based schema sync workflows                         | `enhancement`, `profile`, `rest`         | No  | Yes      | #2440  |
+| 5.3 | Personal Webhook Endpoints              | Configure webhooks for personal-account events (schema edit, review assigned)     | `enhancement`, `profile`, `rest`         | No  | Yes      | #2442  |
+| 5.4 | CLI / SDK Authentication Tokens         | Generate long-lived CLI tokens with narrower scopes than API keys                  | `enhancement`, `profile`, `rest`         | No  | Yes      | #2441  |
+| 5.5 | API Usage Statistics (Personal)         | Per-user breakdown of API call volume across personal and tenant keys             | `enhancement`, `profile`                 | No  | Yes      | #2443  |
 
 ---
 
 ## Epic 6: Enterprise Identity & Governance
 
+**GitHub Epic:** #2413
+
 ### Summary Table
 
-| #   | Title                                         | Description                                                                      | Labels                                          | MVP | Parallel |
-|-----|-----------------------------------------------|----------------------------------------------------------------------------------|-------------------------------------------------|-----|----------|
-| 6.1 | SAML 2.0 SSO Integration                      | IdP-initiated and SP-initiated SAML 2.0 with metadata exchange                  | `enhancement`, `profile`, `security`           | No  | No       |
-| 6.2 | OIDC (OpenID Connect) Support                 | OIDC provider integration; map claims to Objectified roles                       | `enhancement`, `profile`, `security`           | No  | Yes      |
-| 6.3 | LDAP / Active Directory Sync                  | Sync users, groups, and role assignments from LDAP/AD on configurable schedule  | `enhancement`, `profile`, `security`           | No  | No       |
-| 6.4 | SCIM 2.0 Provisioning                         | Implement SCIM 2.0 API for automated user provisioning/deprovisioning           | `enhancement`, `profile`, `security`, `rest`   | No  | No       |
-| 6.5 | Mandatory MFA Enforcement (Tenant Policy)     | Tenant-wide policy requiring all users to enroll 2FA within N days              | `enhancement`, `profile`, `security`           | No  | Yes      |
-| 6.6 | IP-Based Access Restrictions per User         | Allow only specified CIDRs per user account; block all other IPs                | `enhancement`, `profile`, `security`           | No  | Yes      |
-| 6.7 | Conditional Access Policies                   | Access rules based on: location, device trust, time-of-day, risk score          | `enhancement`, `profile`, `security`           | No  | No       |
-| 6.8 | User Access Reviews / Recertification         | Periodic manager review of each user's role assignments; automated reminders    | `enhancement`, `profile`, `security`           | No  | No       |
-| 6.9 | Delegation & Proxy Access                     | Delegate account access for vacation mode; impersonation for support (audited)  | `enhancement`, `profile`, `security`           | No  | No       |
-| 6.10 | Bulk User Import/Export (CSV, SCIM)          | Import new users from CSV or SCIM batch payload; export user roster as CSV      | `enhancement`, `profile`, `rest`               | No  | Yes      |
-| 6.11 | Enterprise Directory (People Search)         | Org-wide people search by name, role, department, skills; org chart view        | `enhancement`, `profile`                       | No  | Yes      |
-| 6.12 | Right to Be Forgotten Workflow               | Trigger full PII deletion across all data stores for a specific user            | `enhancement`, `profile`, `security`           | No  | No       |
+| #   | Title                                         | Description                                                                      | Labels                                          | MVP | Parallel | Issue  |
+|-----|-----------------------------------------------|----------------------------------------------------------------------------------|-------------------------------------------------|-----|----------|--------|
+| 6.1 | SAML 2.0 SSO Integration                      | IdP-initiated and SP-initiated SAML 2.0 with metadata exchange                  | `enhancement`, `profile`, `security`           | No  | No       | #2444  |
+| 6.2 | OIDC (OpenID Connect) Support                 | OIDC provider integration; map claims to Objectified roles                       | `enhancement`, `profile`, `security`           | No  | Yes      | #2445  |
+| 6.3 | LDAP / Active Directory Sync                  | Sync users, groups, and role assignments from LDAP/AD on configurable schedule  | `enhancement`, `profile`, `security`           | No  | No       | #2446  |
+| 6.4 | SCIM 2.0 Provisioning                         | Implement SCIM 2.0 API for automated user provisioning/deprovisioning           | `enhancement`, `profile`, `security`, `rest`   | No  | No       | #2447  |
+| 6.5 | Mandatory MFA Enforcement (Tenant Policy)     | Tenant-wide policy requiring all users to enroll 2FA within N days              | `enhancement`, `profile`, `security`           | No  | Yes      | #2448  |
+| 6.6 | IP-Based Access Restrictions per User         | Allow only specified CIDRs per user account; block all other IPs                | `enhancement`, `profile`, `security`           | No  | Yes      | #2449  |
+| 6.7 | Conditional Access Policies                   | Access rules based on: location, device trust, time-of-day, risk score          | `enhancement`, `profile`, `security`           | No  | No       | #2450  |
+| 6.8 | User Access Reviews / Recertification         | Periodic manager review of each user's role assignments; automated reminders    | `enhancement`, `profile`, `security`           | No  | No       | #2451  |
+| 6.9 | Delegation & Proxy Access                     | Delegate account access for vacation mode; impersonation for support (audited)  | `enhancement`, `profile`, `security`           | No  | No       | #2452  |
+| 6.10 | Bulk User Import/Export (CSV, SCIM)          | Import new users from CSV or SCIM batch payload; export user roster as CSV      | `enhancement`, `profile`, `rest`               | No  | Yes      | #2453  |
+| 6.11 | Enterprise Directory (People Search)         | Org-wide people search by name, role, department, skills; org chart view        | `enhancement`, `profile`                       | No  | Yes      | #2454  |
+| 6.12 | Right to Be Forgotten Workflow               | Trigger full PII deletion across all data stores for a specific user            | `enhancement`, `profile`, `security`           | No  | No       | #2455  |
 
 ### Detailed Issue Descriptions
 
@@ -243,4 +255,4 @@ DELETE /scim/v2/Groups/{id}           → 204
 - SCIM bearer token separate from regular API keys; rotatable independently
 - All SCIM operations logged in the audit trail
 
-Part of Epic: Enterprise Identity & Governance
+Part of Epic: Enterprise Identity & Governance (#2413)

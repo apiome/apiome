@@ -22,21 +22,21 @@
 
 ---
 
-## Epic 1: Canvas Editor & Node Design
+## Epic 1 (#2240): Canvas Editor & Node Design
 
 ### Summary Table
 
 | #    | Title                          | Description                                                                                          | Labels                                           | MVP | Parallel |
 |------|--------------------------------|------------------------------------------------------------------------------------------------------|--------------------------------------------------|-----|----------|
-| 1.1  | Operation Focus Mode           | Click-to-isolate: focused operation at full opacity, all other nodes/edges dim to 20%                | `enhancement`, `mvp`, `paths`                    | Yes | No       |
-| 1.2  | Editor Overlay (Replace Sidebar) | Floating panel with tabbed content for operation editing; reclaims canvas real estate              | `enhancement`, `mvp`, `paths`                    | Yes | Yes      |
-| 1.3  | Professional Node Visual Redesign | Accent-bar node design: compact method badges, inline parameter/response chips, unified shell     | `enhancement`, `paths`                           | No  | Yes      |
-| 1.4  | Canvas Toolbar for Paths       | Horizontal toolbar: Add Path, Auto-Layout, Fit View, view-mode toggles, Export, Validate, Settings  | `enhancement`, `mvp`, `paths`                    | Yes | Yes      |
-| 1.5  | Paths Canvas Layout Improvements | Vertical swimlane, horizontal flow, grouped-by-path, grouped-by-tag, and RESTful resource layouts  | `enhancement`, `paths`                           | No  | Yes      |
+| 1.1 (#2241) | Operation Focus Mode           | Click-to-isolate: focused operation at full opacity, all other nodes/edges dim to 20%                | `enhancement`, `mvp`, `paths`                    | Yes | No       |
+| 1.2 (#2242) | Editor Overlay (Replace Sidebar) | Floating panel with tabbed content for operation editing; reclaims canvas real estate              | `enhancement`, `mvp`, `paths`                    | Yes | Yes      |
+| 1.3 (#2243) | Professional Node Visual Redesign | Accent-bar node design: compact method badges, inline parameter/response chips, unified shell     | `enhancement`, `paths`                           | No  | Yes      |
+| 1.4 (#2244) | Canvas Toolbar for Paths       | Horizontal toolbar: Add Path, Auto-Layout, Fit View, view-mode toggles, Export, Validate, Settings  | `enhancement`, `mvp`, `paths`                    | Yes | Yes      |
+| 1.5 (#2245) | Paths Canvas Layout Improvements | Vertical swimlane, horizontal flow, grouped-by-path, grouped-by-tag, and RESTful resource layouts  | `enhancement`, `paths`                           | No  | Yes      |
 
 ### Detailed Issue Descriptions
 
-#### 1.1 — Operation Focus Mode
+#### 1.1 (#2241) — Operation Focus Mode
 
 When an HTTP operation node is selected, all nodes not associated with that operation fade to 20% opacity over a 200ms CSS transition. Only the selected operation and its directly connected nodes (parameters, request body, responses, response bodies, and referenced classes at any traversal depth) remain at full opacity. This dramatically improves readability for APIs with many endpoints.
 
@@ -70,7 +70,7 @@ Part of Epic: Canvas Editor & Node Design
 
 ---
 
-#### 1.2 — Editor Overlay (Replace Sidebar Properties Panels)
+#### 1.2 (#2242) — Editor Overlay (Replace Sidebar Properties Panels)
 
 The current three-panel layout (left library, canvas, right properties panel) confines the canvas to a narrow strip. Replacing right-side properties panels with a floating overlay reclaims the canvas area and follows UX patterns familiar from Figma, Postman, and VS Code.
 
@@ -96,7 +96,7 @@ Part of Epic: Canvas Editor & Node Design
 
 ---
 
-#### 1.3 — Professional Node Visual Redesign
+#### 1.3 (#2243) — Professional Node Visual Redesign
 
 The current nodes use full-width colored headers with inconsistent sizing and mixed design patterns. An enterprise-grade designer tool needs a unified visual system with consistent width (280px), clear type differentiation via a 4px left accent bar rather than large color floods, and a reduced visual noise approach inspired by Stoplight Studio and Insomnia.
 
@@ -127,7 +127,7 @@ Part of Epic: Canvas Editor & Node Design
 
 ---
 
-#### 1.4 — Canvas Toolbar for Paths
+#### 1.4 (#2244) — Canvas Toolbar for Paths
 
 The Paths Designer currently has no dedicated toolbar. A 40px-tall horizontal toolbar spanning the canvas width provides quick access to the most common actions, consistent with professional API design tools. Flat icons with tooltips (no text labels by default); tooltip reveals label on hover.
 
@@ -151,7 +151,7 @@ Part of Epic: Canvas Editor & Node Design
 
 ---
 
-#### 1.5 — Paths Canvas Layout Improvements
+#### 1.5 (#2245) — Paths Canvas Layout Improvements
 
 The current horizontal row layout (operations at y=200, parameters at y=350, responses at y=500) works for small APIs but becomes unwieldy at 10+ endpoints. Multiple layout algorithms give developers the right view for their context.
 
@@ -176,24 +176,24 @@ Part of Epic: Canvas Editor & Node Design
 
 ---
 
-## Epic 2: Engineer DX (Code Generation, Stubs & Testing)
+## Epic 2 (#2246): Engineer DX (Code Generation, Stubs & Testing)
 
 ### Summary Table
 
 | #    | Title                          | Description                                                                                             | Labels                                              | MVP | Parallel |
 |------|--------------------------------|---------------------------------------------------------------------------------------------------------|-----------------------------------------------------|-----|----------|
-| 2.1  | Code-Level Editors             | JSON Schema editor, Example Value editor, Markdown description editor — each with IDE-quality features  | `enhancement`, `mvp`, `paths`                       | Yes | No       |
-| 2.2  | Real-Time Validation           | Continuous OpenAPI 3.1 validation: unique operationId, path variables, $ref integrity, status codes     | `enhancement`, `mvp`, `paths`                       | Yes | Yes      |
-| 2.3  | OpenAPI Export & Import        | Export to OpenAPI 3.1/3.0/Swagger 2.0/Postman/Insomnia; selective import with merge support            | `enhancement`, `mvp`, `paths`, `rest`               | Yes | Yes      |
-| 2.4  | Automatic Endpoint Generation  | Right-click class → Generate CRUD Endpoints; schema-to-path inference with standard error responses     | `enhancement`, `paths`                              | No  | Yes      |
-| 2.5  | Pattern Libraries              | Pagination, filtering, sorting, RFC 7807 error, and auth pattern templates for quick endpoint creation  | `enhancement`, `paths`                              | No  | Yes      |
-| 2.6  | Client SDK Generation          | Type-safe client libraries from path definitions: TypeScript, Python, Java, C#, Go, Rust               | `enhancement`, `paths`                              | No  | Yes      |
-| 2.7  | Server Stub Generation         | Backend API stubs with routing and validation: Express, FastAPI, Spring Boot, Gin, Actix-web            | `enhancement`, `paths`                              | No  | Yes      |
-| 2.8  | Interactive Documentation      | ReDoc/Swagger UI documentation with Try It Out; embedded preview panel; standalone preview URL          | `enhancement`, `paths`                              | No  | Yes      |
+| 2.1 (#2247) | Code-Level Editors             | JSON Schema editor, Example Value editor, Markdown description editor — each with IDE-quality features  | `enhancement`, `mvp`, `paths`                       | Yes | No       |
+| 2.2 (#2248) | Real-Time Validation           | Continuous OpenAPI 3.1 validation: unique operationId, path variables, $ref integrity, status codes     | `enhancement`, `mvp`, `paths`                       | Yes | Yes      |
+| 2.3 (#2249) | OpenAPI Export & Import        | Export to OpenAPI 3.1/3.0/Swagger 2.0/Postman/Insomnia; selective import with merge support            | `enhancement`, `mvp`, `paths`, `rest`               | Yes | Yes      |
+| 2.4 (#2250) | Automatic Endpoint Generation  | Right-click class → Generate CRUD Endpoints; schema-to-path inference with standard error responses     | `enhancement`, `paths`                              | No  | Yes      |
+| 2.5 (#2251) | Pattern Libraries              | Pagination, filtering, sorting, RFC 7807 error, and auth pattern templates for quick endpoint creation  | `enhancement`, `paths`                              | No  | Yes      |
+| 2.6 (#2252) | Client SDK Generation          | Type-safe client libraries from path definitions: TypeScript, Python, Java, C#, Go, Rust               | `enhancement`, `paths`                              | No  | Yes      |
+| 2.7 (#2253) | Server Stub Generation         | Backend API stubs with routing and validation: Express, FastAPI, Spring Boot, Gin, Actix-web            | `enhancement`, `paths`                              | No  | Yes      |
+| 2.8 (#2254) | Interactive Documentation      | ReDoc/Swagger UI documentation with Try It Out; embedded preview panel; standalone preview URL          | `enhancement`, `paths`                              | No  | Yes      |
 
 ### Detailed Issue Descriptions
 
-#### 2.1 — Code-Level Editors
+#### 2.1 (#2247) — Code-Level Editors
 
 Engineers need precision and control when defining schema structures, example values, and descriptions. Three specialized editors are embedded in the editor overlay (Epic 1.2) tabs.
 
@@ -217,7 +217,7 @@ Part of Epic: Engineer DX
 
 ---
 
-#### 2.2 — Real-Time Validation
+#### 2.2 (#2248) — Real-Time Validation
 
 Catch errors as you design, not during export. Validation runs continuously in a Web Worker (to avoid blocking the main thread) and updates node visual states within 500ms of each change.
 
@@ -241,7 +241,7 @@ Part of Epic: Engineer DX
 
 ---
 
-#### 2.3 — OpenAPI Export & Import
+#### 2.3 (#2249) — OpenAPI Export & Import
 
 **Export formats:** OpenAPI 3.1 JSON (prettified or minified), OpenAPI 3.1 YAML, Swagger 2.0 (legacy), Postman Collection v2.1, Insomnia Collection. **Export options:** include/exclude examples, include/exclude descriptions, bundle schemas inline or use `$ref` links, add custom `x-*` extensions, dereference all `$ref` to embedded schemas, add server URLs for multiple environments.
 
@@ -274,7 +274,7 @@ Part of Epic: Engineer DX
 
 ---
 
-#### 2.4 — Automatic Endpoint Generation
+#### 2.4 (#2250) — Automatic Endpoint Generation
 
 Right-clicking a class on the canvas opens a context menu item "Generate CRUD Endpoints" that creates GET (list), GET (detail), POST (create), PUT (update), and DELETE (delete) operations pre-populated from the class schema.
 
@@ -296,7 +296,7 @@ Part of Epic: Engineer DX
 
 ---
 
-#### 2.5 — Pattern Libraries
+#### 2.5 (#2251) — Pattern Libraries
 
 Pattern libraries provide pre-built operation templates for the most common API design patterns, reducing the boilerplate work of adding parameters and responses from scratch.
 
@@ -320,7 +320,7 @@ Part of Epic: Engineer DX
 
 ---
 
-#### 2.6 — Client SDK Generation
+#### 2.6 (#2252) — Client SDK Generation
 
 Generate type-safe client libraries from the current path definitions. Supported languages: TypeScript/JavaScript (fetch or axios), Python (httpx or requests), Java (OkHttp or RestTemplate), C# (HttpClient), Go (net/http with generated structs), Rust (reqwest with serde). SDK features: type-safe request/response models, automatic serialization/deserialization, error handling with typed exceptions, retry logic with exponential backoff, authentication handling (API key, OAuth2), request/response interceptors, TypeScript IntelliSense support.
 
@@ -340,7 +340,7 @@ Part of Epic: Engineer DX
 
 ---
 
-#### 2.7 — Server Stub Generation
+#### 2.7 (#2253) — Server Stub Generation
 
 Generate backend API stubs with routing and validation matching the OpenAPI spec. Supported frameworks: Node.js (Express, Fastify, NestJS), Python (FastAPI, Flask, Django REST), Java (Spring Boot, Quarkus), Go (Gin, Echo, Chi), Rust (Actix-web, Rocket). Generated code includes: route definitions mapped to operations, request validation middleware, response serialization, OpenAPI documentation endpoint, health check endpoint, error handling middleware, authentication middleware stubs.
 
@@ -360,7 +360,7 @@ Part of Epic: Engineer DX
 
 ---
 
-#### 2.8 — Interactive Documentation
+#### 2.8 (#2254) — Interactive Documentation
 
 **Embedded preview tab:** A resizable bottom panel or split-view toggle shows a live Swagger UI or ReDoc rendering of the current API spec, updating as the user edits operations. **Try It Out:** The embedded Swagger UI "Try It Out" functionality works against the integrated mock server (see P10 in Epic 5) or a configured real server. **Toggle:** developers switch between Swagger UI and ReDoc with a button. **Standalone preview URL:** generates a shareable read-only URL rendering the current spec as API documentation for stakeholders.
 
@@ -380,21 +380,21 @@ Part of Epic: Engineer DX
 
 ---
 
-## Epic 3: Enterprise Features
+## Epic 3 (#2255): Enterprise Features
 
 ### Summary Table
 
 | #    | Title                            | Description                                                                                             | Labels                                           | MVP | Parallel |
 |------|----------------------------------|---------------------------------------------------------------------------------------------------------|--------------------------------------------------|-----|----------|
-| 3.1  | Security Configuration           | Security scheme library: OAuth2, API Key, HTTP Basic/Bearer, OpenID Connect; drag-to-assign scopes     | `enhancement`, `paths`                           | No  | No       |
-| 3.2  | Multi-Tenant & Team Collaboration | Org-scoped path libraries; path ownership; comment threads; real-time collaboration indicators         | `enhancement`, `paths`                           | No  | Yes      |
-| 3.3  | API Gateway Integration          | Rate limiting, transformation rules, CORS, caching policy; export to Kong/AWS API Gateway/Azure APIM   | `enhancement`, `paths`                           | No  | Yes      |
-| 3.4  | Contract Testing                 | Example-based request generation; Pact/Dredd contract generation; CI/CD integration hooks               | `enhancement`, `paths`                           | No  | Yes      |
-| 3.5  | Integrated Swagger UI (Testing)  | Embedded Swagger UI panel within Studio for live API testing; real-time spec sync                       | `enhancement`, `paths`                           | No  | Yes      |
+| 3.1 (#2256) | Security Configuration           | Security scheme library: OAuth2, API Key, HTTP Basic/Bearer, OpenID Connect; drag-to-assign scopes     | `enhancement`, `paths`                           | No  | No       |
+| 3.2 (#2257) | Multi-Tenant & Team Collaboration | Org-scoped path libraries; path ownership; comment threads; real-time collaboration indicators         | `enhancement`, `paths`                           | No  | Yes      |
+| 3.3 (#2258) | API Gateway Integration          | Rate limiting, transformation rules, CORS, caching policy; export to Kong/AWS API Gateway/Azure APIM   | `enhancement`, `paths`                           | No  | Yes      |
+| 3.4 (#2259) | Contract Testing                 | Example-based request generation; Pact/Dredd contract generation; CI/CD integration hooks               | `enhancement`, `paths`                           | No  | Yes      |
+| 3.5 (#2260) | Integrated Swagger UI (Testing)  | Embedded Swagger UI panel within Studio for live API testing; real-time spec sync                       | `enhancement`, `paths`                           | No  | Yes      |
 
 ### Detailed Issue Descriptions
 
-#### 3.1 — Security Configuration
+#### 3.1 (#2256) — Security Configuration
 
 A security scheme library panel in the left sidebar provides: OAuth2 flows (authorization code, client credentials, implicit, password), API Key (header, query, cookie), HTTP Basic/Bearer, OpenID Connect. Users drag security scheme nodes onto operation nodes to apply authentication requirements; a scope selector for OAuth2 flows shows a visual scope hierarchy with AND/OR logic. Global security defaults can be set per project version with per-operation overrides.
 
@@ -414,7 +414,7 @@ Part of Epic: Enterprise Features
 
 ---
 
-#### 3.2 — Multi-Tenant & Team Collaboration
+#### 3.2 (#2257) — Multi-Tenant & Team Collaboration
 
 Organization-scoped path libraries allow teams to define reusable endpoint pattern templates (CRUD generators, pagination patterns) accessible across all projects in the organization. Path ownership assigns edit/view permissions per path, enabling fine-grained access control for production API changes.
 
@@ -434,7 +434,7 @@ Part of Epic: Enterprise Features
 
 ---
 
-#### 3.3 — API Gateway Integration
+#### 3.3 (#2258) — API Gateway Integration
 
 Rate limiting configuration per operation uses custom `x-rateLimit` extensions (requests per second, burst size). Request/response transformation rules are attached to operations as `x-transform` extensions with key-value mapping configuration. CORS configuration at path and operation level. Caching policy with TTL and invalidation rules via `x-cache` extensions.
 
@@ -454,7 +454,7 @@ Part of Epic: Enterprise Features
 
 ---
 
-#### 3.4 — Contract Testing
+#### 3.4 (#2259) — Contract Testing
 
 Contract testing validates that the implementation conforms to the API design. The Paths Designer generates test artifacts from the operation definitions.
 
@@ -474,7 +474,7 @@ Part of Epic: Enterprise Features
 
 ---
 
-#### 3.5 — Integrated Swagger UI (Testing)
+#### 3.5 (#2260) — Integrated Swagger UI (Testing)
 
 An embedded Swagger UI panel within the Studio allows developers to test operations directly without leaving the Paths Designer. The panel syncs in real-time with canvas changes: as the user edits an operation, the Swagger UI updates within 500ms.
 
@@ -495,26 +495,26 @@ Part of Epic: Enterprise Features
 
 ---
 
-## Epic 4: UX Polish
+## Epic 4 (#2261): UX Polish
 
 ### Summary Table
 
 | #    | Title                              | Description                                                                                            | Labels                                        | MVP | Parallel |
 |------|------------------------------------|--------------------------------------------------------------------------------------------------------|-----------------------------------------------|-----|----------|
-| 4.1  | Keyboard-First Navigation          | Full keyboard shortcut set: navigation, editing, quick-add by HTTP method, display toggles             | `enhancement`, `mvp`, `paths`                 | Yes | No       |
-| 4.2  | Undo/Redo for Paths Canvas         | 50-operation undo stack; coalescing for rapid moves; visual feedback toast; persistent undo option     | `enhancement`, `mvp`, `paths`                 | Yes | Yes      |
-| 4.3  | Paths Canvas Search & Filter       | Canvas search (`Cmd+F`) with result highlighting; filter by HTTP method, tag, status, path segment     | `enhancement`, `paths`                        | No  | Yes      |
-| 4.4  | Validation Panel & API Design Linting | Validation sidebar tab: errors/warnings/info; naming convention check; quality score 0–100         | `enhancement`, `paths`                        | No  | Yes      |
-| 4.5  | Minimap for Paths Canvas           | Bird's-eye minimap in bottom-right corner; viewport rectangle; click-to-navigate; `M` key toggle      | `enhancement`, `paths`                        | No  | Yes      |
-| 4.6  | Context Menu for Paths Nodes       | Right-click context menus for operation, parameter, response, and canvas background                    | `enhancement`, `paths`                        | No  | Yes      |
-| 4.7  | Edge & Connection Visual Improvements | Semantic edge labels; orthogonal routing; edge bundling; animated data flow; focus-mode re-routing   | `enhancement`, `paths`                        | No  | Yes      |
-| 4.8  | Left Sidebar Improvements          | Icon-only tabs with collapsible rail; hierarchical path tree; drag preview; drop zone highlighting     | `enhancement`, `paths`                        | No  | Yes      |
-| 4.9  | Paths Canvas Export Enhancements   | OpenAPI export dialog; visual export (PNG/SVG/PDF/Mermaid sequence); canvas export in 2x resolution   | `enhancement`, `paths`, `rest`                | No  | Yes      |
-| 4.10 | Canvas Visual Polish               | Dot grid, semantic zoom levels, node entrance/exit animations, visual grouping containers, status bar  | `enhancement`, `paths`                        | No  | Yes      |
+| 4.1 (#2262) | Keyboard-First Navigation          | Full keyboard shortcut set: navigation, editing, quick-add by HTTP method, display toggles             | `enhancement`, `mvp`, `paths`                 | Yes | No       |
+| 4.2 (#2263) | Undo/Redo for Paths Canvas         | 50-operation undo stack; coalescing for rapid moves; visual feedback toast; persistent undo option     | `enhancement`, `mvp`, `paths`                 | Yes | Yes      |
+| 4.3 (#2264) | Paths Canvas Search & Filter       | Canvas search (`Cmd+F`) with result highlighting; filter by HTTP method, tag, status, path segment     | `enhancement`, `paths`                        | No  | Yes      |
+| 4.4 (#2265) | Validation Panel & API Design Linting | Validation sidebar tab: errors/warnings/info; naming convention check; quality score 0–100         | `enhancement`, `paths`                        | No  | Yes      |
+| 4.5 (#2266) | Minimap for Paths Canvas           | Bird's-eye minimap in bottom-right corner; viewport rectangle; click-to-navigate; `M` key toggle      | `enhancement`, `paths`                        | No  | Yes      |
+| 4.6 (#2267) | Context Menu for Paths Nodes       | Right-click context menus for operation, parameter, response, and canvas background                    | `enhancement`, `paths`                        | No  | Yes      |
+| 4.7 (#2268) | Edge & Connection Visual Improvements | Semantic edge labels; orthogonal routing; edge bundling; animated data flow; focus-mode re-routing   | `enhancement`, `paths`                        | No  | Yes      |
+| 4.8 (#2269) | Left Sidebar Improvements          | Icon-only tabs with collapsible rail; hierarchical path tree; drag preview; drop zone highlighting     | `enhancement`, `paths`                        | No  | Yes      |
+| 4.9 (#2270) | Paths Canvas Export Enhancements   | OpenAPI export dialog; visual export (PNG/SVG/PDF/Mermaid sequence); canvas export in 2x resolution   | `enhancement`, `paths`, `rest`                | No  | Yes      |
+| 4.10 (#2271) | Canvas Visual Polish               | Dot grid, semantic zoom levels, node entrance/exit animations, visual grouping containers, status bar  | `enhancement`, `paths`                        | No  | Yes      |
 
 ### Detailed Issue Descriptions
 
-#### 4.1 — Keyboard-First Navigation
+#### 4.1 (#2262) — Keyboard-First Navigation
 
 A comprehensive keyboard shortcut set makes the Paths Designer first-class for engineers who prefer keyboard over mouse.
 
@@ -540,7 +540,7 @@ Part of Epic: UX Polish
 
 ---
 
-#### 4.2 — Undo/Redo for Paths Canvas
+#### 4.2 (#2263) — Undo/Redo for Paths Canvas
 
 The Paths canvas currently has no undo/redo capability. Any accidental deletion or edit is irreversible. This issue implements a client-side history stack that covers all canvas mutations.
 
@@ -560,7 +560,7 @@ Part of Epic: UX Polish
 
 ---
 
-#### 4.3 — Paths Canvas Search & Filter
+#### 4.3 (#2264) — Paths Canvas Search & Filter
 
 **Search (`Cmd/Ctrl+F`):** Search overlay that searches across operation paths, operationIds, descriptions, parameter names, and response descriptions. Matching nodes are highlighted with a bright ring; non-matching nodes dim to 30% opacity. Up/Down arrows cycle through results; canvas auto-pans to center each result. Scope toggle: All, Paths only, Operations only, Parameters only, Responses only.
 
@@ -582,7 +582,7 @@ Part of Epic: UX Polish
 
 ---
 
-#### 4.4 — Validation Panel & API Design Linting
+#### 4.4 (#2265) — Validation Panel & API Design Linting
 
 A dedicated Validation tab in the left sidebar provides a persistent view of all current OpenAPI spec issues, organized by severity.
 
@@ -606,7 +606,7 @@ Part of Epic: UX Polish
 
 ---
 
-#### 4.5 — Minimap for Paths Canvas
+#### 4.5 (#2266) — Minimap for Paths Canvas
 
 The Paths canvas needs a minimap for navigating large APIs with many endpoints.
 
@@ -630,7 +630,7 @@ Part of Epic: UX Polish
 
 ---
 
-#### 4.6 — Context Menu for Paths Nodes
+#### 4.6 (#2267) — Context Menu for Paths Nodes
 
 Right-click context menus provide instant access to common actions without navigating toolbars.
 
@@ -656,7 +656,7 @@ Part of Epic: UX Polish
 
 ---
 
-#### 4.7 — Edge & Connection Visual Improvements
+#### 4.7 (#2268) — Edge & Connection Visual Improvements
 
 **Edge labels:** Parameter edges show location and name (e.g., "query: page"); response edges show status code ("200", "404"); schema binding edges show type ("$ref: Pet"); content type edges show content type ("application/json"). Semi-transparent pill background on labels for readability.
 
@@ -681,7 +681,7 @@ Part of Epic: UX Polish
 
 ---
 
-#### 4.8 — Left Sidebar Improvements
+#### 4.8 (#2269) — Left Sidebar Improvements
 
 **Icon-only tab rail:** Replace text tabs with icon-only tabs (with tooltips): 🛤️ Paths, ⚡ Operations, 📦 Classes, 🔑 Security, 🌐 Servers. Collapsible to a 48px icon rail with `Cmd+B`. Auto-collapse when canvas is clicked (pinned/unpinned toggle).
 
@@ -703,7 +703,7 @@ Part of Epic: UX Polish
 
 ---
 
-#### 4.9 — Paths Canvas Export Enhancements
+#### 4.9 (#2270) — Paths Canvas Export Enhancements
 
 **OpenAPI export dialog enhancements:** Format (JSON/YAML), version (OpenAPI 3.1/3.0/Swagger 2.0), bundling (inline/$ref), include/exclude options, server URL editor, Monaco live preview, validation gate (block on errors with override), download or copy buttons, export to Git (push generated spec to configured repo), export history (timestamp, format, user).
 
@@ -723,7 +723,7 @@ Part of Epic: UX Polish
 
 ---
 
-#### 4.10 — Canvas Visual Polish & Presentation
+#### 4.10 (#2271) — Canvas Visual Polish & Presentation
 
 **Grid & background:** Dot grid option (dots at grid intersections, less visually dominant than lines). Grid fades out below 40% zoom, fades in above 50%. Isometric grid (optional, 30-degree angled). Canvas region shading: subtly shade areas by path group (`bg-blue-500/3` for `/users`, `bg-green-500/3` for `/products`).
 
@@ -749,34 +749,34 @@ Part of Epic: UX Polish
 
 ---
 
-## Epic 5: Enterprise Improvements (P1–P16)
+## Epic 5 (#2272): Enterprise Improvements (P1–P16)
 
 ### Summary Table
 
 | #    | Title                              | Description                                                                                          | Labels                                              | MVP | Parallel |
 |------|------------------------------------|------------------------------------------------------------------------------------------------------|-----------------------------------------------------|-----|----------|
-| 5.1  | Command Palette (P1)               | Fuzzy-search over all Paths Designer actions; recent actions; contextual commands for selected node  | `enhancement`, `paths`                              | No  | No       |
-| 5.2  | Integrated API Testing Panel (P2)  | Per-operation test button; test panel with server selector, editable params, response inspector      | `enhancement`, `paths`                              | No  | Yes      |
-| 5.3  | Paths Diff & Version Comparison (P3) | Side-by-side diff between versions; breaking change detection; changelog generation; cherry-pick   | `enhancement`, `paths`                              | No  | Yes      |
-| 5.4  | Paths Annotations & Comments (P4)  | Sticky notes; pin comment threads to operations; @mentions; review mode                              | `enhancement`, `paths`                              | No  | Yes      |
-| 5.5  | Real-Time Collaboration (P5)       | Presence indicators; live cursors; CRDT conflict-free editing; follow mode; activity feed            | `enhancement`, `paths`                              | No  | Yes      |
-| 5.6  | Paths Audit Trail (P6)             | Change log per operation and path; diff playback; blame view; export audit trail CSV/JSON            | `enhancement`, `paths`, `rest`                      | No  | Yes      |
-| 5.7  | Paths Performance Optimization (P7) | Extract custom hooks; lazy-load dialogs; virtualized node rendering; memoized components            | `enhancement`, `paths`                              | No  | Yes      |
-| 5.8  | Paths Import Enhancements (P8)     | Import from Postman/Insomnia/HAR/API Gateway; selective import; merge with conflict resolution       | `enhancement`, `paths`, `rest`                      | No  | Yes      |
-| 5.9  | Operation Grouping & Resource View (P9) | Resource groups; tag-based groups; manual groups; collapsed group view; nested resources        | `enhancement`, `paths`                              | No  | Yes      |
-| 5.10 | Integrated Mock Server (P10)       | One-click mock server; example-based responses; configurable latency; request validation             | `enhancement`, `paths`                              | No  | Yes      |
-| 5.11 | Paths Accessibility (P11)          | WCAG 2.1 AA: keyboard-only navigation, ARIA live regions, high-contrast colors, reduced motion       | `enhancement`, `paths`                              | No  | Yes      |
-| 5.12 | Dark IDE Theme Integration (P12)   | First-class dark mode: adjusted method colors, edge visibility, Monaco dark theme, Blueprint theme   | `enhancement`, `paths`                              | No  | Yes      |
-| 5.13 | OpenAPI Extension Support (P13)    | Extension editor in overlay; common extension templates; extension visualization as node badges      | `enhancement`, `paths`, `rest`                      | No  | Yes      |
-| 5.14 | API Metrics & Analytics (P14)      | Surface area metrics; complexity score; documentation coverage; naming consistency; metrics panel    | `enhancement`, `paths`                              | No  | Yes      |
-| 5.15 | Swagger UI / ReDoc Preview (P15)   | Embedded preview tab; auto-refresh; Try It Out via mock server; standalone preview URL               | `enhancement`, `paths`                              | No  | Yes      |
-| 5.16 | Multi-Spec & Microservice Coordination (P16) | Multi-spec canvas; cross-service schema references; service dependency map; merged export  | `enhancement`, `paths`, `rest`                      | No  | Yes      |
-| 5.17 | Advanced Edge Routing Engine (P16-routing) | Orthogonal routing engine; crossing minimization; port-based connections; edge bundling; presets | `enhancement`, `paths`                          | No  | Yes      |
-| 5.18 | Node Visual Design System (P17)    | PathsBaseNode unified shell; consistent 280px width; interaction states; node design presets         | `enhancement`, `paths`                              | No  | Yes      |
+| 5.1 (#2273) | Command Palette (P1)               | Fuzzy-search over all Paths Designer actions; recent actions; contextual commands for selected node  | `enhancement`, `paths`                              | No  | No       |
+| 5.2 (#2274) | Integrated API Testing Panel (P2)  | Per-operation test button; test panel with server selector, editable params, response inspector      | `enhancement`, `paths`                              | No  | Yes      |
+| 5.3 (#2275) | Paths Diff & Version Comparison (P3) | Side-by-side diff between versions; breaking change detection; changelog generation; cherry-pick   | `enhancement`, `paths`                              | No  | Yes      |
+| 5.4 (#2276) | Paths Annotations & Comments (P4)  | Sticky notes; pin comment threads to operations; @mentions; review mode                              | `enhancement`, `paths`                              | No  | Yes      |
+| 5.5 (#2277) | Real-Time Collaboration (P5)       | Presence indicators; live cursors; CRDT conflict-free editing; follow mode; activity feed            | `enhancement`, `paths`                              | No  | Yes      |
+| 5.6 (#2278) | Paths Audit Trail (P6)             | Change log per operation and path; diff playback; blame view; export audit trail CSV/JSON            | `enhancement`, `paths`, `rest`                      | No  | Yes      |
+| 5.7 (#2279) | Paths Performance Optimization (P7) | Extract custom hooks; lazy-load dialogs; virtualized node rendering; memoized components            | `enhancement`, `paths`                              | No  | Yes      |
+| 5.8 (#2280) | Paths Import Enhancements (P8)     | Import from Postman/Insomnia/HAR/API Gateway; selective import; merge with conflict resolution       | `enhancement`, `paths`, `rest`                      | No  | Yes      |
+| 5.9 (#2281) | Operation Grouping & Resource View (P9) | Resource groups; tag-based groups; manual groups; collapsed group view; nested resources        | `enhancement`, `paths`                              | No  | Yes      |
+| 5.10 (#2282) | Integrated Mock Server (P10)       | One-click mock server; example-based responses; configurable latency; request validation             | `enhancement`, `paths`                              | No  | Yes      |
+| 5.11 (#2283) | Paths Accessibility (P11)          | WCAG 2.1 AA: keyboard-only navigation, ARIA live regions, high-contrast colors, reduced motion       | `enhancement`, `paths`                              | No  | Yes      |
+| 5.12 (#2284) | Dark IDE Theme Integration (P12)   | First-class dark mode: adjusted method colors, edge visibility, Monaco dark theme, Blueprint theme   | `enhancement`, `paths`                              | No  | Yes      |
+| 5.13 (#2285) | OpenAPI Extension Support (P13)    | Extension editor in overlay; common extension templates; extension visualization as node badges      | `enhancement`, `paths`, `rest`                      | No  | Yes      |
+| 5.14 (#2286) | API Metrics & Analytics (P14)      | Surface area metrics; complexity score; documentation coverage; naming consistency; metrics panel    | `enhancement`, `paths`                              | No  | Yes      |
+| 5.15 (#2287) | Swagger UI / ReDoc Preview (P15)   | Embedded preview tab; auto-refresh; Try It Out via mock server; standalone preview URL               | `enhancement`, `paths`                              | No  | Yes      |
+| 5.16 (#2288) | Multi-Spec & Microservice Coordination (P16) | Multi-spec canvas; cross-service schema references; service dependency map; merged export  | `enhancement`, `paths`, `rest`                      | No  | Yes      |
+| 5.17 (#2289) | Advanced Edge Routing Engine (P16-routing) | Orthogonal routing engine; crossing minimization; port-based connections; edge bundling; presets | `enhancement`, `paths`                          | No  | Yes      |
+| 5.18 (#2290) | Node Visual Design System (P17)    | PathsBaseNode unified shell; consistent 280px width; interaction states; node design presets         | `enhancement`, `paths`                              | No  | Yes      |
 
 ### Detailed Issue Descriptions
 
-#### 5.1 — Command Palette (P1)
+#### 5.1 (#2273) — Command Palette (P1)
 
 `Cmd/Ctrl+K` opens a fuzzy-search overlay centered on the canvas that indexes every Paths Designer action by name. Categories: Navigation ("Go to GET /users", "Go to operation createUser"), Creation ("Add path", "Add GET operation"), View ("Fit view", "Toggle minimap"), Export ("Export OpenAPI YAML"), Layout ("Auto-layout top-to-bottom"), Settings ("Change edge style"). Fuzzy matching accepts partial and out-of-order terms. Recent actions appear at the top. When a node is selected, contextual commands for that node appear first. Keyboard navigation: arrow keys to move, Enter to execute, Esc to dismiss.
 
@@ -793,7 +793,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.2 — Integrated API Testing Panel (P2)
+#### 5.2 (#2274) — Integrated API Testing Panel (P2)
 
 Each operation node has a "▶ Test" button. Clicking it opens a resizable bottom panel. The panel contains: server selector dropdown (from OpenAPI servers array), auto-populated request fields (URL, method, headers, query params, path params, request body from the operation definition), editable parameter and body fields, authentication selector (auto-applies security scheme credentials), Send button with loading indicator, response viewer (status code, headers, syntax-highlighted body, response time, payload size), environment variable support (`{{baseUrl}}`, `{{apiKey}}`), request history log with replay, cURL export, and response schema validation (highlights mismatches against the defined response schema).
 
@@ -811,7 +811,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.3 — Paths Diff & Version Comparison (P3)
+#### 5.3 (#2275) — Paths Diff & Version Comparison (P3)
 
 Enterprise teams need to compare API definitions across versions. A split-canvas view shows the current version on the left and a selected comparison version on the right, linked so pan/zoom are synchronized. Each operation shows a badge: "Added" (green), "Modified" (yellow), "Removed" (red), "Unchanged" (no badge). Expanding a modified operation shows which parameters, responses, or schemas changed. Breaking changes (removed operation, removed required parameter, changed response schema) are flagged with a red "BREAKING" badge. Changelog generation produces a human-readable summary. Cherry-pick merge allows selecting individual changes from the comparison version to apply to the current.
 
@@ -831,7 +831,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.4 — Paths Annotations & Comments (P4)
+#### 5.4 (#2276) — Paths Annotations & Comments (P4)
 
 Sticky notes (freeform text, placeable anywhere on the canvas) and comment threads pinned to operation nodes support collaborative design review. Comment threads support replies, `@mentions` (triggering in-app notifications), rich text (Markdown with code blocks), and resolved/unresolved state. A filter toggle shows/hides all annotations. Review mode makes the canvas read-only with comment-only interaction. Comment export includes comments in PDF or Markdown export reports.
 
@@ -850,7 +850,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.5 — Real-Time Collaboration (P5)
+#### 5.5 (#2277) — Real-Time Collaboration (P5)
 
 Enterprise teams need concurrent editing on the Paths Designer. Presence indicators (avatar badges in toolbar) show who is currently viewing the canvas. Live cursors render other users' cursor positions as colored crosshairs with name labels. CRDT or operational transform ensures conflict-free concurrent edits to the same operation. Activity feed in the sidebar shows a live stream of changes by all users. Follow mode locks your viewport to another user's position. Editing lock indicator: when a user has the editor overlay open for an operation, a lock icon appears on that node for other users.
 
@@ -868,7 +868,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.6 — Paths Audit Trail (P6)
+#### 5.6 (#2278) — Paths Audit Trail (P6)
 
 Every create, update, and delete of a path, operation, parameter, response, or request body is recorded with timestamp and user. The per-operation change log shows a diff of what changed at each point. Diff playback allows stepping through the change history chronologically to watch the API design evolve. Blame view color-codes operation nodes by last editor. CSV/JSON audit trail export. Configurable retention period for audit entries (default 90 days, Enterprise: unlimited).
 
@@ -886,7 +886,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.7 — Paths Performance Optimization (P7)
+#### 5.7 (#2279) — Paths Performance Optimization (P7)
 
 The `PathsCanvasView.tsx` component is approximately 3,800 lines. For APIs with 50+ operations, performance and maintainability improvements are critical.
 
@@ -906,7 +906,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.8 — Paths Import Enhancements (P8)
+#### 5.8 (#2280) — Paths Import Enhancements (P8)
 
 **Import from project schemas:** Right-click a class → "Generate CRUD Endpoints" (already in Epic 2.4, extended here with schema canvas cross-navigation). **Import Postman Collection:** Parse Postman Collection v2.1 and create paths, operations, parameters, request bodies, and responses on the canvas. **Import Insomnia Workspace:** Parse Insomnia export format. **Import HAR file:** Parse HTTP Archive (HAR) from browser DevTools recordings; reverse-engineer path definitions from recorded traffic. **Import from API Gateway:** Fetch endpoint definitions from AWS API Gateway, Azure APIM, or Kong and create corresponding paths. **Selective import:** Choose which paths/operations to import. **Merge import:** Integrate into existing canvas with conflict detection and resolution UI.
 
@@ -924,7 +924,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.9 — Operation Grouping & Resource View (P9)
+#### 5.9 (#2281) — Operation Grouping & Resource View (P9)
 
 Enterprise APIs with 50+ endpoints need visual organization beyond flat node lists. Resource groups automatically group operations by resource (first path segment) into collapsible containers with colored headers. Tag-based groups organize by OpenAPI tags. Manual groups: drag operations into custom-named groups. Collapsed group view shows: resource name, operation count, HTTP method pills. Group-level actions via right-click: Expand/Collapse, Add Operation, Delete All, Move Group, Set Tag, Export Group as OpenAPI fragment. Nested resources appear as child groups. Resource color coding with persistent color choices.
 
@@ -942,7 +942,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.10 — Integrated Mock Server (P10)
+#### 5.10 (#2282) — Integrated Mock Server (P10)
 
 Frontend developers need to work against the API design before the backend is built. A one-click mock server starts a local mock service that serves responses based on the current path definitions. Features: example-based responses (from spec examples; fallback to auto-generated data), configurable latency slider (0–5000ms), error simulation (configurable % chance of 4xx/5xx), request validation (validate incoming requests against defined schemas; return 400 on mismatch), mock server URL display in toolbar, live request/response log, dynamic mock rules ("If `userId` is 999, return 404").
 
@@ -963,7 +963,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.11 — Paths Accessibility (P11)
+#### 5.11 (#2283) — Paths Accessibility (P11)
 
 Enterprise products must meet WCAG 2.1 AA accessibility standards. The Paths Designer canvas must be navigable via keyboard only, provide screen reader announcements for state changes, ensure sufficient color contrast, and respect system-level motion preferences.
 
@@ -988,7 +988,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.12 — Dark IDE Theme Integration (P12)
+#### 5.12 (#2284) — Dark IDE Theme Integration (P12)
 
 Developers overwhelmingly prefer dark themes. The Paths Designer must have a first-class dark mode that feels native to dark IDEs, not a simple color inversion.
 
@@ -1012,7 +1012,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.13 — OpenAPI Extension Support (P13)
+#### 5.13 (#2285) — OpenAPI Extension Support (P13)
 
 Enterprise teams use custom `x-*` OpenAPI extensions for API gateway configuration, documentation metadata, and internal tooling. A dedicated Extensions tab in the editor overlay provides a key-value editor for `x-*` extensions on operations, parameters, and responses.
 
@@ -1032,7 +1032,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.14 — API Metrics & Analytics (P14)
+#### 5.14 (#2286) — API Metrics & Analytics (P14)
 
 Architects need data-driven insight into their API design to make informed decisions. A metrics panel shows real-time analytics about the current API spec.
 
@@ -1052,7 +1052,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.15 — Swagger UI / ReDoc Preview Panel (P15)
+#### 5.15 (#2287) — Swagger UI / ReDoc Preview Panel (P15)
 
 (See Epic 2.8 for baseline; this issue extends it with enterprise integration features.)
 
@@ -1072,7 +1072,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.16 — Multi-Spec Support & Microservice Coordination (P16)
+#### 5.16 (#2288) — Multi-Spec Support & Microservice Coordination (P16)
 
 Enterprise architectures involve multiple microservices, each with their own OpenAPI spec. The Paths Designer should support working with multiple specs and understanding cross-service dependencies.
 
@@ -1091,7 +1091,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.17 — Advanced Edge Routing Engine (P16-routing)
+#### 5.17 (#2289) — Advanced Edge Routing Engine (P16-routing)
 
 Production-grade orthogonal routing with crossing minimization, port-based connections, edge bundling, and style presets.
 
@@ -1112,7 +1112,7 @@ Part of Epic: Enterprise Improvements
 
 ---
 
-#### 5.18 — Node Visual Design System (P17)
+#### 5.18 (#2290) — Node Visual Design System (P17)
 
 A unified visual design system for all node types, delivering consistency, hierarchy, and polish across the entire canvas.
 

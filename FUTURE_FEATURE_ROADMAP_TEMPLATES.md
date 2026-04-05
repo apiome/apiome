@@ -22,19 +22,21 @@
 
 ## Epic 1: Group Templates
 
+**Epic Issue:** #2456
+
 ### Summary Table
 
-| #   | Title                                     | Description                                                                        | Labels                                     | MVP | Parallel |
-|-----|-------------------------------------------|------------------------------------------------------------------------------------|--------------------------------------------|-----|----------|
-| 1.1 | Pre-Defined Group Template Library        | Built-in group templates: REST Resource, Auth, E-commerce, Audit, and more        | `enhancement`, `mvp`, `templates`         | Yes | No       |
-| 1.2 | Save Custom Group Templates               | Select classes on canvas, save selection as a named reusable group template        | `enhancement`, `mvp`, `templates`, `rest` | Yes | No       |
-| 1.3 | Share Group Templates Across Projects     | Promote a custom group template to tenant-wide or project-shared scope            | `enhancement`, `templates`                | No  | Yes      |
-| 1.4 | Group Template Preview                    | Preview all classes and relationships in a group template before applying          | `enhancement`, `templates`                | No  | Yes      |
-| 1.5 | Apply Group Template to Canvas            | Insert all classes from a group template onto the canvas with layout auto-arrange  | `enhancement`, `mvp`, `templates`         | Yes | No       |
+| #   | Title                                     | Issue  | Description                                                                        | Labels                                     | MVP | Parallel |
+|-----|-------------------------------------------|--------|------------------------------------------------------------------------------------|--------------------------------------------|-----|----------|
+| 1.1 | Pre-Defined Group Template Library        | #2457  | Built-in group templates: REST Resource, Auth, E-commerce, Audit, and more        | `enhancement`, `mvp`, `templates`         | Yes | No       |
+| 1.2 | Save Custom Group Templates               | #2458  | Select classes on canvas, save selection as a named reusable group template        | `enhancement`, `mvp`, `templates`, `rest` | Yes | No       |
+| 1.3 | Share Group Templates Across Projects     | #2459  | Promote a custom group template to tenant-wide or project-shared scope            | `enhancement`, `templates`                | No  | Yes      |
+| 1.4 | Group Template Preview                    | #2460  | Preview all classes and relationships in a group template before applying          | `enhancement`, `templates`                | No  | Yes      |
+| 1.5 | Apply Group Template to Canvas            | #2461  | Insert all classes from a group template onto the canvas with layout auto-arrange  | `enhancement`, `mvp`, `templates`         | Yes | No       |
 
 ### Detailed Issue Descriptions
 
-#### 1.1 — Pre-Defined Group Template Library
+#### 1.1 — Pre-Defined Group Template Library (Issue #2457)
 
 Ship a curated set of built-in group templates that cover the most common schema patterns. Each group includes fully defined class definitions, property sets, and inter-class relationships ready to drop onto the canvas.
 
@@ -58,11 +60,11 @@ Ship a curated set of built-in group templates that cover the most common schema
 
 **Tech Stack:** PostgreSQL seed migration, canvas insertion API
 
-Part of Epic: Group Templates
+Part of Epic: Group Templates (#2456)
 
 ---
 
-#### 1.2 — Save Custom Group Templates
+#### 1.2 — Save Custom Group Templates (Issue #2458)
 
 Allow users to select a set of classes on the canvas and save them as a named group template. The template captures the class definitions (structure only, not data), their relationships, and the relative canvas layout positions for restore-on-apply.
 
@@ -88,31 +90,33 @@ DELETE /api/v1/group-templates/{id}       → 204
 - Template visible to the creating user immediately; shared templates visible to all project members
 - `#160` addressed by this issue
 
-Part of Epic: Group Templates
+Part of Epic: Group Templates (#2456)
 
 ---
 
 ## Epic 2: Schema Templates
 
+**Epic Issue:** #2462
+
 ### Summary Table
 
-| #   | Title                                     | Description                                                                        | Labels                                      | MVP | Parallel |
-|-----|-------------------------------------------|------------------------------------------------------------------------------------|---------------------------------------------|-----|----------|
-| 2.1 | Schema Template Data Model               | DB schema for schema templates with categories, tags, versioning, and metadata      | `enhancement`, `mvp`, `templates`, `rest`  | Yes | No       |
-| 2.2 | Core Domain Templates (Phase 1)          | Addresses, Common, Content, Integrations, Notifications, Orders, Payments, Products | `enhancement`, `mvp`, `templates`          | Yes | No       |
-| 2.3 | Core Domain Templates (Phase 2)          | Security/Auth, Users, Analytics, Communication, Compliance, Marketplace, Scheduling, Support | `enhancement`, `templates`        | No  | No       |
-| 2.4 | Template Category Browser                | Browse templates by category in a sidebar or modal; search by keyword              | `enhancement`, `mvp`, `templates`          | Yes | No       |
-| 2.5 | Template Tags System                     | Tag templates for discoverability; filter by tag in the browser                    | `enhancement`, `templates`                 | No  | Yes      |
-| 2.6 | Drag-and-Drop from Template Browser      | Drag a template from the browser sidebar and drop it onto the canvas               | `enhancement`, `mvp`, `templates`          | Yes | No       |
-| 2.7 | Custom Template Creation from Canvas     | Select classes → "Save as Template" → name, description, category, tags           | `enhancement`, `mvp`, `templates`, `rest`  | Yes | No       |
-| 2.8 | Template Variables with Auto-Fill        | Mark placeholder properties in a template; prompt user to fill values on apply     | `enhancement`, `templates`                 | No  | Yes      |
-| 2.9 | Team-Shared Template Library             | Publish custom templates to a tenant-wide shared library visible to all users      | `enhancement`, `templates`                 | No  | Yes      |
-| 2.10 | Template Ratings & Reviews              | 1–5 star rating plus free-text review after using a template                       | `enhancement`, `templates`, `rest`         | No  | Yes      |
-| 2.11 | Community Marketplace Integration        | Push/pull templates to/from the Template Marketplace (cross-reference)             | `enhancement`, `templates`                 | No  | No       |
+| #   | Title                                     | Issue  | Description                                                                        | Labels                                      | MVP | Parallel |
+|-----|-------------------------------------------|--------|------------------------------------------------------------------------------------|---------------------------------------------|-----|----------|
+| 2.1 | Schema Template Data Model               | #2463  | DB schema for schema templates with categories, tags, versioning, and metadata      | `enhancement`, `mvp`, `templates`, `rest`  | Yes | No       |
+| 2.2 | Core Domain Templates (Phase 1)          | #2464  | Addresses, Common, Content, Integrations, Notifications, Orders, Payments, Products | `enhancement`, `mvp`, `templates`          | Yes | No       |
+| 2.3 | Core Domain Templates (Phase 2)          | #2465  | Security/Auth, Users, Analytics, Communication, Compliance, Marketplace, Scheduling, Support | `enhancement`, `templates`        | No  | No       |
+| 2.4 | Template Category Browser                | #2466  | Browse templates by category in a sidebar or modal; search by keyword              | `enhancement`, `mvp`, `templates`          | Yes | No       |
+| 2.5 | Template Tags System                     | #2467  | Tag templates for discoverability; filter by tag in the browser                    | `enhancement`, `templates`                 | No  | Yes      |
+| 2.6 | Drag-and-Drop from Template Browser      | #2468  | Drag a template from the browser sidebar and drop it onto the canvas               | `enhancement`, `mvp`, `templates`          | Yes | No       |
+| 2.7 | Custom Template Creation from Canvas     | #2469  | Select classes → "Save as Template" → name, description, category, tags           | `enhancement`, `mvp`, `templates`, `rest`  | Yes | No       |
+| 2.8 | Template Variables with Auto-Fill        | #2470  | Mark placeholder properties in a template; prompt user to fill values on apply     | `enhancement`, `templates`                 | No  | Yes      |
+| 2.9 | Team-Shared Template Library             | #2471  | Publish custom templates to a tenant-wide shared library visible to all users      | `enhancement`, `templates`                 | No  | Yes      |
+| 2.10 | Template Ratings & Reviews              | #2472  | 1–5 star rating plus free-text review after using a template                       | `enhancement`, `templates`, `rest`         | No  | Yes      |
+| 2.11 | Community Marketplace Integration        | #2473  | Push/pull templates to/from the Template Marketplace (cross-reference)             | `enhancement`, `templates`                 | No  | No       |
 
 ### Detailed Issue Descriptions
 
-#### 2.1 — Schema Template Data Model
+#### 2.1 — Schema Template Data Model (Issue #2463)
 
 Design the database model for schema templates. Each template is a versioned artifact with content stored as JSON (class definitions, property sets, relationships). Templates have a category, tags, scope, and rating aggregate.
 
@@ -153,11 +157,11 @@ Design the database model for schema templates. Each template is a versioned art
 - Seed migration populates all Phase 1 system templates
 - `#602`, `#603`, `#604` addressed by this issue
 
-Part of Epic: Schema Templates
+Part of Epic: Schema Templates (#2462)
 
 ---
 
-#### 2.2 — Core Domain Templates (Phase 1)
+#### 2.2 — Core Domain Templates (Phase 1) (Issue #2464)
 
 Implement the first batch of system-provided schema templates covering the most frequently needed domains. Each template must be production-quality: all properties typed, described, and with example values. Quality score ≥ 80/100 required before shipping.
 
@@ -180,11 +184,11 @@ Implement the first batch of system-provided schema templates covering the most 
 - Templates visible in the canvas sidebar under their respective categories
 - Can be applied to a canvas without conflict if no naming collisions exist
 
-Part of Epic: Schema Templates
+Part of Epic: Schema Templates (#2462)
 
 ---
 
-#### 2.3 — Core Domain Templates (Phase 2)
+#### 2.3 — Core Domain Templates (Phase 2) (Issue #2465)
 
 Implement the second batch of system templates for security, user management, analytics, communication, compliance, marketplace, scheduling, and support domains.
 
@@ -201,28 +205,30 @@ Implement the second batch of system templates for security, user management, an
 | Scheduling    | Calendar & Booking       | Event, TimeSlot, Booking, Recurrence                    | #787   |
 | Support       | Help Desk                | Ticket, TicketComment, SupportAgent, KnowledgeArticle   | #788   |
 
-Part of Epic: Schema Templates
+Part of Epic: Schema Templates (#2462)
 
 ---
 
 ## Epic 3: Property Templates (Property Library)
 
+**Epic Issue:** #2474
+
 ### Summary Table
 
-| #   | Title                                     | Description                                                                        | Labels                                     | MVP | Parallel |
-|-----|-------------------------------------------|------------------------------------------------------------------------------------|--------------------------------------------|-----|----------|
-| 3.1 | Property Library Data Model              | Shared property definitions per tenant with type, constraints, description, examples| `enhancement`, `mvp`, `templates`, `rest` | Yes | No       |
-| 3.2 | Reusable Property Components             | Reference a library property from any class; changes to library propagate optionally| `enhancement`, `templates`               | No  | No       |
-| 3.3 | Property Inheritance                     | Extend a library property in a class to add local constraints without forking      | `enhancement`, `templates`               | No  | No       |
-| 3.4 | Property Versioning                      | Version library properties; track which class uses which version                   | `enhancement`, `templates`               | No  | Yes      |
-| 3.5 | Property Search & Filter                 | Search library properties by name, type, tag; filter by usage count                | `enhancement`, `mvp`, `templates`         | Yes | Yes      |
-| 3.6 | Property Usage Tracking                  | Count and list which classes reference each library property                       | `enhancement`, `templates`               | No  | Yes      |
-| 3.7 | Deprecate Library Properties             | Mark a property deprecated with migration guidance; warn in consuming classes      | `enhancement`, `templates`               | No  | Yes      |
-| 3.8 | Property Marketplace (Community-Shared)  | Share property definitions publicly via Template Marketplace                       | `enhancement`, `templates`               | No  | No       |
+| #   | Title                                     | Issue  | Description                                                                        | Labels                                     | MVP | Parallel |
+|-----|-------------------------------------------|--------|------------------------------------------------------------------------------------|--------------------------------------------|-----|----------|
+| 3.1 | Property Library Data Model              | #2475  | Shared property definitions per tenant with type, constraints, description, examples| `enhancement`, `mvp`, `templates`, `rest` | Yes | No       |
+| 3.2 | Reusable Property Components             | #2476  | Reference a library property from any class; changes to library propagate optionally| `enhancement`, `templates`               | No  | No       |
+| 3.3 | Property Inheritance                     | #2477  | Extend a library property in a class to add local constraints without forking      | `enhancement`, `templates`               | No  | No       |
+| 3.4 | Property Versioning                      | #2478  | Version library properties; track which class uses which version                   | `enhancement`, `templates`               | No  | Yes      |
+| 3.5 | Property Search & Filter                 | #2479  | Search library properties by name, type, tag; filter by usage count                | `enhancement`, `mvp`, `templates`         | Yes | Yes      |
+| 3.6 | Property Usage Tracking                  | #2480  | Count and list which classes reference each library property                       | `enhancement`, `templates`               | No  | Yes      |
+| 3.7 | Deprecate Library Properties             | #2481  | Mark a property deprecated with migration guidance; warn in consuming classes      | `enhancement`, `templates`               | No  | Yes      |
+| 3.8 | Property Marketplace (Community-Shared)  | #2482  | Share property definitions publicly via Template Marketplace                       | `enhancement`, `templates`               | No  | No       |
 
 ### Detailed Issue Descriptions
 
-#### 3.1 — Property Library Data Model
+#### 3.1 — Property Library Data Model (Issue #2475)
 
 Create a `property_library` table holding reusable property definitions at the tenant scope. Each entry defines a canonical property (type, format, constraints, description, examples) that can be referenced by name from any class in the tenant.
 
@@ -261,11 +267,11 @@ GET  /api/v1/property-library/{id}/usages → 200: ClassUsageList
 - Deleting a library property blocked if any class currently references it
 - System-provided properties (e.g., `id`, `created_at`, `updated_at`) seeded in migration
 
-Part of Epic: Property Templates (Property Library)
+Part of Epic: Property Templates (Property Library) (#2474)
 
 ---
 
-#### 3.5 — Property Search & Filter
+#### 3.5 — Property Search & Filter (Issue #2479)
 
 Provide a searchable property library panel within the schema editor. Users can type a property name or keyword and see matching library properties with their type, description, and usage count. Double-click or drag to add the property to the current class.
 
@@ -290,4 +296,4 @@ Filter: [All Types ▼] [All Tags ▼]
 - Deprecated properties shown with strikethrough and deprecation notice
 - Adding a library property to a class creates a reference (not a copy), enabling propagation
 
-Part of Epic: Property Templates (Property Library)
+Part of Epic: Property Templates (Property Library) (#2474)
