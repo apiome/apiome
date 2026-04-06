@@ -19,5 +19,5 @@ We'd love to hear your thoughts! Your feedback helps us make Objectified better.
 
 **Thank you for using Objectified!**
 
-*Last updated: March 1, 2026*
+*Last updated: April 6, 2026*
 

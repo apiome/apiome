@@ -19,6 +19,8 @@ export interface ProjectStartTemplate {
   metadata: ProjectOpenApiMetadata;
 }
 
+export const BLANK_TEMPLATE_ID = 'blank';
+
 export const PROJECT_START_TEMPLATES: readonly ProjectStartTemplate[] = [
   {
     id: 'blank',
@@ -132,7 +134,7 @@ export function applyProjectStartTemplate(id: string): {
   suggestedDescription: string;
   metadata: ProjectOpenApiMetadata;
 } {
-  const t = getProjectStartTemplate(id) ?? PROJECT_START_TEMPLATES[0];
+  const t = getProjectStartTemplate(id) ?? getProjectStartTemplate(BLANK_TEMPLATE_ID)!;
   return {
     suggestedDescription: t.suggestedDescription,
     metadata: JSON.parse(JSON.stringify(t.metadata)) as ProjectOpenApiMetadata,
