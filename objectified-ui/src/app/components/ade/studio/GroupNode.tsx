@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo, useState, useCallback, useMemo } from 'react';
+import React, { memo, useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { NodeProps, NodeResizer } from '@xyflow/react';
 import {
   Folder, Edit2, Trash2, X, Check, Palette, Settings,
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import { COLLAPSED_GROUP_FRAME_WIDTH, COLLAPSED_GROUP_FRAME_HEIGHT } from '@/app/utils/canvas-group-collapse';
+import { parseCssHexColor, resolveGroupFrameHex } from '@/app/utils/group-frame-colors';
 import { tagChipClass, tagDotClass } from '@/app/utils/tag-color-tokens';
 import GroupBulkEditDialog, { type GroupBulkEditTagOption } from './GroupBulkEditDialog';
 import {
@@ -104,7 +105,8 @@ export interface GroupNodeData {
   id: string;
   name: string;
   description?: string;
-  color: string; // Color name from GROUP_COLORS
+  /** Preset name from GROUP_COLORS or custom `#RRGGBB` / `#RGB` (#97). */
+  color: string;
   nodeIds: string[]; // IDs of nodes contained in this group
   styleOptions?: GroupStyleOptions; // Visual styling options
   isHighlighted?: boolean; // Visual highlight when node is dragged over
@@ -155,10 +157,12 @@ const GroupNode = memo((props: NodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(groupData.name);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const colorPopoverContentRef = useRef<HTMLDivElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [exportPopoverOpen, setExportPopoverOpen] = useState(false);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [isFrameHovered, setIsFrameHovered] = useState(false);
+  const [customHexDraft, setCustomHexDraft] = useState('');
 
   const showFloatingToolbar = useMemo(
     () =>
@@ -180,8 +184,19 @@ const GroupNode = memo((props: NodeProps) => {
     ]
   );
 
-  // Get color configuration
-  const colorConfig = GROUP_COLORS.find(c => c.name === groupData.color) || GROUP_COLORS[0];
+  const { hex: frameHex, preset: matchedPreset } = useMemo(
+    () => resolveGroupFrameHex(groupData.color, GROUP_COLORS),
+    [groupData.color]
+  );
+
+  const presetBorderClass = matchedPreset ? matchedPreset.border : '';
+  const useCustomFrameBorder = !matchedPreset && parseCssHexColor(groupData.color) !== null;
+
+  useEffect(() => {
+    if (!colorPickerOpen) return;
+    const { hex: h, preset: p } = resolveGroupFrameHex(groupData.color, GROUP_COLORS);
+    setCustomHexDraft(p ? '' : h);
+  }, [colorPickerOpen, groupData.color]);
 
   // Get style options with defaults
   const styleOptions = useMemo(
@@ -191,7 +206,7 @@ const GroupNode = memo((props: NodeProps) => {
 
   // Determine if we should use light text based on background darkness
   const useLightText = true;
-  const textColorClass = useLightText ? 'text-white' : colorConfig.text;
+  const textColorClass = useLightText ? 'text-white' : (matchedPreset?.text ?? GROUP_COLORS[0].text);
 
   // Get the icon component
   const IconComponent = GROUP_ICONS.find(i => i.name === styleOptions.icon)?.icon || Folder;
@@ -296,11 +311,14 @@ const GroupNode = memo((props: NodeProps) => {
     [groupData]
   );
 
-  const handleColorChange = useCallback((colorName: string) => {
-    if (groupData.isReadOnly) return;
-    groupData.onColorChange?.(groupData.id, colorName);
-    setColorPickerOpen(false);
-  }, [groupData]);
+  const handleColorChange = useCallback(
+    (colorValue: string) => {
+      if (groupData.isReadOnly) return;
+      groupData.onColorChange?.(groupData.id, colorValue);
+      setColorPickerOpen(false);
+    },
+    [groupData]
+  );
 
   // Handle style option changes
   const handleStyleChange = useCallback(
@@ -351,14 +369,15 @@ const GroupNode = memo((props: NodeProps) => {
         data-testid="group-node-surface"
         className={`
           relative w-full h-full rounded-2xl border-2 transition-all duration-200
-          ${borderStyleClass} ${colorConfig.border} ${shadowClass}
+          ${borderStyleClass} ${presetBorderClass} ${shadowClass}
           ${selected ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-gray-900' : ''}
           ${groupData.isHighlighted ? 'ring-4 ring-green-500 ring-offset-4 dark:ring-offset-gray-900 scale-[1.02] border-green-500 dark:border-green-400' : ''}
         `}
         style={{
           minWidth: isCollapsed ? COLLAPSED_GROUP_FRAME_WIDTH : 200,
           minHeight: isCollapsed ? COLLAPSED_GROUP_FRAME_HEIGHT : 150,
-          backgroundColor: `${colorConfig.hex}${Math.round(styleOptions.opacity * 25.5).toString(16).padStart(2, '0')}`
+          backgroundColor: `${frameHex}${Math.round(styleOptions.opacity * 25.5).toString(16).padStart(2, '0')}`,
+          ...(useCustomFrameBorder ? { borderColor: `${frameHex}99` } : {})
         }}
         onMouseEnter={() => setIsFrameHovered(true)}
         onMouseLeave={() => setIsFrameHovered(false)}
@@ -367,11 +386,12 @@ const GroupNode = memo((props: NodeProps) => {
         <div
           className={`
             absolute -top-3 left-4 px-3 py-1 rounded-lg border ${shadowClass || 'shadow-sm'}
-            ${colorConfig.border} ${textColorClass}
+            ${presetBorderClass} ${textColorClass}
             flex items-center gap-2 cursor-move
           `}
           style={{
-            backgroundColor: `${colorConfig.hex}${Math.round(Math.min(styleOptions.opacity + 0.3, 1) * 255).toString(16).padStart(2, '0')}`
+            backgroundColor: `${frameHex}${Math.round(Math.min(styleOptions.opacity + 0.3, 1) * 255).toString(16).padStart(2, '0')}`,
+            ...(useCustomFrameBorder ? { borderColor: `${frameHex}cc` } : {})
           }}
         >
           <button
@@ -471,10 +491,11 @@ const GroupNode = memo((props: NodeProps) => {
             className={`
               absolute -top-6 right-[-2px] z-20 flex max-w-[min(100%,calc(100vw-2rem))] flex-wrap items-center gap-1 rounded-lg border px-1.5 py-1
               ${shadowClass || 'shadow-md'}
-              ${colorConfig.border} ${textColorClass}
+              ${presetBorderClass} ${textColorClass}
             `}
             style={{
-              backgroundColor: `${colorConfig.hex}${Math.round(Math.min(styleOptions.opacity + 0.3, 1) * 255).toString(16).padStart(2, '0')}`
+              backgroundColor: `${frameHex}${Math.round(Math.min(styleOptions.opacity + 0.3, 1) * 255).toString(16).padStart(2, '0')}`,
+              ...(useCustomFrameBorder ? { borderColor: `${frameHex}cc` } : {})
             }}
             onMouseDown={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
@@ -677,6 +698,7 @@ const GroupNode = memo((props: NodeProps) => {
                 </Popover.Trigger>
                 <Popover.Portal>
                   <Popover.Content
+                    ref={colorPopoverContentRef}
                     className="z-[9999] bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-3"
                     sideOffset={5}
                     onOpenAutoFocus={(e) => e.preventDefault()}
@@ -686,15 +708,62 @@ const GroupNode = memo((props: NodeProps) => {
                       {GROUP_COLORS.map((color) => (
                         <button
                           key={color.name}
+                          type="button"
+                          disabled={groupData.isReadOnly}
                           onClick={() => handleColorChange(color.name)}
                           className={`
                             w-6 h-6 rounded-full border-2 transition-transform hover:scale-110
-                            ${color.name === groupData.color ? 'ring-2 ring-offset-2 ring-indigo-500' : ''}
+                            ${color.name === groupData.color ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-gray-800' : ''}
                           `}
                           style={{ backgroundColor: color.hex }}
                           title={color.name}
                         />
                       ))}
+                    </div>
+                    <div className="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3 space-y-2">
+                      <div className="text-xs font-medium text-gray-600 dark:text-gray-400">Custom color</div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={frameHex}
+                          onChange={(e) => {
+                            const v = parseCssHexColor(e.target.value);
+                            if (v) handleColorChange(v);
+                          }}
+                          className="h-8 w-10 shrink-0 cursor-pointer rounded border border-gray-300 dark:border-gray-600 bg-transparent p-0"
+                          title="Pick a custom container color"
+                          aria-label="Custom color picker"
+                          disabled={groupData.isReadOnly}
+                        />
+                        <input
+                          type="text"
+                          value={customHexDraft}
+                          onChange={(e) => setCustomHexDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              const v = parseCssHexColor(customHexDraft);
+                              if (v) handleColorChange(v);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (
+                              e.relatedTarget instanceof Element &&
+                              colorPopoverContentRef.current?.contains(e.relatedTarget)
+                            ) {
+                              return;
+                            }
+                            const v = parseCssHexColor(customHexDraft);
+                            if (v) handleColorChange(v);
+                          }}
+                          placeholder="#6366f1"
+                          disabled={groupData.isReadOnly}
+                          className="min-w-0 flex-1 rounded-md border border-gray-200 bg-white px-2 py-1 font-mono text-xs text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                          aria-label="Custom color hex value"
+                        />
+                      </div>
+                      {useCustomFrameBorder ? (
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400">Custom container color (saved with the layout)</p>
+                      ) : null}
                     </div>
                     <Popover.Arrow className="fill-white dark:fill-gray-800" />
                   </Popover.Content>

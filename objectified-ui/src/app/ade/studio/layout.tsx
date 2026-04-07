@@ -9,6 +9,7 @@ import { StudioProvider, useStudio } from './StudioContext';
 import { useDialog } from '../../components/providers/DialogProvider';
 import StudioHeader from './components/StudioHeader';
 import { GROUP_COLORS } from '@/app/components/ade/studio/GroupNode';
+import { resolveGroupFrameHex } from '@/app/utils/group-frame-colors';
 
 import StudioSideNav, { ClassItem, PropertyItem, StudioSideNavCallbacks } from '@/app/components/ade/studio/StudioSideNav';
 import PropertyDialog from '@/app/components/ade/studio/PropertyDialog';
@@ -395,11 +396,11 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
   // Transform groups for sidebar display
   const sidebarGroups = React.useMemo(() => {
     return groups.map(group => {
-      const colorConfig = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
+      const { hex: colorHex } = resolveGroupFrameHex(group.color, GROUP_COLORS);
       return {
         id: group.id,
         name: group.name,
-        color: colorConfig.hex,
+        color: colorHex,
         nodeIds: group.nodeIds,
       };
     });
