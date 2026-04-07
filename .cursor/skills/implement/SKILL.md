@@ -87,6 +87,8 @@ Also run any package-specific tests the issue touches, per READMEs.
 
 1. Mark the ticket complete in **ROADMAP** and remove its entry from the issues list matching the issue number.
 2. Add a one-line summary of the work performed to **public/WHATS_NEW.md**.
+3. Bump the patch version of the application in the **objectified-ui/package.json** when a change is made in **objectified-ui**.
+4. Bump the patch version of pyproject.toml in **objectified-rest** when a change is made in that project.
 
 ## Phase 7 - Commit, Push, and PR
 
