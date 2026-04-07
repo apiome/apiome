@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Upload, X, FileCode, AlertTriangle, CheckCircle2, Package, Search, Check, ChevronRight, ArrowUpAZ, ArrowDownAZ, Link2, FileText, Github, ChevronDown } from 'lucide-react';
 import * as Checkbox from '@radix-ui/react-checkbox';
 import {
@@ -19,6 +19,10 @@ import UrlImportPanel from '../dashboard/UrlImportPanel';
 import ClipboardImportPanel from '../dashboard/ClipboardImportPanel';
 import GitImportPanel from '../dashboard/GitImportPanel';
 import { ConflictReport, type ImportConflict } from '../dashboard/ConflictReport';
+import {
+  ImportSchemaConflictDialog,
+  type ImportDuplicateResolutionChoice,
+} from '../dashboard/ImportSchemaConflictDialog';
 import { isDuplicateSchema } from '../../../utils/schema-definition-equal';
 import { detectPropertyConflicts } from '../../../utils/property-conflict-detection';
 import { detectReferenceConflicts } from '../../../utils/reference-conflict-detection';
@@ -125,6 +129,13 @@ const INTERNAL_TYPE_OPTIONS: { value: string; label: string; schema: any }[] = [
   { value: 'boolean', label: 'boolean', schema: { type: 'boolean' } },
 ];
 
+function conflictResolutionToDiffChoice(
+  r: 'keep' | 'replace' | 'merge' | 'rename' | 'createVersion'
+): ImportDuplicateResolutionChoice {
+  if (r === 'createVersion') return 'merge';
+  return r;
+}
+
 const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
   open,
   onClose,
@@ -186,6 +197,8 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
   const canSelectExisting = overwriteExisting || conflictResolution === 'rename' || conflictResolution === 'createVersion';
   /** When import used "Create new version", the created version_id string (e.g. 1.0.0b) for success message. */
   const [createdVersionLabel, setCreatedVersionLabel] = useState<string | null>(null);
+  /** Schema name whose duplicate_schema diff modal is open (#298). */
+  const [schemaDiffFor, setSchemaDiffFor] = useState<string | null>(null);
 
   const handleSourceClick = (source: 'file' | 'url' | 'clipboard' | 'git') => {
     setSelectedSource(source);
@@ -248,6 +261,7 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
     setCreatedVersionLabel(null);
     setMergeStrategy('additive');
     setPropertyMergeStrategies({});
+    setSchemaDiffFor(null);
     setArrayMergeStrategy('replace');
     onClose();
   };
@@ -624,7 +638,26 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
     return prop.type || 'any';
   };
 
+  const schemaDiffImported = useMemo(() => {
+    if (!schemaDiffFor || !analysisResult?.document) return null;
+    const doc = analysisResult.document;
+    return doc.components?.schemas?.[schemaDiffFor] ?? doc.definitions?.[schemaDiffFor] ?? null;
+  }, [schemaDiffFor, analysisResult?.document]);
+
+  const schemaDiffExisting = useMemo(() => {
+    if (!schemaDiffFor || !existingClassSchemas) return undefined;
+    return existingClassSchemas[schemaDiffFor.toLowerCase()];
+  }, [schemaDiffFor, existingClassSchemas]);
+
+  const schemaDiffHasExisting = schemaDiffExisting != null;
+
+  const handleSchemaDiffApply = (choice: ImportDuplicateResolutionChoice) => {
+    setConflictResolution(choice);
+    setSchemaDiffFor(null);
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-5xl max-h-[85vh] overflow-hidden flex flex-col" showCloseButton={false} aria-describedby={undefined}>
         <DialogHeader className="border-b border-gray-200 dark:border-gray-700 pb-4">
@@ -1090,7 +1123,12 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
 
               {/* Conflict Report (#596): overview of all detected conflicts (incl. #585 type mismatch) */}
               {conflictReportItems.length > 0 && (
-                <ConflictReport conflicts={conflictReportItems} defaultOpen={true} className="mb-6" />
+                <ConflictReport
+                  conflicts={conflictReportItems}
+                  defaultOpen={true}
+                  className="mb-6"
+                  onViewDuplicateSchemaDiff={analysisResult ? (name) => setSchemaDiffFor(name) : undefined}
+                />
               )}
 
               {/* Pre-Import Analysis */}
@@ -1832,6 +1870,23 @@ const ClassImportDialog: React.FC<ClassImportDialogProps> = ({
         </div>
       </DialogContent>
     </Dialog>
+    {schemaDiffFor != null && schemaDiffImported != null && (
+      <ImportSchemaConflictDialog
+        key={schemaDiffFor}
+        open
+        onOpenChange={(o) => {
+          if (!o) setSchemaDiffFor(null);
+        }}
+        schemaName={schemaDiffFor}
+        existingSchema={schemaDiffHasExisting ? schemaDiffExisting : {}}
+        importedSchema={schemaDiffImported}
+        hasExistingBody={schemaDiffHasExisting}
+        initialResolution={conflictResolutionToDiffChoice(conflictResolution)}
+        renameSuffix={renameSuffix}
+        onApply={handleSchemaDiffApply}
+      />
+    )}
+    </>
   );
 };
 

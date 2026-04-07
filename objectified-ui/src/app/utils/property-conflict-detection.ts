@@ -10,8 +10,9 @@ const VOLATILE_KEYS = new Set(['$id', '$schema']);
 /**
  * Extract direct properties from an OpenAPI/JSON Schema object (top-level + allOf inline).
  * Mirrors lib/importers/openapi.ts extractDirectProperties for consistency.
+ * Exported so sibling utilities (e.g. schema-import-property-diff) stay in sync.
  */
-function extractDirectProperties(schema: any): Record<string, any> {
+export function extractDirectProperties(schema: any): Record<string, any> {
   const result: Record<string, any> = {};
   if (!schema || typeof schema !== 'object') return result;
   if (schema.properties && typeof schema.properties === 'object') {

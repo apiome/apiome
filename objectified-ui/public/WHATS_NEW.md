@@ -6,6 +6,8 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## UI:
 - **What's New** dialog is centered on the viewport again (overlay renders outside the header so it is not offset downward)
+- **Import classes:** duplicate-schema rows in the conflict report include **Schema diff** — side-by-side property diff (new / modified / removed), summary counts, and resolution choices (merge, replace, keep current, rename) before you apply
+
 
 ## Projects:
 - Added ability to start a new project from a template
@@ -32,5 +34,5 @@ We'd love to hear your thoughts! Your feedback helps us make Objectified better.
 
 **Thank you for using Objectified!**
 
-*Last updated: April 6, 2026*
+*Last updated: April 7, 2026*
 

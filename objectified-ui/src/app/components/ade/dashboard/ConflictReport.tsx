@@ -132,13 +132,20 @@ interface ConflictReportProps {
   /** When true, the report section is expanded by default */
   defaultOpen?: boolean;
   className?: string;
+  /** When set, duplicate-schema rows include a control to open the schema diff dialog (#298). */
+  onViewDuplicateSchemaDiff?: (schemaName: string) => void;
 }
 
 /**
  * Conflict Report (#596): overview of all detected conflicts during import.
  * Renders a summary and a table of conflicts by type and schema.
  */
-export function ConflictReport({ conflicts, defaultOpen = true, className = '' }: ConflictReportProps) {
+export function ConflictReport({
+  conflicts,
+  defaultOpen = true,
+  className = '',
+  onViewDuplicateSchemaDiff,
+}: ConflictReportProps) {
   const [open, setOpen] = useState(defaultOpen);
 
   const handleExportMarkdown = useCallback(() => {
@@ -259,6 +266,11 @@ export function ConflictReport({ conflicts, defaultOpen = true, className = '' }
                     <th className="text-left py-2.5 px-3 font-semibold text-gray-700 dark:text-gray-300 min-w-[200px]">
                       What will change if resolved
                     </th>
+                    {onViewDuplicateSchemaDiff && (
+                      <th className="text-left py-2.5 px-3 font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                        Diff
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -290,6 +302,21 @@ export function ConflictReport({ conflicts, defaultOpen = true, className = '' }
                         <td className="py-2 px-3 text-gray-600 dark:text-gray-400 text-xs">
                           {impact}
                         </td>
+                        {onViewDuplicateSchemaDiff && (
+                          <td className="py-2 px-3">
+                            {c.kind === 'duplicate_schema' ? (
+                              <button
+                                type="button"
+                                onClick={() => onViewDuplicateSchemaDiff(c.schemaName)}
+                                className="rounded-md border border-indigo-300 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-800 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200 dark:hover:bg-indigo-900/50"
+                              >
+                                Schema diff
+                              </button>
+                            ) : (
+                              <span className="text-gray-400 dark:text-gray-600">—</span>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     );
                   })}
