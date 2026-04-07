@@ -44,4 +44,16 @@ describe('buildGroupMetadataForSync', () => {
     expect(meta.tags).toEqual([]);
     expect(meta.shadow).toBe('none');
   });
+
+  test('preserves existing metadata tags when tags are omitted', () => {
+    const meta = buildGroupMetadataForSync({
+      metadata: {
+        tags: [{ id: 'existing', name: 'Existing', color: 'default' }],
+        shadow: 'md',
+      },
+      styleOptions: { shadow: 'sm', icon: 'folder' },
+    });
+    expect(meta.tags).toEqual([{ id: 'existing', name: 'Existing', color: 'default' }]);
+    expect(meta.shadow).toBe('md');
+  });
 });

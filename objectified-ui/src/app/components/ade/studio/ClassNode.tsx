@@ -171,6 +171,7 @@ import {
 import { useDialog } from '../../providers/DialogProvider';
 import * as Popover from '@radix-ui/react-popover';
 import { cn } from '../../../../../lib/utils';
+import { tagInlineColors } from '@/app/utils/tag-color-tokens';
 
 // Icon options for class nodes - curated list organized by category
 const NODE_ICON_OPTIONS: Array<{ name: string; icon: LucideIcon; category: string }> = [
@@ -1684,16 +1685,7 @@ function ClassNode({ id, data, selected }: NodeProps) {
                 transition: 'opacity 0.2s ease'
               }}>
                 {typedData.tags.map((tag) => {
-                  const colorMap: Record<string, { bg: string; border: string }> = {
-                    default: { bg: 'rgba(255, 255, 255, 0.15)', border: 'rgba(255, 255, 255, 0.25)' },
-                    primary: { bg: 'rgba(99, 102, 241, 0.3)', border: 'rgba(99, 102, 241, 0.5)' },
-                    secondary: { bg: 'rgba(168, 85, 247, 0.3)', border: 'rgba(168, 85, 247, 0.5)' },
-                    error: { bg: 'rgba(239, 68, 68, 0.3)', border: 'rgba(239, 68, 68, 0.5)' },
-                    warning: { bg: 'rgba(245, 158, 11, 0.3)', border: 'rgba(245, 158, 11, 0.5)' },
-                    info: { bg: 'rgba(59, 130, 246, 0.3)', border: 'rgba(59, 130, 246, 0.5)' },
-                    success: { bg: 'rgba(16, 185, 129, 0.3)', border: 'rgba(16, 185, 129, 0.5)' },
-                  };
-                  const colors = colorMap[tag.tag_color] || colorMap.default;
+                  const colors = tagInlineColors(tag.tag_color);
                   return (
                     <span
                       key={tag.id}
