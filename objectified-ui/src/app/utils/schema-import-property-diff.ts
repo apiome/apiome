@@ -4,35 +4,7 @@
  */
 
 import { schemasDefinitionEqual } from './schema-definition-equal';
-
-function extractDirectProperties(schema: unknown): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  if (!schema || typeof schema !== 'object' || Array.isArray(schema)) return result;
-  const o = schema as Record<string, unknown>;
-
-  const props = o.properties;
-  if (props && typeof props === 'object' && !Array.isArray(props)) {
-    Object.assign(result, props as Record<string, unknown>);
-  }
-
-  const allOf = o.allOf;
-  if (Array.isArray(allOf)) {
-    for (const item of allOf) {
-      if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
-      const entry = item as Record<string, unknown>;
-      if (entry.$ref !== undefined || entry.if !== undefined) continue;
-      const inline = entry.properties;
-      if (inline && typeof inline === 'object' && !Array.isArray(inline)) {
-        Object.assign(result, inline as Record<string, unknown>);
-      }
-    }
-  }
-
-  if ((o.anyOf || o.oneOf) && Object.keys(result).length === 0) {
-    return {};
-  }
-  return result;
-}
+import { extractDirectProperties } from './property-conflict-detection';
 
 export type SchemaPropertyDiffStatus = 'unchanged' | 'added' | 'removed' | 'modified';
 

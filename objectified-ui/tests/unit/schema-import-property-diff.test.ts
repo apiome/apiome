@@ -11,6 +11,7 @@ describe('schema-import-property-diff (#298)', () => {
         id: { type: 'integer', format: 'int64' },
         name: { type: 'string' },
         category: { $ref: '#/components/schemas/Category' },
+        legacyTag: { type: 'string' },
       },
     };
     const imported = {
@@ -33,13 +34,14 @@ describe('schema-import-property-diff (#298)', () => {
 
     expect(addedCount).toBe(1);
     expect(modifiedCount).toBe(1);
-    expect(removedCount).toBe(0);
+    expect(removedCount).toBe(1);
 
     const byName = Object.fromEntries(rows.map((r) => [r.name, r.status]));
     expect(byName.id).toBe('unchanged');
     expect(byName.name).toBe('unchanged');
     expect(byName.status).toBe('added');
     expect(byName.category).toBe('modified');
+    expect(byName.legacyTag).toBe('removed');
   });
 
   test('empty schemas yield empty diff', () => {

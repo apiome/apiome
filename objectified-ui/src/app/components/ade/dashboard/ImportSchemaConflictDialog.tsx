@@ -1,13 +1,16 @@
 'use client';
 
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useMemo, useState } from 'react';
 import {
   Dialog,
-  DialogContent,
+  DialogPortal,
+  DialogOverlay,
   DialogHeader,
   DialogTitle,
   DialogFooter,
 } from '../../ui/Dialog';
+import { cn } from '../../../../../lib/utils';
 import { Button } from '../../ui/Button';
 import { RadioGroup, RadioGroupItem } from '../../ui/RadioGroup';
 import {
@@ -128,11 +131,18 @@ export function ImportSchemaConflictDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="max-h-[90vh] max-w-5xl overflow-hidden flex flex-col gap-0 p-0 z-[10050]"
-        showCloseButton={false}
-        aria-describedby={undefined}
-      >
+      {/* Uses z-[10000]/[10001] so the overlay and content sit above any parent Dialog (z-9999) */}
+      <DialogPortal>
+        <DialogOverlay className="z-[10000]" />
+        <DialogPrimitive.Content
+          ref={undefined}
+          className={cn(
+            'fixed left-[50%] top-[50%] z-[10001] w-full translate-x-[-50%] translate-y-[-50%]',
+            'max-h-[90vh] max-w-5xl overflow-hidden flex flex-col gap-0 p-0',
+            'border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg rounded-xl',
+          )}
+          aria-describedby={undefined}
+        >
         <DialogHeader className="border-b border-gray-200 dark:border-gray-700 px-6 py-4 shrink-0">
           <div className="flex items-start justify-between gap-4">
             <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white pr-8">
@@ -227,7 +237,8 @@ export function ImportSchemaConflictDialog({
             Apply
           </Button>
         </DialogFooter>
-      </DialogContent>
+        </DialogPrimitive.Content>
+      </DialogPortal>
     </Dialog>
   );
 }
