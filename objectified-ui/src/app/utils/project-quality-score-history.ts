@@ -20,8 +20,35 @@ interface StoreShape {
 const STORAGE_KEY = 'objectified:project-quality-history:v1';
 const MAX_ENTRIES_PER_PROJECT = 120;
 
-/** Prevents duplicate snapshots when import completion runs twice (e.g. React Strict Mode). */
-const appendedImportJobIds = new Set<string>();
+const MAX_APPENDED_IMPORT_JOB_IDS = 500;
+
+/**
+ * Prevents duplicate snapshots when import completion runs twice
+ * (e.g. React Strict Mode), while avoiding unbounded growth for long-lived tabs.
+ */
+const appendedImportJobIds = (() => {
+  const ids = new Set<string>();
+  const order: string[] = [];
+
+  return {
+    has(id: string): boolean {
+      return ids.has(id);
+    },
+    add(id: string): void {
+      if (ids.has(id)) return;
+
+      ids.add(id);
+      order.push(id);
+
+      if (order.length > MAX_APPENDED_IMPORT_JOB_IDS) {
+        const oldestId = order.shift();
+        if (oldestId) {
+          ids.delete(oldestId);
+        }
+      }
+    },
+  };
+})();
 
 function loadStore(): StoreShape {
   if (typeof window === 'undefined') return { byProject: {} };
@@ -48,7 +75,8 @@ function saveStore(store: StoreShape): void {
 }
 
 function clampOverall(n: number): number {
-  return Math.max(0, Math.min(100, Math.round(n)));
+  const safeValue = Number.isFinite(n) ? n : 0;
+  return Math.max(0, Math.min(100, Math.round(safeValue)));
 }
 
 /**

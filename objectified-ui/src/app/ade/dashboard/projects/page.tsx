@@ -111,10 +111,23 @@ const Projects = () => {
     prevImportOpen.current = showNewImportDialog;
   }, [showNewImportDialog]);
 
+  const projectQualityHistoryCacheRef = useRef<Record<string, ReturnType<typeof getProjectQualityHistory>>>({});
+  const projectQualityHistoryCacheEpochRef = useRef(qualityHistoryEpoch);
+
   const projectQualityHistoryMap = useMemo(() => {
+    if (projectQualityHistoryCacheEpochRef.current !== qualityHistoryEpoch) {
+      projectQualityHistoryCacheRef.current = {};
+      projectQualityHistoryCacheEpochRef.current = qualityHistoryEpoch;
+    }
+
+    const cache = projectQualityHistoryCacheRef.current;
     const m: Record<string, ReturnType<typeof getProjectQualityHistory>> = {};
+
     for (const p of projects) {
-      m[p.id] = getProjectQualityHistory(p.id);
+      if (!(p.id in cache)) {
+        cache[p.id] = getProjectQualityHistory(p.id);
+      }
+      m[p.id] = cache[p.id];
     }
     return m;
   }, [projects, qualityHistoryEpoch]);

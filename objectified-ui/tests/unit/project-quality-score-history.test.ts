@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { buildQualityTrendPoints } from '@/app/utils/project-quality-score-history';
 
 describe('project-quality-score-history', () => {
