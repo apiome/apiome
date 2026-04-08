@@ -22,6 +22,10 @@ export interface SchemaVersionScoringPanelProps {
   onClose?: () => void;
   isMinimized?: boolean;
   onMinimizeToggle?: () => void;
+  /** Studio version id for the open canvas; when it matches the breakdown version, scores use the live graph (#244). */
+  liveCanvasVersionId?: string | null;
+  /** Per-class scores from current canvas nodes/edges; paired with `liveCanvasVersionId`. */
+  livePerSchemaRows?: PerSchemaScoreRow[];
 }
 
 const GAUGE_R = 16;
@@ -144,12 +148,20 @@ export default function SchemaVersionScoringPanel({
   onClose,
   isMinimized = false,
   onMinimizeToggle,
+  liveCanvasVersionId = null,
+  livePerSchemaRows = [],
 }: SchemaVersionScoringPanelProps) {
   const [breakdownVersionId, setBreakdownVersionId] = React.useState(selectedVersionId);
   const [loading, setLoading] = React.useState(false);
   const [rows, setRows] = React.useState<PerSchemaScoreRow[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const [animTick, setAnimTick] = React.useState(0);
+
+  const useLiveCanvasScores = Boolean(
+    breakdownVersionId && liveCanvasVersionId && breakdownVersionId === liveCanvasVersionId
+  );
+
+  const displayRows = useLiveCanvasScores ? livePerSchemaRows : rows;
 
   React.useEffect(() => {
     setBreakdownVersionId(selectedVersionId);
@@ -159,6 +171,13 @@ export default function SchemaVersionScoringPanel({
     if (!breakdownVersionId) {
       setRows([]);
       setError(null);
+      setLoading(false);
+      return;
+    }
+
+    if (useLiveCanvasScores) {
+      setError(null);
+      setLoading(false);
       return;
     }
 
@@ -195,7 +214,7 @@ export default function SchemaVersionScoringPanel({
       });
 
     return () => controller.abort();
-  }, [breakdownVersionId]);
+  }, [breakdownVersionId, useLiveCanvasScores]);
 
   const sortedVersions = React.useMemo(() => {
     const copy = [...versions];
@@ -256,6 +275,11 @@ export default function SchemaVersionScoringPanel({
         <p className="text-xs text-gray-500 dark:text-gray-400">
           Pick a project version to see documentation, naming, and complexity scores per schema (class), with animated gauges.
         </p>
+        {useLiveCanvasScores && (
+          <p className="text-xs text-emerald-700 dark:text-emerald-400/90">
+            Live — scores follow the current canvas for this version as you edit.
+          </p>
+        )}
 
         <label className="block text-[10px] font-medium text-gray-600 dark:text-gray-300">
           Version
@@ -287,12 +311,12 @@ export default function SchemaVersionScoringPanel({
 
         {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
 
-        {!loading && breakdownVersionId && rows.length === 0 && !error && (
+        {!loading && breakdownVersionId && displayRows.length === 0 && !error && (
           <p className="text-sm text-gray-500 dark:text-gray-400">No classes in this version.</p>
         )}
 
         <ul className="space-y-2">
-          {rows.map((row) => (
+          {displayRows.map((row) => (
             <li
               key={row.classId}
               className="rounded-lg border border-gray-200/80 dark:border-gray-700/80 bg-gray-50/80 dark:bg-gray-900/40 px-2 py-2"

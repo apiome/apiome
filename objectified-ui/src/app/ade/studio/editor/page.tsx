@@ -198,7 +198,15 @@ import {
   filterCanvasLayoutForTargetClasses,
   mergeSavedEdgeHandles,
 } from '@/app/utils/canvas-layout-json';
-import { computeSchemaMetrics, getCircularDependencyEdgeIds, getDependencyDepthMap, getAffectedClassIds, getUpstreamClassIds, getDependencyChainNodeAndEdgeIds } from '@/app/utils/schema-metrics';
+import {
+  computeSchemaMetrics,
+  computePerSchemaScores,
+  getCircularDependencyEdgeIds,
+  getDependencyDepthMap,
+  getAffectedClassIds,
+  getUpstreamClassIds,
+  getDependencyChainNodeAndEdgeIds,
+} from '@/app/utils/schema-metrics';
 import { toPng } from 'html-to-image';
 import { QuickSnapshotCaptureDialog } from './components/QuickSnapshotCaptureDialog';
 import { QuickSnapshotCompareDialog } from './components/QuickSnapshotCompareDialog';
@@ -824,6 +832,9 @@ const StudioContent = () => {
     if (classNodes.length === 0) return null;
     return computeSchemaMetrics(nodes, edges);
   }, [nodes, edges]);
+
+  // #244: Version scoring panel — per-schema rows from the live canvas (same graph as metrics)
+  const livePerSchemaScores = useMemo(() => computePerSchemaScores(nodes, edges), [nodes, edges]);
 
   // #548: Circular dependency node/edge sets for canvas warning indicators
   const circularNodeIdsSet = useMemo(
@@ -10223,6 +10234,8 @@ const StudioContent = () => {
                 onClose={() => setSchemaVersionScoringOpen(false)}
                 isMinimized={schemaVersionScoringMinimized}
                 onMinimizeToggle={() => setSchemaVersionScoringMinimized(!schemaVersionScoringMinimized)}
+                liveCanvasVersionId={selectedVersionId || null}
+                livePerSchemaRows={livePerSchemaScores}
               />
             </DraggablePanel>
           )}
