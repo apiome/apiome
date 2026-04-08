@@ -1,4 +1,81 @@
-import { sanitizeFilenameSegment } from '@/app/utils/export-schema-score-report-pdf';
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import type { SchemaMetricsResult } from '@/app/utils/schema-metrics';
+
+// ── jsPDF mock ────────────────────────────────────────────────────────────────
+
+const mockSave = jest.fn();
+const mockText = jest.fn();
+const mockSetFont = jest.fn();
+const mockSetFontSize = jest.fn();
+const mockSetTextColor = jest.fn();
+const mockAddPage = jest.fn();
+const mockSplitTextToSize = jest.fn((text: string) => (text as string).split('\n'));
+
+const mockPdfInstance = {
+  save: mockSave,
+  text: mockText,
+  setFont: mockSetFont,
+  setFontSize: mockSetFontSize,
+  setTextColor: mockSetTextColor,
+  addPage: mockAddPage,
+  splitTextToSize: mockSplitTextToSize,
+  internal: {
+    pageSize: {
+      getWidth: () => 210,
+      getHeight: () => 297,
+    },
+  },
+};
+
+jest.mock('jspdf', () => ({
+  jsPDF: jest.fn(() => mockPdfInstance),
+}));
+
+// ── Imports (after mock) ───────────────────────────────────────────────────────
+
+import {
+  sanitizeFilenameSegment,
+  downloadSchemaScoreReportPdf,
+  downloadSchemaTimelineScoreReportPdf,
+} from '@/app/utils/export-schema-score-report-pdf';
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function makeMinimalMetrics(overrides: Partial<SchemaMetricsResult> = {}): SchemaMetricsResult {
+  return {
+    classCount: 3,
+    totalProperties: 9,
+    averagePropertiesPerClass: 3,
+    relationshipCount: 2,
+    hubClassIds: [],
+    hubNames: [],
+    isolatedClassIds: [],
+    isolatedNames: [],
+    deepestChainLength: 2,
+    circularDependencyCount: 0,
+    circularSampleNames: [],
+    circularDependencyNodeIds: [],
+    complexityScore: 30,
+    complexityLabel: 'Low',
+    complexityBreakdown: [
+      { label: 'Class count', value: 3, weight: 10, contribution: 3 },
+    ],
+    documentationCompletionPercentage: 100,
+    classesMissingDocumentation: [],
+    propertiesMissingDocumentation: [],
+    namingCompliance: {
+      classes: { pascal: 3, camel: 0, snake: 0, other: 0, total: 3 },
+      properties: { pascal: 0, camel: 9, snake: 0, other: 0, total: 9 },
+      compliancePercentage: 100,
+      classesNonPascal: [],
+      propertiesNonCamel: [],
+    },
+    dependencyMetricsPerClass: [],
+    ...overrides,
+  };
+}
+
+// ── sanitizeFilenameSegment ───────────────────────────────────────────────────
 
 describe('sanitizeFilenameSegment', () => {
   it('keeps alphanumerics and common safe chars', () => {
@@ -14,3 +91,173 @@ describe('sanitizeFilenameSegment', () => {
     expect(sanitizeFilenameSegment(long).length).toBeLessThanOrEqual(96);
   });
 });
+
+// ── downloadSchemaScoreReportPdf ──────────────────────────────────────────────
+
+describe('downloadSchemaScoreReportPdf', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSplitTextToSize.mockImplementation((text: string) => (text as string).split('\n'));
+  });
+
+  it('calls pdf.save() with sanitized project and version in filename', () => {
+    downloadSchemaScoreReportPdf({
+      metrics: makeMinimalMetrics(),
+      projectName: 'My Project',
+      versionLabel: 'v1.0',
+    });
+    expect(mockSave).toHaveBeenCalledTimes(1);
+    expect(mockSave).toHaveBeenCalledWith('schema-score-report-My_Project-v1.0.pdf');
+  });
+
+  it('uses fallback filename segments when project/version are absent', () => {
+    downloadSchemaScoreReportPdf({ metrics: makeMinimalMetrics() });
+    expect(mockSave).toHaveBeenCalledWith('schema-score-report-schema-version.pdf');
+  });
+
+  it('sanitizes long project names in the filename', () => {
+    const longName = 'x'.repeat(200);
+    downloadSchemaScoreReportPdf({
+      metrics: makeMinimalMetrics(),
+      projectName: longName,
+      versionLabel: 'v2',
+    });
+    const [filename] = (mockSave.mock.calls[0] as string[]);
+    expect(filename.length).toBeLessThanOrEqual('schema-score-report--v2.pdf'.length + 96);
+    expect(filename).toMatch(/^schema-score-report-.+-v2\.pdf$/);
+  });
+
+  it('does not throw when metrics contain documentation and naming gaps', () => {
+    const metrics = makeMinimalMetrics({
+      classesMissingDocumentation: ['ClassA', 'ClassB'],
+      propertiesMissingDocumentation: [{ className: 'ClassA', propertyName: 'foo' }],
+      namingCompliance: {
+        classes: { pascal: 1, camel: 0, snake: 1, other: 0, total: 2 },
+        properties: { pascal: 0, camel: 1, snake: 1, other: 0, total: 2 },
+        compliancePercentage: 50,
+        classesNonPascal: ['snake_class'],
+        propertiesNonCamel: [{ className: 'ClassA', propertyName: 'BadProp' }],
+      },
+    });
+    expect(() =>
+      downloadSchemaScoreReportPdf({ metrics, projectName: 'P', versionLabel: 'v1' })
+    ).not.toThrow();
+    expect(mockSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not throw with dependency metrics and layout quality', () => {
+    const metrics = makeMinimalMetrics({
+      dependencyMetricsPerClass: [
+        { classId: 'c1', className: 'Order', inDegree: 2, outDegree: 1, betweenness: 0.5 },
+      ],
+    });
+    const layoutQuality = {
+      overallScore: 80,
+      edgeCrossingCount: 2,
+      nodeSpacingUniformityScore: 70,
+      layoutSymmetryScore: 75,
+      visualBalanceScore: 85,
+    };
+    expect(() =>
+      downloadSchemaScoreReportPdf({ metrics, layoutQuality, projectName: 'P', versionLabel: 'v1' })
+    ).not.toThrow();
+    expect(mockSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not add an extra page just for the footer', () => {
+    // Simulate body content ending near the bottom of the page (ctx.y close to pageH - margin).
+    // If ensureSpace were still called before the footer draw, it would trigger addPage.
+    // We verify addPage is NOT called merely for the footer line.
+    const addPageCallsBefore = (mockAddPage.mock.calls as unknown[]).length;
+    downloadSchemaScoreReportPdf({
+      metrics: makeMinimalMetrics(),
+      projectName: 'P',
+      versionLabel: 'v1',
+    });
+    // addPage may be called if content overflows, but save() must always be called exactly once.
+    expect(mockSave).toHaveBeenCalledTimes(1);
+    // The footer text should be drawn at pageH - 10 (fixed bottom position).
+    const textCalls = mockText.mock.calls as Array<[string, number, number]>;
+    const footerCall = textCalls.find(([t]) => (t as string).includes('Objectified Studio'));
+    expect(footerCall).toBeDefined();
+    expect(footerCall![2]).toBe(297 - 10); // pageH - 10
+    // addPage should NOT have been called more times than needed for content overflow.
+    // (In this minimal test, content fits easily in one page, so addPage stays at 0.)
+    expect((mockAddPage.mock.calls as unknown[]).length).toBe(addPageCallsBefore);
+  });
+});
+
+// ── downloadSchemaTimelineScoreReportPdf ──────────────────────────────────────
+
+describe('downloadSchemaTimelineScoreReportPdf', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSplitTextToSize.mockImplementation((text: string) => (text as string).split('\n'));
+  });
+
+  it('calls pdf.save() with sanitized project name in filename', () => {
+    downloadSchemaTimelineScoreReportPdf({
+      rows: [{ versionLabel: 'v1', createdAt: null, metrics: makeMinimalMetrics() }],
+      projectName: 'My Schemas',
+    });
+    expect(mockSave).toHaveBeenCalledWith('schema-score-history-My_Schemas.pdf');
+  });
+
+  it('uses fallback filename when projectName is absent', () => {
+    downloadSchemaTimelineScoreReportPdf({ rows: [] });
+    expect(mockSave).toHaveBeenCalledWith('schema-score-history-schema.pdf');
+  });
+
+  it('does not throw for rows with loadError', () => {
+    expect(() =>
+      downloadSchemaTimelineScoreReportPdf({
+        rows: [
+          { versionLabel: 'v1', createdAt: '2024-01-01', metrics: null, loadError: 'Network error' },
+          { versionLabel: 'v2', createdAt: '2024-02-01', metrics: makeMinimalMetrics() },
+        ],
+        projectName: 'Proj',
+      })
+    ).not.toThrow();
+    expect(mockSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not throw for rows with null metrics and no loadError', () => {
+    expect(() =>
+      downloadSchemaTimelineScoreReportPdf({
+        rows: [{ versionLabel: 'v1', createdAt: null, metrics: null }],
+        projectName: 'Proj',
+      })
+    ).not.toThrow();
+    expect(mockSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('handles empty rows array without throwing', () => {
+    expect(() =>
+      downloadSchemaTimelineScoreReportPdf({ rows: [], projectName: 'Empty' })
+    ).not.toThrow();
+    expect(mockSave).toHaveBeenCalledWith('schema-score-history-Empty.pdf');
+  });
+
+  it('meta text uses ASCII arrow, not Unicode', () => {
+    downloadSchemaTimelineScoreReportPdf({ rows: [], projectName: 'P' });
+    // The splitTextToSize mock receives raw text — check it never contains the Unicode arrow.
+    const allTexts = (mockSplitTextToSize.mock.calls as Array<[string]>).map(([t]) => t as string);
+    const combined = allTexts.join('');
+    expect(combined).not.toContain('\u2192'); // Unicode right arrow →
+    expect(combined).toContain('->');
+  });
+
+  it('does not add an extra page just for the footer', () => {
+    downloadSchemaTimelineScoreReportPdf({
+      rows: [{ versionLabel: 'v1', createdAt: '2024-01-01', metrics: makeMinimalMetrics() }],
+      projectName: 'P',
+    });
+    expect(mockSave).toHaveBeenCalledTimes(1);
+    const textCalls = mockText.mock.calls as Array<[string, number, number]>;
+    const footerCall = textCalls.find(([t]) => (t as string).includes('Objectified Studio'));
+    expect(footerCall).toBeDefined();
+    expect(footerCall![2]).toBe(297 - 10);
+    expect((mockAddPage.mock.calls as unknown[]).length).toBe(0);
+  });
+});
+
