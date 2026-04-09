@@ -22,6 +22,8 @@ describe('project-domain-categories', () => {
   test('getProjectDomainCategory resolves known ids', () => {
     expect(getProjectDomainCategory('iot')?.label).toBe('IoT device schemas');
     expect(getProjectDomainCategory('gaming')?.label).toContain('Gaming');
+    expect(getProjectDomainCategory('ecommerce')?.label).toContain('E-commerce');
+    expect(getProjectDomainCategory('logistics')?.label).toContain('Logistics');
   });
 
   test('getProjectDomainCategory returns undefined for unknown or empty', () => {

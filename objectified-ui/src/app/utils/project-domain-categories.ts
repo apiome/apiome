@@ -1,5 +1,5 @@
 /**
- * Optional domain labels for projects (#243). Stored in project metadata as `domainCategory` (id string).
+ * Optional domain labels for projects (#243, #242). Stored in project metadata as `domainCategory` (id string).
  */
 
 export const PROJECT_DOMAIN_CATEGORY_NONE = 'none';
@@ -36,6 +36,41 @@ export const PROJECT_DOMAIN_CATEGORIES: readonly ProjectDomainCategory[] = [
     id: 'media',
     label: 'Media & entertainment',
     hint: 'Content catalogs, rights, playback, and editorial metadata.',
+  },
+  {
+    id: 'ecommerce',
+    label: 'E-commerce (Product, Cart, Order, Payment, Shipping)',
+    hint: 'Catalogs, carts, checkout, payments, and fulfillment models.',
+  },
+  {
+    id: 'healthcare',
+    label: 'Healthcare (Patient, Appointment, Medication, Insurance)',
+    hint: 'Clinical and administrative records, scheduling, prescriptions, and coverage.',
+  },
+  {
+    id: 'finance',
+    label: 'Finance (Account, Transaction, Investment, Loan)',
+    hint: 'Accounts, money movement, portfolios, and lending products.',
+  },
+  {
+    id: 'saas',
+    label: 'SaaS (Tenant, User, Subscription, Usage)',
+    hint: 'Multi-tenant identity, billing, metering, and subscription lifecycle.',
+  },
+  {
+    id: 'education',
+    label: 'Education (Course, Student, Assignment, Grade)',
+    hint: 'Curriculum, enrollment, coursework, and outcomes.',
+  },
+  {
+    id: 'realestate',
+    label: 'Real Estate (Property, Listing, Agent, Transaction)',
+    hint: 'Listings, brokerage, offers, and deal flow.',
+  },
+  {
+    id: 'logistics',
+    label: 'Logistics (Shipment, Route, Warehouse, Delivery)',
+    hint: 'Movements, routing, facilities, and last-mile delivery.',
   },
 ];
 

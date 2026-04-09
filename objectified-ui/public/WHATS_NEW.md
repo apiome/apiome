@@ -24,6 +24,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Projects:
 - **Domain categories (#243):** Optional **domain category** per project (IoT, social, gaming, travel & hospitality, media & entertainment) — stored in project metadata, editable on create/edit, shown as a chip on the projects list
+- **Industry domain patterns (#242):** Seven additional categories — e-commerce, healthcare, finance, SaaS, education, real estate, and logistics — each with representative entity names in the label (e.g. Product, Cart, Order, Payment, Shipping)
 - **Quality score history (#246):** After a successful **Import specification** run, the OpenAPI **overall quality score** is saved in this browser per project; the projects table shows a **sparkline** and latest score, with a **trend chart** and history table in a detail dialog
 - Added ability to start a new project from a template
 
