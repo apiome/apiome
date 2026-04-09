@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from '@jest/globals';
 import {
   addGitImportSavedRepo,
   dedupeKeyGitImportSaved,
@@ -28,7 +29,7 @@ describe('git-import-saved-repos', () => {
   });
 
   it('round-trips through localStorage', () => {
-    const list = addGitImportSavedRepo(userId, {
+    const { items: list, persisted } = addGitImportSavedRepo(userId, {
       accountId: 'acc1',
       provider: 'github',
       repoFullName: 'org/repo',
@@ -36,12 +37,13 @@ describe('git-import-saved-repos', () => {
       refName: 'main',
       specPath: 'spec/openapi.yaml',
     });
+    expect(persisted).toBe(true);
     expect(list).toHaveLength(1);
     expect(loadGitImportSavedRepos(userId)).toEqual(list);
   });
 
   it('replaces duplicate bookmarks (same dedupe key)', () => {
-    const a = addGitImportSavedRepo(userId, {
+    const { items: a } = addGitImportSavedRepo(userId, {
       accountId: 'acc1',
       provider: 'github',
       repoFullName: 'org/repo',
@@ -50,7 +52,7 @@ describe('git-import-saved-repos', () => {
       specPath: '',
     });
     const idFirst = a[0].id;
-    const b = addGitImportSavedRepo(userId, {
+    const { items: b } = addGitImportSavedRepo(userId, {
       accountId: 'acc1',
       provider: 'github',
       repoFullName: 'org/repo',
@@ -84,7 +86,7 @@ describe('git-import-saved-repos', () => {
   });
 
   it('removeGitImportSavedRepo drops by id', () => {
-    const one = addGitImportSavedRepo(userId, {
+    const { items: one } = addGitImportSavedRepo(userId, {
       accountId: 'acc1',
       provider: 'github',
       repoFullName: 'a/a',
@@ -92,7 +94,7 @@ describe('git-import-saved-repos', () => {
       refName: 'main',
       specPath: '',
     });
-    const two = addGitImportSavedRepo(userId, {
+    const { items: two } = addGitImportSavedRepo(userId, {
       accountId: 'acc1',
       provider: 'github',
       repoFullName: 'b/b',
@@ -104,7 +106,7 @@ describe('git-import-saved-repos', () => {
     expect(two).toHaveLength(2);
     const olderId = two.find((e) => e.repoFullName === 'a/a')?.id;
     expect(olderId).toBeDefined();
-    const rest = removeGitImportSavedRepo(userId, olderId!);
+    const { items: rest } = removeGitImportSavedRepo(userId, olderId!);
     expect(rest).toHaveLength(1);
     expect(rest[0].repoFullName).toBe('b/b');
   });
@@ -143,5 +145,23 @@ describe('git-import-saved-repos', () => {
       { bad: true } as never,
     ]);
     expect(loadGitImportSavedRepos(userId)).toHaveLength(1);
+  });
+
+  it('rejects entries with empty required fields', () => {
+    saveGitImportSavedRepos(userId, [
+      // empty accountId
+      { id: 'a', accountId: '', provider: 'github', repoFullName: 'o/r', refKind: 'branch', refName: 'main', specPath: '', savedAt: 1 } as never,
+      // empty provider
+      { id: 'b', accountId: 'acc', provider: '', repoFullName: 'o/r', refKind: 'branch', refName: 'main', specPath: '', savedAt: 1 } as never,
+      // empty repoFullName
+      { id: 'c', accountId: 'acc', provider: 'github', repoFullName: '', refKind: 'branch', refName: 'main', specPath: '', savedAt: 1 } as never,
+      // tag with empty refName
+      { id: 'd', accountId: 'acc', provider: 'github', repoFullName: 'o/r', refKind: 'tag', refName: '', specPath: '', savedAt: 1 } as never,
+      // valid entry
+      { id: 'e', accountId: 'acc', provider: 'github', repoFullName: 'o/r', refKind: 'branch', refName: 'main', specPath: '', savedAt: 1 },
+    ]);
+    const loaded = loadGitImportSavedRepos(userId);
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0].id).toBe('e');
   });
 });

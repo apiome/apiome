@@ -39,18 +39,26 @@ export function dedupeKeyGitImportSaved(
 
 export function isGitImportSavedRepo(v: unknown): v is GitImportSavedRepo {
   if (!isPlainObject(v)) return false;
-  return (
-    typeof v.id === 'string' &&
-    v.id.length > 0 &&
-    typeof v.accountId === 'string' &&
-    typeof v.provider === 'string' &&
-    typeof v.repoFullName === 'string' &&
-    (v.refKind === 'branch' || v.refKind === 'tag') &&
-    typeof v.refName === 'string' &&
-    typeof v.specPath === 'string' &&
-    typeof v.savedAt === 'number' &&
-    Number.isFinite(v.savedAt)
-  );
+  if (
+    typeof v.id !== 'string' ||
+    v.id.length === 0 ||
+    typeof v.accountId !== 'string' ||
+    v.accountId.length === 0 ||
+    typeof v.provider !== 'string' ||
+    v.provider.length === 0 ||
+    typeof v.repoFullName !== 'string' ||
+    v.repoFullName.length === 0 ||
+    (v.refKind !== 'branch' && v.refKind !== 'tag') ||
+    typeof v.refName !== 'string' ||
+    typeof v.specPath !== 'string' ||
+    typeof v.savedAt !== 'number' ||
+    !Number.isFinite(v.savedAt)
+  ) {
+    return false;
+  }
+  // A tag entry must have a non-empty refName
+  if (v.refKind === 'tag' && (v.refName as string).length === 0) return false;
+  return true;
 }
 
 export function loadGitImportSavedRepos(userId: string): GitImportSavedRepo[] {
@@ -68,12 +76,14 @@ export function loadGitImportSavedRepos(userId: string): GitImportSavedRepo[] {
   }
 }
 
-export function saveGitImportSavedRepos(userId: string, items: GitImportSavedRepo[]): void {
-  if (typeof window === 'undefined') return;
+export function saveGitImportSavedRepos(userId: string, items: GitImportSavedRepo[]): boolean {
+  if (typeof window === 'undefined') return false;
   try {
     localStorage.setItem(gitImportSavedReposStorageKey(userId), JSON.stringify(items));
+    return true;
   } catch {
     // quota or private mode
+    return false;
   }
 }
 
@@ -87,7 +97,7 @@ function newSavedId(): string {
 export function addGitImportSavedRepo(
   userId: string,
   entry: Omit<GitImportSavedRepo, 'id' | 'savedAt'>
-): GitImportSavedRepo[] {
+): { persisted: boolean; items: GitImportSavedRepo[] } {
   const existing = loadGitImportSavedRepos(userId);
   const key = dedupeKeyGitImportSaved(entry);
   const filtered = existing.filter((e) => dedupeKeyGitImportSaved(e) !== key);
@@ -97,13 +107,16 @@ export function addGitImportSavedRepo(
     savedAt: Date.now(),
   };
   const next = [newEntry, ...filtered].slice(0, MAX_GIT_IMPORT_SAVED_REPOS);
-  saveGitImportSavedRepos(userId, next);
-  return next;
+  const persisted = saveGitImportSavedRepos(userId, next);
+  return { persisted, items: next };
 }
 
-export function removeGitImportSavedRepo(userId: string, id: string): GitImportSavedRepo[] {
+export function removeGitImportSavedRepo(
+  userId: string,
+  id: string
+): { persisted: boolean; items: GitImportSavedRepo[] } {
   const existing = loadGitImportSavedRepos(userId);
   const next = existing.filter((e) => e.id !== id);
-  saveGitImportSavedRepos(userId, next);
-  return next;
+  const persisted = saveGitImportSavedRepos(userId, next);
+  return { persisted, items: next };
 }

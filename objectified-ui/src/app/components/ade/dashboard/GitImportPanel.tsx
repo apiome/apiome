@@ -165,7 +165,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
     path: string,
     ref: string
   ) => {
-    let url = `/api/sso/${account.provider}/files?accountId=${account.id}&repo=${encodeURIComponent(repo.full_name)}&path=${encodeURIComponent(path)}`;
+    let url = `/api/sso/${account.provider.toLowerCase()}/files?accountId=${encodeURIComponent(account.id)}&repo=${encodeURIComponent(repo.full_name)}&path=${encodeURIComponent(path)}`;
     if (account.provider?.toLowerCase() === 'github' && ref) {
       url += `&ref=${encodeURIComponent(ref)}`;
     }
@@ -221,7 +221,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
 
     try {
       // Fetch repositories for the selected account
-      const response = await fetch(`/api/sso/${account.provider}/repos?accountId=${account.id}`);
+      const response = await fetch(`/api/sso/${account.provider.toLowerCase()}/repos?accountId=${encodeURIComponent(account.id)}`);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch repositories: ${response.statusText}`);
@@ -383,7 +383,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
     try {
       const ref = resolveContentRef();
       const response = await fetch(
-        `/api/sso/${selectedAccount.provider}/content?accountId=${selectedAccount.id}&repo=${encodeURIComponent(selectedRepo.full_name)}&path=${encodeURIComponent(file.path)}&branch=${encodeURIComponent(ref)}`
+        `/api/sso/${selectedAccount.provider.toLowerCase()}/content?accountId=${encodeURIComponent(selectedAccount.id)}&repo=${encodeURIComponent(selectedRepo.full_name)}&path=${encodeURIComponent(file.path)}&branch=${encodeURIComponent(ref)}`
       );
 
       if (!response.ok) {
@@ -437,7 +437,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
     try {
       const ref = resolveContentRef();
       const response = await fetch(
-        `/api/sso/${selectedAccount.provider}/content?accountId=${selectedAccount.id}&repo=${encodeURIComponent(selectedRepo.full_name)}&path=${encodeURIComponent(raw)}&branch=${encodeURIComponent(ref)}`
+        `/api/sso/${selectedAccount.provider.toLowerCase()}/content?accountId=${encodeURIComponent(selectedAccount.id)}&repo=${encodeURIComponent(selectedRepo.full_name)}&path=${encodeURIComponent(raw)}&branch=${encodeURIComponent(ref)}`
       );
 
       if (!response.ok) {
@@ -467,21 +467,25 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
     const refName =
       selectedTag || selectedBranch || selectedRepo.default_branch || 'main';
     const specPath = normalizeGitImportSpecPath(specPathInput);
-    setSavedRepos(
-      addGitImportSavedRepo(userId, {
-        accountId: selectedAccount.id,
-        provider: selectedAccount.provider,
-        repoFullName: selectedRepo.full_name,
-        refKind,
-        refName,
-        specPath,
-      })
-    );
-    setErrorMessage('');
+    const { persisted, items } = addGitImportSavedRepo(userId, {
+      accountId: selectedAccount.id,
+      provider: selectedAccount.provider,
+      repoFullName: selectedRepo.full_name,
+      refKind,
+      refName,
+      specPath,
+    });
+    setSavedRepos(items);
+    if (!persisted) {
+      setErrorMessage('Failed to save bookmark. Storage may be full or unavailable.');
+    } else {
+      setErrorMessage('');
+    }
   };
 
   const handleRemoveSaved = (id: string) => {
-    setSavedRepos(removeGitImportSavedRepo(userId, id));
+    const { items } = removeGitImportSavedRepo(userId, id);
+    setSavedRepos(items);
   };
 
   const handleOpenSaved = async (bookmark: GitImportSavedRepo) => {
@@ -502,7 +506,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
     setRepoSearchQuery('');
 
     try {
-      const reposRes = await fetch(`/api/sso/${account.provider}/repos?accountId=${account.id}`);
+      const reposRes = await fetch(`/api/sso/${account.provider.toLowerCase()}/repos?accountId=${encodeURIComponent(account.id)}`);
       if (!reposRes.ok) {
         throw new Error(`Failed to fetch repositories: ${reposRes.statusText}`);
       }
