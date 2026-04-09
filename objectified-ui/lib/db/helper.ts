@@ -5529,6 +5529,16 @@ async function copySingleClassBetweenVersions(
   }
 }
 
+/** Version row returned by merge tip queries (merge preview and merge apply). */
+type MergeBranchTipRow = {
+  id: string;
+  project_id: string;
+  version_id: string;
+  description: string | null;
+  published: boolean;
+  project_name: string | null;
+};
+
 /**
  * Merge source branch into target branch (server-side, after session auth).
  * Creates a new version row with both parents when auto-merge succeeds (no overlapping modified/removed paths).
@@ -5583,7 +5593,8 @@ export async function mergeVersionBranchesServer(input: {
     if (tips.rowCount !== 2) {
       return JSON.stringify({ success: false, error: 'Version tip not accessible', status: 403 });
     }
-    const byId = new Map(tips.rows.map((r: any) => [r.id, r]));
+    const tipRows = tips.rows as MergeBranchTipRow[];
+    const byId = new Map<string, MergeBranchTipRow>(tipRows.map((r) => [r.id, r]));
     const sourceRow = byId.get(sourceTipId);
     const targetRow = byId.get(targetTipId);
     if (!sourceRow || !targetRow) {
@@ -5738,7 +5749,7 @@ export async function mergeVersionBranchesPreviewServer(input: {
     const targetTipId = tgtBranch.rows[0].tip_version_id;
 
     const tips = await connectionPool.query(
-      `SELECT v.id, v.project_id, v.version_id, v.description, p.name AS project_name
+      `SELECT v.id, v.project_id, v.version_id, v.description, v.published, p.name AS project_name
        FROM odb.versions v
        JOIN odb.projects p ON v.project_id = p.id
        WHERE v.id = ANY($1::uuid[]) AND p.tenant_id = $2 AND v.deleted_at IS NULL`,
@@ -5747,9 +5758,10 @@ export async function mergeVersionBranchesPreviewServer(input: {
     if (tips.rowCount !== 2) {
       return JSON.stringify({ success: false, error: 'Version tip not accessible', status: 403 });
     }
-    const byId = new Map(tips.rows.map((r: any) => [r.id, r]));
-    const sourceRow = byId.get(sourceTipId);
-    const targetRow = byId.get(targetTipId);
+    const previewTipRows = tips.rows as MergeBranchTipRow[];
+    const byIdPreview = new Map<string, MergeBranchTipRow>(previewTipRows.map((r) => [r.id, r]));
+    const sourceRow = byIdPreview.get(sourceTipId);
+    const targetRow = byIdPreview.get(targetTipId);
     if (!sourceRow || !targetRow) {
       return JSON.stringify({ success: false, error: 'Version tip not accessible', status: 403 });
     }
