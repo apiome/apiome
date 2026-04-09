@@ -73,7 +73,6 @@ export const authOptions: NextAuthOptions = {
         }
 
         const gh = await credentialsGithub(payload);
-        if (typeof gh === 'string') return gh;
         return gh;
       }
 
@@ -96,7 +95,6 @@ export const authOptions: NextAuthOptions = {
         }
 
         const gl = await credentialsGitlab(payload);
-        if (typeof gl === 'string') return gl;
         return gl;
       }
 

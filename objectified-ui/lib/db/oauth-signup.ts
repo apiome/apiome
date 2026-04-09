@@ -37,8 +37,7 @@ export async function upsertOauthSignupPending(
        email = EXCLUDED.email,
        account_json = EXCLUDED.account_json,
        profile_json = EXCLUDED.profile_json,
-       expires_at = EXCLUDED.expires_at,
-       created_at = CURRENT_TIMESTAMP
+       expires_at = EXCLUDED.expires_at
      RETURNING id`,
     [provider, providerAccountId, email, JSON.stringify(account), JSON.stringify(profile), expiresAt]
   );

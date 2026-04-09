@@ -145,7 +145,11 @@ const LoginClient: React.FC<LoginClientProps> = ({ error }) => {
     setIsSSOLoading(true);
     try {
       if (isSignUp) {
-        const res = await fetch(`/api/auth/signup-intent?provider=${encodeURIComponent(provider)}`);
+        const res = await fetch(`/api/auth/signup-intent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider }),
+        });
         if (!res.ok) {
           setSignupMessage({ type: 'error', text: 'Could not start sign-up. Please try again.' });
           setIsSSOLoading(false);

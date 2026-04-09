@@ -379,7 +379,12 @@ export async function createProject(tenantId: string, creatorId: string, name: s
     const slugError = validateSlug(slug.trim());
     if (slugError) return errorResponse(slugError);
 
-    const planErr = await getPlanBlockMessageForNewProject(creatorId);
+    const session = await getAuthSession();
+    const sessionUserId = (session?.user as any)?.user_id;
+    if (!sessionUserId) return errorResponse('Unauthorized');
+    if (sessionUserId !== creatorId) return errorResponse('Unauthorized');
+
+    const planErr = await getPlanBlockMessageForNewProject(sessionUserId);
     if (planErr) return errorResponse(planErr);
 
     const result = await connectionPool.query(
@@ -979,7 +984,12 @@ export async function createVersion(projectId: string, creatorId: string, versio
       return JSON.stringify({ success: false, error: 'Version ID must follow semantic versioning format (e.g., 1.0.0 or 1.0.0b)' });
     }
 
-    const planErr = await getPlanBlockMessageForNewVersion(creatorId);
+    const session = await getAuthSession();
+    const sessionUserId = (session?.user as any)?.user_id;
+    if (!sessionUserId) return JSON.stringify({ success: false, error: 'Unauthorized' });
+    if (sessionUserId !== creatorId) return JSON.stringify({ success: false, error: 'Unauthorized' });
+
+    const planErr = await getPlanBlockMessageForNewVersion(sessionUserId);
     if (planErr) return JSON.stringify({ success: false, error: planErr });
 
     const result = await connectionPool.query(

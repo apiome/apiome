@@ -74,7 +74,7 @@ export async function createProjectTx(
     const slugError = validateSlug(slug.trim());
     if (slugError) return errorResponse(slugError);
 
-    const planErr = await getPlanBlockMessageForNewProject(creatorId);
+    const planErr = await getPlanBlockMessageForNewProject(creatorId, client);
     if (planErr) return errorResponse(planErr);
 
     const result = await client.query(
@@ -113,7 +113,7 @@ export async function createVersionTx(
   try {
     if (!versionId?.trim()) return errorResponse('Version ID is required');
 
-    const planErr = await getPlanBlockMessageForNewVersion(creatorId);
+    const planErr = await getPlanBlockMessageForNewVersion(creatorId, client);
     if (planErr) return errorResponse(planErr);
 
     const result = await client.query(

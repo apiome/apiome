@@ -9,8 +9,12 @@ export type UserEntitlementRow = {
   max_versions: number;
 };
 
-async function getEntitlements(userId: string): Promise<UserEntitlementRow | null> {
-  const result = await connectionPool.query(
+/** Minimal query interface satisfied by both the global pool and a transaction client. */
+type Queryable = { query: (text: string, params?: any[]) => Promise<any> };
+
+async function getEntitlements(userId: string, client?: Queryable): Promise<UserEntitlementRow | null> {
+  const db = client ?? connectionPool;
+  const result = await db.query(
     `SELECT plan_code, max_tenants, max_projects, max_versions
      FROM odb.user_entitlements WHERE user_id = $1`,
     [userId]
@@ -19,8 +23,9 @@ async function getEntitlements(userId: string): Promise<UserEntitlementRow | nul
   return result.rows[0];
 }
 
-async function countProjectsForUser(userId: string): Promise<number> {
-  const result = await connectionPool.query(
+async function countProjectsForUser(userId: string, client?: Queryable): Promise<number> {
+  const db = client ?? connectionPool;
+  const result = await db.query(
     `SELECT COUNT(DISTINCT p.id)::int AS c
      FROM odb.projects p
      INNER JOIN odb.tenant_users tu ON tu.tenant_id = p.tenant_id AND tu.user_id = $1
@@ -30,8 +35,9 @@ async function countProjectsForUser(userId: string): Promise<number> {
   return result.rows[0]?.c ?? 0;
 }
 
-async function countVersionsForUser(userId: string): Promise<number> {
-  const result = await connectionPool.query(
+async function countVersionsForUser(userId: string, client?: Queryable): Promise<number> {
+  const db = client ?? connectionPool;
+  const result = await db.query(
     `SELECT COUNT(DISTINCT v.id)::int AS c
      FROM odb.versions v
      INNER JOIN odb.projects p ON p.id = v.project_id AND p.deleted_at IS NULL
@@ -43,10 +49,10 @@ async function countVersionsForUser(userId: string): Promise<number> {
 }
 
 /** Returns an error message if another project would exceed the plan, otherwise null. */
-export async function getPlanBlockMessageForNewProject(userId: string): Promise<string | null> {
-  const ent = await getEntitlements(userId);
+export async function getPlanBlockMessageForNewProject(userId: string, client?: Queryable): Promise<string | null> {
+  const ent = await getEntitlements(userId, client);
   if (!ent) return null;
-  const n = await countProjectsForUser(userId);
+  const n = await countProjectsForUser(userId, client);
   if (n >= ent.max_projects) {
     return `Your ${ent.plan_code} plan allows up to ${ent.max_projects} project(s). Upgrade or remove a project to add another.`;
   }
@@ -54,10 +60,10 @@ export async function getPlanBlockMessageForNewProject(userId: string): Promise<
 }
 
 /** Returns an error message if another version would exceed the plan, otherwise null. */
-export async function getPlanBlockMessageForNewVersion(userId: string): Promise<string | null> {
-  const ent = await getEntitlements(userId);
+export async function getPlanBlockMessageForNewVersion(userId: string, client?: Queryable): Promise<string | null> {
+  const ent = await getEntitlements(userId, client);
   if (!ent) return null;
-  const n = await countVersionsForUser(userId);
+  const n = await countVersionsForUser(userId, client);
   if (n >= ent.max_versions) {
     return `Your ${ent.plan_code} plan allows up to ${ent.max_versions} version(s). Upgrade or remove a version to add another.`;
   }
