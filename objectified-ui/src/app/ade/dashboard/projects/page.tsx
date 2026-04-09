@@ -255,7 +255,7 @@ const Projects = () => {
     setMetadataLicenseName(metadata.license?.name || '');
     setMetadataLicenseIdentifier(metadata.license?.identifier || '');
     setMetadataLicenseUrl(metadata.license?.url || '');
-    setProjectDomainCategoryId(getProjectDomainCategory(metadata.domainCategory)?.id ?? PROJECT_DOMAIN_CATEGORY_NONE);
+    setProjectDomainCategoryId(metadata.domainCategory ?? PROJECT_DOMAIN_CATEGORY_NONE);
     setShowEditDialog(true);
   };
 
@@ -475,7 +475,9 @@ const Projects = () => {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
-                {projects.map((project) => (
+                {projects.map((project) => {
+                  const domainCategoryLabel = getProjectDomainCategoryLabel(project.metadata?.domainCategory);
+                  return (
                   <tr key={project.id} className="hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 transition-all duration-200">
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1">
@@ -485,12 +487,12 @@ const Projects = () => {
                         <div className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate" title={(project as any).slug}>
                           {(project as any).slug || '—'}
                         </div>
-                        {getProjectDomainCategoryLabel(project.metadata?.domainCategory) ? (
+                        {domainCategoryLabel ? (
                           <span
                             className="inline-flex mt-1 max-w-xs items-center rounded-md px-2 py-0.5 text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300"
-                            title={getProjectDomainCategoryLabel(project.metadata?.domainCategory)}
+                            title={domainCategoryLabel}
                           >
-                            {getProjectDomainCategoryLabel(project.metadata?.domainCategory)}
+                            {domainCategoryLabel}
                           </span>
                         ) : null}
                       </div>
@@ -648,7 +650,8 @@ const Projects = () => {
                       </div>
                     </td>
                 </tr>
-              ))}
+                  );
+                })}
             </tbody>
           </table>
           </div>
