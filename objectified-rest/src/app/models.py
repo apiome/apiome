@@ -221,6 +221,8 @@ class VersionSchema(BaseModel):
     published: bool = False
     published_at: Optional[Union[datetime, str]] = None
     enabled: bool = True
+    parent_version_id: Optional[str] = None
+    merge_parent_version_id: Optional[str] = None
     creator_name: Optional[str] = None
     creator_email: Optional[str] = None
     project_name: Optional[str] = None

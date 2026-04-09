@@ -1,5 +1,7 @@
 'use server';
 
+import { generateOpenApiSpec } from '@/app/utils/openapi';
+import { mergePreviewFromSpecs } from '../version-merge';
 import { getPlanBlockMessageForNewProject, getPlanBlockMessageForNewVersion } from './plan-entitlements';
 import { getAuthSession } from '../auth/server-session';
 import { buildGroupMetadataForSync } from '../utils/group-metadata';
@@ -5337,6 +5339,449 @@ export async function importPrimitivesFromSchema(
   } catch (error: any) {
     console.error('Error importing primitives from schema:', error);
     return JSON.stringify({ success: false, error: error.message });
+  }
+}
+
+const VERSION_BRANCH_NAME_RE = /^[a-zA-Z][a-zA-Z0-9._\-/]{0,254}$/;
+
+export async function buildOpenApiSpecJsonForVersion(
+  versionRow: { id: string; version_id: string; description?: string | null; project_id: string },
+  projectName: string | null
+): Promise<string> {
+  const classesResult = await getClassesForVersion(versionRow.id);
+  const classesData = JSON.parse(classesResult) as unknown[];
+  const classesWithProperties = await Promise.all(
+    classesData.map(async (cls: any) => {
+      const propsResult = await getPropertiesForClass(cls.id);
+      return { ...cls, properties: JSON.parse(propsResult) };
+    })
+  );
+  return generateOpenApiSpec(classesWithProperties, {
+    projectName: projectName ?? undefined,
+    version: versionRow.version_id,
+    description: versionRow.description || undefined,
+  });
+}
+
+export function isValidVersionBranchName(name: string): boolean {
+  return VERSION_BRANCH_NAME_RE.test(name.trim());
+}
+
+export async function assertProjectInTenant(projectId: string, tenantId: string): Promise<boolean> {
+  const r = await connectionPool.query(
+    `SELECT 1 FROM odb.projects p WHERE p.id = $1 AND p.tenant_id = $2 AND p.deleted_at IS NULL`,
+    [projectId, tenantId]
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+/** List named branches for a project (tips are version row ids). */
+export async function listVersionBranches(projectId: string, tenantId: string) {
+  try {
+    const ok = await assertProjectInTenant(projectId, tenantId);
+    if (!ok) return JSON.stringify({ success: false, error: 'Project not found' });
+    const result = await connectionPool.query(
+      `SELECT b.id, b.project_id, b.name, b.tip_version_id, b.created_by, b.created_at, b.updated_at,
+              v.version_id AS tip_version_string
+       FROM odb.version_branches b
+       JOIN odb.versions v ON v.id = b.tip_version_id
+       JOIN odb.projects p ON b.project_id = p.id
+       WHERE b.project_id = $1 AND p.tenant_id = $2 AND v.deleted_at IS NULL
+       ORDER BY b.name ASC`,
+      [projectId, tenantId]
+    );
+    return JSON.stringify({ success: true, branches: result.rows });
+  } catch (error: any) {
+    console.error('listVersionBranches:', error);
+    return JSON.stringify({ success: false, error: error.message });
+  }
+}
+
+/** Create a named branch whose tip is an existing version (revision). */
+export async function createVersionBranch(
+  projectId: string,
+  tenantId: string,
+  name: string,
+  fromVersionId: string,
+  userId: string
+) {
+  try {
+    const trimmed = name.trim();
+    if (!isValidVersionBranchName(trimmed)) {
+      return JSON.stringify({
+        success: false,
+        error:
+          'Branch name must start with a letter and contain only letters, digits, . _ - / (max 255 chars)',
+      });
+    }
+    const ok = await assertProjectInTenant(projectId, tenantId);
+    if (!ok) return JSON.stringify({ success: false, error: 'Project not found' });
+    const ver = await connectionPool.query(
+      `SELECT v.id, v.project_id FROM odb.versions v
+       JOIN odb.projects p ON v.project_id = p.id
+       WHERE v.id = $1 AND v.project_id = $2 AND p.tenant_id = $3 AND v.deleted_at IS NULL`,
+      [fromVersionId, projectId, tenantId]
+    );
+    if (ver.rowCount === 0) {
+      return JSON.stringify({ success: false, error: 'Source version not found in this project' });
+    }
+    const ins = await connectionPool.query(
+      `INSERT INTO odb.version_branches (project_id, name, tip_version_id, created_by)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, project_id, name, tip_version_id, created_by, created_at, updated_at`,
+      [projectId, trimmed, fromVersionId, userId]
+    );
+    return JSON.stringify({ success: true, branch: ins.rows[0] });
+  } catch (error: any) {
+    if (error.code === '23505') {
+      return JSON.stringify({ success: false, error: 'A branch with this name already exists for this project' });
+    }
+    console.error('createVersionBranch:', error);
+    return JSON.stringify({ success: false, error: error.message });
+  }
+}
+
+export async function deleteVersionBranch(
+  branchId: string,
+  projectId: string,
+  tenantId: string,
+  userId: string,
+  isTenantAdmin: boolean
+) {
+  try {
+    const ok = await assertProjectInTenant(projectId, tenantId);
+    if (!ok) return JSON.stringify({ success: false, error: 'Project not found' });
+    const row = await connectionPool.query(
+      `SELECT b.id, b.created_by FROM odb.version_branches b
+       JOIN odb.projects p ON b.project_id = p.id
+       WHERE b.id = $1 AND b.project_id = $2 AND p.tenant_id = $3`,
+      [branchId, projectId, tenantId]
+    );
+    if (row.rowCount === 0) return JSON.stringify({ success: false, error: 'Branch not found' });
+    if (!isTenantAdmin && row.rows[0].created_by !== userId) {
+      return JSON.stringify({ success: false, error: 'Only the branch creator or a tenant admin can delete this branch' });
+    }
+    await connectionPool.query(`DELETE FROM odb.version_branches WHERE id = $1`, [branchId]);
+    return JSON.stringify({ success: true });
+  } catch (error: any) {
+    console.error('deleteVersionBranch:', error);
+    return JSON.stringify({ success: false, error: error.message });
+  }
+}
+
+async function copySingleClassBetweenVersions(
+  sourceVersionId: string,
+  targetVersionId: string,
+  className: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const result = await connectionPool.query(
+      `INSERT INTO odb.classes (version_id, name, description, schema, enabled, canvas_metadata)
+       SELECT $1, name, description, schema, enabled, canvas_metadata
+       FROM odb.classes
+       WHERE version_id = $2 AND name = $3 AND deleted_at IS NULL
+       RETURNING id, name`,
+      [targetVersionId, sourceVersionId, className]
+    );
+    if (result.rowCount === 0) {
+      return { success: false, error: `Class ${className} not found on source version` };
+    }
+    const copiedClass = result.rows[0];
+    const originalClassResult = await connectionPool.query(
+      `SELECT id FROM odb.classes
+       WHERE version_id = $1 AND name = $2 AND deleted_at IS NULL`,
+      [sourceVersionId, copiedClass.name]
+    );
+    if (originalClassResult.rowCount === 0) {
+      return { success: false, error: 'Original class missing' };
+    }
+    const originalClassId = originalClassResult.rows[0].id;
+    const newClassId = copiedClass.id;
+    const originalPropertiesResult = await connectionPool.query(
+      `SELECT id, property_id, name, description, data, parent_id
+       FROM odb.class_properties
+       WHERE class_id = $1`,
+      [originalClassId]
+    );
+    const oldToNewIdMap = new Map<string, string>();
+    const allProperties = originalPropertiesResult.rows;
+    const processedIds = new Set<string>();
+
+    const copyPropertiesRecursively = async (parentId: string | null) => {
+      const propsAtThisLevel = allProperties.filter(
+        (p: any) =>
+          (p.parent_id === parentId || (p.parent_id === null && parentId === null)) && !processedIds.has(p.id)
+      );
+      for (const prop of propsAtThisLevel) {
+        const newParentId = prop.parent_id ? oldToNewIdMap.get(prop.parent_id) || null : null;
+        const insertResult = await connectionPool.query(
+          `INSERT INTO odb.class_properties (class_id, property_id, name, description, data, parent_id)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING id`,
+          [newClassId, prop.property_id, prop.name, prop.description, prop.data, newParentId]
+        );
+        const newId = insertResult.rows[0].id;
+        oldToNewIdMap.set(prop.id, newId);
+        processedIds.add(prop.id);
+        await copyPropertiesRecursively(prop.id);
+      }
+    };
+    await copyPropertiesRecursively(null);
+    return { success: true };
+  } catch (error: any) {
+    console.error('copySingleClassBetweenVersions:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Merge source branch into target branch (server-side, after session auth).
+ * Creates a new version row with both parents when auto-merge succeeds (no overlapping modified/removed paths).
+ */
+export async function mergeVersionBranchesServer(input: {
+  projectId: string;
+  tenantId: string;
+  userId: string;
+  sourceBranchName: string;
+  targetBranchName: string;
+  baseRevisionId: string;
+}) {
+  try {
+    const { projectId, tenantId, userId, sourceBranchName, targetBranchName, baseRevisionId } = input;
+    const ok = await assertProjectInTenant(projectId, tenantId);
+    if (!ok) return JSON.stringify({ success: false, error: 'Project not found', status: 404 });
+
+    const srcBranch = await connectionPool.query(
+      `SELECT b.id, b.tip_version_id, b.name FROM odb.version_branches b
+       JOIN odb.projects p ON b.project_id = p.id
+       WHERE b.project_id = $1 AND p.tenant_id = $2 AND b.name = $3`,
+      [projectId, tenantId, sourceBranchName.trim()]
+    );
+    const tgtBranch = await connectionPool.query(
+      `SELECT b.id, b.tip_version_id, b.name FROM odb.version_branches b
+       JOIN odb.projects p ON b.project_id = p.id
+       WHERE b.project_id = $1 AND p.tenant_id = $2 AND b.name = $3`,
+      [projectId, tenantId, targetBranchName.trim()]
+    );
+    if (srcBranch.rowCount === 0 || tgtBranch.rowCount === 0) {
+      return JSON.stringify({ success: false, error: 'Source or target branch not found', status: 404 });
+    }
+    const sourceTipId: string = srcBranch.rows[0].tip_version_id;
+    const targetTipId: string = tgtBranch.rows[0].tip_version_id;
+
+    if (targetTipId !== baseRevisionId) {
+      return JSON.stringify({
+        success: false,
+        error: 'Target branch tip does not match baseRevisionId (stale head or wrong base).',
+        status: 409,
+        code: 'STALE_HEAD',
+      });
+    }
+
+    const tips = await connectionPool.query(
+      `SELECT v.id, v.project_id, v.version_id, v.description, v.published, p.name AS project_name
+       FROM odb.versions v
+       JOIN odb.projects p ON v.project_id = p.id
+       WHERE v.id = ANY($1::uuid[]) AND p.tenant_id = $2 AND v.deleted_at IS NULL`,
+      [[sourceTipId, targetTipId], tenantId]
+    );
+    if (tips.rowCount !== 2) {
+      return JSON.stringify({ success: false, error: 'Version tip not accessible', status: 403 });
+    }
+    const byId = new Map(tips.rows.map((r: any) => [r.id, r]));
+    const sourceRow = byId.get(sourceTipId);
+    const targetRow = byId.get(targetTipId);
+    if (!sourceRow || !targetRow) {
+      return JSON.stringify({ success: false, error: 'Version tip not accessible', status: 403 });
+    }
+    if (sourceRow.published || targetRow.published) {
+      return JSON.stringify({
+        success: false,
+        error: 'Cannot merge published or frozen versions',
+        status: 409,
+        code: 'PUBLISHED_VERSION',
+      });
+    }
+
+    const targetSpec = await buildOpenApiSpecJsonForVersion(
+      {
+        id: targetRow.id,
+        version_id: targetRow.version_id,
+        description: targetRow.description,
+        project_id: targetRow.project_id,
+      },
+      targetRow.project_name
+    );
+    const sourceSpec = await buildOpenApiSpecJsonForVersion(
+      {
+        id: sourceRow.id,
+        version_id: sourceRow.version_id,
+        description: sourceRow.description,
+        project_id: sourceRow.project_id,
+      },
+      sourceRow.project_name
+    );
+
+    const { classification } = await mergePreviewFromSpecs(targetSpec, sourceSpec);
+    if (!classification.canAutoMerge) {
+      return JSON.stringify({
+        success: false,
+        error: 'Merge blocked: overlapping schema changes detected',
+        status: 409,
+        code: 'MERGE_CONFLICT',
+        conflictPaths: classification.conflictPaths,
+      });
+    }
+
+    const latest = await getLatestVersionForProject(projectId);
+    const newVersionString = latest ? bumpPatchVersion(latest) : '0.1.0';
+
+    const planErr = await getPlanBlockMessageForNewVersion(userId);
+    if (planErr) {
+      return JSON.stringify({ success: false, error: planErr, status: 403 });
+    }
+
+    const insVer = await connectionPool.query(
+      `INSERT INTO odb.versions (project_id, creator_id, version_id, description, change_log,
+        parent_version_id, merge_parent_version_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [
+        projectId,
+        userId,
+        newVersionString,
+        `Merge ${sourceBranchName} into ${targetBranchName}`,
+        null,
+        targetTipId,
+        sourceTipId,
+      ]
+    );
+    const newVersion = insVer.rows[0];
+
+    const copyAll = await copyClassesFromVersion(targetTipId, newVersion.id);
+    const copyAllParsed = JSON.parse(copyAll);
+    if (!copyAllParsed.success) {
+      await connectionPool.query(`DELETE FROM odb.versions WHERE id = $1`, [newVersion.id]);
+      return JSON.stringify({
+        success: false,
+        error: copyAllParsed.error || 'Failed to copy target schema classes',
+        status: 500,
+      });
+    }
+
+    for (const schemaName of [...new Set(classification.addedSchemaNames)]) {
+      const one = await copySingleClassBetweenVersions(sourceTipId, newVersion.id, schemaName);
+      if (!one.success) {
+        await connectionPool.query(`DELETE FROM odb.versions WHERE id = $1`, [newVersion.id]);
+        return JSON.stringify({
+          success: false,
+          error: one.error || `Failed to copy added class ${schemaName}`,
+          status: 500,
+        });
+      }
+    }
+
+    await connectionPool.query(
+      `UPDATE odb.version_branches SET tip_version_id = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+      [newVersion.id, tgtBranch.rows[0].id]
+    );
+
+    return JSON.stringify({
+      success: true,
+      version: newVersion,
+      mergedAddedSchemas: classification.addedSchemaNames,
+    });
+  } catch (error: any) {
+    console.error('mergeVersionBranchesServer:', error);
+    if (error.code === '23505') {
+      return JSON.stringify({
+        success: false,
+        error: 'Version id collision after bump; retry merge',
+        status: 409,
+      });
+    }
+    return JSON.stringify({ success: false, error: error.message, status: 500 });
+  }
+}
+
+/** Dry-run merge preview (no DB writes). */
+export async function mergeVersionBranchesPreviewServer(input: {
+  projectId: string;
+  tenantId: string;
+  sourceBranchName: string;
+  targetBranchName: string;
+}) {
+  try {
+    const { projectId, tenantId, sourceBranchName, targetBranchName } = input;
+    const ok = await assertProjectInTenant(projectId, tenantId);
+    if (!ok) return JSON.stringify({ success: false, error: 'Project not found', status: 404 });
+
+    const srcBranch = await connectionPool.query(
+      `SELECT b.tip_version_id FROM odb.version_branches b
+       JOIN odb.projects p ON b.project_id = p.id
+       WHERE b.project_id = $1 AND p.tenant_id = $2 AND b.name = $3`,
+      [projectId, tenantId, sourceBranchName.trim()]
+    );
+    const tgtBranch = await connectionPool.query(
+      `SELECT b.tip_version_id FROM odb.version_branches b
+       JOIN odb.projects p ON b.project_id = p.id
+       WHERE b.project_id = $1 AND p.tenant_id = $2 AND b.name = $3`,
+      [projectId, tenantId, targetBranchName.trim()]
+    );
+    if (srcBranch.rowCount === 0 || tgtBranch.rowCount === 0) {
+      return JSON.stringify({ success: false, error: 'Source or target branch not found', status: 404 });
+    }
+    const sourceTipId = srcBranch.rows[0].tip_version_id;
+    const targetTipId = tgtBranch.rows[0].tip_version_id;
+
+    const tips = await connectionPool.query(
+      `SELECT v.id, v.project_id, v.version_id, v.description, p.name AS project_name
+       FROM odb.versions v
+       JOIN odb.projects p ON v.project_id = p.id
+       WHERE v.id = ANY($1::uuid[]) AND p.tenant_id = $2 AND v.deleted_at IS NULL`,
+      [[sourceTipId, targetTipId], tenantId]
+    );
+    if (tips.rowCount !== 2) {
+      return JSON.stringify({ success: false, error: 'Version tip not accessible', status: 403 });
+    }
+    const byId = new Map(tips.rows.map((r: any) => [r.id, r]));
+    const sourceRow = byId.get(sourceTipId);
+    const targetRow = byId.get(targetTipId);
+    if (!sourceRow || !targetRow) {
+      return JSON.stringify({ success: false, error: 'Version tip not accessible', status: 403 });
+    }
+
+    const targetSpec = await buildOpenApiSpecJsonForVersion(
+      {
+        id: targetRow.id,
+        version_id: targetRow.version_id,
+        description: targetRow.description,
+        project_id: targetRow.project_id,
+      },
+      targetRow.project_name
+    );
+    const sourceSpec = await buildOpenApiSpecJsonForVersion(
+      {
+        id: sourceRow.id,
+        version_id: sourceRow.version_id,
+        description: sourceRow.description,
+        project_id: sourceRow.project_id,
+      },
+      sourceRow.project_name
+    );
+
+    const { summary, classification } = await mergePreviewFromSpecs(targetSpec, sourceSpec);
+    return JSON.stringify({
+      success: true,
+      sourceTipVersionId: sourceTipId,
+      targetTipVersionId: targetTipId,
+      summary,
+      classification,
+      mergeBaseVersionId: null,
+    });
+  } catch (error: any) {
+    console.error('mergeVersionBranchesPreviewServer:', error);
+    return JSON.stringify({ success: false, error: error.message, status: 500 });
   }
 }
 

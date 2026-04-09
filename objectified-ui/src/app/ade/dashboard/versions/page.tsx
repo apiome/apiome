@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState, useRef } from 'react';
-import { Plus, Edit2, Trash2, Package, AlertCircle, Lock, Unlock, CheckCircle, Eye, Copy, MoreVertical, Network, Snowflake } from 'lucide-react';
+import { Plus, Edit2, Trash2, Package, AlertCircle, Lock, Unlock, CheckCircle, Eye, Copy, MoreVertical, Network, Snowflake, GitBranch, GitMerge } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import {
   Dialog,
@@ -66,6 +66,17 @@ interface Version {
   published_at: string | null;
   creator_name: string;
   creator_email: string;
+  parent_version_id?: string | null;
+  merge_parent_version_id?: string | null;
+}
+
+interface VersionBranchRow {
+  id: string;
+  name: string;
+  tip_version_id: string;
+  tip_version_string?: string;
+  created_at?: string;
+  created_by?: string | null;
 }
 
 const Versions = () => {
@@ -126,6 +137,24 @@ const Versions = () => {
   const [hasClassSchemaMap, setHasClassSchemaMap] = useState<Record<string, boolean>>({});
   const [freezingSchemaVersionId, setFreezingSchemaVersionId] = useState<string | null>(null);
 
+  const [versionBranches, setVersionBranches] = useState<VersionBranchRow[]>([]);
+  const [showBranchDialog, setShowBranchDialog] = useState(false);
+  const [branchFromVersionId, setBranchFromVersionId] = useState<string>('');
+  const [branchNameInput, setBranchNameInput] = useState('');
+  const [branchSaving, setBranchSaving] = useState(false);
+
+  const [showMergeDialog, setShowMergeDialog] = useState(false);
+  const [mergeSourceBranch, setMergeSourceBranch] = useState('');
+  const [mergeTargetBranch, setMergeTargetBranch] = useState('');
+  const [mergePreviewLoading, setMergePreviewLoading] = useState(false);
+  const [mergeApplyLoading, setMergeApplyLoading] = useState(false);
+  const [mergePreviewData, setMergePreviewData] = useState<{
+    classification?: { canAutoMerge: boolean; conflictPaths: string[]; addedSchemaNames: string[] };
+    sourceTipVersionId?: string;
+    targetTipVersionId?: string;
+    mergeBaseVersionId?: string | null;
+  } | null>(null);
+
   const leftPanelRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
   const isSyncingScroll = useRef(false);
@@ -153,6 +182,23 @@ const Versions = () => {
 
   useEffect(() => { if (currentTenantId) loadProjects(); }, [currentTenantId]);
   useEffect(() => { if (selectedProjectId) loadVersions(); else setVersions([]); }, [selectedProjectId]);
+
+  const loadBranches = async () => {
+    if (!selectedProjectId) return;
+    try {
+      const r = await fetch(`/api/projects/${selectedProjectId}/version-branches`);
+      const d = await r.json();
+      if (d.success && Array.isArray(d.branches)) setVersionBranches(d.branches);
+      else setVersionBranches([]);
+    } catch {
+      setVersionBranches([]);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedProjectId) loadBranches();
+    else setVersionBranches([]);
+  }, [selectedProjectId]);
 
   useEffect(() => {
     if (!currentTenantId || versions.length === 0) {
@@ -487,6 +533,160 @@ const Versions = () => {
       case 'unpublish': if (canUnpub) await handleUnpublish(version.id); else toast.warning('Only owner or admin can unpublish'); break;
       case 'freezeSchema': if (canModify(version)) await handleFreezeSchema(version); else toast.warning('Only owner or admin can freeze schema'); break;
       case 'delete': await handleDelete(version.id); break;
+      case 'branchFrom':
+        setBranchFromVersionId(version.id);
+        setBranchNameInput('');
+        setShowBranchDialog(true);
+        break;
+    }
+  };
+
+  const handleCreateBranchSubmit = async () => {
+    const name = branchNameInput.trim();
+    if (!name || !branchFromVersionId || !selectedProjectId) {
+      toast.warning('Enter a branch name');
+      return;
+    }
+    setBranchSaving(true);
+    try {
+      const r = await fetch(`/api/projects/${selectedProjectId}/version-branches`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, fromVersionId: branchFromVersionId }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        toast.success(`Branch "${name}" created`);
+        setShowBranchDialog(false);
+        await loadBranches();
+      } else {
+        toast.error(d.error || 'Could not create branch');
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not create branch');
+    } finally {
+      setBranchSaving(false);
+    }
+  };
+
+  const handleDeleteBranch = async (branchId: string) => {
+    if (!selectedProjectId) return;
+    const ok = await confirmDialog({
+      title: 'Delete branch',
+      message: 'Remove this named branch? The version records are not deleted.',
+      variant: 'danger',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+    });
+    if (!ok) return;
+    try {
+      const r = await fetch(`/api/projects/${selectedProjectId}/version-branches/${branchId}`, {
+        method: 'DELETE',
+      });
+      const d = await r.json();
+      if (d.success) {
+        toast.success('Branch removed');
+        await loadBranches();
+      } else {
+        toast.error(d.error || 'Could not delete branch');
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not delete branch');
+    }
+  };
+
+  const runMergePreview = async () => {
+    if (!selectedProjectId || !mergeSourceBranch.trim() || !mergeTargetBranch.trim()) {
+      toast.warning('Select source and target branch names');
+      return;
+    }
+    if (mergeSourceBranch.trim() === mergeTargetBranch.trim()) {
+      toast.warning('Source and target must be different branches');
+      return;
+    }
+    setMergePreviewLoading(true);
+    setMergePreviewData(null);
+    try {
+      const r = await fetch(`/api/projects/${selectedProjectId}/version-branches/merge-preview`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceBranchName: mergeSourceBranch.trim(),
+          targetBranchName: mergeTargetBranch.trim(),
+        }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        setMergePreviewData({
+          classification: d.classification,
+          sourceTipVersionId: d.sourceTipVersionId,
+          targetTipVersionId: d.targetTipVersionId,
+          mergeBaseVersionId: d.mergeBaseVersionId ?? null,
+        });
+        if (!d.classification?.canAutoMerge) {
+          toast.info('Merge preview: conflicts detected — apply is blocked until resolved.');
+        }
+      } else {
+        toast.error(d.error || 'Preview failed');
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Preview failed');
+    } finally {
+      setMergePreviewLoading(false);
+    }
+  };
+
+  const runMergeApply = async () => {
+    if (!selectedProjectId || !mergeSourceBranch.trim() || !mergeTargetBranch.trim()) {
+      toast.warning('Select source and target branch names');
+      return;
+    }
+    if (mergeSourceBranch.trim() === mergeTargetBranch.trim()) {
+      toast.warning('Source and target must be different branches');
+      return;
+    }
+    const target = versionBranches.find((b) => b.name === mergeTargetBranch.trim());
+    if (!target) {
+      toast.error('Target branch not found in list — refresh branches');
+      return;
+    }
+    setMergeApplyLoading(true);
+    try {
+      const r = await fetch(`/api/projects/${selectedProjectId}/version-branches/merge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceBranchName: mergeSourceBranch.trim(),
+          targetBranchName: mergeTargetBranch.trim(),
+          baseRevisionId: target.tip_version_id,
+        }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        toast.success(`Merged into ${mergeTargetBranch.trim()} — new version ${d.version?.version_id ?? ''}`);
+        setShowMergeDialog(false);
+        setMergePreviewData(null);
+        await loadVersions();
+        await loadBranches();
+      } else {
+        if (r.status === 409 && d.code === 'MERGE_CONFLICT') {
+          toast.error('Merge blocked: overlapping changes. Resolve conflicts using a future merge flow.');
+          setMergePreviewData((prev) => ({
+            ...prev,
+            classification: {
+              canAutoMerge: false,
+              conflictPaths: d.conflictPaths ?? [],
+              addedSchemaNames: prev?.classification?.addedSchemaNames ?? [],
+            },
+          }));
+        } else {
+          toast.error(typeof d.error === 'string' ? d.error : 'Merge failed');
+        }
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Merge failed');
+    } finally {
+      setMergeApplyLoading(false);
     }
   };
 
@@ -561,6 +761,20 @@ const Versions = () => {
                 <Copy className="h-4 w-4 mr-2" />
                 Compare
               </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setMergeSourceBranch('');
+                  setMergeTargetBranch('');
+                  setMergePreviewData(null);
+                  setShowMergeDialog(true);
+                }}
+                disabled={!selectedProjectId || versionBranches.length < 2}
+                title={versionBranches.length < 2 ? 'Create at least two named branches to merge' : undefined}
+              >
+                <GitMerge className="h-4 w-4 mr-2" />
+                Merge branches
+              </Button>
               <Button onClick={handleCreateClick} disabled={!selectedProjectId}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Version
@@ -571,7 +785,40 @@ const Versions = () => {
       </header>
 
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto space-y-6">
+      {selectedProjectId && versionBranches.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <GitBranch className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Named branches</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {versionBranches.map((b) => (
+              <div
+                key={b.id}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900/50"
+              >
+                <span className="font-mono font-medium text-gray-900 dark:text-white">{b.name}</span>
+                <span className="text-gray-500 dark:text-gray-400">→ v{b.tip_version_string ?? '?'}</span>
+                {(effectiveIsAdmin || b.created_by === currentUserId) && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteBranch(b.id)}
+                    className="text-red-600 dark:text-red-400 hover:underline text-xs"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Use &quot;Branch from here&quot; on a version row to create a pointer. Merge uses optimistic concurrency on the target tip (
+            <code className="text-xs">baseRevisionId</code>).
+          </p>
+        </div>
+      )}
+
       {/* Versions List */}
       {versions.length === 0 ? (
         <EmptyState
@@ -652,7 +899,7 @@ const Versions = () => {
                             }}
                           />
                           <div
-                            className="fixed w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20"
+                            className="fixed w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20"
                             style={{
                               top: `${dropdownPosition.top}px`,
                               right: `${dropdownPosition.right}px`
@@ -679,6 +926,17 @@ const Versions = () => {
                               >
                                 <Network className="w-4 h-4 text-teal-500" />
                                 Relationship graph
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenVersionDropdown(null);
+                                  handleRowAction('branchFrom', version);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                              >
+                                <GitBranch className="w-4 h-4 text-indigo-500" />
+                                Branch from here
                               </button>
                               <button
                                 onClick={(e) => {
@@ -1283,6 +1541,104 @@ const Versions = () => {
           <DialogFooter className="flex-shrink-0">
             {diffResult.length > 0 && <Button variant="outline" onClick={() => { setDiffResult([]); setCompareSpec1(''); setCompareSpec2(''); }}>Compare Different Versions</Button>}
             <Button variant="outline" onClick={() => setShowCompareDialog(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showBranchDialog} onOpenChange={(open) => !branchSaving && setShowBranchDialog(open)}>
+        <DialogContent className="max-w-md" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>Create named branch</DialogTitle>
+            <DialogDescription>
+              Point a new branch name at this version snapshot. Further work can advance the tip via merge workflows.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label htmlFor="branch-name">Branch name</Label>
+              <Input
+                id="branch-name"
+                value={branchNameInput}
+                onChange={(e) => setBranchNameInput(e.target.value)}
+                placeholder="e.g. feature/payments"
+                autoComplete="off"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBranchDialog(false)} disabled={branchSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateBranchSubmit} disabled={branchSaving || !branchNameInput.trim()}>
+              {branchSaving ? 'Saving…' : 'Create branch'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showMergeDialog} onOpenChange={(open) => !mergePreviewLoading && !mergeApplyLoading && setShowMergeDialog(open)}>
+        <DialogContent className="max-w-lg" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>Merge branches</DialogTitle>
+            <DialogDescription>
+              Preview compares branch tips (merge-base from #2593 not yet applied). Apply creates a merge revision with two parents when there are no overlapping schema conflicts.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label>Source branch</Label>
+              <Select value={mergeSourceBranch || '__pick__'} onValueChange={(v) => setMergeSourceBranch(v === '__pick__' ? '' : v)}>
+                <SelectTrigger><SelectValue placeholder="Choose branch" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__pick__">Choose branch</SelectItem>
+                  {versionBranches.map((b) => (
+                    <SelectItem key={b.id} value={b.name}>{b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Target branch</Label>
+              <Select value={mergeTargetBranch || '__pick__'} onValueChange={(v) => setMergeTargetBranch(v === '__pick__' ? '' : v)}>
+                <SelectTrigger><SelectValue placeholder="Choose branch" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__pick__">Choose branch</SelectItem>
+                  {versionBranches.map((b) => (
+                    <SelectItem key={`t-${b.id}`} value={b.name}>{b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {mergePreviewData?.classification && (
+              <Alert variant={mergePreviewData.classification.canAutoMerge ? 'success' : 'error'}>
+                {mergePreviewData.classification.canAutoMerge
+                  ? 'No overlapping modified or removed paths — apply is allowed if the target tip has not moved.'
+                  : `Conflicts: ${mergePreviewData.classification.conflictPaths.length} path(s). Apply is blocked.`}
+              </Alert>
+            )}
+            {mergePreviewData?.mergeBaseVersionId === null && mergePreviewData?.classification && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">Merge-base (LCA) is not computed yet (#2593); preview uses two-way diff between tips.</p>
+            )}
+          </div>
+          <DialogFooter className="gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => setShowMergeDialog(false)} disabled={mergePreviewLoading || mergeApplyLoading}>
+              Close
+            </Button>
+            <Button variant="secondary" onClick={runMergePreview} disabled={mergePreviewLoading || mergeApplyLoading || !mergeSourceBranch || !mergeTargetBranch}>
+              {mergePreviewLoading ? 'Previewing…' : 'Preview merge'}
+            </Button>
+            <Button
+              onClick={runMergeApply}
+              disabled={
+                mergeApplyLoading ||
+                mergePreviewLoading ||
+                !mergeSourceBranch ||
+                !mergeTargetBranch ||
+                mergePreviewData?.classification?.canAutoMerge === false
+              }
+            >
+              {mergeApplyLoading ? 'Merging…' : 'Apply merge'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -8,7 +8,7 @@ This represents the different versions of the Objectified specification and thei
 - ✅ Full version history
 - ✅ Compare any two versions
 - ✅ Visual diff with highlights
-- 📋 Branch and merge workflows
+- ✅ Branch and merge workflows (named branch tips, merge preview, merge apply with two parents when auto-mergeable; merge-base #2593 follow-up)
 - 📋 Tag versions (v1.0, stable, beta)
 - 📋 Version notes and changelogs
 - 📋 Fork versions for experiments
@@ -17,7 +17,7 @@ This represents the different versions of the Objectified specification and thei
 
 | Ticket  | Feature Description                           |
 |---------|-----------------------------------------------|
-| #500    | Implemented full version history tracking     |
+| #500    | Branch and merge workflows (git-like DAG edges on versions) |
 | #501    | Add tagging functionality for versions        |
 | #502    | Add and modify version notes and changelogs   |
 | #503    | Add ability to fork versions for testing      |

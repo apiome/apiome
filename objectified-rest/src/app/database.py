@@ -1211,7 +1211,8 @@ class Database:
         query = """
             SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
                    v.change_log, v.visibility, v.published, v.published_at,
-                   v.enabled, v.created_at, v.updated_at,
+                   v.enabled, v.parent_version_id, v.merge_parent_version_id,
+                   v.created_at, v.updated_at,
                    u.name as creator_name, u.email as creator_email,
                    p.name as project_name, p.slug as project_slug
             FROM odb.versions v
@@ -1230,7 +1231,8 @@ class Database:
         query = """
             SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
                    v.change_log, v.visibility, v.published, v.published_at,
-                   v.enabled, v.created_at, v.updated_at,
+                   v.enabled, v.parent_version_id, v.merge_parent_version_id,
+                   v.created_at, v.updated_at,
                    u.name as creator_name, u.email as creator_email,
                    p.name as project_name, p.slug as project_slug
             FROM odb.versions v
@@ -1249,7 +1251,8 @@ class Database:
         query = """
             SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
                    v.change_log, v.visibility, v.published, v.published_at,
-                   v.enabled, v.created_at, v.updated_at,
+                   v.enabled, v.parent_version_id, v.merge_parent_version_id,
+                   v.created_at, v.updated_at,
                    u.name as creator_name, u.email as creator_email,
                    p.name as project_name, p.slug as project_slug
             FROM odb.versions v
@@ -1295,7 +1298,8 @@ class Database:
             VALUES (%s, %s, %s, %s, %s)
             RETURNING id, project_id, creator_id, version_id, description,
                       change_log, visibility, published, published_at,
-                      enabled, created_at, updated_at
+                      enabled, parent_version_id, merge_parent_version_id,
+                      created_at, updated_at
         """
 
         conn = self.connect()
