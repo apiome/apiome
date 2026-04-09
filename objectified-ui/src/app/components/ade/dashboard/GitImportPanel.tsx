@@ -1,11 +1,32 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { FolderOpen, File, ArrowLeft, Lock, Search, Loader2, Globe, AlertTriangle, CheckCircle2, FileCode } from 'lucide-react';
+import {
+  FolderOpen,
+  File,
+  ArrowLeft,
+  Lock,
+  Search,
+  Loader2,
+  Globe,
+  AlertTriangle,
+  CheckCircle2,
+  FileCode,
+  Bookmark,
+  BookmarkPlus,
+  Trash2,
+} from 'lucide-react';
 import { SiGithub, SiGitlab, SiGoogle, SiAmazon } from 'react-icons/si';
 import { getLinkedAccountsForUser } from '../../../../../lib/db/helper';
 import { extractFileMetadata, FileMetadataPreview } from '../../../utils/openapi-analyzer';
 import { parseGitHubRepoUrl } from '../../../utils/git-repo-url';
+import {
+  addGitImportSavedRepo,
+  GitImportSavedRepo,
+  loadGitImportSavedRepos,
+  normalizeGitImportSpecPath,
+  removeGitImportSavedRepo,
+} from '../../../utils/git-import-saved-repos';
 import { Button } from '../../../components/ui/Button';
 
 interface GitImportPanelProps {
@@ -70,6 +91,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
   const [fetchedContent, setFetchedContent] = useState<string | null>(null);
   const [fetchedFilename, setFetchedFilename] = useState<string | null>(null);
   const [fileMetadata, setFileMetadata] = useState<FileMetadataPreview | null>(null);
+  const [savedRepos, setSavedRepos] = useState<GitImportSavedRepo[]>([]);
 
   const loadLinkedAccounts = useCallback(async () => {
     setIsLoadingAccounts(true);
@@ -87,6 +109,11 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
   useEffect(() => {
     void loadLinkedAccounts();
   }, [loadLinkedAccounts]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !userId) return;
+    setSavedRepos(loadGitImportSavedRepos(userId));
+  }, [userId]);
 
   const getProviderIcon = (provider: string) => {
     switch (provider.toLowerCase()) {
@@ -138,7 +165,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
     path: string,
     ref: string
   ) => {
-    let url = `/api/sso/${account.provider}/files?accountId=${account.id}&repo=${encodeURIComponent(repo.full_name)}&path=${encodeURIComponent(path)}`;
+    let url = `/api/sso/${account.provider.toLowerCase()}/files?accountId=${encodeURIComponent(account.id)}&repo=${encodeURIComponent(repo.full_name)}&path=${encodeURIComponent(path)}`;
     if (account.provider?.toLowerCase() === 'github' && ref) {
       url += `&ref=${encodeURIComponent(ref)}`;
     }
@@ -149,6 +176,29 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
     }
     const data = await response.json();
     return (data.files || []) as RepoFileEntry[];
+  };
+
+  const loadRepoRootAtRef = async (
+    account: LinkedAccount,
+    repo: GitHubRepoSummary,
+    ref: string,
+    manageLoading = true
+  ) => {
+    if (manageLoading) {
+      setIsLoading(true);
+      setErrorMessage('');
+      setCurrentPath('');
+    }
+    try {
+      const files = await fetchDirectoryListing(account, repo, '', ref);
+      setRepoFiles(files);
+    } catch (error: unknown) {
+      setErrorMessage(`Failed to load files: ${formatError(error)}`);
+    } finally {
+      if (manageLoading) {
+        setIsLoading(false);
+      }
+    }
   };
 
   const handleSelectAccount = async (account: LinkedAccount) => {
@@ -171,7 +221,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
 
     try {
       // Fetch repositories for the selected account
-      const response = await fetch(`/api/sso/${account.provider}/repos?accountId=${account.id}`);
+      const response = await fetch(`/api/sso/${account.provider.toLowerCase()}/repos?accountId=${encodeURIComponent(account.id)}`);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch repositories: ${response.statusText}`);
@@ -208,8 +258,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
 
     try {
       await fetchBranchesAndTags(selectedAccount, repo.full_name);
-      const files = await fetchDirectoryListing(selectedAccount, repo, '', defaultBr);
-      setRepoFiles(files);
+      await loadRepoRootAtRef(selectedAccount, repo, defaultBr, false);
     } catch (error: unknown) {
       setErrorMessage(`Failed to load files: ${formatError(error)}`);
     } finally {
@@ -251,8 +300,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
       setSelectedBranch(defaultBr);
       setSelectedTag('');
       await fetchBranchesAndTags(selectedAccount, repo.full_name);
-      const files = await fetchDirectoryListing(selectedAccount, repo, '', defaultBr);
-      setRepoFiles(files);
+      await loadRepoRootAtRef(selectedAccount, repo, defaultBr, false);
     } catch (error: unknown) {
       setErrorMessage(formatError(error) || 'Failed to load repository from URL');
     } finally {
@@ -263,17 +311,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
   const applyRefAndReloadRoot = async (branch: string, tag: string) => {
     if (!selectedAccount || !selectedRepo) return;
     const ref = tag || branch || selectedRepo.default_branch || 'main';
-    setIsLoading(true);
-    setErrorMessage('');
-    setCurrentPath('');
-    try {
-      const files = await fetchDirectoryListing(selectedAccount, selectedRepo, '', ref);
-      setRepoFiles(files);
-    } catch (error: unknown) {
-      setErrorMessage(`Failed to load files: ${formatError(error)}`);
-    } finally {
-      setIsLoading(false);
-    }
+    await loadRepoRootAtRef(selectedAccount, selectedRepo, ref, true);
   };
 
   const handleBranchSelectChange = (value: string) => {
@@ -345,7 +383,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
     try {
       const ref = resolveContentRef();
       const response = await fetch(
-        `/api/sso/${selectedAccount.provider}/content?accountId=${selectedAccount.id}&repo=${encodeURIComponent(selectedRepo.full_name)}&path=${encodeURIComponent(file.path)}&branch=${encodeURIComponent(ref)}`
+        `/api/sso/${selectedAccount.provider.toLowerCase()}/content?accountId=${encodeURIComponent(selectedAccount.id)}&repo=${encodeURIComponent(selectedRepo.full_name)}&path=${encodeURIComponent(file.path)}&branch=${encodeURIComponent(ref)}`
       );
 
       if (!response.ok) {
@@ -399,7 +437,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
     try {
       const ref = resolveContentRef();
       const response = await fetch(
-        `/api/sso/${selectedAccount.provider}/content?accountId=${selectedAccount.id}&repo=${encodeURIComponent(selectedRepo.full_name)}&path=${encodeURIComponent(raw)}&branch=${encodeURIComponent(ref)}`
+        `/api/sso/${selectedAccount.provider.toLowerCase()}/content?accountId=${encodeURIComponent(selectedAccount.id)}&repo=${encodeURIComponent(selectedRepo.full_name)}&path=${encodeURIComponent(raw)}&branch=${encodeURIComponent(ref)}`
       );
 
       if (!response.ok) {
@@ -418,6 +456,124 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
       onSpecificationFetched(content, filename, metadata);
     } catch (error: unknown) {
       setErrorMessage(`Failed to load file: ${formatError(error)}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveBookmark = () => {
+    if (!selectedAccount || !selectedRepo) return;
+    const refKind = selectedTag ? 'tag' : 'branch';
+    const refName =
+      selectedTag || selectedBranch || selectedRepo.default_branch || 'main';
+    const specPath = normalizeGitImportSpecPath(specPathInput);
+    const { persisted, items } = addGitImportSavedRepo(userId, {
+      accountId: selectedAccount.id,
+      provider: selectedAccount.provider,
+      repoFullName: selectedRepo.full_name,
+      refKind,
+      refName,
+      specPath,
+    });
+    setSavedRepos(items);
+    if (!persisted) {
+      setErrorMessage('Failed to save bookmark. Storage may be full or unavailable.');
+    } else {
+      setErrorMessage('');
+    }
+  };
+
+  const handleRemoveSaved = (id: string) => {
+    const { items } = removeGitImportSavedRepo(userId, id);
+    setSavedRepos(items);
+  };
+
+  const handleOpenSaved = async (bookmark: GitImportSavedRepo) => {
+    const account = linkedAccounts.find((a) => a.id === bookmark.accountId);
+    if (!account) {
+      setErrorMessage(
+        'The linked account for this saved repository is no longer available. Remove the entry or reconnect your account.'
+      );
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage('');
+    setFetchedContent(null);
+    setFetchedFilename(null);
+    setFileMetadata(null);
+    setRepoUrlInput('');
+    setRepoSearchQuery('');
+
+    try {
+      const reposRes = await fetch(`/api/sso/${account.provider.toLowerCase()}/repos?accountId=${encodeURIComponent(account.id)}`);
+      if (!reposRes.ok) {
+        throw new Error(`Failed to fetch repositories: ${reposRes.statusText}`);
+      }
+      const data = await reposRes.json();
+      let sortedRepos = ((data.repositories || []) as GitHubRepoSummary[]).sort((a, b) => {
+        const nameA = (a.name || '').toLowerCase();
+        const nameB = (b.name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+
+      let repo: GitHubRepoSummary | undefined = sortedRepos.find(
+        (r) => r.full_name.toLowerCase() === bookmark.repoFullName.toLowerCase()
+      );
+
+      if (!repo && account.provider?.toLowerCase() === 'github') {
+        const metaRes = await fetch(
+          `/api/sso/github/repo?accountId=${account.id}&repo=${encodeURIComponent(bookmark.repoFullName)}`
+        );
+        if (!metaRes.ok) {
+          const errBody = await metaRes.json().catch(() => ({}));
+          throw new Error(
+            typeof errBody.error === 'string'
+              ? errBody.error
+              : 'Repository not found. It may have been renamed or removed.'
+          );
+        }
+        const meta = await metaRes.json();
+        repo = meta.repository as GitHubRepoSummary;
+      }
+
+      if (!repo) {
+        throw new Error('Repository not found. It may have been renamed or removed.');
+      }
+
+      if (!sortedRepos.some((r) => r.full_name.toLowerCase() === repo.full_name.toLowerCase())) {
+        sortedRepos = [...sortedRepos, repo].sort((a, b) => {
+          const nameA = (a.name || '').toLowerCase();
+          const nameB = (b.name || '').toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+      }
+
+      setSelectedAccount(account);
+      setRepositories(sortedRepos);
+      setSelectedRepo(repo);
+      setCurrentPath('');
+
+      const specNorm = normalizeGitImportSpecPath(bookmark.specPath);
+      setSpecPathInput(specNorm ? `/${specNorm}` : '');
+
+      const defaultBr = repo.default_branch || 'main';
+      await fetchBranchesAndTags(account, repo.full_name);
+
+      const ref =
+        bookmark.refKind === 'tag' ? bookmark.refName : bookmark.refName || defaultBr;
+
+      if (bookmark.refKind === 'tag') {
+        setSelectedTag(bookmark.refName);
+        setSelectedBranch('');
+      } else {
+        setSelectedTag('');
+        setSelectedBranch(bookmark.refName || defaultBr);
+      }
+
+      await loadRepoRootAtRef(account, repo, ref, false);
+    } catch (error: unknown) {
+      setErrorMessage(formatError(error));
     } finally {
       setIsLoading(false);
     }
@@ -474,6 +630,75 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
             <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
             <div className="text-sm text-red-700 dark:text-red-300">{errorMessage}</div>
           </div>
+        </div>
+      )}
+
+      {savedRepos.length > 0 && (
+        <div className="flex-shrink-0 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4">
+          <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            <Bookmark className="h-4 w-4 text-indigo-600 dark:text-indigo-400" aria-hidden />
+            Saved for re-import
+          </div>
+          <ul className="mt-3 space-y-2">
+            {savedRepos.map((b) => (
+              <li
+                key={b.id}
+                className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-md border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-3 py-2"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {b.repoFullName}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    {b.refKind === 'tag' ? `Tag ${b.refName}` : `Branch ${b.refName}`}
+                    {b.specPath ? ` · ${b.specPath}` : ''}
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void handleOpenSaved(b)}
+                    disabled={isLoading}
+                    className="shrink-0"
+                  >
+                    Open
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSaved(b.id)}
+                    disabled={isLoading}
+                    className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                    aria-label={`Remove saved repository ${b.repoFullName}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            Stored in this browser on this device. Use the same linked account to open a saved entry.
+          </p>
+        </div>
+      )}
+
+      {selectedAccount && selectedRepo && (
+        <div className="flex-shrink-0 flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/30 px-4 py-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSaveBookmark}
+            disabled={isLoading}
+            className="shrink-0 border-indigo-300 dark:border-indigo-700"
+          >
+            <BookmarkPlus className="h-4 w-4 mr-2" aria-hidden />
+            Save for later
+          </Button>
+          <p className="text-xs text-indigo-900/90 dark:text-indigo-200/90 sm:flex-1 sm:min-w-0">
+            Saves the linked account, repository, branch or tag, and optional spec path so you can return here to re-import or open a PR branch later.
+          </p>
         </div>
       )}
 
