@@ -38,6 +38,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Fixed group tag picker and chips so tag names and colors show correctly (project tags use `name`/`color` from the database)
 
 ## Account:
+- **Free OAuth sign-up (#66):** On the login page, choose **Create one**, then **Continue with GitHub** or **Continue with GitLab** to complete OAuth, enter your name and first organization (slug), and receive a **free plan** (1 organization, 1 project, up to 3 versions) with automatic sign-in
 - Removed verbose NextAuth debug logging from server and client auth flows (credentials, OAuth linking, JWT/session callbacks)
 - Profile shows your last successful login date and time (stored when you sign in with email/password or OAuth)
 
@@ -53,5 +54,5 @@ We'd love to hear your thoughts! Your feedback helps us make Objectified better.
 
 **Thank you for using Objectified!**
 
-*Last updated: April 7, 2026*
+*Last updated: April 8, 2026*
 

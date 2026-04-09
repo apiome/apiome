@@ -1,9 +1,12 @@
 import * as helper from '../db/helper';
+import { upsertOauthSignupPending, consumeAuthOneTimeCode } from '../db/oauth-signup';
+
 const bcrypt = require('bcrypt');
 
 export interface ICredentials {
-  email: string;
-  password: string;
+  email?: string;
+  password?: string;
+  oneTimeCode?: string;
 }
 
 /**
@@ -70,7 +73,6 @@ export const linkGitlabAccount = async (userId: string, account: any, profile: a
  */
 export const checkLinkingIntent = async () => {
   try {
-    // Dynamic import of cookies from next/headers
     const { cookies } = await import('next/headers');
     const cookieStore = await cookies();
     const linkIntent = cookieStore.get('oauth_link_intent');
@@ -78,21 +80,45 @@ export const checkLinkingIntent = async () => {
     if (linkIntent && linkIntent.value) {
       try {
         const intent = JSON.parse(linkIntent.value);
-        // Check if intent is not expired (10 minutes)
         if (Date.now() - intent.timestamp < 600000) {
-          // Clear the cookie after reading it
           cookieStore.delete('oauth_link_intent');
           return intent;
         }
-        // Expired intent cookie; clear it and treat as no intent
         cookieStore.delete('oauth_link_intent');
       } catch {
-        // Malformed intent cookie; clear it and treat as no intent
         cookieStore.delete('oauth_link_intent');
       }
     }
   } catch {
     // Cookie store unavailable; treat as no intent
+  }
+
+  return null;
+};
+
+/**
+ * Check if the user started OAuth from "Create account" (self-signup) mode.
+ */
+export const checkSignupIntent = async () => {
+  try {
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const raw = cookieStore.get('oauth_signup_intent');
+
+    if (raw && raw.value) {
+      try {
+        const intent = JSON.parse(raw.value);
+        if (Date.now() - intent.timestamp < 600000) {
+          cookieStore.delete('oauth_signup_intent');
+          return intent as { provider: string; timestamp: number };
+        }
+        cookieStore.delete('oauth_signup_intent');
+      } catch {
+        cookieStore.delete('oauth_signup_intent');
+      }
+    }
+  } catch {
+    // Cookie store unavailable
   }
 
   return null;
@@ -104,10 +130,34 @@ export const checkLinkingIntent = async () => {
  * 2. Comparison is checked against user password and stored password using bcrypt.
  * 3. If the user login succeeds, the record is returned without the password field.
  * 4. Failure returns a null, which the next-auth `authorize()` handler will interpret as an invalid account.
+ *
+ * One-time codes (after OAuth signup completion) are also accepted.
  */
 export const credentialsAuthorize = async (credentials: ICredentials) => {
+  if (credentials.oneTimeCode?.trim()) {
+    const consumed = await consumeAuthOneTimeCode(credentials.oneTimeCode.trim());
+    if (!consumed) {
+      return null;
+    }
+    const userResults = await helper.getUserById(consumed.userId);
+    if (userResults.rowCount === 0) {
+      return null;
+    }
+    const userResult = userResults.rows[0];
+    delete userResult.password;
+    return {
+      ...userResult,
+      pending_tenant_id: consumed.tenantId,
+    };
+  }
+
   const password = credentials.password;
-  const results = await helper.getUserByEmail(credentials.email);
+  const email = credentials.email;
+  if (!email || !password) {
+    return null;
+  }
+
+  const results = await helper.getUserByEmail(email);
 
   if (results.rowCount > 0) {
     const userResult = results.rows[0];
@@ -127,7 +177,7 @@ export const credentialsAuthorize = async (credentials: ICredentials) => {
   }
 
   return null;
-}
+};
 
 /*
  * Sign-in Steps:
@@ -137,8 +187,6 @@ export const credentialsAuthorize = async (credentials: ICredentials) => {
  *    If not enabled, return 'Your account is currently disabled'
  * 3. Verified must be true.
  *    If not verified, return 'You have not yet verified your account e-mail address'
- *
- * TODO: Check licenses here.
  *
  * If all passes, true is returned.
  */
@@ -160,32 +208,36 @@ export const credentialsSignIn = async (payload: any) => {
   }
 
   return true;
+};
+
+type OAuthSignInResult = boolean | string;
+
+function resolveOAuthEmail(user: any, profile: any): string | null {
+  const fromUser = typeof user?.email === 'string' && user.email.trim() ? user.email.trim().toLowerCase() : '';
+  if (fromUser) return fromUser;
+  const fromProfile = typeof profile?.email === 'string' && profile.email.trim() ? profile.email.trim().toLowerCase() : '';
+  if (fromProfile) return fromProfile;
+  return null;
 }
 
 /*
  * Sign-in Steps for GitHub OAuth:
  * 1. Check if this GitHub account is already linked to a user in external_auth_providers
  *    - If linked, login as that user
- * 2. If not linked, check if user exists by email
- *    - If user exists by email, this is the initial login, proceed normally
- * 3. User must be enabled and verified
- *
- * IMPORTANT: This function modifies payload.user to use the odb.users data instead of GitHub data
- * If all passes, true is returned.
+ * 2. If signup intent: new users go to pending signup; existing email → error redirect
+ * 3. If not linked, check if user exists by email — initial login / auto-link
+ * 4. User must be enabled and verified
  */
-export const credentialsGithub = async (payload: any) => {
+export const credentialsGithub = async (payload: any): Promise<OAuthSignInResult> => {
   const user = payload.user;
   const account = payload.account;
   const profile = payload.profile;
 
-  // First, check if this GitHub account is already linked to an existing user
   if (account?.providerAccountId) {
-    // Check if this GitHub account is already linked
     const linkedAccountResult = await helper.getLinkedAccountByProvider('github', account.providerAccountId);
     const linkedAccount = JSON.parse(linkedAccountResult);
 
     if (linkedAccount.found && linkedAccount.account) {
-      // Get the user by ID (not email, since email might not match)
       const userResults = await helper.getUserById(linkedAccount.account.user_id);
 
       if (userResults.rowCount > 0) {
@@ -199,11 +251,8 @@ export const credentialsGithub = async (payload: any) => {
           return '/login?error=You have not yet verified your account e-mail address';
         }
 
-        // Update last login time for this linked account
         await helper.updateLinkedAccountLastLogin('github', account.providerAccountId);
 
-        // IMPORTANT: Replace the GitHub user data with our database user data
-        // This ensures the JWT callback gets the correct odb.users ID, not the GitHub ID
         payload.user.id = userResult.id;
         payload.user.email = userResult.email;
         payload.user.name = userResult.name;
@@ -218,8 +267,35 @@ export const credentialsGithub = async (payload: any) => {
     }
   }
 
-  // If not linked, check if user exists by email (standard OAuth flow for first-time login)
-  const results = await helper.getUserByEmail(user.email);
+  const signupIntent = await checkSignupIntent();
+  const email = resolveOAuthEmail(user, profile);
+
+  const results = email ? await helper.getUserByEmail(email) : { rowCount: 0, rows: [] as any[] };
+
+  if (signupIntent?.provider === 'github') {
+    if (!email) {
+      return '/login?error=OAuthEmailRequired';
+    }
+    if (results.rowCount > 0) {
+      return '/login?error=OAuthAccountExists';
+    }
+    if (!account?.providerAccountId) {
+      return '/login?error=OAuthProfileIncomplete';
+    }
+    const { id } = await upsertOauthSignupPending(
+      'github',
+      account.providerAccountId,
+      email,
+      {
+        access_token: account.access_token ?? null,
+        refresh_token: account.refresh_token ?? null,
+        expires_at: account.expires_at ?? null,
+        providerAccountId: account.providerAccountId,
+      },
+      { ...(profile || {}), email }
+    );
+    return `/signup/oauth?token=${encodeURIComponent(id)}`;
+  }
 
   if (results.rowCount > 0) {
     const userResult = results.rows[0];
@@ -232,13 +308,10 @@ export const credentialsGithub = async (payload: any) => {
       return '/login?error=You have not yet verified your account e-mail address';
     }
 
-    // Auto-link this GitHub account to the user on first successful login
     if (account?.providerAccountId) {
       await linkGithubAccount(userResult.id, account, profile || user);
     }
 
-    // IMPORTANT: Replace the GitHub user data with our database user data
-    // This ensures the JWT callback gets the correct odb.users ID, not the GitHub ID
     payload.user.id = userResult.id;
     payload.user.email = userResult.email;
     payload.user.name = userResult.name;
@@ -252,32 +325,21 @@ export const credentialsGithub = async (payload: any) => {
   }
 
   return false;
-}
+};
 
 /*
- * Sign-in Steps for GitLab OAuth:
- * 1. Check if this GitLab account is already linked to a user in external_auth_providers
- *    - If linked, login as that user
- * 2. If not linked, check if user exists by email
- *    - If user exists by email, this is the initial login, proceed normally
- * 3. User must be enabled and verified
- *
- * IMPORTANT: This function modifies payload.user to use the odb.users data instead of GitLab data
- * If all passes, true is returned.
+ * Sign-in Steps for GitLab OAuth (same structure as GitHub).
  */
-export const credentialsGitlab = async (payload: any) => {
+export const credentialsGitlab = async (payload: any): Promise<OAuthSignInResult> => {
   const user = payload.user;
   const account = payload.account;
   const profile = payload.profile;
 
-  // First, check if this GitLab account is already linked to an existing user
   if (account?.providerAccountId) {
-    // Check if this GitLab account is already linked
     const linkedAccountResult = await helper.getLinkedAccountByProvider('gitlab', account.providerAccountId);
     const linkedAccount = JSON.parse(linkedAccountResult);
 
     if (linkedAccount.found && linkedAccount.account) {
-      // Get the user by ID (not email, since email might not match)
       const userResults = await helper.getUserById(linkedAccount.account.user_id);
 
       if (userResults.rowCount > 0) {
@@ -291,11 +353,8 @@ export const credentialsGitlab = async (payload: any) => {
           return '/login?error=You have not yet verified your account e-mail address';
         }
 
-        // Update last login time for this linked account
         await helper.updateLinkedAccountLastLogin('gitlab', account.providerAccountId);
 
-        // IMPORTANT: Replace the GitLab user data with our database user data
-        // This ensures the JWT callback gets the correct odb.users ID, not the GitLab ID
         payload.user.id = userResult.id;
         payload.user.email = userResult.email;
         payload.user.name = userResult.name;
@@ -310,8 +369,35 @@ export const credentialsGitlab = async (payload: any) => {
     }
   }
 
-  // If not linked, check if user exists by email (standard OAuth flow for first-time login)
-  const results = await helper.getUserByEmail(user.email);
+  const signupIntent = await checkSignupIntent();
+  const email = resolveOAuthEmail(user, profile);
+
+  const results = email ? await helper.getUserByEmail(email) : { rowCount: 0, rows: [] as any[] };
+
+  if (signupIntent?.provider === 'gitlab') {
+    if (!email) {
+      return '/login?error=OAuthEmailRequired';
+    }
+    if (results.rowCount > 0) {
+      return '/login?error=OAuthAccountExists';
+    }
+    if (!account?.providerAccountId) {
+      return '/login?error=OAuthProfileIncomplete';
+    }
+    const { id } = await upsertOauthSignupPending(
+      'gitlab',
+      account.providerAccountId,
+      email,
+      {
+        access_token: account.access_token ?? null,
+        refresh_token: account.refresh_token ?? null,
+        expires_at: account.expires_at ?? null,
+        providerAccountId: account.providerAccountId,
+      },
+      { ...(profile || {}), email }
+    );
+    return `/signup/oauth?token=${encodeURIComponent(id)}`;
+  }
 
   if (results.rowCount > 0) {
     const userResult = results.rows[0];
@@ -324,13 +410,10 @@ export const credentialsGitlab = async (payload: any) => {
       return '/login?error=You have not yet verified your account e-mail address';
     }
 
-    // Auto-link this GitLab account to the user on first successful login
     if (account?.providerAccountId) {
       await linkGitlabAccount(userResult.id, account, profile || user);
     }
 
-    // IMPORTANT: Replace the GitLab user data with our database user data
-    // This ensures the JWT callback gets the correct odb.users ID, not the GitLab ID
     payload.user.id = userResult.id;
     payload.user.email = userResult.email;
     payload.user.name = userResult.name;
@@ -344,4 +427,4 @@ export const credentialsGitlab = async (payload: any) => {
   }
 
   return false;
-}
+};

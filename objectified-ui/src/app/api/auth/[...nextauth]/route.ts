@@ -72,8 +72,9 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // Normal login flow
-        return credentialsGithub(payload);
+        const gh = await credentialsGithub(payload);
+        if (typeof gh === 'string') return gh;
+        return gh;
       }
 
       if (loginProvider === 'gitlab') {
@@ -94,8 +95,9 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // Normal login flow
-        return credentialsGitlab(payload);
+        const gl = await credentialsGitlab(payload);
+        if (typeof gl === 'string') return gl;
+        return gl;
       }
 
       return `/login?error=Your login attempt failed, provider "${loginProvider}" is not yet supported`;
@@ -145,6 +147,10 @@ export const authOptions: NextAuthOptions = {
 
       if (payload.user) {
         token.user_id = payload.user.id;
+        const pendingTenant = (payload.user as { pending_tenant_id?: string }).pending_tenant_id;
+        if (pendingTenant) {
+          token.current_tenant_id = pendingTenant;
+        }
       }
 
       return token;

@@ -1716,6 +1716,7 @@ describe('Database Helper - Version Copy and Creation Edge Cases', () => {
   test('createVersion accepts prerelease version_id (e.g. 1.0.0b) (#590)', async () => {
     const { createVersion } = await import('../lib/db/helper');
 
+    mockQuery.mockResolvedValueOnce({ rowCount: 0, rows: [] });
     mockQuery.mockResolvedValueOnce({
       rows: [{
         id: 'ver-1.0.0b',

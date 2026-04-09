@@ -54,6 +54,34 @@ const LoginClient: React.FC<LoginClientProps> = ({ error }) => {
       };
     }
 
+    if (errorCode === 'OAuthAccountExists') {
+      return {
+        type: 'info',
+        text: 'An account with this email already exists. Sign in with your password or use "Continue with GitHub/GitLab" without create-account mode.',
+      };
+    }
+
+    if (errorCode === 'OAuthEmailRequired') {
+      return {
+        type: 'error',
+        text: 'Your Git provider did not share an email address. Set your email to public or add a verified email on GitHub/GitLab, then try again.',
+      };
+    }
+
+    if (errorCode === 'OAuthProfileIncomplete') {
+      return {
+        type: 'error',
+        text: 'We could not read your OAuth profile. Please try again or contact support.',
+      };
+    }
+
+    if (errorCode === 'SignupSessionExpired') {
+      return {
+        type: 'error',
+        text: 'Your signup session expired. Please start again from Create account.',
+      };
+    }
+
     if (errorCode === 'CredentialsSignin') {
       return {
         type: 'error',
@@ -115,14 +143,20 @@ const LoginClient: React.FC<LoginClientProps> = ({ error }) => {
 
   const handleSSOLogin = async (provider: string) => {
     setIsSSOLoading(true);
-    await signIn(provider, { callbackUrl: '/ade' })
-      .then((x) => {
-        console.log('SSO sign-in initiated:', x);
-      })
-      .catch((error) => {
-        console.error('SSO sign-in error:', error);
-        setIsSSOLoading(false);
-      });
+    try {
+      if (isSignUp) {
+        const res = await fetch(`/api/auth/signup-intent?provider=${encodeURIComponent(provider)}`);
+        if (!res.ok) {
+          setSignupMessage({ type: 'error', text: 'Could not start sign-up. Please try again.' });
+          setIsSSOLoading(false);
+          return;
+        }
+      }
+      await signIn(provider, { callbackUrl: '/ade' });
+    } catch (error) {
+      console.error('SSO sign-in error:', error);
+      setIsSSOLoading(false);
+    }
   }
 
   const handleChange = (e: any) => {

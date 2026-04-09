@@ -1,5 +1,6 @@
 'use server';
 
+import { getPlanBlockMessageForNewProject, getPlanBlockMessageForNewVersion } from './plan-entitlements';
 import { getAuthSession } from '../auth/server-session';
 import { buildGroupMetadataForSync } from '../utils/group-metadata';
 import { sortGroupsParentsBeforeChildren } from '../utils/group-sort';
@@ -377,6 +378,9 @@ export async function createProject(tenantId: string, creatorId: string, name: s
     if (!slug?.trim()) return errorResponse('Project slug is required');
     const slugError = validateSlug(slug.trim());
     if (slugError) return errorResponse(slugError);
+
+    const planErr = await getPlanBlockMessageForNewProject(creatorId);
+    if (planErr) return errorResponse(planErr);
 
     const result = await connectionPool.query(
       `INSERT INTO odb.projects (tenant_id, creator_id, name, description, slug, metadata) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
@@ -974,6 +978,9 @@ export async function createVersion(projectId: string, creatorId: string, versio
     if (!parseSemanticVersion(finalVersionId) && !parseSemanticVersionWithPrerelease(finalVersionId)) {
       return JSON.stringify({ success: false, error: 'Version ID must follow semantic versioning format (e.g., 1.0.0 or 1.0.0b)' });
     }
+
+    const planErr = await getPlanBlockMessageForNewVersion(creatorId);
+    if (planErr) return JSON.stringify({ success: false, error: planErr });
 
     const result = await connectionPool.query(
       `INSERT INTO odb.versions (project_id, creator_id, version_id, description, change_log)

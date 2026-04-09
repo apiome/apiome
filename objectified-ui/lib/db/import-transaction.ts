@@ -5,6 +5,8 @@
  * These functions accept an optional client parameter to run within a transaction.
  */
 
+import { getPlanBlockMessageForNewProject, getPlanBlockMessageForNewVersion } from './plan-entitlements';
+
 const connectionPool = require('./db');
 
 // Type for a Postgres client (from pool)
@@ -72,6 +74,9 @@ export async function createProjectTx(
     const slugError = validateSlug(slug.trim());
     if (slugError) return errorResponse(slugError);
 
+    const planErr = await getPlanBlockMessageForNewProject(creatorId);
+    if (planErr) return errorResponse(planErr);
+
     const result = await client.query(
       `INSERT INTO odb.projects (tenant_id, creator_id, name, description, slug, metadata) 
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
@@ -107,6 +112,9 @@ export async function createVersionTx(
 ): Promise<string> {
   try {
     if (!versionId?.trim()) return errorResponse('Version ID is required');
+
+    const planErr = await getPlanBlockMessageForNewVersion(creatorId);
+    if (planErr) return errorResponse(planErr);
 
     const result = await client.query(
       `INSERT INTO odb.versions (project_id, creator_id, version_id, description, change_log) 
