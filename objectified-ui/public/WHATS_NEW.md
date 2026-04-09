@@ -5,6 +5,7 @@ We continue to improve the platform based on your feedback with improvements and
 ---
 
 ## UI:
+- **Theme engine (#1332):** **`--obj-*` design tokens** (colors, spacing, radius, typography, shadows) applied from the root `ThemeProvider`; **Light / Dark / System** (follows OS) with instant updates, **`theme-changed`** custom events, and **Appearance** settings at **`/settings/appearance`** with hex/HSL/RGB popover pickers; preferences persist via **`PUT /api/v1/preferences/theme`** and load with the session
 - **Studio Code / GraphQL (#147):** GraphQL SDL in the Code tab is generated from a **Handlebars template** (`templates/graphql/graphql-schema.hbs`) instead of inlined string building, aligned with OpenAPI and Arazzo; template loader init is synchronous so tooling can import it safely
 - **Schema quality details (#2548):** **Studio header** Schema quality is **clickable** — opens a dialog with **letter grade (A–F)**, weighted **factor table**, and the same **score band guide** as import quality. **Schema Metrics** shows the same **overall schema quality** block (numeric score + letter + guide) above the per-metric controls
 - **Studio schema quality (#245):** **Overall score (0–100)** in the Studio header — weighted blend of documentation, naming, structural load (inverted complexity), and canvas layout quality; updates live on the Canvas

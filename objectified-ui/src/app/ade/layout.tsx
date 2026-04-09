@@ -4,7 +4,6 @@ import "@radix-ui/themes/styles.css";
 import SessionWrapper from "@/app/components/auth/SessionWrapper";
 import AuthenticatedLayout from "@/app/components/auth/AuthenticatedLayout";
 import ConditionalHeader from '@/app/components/ade/ConditionalHeader';
-import { ThemeProvider } from '@/app/providers/ThemeProvider';
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { Theme as RadixTheme } from "@radix-ui/themes";
 import * as React from 'react';
@@ -34,14 +33,12 @@ export default function RootLayout({
           radius="medium"
           scaling="100%"
         >
-          <ThemeProvider>
             <SessionWrapper>
               <AuthenticatedLayout>
                 <ConditionalHeader />
                 {children}
               </AuthenticatedLayout>
             </SessionWrapper>
-          </ThemeProvider>
         </RadixTheme>
       </NextThemesProvider>
     </div>

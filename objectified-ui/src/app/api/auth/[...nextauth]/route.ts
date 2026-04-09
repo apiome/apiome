@@ -13,6 +13,7 @@ import {
   checkLinkingIntent,
   ICredentials,
 } from '../../../../../lib/auth/credentials';
+import { getUserThemePreferences } from '../../../../../lib/db/theme-preferences';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -126,6 +127,18 @@ export const authOptions: NextAuthOptions = {
         payload.session.user.name = payload.token.name;
       }
 
+      if (payload.token?.theme_name) {
+        payload.session.user.theme_name = payload.token.theme_name as 'light' | 'dark' | 'system';
+      }
+
+      if (payload.token?.theme_overrides) {
+        try {
+          payload.session.user.theme_overrides = JSON.parse(payload.token.theme_overrides as string);
+        } catch {
+          payload.session.user.theme_overrides = {};
+        }
+      }
+
       return payload.session;
     },
     async jwt(payload: any) {
@@ -141,6 +154,14 @@ export const authOptions: NextAuthOptions = {
         if (payload.session?.current_tenant_id) {
           token.current_tenant_id = payload.session.current_tenant_id;
         }
+
+        if (payload.session?.user?.theme_name !== undefined) {
+          token.theme_name = payload.session.user.theme_name;
+        }
+
+        if (payload.session?.user?.theme_overrides !== undefined) {
+          token.theme_overrides = JSON.stringify(payload.session.user.theme_overrides ?? {});
+        }
       }
 
       if (payload.user) {
@@ -148,6 +169,15 @@ export const authOptions: NextAuthOptions = {
         const pendingTenant = (payload.user as { pending_tenant_id?: string }).pending_tenant_id;
         if (pendingTenant) {
           token.current_tenant_id = pendingTenant;
+        }
+
+        try {
+          const prefs = await getUserThemePreferences(payload.user.id as string);
+          token.theme_name = prefs?.theme_name ?? 'system';
+          token.theme_overrides = JSON.stringify(prefs?.overrides ?? {});
+        } catch {
+          token.theme_name = 'system';
+          token.theme_overrides = '{}';
         }
       }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import { User, Mail, Hash, Clock, Building2, Edit2, Key, Shield, LogIn } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import {
@@ -192,6 +193,12 @@ const Profile = () => {
               <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
                 Manage your account and security settings
               </p>
+              <Link
+                href="/settings/appearance"
+                className="mt-2 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+              >
+                Appearance settings →
+              </Link>
             </div>
           </div>
         </div>

@@ -17,6 +17,49 @@
   --radius-md: 0.5rem;
   --shadow-subtle: 0 1px 2px rgb(15 23 42 / 0.06);
   --control-height: 2.5rem;
+
+  /* Design tokens (--obj-*): overridden live by ThemeProvider for theme + custom palette */
+  --obj-color-primary: #6366f1;
+  --obj-color-primary-fg: #ffffff;
+  --obj-color-secondary: #f1f5f9;
+  --obj-color-secondary-fg: #0f172a;
+  --obj-color-accent: #f1f5f9;
+  --obj-color-accent-fg: #0f172a;
+  --obj-color-background: #ffffff;
+  --obj-color-surface: #ffffff;
+  --obj-color-text: #171717;
+  --obj-color-muted: #f8fafc;
+  --obj-color-muted-fg: #64748b;
+  --obj-color-border: #e2e8f0;
+  --obj-color-destructive: #ef4444;
+  --obj-color-destructive-fg: #ffffff;
+  --obj-color-card: #ffffff;
+  --obj-color-card-fg: #171717;
+  --obj-color-popover: #ffffff;
+  --obj-color-popover-fg: #171717;
+  --obj-space-1: 0.25rem;
+  --obj-space-2: 0.5rem;
+  --obj-space-3: 0.75rem;
+  --obj-space-4: 1rem;
+  --obj-space-5: 1.25rem;
+  --obj-space-6: 1.5rem;
+  --obj-space-8: 2rem;
+  --obj-radius-sm: 0.25rem;
+  --obj-radius-md: 0.5rem;
+  --obj-radius-lg: 0.75rem;
+  --obj-radius-xl: 1rem;
+  --obj-font-size-xs: 0.75rem;
+  --obj-font-size-sm: 0.875rem;
+  --obj-font-size-base: 1rem;
+  --obj-font-size-lg: 1.125rem;
+  --obj-font-size-xl: 1.25rem;
+  --obj-font-size-2xl: 1.5rem;
+  --obj-line-tight: 1.25;
+  --obj-line-normal: 1.45;
+  --obj-line-relaxed: 1.6;
+  --obj-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
+  --obj-shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.08);
+  --obj-shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.08);
 }
 
 /* ===== THEME SYSTEM ===== */

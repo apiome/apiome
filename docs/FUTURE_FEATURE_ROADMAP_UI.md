@@ -31,7 +31,7 @@
 
 | #   | Title | Description | Labels | Parallel |
 |-----|-------|-------------|--------|----------|
-| 1.1 (#1332) | Theme Engine & CSS Custom Properties | Token-based theming with light/dark/system modes and custom palette support | `enhancement`, `mvp`, `ui`, `ai-generated` | Yes |
+| ~~1.1 (#1332)~~ **Done** | Theme Engine & CSS Custom Properties | Token-based theming with light/dark/system modes and custom palette support | `enhancement`, `mvp`, `ui`, `ai-generated` | Yes |
 | 1.2 (#1338) | Customizable Toolbar & Panel Layout | Drag-and-drop toolbar ordering, sidebar toggling, and panel resizing | `enhancement`, `mvp`, `ui`, `ai-generated` | Yes |
 | 1.3 (#1343) | Keyboard Shortcut Manager | User-configurable keyboard shortcuts with conflict detection and reset | `enhancement`, `mvp`, `ui`, `ai-generated`, `rest` | Yes |
 | 1.4 (#1347) | Workspace Layout Persistence | Save, restore, and switch between named workspace layouts | `enhancement`, `mvp`, `ui`, `ai-generated`, `rest` | No |
