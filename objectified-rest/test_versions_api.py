@@ -371,3 +371,73 @@ def test_fork_version_bump_strategy_minor():
         assert response.status_code == 200
     finally:
         app.dependency_overrides.pop(validate_authentication, None)
+
+
+def test_sunset_timeline_requires_auth():
+    """GET /v1/versions/{tenant}/sunset-timeline requires authentication."""
+    response = client.get("/v1/versions/test-tenant/sunset-timeline")
+    assert response.status_code == 401
+
+
+def test_sunset_timeline_route_registered():
+    """Sunset timeline route exists (401 without auth, not 404)."""
+    response = client.get("/v1/versions/any-tenant/sunset-timeline")
+    assert response.status_code == 401
+
+
+def test_sunset_timeline_returns_entries():
+    """GET sunset-timeline aggregates deprecation rows with #507-shaped warnings."""
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        with patch("src.app.versions_routes.db") as mock_db:
+            mock_db.list_sunset_timeline_entries.return_value = [
+                {
+                    "id": "rev-uuid-1",
+                    "project_id": "proj-a",
+                    "version_id": "1.0.0",
+                    "metadata": {
+                        "deprecated": True,
+                        "deprecationMessage": "Move to v2",
+                        "sunsetDate": "2099-06-01",
+                        "successorRevisionId": "succ-rev",
+                    },
+                    "published": True,
+                    "project_name": "Alpha",
+                    "project_slug": "alpha",
+                }
+            ]
+            response = client.get(
+                "/v1/versions/test-tenant/sunset-timeline",
+                headers={"Authorization": "Bearer unused"},
+            )
+        assert response.status_code == 200
+        data = response.json()
+        assert "entries" in data
+        assert len(data["entries"]) == 1
+        e = data["entries"][0]
+        assert e["revisionId"] == "rev-uuid-1"
+        assert e["versionLine"] == "1.0.0"
+        assert e["timelineStatus"] == "announced"
+        assert e["lifecyclePhase"] == "deprecated"
+        assert e["sunsetDate"] == "2099-06-01"
+        assert len(e["deprecationWarnings"]) == 1
+        assert e["deprecationWarnings"][0]["revisionId"] == "rev-uuid-1"
+        mock_db.list_sunset_timeline_entries.assert_called_once_with("test-tenant-id", None)
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+
+
+def test_sunset_timeline_unknown_project_404():
+    """Optional projectId filter returns 404 when project is missing."""
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        with patch("src.app.versions_routes.db") as mock_db:
+            mock_db.get_project_by_id.return_value = None
+            response = client.get(
+                "/v1/versions/test-tenant/sunset-timeline?projectId=missing-proj",
+                headers={"Authorization": "Bearer unused"},
+            )
+        assert response.status_code == 404
+        mock_db.list_sunset_timeline_entries.assert_not_called()
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)

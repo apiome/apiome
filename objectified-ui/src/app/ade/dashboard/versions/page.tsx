@@ -1,8 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { Plus, Edit2, Trash2, Package, AlertCircle, Lock, Unlock, CheckCircle, Eye, Copy, MoreVertical, Network, Snowflake, GitBranch, GitMerge, Tag, GitFork, Shield } from 'lucide-react';
+import { Plus, Edit2, Trash2, Package, AlertCircle, Lock, Unlock, CheckCircle, Eye, Copy, MoreVertical, Network, Snowflake, GitBranch, GitMerge, Tag, GitFork, Shield, Sun } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import {
   Dialog,
@@ -1162,6 +1163,13 @@ const Versions = () => {
               <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
                 Manage versions with semantic versioning
               </p>
+              <Link
+                href="/ade/dashboard/versions/sunset-timeline"
+                className="inline-flex items-center gap-1.5 text-sm text-amber-700 dark:text-amber-300 hover:underline mt-2"
+              >
+                <Sun className="h-4 w-4" />
+                Sunset timeline (EOL schedule)
+              </Link>
             </div>
             <div className="flex items-center gap-3">
               <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>

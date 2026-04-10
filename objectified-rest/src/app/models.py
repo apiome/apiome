@@ -486,6 +486,36 @@ class RevisionDeprecationWarningOut(BaseModel):
     )
 
 
+class SunsetTimelineEntryOut(BaseModel):
+    """One row in the tenant-wide deprecation / sunset schedule (#508)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    revision_id: str = Field(serialization_alias="revisionId")
+    project_id: str = Field(serialization_alias="projectId")
+    project_name: Optional[str] = Field(default=None, serialization_alias="projectName")
+    project_slug: Optional[str] = Field(default=None, serialization_alias="projectSlug")
+    version_line: str = Field(serialization_alias="versionLine")
+    sunset_date: Optional[str] = Field(default=None, serialization_alias="sunsetDate")
+    timeline_status: str = Field(serialization_alias="timelineStatus")
+    lifecycle_phase: str = Field(serialization_alias="lifecyclePhase")
+    deprecation_message: Optional[str] = Field(default=None, serialization_alias="deprecationMessage")
+    successor_revision_id: Optional[str] = Field(default=None, serialization_alias="successorRevisionId")
+    published: bool
+    deprecation_warnings: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        serialization_alias="deprecationWarnings",
+    )
+
+
+class SunsetTimelineResponse(BaseModel):
+    """Aggregated sunset / deprecation timeline for accessible projects (#508)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    entries: List[SunsetTimelineEntryOut] = Field(default_factory=list)
+
+
 class CompatibilityCheckResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 

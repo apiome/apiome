@@ -1,10 +1,14 @@
 """Unit tests for revision deprecation helpers (#507)."""
 
+from datetime import date
+
 from app.revision_deprecation import (
     MIGRATION_GUIDE_ISSUE_URL,
     deprecation_payload_for_openapi,
     is_revision_deprecated,
     merge_version_metadata,
+    parse_calendar_date,
+    sunset_timeline_fields,
     warnings_for_revision,
 )
 
@@ -57,3 +61,37 @@ def test_warnings_for_revision():
     assert w[0]["replacementRevisionId"] == "new-rev"
     assert w[0]["sunsetDate"] == "2026-06-01"
     assert MIGRATION_GUIDE_ISSUE_URL in w[0]["message"]
+
+
+def test_parse_calendar_date():
+    assert parse_calendar_date("2026-06-01") == date(2026, 6, 1)
+    assert parse_calendar_date("2026-06-01T12:00:00Z") == date(2026, 6, 1)
+    assert parse_calendar_date("") is None
+    assert parse_calendar_date("bad") is None
+
+
+def test_sunset_timeline_fields_deprecated_only():
+    ts, life, sd = sunset_timeline_fields({"deprecated": True}, today=date(2026, 1, 1))
+    assert ts == "announced"
+    assert life == "deprecated"
+    assert sd is None
+
+
+def test_sunset_timeline_fields_past_sunset():
+    ts, life, sd = sunset_timeline_fields(
+        {"deprecated": True, "sunsetDate": "2020-01-01"},
+        today=date(2026, 1, 1),
+    )
+    assert ts == "past"
+    assert life == "sunset_reached"
+    assert sd == "2020-01-01"
+
+
+def test_sunset_timeline_fields_imminent():
+    ts, life, sd = sunset_timeline_fields(
+        {"deprecated": True, "sunsetDate": "2026-01-15"},
+        today=date(2026, 1, 1),
+    )
+    assert ts == "imminent"
+    assert life == "deprecated"
+    assert sd == "2026-01-15"

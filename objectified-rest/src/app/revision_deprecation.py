@@ -14,7 +14,8 @@ Migration guide: `#747` (GitHub).
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Optional
+from datetime import date
+from typing import Any, Dict, List, Optional, Tuple
 
 MIGRATION_GUIDE_ISSUE_URL = "https://github.com/KenSuenobu/objectified/issues/747"
 
@@ -39,6 +40,52 @@ def merge_version_metadata(existing: Any, patch: Optional[Dict[str, Any]]) -> Di
     if not patch:
         return base
     return {**base, **patch}
+
+
+def parse_calendar_date(s: Optional[str]) -> Optional[date]:
+    """Parse YYYY-MM-DD from an ISO 8601 date or timestamp string."""
+    if not s or not isinstance(s, str):
+        return None
+    t = s.strip()
+    if len(t) < 10:
+        return None
+    try:
+        return date.fromisoformat(t[:10])
+    except ValueError:
+        return None
+
+
+def sunset_timeline_fields(
+    metadata: Any,
+    *,
+    today: Optional[date] = None,
+) -> Tuple[str, str, Optional[str]]:
+    """
+    Timeline UX and lifecycle for deprecation / sunset (#508).
+
+    Returns (timeline_status, lifecycle_phase, normalized_sunset_str).
+    timeline_status: announced | imminent | past
+    lifecycle_phase: deprecated | sunset_reached
+    """
+    today = today or date.today()
+    m = coerce_metadata(metadata)
+    sunset_raw = m.get("sunsetDate") or m.get("sunset_date")
+    norm_sunset: Optional[str] = None
+    if isinstance(sunset_raw, str) and sunset_raw.strip():
+        norm_sunset = sunset_raw.strip()
+    sunset_d = parse_calendar_date(norm_sunset) if norm_sunset else None
+    dep = is_revision_deprecated(metadata)
+
+    if sunset_d is not None:
+        if sunset_d < today:
+            return ("past", "sunset_reached", norm_sunset)
+        if (sunset_d - today).days <= 30:
+            return ("imminent", "deprecated", norm_sunset)
+        return ("announced", "deprecated", norm_sunset)
+
+    if dep:
+        return ("announced", "deprecated", None)
+    return ("announced", "deprecated", norm_sunset)
 
 
 def is_revision_deprecated(metadata: Any) -> bool:

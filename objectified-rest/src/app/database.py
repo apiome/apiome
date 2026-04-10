@@ -1238,6 +1238,36 @@ class Database:
         """
         return self.execute_query(query, (project_id, tenant_id))
 
+    def list_sunset_timeline_entries(
+        self, tenant_id: str, project_id: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Schema revisions with deprecation and/or a sunset date (#508).
+        """
+        project_filter = ""
+        params: List[Any] = [tenant_id]
+        if project_id:
+            project_filter = " AND v.project_id = %s"
+            params.append(project_id)
+
+        query = f"""
+            SELECT v.id, v.project_id, v.version_id, v.metadata, v.published,
+                   p.name AS project_name, p.slug AS project_slug
+            FROM odb.versions v
+            JOIN odb.projects p ON v.project_id = p.id
+            WHERE p.tenant_id = %s
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+              {project_filter}
+              AND (
+                COALESCE(v.metadata->>'deprecated', '') IN ('true', '1', 'True', 'yes')
+                OR (v.metadata @> '{{"deprecated": true}}'::jsonb)
+                OR NULLIF(trim(COALESCE(v.metadata->>'sunsetDate', v.metadata->>'sunset_date', '')), '') IS NOT NULL
+              )
+            ORDER BY p.name ASC, v.version_id ASC
+        """
+        return self.execute_query(query, tuple(params))
+
     def get_version_by_id(self, version_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         """Get a specific version by ID, ensuring it belongs to the tenant."""
         query = """

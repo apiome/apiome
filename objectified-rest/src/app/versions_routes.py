@@ -6,6 +6,7 @@ All endpoints are tenant and project-scoped and require authentication via JWT t
 """
 
 import re
+from datetime import date as date_cls
 from fastapi import APIRouter, HTTPException, Query, Depends, Body
 from typing import Optional, List, Dict, Any
 
@@ -15,10 +16,18 @@ from .models import (
     VersionCreateRequest,
     VersionForkRequest,
     VersionUpdateRequest,
-    VersionPublishRequest
+    VersionPublishRequest,
+    SunsetTimelineResponse,
+    SunsetTimelineEntryOut,
 )
 from .auth import validate_authentication, get_authenticated_user_id
 from .version_notes import limits_for_tenant, validate_version_notes
+from .revision_deprecation import (
+    coerce_metadata,
+    parse_calendar_date,
+    sunset_timeline_fields,
+    warnings_for_revision,
+)
 
 router = APIRouter(prefix="/v1/versions", tags=["versions"])
 
@@ -49,6 +58,80 @@ def bump_minor_version(version: str) -> str:
     if parsed:
         return f"{parsed['major']}.{parsed['minor'] + 1}.0"
     return '0.1.0'
+
+
+@router.get("/{tenant_slug}/sunset-timeline", response_model=SunsetTimelineResponse)
+async def get_sunset_timeline(
+    tenant_slug: str,
+    project_id: Optional[str] = Query(None, alias="projectId"),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> SunsetTimelineResponse:
+    """
+    Aggregate deprecation and sunset dates across projects (#508).
+    Must be registered before ``/{tenant_slug}/{project_id}`` so ``sunset-timeline`` is not parsed as a project id.
+    """
+    tid = auth_data["tenant_id"]
+    if project_id:
+        proj = db.get_project_by_id(project_id, tid)
+        if not proj:
+            raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+
+    rows = db.list_sunset_timeline_entries(tid, project_id)
+    decorated: List[tuple] = []
+    for row in rows:
+        meta = row.get("metadata")
+        t_status, life, norm = sunset_timeline_fields(meta)
+        m = coerce_metadata(meta)
+        raw_msg = m.get("deprecationMessage") or m.get("message")
+        msg: Optional[str] = None
+        if isinstance(raw_msg, str) and raw_msg.strip():
+            msg = raw_msg.strip()
+        succ = m.get("successorRevisionId") or m.get("successor_revision_id")
+        succ_str = succ.strip() if isinstance(succ, str) and succ.strip() else None
+        warns = warnings_for_revision(
+            revision_id=row["id"],
+            version_label=row["version_id"],
+            role="head",
+            metadata=meta,
+        )
+        sort_date = parse_calendar_date(norm) if norm else None
+        decorated.append(
+            (
+                sort_date or date_cls(9999, 12, 31),
+                row,
+                t_status,
+                life,
+                norm,
+                msg,
+                succ_str,
+                warns,
+            )
+        )
+
+    decorated.sort(
+        key=lambda x: (x[0], (x[1].get("project_name") or ""), (x[1].get("version_id") or ""))
+    )
+
+    entries: List[SunsetTimelineEntryOut] = []
+    for _, row, t_status, life, norm, msg, succ_str, warns in decorated:
+        entries.append(
+            SunsetTimelineEntryOut(
+                revision_id=row["id"],
+                project_id=row["project_id"],
+                project_name=row.get("project_name"),
+                project_slug=row.get("project_slug"),
+                version_line=row["version_id"],
+                sunset_date=norm,
+                timeline_status=t_status,
+                lifecycle_phase=life,
+                deprecation_message=msg,
+                successor_revision_id=succ_str,
+                published=bool(row.get("published")),
+                deprecation_warnings=warns,
+            )
+        )
+
+    return SunsetTimelineResponse(entries=entries)
 
 
 @router.get("/{tenant_slug}/{project_id}")
