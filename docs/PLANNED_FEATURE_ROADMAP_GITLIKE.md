@@ -105,7 +105,7 @@ Workstreams below can proceed in parallel once shared contracts (revision id, he
 
 ## P0-01: Add Commit Metadata Fields to Revision Records
 
-**GitHub:** [#2563](https://github.com/KenSuenobu/objectified-commercial/issues/2563) · **Epic:** [#2558](https://github.com/KenSuenobu/objectified-commercial/issues/2558)
+**GitHub:** [#2563](https://github.com/KenSuenobu/objectified-commercial/issues/2563) · **Epic:** [#2558](https://github.com/KenSuenobu/objectified-commercial/issues/2558) · **Status:** shipped (DB columns + REST create/fork + list/get history)
 
 ### Problem statement
 Commits are not consistently traceable to who made the change or why. Teams need author/message/reference metadata to audit change intent and link commits to delivery workflows.

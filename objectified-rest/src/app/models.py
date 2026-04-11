@@ -229,6 +229,24 @@ class VersionSchema(BaseModel):
         validation_alias=AliasChoices("changelog", "change_log"),
         description="Markdown changelog / release notes (stored as change_log in DB).",
     )
+    author: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("author", "commit_author"),
+        serialization_alias="author",
+        description="Optional commit author string (audit / CI identity; stored as commit_author).",
+    )
+    message: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("message", "commit_message"),
+        serialization_alias="message",
+        description="Optional full commit message body (stored as commit_message).",
+    )
+    external_ref: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("externalRef", "external_ref"),
+        serialization_alias="externalRef",
+        description="External work item id or URL (Jira, Linear, etc.).",
+    )
     visibility: str = "private"
     published: bool = False
     published_at: Optional[Union[datetime, str]] = None
@@ -308,6 +326,18 @@ class VersionCreateRequest(BaseModel):
         default=None,
         validation_alias=AliasChoices("changelog", "change_log"),
     )
+    author: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("author", "commit_author"),
+    )
+    message: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("message", "commit_message"),
+    )
+    external_ref: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("externalRef", "external_ref"),
+    )
     source_version_id: Optional[str] = None  # Copy classes from this version
     bump_strategy: Optional[str] = None  # 'patch' or 'minor' for auto-versioning
 
@@ -339,6 +369,18 @@ class VersionForkRequest(BaseModel):
     changelog: Optional[str] = Field(
         default=None,
         validation_alias=AliasChoices("changelog", "change_log"),
+    )
+    author: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("author", "commit_author"),
+    )
+    message: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("message", "commit_message"),
+    )
+    external_ref: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("externalRef", "external_ref"),
     )
     bump_strategy: Optional[str] = Field(
         default=None,

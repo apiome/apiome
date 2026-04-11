@@ -1230,6 +1230,7 @@ class Database:
                    v.enabled, v.parent_version_id, v.merge_parent_version_id,
                    v.forked_from_revision_id, v.upstream_project_id,
                    v.revision_locked, v.metadata,
+                   v.commit_author, v.commit_message, v.external_ref,
                    vf.version_id AS fork_source_version_string,
                    pf.name AS fork_source_project_name,
                    up.name AS upstream_project_name,
@@ -1289,6 +1290,7 @@ class Database:
                    v.enabled, v.parent_version_id, v.merge_parent_version_id,
                    v.forked_from_revision_id, v.upstream_project_id,
                    v.revision_locked, v.metadata,
+                   v.commit_author, v.commit_message, v.external_ref,
                    vf.version_id AS fork_source_version_string,
                    pf.name AS fork_source_project_name,
                    up.name AS upstream_project_name,
@@ -1317,6 +1319,7 @@ class Database:
                    v.enabled, v.parent_version_id, v.merge_parent_version_id,
                    v.forked_from_revision_id, v.upstream_project_id,
                    v.revision_locked, v.metadata,
+                   v.commit_author, v.commit_message, v.external_ref,
                    vf.version_id AS fork_source_version_string,
                    pf.name AS fork_source_project_name,
                    up.name AS upstream_project_name,
@@ -1436,16 +1439,21 @@ class Database:
         creator_id: Optional[str],
         version_id: str,
         description: Optional[str] = None,
-        change_log: Optional[str] = None
+        change_log: Optional[str] = None,
+        commit_author: Optional[str] = None,
+        commit_message: Optional[str] = None,
+        external_ref: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create a new version."""
         query = """
             INSERT INTO odb.versions
-            (project_id, creator_id, version_id, description, change_log)
-            VALUES (%s, %s, %s, %s, %s)
+            (project_id, creator_id, version_id, description, change_log,
+             commit_author, commit_message, external_ref)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, project_id, creator_id, version_id, description,
                       change_log, visibility, published, published_at,
                       enabled, parent_version_id, merge_parent_version_id,
+                      commit_author, commit_message, external_ref,
                       created_at, updated_at
         """
 
@@ -1454,7 +1462,16 @@ class Database:
             with conn.cursor() as cursor:
                 cursor.execute(
                     query,
-                    (project_id, creator_id, version_id, description, change_log)
+                    (
+                        project_id,
+                        creator_id,
+                        version_id,
+                        description,
+                        change_log,
+                        commit_author,
+                        commit_message,
+                        external_ref,
+                    ),
                 )
                 result = cursor.fetchone()
                 conn.commit()
@@ -1473,6 +1490,9 @@ class Database:
         change_log: Optional[str],
         source_revision_id: str,
         upstream_project_id: Optional[str],
+        commit_author: Optional[str] = None,
+        commit_message: Optional[str] = None,
+        external_ref: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Create a new version in target_project_id as a fork of source_revision_id (cross-project).
@@ -1503,8 +1523,9 @@ class Database:
         insert_query = """
             INSERT INTO odb.versions
             (project_id, creator_id, version_id, description, change_log,
-             parent_version_id, forked_from_revision_id, upstream_project_id)
-            VALUES (%s, %s, %s, %s, %s, NULL, %s, %s)
+             parent_version_id, forked_from_revision_id, upstream_project_id,
+             commit_author, commit_message, external_ref)
+            VALUES (%s, %s, %s, %s, %s, NULL, %s, %s, %s, %s, %s)
             RETURNING id
         """
         conn = self.connect()
@@ -1522,6 +1543,9 @@ class Database:
                         change_log,
                         source_revision_id,
                         effective_upstream,
+                        commit_author,
+                        commit_message,
+                        external_ref,
                     ),
                 )
                 row = cursor.fetchone()
@@ -1698,7 +1722,8 @@ class Database:
               )
             RETURNING v.id, v.project_id, v.creator_id, v.version_id, v.description,
                       v.change_log, v.visibility, v.published, v.published_at,
-                      v.enabled, v.created_at, v.updated_at
+                      v.enabled, v.commit_author, v.commit_message, v.external_ref,
+                      v.created_at, v.updated_at
         """
         conn = self.connect()
         try:
@@ -2187,7 +2212,8 @@ class Database:
               )
             RETURNING v.id, v.project_id, v.creator_id, v.version_id, v.description,
                       v.change_log, v.visibility, v.published, v.published_at,
-                      v.enabled, v.created_at, v.updated_at
+                      v.enabled, v.commit_author, v.commit_message, v.external_ref,
+                      v.created_at, v.updated_at
         """
         conn = self.connect()
         try:

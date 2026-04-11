@@ -38,6 +38,31 @@ from .revision_lifecycle import (
 
 router = APIRouter(prefix="/v1/versions", tags=["versions"])
 
+
+_DEFAULT_COMMIT_METADATA_MAX_CHARS = 10_000
+_AUTHOR_OR_REF_MAX_CHARS = 500
+
+
+def _optional_commit_metadata_str(
+    value: Optional[str],
+    *,
+    field_name: str = "value",
+    max_length: int = _DEFAULT_COMMIT_METADATA_MAX_CHARS,
+) -> Optional[str]:
+    """Normalize optional commit metadata and reject overlong values (#2563)."""
+    if value is None:
+        return None
+    s = str(value).strip()
+    if not s:
+        return None
+    if len(s) > max_length:
+        raise HTTPException(
+            status_code=400,
+            detail=f"{field_name} must be at most {max_length} characters",
+        )
+    return s
+
+
 _SUCCESSOR_RESOLUTION_DESC = (
     "none: return the requested revision only. "
     "resolve: follow metadata.successorRevisionId (same project, #748); JSON body is the final revision; "
@@ -537,6 +562,15 @@ async def create_version(
         except ValueError as ve:
             raise HTTPException(status_code=400, detail=str(ve)) from ve
 
+        # Validate and normalize commit metadata before DB call so 400s surface correctly
+        commit_author = _optional_commit_metadata_str(
+            request.author, field_name="author", max_length=_AUTHOR_OR_REF_MAX_CHARS
+        )
+        commit_message = _optional_commit_metadata_str(request.message, field_name="message")
+        commit_external_ref = _optional_commit_metadata_str(
+            request.external_ref, field_name="externalRef", max_length=_AUTHOR_OR_REF_MAX_CHARS
+        )
+
         # Create version
         version = db.create_version(
             project_id=project_id,
@@ -544,6 +578,9 @@ async def create_version(
             version_id=version_id,
             description=sm,
             change_log=cl,
+            commit_author=commit_author,
+            commit_message=commit_message,
+            external_ref=commit_external_ref,
         )
 
         response_data = {**version}
@@ -562,6 +599,8 @@ async def create_version(
                     response_data['copy_warning'] = copy_result.get('error')
 
         return VersionSchema(**response_data)
+    except HTTPException:
+        raise
     except Exception as e:
         # Check for unique constraint violation
         if "unique constraint" in str(e).lower() or "23505" in str(e):
@@ -637,6 +676,13 @@ async def fork_version_from_revision(
         change_log=cl,
         source_revision_id=src_id,
         upstream_project_id=upstream_opt,
+        commit_author=_optional_commit_metadata_str(
+            request.author, field_name="author", max_length=_AUTHOR_OR_REF_MAX_CHARS
+        ),
+        commit_message=_optional_commit_metadata_str(request.message, field_name="message"),
+        external_ref=_optional_commit_metadata_str(
+            request.external_ref, field_name="externalRef", max_length=_AUTHOR_OR_REF_MAX_CHARS
+        ),
     )
 
     if not result.get("success"):

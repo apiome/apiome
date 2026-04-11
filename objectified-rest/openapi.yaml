@@ -6762,6 +6762,24 @@ components:
           - type: string
           - type: 'null'
           title: Changelog
+        author:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Author
+          description: Optional commit author string (audit / CI identity).
+        message:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message
+          description: Optional full commit message body.
+        externalRef:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Externalref
+          description: External work item id or URL (Jira, Linear, etc.).
         source_version_id:
           anyOf:
           - type: string
@@ -6805,6 +6823,24 @@ components:
           - type: string
           - type: 'null'
           title: Changelog
+        author:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Author
+          description: Optional commit author string (audit / CI identity).
+        message:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message
+          description: Optional full commit message body.
+        externalRef:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Externalref
+          description: External work item id or URL (Jira, Linear, etc.).
         bumpStrategy:
           anyOf:
           - type: string
@@ -6869,6 +6905,24 @@ components:
           title: Changelog
           description: Markdown changelog / release notes (stored as change_log in
             DB).
+        author:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Author
+          description: Optional commit author string (stored as commit_author).
+        message:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message
+          description: Optional full commit message body (stored as commit_message).
+        externalRef:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Externalref
+          description: External work item id or URL (stored as external_ref).
         visibility:
           type: string
           title: Visibility
