@@ -49,6 +49,8 @@ import { loadLayoutStateForVersionCompare } from '../../../../../lib/version-can
 import { extractBreakingHintsFromChangelog, validateVersionNotesClient } from '../../../../../lib/version-notes';
 import RelationshipGraphDialog from './RelationshipGraphDialog';
 import VersionLineageSnippet from './VersionLineageSnippet';
+import VersionHistoryGraphPanel from './VersionHistoryGraphPanel';
+import { DEFAULT_HISTORY_WINDOW } from './version-history-dag';
 import { toast } from 'sonner';
 
 const Editor = dynamic(() => import('@monaco-editor/react'), {
@@ -237,6 +239,8 @@ const Versions = () => {
   const [editLifecycle, setEditLifecycle] = useState<string>('stable');
   const [compareBaseTagId, setCompareBaseTagId] = useState<string>('');
   const [compareToTagId, setCompareToTagId] = useState<string>('');
+  /** #743: newest-first window for history DAG + "Load older" */
+  const [historyGraphWindowSize, setHistoryGraphWindowSize] = useState(DEFAULT_HISTORY_WINDOW);
 
   const [showMergeDialog, setShowMergeDialog] = useState(false);
   const [mergeSourceBranch, setMergeSourceBranch] = useState('');
@@ -745,32 +749,61 @@ const Versions = () => {
     return generateOpenApiSpec(classesWithProperties, { projectName: project?.name, version: version.version_id, description: version.shortMessage || undefined });
   };
 
-  const handleCompareVersions = async () => {
-    if (!compareVersion1Id || !compareVersion2Id) { toast.warning('Please select two versions'); return; }
-    if (compareVersion1Id === compareVersion2Id) { toast.warning('Select two different versions'); return; }
+  const runCompareBetween = async (baseId: string, targetId: string) => {
+    if (!baseId || !targetId) {
+      toast.warning('Please select two versions');
+      return;
+    }
+    if (baseId === targetId) {
+      toast.warning('Select two different versions');
+      return;
+    }
+    setDiffResult([]);
+    setSchemaDiffSummary(null);
+    setClassDiffRows(null);
     setCanvasCompareLeft(null);
     setCanvasCompareRight(null);
     setCanvasCompareDiff(null);
     setCanvasComparePairKey('');
     setIsLoadingComparison(true);
     try {
-      const [spec1, spec2] = await Promise.all([loadVersionSpec(compareVersion1Id), loadVersionSpec(compareVersion2Id)]);
-      setCompareSpec1(spec1); setCompareSpec2(spec2);
-
-      // Perform schema-aware diff
+      const [spec1, spec2] = await Promise.all([loadVersionSpec(baseId), loadVersionSpec(targetId)]);
+      setCompareSpec1(spec1);
+      setCompareSpec2(spec2);
       const diffSummary = compareSchemas(spec1, spec2);
       setSchemaDiffSummary(diffSummary);
       setClassDiffRows(buildClassLevelDiff(spec1, spec2));
-
-      // Also keep line-based diff for fallback
       const content1 = compareFormat === 'json' ? spec1 : YAML.stringify(JSON.parse(spec1));
       const content2 = compareFormat === 'json' ? spec2 : YAML.stringify(JSON.parse(spec2));
       setDiffResult(diffLines(content1, content2));
     } catch (error) {
       console.error('Comparison error:', error);
       await alertDialog({ message: 'Failed to load specs for comparison', variant: 'error' });
+    } finally {
+      setIsLoadingComparison(false);
     }
-    finally { setIsLoadingComparison(false); }
+  };
+
+  const handleCompareVersions = async () => {
+    await runCompareBetween(compareVersion1Id, compareVersion2Id);
+  };
+
+  const handleHistoryGraphCompareToParent = async (revisionId: string) => {
+    const v = versions.find((x) => x.id === revisionId);
+    if (!v?.parent_version_id?.trim()) {
+      toast.info('This revision has no primary parent to compare against.');
+      return;
+    }
+    setCompareVersion1Id(v.parent_version_id);
+    setCompareVersion2Id(v.id);
+    setShowCompareDialog(true);
+    await runCompareBetween(v.parent_version_id, v.id);
+  };
+
+  const handleHistoryGraphViewSpec = async (revisionId: string) => {
+    const v = versions.find((x) => x.id === revisionId);
+    if (!v) return;
+    await handleViewOpenApi(v);
   };
 
   const handleCompareDialogOpen = () => {
@@ -881,6 +914,10 @@ const Versions = () => {
     if (!t) return versions;
     return versions.filter((v) => v.id === t.version_id);
   }, [versions, versionTags, historyTagFilter]);
+
+  useEffect(() => {
+    setHistoryGraphWindowSize(DEFAULT_HISTORY_WINDOW);
+  }, [selectedProjectId, historyTagFilter, lifecycleFilter]);
 
   const handleCompareFormatChange = (newFormat: 'json' | 'yaml') => {
     setCompareFormat(newFormat);
@@ -1574,6 +1611,23 @@ const Versions = () => {
           iconContainerClassName="from-amber-500 to-orange-600 shadow-amber-500/30"
         />
       ) : (
+        <>
+          <div className="mb-6">
+            <VersionHistoryGraphPanel
+              versions={displayVersions.map((v) => ({
+                id: v.id,
+                version_id: v.version_id,
+                parent_version_id: v.parent_version_id ?? null,
+                merge_parent_version_id: v.merge_parent_version_id ?? null,
+                created_at: v.created_at,
+                shortMessage: v.shortMessage,
+              }))}
+              windowSize={historyGraphWindowSize}
+              onWindowSizeIncrease={setHistoryGraphWindowSize}
+              onCompareToPrimaryParent={handleHistoryGraphCompareToParent}
+              onViewSpec={handleHistoryGraphViewSpec}
+            />
+          </div>
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex flex-wrap items-center gap-3 bg-gray-50/80 dark:bg-gray-900/40">
             <span className="text-sm text-gray-600 dark:text-gray-400">Lifecycle filter</span>
@@ -1865,6 +1919,7 @@ const Versions = () => {
             </tbody>
           </table>
         </div>
+        </>
       )}
         </div>
       </main>
