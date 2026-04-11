@@ -35,7 +35,7 @@ This represents the different versions of the Objectified specification and thei
   - 📋 Visual canvas comparison
 - **Version History Graph**:
   - ✅ Visual DAG of version history (#743) — parent + merge edges, zoom/pan, compare/view from nodes
-  - 📋 Show branches and merges
+  - ✅ Show branches and merges (#744) — left-to-right **lanes**, **branch tips** vs **merge commits**, **branch filter** (ancestor union keeps merges readable)
   - ✅ Click to switch versions
 - **Version Rollback**:
   - 📋 Rollback to any previous version
@@ -57,7 +57,6 @@ This represents the different versions of the Objectified specification and thei
 
 | Ticket | Feature Description                          |
 |--------|----------------------------------------------|
-| #744   | Show branches and merges                     |
 | #745   | Rollback to any previous version             |
 | #746   | Breaking changes documentation               |
 | #747   | Migration guide generation for version notes |
@@ -68,6 +67,7 @@ This represents the different versions of the Objectified specification and thei
 
 # Completed
 
+- **#744** — **ADE → Versions → Revision history graph (branches & merges)**: **Left-to-right** layered layout (**lanes**); **merge commits** (violet, dashed merge-parent edge) vs **branch tips** (emerald marker, **Tip:** labels from named branches, hover); **branch toggles** filter by **ancestor union** from each selected tip so **merge readability** is preserved; shared **#743** panel/DAG module.
 - **#743** — **ADE → Versions → Revision history graph**: interactive **DAG** from `parent_version_id` / `merge_parent_version_id` (React Flow: zoom/pan, minimap); **compare** to primary parent or **view spec** (Ctrl/Cmd-click); **Load older** for large histories; merge nodes show **two parents** (dashed merge edge).
 - **#741** — **Property-level diff** in **Schema Changes**: readable lines per property/schema (`property name: field old → new`), expanded OpenAPI compare (**default**, **nullable**, **readOnly** / **writeOnly**, **deprecated**, **example**, **title**, **multipleOf**, **uniqueItems**, **exclusiveMin/Max**, etc.), sorted drill lists, **performance** cap with **show all** for huge classes; **Merge branches** preview shows **conflict paths grouped by class** (aligned with `schemas.*` IDs).
 - **#742** — **ADE → Versions → Compare → Canvas**: **visual** diagram compare for saved Studio layouts (default snapshot, else effective named layout) with **split** or **stacked overlay**, legend (**added / removed / moved / unchanged**), **lazy-loaded** when the tab opens (orthogonal to OpenAPI diff **#740** / **#741**).

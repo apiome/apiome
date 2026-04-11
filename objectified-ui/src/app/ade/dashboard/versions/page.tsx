@@ -1614,6 +1614,7 @@ const Versions = () => {
         <>
           <div className="mb-6">
             <VersionHistoryGraphPanel
+              key={versionBranches.map((b) => b.id).sort().join('|') || 'graph-branches'}
               versions={displayVersions.map((v) => ({
                 id: v.id,
                 version_id: v.version_id,
@@ -1621,6 +1622,11 @@ const Versions = () => {
                 merge_parent_version_id: v.merge_parent_version_id ?? null,
                 created_at: v.created_at,
                 shortMessage: v.shortMessage,
+              }))}
+              branches={versionBranches.map((b) => ({
+                id: b.id,
+                name: b.name,
+                tip_version_id: b.tip_version_id,
               }))}
               windowSize={historyGraphWindowSize}
               onWindowSizeIncrease={setHistoryGraphWindowSize}
