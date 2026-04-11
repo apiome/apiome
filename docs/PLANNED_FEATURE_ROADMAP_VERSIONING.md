@@ -57,7 +57,6 @@ This represents the different versions of the Objectified specification and thei
 
 | Ticket | Feature Description                          |
 |--------|----------------------------------------------|
-| #740   | Highlight added/removed/changed classes      |
 | #741   | Detail property-level changes                |
 | #742   | Visual canvas comparison                     |
 | #743   | Visual tree of version history               |
@@ -72,4 +71,5 @@ This represents the different versions of the Objectified specification and thei
 
 # Completed
 
+- **#740** — Version compare **Schema Changes**: **class-level** structural diff (stable OpenAPI schema IDs), git-style **+/−/~** highlights, search and **virtualized** list for large schemas, **property drill-down** per class, **Copy class stat** export text.
 - **#738** — Version merging (Git-style merge-base, three-way OpenAPI schema merge, merge revision with two parents, `baseRevisionId` lock; optional `compatGateOnMerge`).

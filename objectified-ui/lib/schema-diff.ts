@@ -19,6 +19,154 @@ export interface DiffSummary {
   unchanged: SchemaDiff[];
 }
 
+/** One row per `components.schemas` entry — stable ID is the OpenAPI component name. */
+export type ClassDiffStatus = 'added' | 'removed' | 'modified' | 'unchanged';
+
+export interface ClassDiffRow {
+  /** Stable identifier: schema component key (e.g. `User`). */
+  stableId: string;
+  status: ClassDiffStatus;
+  /** Counts of property-level ops under this class (for stat-style display). */
+  propertyAdded: number;
+  propertyRemoved: number;
+  propertyModified: number;
+  /** Present when the schema object itself changed (not only properties). */
+  schemaChanges?: string[];
+}
+
+/**
+ * Structural class-level diff (git diff --stat style): one row per schema name.
+ * Uses the same comparison rules as `compareSchemas` but aggregates property ops per class.
+ */
+export function buildClassLevelDiff(spec1: any, spec2: any): ClassDiffRow[] {
+  const summary = compareSchemas(spec1, spec2);
+
+  const schema1 = typeof spec1 === 'string' ? JSON.parse(spec1) : spec1;
+  const schema2 = typeof spec2 === 'string' ? JSON.parse(spec2) : spec2;
+  const schemas1 = schema1?.components?.schemas || {};
+  const schemas2 = schema2?.components?.schemas || {};
+  const names = new Set([...Object.keys(schemas1), ...Object.keys(schemas2)]);
+
+  const sorted = [...names].sort((a, b) => a.localeCompare(b));
+
+  const getPropertySchemaName = (path: string): string | undefined => {
+    const match = path.match(/^schemas\.([^.]+)\.properties\./);
+    return match?.[1];
+  };
+
+  const countPropertyDiffsBySchema = (diffs: SchemaDiff[]): Map<string, number> => {
+    const counts = new Map<string, number>();
+    diffs.forEach((d) => {
+      if (d.itemType !== 'property') return;
+      const schemaName = getPropertySchemaName(d.path);
+      if (!schemaName) return;
+      counts.set(schemaName, (counts.get(schemaName) || 0) + 1);
+    });
+    return counts;
+  };
+
+  const propertyAddedBySchema = countPropertyDiffsBySchema(summary.added);
+  const propertyRemovedBySchema = countPropertyDiffsBySchema(summary.removed);
+  const propertyModifiedBySchema = countPropertyDiffsBySchema(summary.modified);
+
+  const schemaModifiedByName = new Map<string, SchemaDiff>();
+  summary.modified.forEach((d) => {
+    if (d.itemType !== 'schema') return;
+    const match = d.path.match(/^schemas\.([^.]+)$/);
+    if (match) schemaModifiedByName.set(match[1], d);
+  });
+
+  return sorted.map((name) => {
+    const in1 = name in schemas1;
+    const in2 = name in schemas2;
+
+    const propAdded = propertyAddedBySchema.get(name) || 0;
+    const propRemoved = propertyRemovedBySchema.get(name) || 0;
+    const propModified = propertyModifiedBySchema.get(name) || 0;
+
+    const schemaMod = schemaModifiedByName.get(name);
+
+    if (!in1 && in2) {
+      return {
+        stableId: name,
+        status: 'added' as const,
+        propertyAdded: propAdded,
+        propertyRemoved: 0,
+        propertyModified: 0,
+      };
+    }
+    if (in1 && !in2) {
+      return {
+        stableId: name,
+        status: 'removed' as const,
+        propertyAdded: 0,
+        propertyRemoved: propRemoved,
+        propertyModified: 0,
+      };
+    }
+
+    const hasSchemaChange = Boolean(schemaMod);
+    const hasPropChange = propAdded > 0 || propRemoved > 0 || propModified > 0;
+    const status: ClassDiffStatus =
+      hasSchemaChange || hasPropChange ? 'modified' : 'unchanged';
+
+    return {
+      stableId: name,
+      status,
+      propertyAdded: propAdded,
+      propertyRemoved: propRemoved,
+      propertyModified: propModified,
+      schemaChanges: schemaMod?.changes,
+    };
+  });
+}
+
+/** Non-unchanged property and schema rows for a single class (drill-down / #741). */
+export function getClassChangeDiffs(summary: DiffSummary, className: string): SchemaDiff[] {
+  const schemaPath = `schemas.${className}`;
+  const propPrefix = `${schemaPath}.properties.`;
+  const out: SchemaDiff[] = [];
+
+  for (const bucket of [summary.added, summary.removed, summary.modified]) {
+    for (const d of bucket) {
+      if (d.itemType === 'schema' && d.path === schemaPath) {
+        out.push(d);
+      } else if (d.itemType === 'property' && d.path.startsWith(propPrefix)) {
+        out.push(d);
+      }
+    }
+  }
+  return out;
+}
+
+/** Plain-text export: one line per class, git stat style (feeds export / #746). */
+export function formatClassDiffStatLines(
+  rows: ClassDiffRow[],
+  options?: { includeUnchanged?: boolean }
+): string {
+  const includeUnchanged = options?.includeUnchanged !== false;
+  const list = includeUnchanged ? rows : rows.filter((r) => r.status !== 'unchanged');
+  return list
+    .map((r) => {
+      if (r.status === 'unchanged') {
+        return `  ${r.stableId}:  unchanged`;
+      }
+      if (r.status === 'added') {
+        return `+ ${r.stableId}:  added     (+${r.propertyAdded} props)`;
+      }
+      if (r.status === 'removed') {
+        return `- ${r.stableId}:  removed   (-${r.propertyRemoved} props)`;
+      }
+      const bits: string[] = [];
+      if (r.schemaChanges?.length) bits.push(`schema: ${r.schemaChanges.join(', ')}`);
+      if (r.propertyAdded) bits.push(`+${r.propertyAdded} prop`);
+      if (r.propertyRemoved) bits.push(`-${r.propertyRemoved} prop`);
+      if (r.propertyModified) bits.push(`~${r.propertyModified} prop`);
+      return `~ ${r.stableId}:  modified  (${bits.join('; ') || 'changes'})`;
+    })
+    .join('\n');
+}
+
 /**
  * Compare two OpenAPI schemas and detect differences
  */

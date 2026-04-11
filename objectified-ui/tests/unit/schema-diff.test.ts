@@ -3,7 +3,14 @@
  * Tests the comparison logic for OpenAPI schema differences
  */
 
-import { compareSchemas, getPathLabel, type DiffSummary } from '../../lib/schema-diff';
+import {
+  compareSchemas,
+  buildClassLevelDiff,
+  formatClassDiffStatLines,
+  getClassChangeDiffs,
+  getPathLabel,
+  type DiffSummary,
+} from '../../lib/schema-diff';
 
 describe('Schema Diff Utility', () => {
   describe('compareSchemas', () => {
@@ -245,6 +252,83 @@ describe('Schema Diff Utility', () => {
       const modifiedSchema = result.modified.find(d => d.path === 'schemas.User' && d.itemType === 'schema');
       expect(modifiedSchema).toBeDefined();
       expect(modifiedSchema?.changes).toContain('required');
+    });
+  });
+
+  describe('buildClassLevelDiff', () => {
+    it('lists all classes with added/removed/modified/unchanged', () => {
+      const spec1 = {
+        openapi: '3.1.0',
+        components: {
+          schemas: {
+            Stay: { type: 'object', properties: { id: { type: 'string' } } },
+            Gone: { type: 'object', properties: { x: { type: 'string' } } },
+          },
+        },
+      };
+      const spec2 = {
+        openapi: '3.1.0',
+        components: {
+          schemas: {
+            Stay: {
+              type: 'object',
+              properties: { id: { type: 'string' }, email: { type: 'string' } },
+            },
+            NewOne: { type: 'object', properties: { n: { type: 'number' } } },
+          },
+        },
+      };
+
+      const rows = buildClassLevelDiff(spec1, spec2);
+      expect(rows.map((r) => r.stableId)).toEqual(['Gone', 'NewOne', 'Stay']);
+
+      const gone = rows.find((r) => r.stableId === 'Gone');
+      expect(gone?.status).toBe('removed');
+
+      const neu = rows.find((r) => r.stableId === 'NewOne');
+      expect(neu?.status).toBe('added');
+      expect(neu?.propertyAdded).toBe(1);
+
+      const stay = rows.find((r) => r.stableId === 'Stay');
+      expect(stay?.status).toBe('modified');
+      expect(stay?.propertyAdded).toBe(1);
+    });
+  });
+
+  describe('getClassChangeDiffs', () => {
+    it('returns property and schema rows for one class', () => {
+      const spec1 = {
+        openapi: '3.1.0',
+        components: { schemas: { User: { type: 'object', properties: { a: { type: 'string' } } } } },
+      };
+      const spec2 = {
+        openapi: '3.1.0',
+        components: {
+          schemas: {
+            User: {
+              type: 'object',
+              required: ['a'],
+              properties: { a: { type: 'string' }, b: { type: 'string' } },
+            },
+          },
+        },
+      };
+      const summary = compareSchemas(spec1, spec2);
+      const drill = getClassChangeDiffs(summary, 'User');
+      expect(drill.some((d) => d.itemType === 'schema')).toBe(true);
+      expect(drill.some((d) => d.path.endsWith('.properties.b'))).toBe(true);
+    });
+  });
+
+  describe('formatClassDiffStatLines', () => {
+    it('emits git-style lines', () => {
+      const rows = buildClassLevelDiff(
+        { openapi: '3.1.0', components: { schemas: { A: { type: 'object', properties: {} } } } },
+        { openapi: '3.1.0', components: { schemas: {} } }
+      );
+      const text = formatClassDiffStatLines(rows, { includeUnchanged: false });
+      expect(text).toContain('- A:');
+      expect(text).toContain('removed');
     });
   });
 

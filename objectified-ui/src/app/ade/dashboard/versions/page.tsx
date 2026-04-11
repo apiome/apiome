@@ -33,7 +33,15 @@ import {
 import { generateOpenApiSpec } from '../../../utils/openapi';
 import YAML from 'yaml';
 import { diffLines, Change } from 'diff';
-import { compareSchemas, type DiffSummary, getPathLabel } from '../../../../../lib/schema-diff';
+import {
+  compareSchemas,
+  buildClassLevelDiff,
+  formatClassDiffStatLines,
+  getClassChangeDiffs,
+  type DiffSummary,
+  type ClassDiffRow,
+  getPathLabel,
+} from '../../../../../lib/schema-diff';
 import { extractBreakingHintsFromChangelog, validateVersionNotesClient } from '../../../../../lib/version-notes';
 import RelationshipGraphDialog from './RelationshipGraphDialog';
 import VersionLineageSnippet from './VersionLineageSnippet';
@@ -151,6 +159,12 @@ const Versions = () => {
   const [isLoadingComparison, setIsLoadingComparison] = useState(false);
   const [diffResult, setDiffResult] = useState<Change[]>([]);
   const [schemaDiffSummary, setSchemaDiffSummary] = useState<DiffSummary | null>(null);
+  const [classDiffRows, setClassDiffRows] = useState<ClassDiffRow[] | null>(null);
+  const [classDiffSearch, setClassDiffSearch] = useState('');
+  const [classDiffShowUnchanged, setClassDiffShowUnchanged] = useState(true);
+  const [expandedClassDiffId, setExpandedClassDiffId] = useState<string | null>(null);
+  const [classListScrollTop, setClassListScrollTop] = useState(0);
+  const classListScrollRef = useRef<HTMLDivElement | null>(null);
   const [diffViewMode, setDiffViewMode] = useState<'overlay' | 'side-by-side'>('overlay');
   const [diffFilter, setDiffFilter] = useState<{
     showAdded: boolean;
@@ -669,6 +683,7 @@ const Versions = () => {
       // Perform schema-aware diff
       const diffSummary = compareSchemas(spec1, spec2);
       setSchemaDiffSummary(diffSummary);
+      setClassDiffRows(buildClassLevelDiff(spec1, spec2));
 
       // Also keep line-based diff for fallback
       const content1 = compareFormat === 'json' ? spec1 : YAML.stringify(JSON.parse(spec1));
@@ -684,7 +699,9 @@ const Versions = () => {
   const handleCompareDialogOpen = () => {
     setShowCompareDialog(true); setCompareVersion1Id(''); setCompareVersion2Id('');
     setCompareSpec1(''); setCompareSpec2(''); setCompareFormat('json');
-    setDiffResult([]); setSchemaDiffSummary(null); setDiffViewMode('overlay');
+    setDiffResult([]); setSchemaDiffSummary(null); setClassDiffRows(null);
+    setClassDiffSearch(''); setClassDiffShowUnchanged(true); setExpandedClassDiffId(null);
+    setClassListScrollTop(0); setDiffViewMode('overlay');
     setCompareBaseTagId(''); setCompareToTagId('');
   };
 
@@ -697,6 +714,73 @@ const Versions = () => {
     }
     return map;
   }, [versionTags]);
+
+  const CLASS_DIFF_ROW_PX = 40;
+  const CLASS_DIFF_VIEWPORT_PX = 288;
+
+  const filteredClassDiffRows = useMemo(() => {
+    if (!classDiffRows) return [];
+    let rows = classDiffRows;
+    if (!classDiffShowUnchanged) rows = rows.filter((r) => r.status !== 'unchanged');
+    const q = classDiffSearch.trim().toLowerCase();
+    if (q) rows = rows.filter((r) => r.stableId.toLowerCase().includes(q));
+    return rows;
+  }, [classDiffRows, classDiffSearch, classDiffShowUnchanged]);
+
+  useEffect(() => {
+    setClassListScrollTop(0);
+    if (classListScrollRef.current) {
+      classListScrollRef.current.scrollTop = 0;
+    }
+  }, [classDiffSearch, classDiffShowUnchanged]);
+
+  const classListVirtual = useMemo(() => {
+    const overscan = 6;
+    const total = filteredClassDiffRows.length;
+    const start = Math.max(0, Math.floor(classListScrollTop / CLASS_DIFF_ROW_PX) - overscan);
+    const end = Math.min(
+      total,
+      Math.ceil((classListScrollTop + CLASS_DIFF_VIEWPORT_PX) / CLASS_DIFF_ROW_PX) + overscan
+    );
+    return {
+      visibleRows: filteredClassDiffRows.slice(start, end),
+      padTop: start * CLASS_DIFF_ROW_PX,
+      padBottom: Math.max(0, (total - end) * CLASS_DIFF_ROW_PX),
+      total,
+    };
+  }, [filteredClassDiffRows, classListScrollTop]);
+
+  const classDiffCounts = useMemo(() => {
+    if (!classDiffRows) return null;
+    return {
+      added: classDiffRows.filter((r) => r.status === 'added').length,
+      removed: classDiffRows.filter((r) => r.status === 'removed').length,
+      modified: classDiffRows.filter((r) => r.status === 'modified').length,
+      unchanged: classDiffRows.filter((r) => r.status === 'unchanged').length,
+    };
+  }, [classDiffRows]);
+
+  const classDiffListRender = useMemo(() => {
+    const hasVisibleExpandedClassDiff =
+      expandedClassDiffId !== null &&
+      filteredClassDiffRows.some((row) => row.stableId === expandedClassDiffId);
+    const virtualize =
+      !hasVisibleExpandedClassDiff && filteredClassDiffRows.length > 64;
+    if (virtualize) {
+      return {
+        virtualize: true as const,
+        rows: classListVirtual.visibleRows,
+        padTop: classListVirtual.padTop,
+        padBottom: classListVirtual.padBottom,
+      };
+    }
+    return {
+      virtualize: false as const,
+      rows: filteredClassDiffRows,
+      padTop: 0,
+      padBottom: 0,
+    };
+  }, [expandedClassDiffId, filteredClassDiffRows, classListVirtual]);
 
   const displayVersions = useMemo(() => {
     if (!historyTagFilter) return versions;
@@ -2184,7 +2268,11 @@ const Versions = () => {
                       <span>Schema Changes</span>
                       {schemaDiffSummary && (
                         <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300">
-                          {schemaDiffSummary.added.length + schemaDiffSummary.removed.length + schemaDiffSummary.modified.length}
+                          {classDiffRows
+                            ? classDiffRows.filter((r) => r.status !== 'unchanged').length
+                            : schemaDiffSummary.added.length +
+                              schemaDiffSummary.removed.length +
+                              schemaDiffSummary.modified.length}
                         </span>
                       )}
                     </div>
@@ -2281,6 +2369,177 @@ const Versions = () => {
                   <div className="h-[calc(90vh-280px)] overflow-y-auto">
                     {schemaDiffSummary && (
                   <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                    {classDiffRows && classDiffCounts && (
+                      <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-3">
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Classes</h3>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                              Structural diff (git-style). Stable ID = OpenAPI schema name.{' '}
+                              <span className="text-green-700 dark:text-green-400">+{classDiffCounts.added}</span>
+                              {' · '}
+                              <span className="text-red-700 dark:text-red-400">−{classDiffCounts.removed}</span>
+                              {' · '}
+                              <span className="text-yellow-700 dark:text-yellow-400">~{classDiffCounts.modified}</span>
+                              {' · '}
+                              <span className="text-gray-600 dark:text-gray-500">{classDiffCounts.unchanged} unchanged</span>
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="text-xs h-8"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(formatClassDiffStatLines(classDiffRows));
+                                  toast.success('Class diff copied to clipboard');
+                                } catch {
+                                  toast.error('Failed to copy class diff to clipboard');
+                                }
+                              }}
+                            >
+                              Copy class stat
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2 mb-2">
+                          <Input
+                            type="search"
+                            placeholder="Search classes…"
+                            value={classDiffSearch}
+                            onChange={(e) => setClassDiffSearch(e.target.value)}
+                            className="text-sm h-9 flex-1 min-w-0"
+                            aria-label="Filter classes by name"
+                          />
+                          <label className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 whitespace-nowrap shrink-0">
+                            <input
+                              type="checkbox"
+                              className="rounded border-gray-300 dark:border-gray-600"
+                              checked={classDiffShowUnchanged}
+                              onChange={(e) => setClassDiffShowUnchanged(e.target.checked)}
+                            />
+                            Show unchanged
+                          </label>
+                        </div>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-500 mb-1">
+                          Showing {filteredClassDiffRows.length} of {classDiffRows.length} classes
+                          {classDiffListRender.virtualize ? ' · Virtualized list' : ''}
+                        </p>
+                        <div
+                          ref={classListScrollRef}
+                          className="max-h-72 overflow-y-auto rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-950"
+                          style={
+                            classDiffListRender.virtualize ? { height: CLASS_DIFF_VIEWPORT_PX } : undefined
+                          }
+                          onScroll={(e) => setClassListScrollTop(e.currentTarget.scrollTop)}
+                        >
+                          <div style={{ height: classDiffListRender.padTop }} aria-hidden />
+                          {classDiffListRender.rows.map((row) => {
+                            const sym =
+                              row.status === 'added'
+                                ? '+'
+                                : row.status === 'removed'
+                                  ? '−'
+                                  : row.status === 'modified'
+                                    ? '~'
+                                    : ' ';
+                            const rowBg =
+                              row.status === 'added'
+                                ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900 border-l-green-600'
+                                : row.status === 'removed'
+                                  ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900 border-l-red-600'
+                                  : row.status === 'modified'
+                                    ? 'bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-900 border-l-yellow-500'
+                                    : 'bg-gray-50 dark:bg-gray-900/40 border-gray-200 dark:border-gray-700 border-l-gray-400';
+                            const expanded = expandedClassDiffId === row.stableId;
+                            const drill = expanded ? getClassChangeDiffs(schemaDiffSummary, row.stableId) : [];
+                            return (
+                              <div key={row.stableId} className="border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setExpandedClassDiffId((id) => (id === row.stableId ? null : row.stableId))
+                                  }
+                                  className={`w-full text-left px-3 py-2 flex items-center gap-2 border-l-4 ${rowBg} hover:opacity-95 transition-opacity`}
+                                  style={{ minHeight: CLASS_DIFF_ROW_PX }}
+                                  aria-expanded={expanded}
+                                >
+                                  <span
+                                    className={`font-mono text-xs w-4 shrink-0 ${
+                                      row.status === 'added'
+                                        ? 'text-green-700 dark:text-green-400'
+                                        : row.status === 'removed'
+                                          ? 'text-red-700 dark:text-red-400'
+                                          : row.status === 'modified'
+                                            ? 'text-yellow-800 dark:text-yellow-300'
+                                            : 'text-gray-400 dark:text-gray-500'
+                                    }`}
+                                  >
+                                    {sym}
+                                  </span>
+                                  <span className="font-mono text-sm font-medium text-gray-900 dark:text-gray-100 truncate flex-1">
+                                    {row.stableId}
+                                  </span>
+                                  {row.status === 'modified' && (
+                                    <span className="text-[10px] text-gray-600 dark:text-gray-400 shrink-0 hidden sm:inline">
+                                      {row.propertyAdded ? `+${row.propertyAdded} ` : ''}
+                                      {row.propertyRemoved ? `−${row.propertyRemoved} ` : ''}
+                                      {row.propertyModified ? `~${row.propertyModified} ` : ''}
+                                      {row.schemaChanges?.length ? `schema ${row.schemaChanges.join(', ')}` : ''}
+                                    </span>
+                                  )}
+                                  {row.status === 'added' && (
+                                    <span className="text-[10px] text-green-800 dark:text-green-300 shrink-0">
+                                      +{row.propertyAdded} props
+                                    </span>
+                                  )}
+                                  {row.status === 'removed' && (
+                                    <span className="text-[10px] text-red-800 dark:text-red-300 shrink-0">
+                                      −{row.propertyRemoved} props
+                                    </span>
+                                  )}
+                                </button>
+                                {expanded && drill.length > 0 && (
+                                  <div className="px-3 pb-3 pt-0 space-y-1 bg-gray-50/80 dark:bg-gray-900/50 border-t border-dashed border-gray-200 dark:border-gray-700">
+                                    <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400 pt-2">
+                                      Property-level changes
+                                    </p>
+                                    {drill.map((d, i) => (
+                                      <div
+                                        key={`${d.path}-${d.type}-${i}`}
+                                        className={`text-xs rounded px-2 py-1 font-mono flex flex-wrap gap-x-2 ${
+                                          d.type === 'added'
+                                            ? 'bg-green-50 dark:bg-green-950/20 text-green-900 dark:text-green-100'
+                                            : d.type === 'removed'
+                                              ? 'bg-red-50 dark:bg-red-950/20 text-red-900 dark:text-red-100'
+                                              : 'bg-yellow-50 dark:bg-yellow-950/20 text-yellow-900 dark:text-yellow-100'
+                                        }`}
+                                      >
+                                        <span>
+                                          {d.type === 'added' ? '+' : d.type === 'removed' ? '−' : '~'}
+                                        </span>
+                                        <span>{getPathLabel(d.path)}</span>
+                                        <span className="text-gray-600 dark:text-gray-400">({d.itemType})</span>
+                                        {d.changes && d.changes.length > 0 && (
+                                          <span className="text-gray-600 dark:text-gray-400">
+                                            {d.changes.join(', ')}
+                                          </span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {expanded && drill.length === 0 && row.status === 'unchanged' && (
+                                  <p className="text-[10px] text-gray-500 px-3 pb-2">No property-level changes.</p>
+                                )}
+                              </div>
+                            );
+                          })}
+                          <div style={{ height: classDiffListRender.padBottom }} aria-hidden />
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Schema Changes Summary</h3>
 
@@ -2458,7 +2717,22 @@ const Versions = () => {
             )}
           </div>
           <DialogFooter className="flex-shrink-0">
-            {diffResult.length > 0 && <Button variant="outline" onClick={() => { setDiffResult([]); setCompareSpec1(''); setCompareSpec2(''); }}>Compare Different Versions</Button>}
+            {diffResult.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDiffResult([]);
+                  setCompareSpec1('');
+                  setCompareSpec2('');
+                  setSchemaDiffSummary(null);
+                  setClassDiffRows(null);
+                  setClassDiffSearch('');
+                  setExpandedClassDiffId(null);
+                }}
+              >
+                Compare Different Versions
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setShowCompareDialog(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
