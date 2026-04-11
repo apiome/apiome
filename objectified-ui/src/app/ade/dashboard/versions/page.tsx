@@ -758,6 +758,9 @@ const Versions = () => {
       toast.warning('Select two different versions');
       return;
     }
+    setDiffResult([]);
+    setSchemaDiffSummary(null);
+    setClassDiffRows(null);
     setCanvasCompareLeft(null);
     setCanvasCompareRight(null);
     setCanvasCompareDiff(null);

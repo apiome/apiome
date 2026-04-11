@@ -37,7 +37,7 @@ export function expandVersionsForWindow(
   if (all.length === 0) return [];
   const byId = new Map(all.map((v) => [v.id, v]));
   const sorted = [...all].sort((a, b) => parseTime(b.created_at) - parseTime(a.created_at));
-  const cap = Math.max(1, Math.min(windowSize, sorted.length));
+  const cap = Math.max(1, Math.min(windowSize, sorted.length, maxTotal));
   const seeds = sorted.slice(0, cap);
   const out = new Map<string, VersionHistoryVertex>();
   const queue: VersionHistoryVertex[] = [];

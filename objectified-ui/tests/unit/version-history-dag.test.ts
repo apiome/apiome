@@ -44,6 +44,20 @@ describe('version-history-dag', () => {
     expect(mergeEdge?.style?.strokeDasharray).toBeDefined();
   });
 
+  test('expandVersionsForWindow respects maxTotal hard cap even when windowSize exceeds it', () => {
+    // Create 10 linearly chained vertices
+    const many: VersionHistoryVertex[] = Array.from({ length: 10 }, (_, i) => ({
+      id: `v${i}`,
+      version_id: `0.${i}.0`,
+      parent_version_id: i > 0 ? `v${i - 1}` : null,
+      merge_parent_version_id: null,
+      created_at: `2024-01-${String(i + 1).padStart(2, '0')}T00:00:00Z`,
+    }));
+    // windowSize (20) > list length (10) > maxTotal (3) — hard cap must win
+    const result = expandVersionsForWindow(many, 20, 3);
+    expect(result.length).toBeLessThanOrEqual(3);
+  });
+
   test('buildLayoutedHistoryGraph returns nodes and edges', () => {
     const { nodes, edges } = buildLayoutedHistoryGraph(linear);
     expect(nodes.length).toBe(3);

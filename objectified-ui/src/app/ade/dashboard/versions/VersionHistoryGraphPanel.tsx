@@ -20,6 +20,7 @@ import { Button } from '../../../components/ui/Button';
 import {
   buildLayoutedHistoryGraph,
   HISTORY_WINDOW_STEP,
+  MAX_HISTORY_GRAPH_NODES,
   expandVersionsForWindow,
   type RevisionNodeData,
   type VersionHistoryVertex,
@@ -109,7 +110,8 @@ export default function VersionHistoryGraphPanel({
     [onCompareToPrimaryParent, onViewSpec]
   );
 
-  const canLoadMore = windowSize < versions.length;
+  const atMaxNodes = expanded.length >= MAX_HISTORY_GRAPH_NODES;
+  const canLoadMore = windowSize < versions.length && !atMaxNodes;
 
   if (versions.length === 0) {
     return null;
@@ -136,6 +138,11 @@ export default function VersionHistoryGraphPanel({
               Load older ({windowSize} → {windowSize + HISTORY_WINDOW_STEP})
             </Button>
           ) : null}
+          {atMaxNodes && (
+            <span className="text-xs text-amber-600 dark:text-amber-400">
+              Max render limit reached ({MAX_HISTORY_GRAPH_NODES} nodes)
+            </span>
+          )}
           <span className="text-xs text-gray-500 dark:text-gray-400">
             Showing {expanded.length} revision{expanded.length !== 1 ? 's' : ''}
             {expanded.length < versions.length ? ` (of ${versions.length} in view)` : ''}
