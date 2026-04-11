@@ -160,6 +160,8 @@ Implement policy checks before commit and return policy violations in a consiste
 
 ## P0-04: Add Push Base Revision Check (Optimistic Locking)
 
+**Status:** **Done** — `POST /v1/versions/{tenant}/{project}` requires **`baseRevisionId`**; stale base → **`409`** with `code: STALE_HEAD`, `currentHeadRevisionId`, `currentHead` (subset); advances **named branch tip** in the same transaction when applicable; ADE Commit sends **`baseRevisionId`** / **`branchName`**.
+
 **GitHub:** [#2566](https://github.com/KenSuenobu/objectified-commercial/issues/2566) · **Epic:** [#2558](https://github.com/KenSuenobu/objectified-commercial/issues/2558)
 
 ### Problem statement
@@ -172,6 +174,18 @@ Require `baseRevisionId` on push and return `409` conflict when stale.
 - Push without `baseRevisionId` is rejected.
 - Push with stale base revision returns `409` and latest server revision metadata.
 - Valid push with current base revision succeeds.
+
+### Push conflict response (REST, for P0-05 UI)
+
+On **`409`** with **`code: STALE_HEAD`**:
+
+| Field | Meaning |
+|-------|---------|
+| `message` | Human-readable reason |
+| `currentHeadRevisionId` | Server revision id (UUID) clients should treat as head |
+| `currentHead` | Optional object: `revisionId`, `versionId`, `shortMessage`, `createdAt` |
+
+**Idempotency:** Retrying the **same** successful push body may create a **second** revision if the first commit persisted; clients should refresh head from the error payload or re-pull before retry.
 
 ---
 

@@ -78,7 +78,14 @@ async function handleRestResponse(response: Response, defaultError: string): Pro
   const data = await response.json();
 
   if (!response.ok) {
-    return { data: null, error: data.detail || defaultError, status: response.status };
+    const detail = data.detail;
+    const errMsg =
+      typeof detail === 'string'
+        ? detail
+        : detail && typeof detail === 'object' && 'message' in detail && typeof (detail as { message?: unknown }).message === 'string'
+          ? (detail as { message: string }).message
+          : defaultError;
+    return { data: null, error: errMsg, status: response.status };
   }
 
   return { data, error: null, status: response.status };

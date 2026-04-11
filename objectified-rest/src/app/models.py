@@ -338,6 +338,16 @@ class VersionCreateRequest(BaseModel):
         default=None,
         validation_alias=AliasChoices("externalRef", "external_ref"),
     )
+    base_revision_id: str = Field(
+        ...,
+        validation_alias=AliasChoices("baseRevisionId", "base_revision_id"),
+        description="Revision id the client believes is the current head (optimistic lock; #2566).",
+    )
+    branch_name: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("branchName", "branch_name"),
+        description="Named branch to advance; required when the project has multiple branches.",
+    )
     source_version_id: Optional[str] = None  # Copy classes from this version
     bump_strategy: Optional[str] = None  # 'patch' or 'minor' for auto-versioning
 

@@ -79,6 +79,7 @@ def test_version_create_request_accepts_camel_case_commit_fields():
             "author": "CI Bot",
             "message": "Full body",
             "externalRef": "LINEAR-42",
+            "baseRevisionId": "",
         }
     )
     assert body.author == "CI Bot"
@@ -161,12 +162,14 @@ def test_version_schema_null_commit_metadata_renders():
 
 
 def test_post_create_commit_metadata_stored_and_echoed():
-    """Commit metadata fields are normalized, passed to db.create_version, and echoed back."""
+    """Commit metadata fields are normalized, passed to db.create_version_push_transaction, and echoed back."""
     row = _make_version_row(commit_author="Alice", commit_message="Add feature", external_ref="JIRA-1")
     with patch("app.versions_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1"}
         mdb.get_latest_version_for_project.return_value = None
-        mdb.create_version.return_value = row
+        mdb.list_version_branches_for_project.return_value = []
+        mdb.get_latest_revision_id_for_project.return_value = None
+        mdb.create_version_push_transaction.return_value = (row, 0)
         r = client.post(
             "/v1/versions/tn/proj-1",
             json={
@@ -175,6 +178,7 @@ def test_post_create_commit_metadata_stored_and_echoed():
                 "author": "Alice",
                 "message": "Add feature",
                 "externalRef": "JIRA-1",
+                "baseRevisionId": "",
             },
         )
     assert r.status_code == 200
@@ -182,10 +186,11 @@ def test_post_create_commit_metadata_stored_and_echoed():
     assert body["author"] == "Alice"
     assert body["message"] == "Add feature"
     assert body["externalRef"] == "JIRA-1"
-    call_kwargs = mdb.create_version.call_args.kwargs
+    call_kwargs = mdb.create_version_push_transaction.call_args.kwargs
     assert call_kwargs["commit_author"] == "Alice"
     assert call_kwargs["commit_message"] == "Add feature"
     assert call_kwargs["external_ref"] == "JIRA-1"
+    assert call_kwargs["client_base_revision_id"] == ""
 
 
 def test_post_create_whitespace_only_commit_metadata_becomes_null():
@@ -194,7 +199,9 @@ def test_post_create_whitespace_only_commit_metadata_becomes_null():
     with patch("app.versions_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1"}
         mdb.get_latest_version_for_project.return_value = None
-        mdb.create_version.return_value = row
+        mdb.list_version_branches_for_project.return_value = []
+        mdb.get_latest_revision_id_for_project.return_value = None
+        mdb.create_version_push_transaction.return_value = (row, 0)
         r = client.post(
             "/v1/versions/tn/proj-1",
             json={
@@ -203,10 +210,11 @@ def test_post_create_whitespace_only_commit_metadata_becomes_null():
                 "author": "   ",
                 "message": "\t\n",
                 "externalRef": "  ",
+                "baseRevisionId": "",
             },
         )
     assert r.status_code == 200
-    call_kwargs = mdb.create_version.call_args.kwargs
+    call_kwargs = mdb.create_version_push_transaction.call_args.kwargs
     assert call_kwargs["commit_author"] is None
     assert call_kwargs["commit_message"] is None
     assert call_kwargs["external_ref"] is None
@@ -225,6 +233,7 @@ def test_post_create_overlong_author_returns_400():
                 "version_id": "1.0.0",
                 "shortMessage": "subject",
                 "author": "x" * (_AUTHOR_OR_REF_MAX_CHARS + 1),
+                "baseRevisionId": "",
             },
         )
     assert r.status_code == 400
@@ -244,6 +253,7 @@ def test_post_create_overlong_message_returns_400():
                 "version_id": "1.0.0",
                 "shortMessage": "subject",
                 "message": "x" * (_DEFAULT_COMMIT_METADATA_MAX_CHARS + 1),
+                "baseRevisionId": "",
             },
         )
     assert r.status_code == 400

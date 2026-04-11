@@ -31,6 +31,14 @@ def _deep_equal(a: Any, b: Any) -> bool:
     return False
 
 
+class StaleHeadPushError(Exception):
+    """Branch tip changed after the client's base revision check (optimistic lock, #2566)."""
+
+    def __init__(self, current_tip_revision_id: str):
+        self.current_tip_revision_id = current_tip_revision_id
+        super().__init__("stale head")
+
+
 def _compute_delta(old: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
     """
     Compute top-level delta: keys added, removed, or changed.
@@ -3814,6 +3822,137 @@ class Database:
             return {"success": False, "error": "Original class missing"}
         self._copy_class_properties_recursive(cursor, str(orig["id"]), str(ins["id"]))
         return {"success": True}
+
+    def list_version_branches_for_project(
+        self, project_id: str, tenant_id: str
+    ) -> List[Dict[str, Any]]:
+        """Named branches for a project (tenant-scoped)."""
+        q = """
+            SELECT b.id, b.project_id, b.name, b.tip_version_id, b.protected, b.created_by
+            FROM odb.version_branches b
+            JOIN odb.projects p ON b.project_id = p.id
+            WHERE b.project_id = %s AND p.tenant_id = %s
+            ORDER BY b.name ASC
+        """
+        return self.execute_query(q, (project_id, tenant_id))
+
+    def get_latest_revision_id_for_project(
+        self, project_id: str, tenant_id: str
+    ) -> Optional[str]:
+        """Most recently created revision row id for the project (no branch), or None if empty."""
+        q = """
+            SELECT v.id::text AS id
+            FROM odb.versions v
+            JOIN odb.projects p ON v.project_id = p.id
+            WHERE v.project_id = %s AND p.tenant_id = %s AND v.deleted_at IS NULL
+            ORDER BY v.created_at DESC
+            LIMIT 1
+        """
+        rows = self.execute_query(q, (project_id, tenant_id))
+        return str(rows[0]["id"]) if rows else None
+
+    def create_version_push_transaction(
+        self,
+        project_id: str,
+        tenant_id: str,
+        creator_id: Optional[str],
+        version_id: str,
+        description: Optional[str],
+        change_log: Optional[str],
+        commit_author: Optional[str],
+        commit_message: Optional[str],
+        external_ref: Optional[str],
+        parent_version_id: Optional[str],
+        source_version_id: Optional[str],
+        branch_row: Optional[Dict[str, Any]],
+        client_base_revision_id: str,
+    ) -> Tuple[Dict[str, Any], int]:
+        """
+        Insert version (optional parent), copy classes from source, advance branch tip under lock.
+        Returns (full version row from get_version_by_id, copied_class_count).
+        """
+        base = (client_base_revision_id or "").strip()
+        src = (source_version_id or "").strip() or None
+        conn = self.connect()
+        prev_autocommit = conn.autocommit
+        copied_count = 0
+        new_id: Optional[str] = None
+        try:
+            conn.autocommit = False
+            with conn.cursor() as cursor:
+                if branch_row is not None:
+                    bid = str(branch_row["id"])
+                    cursor.execute(
+                        """
+                        SELECT b.id, b.tip_version_id
+                        FROM odb.version_branches b
+                        JOIN odb.projects p ON b.project_id = p.id
+                        WHERE b.id = %s AND b.project_id = %s AND p.tenant_id = %s
+                        FOR UPDATE
+                        """,
+                        (bid, project_id, tenant_id),
+                    )
+                    locked = cursor.fetchone()
+                    if not locked:
+                        raise ValueError("Branch not found or not accessible")
+                    if str(locked["tip_version_id"]) != base:
+                        raise StaleHeadPushError(str(locked["tip_version_id"]))
+
+                cursor.execute(
+                    """
+                    INSERT INTO odb.versions
+                    (project_id, creator_id, version_id, description, change_log,
+                     commit_author, commit_message, external_ref, parent_version_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        project_id,
+                        creator_id,
+                        version_id,
+                        description,
+                        change_log,
+                        commit_author,
+                        commit_message,
+                        external_ref,
+                        parent_version_id,
+                    ),
+                )
+                row = cursor.fetchone()
+                if not row or row.get("id") is None:
+                    raise ValueError("Failed to insert version")
+                new_id = str(row["id"])
+
+                if src:
+                    copied_count = self.copy_classes_from_version_for_merge(cursor, src, new_id)
+
+                if branch_row is not None:
+                    cursor.execute(
+                        """
+                        UPDATE odb.version_branches
+                        SET tip_version_id = %s, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s
+                        """,
+                        (new_id, str(branch_row["id"])),
+                    )
+
+            conn.commit()
+        except StaleHeadPushError:
+            conn.rollback()
+            raise
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.autocommit = prev_autocommit
+
+        if not new_id:
+            raise ValueError("create_version_push_transaction: missing new id")
+
+        full = self.get_version_by_id(new_id, tenant_id)
+        if not full:
+            raise ValueError("Version created but could not be loaded")
+        return full, copied_count
 
 
 # Global database instance

@@ -46,11 +46,11 @@ def test_effective_commit_policy_reads_project_metadata():
 
 def test_enforce_max_commit_payload_raises_payload_too_large():
     lim = DEFAULT_VERSION_NOTES_LIMITS
-    small = VersionCreateRequest(short_message="x" * 100, version_id="1.0.0")
+    small = VersionCreateRequest(short_message="x" * 100, version_id="1.0.0", base_revision_id="")
     enforce_max_commit_payload(small, lim)  # no raise
 
     lim2 = replace(lim, max_commit_payload_bytes=50)
-    big = VersionCreateRequest(short_message="y" * 200, version_id="1.0.0")
+    big = VersionCreateRequest(short_message="y" * 200, version_id="1.0.0", base_revision_id="")
     with pytest.raises(CommitPolicyViolation) as ei:
         enforce_max_commit_payload(big, lim2)
     assert ei.value.code == "PAYLOAD_TOO_LARGE"
@@ -93,10 +93,12 @@ def test_post_create_empty_short_message_returns_policy_envelope():
     with patch("app.versions_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": "proj-1", "metadata": {}}
         mdb.get_latest_version_for_project.return_value = None
-        mdb.create_version.return_value = row
+        mdb.list_version_branches_for_project.return_value = []
+        mdb.get_latest_revision_id_for_project.return_value = None
+        mdb.create_version_push_transaction.return_value = (row, 0)
         r = client.post(
             "/v1/versions/tn/proj-1",
-            json={"version_id": "1.0.0", "shortMessage": ""},
+            json={"version_id": "1.0.0", "shortMessage": "", "baseRevisionId": ""},
         )
     assert r.status_code == 400
     body = r.json()
@@ -138,10 +140,12 @@ def test_post_create_respects_require_short_message_false_in_project_metadata():
             "metadata": {"commitPolicy": {"requireShortMessage": False}},
         }
         mdb.get_latest_version_for_project.return_value = None
-        mdb.create_version.return_value = row
+        mdb.list_version_branches_for_project.return_value = []
+        mdb.get_latest_revision_id_for_project.return_value = None
+        mdb.create_version_push_transaction.return_value = (row, 0)
         r = client.post(
             "/v1/versions/tn/proj-1",
-            json={"version_id": "1.0.0", "shortMessage": ""},
+            json={"version_id": "1.0.0", "shortMessage": "", "baseRevisionId": ""},
         )
     assert r.status_code == 200
 
@@ -180,12 +184,15 @@ def test_post_create_payload_too_large_envelope():
             "metadata": {"commitPolicy": {"maxCommitPayloadBytes": 80}},
         }
         mdb.get_latest_version_for_project.return_value = None
-        mdb.create_version.return_value = row
+        mdb.list_version_branches_for_project.return_value = []
+        mdb.get_latest_revision_id_for_project.return_value = None
+        mdb.create_version_push_transaction.return_value = (row, 0)
         r = client.post(
             "/v1/versions/tn/proj-1",
             json={
                 "version_id": "1.0.0",
                 "shortMessage": "x" * 200,
+                "baseRevisionId": "",
             },
         )
     assert r.status_code == 400
