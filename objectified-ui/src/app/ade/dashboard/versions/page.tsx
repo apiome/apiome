@@ -25,7 +25,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useDialog } from '../../../components/providers/DialogProvider';
 import {
   createVersion,
-  updateVersion,
   deleteVersion,
   getClassesForVersion,
   getPropertiesForClass,
@@ -77,6 +76,8 @@ interface Version {
   forkSourceProjectName?: string | null;
   upstreamProjectName?: string | null;
   revisionLocked?: boolean;
+  /** Governance lifecycle (#739): stable | beta | deprecated | archived */
+  lifecycle?: string;
 }
 
 interface VersionBranchRow {
@@ -193,6 +194,8 @@ const Versions = () => {
   const [tagProtected, setTagProtected] = useState(false);
   const [tagSaving, setTagSaving] = useState(false);
   const [historyTagFilter, setHistoryTagFilter] = useState<string>('');
+  const [lifecycleFilter, setLifecycleFilter] = useState<string>('');
+  const [editLifecycle, setEditLifecycle] = useState<string>('stable');
   const [compareBaseTagId, setCompareBaseTagId] = useState<string>('');
   const [compareToTagId, setCompareToTagId] = useState<string>('');
 
@@ -247,7 +250,7 @@ const Versions = () => {
   }, [isAdmin, currentUserId, currentTenantId]);
 
   useEffect(() => { if (currentTenantId) loadProjects(); }, [currentTenantId]);
-  useEffect(() => { if (selectedProjectId) loadVersions(); else setVersions([]); }, [selectedProjectId]);
+  useEffect(() => { if (selectedProjectId) loadVersions(); else setVersions([]); }, [selectedProjectId, lifecycleFilter]);
 
   useEffect(() => {
     if (!forkTargetProjectId || !showForkDialog) {
@@ -332,8 +335,10 @@ const Versions = () => {
     if (!selectedProjectId) {
       setVersionTags([]);
       setHistoryTagFilter('');
+      setLifecycleFilter('');
     } else {
       setHistoryTagFilter('');
+      setLifecycleFilter('');
     }
   }, [selectedProjectId]);
 
@@ -376,7 +381,9 @@ const Versions = () => {
   const loadVersions = async () => {
     if (!selectedProjectId) return;
     try {
-      const response = await fetch(`/api/versions?projectId=${selectedProjectId}`);
+      const qs = new URLSearchParams({ projectId: selectedProjectId });
+      if (lifecycleFilter) qs.set('lifecycle', lifecycleFilter);
+      const response = await fetch(`/api/versions?${qs.toString()}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch versions: ${response.statusText}`);
       }
@@ -434,23 +441,52 @@ const Versions = () => {
 
   const handleEditClick = (version: Version) => {
     if (version.published) { setErrorMessage('Cannot edit published version'); return; }
+    const lc = version.lifecycle ?? 'stable';
+    if (lc === 'archived' && !effectiveIsAdmin) {
+      toast.warning('Archived revisions are read-only.');
+      return;
+    }
     setSelectedVersion(version); setVersionId(version.version_id);
     setDescription(version.shortMessage || ''); setChangeLog(version.changelog || '');
-    setEnabled(version.enabled); setErrorMessage(''); setShowEditDialog(true);
+    setEnabled(version.enabled); setEditLifecycle(lc);
+    setErrorMessage(''); setShowEditDialog(true);
   };
 
   const handleEditSubmit = async () => {
     if (!selectedVersion) return;
     const notesCheck = validateVersionNotesClient(description, changeLog);
     if (!notesCheck.ok) { setErrorMessage(notesCheck.error); return; }
+    const isArchived = (selectedVersion.lifecycle ?? 'stable') === 'archived';
+    if (isArchived && !effectiveIsAdmin) return;
     setIsLoading(true); setErrorMessage('');
     try {
-      const result = await updateVersion(selectedVersion.id, description, changeLog, enabled);
-      const response = JSON.parse(result);
-      if (response.success) { setShowEditDialog(false); await loadVersions(); }
-      else setErrorMessage(response.error || 'Failed to update version');
-    } catch (error: any) { setErrorMessage(error.message || 'An error occurred'); }
-    finally { setIsLoading(false); }
+      const body: Record<string, unknown> = {
+        projectId: selectedProjectId,
+        shortMessage: description.trim(),
+        changelog: changeLog.trim() || null,
+        enabled,
+      };
+      const prevLc = selectedVersion.lifecycle ?? 'stable';
+      if (editLifecycle !== prevLc) {
+        body.metadata = { lifecycle: editLifecycle };
+      }
+      const res = await fetch(`/api/versions/${selectedVersion.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShowEditDialog(false);
+        await loadVersions();
+      } else {
+        setErrorMessage(typeof data.error === 'string' ? data.error : 'Failed to update version');
+      }
+    } catch (error: unknown) {
+      setErrorMessage(error instanceof Error ? error.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePublishClick = (versionRecordId: string) => {
@@ -698,6 +734,20 @@ const Versions = () => {
     const timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     return `${datePart} ${timePart}`;
   };
+
+  const revisionLifecycleBadge = (lc: string | undefined) => {
+    const v = (lc ?? 'stable').toLowerCase();
+    const label =
+      v === 'stable' ? 'Stable' : v === 'beta' ? 'Beta' : v === 'deprecated' ? 'Deprecated' : v === 'archived' ? 'Archived' : 'Stable';
+    const variant =
+      v === 'stable' ? 'success' : v === 'beta' ? 'default' : v === 'deprecated' ? 'warning' : 'secondary';
+    return (
+      <Badge variant={variant} title="Revision lifecycle (#739)">
+        {label}
+      </Badge>
+    );
+  };
+
   const canModify = (version: Version) => version.creator_id === currentUserId || !!effectiveIsAdmin;
 
   const handleRowAction = async (action: string, version: Version) => {
@@ -1348,6 +1398,24 @@ const Versions = () => {
         />
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex flex-wrap items-center gap-3 bg-gray-50/80 dark:bg-gray-900/40">
+            <span className="text-sm text-gray-600 dark:text-gray-400">Lifecycle filter</span>
+            <Select
+              value={lifecycleFilter || '__all__'}
+              onValueChange={(v) => setLifecycleFilter(v === '__all__' ? '' : v)}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="All lifecycles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All lifecycles</SelectItem>
+                <SelectItem value="stable">Stable</SelectItem>
+                <SelectItem value="beta">Beta</SelectItem>
+                <SelectItem value="deprecated">Deprecated</SelectItem>
+                <SelectItem value="archived">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           {versionTags.length > 0 && (
             <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex flex-wrap items-center gap-3 bg-gray-50/80 dark:bg-gray-900/40">
               <span className="text-sm text-gray-600 dark:text-gray-400">History filter</span>
@@ -1386,6 +1454,7 @@ const Versions = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2 flex-wrap">
                       <div className="text-sm font-bold text-gray-900 dark:text-white font-mono">v{version.version_id}</div>
+                      {revisionLifecycleBadge(version.lifecycle)}
                       {version.published && <div title="Published" className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded"><Lock className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" /></div>}
                       {version.revisionLocked && (
                         <div title="Revision locked: non-admins cannot delete" className="p-1 bg-indigo-100 dark:bg-indigo-900/30 rounded">
@@ -1766,17 +1835,51 @@ const Versions = () => {
           <DialogHeader><DialogTitle>Edit Version</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
             {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
+            {selectedVersion && (selectedVersion.lifecycle ?? 'stable') === 'archived' && effectiveIsAdmin && (
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                This revision is archived (read-only). You can change its lifecycle or use revision lock; notes cannot be edited here.
+              </p>
+            )}
             <div className="space-y-2">
               <Label>Version ID</Label>
               <Input value={versionId} disabled className="font-mono" />
             </div>
             <div className="space-y-2">
+              <Label>Lifecycle</Label>
+              <Select value={editLifecycle} onValueChange={setEditLifecycle} disabled={isLoading}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stable">Stable</SelectItem>
+                  <SelectItem value="beta">Beta</SelectItem>
+                  <SelectItem value="deprecated">Deprecated</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Semantic governance tag (#739). Setting Deprecated sets revision deprecation (#507) for consumers.
+              </p>
+            </div>
+            <div className="space-y-2">
               <Label>Revision note *</Label>
-              <Input value={description} onChange={(e) => setDescription(e.target.value)} disabled={isLoading} autoFocus placeholder="Short summary (commit message)" />
+              <Input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={isLoading || ((selectedVersion?.lifecycle ?? 'stable') === 'archived' && effectiveIsAdmin)}
+                autoFocus={((selectedVersion?.lifecycle ?? 'stable') !== 'archived') || !effectiveIsAdmin}
+                placeholder="Short summary (commit message)"
+              />
             </div>
             <div className="space-y-2">
               <Label>Changelog (markdown)</Label>
-              <Textarea value={changeLog} onChange={(e) => setChangeLog(e.target.value)} rows={4} disabled={isLoading} placeholder="Release notes, breaking bullets (- breaking: …)" />
+              <Textarea
+                value={changeLog}
+                onChange={(e) => setChangeLog(e.target.value)}
+                rows={4}
+                disabled={isLoading || ((selectedVersion?.lifecycle ?? 'stable') === 'archived' && effectiveIsAdmin)}
+                placeholder="Release notes, breaking bullets (- breaking: …)"
+              />
             </div>
           </div>
           <DialogFooter>

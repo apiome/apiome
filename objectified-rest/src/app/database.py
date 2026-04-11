@@ -8,7 +8,7 @@ from psycopg2.extensions import register_adapter, AsIs, adapt
 from typing import Optional, List, Dict, Any, Tuple, Set
 from .config import settings
 from .jsonschema_generator import generate_class_jsonschema_spec
-from .revision_deprecation import merge_version_metadata
+from .revision_lifecycle import prepare_version_metadata_update, sql_effective_lifecycle_expr
 
 _logger = logging.getLogger(__name__)
 
@@ -1210,9 +1210,20 @@ class Database:
 
     # ==================== Version CRUD Operations ====================
 
-    def get_versions_for_project(self, project_id: str, tenant_id: str) -> List[Dict[str, Any]]:
-        """Get all versions for a project, ensuring project belongs to tenant."""
-        query = """
+    def get_versions_for_project(
+        self,
+        project_id: str,
+        tenant_id: str,
+        lifecycle: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get all versions for a project, ensuring project belongs to tenant. Optional lifecycle filter (#739)."""
+        lifecycle_clause = ""
+        params: List[Any] = [project_id, tenant_id]
+        if lifecycle:
+            lifecycle_clause = f" AND {sql_effective_lifecycle_expr('v')} = %s"
+            params.append(lifecycle.strip().lower())
+
+        query = f"""
             SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
                    v.change_log, v.visibility, v.published, v.published_at,
                    v.enabled, v.parent_version_id, v.merge_parent_version_id,
@@ -1234,9 +1245,10 @@ class Database:
               AND p.tenant_id = %s
               AND v.deleted_at IS NULL
               AND p.deleted_at IS NULL
+              {lifecycle_clause}
             ORDER BY v.created_at DESC
         """
-        return self.execute_query(query, (project_id, tenant_id))
+        return self.execute_query(query, tuple(params))
 
     def list_sunset_timeline_entries(
         self, tenant_id: str, project_id: Optional[str] = None
@@ -1486,7 +1498,8 @@ class Database:
         self,
         version_record_id: str,
         tenant_id: str,
-        updates: Dict[str, Any]
+        updates: Dict[str, Any],
+        lifecycle_admin: bool = False,
     ) -> Optional[Dict[str, Any]]:
         """Update an existing version, ensuring it belongs to the tenant."""
         existing = self.get_version_by_id(version_record_id, tenant_id)
@@ -1514,7 +1527,11 @@ class Database:
             update_fields.append("revision_locked = %s")
             params.append(bool(updates["revision_locked"]))
         if "metadata" in updates and updates["metadata"] is not None:
-            merged_meta = merge_version_metadata(existing.get("metadata"), updates["metadata"])
+            merged_meta = prepare_version_metadata_update(
+                existing.get("metadata"),
+                updates["metadata"],
+                allow_exit_archived=lifecycle_admin,
+            )
             update_fields.append("metadata = %s::jsonb")
             params.append(json.dumps(merged_meta))
 

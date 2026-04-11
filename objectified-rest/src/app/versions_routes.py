@@ -28,6 +28,11 @@ from .revision_deprecation import (
     sunset_timeline_fields,
     warnings_for_revision,
 )
+from .revision_lifecycle import (
+    LIFECYCLE_ARCHIVED,
+    LIFECYCLE_VALUES,
+    effective_lifecycle,
+)
 
 router = APIRouter(prefix="/v1/versions", tags=["versions"])
 
@@ -138,7 +143,11 @@ async def get_sunset_timeline(
 async def list_versions(
     tenant_slug: str,
     project_id: str,
-    auth_data: Dict[str, Any] = Depends(validate_authentication)
+    lifecycle: Optional[str] = Query(
+        None,
+        description="Filter catalog/history by revision lifecycle tag (#739): stable, beta, deprecated, archived.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[VersionSchema]:
     """
     List all versions for a project.
@@ -163,7 +172,17 @@ async def list_versions(
             detail=f"Project not found: {project_id}"
         )
 
-    versions = db.get_versions_for_project(project_id, auth_data['tenant_id'])
+    lc_filter: Optional[str] = None
+    if lifecycle is not None and str(lifecycle).strip() != "":
+        lc_norm = str(lifecycle).strip().lower()
+        if lc_norm not in LIFECYCLE_VALUES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid lifecycle filter; expected one of: {', '.join(sorted(LIFECYCLE_VALUES))}",
+            )
+        lc_filter = lc_norm
+
+    versions = db.get_versions_for_project(project_id, auth_data["tenant_id"], lifecycle=lc_filter)
 
     return [VersionSchema(**v) for v in versions]
 
@@ -465,6 +484,29 @@ async def update_version(
         )
 
     try:
+        existing_lc = effective_lifecycle(existing.get("metadata"))
+        tenant_id = auth_data["tenant_id"]
+        uid_session = get_authenticated_user_id(auth_data)
+        tenant_admin = bool(uid_session and db.is_user_tenant_admin(tenant_id, uid_session))
+
+        if existing_lc == LIFECYCLE_ARCHIVED:
+            if not tenant_admin:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Archived revisions are read-only (#739). Tenant admins may update lifecycle or revision lock only.",
+                )
+            if request.enabled is not None and request.enabled != existing.get("enabled"):
+                raise HTTPException(
+                    status_code=403,
+                    detail="Cannot change enabled on an archived revision.",
+                )
+            note_keys_block = {"short_message", "changelog"}
+            if request.model_fields_set & note_keys_block:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Cannot edit version notes on an archived revision.",
+                )
+
         limits = limits_for_tenant(auth_data["tenant_id"])
         updates: Dict[str, Any] = {}
         if request.enabled is not None:
@@ -516,8 +558,9 @@ async def update_version(
         # Update version
         version = db.update_version(
             version_record_id,
-            auth_data['tenant_id'],
-            updates
+            auth_data["tenant_id"],
+            updates,
+            lifecycle_admin=tenant_admin,
         )
 
         if not version:

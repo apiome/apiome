@@ -27,7 +27,7 @@ This represents the different versions of the Objectified specification and thei
 **Advanced Versioning** ✅ PARTIALLY IMPLEMENTED
 - **Version Branches**: 📋 Create branches for experimental features
 - ✅ **Version Merging** (#738): REST three-way merge + merge-base; Studio proxies to REST
-- 📋 **Version Tags**: Label versions (stable, beta, deprecated, archived)
+- ✅ **Lifecycle version tags** (#739): governance labels (`stable` / `beta` / `deprecated` / `archived`) in `versions.metadata.lifecycle`, list filter, Studio badges; distinct from **git-like release tags** (#501)
 - ✅ **Version Comparison**:
   - ✅ Side-by-side diff view
   - 📋 Highlight added/removed/changed classes
@@ -57,7 +57,6 @@ This represents the different versions of the Objectified specification and thei
 
 | Ticket | Feature Description                          |
 |--------|----------------------------------------------|
-| #739   | Implement version tags feature               |
 | #740   | Highlight added/removed/changed classes      |
 | #741   | Detail property-level changes                |
 | #742   | Visual canvas comparison                     |

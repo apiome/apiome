@@ -112,6 +112,7 @@ export async function GET(request: NextRequest) {
     // Get project ID from query params
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('projectId');
+    const lifecycle = searchParams.get('lifecycle');
 
     if (!projectId) {
       return NextResponse.json(
@@ -132,7 +133,8 @@ export async function GET(request: NextRequest) {
     const tenantSlug = tenant.slug;
 
     // Build REST API URL
-    const url = `${REST_API_BASE_URL}/versions/${tenantSlug}/${projectId}`;
+    const qs = lifecycle ? `?lifecycle=${encodeURIComponent(lifecycle)}` : '';
+    const url = `${REST_API_BASE_URL}/versions/${tenantSlug}/${projectId}${qs}`;
 
     // Create auth headers with JWT token from session
     const headers = createAuthHeaders({

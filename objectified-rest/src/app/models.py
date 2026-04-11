@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field, AliasChoices, ConfigDict
+from pydantic import BaseModel, Field, AliasChoices, ConfigDict, model_validator
 from typing import Optional, Dict, Any, List, Union, Literal
 
 
@@ -270,7 +270,11 @@ class VersionSchema(BaseModel):
     )
     metadata: Optional[Dict[str, Any]] = Field(
         default=None,
-        description="Revision-level JSON (deprecation, sunset, successor revision id, etc.).",
+        description="Revision-level JSON (deprecation, sunset, successor revision id, lifecycle tag, etc.).",
+    )
+    lifecycle: str = Field(
+        default="stable",
+        description="Governance lifecycle tag: stable | beta | deprecated | archived (#739); aligns with metadata.lifecycle and #507 deprecation when unset.",
     )
     creator_name: Optional[str] = None
     creator_email: Optional[str] = None
@@ -278,6 +282,15 @@ class VersionSchema(BaseModel):
     project_slug: Optional[str] = None
     created_at: Optional[Union[datetime, str]] = None
     updated_at: Optional[Union[datetime, str]] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _inject_lifecycle(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        from .revision_lifecycle import effective_lifecycle
+
+        return {**data, "lifecycle": effective_lifecycle(data.get("metadata"))}
 
 
 class VersionCreateRequest(BaseModel):
@@ -394,7 +407,7 @@ class VersionUpdateRequest(BaseModel):
     )
     metadata: Optional[Dict[str, Any]] = Field(
         default=None,
-        description="Shallow-merge into versions.metadata (deprecation fields, etc.).",
+        description="Shallow-merge into versions.metadata (deprecation fields, lifecycle tag #739, etc.).",
     )
 
 

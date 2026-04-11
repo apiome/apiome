@@ -1722,6 +1722,15 @@ paths:
         schema:
           type: string
           title: Project Id
+      - name: lifecycle
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Lifecycle
+          description: Filter revisions by governance lifecycle tag (#739).
       - name: authorization
         in: header
         required: false
@@ -1748,6 +1757,8 @@ paths:
                 items:
                   $ref: '#/components/schemas/VersionSchema'
                 title: Response List Versions V1 Versions  Tenant Slug   Project Id  Get
+        '400':
+          description: Bad Request
         '422':
           description: Validation Error
           content:
@@ -6919,6 +6930,12 @@ components:
           title: Revisionlocked
           description: 'Tenant-admin lock: revision cannot be soft-deleted by non-admins.'
           default: false
+        lifecycle:
+          type: string
+          title: Lifecycle
+          description: 'Governance lifecycle tag (#739): stable, beta, deprecated,
+            or archived (distinct from git-like release tags #501).'
+          default: stable
         creator_name:
           anyOf:
           - type: string
