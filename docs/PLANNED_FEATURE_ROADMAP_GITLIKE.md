@@ -88,7 +88,7 @@ Workstreams below can proceed in parallel once shared contracts (revision id, he
 
 | Parallel track | Tickets | Notes |
 |----------------|---------|--------|
-| **A — Commit & metadata** | P0-01, P0-03 | P0-02 UI waits on P0-01 API shape |
+| **A — Commit & metadata** | P0-01, P0-02 ✓, P0-03 | P0-02 (ADE **Commit** dialog) shipped after P0-01 API |
 | **B — Push & conflict UX** | P0-04, P0-05 | P0-05 can mock 409 until P0-04 stable |
 | **C — Pull efficiency** | P0-06 | Coordinate ETag with P0-04 head semantics |
 | **D — Studio status** | P0-07 | Depends on signals from B/C; can mock |
@@ -121,6 +121,8 @@ Add metadata persistence for commit author, message, and external reference id. 
 ---
 
 ## P0-02: Commit Dialog with Radix Form Validation
+
+**Status:** **Done** — ADE **Versions** toolbar **Commit** opens a Radix dialog (required message, optional external ref, validation, toasts); create revision uses REST `POST /api/versions` with `shortMessage` / `externalRef`.
 
 **GitHub:** [#2564](https://github.com/KenSuenobu/objectified-commercial/issues/2564) · **Epic:** [#2558](https://github.com/KenSuenobu/objectified-commercial/issues/2558)
 

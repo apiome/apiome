@@ -5,6 +5,9 @@ export const VERSION_NOTES_LIMITS = {
   requireShortMessage: true,
 } as const;
 
+/** REST `_AUTHOR_OR_REF_MAX_CHARS` for optional `externalRef` on commit (#2564). */
+export const COMMIT_EXTERNAL_REF_MAX_CHARS = 500;
+
 export function validateVersionNotesClient(
   shortMessage: string,
   changelog: string

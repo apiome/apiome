@@ -24,7 +24,6 @@ import { Badge } from '../../../components/ui/Badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/Select';
 import { useDialog } from '../../../components/providers/DialogProvider';
 import {
-  createVersion,
   deleteVersion,
   getClassesForVersion,
   getPropertiesForClass,
@@ -46,7 +45,12 @@ import {
 } from '../../../../../lib/schema-diff';
 import { compareLayouts, type LayoutDiffSummary, type LayoutState } from '../../../../../lib/layout-diff';
 import { loadLayoutStateForVersionCompare } from '../../../../../lib/version-canvas-layout';
-import { extractBreakingHintsFromChangelog, validateVersionNotesClient } from '../../../../../lib/version-notes';
+import {
+  COMMIT_EXTERNAL_REF_MAX_CHARS,
+  extractBreakingHintsFromChangelog,
+  validateVersionNotesClient,
+  VERSION_NOTES_LIMITS,
+} from '../../../../../lib/version-notes';
 import { generateBreakingChangesMarkdownFromSummary } from '../../../../../lib/breaking-changes-doc';
 import { generateMigrationGuideMarkdownFromSummary } from '../../../../../lib/migration-guide-doc';
 import { downloadMigrationGuidePdf } from '../../../utils/export-migration-guide-pdf';
@@ -155,6 +159,8 @@ const Versions = () => {
   const [nextAutoVersion, setNextAutoVersion] = useState<string>('');
   const [description, setDescription] = useState('');
   const [changeLog, setChangeLog] = useState('');
+  /** Optional ticket / issue id (Jira, Linear, …) stored as external_ref on create (#2564). */
+  const [commitExternalRef, setCommitExternalRef] = useState('');
   const [enabled, setEnabled] = useState(true);
   const [sourceVersionId, setSourceVersionId] = useState<string>('');
   /** When multiple named branches exist, select by branch id before resolving tip (#505). */
@@ -534,29 +540,75 @@ const Versions = () => {
   const handleCreateClick = () => {
     setVersionId(''); setAutoGenerate(true); setBumpStrategy('patch');
     setNextAutoVersion(calculateNextVersion('patch')); setDescription('');
-    setChangeLog(''); setEnabled(true); setSourceVersionId('');
+    setChangeLog(''); setCommitExternalRef(''); setEnabled(true); setSourceVersionId('');
     setCopySourceBranchKey('blank');
     setErrorMessage(''); setBranchListError(null);
     void loadBranches();
     setShowCreateDialog(true);
   };
 
+  const createCommitMessageCheck = validateVersionNotesClient(description, '');
+  const commitChangelogOverLimit = changeLog.trim().length > VERSION_NOTES_LIMITS.maxChangelogChars;
+  const commitExternalRefTrim = commitExternalRef.trim();
+  const createCommitFormValid =
+    createCommitMessageCheck.ok &&
+    !commitChangelogOverLimit &&
+    commitExternalRefTrim.length <= COMMIT_EXTERNAL_REF_MAX_CHARS &&
+    (autoGenerate || versionId.trim().length > 0);
+
   const handleCreateSubmit = async () => {
     if (!autoGenerate && !versionId.trim()) { setErrorMessage('Version ID is required when not auto-generating'); return; }
     const notesCheck = validateVersionNotesClient(description, changeLog);
     if (!notesCheck.ok) { setErrorMessage(notesCheck.error); return; }
+    if (commitExternalRefTrim.length > COMMIT_EXTERNAL_REF_MAX_CHARS) {
+      setErrorMessage(`External reference must be at most ${COMMIT_EXTERNAL_REF_MAX_CHARS} characters`);
+      return;
+    }
     setIsLoading(true); setErrorMessage('');
     try {
-      const result = await createVersion(selectedProjectId, currentUserId, autoGenerate ? null : versionId, description, changeLog, sourceVersionId || null, autoGenerate ? bumpStrategy : undefined);
-      const response = JSON.parse(result);
-      if (response.success) {
-        setShowCreateDialog(false);
-        await loadVersions();
-        if (response.copiedClasses > 0) toast.success(`Version created! Copied ${response.copiedClasses} class(es).`);
-        else if (response.copyWarning) toast.warning(`Version created, but: ${response.copyWarning}`);
-      } else setErrorMessage(response.error || 'Failed to create version');
-    } catch (error: any) { setErrorMessage(error.message || 'An error occurred'); }
-    finally { setIsLoading(false); }
+      const body: Record<string, unknown> = {
+        projectId: selectedProjectId,
+        shortMessage: description.trim(),
+        changelog: changeLog.trim() || null,
+      };
+      if (commitExternalRefTrim) body.externalRef = commitExternalRefTrim;
+      if (!autoGenerate) body.version_id = versionId.trim();
+      if (autoGenerate) body.bump_strategy = bumpStrategy;
+      if (sourceVersionId?.trim()) body.source_version_id = sourceVersionId.trim();
+
+      const res = await fetch('/api/versions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const json = (await res.json()) as {
+        success?: boolean;
+        error?: string;
+        version?: { copied_classes?: number; copy_warning?: string };
+      };
+      if (!res.ok || !json.success) {
+        const err = typeof json.error === 'string' ? json.error : 'Failed to commit revision';
+        setErrorMessage(err);
+        toast.error(err);
+        return;
+      }
+      setShowCreateDialog(false);
+      await loadVersions();
+      const v = json.version;
+      if (v && typeof v.copied_classes === 'number' && v.copied_classes > 0) {
+        toast.success(`Revision committed. Copied ${v.copied_classes} class(es).`);
+      } else if (v?.copy_warning) {
+        toast.warning(`Revision committed, but: ${v.copy_warning}`);
+      } else {
+        toast.success('Revision committed.');
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'An error occurred';
+      setErrorMessage(msg);
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEditClick = (version: Version) => {
@@ -1782,9 +1834,9 @@ const Versions = () => {
                 <GitMerge className="h-4 w-4 mr-2" />
                 Merge branches
               </Button>
-              <Button onClick={handleCreateClick} disabled={!selectedProjectId}>
+              <Button onClick={handleCreateClick} disabled={!selectedProjectId} title="Create a new schema revision (commit)">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Version
+                Commit
               </Button>
             </div>
           </div>
@@ -2254,10 +2306,15 @@ const Versions = () => {
         </div>
       </main>
 
-      {/* Create Version Dialog */}
+      {/* Commit new revision (Radix dialog + validation #2564) */}
       <Dialog open={showCreateDialog} onOpenChange={(open) => !isLoading && setShowCreateDialog(open)}>
-        <DialogContent className="max-w-xl" aria-describedby={undefined}>
-          <DialogHeader><DialogTitle>Create New Version</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-xl" aria-describedby="commit-dialog-desc">
+          <DialogHeader>
+            <DialogTitle>Commit</DialogTitle>
+            <DialogDescription id="commit-dialog-desc">
+              Create a new schema revision for this project. Message is required; add an external reference when linking to a ticket or issue.
+            </DialogDescription>
+          </DialogHeader>
           <div className="space-y-4 py-4">
             {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
             {branchListError && (
@@ -2376,17 +2433,54 @@ const Versions = () => {
               </div>
             )}
             <div className="space-y-2">
-              <Label>Revision note *</Label>
-              <Input value={description} onChange={(e) => setDescription(e.target.value)} disabled={isLoading} placeholder="Short summary (commit message)" />
+              <Label htmlFor="commit-message">Message *</Label>
+              <Textarea
+                id="commit-message"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={isLoading}
+                rows={4}
+                placeholder="Describe this revision (required)"
+                aria-invalid={description.length > 0 && !createCommitMessageCheck.ok}
+                className="min-h-[6rem]"
+              />
+              {!createCommitMessageCheck.ok && description.length > 0 && (
+                <p className="text-xs text-red-600 dark:text-red-400" role="alert">
+                  {createCommitMessageCheck.error}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
-              <Label>Changelog (markdown)</Label>
-              <Textarea value={changeLog} onChange={(e) => setChangeLog(e.target.value)} rows={3} disabled={isLoading} placeholder="Release notes, breaking bullets (- breaking: …)" />
+              <Label htmlFor="commit-external-ref">External reference (optional)</Label>
+              <Input
+                id="commit-external-ref"
+                value={commitExternalRef}
+                onChange={(e) => setCommitExternalRef(e.target.value)}
+                disabled={isLoading}
+                placeholder="e.g. LINEAR-42, JIRA-123"
+                aria-invalid={commitExternalRefTrim.length > COMMIT_EXTERNAL_REF_MAX_CHARS}
+              />
+              {commitExternalRefTrim.length > COMMIT_EXTERNAL_REF_MAX_CHARS && (
+                <p className="text-xs text-red-600 dark:text-red-400" role="alert">
+                  External reference must be at most {COMMIT_EXTERNAL_REF_MAX_CHARS} characters
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>Changelog (markdown, optional)</Label>
+              <Textarea value={changeLog} onChange={(e) => setChangeLog(e.target.value)} rows={3} disabled={isLoading} placeholder="Release notes, breaking bullets (- breaking: …)" aria-invalid={commitChangelogOverLimit} />
+              {commitChangelogOverLimit && (
+                <p className="text-xs text-red-600 dark:text-red-400" role="alert">
+                  Changelog exceeds {VERSION_NOTES_LIMITS.maxChangelogChars} characters
+                </p>
+              )}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreateDialog(false)} disabled={isLoading}>Cancel</Button>
-            <Button onClick={handleCreateSubmit} disabled={isLoading}>{isLoading ? 'Creating...' : 'Create Version'}</Button>
+            <Button onClick={handleCreateSubmit} disabled={isLoading || !createCommitFormValid}>
+              {isLoading ? 'Committing…' : 'Commit'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

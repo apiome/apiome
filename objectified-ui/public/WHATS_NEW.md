@@ -26,7 +26,7 @@ We continue to improve the platform based on your feedback with improvements and
 - **OpenAPI import:** one shared rule for “direct” schema properties — specs that mix top-level `properties` with inline `allOf` fragments now pick up both (aligned with the unified class importer)
 
 ## Git Behavior
-
+- **Commit dialog (#2564):** ADE **Versions** **Commit** opens a Radix dialog with required **Message**, optional **External reference** (max 500 chars), inline validation, disabled submit until valid, and **sonner** toasts; new revisions post to **REST** via `/api/versions` with commit metadata
 
 ## Versioning
 - **Commit metadata (#2563):** Schema revisions persist optional **`author`**, **`message`**, and **`externalRef`** (REST create/fork + revision list/detail); stored as `commit_author`, `commit_message`, `external_ref` — existing rows surface **null** safely
