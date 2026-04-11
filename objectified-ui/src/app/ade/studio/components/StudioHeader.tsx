@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
+import { toast } from 'sonner';
 import { Check, Gauge, Settings, X } from 'lucide-react';
 import * as Select from '@radix-ui/react-select';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -17,6 +18,8 @@ import { cn } from '../../../../../lib/utils';
 import { getNumericScoreTier, NUMERIC_SCORE_TIER_LEGEND } from '@/app/utils/numeric-score-tier';
 import { OVERALL_SCHEMA_QUALITY_WEIGHTS } from '@/app/utils/overall-schema-quality';
 import RevisionDeprecationBanner from '@/app/components/ade/RevisionDeprecationBanner';
+import ServerAheadPushBanner from '@/app/components/ade/ServerAheadPushBanner';
+import { usePushConflictBanner } from '@/app/providers/PushConflictBannerProvider';
 import { isRevisionDeprecated } from '@/app/utils/revision-deprecation';
 
 interface Project {
@@ -76,8 +79,13 @@ export default function StudioHeader({ onProjectTagsLoaded }: StudioHeaderProps)
     clearSearchHistoryFn,
     clearCanvasSelectionFn,
     schemaQualityScore,
-    schemaQualityDetail
+    schemaQualityDetail,
+    triggerCanvasRefresh,
+    triggerSidebarRefresh,
   } = useStudio();
+
+  const { conflict, clearPushConflict } = usePushConflictBanner();
+  const [pullReconcileLoading, setPullReconcileLoading] = React.useState(false);
 
   const [schemaQualityDialogOpen, setSchemaQualityDialogOpen] = React.useState(false);
 
@@ -247,6 +255,54 @@ export default function StudioHeader({ onProjectTagsLoaded }: StudioHeaderProps)
     const version = versions.find(v => v.id === value);
     setIsReadOnly(version?.published ?? false);
   };
+
+  const serverAheadForProject =
+    conflict && localProjectId && conflict.projectId === localProjectId ? conflict : null;
+
+  const handlePullReconcile = React.useCallback(async () => {
+    if (!localProjectId || !serverAheadForProject) return;
+    setPullReconcileLoading(true);
+    try {
+      const response = await fetch(`/api/versions?projectId=${encodeURIComponent(localProjectId)}`);
+      const result = await response.json();
+      if (!response.ok || !result.success || !Array.isArray(result.versions)) {
+        toast.error(typeof result.error === 'string' ? result.error : 'Could not refresh versions.');
+        return;
+      }
+      const list = result.versions as Version[];
+      setVersions(list);
+      const headId = serverAheadForProject.currentHeadRevisionId;
+      const match = headId ? list.find((v) => v.id === headId) : undefined;
+      const next = match ?? list[0];
+      if (next) {
+        setLocalVersionId(next.id);
+        setContextVersionId(next.id);
+        setIsReadOnly(next.published ?? false);
+      }
+      clearPushConflict();
+      triggerCanvasRefresh();
+      triggerSidebarRefresh();
+      toast.success('Now on the latest revision.');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Pull failed');
+    } finally {
+      setPullReconcileLoading(false);
+    }
+  }, [
+    localProjectId,
+    serverAheadForProject,
+    setContextVersionId,
+    setIsReadOnly,
+    clearPushConflict,
+    triggerCanvasRefresh,
+    triggerSidebarRefresh,
+  ]);
+
+  const handleOpenMergeFromBanner = React.useCallback(() => {
+    const pid = serverAheadForProject?.projectId ?? localProjectId;
+    if (!pid) return;
+    router.push(`/ade/dashboard/versions?merge=1&projectId=${encodeURIComponent(pid)}`);
+  }, [serverAheadForProject?.projectId, localProjectId, router]);
 
   // Handle view mode change
   const handleViewModeChange = (value: string) => {
@@ -608,6 +664,16 @@ export default function StudioHeader({ onProjectTagsLoaded }: StudioHeaderProps)
           </>
         )}
       </div>
+      {serverAheadForProject && (
+        <div className="mt-2 w-full min-w-0 px-1">
+          <ServerAheadPushBanner
+            detail={serverAheadForProject.message}
+            pullLoading={pullReconcileLoading}
+            onPull={handlePullReconcile}
+            onOpenMerge={handleOpenMergeFromBanner}
+          />
+        </div>
+      )}
       {(() => {
         const v = versions.find((x) => x.id === localVersionId);
         if (!v || !isRevisionDeprecated(v.metadata)) return null;

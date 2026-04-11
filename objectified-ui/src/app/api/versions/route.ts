@@ -64,31 +64,56 @@ function createAuthHeaders(user: SessionUser): Record<string, string> {
 }
 
 /**
- * Helper to handle REST API responses
+ * Helper to handle REST API responses (FastAPI uses `{ detail: string | object }` for errors).
  */
-async function handleRestResponse(response: Response, defaultError: string): Promise<{ data: unknown; error: string | null; status: number }> {
+async function handleRestResponse(
+  response: Response,
+  defaultError: string
+): Promise<{
+  data: unknown;
+  error: string | null;
+  status: number;
+  errorDetail: Record<string, unknown> | null;
+}> {
   const contentType = response.headers.get('content-type');
 
   if (!contentType || !contentType.includes('application/json')) {
     const text = await response.text();
     console.error('Non-JSON response from REST API:', text);
-    return { data: null, error: text || defaultError, status: response.status || 500 };
+    return { data: null, error: text || defaultError, status: response.status || 500, errorDetail: null };
   }
 
   const data = await response.json();
 
   if (!response.ok) {
-    const detail = data.detail;
-    const errMsg =
-      typeof detail === 'string'
-        ? detail
-        : detail && typeof detail === 'object' && 'message' in detail && typeof (detail as { message?: unknown }).message === 'string'
-          ? (detail as { message: string }).message
-          : defaultError;
-    return { data: null, error: errMsg, status: response.status };
+    const detail = (data as { detail?: unknown }).detail;
+    let errMsg = defaultError;
+    let errorDetail: Record<string, unknown> | null = null;
+    if (typeof detail === 'string') {
+      errMsg = detail;
+    } else if (detail && typeof detail === 'object') {
+      errorDetail = detail as Record<string, unknown>;
+      const m = (detail as { message?: unknown }).message;
+      if (typeof m === 'string') errMsg = m;
+    }
+    return { data: null, error: errMsg, status: response.status, errorDetail };
   }
 
-  return { data, error: null, status: response.status };
+  return { data, error: null, status: response.status, errorDetail: null };
+}
+
+function nextJsonFromVersionCreateError(
+  error: string,
+  errorDetail: Record<string, unknown> | null
+): Record<string, unknown> {
+  const body: Record<string, unknown> = { success: false, error };
+  if (!errorDetail) return body;
+  if (typeof errorDetail.code === 'string') body.code = errorDetail.code;
+  if (typeof errorDetail.currentHeadRevisionId === 'string') {
+    body.currentHeadRevisionId = errorDetail.currentHeadRevisionId;
+  }
+  if ('currentHead' in errorDetail) body.currentHead = errorDetail.currentHead;
+  return body;
 }
 
 /**
@@ -236,10 +261,10 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(versionData),
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to create version');
+    const { data, error, status, errorDetail } = await handleRestResponse(response, 'Failed to create version');
 
     if (error) {
-      return NextResponse.json({ success: false, error }, { status });
+      return NextResponse.json(nextJsonFromVersionCreateError(error, errorDetail), { status });
     }
 
     return NextResponse.json({ success: true, version: data });

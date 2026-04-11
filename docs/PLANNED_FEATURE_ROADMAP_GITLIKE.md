@@ -191,6 +191,8 @@ On **`409`** with **`code: STALE_HEAD`**:
 
 ## P0-05: Push Conflict Banner + CTA Guidance in Studio
 
+**Status:** **Done** — On **`409`** / **`STALE_HEAD`** from commit (push), **ADE** shows a **persistent server-ahead banner** with **Pull** and **Open merge**; **`/api/versions`** POST forwards **`code`**, **`currentHeadRevisionId`**, **`currentHead`**; banner clears after **pull** reconciliation or **successful merge**.
+
 **GitHub:** [#2567](https://github.com/KenSuenobu/objectified-commercial/issues/2567) · **Epic:** [#2558](https://github.com/KenSuenobu/objectified-commercial/issues/2558)
 
 ### Problem statement

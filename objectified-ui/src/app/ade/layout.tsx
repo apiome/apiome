@@ -4,6 +4,7 @@ import "@radix-ui/themes/styles.css";
 import SessionWrapper from "@/app/components/auth/SessionWrapper";
 import AuthenticatedLayout from "@/app/components/auth/AuthenticatedLayout";
 import ConditionalHeader from '@/app/components/ade/ConditionalHeader';
+import { PushConflictBannerProvider } from '@/app/providers/PushConflictBannerProvider';
 import { ThemeProvider } from '@/app/providers/ThemeProvider';
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { Theme as RadixTheme } from "@radix-ui/themes";
@@ -36,10 +37,12 @@ export default function RootLayout({
         >
           <ThemeProvider>
             <SessionWrapper>
-              <AuthenticatedLayout>
-                <ConditionalHeader />
-                {children}
-              </AuthenticatedLayout>
+              <PushConflictBannerProvider>
+                <AuthenticatedLayout>
+                  <ConditionalHeader />
+                  {children}
+                </AuthenticatedLayout>
+              </PushConflictBannerProvider>
             </SessionWrapper>
           </ThemeProvider>
         </RadixTheme>

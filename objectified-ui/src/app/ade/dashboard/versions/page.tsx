@@ -61,6 +61,9 @@ import VersionHistoryGraphPanel from './VersionHistoryGraphPanel';
 import { DEFAULT_HISTORY_WINDOW } from './version-history-dag';
 import { toast } from 'sonner';
 import { localDatetimeLocalToUtcIso, utcIsoToDatetimeLocalValue } from '../../../utils/revision-deprecation';
+import { usePushConflictBanner } from '@/app/providers/PushConflictBannerProvider';
+import ServerAheadPushBanner from '@/app/components/ade/ServerAheadPushBanner';
+import { parseStaleHeadFromVersionsPostJson } from '@/app/utils/push-conflict';
 
 const Editor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
@@ -141,6 +144,8 @@ interface VersionTagRow {
 
 const Versions = () => {
   const { data: session } = useSession();
+  const { conflict, setPushConflictFrom409, clearPushConflict } = usePushConflictBanner();
+  const [versionsPullBannerLoading, setVersionsPullBannerLoading] = useState(false);
   const { confirm: confirmDialog, alert: alertDialog } = useDialog();
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
@@ -526,6 +531,45 @@ const Versions = () => {
     }
   };
 
+  const handleVersionsPullReconcile = async () => {
+    if (!selectedProjectId) return;
+    setVersionsPullBannerLoading(true);
+    try {
+      await loadVersions();
+      clearPushConflict();
+      toast.success('Version list refreshed. Update your commit base from the latest revision, then try again.');
+    } finally {
+      setVersionsPullBannerLoading(false);
+    }
+  };
+
+  const handleVersionsOpenMerge = () => {
+    setMergeSourceBranch('');
+    setMergeTargetBranch('');
+    setMergePreviewData(null);
+    setMergeCompat(null);
+    setShowMergeDialog(true);
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || projects.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('merge') !== '1') return;
+    const pid = params.get('projectId');
+    if (pid && projects.some((p) => p.id === pid)) {
+      setSelectedProjectId(pid);
+    }
+    setMergeSourceBranch('');
+    setMergeTargetBranch('');
+    setMergePreviewData(null);
+    setMergeCompat(null);
+    setShowMergeDialog(true);
+    params.delete('merge');
+    params.delete('projectId');
+    const qs = params.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
+  }, [projects]);
+
   const calculateNextVersion = (strategy: 'patch' | 'minor' = 'patch'): string => {
     if (versions.length === 0) return '0.1.0';
     const latestVersion = versions[0].version_id;
@@ -645,15 +689,47 @@ const Versions = () => {
       const json = (await res.json()) as {
         success?: boolean;
         error?: string;
+        code?: string;
         version?: { copied_classes?: number; copy_warning?: string };
       };
       if (!res.ok || !json.success) {
+        if (res.status === 409) {
+          const stale = parseStaleHeadFromVersionsPostJson(json, res.status);
+          if (stale && selectedProjectId) {
+            setPushConflictFrom409({
+              projectId: selectedProjectId,
+              message: stale.message,
+              currentHeadRevisionId: stale.currentHeadRevisionId,
+              currentHead: stale.currentHead
+                ? {
+                    revisionId:
+                      typeof stale.currentHead.revisionId === 'string'
+                        ? stale.currentHead.revisionId
+                        : undefined,
+                    versionId:
+                      typeof stale.currentHead.versionId === 'string'
+                        ? stale.currentHead.versionId
+                        : undefined,
+                    shortMessage:
+                      typeof stale.currentHead.shortMessage === 'string'
+                        ? stale.currentHead.shortMessage
+                        : null,
+                    createdAt:
+                      typeof stale.currentHead.createdAt === 'string'
+                        ? stale.currentHead.createdAt
+                        : null,
+                  }
+                : null,
+            });
+          }
+        }
         const err = typeof json.error === 'string' ? json.error : 'Failed to commit revision';
         setErrorMessage(err);
         toast.error(err);
         return;
       }
       setShowCreateDialog(false);
+      clearPushConflict();
       await loadVersions();
       const v = json.version;
       if (v && typeof v.copied_classes === 'number' && v.copied_classes > 0) {
@@ -1669,6 +1745,7 @@ const Versions = () => {
         toast.success(`Merged into ${mergeTargetBranch.trim()} — new version ${d.version?.version_id ?? ''}`);
         setShowMergeDialog(false);
         setMergePreviewData(null);
+        clearPushConflict();
         await loadVersions();
         await loadBranches();
       } else {
@@ -1903,6 +1980,19 @@ const Versions = () => {
           </div>
         </div>
       </header>
+
+      {conflict && conflict.projectId === selectedProjectId && selectedProjectId && (
+        <div className="border-b border-amber-200/80 bg-amber-50/50 px-6 py-3 dark:border-amber-800/50 dark:bg-amber-950/25">
+          <div className="max-w-7xl mx-auto">
+            <ServerAheadPushBanner
+              detail={conflict.message}
+              pullLoading={versionsPullBannerLoading}
+              onPull={handleVersionsPullReconcile}
+              onOpenMerge={handleVersionsOpenMerge}
+            />
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 overflow-y-auto p-6">
         <div className="max-w-7xl mx-auto space-y-6">
