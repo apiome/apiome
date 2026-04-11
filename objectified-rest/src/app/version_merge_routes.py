@@ -432,6 +432,10 @@ def _rollback_validate_branch_and_revisions(
     if not bname:
         raise HTTPException(status_code=400, detail="branchName is required")
 
+    project = db.get_project_by_id(project_id, tenant_id)
+    if not project:
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+
     branch = db.get_version_branch_by_name(project_id, tenant_id, bname)
     if not branch:
         raise HTTPException(status_code=404, detail="Branch not found")
@@ -467,9 +471,6 @@ def _rollback_validate_branch_and_revisions(
             detail="Target revision is not an ancestor of the branch tip; only in-history rollbacks are allowed.",
         )
 
-    project = db.get_project_by_id(project_id, tenant_id)
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
     return project, branch, head_ver, target_ver, head_tip, tgt_id
 
 
@@ -484,10 +485,6 @@ async def version_branch_rollback_preview(
     Dry-run rollback: schema compatibility tip→target, deprecation warnings (#506), fingerprint.
     """
     tenant_id = auth_data["tenant_id"]
-    project = db.get_project_by_id(project_id, tenant_id)
-    if not project:
-        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
-
     _project, _branch, head_ver, target_ver, head_tip, tgt_id = _rollback_validate_branch_and_revisions(
         project_id, tenant_id, body.branch_name, body.target_revision_id
     )
@@ -495,7 +492,7 @@ async def version_branch_rollback_preview(
     overall, finding_out, dep_out, fp, doc_url = _rollback_analyze(
         tenant_slug, tenant_id, head_ver, target_ver
     )
-    gate = _tenant_compat_gate_rollback(project)
+    gate = _tenant_compat_gate_rollback(_project)
     blocked = bool(gate and overall != "safe")
 
     return {
@@ -624,10 +621,18 @@ async def version_branch_rollback(
                 """
                 UPDATE odb.version_branches
                 SET tip_version_id = %s, updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s
+                WHERE id = %s AND tip_version_id = %s
                 """,
-                (new_id, str(branch["id"])),
+                (new_id, str(branch["id"]), head_tip),
             )
+            if cursor.rowcount == 0:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "message": "Branch tip was modified concurrently; please retry (stale head).",
+                        "code": "STALE_HEAD",
+                    },
+                )
 
         conn.commit()
     except HTTPException:

@@ -1435,12 +1435,13 @@ const Versions = () => {
         });
         setRollbackSkipCompat(false);
       } else {
-        const msg =
-          typeof d.detail === 'string'
-            ? d.detail
-            : typeof d.error === 'string'
-              ? d.error
-              : 'Preview failed';
+        const msg = (() => {
+          if (typeof d.detail === 'string') return d.detail;
+          const detail = d.detail as Record<string, unknown> | null | undefined;
+          if (detail && typeof detail.message === 'string') return detail.message;
+          if (typeof d.error === 'string') return d.error;
+          return 'Preview failed';
+        })();
         toast.error(msg);
       }
     } catch (e) {
