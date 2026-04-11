@@ -1412,7 +1412,7 @@ class Database:
             visited.add(succ)
             current = succ
 
-        return current, hops, "cycle", None
+        return current, hops, "max_hops_exceeded", None
 
     def get_latest_version_for_project(self, project_id: str, tenant_id: str) -> Optional[str]:
         """Get the latest version_id string for a project."""

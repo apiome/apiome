@@ -139,13 +139,14 @@ export async function GET(
     const response = await fetch(restUrl, {
       method: 'GET',
       headers,
+      redirect: sr === 'redirect' ? 'manual' : 'follow',
     });
 
     if (response.status === 307 || response.status === 308) {
       const loc = response.headers.get('Location');
       if (loc) {
         try {
-          const remote = new URL(loc);
+          const remote = new URL(loc, restUrl);
           const segs = remote.pathname.replace(/\/$/, '').split('/').filter(Boolean);
           const finalRevisionId = segs[segs.length - 1] ?? versionId;
           const dest = new URL(request.url);

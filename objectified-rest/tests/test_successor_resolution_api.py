@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from src.app.auth import validate_authentication
-from src.app.main import app
+from app.auth import validate_authentication
+from app.main import app
 
 client = TestClient(app)
 
@@ -58,7 +58,7 @@ def _auth():
 def test_get_version_resolve_returns_final_revision_and_headers():
     va = _min_version("rev-a", "1.0.0", {"successorRevisionId": "rev-b"})
     vb = _min_version("rev-b", "1.0.1", {})
-    with patch("src.app.versions_routes.db") as mdb:
+    with patch("app.versions_routes.db") as mdb:
         mdb.get_version_by_id.side_effect = lambda vid, tid: (
             va if vid == "rev-a" else vb if vid == "rev-b" else None
         )
@@ -77,7 +77,7 @@ def test_get_version_resolve_returns_final_revision_and_headers():
 
 def test_get_version_successor_cycle_409():
     va = _min_version("rev-a", "1.0.0", {"successorRevisionId": "rev-b"})
-    with patch("src.app.versions_routes.db") as mdb:
+    with patch("app.versions_routes.db") as mdb:
         mdb.get_version_by_id.return_value = va
         mdb.resolve_successor_revision_chain.return_value = ("rev-a", ["rev-b"], "cycle", None)
         r = client.get(
@@ -90,7 +90,7 @@ def test_get_version_successor_cycle_409():
 def test_get_version_redirect_307():
     va = _min_version("rev-a", "1.0.0", {"successorRevisionId": "rev-b"})
     vb = _min_version("rev-b", "1.0.1", {})
-    with patch("src.app.versions_routes.db") as mdb:
+    with patch("app.versions_routes.db") as mdb:
         mdb.get_version_by_id.side_effect = lambda vid, tid: (
             va if vid == "rev-a" else vb if vid == "rev-b" else None
         )
@@ -106,7 +106,7 @@ def test_get_version_redirect_307():
 
 
 def test_resolve_successor_chain_unit():
-    from src.app.database import Database
+    from app.database import Database
 
     db = Database()
     with patch.object(db, "get_version_by_id") as gv, patch.object(
@@ -123,7 +123,7 @@ def test_resolve_successor_chain_unit():
 
 
 def test_resolve_successor_chain_cycle():
-    from src.app.database import Database
+    from app.database import Database
 
     db = Database()
     with patch.object(db, "get_version_by_id") as gv, patch.object(
@@ -138,7 +138,7 @@ def test_resolve_successor_chain_cycle():
 
 
 def test_resolve_successor_blocked_when_protected_ref():
-    from src.app.database import Database
+    from app.database import Database
 
     db = Database()
     with patch.object(db, "get_version_by_id") as gv, patch.object(

@@ -215,7 +215,7 @@ async def list_versions(
     return [VersionSchema(**v) for v in versions]
 
 
-@router.get("/{tenant_slug}/{project_id}/{version_record_id}")
+@router.get("/{tenant_slug}/{project_id}/{version_record_id}", response_model=VersionSchema)
 async def get_version(
     request: Request,
     response: Response,
@@ -276,6 +276,16 @@ async def get_version(
             },
         )
 
+    if status == "max_hops_exceeded":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "SUCCESSOR_MAX_HOPS_EXCEEDED",
+                "message": "Successor chain exceeds maximum allowed hops",
+                "chain": hops,
+            },
+        )
+
     if status == "project_mismatch":
         raise HTTPException(
             status_code=409,
@@ -332,7 +342,7 @@ async def get_version(
     return VersionSchema(**final_row)
 
 
-@router.get("/{tenant_slug}/{project_id}/by-version/{version_id}")
+@router.get("/{tenant_slug}/{project_id}/by-version/{version_id}", response_model=VersionSchema)
 async def get_version_by_version_id(
     request: Request,
     response: Response,
@@ -386,6 +396,16 @@ async def get_version_by_version_id(
             },
         )
 
+    if status == "max_hops_exceeded":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "SUCCESSOR_MAX_HOPS_EXCEEDED",
+                "message": "Successor chain exceeds maximum allowed hops",
+                "chain": hops,
+            },
+        )
+
     if status == "project_mismatch":
         raise HTTPException(
             status_code=409,
@@ -428,7 +448,7 @@ async def get_version_by_version_id(
             return VersionSchema(**version)
         base = request.url.path.rstrip("/").rsplit("/", 1)[0]
         loc = request.url.replace(
-            path=f"{base}/by-version/{final_row['version_id']}",
+            path=f"{base}/{final_row['version_id']}",
             query="successorResolution=none",
         )
         return RedirectResponse(str(loc), status_code=307)

@@ -82,9 +82,10 @@ def coerce_metadata(raw: Any) -> Dict[str, Any]:
 def successor_revision_id_from_metadata(metadata: Any) -> Optional[str]:
     """Return the successor revision UUID from ``versions.metadata`` (#748, #749)."""
     m = coerce_metadata(metadata)
-    succ = m.get("successorRevisionId") or m.get("successor_revision_id")
-    if isinstance(succ, str) and succ.strip():
-        return succ.strip()
+    for key in _SUCCESSOR_ALIAS_KEYS:
+        succ = m.get(key)
+        if isinstance(succ, str) and succ.strip():
+            return succ.strip()
     return None
 
 
