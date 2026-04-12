@@ -434,9 +434,32 @@ class VersionBranchRecordOut(BaseModel):
         description="Revision this branch was created from (lineage; persists when tip advances).",
     )
     protected: bool = False
+    require_merge_path: bool = Field(
+        default=False,
+        serialization_alias="requireMergePath",
+        description="When true, non-admin direct pushes may not advance this branch tip; use merge (#2583).",
+    )
     created_by: Optional[str] = Field(default=None, serialization_alias="createdBy")
     created_at: Optional[Union[datetime, str]] = Field(default=None, serialization_alias="createdAt")
     updated_at: Optional[Union[datetime, str]] = Field(default=None, serialization_alias="updatedAt")
+
+
+class VersionBranchPolicyPatchRequest(BaseModel):
+    """Tenant-admin: branch protection and merge-path policy (#504, #2583)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    protected: Optional[bool] = None
+    require_merge_path: Optional[bool] = Field(
+        default=None,
+        validation_alias=AliasChoices("requireMergePath", "require_merge_path"),
+    )
+
+    @model_validator(mode="after")
+    def _at_least_one_field(self) -> "VersionBranchPolicyPatchRequest":
+        if self.protected is None and self.require_merge_path is None:
+            raise ValueError("Provide protected and/or requireMergePath")
+        return self
 
 
 class VersionBranchFromRevisionResponse(BaseModel):

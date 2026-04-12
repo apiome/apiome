@@ -3911,13 +3911,49 @@ class Database:
     ) -> Optional[Dict[str, Any]]:
         q = """
             SELECT b.id, b.project_id, b.name, b.tip_version_id, b.branched_from_revision_id,
-                   b.protected, b.created_by, b.created_at, b.updated_at
+                   b.protected, b.require_merge_path, b.created_by, b.created_at, b.updated_at
             FROM odb.version_branches b
             JOIN odb.projects p ON b.project_id = p.id
             WHERE b.project_id = %s AND p.tenant_id = %s AND b.name = %s
         """
         rows = self.execute_query(q, (project_id, tenant_id, name.strip()))
         return rows[0] if rows else None
+
+    def update_version_branch_protection_policy(
+        self,
+        project_id: str,
+        tenant_id: str,
+        branch_id: str,
+        *,
+        protected: Optional[bool] = None,
+        require_merge_path: Optional[bool] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Tenant-admin policy fields on a branch (#504, #2583). At least one of protected or
+        require_merge_path must be set.
+        """
+        if protected is None and require_merge_path is None:
+            return None
+        sets: List[str] = []
+        params: List[Any] = []
+        if protected is not None:
+            sets.append("b.protected = %s")
+            params.append(protected)
+        if require_merge_path is not None:
+            sets.append("b.require_merge_path = %s")
+            params.append(require_merge_path)
+        sets.append("b.updated_at = CURRENT_TIMESTAMP")
+        params.extend([branch_id, project_id, tenant_id])
+        q = f"""
+            UPDATE odb.version_branches b
+            SET {", ".join(sets)}
+            FROM odb.projects p
+            WHERE b.id = %s AND b.project_id = %s AND b.project_id = p.id AND p.tenant_id = %s
+            RETURNING b.id, b.project_id, b.name, b.tip_version_id, b.branched_from_revision_id,
+                      b.protected, b.require_merge_path, b.created_by, b.created_at, b.updated_at
+        """
+        rows = self.execute_query(q, tuple(params))
+        return dict(rows[0]) if rows else None
 
     def _branch_from_revision_idempotent_result(
         self,
@@ -3994,7 +4030,7 @@ class Database:
                         (project_id, name, tip_version_id, created_by, branched_from_revision_id)
                     VALUES (%s, %s, %s, %s, %s)
                     RETURNING id, project_id, name, tip_version_id, branched_from_revision_id,
-                              protected, created_by, created_at, updated_at
+                              protected, require_merge_path, created_by, created_at, updated_at
                     """,
                     (project_id, bn, src, creator_id, src),
                 )
@@ -4188,7 +4224,7 @@ class Database:
         """Named branches for a project (tenant-scoped)."""
         q = """
             SELECT b.id, b.project_id, b.name, b.tip_version_id, b.branched_from_revision_id,
-                   b.protected, b.created_by
+                   b.protected, b.require_merge_path, b.created_by
             FROM odb.version_branches b
             JOIN odb.projects p ON b.project_id = p.id
             WHERE b.project_id = %s AND p.tenant_id = %s
@@ -4244,7 +4280,7 @@ class Database:
                     bid = str(branch_row["id"])
                     cursor.execute(
                         """
-                        SELECT b.id, b.tip_version_id
+                        SELECT b.id, b.tip_version_id, b.require_merge_path
                         FROM odb.version_branches b
                         JOIN odb.projects p ON b.project_id = p.id
                         WHERE b.id = %s AND b.project_id = %s AND p.tenant_id = %s

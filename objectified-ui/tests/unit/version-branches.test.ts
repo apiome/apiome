@@ -354,6 +354,39 @@ describe('updateVersionBranchProtection', () => {
     // Three queries expected: assertProjectInTenant, UPDATE, audit INSERT
     expect(getDbMock().query).toHaveBeenCalledTimes(3);
   });
+
+  it('updates requireMergePath without protected and returns success', async () => {
+    const fakeBranch = {
+      id: BRANCH_ID,
+      project_id: PROJECT_ID,
+      name: 'main',
+      tip_version_id: VERSION_ID,
+      protected: false,
+      require_merge_path: true,
+      created_by: USER_ID,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    getDbMock().query.mockResolvedValueOnce({ rowCount: 1, rows: [{}] });         // assertProjectInTenant
+    getDbMock().query.mockResolvedValueOnce({ rowCount: 1, rows: [fakeBranch] }); // UPDATE
+    getDbMock().query.mockResolvedValueOnce({ rowCount: 1, rows: [] });           // audit INSERT
+    // Pass undefined for branchProtected, true for requireMergePath
+    const result = JSON.parse(
+      await updateVersionBranchProtection(BRANCH_ID, PROJECT_ID, TENANT_ID, USER_ID, true, undefined, true)
+    );
+    expect(result.success).toBe(true);
+    expect(result.branch.require_merge_path).toBe(true);
+  });
+
+  it('returns INVALID_INPUT when both protected and requireMergePath are omitted', async () => {
+    // Even as a tenant admin, omitting both fields should return INVALID_INPUT (no DB call)
+    const result = JSON.parse(
+      await updateVersionBranchProtection(BRANCH_ID, PROJECT_ID, TENANT_ID, USER_ID, true, undefined, undefined)
+    );
+    expect(result.success).toBe(false);
+    expect(result.code).toBe('INVALID_INPUT');
+    expect(getDbMock().query).not.toHaveBeenCalled();
+  });
 });
 
 // ─── setVersionRevisionLock ───────────────────────────────────────────────────

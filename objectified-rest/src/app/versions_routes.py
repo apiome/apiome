@@ -13,6 +13,7 @@ from typing import Literal, Optional, List, Dict, Any
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import RedirectResponse
 
+from .branch_push_policy import effective_require_merge_path
 from .database import BranchNotFoundError, StaleHeadPushError, db
 from .models import (
     VersionSchema,
@@ -938,6 +939,32 @@ async def create_version(
                     detail=stale_detail,
                 )
             parent_version_id = expected_tip
+
+        if branch_row is not None and effective_require_merge_path(
+            project_metadata=project.get("metadata"),
+            branch_row=branch_row,
+        ):
+            uid_push = creator_id
+            if not uid_push or not db.is_user_tenant_admin(tenant_id, uid_push):
+                bn = str(branch_row.get("name") or "")
+                merge_detail: Dict[str, Any] = {
+                    "message": (
+                        "Direct push is not allowed for this branch; use the merge workflow "
+                        "to advance the branch tip."
+                    ),
+                    "code": "MERGE_PATH_REQUIRED",
+                    "reason": "merge_path_required",
+                    "branchName": bn or None,
+                }
+                _workflow_audit_push(
+                    tenant_id,
+                    project_id,
+                    str(branch_row.get("tip_version_id")) if branch_row.get("tip_version_id") else None,
+                    "failure",
+                    creator_id,
+                    {"httpStatus": 403, "detail": merge_detail},
+                )
+                raise HTTPException(status_code=403, detail=merge_detail)
 
         copy_source_id: Optional[str] = None
         copy_warning: Optional[str] = None

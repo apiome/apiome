@@ -4,7 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { deleteVersionBranch, updateVersionBranchProtection } from '@lib/db/helper';
 
 /**
- * PATCH /api/projects/[projectId]/version-branches/[branchId] — body: { protected: boolean } (tenant admin only)
+ * PATCH /api/projects/[projectId]/version-branches/[branchId] — body: { protected?: boolean, requireMergePath?: boolean } (tenant admin only; at least one field)
  * DELETE /api/projects/[projectId]/version-branches/[branchId]
  */
 export async function PATCH(
@@ -23,9 +23,14 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: 'No tenant or user' }, { status: 400 });
     }
     const { projectId, branchId } = await params;
-    const body = await request.json();
-    if (typeof body.protected !== 'boolean') {
-      return NextResponse.json({ success: false, error: 'protected boolean is required' }, { status: 400 });
+    const body = (await request.json()) as { protected?: boolean; requireMergePath?: boolean };
+    const hasProtected = typeof body.protected === 'boolean';
+    const hasRequireMerge = typeof body.requireMergePath === 'boolean';
+    if (!hasProtected && !hasRequireMerge) {
+      return NextResponse.json(
+        { success: false, error: 'Provide protected and/or requireMergePath', code: 'INVALID_INPUT' },
+        { status: 400 }
+      );
     }
     const raw = await updateVersionBranchProtection(
       branchId,
@@ -33,7 +38,8 @@ export async function PATCH(
       tenantId,
       userId,
       isTenantAdmin,
-      body.protected
+      hasProtected ? body.protected : undefined,
+      hasRequireMerge ? body.requireMergePath : undefined
     );
     const data = JSON.parse(raw) as { success: boolean; branch?: unknown; error?: string; code?: string };
     if (!data.success) {

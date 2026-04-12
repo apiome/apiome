@@ -503,6 +503,8 @@ Implement branch protection policy checks on push path.
 - Unauthorized push attempts return policy error with reason.
 - Policy can be configured per project/branch pattern.
 
+**Status:** Shipped — **`version_branches.require_merge_path`** and project **`metadata.branchPushPolicy.patterns`** (glob via `fnmatch`); **`POST .../versions/{tenant}/{project}`** returns **403** with **`code: MERGE_PATH_REQUIRED`**; tenant admins may direct-push; **`PATCH /v1/versions/{tenant}/{project}/version-branches/{branchId}`** and Studio API **`PATCH .../version-branches/[branchId]`** set policy (**#2583**).
+
 ---
 
 ## P2-02: Add Draft Lock Acquisition/Release API

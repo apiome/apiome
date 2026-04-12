@@ -5484,7 +5484,7 @@ export async function listVersionBranches(projectId: string, tenantId: string) {
     const ok = await assertProjectInTenant(projectId, tenantId);
     if (!ok) return JSON.stringify({ success: false, error: 'Project not found' });
     const result = await connectionPool.query(
-      `SELECT b.id, b.project_id, b.name, b.tip_version_id, b.protected, b.created_by, b.created_at, b.updated_at,
+      `SELECT b.id, b.project_id, b.name, b.tip_version_id, b.protected, b.require_merge_path, b.created_by, b.created_at, b.updated_at,
               v.version_id AS tip_version_string
        FROM odb.version_branches b
        JOIN odb.versions v ON v.id = b.tip_version_id AND v.project_id = b.project_id
@@ -5609,7 +5609,8 @@ export async function updateVersionBranchProtection(
   tenantId: string,
   userId: string,
   isTenantAdmin: boolean,
-  branchProtected: boolean
+  branchProtected?: boolean,
+  requireMergePath?: boolean
 ) {
   try {
     if (!isTenantAdmin) {
@@ -5619,18 +5620,44 @@ export async function updateVersionBranchProtection(
         code: 'FORBIDDEN',
       });
     }
+    const hasProtected = typeof branchProtected === 'boolean';
+    const hasRequireMerge = typeof requireMergePath === 'boolean';
+    if (!hasProtected && !hasRequireMerge) {
+      return JSON.stringify({
+        success: false,
+        error: 'Provide protected and/or requireMergePath',
+        code: 'INVALID_INPUT',
+      });
+    }
     const ok = await assertProjectInTenant(projectId, tenantId);
     if (!ok) return JSON.stringify({ success: false, error: 'Project not found' });
+    const sets: string[] = [];
+    const params: unknown[] = [];
+    let n = 1;
+    if (hasProtected) {
+      sets.push(`protected = $${n++}`);
+      params.push(branchProtected);
+    }
+    if (hasRequireMerge) {
+      sets.push(`require_merge_path = $${n++}`);
+      params.push(requireMergePath);
+    }
+    sets.push('updated_at = CURRENT_TIMESTAMP');
+    const whereStart = n;
+    params.push(branchId, projectId, tenantId);
     const upd = await connectionPool.query(
-      `UPDATE odb.version_branches b SET protected = $1, updated_at = CURRENT_TIMESTAMP
+      `UPDATE odb.version_branches b SET ${sets.join(', ')}
        FROM odb.projects p
-       WHERE b.id = $2 AND b.project_id = $3 AND b.project_id = p.id AND p.tenant_id = $4
-       RETURNING b.id, b.project_id, b.name, b.tip_version_id, b.protected, b.created_by, b.created_at, b.updated_at`,
-      [branchProtected, branchId, projectId, tenantId]
+       WHERE b.id = $${whereStart} AND b.project_id = $${whereStart + 1} AND b.project_id = p.id AND p.tenant_id = $${whereStart + 2}
+       RETURNING b.id, b.project_id, b.name, b.tip_version_id, b.protected, b.require_merge_path, b.created_by, b.created_at, b.updated_at`,
+      params
     );
     if (upd.rowCount === 0) {
       return JSON.stringify({ success: false, error: 'Branch not found' });
     }
+    const auditDetail: Record<string, boolean> = {};
+    if (hasProtected) auditDetail.protected = branchProtected as boolean;
+    if (hasRequireMerge) auditDetail.requireMergePath = requireMergePath as boolean;
     await insertVersionProtectionAudit({
       tenantId,
       projectId,
@@ -5639,7 +5666,7 @@ export async function updateVersionBranchProtection(
       resourceType: 'version_branch',
       resourceId: branchId,
       outcome: 'policy_change',
-      detail: { protected: branchProtected },
+      detail: auditDetail,
     });
     return JSON.stringify({ success: true, branch: upd.rows[0] });
   } catch (error: any) {

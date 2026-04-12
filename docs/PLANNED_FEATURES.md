@@ -59,7 +59,7 @@ Implement and verify in this order so each step stays testable. **Issue → road
 
 | Order | Issue | ID | Topic |
 |------:|------|-----|--------|
-| — | [#2583](https://github.com/KenSuenobu/objectified-commercial/issues/2583) | P2-01 | Branch protection |
+| — | [#2583](https://github.com/KenSuenobu/objectified-commercial/issues/2583) | P2-01 | Branch protection — **shipped** (`require_merge_path` + `metadata.branchPushPolicy.patterns`; push **403** `MERGE_PATH_REQUIRED`; `PATCH .../version-branches/{id}`; tenant-admin bypass) |
 | — | [#2584](https://github.com/KenSuenobu/objectified-commercial/issues/2584) | P2-02 | Draft lock API |
 | — | [#2585](https://github.com/KenSuenobu/objectified-commercial/issues/2585) | P2-03 | Lock state in Studio header |
 | — | [#2586](https://github.com/KenSuenobu/objectified-commercial/issues/2586) | P2-04 | Published immutability |

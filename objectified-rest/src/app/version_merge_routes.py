@@ -22,6 +22,7 @@ from .models import (
     VersionBranchFromRevisionResponse,
     VersionBranchMergePreviewRequest,
     VersionBranchMergeRequest,
+    VersionBranchPolicyPatchRequest,
     VersionBranchRecordOut,
     VersionBranchRollbackPreviewRequest,
     VersionBranchRollbackRequest,
@@ -63,6 +64,23 @@ def _is_valid_version_branch_name(name: str) -> bool:
     """Aligned with objectified-ui/lib/version-branch-utils.ts (Git-like branch labels)."""
     s = (name or "").strip()
     return bool(_VERSION_BRANCH_NAME_RE.match(s))
+
+
+def _version_branch_record_out(br: Dict[str, Any]) -> VersionBranchRecordOut:
+    return VersionBranchRecordOut(
+        id=str(br["id"]),
+        project_id=str(br["project_id"]),
+        name=str(br["name"]),
+        tip_revision_id=str(br["tip_version_id"]),
+        branched_from_revision_id=(
+            str(br["branched_from_revision_id"]) if br.get("branched_from_revision_id") else None
+        ),
+        protected=bool(br.get("protected")),
+        require_merge_path=bool(br.get("require_merge_path")),
+        created_by=str(br["created_by"]) if br.get("created_by") else None,
+        created_at=br.get("created_at"),
+        updated_at=br.get("updated_at"),
+    )
 
 
 def _parse_project_metadata(metadata: Any) -> Dict[str, Any]:
@@ -304,25 +322,63 @@ async def version_branch_from_revision(
         raise HTTPException(status_code=500, detail=err)
 
     br = result["branch"]
-    record = VersionBranchRecordOut(
-        id=str(br["id"]),
-        project_id=str(br["project_id"]),
-        name=str(br["name"]),
-        tip_revision_id=str(br["tip_version_id"]),
-        branched_from_revision_id=(
-            str(br["branched_from_revision_id"]) if br.get("branched_from_revision_id") else None
-        ),
-        protected=bool(br.get("protected")),
-        created_by=str(br["created_by"]) if br.get("created_by") else None,
-        created_at=br.get("created_at"),
-        updated_at=br.get("updated_at"),
-    )
+    record = _version_branch_record_out(br)
     tip = result["tip_version"]
     return VersionBranchFromRevisionResponse(
         branch=record,
         tip_version=VersionSchema(**tip),
         idempotent_replay=bool(result.get("idempotent_replay")),
     )
+
+
+@router.patch("/{tenant_slug}/{project_id}/version-branches/{branch_id}")
+async def patch_version_branch_policy(
+    tenant_slug: str,
+    project_id: str,
+    branch_id: str,
+    body: VersionBranchPolicyPatchRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Dict[str, Any]:
+    """
+    Tenant administrators: set ``protected`` and/or ``requireMergePath`` on a branch (#504, #2583).
+    """
+    tenant_id = auth_data["tenant_id"]
+    uid = get_authenticated_user_id(auth_data)
+    if not uid or not db.is_user_tenant_admin(tenant_id, uid):
+        raise HTTPException(
+            status_code=403,
+            detail="Only tenant administrators may change branch protection policy",
+        )
+    project = db.get_project_by_id(project_id, tenant_id)
+    if not project:
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+
+    row = db.update_version_branch_protection_policy(
+        project_id,
+        tenant_id,
+        branch_id,
+        protected=body.protected,
+        require_merge_path=body.require_merge_path,
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Branch not found")
+
+    detail: Dict[str, Any] = {}
+    if body.protected is not None:
+        detail["protected"] = body.protected
+    if body.require_merge_path is not None:
+        detail["requireMergePath"] = body.require_merge_path
+    db.insert_version_protection_audit(
+        tenant_id,
+        project_id,
+        uid,
+        "branch.protection_policy",
+        "version_branch",
+        branch_id,
+        "policy_change",
+        detail,
+    )
+    return {"branch": _version_branch_record_out(row)}
 
 
 @router.post("/{tenant_slug}/{project_id}/version-branches/merge-preview")
