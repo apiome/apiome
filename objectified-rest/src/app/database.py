@@ -2353,6 +2353,129 @@ class Database:
         params.append(limit)
         return self.execute_query(q, tuple(params))
 
+    def _workflow_audit_filter_clauses(
+        self,
+        tenant_id: str,
+        *,
+        project_id: Optional[str] = None,
+        actions: Optional[List[str]] = None,
+        actor_id: Optional[str] = None,
+        outcome: Optional[str] = None,
+        version_id: Optional[str] = None,
+        since=None,
+        until=None,
+        cursor_created_at=None,
+        cursor_id: Optional[str] = None,
+    ) -> Tuple[str, List[Any]]:
+        """Build WHERE fragment and params for tenant-scoped workflow_audit queries (#2578)."""
+        clauses = ["wa.tenant_id = %s"]
+        params: List[Any] = [tenant_id]
+        if project_id is not None:
+            clauses.append("wa.project_id = %s")
+            params.append(project_id)
+        if actions:
+            placeholders = ",".join(["%s"] * len(actions))
+            clauses.append(f"wa.action IN ({placeholders})")
+            params.extend(actions)
+        if actor_id is not None:
+            clauses.append("wa.actor_id = %s")
+            params.append(actor_id)
+        if outcome is not None:
+            clauses.append("wa.outcome = %s")
+            params.append(outcome)
+        if version_id is not None:
+            clauses.append("wa.version_id = %s")
+            params.append(version_id)
+        if since is not None:
+            clauses.append("wa.created_at >= %s")
+            params.append(since)
+        if until is not None:
+            clauses.append("wa.created_at <= %s")
+            params.append(until)
+        if cursor_created_at is not None and cursor_id is not None:
+            clauses.append("(wa.created_at, wa.id) < (%s, %s::uuid)")
+            params.extend([cursor_created_at, cursor_id])
+        where_sql = " AND ".join(clauses)
+        return where_sql, params
+
+    def count_workflow_audit_filtered(
+        self,
+        tenant_id: str,
+        *,
+        project_id: Optional[str] = None,
+        actions: Optional[List[str]] = None,
+        actor_id: Optional[str] = None,
+        outcome: Optional[str] = None,
+        version_id: Optional[str] = None,
+        since=None,
+        until=None,
+    ) -> int:
+        """Count rows matching filters (no cursor)."""
+        where_sql, params = self._workflow_audit_filter_clauses(
+            tenant_id,
+            project_id=project_id,
+            actions=actions,
+            actor_id=actor_id,
+            outcome=outcome,
+            version_id=version_id,
+            since=since,
+            until=until,
+            cursor_created_at=None,
+            cursor_id=None,
+        )
+        q = f"SELECT COUNT(*)::bigint AS cnt FROM odb.workflow_audit wa WHERE {where_sql}"
+        rows = self.execute_query(q, tuple(params))
+        if not rows:
+            return 0
+        return int(rows[0].get("cnt") or 0)
+
+    def search_workflow_audit(
+        self,
+        tenant_id: str,
+        *,
+        project_id: Optional[str] = None,
+        actions: Optional[List[str]] = None,
+        actor_id: Optional[str] = None,
+        outcome: Optional[str] = None,
+        version_id: Optional[str] = None,
+        since=None,
+        until=None,
+        limit: int = 50,
+        offset: int = 0,
+        cursor_created_at=None,
+        cursor_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Paginated workflow_audit rows, newest first (created_at DESC, id DESC).
+        Use either (offset) or (cursor_created_at + cursor_id), not both.
+        """
+        where_sql, params = self._workflow_audit_filter_clauses(
+            tenant_id,
+            project_id=project_id,
+            actions=actions,
+            actor_id=actor_id,
+            outcome=outcome,
+            version_id=version_id,
+            since=since,
+            until=until,
+            cursor_created_at=cursor_created_at,
+            cursor_id=cursor_id,
+        )
+        use_cursor = cursor_created_at is not None and cursor_id is not None
+        q = f"""
+            SELECT wa.id, wa.tenant_id, wa.project_id, wa.version_id, wa.action, wa.outcome,
+                   wa.actor_id, wa.detail, wa.created_at
+            FROM odb.workflow_audit wa
+            WHERE {where_sql}
+            ORDER BY wa.created_at DESC, wa.id DESC
+            LIMIT %s
+        """
+        params.append(limit)
+        if not use_cursor:
+            q += " OFFSET %s"
+            params.append(offset)
+        return self.execute_query(q, tuple(params))
+
     def delete_version(
         self, version_record_id: str, tenant_id: str, user_id: Optional[str]
     ) -> Tuple[bool, Optional[str]]:

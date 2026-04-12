@@ -14,6 +14,7 @@ from .models import OpenAPIResponse
 from .primitives_routes import router as primitives_router
 from .classes_routes import router as classes_router
 from .projects_routes import router as projects_router
+from .workflow_audit_routes import router as workflow_audit_router
 from .versions_routes import router as versions_router
 from .version_merge_routes import router as version_merge_router
 from .properties_routes import router as properties_router
@@ -27,7 +28,7 @@ from .compatibility_routes import router as compatibility_router
 app = FastAPI(
     title="Objectified REST API",
     description="REST API for serving OpenAPI specifications from the Objectified database",
-    version="1.0.21"
+    version="1.0.24"
 )
 
 
@@ -83,6 +84,7 @@ app.include_router(classes_router)
 app.include_router(projects_router)
 app.include_router(compatibility_router)
 app.include_router(version_merge_router)
+app.include_router(workflow_audit_router)
 app.include_router(versions_router)
 app.include_router(properties_router)
 app.include_router(paths_router)

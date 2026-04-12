@@ -408,6 +408,8 @@ Expose paginated REST endpoint for audit ledger with common filters.
 - Supports cursor/offset pagination and total/next metadata.
 - Response shape is stable and documented.
 
+**Status:** Shipped — `GET /v1/versions/{tenant}/workflow-audit` (filters, offset + cursor pages, `schemaVersion` envelope); see `objectified-rest/docs/WORKFLOW_AUDIT_API.md`.
+
 ---
 
 ## P1-07: History Search and Filter in Timeline Panel
