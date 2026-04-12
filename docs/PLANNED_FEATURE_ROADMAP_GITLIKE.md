@@ -93,7 +93,7 @@ Workstreams below can proceed in parallel once shared contracts (revision id, he
 | **C — Pull efficiency** | P0-06 | Coordinate ETag with P0-04 head semantics |
 | **D — Studio status** | P0-07 | Depends on signals from B/C; can mock |
 | **E — Branching** | P0-08 ✓, P0-09 ✓ | P0-09 after P0-08 |
-| **F — Merge preview** | P0-10 | Gates P1-01 — P1-04 |
+| **F — Merge preview** | P0-10 ✓ | Gates P1-01 — P1-04 |
 | **G — Merge resolution UI** | P1-01, P1-02, P1-03, P1-04 | Sequential within: 01→02→03→04 |
 | **H — Audit** | P1-05, P1-06 | 05 before 06 |
 | **I — History & rollback** | P1-07, P1-08, P1-09, P1-10 | P1-07/08 parallel; 09/10 pair with rollback API |
@@ -291,7 +291,7 @@ Add branch action in history UI row with Radix dialog for branch name and open b
 
 ## P0-10: Merge Preview Endpoint (No State Mutation)
 
-**GitHub:** [#2572](https://github.com/KenSuenobu/objectified-commercial/issues/2572) · **Epic:** [#2559](https://github.com/KenSuenobu/objectified-commercial/issues/2559)
+**GitHub:** [#2572](https://github.com/KenSuenobu/objectified-commercial/issues/2572) · **Epic:** [#2559](https://github.com/KenSuenobu/objectified-commercial/issues/2559) · **Status:** shipped (REST dry-run: `summaryCounts`, `conflictCounts`, `conflicts[]` with kinds, optional `mergedOpenApi` capped, `includeMergedOpenApi`)
 
 ### Problem statement
 Teams need to understand conflicts before applying a merge.

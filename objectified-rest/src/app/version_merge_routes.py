@@ -7,7 +7,7 @@ from __future__ import annotations
 import copy
 import json
 import re
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -50,6 +50,9 @@ from .version_notes import (
 
 
 router = APIRouter(prefix="/v1/versions", tags=["versions"])
+
+# Max UTF-8 size of serialized merged OpenAPI in merge-preview (dry-run only; avoids huge payloads).
+_MERGE_PREVIEW_MAX_JSON_BYTES = 512 * 1024
 
 _VERSION_BRANCH_NAME_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9._\-/]{0,254}$")
 
@@ -102,6 +105,34 @@ def bump_patch_version(version: str) -> str:
 
 def _extract_schemas(spec: Dict[str, Any]) -> Dict[str, Any]:
     return (spec.get("components") or {}).get("schemas") or {}
+
+
+def _diff_summary_counts(summary: Any) -> Dict[str, int]:
+    return {
+        "added": len(summary.added),
+        "removed": len(summary.removed),
+        "modified": len(summary.modified),
+        "unchanged": len(summary.unchanged),
+    }
+
+
+def _merge_conflict_records(
+    three_way: List[str],
+    blend: List[str],
+    two_way: List[str],
+) -> List[Dict[str, Any]]:
+    """Per-path conflict metadata for conflict UI (P1-02); paths may appear in multiple kinds."""
+    by_path: Dict[str, Set[str]] = {}
+    for p in three_way:
+        by_path.setdefault(p, set()).add("threeWay")
+    for p in blend:
+        by_path.setdefault(p, set()).add("blend")
+    for p in two_way:
+        by_path.setdefault(p, set()).add("twoWay")
+    return [
+        {"path": p, "kinds": sorted(kinds)}
+        for p, kinds in sorted(by_path.items(), key=lambda kv: kv[0])
+    ]
 
 
 def _merge_openapi_components(
@@ -195,7 +226,8 @@ async def version_branch_merge_preview(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Dict[str, Any]:
     """
-    Dry-run merge: merge-base revision id, three-way schema classification, optional two-way summary.
+    Dry-run merge (no DB writes): merge-base id, two-way summary counts, per-kind conflict metadata,
+    classification, and optional capped merged OpenAPI when auto-merge is possible (#2572).
     """
     tenant_id = auth_data["tenant_id"]
     project = db.get_project_by_id(project_id, tenant_id)
@@ -240,25 +272,60 @@ async def version_branch_merge_preview(
     ok_mat, blend_paths = schema_merge_materializable_paths(merged or {}, o, t) if merged else (False, [])
 
     two_way = compare_schemas(json.dumps(target_spec), json.dumps(source_spec))
-    _, conflict_paths_two, _ = classify_merge_diff_two_way(two_way)
+    _, conflict_paths_two, added_schema_names = classify_merge_diff_two_way(two_way)
     can_auto = bool(merged and not conflicts and ok_mat)
+
+    three_way_paths = list(conflicts or [])
+    unique_conflict_paths = list(
+        dict.fromkeys(three_way_paths + blend_paths + conflict_paths_two)
+    )
+    conflict_records = _merge_conflict_records(three_way_paths, blend_paths, conflict_paths_two)
+
+    merged_open_api: Optional[Dict[str, Any]] = None
+    merged_open_api_omitted: Optional[str] = None
+    if (
+        body.include_merged_open_api
+        and can_auto
+        and merged
+        and isinstance(merged, dict)
+    ):
+        candidate = _merge_openapi_components(base_spec, merged)
+        raw = json.dumps(candidate, sort_keys=True, separators=(",", ":"), default=str)
+        if len(raw.encode("utf-8")) <= _MERGE_PREVIEW_MAX_JSON_BYTES:
+            merged_open_api = candidate
+        else:
+            merged_open_api_omitted = "payload_too_large"
 
     preview: Dict[str, Any] = {
         "success": True,
+        "dryRun": True,
         "mergeBaseVersionId": merge_base_id,
         "sourceTipVersionId": source_tip,
         "targetTipVersionId": target_tip,
         "summary": format_diff_summary_text(two_way),
+        "summaryCounts": _diff_summary_counts(two_way),
+        "conflictCounts": {
+            "uniquePaths": len(unique_conflict_paths),
+            "threeWay": len(set(three_way_paths)),
+            "blend": len(set(blend_paths)),
+            "twoWay": len(set(conflict_paths_two)),
+        },
+        "conflicts": conflict_records,
         "classification": {
             "canAutoMerge": can_auto,
-            "conflictPaths": list(
-                dict.fromkeys((conflicts or []) + blend_paths + conflict_paths_two)
-            ),
-            "threeWayConflictPaths": conflicts or [],
+            "conflictPaths": unique_conflict_paths,
+            "threeWayConflictPaths": three_way_paths,
             "blendPaths": blend_paths,
             "twoWayConflictPaths": conflict_paths_two,
+            "addedSchemaNames": added_schema_names,
         },
     }
+    if merged_open_api is not None:
+        preview["mergedOpenApi"] = merged_open_api
+    if merged_open_api_omitted:
+        preview["mergedOpenApiOmitted"] = True
+        preview["mergedOpenApiOmittedReason"] = merged_open_api_omitted
+
     return preview
 
 

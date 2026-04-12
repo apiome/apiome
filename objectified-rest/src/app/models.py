@@ -471,6 +471,14 @@ class VersionBranchMergePreviewRequest(BaseModel):
         ...,
         validation_alias=AliasChoices("targetBranchName", "target_branch_name"),
     )
+    include_merged_open_api: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("includeMergedOpenApi", "include_merged_open_api"),
+        description=(
+            "When true (default), include merged OpenAPI preview when auto-merge is possible "
+            "and under the size cap; set false to omit large payloads (counts and conflicts unchanged)."
+        ),
+    )
 
 
 class VersionBranchMergeRequest(BaseModel):
