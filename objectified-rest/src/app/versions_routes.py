@@ -48,6 +48,7 @@ from .version_notes import (
     enforce_max_commit_payload,
     validate_version_notes,
 )
+from .version_pull_delta import SCHEMA_PULL_DELTA_GUARANTEE, build_schema_pull_delta
 from .version_pull_payload import filter_version_pull_dump, resolve_pull_sections
 
 router = APIRouter(prefix="/v1/versions", tags=["versions"])
@@ -149,6 +150,13 @@ def _not_modified_revision_response(
     return Response(status_code=304, headers=headers)
 
 
+def _optional_since_revision_query(raw: Optional[str]) -> Optional[str]:
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    return s or None
+
+
 def _redirect_successor_resolution_none(request: Request, *, new_path: str) -> RedirectResponse:
     """307 with ``successorResolution=none``, preserving other query params (e.g. pull sections, #2591)."""
     p = urlparse(str(request.url))
@@ -162,6 +170,87 @@ def _redirect_successor_resolution_none(request: Request, *, new_path: str) -> R
     return RedirectResponse(loc, status_code=307)
 
 
+def _validated_since_row_for_schema_pull_delta(
+    since_revision_id: str,
+    *,
+    head_revision_id: str,
+    project_id: str,
+    tenant_id: str,
+) -> Dict[str, Any]:
+    """Ensure since revision exists, matches project, and lies on the ancestor walk to head (#2592)."""
+    row = db.get_version_by_id(since_revision_id, tenant_id)
+    if not row:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "UNKNOWN_REVISION_ID",
+                "message": f"No revision exists for sinceRevisionId {since_revision_id!r}.",
+                "sinceRevisionId": since_revision_id,
+            },
+        )
+    if str(row["project_id"]) != str(project_id):
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "REVISION_PROJECT_MISMATCH",
+                "message": "sinceRevisionId belongs to a different project than this pull.",
+                "sinceRevisionId": since_revision_id,
+            },
+        )
+    ancestors = db.collect_revision_ancestors(str(head_revision_id), tenant_id)
+    anc_norm = {str(a) for a in ancestors}
+    if str(since_revision_id) not in anc_norm:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "SINCE_NOT_ANCESTOR_OF_HEAD",
+                "message": (
+                    "sinceRevisionId must name the requested head revision or an ancestor in the "
+                    "revision parent graph (parent_version_id / merge_parent_version_id)."
+                ),
+                "sinceRevisionId": since_revision_id,
+                "headRevisionId": str(head_revision_id),
+            },
+        )
+    return row
+
+
+def _schema_pull_delta_for_head(
+    since_revision_id: str,
+    *,
+    tenant_slug: str,
+    tenant_id: str,
+    project_id: str,
+    head_row: Dict[str, Any],
+    since_row: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Build ``schemaPullDelta`` for OpenAPI components.schemas between since and head."""
+    if since_row is None:
+        since_row = _validated_since_row_for_schema_pull_delta(
+            since_revision_id,
+            head_revision_id=str(head_row["id"]),
+            project_id=project_id,
+            tenant_id=tenant_id,
+        )
+    head_revision_id = str(head_row["id"])
+    if str(since_row["id"]) == head_revision_id:
+        return {
+            "sinceRevisionId": since_revision_id,
+            "headRevisionId": head_revision_id,
+            "removedSchemaNames": [],
+            "schemas": {},
+            "guarantee": SCHEMA_PULL_DELTA_GUARANTEE,
+        }
+    since_spec = openapi_for_revision(since_row, tenant_slug, tenant_id)
+    head_spec = openapi_for_revision(head_row, tenant_slug, tenant_id)
+    return build_schema_pull_delta(
+        since_spec,
+        head_spec,
+        since_revision_id=since_revision_id,
+        head_revision_id=head_revision_id,
+    )
+
+
 def _version_pull_http_response(
     version_row: Dict[str, Any],
     *,
@@ -169,10 +258,14 @@ def _version_pull_http_response(
     exclude_sections: Optional[str],
     response: Response,
     etag_revision_id: str,
+    schema_pull_delta: Optional[Dict[str, Any]] = None,
 ):
     """
     JSON body for GET version (pull). Same strong ETag as the full representation (#2568); the ETag
     identifies the revision, not the selected field set (#2591).
+
+    When *schema_pull_delta* is set (#2592), the body is always JSON and includes ``schemaPullDelta``
+    alongside the version fields (same keys as VersionSchema wire format, subject to section filters).
     """
     try:
         inc, exc = resolve_pull_sections(include_sections, exclude_sections)
@@ -181,10 +274,12 @@ def _version_pull_http_response(
     vs = VersionSchema(**version_row)
     etag = _strong_etag_for_revision(etag_revision_id)
     response.headers["ETag"] = etag
-    if inc is None and exc is None:
+    if schema_pull_delta is None and inc is None and exc is None:
         return vs
     dump = vs.model_dump(by_alias=True, mode="json")
     filtered = filter_version_pull_dump(dump, include_sections=inc, exclude_sections=exc)
+    if schema_pull_delta is not None:
+        filtered["schemaPullDelta"] = schema_pull_delta
     return JSONResponse(content=filtered, headers=dict(response.headers))
 
 
@@ -508,7 +603,15 @@ async def list_versions(
 @router.get(
     "/{tenant_slug}/{project_id}/{version_record_id}",
     response_model=None,
-    responses={200: {"model": VersionSchema, "description": "Full VersionSchema, or a partial subset when includeSections/excludeSections are used (#2591)."}},
+    responses={
+        200: {
+            "model": VersionSchema,
+            "description": (
+                "Full VersionSchema, or JSON with includeSections/excludeSections (#2591), or JSON with "
+                "schemaPullDelta when sinceRevisionId is set (#2592)."
+            ),
+        }
+    },
 )
 async def get_version(
     request: Request,
@@ -543,6 +646,15 @@ async def get_version(
             "cannot be removed. Mutually exclusive with includeSections."
         ),
     ),
+    since_revision_id: Optional[str] = Query(
+        None,
+        alias="sinceRevisionId",
+        description=(
+            "When set, the JSON body includes schemaPullDelta with changed OpenAPI components.schemas "
+            "entities since this revision (#2592). Must be the resolved head revision or an ancestor "
+            "in the revision parent graph."
+        ),
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ):
     """
@@ -556,6 +668,8 @@ async def get_version(
 
     Pull payload selection (#2591): ``includeSections`` / ``excludeSections`` reduce JSON size for CI;
     the strong ETag still identifies the revision only (same as full body, #2568).
+
+    Delta pull (#2592): ``sinceRevisionId`` adds ``schemaPullDelta`` (changed schema entities only).
     """
     tenant_id = auth_data["tenant_id"]
     pull_actor = get_authenticated_user_id(auth_data)
@@ -603,10 +717,21 @@ async def get_version(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
+    since_q = _optional_since_revision_query(since_revision_id)
     if_none_match = request.headers.get("if-none-match")
 
     if successor_resolution == "none":
         etag_id = str(version["id"])
+        since_row_none = (
+            _validated_since_row_for_schema_pull_delta(
+                since_q,
+                head_revision_id=etag_id,
+                project_id=project_id,
+                tenant_id=tenant_id,
+            )
+            if since_q
+            else None
+        )
         if _if_none_match_matches_revision(etag_id, if_none_match):
             _workflow_audit_pull(
                 tenant_id,
@@ -625,12 +750,25 @@ async def get_version(
             pull_actor,
             {"httpStatus": 200},
         )
+        delta_none = (
+            _schema_pull_delta_for_head(
+                since_q,
+                tenant_slug=tenant_slug,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                head_row=version,
+                since_row=since_row_none,
+            )
+            if since_q
+            else None
+        )
         return _version_pull_http_response(
             version,
             include_sections=include_sections,
             exclude_sections=exclude_sections,
             response=response,
             etag_revision_id=etag_id,
+            schema_pull_delta=delta_none,
         )
 
     final_id, hops, status, missing_id = db.resolve_successor_revision_chain(
@@ -699,14 +837,37 @@ async def get_version(
     if successor_resolution == "redirect":
         if final_id == version_record_id:
             etag_id = str(version["id"])
+            since_row_redir = (
+                _validated_since_row_for_schema_pull_delta(
+                    since_q,
+                    head_revision_id=etag_id,
+                    project_id=project_id,
+                    tenant_id=tenant_id,
+                )
+                if since_q
+                else None
+            )
             if _if_none_match_matches_revision(etag_id, if_none_match):
                 return _not_modified_revision_response(revision_id=etag_id)
+            delta_redir_same = (
+                _schema_pull_delta_for_head(
+                    since_q,
+                    tenant_slug=tenant_slug,
+                    tenant_id=tenant_id,
+                    project_id=project_id,
+                    head_row=version,
+                    since_row=since_row_redir,
+                )
+                if since_q
+                else None
+            )
             return _version_pull_http_response(
                 version,
                 include_sections=include_sections,
                 exclude_sections=exclude_sections,
                 response=response,
                 etag_revision_id=etag_id,
+                schema_pull_delta=delta_redir_same,
             )
         base = request.url.path.rstrip("/").rsplit("/", 1)[0]
         return _redirect_successor_resolution_none(request, new_path=f"{base}/{final_id}")
@@ -718,23 +879,54 @@ async def get_version(
         status=status,
         missing_id=missing_id,
     )
+    since_row_resolve = (
+        _validated_since_row_for_schema_pull_delta(
+            since_q,
+            head_revision_id=final_id,
+            project_id=project_id,
+            tenant_id=tenant_id,
+        )
+        if since_q
+        else None
+    )
     if _if_none_match_matches_revision(final_id, if_none_match):
         return _not_modified_revision_response(revision_id=final_id, extra_headers=succ_headers)
     for k, v in succ_headers.items():
         response.headers[k] = v
+    delta_resolve = (
+        _schema_pull_delta_for_head(
+            since_q,
+            tenant_slug=tenant_slug,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            head_row=final_row,
+            since_row=since_row_resolve,
+        )
+        if since_q
+        else None
+    )
     return _version_pull_http_response(
         final_row,
         include_sections=include_sections,
         exclude_sections=exclude_sections,
         response=response,
         etag_revision_id=final_id,
+        schema_pull_delta=delta_resolve,
     )
 
 
 @router.get(
     "/{tenant_slug}/{project_id}/by-version/{version_id}",
     response_model=None,
-    responses={200: {"model": VersionSchema, "description": "Full VersionSchema, or a partial subset when includeSections/excludeSections are used (#2591)."}},
+    responses={
+        200: {
+            "model": VersionSchema,
+            "description": (
+                "Full VersionSchema, or JSON with includeSections/excludeSections (#2591), or JSON with "
+                "schemaPullDelta when sinceRevisionId is set (#2592)."
+            ),
+        }
+    },
 )
 async def get_version_by_version_id(
     request: Request,
@@ -769,6 +961,15 @@ async def get_version_by_version_id(
             "cannot be removed. Mutually exclusive with includeSections."
         ),
     ),
+    since_revision_id: Optional[str] = Query(
+        None,
+        alias="sinceRevisionId",
+        description=(
+            "When set, the JSON body includes schemaPullDelta with changed OpenAPI components.schemas "
+            "entities since this revision (#2592). Must be the resolved head revision or an ancestor "
+            "in the revision parent graph."
+        ),
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ):
     """
@@ -777,6 +978,7 @@ async def get_version_by_version_id(
     Supports authentication via JWT token or API key.
     Successor resolution (#749) matches ``GET .../{version_record_id}``.
     Pull payload selection (#2591) matches ``GET .../{version_record_id}``.
+    Delta pull (#2592) matches ``GET .../{version_record_id}``.
     """
     tenant_id = auth_data["tenant_id"]
     pull_actor = get_authenticated_user_id(auth_data)
@@ -808,10 +1010,21 @@ async def get_version_by_version_id(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
+    since_q = _optional_since_revision_query(since_revision_id)
     if_none_match = request.headers.get("if-none-match")
 
     if successor_resolution == "none":
         etag_id = str(version["id"])
+        since_row_bv_none = (
+            _validated_since_row_for_schema_pull_delta(
+                since_q,
+                head_revision_id=etag_id,
+                project_id=project_id,
+                tenant_id=tenant_id,
+            )
+            if since_q
+            else None
+        )
         if _if_none_match_matches_revision(etag_id, if_none_match):
             _workflow_audit_pull(
                 tenant_id,
@@ -830,12 +1043,25 @@ async def get_version_by_version_id(
             pull_actor,
             {"httpStatus": 200, "byVersionLine": True},
         )
+        delta_bv_none = (
+            _schema_pull_delta_for_head(
+                since_q,
+                tenant_slug=tenant_slug,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                head_row=version,
+                since_row=since_row_bv_none,
+            )
+            if since_q
+            else None
+        )
         return _version_pull_http_response(
             version,
             include_sections=include_sections,
             exclude_sections=exclude_sections,
             response=response,
             etag_revision_id=etag_id,
+            schema_pull_delta=delta_bv_none,
         )
 
     final_id, hops, status, missing_id = db.resolve_successor_revision_chain(
@@ -904,14 +1130,37 @@ async def get_version_by_version_id(
     if successor_resolution == "redirect":
         if final_id == version_record_id:
             etag_id = str(version["id"])
+            since_row_bv_redir = (
+                _validated_since_row_for_schema_pull_delta(
+                    since_q,
+                    head_revision_id=etag_id,
+                    project_id=project_id,
+                    tenant_id=tenant_id,
+                )
+                if since_q
+                else None
+            )
             if _if_none_match_matches_revision(etag_id, if_none_match):
                 return _not_modified_revision_response(revision_id=etag_id)
+            delta_bv_redir = (
+                _schema_pull_delta_for_head(
+                    since_q,
+                    tenant_slug=tenant_slug,
+                    tenant_id=tenant_id,
+                    project_id=project_id,
+                    head_row=version,
+                    since_row=since_row_bv_redir,
+                )
+                if since_q
+                else None
+            )
             return _version_pull_http_response(
                 version,
                 include_sections=include_sections,
                 exclude_sections=exclude_sections,
                 response=response,
                 etag_revision_id=etag_id,
+                schema_pull_delta=delta_bv_redir,
             )
         base = request.url.path.rstrip("/").rsplit("/", 1)[0]
         return _redirect_successor_resolution_none(
@@ -926,16 +1175,39 @@ async def get_version_by_version_id(
         status=status,
         missing_id=missing_id,
     )
+    since_row_bv_resolve = (
+        _validated_since_row_for_schema_pull_delta(
+            since_q,
+            head_revision_id=final_id,
+            project_id=project_id,
+            tenant_id=tenant_id,
+        )
+        if since_q
+        else None
+    )
     if _if_none_match_matches_revision(final_id, if_none_match):
         return _not_modified_revision_response(revision_id=final_id, extra_headers=succ_headers)
     for k, v in succ_headers.items():
         response.headers[k] = v
+    delta_bv_resolve = (
+        _schema_pull_delta_for_head(
+            since_q,
+            tenant_slug=tenant_slug,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            head_row=final_row,
+            since_row=since_row_bv_resolve,
+        )
+        if since_q
+        else None
+    )
     return _version_pull_http_response(
         final_row,
         include_sections=include_sections,
         exclude_sections=exclude_sections,
         response=response,
         etag_revision_id=final_id,
+        schema_pull_delta=delta_bv_resolve,
     )
 
 

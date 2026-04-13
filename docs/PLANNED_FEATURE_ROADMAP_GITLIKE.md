@@ -674,6 +674,8 @@ Implement delta pull using `sinceRevisionId` input.
 - Invalid or unknown revision id returns clear validation error.
 - Applying delta yields same effective state as full pull at target head.
 
+**Status:** Shipped — **GET** `.../v1/versions/{tenant}/{project}/{revisionId}` and **GET** `.../by-version/{versionLine}` accept **`sinceRevisionId`**. JSON includes **`schemaPullDelta`** (`removedSchemaNames`, **`schemas`** map of full head fragments for touched entities, **`guarantee`** text). **400** codes: **`UNKNOWN_REVISION_ID`**, **`REVISION_PROJECT_MISMATCH`**, **`SINCE_NOT_ANCESTOR_OF_HEAD`**. Same strong **ETag** as full pull (**#2568**); **307** successor redirect preserves query (**#2591**).
+
 ---
 
 ## Notes for implementation (issues created on GitHub)
