@@ -655,6 +655,8 @@ Support include/exclude options on pull for non-UI consumers.
 - Returned payload respects option set and remains schema-valid.
 - Defaults remain backward compatible for existing clients.
 
+**Status:** Shipped — **GET** `.../v1/versions/{tenant}/{project}/{revisionId}` and **GET** `.../by-version/{versionLine}` support **`includeSections`** and **`excludeSections`** (comma-separated: `core`, `commit`, `publish`, `lineage`, `governance`, `creator`, `project`, `timestamps`). Mutually exclusive; core identifiers always returned; **307** successor redirect preserves query (**#2591**). Strong **ETag** unchanged vs full body (**#2568**).
+
 ---
 
 ## P2-10: Delta Pull Endpoint (Changes Since Revision)
