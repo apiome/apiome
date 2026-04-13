@@ -210,3 +210,142 @@ def test_rollback_preview_impact_summary_keys(auth_client):
     assert summary["modified"] == 3
     assert summary["unchanged"] == 10
     assert summary["changedEntityCount"] == 6
+
+
+def _create_immutable_published_version(tip):
+    return {
+        "id": tip,
+        "project_id": "p1",
+        "version_id": "1.0.1",
+        "metadata": None,
+        "published": True,
+        "published_immutable": True,
+    }
+
+
+def _create_unpublished_version(old):
+    return {
+        "id": old,
+        "project_id": "p1",
+        "version_id": "1.0.0",
+        "metadata": None,
+        "published": False,
+        "published_immutable": False,
+    }
+
+
+def test_rollback_preview_blocks_immutable_tip(auth_client):
+    """rollback-preview returns 409 PUBLISHED_IMMUTABLE when branch tip is published+immutable."""
+    tip = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    old = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    proj = {"id": "p1", "metadata": {}}
+    branch = {"id": "b1", "tip_version_id": tip, "protected": False}
+    head_ver = _create_immutable_published_version(tip)
+    target_ver = _create_unpublished_version(old)
+    ancestors = {tip, old}
+
+    def gv(vid, _tid):
+        if vid == tip:
+            return head_ver
+        if vid == old:
+            return target_ver
+        return None
+
+    with patch("app.version_merge_routes.db.get_project_by_id", return_value=proj), patch(
+        "app.version_merge_routes.db.get_version_branch_by_name", return_value=branch
+    ), patch("app.version_merge_routes.db.get_version_by_id", side_effect=gv), patch(
+        "app.version_merge_routes.db.collect_revision_ancestors", return_value=ancestors
+    ), patch(
+        "app.version_merge_routes.db.is_user_tenant_admin", return_value=False
+    ), patch(
+        "app.version_merge_routes.db.insert_workflow_audit", side_effect=lambda *a, **k: None
+    ):
+        r = auth_client.post(
+            "/v1/versions/slug/p1/version-branches/rollback-preview",
+            json={"branchName": "main", "targetRevisionId": old},
+        )
+    assert r.status_code == 409
+    assert r.json()["detail"]["code"] == "PUBLISHED_IMMUTABLE"
+
+
+def test_rollback_apply_blocks_immutable_tip(auth_client):
+    """rollback apply returns 409 PUBLISHED_IMMUTABLE when branch tip is published+immutable."""
+    tip = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    old = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    proj = {"id": "p1", "metadata": {}}
+    branch = {"id": "b1", "tip_version_id": tip, "protected": False}
+    head_ver = _create_immutable_published_version(tip)
+    target_ver = _create_unpublished_version(old)
+    ancestors = {tip, old}
+
+    def gv(vid, _tid):
+        if vid == tip:
+            return head_ver
+        if vid == old:
+            return target_ver
+        return None
+
+    with patch("app.version_merge_routes.db.get_project_by_id", return_value=proj), patch(
+        "app.version_merge_routes.db.get_version_branch_by_name", return_value=branch
+    ), patch("app.version_merge_routes.db.get_version_by_id", side_effect=gv), patch(
+        "app.version_merge_routes.db.collect_revision_ancestors", return_value=ancestors
+    ), patch(
+        "app.version_merge_routes.db.is_user_tenant_admin", return_value=False
+    ), patch(
+        "app.version_merge_routes.db.insert_workflow_audit", side_effect=lambda *a, **k: None
+    ):
+        r = auth_client.post(
+            "/v1/versions/slug/p1/version-branches/rollback",
+            json={"branchName": "main", "targetRevisionId": old, "baseRevisionId": tip},
+        )
+    assert r.status_code == 409
+    assert r.json()["detail"]["code"] == "PUBLISHED_IMMUTABLE"
+
+
+def test_rollback_preview_override_does_not_write_audit(auth_client):
+    """rollback-preview is a dry-run; admin override must NOT write a workflow_audit row."""
+    tip = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    old = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    proj = {"id": "p1", "metadata": {}}
+    branch = {"id": "b1", "tip_version_id": tip, "protected": False}
+    head_ver = _create_immutable_published_version(tip)
+    target_ver = _create_unpublished_version(old)
+    ancestors = {tip, old}
+    impact = {"added": 0, "removed": 0, "modified": 0, "unchanged": 0, "changedEntityCount": 0}
+
+    def gv(vid, _tid):
+        if vid == tip:
+            return head_ver
+        if vid == old:
+            return target_ver
+        return None
+
+    audit_calls = []
+
+    with patch("app.version_merge_routes.db.get_project_by_id", return_value=proj), patch(
+        "app.version_merge_routes.db.get_version_branch_by_name", return_value=branch
+    ), patch("app.version_merge_routes.db.get_version_by_id", side_effect=gv), patch(
+        "app.version_merge_routes.db.collect_revision_ancestors", return_value=ancestors
+    ), patch(
+        "app.version_merge_routes.db.is_user_tenant_admin", return_value=True
+    ), patch(
+        "app.version_merge_routes.db.insert_workflow_audit",
+        side_effect=lambda *a, **k: audit_calls.append((a, k)),
+    ), patch(
+        "app.version_merge_routes._rollback_analyze",
+        return_value=("safe", [], [], "fp", None, impact),
+    ):
+        r = auth_client.post(
+            "/v1/versions/slug/p1/version-branches/rollback-preview",
+            json={
+                "branchName": "main",
+                "targetRevisionId": old,
+                "overridePublishedImmutability": True,
+                "overrideReason": "dry-run-glass",
+            },
+        )
+    assert r.status_code == 200
+    override_calls = [
+        c for c in audit_calls if len(c[0]) > 3 and c[0][3] == "version.immutability_override"
+    ]
+    assert override_calls == [], "rollback-preview must not write immutability_override audit rows"

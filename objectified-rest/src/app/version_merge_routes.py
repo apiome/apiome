@@ -201,22 +201,24 @@ def _merge_immutability_guard(
             )
         raise HTTPException(status_code=409, detail=d)
     reason = (override_reason or "").strip() or None
-    db.insert_workflow_audit(
-        tenant_id,
-        project_id,
-        str(tgt_ver.get("id")),
-        "version.immutability_override",
-        "success",
-        actor_id,
-        {
-            "operation": audit_operation,
-            "sourceTipRevisionId": str(src_ver.get("id")),
-            "targetTipRevisionId": str(tgt_ver.get("id")),
-            "sourceImmutable": src_im,
-            "targetImmutable": tgt_im,
-            "reason": reason,
-        },
-    )
+    # Preview endpoints are dry-runs with no DB writes; skip audit for overrides on preview.
+    if not audit_operation.endswith("_preview"):
+        db.insert_workflow_audit(
+            tenant_id,
+            project_id,
+            str(tgt_ver.get("id")),
+            "version.immutability_override",
+            "success",
+            actor_id,
+            {
+                "operation": audit_operation,
+                "sourceTipRevisionId": str(src_ver.get("id")),
+                "targetTipRevisionId": str(tgt_ver.get("id")),
+                "sourceImmutable": src_im,
+                "targetImmutable": tgt_im,
+                "reason": reason,
+            },
+        )
 
 
 def _rollback_immutability_guard(
@@ -228,6 +230,7 @@ def _rollback_immutability_guard(
     actor_id: Optional[str],
     override: bool,
     override_reason: Optional[str],
+    operation: str = "rollback",
 ) -> None:
     """Block rollback when branch tip is immutable published unless tenant admin override (#2586)."""
     if not revision_is_published_immutable(head_ver):
@@ -253,15 +256,17 @@ def _rollback_immutability_guard(
         )
         raise HTTPException(status_code=409, detail=d)
     reason = (override_reason or "").strip() or None
-    db.insert_workflow_audit(
-        tenant_id,
-        project_id,
-        head_tip,
-        "version.immutability_override",
-        "success",
-        actor_id,
-        {"operation": "rollback", "reason": reason},
-    )
+    # Preview endpoints are dry-runs; skip audit writes for override on preview.
+    if not operation.endswith("_preview"):
+        db.insert_workflow_audit(
+            tenant_id,
+            project_id,
+            head_tip,
+            "version.immutability_override",
+            "success",
+            actor_id,
+            {"operation": operation, "reason": reason},
+        )
 
 
 def _enrich_rollback_audit_detail(
@@ -1141,6 +1146,7 @@ async def version_branch_rollback_preview(
         actor_id=get_authenticated_user_id(auth_data),
         override=bool(body.override_published_immutability),
         override_reason=body.override_reason,
+        operation="rollback_preview",
     )
 
     overall, finding_out, dep_out, fp, doc_url, impact_summary = _rollback_analyze(
