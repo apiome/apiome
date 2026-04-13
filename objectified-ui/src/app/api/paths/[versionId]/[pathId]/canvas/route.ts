@@ -5,46 +5,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import jwt from 'jsonwebtoken';
 import { authOptions } from '../../../../auth/[...nextauth]/route';
 import { getTenantById } from '@lib/db/helper';
-
-const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
-
-interface SessionUser {
-  user_id?: string;
-  email?: string | null;
-  name?: string | null;
-  current_tenant_id?: string;
-}
-
-function createAuthHeaders(user: SessionUser): Record<string, string> {
-  if (!user.user_id) {
-    return { 'Content-Type': 'application/json' };
-  }
-
-  const secret = process.env.NEXTAUTH_SECRET;
-  if (!secret) {
-    return { 'Content-Type': 'application/json' };
-  }
-
-  const encodedToken = jwt.sign(
-    {
-      user_id: user.user_id,
-      sub: user.user_id,
-      email: user.email,
-      name: user.name,
-      current_tenant_id: user.current_tenant_id,
-    },
-    secret,
-    { algorithm: 'HS256', expiresIn: '1h' }
-  );
-
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${encodedToken}`,
-  };
-}
+import { createRestAuthHeaders, REST_API_BASE_URL } from '@lib/rest-auth';
 
 async function handleRestResponse(
   response: Response,
@@ -93,7 +56,7 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
     }
 
-    const headers = createAuthHeaders({
+    const headers = createRestAuthHeaders({
       user_id: user.user_id,
       email: session.user.email,
       name: session.user.name,
@@ -147,7 +110,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const headers = createAuthHeaders({
+    const headers = createRestAuthHeaders({
       user_id: user.user_id,
       email: session.user.email,
       name: session.user.name,

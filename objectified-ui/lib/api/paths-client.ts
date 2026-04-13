@@ -216,9 +216,6 @@ export async function updatePath(
 }
 
 /**
- * Delete a path
- */
-/**
  * Load persisted Paths React Flow canvas for a version_path (#2642).
  */
 export async function getPathCanvas(
@@ -278,6 +275,9 @@ export async function putPathCanvas(
   }
 }
 
+/**
+ * Delete a path
+ */
 export async function deletePath(
   versionId: string,
   pathId: string

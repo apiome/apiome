@@ -1,3 +1,4 @@
+import { describe, it, expect } from '@jest/globals';
 import type { Edge, Node } from '@xyflow/react';
 import {
   mergePathsCanvasLayout,
