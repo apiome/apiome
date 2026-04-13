@@ -15,7 +15,6 @@ import {
   type PathParameter,
   type ResponseInfo,
   type RequestBodyInfo,
-  type ContentTypeInfo,
 } from '../../lib/utils/openapi-paths-generator';
 
 describe('OpenAPI Paths Generator', () => {
@@ -85,6 +84,27 @@ describe('OpenAPI Paths Generator', () => {
 
       expect(result.style).toBe('form');
       expect(result.explode).toBe(true);
+    });
+
+    it('should use inline JSON Schema when schemaMode is inline', () => {
+      const param: PathParameter = {
+        id: 'param-inline',
+        name: 'filter',
+        in_location: 'query',
+        data: {
+          schemaMode: 'inline',
+          inlineSchema: { type: 'string', pattern: '^[a-z]+$' },
+          required: false,
+          style: 'form',
+          explode: false,
+        },
+      };
+
+      const result = buildParameterForOpenAPI(param);
+
+      expect(result.schema).toEqual({ type: 'string', pattern: '^[a-z]+$' });
+      expect(result.required).toBeUndefined();
+      expect(result.style).toBe('form');
     });
   });
 

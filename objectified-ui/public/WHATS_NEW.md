@@ -5,6 +5,7 @@ We continue to improve the platform based on your feedback with improvements and
 ---
 
 ## UI:
+- **Path & query parameters (#2647):** **Parameter** panel supports **Designer property** binding, **form** vs **inline JSON Schema**, and **path-template coverage** checks so `{segments}` match **`in: path`** parameters; **path template** and **sidebar** path saves block on mismatch
 - **OPTIONS operations (#2653):** **Paths** export emits OpenAPI **`options`** on the path item; default **204 No Content** when no responses are modeled; operation inspector shows a **warning** if a **request body** is linked (export still omits `requestBody` for OPTIONS per common practice)
 - **Paths canvas edges (#2646):** **Path → operation** and **operation → parameter / request body / response** edges use **semantic labels** (`has`, `hasParam`, `requestBody`, `response <code>`); **request body** links render **operation → request body** (tree from the operation); **manual** connect / **delete edge** syncs **request body** link like parameters and responses; **`edge.data.semantic`** tags role for layout persistence (**P-03**)
 - **Paths operation inspector (#2645):** **Operation** side panel uses **Radix Tabs** (**General**, **Docs**, **Tags**, **Advanced**) for OpenAPI **Operation Object** fields; **Docs** includes **Markdown** preview; **Tags** edits **`metadata.tags`**; **operationId** must be **unique across all operations in the API version** (server validation with a clear error naming the conflicting **method** and **path**)

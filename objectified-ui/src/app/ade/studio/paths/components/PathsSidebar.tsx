@@ -24,7 +24,8 @@ import {
   deletePath as deletePathRest,
   createOperation as createOperationRest,
 } from '../../../../../../lib/api/paths-client';
-import { getPathTemplateValidationError, isValidPath } from '../../../../../../lib/utils/path-params';
+import { getSharedPathParameters } from '../../../../../../lib/db/helper-shared-path-parameters';
+import { getPathParameterCoverageError, getPathTemplateValidationError, isValidPath } from '../../../../../../lib/utils/path-params';
 import { useDarkMode } from '../../../../hooks/useDarkMode';
 import { AVAILABLE_OPERATIONS } from './paths-operation-colors';
 import { parseOpenAPISpec } from '../../../../utils/openapi-import';
@@ -218,7 +219,8 @@ export default function PathsSidebar({
   const handleSavePath = async () => {
     if (!selectedVersionId || !pathNameInput.trim()) return;
 
-    const templateError = getPathTemplateValidationError(pathNameInput.trim());
+    const trimmedPath = pathNameInput.trim();
+    const templateError = getPathTemplateValidationError(trimmedPath);
     if (templateError) {
       await alertDialog({
         title: 'Invalid path template',
@@ -228,10 +230,31 @@ export default function PathsSidebar({
       return;
     }
 
+    let paramsForCoverage: { name: string; in_location: string }[] = [];
+    if (editingPath) {
+      const paramsRaw = await getSharedPathParameters(editingPath.id);
+      const paramsParsed = JSON.parse(paramsRaw) as {
+        success?: boolean;
+        parameters?: { name: string; in_location: string }[];
+      };
+      if (paramsParsed.success && paramsParsed.parameters) {
+        paramsForCoverage = paramsParsed.parameters;
+      }
+    }
+    const coverageError = getPathParameterCoverageError(trimmedPath, paramsForCoverage);
+    if (coverageError) {
+      await alertDialog({
+        title: 'Path parameters do not match template',
+        message: coverageError,
+        variant: 'warning',
+      });
+      return;
+    }
+
     try {
       if (editingPath) {
         // Update existing path
-        const result = await updatePathRest(selectedVersionId, editingPath.id, { pathname: pathNameInput.trim() });
+        const result = await updatePathRest(selectedVersionId, editingPath.id, { pathname: trimmedPath });
         if (result.success && result.data) {
           const updatedPath = result.data as PathItem;
           setPaths(prevPaths =>
@@ -242,7 +265,7 @@ export default function PathsSidebar({
         }
       } else {
         // Create new path
-        const result = await createPathRest(selectedVersionId, pathNameInput.trim());
+        const result = await createPathRest(selectedVersionId, trimmedPath);
         if (result.success && result.data) {
           const newPath = result.data as PathItem;
           setPaths(prevPaths => [...prevPaths, newPath].sort((a, b) => a.pathname.localeCompare(b.pathname)));

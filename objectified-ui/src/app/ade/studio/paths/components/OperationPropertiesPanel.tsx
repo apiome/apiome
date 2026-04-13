@@ -498,6 +498,21 @@ export default function OperationPropertiesPanel({
   const handleSaveParameter = async () => {
     if (!operationId || !newParamName.trim() || !versionPathId) return;
 
+    if (newParamLocation === 'path') {
+      const segments = extractPathParameters(pathname);
+      if (!segments.includes(newParamName.trim())) {
+        await alertDialog({
+          title: 'Path parameter name mismatch',
+          message:
+            segments.length === 0
+              ? 'This path template has no {segments}. Use a name that appears in the path (e.g. /users/{id}) or edit the path template first.'
+              : `The name must match a segment in the path template. Expected one of: ${segments.map((s) => `{${s}}`).join(', ')}.`,
+          variant: 'warning',
+        });
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       // Schema with required field included

@@ -45,6 +45,7 @@ import {
   deleteSharedPathParameter,
 } from '../../../../../../lib/db/helper-shared-path-parameters';
 import { extractPathParameters, isValidPath, getPathWithSampleValues } from '../../../../../../lib/utils/path-params';
+import { propertyDataToParameterSchema } from '../../../../../../lib/utils/path-parameter-schema';
 import {
   getLinkedResponsesForOperation,
   getSharedPathResponses,
@@ -914,24 +915,6 @@ function PathsCanvasInner({
     [selectedPathId, onParameterSelect, onRefresh, alertDialog]
   );
 
-  // Map property schema to path parameter schema (path params: string, integer, number, boolean, array only)
-  const propertyDataToParameterSchema = useCallback((propertyData: Record<string, any> | undefined): Record<string, any> => {
-    const data = propertyData || { type: 'string' };
-    const type = data.type || 'string';
-    const pathParamTypes = ['string', 'integer', 'number', 'boolean', 'array'];
-    const paramType = pathParamTypes.includes(type) ? type : 'string';
-    const schema: Record<string, any> = { type: paramType, required: true };
-    if (data.format != null) schema.format = data.format;
-    if (Array.isArray(data.enum)) schema.enum = data.enum;
-    if (data.minimum != null) schema.minimum = data.minimum;
-    if (data.maximum != null) schema.maximum = data.maximum;
-    if (data.minLength != null) schema.minLength = data.minLength;
-    if (data.maxLength != null) schema.maxLength = data.maxLength;
-    if (data.pattern != null) schema.pattern = data.pattern;
-    if (paramType === 'array' && data.items != null) schema.items = data.items;
-    return schema;
-  }, []);
-
   // Handle property drop on path variable: bind property type/schema to the parameter
   const handlePropertyDropOnPathVariable = useCallback(
     async (variableName: string, dropData: any) => {
@@ -990,7 +973,7 @@ function PathsCanvasInner({
         });
       }
     },
-    [selectedPathId, propertyDataToParameterSchema, onRefresh, onParameterSelect, alertDialog]
+    [selectedPathId, onRefresh, onParameterSelect, alertDialog]
   );
 
   // Handle delete response

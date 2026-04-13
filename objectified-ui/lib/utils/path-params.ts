@@ -126,3 +126,54 @@ export function getPathTemplateValidationError(pathname: string): string | null 
 export function isValidPath(pathname: string): boolean {
   return getPathTemplateValidationError(pathname) === null;
 }
+
+export interface PathParamCoverageRow {
+  name: string;
+  in_location: string;
+}
+
+/**
+ * Ensures OpenAPI path template `{segments}` align with shared path parameters where
+ * `in_location === 'path'`: every template variable has exactly one matching parameter,
+ * and every path parameter appears in the template (no orphans).
+ * Returns `null` when valid; otherwise a user-facing error message.
+ */
+export function getPathParameterCoverageError(
+  pathname: string,
+  parameters: PathParamCoverageRow[]
+): string | null {
+  const templateError = getPathTemplateValidationError(pathname);
+  if (templateError) {
+    return templateError;
+  }
+
+  const templateNames = extractPathParameters(pathname);
+  const pathParams = parameters.filter((p) => p.in_location === 'path');
+  const byName = new Map<string, number>();
+  for (const p of pathParams) {
+    byName.set(p.name, (byName.get(p.name) || 0) + 1);
+  }
+
+  for (const n of templateNames) {
+    const count = byName.get(n) ?? 0;
+    if (count === 0) {
+      return `Path template includes {${n}} but there is no path parameter with that name and location "path". Add or restore a path parameter named "${n}".`;
+    }
+    if (count > 1) {
+      return `Path parameter "${n}" is defined more than once for this path. Remove duplicates so each {${n}} matches exactly one parameter.`;
+    }
+  }
+
+  const templateSet = new Set(templateNames);
+  const orphans: string[] = [];
+  for (const p of pathParams) {
+    if (!templateSet.has(p.name)) {
+      orphans.push(p.name);
+    }
+  }
+  if (orphans.length > 0) {
+    return `These path parameters are not in the URL template: ${orphans.join(', ')}. Remove them or add matching {name} segments to the path.`;
+  }
+
+  return null;
+}

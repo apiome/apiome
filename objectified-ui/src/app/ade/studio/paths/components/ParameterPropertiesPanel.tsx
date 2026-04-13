@@ -23,7 +23,10 @@ import {
   updateSharedPathParameter,
   unlinkParameterFromOperation,
 } from '../../../../../../lib/db/helper-shared-path-parameters';
-import { extractPathParameters } from '../../../../../../lib/utils/path-params';
+import { getClassesWithPropertiesAndTags } from '../../../../../../lib/db/helper';
+import { extractPathParameters, getPathParameterCoverageError } from '../../../../../../lib/utils/path-params';
+import { propertyDataToParameterSchema } from '../../../../../../lib/utils/path-parameter-schema';
+import { useStudio } from '../../StudioContext';
 
 // Simple types allowed for path parameters (no 'object')
 const SCHEMA_TYPES = [
@@ -103,6 +106,24 @@ interface PrimitiveTemplate {
   usage_count: number;
 }
 
+interface DesignerPropOption {
+  key: string;
+  classId: string;
+  className: string;
+  propertyId: string;
+  propertyName: string;
+  data: Record<string, unknown>;
+}
+
+interface LoadedSharedParameter {
+  id: string;
+  name: string;
+  in_location: 'path' | 'query' | 'header' | 'cookie';
+  summary?: string | null;
+  description?: string | null;
+  data?: unknown;
+}
+
 interface ParameterPropertiesPanelProps {
   parameterId: string | null;
   operationId?: string; // Optional when opened from path variable click
@@ -121,6 +142,7 @@ export default function ParameterPropertiesPanel({
   onRefresh,
 }: ParameterPropertiesPanelProps) {
   const isDark = useDarkMode();
+  const { selectedVersionId } = useStudio();
   const { alert: alertDialog, confirm: confirmDialog } = useDialog();
   const [name, setName] = useState('');
   const [inLocation, setInLocation] = useState<'path' | 'query' | 'header' | 'cookie'>('path');
@@ -145,6 +167,17 @@ export default function ParameterPropertiesPanel({
   const [schemaArrayItemType, setSchemaArrayItemType] = useState<'string' | 'integer' | 'number' | 'boolean'>('string');
   const [paramStyle, setParamStyle] = useState<ParamStyle>(PARAM_STYLE_DEFAULT);
   const [paramExplode, setParamExplode] = useState(false);
+
+  const [schemaMode, setSchemaMode] = useState<'form' | 'inline'>('form');
+  const [inlineSchemaText, setInlineSchemaText] = useState('{\n  "type": "string"\n}');
+  const [designerProps, setDesignerProps] = useState<DesignerPropOption[]>([]);
+  const [designerPropSearch, setDesignerPropSearch] = useState('');
+  const [propertyRef, setPropertyRef] = useState<{
+    classId: string;
+    className: string;
+    propertyId: string;
+    propertyName: string;
+  } | null>(null);
 
   // Primitive template dialog state (Apply from REST primitives)
   const [primitiveDialogOpen, setPrimitiveDialogOpen] = useState(false);
@@ -177,25 +210,35 @@ export default function ParameterPropertiesPanel({
       setSchemaArrayItemType('string');
       setParamStyle(PARAM_STYLE_DEFAULT);
       setParamExplode(false);
+      setSchemaMode('form');
+      setInlineSchemaText('{\n  "type": "string"\n}');
+      setPropertyRef(null);
+      setDesignerPropSearch('');
       return;
     }
 
     const loadParameter = async () => {
       setIsLoading(true);
       try {
-        let param: any = null;
+        let param: LoadedSharedParameter | null = null;
 
         if (operationId) {
           const result = await getLinkedParametersForOperation(operationId);
-          const data = JSON.parse(result);
+          const data = JSON.parse(result) as {
+            success?: boolean;
+            parameters?: LoadedSharedParameter[];
+          };
           if (data.success && data.parameters) {
-            param = data.parameters.find((p: any) => p.id === parameterId);
+            param = data.parameters.find((p) => p.id === parameterId) ?? null;
           }
         } else if (versionPathId) {
           const result = await getSharedPathParameters(versionPathId);
-          const data = JSON.parse(result);
+          const data = JSON.parse(result) as {
+            success?: boolean;
+            parameters?: LoadedSharedParameter[];
+          };
           if (data.success && data.parameters) {
-            param = data.parameters.find((p: any) => p.id === parameterId);
+            param = data.parameters.find((p) => p.id === parameterId) ?? null;
           }
         }
 
@@ -208,16 +251,44 @@ export default function ParameterPropertiesPanel({
           // Load schema from param.data column (JSONB may be object or string)
           const schema = typeof param.data === 'string' ? JSON.parse(param.data) : param.data;
           if (schema && typeof schema === 'object') {
-            setSchemaType(schema.type || 'string');
-            setSchemaFormat(schema.format || '');
-            setSchemaMinimum(schema.minimum !== undefined ? String(schema.minimum) : '');
-            setSchemaMaximum(schema.maximum !== undefined ? String(schema.maximum) : '');
-            setSchemaMinLength(schema.minLength !== undefined ? String(schema.minLength) : '');
-            setSchemaMaxLength(schema.maxLength !== undefined ? String(schema.maxLength) : '');
-            setSchemaPattern(schema.pattern || '');
-            setSchemaDefault(schema.default !== undefined ? String(schema.default) : '');
-            setSchemaEnum(schema.enum ? schema.enum.join(', ') : '');
-            setSchemaArrayItemType(schema.items?.type || 'string');
+            if (schema.schemaMode === 'inline' && schema.inlineSchema && typeof schema.inlineSchema === 'object') {
+              setSchemaMode('inline');
+              setInlineSchemaText(JSON.stringify(schema.inlineSchema, null, 2));
+            } else {
+              setSchemaMode('form');
+              setInlineSchemaText('{\n  "type": "string"\n}');
+            }
+            const pr = schema.propertyRef;
+            if (pr && typeof pr === 'object' && pr.propertyId && pr.classId) {
+              setPropertyRef({
+                classId: String(pr.classId),
+                className: String(pr.className || ''),
+                propertyId: String(pr.propertyId),
+                propertyName: String(pr.propertyName || ''),
+              });
+            } else {
+              setPropertyRef(null);
+            }
+            const isInlineSchema =
+              schema.schemaMode === 'inline' && schema.inlineSchema && typeof schema.inlineSchema === 'object';
+            if (!isInlineSchema) {
+              const t = String(schema.type || 'string');
+              const allowed = ['string', 'integer', 'number', 'boolean', 'array'] as const;
+              setSchemaType(
+                (allowed as readonly string[]).includes(t)
+                  ? (t as (typeof allowed)[number])
+                  : 'string'
+              );
+              setSchemaFormat(schema.format || '');
+              setSchemaMinimum(schema.minimum !== undefined ? String(schema.minimum) : '');
+              setSchemaMaximum(schema.maximum !== undefined ? String(schema.maximum) : '');
+              setSchemaMinLength(schema.minLength !== undefined ? String(schema.minLength) : '');
+              setSchemaMaxLength(schema.maxLength !== undefined ? String(schema.maxLength) : '');
+              setSchemaPattern(schema.pattern || '');
+              setSchemaDefault(schema.default !== undefined ? String(schema.default) : '');
+              setSchemaEnum(schema.enum ? schema.enum.join(', ') : '');
+              setSchemaArrayItemType(schema.items?.type || 'string');
+            }
             // Read required from data field
             setRequired(schema.required ?? (param.in_location === 'path'));
             // Serialization style (default form)
@@ -226,6 +297,9 @@ export default function ParameterPropertiesPanel({
             setParamExplode(schema.explode === true);
           } else {
             // Reset to defaults if no schema
+            setSchemaMode('form');
+            setInlineSchemaText('{\n  "type": "string"\n}');
+            setPropertyRef(null);
             setSchemaType('string');
             setSchemaFormat('');
             setSchemaMinimum('');
@@ -259,6 +333,62 @@ export default function ParameterPropertiesPanel({
       setAvailablePathParams(params);
     }
   }, [pathname]);
+
+  // Designer class properties (same catalog as Schema Builder) for schema binding
+  useEffect(() => {
+    if (!selectedVersionId) {
+      setDesignerProps([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const raw = await getClassesWithPropertiesAndTags(selectedVersionId);
+        const classes: Array<{
+          id: string;
+          name: string;
+          properties?: Array<{
+            id: string;
+            name: string;
+            parent_id?: string | null;
+            data?: Record<string, unknown> | string;
+          }>;
+        }> = JSON.parse(raw as string);
+        const opts: DesignerPropOption[] = [];
+        for (const cls of classes || []) {
+          for (const p of cls.properties || []) {
+            if (p.parent_id) continue;
+            const pdata = typeof p.data === 'string' ? JSON.parse(p.data) : p.data || {};
+            opts.push({
+              key: `${cls.id}:${p.id}`,
+              classId: cls.id,
+              className: cls.name,
+              propertyId: p.id,
+              propertyName: p.name,
+              data: pdata,
+            });
+          }
+        }
+        opts.sort((a, b) => a.propertyName.localeCompare(b.propertyName));
+        if (!cancelled) setDesignerProps(opts);
+      } catch {
+        if (!cancelled) setDesignerProps([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedVersionId]);
+
+  const filteredDesignerProps = useMemo(() => {
+    const q = designerPropSearch.trim().toLowerCase();
+    if (!q) return designerProps;
+    return designerProps.filter(
+      (o) =>
+        o.propertyName.toLowerCase().includes(q) ||
+        o.className.toLowerCase().includes(q)
+    );
+  }, [designerProps, designerPropSearch]);
 
   // Fetch primitives when primitive dialog opens (from REST service)
   useEffect(() => {
@@ -302,6 +432,32 @@ export default function ParameterPropertiesPanel({
     return list.sort((a, b) => (a.is_system === b.is_system ? 0 : a.is_system ? 1 : -1));
   }, [primitives, primitiveSearch, showSystemPrimitives, showTenantPrimitives]);
 
+  const applyDesignerProperty = (opt: DesignerPropOption) => {
+    const mapped = propertyDataToParameterSchema(opt.data);
+    const t = (mapped.type as string) || 'string';
+    if (['string', 'integer', 'number', 'boolean', 'array'].includes(t)) {
+      setSchemaType(t as 'string' | 'integer' | 'number' | 'boolean' | 'array');
+    }
+    if (mapped.format !== undefined) setSchemaFormat(String(mapped.format));
+    setSchemaMinimum(mapped.minimum !== undefined ? String(mapped.minimum) : '');
+    setSchemaMaximum(mapped.maximum !== undefined ? String(mapped.maximum) : '');
+    setSchemaMinLength(mapped.minLength !== undefined ? String(mapped.minLength) : '');
+    setSchemaMaxLength(mapped.maxLength !== undefined ? String(mapped.maxLength) : '');
+    setSchemaPattern(mapped.pattern !== undefined ? String(mapped.pattern) : '');
+    setSchemaEnum(mapped.enum && Array.isArray(mapped.enum) ? (mapped.enum as unknown[]).map(String).join(', ') : '');
+    if (mapped.items && typeof mapped.items === 'object' && mapped.items !== null && 'type' in mapped.items) {
+      setSchemaArrayItemType((mapped.items as { type: string }).type as 'string' | 'integer' | 'number' | 'boolean');
+    }
+    setSchemaMode('form');
+    setPropertyRef({
+      classId: opt.classId,
+      className: opt.className,
+      propertyId: opt.propertyId,
+      propertyName: opt.propertyName,
+    });
+    setDesignerPropSearch('');
+  };
+
   // Apply primitive schema to parameter form (type, format, pattern, constraints)
   const applyPrimitiveToParameter = (primitive: PrimitiveTemplate) => {
     const schema = primitive.schema as Record<string, unknown>;
@@ -320,56 +476,109 @@ export default function ParameterPropertiesPanel({
       setSchemaArrayItemType((schema.items as { type: string }).type as 'string' | 'integer' | 'number' | 'boolean');
     }
     if (primitive.description && !description) setDescription(primitive.description);
+    setPropertyRef(null);
     setPrimitiveDialogOpen(false);
     setSelectedPrimitive(null);
   };
 
   const handleSave = async () => {
-    if (!parameterId || !name.trim()) return;
+    if (!parameterId || !name.trim() || !versionPathId) return;
 
     setIsSaving(true);
     setSaveStatus('idle');
     try {
-      // Build the JSON Schema for the parameter
-      const schemaData: Record<string, any> = { type: schemaType };
-
-      if (schemaType === 'string') {
-        if (schemaFormat) schemaData.format = schemaFormat;
-        if (schemaMinLength) schemaData.minLength = parseInt(schemaMinLength, 10);
-        if (schemaMaxLength) schemaData.maxLength = parseInt(schemaMaxLength, 10);
-        if (schemaPattern) schemaData.pattern = schemaPattern;
-      } else if (schemaType === 'integer' || schemaType === 'number') {
-        if (schemaMinimum) schemaData.minimum = schemaType === 'integer' ? parseInt(schemaMinimum, 10) : parseFloat(schemaMinimum);
-        if (schemaMaximum) schemaData.maximum = schemaType === 'integer' ? parseInt(schemaMaximum, 10) : parseFloat(schemaMaximum);
-      } else if (schemaType === 'array') {
-        schemaData.items = { type: schemaArrayItemType };
-      }
-
-      // Handle enum values (comma-separated)
-      if (schemaEnum.trim()) {
-        schemaData.enum = schemaEnum.split(',').map(v => v.trim()).filter(v => v);
-      }
-
-      // Handle default value
-      if (schemaDefault.trim()) {
-        if (schemaType === 'integer') {
-          schemaData.default = parseInt(schemaDefault, 10);
-        } else if (schemaType === 'number') {
-          schemaData.default = parseFloat(schemaDefault);
-        } else if (schemaType === 'boolean') {
-          schemaData.default = schemaDefault.toLowerCase() === 'true';
-        } else {
-          schemaData.default = schemaDefault;
+      const allRaw = await getSharedPathParameters(versionPathId);
+      const allParsed = JSON.parse(allRaw) as {
+        success?: boolean;
+        parameters?: Array<{ id: string; name: string; in_location: string }>;
+      };
+      if (allParsed.success && allParsed.parameters) {
+        const simulated = allParsed.parameters.map((p) =>
+          p.id === parameterId
+            ? { name: name.trim(), in_location: inLocation }
+            : { name: p.name, in_location: p.in_location }
+        );
+        const cov = getPathParameterCoverageError(pathname, simulated);
+        if (cov) {
+          await alertDialog({
+            title: 'Path template mismatch',
+            message: cov,
+            variant: 'warning',
+          });
+          return;
         }
       }
 
-      // Add required to schema data (path params are always required in OpenAPI)
-      schemaData.required = inLocation === 'path' ? true : required;
+      let schemaData: Record<string, unknown>;
 
-      // Serialization style (OpenAPI 3.0 parameter style; default form)
-      schemaData.style = paramStyle;
-      // Explode (arrays/objects)
-      schemaData.explode = paramExplode;
+      if (schemaMode === 'inline') {
+        let parsedInline: unknown;
+        try {
+          parsedInline = JSON.parse(inlineSchemaText);
+        } catch {
+          await alertDialog({
+            title: 'Invalid JSON',
+            message: 'Fix the inline JSON Schema object before saving.',
+            variant: 'error',
+          });
+          return;
+        }
+        if (!parsedInline || typeof parsedInline !== 'object' || Array.isArray(parsedInline)) {
+          await alertDialog({
+            title: 'Invalid schema',
+            message: 'Inline schema must be a JSON object (for example {"type":"string"}).',
+            variant: 'error',
+          });
+          return;
+        }
+        schemaData = {
+          schemaMode: 'inline',
+          inlineSchema: parsedInline as Record<string, unknown>,
+          required: inLocation === 'path' ? true : required,
+          style: paramStyle,
+          explode: paramExplode,
+        };
+        if (propertyRef) {
+          schemaData.propertyRef = propertyRef;
+        }
+      } else {
+        schemaData = { type: schemaType };
+
+        if (schemaType === 'string') {
+          if (schemaFormat) schemaData.format = schemaFormat;
+          if (schemaMinLength) schemaData.minLength = parseInt(schemaMinLength, 10);
+          if (schemaMaxLength) schemaData.maxLength = parseInt(schemaMaxLength, 10);
+          if (schemaPattern) schemaData.pattern = schemaPattern;
+        } else if (schemaType === 'integer' || schemaType === 'number') {
+          if (schemaMinimum) schemaData.minimum = schemaType === 'integer' ? parseInt(schemaMinimum, 10) : parseFloat(schemaMinimum);
+          if (schemaMaximum) schemaData.maximum = schemaType === 'integer' ? parseInt(schemaMaximum, 10) : parseFloat(schemaMaximum);
+        } else if (schemaType === 'array') {
+          schemaData.items = { type: schemaArrayItemType };
+        }
+
+        if (schemaEnum.trim()) {
+          schemaData.enum = schemaEnum.split(',').map((v) => v.trim()).filter(Boolean);
+        }
+
+        if (schemaDefault.trim()) {
+          if (schemaType === 'integer') {
+            schemaData.default = parseInt(schemaDefault, 10);
+          } else if (schemaType === 'number') {
+            schemaData.default = parseFloat(schemaDefault);
+          } else if (schemaType === 'boolean') {
+            schemaData.default = schemaDefault.toLowerCase() === 'true';
+          } else {
+            schemaData.default = schemaDefault;
+          }
+        }
+
+        schemaData.required = inLocation === 'path' ? true : required;
+        schemaData.style = paramStyle;
+        schemaData.explode = paramExplode;
+        if (propertyRef) {
+          schemaData.propertyRef = propertyRef;
+        }
+      }
 
       const result = await updateSharedPathParameter(parameterId, {
         name: name.trim(),
@@ -396,7 +605,7 @@ export default function ParameterPropertiesPanel({
           variant: 'error',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving parameter:', error);
       await alertDialog({
         title: 'Error',
@@ -645,7 +854,100 @@ export default function ParameterPropertiesPanel({
                   Schema Definition
                 </Label>
 
-                {/* Apply from primitive template (REST service primitives) */}
+                <div
+                  className={`flex rounded-md border overflow-hidden mb-3 text-xs ${
+                    isDark ? 'border-slate-600' : 'border-slate-300'
+                  }`}
+                  role="group"
+                  aria-label="Schema editor mode"
+                >
+                  <button
+                    type="button"
+                    className={`flex-1 px-2 py-1.5 font-medium transition-colors ${
+                      schemaMode === 'form'
+                        ? 'bg-violet-600 text-white'
+                        : isDark
+                          ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                          : 'bg-white text-slate-700 hover:bg-slate-50'
+                    }`}
+                    onClick={() => setSchemaMode('form')}
+                  >
+                    Form builder
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex-1 px-2 py-1.5 font-medium transition-colors border-l ${
+                      schemaMode === 'inline'
+                        ? 'bg-violet-600 text-white border-violet-500'
+                        : isDark
+                          ? 'bg-slate-800 text-slate-300 border-slate-600 hover:bg-slate-700'
+                          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                    onClick={() => {
+                      setSchemaMode('inline');
+                      setPropertyRef(null);
+                    }}
+                  >
+                    Inline JSON Schema
+                  </button>
+                </div>
+
+                {propertyRef && schemaMode === 'form' && (
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 mb-2">
+                    Designer link:{' '}
+                    <span className="font-mono">
+                      {propertyRef.className}.{propertyRef.propertyName}
+                    </span>
+                  </p>
+                )}
+
+                {schemaMode === 'form' && selectedVersionId && designerProps.length > 0 && (
+                  <div className="mb-3">
+                    <Label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                      Apply from Designer property
+                    </Label>
+                    <div className="relative">
+                      <Search
+                        size={14}
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none"
+                      />
+                      <Input
+                        value={designerPropSearch}
+                        onChange={(e) => setDesignerPropSearch(e.target.value)}
+                        placeholder="Search class properties…"
+                        className="h-9 text-sm pl-8"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div
+                      className={`mt-1 max-h-28 overflow-y-auto rounded border text-xs ${
+                        isDark ? 'border-slate-600 bg-slate-900/50' : 'border-slate-200 bg-slate-50'
+                      }`}
+                    >
+                      {filteredDesignerProps.length === 0 ? (
+                        <p className="p-2 text-gray-500 dark:text-gray-400">No matching properties</p>
+                      ) : (
+                        filteredDesignerProps.slice(0, 40).map((opt) => (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => applyDesignerProperty(opt)}
+                            className={`w-full text-left px-2 py-1.5 border-b last:border-b-0 transition-colors ${
+                              isDark
+                                ? 'border-slate-700 hover:bg-slate-800 text-slate-200'
+                                : 'border-slate-100 hover:bg-white text-slate-800'
+                            }`}
+                          >
+                            <span className="font-medium">{opt.propertyName}</span>
+                            <span className="text-gray-500 dark:text-gray-400"> · {opt.className}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {schemaMode === 'form' && (
                 <div className="mb-4">
                   <Button
                     type="button"
@@ -664,7 +966,10 @@ export default function ParameterPropertiesPanel({
                     ⓘ
                   </span>
                 </div>
+                )}
 
+                {schemaMode === 'form' && (
+                <>
                 {/* Schema Type */}
                 <div className="mb-4">
                   <Label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">
@@ -836,6 +1141,26 @@ export default function ParameterPropertiesPanel({
                     Optional. Used when the client omits this parameter.
                   </p>
                 </div>
+                </>
+                )}
+
+                {schemaMode === 'inline' && (
+                  <div>
+                    <Label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                      Parameter schema (JSON)
+                    </Label>
+                    <Textarea
+                      value={inlineSchemaText}
+                      onChange={(e) => setInlineSchemaText(e.target.value)}
+                      rows={12}
+                      spellCheck={false}
+                      className="text-xs font-mono resize-y min-h-[140px]"
+                    />
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                      OpenAPI Schema Object subset (e.g. type, format, enum). Required, style, and explode are saved separately.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

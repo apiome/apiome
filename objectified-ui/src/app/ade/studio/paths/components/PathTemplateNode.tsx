@@ -3,7 +3,8 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { updatePath } from '../../../../../../lib/api/paths-client';
-import { getPathTemplateValidationError } from '../../../../../../lib/utils/path-params';
+import { getSharedPathParameters } from '../../../../../../lib/db/helper-shared-path-parameters';
+import { getPathParameterCoverageError, getPathTemplateValidationError } from '../../../../../../lib/utils/path-params';
 
 export interface PathTemplateNodeData {
   versionPathId: string;
@@ -30,6 +31,25 @@ function PathTemplateNode({ data, selected }: NodeProps) {
       setError(validationError);
       return;
     }
+
+    try {
+      const paramsRaw = await getSharedPathParameters(d.versionPathId);
+      const paramsParsed = JSON.parse(paramsRaw) as {
+        success?: boolean;
+        parameters?: { name: string; in_location: string }[];
+      };
+      if (paramsParsed.success && paramsParsed.parameters) {
+        const coverageError = getPathParameterCoverageError(trimmed, paramsParsed.parameters);
+        if (coverageError) {
+          setError(coverageError);
+          return;
+        }
+      }
+    } catch {
+      setError('Could not validate path parameters against the template. Try again.');
+      return;
+    }
+
     if (trimmed === d.pathname.trim()) {
       setError(null);
       return;

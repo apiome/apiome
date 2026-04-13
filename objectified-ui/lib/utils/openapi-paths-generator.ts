@@ -130,9 +130,36 @@ export function buildParameterForOpenAPI(param: PathParameter): Record<string, u
     result.required = true;
   }
 
+  // Inline JSON Schema mode (P-08): full Schema Object stored in data.inlineSchema
+  if (data.schemaMode === 'inline' && data.inlineSchema && typeof data.inlineSchema === 'object') {
+    result.schema = { ...(data.inlineSchema as Record<string, unknown>) };
+    if (data.deprecated) {
+      result.deprecated = true;
+    }
+    if (data.allowEmptyValue !== undefined) {
+      result.allowEmptyValue = data.allowEmptyValue;
+    }
+    if (data.style) {
+      result.style = data.style;
+    }
+    if (data.explode !== undefined) {
+      result.explode = data.explode;
+    }
+    if (data.example !== undefined) {
+      result.example = data.example;
+    }
+    if (data.examples !== undefined) {
+      result.examples = data.examples;
+    }
+    return result;
+  }
+
   // Build schema from data (excluding non-schema fields)
   const schemaData = { ...data };
   delete schemaData.required;
+  delete schemaData.schemaMode;
+  delete schemaData.inlineSchema;
+  delete schemaData.propertyRef;
 
   // Handle deprecated
   if (schemaData.deprecated) {
