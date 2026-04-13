@@ -48,7 +48,7 @@ from .version_notes import (
     enforce_max_commit_payload,
     validate_version_notes,
 )
-from .version_pull_delta import build_schema_pull_delta
+from .version_pull_delta import SCHEMA_PULL_DELTA_GUARANTEE, build_schema_pull_delta
 from .version_pull_payload import filter_version_pull_dump, resolve_pull_sections
 
 router = APIRouter(prefix="/v1/versions", tags=["versions"])
@@ -222,21 +222,32 @@ def _schema_pull_delta_for_head(
     tenant_id: str,
     project_id: str,
     head_row: Dict[str, Any],
+    since_row: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Build ``schemaPullDelta`` for OpenAPI components.schemas between since and head."""
-    since_row = _validated_since_row_for_schema_pull_delta(
-        since_revision_id,
-        head_revision_id=str(head_row["id"]),
-        project_id=project_id,
-        tenant_id=tenant_id,
-    )
+    if since_row is None:
+        since_row = _validated_since_row_for_schema_pull_delta(
+            since_revision_id,
+            head_revision_id=str(head_row["id"]),
+            project_id=project_id,
+            tenant_id=tenant_id,
+        )
+    head_revision_id = str(head_row["id"])
+    if str(since_row["id"]) == head_revision_id:
+        return {
+            "sinceRevisionId": since_revision_id,
+            "headRevisionId": head_revision_id,
+            "removedSchemaNames": [],
+            "schemas": {},
+            "guarantee": SCHEMA_PULL_DELTA_GUARANTEE,
+        }
     since_spec = openapi_for_revision(since_row, tenant_slug, tenant_id)
     head_spec = openapi_for_revision(head_row, tenant_slug, tenant_id)
     return build_schema_pull_delta(
         since_spec,
         head_spec,
         since_revision_id=since_revision_id,
-        head_revision_id=str(head_row["id"]),
+        head_revision_id=head_revision_id,
     )
 
 
@@ -711,13 +722,16 @@ async def get_version(
 
     if successor_resolution == "none":
         etag_id = str(version["id"])
-        if since_q:
+        since_row_none = (
             _validated_since_row_for_schema_pull_delta(
                 since_q,
                 head_revision_id=etag_id,
                 project_id=project_id,
                 tenant_id=tenant_id,
             )
+            if since_q
+            else None
+        )
         if _if_none_match_matches_revision(etag_id, if_none_match):
             _workflow_audit_pull(
                 tenant_id,
@@ -743,6 +757,7 @@ async def get_version(
                 tenant_id=tenant_id,
                 project_id=project_id,
                 head_row=version,
+                since_row=since_row_none,
             )
             if since_q
             else None
@@ -822,13 +837,16 @@ async def get_version(
     if successor_resolution == "redirect":
         if final_id == version_record_id:
             etag_id = str(version["id"])
-            if since_q:
+            since_row_redir = (
                 _validated_since_row_for_schema_pull_delta(
                     since_q,
                     head_revision_id=etag_id,
                     project_id=project_id,
                     tenant_id=tenant_id,
                 )
+                if since_q
+                else None
+            )
             if _if_none_match_matches_revision(etag_id, if_none_match):
                 return _not_modified_revision_response(revision_id=etag_id)
             delta_redir_same = (
@@ -838,6 +856,7 @@ async def get_version(
                     tenant_id=tenant_id,
                     project_id=project_id,
                     head_row=version,
+                    since_row=since_row_redir,
                 )
                 if since_q
                 else None
@@ -860,13 +879,16 @@ async def get_version(
         status=status,
         missing_id=missing_id,
     )
-    if since_q:
+    since_row_resolve = (
         _validated_since_row_for_schema_pull_delta(
             since_q,
             head_revision_id=final_id,
             project_id=project_id,
             tenant_id=tenant_id,
         )
+        if since_q
+        else None
+    )
     if _if_none_match_matches_revision(final_id, if_none_match):
         return _not_modified_revision_response(revision_id=final_id, extra_headers=succ_headers)
     for k, v in succ_headers.items():
@@ -878,6 +900,7 @@ async def get_version(
             tenant_id=tenant_id,
             project_id=project_id,
             head_row=final_row,
+            since_row=since_row_resolve,
         )
         if since_q
         else None
@@ -992,13 +1015,16 @@ async def get_version_by_version_id(
 
     if successor_resolution == "none":
         etag_id = str(version["id"])
-        if since_q:
+        since_row_bv_none = (
             _validated_since_row_for_schema_pull_delta(
                 since_q,
                 head_revision_id=etag_id,
                 project_id=project_id,
                 tenant_id=tenant_id,
             )
+            if since_q
+            else None
+        )
         if _if_none_match_matches_revision(etag_id, if_none_match):
             _workflow_audit_pull(
                 tenant_id,
@@ -1024,6 +1050,7 @@ async def get_version_by_version_id(
                 tenant_id=tenant_id,
                 project_id=project_id,
                 head_row=version,
+                since_row=since_row_bv_none,
             )
             if since_q
             else None
@@ -1103,13 +1130,16 @@ async def get_version_by_version_id(
     if successor_resolution == "redirect":
         if final_id == version_record_id:
             etag_id = str(version["id"])
-            if since_q:
+            since_row_bv_redir = (
                 _validated_since_row_for_schema_pull_delta(
                     since_q,
                     head_revision_id=etag_id,
                     project_id=project_id,
                     tenant_id=tenant_id,
                 )
+                if since_q
+                else None
+            )
             if _if_none_match_matches_revision(etag_id, if_none_match):
                 return _not_modified_revision_response(revision_id=etag_id)
             delta_bv_redir = (
@@ -1119,6 +1149,7 @@ async def get_version_by_version_id(
                     tenant_id=tenant_id,
                     project_id=project_id,
                     head_row=version,
+                    since_row=since_row_bv_redir,
                 )
                 if since_q
                 else None
@@ -1144,13 +1175,16 @@ async def get_version_by_version_id(
         status=status,
         missing_id=missing_id,
     )
-    if since_q:
+    since_row_bv_resolve = (
         _validated_since_row_for_schema_pull_delta(
             since_q,
             head_revision_id=final_id,
             project_id=project_id,
             tenant_id=tenant_id,
         )
+        if since_q
+        else None
+    )
     if _if_none_match_matches_revision(final_id, if_none_match):
         return _not_modified_revision_response(revision_id=final_id, extra_headers=succ_headers)
     for k, v in succ_headers.items():
@@ -1162,6 +1196,7 @@ async def get_version_by_version_id(
             tenant_id=tenant_id,
             project_id=project_id,
             head_row=final_row,
+            since_row=since_row_bv_resolve,
         )
         if since_q
         else None

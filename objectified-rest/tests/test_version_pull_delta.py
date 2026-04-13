@@ -108,6 +108,46 @@ def test_unknown_since_revision_is_400():
     assert body["detail"]["code"] == "UNKNOWN_REVISION_ID"
 
 
+def test_unknown_since_revision_is_400_by_version():
+    row = _min_version("rev-head", "1.0.1", parent="rev-parent")
+    with patch("app.versions_routes.db") as mdb:
+        mdb.get_version_by_version_id.return_value = row
+
+        def _gf(vid, tid):
+            if vid == "rev-head":
+                return row
+            return None
+
+        mdb.get_version_by_id.side_effect = _gf
+        r = client.get(
+            "/v1/versions/tn/proj-1/by-version/1.0.1",
+            params={"sinceRevisionId": "nope"},
+        )
+    assert r.status_code == 400
+    body = r.json()
+    assert body["detail"]["code"] == "UNKNOWN_REVISION_ID"
+
+
+def test_since_equals_head_empty_delta_by_version():
+    row = _min_version("rev-same", "1.0.0")
+    spec = {"components": {"schemas": {"Z": {"type": "string"}}}}
+    with patch("app.versions_routes.db") as mdb:
+        mdb.get_version_by_version_id.return_value = row
+        mdb.get_version_by_id.return_value = row
+        mdb.collect_revision_ancestors.return_value = {"rev-same"}
+        with patch("app.versions_routes.openapi_for_revision", return_value=spec):
+            r = client.get(
+                "/v1/versions/tn/proj-1/by-version/1.0.0",
+                params={"sinceRevisionId": "rev-same"},
+            )
+    assert r.status_code == 200
+    body = r.json()
+    d = body["schemaPullDelta"]
+    assert d["removedSchemaNames"] == []
+    assert d["schemas"] == {}
+    assert "guarantee" in d
+
+
 def test_since_not_ancestor_of_head_is_400():
     head = _min_version("rev-head", "1.0.1", parent="rev-parent")
     cousin = _min_version("rev-cousin", "0.9.0", parent=None)
