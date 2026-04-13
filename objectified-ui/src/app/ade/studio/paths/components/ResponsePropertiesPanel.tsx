@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { X, Save, Plus, Trash2, FileJson, Link2, LayoutList } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import { Textarea } from '../../../../components/ui/Textarea';
@@ -35,6 +35,8 @@ import {
 } from '../../../../components/ui/Select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../../../components/ui/Tabs';
 import SchemaBuilder from './SchemaBuilder';
+import ReuseSearchCombobox, { type ReuseSearchItem } from './ReuseSearchCombobox';
+import { createPathsVersionRefRegistry } from '../../../../../../lib/utils/paths-version-ref-registry';
 import { useStudio } from '../../StudioContext';
 
 /** Content type with schema binding (class or inline) - matches API shape */
@@ -193,6 +195,7 @@ export default function ResponsePropertiesPanel({
   const [contentTypes, setContentTypes] = useState<ContentTypeMapItem[]>([]);
   const [selectedContentTypeIndex, setSelectedContentTypeIndex] = useState(0);
   const [classes, setClasses] = useState<Array<{ id: string; name: string }>>([]);
+  const refRegistry = useMemo(() => createPathsVersionRefRegistry(classes), [classes]);
   const [newMediaType, setNewMediaType] = useState('application/json');
   const [showAddContentType, setShowAddContentType] = useState(false);
   const [isSavingContentType, setIsSavingContentType] = useState(false);
@@ -1039,25 +1042,52 @@ export default function ResponsePropertiesPanel({
                   {contentTypes.map((ct, idx) => (
                     <TabsContent key={ct.id} value={String(idx)} className="mt-3 space-y-3">
                       <div>
-                        <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 block mb-1">Schema binding</span>
-                        <Select
-                          value={ct.class_id ? ct.class_id : (ct.inline_schema ? '__inline__' : '__none__')}
+                        <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 block mb-1">
+                          Schema binding (reuse class)
+                        </span>
+                        <ReuseSearchCombobox
+                          aria-label="Response content type schema binding"
+                          items={
+                            [
+                              { id: '__none__', label: '— None —' },
+                              ...(ct.inline_schema && !ct.class_id
+                                ? [
+                                    {
+                                      id: '__inline__',
+                                      label: '— Inline schema —',
+                                      description: 'Edit in Operation → Responses',
+                                      disabled: true,
+                                    } satisfies ReuseSearchItem,
+                                  ]
+                                : []),
+                              ...classes.map((c) => ({ id: c.id, label: c.name })),
+                            ] as ReuseSearchItem[]
+                          }
+                          value={
+                            ct.class_id ? ct.class_id : ct.inline_schema ? '__inline__' : '__none__'
+                          }
                           onValueChange={(v) => handleContentTypeClassChange(ct.id, v)}
-                        >
-                          <SelectTrigger className={`h-9 text-xs ${isDark ? 'bg-slate-800 border-slate-600' : ''}`}>
-                            <SelectValue placeholder="Select class or use inline" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__none__">— None —</SelectItem>
-                            <SelectItem value="__inline__" disabled>— Inline schema (edit in Operation → Responses) —</SelectItem>
-                            {classes.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          placeholder="Search classes…"
+                          searchPlaceholder="Filter by name…"
+                          emptyText="No matches."
+                          triggerClassName={`h-9 text-xs ${isDark ? 'bg-slate-800 border-slate-600' : ''}`}
+                        />
+                        {ct.class_id && refRegistry.isOrphanClassId(ct.class_id) && (
+                          <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">
+                            This class is missing from the version (rename/delete). Fix the reference before export.
+                          </p>
+                        )}
+                        {ct.inline_schema &&
+                          refRegistry.findBrokenComponentSchemaRefs(ct.inline_schema).length > 0 && (
+                            <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">
+                              Inline schema contains{' '}
+                              <code className="font-mono">$ref</code> to a class not in this version.
+                            </p>
+                          )}
                         {ct.inline_schema && !ct.class_id && (
                           <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
-                            Inline schema ({Array.isArray(ct.inline_schema?.properties) ? ct.inline_schema.properties.length : 0} properties). Use Operation panel → Responses to edit inline schema.
+                            Inline schema ({Array.isArray(ct.inline_schema?.properties) ? ct.inline_schema.properties.length : 0}{' '}
+                            properties). Use Operation panel → Responses to edit inline schema.
                           </p>
                         )}
                       </div>

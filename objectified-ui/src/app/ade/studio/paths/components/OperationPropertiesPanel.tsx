@@ -23,12 +23,14 @@ import {
 import { generateOperationId } from '../../../../../../lib/utils/path-utils';
 import {
   getLinkedParametersForOperation,
+  getSharedPathParameters,
   createSharedPathParameter,
   linkParameterToOperation,
   unlinkParameterFromOperation,
 } from '../../../../../../lib/db/helper-shared-path-parameters';
 import {
   getLinkedResponsesForOperation,
+  getSharedPathResponses,
   createSharedPathResponse,
   linkResponseToOperation,
   unlinkResponseFromOperation,
@@ -38,6 +40,7 @@ import { extractPathParameters } from '../../../../../../lib/utils/path-params';
 import { validateOpenApiParameterName } from '../../../../../../lib/utils/openapi-parameter-name';
 import ResponseSection from './ResponseSection';
 import RequestBodySection from './RequestBodySection';
+import ReuseSearchCombobox from './ReuseSearchCombobox';
 import { getHttpStatusDescription } from '../../../../../../lib/utils/http-status-codes';
 import type { SecurityRequirement } from '../../../../../../lib/utils/openapi-paths-generator';
 import { ExtensionsEditor } from '../../../../components/ade/studio/ExtensionsEditor';
@@ -140,6 +143,18 @@ export default function OperationPropertiesPanel({
 
   // Custom x-* extensions (OpenAPI extension properties)
   const [extensions, setExtensions] = useState<Record<string, unknown>>({});
+
+  /** Reuse library (#2652): attach existing shared parameter / response */
+  const [paramAttachMode, setParamAttachMode] = useState<'create' | 'reuse'>('create');
+  const [responseAttachMode, setResponseAttachMode] = useState<'create' | 'reuse'>('create');
+  const [reuseParamId, setReuseParamId] = useState('');
+  const [reuseResponseId, setReuseResponseId] = useState('');
+  const [sharedParamsPool, setSharedParamsPool] = useState<
+    { id: string; name: string; in_location: string; summary?: string | null }[]
+  >([]);
+  const [sharedResponsesPool, setSharedResponsesPool] = useState<
+    { id: string; status_code: string; description?: string | null }[]
+  >([]);
 
   // Load operation description when operationId changes
   useEffect(() => {
@@ -363,6 +378,50 @@ export default function OperationPropertiesPanel({
     // Filter out already-linked parameters
     return availablePathParams.filter((param) => !linkedParamNames.has(param));
   }, [availablePathParams, parameters]);
+
+  const unlinkedSharedParams = useMemo(() => {
+    const linkedIds = new Set(parameters.map((p: any) => p.id as string));
+    return sharedParamsPool.filter((p) => !linkedIds.has(p.id));
+  }, [sharedParamsPool, parameters]);
+
+  const unlinkedSharedResponses = useMemo(() => {
+    const linkedIds = new Set(responses.map((r: any) => r.id as string));
+    return sharedResponsesPool.filter((r) => !linkedIds.has(r.id));
+  }, [sharedResponsesPool, responses]);
+
+  useEffect(() => {
+    if (!versionPathId || viewMode === 'operation') return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        if (viewMode === 'add-parameter') {
+          const raw = await getSharedPathParameters(versionPathId);
+          const data = JSON.parse(raw) as {
+            success?: boolean;
+            parameters?: {
+              id: string;
+              name: string;
+              in_location: string;
+              summary?: string | null;
+            }[];
+          };
+          if (!cancelled && data.success && data.parameters) setSharedParamsPool(data.parameters);
+        } else if (viewMode === 'add-response') {
+          const raw = await getSharedPathResponses(versionPathId);
+          const data = JSON.parse(raw) as {
+            success?: boolean;
+            responses?: { id: string; status_code: string; description?: string | null }[];
+          };
+          if (!cancelled && data.success && data.responses) setSharedResponsesPool(data.responses);
+        }
+      } catch (e) {
+        console.error('Failed to load reuse pool for paths', e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [versionPathId, viewMode]);
 
   const resetNewParamForm = () => {
     setNewParamName('');
@@ -593,6 +652,46 @@ export default function OperationPropertiesPanel({
     }
   };
 
+  const handleLinkExistingParameter = async () => {
+    if (!operationId || !reuseParamId) return;
+
+    setIsSaving(true);
+    try {
+      const linkResult = await linkParameterToOperation(operationId, reuseParamId);
+      const linkParsed = JSON.parse(linkResult);
+
+      if (linkParsed.success) {
+        const paramsResult = await getLinkedParametersForOperation(operationId);
+        const paramsData = JSON.parse(paramsResult);
+        if (paramsData.success) {
+          setParameters(paramsData.parameters || []);
+        }
+        setViewMode('operation');
+        setReuseParamId('');
+        setParamAttachMode('create');
+        resetNewParamForm();
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        await alertDialog({
+          title: 'Error',
+          message: linkParsed.error || 'Failed to link parameter',
+          variant: 'error',
+        });
+      }
+    } catch (error) {
+      console.error('Error linking shared parameter:', error);
+      await alertDialog({
+        title: 'Error',
+        message: 'Failed to link parameter. Please try again.',
+        variant: 'error',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleDeleteParameter = async (paramId: string, paramName: string) => {
     if (!operationId) return;
 
@@ -700,6 +799,46 @@ export default function OperationPropertiesPanel({
       await alertDialog({
         title: 'Error',
         message: 'Failed to add response. Please try again.',
+        variant: 'error',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleLinkExistingResponse = async () => {
+    if (!operationId || !reuseResponseId) return;
+
+    setIsSaving(true);
+    try {
+      const linkResult = await linkResponseToOperation(operationId, reuseResponseId);
+      const linkParsed = JSON.parse(linkResult);
+
+      if (linkParsed.success) {
+        const responsesResult = await getLinkedResponsesForOperation(operationId);
+        const responsesData = JSON.parse(responsesResult);
+        if (responsesData.success) {
+          setResponses(responsesData.responses || []);
+        }
+        setViewMode('operation');
+        setReuseResponseId('');
+        setResponseAttachMode('create');
+        resetNewResponseForm();
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        await alertDialog({
+          title: 'Error',
+          message: linkParsed.error || 'Failed to link response',
+          variant: 'error',
+        });
+      }
+    } catch (error) {
+      console.error('Error linking shared response:', error);
+      await alertDialog({
+        title: 'Error',
+        message: 'Failed to link response. Please try again.',
         variant: 'error',
       });
     } finally {
@@ -881,12 +1020,19 @@ export default function OperationPropertiesPanel({
 
   const handleAddParameterClick = () => {
     resetNewParamForm();
+    setParamAttachMode('create');
+    setReuseParamId('');
     setViewMode('add-parameter');
   };
 
   const handleBackToOperation = () => {
     setViewMode('operation');
     resetNewParamForm();
+    resetNewResponseForm();
+    setParamAttachMode('create');
+    setResponseAttachMode('create');
+    setReuseParamId('');
+    setReuseResponseId('');
   };
 
   if (!operationId) return null;
@@ -907,7 +1053,7 @@ export default function OperationPropertiesPanel({
           isDark ? 'border-slate-700' : 'border-slate-200'
         }`}
       >
-        {viewMode === 'add-parameter' ? (
+        {viewMode === 'add-parameter' || viewMode === 'add-response' ? (
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -921,7 +1067,7 @@ export default function OperationPropertiesPanel({
             </button>
             <div>
               <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                Add Parameter
+                {viewMode === 'add-parameter' ? 'Add Parameter' : 'Add Response'}
               </span>
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 {operation} {pathname}
@@ -960,6 +1106,65 @@ export default function OperationPropertiesPanel({
         <>
           <div className="flex-1 overflow-auto p-4">
             <div className="flex flex-col gap-4">
+              <div
+                className={`flex rounded-lg border p-0.5 ${
+                  isDark ? 'border-slate-600 bg-slate-800/80' : 'border-slate-200 bg-slate-100'
+                }`}
+              >
+                <button
+                  type="button"
+                  className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                    responseAttachMode === 'create'
+                      ? isDark
+                        ? 'bg-slate-700 text-indigo-300 shadow-sm'
+                        : 'bg-white text-indigo-600 shadow-sm'
+                      : isDark
+                        ? 'text-slate-400'
+                        : 'text-slate-600'
+                  }`}
+                  onClick={() => setResponseAttachMode('create')}
+                >
+                  Create new
+                </button>
+                <button
+                  type="button"
+                  className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                    responseAttachMode === 'reuse'
+                      ? isDark
+                        ? 'bg-slate-700 text-indigo-300 shadow-sm'
+                        : 'bg-white text-indigo-600 shadow-sm'
+                      : isDark
+                        ? 'text-slate-400'
+                        : 'text-slate-600'
+                  }`}
+                  onClick={() => setResponseAttachMode('reuse')}
+                >
+                  Reuse library
+                </button>
+              </div>
+
+              {responseAttachMode === 'reuse' ? (
+                <>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Attach a shared response from this path version. Operations use stable links; the schema is not duplicated.
+                  </p>
+                  <ReuseSearchCombobox
+                    aria-label="Shared response to attach"
+                    items={unlinkedSharedResponses.map((r) => ({
+                      id: r.id,
+                      label: String(r.status_code),
+                      description: r.description?.trim() || undefined,
+                    }))}
+                    value={reuseResponseId}
+                    onValueChange={setReuseResponseId}
+                    placeholder="Search responses…"
+                    searchPlaceholder="Filter by status or description…"
+                    emptyText="No unlinked responses. Create one under “Create new” or unlink from another operation."
+                    triggerClassName="h-9 text-sm"
+                  />
+                </>
+              ) : (
+                <>
               {/* Status Code */}
               <div>
                 <Label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -1048,6 +1253,8 @@ export default function OperationPropertiesPanel({
                   </p>
                 </div>
               )}
+                </>
+              )}
             </div>
           </div>
 
@@ -1055,14 +1262,25 @@ export default function OperationPropertiesPanel({
           <div
             className={`p-4 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}
           >
-            <Button
-              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white disabled:opacity-60 disabled:cursor-not-allowed"
-              onClick={handleSaveResponse}
-              disabled={isSaving || !newResponseStatusCode.trim()}
-            >
-              <Save className="w-4 h-4" />
-              {isSaving ? 'Saving...' : 'Save'}
-            </Button>
+            {responseAttachMode === 'reuse' ? (
+              <Button
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={handleLinkExistingResponse}
+                disabled={isSaving || !reuseResponseId}
+              >
+                <Save className="w-4 h-4" />
+                {isSaving ? 'Attaching…' : 'Attach to operation'}
+              </Button>
+            ) : (
+              <Button
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={handleSaveResponse}
+                disabled={isSaving || !newResponseStatusCode.trim()}
+              >
+                <Save className="w-4 h-4" />
+                {isSaving ? 'Saving...' : 'Save'}
+              </Button>
+            )}
           </div>
         </>
       ) : viewMode === 'add-parameter' ? (
@@ -1070,6 +1288,65 @@ export default function OperationPropertiesPanel({
         <>
           <div className="flex-1 overflow-auto p-4">
             <div className="flex flex-col gap-4">
+              <div
+                className={`flex rounded-lg border p-0.5 ${
+                  isDark ? 'border-slate-600 bg-slate-800/80' : 'border-slate-200 bg-slate-100'
+                }`}
+              >
+                <button
+                  type="button"
+                  className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                    paramAttachMode === 'create'
+                      ? isDark
+                        ? 'bg-slate-700 text-indigo-300 shadow-sm'
+                        : 'bg-white text-indigo-600 shadow-sm'
+                      : isDark
+                        ? 'text-slate-400'
+                        : 'text-slate-600'
+                  }`}
+                  onClick={() => setParamAttachMode('create')}
+                >
+                  Create new
+                </button>
+                <button
+                  type="button"
+                  className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                    paramAttachMode === 'reuse'
+                      ? isDark
+                        ? 'bg-slate-700 text-indigo-300 shadow-sm'
+                        : 'bg-white text-indigo-600 shadow-sm'
+                      : isDark
+                        ? 'text-slate-400'
+                        : 'text-slate-600'
+                  }`}
+                  onClick={() => setParamAttachMode('reuse')}
+                >
+                  Reuse library
+                </button>
+              </div>
+
+              {paramAttachMode === 'reuse' ? (
+                <>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Attach a shared parameter already defined for this path version (query, header, cookie, or path).
+                  </p>
+                  <ReuseSearchCombobox
+                    aria-label="Shared parameter to attach"
+                    items={unlinkedSharedParams.map((p) => ({
+                      id: p.id,
+                      label: p.name,
+                      description: `${p.in_location}${p.summary ? ` · ${p.summary}` : ''}`,
+                    }))}
+                    value={reuseParamId}
+                    onValueChange={setReuseParamId}
+                    placeholder="Search parameters…"
+                    searchPlaceholder="Filter by name or location…"
+                    emptyText="No unlinked parameters. Create one under “Create new” or unlink from another operation."
+                    triggerClassName="h-9 text-sm"
+                  />
+                </>
+              ) : (
+                <>
               {/* Parameter Name */}
               <div>
                 <Label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -1194,6 +1471,8 @@ export default function OperationPropertiesPanel({
                   placeholder="Detailed description..."
                 />
               </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -1201,14 +1480,25 @@ export default function OperationPropertiesPanel({
           <div
             className={`p-4 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}
           >
-            <Button
-              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white disabled:opacity-60 disabled:cursor-not-allowed"
-              onClick={handleSaveParameter}
-              disabled={isSaving || !newParamName.trim()}
-            >
-              <Save className="w-4 h-4" />
-              {isSaving ? 'Saving...' : 'Save'}
-            </Button>
+            {paramAttachMode === 'reuse' ? (
+              <Button
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={handleLinkExistingParameter}
+                disabled={isSaving || !reuseParamId}
+              >
+                <Save className="w-4 h-4" />
+                {isSaving ? 'Attaching…' : 'Attach to operation'}
+              </Button>
+            ) : (
+              <Button
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={handleSaveParameter}
+                disabled={isSaving || !newParamName.trim()}
+              >
+                <Save className="w-4 h-4" />
+                {isSaving ? 'Saving...' : 'Save'}
+              </Button>
+            )}
           </div>
         </>
       ) : (
@@ -1514,7 +1804,12 @@ export default function OperationPropertiesPanel({
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => setViewMode('add-response')}
+                      onClick={() => {
+                        resetNewResponseForm();
+                        setResponseAttachMode('create');
+                        setReuseResponseId('');
+                        setViewMode('add-response');
+                      }}
                       className="text-indigo-600 dark:text-indigo-400 text-xs hover:bg-indigo-500/10"
                     >
                       <Plus className="w-4 h-4" />

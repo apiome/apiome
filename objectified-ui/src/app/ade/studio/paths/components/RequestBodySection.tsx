@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../../components/ui/Select';
+import ReuseSearchCombobox from './ReuseSearchCombobox';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../../../components/ui/Tabs';
 import { useDarkMode } from '../../../../hooks/useDarkMode';
 import { useDialog } from '../../../../components/providers/DialogProvider';
@@ -359,19 +360,19 @@ function ContentTypeEditor({
       {/* Reference Mode: Class Selector */}
       {isReference && (
         <div>
-          <Label className="text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1 block">Select Class</Label>
-          <Select value={content.class_id || ''} onValueChange={onClassChange}>
-            <SelectTrigger className="h-9 text-xs">
-              <SelectValue placeholder="Select a class" />
-            </SelectTrigger>
-            <SelectContent>
-              {classes.map((cls) => (
-                <SelectItem key={cls.id} value={cls.id} className="text-xs">
-                  {cls.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label className="text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1 block">
+            Reuse class ($ref)
+          </Label>
+          <ReuseSearchCombobox
+            aria-label="Select class for request body schema"
+            items={classes.map((cls) => ({ id: cls.id, label: cls.name }))}
+            value={content.class_id || ''}
+            onValueChange={onClassChange}
+            placeholder="Search classes…"
+            searchPlaceholder="Filter by name…"
+            emptyText="No classes match."
+            triggerClassName="h-9 text-xs"
+          />
           {content.class_id && (
             <Button
               type="button"
@@ -961,18 +962,18 @@ export default function RequestBodySection({
               {newContentSchemaType === 'reference' && (
                 <div className="mt-3">
                   <Label className="text-xs font-medium mb-1 block">Class</Label>
-                  <Select value={newContentClassId} onValueChange={setNewContentClassId}>
-                    <SelectTrigger className="h-9 text-sm mt-1">
-                      <SelectValue placeholder="Select a class" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classes.map((cls) => (
-                        <SelectItem key={cls.id} value={cls.id} className="text-xs">
-                          {cls.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="mt-1">
+                    <ReuseSearchCombobox
+                      aria-label="Class for new content type"
+                      items={classes.map((cls) => ({ id: cls.id, label: cls.name }))}
+                      value={newContentClassId}
+                      onValueChange={setNewContentClassId}
+                      placeholder="Search classes…"
+                      searchPlaceholder="Filter by name…"
+                      emptyText="No classes match."
+                      triggerClassName="h-9 text-sm"
+                    />
+                  </div>
                 </div>
               )}
 

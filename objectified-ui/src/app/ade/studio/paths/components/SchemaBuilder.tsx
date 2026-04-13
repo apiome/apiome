@@ -7,6 +7,7 @@ import { useStudio } from '../../StudioContext';
 import {
   getClassesWithPropertiesAndTags,
 } from '../../../../../../lib/db/helper';
+import ReuseSearchCombobox from './ReuseSearchCombobox';
 
 interface SchemaBuilderProps {
   value?: any; // Current schema value (can be $ref, type: object, etc.)
@@ -285,7 +286,7 @@ export default function SchemaBuilder({
         <div className="space-y-2">
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Select Class
+              Reuse class ($ref)
             </label>
             {isLoading ? (
               <div className="text-xs text-gray-500 dark:text-gray-400 py-2">Loading classes...</div>
@@ -294,22 +295,16 @@ export default function SchemaBuilder({
                 No classes available. Create classes in the main Studio editor.
               </div>
             ) : (
-              <select
+              <ReuseSearchCombobox
+                aria-label="Select class for schema reference"
+                items={classes.map((cls) => ({ id: cls.id, label: cls.name }))}
                 value={selectedClassId}
-                onChange={(e) => handleClassSelect(e.target.value)}
-                className={`w-full px-3 py-2 rounded-lg text-sm border ${
-                  isDark
-                    ? 'bg-gray-900 border-gray-600 text-gray-100'
-                    : 'bg-white border-gray-300 text-gray-900'
-                } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-              >
-                <option value="">-- Select a class --</option>
-                {classes.map((cls) => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name}
-                  </option>
-                ))}
-              </select>
+                onValueChange={(id) => handleClassSelect(id)}
+                placeholder="Search classes…"
+                searchPlaceholder="Filter by name…"
+                emptyText="No classes match."
+                triggerClassName="h-9 text-sm"
+              />
             )}
             {value?.$ref && !selectedClassId && classes.length > 0 && (
               <div className="mt-1 text-xs text-amber-600 dark:text-amber-400">
