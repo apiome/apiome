@@ -102,6 +102,7 @@ def test_compatibility_reports_breaking(mock_auth):
     data = r.json()
     assert data["overall"] == "breaking"
     assert any(f["rule"] == "schema_removed" for f in data["findings"])
+    assert data["ruleHits"].get("schema_removed", 0) >= 1
     assert data["breakingChangeDocumentationIssueUrl"].endswith("/issues/746")
     assert len(data["reportFingerprint"]) == 64
 

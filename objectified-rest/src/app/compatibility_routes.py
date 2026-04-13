@@ -4,13 +4,13 @@ Backward compatibility API: compare two schema revisions (versions.id) using gen
 
 from __future__ import annotations
 
-import hashlib
 import json
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from .auth import validate_authentication
+from .compatibility_engine import CompatibilityCheckEngine, compat_report_fingerprint
 from .database import db
 from .models import (
     CompatibilityCheckRequest,
@@ -20,11 +20,7 @@ from .models import (
 )
 from .openapi_generator import generate_openapi_spec
 from .revision_deprecation import warnings_for_revision
-from .schema_compatibility import (
-    BREAKING_DOC_ISSUE_URL,
-    CompatibilityRules,
-    analyze_schema_compatibility,
-)
+from .schema_compatibility import BREAKING_DOC_ISSUE_URL, CompatibilityRules
 
 
 router = APIRouter(prefix="/v1/versions", tags=["compatibility"])
@@ -88,28 +84,6 @@ def _openapi_for_revision(version: Dict[str, Any], tenant_slug: str, tenant_id: 
     )
 
 
-def _fingerprint(
-    overall: str,
-    finding_dicts: list,
-    deprecation_dicts: Optional[List[Dict[str, Any]]] = None,
-) -> str:
-    payload: Dict[str, Any] = {
-        "overall": overall,
-        "findings": sorted(
-            finding_dicts,
-            key=lambda x: (x.get("path", ""), x.get("rule", ""), x.get("id", "")),
-        ),
-    }
-    if deprecation_dicts:
-        payload["deprecationWarnings"] = sorted(
-            deprecation_dicts,
-            key=lambda x: (x.get("revisionId", ""), x.get("role", "")),
-        )
-    return hashlib.sha256(
-        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    ).hexdigest()
-
-
 @router.post("/{tenant_slug}/{project_id}/compatibility", response_model=CompatibilityCheckResponse)
 async def check_revision_compatibility(
     tenant_slug: str,
@@ -156,7 +130,8 @@ async def check_revision_compatibility(
     base_spec = _openapi_for_revision(base_ver, tenant_slug, tenant_id)
     head_spec = _openapi_for_revision(head_ver, tenant_slug, tenant_id)
 
-    overall, findings = analyze_schema_compatibility(base_spec, head_spec, rules)
+    result = CompatibilityCheckEngine.run(base_spec, head_spec, rules)
+    overall = result.overall
     finding_out = [
         CompatibilityFindingOut(
             id=f.id,
@@ -165,9 +140,10 @@ async def check_revision_compatibility(
             rule=f.rule,
             message=f.message,
         )
-        for f in findings
+        for f in result.findings
     ]
     finding_dicts = [f.model_dump(by_alias=True) for f in finding_out]
+    rule_hits_sorted = dict(sorted(result.rule_hits.items()))
 
     dep_out: List[RevisionDeprecationWarningOut] = []
     dep_out.extend(
@@ -188,7 +164,7 @@ async def check_revision_compatibility(
     )
 
     dep_dicts = [w.model_dump(by_alias=True) for w in dep_out]
-    fp = _fingerprint(overall, finding_dicts, dep_dicts or None)
+    fp = compat_report_fingerprint(overall, finding_dicts, dep_dicts or None)
 
     tenant_gate = _tenant_compat_gate(project)
     merge_blocked = bool(tenant_gate and overall != "safe")
@@ -202,6 +178,7 @@ async def check_revision_compatibility(
         base_revision_id=base_id,
         head_revision_id=head_id,
         findings=finding_out,
+        rule_hits=rule_hits_sorted,
         breaking_change_documentation_issue_url=doc_url,
         report_fingerprint=fp,
         tenant_compat_gate_active=tenant_gate,

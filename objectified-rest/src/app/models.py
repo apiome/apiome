@@ -1011,6 +1011,11 @@ class CompatibilityCheckResponse(BaseModel):
     base_revision_id: str = Field(serialization_alias="baseRevisionId")
     head_revision_id: str = Field(serialization_alias="headRevisionId")
     findings: List[CompatibilityFindingOut]
+    rule_hits: Dict[str, int] = Field(
+        default_factory=dict,
+        serialization_alias="ruleHits",
+        description="Count of findings per rule id (deterministic classification; #2589).",
+    )
     breaking_change_documentation_issue_url: Optional[str] = Field(
         default=None,
         serialization_alias="breakingChangeDocumentationIssueUrl",

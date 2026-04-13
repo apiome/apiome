@@ -617,6 +617,8 @@ Add compatibility check pass that classifies candidate changes as breaking or no
 - Commit/merge pipelines can call compatibility checks synchronously.
 - Results are persisted for later audit/display.
 
+**Status:** Shipped — **`CompatibilityCheckEngine`** (`objectified-rest/src/app/compatibility_engine.py`) wraps **`analyze_schema_compatibility`** with **`ruleHits`** (per-rule counts) and stable fingerprints; **`POST .../compatibility`** includes **`ruleHits`**; successful **push** (with parent) and **merge** append **`workflow_audit`** rows with **`action`** **`schema.compatibility`** and **`detail.pipeline`** **`version.push`** / **`version.merge`** (**#2589**).
+
 ---
 
 ## P2-08: Compatibility Report UI Panel + Override Reason
