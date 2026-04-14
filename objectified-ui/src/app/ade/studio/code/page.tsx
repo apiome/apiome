@@ -11,7 +11,7 @@ import YAML from 'yaml';
 import { useStudio } from '../StudioContext';
 import { generateOpenApiSpec } from '../../../utils/openapi';
 import { STUDIO_EXPORT_OPENAPI_VERSION } from '../../../utils/openapi-versions';
-import { validateOpenAPIExport } from '../../../utils/openapi-export-validation';
+import { validateOpenAPIExport } from '../../../utils/openapi-export-validation-server';
 import type { OpenAPIExportValidationResult } from '../../../utils/openapi-export-validation';
 import {
   AlertDialog,

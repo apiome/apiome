@@ -21,7 +21,7 @@ export interface OpenAPIExportValidationResult {
   validatorNote: string;
 }
 
-const VALIDATOR_NOTE =
+export const VALIDATOR_NOTE =
   'Document structure is validated with @seriousme/openapi-schema-validator against the OpenAPI 3.2 JSON Schema, plus Objectified checks for operationId, path parameters, and local $ref targets.';
 
 const HTTP_METHODS = new Set([
@@ -50,7 +50,7 @@ function pathTemplateParamNames(pathKey: string): string[] {
   return out;
 }
 
-function isPlainObject(v: unknown): v is Record<string, unknown> {
+export function isPlainObject(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === 'object' && !Array.isArray(v);
 }
 
@@ -105,7 +105,7 @@ function localPointerExists(doc: Record<string, unknown>, pointer: string): bool
   return node !== undefined;
 }
 
-function formatSchemaValidatorErrors(errors: unknown): OpenAPIExportIssue[] {
+export function formatSchemaValidatorErrors(errors: unknown): OpenAPIExportIssue[] {
   if (errors === undefined || errors === null) return [];
   if (Array.isArray(errors)) {
     return errors.map((e: unknown, i: number) => {
@@ -253,48 +253,6 @@ export function validateOpenAPISemantics(spec: Record<string, unknown>): OpenAPI
 }
 
 /**
- * Full export validation: JSON Schema (OAS 3.2) + semantics. Intended for browser (dynamic import).
+ * Full validation (`validateOpenAPIExport`) runs in a **server action** — the schema validator uses Node (`fs`) and cannot ship to the browser bundle.
+ * @see `./openapi-export-validation-server`
  */
-export async function validateOpenAPIExport(spec: unknown): Promise<OpenAPIExportValidationResult> {
-  const errors: OpenAPIExportIssue[] = [];
-  const warnings: OpenAPIExportIssue[] = [];
-  let schemaValidationCompleted = false;
-
-  if (!isPlainObject(spec)) {
-    return {
-      errors: [{ severity: 'error', message: 'Specification must be a JSON object.' }],
-      warnings: [],
-      schemaValidationCompleted: false,
-      validatorNote: VALIDATOR_NOTE,
-    };
-  }
-
-  const semantic = validateOpenAPISemantics(spec);
-  for (const i of semantic) {
-    if (i.severity === 'error') errors.push(i);
-    else warnings.push(i);
-  }
-
-  try {
-    const { Validator } = await import('@seriousme/openapi-schema-validator');
-    const validator = new Validator();
-    const res = await validator.validate(spec as Record<string, unknown>);
-    schemaValidationCompleted = true;
-    if (!res.valid && res.errors !== undefined) {
-      errors.push(...formatSchemaValidatorErrors(res.errors));
-    }
-  } catch (e) {
-    errors.push({
-      severity: 'error',
-      message: `OpenAPI schema validation could not run: ${e instanceof Error ? e.message : String(e)}. Export is blocked until validation succeeds.`,
-      path: '#',
-    });
-  }
-
-  return {
-    errors,
-    warnings,
-    schemaValidationCompleted,
-    validatorNote: VALIDATOR_NOTE,
-  };
-}
