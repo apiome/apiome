@@ -432,9 +432,9 @@ export default function OperationPropertiesPanel({
     setNewParamRequired(unlinkedPathParams.length > 0);
   };
 
-  const resetNewResponseForm = () => {
-    setNewResponseStatusCode('200');
-    setNewResponseDescription(getHttpStatusDescription('200'));
+  const resetNewResponseForm = (defaultStatusCode: string = '200') => {
+    setNewResponseStatusCode(defaultStatusCode);
+    setNewResponseDescription(getHttpStatusDescription(defaultStatusCode));
     setNewResponseAutoFillDescription(true);
     setNewResponseSchemaType('object');
     setNewResponseArrayItemType('string');
@@ -1767,8 +1767,8 @@ export default function OperationPropertiesPanel({
                 )}
               </div>
 
-              {/* Request body: shared_path_request_body + content rows + operation link (#2648) */}
-              {['POST', 'PUT', 'PATCH'].includes(operation) && operationId && versionPathId && (
+              {/* Request body: shared_path_request_body + content rows + operation link (#2648); OPTIONS optional (#2653 warn-only vs export) */}
+              {['POST', 'PUT', 'PATCH', 'OPTIONS'].includes(operation) && operationId && versionPathId && (
                 <div className={`mt-4 pt-4 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
                   <RequestBodySection
                     operationId={operationId}
@@ -1805,7 +1805,7 @@ export default function OperationPropertiesPanel({
                       size="sm"
                       variant="ghost"
                       onClick={() => {
-                        resetNewResponseForm();
+                        resetNewResponseForm(operation === 'OPTIONS' ? '204' : '200');
                         setResponseAttachMode('create');
                         setReuseResponseId('');
                         setViewMode('add-response');
