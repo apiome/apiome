@@ -18,7 +18,7 @@ const config: Config = {
   transform: {
     '^.+\\.[tj]sx?$': ['ts-jest', {
       tsconfig: {
-        jsx: 'react',
+        jsx: 'react-jsx',
         allowJs: true,
         esModuleInterop: true,
         allowSyntheticDefaultImports: true,
