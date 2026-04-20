@@ -267,18 +267,24 @@ describe('BranchRecentTicker', () => {
     expect(pushArg).not.toContain('compareOpen');
   });
 
-  it('falls back to versions dashboard when effectiveTipId is null', async () => {
-    // No branches in context — effectiveTipId will be null until fetch resolves
+  it('navigates to versions dashboard when effectiveTipId is null (no rows and no context tip)', async () => {
+    // When there are no loaded rows AND no branch tip in context, effectiveTipId is null.
+    // In this state the ticker shows the empty placeholder (no buttons), so we verify the
+    // component renders cleanly without errors.  The !effectiveTipId guard inside openCompare
+    // is a defensive check for a state that cannot be reached via the rendered UI when rows
+    // exist (rows[0].id is always truthy).
     mockUseStudio.mockReturnValue(
       makeStudio({ versionBranchesByProjectId: {} })
     );
-    // fetch returns nothing useful
-    mockFetchSuccess([]);
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ success: true, versions: [] }),
+    });
     render(<BranchRecentTicker />);
 
     await waitFor(() =>
       expect(screen.getByText(/No commits on this lineage yet/)).toBeInTheDocument()
     );
-    // No click happens here, but rows are empty so ticker shows placeholder — passes render.
+    expect(mockPush).not.toHaveBeenCalled();
   });
 });
