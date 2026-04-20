@@ -5,6 +5,7 @@ We continue to improve the platform based on your feedback with improvements and
 ---
 
 ## Git-like Functionality
+- Added a **recent-activity ticker** under the canvas toolbar (when a named branch is active): the last three commits on that branch’s first-parent lineage, polled every 30s while the tab is visible, with each row opening Compare Version Schemas (revision vs branch tip, or parent→tip for the tip row) on the Versions dashboard.
 - Default branch promotion and first-commit `main` bootstrap now turn on merge-path protection automatically (unless explicitly overridden); promotions are recorded in workflow audit as `version.default_branch_promoted`.
 - Added default-branch foundations for git-like workflows: branch rows now support a single project default (`isDefault`) with promotion support and first-commit auto-bootstrap of `main`.
 - Added branch divergence REST support with merge-base, ahead/behind counts, commit samples, and strong ETag-based 304 responses for stable canvas sync indicators.

@@ -9,7 +9,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import jwt from 'jsonwebtoken';
 import { authOptions } from '../auth/[...nextauth]/route';
-import { getTenantById } from '@lib/db/helper';
+import { getTenantById, listVersionBranches } from '@lib/db/helper';
+import {
+  collectRecentRevisionsOnLineage,
+  type VersionLineageRow,
+} from '@/app/ade/studio/lib/studio-branch-status-recent';
 
 const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
 
@@ -126,6 +130,8 @@ function nextJsonFromVersionCreateError(
  * - creatorId: Optional creator/user filter.
  * - createdAfter: Optional lower bound for creation timestamp.
  * - createdBefore: Optional upper bound for creation timestamp.
+ * - branchId: When set with the project version list, restrict to the first-parent chain from
+ *   that named branch's tip (GLI-09). Requires `limit` (defaults to 3; max 25).
  */
 export async function GET(request: NextRequest) {
   try {
@@ -156,6 +162,11 @@ export async function GET(request: NextRequest) {
     const creatorId = searchParams.get('creatorId');
     const createdAfter = searchParams.get('createdAfter');
     const createdBefore = searchParams.get('createdBefore');
+    const branchId = searchParams.get('branchId')?.trim() ?? '';
+    const limitRaw = searchParams.get('limit');
+    const lineageLimit = branchId
+      ? Math.min(25, Math.max(1, Number.parseInt(limitRaw || '3', 10) || 3))
+      : null;
 
     if (!projectId) {
       return NextResponse.json(
@@ -203,6 +214,37 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
+    }
+
+    if (branchId && lineageLimit !== null) {
+      if (!Array.isArray(data)) {
+        return NextResponse.json(
+          { success: false, error: 'Unexpected versions payload' },
+          { status: 500 }
+        );
+      }
+      const rawBranches = await listVersionBranches(projectId, tenantId);
+      const branchPayload = JSON.parse(rawBranches) as {
+        success?: boolean;
+        branches?: Array<{ id: string; tip_version_id: string }>;
+        error?: string;
+      };
+      if (!branchPayload.success || !Array.isArray(branchPayload.branches)) {
+        return NextResponse.json(
+          { success: false, error: branchPayload.error || 'Failed to resolve branches' },
+          { status: 500 }
+        );
+      }
+      const branchRow = branchPayload.branches.find((b) => String(b.id) === branchId);
+      if (!branchRow?.tip_version_id?.trim()) {
+        return NextResponse.json({ success: false, error: 'Branch not found' }, { status: 404 });
+      }
+      const lineage = collectRecentRevisionsOnLineage(
+        data as VersionLineageRow[],
+        branchRow.tip_version_id.trim(),
+        lineageLimit
+      );
+      return NextResponse.json({ success: true, versions: lineage });
     }
 
     return NextResponse.json({ success: true, versions: data });

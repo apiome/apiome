@@ -222,6 +222,7 @@ import SchemaVersionScoringPanel from '../components/SchemaVersionScoringPanel';
 import { DesignerCanvasGitMenu } from '../components/DesignerCanvasGitMenu';
 import { BranchPickerChip } from '../components/BranchPickerChip';
 import { BranchDivergenceChip } from '../components/BranchDivergenceChip';
+import { BranchRecentTicker } from '../components/BranchRecentTicker';
 import { CanvasCommitButton, type CanvasCommitButtonHandle } from '../components/CanvasCommitButton';
 import { useStudioBranchSync } from '../lib/use-studio-branch-sync';
 import { useSearchHistory } from '../hooks/useSearchHistory';
@@ -9414,7 +9415,8 @@ const StudioContent = () => {
 
             {/* Branch, layout, and export — one toolbar (top-right) */}
             {!canvasPresentationActive && (
-            <Panel position="top-right" className="flex items-center gap-1.5 z-[1002] border-0 bg-transparent p-0 shadow-none">
+            <Panel position="top-right" className="flex flex-col items-end gap-1 z-[1002] border-0 bg-transparent p-0 shadow-none">
+              <div className="flex items-center gap-1.5">
               <BranchPickerChip
                 versions={versions}
                 setVersions={setVersions}
@@ -10178,6 +10180,8 @@ const StudioContent = () => {
               >
                 <Download className="w-5 h-5" />
               </button>
+              </div>
+              <BranchRecentTicker />
             </Panel>
             )}
 
