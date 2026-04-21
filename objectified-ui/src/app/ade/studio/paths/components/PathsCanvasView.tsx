@@ -421,6 +421,7 @@ function PathsCanvasInner({
     selectedVersionId,
     registerPathsCanvasFlush,
     setFocusPathsCanvasNodeFn,
+    setCanvasViewport,
   } = useStudio();
 
   const { alert: alertDialog, confirm: confirmDialog } = useDialog();
@@ -4520,7 +4521,10 @@ function PathsCanvasInner({
         snapToGrid={snapToGrid}
         snapGrid={[gridSize, gridSize]}
         fitView={false}
-        onMoveEnd={schedulePersistPathsCanvas}
+        onMoveEnd={(_, viewport) => {
+          schedulePersistPathsCanvas();
+          setCanvasViewport(viewport);
+        }}
         attributionPosition="bottom-left"
         className={isDark ? 'bg-gray-900' : ''}
         nodesDraggable={true}

@@ -276,7 +276,8 @@ const StudioSideNav: React.FC<StudioSideNavProps> = ({
     flexShrink: 0,
     boxSizing: 'border-box' as const,
     top: 102,
-    height: 'calc(100vh - 102px)',
+    /* 102px = top app bar + studio subheader; 22px = StudioFooterBar reserve. */
+    height: 'calc(100vh - 124px)',
     borderRight: 'none',
     background: isDark
       ? 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)'

@@ -23,6 +23,7 @@ import { deleteClassWithSession } from '../../../../lib/api/rest-client';
 import * as Dialog from '@radix-ui/react-dialog';
 import { ADE_SUBHEADER_RESERVE_PX } from '../constants/subheader-layout';
 import { GitCommandPalette } from './components/GitCommandPalette';
+import StudioFooterBar from './components/StudioFooterBar';
 
 // Helper function to check permissions
 const checkPermissions = async (condition: boolean, message: string, alertDialog: any) => {
@@ -435,12 +436,15 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
         />
       )}
 
-      {/* Sidebar and main content area - with padding for fixed header */}
+      {/* Sidebar and main content area - with padding for fixed header.
+          The footer renders as a sibling in this flex column, so flex:1 here
+          naturally yields its height without explicit subtraction. */}
       <div
         style={{
           display: "flex",
           flex: 1,
           overflow: "hidden",
+          minHeight: 0,
           marginTop: canvasPresentationMode ? 0 : `${ADE_SUBHEADER_RESERVE_PX}px`,
         }}
       >
@@ -586,6 +590,10 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
       />
 
       <GitCommandPalette />
+
+      {/* Programmatic state of the canvas — pinned to the bottom of the studio layout.
+          Hidden in presentation mode for chrome consistency with StudioHeader. */}
+      {!canvasPresentationMode && <StudioFooterBar />}
     </div>
   );
 }

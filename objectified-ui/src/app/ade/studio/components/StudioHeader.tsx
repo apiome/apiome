@@ -105,6 +105,8 @@ export default function StudioHeader({ onProjectTagsLoaded }: StudioHeaderProps)
     flushPathsCanvas,
     pathsQualityRevision,
     focusPathsCanvasNodeFn,
+    setSelectedProjectName,
+    setSelectedVersionLabel,
   } = useStudio();
 
   const { conflict, clearPushConflict } = usePushConflictBanner();
@@ -233,6 +235,25 @@ export default function StudioHeader({ onProjectTagsLoaded }: StudioHeaderProps)
     () => Boolean(selectedVersion && isRevisionDeprecated(selectedVersion.metadata)),
     [selectedVersion]
   );
+
+  /** Publish resolved project/version labels to context so the studio footer bar
+      can render them without re-fetching projects/versions. */
+  React.useEffect(() => {
+    if (!selectedProjectId) {
+      setSelectedProjectName(null);
+      return;
+    }
+    const project = projects.find((p) => String(p.id) === String(selectedProjectId));
+    setSelectedProjectName(project?.name ?? null);
+  }, [selectedProjectId, projects, setSelectedProjectName]);
+
+  React.useEffect(() => {
+    if (!selectedVersion) {
+      setSelectedVersionLabel(null);
+      return;
+    }
+    setSelectedVersionLabel(formatVersionSelectorLabel(selectedVersion));
+  }, [selectedVersion, setSelectedVersionLabel]);
 
   React.useEffect(() => {
     if (!selectedVersionDeprecated) {

@@ -372,6 +372,7 @@ const StudioContent = () => {
     setSelectedBranchId,
     versionBranchesByProjectId,
     setVersionBranchesForProject,
+    setCanvasViewport,
   } = useStudio();
 
   useStudioBranchSync({
@@ -8271,7 +8272,10 @@ const StudioContent = () => {
               onDragOver={handleCanvasDragOver}
               onDrop={handleCanvasDrop}
               onMove={(_, viewport) => setZoomLevel(viewport.zoom)}
-              onMoveEnd={() => setAutoSavePending(true)}
+              onMoveEnd={(_, viewport) => {
+                setAutoSavePending(true);
+                setCanvasViewport(viewport);
+              }}
               snapToGrid={snapToGrid}
               snapGrid={[gridSize, gridSize]}
               fitView

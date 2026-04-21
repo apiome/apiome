@@ -210,6 +210,15 @@ interface StudioContextType {
   /** Canvas / studio edits not yet persisted (#2569). */
   syncLocalDirty: boolean;
   setSyncLocalDirty: (value: boolean) => void;
+  /** Live React Flow viewport published by canvas surfaces; consumed by the studio footer bar. */
+  canvasViewport: { zoom: number; x: number; y: number };
+  setCanvasViewport: (vp: { zoom: number; x: number; y: number }) => void;
+  /** Resolved display label for the selected project, published by StudioHeader once projects load. */
+  selectedProjectName: string | null;
+  setSelectedProjectName: (name: string | null) => void;
+  /** Resolved display label for the selected version (e.g. "v1.2.3"), published by StudioHeader. */
+  selectedVersionLabel: string | null;
+  setSelectedVersionLabel: (label: string | null) => void;
   /** Paths editor: canvas vs code (sessionStorage `studio.paths.viewMode`; #2640 P-01). */
   pathsViewMode: 'canvas' | 'code';
   setPathsViewMode: (mode: 'canvas' | 'code') => void;
@@ -378,6 +387,18 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const [schemaQualityScore, setSchemaQualityScore] = useState<number | null>(null);
   const [schemaQualityDetail, setSchemaQualityDetail] = useState<OverallSchemaQualityDetail | null>(null);
   const [syncLocalDirty, setSyncLocalDirty] = useState(false);
+  const [canvasViewport, setCanvasViewportState] = useState<{ zoom: number; x: number; y: number }>({
+    zoom: 1,
+    x: 0,
+    y: 0,
+  });
+  const setCanvasViewport = useCallback((vp: { zoom: number; x: number; y: number }) => {
+    setCanvasViewportState((prev) =>
+      prev.zoom === vp.zoom && prev.x === vp.x && prev.y === vp.y ? prev : vp
+    );
+  }, []);
+  const [selectedProjectName, setSelectedProjectName] = useState<string | null>(null);
+  const [selectedVersionLabel, setSelectedVersionLabel] = useState<string | null>(null);
 
   const [pathsViewMode, setPathsViewModeState] = useState<'canvas' | 'code'>(() => {
     if (typeof window === 'undefined') return 'canvas';
@@ -682,6 +703,12 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       setSchemaQualityDetail,
       syncLocalDirty,
       setSyncLocalDirty,
+      canvasViewport,
+      setCanvasViewport,
+      selectedProjectName,
+      setSelectedProjectName,
+      selectedVersionLabel,
+      setSelectedVersionLabel,
       pathsViewMode,
       setPathsViewMode,
       registerPathsCanvasFlush,

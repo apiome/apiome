@@ -22,6 +22,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Branch workflow is its own button in the canvas now, and compacted to fit most functionality that's in Versions now.
 - Compacted the trending view in the projects page in the dashboard.
 - Moved the add, import, and template buttons to the bottom of the classes and properties sidebar list so they don't obscure the lists.
+- Added bottom header to show status of the canvas editor screens.
 
 ---
 
