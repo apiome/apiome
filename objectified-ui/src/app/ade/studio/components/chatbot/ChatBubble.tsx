@@ -152,18 +152,19 @@ function AssistantActions({
           />
         </>
       )}
-      {specs.map((spec, index) => (
-        <button
-          key={`spec-${index}`}
-          type="button"
-          onClick={() => onImportSpec?.(spec)}
-          data-testid="studio-ai-chat-import-spec"
-          className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 transition-colors hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 dark:border-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200 dark:hover:bg-indigo-900/60"
-        >
-          <Download className="h-3.5 w-3.5" />
-          {specs.length > 1 ? `Import spec ${index + 1}` : 'Import OpenAPI spec'}
-        </button>
-      ))}
+      {onImportSpec &&
+        specs.map((spec, index) => (
+          <button
+            key={`spec-${index}`}
+            type="button"
+            onClick={() => onImportSpec(spec)}
+            data-testid={`studio-ai-chat-import-spec-${index}`}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 transition-colors hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 dark:border-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200 dark:hover:bg-indigo-900/60"
+          >
+            <Download className="h-3.5 w-3.5" />
+            {specs.length > 1 ? `Import spec ${index + 1}` : 'Import OpenAPI spec'}
+          </button>
+        ))}
     </div>
   );
 }

@@ -80,9 +80,8 @@ export function ChatConversation({
       try {
         reply = await responder({ messages: transcript, prompt, isRegenerate });
       } catch (error) {
-        reply = `Sorry — the assistant could not respond. (${
-          error instanceof Error ? error.message : 'unknown error'
-        })`;
+        console.error('Chat assistant failed to respond', error);
+        reply = 'Sorry — the assistant could not respond. Please try again.';
       }
 
       // Drop the response if a newer turn started while we were waiting.

@@ -41,8 +41,9 @@ This outlines the planned features for integrating AI capabilities into Objectif
     - ✅ Thumbs up/down for feedback
     - ✅ OpenAPI Specifications are parsed using ```json``` markers, click button to view/accept import
 
-| Ticket | Feature Description              |
-|--------|----------------------------------|
+| Ticket | Feature Description                               |
+|--------|---------------------------------------------------|
+| #258   | Studio AI chatbot interface guidelines ✅ |
 
 **Conversation Features** 📋 PLANNED
 - 📋 **Conversation History**:

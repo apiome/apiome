@@ -150,7 +150,7 @@ describe('ChatConversation', () => {
     fireEvent.click(screen.getByTestId('studio-ai-chat-send'));
 
     await waitFor(() => {
-      expect(screen.getByText(/network down/i)).toBeInTheDocument();
+      expect(screen.getByText(/the assistant could not respond/i)).toBeInTheDocument();
     });
     expect(screen.getByTestId('studio-ai-chat-input')).not.toBeDisabled();
   });
@@ -176,7 +176,7 @@ describe('ChatConversation', () => {
     fireEvent.change(screen.getByTestId('studio-ai-chat-input'), { target: { value: 'spec' } });
     fireEvent.click(screen.getByTestId('studio-ai-chat-send'));
 
-    const importButton = await screen.findByTestId('studio-ai-chat-import-spec');
+    const importButton = await screen.findByTestId('studio-ai-chat-import-spec-0');
     fireEvent.click(importButton);
     expect(onImportSpec).toHaveBeenCalledTimes(1);
     expect(onImportSpec.mock.calls[0][0].version).toBe('3.1.0');
