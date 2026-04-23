@@ -31,6 +31,8 @@ export type {
   ChatStudioProperty,
   ChatStudioVersion,
 } from './chat-context';
+export { ConversationHistoryPanel } from './ConversationHistoryPanel';
+export type { ConversationHistoryPanelProps } from './ConversationHistoryPanel';
 export { createDemoChatResponder } from './demo-responder';
 export {
   detectOpenApiSpecs,
@@ -50,4 +52,22 @@ export type {
   ChatHistorySummary,
   ChatRefinementOp,
 } from './conversation-history';
+export {
+  buildStoredConversation,
+  CHAT_HISTORY_MAX_CONVERSATIONS,
+  CHAT_HISTORY_STORAGE_KEY,
+  CHAT_HISTORY_TITLE_CHAR_CAP,
+  createConversationStore,
+  createLocalStorageConversationStorage,
+  createMemoryConversationStorage,
+  deriveConversationTitle,
+  exportConversationToMarkdown,
+  exportConversationsToMarkdown,
+} from './conversation-store';
+export type {
+  ConversationStorage,
+  ConversationStore,
+  StoredConversation,
+  StoredConversationScope,
+} from './conversation-store';
 export type { ChatFeedback, ChatMessage, ChatRole, ChatSendContext, ChatSendFn } from './types';

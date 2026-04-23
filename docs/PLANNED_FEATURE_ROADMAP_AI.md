@@ -24,12 +24,12 @@ This outlines the planned features for integrating AI capabilities into Objectif
 ### Studio AI Chatbot
 
 **Conversation Features** 📋 PLANNED
-- 📋 **Conversation History**:
-    - 📋 Persist conversations per project/version
-    - 📋 Browse past conversations
-    - 📋 Search conversation history
-    - 📋 Export conversations as markdown
-    - 📋 Clear conversation option
+- ✅ **Conversation History** (#261):
+    - ✅ Persist conversations per project/version
+    - ✅ Browse past conversations
+    - ✅ Search conversation history
+    - ✅ Export conversations as markdown
+    - ✅ Clear conversation option
 - ✅ **Context Awareness** (#259):
     - ✅ AI knows current project, version, classes
     - ✅ AI can reference existing schemas in responses
@@ -46,7 +46,6 @@ This outlines the planned features for integrating AI capabilities into Objectif
 
 | Ticket | Feature Description                                |
 |--------|----------------------------------------------------|
-| #261   | AI Conversation history actions                    |
 | #262   | Install guardrails.ai server                       |
 | #263   | Add guardrails to prevent sensitive data exposure  |
 | #264   | Add guardrails to prevent further sensitive issues |

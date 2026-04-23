@@ -1,19 +1,29 @@
 'use client';
 
 import * as React from 'react';
-import { Sparkles } from 'lucide-react';
+import { Download, History, Plus, Sparkles, Trash2 } from 'lucide-react';
 
 import { ChatBubble } from './ChatBubble';
 import { ChatComposer } from './ChatComposer';
 import { ChatContextChip } from './ChatContextChip';
 import type { ChatStudioContext } from './chat-context';
 import { isChatStudioContextEmpty } from './chat-context';
+import { ConversationHistoryPanel } from './ConversationHistoryPanel';
+import {
+  buildStoredConversation,
+  createConversationStore,
+  createLocalStorageConversationStorage,
+  exportConversationToMarkdown,
+  type ConversationStore,
+  type StoredConversation,
+  type StoredConversationScope,
+} from './conversation-store';
 import { createDemoChatResponder } from './demo-responder';
 import type { DetectedOpenApiSpec } from './openapi-detection';
 import type { ChatFeedback, ChatMessage, ChatSendFn } from './types';
 
 /**
- * Studio AI chat conversation surface (#258, #259).
+ * Studio AI chat conversation surface (#258, #259, #260, #261).
  *
  * Owns the message transcript, scroll behaviour, and request lifecycle for
  * the chatbot panel. Stateless from the caller's perspective: pass an
@@ -26,6 +36,9 @@ import type { ChatFeedback, ChatMessage, ChatSendFn } from './types';
  *   - When a `studioContext` snapshot is provided (#259), each send captures
  *     the snapshot at that moment and forwards it to the responder, and a
  *     small "Sharing context" chip lets the user inspect what is being sent
+ *   - Conversations are auto-persisted per project / version (#261), with a
+ *     toolbar for new / history / export / clear and a browse + search
+ *     surface tucked behind the history button
  */
 export interface ChatConversationProps {
   /** Adapter invoked to produce assistant replies. Defaults to the demo responder. */
@@ -43,6 +56,28 @@ export interface ChatConversationProps {
    * and current canvas selection.
    */
   studioContext?: ChatStudioContext;
+  /**
+   * Optional persistence backend (#261). Defaults to a localStorage-backed
+   * store. Tests inject a memory-backed store to assert persistence
+   * behaviour without touching the DOM.
+   */
+  conversationStore?: ConversationStore;
+  /**
+   * Restore the most recent persisted conversation in the active scope on
+   * mount. Defaults to `true`. Tests opt out for deterministic empty-state
+   * runs.
+   */
+  restoreLastConversation?: boolean;
+  /**
+   * Confirmation hook for destructive actions (clear, clear-all). Defaults
+   * to `window.confirm` when available. Returning `false` aborts the action.
+   */
+  confirmAction?: (message: string) => boolean;
+  /**
+   * Override how exported markdown is delivered. Defaults to triggering a
+   * browser download. Tests inject a spy to assert the markdown content.
+   */
+  onExportConversation?: (input: { filename: string; markdown: string }) => void;
 }
 
 const PROMPT_SUGGESTIONS: readonly string[] = [
@@ -57,25 +92,97 @@ export function ChatConversation({
   initialMessages,
   emptyStateMessage,
   studioContext,
+  conversationStore,
+  restoreLastConversation = true,
+  confirmAction,
+  onExportConversation,
 }: ChatConversationProps) {
   const responder = React.useMemo(() => onSendMessage ?? createDemoChatResponder(), [onSendMessage]);
+  const store = React.useMemo<ConversationStore>(
+    () => conversationStore ?? createConversationStore(createLocalStorageConversationStorage()),
+    [conversationStore],
+  );
+  const scope = React.useMemo<StoredConversationScope>(
+    () => ({
+      projectId: studioContext?.project?.id ?? null,
+      versionId: studioContext?.version?.id ?? null,
+    }),
+    [studioContext?.project?.id, studioContext?.version?.id],
+  );
+
   const [messages, setMessages] = React.useState<ChatMessage[]>(() => initialMessages ?? []);
   const [isBusy, setIsBusy] = React.useState(false);
+  const [view, setView] = React.useState<'chat' | 'history'>('chat');
+  const [activeId, setActiveId] = React.useState<string | null>(null);
+  const [activeCreatedAt, setActiveCreatedAt] = React.useState<number | null>(null);
+  const [historyVersion, bumpHistoryVersion] = React.useReducer((n: number) => n + 1, 0);
+
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const requestIdRef = React.useRef(0);
-  // Hold the current snapshot in a ref so each send captures the latest state
-  // without re-creating the send callback on every studio change (which would
-  // thrash effects in the composer / message list).
   const studioContextRef = React.useRef<ChatStudioContext | undefined>(studioContext);
+  const lastRestoreScopeRef = React.useRef<string | null>(null);
+  // Set to true only by user-originated transcript changes (send / regenerate).
+  // Cleared by the persist effect after saving, and reset to false whenever
+  // messages are loaded from the store (restore / open-from-history) so we
+  // never re-persist a conversation that already matches what is stored.
+  const pendingPersistRef = React.useRef(false);
   React.useEffect(() => {
     studioContextRef.current = studioContext;
   }, [studioContext]);
 
   const hasStudioContext = !!studioContext && !isChatStudioContextEmpty(studioContext);
 
+  // Restore the most recent conversation when the scope changes.
+  React.useEffect(() => {
+    if (!restoreLastConversation) return;
+    if (initialMessages && initialMessages.length > 0) return;
+    const key = scopeKey(scope);
+    if (lastRestoreScopeRef.current === key) return;
+    lastRestoreScopeRef.current = key;
+    // Any pending persist from the previous scope is no longer valid — the
+    // messages it refers to belong to the old scope and must not be saved
+    // under the new one.
+    pendingPersistRef.current = false;
+    const latest = store.list(scope)[0];
+    if (latest) {
+      setMessages(latest.messages);
+      setActiveId(latest.id);
+      setActiveCreatedAt(latest.createdAt);
+    } else {
+      setMessages([]);
+      setActiveId(null);
+      setActiveCreatedAt(null);
+    }
+  }, [restoreLastConversation, initialMessages, scope, store]);
+
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages]);
+
+  // Auto-persist whenever the transcript settles (no pending turns).
+  // Guard: only run when the change was user-originated (send / regenerate),
+  // not when messages were loaded from the store (restore / open-from-history).
+  // This prevents unnecessary `updatedAt` rewrites that would reorder history
+  // and avoids writing the old transcript under a newly-switched scope.
+  React.useEffect(() => {
+    if (!pendingPersistRef.current) return;
+    if (messages.length === 0) return;
+    if (messages.some((m) => m.pending)) return;
+    if (!messages.some((m) => m.role === 'user')) return;
+    pendingPersistRef.current = false;
+    const conversation = buildStoredConversation({
+      id: activeId ?? undefined,
+      scope,
+      messages,
+      createdAt: activeCreatedAt ?? undefined,
+    });
+    store.save(conversation);
+    if (!activeId) {
+      setActiveId(conversation.id);
+      setActiveCreatedAt(conversation.createdAt);
+    }
+    bumpHistoryVersion();
+  }, [messages, scope, store, activeId, activeCreatedAt]);
 
   const lastAssistantId = React.useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -112,7 +219,6 @@ export function ChatConversation({
         reply = 'Sorry — the assistant could not respond. Please try again.';
       }
 
-      // Drop the response if a newer turn started while we were waiting.
       if (requestIdRef.current !== requestId) return;
 
       setMessages((current) =>
@@ -129,6 +235,7 @@ export function ChatConversation({
     (text: string) => {
       const userMessage: ChatMessage = { id: createId(), role: 'user', content: text };
       const nextTranscript = [...messages, userMessage];
+      pendingPersistRef.current = true;
       setMessages(nextTranscript);
       void runAssistantTurn(nextTranscript, text, false);
     },
@@ -137,7 +244,6 @@ export function ChatConversation({
 
   const handleRegenerate = React.useCallback(() => {
     if (isBusy) return;
-    // Find the last user prompt and the assistant reply that followed it.
     let lastUserIndex = -1;
     for (let i = messages.length - 1; i >= 0; i -= 1) {
       if (messages[i].role === 'user') {
@@ -148,6 +254,7 @@ export function ChatConversation({
     if (lastUserIndex === -1) return;
     const trimmedTranscript = messages.slice(0, lastUserIndex + 1);
     const prompt = messages[lastUserIndex].content;
+    pendingPersistRef.current = true;
     setMessages(trimmedTranscript);
     void runAssistantTurn(trimmedTranscript, prompt, true);
   }, [isBusy, messages, runAssistantTurn]);
@@ -165,42 +272,275 @@ export function ChatConversation({
     []
   );
 
+  const askConfirm = React.useCallback(
+    (message: string) => {
+      const fn = confirmAction ?? defaultConfirm;
+      try {
+        return fn(message);
+      } catch {
+        return true;
+      }
+    },
+    [confirmAction],
+  );
+
+  const resetActive = React.useCallback(() => {
+    setMessages([]);
+    setActiveId(null);
+    setActiveCreatedAt(null);
+  }, []);
+
+  const handleNewConversation = React.useCallback(() => {
+    requestIdRef.current += 1;
+    setIsBusy(false);
+    pendingPersistRef.current = false;
+    resetActive();
+    setView('chat');
+  }, [resetActive]);
+
+  const handleClearCurrent = React.useCallback(() => {
+    if (messages.length === 0) return;
+    if (!askConfirm('Clear the current conversation? It will be removed from your history.')) return;
+    requestIdRef.current += 1;
+    setIsBusy(false);
+    pendingPersistRef.current = false;
+    if (activeId) store.remove(activeId);
+    resetActive();
+    bumpHistoryVersion();
+    setView('chat');
+  }, [messages.length, askConfirm, activeId, store, resetActive]);
+
+  const handleExportCurrent = React.useCallback(() => {
+    if (messages.length === 0) return;
+    const conversation = buildStoredConversation({
+      id: activeId ?? undefined,
+      scope,
+      messages,
+      createdAt: activeCreatedAt ?? undefined,
+    });
+    const markdown = exportConversationToMarkdown(conversation);
+    const filename = buildExportFilename(conversation);
+    if (onExportConversation) {
+      onExportConversation({ filename, markdown });
+      return;
+    }
+    triggerMarkdownDownload(filename, markdown);
+  }, [messages, activeId, scope, activeCreatedAt, onExportConversation]);
+
+  const handleOpenHistory = React.useCallback(() => {
+    setView('history');
+  }, []);
+  const handleCloseHistory = React.useCallback(() => {
+    setView('chat');
+  }, []);
+
+  const handleOpenStored = React.useCallback(
+    (id: string) => {
+      const conversation = store.get(id);
+      if (!conversation) return;
+      // Loading from store — do not trigger an auto-persist for this change.
+      pendingPersistRef.current = false;
+      setMessages(conversation.messages);
+      setActiveId(conversation.id);
+      setActiveCreatedAt(conversation.createdAt);
+      setView('chat');
+    },
+    [store],
+  );
+
+  const handleDeleteStored = React.useCallback(
+    (id: string) => {
+      if (!askConfirm('Delete this conversation? This cannot be undone.')) return;
+      store.remove(id);
+      if (activeId === id) {
+        resetActive();
+      }
+      bumpHistoryVersion();
+    },
+    [store, activeId, resetActive, askConfirm],
+  );
+
+  const handleClearAllStored = React.useCallback(() => {
+    if (!askConfirm('Clear every saved conversation in this scope? This cannot be undone.')) return;
+    store.clear(scope);
+    resetActive();
+    bumpHistoryVersion();
+  }, [askConfirm, store, scope, resetActive]);
+
+  const storedConversations = React.useMemo(
+    () => store.list(scope),
+    // historyVersion lets us re-derive after save / remove / clear without
+    // relying on the store being a referentially-stable object across runs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, scope, historyVersion],
+  );
+
   const showEmptyState = messages.length === 0;
+  const hasMessages = messages.length > 0;
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="studio-ai-chat-conversation">
-      <div className="flex-1 overflow-y-auto px-4 py-3" data-testid="studio-ai-chat-messages">
-        {showEmptyState ? (
-          <EmptyState
-            message={emptyStateMessage}
-            suggestions={PROMPT_SUGGESTIONS}
-            onSelect={handleSend}
-          />
-        ) : (
-          <div className="space-y-4">
-            {messages.map((message) => (
-              <ChatBubble
-                key={message.id}
-                message={message}
-                isLatestAssistant={message.id === lastAssistantId}
-                onRegenerate={message.id === lastAssistantId ? handleRegenerate : undefined}
-                onFeedback={(feedback) => handleFeedback(message.id, feedback)}
-                onImportSpec={onImportSpec}
+      <ChatToolbar
+        onNew={handleNewConversation}
+        onHistory={handleOpenHistory}
+        onExport={handleExportCurrent}
+        onClear={handleClearCurrent}
+        canExport={hasMessages}
+        canClear={hasMessages}
+        historyCount={storedConversations.length}
+      />
+
+      {view === 'history' ? (
+        <ConversationHistoryPanel
+          conversations={storedConversations}
+          activeId={activeId}
+          onOpen={handleOpenStored}
+          onDelete={handleDeleteStored}
+          onClearAll={handleClearAllStored}
+          onClose={handleCloseHistory}
+        />
+      ) : (
+        <>
+          <div className="flex-1 overflow-y-auto px-4 py-3" data-testid="studio-ai-chat-messages">
+            {showEmptyState ? (
+              <EmptyState
+                message={emptyStateMessage}
+                suggestions={PROMPT_SUGGESTIONS}
+                onSelect={handleSend}
               />
-            ))}
-            <div ref={messagesEndRef} aria-hidden />
+            ) : (
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <ChatBubble
+                    key={message.id}
+                    message={message}
+                    isLatestAssistant={message.id === lastAssistantId}
+                    onRegenerate={message.id === lastAssistantId ? handleRegenerate : undefined}
+                    onFeedback={(feedback) => handleFeedback(message.id, feedback)}
+                    onImportSpec={onImportSpec}
+                  />
+                ))}
+                <div ref={messagesEndRef} aria-hidden />
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {hasStudioContext && (
-        <div className="border-t border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-900">
-          <ChatContextChip studioContext={studioContext!} />
-        </div>
+          {hasStudioContext && (
+            <div className="border-t border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-900">
+              <ChatContextChip studioContext={studioContext!} />
+            </div>
+          )}
+
+          <ChatComposer onSend={handleSend} isBusy={isBusy} />
+        </>
       )}
-
-      <ChatComposer onSend={handleSend} isBusy={isBusy} />
     </div>
+  );
+}
+
+interface ChatToolbarProps {
+  onNew: () => void;
+  onHistory: () => void;
+  onExport: () => void;
+  onClear: () => void;
+  canExport: boolean;
+  canClear: boolean;
+  historyCount: number;
+}
+
+function ChatToolbar({
+  onNew,
+  onHistory,
+  onExport,
+  onClear,
+  canExport,
+  canClear,
+  historyCount,
+}: ChatToolbarProps) {
+  return (
+    <div
+      className="flex items-center justify-between gap-1 border-b border-gray-200 bg-gray-50 px-2 py-1 dark:border-gray-700 dark:bg-gray-900/60"
+      data-testid="studio-ai-chat-toolbar"
+    >
+      <div className="flex items-center gap-1">
+        <ToolbarButton
+          onClick={onNew}
+          icon={<Plus className="h-3.5 w-3.5" />}
+          label="Start a new conversation"
+          testId="studio-ai-chat-new"
+        >
+          New
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={onHistory}
+          icon={<History className="h-3.5 w-3.5" />}
+          label={`Browse past conversations (${historyCount})`}
+          testId="studio-ai-chat-history"
+        >
+          History {historyCount > 0 ? `(${historyCount})` : ''}
+        </ToolbarButton>
+      </div>
+      <div className="flex items-center gap-1">
+        <ToolbarButton
+          onClick={onExport}
+          icon={<Download className="h-3.5 w-3.5" />}
+          label="Export current conversation as markdown"
+          testId="studio-ai-chat-export"
+          disabled={!canExport}
+        >
+          Export
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={onClear}
+          icon={<Trash2 className="h-3.5 w-3.5" />}
+          label="Clear current conversation"
+          testId="studio-ai-chat-clear"
+          disabled={!canClear}
+          tone="danger"
+        >
+          Clear
+        </ToolbarButton>
+      </div>
+    </div>
+  );
+}
+
+interface ToolbarButtonProps {
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  testId: string;
+  disabled?: boolean;
+  tone?: 'default' | 'danger';
+  children: React.ReactNode;
+}
+
+function ToolbarButton({
+  onClick,
+  icon,
+  label,
+  testId,
+  disabled,
+  tone = 'default',
+  children,
+}: ToolbarButtonProps) {
+  const toneClasses =
+    tone === 'danger'
+      ? 'text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-300 dark:hover:bg-red-950/40'
+      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={label}
+      data-testid={testId}
+      className={`inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 disabled:cursor-not-allowed disabled:opacity-50 ${toneClasses}`}
+    >
+      {icon}
+      <span>{children}</span>
+    </button>
   );
 }
 
@@ -245,4 +585,46 @@ let counter = 0;
 function createId(): string {
   counter += 1;
   return `chat-${Date.now().toString(36)}-${counter.toString(36)}`;
+}
+
+function scopeKey(scope: StoredConversationScope): string {
+  return `${scope.projectId ?? '∅'}::${scope.versionId ?? '∅'}`;
+}
+
+function defaultConfirm(message: string): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    return window.confirm(message);
+  } catch {
+    return true;
+  }
+}
+
+function buildExportFilename(conversation: StoredConversation): string {
+  const slug = conversation.title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+  const stamp = new Date(conversation.updatedAt).toISOString().slice(0, 10);
+  const base = slug.length > 0 ? slug : 'conversation';
+  return `studio-ai-${base}-${stamp}.md`;
+}
+
+function triggerMarkdownDownload(filename: string, markdown: string): void {
+  if (typeof document === 'undefined' || typeof window === 'undefined') return;
+  try {
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  } catch (error) {
+    console.error('Failed to trigger conversation export download', error);
+  }
 }
