@@ -121,6 +121,11 @@ export function ChatConversation({
   const requestIdRef = React.useRef(0);
   const studioContextRef = React.useRef<ChatStudioContext | undefined>(studioContext);
   const lastRestoreScopeRef = React.useRef<string | null>(null);
+  // Set to true only by user-originated transcript changes (send / regenerate).
+  // Cleared by the persist effect after saving, and reset to false whenever
+  // messages are loaded from the store (restore / open-from-history) so we
+  // never re-persist a conversation that already matches what is stored.
+  const pendingPersistRef = React.useRef(false);
   React.useEffect(() => {
     studioContextRef.current = studioContext;
   }, [studioContext]);
@@ -134,6 +139,10 @@ export function ChatConversation({
     const key = scopeKey(scope);
     if (lastRestoreScopeRef.current === key) return;
     lastRestoreScopeRef.current = key;
+    // Any pending persist from the previous scope is no longer valid — the
+    // messages it refers to belong to the old scope and must not be saved
+    // under the new one.
+    pendingPersistRef.current = false;
     const latest = store.list(scope)[0];
     if (latest) {
       setMessages(latest.messages);
@@ -151,10 +160,16 @@ export function ChatConversation({
   }, [messages]);
 
   // Auto-persist whenever the transcript settles (no pending turns).
+  // Guard: only run when the change was user-originated (send / regenerate),
+  // not when messages were loaded from the store (restore / open-from-history).
+  // This prevents unnecessary `updatedAt` rewrites that would reorder history
+  // and avoids writing the old transcript under a newly-switched scope.
   React.useEffect(() => {
+    if (!pendingPersistRef.current) return;
     if (messages.length === 0) return;
     if (messages.some((m) => m.pending)) return;
     if (!messages.some((m) => m.role === 'user')) return;
+    pendingPersistRef.current = false;
     const conversation = buildStoredConversation({
       id: activeId ?? undefined,
       scope,
@@ -220,6 +235,7 @@ export function ChatConversation({
     (text: string) => {
       const userMessage: ChatMessage = { id: createId(), role: 'user', content: text };
       const nextTranscript = [...messages, userMessage];
+      pendingPersistRef.current = true;
       setMessages(nextTranscript);
       void runAssistantTurn(nextTranscript, text, false);
     },
@@ -238,6 +254,7 @@ export function ChatConversation({
     if (lastUserIndex === -1) return;
     const trimmedTranscript = messages.slice(0, lastUserIndex + 1);
     const prompt = messages[lastUserIndex].content;
+    pendingPersistRef.current = true;
     setMessages(trimmedTranscript);
     void runAssistantTurn(trimmedTranscript, prompt, true);
   }, [isBusy, messages, runAssistantTurn]);
@@ -274,6 +291,9 @@ export function ChatConversation({
   }, []);
 
   const handleNewConversation = React.useCallback(() => {
+    requestIdRef.current += 1;
+    setIsBusy(false);
+    pendingPersistRef.current = false;
     resetActive();
     setView('chat');
   }, [resetActive]);
@@ -281,6 +301,9 @@ export function ChatConversation({
   const handleClearCurrent = React.useCallback(() => {
     if (messages.length === 0) return;
     if (!askConfirm('Clear the current conversation? It will be removed from your history.')) return;
+    requestIdRef.current += 1;
+    setIsBusy(false);
+    pendingPersistRef.current = false;
     if (activeId) store.remove(activeId);
     resetActive();
     bumpHistoryVersion();
@@ -315,6 +338,8 @@ export function ChatConversation({
     (id: string) => {
       const conversation = store.get(id);
       if (!conversation) return;
+      // Loading from store — do not trigger an auto-persist for this change.
+      pendingPersistRef.current = false;
       setMessages(conversation.messages);
       setActiveId(conversation.id);
       setActiveCreatedAt(conversation.createdAt);
@@ -325,13 +350,14 @@ export function ChatConversation({
 
   const handleDeleteStored = React.useCallback(
     (id: string) => {
+      if (!askConfirm('Delete this conversation? This cannot be undone.')) return;
       store.remove(id);
       if (activeId === id) {
         resetActive();
       }
       bumpHistoryVersion();
     },
-    [store, activeId, resetActive],
+    [store, activeId, resetActive, askConfirm],
   );
 
   const handleClearAllStored = React.useCallback(() => {

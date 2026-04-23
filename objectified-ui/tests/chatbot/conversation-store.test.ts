@@ -268,6 +268,41 @@ describe('createLocalStorageConversationStorage', () => {
     expect(adapter.read().map((c) => c.id)).toEqual(['good']);
   });
 
+  it('drops conversations whose messages array contains malformed entries', () => {
+    const badMessages = JSON.stringify([
+      makeConversation({ id: 'good' }),
+      {
+        id: 'bad-msgs',
+        title: 'Looks fine',
+        createdAt: 1,
+        updatedAt: 2,
+        projectId: null,
+        versionId: null,
+        // messages entries lack the required id/role/content shape
+        messages: ['string', null, { notAMessage: true }],
+      },
+    ]);
+    const memory = new Map<string, string>([['test-key', badMessages]]);
+    const storage: Storage = {
+      get length() {
+        return memory.size;
+      },
+      clear: () => memory.clear(),
+      getItem: (key) => memory.get(key) ?? null,
+      key: (i) => Array.from(memory.keys())[i] ?? null,
+      removeItem: (key) => {
+        memory.delete(key);
+      },
+      setItem: (key, value) => {
+        memory.set(key, value);
+      },
+    };
+    const adapter = createLocalStorageConversationStorage('test-key', () => storage);
+    // The conversation with malformed messages must be silently dropped so
+    // downstream code cannot call m.content.toLowerCase() on a non-string.
+    expect(adapter.read().map((c) => c.id)).toEqual(['good']);
+  });
+
   it('swallows quota errors during write', () => {
     const storage: Storage = {
       length: 0,

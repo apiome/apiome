@@ -633,7 +633,7 @@ describe('ChatConversation', () => {
           messages: [{ id: 'u', role: 'user', content: 'doomed prompt' }],
         },
       ]);
-      render(<ChatConversation conversationStore={store} />);
+      render(<ChatConversation conversationStore={store} confirmAction={alwaysConfirm} />);
 
       await waitFor(() => {
         expect(screen.getByText('doomed prompt')).toBeInTheDocument();

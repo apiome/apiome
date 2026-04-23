@@ -241,8 +241,19 @@ function isStoredConversation(value: unknown): value is StoredConversation {
     typeof v.createdAt === 'number' &&
     typeof v.updatedAt === 'number' &&
     Array.isArray(v.messages) &&
+    v.messages.every(isChatMessage) &&
     (v.projectId === null || typeof v.projectId === 'string') &&
     (v.versionId === null || typeof v.versionId === 'string')
+  );
+}
+
+function isChatMessage(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false;
+  const m = value as Record<string, unknown>;
+  return (
+    typeof m.id === 'string' &&
+    (m.role === 'user' || m.role === 'assistant' || m.role === 'system') &&
+    typeof m.content === 'string'
   );
 }
 
