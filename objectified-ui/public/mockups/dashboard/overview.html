@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control Panel · Overview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+    .ring-track { stroke: #e2e8f0; }
+    .dark .ring-track { stroke: #334155; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <!-- 48px platform bar -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="layout-dashboard" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Control Panel</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Overview</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-500">← Mockup hub</a>
+      <button class="hidden md:flex items-center gap-2 px-2 h-7 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs">
+        <i data-lucide="search" class="w-3.5 h-3.5"></i>
+        <span class="text-gray-400">Search projects, versions, classes…</span>
+        <span class="mono text-[10px] text-gray-400 px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700">⌘K</span>
+      </button>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <button class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center relative"><i data-lucide="bell" class="w-4 h-4"></i><span class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500"></span></button>
+      <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+
+    <!-- 280px sidebar -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto h-full flex flex-col">
+
+        <!-- Tenant switcher chip -->
+        <div class="p-3">
+          <button class="w-full flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-left hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+            <div class="w-8 h-8 rounded-md bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-xs">AC</div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs text-gray-500 dark:text-gray-400">Workspace</p>
+              <p class="text-sm font-semibold truncate">Acme Corp</p>
+            </div>
+            <i data-lucide="chevrons-up-down" class="w-4 h-4 text-gray-400"></i>
+          </button>
+          <div class="flex items-center gap-1.5 mt-1.5 px-1">
+            <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 font-semibold">Enterprise</span>
+            <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 mono">us-east-1</span>
+            <span class="ml-auto text-[10px] text-gray-400 mono">42 members</span>
+          </div>
+        </div>
+
+        <hr class="border-indigo-500/10 mx-3" />
+
+        <div class="p-4 flex-1">
+          <div class="mb-5">
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Overview</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="overview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-indigo-200 dark:border-indigo-700/70 bg-indigo-500/10"><i data-lucide="layout-dashboard" class="w-5 h-5 text-indigo-500"></i><span class="text-sm font-semibold flex-1 text-indigo-600 dark:text-indigo-400">Control panel</span><span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5">
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Identity</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="profile.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="user-round" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Profile</span></a></li>
+              <li><a href="linked-accounts.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="link-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Linked accounts</span><span class="text-[10px] text-gray-400 mono">5</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5">
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Workspace</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="tenants.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="building-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Tenants</span><span class="text-[10px] text-gray-400 mono">4</span></a></li>
+              <li><a href="api-keys.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="key-round" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">API keys</span><span class="text-[10px] text-amber-500 mono">2 expiring</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5">
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Specifications</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="projects.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="folders" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Projects</span><span class="text-[10px] text-gray-400 mono">18</span></a></li>
+              <li><a href="versions.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="git-branch" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Versions</span><span class="text-[10px] text-gray-400 mono">96</span></a></li>
+              <li><a href="published.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="globe-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Published</span><span class="text-[10px] text-gray-400 mono">12</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div>
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Governance</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="primitives.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="atom" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Primitives</span><span class="text-[10px] text-gray-400 mono">38</span></a></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Footer: usage chip -->
+        <div class="p-3 border-t border-gray-200 dark:border-gray-700/60">
+          <div class="rounded-lg bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200/60 dark:border-indigo-700/30 p-3">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-semibold text-indigo-700 dark:text-indigo-300">Plan usage</span>
+              <span class="mono text-gray-500">68 %</span>
+            </div>
+            <div class="w-full h-1.5 mt-2 bg-white/60 dark:bg-gray-800/60 rounded-full overflow-hidden">
+              <div class="h-1.5 bg-indigo-500" style="width: 68%"></div>
+            </div>
+            <p class="text-[10px] text-gray-500 mt-2 mono">12 / 18 projects · 42 / 50 seats · resets May 1</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-w-0">
+
+      <!-- Page header -->
+      <header class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div class="px-6 py-4 flex items-end justify-between">
+          <div>
+            <h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="layout-dashboard" class="w-6 h-6 text-indigo-500"></i> Control panel</h2>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Welcome back, Kenji. <span class="mono text-xs text-gray-400">Acme Corp · us-east-1</span> · all systems operational · 4 alerts need your attention</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Export report</button>
+            <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh</button>
+            <button class="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2"><i data-lucide="plus" class="w-4 h-4"></i> New project</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 overflow-y-auto p-6 space-y-6">
+
+        <!-- KPI band: 8 cards -->
+        <section class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center justify-between"><p class="text-[11px] text-gray-500 uppercase tracking-wider">Tenants</p><i data-lucide="building-2" class="w-3.5 h-3.5 text-indigo-400"></i></div>
+            <p class="text-2xl font-bold mt-1 mono">4</p>
+            <p class="text-[10px] text-gray-500 mt-1 mono">2 admin · 2 viewer</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center justify-between"><p class="text-[11px] text-gray-500 uppercase tracking-wider">Projects</p><i data-lucide="folders" class="w-3.5 h-3.5 text-emerald-400"></i></div>
+            <p class="text-2xl font-bold mt-1 mono">18</p>
+            <p class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 mono">+2 this week</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center justify-between"><p class="text-[11px] text-gray-500 uppercase tracking-wider">Versions</p><i data-lucide="git-branch" class="w-3.5 h-3.5 text-rose-400"></i></div>
+            <p class="text-2xl font-bold mt-1 mono">96</p>
+            <p class="text-[10px] text-gray-500 mt-1 mono">12 published</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center justify-between"><p class="text-[11px] text-gray-500 uppercase tracking-wider">Classes</p><i data-lucide="boxes" class="w-3.5 h-3.5 text-cyan-400"></i></div>
+            <p class="text-2xl font-bold mt-1 mono">412</p>
+            <p class="text-[10px] text-gray-500 mt-1 mono">3 824 properties</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center justify-between"><p class="text-[11px] text-gray-500 uppercase tracking-wider">Published surface</p><i data-lucide="globe-2" class="w-3.5 h-3.5 text-teal-400"></i></div>
+            <p class="text-2xl font-bold mt-1 mono">12</p>
+            <p class="text-[10px] text-gray-500 mt-1 mono">218 endpoints live</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center justify-between"><p class="text-[11px] text-gray-500 uppercase tracking-wider">Writes · 24 h</p><i data-lucide="pencil-line" class="w-3.5 h-3.5 text-purple-400"></i></div>
+            <p class="text-2xl font-bold mt-1 mono">184 K</p>
+            <p class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 mono">↑ 12 % wow</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center justify-between"><p class="text-[11px] text-gray-500 uppercase tracking-wider">Lint score</p><i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i></div>
+            <p class="text-2xl font-bold mt-1 mono text-emerald-500">92</p>
+            <p class="text-[10px] text-gray-500 mt-1 mono">↑ 4 wow · A grade</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center justify-between"><p class="text-[11px] text-gray-500 uppercase tracking-wider">Error budget</p><i data-lucide="activity" class="w-3.5 h-3.5 text-amber-400"></i></div>
+            <p class="text-2xl font-bold mt-1 mono text-amber-500">71 %</p>
+            <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-1 mono">29 % burned · 30 d</p>
+          </div>
+        </section>
+
+        <!-- System status row -->
+        <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+            <div class="flex items-center gap-3"><i data-lucide="heart-pulse" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-sm font-semibold">Platform status</h3><p class="text-[11px] text-gray-500 dark:text-gray-400 mono">last check 28 s ago</p></div></div>
+            <a href="#" class="text-xs text-indigo-500 hover:underline">status.objectified.io →</a>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 divide-x divide-y md:divide-y-0 divide-gray-100 dark:divide-gray-700/60">
+            <div class="px-5 py-3">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-sm font-medium">REST API</span></div>
+              <p class="text-[11px] mono text-gray-500 mt-1">99.98 % · p95 42 ms</p>
+            </div>
+            <div class="px-5 py-3">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-sm font-medium">GraphQL</span></div>
+              <p class="text-[11px] mono text-gray-500 mt-1">99.97 % · p95 68 ms</p>
+            </div>
+            <div class="px-5 py-3">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-sm font-medium">Realtime</span></div>
+              <p class="text-[11px] mono text-gray-500 mt-1">12 K connections</p>
+            </div>
+            <div class="px-5 py-3">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-500"></span><span class="text-sm font-medium">Embeddings</span></div>
+              <p class="text-[11px] mono text-amber-600 dark:text-amber-400 mt-1">queue lag 1m 14s</p>
+            </div>
+            <div class="px-5 py-3">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-sm font-medium">Webhooks</span></div>
+              <p class="text-[11px] mono text-gray-500 mt-1">2 184 / hr · 0 retries</p>
+            </div>
+            <div class="px-5 py-3">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-sm font-medium">Identity</span></div>
+              <p class="text-[11px] mono text-gray-500 mt-1">SSO · SCIM · OK</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Schema health donut + version pipeline -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <!-- Schema health -->
+          <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+              <div class="flex items-center gap-3"><i data-lucide="shield-check" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold">Schema health</h3><p class="text-xs text-gray-500 dark:text-gray-400">Across all 96 versions</p></div></div>
+            </div>
+            <div class="p-5 flex items-center gap-5">
+              <div class="relative">
+                <svg viewBox="0 0 120 120" class="w-32 h-32 -rotate-90">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke-width="14" class="ring-track"/>
+                  <!-- 92% emerald arc, 8% gap -->
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" stroke-width="14" stroke-dasharray="289 314" stroke-linecap="round"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span class="text-3xl font-bold mono text-emerald-500">92</span>
+                  <span class="text-[10px] uppercase tracking-wider text-gray-500">Health</span>
+                </div>
+              </div>
+              <ul class="flex-1 space-y-2 text-sm">
+                <li class="flex items-center justify-between"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-sm bg-emerald-500"></span>Lint passing</span><span class="mono text-xs text-gray-500">82 / 96</span></li>
+                <li class="flex items-center justify-between"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-sm bg-amber-500"></span>Lint warnings</span><span class="mono text-xs text-amber-500">11</span></li>
+                <li class="flex items-center justify-between"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-sm bg-rose-500"></span>Lint errors</span><span class="mono text-xs text-rose-500">3</span></li>
+                <li class="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-2 mt-2"><span class="flex items-center gap-2"><i data-lucide="git-pull-request-arrow" class="w-3 h-3 text-purple-500"></i>Drift vs primitives</span><span class="mono text-xs text-purple-500">7 props</span></li>
+                <li class="flex items-center justify-between"><span class="flex items-center gap-2"><i data-lucide="link-2-off" class="w-3 h-3 text-rose-500"></i>Broken refs</span><span class="mono text-xs text-rose-500">2</span></li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- Version pipeline funnel -->
+          <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 lg:col-span-2 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+              <div class="flex items-center gap-3"><i data-lucide="git-branch" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold">Version pipeline</h3><p class="text-xs text-gray-500 dark:text-gray-400">Draft → Review → Published → Sunset · all projects</p></div></div>
+              <a href="versions.html" class="text-xs text-indigo-500 hover:underline">Open versions →</a>
+            </div>
+            <div class="p-5">
+              <div class="grid grid-cols-4 gap-3">
+                <div class="rounded-lg border border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-900/40 p-4">
+                  <div class="flex items-center gap-2 mb-2"><i data-lucide="file-edit" class="w-4 h-4 text-slate-500"></i><span class="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Draft</span></div>
+                  <p class="text-2xl font-bold mono">42</p>
+                  <p class="text-[10px] text-gray-500 mt-1 mono">→ 64 % advance · 7 d</p>
+                </div>
+                <div class="rounded-lg border border-amber-200 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-900/20 p-4">
+                  <div class="flex items-center gap-2 mb-2"><i data-lucide="git-pull-request" class="w-4 h-4 text-amber-500"></i><span class="text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300">Review</span></div>
+                  <p class="text-2xl font-bold mono text-amber-600 dark:text-amber-400">14</p>
+                  <p class="text-[10px] text-gray-500 mt-1 mono">→ 81 % gate-pass · 2.4 d</p>
+                </div>
+                <div class="rounded-lg border border-emerald-200 dark:border-emerald-700/40 bg-emerald-50 dark:bg-emerald-900/20 p-4">
+                  <div class="flex items-center gap-2 mb-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i><span class="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Published</span></div>
+                  <p class="text-2xl font-bold mono text-emerald-600 dark:text-emerald-400">12</p>
+                  <p class="text-[10px] text-gray-500 mt-1 mono">218 consumers</p>
+                </div>
+                <div class="rounded-lg border border-orange-200 dark:border-orange-700/40 bg-orange-50 dark:bg-orange-900/20 p-4">
+                  <div class="flex items-center gap-2 mb-2"><i data-lucide="sun" class="w-4 h-4 text-orange-500"></i><span class="text-[10px] font-semibold uppercase tracking-wider text-orange-700 dark:text-orange-300">Deprecated</span></div>
+                  <p class="text-2xl font-bold mono text-orange-600 dark:text-orange-400">9</p>
+                  <p class="text-[10px] text-gray-500 mt-1 mono">3 sunset &lt; 30 d</p>
+                </div>
+              </div>
+
+              <div class="mt-5 pt-5 border-t border-gray-100 dark:border-gray-700">
+                <div class="flex items-center justify-between mb-3"><h4 class="text-sm font-semibold">Sunset countdown</h4><a href="versions.html" class="text-[11px] text-indigo-500 hover:underline">Sunset timeline →</a></div>
+                <ul class="space-y-2 text-sm">
+                  <li class="flex items-center gap-3 px-3 py-2 rounded-md bg-rose-50 dark:bg-rose-900/15 border border-rose-200/60 dark:border-rose-700/30">
+                    <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">SUNSET</span>
+                    <span class="font-medium">billing-api</span>
+                    <span class="mono text-xs text-gray-500">v2.4.1</span>
+                    <span class="ml-auto mono text-xs text-rose-600 dark:text-rose-400">8 days · 24 consumers</span>
+                  </li>
+                  <li class="flex items-center gap-3 px-3 py-2 rounded-md bg-orange-50 dark:bg-orange-900/15 border border-orange-200/60 dark:border-orange-700/30">
+                    <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">DEPRECATED</span>
+                    <span class="font-medium">customer-profile</span>
+                    <span class="mono text-xs text-gray-500">v1.8.0</span>
+                    <span class="ml-auto mono text-xs text-orange-600 dark:text-orange-400">22 days · 8 consumers</span>
+                  </li>
+                  <li class="flex items-center gap-3 px-3 py-2 rounded-md bg-orange-50 dark:bg-orange-900/15 border border-orange-200/60 dark:border-orange-700/30">
+                    <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">DEPRECATED</span>
+                    <span class="font-medium">orders-public</span>
+                    <span class="mono text-xs text-gray-500">v3.0.0</span>
+                    <span class="ml-auto mono text-xs text-orange-600 dark:text-orange-400">29 days · 41 consumers</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Project portfolio + Activity feed -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <!-- Project portfolio -->
+          <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 lg:col-span-2 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+              <div class="flex items-center gap-3"><i data-lucide="folders" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold">Top projects</h3><p class="text-xs text-gray-500 dark:text-gray-400">Ranked by activity · last 7 days</p></div></div>
+              <a href="projects.html" class="text-xs text-indigo-500 hover:underline">All projects →</a>
+            </div>
+            <table class="w-full text-sm">
+              <thead class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-50/60 dark:bg-gray-900/40">
+                <tr><th class="text-left px-5 py-2 font-semibold">Project</th><th class="text-right px-3 py-2 font-semibold">Quality</th><th class="text-right px-3 py-2 font-semibold">Lint</th><th class="text-right px-3 py-2 font-semibold">Versions</th><th class="text-right px-3 py-2 font-semibold">Contributors</th><th class="text-right px-5 py-2 font-semibold">Last edit</th></tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                  <td class="px-5 py-3">
+                    <div class="flex items-center gap-3">
+                      <span class="w-8 h-8 rounded-md bg-indigo-100 dark:bg-indigo-900/40 inline-flex items-center justify-center text-indigo-600 dark:text-indigo-300 text-xs font-bold mono">BL</span>
+                      <div><p class="font-medium">billing-api</p><p class="text-[10px] mono text-gray-400">prj_8a91f · 32 classes</p></div>
+                    </div>
+                  </td>
+                  <td class="text-right px-3 py-3"><span class="inline-flex items-center justify-center w-9 h-9 rounded-full border-2 border-emerald-500 mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">94</span></td>
+                  <td class="text-right px-3 py-3 mono text-xs text-emerald-500">A</td>
+                  <td class="text-right px-3 py-3 mono text-xs">12</td>
+                  <td class="text-right px-3 py-3 mono text-xs">8</td>
+                  <td class="text-right px-5 py-3 text-xs text-gray-500">just now</td>
+                </tr>
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                  <td class="px-5 py-3">
+                    <div class="flex items-center gap-3">
+                      <span class="w-8 h-8 rounded-md bg-emerald-100 dark:bg-emerald-900/40 inline-flex items-center justify-center text-emerald-600 dark:text-emerald-300 text-xs font-bold mono">OR</span>
+                      <div><p class="font-medium">orders-public</p><p class="text-[10px] mono text-gray-400">prj_8a92a · 24 classes</p></div>
+                    </div>
+                  </td>
+                  <td class="text-right px-3 py-3"><span class="inline-flex items-center justify-center w-9 h-9 rounded-full border-2 border-emerald-500 mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">90</span></td>
+                  <td class="text-right px-3 py-3 mono text-xs text-emerald-500">A</td>
+                  <td class="text-right px-3 py-3 mono text-xs">8</td>
+                  <td class="text-right px-3 py-3 mono text-xs">12</td>
+                  <td class="text-right px-5 py-3 text-xs text-gray-500">14 m</td>
+                </tr>
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                  <td class="px-5 py-3">
+                    <div class="flex items-center gap-3">
+                      <span class="w-8 h-8 rounded-md bg-amber-100 dark:bg-amber-900/40 inline-flex items-center justify-center text-amber-600 dark:text-amber-300 text-xs font-bold mono">CP</span>
+                      <div><p class="font-medium">customer-profile</p><p class="text-[10px] mono text-gray-400">prj_8a93b · 18 classes</p></div>
+                    </div>
+                  </td>
+                  <td class="text-right px-3 py-3"><span class="inline-flex items-center justify-center w-9 h-9 rounded-full border-2 border-indigo-500 mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">78</span></td>
+                  <td class="text-right px-3 py-3 mono text-xs text-amber-500">B</td>
+                  <td class="text-right px-3 py-3 mono text-xs">14</td>
+                  <td class="text-right px-3 py-3 mono text-xs">5</td>
+                  <td class="text-right px-5 py-3 text-xs text-gray-500">1 h</td>
+                </tr>
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                  <td class="px-5 py-3">
+                    <div class="flex items-center gap-3">
+                      <span class="w-8 h-8 rounded-md bg-rose-100 dark:bg-rose-900/40 inline-flex items-center justify-center text-rose-600 dark:text-rose-300 text-xs font-bold mono">IN</span>
+                      <div><p class="font-medium">inventory-mgmt</p><p class="text-[10px] mono text-gray-400">prj_8a94c · 41 classes · drift</p></div>
+                    </div>
+                  </td>
+                  <td class="text-right px-3 py-3"><span class="inline-flex items-center justify-center w-9 h-9 rounded-full border-2 border-amber-500 mono text-xs font-semibold text-amber-600 dark:text-amber-400">66</span></td>
+                  <td class="text-right px-3 py-3 mono text-xs text-rose-500">D</td>
+                  <td class="text-right px-3 py-3 mono text-xs">22</td>
+                  <td class="text-right px-3 py-3 mono text-xs">3</td>
+                  <td class="text-right px-5 py-3 text-xs text-gray-500">3 h</td>
+                </tr>
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                  <td class="px-5 py-3">
+                    <div class="flex items-center gap-3">
+                      <span class="w-8 h-8 rounded-md bg-purple-100 dark:bg-purple-900/40 inline-flex items-center justify-center text-purple-600 dark:text-purple-300 text-xs font-bold mono">PA</span>
+                      <div><p class="font-medium">payments-internal</p><p class="text-[10px] mono text-gray-400">prj_8a95d · 16 classes · PCI</p></div>
+                    </div>
+                  </td>
+                  <td class="text-right px-3 py-3"><span class="inline-flex items-center justify-center w-9 h-9 rounded-full border-2 border-emerald-500 mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">96</span></td>
+                  <td class="text-right px-3 py-3 mono text-xs text-emerald-500">A</td>
+                  <td class="text-right px-3 py-3 mono text-xs">6</td>
+                  <td class="text-right px-3 py-3 mono text-xs">4</td>
+                  <td class="text-right px-5 py-3 text-xs text-gray-500">5 h</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <!-- Activity + audit feed -->
+          <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+              <div class="flex items-center gap-3"><i data-lucide="rss" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold">Activity &amp; audit</h3><p class="text-xs text-gray-500 dark:text-gray-400">Mixed feed · last 24 h</p></div></div>
+              <button class="text-xs text-gray-400 hover:text-indigo-500"><i data-lucide="filter" class="w-3.5 h-3.5"></i></button>
+            </div>
+            <ul class="divide-y divide-gray-100 dark:divide-gray-700/60">
+              <li class="px-5 py-3 text-sm">
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-md bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i></div>
+                  <div class="flex-1 min-w-0">
+                    <p><span class="font-medium">billing-api v2.5.0</span> published</p>
+                    <p class="text-[11px] text-gray-500 mono mt-0.5">by alice@acme.com · gates: lint ✓ schema ✓ contract ✓</p>
+                  </div>
+                  <span class="text-[10px] text-gray-400 mono">just now</span>
+                </div>
+              </li>
+              <li class="px-5 py-3 text-sm">
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-md bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="key-round" class="w-4 h-4 text-amber-500"></i></div>
+                  <div class="flex-1 min-w-0">
+                    <p><span class="font-medium">orcl_live_p7</span><span class="text-gray-400 mono">…F8H</span> rotated</p>
+                    <p class="text-[11px] text-gray-500 mono mt-0.5">by ksellers · 90-day policy · 248 services updated</p>
+                  </div>
+                  <span class="text-[10px] text-gray-400 mono">12 m</span>
+                </div>
+              </li>
+              <li class="px-5 py-3 text-sm">
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-md bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="user-plus" class="w-4 h-4 text-purple-500"></i></div>
+                  <div class="flex-1 min-w-0">
+                    <p>3 members added to <span class="font-medium">payments-internal</span></p>
+                    <p class="text-[11px] text-gray-500 mono mt-0.5">via SCIM · Okta sync · role: editor</p>
+                  </div>
+                  <span class="text-[10px] text-gray-400 mono">38 m</span>
+                </div>
+              </li>
+              <li class="px-5 py-3 text-sm">
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-md bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500"></i></div>
+                  <div class="flex-1 min-w-0">
+                    <p>Lint regression on <span class="font-medium">inventory-mgmt</span></p>
+                    <p class="text-[11px] text-gray-500 mono mt-0.5">3 errors · 11 warnings · score 78 → 66</p>
+                  </div>
+                  <span class="text-[10px] text-gray-400 mono">1 h</span>
+                </div>
+              </li>
+              <li class="px-5 py-3 text-sm">
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-md bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="git-branch" class="w-4 h-4 text-indigo-500"></i></div>
+                  <div class="flex-1 min-w-0">
+                    <p>Branch <span class="mono text-xs">feat/multi-currency</span> merged to <span class="mono text-xs">main</span></p>
+                    <p class="text-[11px] text-gray-500 mono mt-0.5">billing-api · 14 file diff · auto-merge</p>
+                  </div>
+                  <span class="text-[10px] text-gray-400 mono">2 h</span>
+                </div>
+              </li>
+              <li class="px-5 py-3 text-sm">
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-md bg-cyan-100 dark:bg-cyan-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="atom" class="w-4 h-4 text-cyan-500"></i></div>
+                  <div class="flex-1 min-w-0">
+                    <p>Primitive <span class="mono text-xs">currency</span> updated to v3</p>
+                    <p class="text-[11px] text-gray-500 mono mt-0.5">122 properties auto-migrated · 7 manual review</p>
+                  </div>
+                  <span class="text-[10px] text-gray-400 mono">3 h</span>
+                </div>
+              </li>
+              <li class="px-5 py-3 text-sm">
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-md bg-slate-100 dark:bg-slate-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="log-in" class="w-4 h-4 text-slate-500"></i></div>
+                  <div class="flex-1 min-w-0">
+                    <p>SSO sign-in spike from <span class="mono text-xs">10.42.0.0/16</span></p>
+                    <p class="text-[11px] text-gray-500 mono mt-0.5">42 sessions · all MFA-verified · no anomalies</p>
+                  </div>
+                  <span class="text-[10px] text-gray-400 mono">5 h</span>
+                </div>
+              </li>
+            </ul>
+            <div class="px-5 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/40 text-xs flex items-center justify-between">
+              <span class="text-gray-500">7 of 248 events</span>
+              <a href="#" class="text-indigo-500 hover:underline">Open audit log →</a>
+            </div>
+          </section>
+        </div>
+
+        <!-- Alerts + Quick actions + Onboarding -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <!-- Alerts -->
+          <section class="bg-white dark:bg-gray-800 rounded-lg border border-amber-200/70 dark:border-amber-700/40 overflow-hidden lg:col-span-2">
+            <div class="px-5 py-4 border-b border-amber-200/70 dark:border-amber-700/40 bg-amber-50/60 dark:bg-amber-900/15 flex items-center justify-between">
+              <div class="flex items-center gap-3"><i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500"></i><div><h3 class="text-base font-semibold">Action needed</h3><p class="text-xs text-gray-500 dark:text-gray-400">4 items · ranked by urgency</p></div></div>
+              <button class="text-xs text-gray-500 hover:text-indigo-500">Snooze all</button>
+            </div>
+            <ul class="divide-y divide-gray-100 dark:divide-gray-700/60">
+              <li class="px-5 py-3 flex items-center gap-3">
+                <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">CRITICAL</span>
+                <div class="flex-1">
+                  <p class="text-sm font-medium">API key <span class="mono text-xs">orcl_live_a3</span><span class="text-gray-400 mono">…7K2</span> expires in 6 days</p>
+                  <p class="text-[11px] text-gray-500 mono">Used by 184 services · last rotated 84 days ago · billing-api workspace</p>
+                </div>
+                <a href="api-keys.html" class="text-xs text-indigo-500 hover:underline">Rotate now →</a>
+              </li>
+              <li class="px-5 py-3 flex items-center gap-3">
+                <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">CRITICAL</span>
+                <div class="flex-1">
+                  <p class="text-sm font-medium">billing-api v2.4.1 sunsets in 8 days · 24 consumers still pinned</p>
+                  <p class="text-[11px] text-gray-500 mono">stripe-webhook-handler · invoice-service · 22 more · contact owners or extend timer</p>
+                </div>
+                <a href="published.html" class="text-xs text-indigo-500 hover:underline">Open consumers →</a>
+              </li>
+              <li class="px-5 py-3 flex items-center gap-3">
+                <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">WARN</span>
+                <div class="flex-1">
+                  <p class="text-sm font-medium">Lint regression on <span class="font-medium">inventory-mgmt</span> · score 78 → 66</p>
+                  <p class="text-[11px] text-gray-500 mono">3 broken refs · 11 missing examples · introduced in commit <span class="mono">a3f12d…</span></p>
+                </div>
+                <a href="projects.html" class="text-xs text-indigo-500 hover:underline">Review →</a>
+              </li>
+              <li class="px-5 py-3 flex items-center gap-3">
+                <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">WARN</span>
+                <div class="flex-1">
+                  <p class="text-sm font-medium">Plan usage at 84 % of seats · upgrade or remove inactive members</p>
+                  <p class="text-[11px] text-gray-500 mono">42 / 50 seats · 7 members inactive &gt; 60 days</p>
+                </div>
+                <a href="tenants.html" class="text-xs text-indigo-500 hover:underline">Manage members →</a>
+              </li>
+            </ul>
+          </section>
+
+          <!-- Quick actions / Onboarding -->
+          <section class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg border border-indigo-200 dark:border-indigo-700/40 overflow-hidden">
+            <div class="px-5 py-4 border-b border-indigo-200 dark:border-indigo-700/40">
+              <h3 class="text-base font-semibold flex items-center gap-2"><i data-lucide="rocket" class="w-5 h-5 text-indigo-500"></i> Workspace setup</h3>
+              <p class="text-xs text-gray-600 dark:text-gray-300 mt-1">5 of 7 steps complete</p>
+              <div class="w-full h-1.5 mt-2 bg-white/60 dark:bg-gray-800/60 rounded-full overflow-hidden">
+                <div class="h-1.5 bg-indigo-500" style="width: 71%"></div>
+              </div>
+            </div>
+            <ul class="p-4 space-y-3 text-sm">
+              <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i><div><p class="line-through text-gray-400">Configure SSO</p><p class="text-[10px] text-gray-400 mt-0.5">Okta · 42 members provisioned via SCIM</p></div></li>
+              <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i><div><p class="line-through text-gray-400">Issue first API key</p><p class="text-[10px] text-gray-400 mt-0.5">orcl_live_p7… · scope read+write</p></div></li>
+              <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i><div><p class="line-through text-gray-400">Publish first version</p><p class="text-[10px] text-gray-400 mt-0.5">billing-api v2.5.0</p></div></li>
+              <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i><div><p class="line-through text-gray-400">Connect GitHub</p><p class="text-[10px] text-gray-400 mt-0.5">12 repos linked · auto-sync on push</p></div></li>
+              <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i><div><p class="line-through text-gray-400">Set retention policy</p><p class="text-[10px] text-gray-400 mt-0.5">90 d audit · 365 d schema captures</p></div></li>
+              <li class="flex items-start gap-3"><span class="w-4 h-4 rounded-full border-2 border-indigo-400 flex-shrink-0 mt-0.5"></span><div><p class="font-medium">Define IP allowlist</p><p class="text-[10px] text-gray-500 mt-0.5">Restrict API key use to your VPC ranges.</p><a href="api-keys.html" class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline mt-1 inline-block">Open allowlist →</a></div></li>
+              <li class="flex items-start gap-3"><span class="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0 mt-0.5"></span><div><p class="text-gray-500">Connect PagerDuty for sunset alerts</p><p class="text-[10px] text-gray-400 mt-0.5">Route deprecation timers to your on-call.</p></div></li>
+            </ul>
+          </section>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const themeKey = 'dashboard-mockup-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

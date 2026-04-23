@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control Panel · Projects</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="layout-dashboard" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span><span class="text-xs text-gray-400">/</span><span class="text-sm text-gray-600 dark:text-gray-300">Control Panel</span><span class="text-xs text-gray-400">/</span><span class="text-sm text-gray-600 dark:text-gray-300">Projects</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-500">← Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto h-full flex flex-col">
+        <div class="p-3"><button class="w-full flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-left"><div class="w-8 h-8 rounded-md bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-xs">AC</div><div class="flex-1 min-w-0"><p class="text-xs text-gray-500 dark:text-gray-400">Workspace</p><p class="text-sm font-semibold truncate">Acme Corp</p></div><i data-lucide="chevrons-up-down" class="w-4 h-4 text-gray-400"></i></button></div>
+        <hr class="border-indigo-500/10 mx-3" />
+        <div class="p-4 flex-1">
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Overview</div><ul class="m-0 mt-1 list-none space-y-1 p-0"><li><a href="overview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Control panel</span></a></li></ul></div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Identity</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="profile.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="user-round" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Profile</span></a></li>
+              <li><a href="linked-accounts.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="link-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Linked accounts</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Workspace</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="tenants.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="building-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Tenants</span></a></li>
+              <li><a href="api-keys.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="key-round" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">API keys</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Specifications</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="projects.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-indigo-200 dark:border-indigo-700/70 bg-indigo-500/10"><i data-lucide="folders" class="w-5 h-5 text-indigo-500"></i><span class="text-sm font-semibold flex-1 text-indigo-600 dark:text-indigo-400">Projects</span><span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span></a></li>
+              <li><a href="versions.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="git-branch" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Versions</span></a></li>
+              <li><a href="published.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="globe-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Published</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Governance</div><ul class="m-0 mt-1 list-none space-y-1 p-0"><li><a href="primitives.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="atom" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Primitives</span></a></li></ul></div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-w-0">
+      <header class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div class="px-6 py-4 flex items-end justify-between">
+          <div>
+            <h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="folders" class="w-6 h-6 text-indigo-500"></i> Projects</h2>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">18 projects · avg quality 84 · 412 classes · 96 versions · 2 favorited · 1 needs attention</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="hidden md:flex items-center gap-2 px-3 h-8 rounded-md border border-gray-200 dark:border-gray-700 text-xs">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-gray-400"></i>
+              <input class="bg-transparent outline-none w-40" placeholder="Filter projects…">
+            </div>
+            <div class="flex items-center gap-1 border border-gray-200 dark:border-gray-700 rounded-md p-0.5">
+              <button class="px-2 py-1 rounded text-xs bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1"><i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> Cards</button>
+              <button class="px-2 py-1 rounded text-xs text-gray-500 hover:text-indigo-500 flex items-center gap-1"><i data-lucide="list" class="w-3.5 h-3.5"></i> Table</button>
+            </div>
+            <button class="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2"><i data-lucide="plus" class="w-4 h-4"></i> New project</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 overflow-y-auto p-6 space-y-6">
+
+        <!-- Saved views / filter chips -->
+        <section class="flex items-center gap-2 flex-wrap">
+          <span class="text-[10px] uppercase tracking-wider text-gray-500 mr-2">Views:</span>
+          <button class="px-3 py-1 text-xs rounded-full border border-indigo-300 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium">All <span class="mono ml-1 text-gray-400">18</span></button>
+          <button class="px-3 py-1 text-xs rounded-full border border-gray-200 dark:border-gray-700 hover:border-indigo-300 text-gray-500">My favorites <span class="mono ml-1">2</span></button>
+          <button class="px-3 py-1 text-xs rounded-full border border-gray-200 dark:border-gray-700 hover:border-indigo-300 text-gray-500">Owned by me <span class="mono ml-1">5</span></button>
+          <button class="px-3 py-1 text-xs rounded-full border border-gray-200 dark:border-gray-700 hover:border-indigo-300 text-gray-500">Recently active <span class="mono ml-1">8</span></button>
+          <button class="px-3 py-1 text-xs rounded-full border border-amber-300 dark:border-amber-700/40 hover:bg-amber-50/40 text-amber-700 dark:text-amber-300">Needs attention <span class="mono ml-1">1</span></button>
+          <button class="px-3 py-1 text-xs rounded-full border border-gray-200 dark:border-gray-700 hover:border-indigo-300 text-gray-500">Has draft <span class="mono ml-1">12</span></button>
+          <span class="ml-auto text-xs text-gray-500">Sorted by <button class="text-indigo-500 hover:underline">last activity ↓</button></span>
+        </section>
+
+        <!-- Project cards grid -->
+        <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+          <article class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+            <div class="p-5">
+              <div class="flex items-start gap-3">
+                <span class="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 inline-flex items-center justify-center text-white font-bold mono">BL</span>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2"><h3 class="font-bold truncate">billing-api</h3><i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i></div>
+                  <p class="text-[11px] mono text-gray-500 truncate">prj_8a91f · 32 classes · 218 props</p>
+                </div>
+                <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Active</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-3 line-clamp-2">Public billing surface · invoices, line-items, currency &amp; tax. Powers stripe-webhook-handler.</p>
+
+              <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Quality</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-emerald-500 mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1">94</span></div>
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Lint</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-emerald-500 mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1">A</span></div>
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Debt</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-emerald-500 mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1">98</span></div>
+              </div>
+
+              <div class="mt-4 flex items-center -space-x-2"><div class="w-6 h-6 rounded-full bg-indigo-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">KS</div><div class="w-6 h-6 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">AL</div><div class="w-6 h-6 rounded-full bg-rose-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">JD</div><div class="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 ring-2 ring-white dark:ring-gray-800 text-gray-600 text-[10px] font-semibold flex items-center justify-center">+5</div><span class="ml-3 text-[11px] text-gray-500">8 contributors</span></div>
+            </div>
+            <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/40 flex items-center justify-between text-xs">
+              <span class="flex items-center gap-2 text-gray-500"><span class="mono">v2.5.0</span> · <span class="text-emerald-500">published</span></span>
+              <span class="text-gray-500">just now</span>
+            </div>
+          </article>
+
+          <article class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+            <div class="p-5">
+              <div class="flex items-start gap-3">
+                <span class="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-500 inline-flex items-center justify-center text-white font-bold mono">OR</span>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2"><h3 class="font-bold truncate">orders-public</h3><i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i></div>
+                  <p class="text-[11px] mono text-gray-500 truncate">prj_8a92a · 24 classes · 184 props</p>
+                </div>
+                <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Active</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-3 line-clamp-2">Public orders surface · cart, checkout, line-items, fulfillment events. 41 consumers across SDKs.</p>
+
+              <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Quality</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-emerald-500 mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1">90</span></div>
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Lint</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-emerald-500 mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1">A</span></div>
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Debt</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-indigo-500 mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 mt-1">88</span></div>
+              </div>
+
+              <div class="mt-4 flex items-center -space-x-2"><div class="w-6 h-6 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">AL</div><div class="w-6 h-6 rounded-full bg-purple-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">PR</div><div class="w-6 h-6 rounded-full bg-sky-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">JM</div><div class="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 ring-2 ring-white dark:ring-gray-800 text-gray-600 text-[10px] font-semibold flex items-center justify-center">+9</div><span class="ml-3 text-[11px] text-gray-500">12 contributors</span></div>
+            </div>
+            <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/40 flex items-center justify-between text-xs"><span class="flex items-center gap-2 text-gray-500"><span class="mono">v3.1.0</span> · <span class="text-amber-500">draft</span></span><span class="text-gray-500">14 m</span></div>
+          </article>
+
+          <article class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+            <div class="p-5">
+              <div class="flex items-start gap-3">
+                <span class="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 inline-flex items-center justify-center text-white font-bold mono">CP</span>
+                <div class="flex-1 min-w-0"><h3 class="font-bold truncate">customer-profile</h3><p class="text-[11px] mono text-gray-500 truncate">prj_8a93b · 18 classes · 142 props</p></div>
+                <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Review</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-3 line-clamp-2">Customer master data · identity, addresses, contacts, preferences. PII flagged on email/phone.</p>
+              <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Quality</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-indigo-500 mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 mt-1">78</span></div>
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Lint</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-amber-500 mono text-xs font-semibold text-amber-600 dark:text-amber-400 mt-1">B</span></div>
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Debt</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-indigo-500 mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 mt-1">76</span></div>
+              </div>
+              <div class="mt-4 flex items-center -space-x-2"><div class="w-6 h-6 rounded-full bg-purple-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">EM</div><div class="w-6 h-6 rounded-full bg-rose-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">SC</div><div class="w-6 h-6 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">AL</div><div class="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 ring-2 ring-white dark:ring-gray-800 text-gray-600 text-[10px] font-semibold flex items-center justify-center">+2</div><span class="ml-3 text-[11px] text-gray-500">5 contributors</span></div>
+            </div>
+            <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/40 flex items-center justify-between text-xs"><span class="flex items-center gap-2 text-gray-500"><span class="mono">v1.9.0</span> · <span class="text-amber-500">in review</span></span><span class="text-gray-500">1 h</span></div>
+          </article>
+
+          <article class="bg-white dark:bg-gray-800 rounded-lg border border-amber-200/60 dark:border-amber-700/40 overflow-hidden">
+            <div class="p-5">
+              <div class="flex items-start gap-3">
+                <span class="w-12 h-12 rounded-lg bg-gradient-to-br from-rose-500 to-pink-500 inline-flex items-center justify-center text-white font-bold mono">IN</span>
+                <div class="flex-1 min-w-0"><h3 class="font-bold truncate">inventory-mgmt</h3><p class="text-[11px] mono text-gray-500 truncate">prj_8a94c · 41 classes · drift</p></div>
+                <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Attention</span>
+              </div>
+              <p class="text-xs text-amber-600 dark:text-amber-400 mt-3 line-clamp-2">Lint regression introduced 1 h ago · 3 broken refs · 11 missing examples · drift on slug primitive.</p>
+              <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Quality</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-amber-500 mono text-xs font-semibold text-amber-600 dark:text-amber-400 mt-1">66</span></div>
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Lint</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-rose-500 mono text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1">D</span></div>
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Debt</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-amber-500 mono text-xs font-semibold text-amber-600 dark:text-amber-400 mt-1">62</span></div>
+              </div>
+              <div class="mt-4 flex items-center -space-x-2"><div class="w-6 h-6 rounded-full bg-cyan-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">RT</div><div class="w-6 h-6 rounded-full bg-amber-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">DK</div><div class="w-6 h-6 rounded-full bg-rose-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">SV</div><span class="ml-3 text-[11px] text-gray-500">3 contributors</span></div>
+            </div>
+            <div class="px-5 py-3 border-t border-amber-200/60 dark:border-amber-700/40 bg-amber-50/40 dark:bg-amber-900/10 flex items-center justify-between text-xs"><span class="flex items-center gap-2 text-amber-700 dark:text-amber-300"><i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> regression a3f12d…</span><a href="#" class="text-indigo-500 hover:underline">Review →</a></div>
+          </article>
+
+          <article class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+            <div class="p-5">
+              <div class="flex items-start gap-3">
+                <span class="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-fuchsia-500 inline-flex items-center justify-center text-white font-bold mono">PA</span>
+                <div class="flex-1 min-w-0"><div class="flex items-center gap-2"><h3 class="font-bold truncate">payments-internal</h3><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 font-semibold">PCI</span></div><p class="text-[11px] mono text-gray-500 truncate">prj_8a95d · 16 classes · private</p></div>
+                <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Active</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-3 line-clamp-2">Internal payments primitives · card tokens, settlement events. Encrypted at rest, IP-restricted.</p>
+              <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Quality</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-emerald-500 mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1">96</span></div>
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Lint</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-emerald-500 mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1">A</span></div>
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Debt</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-emerald-500 mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1">95</span></div>
+              </div>
+              <div class="mt-4 flex items-center -space-x-2"><div class="w-6 h-6 rounded-full bg-indigo-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">KS</div><div class="w-6 h-6 rounded-full bg-purple-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">EM</div><div class="w-6 h-6 rounded-full bg-rose-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">JD</div><div class="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 ring-2 ring-white dark:ring-gray-800 text-gray-600 text-[10px] font-semibold flex items-center justify-center">+1</div><span class="ml-3 text-[11px] text-gray-500">4 contributors</span></div>
+            </div>
+            <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/40 flex items-center justify-between text-xs"><span class="flex items-center gap-2 text-gray-500"><span class="mono">v1.4.2</span> · <span class="text-emerald-500">published</span></span><span class="text-gray-500">5 h</span></div>
+          </article>
+
+          <article class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+            <div class="p-5">
+              <div class="flex items-start gap-3">
+                <span class="w-12 h-12 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-500 inline-flex items-center justify-center text-white font-bold mono">AT</span>
+                <div class="flex-1 min-w-0"><h3 class="font-bold truncate">audit-trail</h3><p class="text-[11px] mono text-gray-500 truncate">prj_8a96e · 8 classes · 62 props</p></div>
+                <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Active</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-3 line-clamp-2">Append-only audit log schema · hash-chained events, GDPR retention overlay.</p>
+              <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Quality</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-indigo-500 mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 mt-1">86</span></div>
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Lint</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-emerald-500 mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1">A</span></div>
+                <div><p class="text-[10px] uppercase tracking-wider text-gray-500">Debt</p><span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-emerald-500 mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1">91</span></div>
+              </div>
+              <div class="mt-4 flex items-center -space-x-2"><div class="w-6 h-6 rounded-full bg-cyan-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">RT</div><div class="w-6 h-6 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-800 text-white text-[10px] font-semibold flex items-center justify-center">AL</div><span class="ml-3 text-[11px] text-gray-500">2 contributors</span></div>
+            </div>
+            <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/40 flex items-center justify-between text-xs"><span class="flex items-center gap-2 text-gray-500"><span class="mono">v0.8.0</span> · <span class="text-slate-500">draft</span></span><span class="text-gray-500">2 d</span></div>
+          </article>
+
+        </section>
+
+        <!-- Aggregate quality trend -->
+        <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+            <div class="flex items-center gap-3"><i data-lucide="trending-up" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold">Portfolio quality trend</h3><p class="text-xs text-gray-500 dark:text-gray-400">Avg quality score across all projects · last 12 weeks</p></div></div>
+          </div>
+          <div class="p-5">
+            <svg viewBox="0 0 600 140" class="w-full h-36">
+              <defs>
+                <linearGradient id="qFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#6366f1" stop-opacity="0.45"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></linearGradient>
+              </defs>
+              <g stroke="#e2e8f0" stroke-dasharray="3,3" stroke-width="0.5" class="dark:stroke-gray-700">
+                <line x1="0" y1="20" x2="600" y2="20"/><line x1="0" y1="60" x2="600" y2="60"/><line x1="0" y1="100" x2="600" y2="100"/>
+              </g>
+              <g class="text-[9px] mono fill-gray-400">
+                <text x="2" y="22">100</text><text x="6" y="62">85</text><text x="6" y="102">70</text>
+              </g>
+              <path d="M30,82 L80,76 L130,82 L180,72 L230,68 L280,62 L330,58 L380,52 L430,42 L480,38 L530,32 L580,28 L580,140 L30,140 Z" fill="url(#qFill)"/>
+              <path d="M30,82 L80,76 L130,82 L180,72 L230,68 L280,62 L330,58 L380,52 L430,42 L480,38 L530,32 L580,28" fill="none" stroke="#6366f1" stroke-width="2"/>
+              <g fill="#6366f1"><circle cx="30" cy="82" r="3"/><circle cx="180" cy="72" r="3"/><circle cx="330" cy="58" r="3"/><circle cx="480" cy="38" r="3"/><circle cx="580" cy="28" r="3"/></g>
+              <g class="text-[9px] mono fill-gray-400"><text x="20" y="135">12 w ago</text><text x="280" y="135">6 w ago</text><text x="555" y="135">now</text></g>
+              <text x="540" y="20" class="text-[10px] font-semibold" fill="#10b981">avg 84</text>
+            </svg>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const themeKey = 'dashboard-mockup-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

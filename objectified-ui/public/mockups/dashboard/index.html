@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Objectified Control Panel — Mockup Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'] } } },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <header class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10">
+    <div class="px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+          <i data-lucide="layout-dashboard" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold flex items-center gap-2">
+            Objectified Control Panel
+            <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">Mockup</span>
+            <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">/ade/dashboard</span>
+          </h1>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Enterprise-grade redesign of the platform control panel · 9 screens · identity · workspace · governance</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="../index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-500">← All mockups</a>
+        <button id="themeBtn" class="w-9 h-9 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center" title="Toggle theme">
+          <i data-lucide="sun-moon" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-10">
+
+    <section class="mb-10">
+      <h2 class="text-3xl font-bold mb-2">Control Panel mockups</h2>
+      <p class="text-gray-600 dark:text-gray-400 max-w-3xl">
+        Visual designs proposing an enterprise-grade overhaul of the Objectified
+        <strong>control panel</strong> at <code class="mono text-xs">/ade/dashboard</code>.
+        Today the control panel is a five-card stat grid plus a
+        recent-activity list. This redesign reorganizes the surface around
+        <strong>identity</strong>, <strong>workspace</strong>,
+        <strong>specifications</strong>, and <strong>governance</strong> —
+        the four lenses an operator, an owner, and an editor each need —
+        and adds the signals an enterprise customer expects:
+        SSO &amp; SCIM provisioning, RBAC visibility, key rotation timers,
+        IP allowlists, residency badges, audit pulses, lint &amp; quality
+        scores, version-pipeline funnels, sunset countdowns, and live
+        consumer counts on every published version. Visual system reuses
+        the existing Objectified mockup conventions: Inter typography,
+        slate gray scale, panel cards, persisted dark mode, indigo accent.
+      </p>
+    </section>
+
+    <section class="mb-10">
+      <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 mb-2">
+        <span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span>
+        Hub · Cross-cutting
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a href="overview.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="layout-dashboard" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Control panel</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">KPIs · schema-health · version pipeline · alerts · system status · quick actions.</p>
+              <p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">/ade/dashboard</p>
+            </div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <section class="mb-10">
+      <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 mb-2">
+        <span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span>
+        Identity · Account
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <a href="profile.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-sky-100 dark:bg-sky-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="user-round" class="w-5 h-5 text-sky-600 dark:text-sky-400"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Profile &amp; security</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Identity card · MFA · recovery codes · active sessions · recent sign-ins.</p>
+              <p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">/ade/dashboard/profile</p>
+            </div>
+          </div>
+        </a>
+
+        <a href="linked-accounts.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-fuchsia-100 dark:bg-fuchsia-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="link-2" class="w-5 h-5 text-fuchsia-600 dark:text-fuchsia-400"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Linked accounts</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">SSO · OIDC · SCIM · GitHub · GitLab · Bitbucket · Slack · PagerDuty.</p>
+              <p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">/ade/dashboard/linked-accounts</p>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <section class="mb-10">
+      <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 mb-2">
+        <span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span>
+        Workspace · Operations
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <a href="tenants.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="building-2" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Tenants</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Workspace cards · plan &amp; seats · residency · members · audit pulse · billing.</p>
+              <p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">/ade/dashboard/tenants</p>
+            </div>
+          </div>
+        </a>
+
+        <a href="api-keys.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="key-round" class="w-5 h-5 text-amber-600 dark:text-amber-400"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold group-hover:text-indigo-600 dark:group-hover:text-indigo-400">API keys</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Keys table · scopes · rotation timer · IP allowlist · usage spark · revoke flow.</p>
+              <p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">/ade/dashboard/api-keys</p>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <section class="mb-10">
+      <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 mb-2">
+        <span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span>
+        Specifications · Lifecycle
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <a href="projects.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="folders" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Projects</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Portfolio grid · quality &amp; lint scores · contributors · last activity · favorites.</p>
+              <p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">/ade/dashboard/projects</p>
+            </div>
+          </div>
+        </a>
+
+        <a href="versions.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="git-branch" class="w-5 h-5 text-rose-600 dark:text-rose-400"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Versions</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Pipeline funnel · branch DAG · publish gates · sunset row · revision history.</p>
+              <p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">/ade/dashboard/versions</p>
+            </div>
+          </div>
+        </a>
+
+        <a href="published.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="globe-2" class="w-5 h-5 text-teal-600 dark:text-teal-400"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Published</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Runtime endpoints · consumer count · traffic · deprecation eta · SLO.</p>
+              <p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">/ade/dashboard/published</p>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <section class="mb-10">
+      <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 mb-2">
+        <span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span>
+        Governance · Reuse
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <a href="primitives.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-cyan-100 dark:bg-cyan-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="atom" class="w-5 h-5 text-cyan-600 dark:text-cyan-400"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Primitives</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Type registry · usage map across versions · drift report · deprecation queue.</p>
+              <p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">/ade/dashboard/primitives</p>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <section class="mt-12 text-xs text-gray-500 dark:text-gray-400">
+      <p>
+        Source: in-product surface
+        <code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800">objectified-ui/src/app/ade/dashboard/page.tsx</code>
+        · sidebar
+        <code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800">app/components/ade/dashboard/DashboardSideNav.tsx</code>
+        · shared layout tokens
+        <code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800">app/components/ade/dashboard/dashboardScreenClasses.ts</code>.
+        Design system documented in
+        <code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800">README.md</code>.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const themeKey = 'dashboard-mockup-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control Panel · Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="layout-dashboard" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Control Panel</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Profile</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-500">← Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto h-full flex flex-col">
+        <div class="p-3">
+          <button class="w-full flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-left">
+            <div class="w-8 h-8 rounded-md bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-xs">AC</div>
+            <div class="flex-1 min-w-0"><p class="text-xs text-gray-500 dark:text-gray-400">Workspace</p><p class="text-sm font-semibold truncate">Acme Corp</p></div>
+            <i data-lucide="chevrons-up-down" class="w-4 h-4 text-gray-400"></i>
+          </button>
+        </div>
+        <hr class="border-indigo-500/10 mx-3" />
+        <div class="p-4 flex-1">
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Overview</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0"><li><a href="overview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Control panel</span></a></li></ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Identity</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="profile.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-indigo-200 dark:border-indigo-700/70 bg-indigo-500/10"><i data-lucide="user-round" class="w-5 h-5 text-indigo-500"></i><span class="text-sm font-semibold flex-1 text-indigo-600 dark:text-indigo-400">Profile</span><span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span></a></li>
+              <li><a href="linked-accounts.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="link-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Linked accounts</span><span class="text-[10px] text-gray-400 mono">5</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Workspace</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="tenants.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="building-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Tenants</span><span class="text-[10px] text-gray-400 mono">4</span></a></li>
+              <li><a href="api-keys.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="key-round" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">API keys</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Specifications</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="projects.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="folders" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Projects</span></a></li>
+              <li><a href="versions.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="git-branch" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Versions</span></a></li>
+              <li><a href="published.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="globe-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Published</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Governance</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0"><li><a href="primitives.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="atom" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Primitives</span></a></li></ul>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-w-0">
+      <header class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div class="px-6 py-4 flex items-end justify-between">
+          <div>
+            <h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="user-round" class="w-6 h-6 text-indigo-500"></i> Profile &amp; security</h2>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Identity, preferences, MFA, sessions, and recent sign-ins · personal scope</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Export data</button>
+            <button class="px-3 py-1.5 text-sm rounded-md border border-rose-200 dark:border-rose-700/40 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> Sign out everywhere</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 overflow-y-auto p-6 space-y-6">
+
+        <!-- Identity card + preferences -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <div class="flex items-center gap-4">
+              <div class="relative">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-2xl font-bold">KS</div>
+                <button class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:border-indigo-500"><i data-lucide="camera" class="w-3.5 h-3.5"></i></button>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-xl font-bold">Kenji Sellers</h3>
+                <p class="text-sm text-gray-500">ksellers@acme.com</p>
+                <p class="text-xs mono text-gray-400 mt-0.5">@kenji.sellers · usr_01HK2BR4XF8H</p>
+              </div>
+            </div>
+            <dl class="mt-6 space-y-3 text-sm">
+              <div class="flex items-center justify-between"><dt class="text-gray-500">Default tenant</dt><dd class="font-medium">Acme Corp</dd></div>
+              <div class="flex items-center justify-between"><dt class="text-gray-500">Roles</dt><dd class="flex gap-1"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">Owner</span><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">Admin</span></dd></div>
+              <div class="flex items-center justify-between"><dt class="text-gray-500">Joined</dt><dd class="mono text-xs">Mar 14, 2024 · 1 yr 41 d</dd></div>
+              <div class="flex items-center justify-between"><dt class="text-gray-500">Last sign-in</dt><dd class="mono text-xs">2 m ago · 73.42.18.90</dd></div>
+              <div class="flex items-center justify-between"><dt class="text-gray-500">Identity source</dt><dd class="flex items-center gap-1.5"><span class="w-4 h-4 rounded-sm bg-sky-500 flex items-center justify-center text-[8px] text-white font-bold">O</span><span class="text-xs font-medium">Okta SSO</span></dd></div>
+            </dl>
+            <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700 flex gap-2">
+              <button class="flex-1 px-3 py-2 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">Edit profile</button>
+              <button class="flex-1 px-3 py-2 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">Change avatar</button>
+            </div>
+          </section>
+
+          <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 lg:col-span-2 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center gap-3">
+              <i data-lucide="settings-2" class="w-5 h-5 text-indigo-500"></i>
+              <div><h3 class="text-base font-semibold">Preferences</h3><p class="text-xs text-gray-500 dark:text-gray-400">Personal display and locale settings</p></div>
+            </div>
+            <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-5 text-sm">
+              <div>
+                <label class="text-xs uppercase tracking-wider text-gray-500 mb-1.5 block">Theme</label>
+                <div class="flex gap-2">
+                  <button class="flex-1 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 hover:border-indigo-300">Light</button>
+                  <button class="flex-1 px-3 py-2 rounded-md border-2 border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium">Dark</button>
+                  <button class="flex-1 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 hover:border-indigo-300">System</button>
+                </div>
+              </div>
+              <div>
+                <label class="text-xs uppercase tracking-wider text-gray-500 mb-1.5 block">Density</label>
+                <div class="flex gap-2">
+                  <button class="flex-1 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 hover:border-indigo-300">Comfortable</button>
+                  <button class="flex-1 px-3 py-2 rounded-md border-2 border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium">Compact</button>
+                </div>
+              </div>
+              <div>
+                <label class="text-xs uppercase tracking-wider text-gray-500 mb-1.5 block">Time zone</label>
+                <select class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"><option>America/Los_Angeles · UTC-7</option></select>
+              </div>
+              <div>
+                <label class="text-xs uppercase tracking-wider text-gray-500 mb-1.5 block">Language</label>
+                <select class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"><option>English (US)</option></select>
+              </div>
+              <div>
+                <label class="text-xs uppercase tracking-wider text-gray-500 mb-1.5 block">Date format</label>
+                <select class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"><option>ISO 8601 · 2026-04-23</option></select>
+              </div>
+              <div>
+                <label class="text-xs uppercase tracking-wider text-gray-500 mb-1.5 block">Week starts on</label>
+                <select class="w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"><option>Monday</option></select>
+              </div>
+              <div class="md:col-span-2 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <div>
+                  <p class="font-medium">Show keyboard shortcuts overlay</p>
+                  <p class="text-[11px] text-gray-500">Press <span class="mono">?</span> anywhere to toggle.</p>
+                </div>
+                <label class="relative inline-flex cursor-pointer"><input type="checkbox" class="sr-only" checked /><span class="w-9 h-5 bg-indigo-500 rounded-full"></span><span class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-white"></span></label>
+              </div>
+              <div class="md:col-span-2 flex items-center justify-between">
+                <div>
+                  <p class="font-medium">Send weekly digest email</p>
+                  <p class="text-[11px] text-gray-500">Mondays · activity, alerts, lint deltas across your tenants.</p>
+                </div>
+                <label class="relative inline-flex cursor-pointer"><input type="checkbox" class="sr-only" checked /><span class="w-9 h-5 bg-indigo-500 rounded-full"></span><span class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-white"></span></label>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Security: MFA + Recovery + Password -->
+        <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+            <div class="flex items-center gap-3"><i data-lucide="shield-check" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold">Authentication &amp; security</h3><p class="text-xs text-gray-500 dark:text-gray-400">MFA enforced by your workspace policy</p></div></div>
+            <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> Hardened</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-gray-700/60">
+            <div class="p-5">
+              <div class="flex items-center justify-between mb-3"><h4 class="font-semibold text-sm flex items-center gap-2"><i data-lucide="key" class="w-4 h-4 text-indigo-500"></i> Password</h4><span class="text-[10px] mono text-gray-400">90-day policy</span></div>
+              <p class="text-xs text-gray-500 mono">Last changed 38 days ago</p>
+              <div class="w-full h-1 mt-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden"><div class="h-1 bg-emerald-500" style="width: 42%"></div></div>
+              <p class="text-[11px] text-gray-500 mt-1 mono">52 days remaining</p>
+              <button class="mt-4 w-full px-3 py-2 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:border-indigo-300">Change password</button>
+            </div>
+            <div class="p-5">
+              <div class="flex items-center justify-between mb-3"><h4 class="font-semibold text-sm flex items-center gap-2"><i data-lucide="smartphone" class="w-4 h-4 text-indigo-500"></i> Multi-factor</h4><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">2 methods</span></div>
+              <ul class="space-y-2 text-sm">
+                <li class="flex items-center justify-between"><span class="flex items-center gap-2"><i data-lucide="key-round" class="w-3.5 h-3.5 text-indigo-500"></i>WebAuthn (YubiKey)</span><span class="text-[10px] mono text-emerald-500">primary</span></li>
+                <li class="flex items-center justify-between"><span class="flex items-center gap-2"><i data-lucide="qr-code" class="w-3.5 h-3.5 text-indigo-500"></i>TOTP (1Password)</span><span class="text-[10px] mono text-gray-400">backup</span></li>
+                <li class="flex items-center justify-between text-gray-400"><span class="flex items-center gap-2"><i data-lucide="message-square" class="w-3.5 h-3.5"></i>SMS</span><span class="text-[10px]">disabled by policy</span></li>
+              </ul>
+              <button class="mt-4 w-full px-3 py-2 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:border-indigo-300">Manage MFA</button>
+            </div>
+            <div class="p-5">
+              <div class="flex items-center justify-between mb-3"><h4 class="font-semibold text-sm flex items-center gap-2"><i data-lucide="ticket" class="w-4 h-4 text-indigo-500"></i> Recovery codes</h4><span class="text-[10px] mono text-amber-500">3 / 10 used</span></div>
+              <p class="text-xs text-gray-500">Single-use codes for sign-in if your MFA device is unavailable.</p>
+              <p class="text-[11px] text-amber-600 dark:text-amber-400 mt-2 mono">Generated 184 days ago · regenerate after travel</p>
+              <button class="mt-4 w-full px-3 py-2 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:border-indigo-300">Regenerate codes</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Active sessions -->
+        <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+            <div class="flex items-center gap-3"><i data-lucide="monitor-smartphone" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold">Active sessions</h3><p class="text-xs text-gray-500 dark:text-gray-400">4 sessions · revoke any device you don't recognise</p></div></div>
+            <button class="text-xs text-rose-500 hover:underline">Revoke all other sessions</button>
+          </div>
+          <table class="w-full text-sm">
+            <thead class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-50/60 dark:bg-gray-900/40">
+              <tr><th class="text-left px-5 py-2 font-semibold">Device</th><th class="text-left px-3 py-2 font-semibold">IP</th><th class="text-left px-3 py-2 font-semibold">Location</th><th class="text-left px-3 py-2 font-semibold">Started</th><th class="text-left px-3 py-2 font-semibold">Last active</th><th class="text-right px-5 py-2 font-semibold">Action</th></tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
+              <tr class="bg-emerald-50/40 dark:bg-emerald-900/10">
+                <td class="px-5 py-3"><div class="flex items-center gap-3"><i data-lucide="laptop" class="w-4 h-4 text-emerald-500"></i><div><p class="font-medium">MacBook Pro · Chrome 142</p><p class="text-[10px] mono text-emerald-500">this device</p></div></div></td>
+                <td class="px-3 py-3 mono text-xs">73.42.18.90</td>
+                <td class="px-3 py-3 text-xs">San Francisco, CA</td>
+                <td class="px-3 py-3 text-xs text-gray-500">2 h ago</td>
+                <td class="px-3 py-3 mono text-xs text-emerald-500">just now</td>
+                <td class="px-5 py-3 text-right"><span class="text-[10px] uppercase tracking-wider text-gray-400">current</span></td>
+              </tr>
+              <tr>
+                <td class="px-5 py-3"><div class="flex items-center gap-3"><i data-lucide="smartphone" class="w-4 h-4 text-indigo-500"></i><div><p class="font-medium">iPhone 15 · Safari iOS</p><p class="text-[10px] mono text-gray-400">objectified-mobile/2.4</p></div></div></td>
+                <td class="px-3 py-3 mono text-xs">73.42.18.91</td>
+                <td class="px-3 py-3 text-xs">San Francisco, CA</td>
+                <td class="px-3 py-3 text-xs text-gray-500">1 d ago</td>
+                <td class="px-3 py-3 mono text-xs">22 m</td>
+                <td class="px-5 py-3 text-right"><button class="text-xs text-rose-500 hover:underline">Revoke</button></td>
+              </tr>
+              <tr>
+                <td class="px-5 py-3"><div class="flex items-center gap-3"><i data-lucide="terminal" class="w-4 h-4 text-purple-500"></i><div><p class="font-medium">CLI · objectified-cli</p><p class="text-[10px] mono text-gray-400">v3.8.2 · darwin/arm64</p></div></div></td>
+                <td class="px-3 py-3 mono text-xs">73.42.18.90</td>
+                <td class="px-3 py-3 text-xs">San Francisco, CA</td>
+                <td class="px-3 py-3 text-xs text-gray-500">3 d ago</td>
+                <td class="px-3 py-3 mono text-xs">14 h</td>
+                <td class="px-5 py-3 text-right"><button class="text-xs text-rose-500 hover:underline">Revoke</button></td>
+              </tr>
+              <tr>
+                <td class="px-5 py-3"><div class="flex items-center gap-3"><i data-lucide="laptop-2" class="w-4 h-4 text-amber-500"></i><div><p class="font-medium">Windows · Edge 138</p><p class="text-[10px] mono text-amber-500">unrecognised device</p></div></div></td>
+                <td class="px-3 py-3 mono text-xs">198.51.100.42</td>
+                <td class="px-3 py-3 text-xs">Austin, TX</td>
+                <td class="px-3 py-3 text-xs text-gray-500">8 d ago</td>
+                <td class="px-3 py-3 mono text-xs text-amber-500">5 d</td>
+                <td class="px-5 py-3 text-right"><button class="text-xs text-rose-500 hover:underline">Revoke</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Recent sign-ins + Notifications matrix -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+              <div class="flex items-center gap-3"><i data-lucide="log-in" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold">Recent sign-ins</h3><p class="text-xs text-gray-500 dark:text-gray-400">Last 30 days · 124 events · 2 anomalies suppressed</p></div></div>
+            </div>
+            <ul class="divide-y divide-gray-100 dark:divide-gray-700/60 text-sm">
+              <li class="px-5 py-3 flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><div class="flex-1"><p>Okta SSO · WebAuthn</p><p class="text-[11px] mono text-gray-400">73.42.18.90 · San Francisco, CA</p></div><span class="text-[10px] mono text-gray-400">just now</span></li>
+              <li class="px-5 py-3 flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><div class="flex-1"><p>Okta SSO · WebAuthn</p><p class="text-[11px] mono text-gray-400">73.42.18.90 · San Francisco, CA</p></div><span class="text-[10px] mono text-gray-400">1 d 2 h</span></li>
+              <li class="px-5 py-3 flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><div class="flex-1"><p>CLI · personal token</p><p class="text-[11px] mono text-gray-400">73.42.18.90 · San Francisco, CA</p></div><span class="text-[10px] mono text-gray-400">3 d 4 h</span></li>
+              <li class="px-5 py-3 flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><div class="flex-1"><p>iOS Safari · WebAuthn passkey</p><p class="text-[11px] mono text-gray-400">73.42.18.91 · San Francisco, CA</p></div><span class="text-[10px] mono text-gray-400">5 d 8 h</span></li>
+              <li class="px-5 py-3 flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-amber-500"></span><div class="flex-1"><p>Edge · Windows · TOTP fallback</p><p class="text-[11px] mono text-amber-500">198.51.100.42 · Austin, TX · new device</p></div><span class="text-[10px] mono text-amber-500">8 d 14 h</span></li>
+              <li class="px-5 py-3 flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-rose-500"></span><div class="flex-1"><p>Failed sign-in · password rejected</p><p class="text-[11px] mono text-rose-500">5.188.10.42 · Tor exit · suppressed</p></div><span class="text-[10px] mono text-gray-400">14 d</span></li>
+            </ul>
+          </section>
+
+          <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+              <div class="flex items-center gap-3"><i data-lucide="bell-ring" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold">Notifications</h3><p class="text-xs text-gray-500 dark:text-gray-400">Channel × event · matrix view</p></div></div>
+            </div>
+            <table class="w-full text-sm">
+              <thead class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-50/60 dark:bg-gray-900/40">
+                <tr><th class="text-left px-5 py-2 font-semibold">Event</th><th class="text-center px-3 py-2 font-semibold">Email</th><th class="text-center px-3 py-2 font-semibold">In-app</th><th class="text-center px-3 py-2 font-semibold">Slack</th><th class="text-center px-5 py-2 font-semibold">Webhook</th></tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
+                <tr><td class="px-5 py-3 font-medium">Version published</td><td class="text-center"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td><td class="text-center"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td><td class="text-center"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td><td class="text-center px-5"><i data-lucide="x" class="w-4 h-4 inline text-gray-300"></i></td></tr>
+                <tr><td class="px-5 py-3 font-medium">Sunset countdown ≤ 14 d</td><td class="text-center"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td><td class="text-center"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td><td class="text-center"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td><td class="text-center px-5"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td></tr>
+                <tr><td class="px-5 py-3 font-medium">API key expiring ≤ 7 d</td><td class="text-center"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td><td class="text-center"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td><td class="text-center"><i data-lucide="x" class="w-4 h-4 inline text-gray-300"></i></td><td class="text-center px-5"><i data-lucide="x" class="w-4 h-4 inline text-gray-300"></i></td></tr>
+                <tr><td class="px-5 py-3 font-medium">Lint regression</td><td class="text-center"><i data-lucide="x" class="w-4 h-4 inline text-gray-300"></i></td><td class="text-center"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td><td class="text-center"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td><td class="text-center px-5"><i data-lucide="x" class="w-4 h-4 inline text-gray-300"></i></td></tr>
+                <tr><td class="px-5 py-3 font-medium">Member joined</td><td class="text-center"><i data-lucide="x" class="w-4 h-4 inline text-gray-300"></i></td><td class="text-center"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td><td class="text-center"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td><td class="text-center px-5"><i data-lucide="x" class="w-4 h-4 inline text-gray-300"></i></td></tr>
+                <tr><td class="px-5 py-3 font-medium">Sign-in from new device</td><td class="text-center"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td><td class="text-center"><i data-lucide="check" class="w-4 h-4 inline text-emerald-500"></i></td><td class="text-center"><i data-lucide="x" class="w-4 h-4 inline text-gray-300"></i></td><td class="text-center px-5"><i data-lucide="x" class="w-4 h-4 inline text-gray-300"></i></td></tr>
+              </tbody>
+            </table>
+            <div class="px-5 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/40 text-xs flex items-center justify-between">
+              <span class="text-gray-500">Quiet hours · 22:00 → 08:00 PT · weekends</span>
+              <button class="text-indigo-500 hover:underline">Edit matrix →</button>
+            </div>
+          </section>
+        </div>
+
+        <!-- Personal access tokens -->
+        <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+            <div class="flex items-center gap-3"><i data-lucide="key-square" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold">Personal access tokens</h3><p class="text-xs text-gray-500 dark:text-gray-400">CLI &amp; script tokens scoped to your identity (separate from workspace API keys)</p></div></div>
+            <button class="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2"><i data-lucide="plus" class="w-4 h-4"></i> New token</button>
+          </div>
+          <table class="w-full text-sm">
+            <thead class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-50/60 dark:bg-gray-900/40">
+              <tr><th class="text-left px-5 py-2 font-semibold">Name</th><th class="text-left px-3 py-2 font-semibold">Prefix</th><th class="text-left px-3 py-2 font-semibold">Scopes</th><th class="text-left px-3 py-2 font-semibold">Last used</th><th class="text-left px-3 py-2 font-semibold">Expires</th><th class="text-right px-5 py-2 font-semibold">Action</th></tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
+              <tr><td class="px-5 py-3 font-medium">objectified-cli</td><td class="px-3 py-3 mono text-xs text-indigo-500">orcl_pat_a3<span class="text-gray-400">…F8H</span></td><td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 mr-1">read</span><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">write</span></td><td class="px-3 py-3 text-xs text-gray-500">14 h ago</td><td class="px-3 py-3 text-xs mono">2026-12-08</td><td class="px-5 py-3 text-right"><button class="text-xs text-gray-500 hover:text-indigo-500 mr-2">Rotate</button><button class="text-xs text-rose-500 hover:underline">Revoke</button></td></tr>
+              <tr><td class="px-5 py-3 font-medium">deploy-bot · ci</td><td class="px-3 py-3 mono text-xs text-indigo-500">orcl_pat_b8<span class="text-gray-400">…K2P</span></td><td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">read</span></td><td class="px-3 py-3 text-xs text-gray-500">38 m ago</td><td class="px-3 py-3 text-xs mono text-amber-500">12 days</td><td class="px-5 py-3 text-right"><button class="text-xs text-gray-500 hover:text-indigo-500 mr-2">Rotate</button><button class="text-xs text-rose-500 hover:underline">Revoke</button></td></tr>
+              <tr><td class="px-5 py-3 font-medium">old-laptop · macbook 2023</td><td class="px-3 py-3 mono text-xs text-gray-400">orcl_pat_c1<span>…X9Q</span></td><td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">read</span></td><td class="px-3 py-3 text-xs text-gray-500">128 d ago</td><td class="px-3 py-3 text-xs mono">never</td><td class="px-5 py-3 text-right"><button class="text-xs text-gray-500 hover:text-indigo-500 mr-2">Rotate</button><button class="text-xs text-rose-500 hover:underline">Revoke</button></td></tr>
+            </tbody>
+          </table>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const themeKey = 'dashboard-mockup-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

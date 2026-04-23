@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control Panel · Primitives</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="layout-dashboard" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span><span class="text-xs text-gray-400">/</span><span class="text-sm text-gray-600 dark:text-gray-300">Control Panel</span><span class="text-xs text-gray-400">/</span><span class="text-sm text-gray-600 dark:text-gray-300">Primitives</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-500">← Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto h-full flex flex-col">
+        <div class="p-3"><button class="w-full flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-left"><div class="w-8 h-8 rounded-md bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-xs">AC</div><div class="flex-1 min-w-0"><p class="text-xs text-gray-500 dark:text-gray-400">Workspace</p><p class="text-sm font-semibold truncate">Acme Corp</p></div><i data-lucide="chevrons-up-down" class="w-4 h-4 text-gray-400"></i></button></div>
+        <hr class="border-indigo-500/10 mx-3" />
+        <div class="p-4 flex-1">
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Overview</div><ul class="m-0 mt-1 list-none space-y-1 p-0"><li><a href="overview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Control panel</span></a></li></ul></div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Identity</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="profile.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="user-round" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Profile</span></a></li>
+              <li><a href="linked-accounts.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="link-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Linked accounts</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Workspace</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="tenants.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="building-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Tenants</span></a></li>
+              <li><a href="api-keys.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="key-round" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">API keys</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Specifications</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="projects.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="folders" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Projects</span></a></li>
+              <li><a href="versions.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="git-branch" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Versions</span></a></li>
+              <li><a href="published.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="globe-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Published</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Governance</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0"><li><a href="primitives.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-indigo-200 dark:border-indigo-700/70 bg-indigo-500/10"><i data-lucide="atom" class="w-5 h-5 text-indigo-500"></i><span class="text-sm font-semibold flex-1 text-indigo-600 dark:text-indigo-400">Primitives</span><span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span></a></li></ul>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-w-0">
+      <header class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div class="px-6 py-4 flex items-end justify-between">
+          <div>
+            <h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="atom" class="w-6 h-6 text-indigo-500"></i> Primitive registry</h2>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">38 primitives · 3 824 properties · 7 drift warnings · 4 pending deprecations · 1 review request</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i data-lucide="upload" class="w-4 h-4"></i> Import bundle</button>
+            <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i data-lucide="git-pull-request" class="w-4 h-4"></i> Drift report</button>
+            <button class="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2"><i data-lucide="plus" class="w-4 h-4"></i> New primitive</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 overflow-y-auto p-6 space-y-6">
+
+        <!-- KPIs -->
+        <section class="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"><div class="flex items-center justify-between"><p class="text-xs text-gray-500">Total primitives</p><i data-lucide="atom" class="w-4 h-4 text-cyan-400"></i></div><p class="text-2xl font-bold mt-2 mono">38</p><p class="text-[10px] text-gray-500 mt-1 mono">12 standard · 26 custom</p></div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"><div class="flex items-center justify-between"><p class="text-xs text-gray-500">Properties using</p><i data-lucide="link" class="w-4 h-4 text-indigo-400"></i></div><p class="text-2xl font-bold mt-2 mono">3 824</p><p class="text-[10px] text-gray-500 mt-1 mono">across 412 classes</p></div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"><div class="flex items-center justify-between"><p class="text-xs text-gray-500">Drift warnings</p><i data-lucide="git-pull-request-arrow" class="w-4 h-4 text-amber-400"></i></div><p class="text-2xl font-bold mt-2 mono text-amber-500">7</p><p class="text-[10px] text-gray-500 mt-1 mono">122 affected props</p></div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"><div class="flex items-center justify-between"><p class="text-xs text-gray-500">Pending deprecation</p><i data-lucide="sun" class="w-4 h-4 text-orange-400"></i></div><p class="text-2xl font-bold mt-2 mono text-orange-500">4</p><p class="text-[10px] text-gray-500 mt-1 mono">soonest 18 d</p></div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"><div class="flex items-center justify-between"><p class="text-xs text-gray-500">Review requests</p><i data-lucide="git-pull-request" class="w-4 h-4 text-purple-400"></i></div><p class="text-2xl font-bold mt-2 mono">1</p><p class="text-[10px] text-gray-500 mt-1 mono">currency v3 · awaiting</p></div>
+        </section>
+
+        <!-- Primitives table + drift sidebar -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 xl:col-span-2 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+              <div class="flex items-center gap-3"><i data-lucide="boxes" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold">Registry</h3><p class="text-xs text-gray-500 dark:text-gray-400">Sorted by usage · click any row for usage map</p></div></div>
+              <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1 border border-gray-200 dark:border-gray-700 rounded-md p-0.5 text-xs">
+                  <button class="px-2 py-1 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium">All</button>
+                  <button class="px-2 py-1 rounded text-gray-500">Standard</button>
+                  <button class="px-2 py-1 rounded text-gray-500">Custom</button>
+                  <button class="px-2 py-1 rounded text-gray-500">Drift</button>
+                </div>
+              </div>
+            </div>
+            <table class="w-full text-sm">
+              <thead class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-50/60 dark:bg-gray-900/40">
+                <tr><th class="text-left px-5 py-2 font-semibold">Primitive</th><th class="text-left px-3 py-2 font-semibold">Type</th><th class="text-left px-3 py-2 font-semibold">Version</th><th class="text-right px-3 py-2 font-semibold">Properties</th><th class="text-left px-3 py-2 font-semibold">Last edit</th><th class="text-right px-5 py-2 font-semibold">Status</th></tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
+
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                  <td class="px-5 py-3"><div class="flex items-center gap-3"><span class="w-8 h-8 rounded-md bg-cyan-100 dark:bg-cyan-900/40 inline-flex items-center justify-center text-cyan-600 dark:text-cyan-300"><i data-lucide="circle-dollar-sign" class="w-4 h-4"></i></span><div><p class="font-medium">currency</p><p class="text-[10px] mono text-gray-400">prim_a3f12 · ISO 4217 · regex</p></div></div></td>
+                  <td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">string</span></td>
+                  <td class="px-3 py-3 mono text-xs">v3 <span class="text-amber-500">(review)</span></td>
+                  <td class="px-3 py-3 text-right mono text-xs">412</td>
+                  <td class="px-3 py-3 text-xs text-gray-500">3 h ago</td>
+                  <td class="px-5 py-3 text-right"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Review</span></td>
+                </tr>
+
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                  <td class="px-5 py-3"><div class="flex items-center gap-3"><span class="w-8 h-8 rounded-md bg-emerald-100 dark:bg-emerald-900/40 inline-flex items-center justify-center text-emerald-600 dark:text-emerald-300"><i data-lucide="mail" class="w-4 h-4"></i></span><div><p class="font-medium">email</p><p class="text-[10px] mono text-gray-400">prim_b8k2p · RFC 5322 · format</p></div></div></td>
+                  <td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">string</span></td>
+                  <td class="px-3 py-3 mono text-xs">v2</td>
+                  <td class="px-3 py-3 text-right mono text-xs">388</td>
+                  <td class="px-3 py-3 text-xs text-gray-500">14 d</td>
+                  <td class="px-5 py-3 text-right"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Stable</span></td>
+                </tr>
+
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                  <td class="px-5 py-3"><div class="flex items-center gap-3"><span class="w-8 h-8 rounded-md bg-amber-100 dark:bg-amber-900/40 inline-flex items-center justify-center text-amber-600 dark:text-amber-300"><i data-lucide="phone" class="w-4 h-4"></i></span><div><p class="font-medium">phone</p><p class="text-[10px] mono text-gray-400">prim_p7f8h · E.164 · regex · PII</p></div></div></td>
+                  <td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">string</span></td>
+                  <td class="px-3 py-3 mono text-xs">v4 <span class="text-amber-500">(drift)</span></td>
+                  <td class="px-3 py-3 text-right mono text-xs">214</td>
+                  <td class="px-3 py-3 text-xs text-gray-500">2 d</td>
+                  <td class="px-5 py-3 text-right"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Drift</span></td>
+                </tr>
+
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                  <td class="px-5 py-3"><div class="flex items-center gap-3"><span class="w-8 h-8 rounded-md bg-purple-100 dark:bg-purple-900/40 inline-flex items-center justify-center text-purple-600 dark:text-purple-300"><i data-lucide="calendar" class="w-4 h-4"></i></span><div><p class="font-medium">timestamp</p><p class="text-[10px] mono text-gray-400">prim_t1k9f · RFC 3339 UTC · format</p></div></div></td>
+                  <td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">string</span></td>
+                  <td class="px-3 py-3 mono text-xs">v1</td>
+                  <td class="px-3 py-3 text-right mono text-xs">488</td>
+                  <td class="px-3 py-3 text-xs text-gray-500">128 d</td>
+                  <td class="px-5 py-3 text-right"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Stable</span></td>
+                </tr>
+
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                  <td class="px-5 py-3"><div class="flex items-center gap-3"><span class="w-8 h-8 rounded-md bg-rose-100 dark:bg-rose-900/40 inline-flex items-center justify-center text-rose-600 dark:text-rose-300"><i data-lucide="key" class="w-4 h-4"></i></span><div><p class="font-medium">uuid</p><p class="text-[10px] mono text-gray-400">prim_u4n7k · v4 · format · PK</p></div></div></td>
+                  <td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">string</span></td>
+                  <td class="px-3 py-3 mono text-xs">v1</td>
+                  <td class="px-3 py-3 text-right mono text-xs">412</td>
+                  <td class="px-3 py-3 text-xs text-gray-500">184 d</td>
+                  <td class="px-5 py-3 text-right"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Stable</span></td>
+                </tr>
+
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                  <td class="px-5 py-3"><div class="flex items-center gap-3"><span class="w-8 h-8 rounded-md bg-orange-100 dark:bg-orange-900/40 inline-flex items-center justify-center text-orange-600 dark:text-orange-300"><i data-lucide="map-pin" class="w-4 h-4"></i></span><div><p class="font-medium">postal-code-us</p><p class="text-[10px] mono text-gray-400">prim_z5p3q · ZIP+4 · custom</p></div></div></td>
+                  <td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">string</span></td>
+                  <td class="px-3 py-3 mono text-xs">v2 <span class="text-orange-500">(deprecating)</span></td>
+                  <td class="px-3 py-3 text-right mono text-xs">94</td>
+                  <td class="px-3 py-3 text-xs text-gray-500">38 d</td>
+                  <td class="px-5 py-3 text-right"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">Sunset 18d</span></td>
+                </tr>
+
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                  <td class="px-5 py-3"><div class="flex items-center gap-3"><span class="w-8 h-8 rounded-md bg-pink-100 dark:bg-pink-900/40 inline-flex items-center justify-center text-pink-600 dark:text-pink-300"><i data-lucide="hash" class="w-4 h-4"></i></span><div><p class="font-medium">slug</p><p class="text-[10px] mono text-gray-400">prim_s8x2k · kebab-case · regex</p></div></div></td>
+                  <td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">string</span></td>
+                  <td class="px-3 py-3 mono text-xs">v1</td>
+                  <td class="px-3 py-3 text-right mono text-xs">182</td>
+                  <td class="px-3 py-3 text-xs text-gray-500">62 d</td>
+                  <td class="px-5 py-3 text-right"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Stable</span></td>
+                </tr>
+
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                  <td class="px-5 py-3"><div class="flex items-center gap-3"><span class="w-8 h-8 rounded-md bg-teal-100 dark:bg-teal-900/40 inline-flex items-center justify-center text-teal-600 dark:text-teal-300"><i data-lucide="percent" class="w-4 h-4"></i></span><div><p class="font-medium">money-amount</p><p class="text-[10px] mono text-gray-400">prim_m4q9p · decimal · scale 2</p></div></div></td>
+                  <td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">number</span></td>
+                  <td class="px-3 py-3 mono text-xs">v2</td>
+                  <td class="px-3 py-3 text-right mono text-xs">388</td>
+                  <td class="px-3 py-3 text-xs text-gray-500">22 d</td>
+                  <td class="px-5 py-3 text-right"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Stable</span></td>
+                </tr>
+
+              </tbody>
+            </table>
+            <div class="px-5 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/40 text-xs flex items-center justify-between">
+              <span class="text-gray-500">Showing 8 of 38 · ranked by usage</span>
+              <div class="flex gap-1"><button class="px-2 py-1 rounded text-gray-500 hover:text-indigo-500"><i data-lucide="chevron-left" class="w-3.5 h-3.5"></i></button><span class="px-2 py-1 mono">1 / 5</span><button class="px-2 py-1 rounded text-gray-500 hover:text-indigo-500"><i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></button></div>
+            </div>
+          </section>
+
+          <!-- Drift report side -->
+          <section class="bg-white dark:bg-gray-800 rounded-lg border border-amber-200/60 dark:border-amber-700/40 overflow-hidden">
+            <div class="px-5 py-4 border-b border-amber-200/60 dark:border-amber-700/40 bg-amber-50/60 dark:bg-amber-900/15"><div class="flex items-center gap-3"><i data-lucide="git-pull-request-arrow" class="w-5 h-5 text-amber-500"></i><div><h3 class="text-base font-semibold">Drift report</h3><p class="text-xs text-gray-500 dark:text-gray-400">7 primitives have local overrides on properties</p></div></div></div>
+            <ul class="divide-y divide-gray-100 dark:divide-gray-700/60">
+              <li class="px-5 py-3">
+                <div class="flex items-center justify-between text-sm"><span class="font-medium flex items-center gap-2"><i data-lucide="phone" class="w-3.5 h-3.5 text-amber-500"></i>phone <span class="mono text-xs text-gray-400">v4 → v3</span></span><span class="text-[10px] mono text-amber-500">42 props</span></div>
+                <p class="text-[11px] text-gray-500 mt-0.5">customer-profile · billing-api · 3 more · regex relaxed locally</p>
+                <div class="w-full h-1 mt-2 bg-amber-100 dark:bg-amber-900/30 rounded-full overflow-hidden"><div class="h-1 bg-amber-500" style="width: 78%"></div></div>
+              </li>
+              <li class="px-5 py-3">
+                <div class="flex items-center justify-between text-sm"><span class="font-medium flex items-center gap-2"><i data-lucide="circle-dollar-sign" class="w-3.5 h-3.5 text-amber-500"></i>currency <span class="mono text-xs text-gray-400">v3 → v2</span></span><span class="text-[10px] mono text-amber-500">38 props</span></div>
+                <p class="text-[11px] text-gray-500 mt-0.5">orders-public · billing-api · enum reduced to USD/EUR</p>
+                <div class="w-full h-1 mt-2 bg-amber-100 dark:bg-amber-900/30 rounded-full overflow-hidden"><div class="h-1 bg-amber-500" style="width: 62%"></div></div>
+              </li>
+              <li class="px-5 py-3">
+                <div class="flex items-center justify-between text-sm"><span class="font-medium flex items-center gap-2"><i data-lucide="hash" class="w-3.5 h-3.5 text-amber-500"></i>slug <span class="mono text-xs text-gray-400">v1 + override</span></span><span class="text-[10px] mono text-amber-500">22 props</span></div>
+                <p class="text-[11px] text-gray-500 mt-0.5">inventory-mgmt · max-length raised 40 → 80</p>
+                <div class="w-full h-1 mt-2 bg-amber-100 dark:bg-amber-900/30 rounded-full overflow-hidden"><div class="h-1 bg-amber-500" style="width: 41%"></div></div>
+              </li>
+              <li class="px-5 py-3">
+                <div class="flex items-center justify-between text-sm"><span class="font-medium flex items-center gap-2"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-amber-500"></i>postal-code-us</span><span class="text-[10px] mono text-amber-500">12 props</span></div>
+                <p class="text-[11px] text-gray-500 mt-0.5">customer-profile · regex includes whitespace variant</p>
+                <div class="w-full h-1 mt-2 bg-amber-100 dark:bg-amber-900/30 rounded-full overflow-hidden"><div class="h-1 bg-amber-500" style="width: 28%"></div></div>
+              </li>
+              <li class="px-5 py-3">
+                <div class="flex items-center justify-between text-sm"><span class="font-medium flex items-center gap-2"><i data-lucide="percent" class="w-3.5 h-3.5 text-amber-500"></i>money-amount</span><span class="text-[10px] mono text-amber-500">8 props</span></div>
+                <p class="text-[11px] text-gray-500 mt-0.5">payments-internal · scale 4 instead of 2</p>
+                <div class="w-full h-1 mt-2 bg-amber-100 dark:bg-amber-900/30 rounded-full overflow-hidden"><div class="h-1 bg-amber-500" style="width: 18%"></div></div>
+              </li>
+            </ul>
+            <div class="px-5 py-3 border-t border-amber-200/60 dark:border-amber-700/40 bg-amber-50/40 dark:bg-amber-900/10 text-xs flex items-center justify-between"><span class="text-gray-500">122 properties affected</span><button class="text-indigo-500 hover:underline">Migrate drifted →</button></div>
+          </section>
+        </div>
+
+        <!-- Usage map -->
+        <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+            <div class="flex items-center gap-3"><i data-lucide="network" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold">Usage map · top primitives × projects</h3><p class="text-xs text-gray-500 dark:text-gray-400">Heat shows property count using each primitive in each project</p></div></div>
+            <a href="projects.html" class="text-xs text-indigo-500 hover:underline">All projects →</a>
+          </div>
+          <div class="p-5 overflow-x-auto">
+            <table class="w-full text-xs min-w-[640px]">
+              <thead>
+                <tr class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  <th class="text-left px-2 py-2">Primitive</th>
+                  <th class="text-center px-2 py-2">billing-api</th>
+                  <th class="text-center px-2 py-2">orders-public</th>
+                  <th class="text-center px-2 py-2">customer-profile</th>
+                  <th class="text-center px-2 py-2">inventory-mgmt</th>
+                  <th class="text-center px-2 py-2">payments-internal</th>
+                  <th class="text-center px-2 py-2">audit-trail</th>
+                  <th class="text-right px-2 py-2">Total</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
+                <tr><td class="px-2 py-2 font-medium">uuid</td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.92);color:#fff">88</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.78);color:#fff">62</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.85);color:#fff">74</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.95);color:#fff">112</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.4)">28</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.55);color:#fff">48</div></td><td class="text-right mono">412</td></tr>
+                <tr><td class="px-2 py-2 font-medium">timestamp</td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.95);color:#fff">128</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.85);color:#fff">82</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.7);color:#fff">62</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.92);color:#fff">98</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.65);color:#fff">42</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.95);color:#fff">76</div></td><td class="text-right mono">488</td></tr>
+                <tr><td class="px-2 py-2 font-medium">currency <span class="text-[9px] text-amber-500 mono">drift</span></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(245,158,11,0.78);color:#fff">88</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(245,158,11,0.62);color:#fff">62</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.4)">14</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.55);color:#fff">38</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(245,158,11,0.78);color:#fff">94</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.45)">12</div></td><td class="text-right mono">412</td></tr>
+                <tr><td class="px-2 py-2 font-medium">email</td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.55);color:#fff">38</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.62);color:#fff">42</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.92);color:#fff">142</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.4)">14</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.55);color:#fff">38</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.85);color:#fff">114</div></td><td class="text-right mono">388</td></tr>
+                <tr><td class="px-2 py-2 font-medium">phone <span class="text-[9px] text-amber-500 mono">drift</span></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.4)">8</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.55);color:#fff">18</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(245,158,11,0.78);color:#fff">142</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.4)">12</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(245,158,11,0.62);color:#fff">28</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.4)">6</div></td><td class="text-right mono">214</td></tr>
+                <tr><td class="px-2 py-2 font-medium">money-amount</td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.92);color:#fff">128</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.78);color:#fff">88</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.4)">8</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.62);color:#fff">42</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(245,158,11,0.78);color:#fff">98</div></td><td class="text-center"><div class="inline-block w-12 h-7 rounded mono leading-7 text-center" style="background:rgba(99,102,241,0.55);color:#fff">24</div></td><td class="text-right mono">388</td></tr>
+              </tbody>
+            </table>
+            <div class="mt-4 flex items-center gap-3 text-[10px] text-gray-500">
+              <span>Heat:</span>
+              <div class="flex items-center gap-1"><div class="w-4 h-3 rounded" style="background:rgba(99,102,241,0.4)"></div><span class="mono">≤ 20</span></div>
+              <div class="flex items-center gap-1"><div class="w-4 h-3 rounded" style="background:rgba(99,102,241,0.6)"></div><span class="mono">21–50</span></div>
+              <div class="flex items-center gap-1"><div class="w-4 h-3 rounded" style="background:rgba(99,102,241,0.85)"></div><span class="mono">51–100</span></div>
+              <div class="flex items-center gap-1"><div class="w-4 h-3 rounded" style="background:rgba(99,102,241,0.95)"></div><span class="mono">&gt; 100</span></div>
+              <span class="ml-3">·</span>
+              <div class="flex items-center gap-1"><div class="w-4 h-3 rounded" style="background:rgba(245,158,11,0.78)"></div><span class="mono text-amber-500">drifted</span></div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const themeKey = 'dashboard-mockup-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>
