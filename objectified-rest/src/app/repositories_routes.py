@@ -10,6 +10,7 @@ from __future__ import annotations
 import base64
 import binascii
 import json
+import re
 from datetime import datetime, timezone
 from threading import Lock
 from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple
@@ -168,6 +169,8 @@ class RepositoryImportJobRecord(BaseModel):
     state: ImportJobStatus
     diffSnapshot: Dict[str, Any] = Field(default_factory=dict)
     errorDetail: str | None = None
+    targetProjectSlug: str | None = None
+    targetVersionId: str | None = None
     createdAt: str
 
 
@@ -188,6 +191,24 @@ class RepositoryScanFilePage(BaseModel):
     nextCursor: str | None = None
 
 
+class RepositoryResolvedProjectRecord(BaseModel):
+    id: str
+    tenantId: str
+    slug: str
+    name: str
+    createdAt: str
+
+
+class RepositoryResolvedVersionRecord(BaseModel):
+    id: str
+    tenantId: str
+    projectSlug: str
+    commitSha: str
+    versionId: str
+    metadata: Dict[str, Any]
+    createdAt: str
+
+
 _REPO_STORE: Dict[str, Dict[str, RepositoryRecord]] = {}
 _REPO_BRANCH_STORE: Dict[str, List[RepositoryBranchRecord]] = {}
 _REPO_SCAN_STORE: Dict[str, List[RepositoryScanTimelineEntry]] = {}
@@ -197,10 +218,19 @@ _REPO_SCAN_FILE_HISTORY_STORE: Dict[str, List[RepositoryFileRecord]] = {}
 _REPO_CREDENTIAL_REF_STORE: Dict[str, List[Dict[str, Any]]] = {}
 _REPO_IMPORT_JOB_STORE: Dict[str, List[RepositoryImportJobRecord]] = {}
 _REPO_AUDIT_STORE: List[Dict[str, Any]] = []
+_REPO_IMPORT_POLICY_STORE: Dict[str, Dict[str, bool]] = {}
+_REPO_PROJECT_STORE: Dict[str, Dict[str, RepositoryResolvedProjectRecord]] = {}
+_REPO_VERSION_STORE: Dict[str, Dict[str, Dict[str, RepositoryResolvedVersionRecord]]] = {}
 _STORE_LOCK = Lock()
 
 _DEFAULT_SCAN_PAGE_SIZE = 50
 _MAX_SCAN_PAGE_SIZE = 200
+_SLUG_SANITIZER = re.compile(r"[^a-z0-9]+")
+_VERSION_SHA_SANITIZER = re.compile(r"[^a-z0-9]+")
+_MANIFEST_PROJECT_AUTO_CREATE_FLAG_KEYS = (
+    "repoManifestProjectAutoCreate",
+    "repo_manifest_project_auto_create",
+)
 
 
 def _utc_now_iso() -> str:
@@ -485,6 +515,137 @@ def _build_repository_source_uri(repository_id: str, path: str, branch: str, com
     return f"repo://{repository_id}/{normalized_path}@{branch}/{commit_sha}"
 
 
+def _normalize_slug(raw: str | None) -> str | None:
+    if raw is None:
+        return None
+    lowered = raw.strip().lower()
+    if not lowered:
+        return None
+    normalized = _SLUG_SANITIZER.sub("-", lowered).strip("-")
+    return normalized or None
+
+
+def _short_sha(commit_sha: str) -> str:
+    normalized = _VERSION_SHA_SANITIZER.sub("-", commit_sha.strip().lower()).strip("-")
+    return (normalized[:12] if normalized else "unknown")
+
+
+def _build_version_id_for_commit(commit_sha: str, created_at: datetime) -> str:
+    return f"{created_at.strftime('%Y%m%d')}-{_short_sha(commit_sha)}"
+
+
+def _coerce_tenant_admin_flag(auth_data: Dict[str, Any]) -> bool:
+    if bool(auth_data.get("is_tenant_admin")) or bool(auth_data.get("tenant_admin")):
+        return True
+    roles = auth_data.get("roles")
+    if isinstance(roles, list):
+        normalized_roles = {str(role).strip().lower() for role in roles}
+        if "tenant_admin" in normalized_roles or "tenant-administrator" in normalized_roles:
+            return True
+    return False
+
+
+def _is_manifest_project_auto_create_enabled(auth_data: Dict[str, Any]) -> bool:
+    containers = (
+        auth_data.get("featureFlags"),
+        auth_data.get("feature_flags"),
+        auth_data.get("flags"),
+    )
+    for container in containers:
+        if not isinstance(container, dict):
+            continue
+        for key in _MANIFEST_PROJECT_AUTO_CREATE_FLAG_KEYS:
+            if container.get(key) is True:
+                return True
+    return False
+
+
+def _manifest_project_slug_by_path(repository_id: str) -> Dict[str, str]:
+    tenant_id = _find_tenant_id_for_repository(repository_id)
+    repository = _REPO_STORE.get(tenant_id, {}).get(repository_id)
+    if repository is None:
+        return {}
+    manifest_outcome = parse_repo_manifest(repository.manifest)
+    if manifest_outcome.manifest is None:
+        return {}
+    manifest_map: Dict[str, str] = {}
+    for spec in manifest_outcome.manifest.specs:
+        normalized_slug = _normalize_slug(spec.project)
+        if normalized_slug is None:
+            continue
+        manifest_map[spec.path] = normalized_slug
+    return manifest_map
+
+
+def _ensure_project_for_scan_file(
+    *,
+    tenant_id: str,
+    repository_id: str,
+    file_row: RepositoryFileRecord,
+    manifest_project_slug_by_path: Dict[str, str],
+) -> RepositoryResolvedProjectRecord | None:
+    normalized_project_slug = _normalize_slug(file_row.projectSlug)
+    if normalized_project_slug is None:
+        return None
+    tenant_projects = _REPO_PROJECT_STORE.setdefault(tenant_id, {})
+    existing = tenant_projects.get(normalized_project_slug)
+    if existing is not None:
+        return existing
+
+    policy = _REPO_IMPORT_POLICY_STORE.get(repository_id, {})
+    allow_auto_create = bool(policy.get("allowManifestProjectAutoCreate"))
+    manifest_slug = manifest_project_slug_by_path.get(file_row.path)
+    if not allow_auto_create or manifest_slug != normalized_project_slug:
+        return None
+
+    now = _utc_now_iso()
+    created = RepositoryResolvedProjectRecord(
+        id=str(uuid4()),
+        tenantId=tenant_id,
+        slug=normalized_project_slug,
+        name=normalized_project_slug.replace("-", " ").title(),
+        createdAt=now,
+    )
+    tenant_projects[normalized_project_slug] = created
+    return created
+
+
+def _ensure_commit_sha_version(
+    *,
+    tenant_id: str,
+    project_slug: str,
+    commit_sha: str,
+    repository_id: str,
+    branch: str,
+    path: str,
+) -> RepositoryResolvedVersionRecord:
+    tenant_versions = _REPO_VERSION_STORE.setdefault(tenant_id, {})
+    project_versions = tenant_versions.setdefault(project_slug, {})
+    existing = project_versions.get(commit_sha)
+    if existing is not None:
+        return existing
+
+    now_dt = datetime.now(timezone.utc)
+    record = RepositoryResolvedVersionRecord(
+        id=str(uuid4()),
+        tenantId=tenant_id,
+        projectSlug=project_slug,
+        commitSha=commit_sha,
+        versionId=_build_version_id_for_commit(commit_sha, now_dt),
+        metadata={
+            "repositorySource": {
+                "repositoryId": repository_id,
+                "branch": branch,
+                "commitSha": commit_sha,
+                "path": path,
+            }
+        },
+        createdAt=now_dt.isoformat(),
+    )
+    project_versions[commit_sha] = record
+    return record
+
+
 def _build_diff_snapshot(file_row: RepositoryFileRecord) -> Dict[str, Any]:
     return {
         "path": file_row.path,
@@ -505,6 +666,7 @@ def _dispatch_import_jobs_for_scan(
     scan_files: List[RepositoryFileRecord],
 ) -> None:
     repository_jobs = _REPO_IMPORT_JOB_STORE.setdefault(repository_id, [])
+    manifest_project_slug_by_path = _manifest_project_slug_by_path(repository_id)
     for file_row in scan_files:
         if file_row.status not in {"new", "modified", "removed"}:
             continue
@@ -533,6 +695,27 @@ def _dispatch_import_jobs_for_scan(
         elif promote == "auto":
             state = "committed"
 
+        target_project_slug: str | None = None
+        target_version_id: str | None = None
+        if file_row.versionStrategy == "commit-sha":
+            resolved_project = _ensure_project_for_scan_file(
+                tenant_id=tenant_id,
+                repository_id=repository_id,
+                file_row=file_row,
+                manifest_project_slug_by_path=manifest_project_slug_by_path,
+            )
+            if resolved_project is not None:
+                resolved_version = _ensure_commit_sha_version(
+                    tenant_id=tenant_id,
+                    project_slug=resolved_project.slug,
+                    commit_sha=commit_sha,
+                    repository_id=repository_id,
+                    branch=branch,
+                    path=file_row.path,
+                )
+                target_project_slug = resolved_project.slug
+                target_version_id = resolved_version.versionId
+
         import_job = RepositoryImportJobRecord(
             id=str(uuid4()),
             repositoryId=repository_id,
@@ -548,6 +731,8 @@ def _dispatch_import_jobs_for_scan(
             state=state,
             diffSnapshot=_build_diff_snapshot(file_row),
             errorDetail=failure_message,
+            targetProjectSlug=target_project_slug,
+            targetVersionId=target_version_id,
             createdAt=file_row.createdAt,
         )
         repository_jobs.insert(0, import_job)
@@ -669,6 +854,10 @@ async def register_repository(
         _REPO_SCAN_HISTORY_STORE[repository.id] = [initial_scan]
         _REPO_SCAN_FILE_HISTORY_STORE[initial_scan.id] = initial_scan_files
         _REPO_CREDENTIAL_REF_STORE[repository.id] = [{"linkedAccountId": request.linkedAccountId}]
+        _REPO_IMPORT_POLICY_STORE[repository.id] = {
+            "allowManifestProjectAutoCreate": _coerce_tenant_admin_flag(auth_data)
+            and _is_manifest_project_auto_create_enabled(auth_data),
+        }
         tenant_repos[repository.id] = repository
 
     return RegisterRepositoryResponse(
@@ -993,6 +1182,9 @@ def _reset_repository_state_for_tests() -> None:
         _REPO_CREDENTIAL_REF_STORE.clear()
         _REPO_IMPORT_JOB_STORE.clear()
         _REPO_AUDIT_STORE.clear()
+        _REPO_IMPORT_POLICY_STORE.clear()
+        _REPO_PROJECT_STORE.clear()
+        _REPO_VERSION_STORE.clear()
 
 
 def _complete_repository_scan_for_tests(
@@ -1177,6 +1369,7 @@ def _seed_repository_relations_for_tests(repository_id: str) -> None:
         ]
         _REPO_FILE_STORE[repository_id] = [{"path": "README.md"}]
         _REPO_CREDENTIAL_REF_STORE[repository_id] = [{"linkedAccountId": str(uuid4())}]
+        _REPO_IMPORT_POLICY_STORE.setdefault(repository_id, {"allowManifestProjectAutoCreate": False})
 
 
 def _get_repository_audit_rows_for_tests(repository_id: str) -> List[Dict[str, Any]]:
@@ -1197,6 +1390,16 @@ def _get_repository_relations_exist_for_tests(repository_id: str) -> Dict[str, b
 def _get_repository_import_jobs_for_tests(repository_id: str) -> List[RepositoryImportJobRecord]:
     with _STORE_LOCK:
         return list(_REPO_IMPORT_JOB_STORE.get(repository_id, []))
+
+
+def _get_repository_resolved_versions_for_tests(tenant_id: str) -> List[RepositoryResolvedVersionRecord]:
+    with _STORE_LOCK:
+        tenant_versions = _REPO_VERSION_STORE.get(tenant_id, {})
+        rows: List[RepositoryResolvedVersionRecord] = []
+        for per_commit in tenant_versions.values():
+            rows.extend(per_commit.values())
+        rows.sort(key=lambda row: row.createdAt, reverse=True)
+        return rows
 
 
 def _list_poll_targets_for_tests(tenant_id: str) -> List[Dict[str, str]]:

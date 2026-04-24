@@ -5,6 +5,7 @@ We continue to improve the platform based on your feedback with improvements and
 ---
 
 ## Repositories
+- Added REPO-5.3 commit-SHA version auto-creation so repository scan import jobs now bind to idempotent draft versions named `<datestamp>-<short-sha>`, capture `metadata.repositorySource` (repository/branch/SHA/path), and allow manifest-declared missing project auto-creation only when a tenant-admin feature flag is enabled.
 - Added REPO-5.2 project/version mapping rules so manifest `specs[].project` + `specs[].versionStrategy` now take precedence, auto mapping falls back to path-derived project + `commit-sha`, and unmapped root-level specs persist `tracked=false` with `settingsJson.mappingRequired=true` for UI mapping prompts.
 - Added REPO-5.1 discovered-file import binding so repository scan completion now dispatches dry-run git import jobs for `new`/`modified` files (tracked files only), creates manual approval `removal` jobs for `removed` files, skips `unchanged` and untracked files, and records sync audit outcomes (`repository.sync_committed` / `repository.sync_pending_review`) with parse failures setting `repository_file.status='parse_error'`.
 - Added REPO-4.5 failure backoff + auto-pause behavior so repeated provider head-check failures exponentially back off scheduler cadence, reset on success, and auto-pause repositories with `repository.auto_paused` audit events after eight consecutive failures.

@@ -2,6 +2,7 @@
 
 ## Completed
 
+- REPO-5.3 (#2788): Added commit-SHA draft version auto-binding for repository import jobs by creating `<datestamp>-<short-sha>` versions per resolved project with `(project, sha)` idempotency, recording `metadata.repositorySource` on created versions, and feature-gating manifest-driven project auto-creation to tenant administrators.
 - REPO-5.2 (#2787): Added manifest-first project/version mapping resolution (`specs[].project`, `specs[].versionStrategy`) with persisted `repository_file.project_slug` / `repository_file.version_strategy` decisions, documented auto fallback rules (`project` derived from path segment, `version_strategy='commit-sha'`), and unmapped-file UI affordance metadata via `tracked=false` + `settings_json.mappingRequired=true`.
 - REPO-5.1 (#2786): Added discovered-file to import-job binding in the repository scan completion path so `new`/`modified` files dispatch dry-run git import jobs, `removed` files dispatch manual-approval removal jobs, `unchanged` files skip job creation, parse failures write back `repository_file.status='parse_error'`, and each job records `repository.sync_committed` or `repository.sync_pending_review` audit events.
 - REPO-4.5 (#2783): Added scheduler failure backoff and auto-pause behavior by persisting per-branch consecutive failure/error metadata, exponentially backing off poll cadence without mutating configured poll intervals, resetting failure state on successful checks, and auto-pausing repositories with `repository.auto_paused` workflow audits after eight consecutive failures.

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -8,6 +10,7 @@ from app.repositories_routes import (
     _get_repository_audit_rows_for_tests,
     _get_repository_import_jobs_for_tests,
     _get_repository_relations_exist_for_tests,
+    _get_repository_resolved_versions_for_tests,
     _list_poll_targets_for_tests,
     _reset_repository_state_for_tests,
     _seed_repository_relations_for_tests,
@@ -27,6 +30,14 @@ _TENANT_SLUG = "test-tenant"
 
 def _override_auth():
     return _MOCK_AUTH
+
+
+def _override_auth_tenant_admin_with_repo_project_autocreate():
+    return {
+        **_MOCK_AUTH,
+        "is_tenant_admin": True,
+        "featureFlags": {"repoManifestProjectAutoCreate": True},
+    }
 
 
 @pytest.fixture(autouse=True)
@@ -618,3 +629,122 @@ def test_complete_scan_applies_manifest_first_mapping_and_auto_fallback_rules():
         "mappingRequired": True,
         "mappingReason": "project_slug_not_resolved",
     }
+
+
+def test_commit_sha_jobs_bind_to_idempotent_auto_created_versions() -> None:
+    app.dependency_overrides[validate_authentication] = _override_auth_tenant_admin_with_repo_project_autocreate
+    try:
+        create_response = client.post(
+            f"/v1/repositories/{_TENANT_SLUG}",
+            json={
+                "linkedAccountId": "aaaaaaaa-bbbb-cccc-dddd-000000000027",
+                "provider": "github",
+                "owner": "acme",
+                "name": "version-binding",
+                "branches": [{"branch": "main"}],
+                "manifest": (
+                    "version: 1\n"
+                    "specs:\n"
+                    "  - path: services/orders/openapi.yaml\n"
+                    "    project: checkout-core\n"
+                    "    versionStrategy: commit-sha\n"
+                ),
+            },
+        )
+        repository_id = create_response.json()["repository"]["id"]
+        first_scan_id = create_response.json()["initialScanJobId"]
+        _complete_repository_scan_for_tests(
+            repository_id,
+            first_scan_id,
+            commit_sha="abc123def4567890",
+            files=[
+                {
+                    "path": "services/orders/openapi.yaml",
+                    "blobSha": "111",
+                }
+            ],
+        )
+        first_jobs = [job for job in _get_repository_import_jobs_for_tests(repository_id) if job.scanId == first_scan_id]
+        first_versions = _get_repository_resolved_versions_for_tests(_MOCK_AUTH["tenant_id"])
+
+        second_scan_response = client.post(
+            f"/v1/repositories/{_TENANT_SLUG}/{repository_id}/scans",
+            json={"branch": "main", "force": True},
+        )
+        second_scan_id = second_scan_response.json()["id"]
+        _complete_repository_scan_for_tests(
+            repository_id,
+            second_scan_id,
+            commit_sha="abc123def4567890",
+            files=[
+                {
+                    "path": "services/orders/openapi.yaml",
+                    "blobSha": "222",
+                }
+            ],
+        )
+        second_jobs = [job for job in _get_repository_import_jobs_for_tests(repository_id) if job.scanId == second_scan_id]
+        second_versions = _get_repository_resolved_versions_for_tests(_MOCK_AUTH["tenant_id"])
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+
+    assert create_response.status_code == 201
+    assert second_scan_response.status_code == 200
+    assert len(first_jobs) == 1
+    assert len(second_jobs) == 1
+    assert len(first_versions) == 1
+    assert len(second_versions) == 1
+
+    first_job = first_jobs[0]
+    second_job = second_jobs[0]
+    created_version = first_versions[0]
+    assert first_job.targetProjectSlug == "checkout-core"
+    assert first_job.targetVersionId == created_version.versionId
+    assert second_job.targetVersionId == created_version.versionId
+    assert created_version.versionId == f"{datetime.now(timezone.utc).strftime('%Y%m%d')}-abc123def456"
+    assert created_version.metadata["repositorySource"] == {
+        "repositoryId": repository_id,
+        "branch": "main",
+        "commitSha": "abc123def4567890",
+        "path": "services/orders/openapi.yaml",
+    }
+
+
+def test_manifest_project_does_not_autocreate_without_flag_or_tenant_admin() -> None:
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        create_response = client.post(
+            f"/v1/repositories/{_TENANT_SLUG}",
+            json={
+                "linkedAccountId": "aaaaaaaa-bbbb-cccc-dddd-000000000028",
+                "provider": "github",
+                "owner": "acme",
+                "name": "version-binding-guard",
+                "branches": [{"branch": "main"}],
+                "manifest": (
+                    "version: 1\n"
+                    "specs:\n"
+                    "  - path: services/orders/openapi.yaml\n"
+                    "    project: checkout-core\n"
+                    "    versionStrategy: commit-sha\n"
+                ),
+            },
+        )
+        repository_id = create_response.json()["repository"]["id"]
+        scan_id = create_response.json()["initialScanJobId"]
+        _complete_repository_scan_for_tests(
+            repository_id,
+            scan_id,
+            commit_sha="abc123def4567890",
+            files=[{"path": "services/orders/openapi.yaml", "blobSha": "111"}],
+        )
+        jobs = [job for job in _get_repository_import_jobs_for_tests(repository_id) if job.scanId == scan_id]
+        versions = _get_repository_resolved_versions_for_tests(_MOCK_AUTH["tenant_id"])
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+
+    assert create_response.status_code == 201
+    assert len(jobs) == 1
+    assert jobs[0].targetProjectSlug is None
+    assert jobs[0].targetVersionId is None
+    assert versions == []
