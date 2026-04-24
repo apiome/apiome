@@ -270,7 +270,7 @@ export function createResolveRepositoryTokenResolver(partialDeps?: Partial<Resol
 
       return {
         repositoryId,
-        linkedAccountId,
+        linkedAccountId: row.linked_account_id,
         provider: row.provider,
         accessToken,
         expiresAt: nextExpiresAt,

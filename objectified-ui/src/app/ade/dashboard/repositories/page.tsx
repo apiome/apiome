@@ -286,7 +286,7 @@ const RepositoriesPage = () => {
               .map((branch: string | { name?: string; branch?: string }) =>
                 typeof branch === 'string' ? branch : branch?.name ?? branch?.branch,
               )
-              .filter((branchName): branchName is string => typeof branchName === 'string')
+              .filter((branchName: unknown): branchName is string => typeof branchName === 'string')
           : [],
       };
       setWizardOpen(false);
