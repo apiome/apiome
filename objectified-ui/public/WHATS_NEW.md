@@ -4,6 +4,8 @@ We continue to improve the platform based on your feedback with improvements and
 
 ---
 
+- Added repository connector MVP database tables for repository registration, branch tracking, and linked-account credential references.
+
 ## UI
 - Branch workflow is its own button in the canvas now, and compacted to fit most functionality that's in Versions now.
 - Compacted the trending view in the projects page in the dashboard.
