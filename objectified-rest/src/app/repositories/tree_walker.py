@@ -10,12 +10,12 @@ from .providers import RepoRef, RepositoryProvider, RepositoryProviderError, Rep
 WorkflowAuditEmitter = Callable[[str, dict[str, Any]], Any]
 
 DEFAULT_SCAN_IGNORE_PATTERNS: tuple[str, ...] = (
-    ".git/**",
-    "node_modules/**",
-    "vendor/**",
-    "dist/**",
-    "build/**",
-    "coverage/**",
+    "**/.git/**",
+    "**/node_modules/**",
+    "**/vendor/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/coverage/**",
     "**/__pycache__/**",
 )
 

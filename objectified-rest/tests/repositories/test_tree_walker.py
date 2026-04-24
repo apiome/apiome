@@ -173,7 +173,32 @@ async def test_walk_repository_tree_applies_default_ignore_rules_and_reports_ski
 
     assert [entry.path for entry in result] == ["README.md", "src/main.py"]
     assert audits[0][1]["files_skipped_by_ignore"] == 1
-    assert "node_modules/**" in DEFAULT_SCAN_IGNORE_PATTERNS
+    assert "**/node_modules/**" in DEFAULT_SCAN_IGNORE_PATTERNS
+
+
+@pytest.mark.asyncio
+async def test_walk_repository_tree_ignores_nested_default_dirs() -> None:
+    provider = _StubProvider(
+        [
+            TreeEntry(path="packages/foo/node_modules/lodash/index.js", type="file", sha="b1", size_bytes=30, mode="100644"),
+            TreeEntry(path="packages/foo/src/index.ts", type="file", sha="b2", size_bytes=12, mode="100644"),
+            TreeEntry(path="packages/bar/dist/bundle.js", type="file", sha="b3", size_bytes=25, mode="100644"),
+            TreeEntry(path="packages/bar/src/index.ts", type="file", sha="b4", size_bytes=10, mode="100644"),
+        ]
+    )
+
+    result = [
+        entry
+        async for entry in walk_repository_tree(
+            provider=provider,
+            token="token-a",
+            repo=RepoRef(owner="acme", name="monorepo"),
+            commit_sha="commit-sha-2",
+            subpath_glob="**/*",
+        )
+    ]
+
+    assert [entry.path for entry in result] == ["packages/foo/src/index.ts", "packages/bar/src/index.ts"]
 
 
 @pytest.mark.asyncio
