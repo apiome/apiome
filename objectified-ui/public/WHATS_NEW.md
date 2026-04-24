@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 - Added repository connector MVP database tables for repository registration, branch tracking, and linked-account credential references.
 - Added a provider abstraction layer for repository connectors with a GitHub adapter, shared provider error taxonomy, and cross-provider contract tests.
+- Added a server-only `resolveRepositoryToken` helper that resolves linked-account repository credentials, refreshes supported expired tokens, emits typed resolver errors, and writes token-safe workflow audit rows.
 
 ## UI
 - Branch workflow is its own button in the canvas now, and compacted to fit most functionality that's in Versions now.
