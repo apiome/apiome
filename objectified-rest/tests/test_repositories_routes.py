@@ -286,7 +286,7 @@ def test_list_scans_returns_initial_register_scan_with_default_page_limit():
             },
         )
         repository_id = create_response.json()["repository"]["id"]
-        scans_response = client.get(f"/v1/repositories/{repository_id}/scans")
+        scans_response = client.get(f"/v1/repositories/{_TENANT_SLUG}/{repository_id}/scans")
     finally:
         app.dependency_overrides.pop(validate_authentication, None)
 
@@ -314,11 +314,11 @@ def test_post_scans_support_force_and_skipped_unchanged_with_single_audit_entry(
         )
         repository_id = create_response.json()["repository"]["id"]
         skipped_response = client.post(
-            f"/v1/repositories/{repository_id}/scans",
+            f"/v1/repositories/{_TENANT_SLUG}/{repository_id}/scans",
             json={"branch": "main", "force": False},
         )
         forced_response = client.post(
-            f"/v1/repositories/{repository_id}/scans",
+            f"/v1/repositories/{_TENANT_SLUG}/{repository_id}/scans",
             json={"branch": "main", "force": True},
         )
     finally:
@@ -354,24 +354,24 @@ def test_list_scans_and_files_support_cursor_pagination_and_filters():
         repository_id = create_response.json()["repository"]["id"]
         for _ in range(3):
             post_response = client.post(
-                f"/v1/repositories/{repository_id}/scans",
+                f"/v1/repositories/{_TENANT_SLUG}/{repository_id}/scans",
                 json={"branch": "main", "force": True},
             )
             assert post_response.status_code == 200
 
-        first_page = client.get(f"/v1/repositories/{repository_id}/scans", params={"limit": 2})
+        first_page = client.get(f"/v1/repositories/{_TENANT_SLUG}/{repository_id}/scans", params={"limit": 2})
         next_cursor = first_page.json()["nextCursor"]
         second_page = client.get(
-            f"/v1/repositories/{repository_id}/scans",
+            f"/v1/repositories/{_TENANT_SLUG}/{repository_id}/scans",
             params={"limit": 2, "cursor": next_cursor},
         )
         skipped_only = client.get(
-            f"/v1/repositories/{repository_id}/scans",
+            f"/v1/repositories/{_TENANT_SLUG}/{repository_id}/scans",
             params={"status": "skipped_unchanged"},
         )
         initial_scan_id = create_response.json()["initialScanJobId"]
         files_response = client.get(
-            f"/v1/repositories/{repository_id}/scans/{initial_scan_id}/files",
+            f"/v1/repositories/{_TENANT_SLUG}/{repository_id}/scans/{initial_scan_id}/files",
             params={"status": "manifest_error"},
         )
     finally:

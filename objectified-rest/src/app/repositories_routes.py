@@ -619,8 +619,9 @@ async def delete_repository(
     return Response(status_code=204)
 
 
-@router.get("/{repository_id}/scans", response_model=RepositoryScanPage)
+@router.get("/{tenant_slug}/{repository_id}/scans", response_model=RepositoryScanPage)
 async def list_repository_scans(
+    tenant_slug: str,
     repository_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
     status: RepositoryScanStatus | None = Query(default=None),
@@ -671,8 +672,9 @@ async def list_repository_scans(
     return RepositoryScanPage(items=page_items, limit=limit, nextCursor=next_cursor)
 
 
-@router.get("/{repository_id}/scans/{scan_id}", response_model=RepositoryScanRecord)
+@router.get("/{tenant_slug}/{repository_id}/scans/{scan_id}", response_model=RepositoryScanRecord)
 async def get_repository_scan(
+    tenant_slug: str,
     repository_id: str,
     scan_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -687,8 +689,9 @@ async def get_repository_scan(
     raise HTTPException(status_code=404, detail=f"Scan not found: {scan_id}")
 
 
-@router.get("/{repository_id}/scans/{scan_id}/files", response_model=RepositoryScanFilePage)
+@router.get("/{tenant_slug}/{repository_id}/scans/{scan_id}/files", response_model=RepositoryScanFilePage)
 async def list_repository_scan_files(
+    tenant_slug: str,
     repository_id: str,
     scan_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -734,8 +737,9 @@ async def list_repository_scan_files(
     return RepositoryScanFilePage(items=page_items, limit=limit, nextCursor=next_cursor)
 
 
-@router.post("/{repository_id}/scans", response_model=RepositoryScanRecord)
+@router.post("/{tenant_slug}/{repository_id}/scans", response_model=RepositoryScanRecord)
 async def create_repository_scan(
+    tenant_slug: str,
     repository_id: str,
     request: RepositoryScanCreateRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
