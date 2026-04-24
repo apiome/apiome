@@ -227,7 +227,7 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
       api.RepositoryFiles.show(projectPath(repo.owner, repo.name), normalizeFilePath(path), branch)
     );
     const record = toRecord(file);
-    const content = typeof record?.content === 'string' ? record.content.replace(/\n/g, '') : '';
+    const content = typeof record?.content === 'string' ? record.content.replaceAll('\n', '') : '';
     return {
       contentBase64: content,
       sha: String(record?.blob_id ?? ''),
