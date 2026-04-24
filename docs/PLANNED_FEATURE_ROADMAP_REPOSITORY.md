@@ -2,6 +2,7 @@
 
 ## Completed
 
+- REPO-3.2 (#2771): Added `swagger_2_0` support to the repository OpenAPI importer pipeline so Swagger 2.0 repository specs run through the same conversion/parser path as OpenAPI 3.x, with semantic parity tests covering definitions, paths, parameters, and security scheme mapping.
 - REPO-3.1 (#2770): Added a repository OpenAPI importer hook that reuses the existing one-shot `parseOpenAPISpec` conversion pipeline, accepts normalized `{source, format, content, refs}` input for repository ingestion, and delegates cross-file `$ref` handling to the REPO-3.8 resolver contract with fixture-set parity coverage.
 - REPO-2.7 (#2768): Added scan diff classification against the previous completed scan keyed by `(repository_id, path)`, including persisted `new/unchanged/modified/removed` per-file statuses with carried-forward `removed` rows and `{added, modified, removed, unchanged}` diff summary counts.
 - REPO-2.6 (#2767): Added `repository_scan` and `repository_file` history support with cursor-paginated scan/file REST endpoints, `force` rescan behavior, and `skipped_unchanged` audit/event tracking.

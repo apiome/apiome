@@ -1,7 +1,10 @@
 import { parseOpenAPISpec, OpenAPIParseResult } from '../../../src/app/utils/openapi-import';
 import type { DetectedRepositorySpecFormat } from '../scanner/detect';
 
-export type RepositoryOpenApiFormat = Extract<DetectedRepositorySpecFormat, 'openapi_3_0' | 'openapi_3_1'>;
+export type RepositoryOpenApiFormat = Extract<
+  DetectedRepositorySpecFormat,
+  'openapi_3_0' | 'openapi_3_1' | 'swagger_2_0'
+>;
 
 export interface RepositoryOpenApiRef {
   path: string;
