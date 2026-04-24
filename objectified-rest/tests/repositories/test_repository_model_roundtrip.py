@@ -11,27 +11,32 @@ import pytest
 from app.config import settings
 
 
-def _migration_path() -> Path:
+def _migration_paths() -> list[Path]:
     repo_root = Path(__file__).resolve().parents[3]
-    return repo_root / "objectified-db" / "scripts" / "20260423-230000-repository-connector.sql"
+    scripts_dir = repo_root / "objectified-db" / "scripts"
+    return [
+        scripts_dir / "20260423-230000.sql",
+        scripts_dir / "20260424-120000.sql",
+    ]
 
 
 @pytest.fixture()
 def repository_schema():
     """Create an isolated schema, apply migration, and clean it up after each test."""
     schema = f"odb_repo_test_{uuid.uuid4().hex[:8]}"
-    migration = _migration_path()
-    migration_sql = migration.read_text()
+    migration_sql_chunks = [path.read_text() for path in _migration_paths()]
     try:
         conn = psycopg2.connect(settings.effective_database_url)
     except Exception as exc:  # pragma: no cover - environment dependent
         pytest.skip(f"PostgreSQL unavailable for repository round-trip tests: {exc}")
     conn.autocommit = False
 
-    transformed_sql = migration_sql.replace(
-        "SET search_path TO odb, public;",
-        f"SET search_path TO {schema}, public;",
-    ).replace("odb.", f"{schema}.")
+    transformed_sql_chunks = [
+        sql_text.replace("SET search_path TO odb, public;", f"SET search_path TO {schema}, public;").replace(
+            "odb.", f"{schema}."
+        )
+        for sql_text in migration_sql_chunks
+    ]
 
     with conn.cursor() as cur:
         cur.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
@@ -73,7 +78,8 @@ def repository_schema():
                 """
             ).format(sql.Identifier(schema, "external_auth_providers"), sql.Identifier(schema, "users"))
         )
-        cur.execute(transformed_sql)
+        for transformed_sql in transformed_sql_chunks:
+            cur.execute(transformed_sql)
     conn.commit()
 
     try:
@@ -254,6 +260,110 @@ def repository_credential_ref_row(repository_schema, repository_row, base_refs):
     return selected
 
 
+@pytest.fixture()
+def repository_scan_row(repository_schema, repository_row):
+    conn, schema = repository_schema
+    scan_id = "00000000-0000-0000-0000-000000000778"
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            sql.SQL(
+                """
+                INSERT INTO {} (
+                    id, repository_id, branch, commit_sha, trigger, status, started_at, finished_at,
+                    duration_ms, files_seen, files_classified, files_unknown, files_failed, event_log, diff_summary
+                )
+                VALUES (
+                    %s, %s, %s, %s, 'manual', 'complete', now(), now(),
+                    %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb
+                )
+                RETURNING id, repository_id, branch, commit_sha, trigger, status, files_seen, files_classified,
+                          files_unknown, files_failed;
+                """
+            ).format(sql.Identifier(schema, "repository_scan")),
+            (
+                scan_id,
+                repository_row["id"],
+                "main",
+                "abc123def456",
+                1234,
+                5,
+                4,
+                1,
+                0,
+                '[{"type":"repository.scan.complete"}]',
+                '{"changed":2}',
+            ),
+        )
+        inserted = cur.fetchone()
+        cur.execute(
+            sql.SQL(
+                """
+                SELECT id, repository_id, branch, commit_sha, trigger, status, files_seen, files_classified,
+                       files_unknown, files_failed
+                FROM {}
+                WHERE id = %s;
+                """
+            ).format(sql.Identifier(schema, "repository_scan")),
+            (scan_id,),
+        )
+        selected = cur.fetchone()
+    conn.commit()
+    assert inserted == selected
+    return selected
+
+
+@pytest.fixture()
+def repository_file_row(repository_schema, repository_row, repository_scan_row):
+    conn, schema = repository_schema
+    file_id = "00000000-0000-0000-0000-000000000779"
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            sql.SQL(
+                """
+                INSERT INTO {} (
+                    id, repository_id, scan_id, path, blob_sha, size_bytes, format, confidence,
+                    discriminator, tracked, project_slug, version_strategy, status, quality_score
+                )
+                VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, 'modified', %s
+                )
+                RETURNING id, repository_id, scan_id, path, status, tracked, quality_score;
+                """
+            ).format(sql.Identifier(schema, "repository_file")),
+            (
+                file_id,
+                repository_row["id"],
+                repository_scan_row["id"],
+                "apis/openapi.yaml",
+                "f0f0f0",
+                1024,
+                "openapi_3_1",
+                0.95,
+                "title:openapi",
+                True,
+                "orders",
+                "semver",
+                88,
+            ),
+        )
+        inserted = cur.fetchone()
+        cur.execute(
+            sql.SQL(
+                """
+                SELECT id, repository_id, scan_id, path, status, tracked, quality_score
+                FROM {}
+                WHERE id = %s;
+                """
+            ).format(sql.Identifier(schema, "repository_file")),
+            (file_id,),
+        )
+        selected = cur.fetchone()
+    conn.commit()
+    assert inserted == selected
+    return selected
+
+
 def test_repository_round_trip(repository_row):
     assert repository_row["provider"] == "github"
     assert repository_row["owner"] == "octocat"
@@ -268,6 +378,18 @@ def test_repository_branch_round_trip(repository_branch_row):
 
 def test_repository_credential_ref_round_trip(repository_credential_ref_row):
     assert repository_credential_ref_row["scopes"] == ["repo", "read:org"]
+
+
+def test_repository_scan_round_trip(repository_scan_row):
+    assert repository_scan_row["trigger"] == "manual"
+    assert repository_scan_row["status"] == "complete"
+    assert repository_scan_row["files_seen"] == 5
+
+
+def test_repository_file_round_trip(repository_file_row):
+    assert repository_file_row["path"] == "apis/openapi.yaml"
+    assert repository_file_row["status"] == "modified"
+    assert repository_file_row["tracked"] is True
 
 
 def test_provider_enum_is_github_only(repository_schema):

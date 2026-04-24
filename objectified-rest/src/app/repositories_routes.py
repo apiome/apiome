@@ -7,12 +7,15 @@ trigger an initial scan job.
 
 from __future__ import annotations
 
+import base64
+import binascii
+import json
 from datetime import datetime, timezone
 from threading import Lock
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Literal, Optional, Tuple
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Response
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 
 from .auth import validate_authentication
@@ -48,6 +51,25 @@ class RepositoryEditRequest(BaseModel):
 
 class RepositoryDeleteRequest(BaseModel):
     confirmFullName: str = Field(min_length=1)
+
+
+RepositoryScanTrigger = Literal["manual", "scheduled", "webhook", "register"]
+RepositoryScanStatus = Literal[
+    "pending",
+    "walking",
+    "sniffing",
+    "complete",
+    "failed",
+    "skipped_unchanged",
+]
+RepositoryFileStatus = Literal[
+    "new",
+    "unchanged",
+    "modified",
+    "removed",
+    "parse_error",
+    "manifest_error",
+]
 
 
 class RepositoryScanTimelineEntry(BaseModel):
@@ -86,13 +108,75 @@ class RegisterRepositoryResponse(BaseModel):
     initialScanJobId: str
 
 
+class RepositoryScanRecord(BaseModel):
+    id: str
+    repositoryId: str
+    branch: str
+    commitSha: str
+    trigger: RepositoryScanTrigger
+    status: RepositoryScanStatus
+    startedAt: str
+    finishedAt: str | None = None
+    durationMs: int | None = None
+    filesSeen: int
+    filesClassified: int
+    filesUnknown: int
+    filesFailed: int
+    eventLog: List[Dict[str, Any]] = Field(default_factory=list)
+    diffSummary: Dict[str, Any] = Field(default_factory=dict)
+    errorCode: str | None = None
+    errorDetail: str | None = None
+    createdAt: str
+
+
+class RepositoryFileRecord(BaseModel):
+    id: str
+    repositoryId: str
+    scanId: str
+    path: str
+    blobSha: str | None = None
+    sizeBytes: int | None = None
+    format: str | None = None
+    confidence: float | None = None
+    discriminator: str | None = None
+    tracked: bool
+    projectSlug: str | None = None
+    versionStrategy: str | None = None
+    status: RepositoryFileStatus
+    qualityScore: int | None = None
+    lastImportJobId: str | None = None
+    createdAt: str
+
+
+class RepositoryScanCreateRequest(BaseModel):
+    branch: str = Field(min_length=1)
+    force: bool = False
+
+
+class RepositoryScanPage(BaseModel):
+    items: List[RepositoryScanRecord]
+    limit: int
+    nextCursor: str | None = None
+
+
+class RepositoryScanFilePage(BaseModel):
+    items: List[RepositoryFileRecord]
+    limit: int
+    nextCursor: str | None = None
+
+
 _REPO_STORE: Dict[str, Dict[str, RepositoryRecord]] = {}
 _REPO_BRANCH_STORE: Dict[str, List[RepositoryBranchRecord]] = {}
 _REPO_SCAN_STORE: Dict[str, List[RepositoryScanTimelineEntry]] = {}
 _REPO_FILE_STORE: Dict[str, List[Dict[str, Any]]] = {}
+_REPO_SCAN_HISTORY_STORE: Dict[str, List[RepositoryScanRecord]] = {}
+_REPO_SCAN_FILE_HISTORY_STORE: Dict[str, List[RepositoryFileRecord]] = {}
 _REPO_CREDENTIAL_REF_STORE: Dict[str, List[Dict[str, Any]]] = {}
 _REPO_AUDIT_STORE: List[Dict[str, Any]] = []
 _STORE_LOCK = Lock()
+
+_DEFAULT_SCAN_PAGE_SIZE = 50
+_MAX_SCAN_PAGE_SIZE = 200
 
 
 def _utc_now_iso() -> str:
@@ -104,6 +188,123 @@ def _validate_uuid(raw: str, field_name: str) -> None:
         UUID(raw)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=f"{field_name} must be a valid UUID") from exc
+
+
+def _parse_iso8601(raw: Optional[str], label: str) -> Optional[datetime]:
+    if raw is None:
+        return None
+    normalized = raw.strip().replace("Z", "+00:00")
+    if not normalized:
+        return None
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid {label}; expected ISO 8601 datetime") from exc
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def _encode_cursor(created_at: str, row_id: str) -> str:
+    payload = json.dumps({"createdAt": created_at, "id": row_id}, separators=(",", ":"))
+    return base64.urlsafe_b64encode(payload.encode("utf-8")).decode("ascii").rstrip("=")
+
+
+def _decode_cursor(token: str) -> Tuple[datetime, str]:
+    raw = token.strip()
+    if not raw:
+        raise HTTPException(status_code=400, detail="Invalid cursor")
+    padding = "=" * (-len(raw) % 4)
+    try:
+        decoded = base64.urlsafe_b64decode(raw + padding).decode("utf-8")
+        parsed = json.loads(decoded)
+    except (binascii.Error, ValueError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid cursor") from exc
+    if not isinstance(parsed, dict):
+        raise HTTPException(status_code=400, detail="Invalid cursor")
+    created_at = parsed.get("createdAt")
+    row_id = parsed.get("id")
+    if not isinstance(created_at, str) or not isinstance(row_id, str):
+        raise HTTPException(status_code=400, detail="Invalid cursor")
+    _validate_uuid(row_id, "cursor.id")
+    parsed_time = _parse_iso8601(created_at, "cursor.createdAt")
+    if parsed_time is None:
+        raise HTTPException(status_code=400, detail="Invalid cursor")
+    return parsed_time, row_id
+
+
+def _find_repository_for_tenant(tenant_id: str, repository_id: str) -> RepositoryRecord:
+    repository = _REPO_STORE.get(tenant_id, {}).get(repository_id)
+    if repository is None:
+        raise HTTPException(status_code=404, detail=f"Repository not found: {repository_id}")
+    return repository
+
+
+def _to_sort_key(created_at: str, row_id: str) -> Tuple[datetime, str]:
+    parsed = _parse_iso8601(created_at, "createdAt")
+    if parsed is None:
+        raise HTTPException(status_code=500, detail="scan row missing createdAt")
+    return parsed, row_id
+
+
+def _make_pending_scan(
+    *,
+    repository_id: str,
+    branch: str,
+    trigger: RepositoryScanTrigger,
+    force: bool,
+) -> RepositoryScanRecord:
+    now = _utc_now_iso()
+    return RepositoryScanRecord(
+        id=str(uuid4()),
+        repositoryId=repository_id,
+        branch=branch,
+        commitSha=f"pending-{uuid4().hex[:12]}",
+        trigger=trigger,
+        status="pending",
+        startedAt=now,
+        filesSeen=0,
+        filesClassified=0,
+        filesUnknown=0,
+        filesFailed=0,
+        eventLog=[{"type": "repository.scan.queued", "at": now, "force": force}],
+        diffSummary={},
+        createdAt=now,
+    )
+
+
+def _make_skipped_unchanged_scan(
+    *,
+    repository_id: str,
+    branch: str,
+    trigger: RepositoryScanTrigger,
+    baseline_commit_sha: str | None,
+) -> RepositoryScanRecord:
+    now = _utc_now_iso()
+    return RepositoryScanRecord(
+        id=str(uuid4()),
+        repositoryId=repository_id,
+        branch=branch,
+        commitSha=baseline_commit_sha or f"skipped-{uuid4().hex[:12]}",
+        trigger=trigger,
+        status="skipped_unchanged",
+        startedAt=now,
+        finishedAt=now,
+        durationMs=0,
+        filesSeen=0,
+        filesClassified=0,
+        filesUnknown=0,
+        filesFailed=0,
+        eventLog=[
+            {
+                "type": "repository.scan.skipped_unchanged",
+                "at": now,
+                "reason": "force=false and no detected changes",
+            }
+        ],
+        diffSummary={"changed": 0},
+        createdAt=now,
+    )
 
 
 def _normalize_branch(record: RepositoryBranchInput) -> RepositoryBranchRecord:
@@ -206,6 +407,7 @@ async def register_repository(
 
     manifest_outcome = parse_repo_manifest(request.manifest)
     initial_file_rows: List[Dict[str, Any]] = []
+    initial_scan_files: List[RepositoryFileRecord] = []
     if manifest_outcome.manifest_error_row is not None:
         row = manifest_outcome.manifest_error_row
         initial_file_rows.append(
@@ -218,12 +420,44 @@ async def register_repository(
                 "metadata": row.metadata,
             }
         )
+        initial_scan_files.append(
+            RepositoryFileRecord(
+                id=str(uuid4()),
+                repositoryId=repository_id,
+                scanId=initial_scan_job_id,
+                path=row.path,
+                format=row.format,
+                tracked=row.tracked,
+                status="manifest_error",
+                discriminator=row.metadata["error"] if row.metadata and "error" in row.metadata else None,
+                createdAt=now,
+            )
+        )
+
+    initial_scan = RepositoryScanRecord(
+        id=initial_scan_job_id,
+        repositoryId=repository_id,
+        branch=normalized_branches[0].branch,
+        commitSha=f"pending-{uuid4().hex[:12]}",
+        trigger="register",
+        status="pending",
+        startedAt=now,
+        filesSeen=0,
+        filesClassified=0,
+        filesUnknown=0,
+        filesFailed=0,
+        eventLog=[{"type": "repository.scan.queued", "at": now, "trigger": "register"}],
+        diffSummary={},
+        createdAt=now,
+    )
 
     with _STORE_LOCK:
         tenant_repos = _REPO_STORE.setdefault(tenant_id, {})
         _REPO_BRANCH_STORE[repository.id] = list(normalized_branches)
         _REPO_SCAN_STORE[repository.id] = [timeline_entry]
         _REPO_FILE_STORE[repository.id] = initial_file_rows
+        _REPO_SCAN_HISTORY_STORE[repository.id] = [initial_scan]
+        _REPO_SCAN_FILE_HISTORY_STORE[initial_scan.id] = initial_scan_files
         _REPO_CREDENTIAL_REF_STORE[repository.id] = [{"linkedAccountId": request.linkedAccountId}]
         tenant_repos[repository.id] = repository
 
@@ -376,10 +610,162 @@ async def delete_repository(
         _REPO_BRANCH_STORE.pop(repository_id, None)
         _REPO_SCAN_STORE.pop(repository_id, None)
         _REPO_FILE_STORE.pop(repository_id, None)
+        scan_history = _REPO_SCAN_HISTORY_STORE.pop(repository_id, [])
+        for scan in scan_history:
+            _REPO_SCAN_FILE_HISTORY_STORE.pop(scan.id, None)
         _REPO_CREDENTIAL_REF_STORE.pop(repository_id, None)
         _write_audit_row(tenant_id, repository_id, "repository.removed")
 
     return Response(status_code=204)
+
+
+@router.get("/{repository_id}/scans", response_model=RepositoryScanPage)
+async def list_repository_scans(
+    repository_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+    status: RepositoryScanStatus | None = Query(default=None),
+    branch: str | None = Query(default=None),
+    from_timestamp: str | None = Query(default=None, alias="from"),
+    to_timestamp: str | None = Query(default=None, alias="to"),
+    limit: int = Query(default=_DEFAULT_SCAN_PAGE_SIZE, ge=1, le=_MAX_SCAN_PAGE_SIZE),
+    cursor: str | None = Query(default=None),
+) -> RepositoryScanPage:
+    tenant_id = auth_data["tenant_id"]
+    from_dt = _parse_iso8601(from_timestamp, "from")
+    to_dt = _parse_iso8601(to_timestamp, "to")
+    cursor_key: Tuple[datetime, str] | None = None
+    if cursor:
+        cursor_dt, cursor_id = _decode_cursor(cursor)
+        cursor_key = (cursor_dt, cursor_id)
+
+    with _STORE_LOCK:
+        _find_repository_for_tenant(tenant_id, repository_id)
+        scans = list(_REPO_SCAN_HISTORY_STORE.get(repository_id, []))
+
+    filtered: List[RepositoryScanRecord] = []
+    for scan in scans:
+        if status is not None and scan.status != status:
+            continue
+        if branch is not None and scan.branch != branch:
+            continue
+        scan_dt = _parse_iso8601(scan.createdAt, "createdAt")
+        if scan_dt is None:
+            continue
+        if from_dt is not None and scan_dt < from_dt:
+            continue
+        if to_dt is not None and scan_dt > to_dt:
+            continue
+        if cursor_key is not None and (scan_dt, scan.id) >= cursor_key:
+            continue
+        filtered.append(scan)
+
+    filtered.sort(key=lambda item: _to_sort_key(item.createdAt, item.id), reverse=True)
+    page_rows = filtered[: limit + 1]
+    has_more = len(page_rows) > limit
+    page_items = page_rows[:limit]
+    next_cursor = None
+    if has_more and page_items:
+        tail = page_items[-1]
+        next_cursor = _encode_cursor(tail.createdAt, tail.id)
+
+    return RepositoryScanPage(items=page_items, limit=limit, nextCursor=next_cursor)
+
+
+@router.get("/{repository_id}/scans/{scan_id}", response_model=RepositoryScanRecord)
+async def get_repository_scan(
+    repository_id: str,
+    scan_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> RepositoryScanRecord:
+    tenant_id = auth_data["tenant_id"]
+    with _STORE_LOCK:
+        _find_repository_for_tenant(tenant_id, repository_id)
+        scans = _REPO_SCAN_HISTORY_STORE.get(repository_id, [])
+        for scan in scans:
+            if scan.id == scan_id:
+                return scan
+    raise HTTPException(status_code=404, detail=f"Scan not found: {scan_id}")
+
+
+@router.get("/{repository_id}/scans/{scan_id}/files", response_model=RepositoryScanFilePage)
+async def list_repository_scan_files(
+    repository_id: str,
+    scan_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+    format: str | None = Query(default=None),
+    status: RepositoryFileStatus | None = Query(default=None),
+    limit: int = Query(default=_DEFAULT_SCAN_PAGE_SIZE, ge=1, le=_MAX_SCAN_PAGE_SIZE),
+    cursor: str | None = Query(default=None),
+) -> RepositoryScanFilePage:
+    tenant_id = auth_data["tenant_id"]
+    cursor_key: Tuple[datetime, str] | None = None
+    if cursor:
+        cursor_dt, cursor_id = _decode_cursor(cursor)
+        cursor_key = (cursor_dt, cursor_id)
+
+    with _STORE_LOCK:
+        _find_repository_for_tenant(tenant_id, repository_id)
+        scans = _REPO_SCAN_HISTORY_STORE.get(repository_id, [])
+        if not any(scan.id == scan_id for scan in scans):
+            raise HTTPException(status_code=404, detail=f"Scan not found: {scan_id}")
+        files = list(_REPO_SCAN_FILE_HISTORY_STORE.get(scan_id, []))
+
+    filtered: List[RepositoryFileRecord] = []
+    for file_row in files:
+        if format is not None and file_row.format != format:
+            continue
+        if status is not None and file_row.status != status:
+            continue
+        file_dt = _parse_iso8601(file_row.createdAt, "createdAt")
+        if file_dt is None:
+            continue
+        if cursor_key is not None and (file_dt, file_row.id) >= cursor_key:
+            continue
+        filtered.append(file_row)
+
+    filtered.sort(key=lambda item: _to_sort_key(item.createdAt, item.id), reverse=True)
+    page_rows = filtered[: limit + 1]
+    has_more = len(page_rows) > limit
+    page_items = page_rows[:limit]
+    next_cursor = None
+    if has_more and page_items:
+        tail = page_items[-1]
+        next_cursor = _encode_cursor(tail.createdAt, tail.id)
+    return RepositoryScanFilePage(items=page_items, limit=limit, nextCursor=next_cursor)
+
+
+@router.post("/{repository_id}/scans", response_model=RepositoryScanRecord)
+async def create_repository_scan(
+    repository_id: str,
+    request: RepositoryScanCreateRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> RepositoryScanRecord:
+    tenant_id = auth_data["tenant_id"]
+    branch_name = request.branch.strip()
+    if not branch_name:
+        raise HTTPException(status_code=400, detail="branch is required")
+
+    with _STORE_LOCK:
+        _find_repository_for_tenant(tenant_id, repository_id)
+        history = _REPO_SCAN_HISTORY_STORE.setdefault(repository_id, [])
+        latest_for_branch = next((scan for scan in history if scan.branch == branch_name), None)
+        if latest_for_branch is not None and not request.force:
+            scan = _make_skipped_unchanged_scan(
+                repository_id=repository_id,
+                branch=branch_name,
+                trigger="manual",
+                baseline_commit_sha=latest_for_branch.commitSha,
+            )
+        else:
+            scan = _make_pending_scan(
+                repository_id=repository_id,
+                branch=branch_name,
+                trigger="manual",
+                force=request.force,
+            )
+        history.insert(0, scan)
+        _REPO_SCAN_FILE_HISTORY_STORE[scan.id] = []
+        return scan
 
 
 def _reset_repository_state_for_tests() -> None:
@@ -388,13 +774,46 @@ def _reset_repository_state_for_tests() -> None:
         _REPO_BRANCH_STORE.clear()
         _REPO_SCAN_STORE.clear()
         _REPO_FILE_STORE.clear()
+        _REPO_SCAN_HISTORY_STORE.clear()
+        _REPO_SCAN_FILE_HISTORY_STORE.clear()
         _REPO_CREDENTIAL_REF_STORE.clear()
         _REPO_AUDIT_STORE.clear()
 
 
 def _seed_repository_relations_for_tests(repository_id: str) -> None:
     with _STORE_LOCK:
-        _REPO_SCAN_STORE[repository_id] = [RepositoryScanTimelineEntry(id=str(uuid4()), type="scan", status="completed", message="done", createdAt=_utc_now_iso())]
+        now = _utc_now_iso()
+        seeded_scan = RepositoryScanRecord(
+            id=str(uuid4()),
+            repositoryId=repository_id,
+            branch="main",
+            commitSha=f"seeded-{uuid4().hex[:12]}",
+            trigger="manual",
+            status="complete",
+            startedAt=now,
+            finishedAt=now,
+            durationMs=0,
+            filesSeen=1,
+            filesClassified=1,
+            filesUnknown=0,
+            filesFailed=0,
+            eventLog=[{"type": "repository.scan.seeded", "at": now}],
+            diffSummary={"changed": 1},
+            createdAt=now,
+        )
+        _REPO_SCAN_STORE[repository_id] = [RepositoryScanTimelineEntry(id=str(uuid4()), type="scan", status="completed", message="done", createdAt=now)]
+        _REPO_SCAN_HISTORY_STORE[repository_id] = [seeded_scan]
+        _REPO_SCAN_FILE_HISTORY_STORE[seeded_scan.id] = [
+            RepositoryFileRecord(
+                id=str(uuid4()),
+                repositoryId=repository_id,
+                scanId=seeded_scan.id,
+                path="README.md",
+                tracked=True,
+                status="new",
+                createdAt=now,
+            )
+        ]
         _REPO_FILE_STORE[repository_id] = [{"path": "README.md"}]
         _REPO_CREDENTIAL_REF_STORE[repository_id] = [{"linkedAccountId": str(uuid4())}]
 

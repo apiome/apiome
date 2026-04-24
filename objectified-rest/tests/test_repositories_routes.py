@@ -270,3 +270,122 @@ def test_delete_repository_requires_confirmation_and_cascades():
     assert all(not exists for exists in relations_exist.values())
     assert detail_response.status_code == 404
     assert [row["eventType"] for row in audit_rows] == ["repository.removed"]
+
+
+def test_list_scans_returns_initial_register_scan_with_default_page_limit():
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        create_response = client.post(
+            f"/v1/repositories/{_TENANT_SLUG}",
+            json={
+                "linkedAccountId": "aaaaaaaa-bbbb-cccc-dddd-000000000021",
+                "provider": "github",
+                "owner": "acme",
+                "name": "scan-api",
+                "branches": [{"branch": "main"}],
+            },
+        )
+        repository_id = create_response.json()["repository"]["id"]
+        scans_response = client.get(f"/v1/repositories/{repository_id}/scans")
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+
+    assert create_response.status_code == 201
+    assert scans_response.status_code == 200
+    body = scans_response.json()
+    assert body["limit"] == 50
+    assert len(body["items"]) == 1
+    assert body["items"][0]["trigger"] == "register"
+    assert body["items"][0]["status"] == "pending"
+
+
+def test_post_scans_support_force_and_skipped_unchanged_with_single_audit_entry():
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        create_response = client.post(
+            f"/v1/repositories/{_TENANT_SLUG}",
+            json={
+                "linkedAccountId": "aaaaaaaa-bbbb-cccc-dddd-000000000022",
+                "provider": "github",
+                "owner": "acme",
+                "name": "scan-retry",
+                "branches": [{"branch": "main"}],
+            },
+        )
+        repository_id = create_response.json()["repository"]["id"]
+        skipped_response = client.post(
+            f"/v1/repositories/{repository_id}/scans",
+            json={"branch": "main", "force": False},
+        )
+        forced_response = client.post(
+            f"/v1/repositories/{repository_id}/scans",
+            json={"branch": "main", "force": True},
+        )
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+
+    assert skipped_response.status_code == 200
+    skipped_scan = skipped_response.json()
+    assert skipped_scan["status"] == "skipped_unchanged"
+    assert skipped_scan["filesSeen"] == 0
+    assert len(skipped_scan["eventLog"]) == 1
+    assert skipped_scan["eventLog"][0]["type"] == "repository.scan.skipped_unchanged"
+
+    assert forced_response.status_code == 200
+    forced_scan = forced_response.json()
+    assert forced_scan["status"] == "pending"
+    assert forced_scan["eventLog"][0]["force"] is True
+
+
+def test_list_scans_and_files_support_cursor_pagination_and_filters():
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        create_response = client.post(
+            f"/v1/repositories/{_TENANT_SLUG}",
+            json={
+                "linkedAccountId": "aaaaaaaa-bbbb-cccc-dddd-000000000023",
+                "provider": "github",
+                "owner": "acme",
+                "name": "scan-pagination",
+                "branches": [{"branch": "main"}],
+                "manifest": "version: 2\nspecs:\n  - path: service.yaml\n",
+            },
+        )
+        repository_id = create_response.json()["repository"]["id"]
+        for _ in range(3):
+            post_response = client.post(
+                f"/v1/repositories/{repository_id}/scans",
+                json={"branch": "main", "force": True},
+            )
+            assert post_response.status_code == 200
+
+        first_page = client.get(f"/v1/repositories/{repository_id}/scans", params={"limit": 2})
+        next_cursor = first_page.json()["nextCursor"]
+        second_page = client.get(
+            f"/v1/repositories/{repository_id}/scans",
+            params={"limit": 2, "cursor": next_cursor},
+        )
+        skipped_only = client.get(
+            f"/v1/repositories/{repository_id}/scans",
+            params={"status": "skipped_unchanged"},
+        )
+        initial_scan_id = create_response.json()["initialScanJobId"]
+        files_response = client.get(
+            f"/v1/repositories/{repository_id}/scans/{initial_scan_id}/files",
+            params={"status": "manifest_error"},
+        )
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+
+    assert first_page.status_code == 200
+    assert len(first_page.json()["items"]) == 2
+    assert next_cursor is not None
+    assert second_page.status_code == 200
+    assert len(second_page.json()["items"]) >= 1
+    assert skipped_only.status_code == 200
+    assert skipped_only.json()["items"] == []
+
+    assert files_response.status_code == 200
+    file_rows = files_response.json()["items"]
+    assert len(file_rows) == 1
+    assert file_rows[0]["status"] == "manifest_error"
