@@ -2,7 +2,7 @@ import pytest
 
 from app.repositories.providers import RepoRef, RepositoryProviderError, RepositoryProviderErrorCode, TreeEntry
 from app.repositories.providers.base import ListReposOpts, ReadFileResult, RepoDetail
-from app.repositories.tree_walker import ScanLimit, walk_repository_tree
+from app.repositories.tree_walker import DEFAULT_SCAN_IGNORE_PATTERNS, ScanLimit, walk_repository_tree
 
 
 class _StubProvider:
@@ -142,6 +142,85 @@ async def test_walk_repository_tree_emits_repository_scan_walked_audit() -> None
                 "subpathGlob": "**/*",
                 "files": 2,
                 "bytes": 15,
+                "files_skipped_by_ignore": 0,
             },
         )
     ]
+
+
+@pytest.mark.asyncio
+async def test_walk_repository_tree_applies_default_ignore_rules_and_reports_skip_count() -> None:
+    provider = _StubProvider(
+        [
+            TreeEntry(path="README.md", type="file", sha="a1", size_bytes=4, mode="100644"),
+            TreeEntry(path="node_modules/package/index.js", type="file", sha="a2", size_bytes=20, mode="100644"),
+            TreeEntry(path="src/main.py", type="file", sha="a3", size_bytes=8, mode="100644"),
+        ]
+    )
+    audits: list[tuple[str, dict[str, object]]] = []
+
+    result = [
+        entry
+        async for entry in walk_repository_tree(
+            provider=provider,
+            token="token-a",
+            repo=RepoRef(owner="acme", name="repo-a"),
+            commit_sha="commit-sha-1",
+            subpath_glob="**/*",
+            audit_emitter=lambda event_type, detail: audits.append((event_type, detail)),
+        )
+    ]
+
+    assert [entry.path for entry in result] == ["README.md", "src/main.py"]
+    assert audits[0][1]["files_skipped_by_ignore"] == 1
+    assert "node_modules/**" in DEFAULT_SCAN_IGNORE_PATTERNS
+
+
+@pytest.mark.asyncio
+async def test_walk_repository_tree_merges_manifest_ignore_with_defaults() -> None:
+    provider = _StubProvider(
+        [
+            TreeEntry(path="dist/app.js", type="file", sha="a1", size_bytes=11, mode="100644"),
+            TreeEntry(path="docs/generated/spec.md", type="file", sha="a2", size_bytes=14, mode="100644"),
+            TreeEntry(path="docs/guide.md", type="file", sha="a3", size_bytes=9, mode="100644"),
+        ]
+    )
+
+    result = [
+        entry
+        async for entry in walk_repository_tree(
+            provider=provider,
+            token="token-a",
+            repo=RepoRef(owner="acme", name="repo-a"),
+            commit_sha="commit-sha-1",
+            subpath_glob="**/*",
+            manifest_ignore=["docs/generated/**"],
+        )
+    ]
+
+    assert [entry.path for entry in result] == ["docs/guide.md"]
+
+
+@pytest.mark.asyncio
+async def test_walk_repository_tree_explicit_specs_override_ignore_patterns() -> None:
+    provider = _StubProvider(
+        [
+            TreeEntry(path="dist/openapi.yaml", type="file", sha="a1", size_bytes=13, mode="100644"),
+            TreeEntry(path="dist/bundle.js", type="file", sha="a2", size_bytes=21, mode="100644"),
+        ]
+    )
+
+    result = [
+        entry
+        async for entry in walk_repository_tree(
+            provider=provider,
+            token="token-a",
+            repo=RepoRef(owner="acme", name="repo-a"),
+            commit_sha="commit-sha-1",
+            subpath_glob="**/*",
+            manifest_specs=["dist/openapi.yaml"],
+            manifest_ignore=["dist/**"],
+        )
+    ]
+
+    assert [entry.path for entry in result] == ["dist/openapi.yaml"]

@@ -9,6 +9,16 @@ from .providers import RepoRef, RepositoryProvider, RepositoryProviderError, Rep
 
 WorkflowAuditEmitter = Callable[[str, dict[str, Any]], Any]
 
+DEFAULT_SCAN_IGNORE_PATTERNS: tuple[str, ...] = (
+    ".git/**",
+    "node_modules/**",
+    "vendor/**",
+    "dist/**",
+    "build/**",
+    "coverage/**",
+    "**/__pycache__/**",
+)
+
 
 @dataclass(frozen=True)
 class RepositoryWalkStats:
@@ -35,17 +45,29 @@ async def walk_repository_tree(
     repo: RepoRef,
     commit_sha: str,
     subpath_glob: str | None,
+    manifest_specs: Sequence[str] | None = None,
+    manifest_ignore: Sequence[str] | None = None,
     limits: ScanLimit | None = None,
     audit_emitter: WorkflowAuditEmitter | None = None,
 ) -> AsyncIterator[TreeEntry]:
     """Yield repository file entries for a specific commit SHA with scan limits."""
     stats = RepositoryWalkStats(files=0, bytes=0)
     effective_limits = limits or ScanLimit()
+    files_skipped_by_ignore = 0
+    explicit_specs = _normalize_patterns(manifest_specs)
+    merged_ignore_patterns = _merge_ignore_patterns(manifest_ignore)
 
     async for entry in provider.walk_tree(token=token, repo=repo, branch=commit_sha):
         if entry.type != "file":
             continue
         if not _glob_match(entry.path, subpath_glob):
+            continue
+        if _should_skip_for_ignore(
+            entry.path,
+            ignore_patterns=merged_ignore_patterns,
+            explicit_specs=explicit_specs,
+        ):
+            files_skipped_by_ignore += 1
             continue
 
         next_files = stats.files + 1
@@ -69,6 +91,7 @@ async def walk_repository_tree(
                 "subpathGlob": subpath_glob,
                 "files": stats.files,
                 "bytes": stats.bytes,
+                "files_skipped_by_ignore": files_skipped_by_ignore,
             },
         )
         if isawaitable(maybe_awaitable):
@@ -103,6 +126,30 @@ def _glob_match(path: str, pattern: str | None) -> bool:
     if not pattern_parts:
         return True
     return _match_parts(path_parts, pattern_parts)
+
+
+def _normalize_patterns(patterns: Sequence[str] | None) -> tuple[str, ...]:
+    if not patterns:
+        return ()
+    return tuple(pattern.strip() for pattern in patterns if pattern and pattern.strip())
+
+
+def _merge_ignore_patterns(manifest_ignore: Sequence[str] | None) -> tuple[str, ...]:
+    merged = list(DEFAULT_SCAN_IGNORE_PATTERNS)
+    for pattern in _normalize_patterns(manifest_ignore):
+        if pattern not in merged:
+            merged.append(pattern)
+    return tuple(merged)
+
+
+def _matches_any(path: str, patterns: Sequence[str]) -> bool:
+    return any(_glob_match(path, pattern) for pattern in patterns)
+
+
+def _should_skip_for_ignore(path: str, *, ignore_patterns: Sequence[str], explicit_specs: Sequence[str]) -> bool:
+    if _matches_any(path, explicit_specs):
+        return False
+    return _matches_any(path, ignore_patterns)
 
 
 def _match_parts(path_parts: Sequence[str], pattern_parts: Sequence[str]) -> bool:

@@ -5,6 +5,7 @@ We continue to improve the platform based on your feedback with improvements and
 ---
 
 ## Repositories
+- Added scanner include/exclude rules with published default ignore patterns, manifest-level ignore merges, `files_skipped_by_ignore` telemetry, and explicit spec precedence over ignores.
 - Added a streaming repository tree walker for connector scans with commit-SHA traversal, boundary glob filtering, typed scan-limit errors, and `repository.scan.walked` workflow audit emission.
 - Added repository connector MVP database tables for repository registration, branch tracking, and linked-account credential references.
 - Added a provider abstraction layer for repository connectors with a GitHub adapter, shared provider error taxonomy, and cross-provider contract tests.
