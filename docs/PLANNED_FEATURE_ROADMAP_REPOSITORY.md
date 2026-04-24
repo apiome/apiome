@@ -2,6 +2,7 @@
 
 ## Completed
 
+- REPO-2.4 (#2765): Added `.objectified/repo.yaml` manifest support with published JSON Schema validation, non-fatal `manifest_error` repository file recording, per-spec format/polling overrides, and untracked discovery output for files not explicitly listed.
 - REPO-2.3 (#2764): Added provider-agnostic spec format detection with filename heuristics plus 64 KB content sniffing, confidence/discriminator output, and stream-mode sniffing for files larger than 5 MB.
 - REPO-2.2 (#2763): Added scanner include/exclude rule support with published default ignore patterns, manifest-level ignore merge behavior, ignore skip telemetry (`files_skipped_by_ignore`), and explicit `specs` precedence over ignores.
 - REPO-2.1 (#2762): Added a streaming repository tree walker that iterates files at a commit SHA, enforces typed scan limits (`SCAN_LIMIT_EXCEEDED`), applies subpath glob filtering at the walker boundary, and emits `repository.scan.walked` workflow audit events.

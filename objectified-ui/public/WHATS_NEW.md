@@ -5,6 +5,7 @@ We continue to improve the platform based on your feedback with improvements and
 ---
 
 ## Repositories
+- Added `.objectified/repo.yaml` manifest support with published schema validation, non-fatal `manifest_error` recording, per-spec format/polling overrides, and untracked discovery rows for files not listed in the manifest.
 - Added provider-agnostic spec format detection with filename heuristics plus 64 KB content sniffing, confidence/discriminator output, and stream-mode sniffing for files over 5 MB.
 - Added scanner include/exclude rules with published default ignore patterns, manifest-level ignore merges, `files_skipped_by_ignore` telemetry, and explicit spec precedence over ignores.
 - Added a streaming repository tree walker for connector scans with commit-SHA traversal, boundary glob filtering, typed scan-limit errors, and `repository.scan.walked` workflow audit emission.
