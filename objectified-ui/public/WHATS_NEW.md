@@ -5,6 +5,7 @@ We continue to improve the platform based on your feedback with improvements and
 ---
 
 - Added repository connector MVP database tables for repository registration, branch tracking, and linked-account credential references.
+- Added a provider abstraction layer for repository connectors with a GitHub adapter, shared provider error taxonomy, and cross-provider contract tests.
 
 ## UI
 - Branch workflow is its own button in the canvas now, and compacted to fit most functionality that's in Versions now.
@@ -43,5 +44,5 @@ We'd love to hear your thoughts! Your feedback helps us make Objectified better.
 
 **Thank you for using Objectified!**
 
-*Last updated: April 22, 2026*
+*Last updated: April 23, 2026*
 
