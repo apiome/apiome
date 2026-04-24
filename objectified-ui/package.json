@@ -1,6 +1,6 @@
 {
   "name": "objectified-ui",
-  "version": "0.10.23",
+  "version": "0.10.24",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -43,6 +43,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@gitbeaker/rest": "^43.8.0",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",

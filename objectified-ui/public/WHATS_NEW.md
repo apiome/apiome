@@ -7,6 +7,7 @@ We continue to improve the platform based on your feedback with improvements and
 ## Repositories
 - Added repository connector MVP database tables for repository registration, branch tracking, and linked-account credential references.
 - Added a provider abstraction layer for repository connectors with a GitHub adapter, shared provider error taxonomy, and cross-provider contract tests.
+- Added a GitLab repository provider (`@gitbeaker/rest`) with full contract support, keyset repository pagination, and GitLab webhook secret verification.
 - Added a server-only `resolveRepositoryToken` helper that resolves linked-account repository credentials, refreshes supported expired tokens, emits typed resolver errors, and writes token-safe workflow audit rows.
 - Added a new ADE Repositories page with a four-step GitHub registration wizard and initial scan timeline flow.
 - Added per-repository branch management so tracked branches can be added/removed with per-branch subpath glob and polling settings, defaulting to the provider default branch and supporting wildcard branch patterns.
