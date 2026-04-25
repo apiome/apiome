@@ -2,6 +2,7 @@
 
 ## Completed
 
+- REPO-6.3 (#2796): Added scan timeline upgrades in the repository detail view with trigger/status/branch filter chips, per-row trigger/SHA/duration/file-count summaries, and expandable failed-scan error consoles that render `repository_scan.event_log` plus `error_detail`.
 - REPO-6.2 (#2795): Added the repository detail experience at `/ade/dashboard/repositories/{id}` with deep-link tabs (`branches/files/scans/sync/manifest/settings`), virtualized file rendering + drawer details, scan timeline links for REPO-6.3 and `repository_scan` drill-in, and Monaco-based manifest editing with REPO-2.4 schema validation.
 - REPO-6.1 (#2794): Added an ADE repositories index experience with provider/status/search filters, sortable repository health and last-scan columns, skeleton-loading rows, and quick row actions for scan-now, pause/resume, and detail navigation from Account -> Repositories.
 - REPO-5.6 (#2791): Added manifest-driven promotion gates by defaulting repository sync promotions to `manual`, preserving `repository.sync_committed` audit + change-report persistence for `promote: auto`, and forcing manual review whenever `onBreakingChange: block` is configured.

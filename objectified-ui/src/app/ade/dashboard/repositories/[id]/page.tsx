@@ -75,6 +75,10 @@ interface ScanRecord {
     removed?: number;
     unchanged?: number;
   };
+  eventLog?: unknown;
+  event_log?: unknown;
+  errorDetail?: unknown;
+  error_detail?: unknown;
 }
 
 interface ScanFileRecord {
@@ -129,6 +133,82 @@ function formatTimestamp(value: string | null | undefined): string {
   return new Date(value).toLocaleString();
 }
 
+function formatDuration(startedAt: string, finishedAt: string | null): string {
+  if (!startedAt || !finishedAt) return 'n/a';
+  const started = Date.parse(startedAt);
+  const finished = Date.parse(finishedAt);
+  if (!Number.isFinite(started) || !Number.isFinite(finished) || finished < started) return 'n/a';
+  const elapsedSec = Math.floor((finished - started) / 1000);
+  if (elapsedSec < 60) return `${elapsedSec}s`;
+  const minutes = Math.floor(elapsedSec / 60);
+  const seconds = elapsedSec % 60;
+  if (minutes < 60) return `${minutes}m ${seconds}s`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return `${hours}h ${remainingMinutes}m ${seconds}s`;
+}
+
+function toErrorDetailText(value: unknown): string {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.map((entry) => String(entry)).join('\n');
+  if (typeof value === 'object') {
+    const detail = value as { detail?: unknown; message?: unknown };
+    if (typeof detail.detail === 'string') return detail.detail;
+    if (typeof detail.message === 'string') return detail.message;
+    return JSON.stringify(value, null, 2);
+  }
+  return String(value);
+}
+
+function toEventLogLines(value: unknown): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => {
+      if (typeof entry === 'string') return [entry];
+      if (entry && typeof entry === 'object') {
+        const item = entry as {
+          timestamp?: string;
+          level?: string;
+          message?: string;
+          error?: string;
+          stack?: string;
+          detail?: string;
+        };
+        const prefixBits = [item.timestamp, item.level].filter(Boolean).join(' ');
+        const body = item.message || item.error || item.detail || '';
+        const line = [prefixBits, body].filter(Boolean).join(' ').trim();
+        if (item.stack && line) return [line, item.stack];
+        if (item.stack) return [item.stack];
+        if (line) return [line];
+        return [JSON.stringify(entry, null, 2)];
+      }
+      return [String(entry)];
+    });
+  }
+  if (typeof value === 'string') return [value];
+  if (typeof value === 'object') return [JSON.stringify(value, null, 2)];
+  return [String(value)];
+}
+
+function extractScanErrorConsole(scan: ScanRecord): string {
+  const eventLogValue = scan.eventLog ?? scan.event_log;
+  const detailValue = scan.errorDetail ?? scan.error_detail;
+  const sections: string[] = [];
+  const eventLines = toEventLogLines(eventLogValue);
+  if (eventLines.length > 0) {
+    sections.push(eventLines.join('\n'));
+  }
+  const detailText = toErrorDetailText(detailValue);
+  if (detailText) {
+    sections.push(detailText);
+  }
+  if (sections.length === 0) {
+    return 'No event log or error detail available for this failed scan.';
+  }
+  return sections.join('\n\n');
+}
+
 export default function RepositoryDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -176,6 +256,10 @@ export default function RepositoryDetailPage() {
   const fileDrawerRef = useRef<HTMLElement | null>(null);
 
   const [manifestValidation, setManifestValidation] = useState<{ valid: boolean; errors: string[] }>({ valid: true, errors: [] });
+  const [scanTriggerFilter, setScanTriggerFilter] = useState('all');
+  const [scanStatusFilter, setScanStatusFilter] = useState('all');
+  const [scanBranchFilter, setScanBranchFilter] = useState('all');
+  const [expandedScanErrorId, setExpandedScanErrorId] = useState('');
 
   useEffect(() => {
     const source = manifestDraft.trim();
@@ -371,6 +455,32 @@ export default function RepositoryDetailPage() {
     () => filteredFiles.slice(visibleRange.start, visibleRange.end),
     [filteredFiles, visibleRange.end, visibleRange.start]
   );
+
+  const normalizeScanFilterValue = useCallback((value?: string | null) => value || 'unknown', []);
+
+  const scanTriggerOptions = useMemo(
+    () => Array.from(new Set(scans.map((scan) => normalizeScanFilterValue(scan.trigger)))),
+    [normalizeScanFilterValue, scans]
+  );
+
+  const scanStatusOptions = useMemo(
+    () => Array.from(new Set(scans.map((scan) => normalizeScanFilterValue(scan.status)))),
+    [normalizeScanFilterValue, scans]
+  );
+
+  const scanBranchOptions = useMemo(
+    () => Array.from(new Set(scans.map((scan) => normalizeScanFilterValue(scan.branch)))),
+    [normalizeScanFilterValue, scans]
+  );
+
+  const filteredScans = useMemo(() => {
+    return scans.filter((scan) => {
+      if (scanTriggerFilter !== 'all' && normalizeScanFilterValue(scan.trigger) !== scanTriggerFilter) return false;
+      if (scanStatusFilter !== 'all' && normalizeScanFilterValue(scan.status) !== scanStatusFilter) return false;
+      if (scanBranchFilter !== 'all' && normalizeScanFilterValue(scan.branch) !== scanBranchFilter) return false;
+      return true;
+    });
+  }, [normalizeScanFilterValue, scanBranchFilter, scanStatusFilter, scanTriggerFilter, scans]);
 
   const saveBranches = async () => {
     if (!repository || branchRows.length === 0) {
@@ -767,26 +877,109 @@ export default function RepositoryDetailPage() {
                   </div>
                 </div>
                 {isLoadingScans ? <div className="text-sm text-gray-500">Loading scans...</div> : null}
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Filter by trigger</div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant={scanTriggerFilter === 'all' ? 'secondary' : 'outline'}
+                      onClick={() => setScanTriggerFilter('all')}
+                    >
+                      Trigger: All
+                    </Button>
+                    {scanTriggerOptions.map((trigger) => (
+                      <Button
+                        key={trigger}
+                        size="sm"
+                        variant={scanTriggerFilter === trigger ? 'secondary' : 'outline'}
+                        onClick={() => setScanTriggerFilter(trigger)}
+                      >
+                        Trigger: {trigger}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Filter by status</div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant={scanStatusFilter === 'all' ? 'secondary' : 'outline'}
+                      onClick={() => setScanStatusFilter('all')}
+                    >
+                      Status: All
+                    </Button>
+                    {scanStatusOptions.map((status) => (
+                      <Button
+                        key={status}
+                        size="sm"
+                        variant={scanStatusFilter === status ? 'secondary' : 'outline'}
+                        onClick={() => setScanStatusFilter(status)}
+                      >
+                        Status: {status}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Filter by branch</div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant={scanBranchFilter === 'all' ? 'secondary' : 'outline'}
+                      onClick={() => setScanBranchFilter('all')}
+                    >
+                      Branch: All
+                    </Button>
+                    {scanBranchOptions.map((branch) => (
+                      <Button
+                        key={branch}
+                        size="sm"
+                        variant={scanBranchFilter === branch ? 'secondary' : 'outline'}
+                        onClick={() => setScanBranchFilter(branch)}
+                      >
+                        Branch: {branch}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
                 <ul className="space-y-2">
-                  {scans.map((scan) => (
+                  {filteredScans.map((scan) => (
                     <li key={scan.id} className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
                           <div className="font-medium">{scan.branch} · {scan.status}</div>
                           <div className="text-xs text-gray-500">{formatTimestamp(scan.startedAt)} · commit {scan.commitSha}</div>
+                          <div className="text-xs text-gray-500">Trigger {scan.trigger} · Duration {formatDuration(scan.startedAt, scan.finishedAt)}</div>
+                          <div className="text-xs text-gray-500">
+                            Files seen {scan.filesSeen} · classified {scan.filesClassified} · unknown {scan.filesUnknown} · failed {scan.filesFailed}
+                          </div>
                           <div className="text-xs text-gray-500">
                             +{scan.diffSummary.added ?? 0} / ~{scan.diffSummary.modified ?? 0} / -{scan.diffSummary.removed ?? 0}
                           </div>
                         </div>
-                        <a
-                          className="text-xs text-indigo-600 hover:text-indigo-500"
-                          href={`/api/repositories/${repository.id}/scans/${scan.id}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          View repository_scan
-                        </a>
+                        <div className="flex flex-col items-end gap-2">
+                          <a
+                            className="text-xs text-indigo-600 hover:text-indigo-500"
+                            href={`/api/repositories/${repository.id}/scans/${scan.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            View repository_scan
+                          </a>
+                          {scan.status === 'failed' ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setExpandedScanErrorId((current) => (current === scan.id ? '' : scan.id))}
+                            >
+                              {expandedScanErrorId === scan.id ? 'Hide errors' : 'Show errors'}
+                            </Button>
+                          ) : null}
+                        </div>
                       </div>
+                      {scan.status === 'failed' && expandedScanErrorId === scan.id ? (
+                        <pre className="mt-3 max-h-72 overflow-auto rounded-lg bg-gray-100 p-3 text-xs text-gray-700 dark:bg-gray-900 dark:text-gray-200">
+                          {extractScanErrorConsole(scan)}
+                        </pre>
+                      ) : null}
                     </li>
                   ))}
                 </ul>
