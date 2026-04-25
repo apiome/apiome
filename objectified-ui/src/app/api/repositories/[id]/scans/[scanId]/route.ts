@@ -30,18 +30,16 @@ async function resolveAuthContext() {
 }
 
 export async function GET(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
+  _request: Request,
+  context: { params: Promise<{ id: string; scanId: string }> }
 ) {
   try {
     const auth = await resolveAuthContext();
     if ('error' in auth) return auth.error;
 
     const params = await context.params;
-    const incomingUrl = new URL(request.url);
-    const passthrough = incomingUrl.search ? incomingUrl.search : '';
     const response = await fetch(
-      `${REST_API_BASE_URL}/repositories/${encodeURIComponent(auth.tenantSlug)}/${encodeURIComponent(params.id)}/scans${passthrough}`,
+      `${REST_API_BASE_URL}/repositories/${encodeURIComponent(auth.tenantSlug)}/${encodeURIComponent(params.id)}/scans/${encodeURIComponent(params.scanId)}`,
       {
         method: 'GET',
         headers: createRestAuthHeaders(auth.sessionUser),
@@ -49,37 +47,7 @@ export async function GET(
     );
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const detail = typeof data.detail === 'string' ? data.detail : 'Failed to load repository scans';
-      return NextResponse.json({ success: false, error: detail }, { status: response.status });
-    }
-    return NextResponse.json({ success: true, ...data });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
-  }
-}
-
-export async function POST(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const auth = await resolveAuthContext();
-    if ('error' in auth) return auth.error;
-
-    const params = await context.params;
-    const body = await request.json().catch(() => ({}));
-    const response = await fetch(
-      `${REST_API_BASE_URL}/repositories/${encodeURIComponent(auth.tenantSlug)}/${encodeURIComponent(params.id)}/scans`,
-      {
-        method: 'POST',
-        headers: createRestAuthHeaders(auth.sessionUser),
-        body: JSON.stringify(body),
-      }
-    );
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const detail = typeof data.detail === 'string' ? data.detail : 'Failed to trigger repository scan';
+      const detail = typeof data.detail === 'string' ? data.detail : 'Failed to load repository scan';
       return NextResponse.json({ success: false, error: detail }, { status: response.status });
     }
     return NextResponse.json({ success: true, scan: data });

@@ -5,6 +5,7 @@ We continue to improve the platform based on your feedback with improvements and
 ---
 
 ## Repositories
+- Added REPO-6.2 repository detail tabs with deep-link navigation (`branches/files/scans/sync/manifest/settings`), virtualized file lists with side-drawer file details/promote action, scan timeline links, and Monaco manifest editing with REPO-2.4 schema validation.
 - Added REPO-6.1 repository index upgrades with skeleton loading, provider/status/search filters, sortable name/last-scan/status columns, and quick row actions for **Scan now**, **Pause/Resume**, and **Open detail** under Account -> Repositories.
 - Added REPO-5.6 promotion gates so repository sync now defaults to `manual` promotions, still records change reports + `repository.sync_committed` audits for `promote: auto`, and forces manual review whenever `onBreakingChange` is set to `block`.
 - Added REPO-5.5 repository-sync conflict handling so modified-file import jobs now carry import-taxonomy conflict records (`duplicate_schema`/`property_conflict`/`reference_conflict`/`type_mismatch`/`semantic_conflict`), sync-history endpoints expose resolver-ready conflict context for REPO-6.2, and conflict-resolution choices are persisted to each job `eventLog`.

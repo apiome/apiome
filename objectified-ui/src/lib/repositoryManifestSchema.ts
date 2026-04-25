@@ -1,0 +1,91 @@
+export const repositoryManifestSchema = {
+  $schema: 'https://json-schema.org/draft/2020-12/schema',
+  $id: 'https://objectified.dev/schemas/repo-manifest.v1.json',
+  title: 'Objectified Repository Manifest v1',
+  type: 'object',
+  additionalProperties: false,
+  required: ['version'],
+  properties: {
+    version: {
+      type: 'integer',
+      const: 1,
+    },
+    defaults: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        pollIntervalSec: {
+          type: 'integer',
+          minimum: 15,
+          maximum: 86400,
+        },
+        branches: {
+          type: 'array',
+          minItems: 1,
+          items: {
+            type: 'string',
+            minLength: 1,
+          },
+        },
+      },
+    },
+    specs: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['path'],
+        properties: {
+          path: {
+            type: 'string',
+            minLength: 1,
+          },
+          format: {
+            type: 'string',
+            enum: [
+              'openapi_3_0',
+              'openapi_3_1',
+              'swagger_2_0',
+              'asyncapi_2',
+              'asyncapi_3',
+              'arazzo_1',
+              'json_schema',
+              'graphql_sdl',
+              'protobuf',
+              'avro',
+              'unknown_spec',
+            ],
+          },
+          project: {
+            type: 'string',
+            minLength: 1,
+          },
+          versionStrategy: {
+            type: 'string',
+            enum: ['file-version', 'commit-sha', 'branch'],
+          },
+          promote: {
+            type: 'string',
+            enum: ['auto', 'manual'],
+          },
+          onBreakingChange: {
+            type: 'string',
+            enum: ['warn', 'block', 'autoCreateNewMajor'],
+          },
+          pollIntervalSec: {
+            type: 'integer',
+            minimum: 15,
+            maximum: 86400,
+          },
+        },
+      },
+    },
+    ignore: {
+      type: 'array',
+      items: {
+        type: 'string',
+        minLength: 1,
+      },
+    },
+  },
+} as const;
