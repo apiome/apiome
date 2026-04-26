@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Calendar,
   ExternalLink,
   FileText,
   Gauge,
+  GitBranch,
   Info,
   Mail,
   Scale,
@@ -28,6 +29,10 @@ import {
   letterGradeFromOverallPercent,
 } from '../../../../utils/numeric-score-tier';
 import { getProjectDomainCategory } from '../../../../utils/project-domain-categories';
+import {
+  deriveLifecycle,
+  type VersionRow,
+} from './versionsTab/versionLifecycle';
 import type { Project } from '../projectTypes';
 
 export interface OverviewTabProps {
@@ -304,8 +309,132 @@ export function OverviewTab({ project }: OverviewTabProps) {
             <IdRow label="Creator id" value={project.creator_id} mono />
           </dl>
         </section>
+
+        <VersionsCard projectId={project.id} />
       </div>
     </div>
+  );
+}
+
+/**
+ * Right-column card that surfaces the version count plus a lifecycle
+ * breakdown — Drafts / Published / Deprecated / Sunset — so the overview
+ * answers "how many revisions exist and where are they in their lifecycle?"
+ * without forcing a tab switch. Counts use the same `deriveLifecycle`
+ * helper the Versions tab reads, so this card and that tab can never
+ * disagree about which bucket a row falls into.
+ */
+function VersionsCard({ projectId }: { projectId: string }) {
+  const [versions, setVersions] = useState<VersionRow[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setError(null);
+    setVersions(null);
+    (async () => {
+      try {
+        const resp = await fetch(`/api/versions?projectId=${encodeURIComponent(projectId)}`);
+        const payload = (await resp.json()) as {
+          success?: boolean;
+          versions?: VersionRow[];
+          error?: string;
+        };
+        if (!resp.ok || !payload.success) {
+          throw new Error(payload.error || 'Failed to load versions');
+        }
+        if (!cancelled) setVersions(payload.versions ?? []);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load versions');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
+
+  const buckets = useMemo(() => {
+    const counts = { draft: 0, published: 0, deprecated: 0, sunset: 0 };
+    if (!versions) return counts;
+    for (const v of versions) counts[deriveLifecycle(v)] += 1;
+    return counts;
+  }, [versions]);
+
+  const total = versions?.length ?? null;
+  const versionsHref = `/ade/dashboard/projects/${projectId}?tab=versions`;
+
+  return (
+    <section className={projectPanelClass}>
+      <div className={`${projectPanelHeaderClass} flex items-center justify-between`}>
+        <div className="flex items-center gap-3">
+          <GitBranch className="w-5 h-5 text-indigo-500" />
+          <h3 className="text-base font-semibold">Versions</h3>
+        </div>
+        <Link href={versionsHref} className="text-xs text-indigo-500 hover:underline">
+          View all →
+        </Link>
+      </div>
+      <div className="p-5">
+        {error ? (
+          <p className="text-xs text-rose-600 dark:text-rose-400">{error}</p>
+        ) : total === null ? (
+          <div className="animate-pulse space-y-2">
+            <div className="h-8 w-12 rounded bg-gray-100 dark:bg-gray-700/60" />
+            <div className="h-3 w-3/4 rounded bg-gray-100 dark:bg-gray-700/60" />
+          </div>
+        ) : total === 0 ? (
+          <div>
+            <p className="font-mono font-bold text-3xl text-gray-400">0</p>
+            <p className="text-xs text-gray-500 mt-1">
+              No revisions yet. Open the Versions tab to create the first one.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-baseline gap-2">
+              <span className="font-mono font-bold text-3xl text-gray-800 dark:text-gray-100">
+                {total}
+              </span>
+              <span className="text-xs text-gray-500">
+                revision{total === 1 ? '' : 's'} tracked
+              </span>
+            </div>
+            <ul className="mt-4 space-y-1.5 text-xs">
+              <BucketRow label="Drafts" count={buckets.draft} dotClass="bg-slate-400" />
+              <BucketRow label="Published" count={buckets.published} dotClass="bg-emerald-500" />
+              <BucketRow label="Deprecated" count={buckets.deprecated} dotClass="bg-orange-500" />
+              <BucketRow label="Sunset" count={buckets.sunset} dotClass="bg-rose-500" />
+            </ul>
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function BucketRow({
+  label,
+  count,
+  dotClass,
+}: {
+  label: string;
+  count: number;
+  dotClass: string;
+}) {
+  return (
+    <li className="flex items-center justify-between">
+      <span className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-300">
+        <span className={`w-1.5 h-1.5 rounded-full ${dotClass}`} aria-hidden="true" />
+        {label}
+      </span>
+      <span
+        className={`font-mono ${
+          count > 0 ? 'text-gray-700 dark:text-gray-200 font-semibold' : 'text-gray-400'
+        }`}
+      >
+        {count}
+      </span>
+    </li>
   );
 }
 

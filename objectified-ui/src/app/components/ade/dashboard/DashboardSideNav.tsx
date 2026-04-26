@@ -60,7 +60,15 @@ const DashboardSideNav: React.FC = () => {
     },
   ];
 
-  const isActive = (href: string) => pathname === href;
+  /**
+   * A nav entry is "active" for its exact path and for any nested route
+   * underneath it. Using `startsWith(href + '/')` rather than a bare
+   * `startsWith(href)` keeps siblings that share a prefix from cross-
+   * highlighting (e.g. a hypothetical `/projects-archive` won't light up
+   * the Projects entry while the user is on `/projects`).
+   */
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
 
   const sidebarBg = isDark
     ? 'linear-gradient(180deg, #172033 0%, #0f172a 100%)'
