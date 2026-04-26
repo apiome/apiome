@@ -26,10 +26,11 @@ import {
   Upload,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
-import { LoadingState } from '../../../components/ui/LoadingState';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { Skeleton } from '../../../components/ui/Skeleton';
 import { toast } from 'sonner';
 import { deleteProject, permanentDeleteProject } from '../../../../../lib/db/helper';
+import { cn } from '../../../../../lib/utils';
 import ImportDialog from '../../../components/ade/dashboard/ImportDialog';
 import { ProjectWizardDialog } from '../../../components/ade/dashboard/ProjectWizardDialog';
 import { useDialog } from '../../../components/providers/DialogProvider';
@@ -53,6 +54,7 @@ import {
   projectPanelHeaderClass,
   projectStatusChipBaseClass,
   projectStatusChipToneClass,
+  repositoryKpiCardClass,
 } from '../../../components/ade/dashboard/dashboardScreenClasses';
 
 type ViewFilter = 'all' | 'mine' | 'recent' | 'attention' | 'disabled';
@@ -126,6 +128,153 @@ type SessionUserExtensions = {
   current_tenant_id?: string;
   user_id?: string;
 };
+
+type ProjectsPageSkeletonMode = 'full' | 'main';
+
+function ProjectsPageSkeleton({ mode }: { mode: ProjectsPageSkeletonMode }) {
+  const kpi = (
+    <section aria-label="Project KPIs" className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className={cn(repositoryKpiCardClass, 'p-4 space-y-2')}>
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-8 w-12" />
+          <Skeleton className="h-3 w-28" />
+        </div>
+      ))}
+    </section>
+  );
+
+  const filters = (
+    <section className="flex items-center gap-2 flex-wrap" aria-hidden="true">
+      <Skeleton className="h-4 w-10" />
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Skeleton key={i} className="h-7 w-20 rounded-full" />
+      ))}
+      <div className="ml-auto flex items-center gap-2">
+        <Skeleton className="h-5 w-14" />
+        <Skeleton className="h-7 w-[7.5rem]" />
+        <Skeleton className="h-5 w-8" />
+        <Skeleton className="h-7 w-[7.5rem]" />
+      </div>
+    </section>
+  );
+
+  const projectCards = (
+    <div className="space-y-6" aria-hidden="true">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <article
+            key={i}
+            className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col"
+          >
+            <div className="p-5 space-y-4">
+              <div className="flex items-start gap-3">
+                <Skeleton className="h-12 w-12 rounded-lg shrink-0" />
+                <div className="flex-1 min-w-0 space-y-2.5">
+                  <Skeleton className="h-4 w-[85%] max-w-[12rem]" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <Skeleton className="h-6 w-6 rounded shrink-0" />
+              </div>
+              <div className="flex gap-2">
+                <Skeleton className="h-5 w-20 rounded" />
+                <Skeleton className="h-5 w-24 rounded" />
+                <Skeleton className="h-5 w-12 rounded" />
+              </div>
+            </div>
+            <div className="p-3 border-t border-gray-100 dark:border-gray-700/80 space-y-2.5 bg-gray-50/50 dark:bg-gray-900/30">
+              <div className="flex justify-between gap-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </div>
+          </article>
+        ))}
+        <div className="min-h-[180px] rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700" />
+      </div>
+    </div>
+  );
+
+  const lowerPanels = (
+    <section className="grid grid-cols-1 gap-6 lg:grid-cols-3" aria-hidden="true">
+      <div className={`${projectPanelClass} lg:col-span-2`}>
+        <div className={`${projectPanelHeaderClass} space-y-2`}>
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-3 w-72" />
+        </div>
+        <div className="p-5 space-y-3">
+          <Skeleton className="h-24 w-full rounded-md" />
+          <div className="flex gap-2">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+        </div>
+      </div>
+      <div className={projectPanelClass}>
+        <div className={`${projectPanelHeaderClass} space-y-2`}>
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+        <div className="p-5">
+          <Skeleton className="h-28 w-full rounded-md" />
+        </div>
+      </div>
+    </section>
+  );
+
+  if (mode === 'main') {
+    return (
+      <>
+        <span className="sr-only" role="status" aria-live="polite">
+          Loading projects
+        </span>
+        {kpi}
+        {filters}
+        {projectCards}
+        {lowerPanels}
+      </>
+    );
+  }
+
+  const main = (
+    <div className={cn(dashboardContentStackClass, 'min-h-[320px]')}>
+      {kpi}
+      {filters}
+      {projectCards}
+      {lowerPanels}
+    </div>
+  );
+
+  return (
+    <>
+      <span className="sr-only">Loading projects</span>
+      <header className={projectHeaderShellClass}>
+        <div className="px-6 py-4 flex items-end justify-between gap-4 flex-wrap">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className={projectHeaderIconTileClass} aria-hidden="true">
+              <Folders className="w-5 h-5" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">Projects</h2>
+              <div className={`${projectHeaderEyebrowClass} max-w-sm`} aria-hidden="true">
+                <Skeleton className="h-3.5 w-64" />
+              </div>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2" aria-hidden="true">
+            <Skeleton className="h-8 w-24 rounded-md" />
+            <Skeleton className="h-7 w-24 rounded-md" />
+            <Skeleton className="h-7 w-16 rounded-md" />
+            <Skeleton className="h-8 w-20 rounded-md" />
+          </div>
+        </div>
+      </header>
+      <main className={dashboardMainClass} role="status" aria-live="polite">
+        {main}
+      </main>
+    </>
+  );
+}
 
 const Projects = () => {
   const { data: session } = useSession();
@@ -383,14 +532,10 @@ const Projects = () => {
   if (kpis.enabled !== kpis.total) headerEyebrowParts.push(`${kpis.enabled} enabled`);
   if (kpis.avgQuality != null) headerEyebrowParts.push(`avg quality ${kpis.avgQuality}`);
   if (kpis.attention > 0) headerEyebrowParts.push(`${kpis.attention} need attention`);
-  const headerEyebrow = isInitialLoading ? 'Loading projects…' : headerEyebrowParts.join(' · ');
+  const headerEyebrow = headerEyebrowParts.join(' · ');
 
   if (!session) {
-    return (
-      <div className="p-6">
-        <LoadingState minHeightClassName="min-h-[220px]" message="Loading projects..." />
-      </div>
-    );
+    return <ProjectsPageSkeleton mode="full" />;
   }
 
   if (!currentTenantId) {
@@ -420,7 +565,13 @@ const Projects = () => {
             </span>
             <div className="min-w-0">
               <h2 className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">Projects</h2>
-              <p className={`${projectHeaderEyebrowClass} truncate`}>{headerEyebrow}</p>
+              {isInitialLoading ? (
+                <div className={`${projectHeaderEyebrowClass} max-w-sm`} aria-hidden="true">
+                  <Skeleton className="h-3.5 w-64" />
+                </div>
+              ) : (
+                <p className={`${projectHeaderEyebrowClass} truncate`}>{headerEyebrow}</p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -481,7 +632,7 @@ const Projects = () => {
       <main className={dashboardMainClass}>
         <div className={dashboardContentStackClass}>
           {isInitialLoading ? (
-            <LoadingState minHeightClassName="min-h-[220px]" message="Loading projects..." />
+            <ProjectsPageSkeleton mode="main" />
           ) : (
             <>
               <section
