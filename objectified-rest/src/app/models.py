@@ -1237,6 +1237,107 @@ class VersionTagUpdateRequest(BaseModel):
         from_attributes = True
 
 
+# ==================== Version Quality Models ====================
+
+
+class VersionQualityScoreSchema(BaseModel):
+    """A single quality snapshot for a version (one row per `Compute quality` run)."""
+
+    id: str
+    tenant_id: str
+    project_id: str
+    version_id: str
+    overall: int
+    completeness: int
+    consistency: int
+    descriptions: int
+    examples: int
+    class_count: int
+    property_count: int
+    computed_by: Optional[str] = None
+    computed_at: Optional[Union[datetime, str]] = None
+    detail: Optional[Dict[str, Any]] = None
+
+    class Config:
+        from_attributes = True
+
+
+class VersionQualityRunResponse(BaseModel):
+    """Response from POST /run: the freshly persisted snapshot, plus the prior
+    snapshot (when one exists) so the UI can show a delta without a follow-up
+    request."""
+
+    snapshot: VersionQualityScoreSchema
+    previous: Optional[VersionQualityScoreSchema] = None
+
+
+# ==================== Version Lint Models ====================
+
+
+class LintRuleSchema(BaseModel):
+    """Static metadata for a registered lint rule. Returned by the rule-list
+    endpoint so the UI can surface rule descriptions next to findings."""
+
+    id: str
+    severity: Literal["error", "warning", "info"]
+    title: str
+    description: str
+    target_kind: Literal["class", "property", "schema"]
+
+    class Config:
+        from_attributes = True
+
+
+class VersionLintFindingSchema(BaseModel):
+    """One finding emitted by a rule during a lint run."""
+
+    id: str
+    result_id: str
+    version_id: str
+    rule_id: str
+    severity: Literal["error", "warning", "info"]
+    target_kind: Literal["class", "property", "schema"]
+    target_id: Optional[str] = None
+    target_path: str
+    message: str
+    suggestion: Optional[str] = None
+    detail: Optional[Dict[str, Any]] = None
+    created_at: Optional[Union[datetime, str]] = None
+
+    class Config:
+        from_attributes = True
+
+
+class VersionLintResultSchema(BaseModel):
+    """Header row for a lint run; the UI's scorecard reads this directly."""
+
+    id: str
+    tenant_id: str
+    project_id: str
+    version_id: str
+    grade: Literal["A", "B", "C", "D", "F"]
+    error_count: int
+    warning_count: int
+    info_count: int
+    rules_applied: int
+    duration_ms: Optional[int] = None
+    computed_by: Optional[str] = None
+    computed_at: Optional[Union[datetime, str]] = None
+    detail: Optional[Dict[str, Any]] = None
+
+    class Config:
+        from_attributes = True
+
+
+class VersionLintRunResponse(BaseModel):
+    """Response from POST /run: the freshly persisted result + every finding it
+    produced (so callers can render the scorecard in one round-trip)."""
+
+    result: VersionLintResultSchema
+    findings: List[VersionLintFindingSchema]
+    previous: Optional[VersionLintResultSchema] = None
+
+
 # ==================== Project Property Models ====================
 
 class ProjectPropertySchema(BaseModel):

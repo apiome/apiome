@@ -191,11 +191,11 @@ export default function SunsetTimelinePage() {
       <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="px-6 py-4">
           <Link
-            href="/ade/dashboard/versions"
+            href="/ade/dashboard/projects"
             className="inline-flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-400 hover:underline mb-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Versions
+            Back to Projects
           </Link>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>

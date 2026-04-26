@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React from 'react';
 import { useSession } from 'next-auth/react';
-import { User, Building2, Folders, FileDigit, Key, Eye, Link as LinkIcon, Database, Sun, GitBranchPlus } from 'lucide-react';
+import { User, Building2, Folders, Key, Eye, Link as LinkIcon, Database, Sun, GitBranchPlus } from 'lucide-react';
 import { useDarkMode } from '@/app/hooks/useDarkMode';
 
 interface NavItem {
@@ -54,7 +54,6 @@ const DashboardSideNav: React.FC = () => {
       header: 'Specifications',
       items: [
         { label: 'Projects', href: '/ade/dashboard/projects', icon: Folders, disabled: !hasTenant },
-        { label: 'Versions', href: '/ade/dashboard/versions', icon: FileDigit, disabled: !hasTenant },
         { label: 'Sunset timeline', href: '/ade/dashboard/versions/sunset-timeline', icon: Sun, disabled: !hasTenant },
         { label: 'Published', href: '/ade/dashboard/published', icon: Eye, disabled: !hasTenant },
       ],

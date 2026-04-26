@@ -25,6 +25,9 @@ from .paths_routes import router as paths_router
 from .data_routes import router as data_router
 from .migration_plans_routes import router as migration_plans_router
 from .version_tags_routes import router as version_tags_router
+from .version_quality_routes import router as version_quality_router
+from .version_lint_routes import router as version_lint_router
+from . import lint_rules as _lint_rules  # noqa: F401  (registers v1 lint rules)
 from .compatibility_routes import router as compatibility_router
 from .draft_lock_routes import router as draft_lock_router
 from .push_webhook_delivery import process_due_push_webhook_deliveries
@@ -101,6 +104,8 @@ app.include_router(properties_router)
 app.include_router(paths_router)
 app.include_router(migration_plans_router)
 app.include_router(version_tags_router)
+app.include_router(version_quality_router)
+app.include_router(version_lint_router)
 app.include_router(draft_lock_router)
 app.include_router(push_webhook_subscriptions_router)
 app.include_router(change_report_router)

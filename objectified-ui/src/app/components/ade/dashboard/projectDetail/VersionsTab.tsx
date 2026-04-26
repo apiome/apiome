@@ -1,15 +1,52 @@
 'use client';
 
+/**
+ * Versions tab — per-project surface.
+ *
+ * Phase 4 rebuilds this against `mockups/versions/detail.html`:
+ *
+ *   sub-page header  →  KPI band (4)  →  lifecycle pipeline kanban
+ *   ────────────────────────────────────────────────────────────
+ *   versions table (filter chips + search)   |   selected-rail
+ *
+ * Data is `/api/versions?projectId=…` only. Per-row quality/lint badges,
+ * the trajectory chart, lifecycle alerts, and the activity timeline from
+ * the mockup are deferred until the bulk quality + lint endpoints land
+ * (Phase 10) — we don't fake numbers we can't back. The right rail and
+ * version detail page (Phase 5) compute quality + lint on demand.
+ *
+ * Branches and tags from the legacy implementation were git-like surface
+ * area; with `FEATURE_GITLIKE` off the proxy returns 404 anyway, so the
+ * fetches are gone entirely.
+ */
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Activity, GitBranch, Info, Tag } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import {
-  projectPanelClass,
-  projectPanelHeaderClass,
-} from '../dashboardScreenClasses';
-import { ProjectStatusChip, type ProjectStatusKind } from '../ProjectStatusChip';
-import { LoadingState } from '../../../ui/LoadingState';
-import { EmptyState } from '../../../ui/EmptyState';
-import { Alert } from '../../../ui/Alert';
+  Activity,
+  Download,
+  FileEdit,
+  GitBranch,
+  GitBranchPlus,
+  Rocket,
+} from 'lucide-react';
+import { LoadingState } from '@/app/components/ui/LoadingState';
+import { EmptyState } from '@/app/components/ui/EmptyState';
+import { Alert } from '@/app/components/ui/Alert';
+import { ProjectKpiCard } from '@/app/components/ade/dashboard/ProjectKpiCard';
+import {
+  VersionsLifecyclePipeline,
+} from './versionsTab/VersionsLifecyclePipeline';
+import {
+  VersionsListTable,
+  type VersionStatusFilter,
+} from './versionsTab/VersionsListTable';
+import { VersionDetailRail } from './versionsTab/VersionDetailRail';
+import {
+  type VersionRow,
+  deriveLifecycle,
+  relativeTime,
+} from './versionsTab/versionLifecycle';
 
 export interface VersionsTabProps {
   projectId: string;
@@ -17,144 +54,96 @@ export interface VersionsTabProps {
   onCountChange?: (count: number | null) => void;
 }
 
-interface VersionRow {
-  id: string;
-  version_id: string;
-  enabled: boolean;
-  published: boolean;
-  deleted_at: string | null;
-  created_at: string;
-  updated_at: string;
-  published_at: string | null;
-  creator_name?: string;
-  creator_email?: string;
-  shortMessage?: string | null;
-  changelog?: string | null;
-  parent_version_id?: string | null;
-  lifecycle?: string;
+interface SessionUserExtensions {
+  user_id?: string;
 }
 
-interface VersionBranchRow {
-  id: string;
-  name: string;
-  tip_version_id: string;
-  tip_version_string?: string;
-  is_default?: boolean;
-  protected?: boolean;
-  updated_at?: string;
-}
-
-interface VersionTagRow {
-  id: string;
-  name: string;
-  version_id: string;
-  target_version_string?: string;
-  channel?: string | null;
-  message?: string | null;
-  immutable?: boolean;
-  protected?: boolean;
-}
-
-function lifecycleToKind(version: VersionRow): ProjectStatusKind {
-  if (version.deleted_at) return 'deleted';
-  if (version.published) return 'published';
-  const lc = (version.lifecycle ?? '').toLowerCase();
-  if (lc === 'deprecated') return 'deprecated';
-  if (lc === 'archived') return 'disabled';
-  if (lc === 'beta') return 'inReview';
-  return 'draft';
-}
-
-function relativeTime(iso?: string | null): string {
-  if (!iso) return '—';
-  const ts = Date.parse(iso);
-  if (!Number.isFinite(ts)) return '—';
-  const diff = Date.now() - ts;
-  const minutes = Math.round(diff / 60000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes} m ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} h ago`;
-  const days = Math.round(hours / 24);
-  if (days < 30) return `${days} d ago`;
-  const months = Math.round(days / 30);
-  if (months < 12) return `${months} mo ago`;
-  return `${Math.round(months / 12)} y ago`;
-}
+const RECENT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export function VersionsTab({ projectId, onCountChange }: VersionsTabProps) {
+  const { data: session } = useSession();
+  const currentUserId = (session?.user as SessionUserExtensions | undefined)?.user_id;
+
   const [versions, setVersions] = useState<VersionRow[]>([]);
-  const [branches, setBranches] = useState<VersionBranchRow[]>([]);
-  const [tags, setTags] = useState<VersionTagRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<VersionStatusFilter>('all');
+  const [search, setSearch] = useState('');
 
   const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [versionsRes, branchesRes, tagsRes] = await Promise.all([
-        fetch(`/api/versions?projectId=${encodeURIComponent(projectId)}`),
-        fetch(`/api/projects/${projectId}/version-branches`),
-        fetch(`/api/projects/${projectId}/version-tags`),
-      ]);
-
-      const versionsJson = (await versionsRes.json()) as {
+      const response = await fetch(
+        `/api/versions?projectId=${encodeURIComponent(projectId)}`
+      );
+      const payload = (await response.json()) as {
         success?: boolean;
         versions?: VersionRow[];
         error?: string;
       };
-      if (!versionsRes.ok || !versionsJson.success) {
-        throw new Error(versionsJson.error || 'Failed to load versions');
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.error || 'Failed to load versions');
       }
-      const list = versionsJson.versions ?? [];
+      const list = payload.versions ?? [];
       setVersions(list);
-      if (list.length > 0 && !selectedVersionId) {
-        setSelectedVersionId(list[0].id);
-      }
       onCountChange?.(list.length);
-
-      const branchesJson = (await branchesRes.json()) as {
-        success?: boolean;
-        branches?: VersionBranchRow[];
-      };
-      if (branchesRes.ok && branchesJson.success) setBranches(branchesJson.branches ?? []);
-
-      const tagsJson = (await tagsRes.json()) as {
-        success?: boolean;
-        tags?: VersionTagRow[];
-      };
-      if (tagsRes.ok && tagsJson.success) setTags(tagsJson.tags ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load versions');
       onCountChange?.(null);
     } finally {
       setIsLoading(false);
     }
-  }, [projectId, selectedVersionId, onCountChange]);
+  }, [projectId, onCountChange]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  /* Auto-select the most recently updated version once data lands. */
+  useEffect(() => {
+    if (versions.length === 0) {
+      setSelectedVersionId(null);
+      return;
+    }
+    setSelectedVersionId((prev) => {
+      if (prev && versions.some((v) => v.id === prev)) return prev;
+      const sorted = [...versions].sort(
+        (a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at)
+      );
+      return sorted[0].id;
+    });
+  }, [versions]);
 
   const selected = useMemo(
     () => versions.find((v) => v.id === selectedVersionId) ?? null,
     [versions, selectedVersionId]
   );
 
-  const counts = useMemo(() => {
-    const c = { total: versions.length, published: 0, draft: 0, deprecated: 0 };
-    for (const v of versions) {
-      if (v.published) c.published += 1;
-      else if ((v.lifecycle ?? '').toLowerCase() === 'deprecated') c.deprecated += 1;
-      else c.draft += 1;
-    }
-    return c;
+  const kpis = useMemo(() => deriveKpis(versions), [versions]);
+
+  const eyebrow = useMemo(() => {
+    if (versions.length === 0) return 'No revisions yet';
+    const counts = countByLifecycle(versions);
+    const parts: string[] = [
+      `${versions.length} ${versions.length === 1 ? 'total' : 'total'}`,
+    ];
+    if (counts.draft) parts.push(`${counts.draft} ${counts.draft === 1 ? 'draft' : 'drafts'}`);
+    if (counts.published) parts.push(`${counts.published} published`);
+    if (counts.deprecated) parts.push(`${counts.deprecated} deprecated`);
+    if (counts.sunset) parts.push(`${counts.sunset} sunsetting`);
+    return parts.join(' · ');
   }, [versions]);
 
-  if (isLoading) return <LoadingState message="Loading versions…" />;
-  if (error) return <Alert variant="error">{error}</Alert>;
+  if (isLoading) {
+    return <LoadingState message="Loading versions…" />;
+  }
+
+  if (error) {
+    return <Alert variant="error">{error}</Alert>;
+  }
+
   if (versions.length === 0) {
     return (
       <EmptyState
@@ -167,234 +156,162 @@ export function VersionsTab({ projectId, onCountChange }: VersionsTabProps) {
 
   return (
     <div className="space-y-6">
+      {/* Sub-page header — sits inside the dashboard <main>, below the project tabs. */}
+      <section className="flex items-end justify-between gap-4 flex-wrap">
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold inline-flex items-center gap-2">
+            <GitBranch className="w-5 h-5 text-indigo-500" aria-hidden="true" />
+            Versions
+          </h2>
+          <p className="text-xs text-gray-500 font-mono truncate">{eyebrow}</p>
+        </div>
+        {/* Action buttons are placeholders — the real wiring is on the version
+            detail page (Phase 5). Disabled here so we don't paint dead clicks. */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled
+            title="Bundle export lands with the version detail page"
+            className="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 text-gray-400 cursor-not-allowed inline-flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" aria-hidden="true" /> Export bundle
+          </button>
+          <button
+            type="button"
+            disabled
+            title="New-version workflow is wired in the version detail page"
+            className="px-3 py-1.5 text-sm rounded-md bg-indigo-600/50 text-white cursor-not-allowed inline-flex items-center gap-2"
+          >
+            <GitBranchPlus className="w-4 h-4" aria-hidden="true" /> New version
+          </button>
+        </div>
+      </section>
+
+      {/* KPI band */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiTile label="Versions" value={counts.total} />
-        <KpiTile label="Published" value={counts.published} tone="positive" />
-        <KpiTile label="Drafts" value={counts.draft} />
-        <KpiTile label="Deprecated" value={counts.deprecated} tone="warning" />
+        <ProjectKpiCard
+          label="Latest published"
+          value={kpis.latestPublished?.version_id ?? '—'}
+          subtitle={
+            kpis.latestPublished
+              ? `${relativeTime(kpis.latestPublished.published_at ?? kpis.latestPublished.updated_at)} · ${
+                  kpis.latestPublished.creator_name || kpis.latestPublished.creator_email || 'unknown author'
+                }`
+              : 'Nothing published yet'
+          }
+          tone={kpis.latestPublished ? 'emerald' : 'slate'}
+          icon={<Rocket className="w-4 h-4" />}
+        />
+        <ProjectKpiCard
+          label="Drafts in flight"
+          value={kpis.draftCount}
+          subtitle={
+            kpis.draftCount === 0
+              ? 'No drafts open'
+              : kpis.draftSamples.map((v) => v.version_id).join(' · ')
+          }
+          tone={kpis.draftCount > 0 ? 'sky' : 'slate'}
+          icon={<FileEdit className="w-4 h-4" />}
+        />
+        <ProjectKpiCard
+          label="Revisions"
+          value={versions.length}
+          subtitle={
+            kpis.deprecatedCount + kpis.sunsetCount > 0
+              ? `${kpis.publishedCount} published · ${kpis.deprecatedCount} deprecated`
+              : `${kpis.publishedCount} published · ${kpis.draftCount} draft`
+          }
+          tone="indigo"
+          icon={<GitBranch className="w-4 h-4" />}
+        />
+        <ProjectKpiCard
+          label="Updated · 24h"
+          value={kpis.recentlyUpdated}
+          subtitle={
+            kpis.recentlyUpdated === 0
+              ? 'No edits in the last day'
+              : `${kpis.recentlyUpdated} active`
+          }
+          tone={kpis.recentlyUpdated > 0 ? 'sky' : 'slate'}
+          icon={<Activity className="w-4 h-4" />}
+        />
       </section>
 
+      {/* Lifecycle pipeline kanban */}
+      <VersionsLifecyclePipeline
+        projectId={projectId}
+        versions={versions}
+        selectedVersionId={selectedVersionId}
+      />
+
+      {/* Body grid: table  |  rail */}
       <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className={`${projectPanelClass} xl:col-span-2`}>
-          <div className={projectPanelHeaderClass}>
-            <div className="flex items-center gap-3">
-              <GitBranch className="w-5 h-5 text-indigo-500" />
-              <div>
-                <h3 className="text-base font-semibold">Revisions</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  All committed schema revisions, newest first
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-[10px] uppercase tracking-wider text-gray-500 bg-gray-50 dark:bg-gray-900">
-                <tr>
-                  <th className="text-left px-4 py-2 font-semibold">Version</th>
-                  <th className="text-left px-4 py-2 font-semibold">Status</th>
-                  <th className="text-left px-4 py-2 font-semibold">Author</th>
-                  <th className="text-left px-4 py-2 font-semibold">Message</th>
-                  <th className="text-right px-4 py-2 font-semibold">Updated</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-700/60">
-                {versions.map((version) => {
-                  const kind = lifecycleToKind(version);
-                  const isSelected = version.id === selectedVersionId;
-                  return (
-                    <tr
-                      key={version.id}
-                      onClick={() => setSelectedVersionId(version.id)}
-                      className={`cursor-pointer ${
-                        isSelected
-                          ? 'bg-indigo-500/5'
-                          : 'hover:bg-gray-50/60 dark:hover:bg-gray-900/30'
-                      }`}
-                    >
-                      <td className="px-4 py-2.5 font-mono text-xs">
-                        v{version.version_id}
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <ProjectStatusChip kind={kind} />
-                      </td>
-                      <td className="px-4 py-2.5 text-xs text-gray-500">
-                        {version.creator_name || '—'}
-                      </td>
-                      <td className="px-4 py-2.5 text-xs text-gray-600 dark:text-gray-300 max-w-xs truncate">
-                        {version.shortMessage || (
-                          <span className="italic text-gray-400">no message</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-2.5 text-right text-[11px] text-gray-500 font-mono">
-                        {relativeTime(version.updated_at)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        <div className="xl:col-span-2 min-w-0">
+          <VersionsListTable
+            projectId={projectId}
+            versions={versions}
+            selectedVersionId={selectedVersionId}
+            onSelect={setSelectedVersionId}
+            filter={filter}
+            onFilterChange={setFilter}
+            search={search}
+            onSearchChange={setSearch}
+            currentUserId={currentUserId}
+          />
         </div>
-
-        <div className="space-y-6">
-          <div className={projectPanelClass}>
-            <div className={projectPanelHeaderClass}>
-              <div className="flex items-center gap-3">
-                <Info className="w-5 h-5 text-indigo-500" />
-                <div>
-                  <h3 className="text-base font-semibold">Selected revision</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {selected ? `v${selected.version_id}` : 'Pick a row on the left'}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="p-5 space-y-3 text-xs">
-              {selected ? (
-                <>
-                  <DetailRow label="Status">
-                    <ProjectStatusChip kind={lifecycleToKind(selected)} />
-                  </DetailRow>
-                  <DetailRow label="Author">{selected.creator_name || '—'}</DetailRow>
-                  <DetailRow label="Created">
-                    {relativeTime(selected.created_at)}
-                  </DetailRow>
-                  <DetailRow label="Updated">
-                    {relativeTime(selected.updated_at)}
-                  </DetailRow>
-                  <DetailRow label="Published">
-                    {selected.published_at ? relativeTime(selected.published_at) : '—'}
-                  </DetailRow>
-                  <DetailRow label="Lifecycle">
-                    <span className="font-mono">{selected.lifecycle ?? '—'}</span>
-                  </DetailRow>
-                  {selected.changelog ? (
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">
-                        Changelog
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-line">
-                        {selected.changelog}
-                      </p>
-                    </div>
-                  ) : null}
-                </>
-              ) : (
-                <p className="text-gray-500 italic">Select a revision to inspect.</p>
-              )}
-            </div>
-          </div>
-
-          <div className={projectPanelClass}>
-            <div className={projectPanelHeaderClass}>
-              <div className="flex items-center gap-3">
-                <GitBranch className="w-5 h-5 text-indigo-500" />
-                <h3 className="text-base font-semibold">Branches</h3>
-                <span className="text-[10px] font-mono text-gray-500">{branches.length}</span>
-              </div>
-            </div>
-            <ul className="divide-y divide-gray-100 dark:divide-gray-700/60 text-xs">
-              {branches.length === 0 ? (
-                <li className="px-5 py-4 text-gray-500 italic">No branches.</li>
-              ) : (
-                branches.map((branch) => (
-                  <li key={branch.id} className="px-5 py-3 flex items-center gap-3">
-                    <GitBranch className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                    <span className="font-mono text-sm flex-1 min-w-0 truncate">
-                      {branch.name}
-                    </span>
-                    {branch.is_default ? (
-                      <span className="text-[9px] uppercase font-semibold text-indigo-500">
-                        default
-                      </span>
-                    ) : null}
-                    {branch.protected ? (
-                      <span className="text-[9px] uppercase font-semibold text-amber-500">
-                        protected
-                      </span>
-                    ) : null}
-                    <span className="font-mono text-[11px] text-gray-500 truncate">
-                      v{branch.tip_version_string ?? branch.tip_version_id}
-                    </span>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
-
-          <div className={projectPanelClass}>
-            <div className={projectPanelHeaderClass}>
-              <div className="flex items-center gap-3">
-                <Tag className="w-5 h-5 text-indigo-500" />
-                <h3 className="text-base font-semibold">Tags</h3>
-                <span className="text-[10px] font-mono text-gray-500">{tags.length}</span>
-              </div>
-            </div>
-            <ul className="divide-y divide-gray-100 dark:divide-gray-700/60 text-xs">
-              {tags.length === 0 ? (
-                <li className="px-5 py-4 text-gray-500 italic">No tags.</li>
-              ) : (
-                tags.map((tag) => (
-                  <li key={tag.id} className="px-5 py-3 flex items-center gap-3">
-                    <Tag className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                    <span className="font-mono text-sm flex-1 min-w-0 truncate">
-                      {tag.name}
-                    </span>
-                    {tag.channel ? (
-                      <span className="text-[10px] font-mono text-gray-500">
-                        {tag.channel}
-                      </span>
-                    ) : null}
-                    {tag.immutable ? (
-                      <Activity className="w-3 h-3 text-amber-500" />
-                    ) : null}
-                    <span className="font-mono text-[11px] text-gray-500">
-                      v{tag.target_version_string ?? tag.version_id}
-                    </span>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
+        <div className="min-w-0">
+          <VersionDetailRail projectId={projectId} version={selected} />
         </div>
       </section>
     </div>
   );
 }
 
-function KpiTile({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone?: 'positive' | 'warning';
-}) {
-  const valueClass =
-    tone === 'positive'
-      ? 'text-emerald-500'
-      : tone === 'warning'
-        ? 'text-amber-500'
-        : '';
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-      <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">
-        {label}
-      </p>
-      <p className={`text-2xl font-bold font-mono mt-1.5 ${valueClass}`}>{value}</p>
-    </div>
-  );
+interface VersionsKpis {
+  latestPublished: VersionRow | null;
+  draftCount: number;
+  publishedCount: number;
+  deprecatedCount: number;
+  sunsetCount: number;
+  recentlyUpdated: number;
+  draftSamples: VersionRow[];
 }
 
-function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3">
-      <dt className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold shrink-0">
-        {label}
-      </dt>
-      <dd className="text-right text-xs">{children}</dd>
-    </div>
-  );
+function deriveKpis(versions: VersionRow[]): VersionsKpis {
+  let latestPublished: VersionRow | null = null;
+  let latestPublishedTs = -Infinity;
+  const drafts: VersionRow[] = [];
+  let recentlyUpdated = 0;
+  const counts = countByLifecycle(versions);
+  const now = Date.now();
+
+  for (const v of versions) {
+    if (v.published) {
+      const when = Date.parse(v.published_at ?? v.updated_at);
+      if (Number.isFinite(when) && when > latestPublishedTs) {
+        latestPublishedTs = when;
+        latestPublished = v;
+      }
+    }
+    if (deriveLifecycle(v) === 'draft') drafts.push(v);
+    if (now - Date.parse(v.updated_at) <= RECENT_WINDOW_MS) recentlyUpdated += 1;
+  }
+
+  drafts.sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
+
+  return {
+    latestPublished,
+    draftCount: counts.draft,
+    publishedCount: counts.published,
+    deprecatedCount: counts.deprecated,
+    sunsetCount: counts.sunset,
+    recentlyUpdated,
+    draftSamples: drafts.slice(0, 2),
+  };
+}
+
+function countByLifecycle(versions: VersionRow[]) {
+  const counts = { draft: 0, published: 0, deprecated: 0, sunset: 0 };
+  for (const v of versions) counts[deriveLifecycle(v)] += 1;
+  return counts;
 }

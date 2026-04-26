@@ -5,7 +5,7 @@ import hashlib
 from datetime import datetime
 import bcrypt
 import numpy as np
-from psycopg2.extras import Json, RealDictCursor
+from psycopg2.extras import Json, RealDictCursor, execute_values
 from psycopg2.extensions import register_adapter, AsIs, adapt
 from typing import Optional, List, Dict, Any, Tuple, Set
 from .config import settings, WEBHOOK_MAX_DELIVERY_ATTEMPTS
@@ -2444,6 +2444,340 @@ class Database:
         """
         params.append(limit)
         return self.execute_query(q, tuple(params))
+
+    # ---------- Version quality snapshots ----------
+
+    def insert_version_quality_score(
+        self,
+        tenant_id: str,
+        project_id: str,
+        version_id: str,
+        overall: int,
+        completeness: int,
+        consistency: int,
+        descriptions: int,
+        examples: int,
+        class_count: int,
+        property_count: int,
+        computed_by: Optional[str],
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Append one quality snapshot. Returns the inserted row, or None if the
+        insert was rolled back (logged at warning)."""
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO odb.version_quality_scores
+                      (tenant_id, project_id, version_id,
+                       overall, completeness, consistency, descriptions, examples,
+                       class_count, property_count, computed_by, detail)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                    RETURNING id, tenant_id, project_id, version_id,
+                              overall, completeness, consistency, descriptions, examples,
+                              class_count, property_count, computed_by, computed_at, detail
+                    """,
+                    (
+                        tenant_id,
+                        project_id,
+                        version_id,
+                        int(overall),
+                        int(completeness),
+                        int(consistency),
+                        int(descriptions),
+                        int(examples),
+                        int(class_count),
+                        int(property_count),
+                        computed_by,
+                        json.dumps(detail) if detail is not None else None,
+                    ),
+                )
+                row = cursor.fetchone()
+                conn.commit()
+                return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            _logger.warning("insert_version_quality_score failed: %s", e)
+            return None
+
+    def get_latest_version_quality_score(
+        self,
+        version_id: str,
+        tenant_id: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Most recent snapshot for a version, or None if it's never been measured."""
+        rows = self.execute_query(
+            """
+            SELECT id, tenant_id, project_id, version_id,
+                   overall, completeness, consistency, descriptions, examples,
+                   class_count, property_count, computed_by, computed_at, detail
+            FROM odb.version_quality_scores
+            WHERE version_id = %s AND tenant_id = %s
+            ORDER BY computed_at DESC, id DESC
+            LIMIT 1
+            """,
+            (version_id, tenant_id),
+        )
+        return rows[0] if rows else None
+
+    def list_version_quality_history(
+        self,
+        version_id: str,
+        tenant_id: str,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """All snapshots for a version, newest first. Caller-bounded by `limit`."""
+        return self.execute_query(
+            """
+            SELECT id, tenant_id, project_id, version_id,
+                   overall, completeness, consistency, descriptions, examples,
+                   class_count, property_count, computed_by, computed_at, detail
+            FROM odb.version_quality_scores
+            WHERE version_id = %s AND tenant_id = %s
+            ORDER BY computed_at DESC, id DESC
+            LIMIT %s
+            """,
+            (version_id, tenant_id, int(limit)),
+        )
+
+    def list_project_quality_history(
+        self,
+        project_id: str,
+        tenant_id: str,
+        limit: int = 200,
+    ) -> List[Dict[str, Any]]:
+        """All snapshots across every version of a project, newest first.
+
+        Used by the project Versions tab's trajectory chart, which plots one
+        point per (version, snapshot) pair."""
+        return self.execute_query(
+            """
+            SELECT id, tenant_id, project_id, version_id,
+                   overall, completeness, consistency, descriptions, examples,
+                   class_count, property_count, computed_by, computed_at, detail
+            FROM odb.version_quality_scores
+            WHERE project_id = %s AND tenant_id = %s
+            ORDER BY computed_at DESC, id DESC
+            LIMIT %s
+            """,
+            (project_id, tenant_id, int(limit)),
+        )
+
+    # ---------- Version lint runs ----------
+
+    # Result rows are append-only; the same is true for findings (each `:run`
+    # writes a fresh batch). We never mutate a prior result, so the runner can
+    # be replayed without coordination beyond a single transaction per run.
+
+    _LINT_RESULT_COLUMNS = (
+        "id, tenant_id, project_id, version_id, grade, "
+        "error_count, warning_count, info_count, rules_applied, duration_ms, "
+        "computed_by, computed_at, detail"
+    )
+
+    _LINT_FINDING_COLUMNS = (
+        "id, result_id, version_id, rule_id, severity, "
+        "target_kind, target_id, target_path, message, suggestion, detail, created_at"
+    )
+
+    def insert_version_lint_run(
+        self,
+        tenant_id: str,
+        project_id: str,
+        version_id: str,
+        grade: str,
+        error_count: int,
+        warning_count: int,
+        info_count: int,
+        rules_applied: int,
+        duration_ms: Optional[int],
+        computed_by: Optional[str],
+        findings: List[Dict[str, Any]],
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Persist one lint run: parent `version_lint_results` row plus all
+        findings, in a single transaction. Returns the result row enriched with
+        a `findings` list of fully-hydrated finding rows; returns None on
+        failure (rolled back, logged at warning).
+
+        `findings` items must carry: rule_id, severity, target_kind,
+        target_path, message; `target_id`, `suggestion`, `detail` are optional.
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    INSERT INTO odb.version_lint_results
+                      (tenant_id, project_id, version_id, grade,
+                       error_count, warning_count, info_count, rules_applied,
+                       duration_ms, computed_by, detail)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                    RETURNING {self._LINT_RESULT_COLUMNS}
+                    """,
+                    (
+                        tenant_id,
+                        project_id,
+                        version_id,
+                        grade,
+                        int(error_count),
+                        int(warning_count),
+                        int(info_count),
+                        int(rules_applied),
+                        int(duration_ms) if duration_ms is not None else None,
+                        computed_by,
+                        json.dumps(detail) if detail is not None else None,
+                    ),
+                )
+                result_row = cursor.fetchone()
+                if not result_row:
+                    conn.rollback()
+                    _logger.warning("insert_version_lint_run: result insert returned no row")
+                    return None
+                result_id = result_row["id"]
+
+                inserted_findings: List[Dict[str, Any]] = []
+                if findings:
+                    rows = [
+                        (
+                            result_id,
+                            version_id,
+                            f["rule_id"],
+                            f["severity"],
+                            f["target_kind"],
+                            f.get("target_id"),
+                            f["target_path"],
+                            f["message"],
+                            f.get("suggestion"),
+                            json.dumps(f["detail"]) if f.get("detail") is not None else None,
+                        )
+                        for f in findings
+                    ]
+                    execute_values(
+                        cursor,
+                        f"""
+                        INSERT INTO odb.version_lint_findings
+                          (result_id, version_id, rule_id, severity,
+                           target_kind, target_id, target_path, message,
+                           suggestion, detail)
+                        VALUES %s
+                        RETURNING {self._LINT_FINDING_COLUMNS}
+                        """,
+                        rows,
+                        template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)",
+                    )
+                    inserted_findings = [dict(r) for r in cursor.fetchall()]
+
+                conn.commit()
+                out = dict(result_row)
+                out["findings"] = inserted_findings
+                return out
+        except Exception as e:
+            conn.rollback()
+            _logger.warning("insert_version_lint_run failed: %s", e)
+            return None
+
+    def get_version_lint_result(
+        self,
+        result_id: str,
+        tenant_id: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch one result row by id, tenant-scoped. Used by the
+        `/results/{resultId}` route to render historical scorecards."""
+        rows = self.execute_query(
+            f"""
+            SELECT {self._LINT_RESULT_COLUMNS}
+            FROM odb.version_lint_results
+            WHERE id = %s AND tenant_id = %s
+            """,
+            (result_id, tenant_id),
+        )
+        return rows[0] if rows else None
+
+    def get_latest_version_lint_result(
+        self,
+        version_id: str,
+        tenant_id: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Most recent result row for a version, or None if it's never been
+        linted (the UI shows a `Run lint` CTA in that case)."""
+        rows = self.execute_query(
+            f"""
+            SELECT {self._LINT_RESULT_COLUMNS}
+            FROM odb.version_lint_results
+            WHERE version_id = %s AND tenant_id = %s
+            ORDER BY computed_at DESC, id DESC
+            LIMIT 1
+            """,
+            (version_id, tenant_id),
+        )
+        return rows[0] if rows else None
+
+    def list_version_lint_findings(
+        self,
+        result_id: str,
+        tenant_id: str,
+    ) -> List[Dict[str, Any]]:
+        """All findings for one result, ordered for stable UI rendering
+        (severity then target path). Tenant scoping happens via the parent
+        result; we join to enforce it without trusting the caller."""
+        return self.execute_query(
+            f"""
+            SELECT {self._LINT_FINDING_COLUMNS}
+            FROM odb.version_lint_findings f
+            JOIN odb.version_lint_results r ON r.id = f.result_id
+            WHERE f.result_id = %s AND r.tenant_id = %s
+            ORDER BY
+                CASE f.severity
+                    WHEN 'error' THEN 0
+                    WHEN 'warning' THEN 1
+                    ELSE 2
+                END,
+                f.target_path,
+                f.id
+            """,
+            (result_id, tenant_id),
+        )
+
+    def list_version_lint_history(
+        self,
+        version_id: str,
+        tenant_id: str,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """Result-row history for a single version, newest first. Findings are
+        omitted; callers fetch them per-result on demand."""
+        return self.execute_query(
+            f"""
+            SELECT {self._LINT_RESULT_COLUMNS}
+            FROM odb.version_lint_results
+            WHERE version_id = %s AND tenant_id = %s
+            ORDER BY computed_at DESC, id DESC
+            LIMIT %s
+            """,
+            (version_id, tenant_id, int(limit)),
+        )
+
+    def list_project_lint_history(
+        self,
+        project_id: str,
+        tenant_id: str,
+        limit: int = 200,
+    ) -> List[Dict[str, Any]]:
+        """Result-row history across every version of a project, newest first.
+        Used by the project Versions tab to badge versions with their latest
+        grade without N round-trips."""
+        return self.execute_query(
+            f"""
+            SELECT {self._LINT_RESULT_COLUMNS}
+            FROM odb.version_lint_results
+            WHERE project_id = %s AND tenant_id = %s
+            ORDER BY computed_at DESC, id DESC
+            LIMIT %s
+            """,
+            (project_id, tenant_id, int(limit)),
+        )
 
     def _workflow_audit_filter_clauses(
         self,

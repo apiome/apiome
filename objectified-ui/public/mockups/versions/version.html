@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projects · billing-api · v2.5.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+    .icon-fill { fill: currentColor !important; }
+    .header-shell { background: linear-gradient(90deg, rgba(99,102,241,0.10) 0%, #ffffff 50%, rgba(217,70,239,0.05) 100%); }
+    .header-shell-dark { background: linear-gradient(90deg, rgba(99,102,241,0.10) 0%, #1f2937 50%, rgba(217,70,239,0.10) 100%); }
+
+    .version-shell { background: linear-gradient(135deg, rgba(16,185,129,0.10) 0%, transparent 60%); }
+    .version-shell-dark { background: linear-gradient(135deg, rgba(16,185,129,0.14) 0%, transparent 60%); }
+
+    /* Quality bar */
+    .qbar { height: 6px; border-radius: 999px; background: rgba(148,163,184,0.20); overflow: hidden; }
+    .qbar > span { display: block; height: 100%; border-radius: 999px; }
+
+    /* Lineage rail */
+    .lineage-node { position: relative; }
+    .lineage-line::before {
+      content: ''; position: absolute; left: 14px; top: 28px; bottom: -16px;
+      width: 2px; background: linear-gradient(180deg, rgba(99,102,241,0.4), rgba(99,102,241,0.05));
+    }
+
+    /* Timeline */
+    .tl-rail { position: relative; }
+    .tl-rail::before {
+      content: ''; position: absolute; left: 9px; top: 4px; bottom: 4px;
+      width: 2px; background: rgba(148,163,184,0.25);
+    }
+    .tl-dot { position: relative; z-index: 1; }
+
+    /* Markdown look for changelog */
+    .md h3 { font-weight: 700; font-size: 0.95rem; margin-top: 1.1rem; margin-bottom: 0.35rem; }
+    .md h3:first-child { margin-top: 0; }
+    .md p { font-size: 0.85rem; line-height: 1.55; color: rgb(75 85 99); margin-bottom: 0.5rem; }
+    .dark .md p { color: rgb(209 213 219); }
+    .md ul { list-style: disc; padding-left: 1.1rem; font-size: 0.85rem; line-height: 1.55; color: rgb(75 85 99); margin-bottom: 0.5rem; }
+    .dark .md ul { color: rgb(209 213 219); }
+    .md code { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; padding: 1px 5px; background: rgba(99,102,241,0.10); border-radius: 4px; color: rgb(67 56 202); }
+    .dark .md code { background: rgba(99,102,241,0.20); color: rgb(199 210 254); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <!-- Top bar -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="folders" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Acme Corp</span>
+      <span class="text-xs text-gray-400">/</span>
+      <a href="../projects/dashboard.html" class="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500">Projects</a>
+      <span class="text-xs text-gray-400">/</span>
+      <a href="../projects/detail.html" class="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500 mono">billing-api</a>
+      <span class="text-xs text-gray-400">/</span>
+      <a href="detail.html" class="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500">Versions</a>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-700 dark:text-gray-200 mono">v2.5.0</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="../" class="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-500">← Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+
+    <!-- Sidebar -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto h-full flex flex-col">
+        <div class="p-3"><button class="w-full flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-left"><div class="w-8 h-8 rounded-md bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-xs">AC</div><div class="flex-1 min-w-0"><p class="text-xs text-gray-500 dark:text-gray-400">Tenant</p><p class="text-sm font-semibold truncate">Acme Corp</p></div><i data-lucide="chevrons-up-down" class="w-4 h-4 text-gray-400"></i></button></div>
+        <hr class="border-indigo-500/10 mx-3" />
+        <div class="p-4 flex-1">
+          <div class="mb-5">
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Account</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="user-round" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Profile</span></a></li>
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="link-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Linked Accounts</span></a></li>
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="git-branch-plus" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Repositories</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5">
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Administration</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="building-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Tenants</span></a></li>
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="key-round" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">API Keys</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5">
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Data Management</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="atom" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Primitives</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div>
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Specifications</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="../projects/dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-indigo-200 dark:border-indigo-700/70 bg-indigo-500/10"><i data-lucide="folders" class="w-5 h-5 text-indigo-500"></i><span class="text-sm font-semibold flex-1 text-indigo-600 dark:text-indigo-400">Projects</span><span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span></a></li>
+              <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="git-branch" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Versions</span></a></li>
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="globe-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Published</span></a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main column -->
+    <div class="flex-1 flex flex-col min-w-0">
+
+      <!-- Project header (shared shell) -->
+      <header class="border-b border-gray-200 dark:border-gray-700 header-shell dark:header-shell-dark">
+        <div class="px-6 py-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-start gap-4 min-w-0">
+              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold mono text-xl shadow-md shrink-0">BL</div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <a href="../projects/dashboard.html" class="text-xs text-gray-500 hover:text-indigo-500 inline-flex items-center gap-1"><i data-lucide="arrow-left" class="w-3 h-3"></i> All projects</a>
+                  <span class="text-gray-300 dark:text-gray-600">·</span>
+                  <span class="text-[11px] mono text-gray-500">prj_8a91f2c4-5d3b-4f1e-9a82-1b5e7c4a9b3d</span>
+                  <button class="text-gray-400 hover:text-indigo-500" title="Copy ID"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                </div>
+                <div class="flex items-center gap-2 mt-1">
+                  <h2 class="text-2xl font-bold leading-tight">billing-api</h2>
+                  <button class="text-amber-400 hover:text-amber-500" title="Unstar"><i data-lucide="star" class="w-5 h-5 icon-fill"></i></button>
+                </div>
+                <div class="flex items-center gap-2 mt-2 flex-wrap">
+                  <span class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"><span class="w-1 h-1 rounded-full bg-emerald-500"></span> Enabled</span>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">Finance</span>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 mono">v2.5.0 · published</span>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 inline-flex items-center gap-1"><i data-lucide="scale" class="w-3 h-3"></i> MIT</span>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 inline-flex items-center gap-1"><i data-lucide="users" class="w-3 h-3"></i> 8 contributors</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2"><i data-lucide="play" class="w-4 h-4"></i> Run lint</button>
+              <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2"><i data-lucide="git-branch-plus" class="w-4 h-4"></i> New version</button>
+              <button class="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2"><i data-lucide="rocket" class="w-4 h-4"></i> Publish</button>
+              <button class="p-2 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center justify-center"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <nav class="mt-4 flex items-center gap-1 -mb-px">
+            <a href="../projects/detail.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Overview</a>
+            <a href="detail.html" class="px-3 py-2 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 inline-flex items-center gap-2"><i data-lucide="git-branch" class="w-4 h-4"></i> Versions <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">9</span></a>
+            <a href="../projects/detail-classes.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="boxes" class="w-4 h-4"></i> Classes <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">32</span></a>
+            <a href="../projects/detail-properties.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="code" class="w-4 h-4"></i> Properties <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">218</span></a>
+            <a href="../projects/detail-published.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="globe-2" class="w-4 h-4"></i> Published <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">4</span></a>
+            <a href="../projects/detail-activity.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4"></i> Activity</a>
+            <a href="../projects/detail-settings.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="settings-2" class="w-4 h-4"></i> Settings</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="flex-1 overflow-y-auto">
+
+        <!-- Version sub-page header -->
+        <section class="border-b border-gray-200 dark:border-gray-700 version-shell dark:version-shell-dark">
+          <div class="px-6 py-5 flex items-start justify-between gap-4 flex-wrap">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                <a href="detail.html" class="inline-flex items-center gap-1 hover:text-indigo-500"><i data-lucide="arrow-left" class="w-3 h-3"></i> All versions</a>
+                <span>·</span>
+                <span class="mono">ver_2c8b3e1f-7a4d-49b6-9c0a-5e3d18a2f4b7</span>
+                <button class="text-gray-400 hover:text-indigo-500" title="Copy ID"><i data-lucide="copy" class="w-3 h-3"></i></button>
+              </div>
+              <div class="flex items-center gap-3 flex-wrap">
+                <h1 class="text-2xl font-bold mono leading-tight">v2.5.0</h1>
+                <span class="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Published</span>
+                <span class="inline-flex items-center gap-1 text-[10px] mono px-2 py-1 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"><i data-lucide="git-fork" class="w-3 h-3"></i> from <span class="font-semibold">v2.4.3</span></span>
+                <span class="inline-flex items-center gap-1 text-[10px] mono px-2 py-1 rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"><i data-lucide="ruler" class="w-3 h-3"></i> 32 classes · 218 props</span>
+              </div>
+              <p class="text-sm text-gray-600 dark:text-gray-300 mt-2 max-w-2xl">Adds invoice line-item taxonomy, normalizes <code class="mono text-[12px] px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">currency.iso4217</code>, splits payment-method enum into provider + instrument.</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Export</button>
+              <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2"><i data-lucide="pencil" class="w-4 h-4"></i> Edit notes</button>
+              <button class="px-3 py-1.5 text-sm rounded-md border border-orange-200 dark:border-orange-700/50 text-orange-600 dark:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 inline-flex items-center gap-2"><i data-lucide="archive" class="w-4 h-4"></i> Deprecate</button>
+              <button class="px-3 py-1.5 text-sm rounded-md border border-rose-200 dark:border-rose-700/50 text-rose-600 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-900/20 inline-flex items-center gap-2"><i data-lucide="moon" class="w-4 h-4"></i> Schedule sunset</button>
+              <button class="p-2 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <!-- Hero metadata strip -->
+          <div class="px-6 pb-5">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-px bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700">
+              <div class="bg-white dark:bg-gray-800 px-3 py-2.5">
+                <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Author</p>
+                <div class="flex items-center gap-1.5 mt-1">
+                  <span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] flex items-center justify-center font-semibold">SP</span>
+                  <p class="text-xs font-medium truncate">Sophie P.</p>
+                </div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 px-3 py-2.5">
+                <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Created</p>
+                <p class="text-xs mono mt-1">Apr 09, 2026 · 14d ago</p>
+              </div>
+              <div class="bg-white dark:bg-gray-800 px-3 py-2.5">
+                <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Published</p>
+                <p class="text-xs mono mt-1">Apr 13, 2026 · 12d ago</p>
+              </div>
+              <div class="bg-white dark:bg-gray-800 px-3 py-2.5">
+                <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Lineage</p>
+                <p class="text-xs mono mt-1"><a href="#" class="text-indigo-500 hover:underline">v2.4.3</a> → <span class="font-semibold">v2.5.0</span></p>
+              </div>
+              <div class="bg-white dark:bg-gray-800 px-3 py-2.5">
+                <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Sunset</p>
+                <p class="text-xs mono mt-1 text-gray-400">— not scheduled</p>
+              </div>
+              <div class="bg-white dark:bg-gray-800 px-3 py-2.5">
+                <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Quality</p>
+                <p class="text-xs mono mt-1"><span class="font-bold text-emerald-600 dark:text-emerald-400">94</span> <span class="text-gray-400">/ 100 · lint A</span></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="p-6 grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          <!-- LEFT (8/12) -->
+          <div class="xl:col-span-2 space-y-6">
+
+            <!-- Quality + Lint -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              <!-- Quality -->
+              <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-2">
+                    <i data-lucide="gauge" class="w-4 h-4 text-emerald-500"></i>
+                    <h3 class="text-sm font-semibold">Quality</h3>
+                  </div>
+                  <span class="text-[10px] mono text-gray-400">computed 12 d ago</span>
+                </div>
+                <div class="flex items-center gap-5">
+                  <div class="relative w-20 h-20 shrink-0">
+                    <svg viewBox="0 0 36 36" class="w-full h-full -rotate-90">
+                      <circle cx="18" cy="18" r="15" stroke="rgba(148,163,184,0.20)" stroke-width="3" fill="none"/>
+                      <circle cx="18" cy="18" r="15" stroke="#10b981" stroke-width="3" fill="none" stroke-dasharray="94 100" stroke-linecap="round" pathLength="100"/>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center flex-col">
+                      <span class="mono font-bold text-xl text-emerald-600 dark:text-emerald-400 leading-none">94</span>
+                      <span class="text-[9px] mono text-gray-400 leading-none mt-0.5">/ 100</span>
+                    </div>
+                  </div>
+                  <div class="flex-1 space-y-2.5">
+                    <div>
+                      <div class="flex items-center justify-between text-[11px] mb-1"><span class="font-medium text-gray-600 dark:text-gray-300">Completeness</span><span class="mono text-gray-500">98</span></div>
+                      <div class="qbar"><span style="width: 98%; background: #10b981"></span></div>
+                    </div>
+                    <div>
+                      <div class="flex items-center justify-between text-[11px] mb-1"><span class="font-medium text-gray-600 dark:text-gray-300">Consistency</span><span class="mono text-gray-500">92</span></div>
+                      <div class="qbar"><span style="width: 92%; background: #10b981"></span></div>
+                    </div>
+                    <div>
+                      <div class="flex items-center justify-between text-[11px] mb-1"><span class="font-medium text-gray-600 dark:text-gray-300">Descriptions</span><span class="mono text-gray-500">90</span></div>
+                      <div class="qbar"><span style="width: 90%; background: #6366f1"></span></div>
+                    </div>
+                    <div>
+                      <div class="flex items-center justify-between text-[11px] mb-1"><span class="font-medium text-gray-600 dark:text-gray-300">Examples</span><span class="mono text-gray-500">88</span></div>
+                      <div class="qbar"><span style="width: 88%; background: #6366f1"></span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between text-[11px]">
+                  <span class="text-gray-500">vs <a href="#" class="text-indigo-500 mono hover:underline">v2.4.3</a></span>
+                  <span class="text-emerald-500 mono font-semibold inline-flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> +5 pts</span>
+                </div>
+              </div>
+
+              <!-- Lint -->
+              <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-2">
+                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i>
+                    <h3 class="text-sm font-semibold">Lint</h3>
+                  </div>
+                  <button class="text-[10px] mono text-indigo-500 hover:underline inline-flex items-center gap-1"><i data-lucide="play" class="w-3 h-3"></i> re-run</button>
+                </div>
+                <div class="flex items-center gap-5">
+                  <div class="w-20 h-20 rounded-md border-2 border-emerald-500 flex items-center justify-center shrink-0">
+                    <span class="font-bold text-3xl mono text-emerald-600 dark:text-emerald-400">A</span>
+                  </div>
+                  <div class="flex-1 space-y-2 mono text-[11px]">
+                    <div class="flex items-center justify-between"><span class="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-300"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Errors</span><span class="font-semibold text-rose-500">0</span></div>
+                    <div class="flex items-center justify-between"><span class="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-300"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Warnings</span><span class="font-semibold text-amber-500">2</span></div>
+                    <div class="flex items-center justify-between"><span class="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-300"><span class="w-2 h-2 rounded-full bg-sky-500"></span> Info</span><span class="font-semibold text-sky-500">5</span></div>
+                  </div>
+                </div>
+                <div class="mt-4 space-y-2">
+                  <div class="flex items-start gap-2 text-[11px] p-2 rounded border border-amber-200 dark:border-amber-700/40 bg-amber-50/60 dark:bg-amber-900/15">
+                    <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0"></i>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-gray-700 dark:text-gray-200">Property missing example</p>
+                      <p class="mono text-[10px] text-gray-500 truncate">Invoice.lineItems.taxRate · rule <code>require-example</code></p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-2 text-[11px] p-2 rounded border border-amber-200 dark:border-amber-700/40 bg-amber-50/60 dark:bg-amber-900/15">
+                    <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0"></i>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-gray-700 dark:text-gray-200">Description shorter than 30 chars</p>
+                      <p class="mono text-[10px] text-gray-500 truncate">Payment.instrument · rule <code>min-description-length</code></p>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60 text-[11px]">
+                  <a href="#" class="text-indigo-500 hover:underline">View all 7 lint findings →</a>
+                </div>
+              </div>
+
+            </section>
+
+            <!-- Schema scope -->
+            <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <i data-lucide="boxes" class="w-5 h-5 text-indigo-500"></i>
+                  <div>
+                    <h3 class="text-base font-semibold">Schema scope</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">What this version contains. Change tags reflect what was added or modified relative to <a href="#" class="text-indigo-500 mono hover:underline">v2.4.3</a>.</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1 border border-gray-200 dark:border-gray-700 rounded-md p-0.5">
+                  <button class="px-2.5 py-1 rounded text-xs bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium">Classes <span class="mono text-[10px] text-indigo-500/70">32</span></button>
+                  <button class="px-2.5 py-1 rounded text-xs text-gray-500 hover:text-indigo-500">Properties <span class="mono text-[10px] text-gray-400">218</span></button>
+                </div>
+              </div>
+
+              <!-- chip strip -->
+              <div class="px-5 py-2.5 border-b border-gray-100 dark:border-gray-700/60 flex items-center gap-2 text-[11px] flex-wrap">
+                <span class="mono text-gray-500">change tags:</span>
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 mono"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> added <span class="font-semibold">3</span></span>
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 mono"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> modified <span class="font-semibold">5</span></span>
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 mono"><span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> unchanged <span class="font-semibold">24</span></span>
+              </div>
+
+              <table class="w-full text-sm">
+                <thead class="text-[10px] uppercase tracking-wider text-gray-500 bg-gray-50/60 dark:bg-gray-900/40">
+                  <tr>
+                    <th class="text-left px-5 py-2 font-semibold">Class</th>
+                    <th class="text-left px-3 py-2 font-semibold w-24">Tag</th>
+                    <th class="text-left px-3 py-2 font-semibold w-20">Props</th>
+                    <th class="text-left px-3 py-2 font-semibold">Note</th>
+                    <th class="px-3 py-2 w-10"></th>
+                  </tr>
+                </thead>
+                <tbody class="text-xs">
+                  <tr class="border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-900/40">
+                    <td class="px-5 py-2.5"><a href="#" class="mono font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">InvoiceLineItem</a></td>
+                    <td class="px-3 py-2.5"><span class="text-[10px] mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">added</span></td>
+                    <td class="px-3 py-2.5 mono text-gray-500">12</td>
+                    <td class="px-3 py-2.5 text-gray-500">Replaces inline line items on <span class="mono">Invoice</span></td>
+                    <td class="px-3 py-2.5 text-right"><button class="text-gray-400 hover:text-indigo-500"><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button></td>
+                  </tr>
+                  <tr class="border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-900/40">
+                    <td class="px-5 py-2.5"><a href="#" class="mono font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">TaxBracket</a></td>
+                    <td class="px-3 py-2.5"><span class="text-[10px] mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">added</span></td>
+                    <td class="px-3 py-2.5 mono text-gray-500">6</td>
+                    <td class="px-3 py-2.5 text-gray-500">Region-aware tax taxonomy</td>
+                    <td class="px-3 py-2.5 text-right"><button class="text-gray-400 hover:text-indigo-500"><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button></td>
+                  </tr>
+                  <tr class="border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-900/40">
+                    <td class="px-5 py-2.5"><a href="#" class="mono font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">PaymentInstrument</a></td>
+                    <td class="px-3 py-2.5"><span class="text-[10px] mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">added</span></td>
+                    <td class="px-3 py-2.5 mono text-gray-500">9</td>
+                    <td class="px-3 py-2.5 text-gray-500">Split out from <span class="mono">Payment.method</span> enum</td>
+                    <td class="px-3 py-2.5 text-right"><button class="text-gray-400 hover:text-indigo-500"><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button></td>
+                  </tr>
+                  <tr class="border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-900/40">
+                    <td class="px-5 py-2.5"><a href="#" class="mono font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Invoice</a></td>
+                    <td class="px-3 py-2.5"><span class="text-[10px] mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">modified</span></td>
+                    <td class="px-3 py-2.5 mono text-gray-500">21 <span class="text-emerald-500">+3</span></td>
+                    <td class="px-3 py-2.5 text-gray-500"><span class="mono">lineItems</span> → ref <span class="mono">InvoiceLineItem</span></td>
+                    <td class="px-3 py-2.5 text-right"><button class="text-gray-400 hover:text-indigo-500"><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button></td>
+                  </tr>
+                  <tr class="border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-900/40">
+                    <td class="px-5 py-2.5"><a href="#" class="mono font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Payment</a></td>
+                    <td class="px-3 py-2.5"><span class="text-[10px] mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">modified</span></td>
+                    <td class="px-3 py-2.5 mono text-gray-500">14</td>
+                    <td class="px-3 py-2.5 text-gray-500"><span class="mono">method</span> → <span class="mono">provider + instrument</span></td>
+                    <td class="px-3 py-2.5 text-right"><button class="text-gray-400 hover:text-indigo-500"><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button></td>
+                  </tr>
+                  <tr class="border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-900/40">
+                    <td class="px-5 py-2.5"><a href="#" class="mono font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Currency</a></td>
+                    <td class="px-3 py-2.5"><span class="text-[10px] mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">modified</span></td>
+                    <td class="px-3 py-2.5 mono text-gray-500">4</td>
+                    <td class="px-3 py-2.5 text-gray-500"><span class="mono">code</span> normalized to ISO 4217</td>
+                    <td class="px-3 py-2.5 text-right"><button class="text-gray-400 hover:text-indigo-500"><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button></td>
+                  </tr>
+                  <tr class="border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-900/40">
+                    <td class="px-5 py-2.5"><a href="#" class="mono text-gray-700 dark:text-gray-200 hover:underline">Customer</a></td>
+                    <td class="px-3 py-2.5"><span class="text-[10px] mono px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">unchanged</span></td>
+                    <td class="px-3 py-2.5 mono text-gray-500">17</td>
+                    <td class="px-3 py-2.5 text-gray-400">—</td>
+                    <td class="px-3 py-2.5 text-right"><button class="text-gray-400 hover:text-indigo-500"><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="px-5 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/40 flex items-center justify-between text-[11px] mono text-gray-500">
+                <span>Showing 7 of 32 classes</span>
+                <a href="#" class="text-indigo-500 hover:underline">Show all →</a>
+              </div>
+            </section>
+
+            <!-- Release notes -->
+            <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <i data-lucide="file-text" class="w-5 h-5 text-indigo-500"></i>
+                  <div>
+                    <h3 class="text-base font-semibold">Release notes</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Authored by the publisher. Markdown supported.</p>
+                  </div>
+                </div>
+                <button class="text-xs text-indigo-500 hover:underline inline-flex items-center gap-1"><i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit</button>
+              </div>
+              <div class="px-5 py-4 md">
+                <h3>Highlights</h3>
+                <p>This release lays the groundwork for multi-region tax handling and unblocks the upcoming Stripe + Adyen instrument split. It is fully backward-compatible at the consumer level &mdash; existing <code>v2.4.x</code> clients keep working until they choose to opt in.</p>
+
+                <h3>Added</h3>
+                <ul>
+                  <li><code>InvoiceLineItem</code> — first-class line items with their own taxonomy, tax bracket, and discount references.</li>
+                  <li><code>TaxBracket</code> — region-aware tax brackets with an effective-from/to window.</li>
+                  <li><code>PaymentInstrument</code> — granular instrument metadata (network, last-four, fingerprint).</li>
+                </ul>
+
+                <h3>Changed</h3>
+                <ul>
+                  <li><code>Invoice.lineItems</code> is now a reference to <code>InvoiceLineItem</code> instead of an inline structure. Old shape is still accepted on read.</li>
+                  <li><code>Payment.method</code> split into <code>Payment.provider</code> + <code>Payment.instrument</code>. The legacy <code>method</code> field is computed and remains available.</li>
+                  <li><code>Currency.code</code> is now strictly validated as ISO 4217.</li>
+                </ul>
+
+                <h3>Notes</h3>
+                <p>No fields were removed in this release. Two minor lint warnings remain &mdash; see the lint card above.</p>
+              </div>
+            </section>
+
+          </div>
+
+          <!-- RIGHT (4/12) -->
+          <aside class="space-y-6">
+
+            <!-- Lineage -->
+            <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold flex items-center gap-2"><i data-lucide="git-fork" class="w-4 h-4 text-indigo-500"></i> Lineage</h3>
+                <a href="detail.html" class="text-[10px] mono text-indigo-500 hover:underline">all versions →</a>
+              </div>
+              <ul class="space-y-3">
+                <li class="lineage-node lineage-line flex items-start gap-3">
+                  <span class="w-7 h-7 rounded-full border-2 border-orange-400 bg-orange-50 dark:bg-orange-900/20 text-orange-500 flex items-center justify-center text-[10px] mono shrink-0"><i data-lucide="archive" class="w-3.5 h-3.5"></i></span>
+                  <div class="flex-1 min-w-0 pt-0.5">
+                    <a href="#" class="mono text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">v2.4.3</a>
+                    <p class="text-[11px] text-gray-500 mono">parent · deprecated · 38 d ago</p>
+                  </div>
+                </li>
+                <li class="lineage-node lineage-line flex items-start gap-3">
+                  <span class="w-7 h-7 rounded-full border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center text-[10px] mono shrink-0"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+                  <div class="flex-1 min-w-0 pt-0.5">
+                    <p class="mono text-sm font-bold">v2.5.0</p>
+                    <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mono">this version · published · 12 d ago</p>
+                  </div>
+                </li>
+                <li class="lineage-node flex items-start gap-3">
+                  <span class="w-7 h-7 rounded-full border-2 border-slate-400 bg-slate-50 dark:bg-slate-900/40 text-slate-500 flex items-center justify-center text-[10px] mono shrink-0"><i data-lucide="file-edit" class="w-3.5 h-3.5"></i></span>
+                  <div class="flex-1 min-w-0 pt-0.5">
+                    <a href="#" class="mono text-sm font-semibold text-slate-700 dark:text-slate-200 hover:underline">v2.6.0-draft</a>
+                    <p class="text-[11px] text-gray-500 mono">child · draft · last edit 2 d ago</p>
+                  </div>
+                </li>
+              </ul>
+            </section>
+
+            <!-- Lifecycle history -->
+            <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold flex items-center gap-2"><i data-lucide="route" class="w-4 h-4 text-indigo-500"></i> Lifecycle history</h3>
+              </div>
+              <ul class="tl-rail space-y-3 pl-1">
+                <li class="flex items-start gap-3">
+                  <span class="tl-dot w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0"><i data-lucide="rocket" class="w-3 h-3"></i></span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium">Published <span class="text-gray-400 font-normal mono">by Sophie P.</span></p>
+                    <p class="text-[11px] text-gray-500 mono">Apr 13, 2026 · 10:24 — moved Draft → Published</p>
+                  </div>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="tl-dot w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0"><i data-lucide="check" class="w-3 h-3"></i></span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium">Lint passed <span class="text-gray-400 font-normal mono">A grade · 2W · 5I</span></p>
+                    <p class="text-[11px] text-gray-500 mono">Apr 13, 2026 · 10:21 — auto on publish</p>
+                  </div>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="tl-dot w-5 h-5 rounded-full bg-slate-400 text-white flex items-center justify-center shrink-0"><i data-lucide="file-edit" class="w-3 h-3"></i></span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium">Draft created <span class="text-gray-400 font-normal mono">by Sophie P.</span></p>
+                    <p class="text-[11px] text-gray-500 mono">Apr 09, 2026 · 14:02 — branched from <a href="#" class="text-indigo-500 hover:underline">v2.4.3</a></p>
+                  </div>
+                </li>
+              </ul>
+            </section>
+
+            <!-- Activity (scoped to this version) -->
+            <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4 text-indigo-500"></i> Activity</h3>
+                <a href="../projects/detail-activity.html" class="text-[10px] mono text-indigo-500 hover:underline">project log →</a>
+              </div>
+              <ul class="space-y-3 text-[11px]">
+                <li class="flex items-start gap-2">
+                  <span class="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0 text-[9px] font-semibold">SP</span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-gray-700 dark:text-gray-200"><span class="font-semibold">Sophie P.</span> updated release notes</p>
+                    <p class="text-gray-500 mono">12 d ago · 3 sections changed</p>
+                  </div>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0"><i data-lucide="rocket" class="w-2.5 h-2.5"></i></span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-gray-700 dark:text-gray-200">Published to <span class="mono">Acme Corp</span></p>
+                    <p class="text-gray-500 mono">12 d ago · by Sophie P.</p>
+                  </div>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0"><i data-lucide="alert-triangle" class="w-2.5 h-2.5"></i></span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-gray-700 dark:text-gray-200">Lint warning on <span class="mono">Invoice.lineItems.taxRate</span></p>
+                    <p class="text-gray-500 mono">12 d ago · rule require-example</p>
+                  </div>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="w-5 h-5 rounded-full bg-slate-400 text-white flex items-center justify-center shrink-0"><i data-lucide="boxes" class="w-2.5 h-2.5"></i></span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-gray-700 dark:text-gray-200">Added class <span class="mono">PaymentInstrument</span></p>
+                    <p class="text-gray-500 mono">14 d ago · by Sophie P.</p>
+                  </div>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="w-5 h-5 rounded-full bg-slate-400 text-white flex items-center justify-center shrink-0"><i data-lucide="git-fork" class="w-2.5 h-2.5"></i></span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-gray-700 dark:text-gray-200">Branched from <span class="mono">v2.4.3</span></p>
+                    <p class="text-gray-500 mono">14 d ago · by Sophie P.</p>
+                  </div>
+                </li>
+              </ul>
+            </section>
+
+          </aside>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const themeKey = 'versions-mockup-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

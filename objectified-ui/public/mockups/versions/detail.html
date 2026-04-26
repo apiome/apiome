@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projects · billing-api · Versions</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    /* Mirror projects/ chrome */
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+    .icon-fill { fill: currentColor !important; }
+    .header-shell { background: linear-gradient(90deg, rgba(99,102,241,0.10) 0%, #ffffff 50%, rgba(217,70,239,0.05) 100%); }
+    .header-shell-dark { background: linear-gradient(90deg, rgba(99,102,241,0.10) 0%, #1f2937 50%, rgba(217,70,239,0.10) 100%); }
+
+    /* Lifecycle board */
+    .lane-header-draft     { background: linear-gradient(180deg, rgba(148,163,184,0.10), transparent); border-color: rgba(148,163,184,0.35); }
+    .lane-header-published { background: linear-gradient(180deg, rgba(16,185,129,0.12), transparent); border-color: rgba(16,185,129,0.45); }
+    .lane-header-deprecated{ background: linear-gradient(180deg, rgba(249,115,22,0.10), transparent); border-color: rgba(249,115,22,0.45); }
+    .lane-header-sunset    { background: linear-gradient(180deg, rgba(244,63,94,0.10), transparent); border-color: rgba(244,63,94,0.45); }
+
+    .version-card { transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease; }
+    .version-card:hover { transform: translateY(-1px); box-shadow: 0 8px 22px -12px rgba(15,23,42,0.25); border-color: rgba(99,102,241,0.5); }
+
+    .row-active  { background: linear-gradient(90deg, rgba(99,102,241,0.06), transparent 60%); }
+    .row-sunset  { box-shadow: inset 3px 0 0 0 #f43f5e; }
+
+    .traj-grid { background-image:
+        linear-gradient(to right,  rgba(148,163,184,0.10) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148,163,184,0.10) 1px, transparent 1px);
+      background-size: 80px 28px; }
+
+    .spark-stroke { stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <!-- Top bar (mirrors projects/) -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="folders" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Acme Corp</span>
+      <span class="text-xs text-gray-400">/</span>
+      <a href="../projects/dashboard.html" class="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500">Projects</a>
+      <span class="text-xs text-gray-400">/</span>
+      <a href="../projects/detail.html" class="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500 mono">billing-api</a>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-700 dark:text-gray-200">Versions</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="../" class="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-500">← Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+
+    <!-- Sidebar (full Projects-page sidebar) -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto h-full flex flex-col">
+        <div class="p-3"><button class="w-full flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-left"><div class="w-8 h-8 rounded-md bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-xs">AC</div><div class="flex-1 min-w-0"><p class="text-xs text-gray-500 dark:text-gray-400">Tenant</p><p class="text-sm font-semibold truncate">Acme Corp</p></div><i data-lucide="chevrons-up-down" class="w-4 h-4 text-gray-400"></i></button></div>
+        <hr class="border-indigo-500/10 mx-3" />
+        <div class="p-4 flex-1">
+          <div class="mb-5">
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Account</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="user-round" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Profile</span></a></li>
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="link-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Linked Accounts</span></a></li>
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="git-branch-plus" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Repositories</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5">
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Administration</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="building-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Tenants</span></a></li>
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="key-round" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">API Keys</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5">
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Data Management</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="atom" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Primitives</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div>
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Specifications</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="../projects/dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-indigo-200 dark:border-indigo-700/70 bg-indigo-500/10"><i data-lucide="folders" class="w-5 h-5 text-indigo-500"></i><span class="text-sm font-semibold flex-1 text-indigo-600 dark:text-indigo-400">Projects</span><span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span></a></li>
+              <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="git-branch" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Versions</span></a></li>
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="globe-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Published</span></a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main column -->
+    <div class="flex-1 flex flex-col min-w-0">
+
+      <!-- Project header (shared shell) -->
+      <header class="border-b border-gray-200 dark:border-gray-700 header-shell dark:header-shell-dark">
+        <div class="px-6 py-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-start gap-4 min-w-0">
+              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold mono text-xl shadow-md shrink-0">BL</div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <a href="../projects/dashboard.html" class="text-xs text-gray-500 hover:text-indigo-500 inline-flex items-center gap-1"><i data-lucide="arrow-left" class="w-3 h-3"></i> All projects</a>
+                  <span class="text-gray-300 dark:text-gray-600">·</span>
+                  <span class="text-[11px] mono text-gray-500">prj_8a91f2c4-5d3b-4f1e-9a82-1b5e7c4a9b3d</span>
+                  <button class="text-gray-400 hover:text-indigo-500" title="Copy ID"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                </div>
+                <div class="flex items-center gap-2 mt-1">
+                  <h2 class="text-2xl font-bold leading-tight">billing-api</h2>
+                  <button class="text-amber-400 hover:text-amber-500" title="Unstar"><i data-lucide="star" class="w-5 h-5 icon-fill"></i></button>
+                </div>
+                <div class="flex items-center gap-2 mt-2 flex-wrap">
+                  <span class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"><span class="w-1 h-1 rounded-full bg-emerald-500"></span> Enabled</span>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">Finance</span>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 mono">v2.5.0 · published</span>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 inline-flex items-center gap-1"><i data-lucide="scale" class="w-3 h-3"></i> MIT</span>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 inline-flex items-center gap-1"><i data-lucide="users" class="w-3 h-3"></i> 8 contributors</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2"><i data-lucide="play" class="w-4 h-4"></i> Run lint</button>
+              <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2"><i data-lucide="git-branch-plus" class="w-4 h-4"></i> New version</button>
+              <button class="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2"><i data-lucide="rocket" class="w-4 h-4"></i> Publish</button>
+              <button class="p-2 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center justify-center"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <!-- Sub-nav tabs (Versions active) -->
+          <nav class="mt-4 flex items-center gap-1 -mb-px">
+            <a href="../projects/detail.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Overview</a>
+            <a href="detail.html" class="px-3 py-2 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 inline-flex items-center gap-2"><i data-lucide="git-branch" class="w-4 h-4"></i> Versions <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">9</span></a>
+            <a href="../projects/detail-classes.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="boxes" class="w-4 h-4"></i> Classes <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">32</span></a>
+            <a href="../projects/detail-properties.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="code" class="w-4 h-4"></i> Properties <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">218</span></a>
+            <a href="../projects/detail-published.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="globe-2" class="w-4 h-4"></i> Published <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">4</span></a>
+            <a href="../projects/detail-activity.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4"></i> Activity</a>
+            <a href="../projects/detail-settings.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="settings-2" class="w-4 h-4"></i> Settings</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="flex-1 overflow-y-auto p-6 space-y-6">
+
+        <!-- Sub-page header -->
+        <section class="flex items-end justify-between gap-4 flex-wrap">
+          <div>
+            <h2 class="text-lg font-semibold flex items-center gap-2"><i data-lucide="git-branch" class="w-5 h-5 text-indigo-500"></i> Versions</h2>
+            <p class="text-xs text-gray-500 mono">9 total · 2 drafts · 4 published · 2 deprecated · 1 sunsetting</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Export bundle</button>
+            <button class="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2"><i data-lucide="git-branch-plus" class="w-4 h-4"></i> New version</button>
+          </div>
+        </section>
+
+        <!-- KPI band -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center justify-between"><p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Latest published</p><i data-lucide="rocket" class="w-4 h-4 text-emerald-500"></i></div>
+            <p class="text-2xl font-bold mono mt-2">v2.5.0</p>
+            <p class="text-[11px] text-gray-500 mono mt-1">12 d ago · Kenji S.</p>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center justify-between"><p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Drafts in flight</p><i data-lucide="file-edit" class="w-4 h-4 text-sky-500"></i></div>
+            <p class="text-2xl font-bold mono mt-2">2</p>
+            <p class="text-[11px] text-gray-500 mono mt-1 truncate">v2.7.0-draft · v2.6.0-draft</p>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center justify-between"><p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Avg. quality</p><i data-lucide="gauge" class="w-4 h-4 text-emerald-500"></i></div>
+            <div class="mt-2 flex items-center gap-3">
+              <span class="inline-flex items-center justify-center w-11 h-11 rounded-full border-[3px] border-emerald-500 mono font-bold text-emerald-600 dark:text-emerald-400 text-sm">90</span>
+              <div class="text-emerald-500">
+                <svg viewBox="0 0 80 26" class="w-20 h-6"><path class="spark-stroke" d="M2,18 L12,16 L22,14 L32,11 L42,10 L52,8 L62,6 L72,4 L78,3"/></svg>
+                <p class="text-[10px] mono inline-flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> +4 across 9 versions</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-rose-200 dark:border-rose-700/40 p-4">
+            <div class="flex items-center justify-between"><p class="text-[10px] uppercase tracking-wider text-rose-600 dark:text-rose-300 font-semibold">Sunset risk</p><i data-lucide="moon" class="w-4 h-4 text-rose-500"></i></div>
+            <p class="text-2xl font-bold mono mt-2 text-rose-500">14 d</p>
+            <p class="text-[11px] text-gray-500 mt-1 mono"><span class="text-rose-500">v2.0.0</span> · 2 consumers pinned</p>
+          </div>
+        </section>
+
+        <!-- Lifecycle pipeline (headline differentiator) -->
+        <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <i data-lucide="kanban" class="w-5 h-5 text-indigo-500"></i>
+              <div>
+                <h3 class="text-base font-semibold">Lifecycle pipeline</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Versions grouped by lifecycle stage. Move a version forward with the action menu.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-1 text-[11px]">
+              <button class="px-2 py-1 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold inline-flex items-center gap-1"><i data-lucide="kanban" class="w-3 h-3"></i> Pipeline</button>
+              <button class="px-2 py-1 rounded text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 inline-flex items-center gap-1"><i data-lucide="line-chart" class="w-3 h-3"></i> Trajectory</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 p-4">
+            <!-- DRAFT -->
+            <div class="rounded-md border lane-header-draft p-3 min-h-[260px] flex flex-col gap-2">
+              <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-slate-400"></span><h4 class="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Draft</h4><span class="text-[10px] mono text-gray-400">2</span></div>
+                <button class="text-gray-400 hover:text-indigo-500" title="New draft"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
+              </div>
+
+              <button onclick="location.href='version.html'" class="version-card text-left w-full bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 p-3">
+                <div class="flex items-center justify-between mb-1.5"><span class="mono text-xs font-semibold">v2.7.0-draft</span><span class="text-[9px] mono text-gray-400">2 d</span></div>
+                <p class="text-[11px] text-gray-500 truncate">spike: settlement webhook v2</p>
+                <div class="flex items-center justify-between mt-2.5">
+                  <span class="text-[10px] mono text-gray-400">12 classes · 64 props</span>
+                  <span class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] inline-flex items-center justify-center" title="Kenji S.">KS</span>
+                </div>
+              </button>
+
+              <button onclick="location.href='version.html'" class="version-card text-left w-full bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 p-3">
+                <div class="flex items-center justify-between mb-1.5"><span class="mono text-xs font-semibold">v2.6.0-draft</span><span class="text-[9px] mono text-gray-400">2 h</span></div>
+                <p class="text-[11px] text-gray-500 truncate">add Refund + DisputeNote</p>
+                <div class="flex items-center justify-between mt-2.5">
+                  <div class="inline-flex items-center gap-1.5 text-[10px]">
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full border border-indigo-500 mono text-indigo-600 dark:text-indigo-400 text-[9px]">88</span>
+                    <span class="mono text-gray-400">37 classes · 224 props</span>
+                  </div>
+                  <span class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] inline-flex items-center justify-center" title="Kenji S.">KS</span>
+                </div>
+              </button>
+
+              <button class="mt-1 text-[11px] text-gray-400 hover:text-indigo-500 inline-flex items-center gap-1.5"><i data-lucide="plus" class="w-3 h-3"></i> New draft</button>
+            </div>
+
+            <!-- PUBLISHED -->
+            <div class="rounded-md border lane-header-published p-3 min-h-[260px] flex flex-col gap-2">
+              <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><h4 class="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Published</h4><span class="text-[10px] mono text-gray-400">4</span></div>
+                <span class="text-[10px] mono text-emerald-600 dark:text-emerald-400">live</span>
+              </div>
+
+              <button onclick="location.href='version.html'" class="version-card text-left w-full bg-white dark:bg-gray-800 rounded-md border border-emerald-300 dark:border-emerald-700/50 p-3">
+                <div class="flex items-center justify-between mb-1.5">
+                  <div class="inline-flex items-center gap-1.5"><span class="mono text-xs font-semibold">v2.5.0</span><span class="text-[9px] mono px-1 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">latest</span></div>
+                  <span class="text-[9px] mono text-gray-400">12 d</span>
+                </div>
+                <p class="text-[11px] text-gray-500 truncate">customer settlement events</p>
+                <div class="mt-2 flex items-center justify-between text-[10px]">
+                  <div class="inline-flex items-center gap-1.5">
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full border border-emerald-500 mono text-emerald-600 dark:text-emerald-400 text-[9px]">94</span>
+                    <span class="mono text-gray-400">32 classes</span>
+                  </div>
+                  <span class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] inline-flex items-center justify-center" title="Kenji S.">KS</span>
+                </div>
+              </button>
+
+              <button onclick="location.href='version.html'" class="version-card text-left w-full bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 p-3">
+                <div class="flex items-center justify-between mb-1.5"><span class="mono text-xs">v2.4.1</span><span class="text-[9px] mono text-gray-400">1 mo</span></div>
+                <p class="text-[11px] text-gray-500 truncate">tax-line patch</p>
+                <div class="mt-2 flex items-center justify-between text-[10px]">
+                  <div class="inline-flex items-center gap-1.5">
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full border border-emerald-500 mono text-emerald-600 dark:text-emerald-400 text-[9px]">91</span>
+                    <span class="mono text-gray-400">31 classes</span>
+                  </div>
+                  <span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-[9px] inline-flex items-center justify-center" title="Alex L.">AL</span>
+                </div>
+              </button>
+
+              <button onclick="location.href='version.html'" class="version-card text-left w-full bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 p-3">
+                <div class="flex items-center justify-between mb-1.5"><span class="mono text-xs">v2.4.0</span><span class="text-[9px] mono text-gray-400">2 mo</span></div>
+                <p class="text-[11px] text-gray-500 truncate">settlement event refactor</p>
+                <div class="mt-2 flex items-center justify-between text-[10px]">
+                  <div class="inline-flex items-center gap-1.5">
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full border border-indigo-500 mono text-indigo-600 dark:text-indigo-400 text-[9px]">87</span>
+                    <span class="mono text-gray-400">31 classes</span>
+                  </div>
+                  <span class="w-5 h-5 rounded-full bg-rose-500 text-white text-[9px] inline-flex items-center justify-center" title="Jamie D.">JD</span>
+                </div>
+              </button>
+
+              <button class="mt-auto text-[11px] text-gray-400 hover:text-indigo-500 inline-flex items-center gap-1.5">+1 more · Show all</button>
+            </div>
+
+            <!-- DEPRECATED -->
+            <div class="rounded-md border lane-header-deprecated p-3 min-h-[260px] flex flex-col gap-2">
+              <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-orange-500"></span><h4 class="text-xs font-semibold uppercase tracking-wider text-orange-700 dark:text-orange-300">Deprecated</h4><span class="text-[10px] mono text-gray-400">2</span></div>
+              </div>
+
+              <button onclick="location.href='version.html'" class="version-card text-left w-full bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 p-3">
+                <div class="flex items-center justify-between mb-1.5"><span class="mono text-xs">v2.3.0</span><span class="text-[9px] mono text-gray-400">3 mo</span></div>
+                <p class="text-[11px] text-gray-500 truncate">superseded by v2.4.x</p>
+                <div class="mt-2 flex items-center justify-between text-[10px]">
+                  <span class="text-orange-500 mono">→ migrate to v2.5.0</span>
+                  <span class="text-gray-400 mono">1 consumer</span>
+                </div>
+              </button>
+
+              <button onclick="location.href='version.html'" class="version-card text-left w-full bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 p-3">
+                <div class="flex items-center justify-between mb-1.5"><span class="mono text-xs">v2.1.0</span><span class="text-[9px] mono text-gray-400">6 mo</span></div>
+                <p class="text-[11px] text-gray-500 truncate">auth payload v1</p>
+                <div class="mt-2 flex items-center justify-between text-[10px]">
+                  <span class="text-orange-500 mono">→ migrate to v2.5.0</span>
+                  <span class="text-gray-400 mono">0 consumers</span>
+                </div>
+              </button>
+
+              <p class="mt-auto text-[10px] text-orange-600 dark:text-orange-400 inline-flex items-center gap-1.5"><i data-lucide="clock" class="w-3 h-3"></i> Avg. age 4.5 mo</p>
+            </div>
+
+            <!-- SUNSET -->
+            <div class="rounded-md border lane-header-sunset p-3 min-h-[260px] flex flex-col gap-2">
+              <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-rose-500"></span><h4 class="text-xs font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-300">Sunset</h4><span class="text-[10px] mono text-gray-400">1</span></div>
+              </div>
+
+              <button onclick="location.href='version.html'" class="version-card text-left w-full bg-white dark:bg-gray-800 rounded-md border border-rose-200 dark:border-rose-700/40 p-3">
+                <div class="flex items-center justify-between mb-1.5"><span class="mono text-xs">v2.0.0</span><span class="text-[9px] mono text-rose-500 font-semibold">in 14 d</span></div>
+                <p class="text-[11px] text-gray-500 truncate">initial GA · scheduled removal</p>
+                <div class="mt-2">
+                  <div class="h-1 rounded bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-amber-500 to-rose-500" style="width: 86%"></div>
+                  </div>
+                  <div class="flex items-center justify-between mt-1.5 text-[10px] mono">
+                    <span class="text-rose-500">2 consumers pinned</span>
+                    <span class="text-gray-400">May 09</span>
+                  </div>
+                </div>
+              </button>
+
+              <p class="mt-auto text-[10px] text-rose-600 dark:text-rose-400 inline-flex items-center gap-1.5"><i data-lucide="bell" class="w-3 h-3"></i> Notify pinned consumers</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Body grid: trajectory + table  |  rail -->
+        <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          <div class="xl:col-span-2 space-y-6 min-w-0">
+
+            <!-- Trajectory -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-3">
+                  <i data-lucide="line-chart" class="w-5 h-5 text-indigo-500"></i>
+                  <div>
+                    <h3 class="text-base font-semibold">Quality &amp; lint trajectory</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Score per version, oldest → newest</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1 text-[11px]">
+                  <button class="px-2 py-1 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold">Quality</button>
+                  <button class="px-2 py-1 rounded text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Lint warnings</button>
+                  <button class="px-2 py-1 rounded text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Schema size</button>
+                </div>
+              </div>
+              <div class="p-5">
+                <div class="rounded-md traj-grid p-2">
+                  <svg viewBox="0 0 720 160" class="w-full h-36">
+                    <defs>
+                      <linearGradient id="qg2" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#10b981" stop-opacity="0.4"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/></linearGradient>
+                    </defs>
+                    <line x1="0" x2="720" y1="20" y2="20" stroke="#94a3b8" stroke-width="0.5" stroke-dasharray="2 4"/>
+                    <line x1="0" x2="720" y1="60" y2="60" stroke="#94a3b8" stroke-width="0.5" stroke-dasharray="2 4"/>
+                    <line x1="0" x2="720" y1="100" y2="100" stroke="#94a3b8" stroke-width="0.5" stroke-dasharray="2 4"/>
+                    <text x="4" y="22" class="mono" font-size="9" fill="#94a3b8">100</text>
+                    <text x="4" y="62" class="mono" font-size="9" fill="#94a3b8">80</text>
+                    <text x="4" y="102" class="mono" font-size="9" fill="#94a3b8">60</text>
+
+                    <path d="M40,80 L120,76 L200,68 L280,62 L360,52 L440,46 L520,32 L600,28 L680,30 L680,140 L40,140 Z" fill="url(#qg2)"/>
+                    <path d="M40,80 L120,76 L200,68 L280,62 L360,52 L440,46 L520,32 L600,28 L680,30" fill="none" stroke="#10b981" stroke-width="2"/>
+
+                    <g font-size="9" class="mono" fill="#64748b" text-anchor="middle">
+                      <g><circle cx="40" cy="80" r="3.5" fill="#fb923c" stroke="#fff" stroke-width="1.5"/><text x="40" y="156">v2.0.0</text></g>
+                      <g><circle cx="120" cy="76" r="3.5" fill="#fb923c" stroke="#fff" stroke-width="1.5"/><text x="120" y="156">v2.1.0</text></g>
+                      <g><circle cx="200" cy="68" r="3.5" fill="#10b981" stroke="#fff" stroke-width="1.5"/><text x="200" y="156">v2.2.0</text></g>
+                      <g><circle cx="280" cy="62" r="3.5" fill="#fb923c" stroke="#fff" stroke-width="1.5"/><text x="280" y="156">v2.3.0</text></g>
+                      <g><circle cx="360" cy="52" r="3.5" fill="#10b981" stroke="#fff" stroke-width="1.5"/><text x="360" y="156">v2.4.0</text></g>
+                      <g><circle cx="440" cy="46" r="3.5" fill="#10b981" stroke="#fff" stroke-width="1.5"/><text x="440" y="156">v2.4.1</text></g>
+                      <g><circle cx="520" cy="32" r="5" fill="#10b981" stroke="#fff" stroke-width="2"/><text x="520" y="156" font-weight="600" fill="#10b981">v2.5.0</text></g>
+                      <g><circle cx="600" cy="28" r="3.5" fill="#94a3b8" stroke="#fff" stroke-width="1.5"/><text x="600" y="156">v2.6.0-d</text></g>
+                      <g><circle cx="680" cy="30" r="3.5" fill="#94a3b8" stroke="#fff" stroke-width="1.5"/><text x="680" y="156">v2.7.0-d</text></g>
+                    </g>
+                  </svg>
+                </div>
+                <div class="mt-3 flex items-center justify-between text-[11px] text-gray-500 flex-wrap gap-3">
+                  <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Published</span>
+                    <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>Draft</span>
+                    <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>Deprecated</span>
+                  </div>
+                  <span class="mono">+22 quality over project lifetime</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 flex items-center gap-3 flex-wrap">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <button class="px-2.5 py-1 text-xs font-semibold rounded-md bg-indigo-600 text-white inline-flex items-center gap-1.5">All <span class="mono text-[10px] px-1 rounded bg-white/20">9</span></button>
+                <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Published <span class="mono text-[10px] text-gray-400">4</span></button>
+                <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Draft <span class="mono text-[10px] text-gray-400">2</span></button>
+                <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Deprecated <span class="mono text-[10px] text-gray-400">2</span></button>
+                <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Sunset <span class="mono text-[10px] text-gray-400">1</span></button>
+                <span class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1"></span>
+                <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><i data-lucide="user" class="w-3 h-3"></i> Mine</button>
+              </div>
+              <div class="flex-1"></div>
+              <div class="relative">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+                <input class="pl-7 pr-3 h-7 w-56 text-xs rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:border-indigo-500" placeholder="Search version, author…" />
+              </div>
+              <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Columns</button>
+            </div>
+
+            <!-- Versions table -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead class="text-[10px] uppercase tracking-wider text-gray-500 bg-gray-50 dark:bg-gray-900/60">
+                    <tr>
+                      <th class="text-left px-4 py-2.5 font-semibold w-44">Version</th>
+                      <th class="text-left px-4 py-2.5 font-semibold w-28">Status</th>
+                      <th class="text-left px-4 py-2.5 font-semibold">Schema</th>
+                      <th class="text-left px-4 py-2.5 font-semibold w-20">Quality</th>
+                      <th class="text-left px-4 py-2.5 font-semibold w-20">Lint</th>
+                      <th class="text-left px-4 py-2.5 font-semibold w-32">Author</th>
+                      <th class="text-right px-4 py-2.5 font-semibold w-24">Updated</th>
+                      <th class="px-2 py-2.5 w-20"></th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
+
+                    <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30 cursor-pointer" onclick="location.href='version.html'">
+                      <td class="px-4 py-3 mono text-xs">v2.7.0-draft<p class="text-[10px] text-gray-400 truncate max-w-[12rem]">spike: settlement webhook v2</p></td>
+                      <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200">Draft</span></td>
+                      <td class="px-4 py-3 text-[11px] mono text-gray-500">12 classes · 64 props</td>
+                      <td class="px-4 py-3"><span class="text-[10px] mono text-gray-400">—</span></td>
+                      <td class="px-4 py-3 text-[11px] mono text-gray-400">—</td>
+                      <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] inline-flex items-center justify-center">KS</span> Kenji S.</span></td>
+                      <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">2 d ago</td>
+                      <td class="px-2 py-3 text-right"><div class="inline-flex gap-0.5"><button title="View" class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="eye" class="w-3.5 h-3.5 text-gray-400"></i></button><button title="More" class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="more-horizontal" class="w-3.5 h-3.5 text-gray-400"></i></button></div></td>
+                    </tr>
+
+                    <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30 cursor-pointer" onclick="location.href='version.html'">
+                      <td class="px-4 py-3 mono text-xs">v2.6.0-draft<p class="text-[10px] text-gray-400 truncate max-w-[12rem]">add Refund + DisputeNote</p></td>
+                      <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200">Draft</span></td>
+                      <td class="px-4 py-3 text-[11px] mono text-gray-500">37 classes · 224 props</td>
+                      <td class="px-4 py-3"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-indigo-500 mono text-indigo-600 dark:text-indigo-400 text-[10px] font-semibold">88</span></td>
+                      <td class="px-4 py-3 text-[11px] mono"><span class="text-indigo-600 dark:text-indigo-400 font-semibold">B</span> <span class="text-gray-400">1E · 4W</span></td>
+                      <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] inline-flex items-center justify-center">KS</span> Kenji S.</span></td>
+                      <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">2 h ago</td>
+                      <td class="px-2 py-3 text-right"><div class="inline-flex gap-0.5"><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="eye" class="w-3.5 h-3.5 text-gray-400"></i></button><button title="Publish" class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="rocket" class="w-3.5 h-3.5 text-indigo-500"></i></button></div></td>
+                    </tr>
+
+                    <tr class="row-active hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10 cursor-pointer" onclick="location.href='version.html'">
+                      <td class="px-4 py-3 mono text-xs"><span class="text-emerald-500">●</span> v2.5.0 <span class="text-[10px] text-gray-400">latest</span><p class="text-[10px] text-gray-400 truncate max-w-[12rem]">customer settlement events</p></td>
+                      <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Published</span></td>
+                      <td class="px-4 py-3 text-[11px] mono text-gray-500">32 classes · 218 props</td>
+                      <td class="px-4 py-3"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-emerald-500 mono text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold">94</span></td>
+                      <td class="px-4 py-3 text-[11px] mono"><span class="text-emerald-600 dark:text-emerald-400 font-semibold">A</span> <span class="text-gray-400">0E · 1W</span></td>
+                      <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] inline-flex items-center justify-center">KS</span> Kenji S.</span></td>
+                      <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">12 d ago</td>
+                      <td class="px-2 py-3 text-right"><div class="inline-flex gap-0.5"><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="eye" class="w-3.5 h-3.5 text-gray-400"></i></button><button title="More" class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="more-horizontal" class="w-3.5 h-3.5 text-gray-400"></i></button></div></td>
+                    </tr>
+
+                    <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30 cursor-pointer" onclick="location.href='version.html'">
+                      <td class="px-4 py-3 mono text-xs">v2.4.1<p class="text-[10px] text-gray-400 truncate max-w-[12rem]">tax-line patch</p></td>
+                      <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Published</span></td>
+                      <td class="px-4 py-3 text-[11px] mono text-gray-500">31 classes · 214 props</td>
+                      <td class="px-4 py-3"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-emerald-500 mono text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold">91</span></td>
+                      <td class="px-4 py-3 text-[11px] mono"><span class="text-emerald-600 dark:text-emerald-400 font-semibold">A</span> <span class="text-gray-400">0E · 0W</span></td>
+                      <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-[9px] inline-flex items-center justify-center">AL</span> Alex L.</span></td>
+                      <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">1 mo ago</td>
+                      <td class="px-2 py-3 text-right"><div class="inline-flex gap-0.5"><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="eye" class="w-3.5 h-3.5 text-gray-400"></i></button><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="more-horizontal" class="w-3.5 h-3.5 text-gray-400"></i></button></div></td>
+                    </tr>
+
+                    <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30 cursor-pointer" onclick="location.href='version.html'">
+                      <td class="px-4 py-3 mono text-xs">v2.4.0<p class="text-[10px] text-gray-400 truncate max-w-[12rem]">settlement event refactor</p></td>
+                      <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Published</span></td>
+                      <td class="px-4 py-3 text-[11px] mono text-gray-500">31 classes · 210 props</td>
+                      <td class="px-4 py-3"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-indigo-500 mono text-indigo-600 dark:text-indigo-400 text-[10px] font-semibold">87</span></td>
+                      <td class="px-4 py-3 text-[11px] mono"><span class="text-indigo-600 dark:text-indigo-400 font-semibold">B</span> <span class="text-gray-400">2E · 5W</span></td>
+                      <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-rose-500 text-white text-[9px] inline-flex items-center justify-center">JD</span> Jamie D.</span></td>
+                      <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">2 mo ago</td>
+                      <td class="px-2 py-3 text-right"><div class="inline-flex gap-0.5"><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="eye" class="w-3.5 h-3.5 text-gray-400"></i></button><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="more-horizontal" class="w-3.5 h-3.5 text-gray-400"></i></button></div></td>
+                    </tr>
+
+                    <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30 cursor-pointer" onclick="location.href='version.html'">
+                      <td class="px-4 py-3 mono text-xs text-gray-500">v2.3.0</td>
+                      <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">Deprecated</span></td>
+                      <td class="px-4 py-3 text-[11px] mono text-gray-400">30 classes · 198 props</td>
+                      <td class="px-4 py-3"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-indigo-300 dark:border-indigo-500/50 mono text-indigo-400 dark:text-indigo-300 text-[10px]">88</span></td>
+                      <td class="px-4 py-3 text-[11px] mono text-gray-400">B+</td>
+                      <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-rose-500 text-white text-[9px] inline-flex items-center justify-center">JD</span> Jamie D.</span></td>
+                      <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">3 mo ago</td>
+                      <td class="px-2 py-3 text-right"><div class="inline-flex gap-0.5"><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="eye" class="w-3.5 h-3.5 text-gray-400"></i></button><button title="Schedule sunset" class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="moon" class="w-3.5 h-3.5 text-gray-400"></i></button></div></td>
+                    </tr>
+
+                    <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30 cursor-pointer" onclick="location.href='version.html'">
+                      <td class="px-4 py-3 mono text-xs text-gray-500">v2.2.0</td>
+                      <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Published</span></td>
+                      <td class="px-4 py-3 text-[11px] mono text-gray-400">28 classes · 184 props</td>
+                      <td class="px-4 py-3"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-amber-400 mono text-amber-500 text-[10px]">82</span></td>
+                      <td class="px-4 py-3 text-[11px] mono text-gray-400">C</td>
+                      <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] inline-flex items-center justify-center">KS</span> Kenji S.</span></td>
+                      <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">4 mo ago</td>
+                      <td class="px-2 py-3"></td>
+                    </tr>
+
+                    <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30 cursor-pointer" onclick="location.href='version.html'">
+                      <td class="px-4 py-3 mono text-xs text-gray-500">v2.1.0</td>
+                      <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">Deprecated</span></td>
+                      <td class="px-4 py-3 text-[11px] mono text-gray-400">26 classes · 172 props</td>
+                      <td class="px-4 py-3"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-amber-400 mono text-amber-500 text-[10px]">76</span></td>
+                      <td class="px-4 py-3 text-[11px] mono text-gray-400">C</td>
+                      <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-[9px] inline-flex items-center justify-center">AL</span> Alex L.</span></td>
+                      <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">6 mo ago</td>
+                      <td class="px-2 py-3"></td>
+                    </tr>
+
+                    <tr class="row-sunset hover:bg-rose-50/40 dark:hover:bg-rose-900/10 cursor-pointer" onclick="location.href='version.html'">
+                      <td class="px-4 py-3 mono text-xs text-gray-500">v2.0.0<p class="text-[10px] text-rose-500 mono truncate max-w-[12rem]">sunset in 14 d</p></td>
+                      <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">Sunset</span></td>
+                      <td class="px-4 py-3 text-[11px] mono text-gray-400">22 classes · 142 props</td>
+                      <td class="px-4 py-3"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-amber-400 mono text-amber-500 text-[10px]">72</span></td>
+                      <td class="px-4 py-3 text-[11px] mono text-gray-400">D</td>
+                      <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] inline-flex items-center justify-center">KS</span> Kenji S.</span></td>
+                      <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">10 mo ago</td>
+                      <td class="px-2 py-3"></td>
+                    </tr>
+
+                  </tbody>
+                </table>
+              </div>
+              <div class="px-4 py-2.5 border-t border-gray-100 dark:border-gray-700/60 bg-gray-50/60 dark:bg-gray-900/30 flex items-center justify-between text-[11px] text-gray-500">
+                <span class="mono">Showing 9 of 9 versions</span>
+                <span class="inline-flex items-center gap-2"><i data-lucide="info" class="w-3 h-3"></i> Click a row to inspect · <span class="mono">⏎</span> opens detail</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right rail -->
+          <aside class="space-y-6 min-w-0">
+
+            <!-- Selected version -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <div class="flex items-center justify-between">
+                  <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Selected version</p>
+                  <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Published</span>
+                </div>
+                <h3 class="text-base font-bold mono mt-1">v2.5.0 <span class="text-[10px] mono px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 ml-1 align-middle">latest</span></h3>
+                <p class="text-[11px] text-gray-500 mt-0.5">customer settlement events</p>
+              </div>
+              <div class="p-5 space-y-4">
+                <dl class="grid grid-cols-2 gap-x-3 gap-y-2 text-[11px]">
+                  <dt class="text-gray-500 uppercase tracking-wider text-[9px] font-semibold">Author</dt>
+                  <dd class="text-right inline-flex items-center justify-end gap-1.5"><span class="w-4 h-4 rounded-full bg-indigo-500 text-white text-[9px] inline-flex items-center justify-center">KS</span> Kenji S.</dd>
+                  <dt class="text-gray-500 uppercase tracking-wider text-[9px] font-semibold">Created</dt>
+                  <dd class="text-right mono">14 d ago</dd>
+                  <dt class="text-gray-500 uppercase tracking-wider text-[9px] font-semibold">Published</dt>
+                  <dd class="text-right mono">12 d ago</dd>
+                  <dt class="text-gray-500 uppercase tracking-wider text-[9px] font-semibold">Schema</dt>
+                  <dd class="text-right mono">32 classes · 218 props</dd>
+                </dl>
+
+                <div>
+                  <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Quality &amp; lint</p>
+                  <div class="grid grid-cols-2 gap-2 text-[11px]">
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2 flex items-center gap-2">
+                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-emerald-500 mono text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold">94</span>
+                      <div><p class="text-gray-500 text-[10px]">Quality</p><p class="font-semibold">excellent</p></div>
+                    </div>
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2 flex items-center gap-2">
+                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-emerald-500 mono text-emerald-600 dark:text-emerald-400 text-[12px] font-bold">A</span>
+                      <div><p class="text-gray-500 text-[10px]">Lint</p><p class="mono text-[10px]">0E · 1W</p></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Changelog</p>
+                  <p class="text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">Added customer settlement event stream. Refined invoice line-item totals. Tightened required-field validation on <span class="mono">Customer</span>.</p>
+                </div>
+
+                <div class="pt-3 border-t border-gray-100 dark:border-gray-700 grid grid-cols-2 gap-2">
+                  <a href="version.html" class="px-3 py-1.5 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center justify-center gap-1.5"><i data-lucide="external-link" class="w-3.5 h-3.5"></i> View detail</a>
+                  <button class="px-3 py-1.5 text-xs rounded-md border border-orange-200 dark:border-orange-700/50 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 inline-flex items-center justify-center gap-1.5"><i data-lucide="archive" class="w-3.5 h-3.5"></i> Deprecate</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lifecycle alerts -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+                <div class="flex items-center gap-3"><i data-lucide="alarm-clock" class="w-5 h-5 text-rose-500"></i><h3 class="text-base font-semibold">Lifecycle alerts</h3></div>
+                <span class="text-[10px] mono text-gray-400">2 active</span>
+              </div>
+              <ul class="divide-y divide-gray-100 dark:divide-gray-700/60 text-xs">
+                <li class="px-5 py-3">
+                  <div class="flex items-start gap-3">
+                    <div class="w-7 h-7 rounded-md bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center shrink-0"><i data-lucide="moon" class="w-3.5 h-3.5 text-rose-500"></i></div>
+                    <div class="flex-1 min-w-0">
+                      <p class="font-semibold mono text-rose-600 dark:text-rose-400">v2.0.0 sunsets in 14 d</p>
+                      <p class="text-[11px] text-gray-500">2 consumers still pinned · suggest migration to <span class="mono">v2.5.0</span></p>
+                      <div class="mt-2 flex items-center gap-2">
+                        <button class="text-[10px] px-2 py-0.5 rounded bg-rose-500 text-white hover:bg-rose-600">Notify consumers</button>
+                        <button class="text-[10px] px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">Extend 30 d</button>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+                <li class="px-5 py-3">
+                  <div class="flex items-start gap-3">
+                    <div class="w-7 h-7 rounded-md bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0"><i data-lucide="trending-down" class="w-3.5 h-3.5 text-amber-500"></i></div>
+                    <div class="flex-1 min-w-0">
+                      <p class="font-semibold text-amber-700 dark:text-amber-300">Lint regression in <span class="mono">v2.6.0-draft</span></p>
+                      <p class="text-[11px] text-gray-500">+1 error vs <span class="mono">v2.5.0</span> · <span class="mono">DisputeNote.note</span> missing description</p>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Recent activity -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+                <div class="flex items-center gap-3"><i data-lucide="activity" class="w-5 h-5 text-indigo-500"></i><h3 class="text-base font-semibold">Recent activity</h3></div>
+                <a href="../projects/detail-activity.html" class="text-[11px] text-indigo-500 hover:underline">View all</a>
+              </div>
+              <ol class="relative px-5 py-4 space-y-4 text-xs">
+                <span class="absolute left-[27px] top-6 bottom-6 w-px bg-gray-200 dark:bg-gray-700"></span>
+                <li class="flex gap-3">
+                  <span class="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0 z-10 ring-4 ring-white dark:ring-gray-800"><i data-lucide="file-edit" class="w-2.5 h-2.5 text-indigo-600 dark:text-indigo-300"></i></span>
+                  <div class="flex-1 min-w-0">
+                    <p><span class="font-medium">Kenji S.</span> updated <span class="mono">v2.6.0-draft</span></p>
+                    <p class="text-[10px] text-gray-400 mono">2 h ago</p>
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span class="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 z-10 ring-4 ring-white dark:ring-gray-800"><i data-lucide="git-branch-plus" class="w-2.5 h-2.5 text-slate-600 dark:text-slate-300"></i></span>
+                  <div class="flex-1 min-w-0">
+                    <p><span class="font-medium">Kenji S.</span> created <span class="mono">v2.7.0-draft</span></p>
+                    <p class="text-[10px] text-gray-400 mono">2 d ago</p>
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span class="w-5 h-5 rounded-full bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center shrink-0 z-10 ring-4 ring-white dark:ring-gray-800"><i data-lucide="moon" class="w-2.5 h-2.5 text-rose-600 dark:text-rose-300"></i></span>
+                  <div class="flex-1 min-w-0">
+                    <p><span class="font-medium">System</span> scheduled <span class="mono">v2.0.0</span> for sunset</p>
+                    <p class="text-[10px] text-gray-400 mono">1 d ago</p>
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span class="w-5 h-5 rounded-full bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center shrink-0 z-10 ring-4 ring-white dark:ring-gray-800"><i data-lucide="archive" class="w-2.5 h-2.5 text-orange-600 dark:text-orange-300"></i></span>
+                  <div class="flex-1 min-w-0">
+                    <p><span class="font-medium">Jamie D.</span> deprecated <span class="mono">v2.3.0</span></p>
+                    <p class="text-[10px] text-gray-400 mono">3 mo ago</p>
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0 z-10 ring-4 ring-white dark:ring-gray-800"><i data-lucide="rocket" class="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-300"></i></span>
+                  <div class="flex-1 min-w-0">
+                    <p><span class="font-medium">Kenji S.</span> published <span class="mono">v2.5.0</span></p>
+                    <p class="text-[10px] text-gray-400 mono">12 d ago</p>
+                  </div>
+                </li>
+              </ol>
+            </div>
+
+          </aside>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const themeKey = 'versions-mockup-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>
