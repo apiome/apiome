@@ -140,3 +140,53 @@ export type RepositoryKpiSubtitleTone = keyof typeof repositoryKpiSubtitleToneCl
 
 export const repositoryActivityRowClass =
   'flex items-start gap-3 px-5 py-3 border-b border-gray-100 dark:border-gray-700/60 last:border-b-0';
+
+/**
+ * Projects surface tokens.
+ *
+ * Mirrors the `repository*` set so the redesigned Projects screens can share
+ * the same KPI card primitive without inheriting repository-specific labels.
+ * Project status tones extend the palette with `inReview` / `draft` /
+ * `published` / `deprecated` / `attention` so future API states can chip in
+ * without another schema break.
+ */
+export const projectHeaderShellClass = repositoryHeaderShellClass;
+export const projectHeaderIconTileClass =
+  'w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-sm';
+export const projectHeaderEyebrowClass = repositoryHeaderEyebrowClass;
+export const projectPanelClass = repositoryPanelClass;
+export const projectPanelHeaderClass = repositoryPanelHeaderClass;
+export const projectMonoCellClass = repositoryMonoCellClass;
+
+export const projectStatusChipBaseClass = repositoryStatusChipBaseClass;
+
+export const projectStatusChipToneClass = {
+  enabled: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  disabled: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
+  attention: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  inReview: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  draft: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
+  published: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+  deprecated: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+  deleted: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+  pii: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+  domain: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+  neutral: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
+} as const;
+
+export type ProjectStatusChipTone = keyof typeof projectStatusChipToneClass;
+
+/**
+ * Project card avatar gradient palette. Picked deterministically from the
+ * project id so the same project keeps the same colour across reloads.
+ */
+export const projectAvatarGradientClasses = [
+  'from-indigo-500 to-purple-500',
+  'from-emerald-500 to-cyan-500',
+  'from-amber-500 to-orange-500',
+  'from-rose-500 to-pink-500',
+  'from-purple-500 to-fuchsia-500',
+  'from-sky-500 to-cyan-500',
+  'from-violet-500 to-indigo-500',
+  'from-teal-500 to-emerald-500',
+] as const;

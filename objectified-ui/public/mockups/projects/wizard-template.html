@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projects · New project · Template &amp; metadata</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+    .icon-fill { fill: currentColor !important; }
+    .modal-backdrop { background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(2px); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <!-- Top bar -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="folders" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Acme Corp</span>
+      <span class="text-xs text-gray-400">/</span>
+      <a href="dashboard.html" class="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500">Projects</a>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-700 dark:text-gray-200">New project · Template &amp; metadata</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="../" class="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-500">← Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex relative" style="height: calc(100vh - 48px);">
+
+    <!-- Sidebar -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Account</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="user-round" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Profile</span></a></li>
+            <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="git-branch-plus" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Repositories</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-indigo-500/10" />
+        <div>
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Specifications</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-indigo-200 dark:border-indigo-700/70 bg-indigo-500/10"><i data-lucide="folders" class="w-5 h-5 text-indigo-500"></i><span class="text-sm font-semibold flex-1 text-indigo-600 dark:text-indigo-400">Projects</span><span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span></a></li>
+            <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="git-branch" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Versions</span></a></li>
+            <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="globe-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Published</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main column -->
+    <div class="flex-1 flex flex-col min-w-0 relative">
+      <header class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 opacity-60">
+        <div class="px-6 py-4 flex items-end justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="folders" class="w-5 h-5 text-white"></i></div>
+            <div>
+              <h2 class="text-2xl font-bold leading-tight">Projects</h2>
+              <p class="text-gray-600 dark:text-gray-400 text-xs mt-1 mono">12 projects · 4 published</p>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main class="flex-1 overflow-hidden p-6 opacity-30 pointer-events-none">
+        <div class="grid grid-cols-3 gap-4">
+          <div class="h-32 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"></div>
+          <div class="h-32 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"></div>
+          <div class="h-32 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"></div>
+          <div class="h-64 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"></div>
+          <div class="h-64 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"></div>
+          <div class="h-64 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"></div>
+        </div>
+      </main>
+
+      <!-- Modal backdrop -->
+      <div class="absolute inset-0 modal-backdrop flex items-stretch justify-center p-6 overflow-y-auto">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl w-full max-w-6xl flex flex-col overflow-hidden my-auto" style="max-height: calc(100vh - 96px);">
+
+          <!-- Modal header -->
+          <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gradient-to-r from-indigo-500/10 via-transparent to-purple-500/10">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-sm"><i data-lucide="folder-plus" class="w-5 h-5 text-white"></i></div>
+              <div>
+                <h2 class="text-lg font-semibold leading-tight">Create a new project</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Step 3 of 4 · Template &amp; OpenAPI metadata</p>
+              </div>
+            </div>
+            <a href="dashboard.html" class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400" title="Close"><i data-lucide="x" class="w-4 h-4"></i></a>
+          </div>
+
+          <!-- Stepper -->
+          <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+            <ol class="flex items-center gap-2 text-xs">
+              <li class="flex items-center gap-2">
+                <a href="wizard-path.html" class="w-6 h-6 rounded-full bg-emerald-500 text-white inline-flex items-center justify-center"><i data-lucide="check" class="w-3.5 h-3.5"></i></a>
+                <a href="wizard-path.html" class="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">Choose path</a>
+                <span class="text-[11px] text-gray-500 mono ml-1">manual</span>
+              </li>
+              <span class="flex-1 h-px bg-emerald-300 dark:bg-emerald-700"></span>
+              <li class="flex items-center gap-2">
+                <a href="wizard.html" class="w-6 h-6 rounded-full bg-emerald-500 text-white inline-flex items-center justify-center"><i data-lucide="check" class="w-3.5 h-3.5"></i></a>
+                <a href="wizard.html" class="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">Basics</a>
+                <span class="text-[11px] text-gray-500 mono ml-1">billing-api · Finance</span>
+              </li>
+              <span class="flex-1 h-px bg-emerald-300 dark:bg-emerald-700"></span>
+              <li class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-indigo-600 text-white inline-flex items-center justify-center mono text-[11px] font-semibold">3</span>
+                <span class="font-semibold text-indigo-600 dark:text-indigo-400">Template &amp; metadata</span>
+              </li>
+              <span class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></span>
+              <li class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 inline-flex items-center justify-center mono text-[11px] font-semibold">4</span>
+                <span class="text-gray-500">Review &amp; create</span>
+              </li>
+            </ol>
+          </div>
+
+          <!-- Modal body -->
+          <div class="flex-1 min-h-0 overflow-y-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-3 divide-x divide-gray-200 dark:divide-gray-700">
+
+              <!-- Wide content -->
+              <section class="lg:col-span-2 p-6 space-y-6">
+
+                <!-- Templates -->
+                <div>
+                  <div class="flex items-baseline justify-between">
+                    <h3 class="text-sm font-semibold">Choose a starter template</h3>
+                    <a href="#" class="text-[11px] text-indigo-500 hover:underline">What's in each template?</a>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-0.5">Templates seed the OpenAPI metadata below. You can override every field.</p>
+
+                  <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+
+                    <label class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 cursor-pointer hover:border-indigo-300">
+                      <div class="flex items-start gap-2.5">
+                        <i data-lucide="file" class="w-4 h-4 text-gray-400 mt-0.5"></i>
+                        <div class="min-w-0">
+                          <p class="text-sm font-semibold">Blank</p>
+                          <p class="text-[11px] text-gray-500">No preset metadata — fill everything in yourself.</p>
+                        </div>
+                      </div>
+                    </label>
+
+                    <label class="rounded-lg border-2 border-indigo-500 bg-indigo-500/5 ring-2 ring-indigo-500/10 p-3 cursor-pointer relative">
+                      <span class="absolute top-2 right-2 w-5 h-5 rounded-full bg-indigo-600 text-white inline-flex items-center justify-center"><i data-lucide="check" class="w-3 h-3"></i></span>
+                      <div class="flex items-start gap-2.5">
+                        <i data-lucide="globe-2" class="w-4 h-4 text-indigo-500 mt-0.5"></i>
+                        <div class="min-w-0">
+                          <p class="text-sm font-semibold">Public REST API</p>
+                          <p class="text-[11px] text-gray-500">External devs · MIT, support contact, clear summary.</p>
+                        </div>
+                      </div>
+                    </label>
+
+                    <label class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 cursor-pointer hover:border-indigo-300">
+                      <div class="flex items-start gap-2.5">
+                        <i data-lucide="lock" class="w-4 h-4 text-gray-400 mt-0.5"></i>
+                        <div class="min-w-0">
+                          <p class="text-sm font-semibold">Internal / private API</p>
+                          <p class="text-[11px] text-gray-500">Service-to-service · proprietary license.</p>
+                        </div>
+                      </div>
+                    </label>
+
+                    <label class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 cursor-pointer hover:border-indigo-300">
+                      <div class="flex items-start gap-2.5">
+                        <i data-lucide="handshake" class="w-4 h-4 text-gray-400 mt-0.5"></i>
+                        <div class="min-w-0">
+                          <p class="text-sm font-semibold">Partner / B2B</p>
+                          <p class="text-[11px] text-gray-500">ToS + contract-governed access.</p>
+                        </div>
+                      </div>
+                    </label>
+
+                    <label class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 cursor-pointer hover:border-indigo-300">
+                      <div class="flex items-start gap-2.5">
+                        <i data-lucide="puzzle" class="w-4 h-4 text-gray-400 mt-0.5"></i>
+                        <div class="min-w-0">
+                          <p class="text-sm font-semibold">Microservice boundary</p>
+                          <p class="text-[11px] text-gray-500">Apache 2.0 · single bounded context.</p>
+                        </div>
+                      </div>
+                    </label>
+
+                    <label class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 cursor-pointer hover:border-indigo-300">
+                      <div class="flex items-start gap-2.5">
+                        <i data-lucide="pencil-ruler" class="w-4 h-4 text-gray-400 mt-0.5"></i>
+                        <div class="min-w-0">
+                          <p class="text-sm font-semibold">OpenAPI design starter</p>
+                          <p class="text-[11px] text-gray-500">Design-first; emphasizes documentation.</p>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- OpenAPI metadata form -->
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-5">
+                  <div class="flex items-baseline justify-between">
+                    <div>
+                      <h3 class="text-sm font-semibold">OpenAPI metadata</h3>
+                      <p class="text-xs text-gray-500 mt-0.5">Fields seeded from <span class="font-semibold">Public REST API</span>. Show up at <span class="mono">openapi.yaml#/info</span>.</p>
+                    </div>
+                    <button class="text-[11px] text-indigo-500 hover:underline inline-flex items-center gap-1"><i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reset to template</button>
+                  </div>
+
+                  <div class="mt-4 space-y-5">
+
+                    <div class="space-y-1.5">
+                      <label class="text-xs font-semibold inline-flex items-center gap-1">Summary <span class="text-rose-500">*</span> <span class="text-[10px] mono text-gray-400 ml-1">info.summary</span></label>
+                      <input value="Public billing surface for invoices, payments, refunds and tax." class="w-full h-10 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+                      <p class="text-[11px] text-gray-500">Shown on the project card and in the published spec landing page.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div class="space-y-1.5">
+                        <label class="text-xs font-semibold">Initial version <span class="text-[10px] mono text-gray-400 ml-1">info.version</span></label>
+                        <input value="0.1.0" class="w-full h-10 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm mono focus:outline-none focus:border-indigo-500" />
+                        <p class="text-[11px] text-gray-500">Drafts always start at <span class="mono">0.x</span>.</p>
+                      </div>
+                      <div class="space-y-1.5">
+                        <label class="text-xs font-semibold">License <span class="text-[10px] mono text-gray-400 ml-1">info.license</span></label>
+                        <select class="w-full h-10 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:border-indigo-500">
+                          <option selected>MIT</option>
+                          <option>Apache 2.0</option>
+                          <option>BSD-3-Clause</option>
+                          <option>MPL 2.0</option>
+                          <option>Proprietary</option>
+                          <option>Custom…</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p class="text-xs font-semibold mb-2">Contact <span class="text-[10px] mono text-gray-400 ml-1">info.contact</span></p>
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="space-y-1.5">
+                          <label class="text-[11px] text-gray-500">Name</label>
+                          <input value="Acme Billing Team" class="w-full h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:border-indigo-500" />
+                        </div>
+                        <div class="space-y-1.5">
+                          <label class="text-[11px] text-gray-500">Email</label>
+                          <input value="api@acme.com" class="w-full h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm mono focus:outline-none focus:border-indigo-500" />
+                        </div>
+                        <div class="space-y-1.5">
+                          <label class="text-[11px] text-gray-500">URL</label>
+                          <input value="https://docs.acme.com/billing" class="w-full h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm mono focus:outline-none focus:border-indigo-500" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-xs font-semibold">Terms of Service URL <span class="text-[10px] mono text-gray-400 ml-1">info.termsOfService</span></label>
+                      <input value="https://acme.com/terms" class="w-full h-10 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm mono focus:outline-none focus:border-indigo-500" />
+                    </div>
+
+                    <div>
+                      <div class="flex items-baseline justify-between mb-2">
+                        <p class="text-xs font-semibold">Servers <span class="text-[10px] mono text-gray-400 ml-1">servers[]</span></p>
+                        <button class="text-[11px] text-indigo-500 hover:underline inline-flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> Add server</button>
+                      </div>
+                      <div class="space-y-2">
+                        <div class="grid grid-cols-12 gap-2 items-center">
+                          <input value="Production" class="col-span-3 h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:border-indigo-500" />
+                          <input value="https://api.acme.com/v1" class="col-span-8 h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-xs mono focus:outline-none focus:border-indigo-500" />
+                          <button class="col-span-1 h-9 rounded-md text-gray-400 hover:text-rose-500 inline-flex items-center justify-center"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                        <div class="grid grid-cols-12 gap-2 items-center">
+                          <input value="Sandbox" class="col-span-3 h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:border-indigo-500" />
+                          <input value="https://sandbox.acme.com/v1" class="col-span-8 h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-xs mono focus:outline-none focus:border-indigo-500" />
+                          <button class="col-span-1 h-9 rounded-md text-gray-400 hover:text-rose-500 inline-flex items-center justify-center"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <details class="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/40 dark:bg-gray-900/30">
+                      <summary class="px-4 py-2.5 cursor-pointer text-xs font-semibold inline-flex items-center gap-2 select-none"><i data-lucide="chevron-right" class="w-3.5 h-3.5"></i> Advanced <span class="text-gray-400 font-normal">— tags · external docs · security schemes</span></summary>
+                      <div class="px-4 pb-4 pt-1 space-y-3 text-xs text-gray-500">
+                        <p>Tags, external-docs URL, and security schemes can also be set later in <span class="mono">Settings → OpenAPI metadata</span>.</p>
+                      </div>
+                    </details>
+                  </div>
+                </div>
+
+              </section>
+
+              <!-- Right rail: live preview + delta -->
+              <aside class="p-5 space-y-4 bg-gray-50/40 dark:bg-gray-900/30">
+                <div>
+                  <p class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold mb-2 inline-flex items-center gap-1.5"><i data-lucide="file-code-2" class="w-3 h-3"></i> Resulting <span class="mono">openapi.yaml#/info</span></p>
+                  <pre class="mono text-[11px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md p-3 overflow-x-auto leading-relaxed text-gray-700 dark:text-gray-200"><code>info:
+  title: billing-api
+  version: 0.1.0
+  summary: Public billing surface
+    for invoices, payments,
+    refunds and tax.
+  contact:
+    name: Acme Billing Team
+    email: api@acme.com
+    url: https://docs.acme.com/billing
+  license:
+    name: MIT
+    identifier: MIT
+  termsOfService:
+    https://acme.com/terms
+servers:
+  - url: https://api.acme.com/v1
+    description: Production
+  - url: https://sandbox.acme.com/v1
+    description: Sandbox</code></pre>
+                </div>
+
+                <div>
+                  <p class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold mb-2">Template seeded</p>
+                  <ul class="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
+                    <li class="inline-flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 mt-0.5"></i> License set to MIT</li>
+                    <li class="inline-flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 mt-0.5"></i> Contact + Terms required</li>
+                    <li class="inline-flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 mt-0.5"></i> 2 server entries (prod + sandbox)</li>
+                    <li class="inline-flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 mt-0.5"></i> Lint preset: <span class="mono">strict-public</span></li>
+                  </ul>
+                </div>
+
+                <div class="rounded-md border border-emerald-200 dark:border-emerald-700/40 bg-emerald-50/40 dark:bg-emerald-900/10 p-3">
+                  <p class="text-[11px] text-emerald-700 dark:text-emerald-300 font-semibold mb-1 inline-flex items-center gap-1.5"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Lint preview</p>
+                  <p class="text-[11px] text-emerald-700 dark:text-emerald-300">All required <span class="mono">info.*</span> fields are present. Estimated lint grade: <span class="font-semibold">A</span>.</p>
+                </div>
+
+                <div class="rounded-md border border-gray-200 dark:border-gray-700 p-3 text-[11px] text-gray-500">
+                  <p class="font-semibold text-gray-700 dark:text-gray-300 mb-1.5 inline-flex items-center gap-1.5"><i data-lucide="keyboard" class="w-3.5 h-3.5"></i> Shortcuts</p>
+                  <div class="grid grid-cols-2 gap-y-1">
+                    <span>Next step</span><span class="text-right"><kbd class="mono px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700">⌘ Enter</kbd></span>
+                    <span>Back</span><span class="text-right"><kbd class="mono px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700">⌘ ←</kbd></span>
+                    <span>Reset template</span><span class="text-right"><kbd class="mono px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700">⌘ R</kbd></span>
+                  </div>
+                </div>
+              </aside>
+
+            </div>
+          </div>
+
+          <!-- Modal footer -->
+          <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2 text-xs text-gray-500">
+              <i data-lucide="info" class="w-3.5 h-3.5"></i>
+              <span>You can return and edit any step before creating.</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <a href="dashboard.html" class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-700">Cancel</a>
+              <a href="wizard.html" class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back</a>
+              <a href="wizard-review.html" class="px-3.5 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-1.5">Continue <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const themeKey = 'projects-mockup-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

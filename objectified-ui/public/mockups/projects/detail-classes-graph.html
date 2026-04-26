@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projects · billing-api · Classes · Graph</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+    .icon-fill { fill: currentColor !important; }
+    .header-shell { background: linear-gradient(90deg, rgba(99,102,241,0.10) 0%, #ffffff 50%, rgba(217,70,239,0.05) 100%); }
+    .header-shell-dark { background: linear-gradient(90deg, rgba(99,102,241,0.10) 0%, #1f2937 50%, rgba(217,70,239,0.10) 100%); }
+
+    /* Graph canvas */
+    .graph-canvas {
+      background-color: #f8fafc;
+      background-image:
+        linear-gradient(to right, rgba(148,163,184,0.12) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148,163,184,0.12) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .dark .graph-canvas {
+      background-color: #0f172a;
+      background-image:
+        linear-gradient(to right, rgba(148,163,184,0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148,163,184,0.06) 1px, transparent 1px);
+    }
+    .node-group { cursor: pointer; transition: transform .15s ease, opacity .15s ease; }
+    .node-group:hover { transform: translate(0,-1px); }
+    .node-group.dim { opacity: 0.18; }
+    .edge { transition: opacity .15s ease, stroke-width .15s ease; }
+    .edge.dim { opacity: 0.1; }
+    .edge.highlight { stroke-width: 2.5; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <!-- Top bar -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="folders" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Acme Corp</span>
+      <span class="text-xs text-gray-400">/</span>
+      <a href="dashboard.html" class="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500">Projects</a>
+      <span class="text-xs text-gray-400">/</span>
+      <a href="detail.html" class="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500 mono">billing-api</a>
+      <span class="text-xs text-gray-400">/</span>
+      <a href="detail-classes.html" class="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500">Classes</a>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-700 dark:text-gray-200">Graph</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="../" class="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-500">← Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+
+    <!-- Sidebar -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto h-full flex flex-col">
+        <div class="p-3"><button class="w-full flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-left"><div class="w-8 h-8 rounded-md bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-xs">AC</div><div class="flex-1 min-w-0"><p class="text-xs text-gray-500 dark:text-gray-400">Tenant</p><p class="text-sm font-semibold truncate">Acme Corp</p></div><i data-lucide="chevrons-up-down" class="w-4 h-4 text-gray-400"></i></button></div>
+        <hr class="border-indigo-500/10 mx-3" />
+        <div class="p-4 flex-1">
+          <div class="mb-5">
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Specifications</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-indigo-200 dark:border-indigo-700/70 bg-indigo-500/10"><i data-lucide="folders" class="w-5 h-5 text-indigo-500"></i><span class="text-sm font-semibold flex-1 text-indigo-600 dark:text-indigo-400">Projects</span><span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span></a></li>
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="git-branch" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Versions</span></a></li>
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="globe-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Published</span></a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main column -->
+    <div class="flex-1 flex flex-col min-w-0">
+
+      <!-- Project header (shared shell) -->
+      <header class="border-b border-gray-200 dark:border-gray-700 header-shell dark:header-shell-dark">
+        <div class="px-6 py-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-start gap-4 min-w-0">
+              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold mono text-xl shadow-md shrink-0">BL</div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <a href="dashboard.html" class="text-xs text-gray-500 hover:text-indigo-500 inline-flex items-center gap-1"><i data-lucide="arrow-left" class="w-3 h-3"></i> All projects</a>
+                  <span class="text-gray-300 dark:text-gray-600">·</span>
+                  <span class="text-[11px] mono text-gray-500">prj_8a91f2c4-5d3b-4f1e-9a82-1b5e7c4a9b3d</span>
+                </div>
+                <div class="flex items-center gap-2 mt-1">
+                  <h2 class="text-2xl font-bold leading-tight">billing-api</h2>
+                  <button class="text-amber-400 hover:text-amber-500" title="Unstar"><i data-lucide="star" class="w-5 h-5 icon-fill"></i></button>
+                </div>
+                <div class="flex items-center gap-2 mt-2 flex-wrap">
+                  <span class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"><span class="w-1 h-1 rounded-full bg-emerald-500"></span> Enabled</span>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">Finance</span>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 mono">v2.5.0 · published</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2"><i data-lucide="play" class="w-4 h-4"></i> Run lint</button>
+              <button class="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2"><i data-lucide="rocket" class="w-4 h-4"></i> Publish</button>
+            </div>
+          </div>
+
+          <!-- Sub-nav tabs (Classes active) -->
+          <nav class="mt-4 flex items-center gap-1 -mb-px">
+            <a href="detail.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Overview</a>
+            <a href="detail-versions.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="git-branch" class="w-4 h-4"></i> Versions <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">9</span></a>
+            <a href="detail-classes.html" class="px-3 py-2 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 inline-flex items-center gap-2"><i data-lucide="boxes" class="w-4 h-4"></i> Classes <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">32</span></a>
+            <a href="detail-properties.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="code" class="w-4 h-4"></i> Properties <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">218</span></a>
+            <a href="detail-published.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="globe-2" class="w-4 h-4"></i> Published <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">4</span></a>
+            <a href="detail-activity.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4"></i> Activity</a>
+            <a href="detail-settings.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="settings-2" class="w-4 h-4"></i> Settings</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="flex-1 overflow-hidden flex flex-col">
+
+        <!-- Sub-page header + view toggle + toolbar -->
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h2 class="text-lg font-semibold flex items-center gap-2"><i data-lucide="boxes" class="w-5 h-5 text-indigo-500"></i> Classes <span class="text-xs font-normal text-gray-400">· Graph</span></h2>
+            <p class="text-xs text-gray-500 mono">32 classes · 47 references · 5 clusters · 2 orphans · v2.5.0</p>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap">
+            <!-- Layout selector -->
+            <div class="flex items-center text-xs rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <button class="px-2.5 py-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold inline-flex items-center gap-1.5"><i data-lucide="git-fork" class="w-3.5 h-3.5"></i> Force</button>
+              <button class="px-2.5 py-1 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-500 inline-flex items-center gap-1.5"><i data-lucide="circle-dot" class="w-3.5 h-3.5"></i> Circular</button>
+              <button class="px-2.5 py-1 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-500 inline-flex items-center gap-1.5"><i data-lucide="network" class="w-3.5 h-3.5"></i> Hierarchical</button>
+            </div>
+
+            <!-- Group by -->
+            <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><i data-lucide="folder-tree" class="w-3.5 h-3.5"></i> Group: cluster</button>
+
+            <!-- View toggle (List ↔ Graph) -->
+            <div class="flex items-center text-xs rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <a href="detail-classes.html" class="px-2.5 py-1 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-500 inline-flex items-center gap-1.5"><i data-lucide="rows" class="w-3.5 h-3.5"></i> List</a>
+              <button class="px-2.5 py-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold inline-flex items-center gap-1.5"><i data-lucide="git-fork" class="w-3.5 h-3.5"></i> Graph</button>
+            </div>
+
+            <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Export PNG</button>
+          </div>
+        </div>
+
+        <!-- Filter strip -->
+        <div class="px-6 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center gap-2 flex-wrap">
+          <div class="relative">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+            <input class="pl-7 pr-3 h-7 w-56 text-xs rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:border-indigo-500" placeholder="Search & focus class…" value="Invoice" />
+          </div>
+          <span class="w-px h-5 bg-gray-200 dark:bg-gray-700"></span>
+          <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><i data-lucide="eye-off" class="w-3 h-3"></i> Hide orphans <span class="mono text-[10px] text-gray-400">2</span></button>
+          <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><i data-lucide="archive" class="w-3 h-3"></i> Hide deprecated <span class="mono text-[10px] text-gray-400">1</span></button>
+          <button class="px-2.5 py-1 text-xs rounded-md border border-amber-200 dark:border-amber-700/40 bg-amber-50/40 dark:bg-amber-900/10 text-amber-700 dark:text-amber-300 inline-flex items-center gap-1.5"><i data-lucide="user-lock" class="w-3 h-3"></i> Highlight PII</button>
+          <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><i data-lucide="filter" class="w-3 h-3"></i> Min refs ≥ <span class="mono">2</span></button>
+          <span class="flex-1"></span>
+          <span class="text-[11px] text-gray-500 mono">depth: <span class="text-gray-700 dark:text-gray-200">2</span> · showing 30 / 32 nodes · 47 edges</span>
+        </div>
+
+        <!-- Graph + right rail -->
+        <div class="flex-1 min-h-0 flex">
+
+          <!-- Canvas -->
+          <div class="flex-1 relative graph-canvas overflow-hidden">
+
+            <!-- Zoom / fit controls (overlay) -->
+            <div class="absolute top-3 left-3 z-10 flex flex-col rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
+              <button class="w-8 h-8 inline-flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700" title="Zoom in"><i data-lucide="plus" class="w-4 h-4"></i></button>
+              <button class="w-8 h-8 inline-flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700" title="Zoom out"><i data-lucide="minus" class="w-4 h-4"></i></button>
+              <button class="w-8 h-8 inline-flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700" title="Fit"><i data-lucide="maximize" class="w-4 h-4"></i></button>
+              <button class="w-8 h-8 inline-flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700" title="Re-run layout"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+            </div>
+
+            <!-- Stats overlay (top-right) -->
+            <div class="absolute top-3 right-3 z-10 rounded-md border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-3 py-2 text-[10px] mono text-gray-500 shadow-sm">
+              <p>zoom: <span class="text-gray-700 dark:text-gray-200">1.0×</span> · cursor: <span class="text-gray-700 dark:text-gray-200">540, 312</span></p>
+              <p>focus: <span class="text-indigo-500">Invoice</span> · depth 2</p>
+            </div>
+
+            <!-- Graph SVG -->
+            <svg viewBox="0 0 980 620" class="w-full h-full" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <!-- Arrowheads per cluster color -->
+                <marker id="arrow-sky"     viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0ea5e9"/></marker>
+                <marker id="arrow-emerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#10b981"/></marker>
+                <marker id="arrow-rose"    viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f43f5e"/></marker>
+                <marker id="arrow-amber"   viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker>
+                <marker id="arrow-violet"  viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8b5cf6"/></marker>
+                <marker id="arrow-slate"   viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+
+                <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%"  stop-color="#6366f1" stop-opacity="0.25" />
+                  <stop offset="70%" stop-color="#6366f1" stop-opacity="0" />
+                </radialGradient>
+              </defs>
+
+              <!-- Cluster halos (faint) -->
+              <ellipse cx="490" cy="320" rx="180" ry="160" fill="#0ea5e9" fill-opacity="0.05" stroke="#0ea5e9" stroke-opacity="0.18" stroke-dasharray="4 4" />
+              <text x="345" y="180" class="mono" font-size="11" fill="#0ea5e9" opacity="0.7">Money &amp; settlement</text>
+
+              <ellipse cx="800" cy="220" rx="130" ry="110" fill="#10b981" fill-opacity="0.05" stroke="#10b981" stroke-opacity="0.18" stroke-dasharray="4 4" />
+              <text x="715" y="120" class="mono" font-size="11" fill="#10b981" opacity="0.7">Customer &amp; identity</text>
+
+              <ellipse cx="800" cy="490" rx="130" ry="100" fill="#f43f5e" fill-opacity="0.05" stroke="#f43f5e" stroke-opacity="0.18" stroke-dasharray="4 4" />
+              <text x="730" y="410" class="mono" font-size="11" fill="#f43f5e" opacity="0.7">Disputes &amp; refunds</text>
+
+              <ellipse cx="180" cy="190" rx="120" ry="90" fill="#8b5cf6" fill-opacity="0.05" stroke="#8b5cf6" stroke-opacity="0.18" stroke-dasharray="4 4" />
+              <text x="125" y="120" class="mono" font-size="11" fill="#8b5cf6" opacity="0.7">Reports</text>
+
+              <ellipse cx="180" cy="490" rx="130" ry="90" fill="#94a3b8" fill-opacity="0.04" stroke="#94a3b8" stroke-opacity="0.18" stroke-dasharray="4 4" />
+              <text x="120" y="420" class="mono" font-size="11" fill="#94a3b8" opacity="0.7">Webhook payloads</text>
+
+              <!-- Halo behind selected node -->
+              <circle cx="490" cy="320" r="80" fill="url(#halo)" />
+
+              <!-- Edges (drawn before nodes so they sit underneath) -->
+              <g fill="none" stroke-linecap="round">
+
+                <!-- Money cluster internal edges (highlighted because Invoice is focused) -->
+                <path class="edge highlight" d="M490,320 C 460,360 430,400 410,420" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrow-sky)" />
+                <path class="edge highlight" d="M490,320 C 530,330 580,330 590,320" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrow-sky)" />
+                <path class="edge highlight" d="M490,320 C 450,260 405,225 380,210" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrow-sky)" />
+                <path class="edge highlight" d="M490,320 C 530,380 590,420 600,440" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrow-sky)" />
+                <path class="edge highlight" d="M490,320 C 510,250 525,200 530,180" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrow-sky)" />
+
+                <!-- Money → Customer (highlighted Invoice → Customer FK) -->
+                <path class="edge highlight" d="M490,320 C 600,300 700,260 750,235" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrow-emerald)" />
+
+                <!-- Money → Disputes (Invoice → Refund) -->
+                <path class="edge highlight" d="M490,320 C 600,360 700,420 745,460" stroke="#f43f5e" stroke-width="2" marker-end="url(#arrow-rose)" />
+
+                <!-- Customer cluster internal edges -->
+                <path class="edge dim" d="M750,235 C 790,210 820,200 820,190" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-emerald)" />
+                <path class="edge dim" d="M750,235 C 800,260 830,275 850,260" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-emerald)" />
+
+                <!-- Disputes cluster internal -->
+                <path class="edge dim" d="M745,460 C 790,470 820,485 830,495" stroke="#f43f5e" stroke-width="1.5" marker-end="url(#arrow-rose)" />
+                <path class="edge dim" d="M745,460 C 770,510 790,535 810,540" stroke="#f43f5e" stroke-width="1.5" marker-end="url(#arrow-rose)" />
+
+                <!-- Reports → Money (Reports use Invoice, dim because not in highlight depth) -->
+                <path class="edge dim" d="M180,190 C 280,220 380,260 470,310" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow-violet)" />
+                <path class="edge dim" d="M180,225 C 200,200 220,180 230,170" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow-violet)" />
+
+                <!-- Webhook payloads → Money -->
+                <path class="edge dim" d="M210,490 C 320,470 410,400 470,340" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-slate)" />
+                <path class="edge dim" d="M170,490 C 200,500 230,505 240,510" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow-slate)" />
+
+                <!-- Self-reference on Invoice (parentInvoiceId) -->
+                <path class="edge highlight" d="M512,300 C 555,275 555,335 512,310" stroke="#0ea5e9" stroke-width="1.5" marker-end="url(#arrow-sky)" />
+              </g>
+
+              <!-- Edge labels (only on highlighted edges) -->
+              <g class="mono" font-size="9" fill="#475569">
+                <text x="430" y="378"><tspan>lineItems[]</tspan></text>
+                <text x="540" y="318"><tspan>tax</tspan></text>
+                <text x="430" y="262"><tspan>settledBy</tspan></text>
+                <text x="555" y="395"><tspan>payment</tspan></text>
+                <text x="510" y="252"><tspan>customerSnap</tspan></text>
+                <text x="640" y="280" fill="#10b981" font-weight="600"><tspan>customerId  →  Customer</tspan></text>
+                <text x="615" y="395" fill="#f43f5e" font-weight="600"><tspan>refunds[]  →  Refund</tspan></text>
+              </g>
+
+              <!-- Nodes -->
+              <g class="mono" font-size="11" font-weight="600">
+
+                <!-- ───────── Money & settlement ───────── -->
+
+                <!-- Invoice (FOCUSED — large, with selection ring) -->
+                <g class="node-group" transform="translate(490 320)">
+                  <circle r="38" fill="#0ea5e9" stroke="#6366f1" stroke-width="3" />
+                  <circle r="44" fill="none" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.7" />
+                  <text text-anchor="middle" dy="-2" fill="white">Invoice</text>
+                  <text text-anchor="middle" dy="11" fill="white" font-size="9" opacity="0.85">14 props · 9 refs</text>
+                </g>
+
+                <!-- LineItem -->
+                <g class="node-group" transform="translate(410 420)">
+                  <circle r="26" fill="#0ea5e9" stroke="#0369a1" stroke-width="1.5" />
+                  <text text-anchor="middle" dy="-1" fill="white" font-size="10">LineItem</text>
+                  <text text-anchor="middle" dy="10" fill="white" font-size="8" opacity="0.85">8 props</text>
+                </g>
+
+                <!-- TaxLine -->
+                <g class="node-group" transform="translate(610 320)">
+                  <circle r="22" fill="#0ea5e9" stroke="#0369a1" stroke-width="1.5" />
+                  <text text-anchor="middle" dy="-1" fill="white" font-size="10">TaxLine</text>
+                  <text text-anchor="middle" dy="10" fill="white" font-size="8" opacity="0.85">5 props</text>
+                </g>
+
+                <!-- SettlementEvent -->
+                <g class="node-group" transform="translate(380 210)">
+                  <circle r="26" fill="#0ea5e9" stroke="#0369a1" stroke-width="1.5" />
+                  <text text-anchor="middle" dy="-1" fill="white" font-size="9">SettlementEvent</text>
+                  <text text-anchor="middle" dy="10" fill="white" font-size="8" opacity="0.85">7 props</text>
+                </g>
+
+                <!-- Payment -->
+                <g class="node-group" transform="translate(610 450)">
+                  <circle r="24" fill="#0ea5e9" stroke="#0369a1" stroke-width="1.5" />
+                  <text text-anchor="middle" dy="-1" fill="white" font-size="10">Payment</text>
+                  <text text-anchor="middle" dy="10" fill="white" font-size="8" opacity="0.85">9 props</text>
+                </g>
+
+                <!-- CustomerSnapshot (sub of Money) -->
+                <g class="node-group" transform="translate(540 175)">
+                  <circle r="20" fill="#0ea5e9" stroke="#0369a1" stroke-width="1.5" />
+                  <text text-anchor="middle" dy="-1" fill="white" font-size="9">CustSnap</text>
+                  <text text-anchor="middle" dy="10" fill="white" font-size="8" opacity="0.85">4 props</text>
+                </g>
+
+                <!-- ───────── Customer & identity ───────── -->
+
+                <!-- Customer (PII flag) -->
+                <g class="node-group" transform="translate(750 235)">
+                  <circle r="30" fill="#10b981" stroke="#047857" stroke-width="1.5" />
+                  <circle r="34" fill="none" stroke="#fda4af" stroke-width="1.5" stroke-dasharray="2 3" />
+                  <text text-anchor="middle" dy="-2" fill="white" font-size="11">Customer</text>
+                  <text text-anchor="middle" dy="10" fill="white" font-size="8" opacity="0.85">11 props · PII</text>
+                </g>
+
+                <!-- Address -->
+                <g class="node-group" transform="translate(820 190)">
+                  <circle r="20" fill="#10b981" stroke="#047857" stroke-width="1.5" />
+                  <circle r="23" fill="none" stroke="#fda4af" stroke-width="1.5" stroke-dasharray="2 3" />
+                  <text text-anchor="middle" dy="-1" fill="white" font-size="10">Address</text>
+                  <text text-anchor="middle" dy="10" fill="white" font-size="8" opacity="0.85">7 · PII</text>
+                </g>
+
+                <!-- ContactMethod -->
+                <g class="node-group" transform="translate(860 265)">
+                  <circle r="22" fill="#10b981" stroke="#047857" stroke-width="1.5" />
+                  <circle r="25" fill="none" stroke="#fda4af" stroke-width="1.5" stroke-dasharray="2 3" />
+                  <text text-anchor="middle" dy="-1" fill="white" font-size="9">Contact</text>
+                  <text text-anchor="middle" dy="10" fill="white" font-size="8" opacity="0.85">5 · PII</text>
+                </g>
+
+                <!-- ───────── Disputes & refunds ───────── -->
+
+                <!-- Refund -->
+                <g class="node-group" transform="translate(745 460)">
+                  <circle r="26" fill="#f43f5e" stroke="#9f1239" stroke-width="1.5" />
+                  <text text-anchor="middle" dy="-1" fill="white" font-size="10">Refund</text>
+                  <text text-anchor="middle" dy="10" fill="white" font-size="8" opacity="0.85">11 props</text>
+                </g>
+
+                <!-- Dispute -->
+                <g class="node-group" transform="translate(840 500)">
+                  <circle r="22" fill="#f43f5e" stroke="#9f1239" stroke-width="1.5" />
+                  <text text-anchor="middle" dy="-1" fill="white" font-size="10">Dispute</text>
+                  <text text-anchor="middle" dy="10" fill="white" font-size="8" opacity="0.85">8 props</text>
+                </g>
+
+                <!-- DisputeEvidence -->
+                <g class="node-group" transform="translate(815 555)">
+                  <circle r="20" fill="#f43f5e" stroke="#9f1239" stroke-width="1.5" />
+                  <text text-anchor="middle" dy="-1" fill="white" font-size="8">Evidence</text>
+                  <text text-anchor="middle" dy="9" fill="white" font-size="8" opacity="0.85">4 props</text>
+                </g>
+
+                <!-- ───────── Reports ───────── -->
+
+                <!-- Report -->
+                <g class="node-group" transform="translate(180 190)">
+                  <circle r="24" fill="#8b5cf6" stroke="#5b21b6" stroke-width="1.5" />
+                  <text text-anchor="middle" dy="-1" fill="white" font-size="10">Report</text>
+                  <text text-anchor="middle" dy="10" fill="white" font-size="8" opacity="0.85">6 props</text>
+                </g>
+
+                <!-- ReportRow -->
+                <g class="node-group" transform="translate(230 145)">
+                  <circle r="20" fill="#8b5cf6" stroke="#5b21b6" stroke-width="1.5" />
+                  <text text-anchor="middle" dy="-1" fill="white" font-size="9">ReportRow</text>
+                  <text text-anchor="middle" dy="10" fill="white" font-size="8" opacity="0.85">5 props</text>
+                </g>
+
+                <!-- ───────── Webhook payloads ───────── -->
+
+                <!-- WebhookEvent -->
+                <g class="node-group" transform="translate(210 490)">
+                  <circle r="24" fill="#94a3b8" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 2" />
+                  <text text-anchor="middle" dy="-1" fill="white" font-size="9">WebhookEvt</text>
+                  <text text-anchor="middle" dy="10" fill="white" font-size="8" opacity="0.85">6 props</text>
+                </g>
+
+                <!-- WebhookDelivery -->
+                <g class="node-group" transform="translate(150 540)">
+                  <circle r="20" fill="#94a3b8" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 2" />
+                  <text text-anchor="middle" dy="-1" fill="white" font-size="8">Delivery</text>
+                  <text text-anchor="middle" dy="9" fill="white" font-size="8" opacity="0.85">7 props</text>
+                </g>
+
+                <!-- ───────── Orphan ───────── -->
+
+                <g class="node-group dim" transform="translate(110 360)">
+                  <circle r="18" fill="#fafafa" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3 3" />
+                  <text text-anchor="middle" dy="-1" fill="#64748b" font-size="9">CurrencyRate</text>
+                  <text text-anchor="middle" dy="9" fill="#94a3b8" font-size="8">orphan</text>
+                </g>
+
+                <!-- ───────── Deprecated ───────── -->
+
+                <g class="node-group dim" transform="translate(345 75)">
+                  <circle r="18" fill="#fafafa" stroke="#fb923c" stroke-width="1.5" stroke-dasharray="3 3" />
+                  <text text-anchor="middle" dy="-1" fill="#9a3412" font-size="9">LegacyTax</text>
+                  <text text-anchor="middle" dy="9" fill="#fb923c" font-size="8">deprecated</text>
+                </g>
+
+              </g>
+
+              <!-- Mini-summary banner (overlay bottom-left) -->
+              <g transform="translate(20 580)" class="mono" font-size="10">
+                <rect x="0" y="0" width="380" height="28" rx="6" fill="white" fill-opacity="0.92" stroke="#e2e8f0" />
+                <circle cx="14" cy="14" r="4" fill="#6366f1" />
+                <text x="26" y="17" fill="#334155">Focused: <tspan font-weight="700" fill="#1e293b">Invoice</tspan> · 9 outgoing refs · 6 incoming · depth 2 visible</text>
+              </g>
+            </svg>
+
+            <!-- Legend (overlay bottom-right) -->
+            <div class="absolute bottom-3 right-3 z-10 rounded-md border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-3 text-[11px] shadow-sm">
+              <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">Legend</p>
+              <div class="space-y-1.5">
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-sky-500"></span><span>Money &amp; settlement</span><span class="text-gray-400 ml-auto mono">6</span></div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-500"></span><span>Customer &amp; identity</span><span class="text-gray-400 ml-auto mono">3</span></div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-rose-500"></span><span>Disputes &amp; refunds</span><span class="text-gray-400 ml-auto mono">3</span></div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-violet-500"></span><span>Reports</span><span class="text-gray-400 ml-auto mono">2</span></div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-slate-400"></span><span>Webhook payloads</span><span class="text-gray-400 ml-auto mono">2</span></div>
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-1.5 mt-1.5 space-y-1">
+                  <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-white border-2 border-rose-300 border-dashed"></span><span>contains PII</span></div>
+                  <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-white border border-gray-300 border-dashed"></span><span>orphan / deprecated</span></div>
+                  <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-indigo-500/20 ring-2 ring-indigo-500"></span><span>focused</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right rail: focused-node detail -->
+          <aside class="w-[340px] shrink-0 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-y-auto">
+            <div class="p-5 border-b border-gray-200 dark:border-gray-700 bg-indigo-500/5">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="text-[10px] uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-semibold mb-1">Focused class</p>
+                  <h3 class="text-base font-bold mono">Invoice</h3>
+                  <p class="text-[11px] text-gray-500 mono mt-0.5">Money &amp; settlement · 14 props · 9 refs</p>
+                </div>
+                <button class="text-gray-400 hover:text-gray-600 p-1" title="Clear focus"><i data-lucide="x" class="w-4 h-4"></i></button>
+              </div>
+              <div class="grid grid-cols-3 gap-2 mt-3">
+                <div class="rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-2 text-center">
+                  <p class="text-[9px] uppercase tracking-wider text-gray-500 font-semibold">Out</p>
+                  <p class="mono text-sm font-bold text-sky-500">9</p>
+                </div>
+                <div class="rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-2 text-center">
+                  <p class="text-[9px] uppercase tracking-wider text-gray-500 font-semibold">In</p>
+                  <p class="mono text-sm font-bold text-emerald-500">6</p>
+                </div>
+                <div class="rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-2 text-center">
+                  <p class="text-[9px] uppercase tracking-wider text-gray-500 font-semibold">Cyc.</p>
+                  <p class="mono text-sm font-bold text-amber-500">1</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-5 space-y-5 text-sm">
+
+              <div>
+                <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2 inline-flex items-center gap-1.5"><i data-lucide="arrow-right" class="w-3 h-3 text-sky-500"></i> Outgoing references</p>
+                <ul class="space-y-1.5">
+                  <li class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="mono flex-1"><span class="text-gray-500">customerId →</span> Customer</span><span class="text-[10px] mono text-gray-400">FK</span></li>
+                  <li class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full bg-sky-500"></span><span class="mono flex-1"><span class="text-gray-500">lineItems[] →</span> LineItem</span><span class="text-[10px] mono text-gray-400">1:n</span></li>
+                  <li class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full bg-sky-500"></span><span class="mono flex-1"><span class="text-gray-500">tax →</span> TaxLine</span><span class="text-[10px] mono text-gray-400">1:1</span></li>
+                  <li class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full bg-sky-500"></span><span class="mono flex-1"><span class="text-gray-500">settledBy →</span> SettlementEvent</span><span class="text-[10px] mono text-gray-400">FK?</span></li>
+                  <li class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full bg-sky-500"></span><span class="mono flex-1"><span class="text-gray-500">payment →</span> Payment</span><span class="text-[10px] mono text-gray-400">FK?</span></li>
+                  <li class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full bg-rose-500"></span><span class="mono flex-1"><span class="text-gray-500">refunds[] →</span> Refund</span><span class="text-[10px] mono text-gray-400">1:n</span></li>
+                  <li class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full bg-sky-500"></span><span class="mono flex-1"><span class="text-gray-500">customerSnap →</span> CustomerSnapshot</span><span class="text-[10px] mono text-gray-400">embed</span></li>
+                  <li class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full bg-amber-500"></span><span class="mono flex-1"><span class="text-gray-500">parentInvoiceId →</span> Invoice</span><span class="text-[10px] mono text-gray-400">cycle</span></li>
+                  <li class="text-[11px] text-gray-500 pl-4">+ 1 more (deprecated)</li>
+                </ul>
+              </div>
+
+              <div>
+                <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2 inline-flex items-center gap-1.5"><i data-lucide="arrow-left" class="w-3 h-3 text-emerald-500"></i> Incoming references</p>
+                <ul class="space-y-1.5">
+                  <li class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full bg-rose-500"></span><span class="mono flex-1">Refund<span class="text-gray-500"> .invoiceId</span></span></li>
+                  <li class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full bg-rose-500"></span><span class="mono flex-1">Dispute<span class="text-gray-500"> .invoiceId</span></span></li>
+                  <li class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full bg-violet-500"></span><span class="mono flex-1">Report<span class="text-gray-500"> .invoices[]</span></span></li>
+                  <li class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full bg-violet-500"></span><span class="mono flex-1">ReportRow<span class="text-gray-500"> .invoiceRef</span></span></li>
+                  <li class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full bg-slate-400"></span><span class="mono flex-1">WebhookEvent<span class="text-gray-500"> .payload.invoice</span></span></li>
+                  <li class="flex items-center gap-2 text-xs"><span class="w-2 h-2 rounded-full bg-amber-500"></span><span class="mono flex-1">Invoice<span class="text-gray-500"> .parentInvoiceId</span> (self)</span></li>
+                </ul>
+              </div>
+
+              <div class="rounded-md border border-amber-200 dark:border-amber-700/40 bg-amber-50/40 dark:bg-amber-900/10 p-3">
+                <p class="text-[11px] text-amber-700 dark:text-amber-300 font-semibold mb-1 inline-flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Cycle detected</p>
+                <p class="text-[11px] text-amber-700 dark:text-amber-300"><span class="mono">Invoice → parentInvoiceId → Invoice</span> — fine for credit notes; flagged so codegen knows to emit a nullable ref.</p>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 pt-1">
+                <a href="detail-classes.html" class="px-3 py-1.5 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center justify-center gap-1.5"><i data-lucide="eye" class="w-3.5 h-3.5"></i> Open in list</a>
+                <button class="px-3 py-1.5 text-xs rounded-md bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center justify-center gap-1.5"><i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit class</button>
+              </div>
+            </div>
+
+            <div class="border-t border-gray-200 dark:border-gray-700 p-5 bg-gray-50/40 dark:bg-gray-900/30">
+              <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">Graph health</p>
+              <ul class="space-y-1.5 text-[11px]">
+                <li class="flex items-center justify-between"><span class="inline-flex items-center gap-1.5 text-gray-700 dark:text-gray-300"><i data-lucide="circle" class="w-3 h-3 text-emerald-500 icon-fill"></i> Connected components</span><span class="mono text-gray-500">3</span></li>
+                <li class="flex items-center justify-between"><span class="inline-flex items-center gap-1.5 text-gray-700 dark:text-gray-300"><i data-lucide="circle" class="w-3 h-3 text-amber-500 icon-fill"></i> Cycles</span><span class="mono text-gray-500">1</span></li>
+                <li class="flex items-center justify-between"><span class="inline-flex items-center gap-1.5 text-gray-700 dark:text-gray-300"><i data-lucide="circle" class="w-3 h-3 text-slate-400 icon-fill"></i> Orphans</span><span class="mono text-gray-500">2</span></li>
+                <li class="flex items-center justify-between"><span class="inline-flex items-center gap-1.5 text-gray-700 dark:text-gray-300"><i data-lucide="circle" class="w-3 h-3 text-rose-500 icon-fill"></i> PII-containing</span><span class="mono text-gray-500">3</span></li>
+                <li class="flex items-center justify-between"><span class="inline-flex items-center gap-1.5 text-gray-700 dark:text-gray-300"><i data-lucide="circle" class="w-3 h-3 text-orange-500 icon-fill"></i> Deprecated</span><span class="mono text-gray-500">1</span></li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const themeKey = 'projects-mockup-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

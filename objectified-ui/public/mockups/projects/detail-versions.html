@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projects · billing-api · Versions</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+    .icon-fill { fill: currentColor !important; }
+    .header-shell { background: linear-gradient(90deg, rgba(99,102,241,0.10) 0%, #ffffff 50%, rgba(217,70,239,0.05) 100%); }
+    .header-shell-dark { background: linear-gradient(90deg, rgba(99,102,241,0.10) 0%, #1f2937 50%, rgba(217,70,239,0.10) 100%); }
+    .lane-bg { background-image: repeating-linear-gradient(90deg, transparent 0 79px, rgba(148,163,184,0.18) 79px 80px); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <!-- Top bar -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="folders" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Acme Corp</span>
+      <span class="text-xs text-gray-400">/</span>
+      <a href="dashboard.html" class="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500">Projects</a>
+      <span class="text-xs text-gray-400">/</span>
+      <a href="detail.html" class="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500 mono">billing-api</a>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-700 dark:text-gray-200">Versions</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="../" class="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-500">← Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+
+    <!-- Sidebar -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto h-full flex flex-col">
+        <div class="p-3"><button class="w-full flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-left"><div class="w-8 h-8 rounded-md bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-xs">AC</div><div class="flex-1 min-w-0"><p class="text-xs text-gray-500 dark:text-gray-400">Tenant</p><p class="text-sm font-semibold truncate">Acme Corp</p></div><i data-lucide="chevrons-up-down" class="w-4 h-4 text-gray-400"></i></button></div>
+        <hr class="border-indigo-500/10 mx-3" />
+        <div class="p-4 flex-1">
+          <div class="mb-5">
+            <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Specifications</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-indigo-200 dark:border-indigo-700/70 bg-indigo-500/10"><i data-lucide="folders" class="w-5 h-5 text-indigo-500"></i><span class="text-sm font-semibold flex-1 text-indigo-600 dark:text-indigo-400">Projects</span><span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span></a></li>
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="git-branch" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Versions</span></a></li>
+              <li><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="globe-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Published</span></a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main column -->
+    <div class="flex-1 flex flex-col min-w-0">
+
+      <!-- Project header (shared shell) -->
+      <header class="border-b border-gray-200 dark:border-gray-700 header-shell dark:header-shell-dark">
+        <div class="px-6 py-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-start gap-4 min-w-0">
+              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold mono text-xl shadow-md shrink-0">BL</div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <a href="dashboard.html" class="text-xs text-gray-500 hover:text-indigo-500 inline-flex items-center gap-1"><i data-lucide="arrow-left" class="w-3 h-3"></i> All projects</a>
+                  <span class="text-gray-300 dark:text-gray-600">·</span>
+                  <span class="text-[11px] mono text-gray-500">prj_8a91f2c4-5d3b-4f1e-9a82-1b5e7c4a9b3d</span>
+                  <button class="text-gray-400 hover:text-indigo-500" title="Copy ID"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                </div>
+                <div class="flex items-center gap-2 mt-1">
+                  <h2 class="text-2xl font-bold leading-tight">billing-api</h2>
+                  <button class="text-amber-400 hover:text-amber-500" title="Unstar"><i data-lucide="star" class="w-5 h-5 icon-fill"></i></button>
+                </div>
+                <div class="flex items-center gap-2 mt-2 flex-wrap">
+                  <span class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"><span class="w-1 h-1 rounded-full bg-emerald-500"></span> Enabled</span>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">Finance</span>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 mono">v2.5.0 · published</span>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 inline-flex items-center gap-1"><i data-lucide="scale" class="w-3 h-3"></i> MIT</span>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 inline-flex items-center gap-1"><i data-lucide="users" class="w-3 h-3"></i> 8 contributors</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2"><i data-lucide="play" class="w-4 h-4"></i> Run lint</button>
+              <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2"><i data-lucide="git-branch-plus" class="w-4 h-4"></i> New version</button>
+              <button class="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2"><i data-lucide="rocket" class="w-4 h-4"></i> Publish</button>
+              <button class="p-2 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center justify-center"><i data-lucide="more-horizontal" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+
+          <!-- Sub-nav tabs (Versions active) -->
+          <nav class="mt-4 flex items-center gap-1 -mb-px">
+            <a href="detail.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Overview</a>
+            <a href="detail-versions.html" class="px-3 py-2 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 inline-flex items-center gap-2"><i data-lucide="git-branch" class="w-4 h-4"></i> Versions <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">9</span></a>
+            <a href="detail-classes.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="boxes" class="w-4 h-4"></i> Classes <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">32</span></a>
+            <a href="detail-properties.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="code" class="w-4 h-4"></i> Properties <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">218</span></a>
+            <a href="detail-published.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="globe-2" class="w-4 h-4"></i> Published <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">4</span></a>
+            <a href="detail-activity.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4"></i> Activity</a>
+            <a href="detail-settings.html" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-indigo-500 inline-flex items-center gap-2"><i data-lucide="settings-2" class="w-4 h-4"></i> Settings</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="flex-1 overflow-y-auto p-6 space-y-6">
+
+        <!-- Sub-page header -->
+        <section class="flex items-end justify-between gap-4 flex-wrap">
+          <div>
+            <h2 class="text-lg font-semibold flex items-center gap-2"><i data-lucide="git-branch" class="w-5 h-5 text-indigo-500"></i> Versions</h2>
+            <p class="text-xs text-gray-500 mono">9 total · 4 published · 2 drafts · 1 in review · 2 deprecated</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2"><i data-lucide="git-compare" class="w-4 h-4"></i> Compare</button>
+            <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Export bundle</button>
+            <button class="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center gap-2"><i data-lucide="git-branch-plus" class="w-4 h-4"></i> New version</button>
+          </div>
+        </section>
+
+        <!-- KPI strip -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <div class="flex items-center justify-between"><p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Latest published</p><i data-lucide="rocket" class="w-4 h-4 text-emerald-400"></i></div>
+            <p class="text-2xl font-bold mono mt-2">v2.5.0</p>
+            <p class="text-[11px] text-gray-500 mono mt-1">12 d ago · Kenji S.</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <div class="flex items-center justify-between"><p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">In flight</p><i data-lucide="file-edit" class="w-4 h-4 text-sky-400"></i></div>
+            <div class="flex items-end justify-between mt-2"><p class="text-2xl font-bold mono">3</p><p class="text-[11px] text-amber-500 mono">1 review</p></div>
+            <p class="text-[11px] text-gray-500 mono mt-1 truncate">v2.6.0-rc.1 · v2.6.0-draft · v2.7.0-draft</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <div class="flex items-center justify-between"><p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Avg. quality</p><i data-lucide="gauge" class="w-4 h-4 text-emerald-400"></i></div>
+            <div class="mt-2 flex items-center gap-3">
+              <span class="inline-flex items-center justify-center w-12 h-12 rounded-full border-[3px] border-emerald-500 mono font-bold text-emerald-600 dark:text-emerald-400 text-sm">90</span>
+              <div>
+                <p class="text-[11px] text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> +4 over 5 versions</p>
+                <p class="text-[11px] text-gray-500 mt-0.5">across 9 versions</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <div class="flex items-center justify-between"><p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Breaking changes</p><i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i></div>
+            <p class="text-2xl font-bold mono mt-2 text-amber-500">2</p>
+            <p class="text-[11px] text-gray-500 mt-1 mono truncate">last in v2.4.0 (3 mo ago)</p>
+          </div>
+        </section>
+
+        <!-- Quality + adoption trajectory -->
+        <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <i data-lucide="line-chart" class="w-5 h-5 text-indigo-500"></i>
+              <div>
+                <h3 class="text-base font-semibold">Trajectory</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Quality &amp; consumer adoption per version</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-1 text-[11px]">
+              <button class="px-2 py-1 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold">Quality</button>
+              <button class="px-2 py-1 rounded text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Adoption</button>
+              <button class="px-2 py-1 rounded text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Lint warnings</button>
+            </div>
+          </div>
+          <div class="p-5">
+            <svg viewBox="0 0 720 140" class="w-full h-32">
+              <defs>
+                <linearGradient id="qg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#10b981" stop-opacity="0.4"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/></linearGradient>
+              </defs>
+              <!-- baseline grid -->
+              <line x1="0" x2="720" y1="20" y2="20" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="2 4"/>
+              <line x1="0" x2="720" y1="60" y2="60" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="2 4"/>
+              <line x1="0" x2="720" y1="100" y2="100" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="2 4"/>
+              <text x="4" y="22" class="mono" font-size="9" fill="#94a3b8">100</text>
+              <text x="4" y="62" class="mono" font-size="9" fill="#94a3b8">80</text>
+              <text x="4" y="102" class="mono" font-size="9" fill="#94a3b8">60</text>
+              <!-- area + line for quality across 9 versions -->
+              <path d="M40,80 L120,76 L200,68 L280,62 L360,52 L440,46 L520,32 L600,28 L680,24 L680,130 L40,130 Z" fill="url(#qg)"/>
+              <path d="M40,80 L120,76 L200,68 L280,62 L360,52 L440,46 L520,32 L600,28 L680,24" fill="none" stroke="#10b981" stroke-width="2"/>
+              <!-- version dots + labels -->
+              <g font-size="9" class="mono" fill="#64748b" text-anchor="middle">
+                <g><circle cx="40" cy="80" r="3.5" fill="#94a3b8"/><text x="40" y="118">v2.0.0</text></g>
+                <g><circle cx="120" cy="76" r="3.5" fill="#94a3b8"/><text x="120" y="118">v2.1.0</text></g>
+                <g><circle cx="200" cy="68" r="3.5" fill="#f97316"/><text x="200" y="118">v2.2.0</text></g>
+                <g><circle cx="280" cy="62" r="3.5" fill="#f97316"/><text x="280" y="118">v2.3.0</text></g>
+                <g><circle cx="360" cy="52" r="3.5" fill="#10b981"/><text x="360" y="118">v2.4.0</text></g>
+                <g><circle cx="440" cy="46" r="3.5" fill="#10b981"/><text x="440" y="118">v2.4.1</text></g>
+                <g><circle cx="520" cy="32" r="3.5" fill="#10b981"/><text x="520" y="118">v2.5.0</text></g>
+                <g><circle cx="600" cy="28" r="3.5" fill="#94a3b8"/><text x="600" y="118">v2.6.0-d</text></g>
+                <g><circle cx="680" cy="24" r="3.5" fill="#f59e0b"/><text x="680" y="118">v2.6.0-rc</text></g>
+              </g>
+            </svg>
+            <div class="mt-2 flex items-center justify-between text-[11px] text-gray-500">
+              <div class="flex items-center gap-3">
+                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>Published</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span>Review</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-400"></span>Draft</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-orange-500"></span>Deprecated</span>
+              </div>
+              <span class="mono">+22 quality over project lifetime</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Toolbar -->
+        <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 flex items-center gap-3 flex-wrap">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button class="px-2.5 py-1 text-xs font-semibold rounded-md bg-indigo-600 text-white inline-flex items-center gap-1.5">All <span class="mono text-[10px] px-1 rounded bg-white/20">9</span></button>
+            <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Published <span class="mono text-[10px] text-gray-400">4</span></button>
+            <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Review <span class="mono text-[10px] text-gray-400">1</span></button>
+            <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Draft <span class="mono text-[10px] text-gray-400">2</span></button>
+            <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Deprecated <span class="mono text-[10px] text-gray-400">2</span></button>
+            <span class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1"></span>
+            <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-3 h-3 text-amber-500"></i> Breaking <span class="mono text-[10px] text-gray-400">2</span></button>
+            <button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center gap-1.5"><i data-lucide="user" class="w-3 h-3"></i> Mine</button>
+          </div>
+          <div class="flex-1"></div>
+          <div class="relative">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+            <input class="pl-7 pr-3 h-7 w-56 text-xs rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:border-indigo-500" placeholder="Search version, tag, author…" />
+          </div>
+          <div class="flex items-center text-xs rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <button class="px-2.5 py-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold inline-flex items-center gap-1.5"><i data-lucide="list" class="w-3.5 h-3.5"></i> List</button>
+            <button class="px-2.5 py-1 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-500 inline-flex items-center gap-1.5"><i data-lucide="git-merge" class="w-3.5 h-3.5"></i> Timeline</button>
+          </div>
+        </section>
+
+        <!-- Two-column body: timeline lane + versions table; with drawer to right -->
+        <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          <!-- Main column: list -->
+          <div class="xl:col-span-2 space-y-6">
+
+            <!-- Timeline lane -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <i data-lucide="git-merge" class="w-5 h-5 text-indigo-500"></i>
+                  <div>
+                    <h3 class="text-base font-semibold">Release lane</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Chronological — left = oldest</p>
+                  </div>
+                </div>
+                <p class="text-[11px] text-gray-400 mono">Q2 2024 → today</p>
+              </div>
+              <div class="p-5">
+                <div class="relative h-24 lane-bg rounded-md border border-dashed border-gray-200 dark:border-gray-700 px-2">
+                  <!-- spine -->
+                  <div class="absolute left-2 right-2 top-1/2 -translate-y-1/2 h-0.5 bg-gradient-to-r from-slate-300 via-emerald-400 to-amber-400"></div>
+                  <!-- nodes -->
+                  <div class="absolute top-1/2 -translate-y-1/2" style="left: 4%"><div class="w-3 h-3 rounded-full bg-orange-500 ring-2 ring-white dark:ring-gray-800" title="v2.0.0 deprecated"></div><span class="block text-[9px] mono text-gray-400 mt-1">v2.0.0</span></div>
+                  <div class="absolute top-1/2 -translate-y-1/2" style="left: 14%"><div class="w-3 h-3 rounded-full bg-orange-500 ring-2 ring-white dark:ring-gray-800"></div><span class="block text-[9px] mono text-gray-400 mt-1">v2.1.0</span></div>
+                  <div class="absolute top-1/2 -translate-y-1/2" style="left: 24%"><div class="w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-800"></div><span class="block text-[9px] mono text-gray-500 mt-1">v2.2.0</span></div>
+                  <div class="absolute top-1/2 -translate-y-1/2" style="left: 36%"><div class="w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-800"></div><span class="block text-[9px] mono text-gray-500 mt-1">v2.3.0</span></div>
+                  <div class="absolute top-1/2 -translate-y-1/2" style="left: 48%"><div class="w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-800"></div><span class="block text-[9px] mono text-gray-500 mt-1">v2.4.0 <span class="text-amber-500">!</span></span></div>
+                  <div class="absolute top-1/2 -translate-y-1/2" style="left: 58%"><div class="w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-800"></div><span class="block text-[9px] mono text-gray-500 mt-1">v2.4.1</span></div>
+                  <div class="absolute top-1/2 -translate-y-1/2" style="left: 70%"><div class="w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-800 shadow"></div><span class="block text-[10px] mono font-semibold text-emerald-600 dark:text-emerald-400 mt-1">v2.5.0</span></div>
+                  <div class="absolute top-1/2 -translate-y-1/2" style="left: 82%"><div class="w-3 h-3 rounded-full bg-slate-400 ring-2 ring-white dark:ring-gray-800"></div><span class="block text-[9px] mono text-gray-500 mt-1">v2.6.0-d</span></div>
+                  <div class="absolute top-1/2 -translate-y-1/2" style="left: 92%"><div class="w-3 h-3 rounded-full bg-amber-500 ring-2 ring-white dark:ring-gray-800 animate-pulse"></div><span class="block text-[9px] mono text-amber-500 font-semibold mt-1">v2.6.0-rc</span></div>
+                </div>
+                <p class="text-[11px] text-gray-500 mt-2 inline-flex items-center gap-1.5"><i data-lucide="info" class="w-3 h-3"></i> <span class="text-amber-500">!</span> indicates breaking changes vs previous version</p>
+              </div>
+            </div>
+
+            <!-- Versions table -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="text-[10px] uppercase tracking-wider text-gray-500 bg-gray-50 dark:bg-gray-900">
+                  <tr>
+                    <th class="text-left px-4 py-2.5 font-semibold">Version</th>
+                    <th class="text-left px-4 py-2.5 font-semibold">Status</th>
+                    <th class="text-left px-4 py-2.5 font-semibold">Changes</th>
+                    <th class="text-left px-4 py-2.5 font-semibold">Quality</th>
+                    <th class="text-left px-4 py-2.5 font-semibold">Author</th>
+                    <th class="text-right px-4 py-2.5 font-semibold">Updated</th>
+                    <th class="px-2 py-2.5"></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
+                  <tr class="bg-amber-50/30 dark:bg-amber-900/10 hover:bg-amber-50/60">
+                    <td class="px-4 py-3 mono text-xs font-semibold">v2.6.0-rc.1</td>
+                    <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Review</span></td>
+                    <td class="px-4 py-3 mono text-[11px]"><span class="text-emerald-500">+5</span> <span class="text-rose-500">-1</span> <span class="text-amber-500">~3</span> <span class="text-gray-400">classes</span></td>
+                    <td class="px-4 py-3 mono text-xs"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 text-[10px]">92</span></td>
+                    <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-[9px] inline-flex items-center justify-center">AL</span> Alex L.</span></td>
+                    <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">14 m ago</td>
+                    <td class="px-2 py-3 text-right"><div class="inline-flex gap-0.5"><button title="View" class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="eye" class="w-3.5 h-3.5 text-gray-400"></i></button><button title="Diff" class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="git-compare" class="w-3.5 h-3.5 text-gray-400"></i></button><button title="Promote" class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="rocket" class="w-3.5 h-3.5 text-indigo-500"></i></button></div></td>
+                  </tr>
+
+                  <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                    <td class="px-4 py-3 mono text-xs">v2.6.0-draft</td>
+                    <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200">Draft</span></td>
+                    <td class="px-4 py-3 mono text-[11px]"><span class="text-emerald-500">+5</span> <span class="text-amber-500">~1</span> <span class="text-gray-400">classes</span></td>
+                    <td class="px-4 py-3 mono text-xs"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-indigo-500 text-indigo-600 dark:text-indigo-400 text-[10px]">88</span></td>
+                    <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] inline-flex items-center justify-center">KS</span> Kenji S.</span></td>
+                    <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">2 h ago</td>
+                    <td class="px-2 py-3 text-right"><div class="inline-flex gap-0.5"><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="eye" class="w-3.5 h-3.5 text-gray-400"></i></button><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="git-compare" class="w-3.5 h-3.5 text-gray-400"></i></button><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="send" class="w-3.5 h-3.5 text-amber-500"></i></button></div></td>
+                  </tr>
+
+                  <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                    <td class="px-4 py-3 mono text-xs"><span class="text-emerald-500">●</span> v2.5.0 <span class="text-[10px] text-gray-400">latest</span></td>
+                    <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Published</span></td>
+                    <td class="px-4 py-3 mono text-[11px]"><span class="text-emerald-500">+8</span> <span class="text-amber-500">~4</span> <span class="text-gray-400">classes</span></td>
+                    <td class="px-4 py-3 mono text-xs"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 text-[10px]">94</span></td>
+                    <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] inline-flex items-center justify-center">KS</span> Kenji S.</span></td>
+                    <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">12 d ago</td>
+                    <td class="px-2 py-3 text-right"><div class="inline-flex gap-0.5"><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="eye" class="w-3.5 h-3.5 text-gray-400"></i></button><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="git-compare" class="w-3.5 h-3.5 text-gray-400"></i></button><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="copy" class="w-3.5 h-3.5 text-gray-400"></i></button></div></td>
+                  </tr>
+
+                  <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                    <td class="px-4 py-3 mono text-xs">v2.4.1</td>
+                    <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Published</span></td>
+                    <td class="px-4 py-3 mono text-[11px]"><span class="text-amber-500">~2</span> <span class="text-gray-400">classes · patch</span></td>
+                    <td class="px-4 py-3 mono text-xs"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 text-[10px]">91</span></td>
+                    <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-[9px] inline-flex items-center justify-center">AL</span> Alex L.</span></td>
+                    <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">1 mo ago</td>
+                    <td class="px-2 py-3 text-right"><div class="inline-flex gap-0.5"><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="eye" class="w-3.5 h-3.5 text-gray-400"></i></button><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="git-compare" class="w-3.5 h-3.5 text-gray-400"></i></button><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="copy" class="w-3.5 h-3.5 text-gray-400"></i></button></div></td>
+                  </tr>
+
+                  <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                    <td class="px-4 py-3 mono text-xs">v2.4.0 <i data-lucide="alert-triangle" class="w-3 h-3 inline text-amber-500" title="breaking"></i></td>
+                    <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Published</span></td>
+                    <td class="px-4 py-3 mono text-[11px]"><span class="text-emerald-500">+4</span> <span class="text-rose-500">-2</span> <span class="text-amber-500">~6</span> <span class="text-gray-400">· breaking</span></td>
+                    <td class="px-4 py-3 mono text-xs"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-indigo-500 text-indigo-600 dark:text-indigo-400 text-[10px]">87</span></td>
+                    <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-rose-500 text-white text-[9px] inline-flex items-center justify-center">JD</span> Jamie D.</span></td>
+                    <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">2 mo ago</td>
+                    <td class="px-2 py-3 text-right"><div class="inline-flex gap-0.5"><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="eye" class="w-3.5 h-3.5 text-gray-400"></i></button><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="git-compare" class="w-3.5 h-3.5 text-gray-400"></i></button><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="copy" class="w-3.5 h-3.5 text-gray-400"></i></button></div></td>
+                  </tr>
+
+                  <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                    <td class="px-4 py-3 mono text-xs text-gray-500">v2.3.0</td>
+                    <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">Deprecated</span></td>
+                    <td class="px-4 py-3 mono text-[11px] text-gray-400">+3 ~3 classes</td>
+                    <td class="px-4 py-3 mono text-xs"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-indigo-300 text-indigo-400 text-[10px]">88</span></td>
+                    <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-rose-500 text-white text-[9px] inline-flex items-center justify-center">JD</span> Jamie D.</span></td>
+                    <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">3 mo ago</td>
+                    <td class="px-2 py-3 text-right"><div class="inline-flex gap-0.5"><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="eye" class="w-3.5 h-3.5 text-gray-400"></i></button><button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="archive" class="w-3.5 h-3.5 text-gray-400"></i></button></div></td>
+                  </tr>
+
+                  <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                    <td class="px-4 py-3 mono text-xs text-gray-500">v2.2.0</td>
+                    <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Published</span></td>
+                    <td class="px-4 py-3 mono text-[11px] text-gray-400">+2 classes</td>
+                    <td class="px-4 py-3 mono text-xs"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-amber-400 text-amber-500 text-[10px]">82</span></td>
+                    <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] inline-flex items-center justify-center">KS</span> Kenji S.</span></td>
+                    <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">4 mo ago</td>
+                    <td class="px-2 py-3"></td>
+                  </tr>
+
+                  <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                    <td class="px-4 py-3 mono text-xs text-gray-500">v2.1.0 <i data-lucide="alert-triangle" class="w-3 h-3 inline text-amber-500"></i></td>
+                    <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">Deprecated</span></td>
+                    <td class="px-4 py-3 mono text-[11px] text-gray-400">+1 -2 ~5 · breaking</td>
+                    <td class="px-4 py-3 mono text-xs"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-amber-400 text-amber-500 text-[10px]">76</span></td>
+                    <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-[9px] inline-flex items-center justify-center">AL</span> Alex L.</span></td>
+                    <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">6 mo ago</td>
+                    <td class="px-2 py-3"></td>
+                  </tr>
+
+                  <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30">
+                    <td class="px-4 py-3 mono text-xs text-gray-500">v2.0.0</td>
+                    <td class="px-4 py-3"><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">Deprecated</span></td>
+                    <td class="px-4 py-3 mono text-[11px] text-gray-400">initial</td>
+                    <td class="px-4 py-3 mono text-xs"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-amber-400 text-amber-500 text-[10px]">72</span></td>
+                    <td class="px-4 py-3 text-xs text-gray-500"><span class="inline-flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] inline-flex items-center justify-center">KS</span> Kenji S.</span></td>
+                    <td class="px-4 py-3 text-right text-[11px] text-gray-500 mono">10 mo ago</td>
+                    <td class="px-2 py-3"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Right rail: selected version drawer (v2.6.0-rc.1) -->
+          <aside class="space-y-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-amber-200 dark:border-amber-700/40 overflow-hidden">
+              <div class="px-5 py-4 border-b border-amber-200 dark:border-amber-700/40 bg-amber-50/40 dark:bg-amber-900/10">
+                <p class="text-[10px] uppercase tracking-wider text-amber-700 dark:text-amber-300 font-semibold mb-1">Selected · in review</p>
+                <h3 class="text-base font-bold mono">v2.6.0-rc.1</h3>
+                <p class="text-[11px] text-gray-500 mt-1">created 14 m ago by <span class="text-gray-700 dark:text-gray-200">Alex L.</span></p>
+              </div>
+              <div class="p-5 space-y-4">
+                <div>
+                  <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Diff vs v2.5.0</p>
+                  <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/40 py-2"><p class="mono text-lg font-bold text-emerald-600 dark:text-emerald-400">+5</p><p class="text-[10px] text-emerald-700 dark:text-emerald-300">added</p></div>
+                    <div class="rounded-md bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-700/40 py-2"><p class="mono text-lg font-bold text-rose-600 dark:text-rose-400">−1</p><p class="text-[10px] text-rose-700 dark:text-rose-300">removed</p></div>
+                    <div class="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 py-2"><p class="mono text-lg font-bold text-amber-600 dark:text-amber-400">~3</p><p class="text-[10px] text-amber-700 dark:text-amber-300">changed</p></div>
+                  </div>
+                </div>
+
+                <div>
+                  <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Affected classes</p>
+                  <ul class="space-y-1 text-xs">
+                    <li class="flex items-center gap-2"><span class="mono text-emerald-500">+</span><span class="mono">Refund</span></li>
+                    <li class="flex items-center gap-2"><span class="mono text-emerald-500">+</span><span class="mono">RefundLine</span></li>
+                    <li class="flex items-center gap-2"><span class="mono text-emerald-500">+</span><span class="mono">DisputeNote</span></li>
+                    <li class="flex items-center gap-2"><span class="mono text-amber-500">~</span><span class="mono">Invoice</span><span class="text-[10px] text-gray-400">(+2 props)</span></li>
+                    <li class="flex items-center gap-2"><span class="mono text-amber-500">~</span><span class="mono">SettlementEvent</span><span class="text-[10px] text-gray-400">(rename)</span></li>
+                    <li class="flex items-center gap-2"><span class="mono text-rose-500">−</span><span class="mono">LegacyTaxLine</span></li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Lint &amp; quality</p>
+                  <div class="grid grid-cols-2 gap-2 text-[11px]">
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2 flex items-center gap-2"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 mono text-[10px]">92</span><div><p class="text-gray-500">Quality</p><p class="font-semibold">excellent</p></div></div>
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2 flex items-center gap-2"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 mono text-[10px]">A</span><div><p class="text-gray-500">Lint</p><p class="mono text-[10px]">0E · 2W</p></div></div>
+                  </div>
+                </div>
+
+                <div>
+                  <p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Reviewers</p>
+                  <ul class="space-y-1.5 text-xs">
+                    <li class="flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] inline-flex items-center justify-center">KS</span> Kenji S. <span class="ml-auto text-[10px] text-emerald-500 inline-flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> approved</span></li>
+                    <li class="flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-rose-500 text-white text-[9px] inline-flex items-center justify-center">JD</span> Jamie D. <span class="ml-auto text-[10px] text-amber-500 inline-flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> pending</span></li>
+                    <li class="flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-[9px] inline-flex items-center justify-center">RT</span> Riya T. <span class="ml-auto text-[10px] text-gray-400">requested</span></li>
+                  </ul>
+                </div>
+
+                <div class="pt-3 border-t border-gray-100 dark:border-gray-700 grid grid-cols-2 gap-2">
+                  <button class="px-3 py-1.5 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 inline-flex items-center justify-center gap-1.5"><i data-lucide="git-compare" class="w-3.5 h-3.5"></i> Open diff</button>
+                  <button class="px-3 py-1.5 text-xs rounded-md bg-indigo-600 hover:bg-indigo-700 text-white inline-flex items-center justify-center gap-1.5"><i data-lucide="rocket" class="w-3.5 h-3.5"></i> Promote</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tags / aliases -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+                <div class="flex items-center gap-3"><i data-lucide="tag" class="w-5 h-5 text-indigo-500"></i><h3 class="text-base font-semibold">Tags &amp; channels</h3></div>
+                <button class="text-xs text-indigo-500 hover:underline">Manage</button>
+              </div>
+              <div class="p-5 space-y-2 text-xs">
+                <div class="flex items-center justify-between"><span class="mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">latest</span><span class="text-gray-500 mono">→ v2.5.0</span></div>
+                <div class="flex items-center justify-between"><span class="mono px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">stable</span><span class="text-gray-500 mono">→ v2.5.0</span></div>
+                <div class="flex items-center justify-between"><span class="mono px-2 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">next</span><span class="text-gray-500 mono">→ v2.6.0-rc.1</span></div>
+                <div class="flex items-center justify-between"><span class="mono px-2 py-0.5 rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">lts-2024</span><span class="text-gray-500 mono">→ v2.4.1</span></div>
+              </div>
+            </div>
+          </aside>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const themeKey = 'projects-mockup-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>
