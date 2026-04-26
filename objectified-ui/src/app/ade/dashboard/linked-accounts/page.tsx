@@ -8,6 +8,7 @@ import {
   GitBranchPlus,
   Hourglass,
   Link as LinkIcon,
+  Link2,
   RefreshCw,
   Search,
   TimerReset,
@@ -553,6 +554,23 @@ const LinkedAccounts = () => {
           />
         ) : (
           <div className={`${dashboardPanelClass} overflow-hidden`}>
+            {/* Card header — same shape as the right-column cards so the
+                Linked accounts page reads as one consistent surface. */}
+            <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center gap-3">
+              <Link2 className="w-5 h-5 text-indigo-500 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                  Connected providers
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Sign-in identity + repository credentials. Click a row to drill into
+                  the repos using it.
+                </p>
+              </div>
+              <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 shrink-0">
+                {kpis.linked} linked
+              </span>
+            </div>
             {selectedIds.size === 0 ? (
               <div className="px-5 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/30 flex items-center gap-3 flex-wrap">
                 <div className="relative flex-1 min-w-[14rem] max-w-md">
