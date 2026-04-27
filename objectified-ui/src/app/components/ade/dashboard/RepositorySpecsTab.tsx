@@ -192,6 +192,8 @@ export function RepositorySpecsTab({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkPending, setIsBulkPending] = useState(false);
   const drawerRef = useRef<HTMLElement | null>(null);
+  const importNowEarlyRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const importNowLateRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (initialBranch && initialBranch !== branch) {
@@ -210,6 +212,13 @@ export function RepositorySpecsTab({
       drawerRef.current?.focus();
     }
   }, [selectedSpec]);
+
+  useEffect(() => {
+    return () => {
+      if (importNowEarlyRefreshTimerRef.current !== null) clearTimeout(importNowEarlyRefreshTimerRef.current);
+      if (importNowLateRefreshTimerRef.current !== null) clearTimeout(importNowLateRefreshTimerRef.current);
+    };
+  }, []);
 
   const loadSpecs = useCallback(async () => {
     if (!repositoryId) return;
@@ -364,6 +373,8 @@ export function RepositorySpecsTab({
     async (spec: RepositorySpecRecord) => {
       setOpenMenuFileId(null);
       setErrorMessage('');
+      setSuccessMessage('');
+      setImportNowJobId(null);
       try {
         const response = await fetch(
           `/api/repositories/${repositoryId}/specs/${spec.fileId}/import-now`,
@@ -390,10 +401,14 @@ export function RepositorySpecsTab({
         setSuccessMessage(
           `Import started (job ${jobId ? `${jobId.slice(0, 8)}…` : 'queued'}).`,
         );
-        setTimeout(() => { void loadSpecs(); }, 1500);
-        setTimeout(() => { void loadSpecs(); }, 5000);
+        if (importNowEarlyRefreshTimerRef.current !== null) clearTimeout(importNowEarlyRefreshTimerRef.current);
+        if (importNowLateRefreshTimerRef.current !== null) clearTimeout(importNowLateRefreshTimerRef.current);
+        importNowEarlyRefreshTimerRef.current = setTimeout(() => { void loadSpecs(); }, 1500);
+        importNowLateRefreshTimerRef.current = setTimeout(() => { void loadSpecs(); }, 5000);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Import Now failed';
+        setSuccessMessage('');
+        setImportNowJobId(null);
         setErrorMessage(message);
       }
     },

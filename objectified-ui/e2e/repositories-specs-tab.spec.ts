@@ -237,6 +237,17 @@ test.describe('REPO-9.4 — Specs tab', () => {
   });
 
   test('Import Now overflow action surfaces a success notification', async ({ page }) => {
+    const importNowFileId = seededSpecs[0].fileId;
+    await page.route(
+      `**/api/repositories/${repositoryId}/specs/${importNowFileId}/import-now`,
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, importJobId: 'abcdef12-0000-0000-0000-000000000000' }),
+        });
+      },
+    );
     await login(page);
     if (page.url().includes('/login')) {
       test.skip(true);
@@ -245,7 +256,7 @@ test.describe('REPO-9.4 — Specs tab', () => {
     await page.goto(`/ade/dashboard/repositories/${repositoryId}?tab=specs`);
     await page.getByTestId('spec-overflow-openapi/orders-v3.yaml').click();
     await page.getByTestId('spec-import-now-openapi/orders-v3.yaml').click();
-    await expect(page.getByTestId('spec-success')).toContainText('Queued import');
+    await expect(page.getByTestId('spec-success')).toContainText('Import started');
   });
 
   test('filter chip changes deep-link via the status query string', async ({ page }) => {

@@ -2065,11 +2065,11 @@ def test_import_now_rejects_disabled_import_and_unchanged_checksum() -> None:
             f"/v1/repositories/{_TENANT_SLUG}/{repository_id}/specs/{file_id}:importNow",
             json={"force": False},
         )
-        patch = client.patch(
+        patch_response = client.patch(
             f"/v1/repositories/{_TENANT_SLUG}/{repository_id}/specs/{file_id}",
             json={"importEnabled": True},
         )
-        opened_id = patch.json()["fileId"]
+        opened_id = patch_response.json()["fileId"]
         with patch("app.repositories_routes.db") as mdb:
             mdb.get_project_by_slug.return_value = {"id": "88888888-8888-8888-8888-888888888888"}
             mdb.get_latest_repository_source_checksum_for_project.return_value = (
@@ -2085,6 +2085,6 @@ def test_import_now_rejects_disabled_import_and_unchanged_checksum() -> None:
     assert create_response.status_code == 201
     assert disabled.status_code == 400
     assert disabled.json()["detail"]["code"] == "IMPORT_NOT_ENABLED"
-    assert patch.status_code == 200
+    assert patch_response.status_code == 200
     assert conflict.status_code == 409
     assert conflict.json()["detail"]["code"] == "IMPORT_UNCHANGED_CHECKSUM"
