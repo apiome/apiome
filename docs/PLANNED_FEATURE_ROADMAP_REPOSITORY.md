@@ -873,7 +873,7 @@ with REPO-10.3, REPO-10.4, REPO-10.5.
 |------------|--------------------------------------------------|--------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|-----|----------|-------|
 | REPO-11.1  | `repository_attention` rollup table + computer | (Shipped) Materialized rollup; events + hourly reconcile, `pg_notify`                                | `enhancement`, `mvp`, `repository`, `roadmap-repository`, `attention`, `database`, `rest` | Yes | No  | #2941 |
 | REPO-11.2  | Dashboard widget: "Repositories Needing Attention" | (Shipped) Top-N panel on `/ade/dashboard` from `GET /v1/dashboard/{tenant}/repository_attention?limit=5` + `odb.repository_attention` roll-up. | `enhancement`, `mvp`, `repository`, `roadmap-repository`, `attention`, `dashboard`, `ui` | Yes | Yes | #2942 |
-| REPO-11.3  | Dashboard widget: "Recent Imports Needing Attention" | Last N failed/warning import jobs sourced from repositories                                              | `enhancement`, `mvp`, `repository`, `roadmap-repository`, `attention`, `dashboard`, `ui`, `import` | Yes | Yes | #2943 |
+| REPO-11.3  | Dashboard widget: "Recent Imports Needing Attention" | (Shipped) Panel under REPO-11.2 on `/ade/dashboard` from `GET /v1/dashboard/{tenant}/recent_imports_attention?limit=5`, `POST …/dismiss`, `odb.user_settings`; same import-job store as sync-history. | `enhancement`, `mvp`, `repository`, `roadmap-repository`, `attention`, `dashboard`, `ui`, `import` | Yes | Yes | #2943 |
 | REPO-11.4  | Per-repo "Issues" tab                           | Repository detail tab listing actionable problems with "Fix" links (reconnect, edit manifest, retry import) | `enhancement`, `repository`, `roadmap-repository`, `attention`, `ui`             | No  | Yes | #2952 |
 
 ### Detailed issues
@@ -1188,7 +1188,6 @@ blocking.
 | 7     | REPO-12.1  | #2935 | auto-import worker + dispatch                       | Yes | E    |
 | 8     | REPO-12.3  | #2936 | version creation with provenance                    | Yes | E    |
 | 9     | REPO-12.4  | #2937 | repository_scan_report artifact                     | Yes | E    |
-| 15    | REPO-11.3  | #2943 | dashboard widget: Recent Imports Needing Attention  | Yes | D    |
 | 16    | REPO-12.6  | #2944 | audit + change-report linking for auto-imports      | Yes | E    |
 | 17    | REPO-10.1  | #2945 | Scanned Repository Report page                      | Yes | C    |
 | —     | _Repo-Scan v1 ships here. Items below are post-MVP._               |     |      |

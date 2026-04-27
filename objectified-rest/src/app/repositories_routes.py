@@ -17,7 +17,7 @@ from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from threading import Lock
 from typing import Any, Dict, Iterator, List, Literal, Optional, Sequence, Set, Tuple
 from uuid import UUID, uuid4
@@ -38,6 +38,7 @@ from .repositories.manifest import (
 )
 from .repositories.spec_detail import (
     MAX_INLINE_PREVIEW_BYTES,
+    _count_change_report_categories,
     derive_lint_summary,
     empty_lint_summary,
     provider_blob_url,
@@ -197,7 +198,12 @@ class RepositoryFileRecord(BaseModel):
     createdAt: str
 
 
-RepositoryImportJobSourceKind = Literal["repository_auto_import", "repository_manual_import"]
+RepositoryImportJobSourceKind = Literal[
+    "git",
+    "repository_sync",
+    "repository_auto_import",
+    "repository_manual_import",
+]
 
 
 class RepositoryImportJobRecord(BaseModel):
@@ -2684,6 +2690,147 @@ def _find_change_report_for_import_job(repository_id: str, import_job_id: str) -
         if report.importJobId == import_job_id:
             return report
     return None
+
+
+_RECENT_IMPORT_ATTENTION_SOURCE_KINDS: frozenset[str] = frozenset(
+    {"git", "repository_sync", "repository_auto_import", "repository_manual_import"}
+)
+
+
+def _import_job_created_within_recent_window(job: RepositoryImportJobRecord, cutoff_utc: datetime) -> bool:
+    dt = _parse_iso8601(job.createdAt, "createdAt")
+    if dt is None:
+        return False
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    cu = cutoff_utc if cutoff_utc.tzinfo else cutoff_utc.replace(tzinfo=timezone.utc)
+    return dt >= cu
+
+
+def _openapi_warnings_count(change_model: Dict[str, Any] | None) -> int:
+    if not isinstance(change_model, dict):
+        return 0
+    w = change_model.get("warnings")
+    return len(w) if isinstance(w, list) else 0
+
+
+def _import_job_matches_recent_attention_filters(
+    job: RepositoryImportJobRecord,
+    change_model: Dict[str, Any] | None,
+    cutoff_utc: datetime,
+) -> bool:
+    sk = str(job.sourceKind or "")
+    if sk not in _RECENT_IMPORT_ATTENTION_SOURCE_KINDS:
+        return False
+    if not _import_job_created_within_recent_window(job, cutoff_utc):
+        return False
+    breaking, _additive = _count_change_report_categories(change_model)
+    openapi_warn = _openapi_warnings_count(change_model)
+    conflict_n = len(job.conflictRecords or [])
+    if job.state == "failed":
+        return True
+    if job.state == "pending_review":
+        return True
+    if breaking > 0:
+        return True
+    if openapi_warn > 0:
+        return True
+    if conflict_n > 0:
+        return True
+    return False
+
+
+def _recent_import_attention_reason(job: RepositoryImportJobRecord, change_model: Dict[str, Any] | None) -> Tuple[str, str]:
+    """Return (reasonKind, primaryReason) for dashboard row copy."""
+    if job.state == "failed":
+        return ("failed", "failed")
+    if job.state == "pending_review":
+        return ("pending_review", "awaiting review")
+    breaking, _a = _count_change_report_categories(change_model)
+    if breaking > 0:
+        label = "breaking change" if breaking == 1 else "breaking changes"
+        return ("breaking", f"{breaking} {label}")
+    c = len(job.conflictRecords or [])
+    if c > 0:
+        return ("conflict", f"{c} conflict" if c == 1 else f"{c} conflicts")
+    ow = _openapi_warnings_count(change_model)
+    if ow > 0:
+        return ("warnings", f"{ow} warnings")
+    return ("other", "needs review")
+
+
+def collect_recent_import_attention_rows(
+    tenant_id: str,
+    *,
+    dismissed_import_job_ids: Set[str],
+    limit: int,
+) -> List[Dict[str, Any]]:
+    """Aggregate recent repository import jobs needing attention (REPO-11.3 / #2943).
+
+    Reads the same in-memory import job store as sync-history; filters match the
+    issue spec (source kinds, 7-day window, failed / pending review / breaking /
+    OpenAPI warnings / conflicts).
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+    triples: List[Tuple[RepositoryRecord, RepositoryImportJobRecord, Dict[str, Any] | None]] = []
+    with _STORE_LOCK:
+        tenant_map = _REPO_STORE.get(tenant_id, {})
+        for repo in tenant_map.values():
+            for job in _REPO_IMPORT_JOB_STORE.get(repo.id, []):
+                if job.id in dismissed_import_job_ids:
+                    continue
+                report = _find_change_report_for_import_job(repo.id, job.id)
+                cm: Dict[str, Any] | None = dict(report.changeModelJson) if report is not None else None
+                if not _import_job_matches_recent_attention_filters(job, cm, cutoff):
+                    continue
+                triples.append((repo, job, cm))
+
+    triples.sort(key=lambda t: _to_sort_key(t[1].createdAt, t[1].id), reverse=True)
+    triples = triples[: max(0, int(limit))]
+
+    out: List[Dict[str, Any]] = []
+    for repo, job, cm in triples:
+        project_label = job.targetProjectSlug or "—"
+        version_label = "—"
+        if job.targetVersionId:
+            try:
+                vr = db.get_version_for_tenant(tenant_id, job.targetVersionId)
+                if vr:
+                    version_label = str(vr.get("version_id") or "—")
+                    pn = vr.get("project_name")
+                    ps = vr.get("project_slug")
+                    if isinstance(pn, str) and pn.strip():
+                        project_label = pn.strip()
+                    elif isinstance(ps, str) and ps.strip():
+                        project_label = ps.strip()
+            except Exception:
+                version_label = "draft"
+
+        reason_kind, reason_text = _recent_import_attention_reason(job, cm)
+        cid = (job.changeReportId or "").strip()
+        if cid:
+            change_path = (
+                f"/ade/dashboard/repositories/{repo.id}?tab=sync&changeReportId="
+                f"{urllib_parse.quote(cid, safe='')}"
+            )
+        else:
+            change_path = f"/ade/dashboard/repositories/{repo.id}?tab=sync"
+
+        out.append(
+            {
+                "importJobId": job.id,
+                "repositoryId": repo.id,
+                "repositoryFullName": repo.fullName,
+                "projectName": project_label,
+                "versionLabel": version_label,
+                "state": job.state,
+                "reasonKind": reason_kind,
+                "primaryReason": reason_text,
+                "createdAt": job.createdAt,
+                "changeReportPath": change_path,
+            }
+        )
+    return out
 
 
 def _find_repository_file_row(

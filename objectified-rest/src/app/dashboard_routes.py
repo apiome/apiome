@@ -5,15 +5,16 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from .auth import validate_authentication
+from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
 from .repositories.attention import attention_detail_query_tab, top_reason_for_chips
 from .repositories_routes import (
     _REPOSITORY_SCOPE_READ,
     _require_repository_scope,
+    collect_recent_import_attention_rows,
     get_repository_corpus_rollup,
 )
 
@@ -66,6 +67,30 @@ class RepositoryAttentionResponse(BaseModel):
     needingAttentionCount: int
     otherHealthyCount: int
     refreshedAt: str
+
+
+class RecentImportAttentionItem(BaseModel):
+    """One row for Recent Imports Needing Attention (REPO-11.3 / #2943)."""
+
+    importJobId: str
+    repositoryId: str
+    repositoryFullName: str
+    projectName: str
+    versionLabel: str
+    state: str
+    reasonKind: str
+    primaryReason: str
+    createdAt: str
+    changeReportPath: str
+
+
+class RecentImportAttentionResponse(BaseModel):
+    items: List[RecentImportAttentionItem] = Field(default_factory=list)
+    refreshedAt: str
+
+
+class DismissRecentImportAttentionBody(BaseModel):
+    importJobId: str = Field(min_length=1)
 
 
 @router.get(
@@ -122,3 +147,51 @@ async def read_repository_attention(
         otherHealthyCount=other_healthy,
         refreshedAt=_now_iso(),
     )
+
+
+@router.get(
+    "/{tenant_slug}/recent_imports_attention",
+    response_model=RecentImportAttentionResponse,
+    summary="Recent repository import jobs needing review (repository.read).",
+)
+async def read_recent_imports_attention(
+    tenant_slug: str,
+    limit: int = Query(default=5, ge=1, le=50),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> RecentImportAttentionResponse:
+    def _now_iso() -> str:
+        return datetime.now(timezone.utc).isoformat()
+
+    _ = tenant_slug
+    _require_repository_scope(auth_data, _REPOSITORY_SCOPE_READ)
+    tenant_id = str(auth_data["tenant_id"])
+    uid = get_authenticated_user_id(auth_data)
+    dismissed: set[str] = set()
+    if uid:
+        dismissed = set(db.get_dismissed_recent_import_job_ids(str(uid), tenant_id))
+    rows = collect_recent_import_attention_rows(
+        tenant_id,
+        dismissed_import_job_ids=dismissed,
+        limit=limit,
+    )
+    items = [RecentImportAttentionItem(**row) for row in rows]
+    return RecentImportAttentionResponse(items=items, refreshedAt=_now_iso())
+
+
+@router.post(
+    "/{tenant_slug}/recent_imports_attention/dismiss",
+    summary="Dismiss one recent-import attention row for the current user (user_settings).",
+)
+async def dismiss_recent_import_attention_row(
+    tenant_slug: str,
+    body: DismissRecentImportAttentionBody,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Dict[str, bool]:
+    _ = tenant_slug
+    _require_repository_scope(auth_data, _REPOSITORY_SCOPE_READ)
+    tenant_id = str(auth_data["tenant_id"])
+    uid = get_authenticated_user_id(auth_data)
+    if not uid:
+        raise HTTPException(status_code=401, detail="User id required for dismissal")
+    db.dismiss_recent_import_attention_job(str(uid), tenant_id, body.importJobId.strip())
+    return {"ok": True}

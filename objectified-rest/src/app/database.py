@@ -6827,6 +6827,84 @@ class Database:
             return [], 0, 0
         return out_rows, total_tracked, needing
 
+    def get_user_settings(self, user_id: str, tenant_id: str) -> Dict[str, Any]:
+        """Tenant-scoped JSON preferences (REPO-11.3 / #2943). Empty dict if unavailable."""
+        try:
+            conn = self.connect()
+            with conn.cursor(cursor_factory=RealDictCursor) as c:
+                c.execute(
+                    """
+                    SELECT settings FROM odb.user_settings
+                    WHERE user_id = %s::uuid AND tenant_id = %s::uuid
+                    LIMIT 1
+                    """,
+                    (user_id, tenant_id),
+                )
+                row = c.fetchone()
+            if not row:
+                return {}
+            s = row.get("settings")
+            if isinstance(s, dict):
+                return dict(s)
+            return {}
+        except Exception as e:
+            _s = str(e).lower()
+            if "42p01" in _s or "undefinedtable" in _s or "does not exist" in _s:
+                return {}
+            _logger.debug("get_user_settings: %s", e)
+            return {}
+
+    def upsert_user_settings(self, user_id: str, tenant_id: str, settings: Dict[str, Any]) -> None:
+        conn = self.connect()
+        try:
+            with conn.cursor() as c:
+                c.execute(
+                    """
+                    INSERT INTO odb.user_settings (user_id, tenant_id, settings, updated_at)
+                    VALUES (%s::uuid, %s::uuid, %s::jsonb, CURRENT_TIMESTAMP)
+                    ON CONFLICT (user_id, tenant_id) DO UPDATE SET
+                      settings = EXCLUDED.settings,
+                      updated_at = CURRENT_TIMESTAMP
+                    """,
+                    (user_id, tenant_id, Json(settings)),
+                )
+            conn.commit()
+        except Exception as e:
+            if conn and not conn.closed:
+                conn.rollback()
+            _s = str(e).lower()
+            if "42p01" in _s or "undefinedtable" in _s or "does not exist" in _s:
+                return
+            raise
+
+    def get_dismissed_recent_import_job_ids(self, user_id: str, tenant_id: str) -> List[str]:
+        s = self.get_user_settings(user_id, tenant_id)
+        dash = s.get("dashboard") if isinstance(s.get("dashboard"), dict) else {}
+        raw = dash.get("recentImportsAttentionDismissedIds")
+        if not isinstance(raw, list):
+            return []
+        out: List[str] = []
+        seen: Set[str] = set()
+        for x in raw:
+            if isinstance(x, str) and x not in seen:
+                seen.add(x)
+                out.append(x)
+        return out
+
+    def dismiss_recent_import_attention_job(self, user_id: str, tenant_id: str, import_job_id: str) -> None:
+        cur = self.get_user_settings(user_id, tenant_id)
+        dash = dict(cur.get("dashboard")) if isinstance(cur.get("dashboard"), dict) else {}
+        ids = dash.get("recentImportsAttentionDismissedIds")
+        merged: List[str] = []
+        if isinstance(ids, list):
+            merged = [str(x) for x in ids if isinstance(x, str)]
+        if import_job_id not in merged:
+            merged.append(import_job_id)
+        merged = merged[-200:]
+        dash["recentImportsAttentionDismissedIds"] = merged
+        cur["dashboard"] = dash
+        self.upsert_user_settings(user_id, tenant_id, cur)
+
 
 # Global database instance
 db = Database()

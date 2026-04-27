@@ -22,6 +22,7 @@ import {
 } from '@/app/components/ade/dashboard/dashboardScreenClasses';
 import { RepositoryKpiCard } from '@/app/components/ade/dashboard/RepositoryKpiCard';
 import { RepositoryAttentionWidget } from '@/app/components/ade/dashboard/RepositoryAttentionWidget';
+import { RecentImportsAttentionWidget } from '@/app/components/ade/dashboard/RecentImportsAttentionWidget';
 import {
   deriveRepositoryKpis,
   formatScanDuration,
@@ -344,6 +345,7 @@ const Dashboard = () => {
         />
         <div className="flex min-w-0 flex-col gap-6 lg:col-start-2">
         <RepositoryAttentionWidget />
+        <RecentImportsAttentionWidget />
         <div className={`${dashboardPanelClass} overflow-hidden`}>
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
             <div className="flex items-center gap-3">

@@ -2442,6 +2442,43 @@ def test_repository_attention_full_name_uses_rid_when_owner_or_name_missing() ->
     assert items["repo-only-name"] == "myrepo"
 
 
+def test_recent_imports_attention_requires_repository_read_scope() -> None:
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        response = client.get(f"/v1/dashboard/{_TENANT_SLUG}/recent_imports_attention?limit=5")
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+    assert response.status_code == 403
+    assert response.json()["detail"]["code"] == "REPOSITORY_SCOPE_REQUIRED"
+
+
+def test_recent_imports_attention_returns_shape_and_empty() -> None:
+    app.dependency_overrides[validate_authentication] = _override_auth_with_repository_scopes
+    try:
+        r = client.get(f"/v1/dashboard/{_TENANT_SLUG}/recent_imports_attention?limit=5")
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["items"] == []
+    assert "refreshedAt" in body
+
+
+def test_recent_imports_attention_dismiss_calls_db() -> None:
+    app.dependency_overrides[validate_authentication] = _override_auth_with_repository_scopes
+    try:
+        with patch("app.dashboard_routes.db") as mdb:
+            r = client.post(
+                f"/v1/dashboard/{_TENANT_SLUG}/recent_imports_attention/dismiss",
+                json={"importJobId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"},
+            )
+            assert mdb.dismiss_recent_import_attention_job.called
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+    assert r.status_code == 200, r.text
+    assert r.json() == {"ok": True}
+
+
 def test_repository_corpus_stats_matches_latest_scan_rollup() -> None:
     app.dependency_overrides[validate_authentication] = _override_auth_with_repository_scopes
     try:
