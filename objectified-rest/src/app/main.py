@@ -37,12 +37,13 @@ from .change_report_routes import router as change_report_router
 from .version_change_report_routes import router as version_change_report_router
 from .change_report_template_routes import router as change_report_template_router
 from .repositories_routes import process_pending_repository_scans, router as repositories_router
+from .dashboard_routes import router as dashboard_router
 
 # Create FastAPI app
 app = FastAPI(
     title="Objectified REST API",
     description="REST API for serving OpenAPI specifications from the Objectified database",
-    version="1.0.44"
+    version="1.0.45"
 )
 
 
@@ -112,6 +113,7 @@ app.include_router(change_report_router)
 app.include_router(version_change_report_router)
 app.include_router(change_report_template_router)
 app.include_router(repositories_router)
+app.include_router(dashboard_router)
 
 
 _webhook_delivery_task: asyncio.Task | None = None

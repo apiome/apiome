@@ -498,6 +498,13 @@ _REPO_FILE_CONTENT_STORE: Dict[Tuple[str, str], bytes] = {}
 # Latest materialized scan reports (REPO-10.1 / REPO-12.4). One row is appended
 # per completed or failed scan; list views read the latest per repository.
 _REPO_SCAN_REPORT_STORE: Dict[str, List[Dict[str, Any]]] = {}
+# Per-tenant roll-up of corpus metrics for REPO-10.3 / #2949, refreshed on scan
+# report append, repository register, and repository delete.
+_REPO_CORPUS_ROLLUP: Dict[str, Dict[str, Any]] = {}
+# Per-repo snapshot of the latest scan report totals, updated in _append_scan_report_row
+# (under _STORE_LOCK). Used by _refresh_repository_corpus_rollup_unsafe to avoid
+# scanning the full scan-report list on every rollup, reducing lock hold time.
+_REPO_LATEST_REPORT_TOTALS: Dict[str, Dict[str, Any]] = {}
 _STORE_LOCK = Lock()
 _SYSTEM_ACTOR_ID = "00000000-0000-0000-0000-000000000000"
 
@@ -1482,6 +1489,47 @@ def _append_scan_report_row(
     bucket.append(row)
     if len(bucket) > 200:
         bucket[:] = bucket[-200:]
+    _REPO_LATEST_REPORT_TOTALS[repository_id] = row.get("totalsJson") or {}
+    try:
+        _rollup_tid = _find_tenant_id_for_repository(repository_id)
+    except ValueError:
+        return
+    _refresh_repository_corpus_rollup_unsafe(_rollup_tid)
+
+
+def _refresh_repository_corpus_rollup_unsafe(tenant_id: str) -> Dict[str, Any]:
+    """Recompute per-tenant corpus stats for the dashboard. Caller must hold _STORE_LOCK."""
+    tenant_repos = list(_REPO_STORE.get(tenant_id, {}).values())
+    repositories_tracked = len(tenant_repos)
+    importable_specs = 0
+    awaiting_selection = 0
+    parse_errors = 0
+    manifest_errors = 0
+    for repo in tenant_repos:
+        tj = _REPO_LATEST_REPORT_TOTALS.get(repo.id)
+        if isinstance(tj, dict):
+            importable_specs += int(tj.get("importable", 0) or 0)
+            awaiting_selection += int(tj.get("awaitingSelection", 0) or 0)
+            parse_errors += int(tj.get("parseError", 0) or 0)
+            manifest_errors += int(tj.get("manifestError", 0) or 0)
+    payload: Dict[str, Any] = {
+        "repositoriesTracked": repositories_tracked,
+        "importableSpecs": importable_specs,
+        "awaitingSelection": awaiting_selection,
+        "parseErrors": parse_errors,
+        "manifestErrors": manifest_errors,
+        "refreshedAt": _utc_now_iso(),
+    }
+    _REPO_CORPUS_ROLLUP[tenant_id] = payload
+    return payload
+
+
+def get_repository_corpus_rollup(tenant_id: str) -> Dict[str, Any]:
+    """Return tenant corpus stats, computing and caching the roll-up on first use."""
+    with _STORE_LOCK:
+        if tenant_id in _REPO_CORPUS_ROLLUP:
+            return dict(_REPO_CORPUS_ROLLUP[tenant_id])
+        return dict(_refresh_repository_corpus_rollup_unsafe(tenant_id))
 
 
 def _reports_for_repository_newest_first(repository_id: str) -> List[Dict[str, Any]]:
@@ -2707,6 +2755,7 @@ async def register_repository(
             and _is_manifest_project_auto_create_enabled(auth_data),
         }
         tenant_repos[repository.id] = repository
+        _refresh_repository_corpus_rollup_unsafe(tenant_id)
         _audit_token_row = _append_audit_row(
             tenant_id,
             repository_id,
@@ -3215,6 +3264,9 @@ async def delete_repository(
         for scan in scan_history:
             _REPO_SCAN_FILE_HISTORY_STORE.pop(scan.id, None)
         _REPO_CREDENTIAL_REF_STORE.pop(repository_id, None)
+        _REPO_SCAN_REPORT_STORE.pop(repository_id, None)
+        _REPO_LATEST_REPORT_TOTALS.pop(repository_id, None)
+        _refresh_repository_corpus_rollup_unsafe(tenant_id)
         _audit_row = _append_audit_row(
             tenant_id,
             repository_id,
@@ -4271,6 +4323,7 @@ def _reset_repository_state_for_tests() -> None:
         _REPO_IMPORT_NOW_IDEMPOTENCY.clear()
         _REPO_FILE_CONTENT_STORE.clear()
         _REPO_SCAN_REPORT_STORE.clear()
+        _REPO_CORPUS_ROLLUP.clear()
 
 
 def _complete_repository_scan_for_tests(

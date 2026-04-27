@@ -753,7 +753,7 @@ decision loop.
 | Roadmap ID | Title                                            | Description                                                                                                  | Labels                                                                              | MVP | Parallel | Issue |
 |------------|--------------------------------------------------|--------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|-----|----------|-------|
 | REPO-10.1  | "Scanned Repository Report" page (tenant-wide)  | New page at `/ade/dashboard/repositories/reports` listing every repository, last scan, importable counts    | `enhancement`, `mvp`, `repository`, `roadmap-repository`, `repository-report`, `ui`  | Yes | No       | #2945 |
-| REPO-10.3  | Cross-repo aggregate stats card                 | Top-of-page stat cards: total repos, importable specs, parse errors, manifest errors, awaiting-selection    | `enhancement`, `repository`, `roadmap-repository`, `repository-report`, `ui`         | No  | Yes      | #2949 |
+| REPO-10.3  | Cross-repo aggregate stats card (shipped)        | Top-of-page stat cards: total repos, importable specs, parse errors, manifest errors, awaiting-selection; `GET /v1/dashboard/{tenant}/repository_corpus_stats` + `odb.repository_corpus_stats_rollup`    | `enhancement`, `repository`, `roadmap-repository`, `repository-report`, `ui`         | No  | Yes      | #2949 |
 | REPO-10.4  | Report export (CSV + JSON)                      | Stream-export the current filtered report; capped at 100k rows; reuses the existing audit-export pipeline   | `enhancement`, `repository`, `roadmap-repository`, `repository-report`, `rest`       | No  | Yes      | #2950 |
 | REPO-10.5  | Saved filters per user                          | Persist named filters ("All failing on prod", "Awaiting selection in core repos") in `user_settings`        | `enhancement`, `repository`, `roadmap-repository`, `repository-report`, `ui`         | No  | Yes      | #2951 |
 
@@ -1193,7 +1193,7 @@ blocking.
 | 17    | REPO-10.1  | #2945 | Scanned Repository Report page                      | Yes | C    |
 | —     | _Repo-Scan v1 ships here. Items below are post-MVP._               |     |      |
 | 20    | REPO-9.7   | #2948 | bulk select + apply across discovered files        | No  | B    |
-| 21    | REPO-10.3  | #2949 | cross-repo aggregate stats card                    | No  | C    |
+| 21    | REPO-10.3  | #2949 | cross-repo aggregate stats card                    | Yes | C    |
 | 22    | REPO-10.4  | #2950 | report export (CSV + JSON)                         | No  | C    |
 | 23    | REPO-10.5  | #2951 | saved filters per user                             | No  | C    |
 | 24    | REPO-11.4  | #2952 | per-repo "Issues" tab                              | No  | D    |
