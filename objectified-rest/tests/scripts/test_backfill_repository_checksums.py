@@ -64,7 +64,7 @@ class _FakeConnection:
 def test_validate_repository_source_payload_normalizes_expected_fields() -> None:
     mod = _load_backfill_module()
     payload = {
-        "repositoryId": "00000000-0000-0000-0000-000000000555",
+        "repositoryId": "123e4567-e89b-42d3-a456-426614174000",
         "branch": "main",
         "path": "apis/openapi.yaml",
         "commitSha": "A" * 40,
@@ -84,7 +84,7 @@ def test_validate_repository_source_payload_normalizes_expected_fields() -> None
 
 def test_validate_repository_source_payload_rejects_missing_required_fields() -> None:
     mod = _load_backfill_module()
-    normalized, error = mod.validate_repository_source_payload({"repositoryId": "00000000-0000-0000-0000-000000000555"})
+    normalized, error = mod.validate_repository_source_payload({"repositoryId": "123e4567-e89b-42d3-a456-426614174000"})
 
     assert normalized is None
     assert error is not None
@@ -194,7 +194,7 @@ def test_migrate_version_repository_source_migrates_valid_and_rejects_invalid(mo
 
     valid_metadata = {
         "repositorySource": {
-            "repositoryId": "00000000-0000-0000-0000-000000000555",
+            "repositoryId": "123e4567-e89b-42d3-a456-426614174000",
             "branch": "main",
             "path": "apis/openapi.yaml",
             "commitSha": "a" * 40,

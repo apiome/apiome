@@ -17,7 +17,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
-from uuid import UUID
+from uuid import UUID, RFC_4122
 
 import httpx
 import psycopg2
@@ -104,7 +104,12 @@ def _normalize_uuid(raw: Any) -> str | None:
     if not candidate:
         return None
     try:
-        return str(UUID(candidate))
+        parsed = UUID(candidate)
+        if parsed.variant != RFC_4122:
+            return None
+        if parsed.version not in (1, 2, 3, 4, 5):
+            return None
+        return str(parsed)
     except ValueError:
         return None
 
