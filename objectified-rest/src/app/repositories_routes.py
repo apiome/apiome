@@ -373,6 +373,27 @@ class RepositorySpecContentResponse(BaseModel):
     fetchedAt: str
 
 
+class RepositoryScanReportListItem(BaseModel):
+    repositoryId: str
+    fullName: str
+    provider: str
+    owner: str
+    name: str
+    branchCount: int
+    lastScanAt: str | None
+    lastScanId: str | None
+    totals: Dict[str, Any] | None
+    attentionScore: int
+    stale: bool
+
+
+class RepositoryScanReportListResponse(BaseModel):
+    items: List[RepositoryScanReportListItem]
+    total: int
+    page: int
+    pageSize: int
+
+
 class RepositoryResolvedProjectRecord(BaseModel):
     id: str
     tenantId: str
@@ -412,6 +433,9 @@ _REPO_IMPORT_NOW_IDEMPOTENCY: Dict[Tuple[str, str, str], Tuple[str, float]] = {}
 # stub the GitHub Contents API; production path falls back to the live
 # provider fetch when no entry is present.
 _REPO_FILE_CONTENT_STORE: Dict[Tuple[str, str], bytes] = {}
+# Latest materialized scan reports (REPO-10.1 / REPO-12.4). One row is appended
+# per completed or failed scan; list views read the latest per repository.
+_REPO_SCAN_REPORT_STORE: Dict[str, List[Dict[str, Any]]] = {}
 _STORE_LOCK = Lock()
 _SYSTEM_ACTOR_ID = "00000000-0000-0000-0000-000000000000"
 
@@ -935,6 +959,13 @@ def _process_single_pending_repository_scan(
                     "error": str(exc),
                 },
             )
+            _append_scan_report_row(
+                repository_id,
+                failed_scan.id,
+                generated_at=now,
+                classified_files=None,
+                scan_failed=True,
+            )
         return True, [audit]
 
     now = _utc_now_iso()
@@ -1056,6 +1087,13 @@ def _process_single_pending_repository_scan(
                     "diffSummary": completed_scan.diffSummary,
                 },
             )
+        )
+        _append_scan_report_row(
+            repository_id,
+            completed_scan.id,
+            generated_at=now,
+            classified_files=classified_files,
+            scan_failed=False,
         )
     return True, pending_audit_rows
 
@@ -1188,6 +1226,117 @@ def _to_summary(repo: RepositoryRecord) -> Dict[str, Any]:
         "createdAt": repo.createdAt,
         "updatedAt": repo.updatedAt,
     }
+
+
+def _count_committed_imports_for_scan(repository_id: str, scan_id: str) -> int:
+    jobs = _REPO_IMPORT_JOB_STORE.get(repository_id, [])
+    return sum(1 for job in jobs if job.scanId == scan_id and job.state == "committed")
+
+
+def _build_scan_report_totals_json(
+    repository_id: str,
+    scan_id: str,
+    classified_files: Sequence[RepositoryFileRecord],
+    *,
+    scan_failed: bool,
+) -> Dict[str, int]:
+    if scan_failed:
+        return {
+            "discovered": 0,
+            "importable": 0,
+            "imported": 0,
+            "failing": 0,
+            "parse_error": 0,
+            "manifest_error": 0,
+            "awaiting_selection": 0,
+            "scanFailed": 1,
+        }
+    imported = _count_committed_imports_for_scan(repository_id, scan_id)
+    importable = 0
+    parse_error = 0
+    manifest_error = 0
+    awaiting = 0
+    for f in classified_files:
+        if not f.tracked:
+            continue
+        conf = f.confidence if f.confidence is not None else 0.0
+        has_format = f.format is not None and (not isinstance(f.format, str) or bool(f.format.strip()))
+        is_high_conf = conf >= 0.5 and has_format
+        if f.status == "parse_error":
+            parse_error += 1
+        if f.status == "manifest_error":
+            manifest_error += 1
+        if is_high_conf and f.status not in ("parse_error", "manifest_error"):
+            importable += 1
+        if is_high_conf and f.status not in ("parse_error", "manifest_error") and not f.importEnabled:
+            awaiting += 1
+    failing = parse_error + manifest_error
+    return {
+        "discovered": len(classified_files),
+        "importable": importable,
+        "imported": imported,
+        "failing": failing,
+        "parse_error": parse_error,
+        "manifest_error": manifest_error,
+        "awaiting_selection": awaiting,
+        "scanFailed": 0,
+    }
+
+
+def _scan_report_attention_score(
+    totals: Dict[str, int], *, last_scan_at: str | None, now_ms: float | None = None
+) -> int:
+    """Derive 0–100 attention score: failures, awaiting selection, scan failure, and staleness (>7d)."""
+    if now_ms is None:
+        now_ms = time.time() * 1000.0
+    failing = int(totals.get("failing", 0) or 0)
+    awaiting = int(totals.get("awaiting_selection", 0) or 0)
+    scan_failed = int(totals.get("scanFailed", 0) or 0)
+    score = min(100, failing * 12 + awaiting * 6 + scan_failed * 25)
+    if last_scan_at:
+        parsed = _parse_iso8601(last_scan_at, "lastScanAt")
+        if parsed is not None:
+            days = (now_ms - parsed.timestamp() * 1000.0) / (24 * 60 * 60 * 1000.0)
+            if days > 7:
+                score = min(100, score + 15)
+    return int(score)
+
+
+def _append_scan_report_row(
+    repository_id: str,
+    scan_id: str,
+    *,
+    generated_at: str,
+    classified_files: Sequence[RepositoryFileRecord] | None,
+    scan_failed: bool,
+) -> None:
+    raw_totals = _build_scan_report_totals_json(
+        repository_id, scan_id, classified_files or [], scan_failed=scan_failed
+    )
+    t_int: Dict[str, int] = {k: int(v) for k, v in raw_totals.items()}
+    attention = _scan_report_attention_score(t_int, last_scan_at=generated_at)
+    row = {
+        "id": str(uuid4()),
+        "scanId": scan_id,
+        "repositoryId": repository_id,
+        "generatedAt": generated_at,
+        "totalsJson": {
+            "discovered": int(raw_totals.get("discovered", 0)),
+            "importable": int(raw_totals.get("importable", 0)),
+            "imported": int(raw_totals.get("imported", 0)),
+            "failing": int(raw_totals.get("failing", 0)),
+            "parseError": int(raw_totals.get("parse_error", 0)),
+            "manifestError": int(raw_totals.get("manifest_error", 0)),
+            "awaitingSelection": int(raw_totals.get("awaiting_selection", 0)),
+            "scanFailed": bool(int(raw_totals.get("scanFailed", 0))),
+        },
+        "attentionScore": attention,
+        "payloadJson": [],
+    }
+    bucket = _REPO_SCAN_REPORT_STORE.setdefault(repository_id, [])
+    bucket.append(row)
+    if len(bucket) > 200:
+        bucket[:] = bucket[-200:]
 
 
 def _append_audit_row(
@@ -2330,6 +2479,119 @@ async def list_repositories(
         tenant_repos = list(_REPO_STORE.get(tenant_id, {}).values())
     tenant_repos.sort(key=lambda repo: repo.updatedAt, reverse=True)
     return {"repositories": [_to_summary(repo) for repo in tenant_repos]}
+
+
+def _last_scan_effective_time(raw: str | None) -> float:
+    if not raw:
+        return 0.0
+    parsed = _parse_iso8601(raw, "lastScanAt")
+    if parsed is None:
+        return 0.0
+    return parsed.timestamp() * 1000.0
+
+
+def _is_scan_timestamp_stale(last_scan_at: str | None, *, now_ms: float | None = None) -> bool:
+    if not last_scan_at:
+        return False
+    if now_ms is None:
+        now_ms = time.time() * 1000.0
+    return now_ms - _last_scan_effective_time(last_scan_at) > 7 * 24 * 60 * 60 * 1000.0
+
+
+@router.get("/{tenant_slug}/scan-reports", response_model=RepositoryScanReportListResponse)
+async def list_repository_scan_reports(
+    tenant_slug: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+    provider: str = Query("all", pattern="^(all|github|gitlab|bitbucket)$"),
+    status: str = Query("all", pattern="^(all|importable|imported|failing|awaiting|stale)$"),
+    q: str = Query(""),
+    page: int = Query(1, ge=1),
+    pageSize: int = Query(25, ge=1, le=100),
+) -> RepositoryScanReportListResponse:
+    _require_repository_scope(auth_data, _REPOSITORY_SCOPE_READ)
+    tenant_id = auth_data["tenant_id"]
+    now_ms = time.time() * 1000.0
+    qn = (q or "").strip().lower()
+    with _STORE_LOCK:
+        tenant_repos = list(_REPO_STORE.get(tenant_id, {}).values())
+    rows: List[RepositoryScanReportListItem] = []
+    for repo in tenant_repos:
+        if provider != "all" and repo.provider != provider:
+            continue
+        if qn:
+            blob = f"{repo.fullName} {repo.name} {repo.owner} {repo.id}".lower()
+            if qn not in blob:
+                continue
+        last_scan = _get_repository_last_scan(repo.id)
+        last_scan_at: str | None = None
+        if last_scan is not None:
+            last_scan_at = (last_scan.finishedAt or last_scan.startedAt or last_scan.createdAt) or None
+        last_scan_id = last_scan.id if last_scan is not None else None
+        rlist = _REPO_SCAN_REPORT_STORE.get(repo.id, [])
+        latest: Dict[str, Any] | None = max(rlist, key=lambda r: r["generatedAt"]) if rlist else None
+        totals = None
+        attention = 0
+        if latest is not None:
+            tj = latest.get("totalsJson")
+            if isinstance(tj, dict):
+                totals = dict(tj)
+            attention = int(latest.get("attentionScore", 0) or 0)
+        elif last_scan_at:
+            attention = _scan_report_attention_score(
+                {"failing": 0, "awaiting_selection": 0, "scanFailed": 0},
+                last_scan_at=last_scan_at,
+                now_ms=now_ms,
+            )
+        stale = _is_scan_timestamp_stale(last_scan_at, now_ms=now_ms)
+        if status == "importable":
+            if not totals or int(totals.get("importable", 0) or 0) < 1:
+                continue
+        elif status == "imported":
+            if not totals or int(totals.get("imported", 0) or 0) < 1:
+                continue
+        elif status == "failing":
+            if not totals:
+                continue
+            perr = int(totals.get("parseError", 0) or 0)
+            merr = int(totals.get("manifestError", 0) or 0)
+            fail = int(totals.get("failing", 0) or 0) or perr + merr
+            if fail < 1 and not bool(totals.get("scanFailed")):
+                continue
+        elif status == "awaiting":
+            if not totals or int(totals.get("awaitingSelection", 0) or 0) < 1:
+                continue
+        elif status == "stale":
+            if not stale:
+                continue
+        rows.append(
+            RepositoryScanReportListItem(
+                repositoryId=repo.id,
+                fullName=repo.fullName,
+                provider=repo.provider,
+                owner=repo.owner,
+                name=repo.name,
+                branchCount=len(repo.branches),
+                lastScanAt=last_scan_at,
+                lastScanId=last_scan_id,
+                totals=totals,
+                attentionScore=attention,
+                stale=stale,
+            )
+        )
+
+    rows.sort(
+        key=lambda item: (item.attentionScore, _last_scan_effective_time(item.lastScanAt or "")),
+        reverse=True,
+    )
+    total = len(rows)
+    off = (page - 1) * pageSize
+    page_items = rows[off : off + pageSize]
+    return RepositoryScanReportListResponse(
+        items=page_items,
+        total=total,
+        page=page,
+        pageSize=pageSize,
+    )
 
 
 @router.get("/{tenant_slug}/{repository_id}", response_model=RepositoryRecord)
@@ -3600,6 +3862,7 @@ def _reset_repository_state_for_tests() -> None:
         _REPO_VERSION_STORE.clear()
         _REPO_IMPORT_NOW_IDEMPOTENCY.clear()
         _REPO_FILE_CONTENT_STORE.clear()
+        _REPO_SCAN_REPORT_STORE.clear()
 
 
 def _complete_repository_scan_for_tests(
@@ -3801,6 +4064,13 @@ def _complete_repository_scan_for_tests(
                 "diffSummary": completed_scan.diffSummary,
             },
         ))
+        _append_scan_report_row(
+            repository_id,
+            completed_scan.id,
+            generated_at=now,
+            classified_files=classified_files,
+            scan_failed=False,
+        )
 
     for _audit_row in pending_audit_rows:
         _persist_audit_row(_audit_row)

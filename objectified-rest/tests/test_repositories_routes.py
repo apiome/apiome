@@ -2347,3 +2347,56 @@ def test_spec_content_requires_repository_read_scope() -> None:
     assert response is not None
     assert response.status_code == 403
     assert response.json()["detail"]["code"] == "REPOSITORY_SCOPE_REQUIRED"
+
+
+def test_scan_reports_list_requires_repository_read_scope() -> None:
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        response = client.get(f"/v1/repositories/{_TENANT_SLUG}/scan-reports")
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+    assert response.status_code == 403
+    assert response.json()["detail"]["code"] == "REPOSITORY_SCOPE_REQUIRED"
+
+
+def test_scan_reports_list_includes_materialized_row_after_scan() -> None:
+    app.dependency_overrides[validate_authentication] = _override_auth_with_repository_scopes
+    try:
+        create_response = client.post(
+            f"/v1/repositories/{_TENANT_SLUG}",
+            json={
+                "linkedAccountId": "aaaaaaaa-bbbb-cccc-dddd-000000000088",
+                "provider": "github",
+                "owner": "acme",
+                "name": "scan-report-probe",
+                "branches": [{"branch": "main"}],
+            },
+        )
+        repository_id = create_response.json()["repository"]["id"]
+        scan_id = create_response.json()["initialScanJobId"]
+        _complete_repository_scan_for_tests(
+            repository_id,
+            scan_id,
+            commit_sha="abc1234",
+            files=[
+                {
+                    "path": "specs/api.yaml",
+                    "format": "openapi_3.1",
+                    "confidence": 0.9,
+                    "tracked": True,
+                }
+            ],
+        )
+        list_response = client.get(f"/v1/repositories/{_TENANT_SLUG}/scan-reports")
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+
+    assert create_response.status_code == 201
+    assert list_response.status_code == 200
+    body = list_response.json()
+    assert body["total"] >= 1
+    item = next((row for row in body["items"] if row["repositoryId"] == repository_id), None)
+    assert item is not None
+    assert item["totals"] is not None
+    assert int(item["totals"]["importable"]) >= 1
+    assert item["lastScanId"] == scan_id

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Activity,
   AlertTriangle,
@@ -376,7 +377,18 @@ const RepositoriesPage = () => {
                 <h2 className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">
                   {copy.pageTitle}
                 </h2>
-                <p className={repositoryHeaderEyebrowClass}>{headerEyebrow}</p>
+                <p className={repositoryHeaderEyebrowClass}>
+                  {headerEyebrow}
+                  <span className="mx-2 text-gray-400" aria-hidden>
+                    ·
+                  </span>
+                  <Link
+                    className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                    href="/ade/dashboard/repositories/reports"
+                  >
+                    {copy.scanReportsLink}
+                  </Link>
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">

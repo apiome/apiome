@@ -132,6 +132,7 @@ export interface RepositoriesI18nBundle {
   sortFavoritesFirst: string;
   paginationFooterFormat: string;
   viewAllLink: string;
+  scanReportsLink: string;
 }
 
 export const repositoriesI18n: Record<RepositoriesLocale, RepositoriesI18nBundle> = {
@@ -271,6 +272,7 @@ export const repositoriesI18n: Record<RepositoriesLocale, RepositoriesI18nBundle
     sortFavoritesFirst: 'Favorites first',
     paginationFooterFormat: 'Showing {visible} of {total}',
     viewAllLink: 'View all repositories →',
+    scanReportsLink: 'Scan reports',
   },
 };
 
