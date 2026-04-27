@@ -270,6 +270,7 @@ _SYSTEM_ACTOR_ID = "00000000-0000-0000-0000-000000000000"
 RepositoryAuditEvent = Literal[
     "repository.registered",
     "repository.scanned",
+    "repository.scan.skipped_checksum",
     "repository.sync_committed",
     "repository.sync_pending_review",
     "repository.sync_failed",
@@ -767,6 +768,7 @@ def _process_single_pending_repository_scan(
         return True, [audit]
 
     now = _utc_now_iso()
+    # Phase 3a: classify files under lock (read-heavy, no DB calls).
     with _STORE_LOCK:
         repository = _REPO_STORE.get(tenant_id, {}).get(repository_id)
         history = _REPO_SCAN_HISTORY_STORE.get(repository_id, [])
@@ -801,6 +803,26 @@ def _process_single_pending_repository_scan(
             current_files=current_files,
             previous_files=previous_files,
         )
+        force = _scan_force_enabled(history[scan_index])
+
+    # Phase 3b: precompute checksums outside lock (blocking DB lookups).
+    precomputed_checksums = _precompute_latest_checksums(
+        tenant_id=tenant_id,
+        repository_id=repository_id,
+        scan_files=classified_files,
+        force=force,
+    )
+
+    # Phase 4: dispatch import jobs and commit scan state under lock.
+    with _STORE_LOCK:
+        repository = _REPO_STORE.get(tenant_id, {}).get(repository_id)
+        history = _REPO_SCAN_HISTORY_STORE.get(repository_id, [])
+        if repository is None or not history:
+            return False, []
+        scan_index = next((idx for idx, row in enumerate(history) if row.id == scan_id and row.status == "pending"), None)
+        if scan_index is None:
+            return False, []
+
         _REPO_SCAN_FILE_HISTORY_STORE[scan_id] = classified_files
 
         pending_audit_rows = _dispatch_import_jobs_for_scan(
@@ -811,8 +833,9 @@ def _process_single_pending_repository_scan(
             commit_sha=commit_sha,
             scan_files=classified_files,
             actor_id=_SYSTEM_ACTOR_ID,
-            force=_scan_force_enabled(history[scan_index]),
+            force=force,
             diff_summary=diff_summary,
+            precomputed_checksums=precomputed_checksums,
         )
 
         completed_scan = history[scan_index].model_copy(
@@ -1416,6 +1439,55 @@ def _latest_repository_source_checksum_for_file(
         return None
 
 
+def _precompute_latest_checksums(
+    *,
+    tenant_id: str,
+    repository_id: str,
+    scan_files: List[RepositoryFileRecord],
+    force: bool,
+) -> Dict[str, str | None]:
+    """Pre-fetch the latest stored contentChecksum for each modified tracked file.
+
+    Must be called **outside** ``_STORE_LOCK`` as it performs blocking DB lookups.
+    Returns a mapping of file path -> latest stored checksum (or None when unavailable).
+    Caches per-slug project_id to avoid redundant ``get_project_by_slug`` calls per scan.
+    """
+    if force:
+        return {}
+    project_id_cache: Dict[str, str | None] = {}
+    result: Dict[str, str | None] = {}
+    for file_row in scan_files:
+        if file_row.status != "modified" or not file_row.tracked:
+            continue
+        if _normalize_content_checksum(file_row.contentChecksum) is None:
+            continue
+        project_slug = _normalize_slug(file_row.projectSlug)
+        if project_slug is None:
+            result[file_row.path] = None
+            continue
+        try:
+            if project_slug not in project_id_cache:
+                project = db.get_project_by_slug(project_slug, tenant_id)
+                raw_id = project.get("id") if project else None
+                project_id_cache[project_slug] = (
+                    raw_id if isinstance(raw_id, str) and raw_id.strip() else None
+                )
+            project_id = project_id_cache[project_slug]
+            if project_id is None:
+                result[file_row.path] = None
+                continue
+            result[file_row.path] = db.get_latest_repository_source_checksum_for_project(
+                tenant_id,
+                repository_id,
+                file_row.path,
+                project_id,
+            )
+        except Exception:
+            # Best-effort optimization; scan completion should not fail on lookup issues.
+            result[file_row.path] = None
+    return result
+
+
 def _dispatch_import_jobs_for_scan(
     *,
     tenant_id: str,
@@ -1427,10 +1499,12 @@ def _dispatch_import_jobs_for_scan(
     actor_id: str,
     force: bool,
     diff_summary: Dict[str, int],
+    precomputed_checksums: Dict[str, str | None] | None = None,
 ) -> List[Dict[str, Any]]:
     repository_jobs = _REPO_IMPORT_JOB_STORE.setdefault(repository_id, [])
     manifest_project_slug_by_path = _manifest_project_slug_by_path(repository_id)
     pending_audit_rows: List[Dict[str, Any]] = []
+    checksums = precomputed_checksums or {}
     for file_row in scan_files:
         if file_row.status not in {"new", "modified", "removed"}:
             continue
@@ -1439,11 +1513,7 @@ def _dispatch_import_jobs_for_scan(
         if file_row.status == "modified" and not force:
             current_checksum = _normalize_content_checksum(file_row.contentChecksum)
             if current_checksum is not None:
-                latest_checksum = _latest_repository_source_checksum_for_file(
-                    tenant_id=tenant_id,
-                    repository_id=repository_id,
-                    file_row=file_row,
-                )
+                latest_checksum = checksums.get(file_row.path)
                 if latest_checksum == current_checksum:
                     file_row.status = "unchanged_checksum"
                     diff_summary["modified"] = max(0, int(diff_summary.get("modified", 0)) - 1)

@@ -1468,7 +1468,7 @@ class Database:
         path: str,
         project_id: str,
     ) -> Optional[str]:
-        """Get latest repository_source.contentChecksum for a specific project/path tuple."""
+        """Get latest repository_source.contentChecksum for a specific (tenant_id, project_id, repository_id, path) tuple."""
         query = """
             SELECT v.repository_source->>'contentChecksum' AS content_checksum
             FROM odb.versions v
