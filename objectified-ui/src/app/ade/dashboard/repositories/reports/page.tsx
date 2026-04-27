@@ -15,7 +15,9 @@ import {
   repositoryHeaderEyebrowClass,
   repositoryHeaderIconTileClass,
   repositoryHeaderShellClass,
+  repositoryKpiCardClass,
 } from '@/app/components/ade/dashboard/dashboardScreenClasses';
+import { subscribeRepositoryCorpusStatsRefresh } from '@/app/utils/repository-dashboard-broadcast';
 
 const PROVIDERS = [
   { id: 'all', label: 'All' },
@@ -55,6 +57,15 @@ type ScanReportRow = {
   totals: ScanReportTotals | null;
   attentionScore: number;
   stale: boolean;
+};
+
+type RepositoryCorpusStats = {
+  repositoriesTracked: number;
+  importableSpecs: number;
+  awaitingSelection: number;
+  parseErrors: number;
+  manifestErrors: number;
+  refreshedAt: string;
 };
 
 function formatLastScan(value: string | null): string {
@@ -102,6 +113,9 @@ export default function ScanReportsPage() {
   const [pageSize] = useState(25);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [corpusStats, setCorpusStats] = useState<RepositoryCorpusStats | null>(null);
+  const [corpusLoading, setCorpusLoading] = useState(true);
+  const [corpusError, setCorpusError] = useState('');
 
   const urlProvider = searchParams.get('provider') || 'all';
   const urlStatus = searchParams.get('status') || 'all';
@@ -155,11 +169,52 @@ export default function ScanReportsPage() {
     }
   }, [pageSize, urlPage, urlProvider, urlQ, urlStatus]);
 
+  const loadCorpusStats = useCallback(async (signal?: AbortSignal) => {
+    setCorpusLoading(true);
+    setCorpusError('');
+    try {
+      const res = await fetch('/api/dashboard/repository-corpus-stats', { signal, cache: 'no-store' });
+      const body = await res.json();
+      if (!res.ok || !body.success) {
+        throw new Error(typeof body.error === 'string' ? body.error : 'Failed to load corpus stats');
+      }
+      setCorpusStats(body.data as RepositoryCorpusStats);
+    } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') return;
+      setCorpusError(e instanceof Error ? e.message : 'Failed to load corpus stats');
+    } finally {
+      setCorpusLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     void load(controller.signal);
     return () => controller.abort();
   }, [load]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadCorpusStats(controller.signal);
+    return () => controller.abort();
+  }, [loadCorpusStats]);
+
+  useEffect(() => {
+    return subscribeRepositoryCorpusStatsRefresh(() => {
+      void load();
+      void loadCorpusStats();
+    });
+  }, [load, loadCorpusStats]);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void loadCorpusStats();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [loadCorpusStats]);
 
   useEffect(() => {
     return () => {
@@ -232,6 +287,96 @@ export default function ScanReportsPage() {
               {error}
             </Alert>
           )}
+          {corpusError && (
+            <Alert variant="error" onClose={() => setCorpusError('')}>
+              {corpusError}
+            </Alert>
+          )}
+
+          <section
+            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5"
+            aria-label="Cross-repository corpus summary"
+          >
+            {(
+              [
+                {
+                  id: 'repos' as const,
+                  stat: (c: RepositoryCorpusStats) => c.repositoriesTracked,
+                  label: 'Repositories',
+                  sub: 'tracked',
+                  match: () => urlStatus === 'all',
+                  onSelect: () => setQuery({ status: 'all', page: 1 }),
+                },
+                {
+                  id: 'importable' as const,
+                  stat: (c: RepositoryCorpusStats) => c.importableSpecs,
+                  label: 'Importable',
+                  sub: 'specs',
+                  match: () => urlStatus === 'importable',
+                  onSelect: () => setQuery({ status: 'importable', page: 1 }),
+                },
+                {
+                  id: 'awaiting' as const,
+                  stat: (c: RepositoryCorpusStats) => c.awaitingSelection,
+                  label: 'Awaiting',
+                  sub: 'selection',
+                  match: () => urlStatus === 'awaiting',
+                  onSelect: () => setQuery({ status: 'awaiting', page: 1 }),
+                },
+                {
+                  id: 'parse' as const,
+                  stat: (c: RepositoryCorpusStats) => c.parseErrors,
+                  label: 'Parse',
+                  sub: 'errors',
+                  match: () => urlStatus === 'failing',
+                  onSelect: () => setQuery({ status: 'failing', page: 1 }),
+                },
+                {
+                  id: 'manifest' as const,
+                  stat: (c: RepositoryCorpusStats) => c.manifestErrors,
+                  label: 'Manifest',
+                  sub: 'errors',
+                  match: () => urlStatus === 'failing',
+                  onSelect: () => setQuery({ status: 'failing', page: 1 }),
+                },
+              ] as const
+            ).map((card) => {
+              const active = card.match();
+              const n = corpusStats != null ? card.stat(corpusStats) : null;
+              return (
+                <button
+                  type="button"
+                  key={card.id}
+                  onClick={card.onSelect}
+                  className={cn(
+                    repositoryKpiCardClass,
+                    'text-left w-full min-h-[8.5rem] flex flex-col justify-between transition-shadow',
+                    'hover:border-indigo-300 dark:hover:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1',
+                    active
+                      ? 'ring-2 ring-indigo-500 border-indigo-500 dark:ring-indigo-400'
+                      : 'border-gray-200 dark:border-gray-700',
+                  )}
+                  aria-pressed={active}
+                >
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                      {card.label}
+                    </p>
+                    {corpusLoading && corpusStats == null ? (
+                      <div className="mt-2">
+                        <Skeleton className="h-9 w-20" />
+                      </div>
+                    ) : (
+                      <p className="text-3xl font-bold font-mono leading-none text-gray-900 dark:text-gray-100 mt-2">
+                        {n == null || corpusError ? '—' : n}
+                      </p>
+                    )}
+                    <p className="text-[11px] mt-1.5 text-gray-500 dark:text-gray-400">{card.sub}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </section>
 
           <section
             className="rounded-lg border border-gray-200/80 dark:border-slate-600/50 bg-white/90 dark:bg-slate-800/30 p-4"

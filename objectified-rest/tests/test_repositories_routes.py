@@ -2359,6 +2359,82 @@ def test_scan_reports_list_requires_repository_read_scope() -> None:
     assert response.json()["detail"]["code"] == "REPOSITORY_SCOPE_REQUIRED"
 
 
+def test_repository_corpus_stats_requires_repository_read_scope() -> None:
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        response = client.get(f"/v1/dashboard/{_TENANT_SLUG}/repository_corpus_stats")
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+    assert response.status_code == 403
+    assert response.json()["detail"]["code"] == "REPOSITORY_SCOPE_REQUIRED"
+
+
+def test_repository_corpus_stats_matches_latest_scan_rollup() -> None:
+    app.dependency_overrides[validate_authentication] = _override_auth_with_repository_scopes
+    try:
+        create_response = client.post(
+            f"/v1/repositories/{_TENANT_SLUG}",
+            json={
+                "linkedAccountId": "aaaaaaaa-bbbb-cccc-dddd-000000000201",
+                "provider": "github",
+                "owner": "acme",
+                "name": "corpus-rollup",
+                "branches": [{"branch": "main"}],
+            },
+        )
+        assert create_response.status_code == 201, create_response.text
+        create_body = create_response.json()
+        repository_id = create_body["repository"]["id"]
+        scan_id = create_body["initialScanJobId"]
+        _complete_repository_scan_for_tests(
+            repository_id,
+            scan_id,
+            commit_sha="c1",
+            files=[
+                {
+                    "path": "specs/api.yaml",
+                    "format": "openapi_3.1",
+                    "confidence": 0.9,
+                    "tracked": True,
+                },
+            ],
+        )
+        stats = client.get(f"/v1/dashboard/{_TENANT_SLUG}/repository_corpus_stats")
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+
+    assert stats.status_code == 200, stats.text
+    s = stats.json()
+    assert s["repositoriesTracked"] >= 1
+    assert s["importableSpecs"] >= 1
+    assert s["refreshedAt"]
+
+
+def test_register_repository_recomputes_corpus_rollup() -> None:
+    app.dependency_overrides[validate_authentication] = _override_auth_with_repository_scopes
+    try:
+        c1 = client.get(f"/v1/dashboard/{_TENANT_SLUG}/repository_corpus_stats")
+        assert c1.status_code == 200
+        before = c1.json()["repositoriesTracked"]
+        r = client.post(
+            f"/v1/repositories/{_TENANT_SLUG}",
+            json={
+                "linkedAccountId": "aaaaaaaa-bbbb-cccc-dddd-000000000202",
+                "provider": "github",
+                "owner": "acme",
+                "name": "corpus-track-count",
+                "branches": [{"branch": "main"}],
+            },
+        )
+        assert r.status_code == 201, r.text
+        c2 = client.get(f"/v1/dashboard/{_TENANT_SLUG}/repository_corpus_stats")
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+    assert c2.status_code == 200
+    after = c2.json()["repositoriesTracked"]
+    assert after == before + 1
+
+
 def test_scan_reports_list_includes_materialized_row_after_scan() -> None:
     app.dependency_overrides[validate_authentication] = _override_auth_with_repository_scopes
     try:
