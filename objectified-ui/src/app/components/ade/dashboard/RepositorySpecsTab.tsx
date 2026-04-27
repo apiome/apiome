@@ -591,7 +591,7 @@ export function RepositorySpecsTab({
           // true server state instead of rolling back to a stale snapshot.
           bulkOptSnapshotRef.current = null;
           void loadSpecs();
-          toast.error(`Partial update: ${succeededChunks} of ${idChunks.length} chunk(s) applied. ${message}`, {
+          toast.error(`Partial update: ${succeededChunks} of ${idChunks.length} chunk(s) applied. Error: ${message}`, {
             id: 'spec-bulk-error',
           });
         } else {
