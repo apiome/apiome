@@ -81,7 +81,7 @@ Optional **`changeReport`** on each item mirrors a join against the linked seman
 | **`changeReport.summaryKind`** | **`breaking`** \| **`additive`** \| **`none`** — rollup from change-report category counts at import time. |
 | **`changeReport.breakingChangeCount`** | Integer breaking-change count stored on the audit row for governance queries. |
 
-Counts and summary kind are also present on **`detail`** as **`changeReportBreakingChangeCount`**, **`changeReportAdditiveChangeCount`**, **`changeReportSummaryKind`** (camelCase JSON). Legacy rows without **`changeReportId`** omit **`changeReport`**.
+Counts and summary kind are also present on **`detail`** as **`changeReportBreakingChangeCount`**, **`changeReportAdditiveChangeCount`**, **`changeReportSummaryKind`** (camelCase JSON). When no linked change report is available — including legacy rows without **`changeReportId`** and rows for other actions — **`changeReport`** is returned as **`null`**.
 
 ## `version.rollback` detail shape (`#2582`)
 

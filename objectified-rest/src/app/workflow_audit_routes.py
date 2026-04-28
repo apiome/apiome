@@ -129,7 +129,9 @@ def _auto_import_change_report_projection(detail: Dict[str, Any]) -> WorkflowAud
     bc_raw = detail.get("changeReportBreakingChangeCount")
     if bc_raw is None:
         bc_raw = detail.get("breaking_change_count")
-    ad_raw = detail.get("changeReportAdditiveChangeCount") or detail.get("additive_change_count")
+    ad_raw = detail.get("changeReportAdditiveChangeCount")
+    if ad_raw is None:
+        ad_raw = detail.get("additive_change_count")
     bc_i: int
     ad_i: int
     try:

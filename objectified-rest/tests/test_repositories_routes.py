@@ -970,6 +970,7 @@ def test_dispatch_chain_selection_mode_checksum_and_auto_import_audit() -> None:
     assert auto_rows[0]["detail"]["changeReportId"] == jobs[0].changeReportId
     assert auto_rows[0]["detail"]["changeReportSummaryKind"] in ("breaking", "additive", "none")
     assert isinstance(auto_rows[0]["detail"]["changeReportBreakingChangeCount"], int)
+    assert isinstance(auto_rows[0]["detail"]["changeReportAdditiveChangeCount"], int)
     assert auto_rows[0]["detail"]["contentChecksumShort"] == ("f" * 64)[:12]
 
 

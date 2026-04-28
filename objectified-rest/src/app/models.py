@@ -1658,7 +1658,7 @@ class WorkflowAuditChangeReportJoinOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     id: str
-    summary_kind: str = Field(serialization_alias="summaryKind")
+    summary_kind: Literal["breaking", "additive", "none"] = Field(serialization_alias="summaryKind")
     breaking_change_count: int = Field(serialization_alias="breakingChangeCount")
 
 
