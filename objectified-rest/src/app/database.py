@@ -3,7 +3,7 @@ import psycopg2.errors
 import json
 import logging
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 import bcrypt
 import numpy as np
 from psycopg2.extras import Json, RealDictCursor, execute_values
@@ -6939,6 +6939,164 @@ class Database:
         merged = merged[-200:]
         dash["recentImportsAttentionDismissedIds"] = merged
         cur["dashboard"] = dash
+        self.upsert_user_settings(user_id, tenant_id, cur)
+
+    def insert_repository_import_notification_if_absent(
+        self,
+        *,
+        tenant_id: str,
+        import_job_id: str,
+        recipient_user_id: str,
+        repository_id: str,
+        title: str,
+        body: str,
+        primary_link: str,
+        payload: Dict[str, Any],
+    ) -> bool:
+        """Insert one in-app row per (tenant, job, user); return True when a new row was inserted."""
+        try:
+            conn = self.connect()
+            with conn.cursor() as c:
+                c.execute(
+                    """
+                    INSERT INTO odb.repository_import_notification (
+                      tenant_id, import_job_id, recipient_user_id, repository_id,
+                      title, body, primary_link, payload
+                    )
+                    VALUES (%s::uuid, %s, %s::uuid, %s::uuid, %s, %s, %s, %s::jsonb)
+                    ON CONFLICT (tenant_id, import_job_id, recipient_user_id) DO NOTHING
+                    RETURNING id
+                    """,
+                    (
+                        tenant_id,
+                        import_job_id,
+                        recipient_user_id,
+                        repository_id,
+                        title,
+                        body,
+                        primary_link,
+                        Json(payload),
+                    ),
+                )
+                row = c.fetchone()
+            conn.commit()
+            return row is not None
+        except Exception as e:
+            cnx = self.connection
+            if cnx and not cnx.closed:
+                cnx.rollback()
+            _s = str(e).lower()
+            if "42p01" in _s or "does not exist" in _s or "undefinedtable" in _s:
+                _logger.debug("insert_repository_import_notification_if_absent skipped: %s", e)
+                return False
+            raise
+
+    def mark_repository_import_notifications_read_for_job(
+        self, user_id: str, tenant_id: str, import_job_id: str
+    ) -> None:
+        try:
+            conn = self.connect()
+            with conn.cursor() as c:
+                c.execute(
+                    """
+                    UPDATE odb.repository_import_notification
+                    SET read_at = COALESCE(read_at, CURRENT_TIMESTAMP)
+                    WHERE tenant_id = %s::uuid
+                      AND recipient_user_id = %s::uuid
+                      AND import_job_id = %s
+                    """,
+                    (tenant_id, user_id, import_job_id),
+                )
+            conn.commit()
+        except Exception as e:
+            cnx = self.connection
+            if cnx and not cnx.closed:
+                cnx.rollback()
+            _s = str(e).lower()
+            if "42p01" in _s or "does not exist" in _s or "undefinedtable" in _s:
+                _logger.debug("mark_repository_import_notifications_read_for_job skipped: %s", e)
+                return
+            raise
+
+    def count_unread_repository_import_notifications(self, user_id: str, tenant_id: str) -> int:
+        try:
+            conn = self.connect()
+            with conn.cursor() as c:
+                c.execute(
+                    """
+                    SELECT COUNT(*)::int
+                    FROM odb.repository_import_notification
+                    WHERE tenant_id = %s::uuid
+                      AND recipient_user_id = %s::uuid
+                      AND read_at IS NULL
+                    """,
+                    (tenant_id, user_id),
+                )
+                row = c.fetchone()
+            return int(row[0]) if row and row[0] is not None else 0
+        except Exception as e:
+            _s = str(e).lower()
+            if "42p01" in _s or "does not exist" in _s or "undefinedtable" in _s:
+                return 0
+            _logger.debug("count_unread_repository_import_notifications: %s", e)
+            return 0
+
+    def list_repository_import_notifications(
+        self, user_id: str, tenant_id: str, *, limit: int
+    ) -> List[Dict[str, Any]]:
+        try:
+            conn = self.connect()
+            with conn.cursor(cursor_factory=RealDictCursor) as c:
+                c.execute(
+                    """
+                    SELECT id::text AS id, import_job_id AS "importJobId",
+                           repository_id::text AS "repositoryId",
+                           title, body, primary_link AS "primaryLink",
+                           payload, read_at AS "readAt",
+                           created_at AS "createdAt"
+                    FROM odb.repository_import_notification
+                    WHERE tenant_id = %s::uuid AND recipient_user_id = %s::uuid
+                    ORDER BY created_at DESC
+                    LIMIT %s
+                    """,
+                    (tenant_id, user_id, limit),
+                )
+                rows = c.fetchall() or []
+            return [dict(r) for r in rows]
+        except Exception as e:
+            _s = str(e).lower()
+            if "42p01" in _s or "does not exist" in _s or "undefinedtable" in _s:
+                return []
+            _logger.debug("list_repository_import_notifications: %s", e)
+            return []
+
+    def repository_import_notification_email_may_send(
+        self, user_id: str, tenant_id: str, now: datetime
+    ) -> bool:
+        s = self.get_user_settings(user_id, tenant_id)
+        notif = s.get("notifications") if isinstance(s.get("notifications"), dict) else {}
+        repo = notif.get("repository") if isinstance(notif.get("repository"), dict) else {}
+        raw = repo.get("emailDigestLastSentAt")
+        if not isinstance(raw, str) or not raw.strip():
+            return True
+        try:
+            last = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        except ValueError:
+            return True
+        if last.tzinfo is None:
+            last = last.replace(tzinfo=timezone.utc)
+        nu = now if now.tzinfo else now.replace(tzinfo=timezone.utc)
+        return (nu - last).total_seconds() >= 15 * 60
+
+    def touch_repository_import_notification_email_digest(
+        self, user_id: str, tenant_id: str, sent_at: datetime
+    ) -> None:
+        cur = dict(self.get_user_settings(user_id, tenant_id))
+        notif = dict(cur["notifications"]) if isinstance(cur.get("notifications"), dict) else {}
+        repo = dict(notif["repository"]) if isinstance(notif.get("repository"), dict) else {}
+        repo["emailDigestLastSentAt"] = sent_at.isoformat()
+        notif["repository"] = repo
+        cur["notifications"] = notif
         self.upsert_user_settings(user_id, tenant_id, cur)
 
     def finalize_repository_scan_with_report(

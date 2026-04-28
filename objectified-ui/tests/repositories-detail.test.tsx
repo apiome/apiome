@@ -22,6 +22,7 @@ jest.mock('next/dynamic', () => {
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace }),
   useParams: () => ({ id: 'repo-1' }),
+  usePathname: () => '/ade/dashboard/repositories/repo-1',
   useSearchParams: () => new URLSearchParams(currentSearch),
 }));
 

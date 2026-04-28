@@ -2765,6 +2765,7 @@ def test_recent_imports_attention_dismiss_calls_db() -> None:
                 json={"importJobId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"},
             )
             assert mdb.dismiss_recent_import_attention_job.called
+            assert mdb.mark_repository_import_notifications_read_for_job.called
     finally:
         app.dependency_overrides.pop(validate_authentication, None)
     assert r.status_code == 200, r.text

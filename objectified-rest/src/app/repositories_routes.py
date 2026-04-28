@@ -29,6 +29,7 @@ from pydantic import BaseModel, Field
 from .auth import validate_authentication
 from .database import db
 from .openapi_change_report import build_change_report
+from .repositories.import_notifications import emit_repository_import_notifications
 from .repositories.manifest import (
     RepoManifest,
     initial_auto_import_enabled_for_path,
@@ -216,6 +217,7 @@ class RepositoryFileRecord(BaseModel):
     lastImportedContentChecksum: str | None = None
     staleMismatchAt: str | None = None
     createdAt: str
+    importSelectionActorId: str | None = None
 
 
 RepositoryImportJobSourceKind = Literal[
@@ -2087,6 +2089,7 @@ def _apply_selection_update(
     *,
     import_enabled: bool | None,
     auto_import_enabled: bool | None,
+    selection_actor_id: str | None = None,
 ) -> Tuple[RepositoryFileRecord, List[Dict[str, Any]]]:
     if import_enabled is None and auto_import_enabled is None:
         raise HTTPException(
@@ -2127,12 +2130,13 @@ def _apply_selection_update(
         )
     if not changes:
         return file_row, changes
-    return file_row.model_copy(
-        update={
-            "importEnabled": next_import_enabled,
-            "autoImportEnabled": next_auto_import_enabled,
-        }
-    ), changes
+    extra: Dict[str, Any] = {
+        "importEnabled": next_import_enabled,
+        "autoImportEnabled": next_auto_import_enabled,
+    }
+    if any(c.get("field") == "import_enabled" for c in changes) and selection_actor_id:
+        extra["importSelectionActorId"] = selection_actor_id
+    return file_row.model_copy(update=extra), changes
 
 
 def _build_repository_source_uri(repository_id: str, path: str, branch: str, commit_sha: str) -> str:
@@ -2904,6 +2908,21 @@ def _materialize_repository_dry_run_import_job(
                 detail=auto_detail,
             )
         )
+    repo_rec = _REPO_STORE.get(tenant_id, {}).get(repository_id)
+    repo_name = repo_rec.fullName if repo_rec is not None else repository_id
+    emit_repository_import_notifications(
+        tenant_id=tenant_id,
+        repository_id=repository_id,
+        repository_full_name=repo_name,
+        import_selection_actor_id=file_row.importSelectionActorId,
+        repository_file_id=file_row.id,
+        import_job_id=import_job.id,
+        source_kind=source_kind,
+        state=import_job.state,
+        change_model=change_report.changeModelJson,
+        conflict_records=import_job.conflictRecords,
+        change_report_id=import_job.changeReportId,
+    )
     return import_job, pending_audit_rows
 
 
@@ -4479,6 +4498,7 @@ async def update_repository_spec_selection(
                     file_row,
                     import_enabled=request.importEnabled,
                     auto_import_enabled=request.autoImportEnabled,
+                    selection_actor_id=actor_id if actor_id != _SYSTEM_ACTOR_ID else None,
                 )
                 file_list[idx] = updated
                 out_row = updated
@@ -5175,6 +5195,7 @@ async def bulk_update_repository_spec_selection(
                 existing_row,
                 import_enabled=request.importEnabled,
                 auto_import_enabled=request.autoImportEnabled,
+                selection_actor_id=actor_id if actor_id != _SYSTEM_ACTOR_ID else None,
             )
             updates.append((file_id, scan_id, idx, existing_row, updated_row, changes, branch_name))
 
@@ -5248,10 +5269,14 @@ async def update_repository_file_import_enabled(
                     after = request.importEnabled
                     if before == after:
                         return file_row
+                    sel_actor = (
+                        actor_id if actor_id != _SYSTEM_ACTOR_ID else file_row.importSelectionActorId
+                    )
                     updated = file_row.model_copy(
                         update={
                             "importEnabled": after,
                             "autoImportEnabled": file_row.autoImportEnabled if after else False,
+                            "importSelectionActorId": sel_actor,
                         }
                     )
                     file_list[idx] = updated

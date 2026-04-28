@@ -1065,7 +1065,7 @@ shared widget shell. **Parallel = Yes**.
 | REPO-12.1  | Auto-import worker + dispatch                    | Consume scan-completion events; for `(import_enabled, auto_import_enabled, checksum_changed)` triplets, dispatch dry-run import jobs | `enhancement`, `mvp`, `repository`, `roadmap-repository`, `scan`, `import` | Yes | No  | Done (#2935) |
 | REPO-12.2  | Project auto-creation policy & conflict handling | Reuse REPO-5.3 policy; expose conflict resolution surface ("project slug taken", "version-strategy mismatch") | `enhancement`, `repository`, `roadmap-repository`, `scan`, `import`   | No  | Yes | Done (#2953) |
 | REPO-12.3  | Version creation with provenance                 | Bind `repository_source` (Epic A) on every auto-imported version; emit `repository.auto_imported` audit     | `enhancement`, `mvp`, `repository`, `roadmap-repository`, `repository-provenance`, `import` | Yes | No  | Done (#2936) |
-| REPO-12.5  | Notifications on auto-import failure / warnings  | Re-use the existing notification system to ping the spec's selection actor on terminal-state changes        | `enhancement`, `repository`, `roadmap-repository`, `attention`, `import`         | No  | Yes | #2954 |
+| REPO-12.5  | Notifications on auto-import failure / warnings  | Re-use the existing notification system to ping the spec's selection actor on terminal-state changes        | `enhancement`, `repository`, `roadmap-repository`, `attention`, `import`         | No  | Yes | Done (#2954) |
 | REPO-12.6  | Audit + change-report linking for auto-imports   | Every auto-import emits a `repository.auto_imported` row pointing at the change report                      | `enhancement`, `mvp`, `repository`, `roadmap-repository`, `governance`, `import` | Yes | Yes | #2944 |
 
 ### Detailed issues
@@ -1197,7 +1197,7 @@ blocking.
 | 23    | REPO-10.5  | #2951 | saved filters per user                             | No  | C    |
 | 24    | REPO-11.4  | #2952 | per-repo "Issues" tab (shipped)                   | No  | D    |
 | 25    | REPO-12.2  | Done (#2953) | project auto-creation policy & conflict handling   | No  | E    |
-| 26    | REPO-12.5  | #2954 | notifications on auto-import failure / warnings    | No  | E    |
+| 26    | REPO-12.5  | Done (#2954) | notifications on auto-import failure / warnings    | No  | E    |
 
 ---
 

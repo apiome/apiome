@@ -193,5 +193,97 @@ async def dismiss_recent_import_attention_row(
     uid = get_authenticated_user_id(auth_data)
     if not uid:
         raise HTTPException(status_code=401, detail="User id required for dismissal")
-    db.dismiss_recent_import_attention_job(str(uid), tenant_id, body.importJobId.strip())
+    jid = body.importJobId.strip()
+    db.dismiss_recent_import_attention_job(str(uid), tenant_id, jid)
+    db.mark_repository_import_notifications_read_for_job(str(uid), tenant_id, jid)
     return {"ok": True}
+
+
+class RepositoryImportNotificationItem(BaseModel):
+    """In-app notification row for repository import outcomes (REPO-12.5 / #2954)."""
+
+    id: str
+    importJobId: str
+    repositoryId: str
+    title: str
+    body: str
+    primaryLink: str
+    payload: Dict[str, Any] = Field(default_factory=dict)
+    readAt: str | None = None
+    createdAt: str
+
+
+class RepositoryImportNotificationsResponse(BaseModel):
+    items: List[RepositoryImportNotificationItem]
+    unreadCount: int
+
+
+def _iso_or_none(v: Any) -> str | None:
+    if v is None:
+        return None
+    if isinstance(v, datetime):
+        if v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc).isoformat()
+        return v.isoformat()
+    return str(v)
+
+
+def _iso_required(v: Any) -> str:
+    if isinstance(v, datetime):
+        if v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc).isoformat()
+        return v.isoformat()
+    return str(v)
+
+
+@router.get(
+    "/{tenant_slug}/repository_import_notifications",
+    response_model=RepositoryImportNotificationsResponse,
+    summary="In-app notifications for repository import jobs (REPO-12.5).",
+)
+async def list_repository_import_notifications(
+    tenant_slug: str,
+    limit: int = Query(default=20, ge=1, le=100),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> RepositoryImportNotificationsResponse:
+    _ = tenant_slug
+    _require_repository_scope(auth_data, _REPOSITORY_SCOPE_READ)
+    tenant_id = str(auth_data["tenant_id"])
+    uid = get_authenticated_user_id(auth_data)
+    if not uid:
+        raise HTTPException(status_code=401, detail="User id required")
+    rows = db.list_repository_import_notifications(str(uid), tenant_id, limit=limit)
+    unread = db.count_unread_repository_import_notifications(str(uid), tenant_id)
+    items = [
+        RepositoryImportNotificationItem(
+            id=str(r.get("id", "")),
+            importJobId=str(r.get("importJobId", "")),
+            repositoryId=str(r.get("repositoryId", "")),
+            title=str(r.get("title", "")),
+            body=str(r.get("body", "")),
+            primaryLink=str(r.get("primaryLink", "")),
+            payload=dict(r.get("payload") or {}) if isinstance(r.get("payload"), dict) else {},
+            readAt=_iso_or_none(r.get("readAt")),
+            createdAt=_iso_required(r.get("createdAt")),
+        )
+        for r in rows
+    ]
+    return RepositoryImportNotificationsResponse(items=items, unreadCount=unread)
+
+
+@router.get(
+    "/{tenant_slug}/repository_import_notifications/unread_count",
+    summary="Unread count for repository import in-app notifications.",
+)
+async def repository_import_notifications_unread_count(
+    tenant_slug: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Dict[str, int]:
+    _ = tenant_slug
+    _require_repository_scope(auth_data, _REPOSITORY_SCOPE_READ)
+    tenant_id = str(auth_data["tenant_id"])
+    uid = get_authenticated_user_id(auth_data)
+    if not uid:
+        raise HTTPException(status_code=401, detail="User id required")
+    n = db.count_unread_repository_import_notifications(str(uid), tenant_id)
+    return {"unreadCount": n}
