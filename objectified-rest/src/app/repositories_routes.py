@@ -542,17 +542,43 @@ _REPO_AUTO_PAUSED: Set[str] = set()
 _REPO_ATTENTION: Dict[str, Dict[str, Any]] = {}
 _STORE_LOCK = Lock()
 _SYSTEM_ACTOR_ID = "00000000-0000-0000-0000-000000000000"
-# Per-repository serialization for scan dispatch (REPO-12.1); parallels PG advisory lock on repository.id.
-_REPO_DISPATCH_ADVISORY_LOCKS: Dict[str, Lock] = {}
+# Per-repository serialization for scan dispatch (REPO-12.1); parallels PG advisory
+# lock on repository.id within a single Python process only. Keep a bounded registry
+# so long-running processes do not accumulate one Lock per historical repository_id.
+_MAX_REPO_DISPATCH_ADVISORY_LOCKS = 1024
+_REPO_DISPATCH_ADVISORY_LOCKS: Dict[str, Tuple[Lock, float]] = {}
 _DISPATCH_ADVISORY_REGISTRY_LOCK = Lock()
+
+
+def _prune_repository_dispatch_advisory_locks_locked(
+    active_repository_id: Optional[str] = None,
+) -> None:
+    if len(_REPO_DISPATCH_ADVISORY_LOCKS) <= _MAX_REPO_DISPATCH_ADVISORY_LOCKS:
+        return
+
+    for candidate_repository_id, (candidate_lock, _) in sorted(
+        _REPO_DISPATCH_ADVISORY_LOCKS.items(),
+        key=lambda item: item[1][1],
+    ):
+        if len(_REPO_DISPATCH_ADVISORY_LOCKS) <= _MAX_REPO_DISPATCH_ADVISORY_LOCKS:
+            break
+        if candidate_repository_id == active_repository_id:
+            continue
+        if candidate_lock.locked():
+            continue
+        _REPO_DISPATCH_ADVISORY_LOCKS.pop(candidate_repository_id, None)
 
 
 def _repository_dispatch_advisory_lock(repository_id: str) -> Lock:
     with _DISPATCH_ADVISORY_REGISTRY_LOCK:
-        existing = _REPO_DISPATCH_ADVISORY_LOCKS.get(repository_id)
-        if existing is None:
+        now = time.monotonic()
+        existing_entry = _REPO_DISPATCH_ADVISORY_LOCKS.get(repository_id)
+        if existing_entry is None:
             existing = Lock()
-            _REPO_DISPATCH_ADVISORY_LOCKS[repository_id] = existing
+        else:
+            existing, _ = existing_entry
+        _REPO_DISPATCH_ADVISORY_LOCKS[repository_id] = (existing, now)
+        _prune_repository_dispatch_advisory_locks_locked(repository_id)
         return existing
 
 
@@ -1970,8 +1996,6 @@ def _derive_repository_spec_status(
         return "manifest_error"
     if file_row.status == "unchanged_checksum":
         return "unchanged_checksum"
-    if file_row.status in {"discovered", "ready_to_promote"}:
-        return "not_imported"
     return "not_imported"
 
 
@@ -2671,11 +2695,13 @@ def _dispatch_import_jobs_for_scan(
                 continue
 
             if not file_row.importEnabled:
-                file_row.status = "discovered"
+                if file_row.status != "removed":
+                    file_row.status = "discovered"
                 continue
 
             if not file_row.autoImportEnabled:
-                file_row.status = "ready_to_promote"
+                if file_row.status != "removed":
+                    file_row.status = "ready_to_promote"
                 continue
 
             if file_row.status == "modified" and not force:
@@ -5027,6 +5053,7 @@ def _reset_repository_state_for_tests() -> None:
         _REPO_CORPUS_ROLLUP.clear()
         _REPO_ATTENTION.clear()
         _REPO_AUTO_PAUSED.clear()
+    with _DISPATCH_ADVISORY_REGISTRY_LOCK:
         _REPO_DISPATCH_ADVISORY_LOCKS.clear()
     try:
         from .repositories.scan_report_export import reset_scan_report_export_state_for_tests
