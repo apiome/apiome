@@ -259,9 +259,9 @@ export default function RepositoriesPage() {
             </Button>
             <Link
               href="/ade/dashboard/repositories/new"
-              className={cn(buttonVariants({ size: 'default' }), 'gap-1.5')}
+              className={cn(buttonVariants({ size: 'sm' }), 'gap-1.5 [font-size:inherit]')}
             >
-              <Plus className="h-4 w-4 shrink-0" aria-hidden />
+              <Plus className="h-3.5 w-3.5 shrink-0" aria-hidden />
               Add repository
             </Link>
           </div>
@@ -383,7 +383,10 @@ export default function RepositoriesPage() {
             }
             action={
               repos.length === 0 ? (
-                <Link href="/ade/dashboard/repositories/new" className={cn(buttonVariants({ size: 'default' }))}>
+                <Link
+                  href="/ade/dashboard/repositories/new"
+                  className={cn(buttonVariants({ size: 'sm' }), '[font-size:inherit]')}
+                >
                   Add repository
                 </Link>
               ) : undefined

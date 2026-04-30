@@ -290,7 +290,10 @@ p {
   color: var(--text-muted);
 }
 
-input, textarea, select, button {
+input,
+textarea,
+select,
+button {
   font: inherit;
 }
 
