@@ -328,8 +328,6 @@ export function RepositoryCard({
   onRemoved?: () => void;
 }) {
   const files = repo.total_files ?? 0;
-  const importable = repo.importable_count;
-  const importableMix = estimatedImportableMixForRepo(importable, repo.id);
   const scanLabel = formatLastScan(repo.last_scanned_at, repo.status === 'error');
   const grad = gradientForIndex(index);
 
@@ -396,20 +394,7 @@ export function RepositoryCard({
         </span>
       </div>
       <div className="flex items-center justify-between border-t border-gray-100 pt-3 dark:border-gray-700">
-        <div className="flex min-w-0 flex-1 flex-col gap-1 text-[11px]">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded bg-indigo-50 px-1.5 py-0.5 font-mono font-semibold text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
-              {importable != null ? `${importable} importable` : '— importable'}
-            </span>
-            <span className="text-gray-400">·</span>
-            <span className="text-gray-500 dark:text-gray-400">{scanLabel}</span>
-          </div>
-          {importable != null ? (
-            <p className="text-[10px] leading-snug text-gray-500 dark:text-gray-400">
-              Est. mix: {formatEstimatedImportableMixInline(importableMix)}
-            </p>
-          ) : null}
-        </div>
+        <span className="text-[11px] text-gray-500 dark:text-gray-400">{scanLabel}</span>
         <RepositorySparkline seed={repo.id} errorTint={repo.status === 'error'} />
       </div>
     </>

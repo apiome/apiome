@@ -94,6 +94,8 @@ export interface ImportJobInput {
     /** When true, commit each class separately and skip failures (no single transaction). */
     incrementalMode?: boolean;
   };
+  /** When set, project creation is skipped and a new version is imported into this catalog project. */
+  existingProjectId?: string;
 }
 
 interface JobState {
@@ -518,7 +520,15 @@ export async function startImport(input: ImportJobInput) {
       if (isDryRun) {
         // Dry run: no DB transaction, just compute what would be created and emit summary
         setProgress(job, 'creating-project', 1, 0, input.project.name);
-        emit(job, 'info', 'DRY_RUN', 'Dry run mode - simulating import (no database changes)');
+        const existingDry = input.existingProjectId?.trim();
+        emit(
+          job,
+          'info',
+          'DRY_RUN',
+          existingDry
+            ? `Dry run mode - simulating import into existing project "${input.project.name}" (no database changes)`
+            : 'Dry run mode - simulating import (no database changes)'
+        );
         setProgress(job, 'creating-version', 2, 1, input.version.versionId);
 
         const propertyMap = new Map<string, { data: any; description?: string; names: Set<string> }>();
@@ -581,15 +591,22 @@ export async function startImport(input: ImportJobInput) {
         // Project and version run in autocommit (no BEGIN)
         if (job.canceled) throw new Error('Import canceled');
         setProgress(job, 'creating-project', 1, 0, input.project.name);
-        const resProj = JSON.parse(
-          await withRetry(
-            () => createProjectTx(client!, input.tenantId, input.userId, input.project.name, input.project.description || '', input.project.slug),
-            { maxAttempts: 3, initialDelayMs: 500, label: 'createProject' }
-          )
-        );
-        if (!resProj.success) throw new Error(resProj.error || 'Failed to create project');
-        const projectId = resProj.project.id as string;
-        emit(job, 'info', 'PROJECT_CREATED', `Created project: ${input.project.name}`, { projectId });
+        let projectId: string;
+        const existingInc = input.existingProjectId?.trim();
+        if (existingInc) {
+          projectId = existingInc;
+          emit(job, 'info', 'EXISTING_PROJECT', `Using existing project: ${input.project.name}`, { projectId });
+        } else {
+          const resProj = JSON.parse(
+            await withRetry(
+              () => createProjectTx(client!, input.tenantId, input.userId, input.project.name, input.project.description || '', input.project.slug),
+              { maxAttempts: 3, initialDelayMs: 500, label: 'createProject' }
+            )
+          );
+          if (!resProj.success) throw new Error(resProj.error || 'Failed to create project');
+          projectId = resProj.project.id as string;
+          emit(job, 'info', 'PROJECT_CREATED', `Created project: ${input.project.name}`, { projectId });
+        }
         if (job.canceled) throw new Error('Import canceled');
         setProgress(job, 'creating-version', 2, 1, input.version.versionId);
         const resVer = JSON.parse(
@@ -716,15 +733,22 @@ export async function startImport(input: ImportJobInput) {
       if (job.canceled) throw new Error('Import canceled');
 
       setProgress(job, 'creating-project', 1, 0, input.project.name);
-      const resProj = JSON.parse(
-        await withRetry(
-          () => createProjectTx(client!, input.tenantId, input.userId, input.project.name, input.project.description || '', input.project.slug),
-          { maxAttempts: 3, initialDelayMs: 500, label: 'createProject' }
-        )
-      );
-      if (!resProj.success) throw new Error(resProj.error || 'Failed to create project');
-      const projectId = resProj.project.id as string;
-      emit(job, 'info', 'PROJECT_CREATED', `Created project: ${input.project.name}`, { projectId });
+      let projectId: string;
+      const existingTx = input.existingProjectId?.trim();
+      if (existingTx) {
+        projectId = existingTx;
+        emit(job, 'info', 'EXISTING_PROJECT', `Using existing project: ${input.project.name}`, { projectId });
+      } else {
+        const resProj = JSON.parse(
+          await withRetry(
+            () => createProjectTx(client!, input.tenantId, input.userId, input.project.name, input.project.description || '', input.project.slug),
+            { maxAttempts: 3, initialDelayMs: 500, label: 'createProject' }
+          )
+        );
+        if (!resProj.success) throw new Error(resProj.error || 'Failed to create project');
+        projectId = resProj.project.id as string;
+        emit(job, 'info', 'PROJECT_CREATED', `Created project: ${input.project.name}`, { projectId });
+      }
 
       if (job.canceled) throw new Error('Import canceled');
 

@@ -10,9 +10,16 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { createProject } from '@lib/db/helper';
+import { startImport, getImportStatus } from '@lib/db/import-actions';
+import { appendProjectQualitySnapshot } from '@/app/utils/project-quality-score-history';
+import { analyzeSpecification, type AnalysisResult } from '@/app/utils/openapi-analyzer';
+import { generateSlug } from '@/app/utils/slug';
+import ImportExecutionPanel from '@/app/components/ade/dashboard/ImportExecutionPanel';
+import ImportCompletePanel from '@/app/components/ade/dashboard/ImportCompletePanel';
+import type { ImportOptions } from '@/app/components/ade/dashboard/PreviewPanel';
 import { Button } from '@/app/components/ui/Button';
 import {
   Dialog,
@@ -152,6 +159,31 @@ function parseProjectsList(payload: unknown): StagedImportProject[] {
   return out;
 }
 
+function analysisFilenameForRepoImport(filePath: string): string {
+  const parts = filePath.split('/').filter(Boolean);
+  return parts[parts.length - 1] || 'openapi.yaml';
+}
+
+function defaultImportOptionsFromAnalysis(analysis: AnalysisResult): ImportOptions {
+  const schemaObj = analysis.document?.components?.schemas || analysis.document?.definitions || {};
+  const schemaNames = Object.keys(schemaObj);
+  const title = analysis.document?.info?.title || 'New Project';
+  return {
+    projectName: title,
+    projectSlug: generateSlug(title) || 'new-project',
+    versionSource: 'spec',
+    targetVersion: analysis.document?.info?.version || '1.0.0',
+    selectedSchemas: schemaNames,
+    applyNamingConvention: true,
+    classNamingConvention: 'PascalCase',
+    propertyNamingConvention: 'camelCase',
+    classPrefix: '',
+    classSuffix: '',
+    dryRun: false,
+    incrementalMode: false,
+  };
+}
+
 export function RepositoryFileImportMapping({
   repositoryId,
   repositoryName,
@@ -190,6 +222,15 @@ export function RepositoryFileImportMapping({
   /** Confirmed via “Map to This Project” in the dialog; project row is created when the user clicks Import. */
   const [stagedNewProject, setStagedNewProject] = useState<CreateProjectManualFormModel | null>(null);
   const [importSubmitting, setImportSubmitting] = useState(false);
+
+  type CatalogImportPhase = 'idle' | 'executing' | 'summary';
+  const [catalogImportPhase, setCatalogImportPhase] = useState<CatalogImportPhase>('idle');
+  const [catalogImportJobId, setCatalogImportJobId] = useState<string | null>(null);
+  const [catalogImportSchemas, setCatalogImportSchemas] = useState<string[]>([]);
+  const [catalogImportAnalysis, setCatalogImportAnalysis] = useState<AnalysisResult | null>(null);
+  const [catalogImportExecutionComplete, setCatalogImportExecutionComplete] = useState(false);
+  const [catalogImportSucceeded, setCatalogImportSucceeded] = useState(false);
+  const dryRunRef = useRef(false);
 
   const specMetadata = useMemo(
     () => parseRepositoryFileSpecMetadata(payload?.content ?? '', file.path),
@@ -298,64 +339,209 @@ export function RepositoryFileImportMapping({
     setFlowStep('newProjectDraft');
   };
 
-  const submitImportNewProject = async () => {
-    if (!stagedNewProject) return;
+  const createCatalogProjectFromStagedForm = async (
+    form: CreateProjectManualFormModel
+  ): Promise<string | null> => {
     if (!currentTenantId || !currentUserId) {
       toast.error('Select a tenant and sign in to create a project.');
-      return;
+      return null;
     }
-    setImportSubmitting(true);
     try {
-      const metadata = metadataFromManualForm(stagedNewProject);
+      const metadata = metadataFromManualForm(form);
       const result = await createProject(
         currentTenantId,
         currentUserId,
-        stagedNewProject.projectName.trim(),
-        stagedNewProject.projectDescription.trim(),
-        stagedNewProject.projectSlug.trim(),
+        form.projectName.trim(),
+        form.projectDescription.trim(),
+        form.projectSlug.trim(),
         metadata
       );
-      const response = JSON.parse(result) as { success?: boolean; error?: string };
-      if (response.success) {
-        toast.success(
-          `Created project "${stagedNewProject.projectName}". Repository file import into a version is not wired yet.`
-        );
-        setStagedNewProject(null);
+      const response = JSON.parse(result) as { success?: boolean; error?: string; project?: { id?: string } };
+      if (response.success && response.project?.id) {
+        toast.success(`Created project "${form.projectName.trim()}". Starting import…`);
         await loadProjects();
-      } else {
-        toast.error(response.error ?? 'Failed to create project');
+        return response.project.id;
       }
+      toast.error(response.error ?? 'Failed to create project');
+      return null;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to create project');
-    } finally {
-      setImportSubmitting(false);
+      return null;
     }
   };
 
-  const onImport = () => {
-    if (!canAttemptImport || importSubmitting) {
-      if (!canAttemptImport) {
-        toast.error('Fix importability issues before importing, or wait for the file to finish loading.');
+  const resetCatalogImportFlow = () => {
+    setCatalogImportPhase('idle');
+    setCatalogImportJobId(null);
+    setCatalogImportSchemas([]);
+    setCatalogImportAnalysis(null);
+    setCatalogImportExecutionComplete(false);
+    setCatalogImportSucceeded(false);
+  };
+
+  const handleCatalogImportExecutionComplete = useCallback((succeeded: boolean) => {
+    setCatalogImportExecutionComplete(true);
+    setCatalogImportSucceeded(succeeded);
+
+    void (async () => {
+      const id = catalogImportJobId;
+      if (!id) {
+        setImportSubmitting(false);
+        return;
       }
-      return;
-    }
-    if (targetMode === 'existing' && !stagedProject) {
-      toast.error('Choose which existing project should receive this import.');
-      return;
-    }
-    if (targetMode === 'existing' && stagedProject) {
-      toast.message(
-        `Import would target existing project "${stagedProject.name}" (${stagedProject.slug}, id ${stagedProject.id}) at version ${specVersionLabel ?? '(unset in spec)'}. Repository → catalog ingest is not wired yet; this is the only moment the target project is fixed for the run.`
-      );
-      return;
-    }
-    if (targetMode === 'new' && !stagedNewProject) {
-      toast.error('Set up the new project in the Create a new project section, then click Import.');
-      return;
-    }
-    if (targetMode === 'new' && stagedNewProject) {
-      void submitImportNewProject();
-    }
+      try {
+        const status = await getImportStatus(id);
+        if (status.state === 'pending-approval') {
+          return;
+        }
+      } catch {
+        setImportSubmitting(false);
+        return;
+      }
+      setImportSubmitting(false);
+      setCatalogImportPhase('summary');
+    })();
+  }, [catalogImportJobId]);
+
+  useEffect(() => {
+    if (catalogImportPhase !== 'summary' || !catalogImportSucceeded || !catalogImportJobId || !catalogImportAnalysis?.qualityScore) return;
+    if (dryRunRef.current) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const status = await getImportStatus(catalogImportJobId);
+        if (cancelled) return;
+        const projectId = (status as { result?: { projectId?: string } }).result?.projectId;
+        if (!projectId) return;
+        appendProjectQualitySnapshot(projectId, {
+          overall: catalogImportAnalysis.qualityScore.overall,
+          grade: catalogImportAnalysis.qualityScore.grade,
+          importJobId: catalogImportJobId,
+        });
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [catalogImportPhase, catalogImportSucceeded, catalogImportJobId, catalogImportAnalysis]);
+
+  const onImport = () => {
+    void (async () => {
+      if (!canAttemptImport || importSubmitting) {
+        if (!canAttemptImport) {
+          toast.error('Fix importability issues before importing, or wait for the file to finish loading.');
+        }
+        return;
+      }
+      if (!currentTenantId || !currentUserId) {
+        toast.error('Select a tenant and sign in to import.');
+        return;
+      }
+      const content = payload?.content;
+      if (typeof content !== 'string' || !content.trim()) {
+        toast.error('Load the repository file before importing.');
+        return;
+      }
+      if (targetMode === 'existing' && !stagedProject) {
+        toast.error('Choose which existing project should receive this import.');
+        return;
+      }
+      if (targetMode === 'new' && !stagedNewProject) {
+        toast.error('Set up the new project in the Create a new project section, then click Import.');
+        return;
+      }
+
+      setImportSubmitting(true);
+      try {
+        let catalogProjectId: string;
+        let newProjectFormSnapshot: CreateProjectManualFormModel | null = null;
+
+        if (targetMode === 'existing') {
+          catalogProjectId = stagedProject!.id;
+        } else {
+          const form = stagedNewProject!;
+          const newId = await createCatalogProjectFromStagedForm(form);
+          if (!newId) {
+            setImportSubmitting(false);
+            return;
+          }
+          catalogProjectId = newId;
+          newProjectFormSnapshot = { ...form };
+          setStagedNewProject(null);
+        }
+
+        const analysis = await analyzeSpecification(content, analysisFilenameForRepoImport(file.path));
+        if (!analysis.formatSupported && analysis.format !== 'unknown') {
+          toast.error(
+            `This format is not available for catalog import: ${analysis.formatDisplayName}. Use a format supported by the Projects dashboard import (OpenAPI, Swagger, JSON Schema, Arazzo, etc.).`
+          );
+          setImportSubmitting(false);
+          return;
+        }
+
+        const importOptions = defaultImportOptionsFromAnalysis(analysis);
+        if (targetMode === 'existing' && stagedProject) {
+          importOptions.projectName = stagedProject.name;
+          importOptions.projectSlug = stagedProject.slug;
+        } else if (newProjectFormSnapshot) {
+          importOptions.projectName = newProjectFormSnapshot.projectName.trim();
+          importOptions.projectSlug = newProjectFormSnapshot.projectSlug.trim();
+        }
+
+        dryRunRef.current = Boolean(importOptions.dryRun);
+
+        const document = analysis.document;
+        const sourceKind = analysis.format === 'arazzo' ? 'arazzo' : 'openapi';
+
+        const job = await startImport({
+          tenantId: currentTenantId,
+          userId: currentUserId,
+          sourceKind,
+          document,
+          project: {
+            name: importOptions.projectName || (document?.info?.title || 'New Project'),
+            slug:
+              importOptions.projectSlug ||
+              generateSlug(document?.info?.title || 'new-project') ||
+              'imported-project',
+            description: document?.info?.description || null,
+          },
+          version: {
+            versionId: importOptions.targetVersion || (document?.info?.version || '1.0.0'),
+            description: 'Imported from OpenAPI specification',
+          },
+          options: {
+            selectedSchemas: importOptions.selectedSchemas,
+            applyNamingConvention: importOptions.applyNamingConvention ?? true,
+            classNamingConvention: importOptions.classNamingConvention ?? 'PascalCase',
+            propertyNamingConvention: importOptions.propertyNamingConvention ?? 'camelCase',
+            classNameMap: importOptions.classNameMap,
+            classPrefix: (importOptions.classPrefix ?? '').trim() || undefined,
+            classSuffix: (importOptions.classSuffix ?? '').trim() || undefined,
+            typeMapping: importOptions.typeMapping,
+            defaultValues: importOptions.defaultValues,
+            requiredOverrides: importOptions.requiredOverrides,
+            descriptionOverrides: importOptions.descriptionOverrides,
+            generateExamples: importOptions.generateExamples ?? false,
+            dryRun: importOptions.dryRun ?? false,
+            incrementalMode: importOptions.incrementalMode ?? false,
+          },
+          existingProjectId: catalogProjectId,
+        });
+
+        setCatalogImportJobId(job.jobId);
+        setCatalogImportSchemas(importOptions.selectedSchemas);
+        setCatalogImportAnalysis(analysis);
+        setCatalogImportExecutionComplete(false);
+        setCatalogImportSucceeded(false);
+        setCatalogImportPhase('executing');
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Import failed to start');
+        setImportSubmitting(false);
+      }
+    })();
   };
 
   const commitMapToNewProject = () => {
@@ -395,6 +581,59 @@ export function RepositoryFileImportMapping({
   const closeNewProjectDraft = () => {
     setFlowStep('mapping');
   };
+
+  if (catalogImportPhase === 'executing' && catalogImportJobId) {
+    return (
+      <div className="space-y-6" aria-busy>
+        <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+          <div className="border-b border-gray-200 px-6 pb-4 pt-5 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Catalog import</h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Same import job engine as Projects → Import. This panel updates live until the run finishes.
+            </p>
+          </div>
+          <div className="px-6 py-6">
+            <ImportExecutionPanel
+              jobId={catalogImportJobId}
+              selectedSchemas={catalogImportSchemas}
+              isReviewing={catalogImportExecutionComplete}
+              onComplete={handleCatalogImportExecutionComplete}
+              onRetry={(newJobId) => {
+                setCatalogImportJobId(newJobId);
+                setCatalogImportExecutionComplete(false);
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (catalogImportPhase === 'summary' && catalogImportJobId) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+          <div className="border-b border-gray-200 px-6 pb-4 pt-5 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Import summary</h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Results from the catalog import job (same completion view as the Projects dashboard).
+            </p>
+          </div>
+          <div className="px-6 py-6">
+            <ImportCompletePanel jobId={catalogImportJobId} />
+          </div>
+          <div className="flex flex-wrap gap-2 border-t border-gray-200 px-6 py-4 dark:border-gray-700">
+            <Button type="button" variant="outline" onClick={resetCatalogImportFlow}>
+              Back to mapping
+            </Button>
+            <Button type="button" variant="outline" onClick={onBack}>
+              Back to file
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" aria-busy={loading}>
@@ -814,8 +1053,12 @@ export function RepositoryFileImportMapping({
                 disabled={!importButtonEnabled}
                 onClick={onImport}
               >
-                <Download className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                {primaryActionLabel}
+                {importSubmitting ? (
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
+                ) : (
+                  <Download className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                )}
+                {importSubmitting ? 'Starting import…' : primaryActionLabel}
               </Button>
               <Button type="button" variant="outline" className="w-full" onClick={onBack}>
                 Cancel

@@ -42,11 +42,7 @@ import {
   RepositoryCard,
   RepositoryKpiCard,
   RepositorySparkline,
-  IMPORTABLE_ESTIMATE_DISCLAIMER,
-  aggregateEstimatedImportableMix,
   dashboardRepositoriesFromListPayload,
-  estimatedImportableMixForRepo,
-  formatEstimatedImportableMixInline,
   formatLastScan,
   repoInitials,
   repositoryStatusClass,
@@ -135,10 +131,6 @@ export default function RepositoriesPage() {
     }
     if (sortKey === "name") {
       list.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortKey === "importable") {
-      list.sort(
-        (a, b) => (b.importable_count ?? 0) - (a.importable_count ?? 0),
-      );
     } else {
       list.sort((a, b) => {
         const ta = a.last_scanned_at
@@ -162,7 +154,6 @@ export default function RepositoriesPage() {
     };
     let files = 0;
     let lastScanMs = 0;
-    const importableMix = aggregateEstimatedImportableMix(repos);
     for (const r of repos) {
       byProvider[r.provider] = (byProvider[r.provider] ?? 0) + 1;
       files += r.total_files ?? 0;
@@ -192,7 +183,6 @@ export default function RepositoriesPage() {
       count: repos.length,
       providerSubtitle: providerBits.length ? providerBits.join(" · ") : "—",
       files,
-      importableMix,
       lastScanTitle,
       lastScanSub,
     };
@@ -267,7 +257,7 @@ export default function RepositoriesPage() {
       <main className={dashboardMainClass}>
         <div className={dashboardContentStackClass}>
           <div className="border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-800">
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-4">
               <RepositoryKpiCard
                 label="Repositories"
                 value={kpis.count.toLocaleString()}
@@ -277,13 +267,6 @@ export default function RepositoriesPage() {
                 label="Files indexed"
                 value={kpis.files.toLocaleString()}
                 subtitle="Sum of `total_files` from scan results across repos (0 until indexing runs)."
-              />
-              <RepositoryKpiCard
-                label="Importable"
-                value={kpis.importableMix.total.toLocaleString()}
-                subtitle={`Workspace estimated mix: ${formatEstimatedImportableMixInline(kpis.importableMix)}. Per-repo totals come from scan classification; kind splits are a deterministic placeholder until indexed files expose real counts.`}
-                footnote={IMPORTABLE_ESTIMATE_DISCLAIMER}
-                valueClassName="text-indigo-600 dark:text-indigo-400"
               />
               <RepositoryKpiCard
                 label="Imports (30d)"
@@ -350,9 +333,6 @@ export default function RepositoriesPage() {
               <SelectContent>
                 <SelectItem value="scanned">Sort: Recently scanned</SelectItem>
                 <SelectItem value="name">Sort: Name</SelectItem>
-                <SelectItem value="importable">
-                  Sort: Importable count
-                </SelectItem>
               </SelectContent>
             </Select>
             <div className="ml-auto inline-flex overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
@@ -399,7 +379,7 @@ export default function RepositoriesPage() {
                 }
                 description={
                   repos.length === 0
-                    ? "Register a Git repository through a linked account or a public clone URL. After the API is enabled, scans and importable file counts appear here."
+                    ? "Register a Git repository through a linked account or a public clone URL. After the API is enabled, scans and file indexing appear here."
                     : "Try adjusting search or filters."
                 }
                 action={
@@ -437,7 +417,6 @@ export default function RepositoriesPage() {
                       <th className={dashboardThClass}>Provider</th>
                       <th className={dashboardThClass}>Branch</th>
                       <th className={dashboardThRightClass}>Files</th>
-                      <th className={dashboardThRightClass}>Importable</th>
                       <th className={dashboardThClass}>Status</th>
                       <th className={dashboardThClass}>Last scan</th>
                       <th className={dashboardThClass}>Activity</th>
@@ -490,34 +469,6 @@ export default function RepositoriesPage() {
                         </td>
                         <td className="text-right font-mono text-xs">
                           {(repo.total_files ?? 0).toLocaleString()}
-                        </td>
-                        <td
-                          className="text-right align-top"
-                          title={
-                            repo.importable_count != null
-                              ? `${IMPORTABLE_ESTIMATE_DISCLAIMER} Est. mix: ${formatEstimatedImportableMixInline(estimatedImportableMixForRepo(repo.importable_count, repo.id))}.`
-                              : undefined
-                          }
-                        >
-                          {repo.importable_count != null ? (
-                            <div className="inline-flex flex-col items-end gap-0.5">
-                              <span className="rounded bg-indigo-50 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
-                                {repo.importable_count}
-                              </span>
-                              <span className="max-w-[11rem] text-right text-[10px] leading-tight text-gray-500 dark:text-gray-400">
-                                {formatEstimatedImportableMixInline(
-                                  estimatedImportableMixForRepo(
-                                    repo.importable_count,
-                                    repo.id,
-                                  ),
-                                )}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="font-mono text-xs text-gray-400">
-                              —
-                            </span>
-                          )}
                         </td>
                         <td className="py-3">
                           <span
