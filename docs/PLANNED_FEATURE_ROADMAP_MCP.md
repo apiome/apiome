@@ -1408,7 +1408,7 @@ same number-prefix can be parallelized across developers because their
 **Parallel** flag is `Yes`. Items marked `(MVP)` are required for the
 MCP v1 release; `(V2)` items are explicitly enterprise.
 
-1. [#2822] MCP-1.1 — `objectified-mcp` package + MCP SDK bootstrap **(MVP)**
+1. ~~[#2822] MCP-1.1 — `objectified-mcp` package + MCP SDK bootstrap **(MVP)**~~ **Done**
 2. [#2823] MCP-1.2 — Transport adapters (stdio + Streamable HTTP) **(MVP)**
 3. [#2824] MCP-1.3 — API-key authentication via Linked Accounts **(MVP)**
 4. [#2825] MCP-1.4 — Tenant scoping + RBAC scope guard **(MVP, parallel)**

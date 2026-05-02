@@ -1,0 +1,30 @@
+{
+  "name": "objectified-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Model Context Protocol server for Objectified (stdio bootstrap)",
+  "type": "module",
+  "bin": "./bin/objectified-mcp.js",
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node bin/objectified-mcp.js --transport stdio",
+    "test": "yarn build && tsx --test tests/server.test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
