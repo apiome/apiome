@@ -16,8 +16,8 @@ async def database_lifespan(server: Any) -> Any:
     """Open the shared async pool at MCP startup; close it on shutdown (including cancellation)."""
     settings = get_settings()
     pool = create_async_pool(settings, open=False)
-    await pool.open()
     try:
+        await pool.open()
         await ping_pool(pool)
         yield {MCP_DB_POOL_KEY: pool}
     finally:
