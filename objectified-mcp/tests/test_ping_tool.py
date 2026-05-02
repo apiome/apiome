@@ -56,6 +56,8 @@ def test_build_ping_response_db_error_redacts_dsn(mock_pool: MagicMock) -> None:
 
 def test_build_ping_response_db_error_is_capped(mock_pool: MagicMock) -> None:
     """Very long error messages must be truncated so payloads stay bounded."""
+    from objectified_mcp.ping_tool import _MAX_DB_ERROR_LEN
+
     mock_pool.connection.side_effect = OSError("x" * 500)
 
     async def run() -> dict[str, object]:
@@ -64,7 +66,7 @@ def test_build_ping_response_db_error_is_capped(mock_pool: MagicMock) -> None:
     result = asyncio.run(run())
 
     assert result["db_ok"] is False
-    assert len(result["db_error"]) <= 203  # 200 chars + "..."
+    assert len(result["db_error"]) <= _MAX_DB_ERROR_LEN + len("...")
 
 
 def test_ping_tool_registered_on_mcp() -> None:

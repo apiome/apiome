@@ -14,7 +14,9 @@ from objectified_mcp.database_pool import ping_pool
 
 _log = structlog.get_logger(__name__)
 
-# Matches scheme://[user[:pass]@]host patterns (e.g. postgresql://admin:s3cr3t@db.host/name).
+# Matches URI authority patterns that contain credentials (scheme://[user[:pass]@]host).
+# Covers postgresql://, postgres://, and generic URIs.  Limitations: does not handle IPv6
+# bracket addresses ([::1]) and assumes no whitespace in the authority component.
 _DSN_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9+\-.]*://\S*@\S+")
 _MAX_DB_ERROR_LEN = 200
 
