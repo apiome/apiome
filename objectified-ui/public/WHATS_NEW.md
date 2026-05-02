@@ -4,6 +4,10 @@ We continue to improve the platform based on your feedback with improvements and
 
 ---
 
+## MCP
+
+- New `objectified-mcp` Python package (FastMCP, uv, ruff, mypy) as the foundation for the Model Context Protocol server.
+
 ## Importing
 - Race condition fixed in 3.0.1 specification imports
 - Import supports Swagger 2.0 format
@@ -28,5 +32,5 @@ We'd love to hear your thoughts! Your feedback helps us make Objectified better.
 
 **Thank you for using Objectified!**
 
-*Last updated: May 1, 2026*
+*Last updated: May 2, 2026*
 

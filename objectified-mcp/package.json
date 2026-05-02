@@ -1,0 +1,10 @@
+{
+  "name": "objectified-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Yarn workspace anchor for the objectified-mcp Python package (uv + pyproject.toml).",
+  "scripts": {
+    "build": "uv sync --frozen",
+    "test": "uv sync --frozen && uv run ruff check . && uv run ruff format --check . && uv run mypy -p objectified_mcp && uv run pytest"
+  }
+}

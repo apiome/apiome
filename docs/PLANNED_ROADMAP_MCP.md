@@ -74,7 +74,7 @@ process or via Docker.
 
 | # | Issue | Title | Depends on |
 |---|-------|-------|------------|
-| 1.1 | [#2989](../../issues/2989) | Scaffold FastMCP Python project (uv, src layout, pyproject) | — |
+| 1.1 | ~~[#2989](../../issues/2989)~~ | ~~Scaffold FastMCP Python project (uv, src layout, pyproject)~~ (**completed**) | — |
 | 1.2 | [#2990](../../issues/2990) | Settings/config module (pydantic-settings, env vars) | 1.1 |
 | 1.3 | [#2991](../../issues/2991) | Postgres connection pool (psycopg async) | 1.2 |
 | 1.4 | [#2992](../../issues/2992) | Structured JSON logging | 1.2 |
