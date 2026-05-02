@@ -74,9 +74,7 @@ def decode_spec_list_cursor(raw: str | None) -> tuple[datetime, UUID] | None:
         raise InvalidSpecListCursorError("Invalid spec.list cursor (bad timestamp).") from exc
 
     if parsed_at.tzinfo is None:
-        raise InvalidSpecListCursorError(
-            "Invalid spec.list cursor (timestamp must include timezone offset)."
-        )
+        raise InvalidSpecListCursorError("Invalid spec.list cursor (timestamp must include timezone offset).")
 
     try:
         parsed_id = UUID(i_raw.strip())

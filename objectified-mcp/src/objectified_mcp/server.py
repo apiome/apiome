@@ -15,6 +15,7 @@ from objectified_mcp.http_credential_middleware import StashHttpBearerInToolCont
 from objectified_mcp.logging_config import configure_logging
 from objectified_mcp.ping_tool import build_ping_response
 from objectified_mcp.settings import get_settings
+from objectified_mcp.spec_describe_tool import build_spec_describe_response
 from objectified_mcp.spec_list_tool import build_spec_list_response
 
 _log = structlog.get_logger(__name__)
@@ -75,3 +76,16 @@ async def spec_list(
         limit=limit,
         cursor=cursor,
     )
+
+
+@mcp.tool(
+    name="spec.describe",
+    description=(
+        "Return metadata for a single published public OpenAPI spec revision by id (UUID). "
+        "Fields: id, title, version, description, owner (tenant slug), tags, updated_at (UTC Z). "
+        "Raises not-found when the revision is missing, unpublished, private, or unknown."
+    ),
+)
+async def spec_describe(ctx: Context, spec_id: str) -> dict[str, Any]:
+    pool = get_db_pool(ctx)
+    return await build_spec_describe_response(pool, spec_id=spec_id)
