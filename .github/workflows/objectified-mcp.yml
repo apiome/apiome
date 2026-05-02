@@ -1,0 +1,51 @@
+name: Objectified MCP
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'objectified-mcp/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'objectified-mcp/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Lint, type-check and test objectified-mcp
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: uv sync --frozen
+        working-directory: objectified-mcp
+
+      - name: Ruff lint
+        run: uv run ruff check .
+        working-directory: objectified-mcp
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+        working-directory: objectified-mcp
+
+      - name: Mypy type check
+        run: uv run mypy -p objectified_mcp
+        working-directory: objectified-mcp
+
+      - name: Run pytest
+        run: uv run pytest
+        working-directory: objectified-mcp
