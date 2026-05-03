@@ -23,6 +23,10 @@
  * Ollama model listing and selection (#265): the conversation loads tags from
  * `/api/ollama/models` and sends each turn through `/api/ollama/chat` when a
  * model is available; otherwise the offline demo responder keeps the panel usable.
+ *
+ * Default model preferences (#266): when `tenantId` is passed with a project in
+ * `studioContext`, the user's model choice is stored per project (and can be
+ * promoted to the whole tenant via the chat toolbar).
  */
 
 import * as React from 'react';
@@ -72,6 +76,8 @@ export interface StudioAiChatbotProps {
    * project, version, classes, properties, and canvas selection.
    */
   studioContext?: ChatStudioContext;
+  /** Current tenant id from the session (#266) — enables per-tenant/project Ollama defaults. */
+  tenantId?: string | null;
 }
 
 /**
@@ -82,6 +88,7 @@ export function StudioAiChatbot({
   forceVisible,
   initialMode = 'closed',
   studioContext,
+  tenantId,
 }: StudioAiChatbotProps = {}) {
   const pathname = usePathname();
   const [mode, setMode] = React.useState<StudioAiChatbotMode>(initialMode);
@@ -127,6 +134,7 @@ export function StudioAiChatbot({
           onModeChange={setMode}
           onClose={close}
           studioContext={studioContext}
+          tenantId={tenantId}
         />
       )}
     </>
@@ -156,9 +164,10 @@ interface ChatbotPanelProps {
   onModeChange: (mode: StudioAiChatbotMode) => void;
   onClose: () => void;
   studioContext?: ChatStudioContext;
+  tenantId?: string | null;
 }
 
-function ChatbotPanel({ mode, onModeChange, onClose, studioContext }: ChatbotPanelProps) {
+function ChatbotPanel({ mode, onModeChange, onClose, studioContext, tenantId }: ChatbotPanelProps) {
   const isFullscreen = mode === 'fullscreen';
 
   const containerClasses = isFullscreen
@@ -226,6 +235,7 @@ function ChatbotPanel({ mode, onModeChange, onClose, studioContext }: ChatbotPan
         <ChatConversation
           onImportSpec={handleImportSpec}
           studioContext={studioContext}
+          tenantId={tenantId}
           ollamaTransport
         />
       </div>

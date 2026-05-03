@@ -82,18 +82,13 @@ This outlines the planned features for integrating AI capabilities into Objectif
         - Custom fine-tuned models
     - Model switching per task type
     - Model performance comparison
-    - 📋 Default model per tenant/project
+    - ✅ Default model per tenant/project (#266)
 - **Resource Management**:
     - GPU memory monitoring
     - Request queuing for high load
     - Priority queues for different users
     - Rate limiting per user/tenant
     - Usage tracking and quotas
-
-| Ticket | Feature Description                     |
-|--------|-----------------------------------------|
-| #265   | Ollama model selection **(shipped)**    |
-| #266   | Ollama default model per tenant/project |
 
 **Ollama API Integration** 📋 PLANNED
 - 📋 **Streaming Responses**:

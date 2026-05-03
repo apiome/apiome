@@ -36,6 +36,15 @@ export type { ConversationHistoryPanelProps } from './ConversationHistoryPanel';
 export { createDemoChatResponder } from './demo-responder';
 export { createOllamaChatResponder } from './ollama-chat-responder';
 export {
+  CHAT_OLLAMA_MODEL_DEFAULTS_STORAGE_KEY,
+  persistOllamaModelChoiceForScope,
+  persistOllamaModelTenantDefault,
+  readOllamaModelDefaults,
+  resolvePreferredOllamaModel,
+  writeOllamaModelDefaults,
+} from './ollama-model-defaults';
+export type { OllamaModelDefaultsV1, StorageLike } from './ollama-model-defaults';
+export {
   detectOpenApiSpecs,
   hasOpenApiSpec,
 } from './openapi-detection';

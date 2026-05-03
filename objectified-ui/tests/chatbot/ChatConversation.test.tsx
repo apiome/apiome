@@ -20,13 +20,17 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import '@testing-library/jest-dom';
 
 import { ChatConversation } from '../../src/app/ade/studio/components/chatbot/ChatConversation';
-import type { ChatStudioContext } from '../../src/app/ade/studio/components/chatbot/chat-context';
+import {
+  EMPTY_CHAT_STUDIO_CONTEXT,
+  type ChatStudioContext,
+} from '../../src/app/ade/studio/components/chatbot/chat-context';
 import {
   createConversationStore,
   createMemoryConversationStorage,
   type ConversationStore,
   type StoredConversation,
 } from '../../src/app/ade/studio/components/chatbot/conversation-store';
+import { CHAT_OLLAMA_MODEL_DEFAULTS_STORAGE_KEY } from '../../src/app/ade/studio/components/chatbot/ollama-model-defaults';
 import type { ChatMessage, ChatSendFn } from '../../src/app/ade/studio/components/chatbot/types';
 
 function makeMemoryStore(initial: StoredConversation[] = []): ConversationStore {
@@ -800,6 +804,135 @@ describe('ChatConversation', () => {
 
       const select = screen.getByTestId('studio-ai-chat-ollama-model-select') as HTMLSelectElement;
       expect(select.value).toBe('studio-test:latest');
+    });
+
+    it('selects persisted project default over the first listed model (#266)', async () => {
+      window.localStorage.setItem(
+        CHAT_OLLAMA_MODEL_DEFAULTS_STORAGE_KEY,
+        JSON.stringify({
+          v: 1,
+          byTenant: {},
+          byProject: { 'tenant-a::project-b': 'saved:latest' },
+        }),
+      );
+
+      global.fetch = jest.fn().mockImplementation((input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+        if (url.includes('/api/ollama/models')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              success: true,
+              models: [{ name: 'first:latest' }, { name: 'saved:latest' }],
+            }),
+          } as Response);
+        }
+        return Promise.reject(new Error(`unexpected fetch ${url}`));
+      });
+
+      render(
+        <ChatConversation
+          ollamaTransport
+          restoreLastConversation={false}
+          tenantId="tenant-a"
+          studioContext={{
+            ...EMPTY_CHAT_STUDIO_CONTEXT,
+            project: { id: 'project-b', name: 'PB' },
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('studio-ai-chat-ollama-model-select')).toBeInTheDocument();
+      });
+
+      const select = screen.getByTestId('studio-ai-chat-ollama-model-select') as HTMLSelectElement;
+      expect(select.value).toBe('saved:latest');
+    });
+
+    it('writes project default to localStorage when the user changes the model (#266)', async () => {
+      window.localStorage.removeItem(CHAT_OLLAMA_MODEL_DEFAULTS_STORAGE_KEY);
+
+      global.fetch = jest.fn().mockImplementation((input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+        if (url.includes('/api/ollama/models')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              success: true,
+              models: [{ name: 'a:latest' }, { name: 'b:latest' }],
+            }),
+          } as Response);
+        }
+        return Promise.reject(new Error(`unexpected fetch ${url}`));
+      });
+
+      render(
+        <ChatConversation
+          ollamaTransport
+          restoreLastConversation={false}
+          tenantId="tenant-x"
+          studioContext={{
+            ...EMPTY_CHAT_STUDIO_CONTEXT,
+            project: { id: 'project-y', name: 'PY' },
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('studio-ai-chat-ollama-model-select')).toBeInTheDocument();
+      });
+
+      const select = screen.getByTestId('studio-ai-chat-ollama-model-select') as HTMLSelectElement;
+      fireEvent.change(select, { target: { value: 'b:latest' } });
+
+      const raw = window.localStorage.getItem(CHAT_OLLAMA_MODEL_DEFAULTS_STORAGE_KEY);
+      expect(raw).toBeTruthy();
+      const parsed = JSON.parse(raw!) as { byProject: Record<string, string> };
+      expect(parsed.byProject['tenant-x::project-y']).toBe('b:latest');
+    });
+
+    it('Tenant default button saves the tenant-wide preference (#266)', async () => {
+      window.localStorage.removeItem(CHAT_OLLAMA_MODEL_DEFAULTS_STORAGE_KEY);
+
+      global.fetch = jest.fn().mockImplementation((input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+        if (url.includes('/api/ollama/models')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              success: true,
+              models: [{ name: 'a:latest' }, { name: 'b:latest' }],
+            }),
+          } as Response);
+        }
+        return Promise.reject(new Error(`unexpected fetch ${url}`));
+      });
+
+      render(
+        <ChatConversation
+          ollamaTransport
+          restoreLastConversation={false}
+          tenantId="tenant-x"
+          studioContext={{
+            ...EMPTY_CHAT_STUDIO_CONTEXT,
+            project: { id: 'project-y', name: 'PY' },
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('studio-ai-chat-ollama-model-select')).toBeInTheDocument();
+      });
+
+      const select = screen.getByTestId('studio-ai-chat-ollama-model-select') as HTMLSelectElement;
+      fireEvent.change(select, { target: { value: 'b:latest' } });
+      fireEvent.click(screen.getByTestId('studio-ai-chat-ollama-tenant-default'));
+
+      const raw = window.localStorage.getItem(CHAT_OLLAMA_MODEL_DEFAULTS_STORAGE_KEY);
+      expect(raw).toBeTruthy();
+      const parsed = JSON.parse(raw!) as { byTenant: Record<string, string> };
+      expect(parsed.byTenant['tenant-x']).toBe('b:latest');
     });
 
     it('sends messages through the Ollama chat route when models are ready', async () => {

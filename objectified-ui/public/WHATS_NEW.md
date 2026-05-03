@@ -21,6 +21,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Studio
 - AI chatbot lists Ollama models from your server and lets you pick which model answers each conversation (falls back to the offline assistant when Ollama is unavailable).
+- Studio chatbot remembers your preferred Ollama tag per project (and per tenant), with an optional control to set a tenant-wide default when you are inside a project.
 
 ---
 

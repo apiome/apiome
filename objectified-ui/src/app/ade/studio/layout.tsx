@@ -648,7 +648,9 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
           studio layout level so the floating bubble and ⌘⇧A shortcut are available
           across the canvas and paths surfaces. Hidden in presentation mode to keep
           the canvas chrome-free. */}
-      {!canvasPresentationMode && <StudioAiChatbot studioContext={chatbotStudioContext} />}
+      {!canvasPresentationMode && (
+        <StudioAiChatbot studioContext={chatbotStudioContext} tenantId={currentTenantId} />
+      )}
 
       {/* Programmatic state of the canvas — pinned to the bottom of the studio layout.
           Hidden in presentation mode for chrome consistency with StudioHeader. */}
