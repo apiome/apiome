@@ -12,6 +12,8 @@ uv run objectified-mcp --help
 
 ## Configuration
 
+Full reference (every variable, default, required flag, and validation bounds) is in **[docs/CONFIGURATION.md](docs/CONFIGURATION.md)**—it mirrors **`objectified_mcp.settings.Settings`**.
+
 Copy [.env.example](.env.example) to `.env` and set at least **`OBJECTIFIED_MCP_DATABASE_URL`** and **`OBJECTIFIED_MCP_INTERNAL_SECRET`** (minimum 16 characters). **`uv run objectified-mcp serve`** validates configuration and exits; **`uv run objectified-mcp serve --transport stdio`** runs the FastMCP stdio transport for local hosts (Claude Desktop, mcp-inspector). **`uv run objectified-mcp serve --transport http`** runs streamable HTTP (MCP endpoint **`/mcp`**); bind address and port come from **`OBJECTIFIED_MCP_HTTP_HOST`** / **`OBJECTIFIED_MCP_HTTP_PORT`** or **`--host`** / **`--port`**. Stop with Ctrl+C or **`SIGTERM`** for graceful uvicorn shutdown.
 
 ### Docker Compose (Postgres + migrations + MCP)

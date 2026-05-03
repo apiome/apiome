@@ -1,6 +1,6 @@
 [project]
 name = "objectified-mcp"
-version = "0.1.26"
+version = "0.1.27"
 description = "Model Context Protocol server for Objectified (FastMCP)."
 readme = "README.md"
 requires-python = ">=3.11"

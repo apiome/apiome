@@ -130,7 +130,7 @@ process or via Docker.
 |---|-------|-------|------------|
 | 6.1 | ~~[#3023](../../issues/3023)~~ | ~~Multi-stage Dockerfile~~ (**completed**) | 1.1, 1.6 |
 | 6.2 | ~~[#3024](../../issues/3024)~~ | ~~`docker-compose.yml` (mcp + postgres)~~ (**completed**) | 6.1, 2.1 |
-| 6.3 | [#3025](../../issues/3025) | `.env.example` + config docs | 1.2 |
+| 6.3 | ~~[#3025](../../issues/3025)~~ | ~~`.env.example` + config docs~~ (**completed**) | 1.2 |
 | 6.4 | [#3026](../../issues/3026) | Local quickstart docs (`uv run`) | 1.5, 1.6 |
 | 6.5 | [#3027](../../issues/3027) | README (overview + tools reference) | E3–E5 |
 | 6.6 | [#3028](../../issues/3028) | GitHub Actions CI (lint + tests) | 1.1 |
