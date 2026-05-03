@@ -178,6 +178,61 @@ def test_build_spec_get_openapi_private_audited() -> None:
     assert audit.call_args.kwargs["tool"] == "spec.get_openapi"
 
 
+def test_build_spec_get_openapi_private_audited_custom_tool_name() -> None:
+    sid = uuid4()
+    row = _openapi_row(spec_id=sid, visibility="private")
+    auth = McpAuthContext(
+        key_id="00000000-0000-4000-8000-000000000099",
+        tenant_id=str(uuid4()),
+        label="k",
+        scope=Scope(),
+    )
+    sample_spec = {
+        "openapi": "3.1.0",
+        "info": {"title": "x", "version": "1"},
+        "paths": {},
+        "components": {"schemas": {}},
+    }
+
+    pool = MagicMock(spec=AsyncConnectionPool)
+    describe_cur = MagicMock()
+    describe_cur.execute = AsyncMock()
+    describe_cur.fetchone = AsyncMock(return_value=row)
+    describe_cm = AsyncMock()
+    describe_cm.__aenter__.return_value = describe_cur
+    describe_cm.__aexit__.return_value = None
+    conn = MagicMock()
+    conn.cursor = MagicMock(return_value=describe_cm)
+    conn_cm = AsyncMock()
+    conn_cm.__aenter__.return_value = conn
+    conn_cm.__aexit__.return_value = None
+    pool.connection = MagicMock(return_value=conn_cm)
+
+    async def fake_fetch(_conn: object, _revision_id: UUID) -> tuple:
+        return ([], {}, [], [], [])
+
+    with (
+        patch("objectified_mcp.spec_get_openapi_tool.fetch_openapi_generation_inputs_async", side_effect=fake_fetch),
+        patch("objectified_mcp.spec_get_openapi_tool.generate_openapi_spec", return_value=sample_spec),
+        patch("objectified_mcp.spec_get_openapi_tool.get_settings") as gs,
+        patch("objectified_mcp.spec_get_openapi_tool.schedule_mcp_private_access_audit") as audit,
+    ):
+        gs.return_value.openapi_max_json_bytes = 1_000_000
+
+        async def run() -> None:
+            await build_spec_get_openapi_response(
+                pool,
+                spec_id=str(sid),
+                auth_ctx=auth,
+                private_access_audit_tool="spec.export_yaml",
+            )
+
+        asyncio.run(run())
+
+    audit.assert_called_once()
+    assert audit.call_args.kwargs["tool"] == "spec.export_yaml"
+
+
 def test_build_spec_get_openapi_returns_valid_json_shape() -> None:
     sid = uuid4()
     row = _openapi_row(spec_id=sid)

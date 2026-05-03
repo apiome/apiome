@@ -106,8 +106,15 @@ async def build_spec_get_openapi_response(
     *,
     spec_id: str,
     auth_ctx: McpAuthContext | None = None,
+    apply_json_payload_cap: bool = True,
+    private_access_audit_tool: str = "spec.get_openapi",
 ) -> dict[str, Any]:
-    """Return OpenAPI 3.1 document dict for ``spec_id``, or raise ``NotFoundError`` / ``ToolError``."""
+    """Return OpenAPI 3.1 document dict for ``spec_id``, or raise ``NotFoundError`` / ``ToolError``.
+
+    When ``apply_json_payload_cap`` is False, skip the compact JSON byte limit (used by YAML export,
+    which applies its own UTF-8 cap). ``private_access_audit_tool`` names the tool stored when a private
+    revision is returned to an authenticated caller.
+    """
     sid = _parse_spec_id(spec_id)
 
     if auth_ctx is not None and auth_ctx.scope.deny_all:
@@ -149,7 +156,7 @@ async def build_spec_get_openapi_response(
         schedule_mcp_private_access_audit(
             pool,
             key_id=auth_ctx.key_id,
-            tool="spec.get_openapi",
+            tool=private_access_audit_tool,
             spec_id=str(row["id"]),
         )
 
@@ -167,12 +174,13 @@ async def build_spec_get_openapi_response(
         server_rows=server_rows,
     )
 
-    settings = get_settings()
-    encoded = json.dumps(spec, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
-    if len(encoded) > settings.openapi_max_json_bytes:
-        raise ToolError(
-            f"OpenAPI document exceeds server limit ({settings.openapi_max_json_bytes} bytes); "
-            "this condition corresponds to HTTP 413 Payload Too Large."
-        )
+    if apply_json_payload_cap:
+        settings = get_settings()
+        encoded = json.dumps(spec, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        if len(encoded) > settings.openapi_max_json_bytes:
+            raise ToolError(
+                f"OpenAPI document exceeds server limit ({settings.openapi_max_json_bytes} bytes); "
+                "this condition corresponds to HTTP 413 Payload Too Large."
+            )
 
     return spec

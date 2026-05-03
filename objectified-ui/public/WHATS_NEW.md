@@ -27,6 +27,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Database table **`odb.mcp_access_audit`** records MCP API key **`key_id`**, tool name, **`spec_id`** (revision UUID), timestamp **`at`**, **`success`**, and optional **`error`** for traceability; **`spec.list`** and **`spec.describe`** enqueue **non-blocking** inserts after each **private** revision returned to an authenticated caller (#3013).
 - MCP tool **`spec.list_my_specs`** lists specs readable by the **current API key only** (same merged public/private semantics and pagination as authenticated **`spec.list`**); calls **without** a key are rejected (**`Depends(require_mcp_auth)`**); private rows are audited under tool name **`spec.list_my_specs`** (#3014).
 - MCP tool **`spec.get_openapi`** returns the generated **OpenAPI 3.1** document as JSON for a published revision UUID (same shape as REST **`GET /v1/schema/{tenant}/{project}/{version}`**): anonymous callers get **public** revisions only; with an MCP API key, **in-scope private** revisions are included; responses larger than **`OBJECTIFIED_MCP_OPENAPI_MAX_JSON_BYTES`** (default **2 MiB**) are rejected with an error described as **HTTP 413** (#3016).
+- MCP tool **`spec.export_yaml`** returns the same generated document as **`openapi_yaml`** YAML text (REST-aligned **`yaml.dump`** settings); visibility, auth, private access audit, and UTF-8 size cap match **`spec.get_openapi`** (#3017).
 
 ## Importing
 - Race condition fixed in 3.0.1 specification imports

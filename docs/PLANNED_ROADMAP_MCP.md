@@ -118,7 +118,7 @@ process or via Docker.
 | # | Issue | Title | Depends on |
 |---|-------|-------|------------|
 | 5.1 | ~~[#3016](../../issues/3016)~~ | ~~Tool `spec.get_openapi` (JSON)~~ (**completed**) | 3.1, 4.1 |
-| 5.2 | [#3017](../../issues/3017) | Tool `spec.export_yaml` | 5.1 |
+| 5.2 | ~~[#3017](../../issues/3017)~~ | ~~Tool `spec.export_yaml`~~ (**completed**) | 5.1 |
 | 5.3 | [#3018](../../issues/3018) | Tool `spec.list_operations` | 5.1 |
 | 5.4 | [#3019](../../issues/3019) | Tool `spec.describe_operation` | 5.3 |
 | 5.5 | [#3020](../../issues/3020) | Tool `spec.list_components` | 5.1 |

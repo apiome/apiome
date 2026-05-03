@@ -18,6 +18,7 @@ from objectified_mcp.mcp_auth import McpAuthContext, require_mcp_auth, resolve_o
 from objectified_mcp.ping_tool import build_ping_response
 from objectified_mcp.settings import get_settings
 from objectified_mcp.spec_describe_tool import build_spec_describe_response
+from objectified_mcp.spec_export_yaml_tool import build_spec_export_yaml_response
 from objectified_mcp.spec_get_openapi_tool import build_spec_get_openapi_response
 from objectified_mcp.spec_list_tags_tool import build_spec_list_tags_response
 from objectified_mcp.spec_list_tool import build_spec_list_response
@@ -158,6 +159,27 @@ async def spec_get_openapi(
     pool = get_db_pool(ctx)
     auth_ctx = await resolve_optional_mcp_auth(ctx, pool, headers=headers)
     return await build_spec_get_openapi_response(pool, spec_id=spec_id, auth_ctx=auth_ctx)
+
+
+@mcp.tool(
+    name="spec.export_yaml",
+    description=(
+        "Return the generated OpenAPI 3.1 document as YAML text for a published spec revision by id (UUID). "
+        "Same semantics as spec.get_openapi: anonymous callers see public revisions only; with "
+        "Authorization: Bearer <MCP API key>, in-scope private published revisions are included (#3017). "
+        "Response field openapi_yaml round-trips with YAML loaders to the same structure as the JSON tool. "
+        "If UTF-8 YAML exceeds OBJECTIFIED_MCP_OPENAPI_MAX_JSON_BYTES (default 2 MiB), returns an error "
+        "analogous to HTTP 413."
+    ),
+)
+async def spec_export_yaml(
+    ctx: Context,
+    spec_id: str,
+    headers: dict[str, str] = CurrentHeaders(),
+) -> dict[str, str]:
+    pool = get_db_pool(ctx)
+    auth_ctx = await resolve_optional_mcp_auth(ctx, pool, headers=headers)
+    return await build_spec_export_yaml_response(pool, spec_id=spec_id, auth_ctx=auth_ctx)
 
 
 @mcp.tool(

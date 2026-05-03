@@ -43,7 +43,10 @@ class Settings(BaseSettings):
         default=2_097_152,
         ge=1024,
         le=100_000_000,
-        description="Max UTF-8 size of json-serialized OpenAPI from spec.get_openapi (413-style limit).",
+        description=(
+            "Max UTF-8 size of exported OpenAPI from spec.get_openapi (compact JSON) and "
+            "spec.export_yaml (YAML text); 413-style limit."
+        ),
     )
 
     @model_validator(mode="after")
