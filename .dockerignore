@@ -1,0 +1,3 @@
+# Keeps `docker build -f objectified-mcp/Dockerfile .` contexts small and avoids copying local venvs.
+**/.venv
+.git

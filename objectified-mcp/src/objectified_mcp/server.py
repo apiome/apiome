@@ -9,6 +9,8 @@ import structlog
 from fastmcp import Context, FastMCP
 from fastmcp.dependencies import CurrentHeaders, Depends
 from fastmcp.server.lifespan import lifespan
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 from structlog.contextvars import bound_contextvars
 
 from objectified_mcp.database_pool import MCP_DB_POOL_KEY, create_async_pool, get_db_pool, ping_pool
@@ -54,6 +56,12 @@ async def database_lifespan(server: Any) -> Any:
 
 mcp = FastMCP("Objectified", lifespan=database_lifespan)
 mcp.add_middleware(StashHttpBearerInToolContextMiddleware())
+
+
+@mcp.custom_route("/health", methods=["GET"])
+async def _http_health(_request: Request) -> JSONResponse:
+    """Liveness probe for load balancers and Docker HEALTHCHECK (HTTP 200; does not query Postgres)."""
+    return JSONResponse({"status": "ok"})
 
 
 @mcp.tool

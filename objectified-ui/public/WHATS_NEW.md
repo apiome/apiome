@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## MCP
 
+- Multi-stage **`objectified-mcp/Dockerfile`** (uv builder + slim runtime, non-root user, **`GET /health`** liveness + **`HEALTHCHECK`**) — build from repo root: **`docker build -f objectified-mcp/Dockerfile .`** (#3023).
 - New `objectified-mcp` Python package (FastMCP, uv, ruff, mypy) as the foundation for the Model Context Protocol server.
 - MCP server loads typed configuration from the environment via pydantic-settings (`objectified-mcp serve`); **`objectified-mcp serve --transport stdio`** runs the FastMCP stdio transport for Claude Desktop and similar hosts; **`objectified-mcp serve --transport http`** exposes streamable HTTP at **`/mcp`** with configurable **`--host`** / **`--port`** (or env defaults); see `objectified-mcp/.env.example`.
 - MCP runtime opens a shared async Postgres pool (psycopg 3) at startup, exposes it to tools via lifespan context, runs a health probe (`SELECT 1`), and closes the pool cleanly on shutdown.
