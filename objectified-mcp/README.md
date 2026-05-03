@@ -2,19 +2,55 @@
 
 Python **FastMCP** service for exposing Objectified OpenAPI specifications over the Model Context Protocol.
 
-Local development uses **[uv](https://docs.astral.sh/uv/)**:
+## Local quickstart (uv, no MCP container)
+
+Use **[uv](https://docs.astral.sh/uv/)** with **Python ≥ 3.11**. Environment variables are loaded from **`.env`** in your **current working directory**—run commands from **`objectified-mcp/`** after **`cd`**.
+
+### Database
+
+The server needs PostgreSQL with the Objectified schema applied. Startup fails if the connection pool cannot open; a failed initial `SELECT 1` probe only logs a warning and the server continues.
+
+**Option A — Docker from the repository root** (Postgres + migrations only; does not start the MCP image):
+
+```bash
+docker compose up -d postgres && docker compose run --rm migrate
+```
+
+With default **`docker-compose.yml`** credentials, set **`OBJECTIFIED_MCP_DATABASE_URL`** to:
+
+`postgresql://postgres:objectified_local_dev@localhost:5432/objectified`
+
+**Option B — Your own cluster** — use any migrated database URI in **`OBJECTIFIED_MCP_DATABASE_URL`**.
+
+### Install, env, and run
+
+After the database is ready:
 
 ```bash
 cd objectified-mcp
 uv sync
-uv run objectified-mcp --help
+cp .env.example .env
 ```
+
+Edit **`.env`**: set **`OBJECTIFIED_MCP_DATABASE_URL`** and **`OBJECTIFIED_MCP_INTERNAL_SECRET`** (minimum **16** characters). Every **`OBJECTIFIED_MCP_*`** variable is documented in **[docs/CONFIGURATION.md](docs/CONFIGURATION.md)**.
+
+**Stdio** (Claude Desktop, MCP Inspector):
+
+```bash
+uv run objectified-mcp serve --transport stdio
+```
+
+**HTTP** (streamable MCP at **`http://<host>:<port>/mcp`**; bind **`OBJECTIFIED_MCP_HTTP_HOST`** / **`OBJECTIFIED_MCP_HTTP_PORT`** or **`--host`** / **`--port`**):
+
+```bash
+uv run objectified-mcp serve --transport http
+```
+
+**`uv run objectified-mcp serve`** without **`--transport`** loads settings and exits—use that to verify **`.env`** after edits. Stop a running server with **Ctrl+C** or **`SIGTERM`** (HTTP uses graceful uvicorn shutdown).
 
 ## Configuration
 
-Full reference (every variable, default, required flag, and validation bounds) is in **[docs/CONFIGURATION.md](docs/CONFIGURATION.md)**—it mirrors **`objectified_mcp.settings.Settings`**.
-
-Copy [.env.example](.env.example) to `.env` and set at least **`OBJECTIFIED_MCP_DATABASE_URL`** and **`OBJECTIFIED_MCP_INTERNAL_SECRET`** (minimum 16 characters). **`uv run objectified-mcp serve`** validates configuration and exits; **`uv run objectified-mcp serve --transport stdio`** runs the FastMCP stdio transport for local hosts (Claude Desktop, mcp-inspector). **`uv run objectified-mcp serve --transport http`** runs streamable HTTP (MCP endpoint **`/mcp`**); bind address and port come from **`OBJECTIFIED_MCP_HTTP_HOST`** / **`OBJECTIFIED_MCP_HTTP_PORT`** or **`--host`** / **`--port`**. Stop with Ctrl+C or **`SIGTERM`** for graceful uvicorn shutdown.
+Full reference (defaults, bounds, required flags) is **[docs/CONFIGURATION.md](docs/CONFIGURATION.md)**—it mirrors **`objectified_mcp.settings.Settings`**.
 
 ### Docker Compose (Postgres + migrations + MCP)
 
