@@ -37,7 +37,11 @@ def _json_pointer_follow(root: dict[str, Any], pointer: str) -> Any | None:
 
 
 def resolve_openapi_refs(root: dict[str, Any], node: Any, stack: frozenset[str]) -> Any:
-    """Recursively resolve document-internal ``#/…`` ``$ref`` values; leave external refs unchanged."""
+    """Recursively resolve document-internal ``#/…`` ``$ref`` values; leave external refs unchanged.
+
+    Sibling fields alongside a ``$ref`` (valid in OAS 3.1 / JSON Schema) are merged into the resolved
+    target, with the sibling values taking precedence over same-named target fields.
+    """
     if isinstance(node, dict):
         ref = node.get("$ref")
         if isinstance(ref, str) and ref.startswith("#/"):
@@ -46,7 +50,16 @@ def resolve_openapi_refs(root: dict[str, Any], node: Any, stack: frozenset[str])
             target = _json_pointer_follow(root, ref)
             if target is None:
                 return deepcopy(node)
-            return resolve_openapi_refs(root, deepcopy(target), frozenset({*stack, ref}))
+            new_stack = frozenset({*stack, ref})
+            resolved = resolve_openapi_refs(root, deepcopy(target), new_stack)
+            siblings = {
+                k: resolve_openapi_refs(root, deepcopy(v), new_stack)
+                for k, v in node.items()
+                if k != "$ref"
+            }
+            if siblings and isinstance(resolved, dict):
+                return {**resolved, **siblings}
+            return resolved
         return {k: resolve_openapi_refs(root, v, stack) for k, v in node.items()}
     if isinstance(node, list):
         return [resolve_openapi_refs(root, item, stack) for item in node]
@@ -116,7 +129,17 @@ def extract_operation_detail(spec: dict[str, Any], path: str, method: str) -> di
     if not isinstance(operation, dict):
         return None
 
-    parameters = merge_path_and_operation_parameters(path_item, operation)
+    # Expand $ref values in path-item parameters before the (name, in) dedup merge so that
+    # operation-level parameters correctly override path-level $ref parameters.
+    path_item_params_raw = path_item.get("parameters")
+    path_item_params_expanded = resolve_openapi_refs(
+        spec,
+        path_item_params_raw if isinstance(path_item_params_raw, list) else [],
+        frozenset(),
+    )
+    path_item_for_merge = {**path_item, "parameters": path_item_params_expanded}
+    parameters = merge_path_and_operation_parameters(path_item_for_merge, operation)
+    # operation params inside `operation` are already resolved; re-running is a harmless no-op.
     parameters_resolved = resolve_openapi_refs(spec, parameters, frozenset())
 
     request_body = operation.get("requestBody")
