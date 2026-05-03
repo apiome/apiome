@@ -1,6 +1,6 @@
 /**
- * Default offline responder used by the Studio AI chatbot until the Ollama
- * adapter lands (#265).
+ * Default offline responder used by the Studio AI chatbot when Ollama is
+ * unavailable or `ollamaTransport` is off (#265).
  *
  * The replies are deterministic and intentionally cover every UI affordance
  * the interface guidelines call for so designers and reviewers can see the

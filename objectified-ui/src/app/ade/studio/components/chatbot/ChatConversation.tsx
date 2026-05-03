@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Download, History, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Download, History, Loader2, Plus, RefreshCw, Sparkles, Trash2 } from 'lucide-react';
 
 import { ChatBubble } from './ChatBubble';
 import { ChatComposer } from './ChatComposer';
@@ -19,6 +19,7 @@ import {
   type StoredConversationScope,
 } from './conversation-store';
 import { createDemoChatResponder } from './demo-responder';
+import { createOllamaChatResponder } from './ollama-chat-responder';
 import type { DetectedOpenApiSpec } from './openapi-detection';
 import type { ChatFeedback, ChatMessage, ChatSendFn } from './types';
 
@@ -39,6 +40,9 @@ import type { ChatFeedback, ChatMessage, ChatSendFn } from './types';
  *   - Conversations are auto-persisted per project / version (#261), with a
  *     toolbar for new / history / export / clear and a browse + search
  *     surface tucked behind the history button
+ *   - With `ollamaTransport` (#265), lists generative models from Ollama and
+ *     sends turns through `/api/ollama/chat`; falls back to the demo when the
+ *     server has no models or the list request fails.
  */
 export interface ChatConversationProps {
   /** Adapter invoked to produce assistant replies. Defaults to the demo responder. */
@@ -78,6 +82,11 @@ export interface ChatConversationProps {
    * browser download. Tests inject a spy to assert the markdown content.
    */
   onExportConversation?: (input: { filename: string; markdown: string }) => void;
+  /**
+   * Load models from `/api/ollama/models` and use the selected tag with the
+   * Ollama chat route. Ignored when `onSendMessage` is provided.
+   */
+  ollamaTransport?: boolean;
 }
 
 const PROMPT_SUGGESTIONS: readonly string[] = [
@@ -96,8 +105,84 @@ export function ChatConversation({
   restoreLastConversation = true,
   confirmAction,
   onExportConversation,
+  ollamaTransport = false,
 }: ChatConversationProps) {
-  const responder = React.useMemo(() => onSendMessage ?? createDemoChatResponder(), [onSendMessage]);
+  type OllamaModelRow = { name: string };
+  type ModelsStatus = 'idle' | 'loading' | 'ready' | 'empty' | 'error';
+
+  const [ollamaModels, setOllamaModels] = React.useState<OllamaModelRow[]>([]);
+  const [selectedOllamaModel, setSelectedOllamaModel] = React.useState('');
+  const [modelsStatus, setModelsStatus] = React.useState<ModelsStatus>(() =>
+    ollamaTransport ? 'loading' : 'idle',
+  );
+  const [modelsRetryToken, bumpModelsRetry] = React.useReducer((n: number) => n + 1, 0);
+
+  const demoResponder = React.useMemo(() => createDemoChatResponder(), []);
+  const ollamaResponder = React.useMemo(() => createOllamaChatResponder(), []);
+
+  React.useEffect(() => {
+    if (!ollamaTransport) {
+      setModelsStatus('idle');
+      setOllamaModels([]);
+      setSelectedOllamaModel('');
+      return;
+    }
+
+    let cancelled = false;
+    setModelsStatus('loading');
+
+    function applyErrorState() {
+      setOllamaModels([]);
+      setSelectedOllamaModel('');
+      setModelsStatus('error');
+    }
+
+    async function loadModels() {
+      try {
+        const res = await fetch('/api/ollama/models');
+        if (!res.ok) {
+          if (!cancelled) applyErrorState();
+          return;
+        }
+        const data = (await res.json()) as {
+          success?: boolean;
+          models?: OllamaModelRow[];
+        };
+        if (cancelled) return;
+        if (data.success === false) {
+          applyErrorState();
+        } else if (data.success && Array.isArray(data.models) && data.models.length > 0) {
+          setOllamaModels(data.models);
+          setSelectedOllamaModel((prev) => {
+            const names = data.models!.map((m) => m.name);
+            if (prev && names.includes(prev)) return prev;
+            return data.models![0].name;
+          });
+          setModelsStatus('ready');
+        } else {
+          setOllamaModels([]);
+          setSelectedOllamaModel('');
+          setModelsStatus('empty');
+        }
+      } catch {
+        if (!cancelled) applyErrorState();
+      }
+    }
+
+    void loadModels();
+    return () => {
+      cancelled = true;
+    };
+  }, [ollamaTransport, modelsRetryToken]);
+
+  const useLiveOllama =
+    ollamaTransport && modelsStatus === 'ready' && ollamaModels.length > 0 && selectedOllamaModel.length > 0;
+
+  const responder = React.useMemo(() => {
+    if (onSendMessage) return onSendMessage;
+    if (useLiveOllama) return ollamaResponder;
+    return demoResponder;
+  }, [onSendMessage, useLiveOllama, ollamaResponder, demoResponder]);
   const store = React.useMemo<ConversationStore>(
     () => conversationStore ?? createConversationStore(createLocalStorageConversationStorage()),
     [conversationStore],
@@ -213,6 +298,7 @@ export function ChatConversation({
           prompt,
           isRegenerate,
           studioContext: studioContextRef.current,
+          ollamaModel: useLiveOllama ? selectedOllamaModel : undefined,
         });
       } catch (error) {
         console.error('Chat assistant failed to respond', error);
@@ -228,7 +314,7 @@ export function ChatConversation({
       );
       setIsBusy(false);
     },
-    [responder]
+    [responder, useLiveOllama, selectedOllamaModel]
   );
 
   const handleSend = React.useCallback(
@@ -380,6 +466,15 @@ export function ChatConversation({
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="studio-ai-chat-conversation">
+      {ollamaTransport && view === 'chat' && (
+        <OllamaModelBar
+          status={ollamaTransport && modelsStatus === 'idle' ? 'loading' : modelsStatus}
+          models={ollamaModels}
+          selectedModel={selectedOllamaModel}
+          onSelectModel={setSelectedOllamaModel}
+          onRetry={bumpModelsRetry}
+        />
+      )}
       <ChatToolbar
         onNew={handleNewConversation}
         onHistory={handleOpenHistory}
@@ -433,6 +528,79 @@ export function ChatConversation({
 
           <ChatComposer onSend={handleSend} isBusy={isBusy} />
         </>
+      )}
+    </div>
+  );
+}
+
+type OllamaModelBarStatus = 'idle' | 'loading' | 'ready' | 'empty' | 'error';
+
+interface OllamaModelBarProps {
+  status: OllamaModelBarStatus;
+  models: Array<{ name: string }>;
+  selectedModel: string;
+  onSelectModel: (name: string) => void;
+  onRetry: () => void;
+}
+
+function OllamaModelBar({
+  status,
+  models,
+  selectedModel,
+  onSelectModel,
+  onRetry,
+}: OllamaModelBarProps) {
+  if (status === 'idle') return null;
+
+  return (
+    <div
+      className="flex flex-wrap items-center gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-900/60"
+      data-testid="studio-ai-chat-ollama-model-bar"
+    >
+      {status === 'loading' && (
+        <span className="inline-flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+          <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
+          Loading models from Ollama…
+        </span>
+      )}
+      {status === 'error' && (
+        <>
+          <span className="text-xs text-red-600 dark:text-red-400">
+            Could not reach Ollama. Using the offline assistant.
+          </span>
+          <button
+            type="button"
+            onClick={onRetry}
+            data-testid="studio-ai-chat-ollama-retry-models"
+            className="inline-flex h-7 items-center gap-1 rounded-md border border-gray-300 bg-white px-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+            Retry
+          </button>
+        </>
+      )}
+      {status === 'empty' && (
+        <span className="text-xs text-gray-600 dark:text-gray-400">
+          No generative models in Ollama. Pull one (for example Qwen 2.5 or Llama 3.2) or continue with the
+          offline assistant.
+        </span>
+      )}
+      {status === 'ready' && (
+        <label className="flex flex-wrap items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
+          <span className="font-medium text-gray-600 dark:text-gray-400">Model</span>
+          <select
+            data-testid="studio-ai-chat-ollama-model-select"
+            className="max-w-[min(100%,18rem)] rounded-md border border-gray-300 bg-white px-2 py-1 font-mono text-xs text-gray-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+            value={selectedModel}
+            onChange={(e) => onSelectModel(e.target.value)}
+          >
+            {models.map((m) => (
+              <option key={m.name} value={m.name}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        </label>
       )}
     </div>
   );

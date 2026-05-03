@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Studio AI Chatbot — placement chrome + chat surface (#257, #258, #259).
+ * Studio AI Chatbot — placement chrome + chat surface (#257, #258, #259, #265).
  *
  * Provides the launcher and panel surfaces for the studio chatbot:
  *   - Floating launcher bubble in the bottom right corner of the canvas
@@ -20,9 +20,9 @@
  * forwarded to the responder on every send, and surfaced in-panel via a
  * "Sharing context" chip so users always see what the assistant can see.
  *
- * Live model wiring (Ollama transport, history) lands in follow-up tickets
- * (#260, #265). Until those land the panel uses an offline demo responder
- * so reviewers can exercise the full UI today.
+ * Ollama model listing and selection (#265): the conversation loads tags from
+ * `/api/ollama/models` and sends each turn through `/api/ollama/chat` when a
+ * model is available; otherwise the offline demo responder keeps the panel usable.
  */
 
 import * as React from 'react';
@@ -223,7 +223,11 @@ function ChatbotPanel({ mode, onModeChange, onClose, studioContext }: ChatbotPan
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col">
-        <ChatConversation onImportSpec={handleImportSpec} studioContext={studioContext} />
+        <ChatConversation
+          onImportSpec={handleImportSpec}
+          studioContext={studioContext}
+          ollamaTransport
+        />
       </div>
 
       <footer className="border-t border-gray-200 bg-gray-50 px-4 py-2 text-[11px] text-gray-500 dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-400">

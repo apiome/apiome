@@ -34,6 +34,7 @@ export type {
 export { ConversationHistoryPanel } from './ConversationHistoryPanel';
 export type { ConversationHistoryPanelProps } from './ConversationHistoryPanel';
 export { createDemoChatResponder } from './demo-responder';
+export { createOllamaChatResponder } from './ollama-chat-responder';
 export {
   detectOpenApiSpecs,
   hasOpenApiSpec,

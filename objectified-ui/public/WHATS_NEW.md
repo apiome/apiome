@@ -19,6 +19,9 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Export
 
+## Studio
+- AI chatbot lists Ollama models from your server and lets you pick which model answers each conversation (falls back to the offline assistant when Ollama is unavailable).
+
 ---
 
 View our YouTube channel [here](https://www.youtube.com/@objectifieddev) for detailed tutorials and walkthroughs!
@@ -33,5 +36,5 @@ We'd love to hear your thoughts! Your feedback helps us make Objectified better.
 
 **Thank you for using Objectified!**
 
-*Last updated: May 2, 2026*
+*Last updated: May 3, 2026*
 

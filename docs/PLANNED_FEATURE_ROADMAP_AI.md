@@ -74,12 +74,12 @@ This outlines the planned features for integrating AI capabilities into Objectif
     - Health check and failover
     - Connection timeout settings
     - Retry policies
-- 📋 **Model Selection**:
-    - 📋 Choose from available models:
-        - 📋 Qwen 2.5
-        - 📋 Llama 3.2
-        - 📋 CodeLlama for code-specific tasks
-        - 📋 Custom fine-tuned models
+- **Model Selection**:
+    - Choose from available models (queried live from Ollama; includes Qwen 2.5, Llama 3.2, CodeLlama, custom tags when installed):
+        - Qwen 2.5
+        - Llama 3.2
+        - CodeLlama for code-specific tasks
+        - Custom fine-tuned models
     - Model switching per task type
     - Model performance comparison
     - 📋 Default model per tenant/project
@@ -92,7 +92,7 @@ This outlines the planned features for integrating AI capabilities into Objectif
 
 | Ticket | Feature Description                     |
 |--------|-----------------------------------------|
-| #265   | Ollama model selection                  |
+| #265   | Ollama model selection **(shipped)**    |
 | #266   | Ollama default model per tenant/project |
 
 **Ollama API Integration** 📋 PLANNED

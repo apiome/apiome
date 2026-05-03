@@ -677,4 +677,166 @@ describe('ChatConversation', () => {
     expect(onImportSpec).toHaveBeenCalledTimes(1);
     expect(onImportSpec.mock.calls[0][0].version).toBe('3.1.0');
   });
+
+  describe('Ollama transport (#265)', () => {
+    const originalFetch = global.fetch;
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+    });
+
+    function mockSseBody(lines: string[]) {
+      const enc = new TextEncoder();
+      const payload = enc.encode(lines.join(''));
+      let sent = false;
+      return {
+        ok: true,
+        status: 200,
+        body: {
+          getReader() {
+            return {
+              read(): Promise<{ done: boolean; value?: Uint8Array }> {
+                if (!sent) {
+                  sent = true;
+                  return Promise.resolve({ done: false, value: payload });
+                }
+                return Promise.resolve({ done: true });
+              },
+            };
+          },
+        },
+      };
+    }
+
+    it('shows error message and Retry button when models endpoint returns non-OK HTTP', async () => {
+      const fetchMock = jest.fn().mockImplementation((input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+        if (url.includes('/api/ollama/models')) {
+          return Promise.resolve({
+            ok: false,
+            status: 500,
+            json: async () => ({ success: false, error: 'internal server error' }),
+          } as Response);
+        }
+        return Promise.reject(new Error(`unexpected fetch ${url}`));
+      });
+      global.fetch = fetchMock;
+
+      render(<ChatConversation ollamaTransport restoreLastConversation={false} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Could not reach Ollama. Using the offline assistant.')).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId('studio-ai-chat-ollama-retry-models')).toBeInTheDocument();
+      expect(screen.queryByTestId('studio-ai-chat-ollama-model-select')).not.toBeInTheDocument();
+
+      // Sending a message must use the demo responder, not the Ollama chat route.
+      fireEvent.change(screen.getByTestId('studio-ai-chat-input'), { target: { value: 'Hello' } });
+      fireEvent.click(screen.getByTestId('studio-ai-chat-send'));
+
+      // Wait for the user bubble to appear (state update is synchronous after send).
+      await waitFor(() => {
+        expect(screen.getAllByTestId('studio-ai-chat-bubble').length).toBeGreaterThan(0);
+      });
+
+      const chatCalls = fetchMock.mock.calls.filter((c) => String(c[0]).includes('/api/ollama/chat'));
+      expect(chatCalls.length).toBe(0);
+    });
+
+    it('shows error message and Retry button when models endpoint returns {success:false}', async () => {
+      const fetchMock = jest.fn().mockImplementation((input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+        if (url.includes('/api/ollama/models')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({ success: false, error: 'ollama unavailable' }),
+          } as Response);
+        }
+        return Promise.reject(new Error(`unexpected fetch ${url}`));
+      });
+      global.fetch = fetchMock;
+
+      render(<ChatConversation ollamaTransport restoreLastConversation={false} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Could not reach Ollama. Using the offline assistant.')).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId('studio-ai-chat-ollama-retry-models')).toBeInTheDocument();
+      expect(screen.queryByTestId('studio-ai-chat-ollama-model-select')).not.toBeInTheDocument();
+
+      // Sending a message must use the demo responder, not the Ollama chat route.
+      fireEvent.change(screen.getByTestId('studio-ai-chat-input'), { target: { value: 'Hello' } });
+      fireEvent.click(screen.getByTestId('studio-ai-chat-send'));
+
+      // Wait for the user bubble to appear (state update is synchronous after send).
+      await waitFor(() => {
+        expect(screen.getAllByTestId('studio-ai-chat-bubble').length).toBeGreaterThan(0);
+      });
+
+      const chatCalls = fetchMock.mock.calls.filter((c) => String(c[0]).includes('/api/ollama/chat'));
+      expect(chatCalls.length).toBe(0);
+    });
+
+    it('loads models and shows the selector', async () => {
+      global.fetch = jest.fn().mockImplementation((input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+        if (url.includes('/api/ollama/models')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, models: [{ name: 'studio-test:latest' }] }),
+          } as Response);
+        }
+        return Promise.reject(new Error(`unexpected fetch ${url}`));
+      });
+
+      render(<ChatConversation ollamaTransport restoreLastConversation={false} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('studio-ai-chat-ollama-model-select')).toBeInTheDocument();
+      });
+
+      const select = screen.getByTestId('studio-ai-chat-ollama-model-select') as HTMLSelectElement;
+      expect(select.value).toBe('studio-test:latest');
+    });
+
+    it('sends messages through the Ollama chat route when models are ready', async () => {
+      const fetchMock = jest.fn().mockImplementation((input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+        if (url.includes('/api/ollama/models')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true, models: [{ name: 'studio-test:latest' }] }),
+          } as Response);
+        }
+        if (url.includes('/api/ollama/chat')) {
+          return Promise.resolve(mockSseBody(['data: {"content":"Model reply","done":true}\n\n', 'data: [DONE]\n\n']));
+        }
+        return Promise.reject(new Error(`unexpected fetch ${url}`));
+      });
+      global.fetch = fetchMock;
+
+      render(<ChatConversation ollamaTransport restoreLastConversation={false} />);
+
+      await waitFor(() => expect(screen.getByTestId('studio-ai-chat-ollama-model-select')).toBeInTheDocument());
+
+      fireEvent.change(screen.getByTestId('studio-ai-chat-input'), { target: { value: 'Hello Ollama' } });
+      fireEvent.click(screen.getByTestId('studio-ai-chat-send'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Model reply')).toBeInTheDocument();
+      });
+
+      const chatCalls = fetchMock.mock.calls.filter((c) => String(c[0]).includes('/api/ollama/chat'));
+      expect(chatCalls.length).toBe(1);
+      const body = JSON.parse((chatCalls[0][1] as RequestInit).body as string) as {
+        model: string;
+        messages: unknown[];
+      };
+      expect(body.model).toBe('studio-test:latest');
+      expect(Array.isArray(body.messages)).toBe(true);
+    });
+  });
 });

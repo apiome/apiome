@@ -17,7 +17,7 @@
  * {@link createLocalStorageConversationStorage}, while tests use
  * {@link createMemoryConversationStorage} for deterministic, DOM-free runs.
  *
- * The Ollama transport (#265) and any future server-side history can replace
+ * The Ollama transport (live in #265) and any future server-side history can replace
  * the storage adapter without touching the chat shell.
  */
 

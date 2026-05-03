@@ -2,7 +2,7 @@
  * Studio AI chatbot — shared types (#258, #259).
  *
  * The chat surface is intentionally backend-agnostic so the same UI can host
- * the offline demo responder today and a streaming Ollama transport later
+ * the offline demo responder today and the Ollama transport when enabled
  * (#259, #265). Anything UI-facing lives here.
  */
 
@@ -39,6 +39,10 @@ export interface ChatSendContext {
    * back into earlier turns.
    */
   studioContext?: ChatStudioContext;
+  /**
+   * Ollama model tag (e.g. `qwen2.5:latest`) when using `createOllamaChatResponder` (#265).
+   */
+  ollamaModel?: string;
 }
 
 /**
