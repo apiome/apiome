@@ -3,7 +3,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { isAbortError } from '../../ade/studio/components/chatbot/abort-errors';
+import { isAbortError } from '../../../ade/studio/components/chatbot/abort-errors';
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 

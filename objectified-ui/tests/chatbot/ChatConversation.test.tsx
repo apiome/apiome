@@ -8,6 +8,7 @@
  *   - Regenerate re-uses the last user prompt and replaces the prior reply
  *   - Thumbs up/down feedback toggles
  *   - Composer is disabled while the assistant is working
+ *   - Indeterminate progress bar while the assistant is generating (#523)
  *   - The studio context snapshot rides on every send (#259)
  *   - Multi-turn follow-ups carry the full transcript and refine prior
  *     specs through the chat surface (#260)
@@ -153,6 +154,7 @@ describe('ChatConversation', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('studio-ai-chat-input')).toBeDisabled();
+      expect(screen.getByTestId('studio-ai-chat-generation-progress')).toBeInTheDocument();
     });
 
     await act(async () => {
@@ -160,6 +162,7 @@ describe('ChatConversation', () => {
     });
 
     expect(screen.getByTestId('studio-ai-chat-input')).not.toBeDisabled();
+    expect(screen.queryByTestId('studio-ai-chat-generation-progress')).not.toBeInTheDocument();
   });
 
   it('Stop aborts an in-flight responder turn and leaves a stopped message (#522)', async () => {

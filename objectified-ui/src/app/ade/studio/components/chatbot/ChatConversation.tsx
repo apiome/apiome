@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Download, History, Loader2, Plus, RefreshCw, Sparkles, Trash2 } from 'lucide-react';
 
 import { ChatBubble } from './ChatBubble';
+import { ChatBusyProgressIndicator } from './ChatBusyProgressIndicator';
 import { ChatComposer } from './ChatComposer';
 import { ChatContextChip } from './ChatContextChip';
 import type { ChatStudioContext } from './chat-context';
@@ -52,6 +53,8 @@ import { isAbortError } from './abort-errors';
  *     server has no models or the list request fails.
  *   - With live Ollama (#521), a footer shows prompt/output token estimates while
  *     streaming and replaces them with measured counts when the model finishes.
+ *   - While a turn is in flight (#523), an indeterminate progress bar appears under
+ *     the toolbar so generation is obvious before and during streamed tokens.
  *   - The composer can **Stop** an in-flight turn (#522): `AbortSignal` is passed to
  *     the responder so streaming fetch/SSE readers unwind and partial text is kept.
  *   - With `tenantId` + `studioContext.project` (#266), the chosen model is
@@ -602,7 +605,11 @@ export function ChatConversation({
   const hasMessages = messages.length > 0;
 
   return (
-    <div className="flex h-full min-h-0 flex-col" data-testid="studio-ai-chat-conversation">
+    <div
+      className="flex h-full min-h-0 flex-col"
+      data-testid="studio-ai-chat-conversation"
+      aria-busy={view === 'chat' && isBusy}
+    >
       {ollamaTransport && view === 'chat' && (
         <OllamaModelBar
           status={ollamaTransport && modelsStatus === 'idle' ? 'loading' : modelsStatus}
@@ -623,6 +630,8 @@ export function ChatConversation({
         canClear={hasMessages}
         historyCount={storedConversations.length}
       />
+
+      {view === 'chat' && isBusy ? <ChatBusyProgressIndicator /> : null}
 
       {view === 'history' ? (
         <ConversationHistoryPanel

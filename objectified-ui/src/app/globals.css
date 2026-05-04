@@ -381,3 +381,26 @@ button {
   opacity: 0.2;
 }
 
+/* Studio AI chat: indeterminate bar while assistant streams (#523) */
+@keyframes studio-chat-indeterminate-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.studio-chat-indeterminate-progress-fill {
+  animation: studio-chat-indeterminate-progress 1.25s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-chat-indeterminate-progress-fill {
+    animation: none;
+    width: 100%;
+    transform: none;
+    opacity: 0.55;
+  }
+}
+

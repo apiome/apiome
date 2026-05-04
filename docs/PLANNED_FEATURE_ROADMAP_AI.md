@@ -95,7 +95,7 @@ This outlines the planned features for integrating AI capabilities into Objectif
     - ✅ Server-Sent Events (SSE) for streaming (#520)
     - ✅ Token-by-token usage display (#521)
     - ✅ Cancel generation mid-stream (#522)
-    - 📋 Progress indication
+    - ✅ Progress indication (#523)
 - 📋 **Caching**:
     - 📋 Cache common queries
     - 📋 Semantic similarity matching
@@ -108,7 +108,6 @@ This outlines the planned features for integrating AI capabilities into Objectif
 
 | Ticket | Feature Description                                 |
 |--------|-----------------------------------------------------|
-| #523   | Show progress indication during generation          |
 | #524   | Cache common queries to Ollama                      |
 | #525   | Semantic similarity matching for cache              |
 | #526   | Cache invalidation on schema changes                |
