@@ -1,11 +1,18 @@
 /**
- * Tests for Ollama chat exact-match query cache (#524).
+ * Tests for Ollama chat query cache (#524 exact match, #525 semantic similarity).
  */
 
 import {
+  clearOllamaChatQueryCacheForTests,
+  cosineSimilarity,
+  findSemanticallySimilarCachedResponse,
   getCachedOllamaChatResponse,
   isOllamaQueryCacheDisabled,
+  isOllamaSemanticCacheDisabled,
   ollamaChatCacheKey,
+  ollamaChatMessagesFingerprint,
+  ollamaChatSemanticContextKey,
+  ollamaSemanticCacheThreshold,
   setCachedOllamaChatResponse,
   stableStringify,
 } from '../../src/app/api/ollama/chat/query-cache';
@@ -46,7 +53,12 @@ describe('ollamaChatCacheKey', () => {
 describe('LRU get/set', () => {
   const prevDisabled = process.env.OLLAMA_CHAT_CACHE_DISABLED;
 
+  beforeEach(() => {
+    clearOllamaChatQueryCacheForTests();
+  });
+
   afterEach(() => {
+    clearOllamaChatQueryCacheForTests();
     if (prevDisabled === undefined) delete process.env.OLLAMA_CHAT_CACHE_DISABLED;
     else process.env.OLLAMA_CHAT_CACHE_DISABLED = prevDisabled;
   });
@@ -72,5 +84,111 @@ describe('LRU get/set', () => {
     const key = `524-off-${Math.random().toString(36).slice(2)}`;
     setCachedOllamaChatResponse(key, { text: 'y' });
     expect(getCachedOllamaChatResponse(key)).toBeUndefined();
+  });
+});
+
+describe('cosineSimilarity', () => {
+  it('returns 1 for identical vectors', () => {
+    expect(cosineSimilarity([1, 2, 3], [1, 2, 3])).toBeCloseTo(1, 5);
+  });
+
+  it('returns 0 for orthogonal vectors', () => {
+    expect(cosineSimilarity([1, 0], [0, 1])).toBe(0);
+  });
+});
+
+describe('ollamaChatSemanticContextKey', () => {
+  it('is unchanged by different message payloads for the same structural fields', () => {
+    const base = { model: 'm', task: 'data_query', tableNames: ['A'] };
+    const sk = ollamaChatSemanticContextKey(base);
+    expect(sk).toBe(ollamaChatSemanticContextKey({ ...base }));
+    expect(ollamaChatCacheKey({ ...base, messages: [{ role: 'user', content: 'a' }] })).not.toBe(
+      ollamaChatCacheKey({ ...base, messages: [{ role: 'user', content: 'b' }] }),
+    );
+    expect(sk).toBe(ollamaChatSemanticContextKey(base));
+  });
+
+  it('changes when model or task changes', () => {
+    const a = ollamaChatSemanticContextKey({ model: 'a', task: 't1' });
+    const b = ollamaChatSemanticContextKey({ model: 'b', task: 't1' });
+    const c = ollamaChatSemanticContextKey({ model: 'a', task: 't2' });
+    expect(new Set([a, b, c]).size).toBe(3);
+  });
+});
+
+describe('ollamaChatMessagesFingerprint', () => {
+  it('matches stableStringify of messages', () => {
+    const m = [{ role: 'user', content: 'hello' }];
+    expect(ollamaChatMessagesFingerprint(m)).toBe(stableStringify(m));
+  });
+});
+
+describe('findSemanticallySimilarCachedResponse', () => {
+  const prevSemanticOff = process.env.OLLAMA_CHAT_CACHE_SEMANTIC_DISABLED;
+  const prevCacheOff = process.env.OLLAMA_CHAT_CACHE_DISABLED;
+  const prevThreshold = process.env.OLLAMA_CHAT_CACHE_SEMANTIC_THRESHOLD;
+
+  beforeEach(() => {
+    clearOllamaChatQueryCacheForTests();
+    delete process.env.OLLAMA_CHAT_CACHE_SEMANTIC_DISABLED;
+    delete process.env.OLLAMA_CHAT_CACHE_DISABLED;
+    delete process.env.OLLAMA_CHAT_CACHE_SEMANTIC_THRESHOLD;
+  });
+
+  afterEach(() => {
+    clearOllamaChatQueryCacheForTests();
+    if (prevSemanticOff === undefined) delete process.env.OLLAMA_CHAT_CACHE_SEMANTIC_DISABLED;
+    else process.env.OLLAMA_CHAT_CACHE_SEMANTIC_DISABLED = prevSemanticOff;
+    if (prevCacheOff === undefined) delete process.env.OLLAMA_CHAT_CACHE_DISABLED;
+    else process.env.OLLAMA_CHAT_CACHE_DISABLED = prevCacheOff;
+    if (prevThreshold === undefined) delete process.env.OLLAMA_CHAT_CACHE_SEMANTIC_THRESHOLD;
+    else process.env.OLLAMA_CHAT_CACHE_SEMANTIC_THRESHOLD = prevThreshold;
+  });
+
+  it('returns the best entry above threshold with matching semantic context', () => {
+    const ctx = 'ctx-525-' + Math.random().toString(36).slice(2);
+    const query = [1, 0] as const;
+    const e1 = [Math.cos(0.25), Math.sin(0.25)] as const;
+    const e2 = [Math.cos(0.05), Math.sin(0.05)] as const;
+    expect(cosineSimilarity([...query], [...e1])).toBeGreaterThanOrEqual(0.9);
+    expect(cosineSimilarity([...query], [...e2])).toBeGreaterThan(cosineSimilarity([...query], [...e1]));
+    setCachedOllamaChatResponse(`525-a-${Math.random().toString(36).slice(2)}`, {
+      text: 'lower similarity',
+      semanticContextKey: ctx,
+      embedding: [...e1],
+    });
+    setCachedOllamaChatResponse(`525-b-${Math.random().toString(36).slice(2)}`, {
+      text: 'higher similarity',
+      semanticContextKey: ctx,
+      embedding: [...e2],
+    });
+    const found = findSemanticallySimilarCachedResponse({
+      semanticContextKey: ctx,
+      embedding: [...query],
+      threshold: 0.9,
+    });
+    expect(found?.text).toBe('higher similarity');
+  });
+
+  it('returns undefined when semantic cache is disabled', () => {
+    process.env.OLLAMA_CHAT_CACHE_SEMANTIC_DISABLED = '1';
+    expect(isOllamaSemanticCacheDisabled()).toBe(true);
+    const ctx = 'ctx-off';
+    setCachedOllamaChatResponse(`525-off-${Math.random().toString(36).slice(2)}`, {
+      text: 'x',
+      semanticContextKey: ctx,
+      embedding: [1, 0, 0],
+    });
+    expect(
+      findSemanticallySimilarCachedResponse({
+        semanticContextKey: ctx,
+        embedding: [1, 0, 0],
+        threshold: 0.5,
+      }),
+    ).toBeUndefined();
+  });
+
+  it('respects OLLAMA_CHAT_CACHE_SEMANTIC_THRESHOLD default', () => {
+    expect(ollamaSemanticCacheThreshold()).toBe(0.92);
   });
 });

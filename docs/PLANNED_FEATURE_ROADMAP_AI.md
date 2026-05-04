@@ -98,7 +98,7 @@ This outlines the planned features for integrating AI capabilities into Objectif
     - ✅ Progress indication (#523)
 - 📋 **Caching**:
     - ✅ Cache common queries (#524)
-    - 📋 Semantic similarity matching
+    - ✅ Semantic similarity matching (#525)
     - 📋 Cache invalidation on schema changes
 - 📋 **Guardrails**:
     - 📋 Prompt filtering for sensitive content
@@ -108,7 +108,6 @@ This outlines the planned features for integrating AI capabilities into Objectif
 
 | Ticket | Feature Description                                 |
 |--------|-----------------------------------------------------|
-| #525   | Semantic similarity matching for cache              |
 | #526   | Cache invalidation on schema changes                |
 | #527   | Implementation of Guardrails for prompts/responses  |
 
