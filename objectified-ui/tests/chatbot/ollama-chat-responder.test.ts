@@ -165,6 +165,31 @@ describe('createOllamaChatResponder', () => {
     expect(body.messages[2].content).toContain('Demo');
   });
 
+  it('includes schemaContextFingerprint in POST body when studio context has classes (#526)', async () => {
+    global.fetch = jest.fn().mockResolvedValue(
+      mockSseResponse(['data: {"content":"ok","done":true}\n\n', 'data: [DONE]\n\n']),
+    );
+
+    const responder = createOllamaChatResponder();
+    await responder({
+      messages: [{ id: 'u1', role: 'user', content: 'Hi' }],
+      prompt: 'Hi',
+      isRegenerate: false,
+      ollamaModel: 'llama3.2:latest',
+      studioContext: {
+        project: { id: 'p1', name: 'Demo' },
+        version: { id: 'v1', label: '1.0' },
+        classes: [{ id: 'c1', name: 'User', schema: { type: 'object' } }],
+        properties: [],
+        selectedClassIds: [],
+      },
+    });
+
+    const init = (global.fetch as jest.Mock).mock.calls[0][1] as RequestInit;
+    const body = JSON.parse(init.body as string) as { schemaContextFingerprint?: string };
+    expect(body.schemaContextFingerprint).toMatch(/^[0-9a-f]{64}$/);
+  });
+
   it('throws when chat HTTP status is not ok', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,

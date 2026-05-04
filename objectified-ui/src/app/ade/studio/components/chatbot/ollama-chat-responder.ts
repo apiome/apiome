@@ -9,7 +9,8 @@
  * usage are forwarded on the same callback (#521).
  */
 
-import { injectChatContext } from './chat-context';
+import { computeStudioSchemaFingerprint } from '@lib/studio-schema-fingerprint';
+import { injectChatContext, isChatStudioContextEmpty } from './chat-context';
 import type {
   ChatMessage,
   ChatSendContext,
@@ -34,11 +35,24 @@ export function createOllamaChatResponder(): ChatSendFn {
       ctx.onStreamAccumulated?.(accumulatedMarkdown, meta);
     };
 
+    let schemaContextFingerprint: string | undefined;
+    if (ctx.studioContext && !isChatStudioContextEmpty(ctx.studioContext)) {
+      try {
+        schemaContextFingerprint = await computeStudioSchemaFingerprint(ctx.studioContext);
+      } catch {
+        /* Web Crypto unavailable: skip optional cache-busting fingerprint */
+      }
+    }
+
     try {
       const response = await fetch('/api/ollama/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, messages }),
+        body: JSON.stringify({
+          model,
+          messages,
+          ...(schemaContextFingerprint ? { schemaContextFingerprint } : {}),
+        }),
         signal: ctx.signal,
       });
 

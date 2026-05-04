@@ -110,7 +110,17 @@ function buildDataQuerySystem(options: { tableNames?: string[]; currentTableName
 
 export async function POST(request: NextRequest) {
   try {
-    const { model, messages, task, existingClassNames, existingProperties, tableNames, currentTableName, versionId } = await request.json();
+    const {
+      model,
+      messages,
+      task,
+      existingClassNames,
+      existingProperties,
+      tableNames,
+      currentTableName,
+      versionId,
+      schemaContextFingerprint,
+    } = await request.json();
 
     if (typeof model !== 'string' || !model.trim() || !messages || !Array.isArray(messages)) {
       return new Response(
@@ -196,6 +206,7 @@ commentary, or thinking output.`;
       tableNames: isDataQuery ? tableNames : undefined,
       currentTableName: isDataQuery ? currentTableName : undefined,
       versionId: typeof versionId === 'string' ? versionId : undefined,
+      schemaContextFingerprint,
       messages,
     });
 
@@ -207,6 +218,7 @@ commentary, or thinking output.`;
       tableNames: isDataQuery ? tableNames : undefined,
       currentTableName: isDataQuery ? currentTableName : undefined,
       versionId: typeof versionId === 'string' ? versionId : undefined,
+      schemaContextFingerprint,
     });
 
     const cached = getCachedOllamaChatResponse(cacheKey);

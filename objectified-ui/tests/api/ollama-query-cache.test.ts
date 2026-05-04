@@ -9,6 +9,7 @@ import {
   getCachedOllamaChatResponse,
   isOllamaQueryCacheDisabled,
   isOllamaSemanticCacheDisabled,
+  normalizeSchemaContextFingerprint,
   ollamaChatCacheKey,
   ollamaChatMessagesFingerprint,
   ollamaChatSemanticContextKey,
@@ -47,6 +48,30 @@ describe('ollamaChatCacheKey', () => {
       messages: [{ role: 'user', content: 'b' }],
     });
     expect(a).not.toBe(b);
+  });
+
+  it('changes when schemaContextFingerprint differs (#526)', () => {
+    const base = { model: 'm', messages: [{ role: 'user', content: 'same' }] };
+    const k1 = ollamaChatCacheKey({ ...base, schemaContextFingerprint: 'aaa' });
+    const k2 = ollamaChatCacheKey({ ...base, schemaContextFingerprint: 'bbb' });
+    const kNone = ollamaChatCacheKey({ ...base });
+    expect(k1).not.toBe(k2);
+    expect(k1).not.toBe(kNone);
+  });
+});
+
+describe('normalizeSchemaContextFingerprint', () => {
+  it('returns null for empty or non-string', () => {
+    expect(normalizeSchemaContextFingerprint(undefined)).toBeNull();
+    expect(normalizeSchemaContextFingerprint('')).toBeNull();
+    expect(normalizeSchemaContextFingerprint('   ')).toBeNull();
+    expect(normalizeSchemaContextFingerprint(1)).toBeNull();
+  });
+
+  it('trims and caps length', () => {
+    expect(normalizeSchemaContextFingerprint('  abcd  ')).toBe('abcd');
+    const long = 'x'.repeat(200);
+    expect(normalizeSchemaContextFingerprint(long)?.length).toBe(128);
   });
 });
 
@@ -123,6 +148,13 @@ describe('ollamaChatSemanticContextKey', () => {
     expect(k1).not.toBe(k2);
     expect(k1).not.toBe(kNone);
     expect(k2).not.toBe(kNone);
+  });
+
+  it('changes when schemaContextFingerprint differs (#526)', () => {
+    const base = { model: 'm', task: undefined };
+    const a = ollamaChatSemanticContextKey({ ...base, schemaContextFingerprint: 'f1' });
+    const b = ollamaChatSemanticContextKey({ ...base, schemaContextFingerprint: 'f2' });
+    expect(a).not.toBe(b);
   });
 });
 

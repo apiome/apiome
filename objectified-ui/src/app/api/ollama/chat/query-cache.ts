@@ -1,9 +1,12 @@
 /**
  * In-memory LRU for Ollama chat requests (#524 exact key, #525 semantic similarity).
- * Invalidation on schema changes is #526.
+ * Schema drift: optional `schemaContextFingerprint` from the client (#526).
  */
 
 import { createHash } from 'crypto';
+import { stableStringify } from '@lib/stable-json';
+
+export { stableStringify } from '@lib/stable-json';
 
 export type OllamaChatCacheEntry = {
   text: string;
@@ -50,21 +53,6 @@ export function ollamaSemanticCacheThreshold(): number {
   return Number.isFinite(n) && n > 0 && n <= 1 ? n : DEFAULT_SEMANTIC_THRESHOLD;
 }
 
-/** Deterministic JSON for stable cache keys. */
-export function stableStringify(value: unknown): string {
-  if (value === null) return 'null';
-  const t = typeof value;
-  if (t === 'string') return JSON.stringify(value);
-  if (t === 'number' || t === 'boolean') return String(value);
-  if (t !== 'object') return JSON.stringify(String(value));
-  if (Array.isArray(value)) {
-    return `[${value.map(stableStringify).join(',')}]`;
-  }
-  const obj = value as Record<string, unknown>;
-  const keys = Object.keys(obj).sort();
-  return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(obj[k])}`).join(',')}}`;
-}
-
 export type OllamaChatCacheKeyInput = {
   model: string;
   task?: string;
@@ -74,11 +62,20 @@ export type OllamaChatCacheKeyInput = {
   currentTableName?: unknown;
   /** Optional version/project scope to prevent cross-tenant semantic cache hits. */
   versionId?: string;
+  /** Client SHA-256 of full class/property schemas so cache invalidates when OpenAPI state changes (#526). */
+  schemaContextFingerprint?: unknown;
   messages: unknown;
 };
 
+export function normalizeSchemaContextFingerprint(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const t = value.trim();
+  return t.length > 0 ? t.slice(0, 128) : null;
+}
+
 /** Hash of request fields excluding messages — semantic hits require this to match exactly. */
 export function ollamaChatSemanticContextKey(input: Omit<OllamaChatCacheKeyInput, 'messages'>): string {
+  const fp = normalizeSchemaContextFingerprint(input.schemaContextFingerprint);
   const payload = stableStringify({
     model: input.model.trim(),
     task: input.task ?? null,
@@ -87,6 +84,7 @@ export function ollamaChatSemanticContextKey(input: Omit<OllamaChatCacheKeyInput
     tableNames: input.tableNames ?? null,
     currentTableName: input.currentTableName ?? null,
     versionId: input.versionId ?? null,
+    schemaContextFingerprint: fp,
   });
   return createHash('sha256').update(payload, 'utf8').digest('hex');
 }
@@ -113,6 +111,7 @@ export function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 export function ollamaChatCacheKey(input: OllamaChatCacheKeyInput): string {
+  const fp = normalizeSchemaContextFingerprint(input.schemaContextFingerprint);
   const payload = stableStringify({
     model: input.model.trim(),
     task: input.task ?? null,
@@ -121,6 +120,7 @@ export function ollamaChatCacheKey(input: OllamaChatCacheKeyInput): string {
     tableNames: input.tableNames ?? null,
     currentTableName: input.currentTableName ?? null,
     versionId: input.versionId ?? null,
+    schemaContextFingerprint: fp,
     messages: input.messages,
   });
   return createHash('sha256').update(payload, 'utf8').digest('hex');
