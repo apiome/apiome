@@ -121,15 +121,6 @@ This outlines the planned features for integrating AI capabilities into Objectif
 | #277   | Adds type inference based on property name |
 | #278   | Adds constraint suggestions for properties |
 
-### AI Schema Review & Improvement
-
-**Improvement Suggestions** ✅ (#495 — Studio chat / Ollama system prompt + offline demo)
-- ✅ "Consider adding pagination to this list endpoint"
-- ✅ "This schema could benefit from inheritance using allOf"
-- ✅ "Add a discriminator for this polymorphic type"
-- ✅ "Consider breaking this large schema into smaller components"
-- ✅ "Add error responses for common failure scenarios"
-
 **Actionable Recommendations** 📋 PLANNED
 - 📋 AI-powered suggestions for improvement:
     - 📋 "Add descriptions to 12 classes to improve docs score"
@@ -300,3 +291,12 @@ This outlines the planned features for integrating AI capabilities into Objectif
     - ✅ "Make email required"
     - ✅ "Add validation for password length"
     - ✅ "Include timestamps for audit"
+
+### AI Schema Review & Improvement
+
+**Improvement Suggestions** ✅ (#495 — Studio chat / Ollama system prompt + offline demo)
+- ✅ "Consider adding pagination to this list endpoint"
+- ✅ "This schema could benefit from inheritance using allOf"
+- ✅ "Add a discriminator for this polymorphic type"
+- ✅ "Consider breaking this large schema into smaller components"
+- ✅ "Add error responses for common failure scenarios"
