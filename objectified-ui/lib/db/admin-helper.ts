@@ -1333,6 +1333,8 @@ export async function getAllUsersWithLicenses() {
  */
 export async function getUserLicense(userId: string) {
   try {
+    // Anchor on users + LEFT JOIN entitlements so we still return a row (and user_overrides)
+    // when user_feature_flags exist but there is no user_entitlements row yet.
     const result = await connectionPool.query(
       `SELECT
          l.id          AS license_id,
@@ -1341,36 +1343,42 @@ export async function getUserLicense(userId: string) {
          l.seats,
          ue.plan_code,
          COALESCE(
-           json_agg(
-             DISTINCT jsonb_build_object(
-               'id',         ff.id,
-               'name',       ff.name,
-               'label',      ff.label,
-               'is_preview', ff.is_preview
+           (
+             SELECT json_agg(
+               jsonb_build_object(
+                 'id',         ff.id,
+                 'name',       ff.name,
+                 'label',      ff.label,
+                 'is_preview', ff.is_preview
+               ) ORDER BY ff.label
              )
-           ) FILTER (WHERE ff.id IS NOT NULL),
-           '[]'
+             FROM odb.license_feature_flags lff
+             JOIN odb.feature_flags ff ON ff.id = lff.feature_flag_id
+             WHERE l.id IS NOT NULL AND lff.license_id = l.id
+           ),
+           '[]'::json
          ) AS license_feature_flags,
          COALESCE(
-           json_agg(
-             DISTINCT jsonb_build_object(
-               'id',         uff_ff.id,
-               'name',       uff_ff.name,
-               'label',      uff_ff.label,
-               'enabled',    uff.enabled,
-               'is_preview', uff_ff.is_preview
+           (
+             SELECT json_agg(
+               jsonb_build_object(
+                 'id',         uff_ff.id,
+                 'name',       uff_ff.name,
+                 'label',      uff_ff.label,
+                 'enabled',    uff.enabled,
+                 'is_preview', uff_ff.is_preview
+               ) ORDER BY uff_ff.label
              )
-           ) FILTER (WHERE uff.feature_flag_id IS NOT NULL),
-           '[]'
+             FROM odb.user_feature_flags uff
+             JOIN odb.feature_flags uff_ff ON uff_ff.id = uff.feature_flag_id
+             WHERE uff.user_id = u.id
+           ),
+           '[]'::json
          ) AS user_overrides
-       FROM odb.user_entitlements ue
-       LEFT JOIN odb.licenses              l      ON l.id = ue.license_id
-       LEFT JOIN odb.license_feature_flags lff    ON lff.license_id = l.id
-       LEFT JOIN odb.feature_flags         ff     ON ff.id = lff.feature_flag_id
-       LEFT JOIN odb.user_feature_flags    uff    ON uff.user_id = ue.user_id
-       LEFT JOIN odb.feature_flags         uff_ff ON uff_ff.id = uff.feature_flag_id
-       WHERE ue.user_id = $1
-       GROUP BY l.id, l.name, l.license_type, l.seats, ue.plan_code`,
+       FROM odb.users u
+       LEFT JOIN odb.user_entitlements ue ON ue.user_id = u.id
+       LEFT JOIN odb.licenses l ON l.id = ue.license_id
+       WHERE u.id = $1 AND u.deleted_at IS NULL`,
       [userId]
     );
     return successResponse({ license: result.rows[0] ?? null });
