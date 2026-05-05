@@ -2,6 +2,7 @@ import {
   detectChatQuickActions,
   extractFirstJsonOrYamlFenceBody,
   parseClassDefinitionFromAssistantMarkdown,
+  summarizeJsonSchemaProperties,
 } from '../../src/app/ade/studio/components/chatbot/assistant-action-detection';
 
 describe('extractFirstJsonOrYamlFenceBody', () => {
@@ -106,5 +107,40 @@ describe('parseClassDefinitionFromAssistantMarkdown', () => {
     const md = '```json\n' + payload + '```';
     const parsed = parseClassDefinitionFromAssistantMarkdown(md);
     expect(parsed?.name).toBe('Order');
+  });
+});
+
+describe('summarizeJsonSchemaProperties', () => {
+  it('returns empty when properties are missing', () => {
+    expect(summarizeJsonSchemaProperties(null)).toEqual([]);
+    expect(summarizeJsonSchemaProperties({ type: 'object' })).toEqual([]);
+  });
+
+  it('labels primitives, refs, arrays, and compositions', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        email: { type: 'string', format: 'email' },
+        userId: { $ref: '#/components/schemas/User' },
+        tags: { type: 'array', items: { type: 'string' } },
+        role: { oneOf: [{ type: 'string' }, { type: 'null' }] },
+      },
+    };
+    const rows = summarizeJsonSchemaProperties(schema);
+    expect(rows).toEqual([
+      { name: 'email', suggestedType: 'string' },
+      { name: 'userId', suggestedType: 'ref (User)' },
+      { name: 'tags', suggestedType: 'array<string>' },
+      { name: 'role', suggestedType: 'oneOf(2)' },
+    ]);
+  });
+
+  it('handles union type keyword arrays', () => {
+    const schema = {
+      properties: {
+        id: { type: ['string', 'number'] },
+      },
+    };
+    expect(summarizeJsonSchemaProperties(schema)).toEqual([{ name: 'id', suggestedType: 'string | number' }]);
   });
 });

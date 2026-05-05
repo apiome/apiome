@@ -38,11 +38,13 @@ function pickAssistantContent(data: Record<string, unknown>): string | undefined
   return typeof raw === 'string' && raw.length > 0 ? raw : undefined;
 }
 
-const CLASS_SKELETON_SYSTEM = `You are an expert at defining JSON Schema (OpenAPI 3.1) class/schema definitions. The user will describe a class they want to create. Your only job is to output a single JSON code block that defines that class.
+const CLASS_SKELETON_SYSTEM = `You are an expert at defining JSON Schema (OpenAPI 3.1) class/schema definitions. The user will describe a class they want to create.
 
 # Output format
 
-Respond with exactly one JSON code block in this shape:
+Optionally begin with a short markdown section titled **Suggested properties**: a bullet list where each line is \`- propertyName — type\` using plain-language JSON Schema types (e.g. \`- email — string\`, \`- age — integer\`, \`- orders — array of Order (ref)\`). This gives the user a scannable summary before the full schema.
+
+Then output exactly one JSON code block in this shape:
 \`\`\`json
 {
   "name": "ClassName",
@@ -59,11 +61,16 @@ Respond with exactly one JSON code block in this shape:
 
 - "name" must be PascalCase and contain only letters, numbers, and underscores (A-Za-z0-9_).
 - "schema" must be a valid JSON Schema object. It must include "type": "object" and a "properties" object (can be empty {} for a placeholder).
+- **Every property** under "schema.properties" must express its intended shape clearly:
+  - Scalar or inline object: include a JSON Schema \`type\` (and \`format\` when useful, e.g. date-time, email).
+  - Reference to another class: use \`"$ref": "#/components/schemas/ClassName"\` (no bare empty objects for named fields).
+  - Arrays: always include \`"type": "array"\` and a typed \`items\` schema (primitive, inline object, or \`$ref\`).
+  - Compositions (oneOf / anyOf / allOf): only when the user's request needs them; prefer simple typed properties otherwise.
 - You may use any JSON Schema / OpenAPI 3.1 schema features in "schema": properties, required, allOf, anyOf, oneOf, discriminator, additionalProperties, unevaluatedProperties, patternProperties, dependentSchemas, dependentRequired, deprecated, deprecationMessage, minProperties, maxProperties, examples, xml, $id, $anchor, $comment, externalDocs, if/then/else, and x-* extensions.
 - For $ref inside the schema, use format "#/components/schemas/ClassName" when referencing other classes.
 - Property names in "properties" should be camelCase. Include "description" (and optionally "summary") on the schema and on properties where helpful.
 - Keep the class a clear skeleton: include the structure the user asked for, but you do not need to exhaust every option. Prefer properties and required; add allOf/anyOf/oneOf/discriminator/additionalProperties etc. only when they fit the user's description.
-- Do not output any text outside the single JSON code block. No commentary before or after.`;
+- Apart from the optional **Suggested properties** section and the single JSON code block, do not add other commentary.`;
 
 function buildClassSkeletonSystem(options: {
   existingClassNames?: string[];

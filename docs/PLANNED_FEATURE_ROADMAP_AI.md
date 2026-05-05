@@ -88,7 +88,7 @@ This outlines the planned features for integrating AI capabilities into Objectif
 - 📋 **Generation Output**:
     - ✅ Preview generated schema before creation (#528)
     - ✅ JSON Schema format display (#529)
-    - 📋 Property list with types
+    - ✅ Property list with types (#530)
     - 📋 Relationship suggestions
 - 📋 **Iterative Refinement**:
     - 📋 "Add a phone number field"
@@ -98,7 +98,6 @@ This outlines the planned features for integrating AI capabilities into Objectif
 
 | Ticket | Feature Description                                      |
 |--------|----------------------------------------------------------|
-| #530   | Property list with types on preview                      |
 | #531   | Relationship suggestions on preview                      |
 | #532   | Iterative refinement of generated schemas                |
 

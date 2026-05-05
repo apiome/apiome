@@ -33,7 +33,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Ollama chat cache keys include a fingerprint of the version’s class and property schemas when you use the Studio AI chatbot, so edits to OpenAPI/JSON Schema state do not reuse stale cached replies.
 - Studio AI chat **Preview changes** opens a modal with a formatted OpenAPI summary and JSON before **Apply import** runs the import action (cancel returns you to the chat with no import).
 - Assistant replies that include phrases such as **Create this class**, **Add these properties**, **Apply to current class**, or **Copy to clipboard** (with a JSON or YAML code block) show quick-action buttons: new class, open the selected class for editing, or copy the fenced payload.
-- **Create this class** opens a preview before continuing (#528); the preview shows class metadata and the generated schema as formatted **JSON Schema** (#529). Confirming opens Add Class in AI mode with that reply seeded. Create Class with AI uses the same preview via **Preview & create**.
+- **Create this class** opens a preview before continuing (#528); the preview shows class metadata and the generated schema as formatted **JSON Schema** (#529). Each property is summarized with a **suggested JSON Schema type** (including refs and arrays) (#530). Confirming opens Add Class in AI mode with that reply seeded. Create Class with AI uses the same preview via **Preview & create**.
 
 ---
 

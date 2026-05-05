@@ -12,6 +12,7 @@ import {
 } from '@/app/components/ui/Dialog';
 import {
   parseClassDefinitionFromAssistantMarkdown,
+  summarizeJsonSchemaProperties,
   type ParsedAiClassDefinition,
 } from './assistant-action-detection';
 
@@ -20,24 +21,6 @@ export interface AiClassCreatePreviewDialogProps {
   assistantMarkdown: string | null;
   onOpenChange: (open: boolean) => void;
   onConfirmCreate: () => void;
-}
-
-function propertySummaries(schema: unknown): { name: string; detail: string }[] {
-  if (!schema || typeof schema !== 'object' || Array.isArray(schema)) return [];
-  const props = (schema as { properties?: unknown }).properties;
-  if (!props || typeof props !== 'object' || Array.isArray(props)) return [];
-  return Object.entries(props as Record<string, unknown>).map(([name, sub]) => {
-    let detail = '';
-    if (sub && typeof sub === 'object' && !Array.isArray(sub)) {
-      const o = sub as Record<string, unknown>;
-      const t = o.type;
-      detail = typeof t === 'string' ? t : Array.isArray(t) ? t.join(' | ') : '';
-      if (o.$ref && typeof o.$ref === 'string') {
-        detail = detail ? `${detail} (${o.$ref})` : o.$ref;
-      }
-    }
-    return { name, detail: detail || 'object' };
-  });
 }
 
 export function AiClassCreatePreviewDialog({
@@ -60,7 +43,10 @@ export function AiClassCreatePreviewDialog({
     }
   }, [parsed]);
 
-  const propsList = React.useMemo(() => (parsed ? propertySummaries(parsed.schema) : []), [parsed]);
+  const propsList = React.useMemo(
+    () => (parsed ? summarizeJsonSchemaProperties(parsed.schema) : []),
+    [parsed],
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -72,8 +58,8 @@ export function AiClassCreatePreviewDialog({
           <DialogHeader className="space-y-2 text-left">
             <DialogTitle>Preview class schema</DialogTitle>
             <DialogDescription className="text-left">
-              Review the class metadata and the formatted JSON Schema below before continuing. Cancel to return to the
-              chat with no changes.
+              Review the class metadata, the suggested type for each property, and the formatted JSON Schema below before
+              continuing. Cancel to return to the chat with no changes.
             </DialogDescription>
           </DialogHeader>
           {parsed ? (
@@ -87,16 +73,16 @@ export function AiClassCreatePreviewDialog({
                 <dd>{parsed.description?.trim() ? parsed.description : '—'}</dd>
               </div>
               <div className="sm:col-span-2">
-                <dt className="font-medium text-gray-700 dark:text-gray-300">Properties</dt>
+                <dt className="font-medium text-gray-700 dark:text-gray-300">Properties (suggested types)</dt>
                 <dd className="mt-1">
                   {propsList.length === 0 ? (
                     <span className="text-gray-500 dark:text-gray-500">No properties object</span>
                   ) : (
-                    <ul className="m-0 max-h-24 list-inside list-disc overflow-y-auto pl-1">
+                    <ul className="m-0 max-h-40 list-inside list-disc overflow-y-auto pl-1">
                       {propsList.map((p) => (
                         <li key={p.name}>
                           <span className="font-mono">{p.name}</span>
-                          {p.detail ? <span className="text-gray-500 dark:text-gray-500"> — {p.detail}</span> : null}
+                          <span className="text-gray-500 dark:text-gray-500"> — {p.suggestedType}</span>
                         </li>
                       ))}
                     </ul>
