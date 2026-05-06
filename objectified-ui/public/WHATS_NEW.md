@@ -28,7 +28,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Studio
 - **Add Property** includes **Suggest types with AI** (when Ollama is configured): enter a property name, ask for alternatives (formats, refs, domain hints such as FHIR), then **Apply to form** to load a chosen JSON Schema (#269).
-- Properties sidebar includes an **AI suggest properties** control (robot): describe what you need, review thinking and summary, **pick a suggestion from the dropdown**, inspect the detail panel, then **Open in Add Property** to create it (#609, #270).
+- Properties sidebar includes an **AI suggest properties** control (robot): describe what you need, review thinking and summary, **pick a suggestion from the list**, use **Accept all** or **Reject all** (or reject individual rows), inspect the detail panel, then **Open in Add Property** to create one—or accept all to step through Add Property for each remaining suggestion (#609, #270, #271).
 - Studio AI chat schema refinements infer JSON Schema type and common constraints from well-known property names (`email`, `createdAt`, `age`, `price`, `isActive`) when you add a field without specifying a type; the class-skeleton Ollama prompt uses the same conventions (#277).
 - Chat refinement inference now adds typical validation hints from names—string lengths, numeric bounds, regex patterns, and marking `id` as required when added without a type (#278).
 - Studio AI assistant (live Ollama and offline demo) appends an **Improvement suggestions** section after OpenAPI sketches—actionable bullets such as pagination, `allOf` inheritance, discriminators, splitting large schemas, and standard error shapes (#495).

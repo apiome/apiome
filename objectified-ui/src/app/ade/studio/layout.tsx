@@ -105,7 +105,13 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
     aiAssistantSeedMarkdown: null as string | null,
   });
   const [classImportDialog, setClassImportDialog] = useState({ open: false });
-  const [propertyDialog, setPropertyDialog] = useState({ open: false, mode: 'add' as 'add' | 'edit', selectedProperty: null as PropertyItem | null });
+  const [propertyDialog, setPropertyDialog] = useState({
+    open: false,
+    mode: 'add' as 'add' | 'edit',
+    selectedProperty: null as PropertyItem | null,
+    /** After bulk-accept from AI property suggestions (#271), each save opens the next seed. */
+    pendingBulkSeeds: null as PropertyItem[] | null,
+  });
   const [propertyTemplateDialog, setPropertyTemplateDialog] = useState({ open: false });
   const [aiPropertySuggestionsOpen, setAiPropertySuggestionsOpen] = useState(false);
   const [classTemplateDialog, setClassTemplateDialog] = useState({ open: false });
@@ -260,7 +266,7 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
   // Property handlers
   const handlePropertyAdd = async () => {
     if (!(await checkProjectSelected()) || !(await checkNotReadOnly('add properties'))) return;
-    setPropertyDialog({ open: true, mode: 'add', selectedProperty: null });
+    setPropertyDialog({ open: true, mode: 'add', selectedProperty: null, pendingBulkSeeds: null });
   };
 
   const handlePropertyTemplates = async () => {
@@ -275,7 +281,7 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
 
   const handlePropertyEdit = async (propertyItem: PropertyItem) => {
     if (!(await checkProjectSelected()) || !(await checkNotReadOnly('edit properties'))) return;
-    setPropertyDialog({ open: true, mode: 'edit', selectedProperty: propertyItem });
+    setPropertyDialog({ open: true, mode: 'edit', selectedProperty: propertyItem, pendingBulkSeeds: null });
   };
 
   const handlePropertyDelete = async (propertyId: string) => {
@@ -317,7 +323,18 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
         throw new Error(result.error || 'Failed to save property');
       }
 
-      setPropertyDialog({ open: false, mode: 'add', selectedProperty: null });
+      const { mode, pendingBulkSeeds } = propertyDialog;
+      if (mode === 'add' && pendingBulkSeeds && pendingBulkSeeds.length > 0) {
+        const [next, ...rest] = pendingBulkSeeds;
+        setPropertyDialog({
+          open: true,
+          mode: 'add',
+          selectedProperty: next,
+          pendingBulkSeeds: rest.length > 0 ? rest : null,
+        });
+      } else {
+        setPropertyDialog({ open: false, mode: 'add', selectedProperty: null, pendingBulkSeeds: null });
+      }
       setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error('Error saving property:', error);
@@ -610,7 +627,7 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
       {/* Property Dialog */}
       <PropertyDialog
         open={propertyDialog.open}
-        onClose={() => setPropertyDialog({ open: false, mode: 'add', selectedProperty: null })}
+        onClose={() => setPropertyDialog({ open: false, mode: 'add', selectedProperty: null, pendingBulkSeeds: null })}
         mode={propertyDialog.mode}
         property={propertyDialog.selectedProperty}
         onSubmit={handlePropertySubmit}
@@ -632,6 +649,7 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
           setPropertyDialog({
             open: true,
             mode: 'add',
+            pendingBulkSeeds: null,
             selectedProperty: {
               ...payload.schema,
               id: '__ai_seed__',
@@ -653,7 +671,17 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
           existingProperties={properties}
           studioContext={chatbotStudioContext}
           onCreatePropertyFromSuggestion={(seed) => {
-            setPropertyDialog({ open: true, mode: 'add', selectedProperty: seed });
+            setPropertyDialog({ open: true, mode: 'add', selectedProperty: seed, pendingBulkSeeds: null });
+          }}
+          onAcceptAllPropertySuggestions={(seeds) => {
+            if (seeds.length === 0) return;
+            const [first, ...rest] = seeds;
+            setPropertyDialog({
+              open: true,
+              mode: 'add',
+              selectedProperty: first,
+              pendingBulkSeeds: rest.length > 0 ? rest : null,
+            });
           }}
         />
       )}

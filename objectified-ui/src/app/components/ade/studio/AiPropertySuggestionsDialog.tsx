@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
 } from '../../ui/Dialog';
 import { Button } from '../../ui/Button';
 import { Textarea } from '../../ui/Textarea';
-import { Bot, Loader2, Square } from 'lucide-react';
+import { Bot, Loader2, Square, ListChecks, Ban, Trash2 } from 'lucide-react';
 import type { PropertyItem } from './StudioSideNav';
 import {
   parseAiPropertySuggestionsResponse,
@@ -46,6 +46,8 @@ export interface AiPropertySuggestionsDialogProps {
   existingProperties: PropertyItem[];
   studioContext: ChatStudioContext;
   onCreatePropertyFromSuggestion: (seed: PropertyItem) => void;
+  /** Opens Add Property for each remaining suggestion in order after each save (#271). */
+  onAcceptAllPropertySuggestions: (seeds: PropertyItem[]) => void;
 }
 
 export function AiPropertySuggestionsDialog({
@@ -58,6 +60,7 @@ export function AiPropertySuggestionsDialog({
   existingProperties,
   studioContext,
   onCreatePropertyFromSuggestion,
+  onAcceptAllPropertySuggestions,
 }: AiPropertySuggestionsDialogProps) {
   const [prompt, setPrompt] = useState('');
   const [modelNames, setModelNames] = useState<string[]>([]);
@@ -67,6 +70,7 @@ export function AiPropertySuggestionsDialog({
   const [parsed, setParsed] = useState<AiPropertySuggestionsPayload | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [rejectedIndices, setRejectedIndices] = useState<Set<number>>(() => new Set());
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -110,6 +114,7 @@ export function AiPropertySuggestionsDialog({
       setParsed(null);
       setParseError(null);
       setSelectedIdx(null);
+      setRejectedIndices(new Set());
       setIsGenerating(false);
       abortRef.current?.abort();
       abortRef.current = null;
@@ -142,6 +147,7 @@ export function AiPropertySuggestionsDialog({
     setParsed(null);
     setParseError(null);
     setSelectedIdx(null);
+    setRejectedIndices(new Set());
 
     let schemaContextFingerprint: string | undefined;
     if (studioContext && !isChatStudioContextEmpty(studioContext)) {
@@ -211,8 +217,51 @@ export function AiPropertySuggestionsDialog({
     studioContext,
   ]);
 
+  useEffect(() => {
+    if (selectedIdx === null || !parsed) return;
+    if (!rejectedIndices.has(selectedIdx)) return;
+    const first = parsed.suggestions.findIndex((_, i) => !rejectedIndices.has(i));
+    setSelectedIdx(first >= 0 ? first : null);
+  }, [rejectedIndices, selectedIdx, parsed]);
+
+  const activeSuggestionRows = useMemo(() => {
+    if (!parsed) return [];
+    return parsed.suggestions
+      .map((s, origIdx) => ({ suggestion: s, origIdx }))
+      .filter(({ origIdx }) => !rejectedIndices.has(origIdx));
+  }, [parsed, rejectedIndices]);
+
+  const handleRejectOne = (origIdx: number) => {
+    setRejectedIndices((prev) => {
+      const next = new Set(prev);
+      next.add(origIdx);
+      return next;
+    });
+  };
+
+  const handleRejectAll = () => {
+    if (!parsed?.suggestions.length) return;
+    setRejectedIndices(new Set(parsed.suggestions.map((_, i) => i)));
+  };
+
+  const handleAcceptAll = () => {
+    if (!parsed) return;
+    const seeds = parsed.suggestions
+      .map((s, i) => ({ s, i }))
+      .filter(({ i }) => !rejectedIndices.has(i))
+      .map(({ s }) => suggestionToSeedProperty(s));
+    if (seeds.length === 0) return;
+    onAcceptAllPropertySuggestions(seeds);
+    onClose();
+  };
+
   const selectedSuggestion: AiPropertySuggestion | null =
-    parsed && selectedIdx !== null && parsed.suggestions[selectedIdx] ? parsed.suggestions[selectedIdx] : null;
+    parsed &&
+    selectedIdx !== null &&
+    !rejectedIndices.has(selectedIdx) &&
+    parsed.suggestions[selectedIdx]
+      ? parsed.suggestions[selectedIdx]
+      : null;
 
   const thinkingBody = isGenerating
     ? streamText || '…'
@@ -331,28 +380,86 @@ export function AiPropertySuggestionsDialog({
 
           {parsed && parsed.suggestions.length > 0 && (
             <section aria-label="Suggested properties" className="space-y-2">
-              <label
-                htmlFor="ai-prop-suggest-pick"
-                className="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
-              >
-                Suggested property
-              </label>
-              <select
-                id="ai-prop-suggest-pick"
-                data-testid="ai-property-suggestions-list"
-                value={selectedIdx !== null ? String(selectedIdx) : ''}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  setSelectedIdx(raw === '' ? null : Number.parseInt(raw, 10));
-                }}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 sm:max-w-xl"
-              >
-                {parsed.suggestions.map((s, i) => (
-                  <option key={`${s.name}-${i}`} value={String(i)} data-testid={`ai-property-suggestions-item-${i}`}>
-                    {s.summary?.trim() ? s.summary : s.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Suggested properties
+                </h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    data-testid="ai-property-suggestions-accept-all"
+                    disabled={activeSuggestionRows.length === 0}
+                    onClick={handleAcceptAll}
+                    className="border-emerald-300 text-emerald-800 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-200 dark:hover:bg-emerald-950/40"
+                  >
+                    <ListChecks className="h-4 w-4" aria-hidden />
+                    Accept all
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    data-testid="ai-property-suggestions-reject-all"
+                    disabled={activeSuggestionRows.length === 0}
+                    onClick={handleRejectAll}
+                    className="border-rose-300 text-rose-800 hover:bg-rose-50 dark:border-rose-700 dark:text-rose-200 dark:hover:bg-rose-950/40"
+                  >
+                    <Ban className="h-4 w-4" aria-hidden />
+                    Reject all
+                  </Button>
+                </div>
+              </div>
+              {activeSuggestionRows.length === 0 ? (
+                <p
+                  data-testid="ai-property-suggestions-list-empty"
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-400"
+                >
+                  No suggestions left to review. Generate again or close.
+                </p>
+              ) : (
+                <ul data-testid="ai-property-suggestions-list" className="max-h-48 space-y-1.5 overflow-y-auto sm:max-w-xl">
+                  {activeSuggestionRows.map(({ suggestion: s, origIdx }) => {
+                    const label = s.summary?.trim() ? s.summary : s.name;
+                    const isSelected = selectedIdx === origIdx;
+                    return (
+                      <li
+                        key={origIdx}
+                        className={`flex items-stretch gap-1 rounded-lg border transition-colors ${
+                          isSelected
+                            ? 'border-violet-500 bg-violet-500/10 ring-2 ring-violet-500/30 dark:border-violet-500 dark:bg-violet-950/30'
+                            : 'border-slate-200 bg-white dark:border-slate-600 dark:bg-slate-900'
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          data-testid={`ai-property-suggestions-item-${origIdx}`}
+                          onClick={() => setSelectedIdx(origIdx)}
+                          className="min-w-0 flex-1 px-3 py-2 text-left text-sm text-slate-900 hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800/80"
+                        >
+                          <span className="font-medium">{label}</span>
+                          {s.name && s.summary?.trim() ? (
+                            <span className="mt-0.5 block font-mono text-xs text-slate-500 dark:text-slate-400">{s.name}</span>
+                          ) : null}
+                        </button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          data-testid={`ai-property-suggestions-reject-${origIdx}`}
+                          onClick={() => handleRejectOne(origIdx)}
+                          className="shrink-0 rounded-none rounded-r-lg text-slate-500 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300"
+                          aria-label={`Reject suggestion ${s.name}`}
+                          title="Reject this suggestion"
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden />
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </section>
           )}
 
