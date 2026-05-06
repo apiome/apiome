@@ -8,7 +8,11 @@
  * ```yaml```/```yml``` fence when no JSON/JSONC fence exists.
  */
 
-export type StudioChatWorkspaceActionKind = 'create_class' | 'batch_add_properties' | 'apply_current_class';
+export type StudioChatWorkspaceActionKind =
+  | 'create_class'
+  | 'batch_add_properties'
+  | 'apply_current_class'
+  | 'open_property_suggestions';
 
 export interface StudioChatWorkspaceAction {
   kind: StudioChatWorkspaceActionKind;
@@ -154,6 +158,7 @@ export type DetectedChatQuickAction =
   | { kind: 'create_class' }
   | { kind: 'batch_add_properties' }
   | { kind: 'apply_current_class' }
+  | { kind: 'open_property_suggestions' }
   | { kind: 'copy_generated_payload'; payload: string };
 
 /** Marks Studio chat user turns that carry a class draft + refinement instructions (#532). */
@@ -276,6 +281,9 @@ export function detectChatQuickActions(markdown: string): DetectedChatQuickActio
   }
   if (phrasePresent(markdown, 'apply to current class')) {
     push({ kind: 'apply_current_class' });
+  }
+  if (phrasePresent(markdown, 'open ai property suggestions')) {
+    push({ kind: 'open_property_suggestions' });
   }
   if (phrasePresent(markdown, 'copy to clipboard')) {
     const payload = extractFirstJsonOrYamlFenceBody(markdown);

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import type { Components } from 'react-markdown';
-import { Bot, ClipboardCopy, Download, ListPlus, Pencil, Plus, RefreshCw, ThumbsDown, ThumbsUp, User } from 'lucide-react';
+import { Bot, ClipboardCopy, Download, ListChecks, ListPlus, Pencil, Plus, RefreshCw, ThumbsDown, ThumbsUp, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Markdown } from '@/app/components/ui/Markdown';
@@ -263,6 +263,11 @@ function QuickActionButton({
       label: 'Apply to current class',
       icon: <Pencil className="h-3.5 w-3.5" />,
       testId: 'studio-ai-chat-quick-apply-class',
+    },
+    open_property_suggestions: {
+      label: 'Open AI property suggestions',
+      icon: <ListChecks className="h-3.5 w-3.5" />,
+      testId: 'studio-ai-chat-quick-open-property-suggestions',
     },
   };
 

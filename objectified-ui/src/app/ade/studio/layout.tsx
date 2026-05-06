@@ -208,6 +208,9 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
   const handleClassAdd = async () => {
     if (!(await checkVersionSelected()) || !(await checkNotReadOnly('add classes'))) return;
     setClassDialog({ open: true, selectedClass: null, aiAssistantSeedMarkdown: null });
+    if ((await checkProjectSelected()) && (await checkNotReadOnly('add properties'))) {
+      setAiPropertySuggestionsOpen(true);
+    }
   };
 
   const handleClassEdit = async (classItem: ClassItem) => {
@@ -235,34 +238,6 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
     setClassTemplateDialog({ open: true });
   };
 
-  const handleChatWorkspaceAction = React.useCallback(
-    async (action: StudioChatWorkspaceAction) => {
-      if (action.kind === 'create_class') {
-        if (!(await checkVersionSelected()) || !(await checkNotReadOnly('add classes'))) return;
-        const seed = action.assistantMarkdown?.trim();
-        setClassDialog({
-          open: true,
-          selectedClass: null,
-          aiAssistantSeedMarkdown: seed || null,
-        });
-        return;
-      }
-      if (action.kind === 'batch_add_properties' || action.kind === 'apply_current_class') {
-        const idSet = new Set(selectedCanvasNodeIds);
-        const selectedClass = classes.find((c) => idSet.has(c.id));
-        if (!selectedClass) {
-          await alertDialog({
-            message: 'Select a class on the canvas first so Studio knows which class to open.',
-            variant: 'warning',
-          });
-          return;
-        }
-        await handleClassEdit(selectedClass);
-      }
-    },
-    [checkVersionSelected, checkNotReadOnly, handleClassEdit, selectedCanvasNodeIds, classes, alertDialog],
-  );
-
   // Property handlers
   const handlePropertyAdd = async () => {
     if (!(await checkProjectSelected()) || !(await checkNotReadOnly('add properties'))) return;
@@ -278,6 +253,50 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
     if (!(await checkProjectSelected()) || !(await checkNotReadOnly('add properties'))) return;
     setAiPropertySuggestionsOpen(true);
   };
+
+  const handleChatWorkspaceAction = React.useCallback(
+    async (action: StudioChatWorkspaceAction) => {
+      if (action.kind === 'create_class') {
+        if (!(await checkVersionSelected()) || !(await checkNotReadOnly('add classes'))) return;
+        const seed = action.assistantMarkdown?.trim();
+        setClassDialog({
+          open: true,
+          selectedClass: null,
+          aiAssistantSeedMarkdown: seed || null,
+        });
+        if ((await checkProjectSelected()) && (await checkNotReadOnly('add properties'))) {
+          setAiPropertySuggestionsOpen(true);
+        }
+        return;
+      }
+      if (action.kind === 'batch_add_properties' || action.kind === 'apply_current_class') {
+        const idSet = new Set(selectedCanvasNodeIds);
+        const selectedClass = classes.find((c) => idSet.has(c.id));
+        if (!selectedClass) {
+          await alertDialog({
+            message: 'Select a class on the canvas first so Studio knows which class to open.',
+            variant: 'warning',
+          });
+          return;
+        }
+        await handleClassEdit(selectedClass);
+        return;
+      }
+      if (action.kind === 'open_property_suggestions') {
+        await handlePropertyAiSuggest();
+      }
+    },
+    [
+      checkVersionSelected,
+      checkNotReadOnly,
+      checkProjectSelected,
+      handleClassEdit,
+      handlePropertyAiSuggest,
+      selectedCanvasNodeIds,
+      classes,
+      alertDialog,
+    ],
+  );
 
   const handlePropertyEdit = async (propertyItem: PropertyItem) => {
     if (!(await checkProjectSelected()) || !(await checkNotReadOnly('edit properties'))) return;
@@ -332,12 +351,19 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
           open: true,
           mode: 'add',
           selectedProperty: next,
-          pendingBulkSeeds: rest.length > 0 ? rest : null,
+          pendingBulkSeeds: rest,
         });
       } else {
         setPropertyDialog({ open: false, mode: 'add', selectedProperty: null, pendingBulkSeeds: null });
       }
       setRefreshKey(prev => prev + 1);
+
+      if (mode === 'add' && pendingBulkSeeds === null) {
+        const newCount = properties.length + 1;
+        if (newCount === 1 || newCount === 3) {
+          void handlePropertyAiSuggest();
+        }
+      }
     } catch (error) {
       console.error('Error saving property:', error);
       throw error;
@@ -600,6 +626,9 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
         onAiAssistantSeedConsumed={() =>
           setClassDialog((d) => ({ ...d, aiAssistantSeedMarkdown: null }))
         }
+        onClassNameEnteredForPropertySuggestions={() => {
+          void handlePropertyAiSuggest();
+        }}
         nodes={classNodes}
         isReadOnly={isReadOnly}
         onSave={() => {
@@ -682,7 +711,7 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
               open: true,
               mode: 'add',
               selectedProperty: first,
-              pendingBulkSeeds: rest.length > 0 ? rest : null,
+              pendingBulkSeeds: rest,
             });
           }}
         />

@@ -65,6 +65,11 @@ describe('detectChatQuickActions', () => {
     const kinds = detectChatQuickActions(md).map((a) => a.kind);
     expect(kinds.filter((k) => k === 'create_class').length).toBe(1);
   });
+
+  it('detects open ai property suggestions CTA (#275)', () => {
+    const md = 'Here are ideas.\n\n**Open AI property suggestions**';
+    expect(detectChatQuickActions(md).some((a) => a.kind === 'open_property_suggestions')).toBe(true);
+  });
 });
 
 describe('parseClassDefinitionFromAssistantMarkdown', () => {

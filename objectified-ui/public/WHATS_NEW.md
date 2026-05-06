@@ -27,6 +27,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Projects list includes a **Show deleted** switch; when on, soft-deleted projects appear with a **Deleted** badge and **Restore** or **permanent delete** in the row menu (#2981).
 
 ## Studio
+- The **AI property suggestions** dialog opens when you start **Add Class** (or **Create this class** from chat), when the new **class name** reaches two characters, after saving your **first** or **third** property in a single-property add (not during bulk **Add all suggested**), from **AI suggest properties** in the sidebar, or when chat includes **Open AI property suggestions** (#275).
 - **Suggest properties with AI** names the bulk queue action **Add all suggested** (clearer next to **Open in Add Property**) (#274).
 - **AI suggest properties** and **Suggest types with AI** list each row with a short **explanation** (model `thinking`, optional `explanation` / `rationale`, or description fallback) so you can scan rationales before opening the detail panel (#273).
 - **Add Property** includes **Suggest types with AI** (when Ollama is configured): enter a property name, ask for alternatives (formats, refs, domain hints such as FHIR), **edit the schema JSON** if you want tweaks, then **Apply to form** to load it (#269, #272).

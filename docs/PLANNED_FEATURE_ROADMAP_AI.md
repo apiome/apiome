@@ -75,11 +75,11 @@ This outlines the planned features for integrating AI capabilities into Objectif
 ### AI-Powered Property Suggestions
 
 **Smart Property Recommendations** 📋 PLANNED
-- 📋 **Trigger Conditions**:
-    - 📋 When creating a new class
-    - 📋 When class name is entered
-    - 📋 On-demand via chat or button
-    - 📋 After adding first few properties
+- ✅ **Trigger Conditions** (#275):
+    - ✅ When creating a new class
+    - ✅ When class name is entered
+    - ✅ On-demand via chat or button
+    - ✅ After adding first few properties
 - 📋 **Suggestion Types**:
     - 📋 Common properties for class type (e.g., "User" → email, password, name)
     - 📋 Missing standard properties (e.g., id, createdAt, updatedAt)
@@ -91,10 +91,10 @@ This outlines the planned features for integrating AI capabilities into Objectif
     - ✅ Customize before adding (#272)
     - ✅ "Add all suggested" button (#274)
     - ✅ Explanation for each suggestion (#273)
+    - ✅ Trigger conditions for opening the dialog (#275)
 
 | Ticket | Feature Description                                |
 |--------|----------------------------------------------------|
-| #275   | Adds trigger conditions for the Suggestion UI      |
 | #276   | Adds analyze button for properties analysis        |
 
 **Actionable Recommendations** 📋 PLANNED

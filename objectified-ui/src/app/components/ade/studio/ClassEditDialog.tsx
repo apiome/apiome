@@ -238,6 +238,8 @@ interface ClassEditDialogProps {
   /** When opening Add Class from chat (#528), seed AI mode with this assistant markdown. */
   aiAssistantSeedMarkdown?: string | null;
   onAiAssistantSeedConsumed?: () => void;
+  /** Fires once per Add Class session when the class name reaches 2+ characters (#275). */
+  onClassNameEnteredForPropertySuggestions?: () => void;
 }
 
 const ClassEditDialog = ({
@@ -253,6 +255,7 @@ const ClassEditDialog = ({
   projectMetadata,
   aiAssistantSeedMarkdown = null,
   onAiAssistantSeedConsumed,
+  onClassNameEnteredForPropertySuggestions,
 }: ClassEditDialogProps) => {
   const isDark = useDarkMode();
 
@@ -298,6 +301,7 @@ const ClassEditDialog = ({
   const [newDependentSchemaProperty, setNewDependentSchemaProperty] = useState('');
   const aiMessagesEndRef = useRef<HTMLDivElement>(null);
   const aiAbortControllerRef = useRef<AbortController | null>(null);
+  const classNamePropertySuggestGateRef = useRef(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -766,6 +770,19 @@ const ClassEditDialog = ({
     setAiMessages([{ role: 'assistant', content: md }]);
     onAiAssistantSeedConsumed?.();
   }, [open, editingClassData, aiAssistantSeedMarkdown, onAiAssistantSeedConsumed]);
+
+  useEffect(() => {
+    if (!open) {
+      classNamePropertySuggestGateRef.current = false;
+      return;
+    }
+    if (editingClassData || isReadOnly || !onClassNameEnteredForPropertySuggestions) return;
+    const t = formData.name.trim();
+    if (t.length >= 2 && !classNamePropertySuggestGateRef.current) {
+      classNamePropertySuggestGateRef.current = true;
+      onClassNameEnteredForPropertySuggestions();
+    }
+  }, [open, editingClassData, isReadOnly, formData.name, onClassNameEnteredForPropertySuggestions]);
 
   useEffect(() => {
     aiMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
