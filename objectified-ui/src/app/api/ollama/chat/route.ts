@@ -156,6 +156,43 @@ Return exactly one markdown fenced JSON block and nothing else — no preamble, 
 - Use "$ref": "#/components/schemas/ClassName" only when that class appears in **Existing classes** below; otherwise use inline types.
 - Prefer practical constraints: string + format, bounded numbers, enums as JSON arrays, arrays with typed \`items\`, etc.
 - Do not reuse names from **Existing project properties** unless the user explicitly wants a variant — then pick a clearly distinct camelCase name.
+- When the user names a domain (healthcare, finance, IoT, etc.), you may align names and formats with common industry vocabularies (for example FHIR-style elements in healthcare) while still emitting valid JSON Schema the Studio property library can store.
+- Consider archetypal class fields (e.g. User → email, password hash, displayName), standard cross-cutting fields (id, createdAt, updatedAt), and properties that complement **Existing project properties** when the user asks for a coherent set.
+- "thinking" at the root is your overall reasoning; each suggestion's "thinking" is specific to that row.`;
+
+const PROPERTY_TYPE_SUGGESTIONS_SYSTEM = `You help API designers pick JSON Schema shapes for ONE reusable property in an OpenAPI 3.1 property library.
+
+The user has already chosen a property name (and may describe a class or domain). You return several **alternative schemas** for that same name so they can compare types, formats, references, and constraints.
+
+# Output format
+
+Return exactly one markdown fenced JSON block and nothing else — no preamble, no commentary outside the fence:
+
+\`\`\`json
+{
+  "thinking": "2–5 sentences: how you interpreted the property name, class context, and existing project properties.",
+  "summary": "2–4 sentences: how the alternatives differ and when to pick each.",
+  "suggestions": [
+    {
+      "name": "sameAsTargetPropertyName",
+      "description": "Optional human-readable line for the library.",
+      "schema": { },
+      "thinking": "1–3 sentences: why this schema fits.",
+      "summary": "Very short label (e.g. UUID string)"
+    }
+  ]
+}
+\`\`\`
+
+# Rules
+
+- "suggestions" must contain at least 2 items and usually 3–8 **distinct schema shapes** (not duplicate JSON).
+- Every suggestion's "name" MUST match the **Target property name** given in the system context (identical spelling).
+- Each "schema" must be a valid JSON Schema object for a single reusable property (the shape stored as property \`data\` in Studio — not wrapped in an outer "properties" object).
+- Prefer a spread of practical alternatives: primitives with strong formats, bounded numbers, enums, arrays with typed \`items\`, or \`"$ref": "#/components/schemas/ClassName"\` when that class appears in **Existing classes**.
+- Include at least one "boring but robust" option (e.g. plain string or ISO-8601 date-time) when other options are domain-specific.
+- When the domain suggests it (e.g. healthcare), one alternative may mirror a well-known industry pattern (FHIR logical types) using standard JSON Schema — do not invent non-JSON-Schema keywords.
+- Use **Existing project properties** to propose complementary or related shapes (e.g. foreign-key style refs, parallel timestamp fields) when relevant.
 - "thinking" at the root is your overall reasoning; each suggestion's "thinking" is specific to that row.`;
 
 function buildPropertySuggestionsSystem(options: {
@@ -182,6 +219,40 @@ function buildPropertySuggestionsSystem(options: {
   return PROPERTY_SUGGESTIONS_SYSTEM + extra;
 }
 
+function buildPropertyTypeSuggestionsSystem(options: {
+  existingClassNames?: string[];
+  existingProperties?: Array<{ name: string; description?: string | null; data?: Record<string, unknown> }>;
+  targetPropertyName?: string;
+  targetClassName?: string;
+}): string {
+  let s = PROPERTY_TYPE_SUGGESTIONS_SYSTEM;
+  const tp = typeof options.targetPropertyName === 'string' ? options.targetPropertyName.trim() : '';
+  if (tp) {
+    s += `\n\n# Target property name (mandatory)\nEvery suggestion's "name" field must be exactly: ${tp}\n`;
+  }
+  const tc = typeof options.targetClassName === 'string' ? options.targetClassName.trim() : '';
+  if (tc) {
+    s += `\n\n# Class or domain context\n${tc}\n`;
+  }
+  if (options.existingClassNames?.length) {
+    s += `\n\n# Existing classes (reference only with $ref: "#/components/schemas/ClassName")\n${options.existingClassNames.join(', ')}`;
+  }
+  if (options.existingProperties?.length) {
+    s += `\n\n# Existing project properties\n`;
+    options.existingProperties.forEach((p) => {
+      const d = p.data;
+      const typeStr =
+        typeof d?.type === 'string'
+          ? d.type
+          : d && typeof d === 'object' && '$ref' in d && d.$ref
+            ? '$ref'
+            : 'object';
+      s += `- ${p.name}: ${typeStr}${p.description ? ` — ${String(p.description).slice(0, 80)}` : ''}\n`;
+    });
+  }
+  return s;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const {
@@ -194,6 +265,8 @@ export async function POST(request: NextRequest) {
       currentTableName,
       versionId,
       schemaContextFingerprint,
+      targetPropertyName,
+      targetClassName,
     } = await request.json();
 
     if (typeof model !== 'string' || !model.trim() || !messages || !Array.isArray(messages)) {
@@ -206,6 +279,8 @@ export async function POST(request: NextRequest) {
     const isClassSkeleton = task === 'class_skeleton';
     const isDataQuery = task === 'data_query';
     const isPropertySuggestions = task === 'property_suggestions';
+    const isPropertyTypeSuggestions = task === 'property_type_suggestions';
+    const usesPropertyLibraryContext = isClassSkeleton || isPropertySuggestions || isPropertyTypeSuggestions;
 
     // Create a system message to guide the LLM
     const systemContent = isClassSkeleton
@@ -223,7 +298,14 @@ export async function POST(request: NextRequest) {
               existingClassNames: Array.isArray(existingClassNames) ? existingClassNames : undefined,
               existingProperties: Array.isArray(existingProperties) ? existingProperties : undefined,
             })
-          : `You are an expert API designer and OpenAPI specification generator. Your task is to help users create OpenAPI 3.1.0 specifications based on their natural language descriptions.
+          : isPropertyTypeSuggestions
+            ? buildPropertyTypeSuggestionsSystem({
+                existingClassNames: Array.isArray(existingClassNames) ? existingClassNames : undefined,
+                existingProperties: Array.isArray(existingProperties) ? existingProperties : undefined,
+                targetPropertyName: typeof targetPropertyName === 'string' ? targetPropertyName : undefined,
+                targetClassName: typeof targetClassName === 'string' ? targetClassName : undefined,
+              })
+            : `You are an expert API designer and OpenAPI specification generator. Your task is to help users create OpenAPI 3.1.0 specifications based on their natural language descriptions.
 
 # Rules
 
@@ -292,8 +374,8 @@ Do not repeat the full JSON spec outside the code block. Do not add other sectio
     const cacheKey = ollamaChatCacheKey({
       model: typeof model === 'string' ? model : '',
       task: typeof task === 'string' ? task : undefined,
-      existingClassNames: isClassSkeleton || isPropertySuggestions ? existingClassNames : undefined,
-      existingProperties: isClassSkeleton || isPropertySuggestions ? existingProperties : undefined,
+      existingClassNames: usesPropertyLibraryContext ? existingClassNames : undefined,
+      existingProperties: usesPropertyLibraryContext ? existingProperties : undefined,
       tableNames: isDataQuery ? tableNames : undefined,
       currentTableName: isDataQuery ? currentTableName : undefined,
       versionId: typeof versionId === 'string' ? versionId : undefined,
@@ -304,8 +386,8 @@ Do not repeat the full JSON spec outside the code block. Do not add other sectio
     const semanticContextKey = ollamaChatSemanticContextKey({
       model: typeof model === 'string' ? model : '',
       task: typeof task === 'string' ? task : undefined,
-      existingClassNames: isClassSkeleton || isPropertySuggestions ? existingClassNames : undefined,
-      existingProperties: isClassSkeleton || isPropertySuggestions ? existingProperties : undefined,
+      existingClassNames: usesPropertyLibraryContext ? existingClassNames : undefined,
+      existingProperties: usesPropertyLibraryContext ? existingProperties : undefined,
       tableNames: isDataQuery ? tableNames : undefined,
       currentTableName: isDataQuery ? currentTableName : undefined,
       versionId: typeof versionId === 'string' ? versionId : undefined,

@@ -33,4 +33,11 @@ describe('parseAiPropertySuggestionsResponse', () => {
       expect.objectContaining({ name: 'ok', schema: { type: 'integer' } }),
     ]);
   });
+
+  it('canonicalPropertyName overrides suggestion names', () => {
+    const md =
+      '```json\n{"thinking":"","summary":"","suggestions":[{"name":"wrong","schema":{"type":"string"}},{"name":"x","schema":{"type":"integer"}}]}\n```';
+    const r = parseAiPropertySuggestionsResponse(md, { canonicalPropertyName: 'patientId' });
+    expect(r?.suggestions.map((s) => s.name)).toEqual(['patientId', 'patientId']);
+  });
 });

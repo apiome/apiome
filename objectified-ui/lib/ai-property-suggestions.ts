@@ -1,6 +1,7 @@
 /**
- * Parse structured AI responses for reusable property suggestions (#609).
- * Expects a single ```json ... ``` markdown block from the property_suggestions Ollama task.
+ * Parse structured AI responses for reusable property suggestions (#609) and
+ * property_type_suggestions (alternative schemas for one name, #269).
+ * Expects a single ```json ... ``` markdown block from those Ollama tasks.
  */
 
 export type AiPropertySuggestion = {
@@ -35,10 +36,18 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === 'object' && !Array.isArray(v);
 }
 
+export type ParseAiPropertySuggestionsOptions = {
+  /** When set, every suggestion uses this name (fixes model drift for type-only tasks). */
+  canonicalPropertyName?: string;
+};
+
 /**
  * Returns null if the response does not contain valid structured suggestions.
  */
-export function parseAiPropertySuggestionsResponse(markdown: string): AiPropertySuggestionsPayload | null {
+export function parseAiPropertySuggestionsResponse(
+  markdown: string,
+  options?: ParseAiPropertySuggestionsOptions,
+): AiPropertySuggestionsPayload | null {
   const raw = extractLastJsonCodeBlock(markdown.trim());
   if (!raw) return null;
 
@@ -59,10 +68,16 @@ export function parseAiPropertySuggestionsResponse(markdown: string): AiProperty
 
   const suggestions: AiPropertySuggestion[] = [];
 
+  const canonical = options?.canonicalPropertyName?.trim() || '';
+
   for (const item of suggestionsRaw) {
     if (!isPlainObject(item)) continue;
-    const name = typeof item.name === 'string' ? item.name.trim() : '';
-    if (!name) continue;
+    let name = typeof item.name === 'string' ? item.name.trim() : '';
+    if (canonical) {
+      name = canonical;
+    } else if (!name) {
+      continue;
+    }
     const schema = item.schema;
     if (!isPlainObject(schema)) continue;
 

@@ -25,58 +25,37 @@ import {
   persistOllamaModelChoiceForScope,
 } from '@/app/ade/studio/components/chatbot/ollama-model-defaults';
 import { accumulateOllamaSse } from '@lib/ollama-chat-sse';
+import { propertyItemToExistingApiShape } from './AiPropertySuggestionsDialog';
 
-export function propertyItemToExistingApiShape(p: PropertyItem): {
-  name: string;
-  description: string | null;
-  data: Record<string, unknown>;
-} {
-  const rec = p as unknown as Record<string, unknown>;
-  const name = rec.name;
-  const description = rec.description;
-  const data = { ...rec };
-  delete data.id;
-  delete data.name;
-  delete data.description;
-  return {
-    name: typeof name === 'string' ? name : String(name ?? ''),
-    description: description != null && String(description).trim() ? String(description) : null,
-    data,
-  };
-}
-
-function suggestionToSeedProperty(s: AiPropertySuggestion): PropertyItem {
-  return {
-    ...(s.schema as Record<string, unknown>),
-    id: '__ai_seed__',
-    name: s.name,
-    description: s.description,
-  } as PropertyItem;
-}
-
-export interface AiPropertySuggestionsDialogProps {
+export interface AiPropertyTypeSuggestionsDialogProps {
   open: boolean;
   onClose: () => void;
   tenantId: string | null | undefined;
   projectId: string;
   versionId: string | null | undefined;
+  targetPropertyName: string;
+  targetPropertyDescription?: string;
+  contextClassName?: string | null;
   existingClasses: string[];
   existingProperties: PropertyItem[];
   studioContext: ChatStudioContext;
-  onCreatePropertyFromSuggestion: (seed: PropertyItem) => void;
+  onApplyTypeSuggestion: (suggestion: AiPropertySuggestion) => void;
 }
 
-export function AiPropertySuggestionsDialog({
+export function AiPropertyTypeSuggestionsDialog({
   open,
   onClose,
   tenantId,
   projectId,
   versionId,
+  targetPropertyName,
+  targetPropertyDescription,
+  contextClassName,
   existingClasses,
   existingProperties,
   studioContext,
-  onCreatePropertyFromSuggestion,
-}: AiPropertySuggestionsDialogProps) {
+  onApplyTypeSuggestion,
+}: AiPropertyTypeSuggestionsDialogProps) {
   const [prompt, setPrompt] = useState('');
   const [modelNames, setModelNames] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState('');
@@ -141,8 +120,8 @@ export function AiPropertySuggestionsDialog({
   };
 
   const handleGenerate = useCallback(async () => {
-    const trimmed = prompt.trim();
-    if (!trimmed || !selectedModel.trim()) return;
+    const propName = targetPropertyName.trim();
+    if (!propName || !selectedModel.trim()) return;
 
     persistOllamaModelChoiceForScope({
       tenantId,
@@ -171,6 +150,17 @@ export function AiPropertySuggestionsDialog({
     }
 
     const existingPropsPayload = existingProperties.map(propertyItemToExistingApiShape);
+    const trimmedPrompt = prompt.trim();
+    const desc = (targetPropertyDescription || '').trim();
+
+    const userContent = [
+      `Target property: ${propName}`,
+      contextClassName?.trim() ? `Class or domain context: ${contextClassName.trim()}` : null,
+      desc ? `Current description in the form: ${desc}` : null,
+      `User instructions:\n${trimmedPrompt || 'Infer strong type options from the property name and project context.'}`,
+    ]
+      .filter(Boolean)
+      .join('\n\n');
 
     try {
       const response = await fetch('/api/ollama/chat', {
@@ -179,10 +169,12 @@ export function AiPropertySuggestionsDialog({
         signal: ac.signal,
         body: JSON.stringify({
           model: selectedModel.trim(),
-          task: 'property_suggestions',
-          messages: [{ role: 'user', content: trimmed }],
+          task: 'property_type_suggestions',
+          messages: [{ role: 'user', content: userContent }],
           existingClassNames: existingClasses,
           existingProperties: existingPropsPayload,
+          targetPropertyName: propName,
+          ...(contextClassName?.trim() ? { targetClassName: contextClassName.trim() } : {}),
           ...(typeof versionId === 'string' && versionId ? { versionId } : {}),
           ...(schemaContextFingerprint ? { schemaContextFingerprint } : {}),
         }),
@@ -198,14 +190,17 @@ export function AiPropertySuggestionsDialog({
 
       if (ac.signal.aborted) return;
 
-      const structured = parseAiPropertySuggestionsResponse(full);
-      if (structured) {
+      const structured = parseAiPropertySuggestionsResponse(full, { canonicalPropertyName: propName });
+      if (structured && structured.suggestions.length >= 2) {
         setParsed(structured);
         setParseError(null);
         setSelectedIdx(0);
+      } else if (structured && structured.suggestions.length === 1) {
+        setParseError('The model returned only one type option. Try again and ask for multiple alternatives.');
+        setParsed(null);
       } else {
         setParseError(
-          'The model response could not be read as structured suggestions. Try again, or ask for fewer properties at once.',
+          'The model response could not be read as structured type suggestions. Try again with a shorter hint.',
         );
       }
     } catch (e) {
@@ -224,6 +219,9 @@ export function AiPropertySuggestionsDialog({
     tenantId,
     projectId,
     versionId,
+    targetPropertyName,
+    targetPropertyDescription,
+    contextClassName,
     existingClasses,
     existingProperties,
     studioContext,
@@ -251,24 +249,27 @@ export function AiPropertySuggestionsDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Bot className="h-5 w-5 text-violet-600 dark:text-violet-400" aria-hidden />
-            Suggest properties with AI
+            Suggest property types with AI
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1 py-2">
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Describe the kinds of reusable properties you want for this project (for example accounting fields,
-            user profile traits, or IoT telemetry). The model proposes JSON Schema snippets you can open in Add
-            Property.
+            For property{' '}
+            <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
+              {targetPropertyName.trim() || '—'}
+            </span>
+            , the model proposes alternative JSON Schema shapes (primitives with formats, refs to existing classes,
+            arrays, enums, or domain-oriented options). Pick one to fill the Add Property form.
           </p>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <label htmlFor="ai-prop-suggest-model" className="sr-only">
+            <label htmlFor="ai-type-suggest-model" className="sr-only">
               Ollama model
             </label>
             <select
-              id="ai-prop-suggest-model"
-              data-testid="ai-property-suggestions-model"
+              id="ai-type-suggest-model"
+              data-testid="ai-property-type-suggestions-model"
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
               disabled={modelNames.length === 0 || isGenerating}
@@ -287,15 +288,18 @@ export function AiPropertySuggestionsDialog({
           </div>
 
           <div>
-            <label htmlFor="ai-prop-suggest-prompt" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
-              What should we create?
+            <label
+              htmlFor="ai-type-suggest-prompt"
+              className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300"
+            >
+              What should the types optimize for?
             </label>
             <Textarea
-              id="ai-prop-suggest-prompt"
-              data-testid="ai-property-suggestions-prompt"
+              id="ai-type-suggest-prompt"
+              data-testid="ai-property-type-suggestions-prompt"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="e.g. Standard fields for a subscription billing entity"
+              placeholder="e.g. FHIR Patient identifiers, strict validation, or compatibility with existing emailAddress property"
               disabled={isGenerating}
               rows={3}
               className="resize-y text-sm"
@@ -305,9 +309,9 @@ export function AiPropertySuggestionsDialog({
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
-              data-testid="ai-property-suggestions-generate"
+              data-testid="ai-property-type-suggestions-generate"
               onClick={() => void handleGenerate()}
-              disabled={isGenerating || !prompt.trim() || !selectedModel.trim()}
+              disabled={isGenerating || !targetPropertyName.trim() || !selectedModel.trim()}
               className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500"
             >
               {isGenerating ? (
@@ -316,11 +320,11 @@ export function AiPropertySuggestionsDialog({
                   Generating…
                 </>
               ) : (
-                'Generate suggestions'
+                'Suggest types'
               )}
             </Button>
             {isGenerating && (
-              <Button type="button" variant="outline" onClick={handleStop} data-testid="ai-property-suggestions-stop">
+              <Button type="button" variant="outline" onClick={handleStop} data-testid="ai-property-type-suggestions-stop">
                 <Square className="mr-2 h-3.5 w-3.5 fill-current" aria-hidden />
                 Stop
               </Button>
@@ -339,7 +343,7 @@ export function AiPropertySuggestionsDialog({
                 Thinking
               </h3>
               <div
-                data-testid="ai-property-suggestions-thinking"
+                data-testid="ai-property-type-suggestions-thinking"
                 className="max-h-36 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-200"
               >
                 {thinkingBody}
@@ -348,16 +352,16 @@ export function AiPropertySuggestionsDialog({
           )}
 
           {parsed && parsed.suggestions.length > 0 && (
-            <section aria-label="Suggested properties">
+            <section aria-label="Suggested types">
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Suggested properties
+                Type alternatives
               </h3>
-              <ul className="flex flex-wrap gap-2" data-testid="ai-property-suggestions-list">
+              <ul className="flex flex-wrap gap-2" data-testid="ai-property-type-suggestions-list">
                 {parsed.suggestions.map((s, i) => (
-                  <li key={`${s.name}-${i}`}>
+                  <li key={`${s.summary || s.name}-${i}`}>
                     <button
                       type="button"
-                      data-testid={`ai-property-suggestions-item-${i}`}
+                      data-testid={`ai-property-type-suggestions-item-${i}`}
                       onClick={() => setSelectedIdx(i)}
                       className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                         selectedIdx === i
@@ -365,7 +369,7 @@ export function AiPropertySuggestionsDialog({
                           : 'border-slate-200 bg-white text-slate-700 hover:border-violet-300 hover:bg-violet-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-violet-500 dark:hover:bg-violet-950/40'
                       }`}
                     >
-                      {s.summary || s.name}
+                      {s.summary?.trim() ? s.summary : `Alternative ${i + 1}`}
                     </button>
                   </li>
                 ))}
@@ -374,23 +378,12 @@ export function AiPropertySuggestionsDialog({
           )}
 
           {selectedSuggestion && (
-            <section aria-label="Selected suggestion detail" className="space-y-2 rounded-lg border border-slate-200 p-3 dark:border-slate-600">
+            <section aria-label="Selected type detail" className="space-y-2 rounded-lg border border-slate-200 p-3 dark:border-slate-600">
               <div>
                 <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Property thinking
+                  Why this type
                 </h3>
-                <p className="text-sm text-slate-700 dark:text-slate-300">
-                  {selectedSuggestion.thinking || '—'}
-                </p>
-              </div>
-              <div>
-                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Name &amp; description
-                </h3>
-                <p className="font-mono text-sm font-semibold text-slate-900 dark:text-slate-100">{selectedSuggestion.name}</p>
-                {selectedSuggestion.description && (
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{selectedSuggestion.description}</p>
-                )}
+                <p className="text-sm text-slate-700 dark:text-slate-300">{selectedSuggestion.thinking || '—'}</p>
               </div>
               <div>
                 <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -402,14 +395,14 @@ export function AiPropertySuggestionsDialog({
               </div>
               <Button
                 type="button"
-                data-testid="ai-property-suggestions-open-add"
+                data-testid="ai-property-type-suggestions-apply"
                 onClick={() => {
-                  onCreatePropertyFromSuggestion(suggestionToSeedProperty(selectedSuggestion));
+                  onApplyTypeSuggestion(selectedSuggestion);
                   onClose();
                 }}
                 className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 sm:w-auto"
               >
-                Open in Add Property
+                Apply to form
               </Button>
             </section>
           )}
@@ -420,7 +413,7 @@ export function AiPropertySuggestionsDialog({
                 Summary
               </h3>
               <div
-                data-testid="ai-property-suggestions-summary"
+                data-testid="ai-property-type-suggestions-summary"
                 className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-600 dark:bg-slate-900/40 dark:text-slate-200"
               >
                 {summaryBelow}

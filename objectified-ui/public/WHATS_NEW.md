@@ -27,6 +27,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Projects list includes a **Show deleted** switch; when on, soft-deleted projects appear with a **Deleted** badge and **Restore** or **permanent delete** in the row menu (#2981).
 
 ## Studio
+- **Add Property** includes **Suggest types with AI** (when Ollama is configured): enter a property name, ask for alternatives (formats, refs, domain hints such as FHIR), then **Apply to form** to load a chosen JSON Schema (#269).
 - Properties sidebar includes an **AI suggest properties** control (robot): describe what you need, review thinking and summary around the suggestion chips, inspect each proposal, then **Open in Add Property** to create it (#609).
 - Studio AI chat schema refinements infer JSON Schema type and common constraints from well-known property names (`email`, `createdAt`, `age`, `price`, `isActive`) when you add a field without specifying a type; the class-skeleton Ollama prompt uses the same conventions (#277).
 - Chat refinement inference now adds typical validation hints from names—string lengths, numeric bounds, regex patterns, and marking `id` as required when added without a type (#278).

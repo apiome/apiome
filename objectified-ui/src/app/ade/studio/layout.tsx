@@ -458,6 +458,12 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
   // Snapshot of the studio workspace assembled for the AI chatbot (#259).
   // Recomputed only when its inputs change so the chatbot doesn't re-render
   // on unrelated layout state churn.
+  const selectedClassNameForPropertyAi = React.useMemo(() => {
+    const idSet = new Set(selectedCanvasNodeIds);
+    const hit = classes.find((c) => idSet.has(c.id));
+    return hit?.name?.trim() || null;
+  }, [classes, selectedCanvasNodeIds]);
+
   const chatbotStudioContext = React.useMemo<ChatStudioContext>(() => {
     const chatProperties: ChatStudioProperty[] = properties.map((prop) => {
       const propAny = prop as unknown as Record<string, unknown>;
@@ -609,6 +615,31 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
         property={propertyDialog.selectedProperty}
         onSubmit={handlePropertySubmit}
         availableClasses={classes.map(c => c.name)}
+        propertyAiContext={
+          currentTenantId && selectedProjectId
+            ? {
+                tenantId: currentTenantId,
+                projectId: selectedProjectId,
+                versionId: selectedVersionId,
+                existingClasses: classes.map((c) => c.name),
+                existingProperties: properties,
+                studioContext: chatbotStudioContext,
+                contextClassName: selectedClassNameForPropertyAi,
+              }
+            : undefined
+        }
+        onApplyAiTypeSchema={(payload) => {
+          setPropertyDialog({
+            open: true,
+            mode: 'add',
+            selectedProperty: {
+              id: '__ai_seed__',
+              name: payload.name,
+              description: payload.description ?? undefined,
+              ...payload.schema,
+            } as PropertyItem,
+          });
+        }}
       />
 
       {selectedProjectId && (

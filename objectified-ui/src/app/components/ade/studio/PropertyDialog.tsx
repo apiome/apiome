@@ -27,7 +27,12 @@ import {
   Sparkles,
   ListChecks,
   BookOpenText,
+  Wand2,
 } from 'lucide-react';
+import type { ChatStudioContext } from '@/app/ade/studio/components/chatbot/chat-context';
+import { AiPropertyTypeSuggestionsDialog } from './AiPropertyTypeSuggestionsDialog';
+import type { AiPropertySuggestion } from '@lib/ai-property-suggestions';
+import type { PropertyItem as LibraryPropertyItem } from './StudioSideNav';
 import {
   FormSection,
   FormFieldGroup,
@@ -95,6 +100,16 @@ export interface PropertyItem {
   items?: any; // Schema for items beyond prefix positions
 }
 
+export interface PropertyDialogAiContext {
+  tenantId: string | null | undefined;
+  projectId: string;
+  versionId: string | null | undefined;
+  existingClasses: string[];
+  existingProperties: LibraryPropertyItem[];
+  studioContext: ChatStudioContext;
+  contextClassName?: string | null;
+}
+
 interface PropertyDialogProps {
   open: boolean;
   onClose: () => void;
@@ -107,6 +122,13 @@ interface PropertyDialogProps {
   }) => Promise<void>;
   // Available class names for schema references
   availableClasses?: string[];
+  /** When set, Add Property shows AI type suggestions (Ollama). */
+  propertyAiContext?: PropertyDialogAiContext;
+  onApplyAiTypeSchema?: (payload: {
+    name: string;
+    description: string | null;
+    schema: Record<string, unknown>;
+  }) => void;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -127,6 +149,7 @@ interface BasicsSectionProps {
   setFormData: React.Dispatch<React.SetStateAction<PropertyFormData>>;
   primitiveAvailable: boolean;
   setPrimitiveDialogOpen: (next: boolean) => void;
+  addModeAiTypeSuggest?: { onOpen: () => void } | null;
   changed?: boolean;
   eyebrow?: string;
 }
@@ -143,6 +166,7 @@ const BasicsSection: React.FC<BasicsSectionProps> = ({
   setFormData,
   primitiveAvailable,
   setPrimitiveDialogOpen,
+  addModeAiTypeSuggest,
   changed,
   eyebrow = 'Basics',
 }) => (
@@ -203,6 +227,35 @@ const BasicsSection: React.FC<BasicsSectionProps> = ({
         </Select>
       </FormFieldGroup>
     </FormGrid>
+
+    {mode === 'add' && addModeAiTypeSuggest && (
+      <div className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 dark:border-violet-900/50 dark:bg-violet-950/30">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300">
+              <Wand2 className="h-4 w-4" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Suggest types with AI</h4>
+              <p className="mt-0.5 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                Get several JSON Schema options for this property name (formats, refs, arrays). Requires Ollama.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="property-dialog-ai-type-suggest"
+            disabled={!propertyName.trim()}
+            onClick={addModeAiTypeSuggest.onOpen}
+            className="shrink-0 border-violet-300 text-violet-800 hover:bg-violet-100 dark:border-violet-700 dark:text-violet-200 dark:hover:bg-violet-950/50"
+          >
+            Suggest types…
+          </Button>
+        </div>
+      </div>
+    )}
 
     <FormFieldGroup
       label="Title"
@@ -489,13 +542,15 @@ const DocsSection: React.FC<DocsSectionProps> = ({ formData, setFormData, change
 );
 
 export const PropertyDialog: React.FC<PropertyDialogProps> = ({
-                                                                open,
-                                                                onClose,
-                                                                mode,
-                                                                property,
-                                                                onSubmit,
-                                                                availableClasses = [],
-                                                              }) => {
+  open,
+  onClose,
+  mode,
+  property,
+  onSubmit,
+  availableClasses = [],
+  propertyAiContext,
+  onApplyAiTypeSchema,
+}) => {
   const isDark = useDarkMode();
 
   const [tabMode, setTabMode] = useState<'form' | 'json'>('form');
@@ -507,6 +562,7 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
   const [propertyError, setPropertyError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [primitiveDialogOpen, setPrimitiveDialogOpen] = useState(false);
+  const [aiTypeSuggestOpen, setAiTypeSuggestOpen] = useState(false);
 
   // Use shared form data structure
   const [formData, setFormData] = useState<PropertyFormData>({});
@@ -1576,7 +1632,22 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
     setCurrentStepIndex((i) => Math.max(i - 1, 0));
   };
 
+  const addModeAiTypeSuggest =
+    mode === 'add' && propertyAiContext && onApplyAiTypeSchema
+      ? { onOpen: () => setAiTypeSuggestOpen(true) }
+      : null;
+
+  const handleApplyAiTypeSuggestion = (s: AiPropertySuggestion) => {
+    if (!onApplyAiTypeSchema) return;
+    onApplyAiTypeSchema({
+      name: propertyName.trim(),
+      description: (formData.description || '').trim() || null,
+      schema: s.schema as Record<string, unknown>,
+    });
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()} modal={true}>
       <DialogContent
         className="max-w-6xl h-[90vh] max-h-[900px] p-0 flex flex-col overflow-hidden"
@@ -1645,6 +1716,7 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
                         setFormData={setFormData}
                         primitiveAvailable={primitiveAvailable}
                         setPrimitiveDialogOpen={setPrimitiveDialogOpen}
+                        addModeAiTypeSuggest={addModeAiTypeSuggest}
                         changed={changedBasics}
                         eyebrow="Step 1 of 5"
                       />
@@ -1724,6 +1796,7 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
                       setFormData={setFormData}
                       primitiveAvailable={primitiveAvailable}
                       setPrimitiveDialogOpen={setPrimitiveDialogOpen}
+                      addModeAiTypeSuggest={addModeAiTypeSuggest}
                       changed={changedBasics}
                     />
                     <FlagsSection formData={formData} setFormData={setFormData} changed={changedFlags} />
@@ -1795,6 +1868,24 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
         )}
       </DialogContent>
     </Dialog>
+
+    {propertyAiContext && onApplyAiTypeSchema && (
+      <AiPropertyTypeSuggestionsDialog
+        open={aiTypeSuggestOpen}
+        onClose={() => setAiTypeSuggestOpen(false)}
+        tenantId={propertyAiContext.tenantId}
+        projectId={propertyAiContext.projectId}
+        versionId={propertyAiContext.versionId}
+        targetPropertyName={propertyName}
+        targetPropertyDescription={formData.description}
+        contextClassName={propertyAiContext.contextClassName}
+        existingClasses={propertyAiContext.existingClasses}
+        existingProperties={propertyAiContext.existingProperties}
+        studioContext={propertyAiContext.studioContext}
+        onApplyTypeSuggestion={handleApplyAiTypeSuggestion}
+      />
+    )}
+    </>
   );
 };
 
