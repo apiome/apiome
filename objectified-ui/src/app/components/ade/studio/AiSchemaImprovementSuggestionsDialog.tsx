@@ -11,6 +11,7 @@ import {
 import { Button } from '../../ui/Button';
 import { Textarea } from '../../ui/Textarea';
 import { Bot, Copy, Loader2, Square, Sparkles } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../ui/Tooltip';
 import {
   parseAiSchemaImprovementSuggestionsResponse,
   type AiSchemaImprovementEffort,
@@ -219,9 +220,9 @@ export function AiSchemaImprovementSuggestionsDialog({
   ) => {
     const scoreLine =
       typeof estimatedDelta === 'number'
-        ? `Est. overall score impact: ${formatEstimatedScoreImpact(estimatedDelta)} (0–100 composite; model estimate)\n`
+        ? `\nEst. overall score impact: ${formatEstimatedScoreImpact(estimatedDelta)} (0–100 composite; model estimate)`
         : '';
-    const text = `${title}\nEffort: ${EFFORT_LABEL[effort]}\n${scoreLine}\n${detail}`;
+    const text = `${title}\nEffort: ${EFFORT_LABEL[effort]}${scoreLine}\n\n${detail}`;
     try {
       await navigator.clipboard.writeText(text);
       setCopyIdx(idx);
@@ -342,13 +343,21 @@ export function AiSchemaImprovementSuggestionsDialog({
                             {EFFORT_LABEL[s.effort]}
                           </span>
                           {typeof s.estimatedOverallScoreDelta === 'number' ? (
-                            <span
-                              className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-sky-100 text-sky-900 dark:bg-sky-950 dark:text-sky-200 tabular-nums"
-                              title="Estimated change to the Studio overall schema quality score (0–100) if this fix were fully applied"
-                              data-testid={`ai-schema-improvement-score-${i}`}
-                            >
-                              {formatEstimatedScoreImpact(s.estimatedOverallScoreDelta)}
-                            </span>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span
+                                    className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-sky-100 text-sky-900 dark:bg-sky-950 dark:text-sky-200 tabular-nums cursor-default"
+                                    data-testid={`ai-schema-improvement-score-${i}`}
+                                  >
+                                    {formatEstimatedScoreImpact(s.estimatedOverallScoreDelta)}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Estimated change to the Studio overall schema quality score (0–100) if this fix were fully applied
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           ) : null}
                         </div>
                         <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{s.detail}</p>
