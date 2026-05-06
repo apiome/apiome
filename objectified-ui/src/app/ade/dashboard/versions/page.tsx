@@ -3,8 +3,37 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
-import { Edit2, Trash2, Package, AlertCircle, Lock, Unlock, CheckCircle, Eye, Copy, MoreVertical, Network, Snowflake, GitBranch, GitMerge, Tag, GitFork, Shield, Sun, LayoutGrid, Undo2, ScrollText, ListOrdered, GitCompareArrows, FileText, ChevronRight } from 'lucide-react';
+import { useEffect, useState, useRef, useMemo, useCallback, type ReactNode } from 'react';
+import {
+  Edit2,
+  Trash2,
+  Package,
+  AlertCircle,
+  Lock,
+  Unlock,
+  CheckCircle,
+  Eye,
+  Copy,
+  MoreVertical,
+  Network,
+  Snowflake,
+  GitBranch,
+  GitMerge,
+  Tag,
+  GitFork,
+  Shield,
+  Sun,
+  LayoutGrid,
+  Undo2,
+  ScrollText,
+  ListOrdered,
+  GitCompareArrows,
+  FileText,
+  ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+} from 'lucide-react';
 import dynamic from 'next/dynamic';
 import {
   Dialog,
@@ -96,6 +125,11 @@ import {
   dashboardTrHoverClass,
 } from '@/app/components/ade/dashboard/dashboardScreenClasses';
 import { FEATURE_GITLIKE } from '@lib/feature-flags';
+import {
+  sortVersionsDashboardRows,
+  type VersionsDashboardSortColumn,
+  type VersionsDashboardSortDirection,
+} from '@/app/utils/versions-dashboard-sort';
 
 /** Radix Select cannot use empty string as a value; maps to no successor in metadata. */
 const SUCCESSOR_SELECT_NONE = '__none__';
@@ -265,6 +299,54 @@ interface VersionTagRow {
   created_by?: string | null;
 }
 
+function VersionsSortTh({
+  column,
+  sortColumn,
+  sortDirection,
+  onSortClick,
+  className,
+  testId,
+  ariaLabel,
+  children,
+}: {
+  column: VersionsDashboardSortColumn;
+  sortColumn: VersionsDashboardSortColumn;
+  sortDirection: VersionsDashboardSortDirection;
+  onSortClick: (c: VersionsDashboardSortColumn) => void;
+  className: string;
+  testId: string;
+  ariaLabel: string;
+  children: ReactNode;
+}) {
+  const active = sortColumn === column;
+  return (
+    <th
+      scope="col"
+      className={className}
+      aria-sort={active ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+    >
+      <button
+        type="button"
+        className="inline-flex w-full max-w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs font-medium uppercase tracking-wider text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+        onClick={() => onSortClick(column)}
+        data-testid={testId}
+        aria-label={ariaLabel}
+      >
+        <span className="inline-flex min-w-0 flex-1 items-center gap-1.5 truncate">{children}</span>
+        {active ? (
+          sortDirection === 'asc' ? (
+            <ArrowUp className="h-3.5 w-3.5 shrink-0 text-indigo-600 dark:text-indigo-400" aria-hidden />
+          ) : (
+            <ArrowDown className="h-3.5 w-3.5 shrink-0 text-indigo-600 dark:text-indigo-400" aria-hidden />
+          )
+        ) : (
+          <ArrowUpDown className="h-3.5 w-3.5 shrink-0 opacity-40" aria-hidden />
+        )}
+      </button>
+    </th>
+  );
+}
+
 const Versions = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -411,6 +493,10 @@ const Versions = () => {
   const [historyAuthorCreatorId, setHistoryAuthorCreatorId] = useState('');
   const [historyDateFrom, setHistoryDateFrom] = useState('');
   const [historyDateTo, setHistoryDateTo] = useState('');
+  const [versionsTableSortColumn, setVersionsTableSortColumn] =
+    useState<VersionsDashboardSortColumn>('created');
+  const [versionsTableSortDirection, setVersionsTableSortDirection] =
+    useState<VersionsDashboardSortDirection>('desc');
   const [lifecycleFilter, setLifecycleFilter] = useState<string>('');
   const [editLifecycle, setEditLifecycle] = useState<string>('stable');
   const [editDeprecationMessage, setEditDeprecationMessage] = useState('');
@@ -1892,6 +1978,27 @@ const Versions = () => {
     );
   }, [tagFilteredVersions, historySearchQ, historyAuthorCreatorId, historyDateFrom, historyDateTo]);
 
+  const tableDisplayVersions = useMemo(
+    () =>
+      sortVersionsDashboardRows(
+        displayVersions,
+        versionsTableSortColumn,
+        versionsTableSortDirection
+      ),
+    [displayVersions, versionsTableSortColumn, versionsTableSortDirection]
+  );
+
+  const handleVersionsTableSortClick = useCallback((column: VersionsDashboardSortColumn) => {
+    setVersionsTableSortColumn((prevCol) => {
+      if (prevCol === column) {
+        setVersionsTableSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+        return prevCol;
+      }
+      setVersionsTableSortDirection('asc');
+      return column;
+    });
+  }, []);
+
   const historyTimelineFiltersActive =
     historySearchQ.trim() !== '' || !!historyAuthorCreatorId || !!historyDateFrom || !!historyDateTo;
 
@@ -3057,12 +3164,64 @@ const Versions = () => {
           <table className="min-w-full">
             <thead className={dashboardTableTheadClass}>
               <tr>
-                <th className={dashboardThClass}>Version</th>
-                <th className={dashboardThClass}>Revision / changelog</th>
-                <th className={dashboardThClass}>Status</th>
-                <th className={dashboardThClass}>Created By</th>
-                <th className={dashboardThClass}>Created</th>
-                <th className={dashboardThRightClass}>Actions</th>
+                <VersionsSortTh
+                  column="version"
+                  sortColumn={versionsTableSortColumn}
+                  sortDirection={versionsTableSortDirection}
+                  onSortClick={handleVersionsTableSortClick}
+                  className={dashboardThClass}
+                  testId="versions-sort-version"
+                  ariaLabel="Sort by version"
+                >
+                  Version
+                </VersionsSortTh>
+                <VersionsSortTh
+                  column="revision"
+                  sortColumn={versionsTableSortColumn}
+                  sortDirection={versionsTableSortDirection}
+                  onSortClick={handleVersionsTableSortClick}
+                  className={dashboardThClass}
+                  testId="versions-sort-revision"
+                  ariaLabel="Sort by revision and changelog"
+                >
+                  Revision / changelog
+                </VersionsSortTh>
+                <VersionsSortTh
+                  column="status"
+                  sortColumn={versionsTableSortColumn}
+                  sortDirection={versionsTableSortDirection}
+                  onSortClick={handleVersionsTableSortClick}
+                  className={dashboardThClass}
+                  testId="versions-sort-status"
+                  ariaLabel="Sort by status"
+                >
+                  Status
+                </VersionsSortTh>
+                <VersionsSortTh
+                  column="creator"
+                  sortColumn={versionsTableSortColumn}
+                  sortDirection={versionsTableSortDirection}
+                  onSortClick={handleVersionsTableSortClick}
+                  className={dashboardThClass}
+                  testId="versions-sort-creator"
+                  ariaLabel="Sort by created by"
+                >
+                  Created By
+                </VersionsSortTh>
+                <VersionsSortTh
+                  column="created"
+                  sortColumn={versionsTableSortColumn}
+                  sortDirection={versionsTableSortDirection}
+                  onSortClick={handleVersionsTableSortClick}
+                  className={dashboardThClass}
+                  testId="versions-sort-created"
+                  ariaLabel="Sort by created date"
+                >
+                  Created
+                </VersionsSortTh>
+                <th scope="col" className={dashboardThRightClass} aria-sort="none">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className={dashboardTbodyClass}>
@@ -3089,7 +3248,7 @@ const Versions = () => {
                     </Button>
                   </td>
                 </tr>
-              ) : displayVersions.length === 0 ? (
+              ) : tableDisplayVersions.length === 0 ? (
                 <tr key="versions-empty-timeline">
                   <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-600 dark:text-gray-300">
                     <p className="mx-auto max-w-md">
@@ -3104,7 +3263,7 @@ const Versions = () => {
                   </td>
                 </tr>
               ) : (
-                displayVersions.map((version) => (
+                tableDisplayVersions.map((version) => (
                 <tr key={version.id} className={dashboardTrHoverClass}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2 flex-wrap">
