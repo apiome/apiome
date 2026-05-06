@@ -689,6 +689,13 @@ function StudioLayoutContent({ children }: Readonly<{ children: React.ReactNode 
             } as PropertyItem,
           });
         }}
+        onOpenAiPropertySuggestions={
+          !isReadOnly && selectedProjectId
+            ? () => {
+                void handlePropertyAiSuggest();
+              }
+            : undefined
+        }
       />
 
       {selectedProjectId && (

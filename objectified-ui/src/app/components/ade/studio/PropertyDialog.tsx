@@ -28,6 +28,7 @@ import {
   ListChecks,
   BookOpenText,
   Wand2,
+  Bot,
 } from 'lucide-react';
 import type { ChatStudioContext } from '@/app/ade/studio/components/chatbot/chat-context';
 import { AiPropertyTypeSuggestionsDialog } from './AiPropertyTypeSuggestionsDialog';
@@ -129,6 +130,8 @@ interface PropertyDialogProps {
     description: string | null;
     schema: Record<string, unknown>;
   }) => void;
+  /** Opens the AI property suggestions dialog (same as sidebar / chat; #276). */
+  onOpenAiPropertySuggestions?: () => void;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -150,6 +153,7 @@ interface BasicsSectionProps {
   primitiveAvailable: boolean;
   setPrimitiveDialogOpen: (next: boolean) => void;
   addModeAiTypeSuggest?: { onOpen: () => void } | null;
+  onOpenAiPropertySuggestions?: () => void;
   changed?: boolean;
   eyebrow?: string;
 }
@@ -167,6 +171,7 @@ const BasicsSection: React.FC<BasicsSectionProps> = ({
   primitiveAvailable,
   setPrimitiveDialogOpen,
   addModeAiTypeSuggest,
+  onOpenAiPropertySuggestions,
   changed,
   eyebrow = 'Basics',
 }) => (
@@ -227,6 +232,34 @@ const BasicsSection: React.FC<BasicsSectionProps> = ({
         </Select>
       </FormFieldGroup>
     </FormGrid>
+
+    {onOpenAiPropertySuggestions && (
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/30">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300">
+              <Bot className="h-4 w-4" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">AI property suggestions</h4>
+              <p className="mt-0.5 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                Brainstorm reusable property names and schemas from a short prompt. Uses the same flow as the properties sidebar. Requires Ollama when connected.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="property-dialog-analyze-ai-properties"
+            onClick={onOpenAiPropertySuggestions}
+            className="shrink-0 border-emerald-300 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-700 dark:text-emerald-200 dark:hover:bg-emerald-950/50"
+          >
+            Analyze
+          </Button>
+        </div>
+      </div>
+    )}
 
     {mode === 'add' && addModeAiTypeSuggest && (
       <div className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 dark:border-violet-900/50 dark:bg-violet-950/30">
@@ -550,6 +583,7 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
   availableClasses = [],
   propertyAiContext,
   onApplyAiTypeSchema,
+  onOpenAiPropertySuggestions,
 }) => {
   const isDark = useDarkMode();
 
@@ -1724,6 +1758,7 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
                         primitiveAvailable={primitiveAvailable}
                         setPrimitiveDialogOpen={setPrimitiveDialogOpen}
                         addModeAiTypeSuggest={addModeAiTypeSuggest}
+                        onOpenAiPropertySuggestions={onOpenAiPropertySuggestions}
                         changed={changedBasics}
                         eyebrow="Step 1 of 5"
                       />
@@ -1804,6 +1839,7 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
                       primitiveAvailable={primitiveAvailable}
                       setPrimitiveDialogOpen={setPrimitiveDialogOpen}
                       addModeAiTypeSuggest={addModeAiTypeSuggest}
+                      onOpenAiPropertySuggestions={onOpenAiPropertySuggestions}
                       changed={changedBasics}
                     />
                     <FlagsSection formData={formData} setFormData={setFormData} changed={changedFlags} />

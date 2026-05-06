@@ -79,6 +79,7 @@ This outlines the planned features for integrating AI capabilities into Objectif
     - ✅ When creating a new class
     - ✅ When class name is entered
     - ✅ On-demand via chat or button
+    - ✅ **Analyze** on Add / Edit Property form (#276)
     - ✅ After adding first few properties
 - 📋 **Suggestion Types**:
     - 📋 Common properties for class type (e.g., "User" → email, password, name)
@@ -92,10 +93,6 @@ This outlines the planned features for integrating AI capabilities into Objectif
     - ✅ "Add all suggested" button (#274)
     - ✅ Explanation for each suggestion (#273)
     - ✅ Trigger conditions for opening the dialog (#275)
-
-| Ticket | Feature Description                                |
-|--------|----------------------------------------------------|
-| #276   | Adds analyze button for properties analysis        |
 
 **Actionable Recommendations** 📋 PLANNED
 - 📋 AI-powered suggestions for improvement:
