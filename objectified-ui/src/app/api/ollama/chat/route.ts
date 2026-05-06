@@ -278,7 +278,8 @@ Return **exactly one** markdown fenced JSON block and **nothing outside the fenc
       "title": "Short imperative headline the user can scan (max ~120 chars).",
       "detail": "Concrete explanation: what to change, where to look, and why it helps quality or maintainability.",
       "category": "documentation",
-      "effort": "quick_win"
+      "effort": "quick_win",
+      "estimatedOverallScoreDelta": 3
     }
   ]
 }
@@ -289,6 +290,7 @@ Return **exactly one** markdown fenced JSON block and **nothing outside the fenc
 - Emit **6–12** suggestions unless the digest is extremely small (then 3–5 is fine).
 - Every "title" and "detail" must be non-empty strings.
 - "category" must be one of: "documentation", "naming", "structure", "api", "performance", "other". Pick the best fit per row.
+- Every row MUST include **"estimatedOverallScoreDelta"**: an **integer** (typically **0–12**, occasionally higher for broad fixes) estimating how many **points** the Studio **overall schema quality score (0–100)** in the digest would **increase** if that suggestion were **fully applied**. Use **0** only when the effect on the composite would be negligible. When the digest includes the current overall score line, anchor estimates to that baseline and the listed doc %, naming %, and complexity. Do not exceed **25**; use negative values only if a fix could realistically lower the composite (rare).
 - Every row MUST include **"effort"**: one of \`"quick_win"\`, \`"moderate"\`, or \`"substantial"\`.
   - **quick_win**: small, localized edits (add missing descriptions, rename a few properties, tighten one validation) that a developer can often finish in minutes to an hour.
   - **moderate**: bounded refactors (split one busy class, normalize a small set of names, add a shared pattern across a few schemas).

@@ -45,4 +45,10 @@ describe('buildStudioMetricsDigestForAi', () => {
     expect(text).toContain('User_ID');
     expect(text).toContain('Hub classes');
   });
+
+  it('includes overall schema quality score when provided (#255)', () => {
+    const text = buildStudioMetricsDigestForAi(baseMetrics(), 72);
+    expect(text).toContain('Overall schema quality score');
+    expect(text).toContain('72');
+  });
 });

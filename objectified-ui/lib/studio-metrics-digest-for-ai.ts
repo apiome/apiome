@@ -16,7 +16,11 @@ function take<T>(arr: T[], n: number): T[] {
 /**
  * Human-readable block appended to the model system prompt.
  */
-export function buildStudioMetricsDigestForAi(metrics: SchemaMetricsResult): string {
+export function buildStudioMetricsDigestForAi(
+  metrics: SchemaMetricsResult,
+  /** Current Studio overall schema quality score (0–100); helps the model estimate per-fix deltas (#255). */
+  overallQualityScore?: number | null
+): string {
   const lines: string[] = [];
   lines.push('## Live schema metrics (Studio canvas)');
   lines.push(`- Classes: ${metrics.classCount}`);
@@ -28,6 +32,11 @@ export function buildStudioMetricsDigestForAi(metrics: SchemaMetricsResult): str
   lines.push(`- Naming compliance (PascalCase classes + camelCase props): ${metrics.namingCompliance.compliancePercentage}%`);
   lines.push(`- Circular dependency groups: ${metrics.circularDependencyCount}`);
   lines.push(`- Deepest dependency chain length: ${metrics.deepestChainLength}`);
+  if (typeof overallQualityScore === 'number' && Number.isFinite(overallQualityScore)) {
+    lines.push(
+      `- Overall schema quality score (0–100 composite: docs, naming, structural load, layout when available): ${Math.min(100, Math.max(0, Math.round(overallQualityScore)))}`,
+    );
+  }
 
   if (metrics.hubNames.length) {
     lines.push(`- Hub classes (sample): ${take(metrics.hubNames, MAX_NAMES).join(', ')}${metrics.hubNames.length > MAX_NAMES ? ' …' : ''}`);

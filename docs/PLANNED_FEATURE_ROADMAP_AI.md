@@ -79,12 +79,11 @@ This outlines the planned features for integrating AI capabilities into Objectif
     - ✅ "Split 'User' class - it has 28 properties (recommended max: 15)"
     - ✅ "Add pagination to 'GET /users' endpoint" (optional user focus + metrics)
 - ✅ Prioritized action items (quick wins first) (#254)
-- 📋 Estimated score impact for each fix
+- ✅ Estimated score impact for each fix (#255)
 - 📋 Bulk apply recommendations
 
 | Ticket | Feature Description                    |
 |--------|----------------------------------------|
-| #255   | Estimated score impact for each fix    |
 | #256   | Add bulk apply recommendations         |
 
 ### AI Schema Health Insights

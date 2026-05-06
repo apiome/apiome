@@ -948,7 +948,10 @@ const StudioContent = () => {
 
   const handleOpenAiImprovementSuggestions = useCallback(() => {
     if (!schemaMetrics) return;
-    setAiImprovementDigest(buildStudioMetricsDigestForAi(schemaMetrics));
+    const classNodes = nodes.filter((n) => n.type !== 'groupNode');
+    const lq = classNodes.length === 0 ? null : computeLayoutQuality(nodes, edges);
+    const overallForDigest = computeOverallSchemaQualityScore(schemaMetrics, lq);
+    setAiImprovementDigest(buildStudioMetricsDigestForAi(schemaMetrics, overallForDigest));
     const allNames = nodes
       .filter((n) => n.type !== 'groupNode')
       .map((n) => String((n.data as { name?: string })?.name ?? '').trim())
@@ -956,7 +959,7 @@ const StudioContent = () => {
     const deduped = [...new Set(allNames)].sort();
     setAiImprovementClassNames(deduped.slice(0, CLASS_NAMES_CAP));
     setAiImprovementDialogOpen(true);
-  }, [schemaMetrics, nodes]);
+  }, [schemaMetrics, nodes, edges]);
 
   // #244: Version scoring panel — per-schema rows from the live canvas (same graph as metrics).
   // Only computed when the panel is open to avoid graph-traversal overhead during editing.

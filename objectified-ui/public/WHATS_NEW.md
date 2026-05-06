@@ -27,6 +27,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Projects list includes a **Show deleted** switch; when on, soft-deleted projects appear with a **Deleted** badge and **Restore** or **permanent delete** in the row menu (#2981).
 
 ## Studio
+- **AI improvement suggestions** shows an optional **estimated overall score impact** (points on the 0–100 Studio composite) per row when the model supplies it; the metrics digest includes the **current overall score** so estimates stay grounded (#255).
 - **AI improvement suggestions** (Schema Metrics **lightbulb**) now labels each item with **effort** (quick win, standard, larger effort), **sorts quick wins to the top**, and adds an **Effort** line when you copy a row (#254).
 - **Schema Metrics** panel includes a **lightbulb** control that opens **AI improvement suggestions**: Ollama reads live canvas metrics (documentation %, naming compliance, complexity, samples of gaps) and returns a structured, copy-friendly list of actionable ideas (#253).
 - **Add Property** and **Edit Property** include **Analyze** on the Basics step (advanced Form view includes it in Basics): opens the same **AI property suggestions** dialog as the sidebar robot control (#276).

@@ -22,6 +22,11 @@ export type AiSchemaImprovementSuggestion = {
   detail: string;
   category: AiSchemaImprovementCategory;
   effort: AiSchemaImprovementEffort;
+  /**
+   * Approximate points the Studio overall schema quality score (0–100) would gain if this fix were fully applied (#255).
+   * Omitted when the model does not provide a usable estimate.
+   */
+  estimatedOverallScoreDelta?: number;
 };
 
 export type AiSchemaImprovementSuggestionsPayload = {
@@ -73,6 +78,27 @@ function normalizeEffort(raw: unknown): AiSchemaImprovementEffort {
   return 'moderate';
 }
 
+const SCORE_DELTA_MIN = -25;
+const SCORE_DELTA_MAX = 25;
+
+/** Parses model-supplied overall-score delta; returns undefined if absent or unusable. */
+export function normalizeEstimatedOverallScoreDelta(raw: unknown): number | undefined {
+  if (raw === null || raw === undefined) return undefined;
+  let n: number;
+  if (typeof raw === 'number') {
+    n = raw;
+  } else if (typeof raw === 'string' && raw.trim().length > 0) {
+    const parsed = Number(raw.trim());
+    if (!Number.isFinite(parsed)) return undefined;
+    n = parsed;
+  } else {
+    return undefined;
+  }
+  const rounded = Math.round(n);
+  if (!Number.isFinite(rounded)) return undefined;
+  return Math.min(SCORE_DELTA_MAX, Math.max(SCORE_DELTA_MIN, rounded));
+}
+
 /** Sort key for display: lower comes first (quick wins at the top). */
 export function effortSortRank(effort: AiSchemaImprovementEffort): number {
   switch (effort) {
@@ -114,11 +140,13 @@ export function parseAiSchemaImprovementSuggestionsResponse(markdown: string): A
     const title = typeof item.title === 'string' ? item.title.trim() : '';
     const detail = typeof item.detail === 'string' ? item.detail.trim() : '';
     if (!title || !detail) continue;
+    const delta = normalizeEstimatedOverallScoreDelta(item.estimatedOverallScoreDelta);
     suggestions.push({
       title,
       detail,
       category: normalizeCategory(item.category),
       effort: normalizeEffort(item.effort),
+      ...(delta !== undefined ? { estimatedOverallScoreDelta: delta } : {}),
     });
   }
 

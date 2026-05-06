@@ -55,6 +55,11 @@ const EFFORT_BADGE_CLASS: Record<AiSchemaImprovementEffort, string> = {
   substantial: 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200',
 };
 
+function formatEstimatedScoreImpact(delta: number): string {
+  const sign = delta > 0 ? '+' : '';
+  return `${sign}${delta} pts`;
+}
+
 export function AiSchemaImprovementSuggestionsDialog({
   open,
   onClose,
@@ -205,8 +210,18 @@ export function AiSchemaImprovementSuggestionsDialog({
     }
   }, [hint, selectedModel, tenantId, projectId, versionId, studioMetricsDigest, existingClassNames]);
 
-  const handleCopyRow = async (idx: number, title: string, detail: string, effort: AiSchemaImprovementEffort) => {
-    const text = `${title}\nEffort: ${EFFORT_LABEL[effort]}\n\n${detail}`;
+  const handleCopyRow = async (
+    idx: number,
+    title: string,
+    detail: string,
+    effort: AiSchemaImprovementEffort,
+    estimatedDelta?: number
+  ) => {
+    const scoreLine =
+      typeof estimatedDelta === 'number'
+        ? `Est. overall score impact: ${formatEstimatedScoreImpact(estimatedDelta)} (0–100 composite; model estimate)\n`
+        : '';
+    const text = `${title}\nEffort: ${EFFORT_LABEL[effort]}\n${scoreLine}\n${detail}`;
     try {
       await navigator.clipboard.writeText(text);
       setCopyIdx(idx);
@@ -225,7 +240,7 @@ export function AiSchemaImprovementSuggestionsDialog({
             AI improvement suggestions
           </DialogTitle>
           <p className="text-xs text-gray-500 dark:text-gray-400 font-normal pt-1">
-            Uses live Schema Metrics and class names from the canvas. Quick wins are listed first; each row shows effort alongside category.
+            Uses live Schema Metrics and class names from the canvas. Quick wins are listed first; each row shows effort, optional estimated impact on the 0–100 overall schema quality score, and category.
             Suggestions are advisory—review before changing your model.
           </p>
         </DialogHeader>
@@ -326,6 +341,15 @@ export function AiSchemaImprovementSuggestionsDialog({
                           >
                             {EFFORT_LABEL[s.effort]}
                           </span>
+                          {typeof s.estimatedOverallScoreDelta === 'number' ? (
+                            <span
+                              className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-sky-100 text-sky-900 dark:bg-sky-950 dark:text-sky-200 tabular-nums"
+                              title="Estimated change to the Studio overall schema quality score (0–100) if this fix were fully applied"
+                              data-testid={`ai-schema-improvement-score-${i}`}
+                            >
+                              {formatEstimatedScoreImpact(s.estimatedOverallScoreDelta)}
+                            </span>
+                          ) : null}
                         </div>
                         <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{s.detail}</p>
                       </div>
@@ -335,7 +359,7 @@ export function AiSchemaImprovementSuggestionsDialog({
                         size="sm"
                         className="shrink-0"
                         data-testid={`ai-schema-improvement-copy-${i}`}
-                        onClick={() => void handleCopyRow(i, s.title, s.detail, s.effort)}
+                        onClick={() => void handleCopyRow(i, s.title, s.detail, s.effort, s.estimatedOverallScoreDelta)}
                       >
                         <Copy className="h-3.5 w-3.5 mr-1" />
                         {copyIdx === i ? 'Copied' : 'Copy'}

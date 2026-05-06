@@ -1,14 +1,18 @@
-import { parseAiSchemaImprovementSuggestionsResponse } from '../../lib/ai-schema-improvement-suggestions';
+import {
+  normalizeEstimatedOverallScoreDelta,
+  parseAiSchemaImprovementSuggestionsResponse,
+} from '../../lib/ai-schema-improvement-suggestions';
 
 describe('parseAiSchemaImprovementSuggestionsResponse', () => {
   it('parses a valid fenced JSON payload', () => {
-    const md = `intro\n\n\`\`\`json\n{"thinking":"t","summary":"s","suggestions":[{"title":"Add docs","detail":"Fill descriptions","category":"documentation","effort":"quick_win"}]}\n\`\`\``;
+    const md = `intro\n\n\`\`\`json\n{"thinking":"t","summary":"s","suggestions":[{"title":"Add docs","detail":"Fill descriptions","category":"documentation","effort":"quick_win","estimatedOverallScoreDelta":3}]}\n\`\`\``;
     const p = parseAiSchemaImprovementSuggestionsResponse(md);
     expect(p).not.toBeNull();
     expect(p!.suggestions).toHaveLength(1);
     expect(p!.suggestions[0].title).toBe('Add docs');
     expect(p!.suggestions[0].category).toBe('documentation');
     expect(p!.suggestions[0].effort).toBe('quick_win');
+    expect(p!.suggestions[0].estimatedOverallScoreDelta).toBe(3);
   });
 
   it('uses last json fence when multiple exist', () => {
@@ -85,5 +89,32 @@ describe('parseAiSchemaImprovementSuggestionsResponse', () => {
 
   it('returns null when no json fence', () => {
     expect(parseAiSchemaImprovementSuggestionsResponse('no fence')).toBeNull();
+  });
+
+  it('omits estimatedOverallScoreDelta when not provided', () => {
+    const md =
+      '```json\n{"thinking":"","summary":"","suggestions":[{"title":"x","detail":"y","category":"documentation","effort":"quick_win"}]}\n```';
+    const r = parseAiSchemaImprovementSuggestionsResponse(md);
+    expect(r?.suggestions[0].estimatedOverallScoreDelta).toBeUndefined();
+  });
+
+  it('parses estimatedOverallScoreDelta from numeric strings and clamps', () => {
+    const md = `\`\`\`json
+{"thinking":"","summary":"","suggestions":[
+  {"title":"a","detail":"d","category":"documentation","effort":"quick_win","estimatedOverallScoreDelta":"4"},
+  {"title":"b","detail":"d","category":"documentation","effort":"quick_win","estimatedOverallScoreDelta":99},
+  {"title":"c","detail":"d","category":"documentation","effort":"quick_win","estimatedOverallScoreDelta":-40}
+]}
+\`\`\``;
+    const r = parseAiSchemaImprovementSuggestionsResponse(md);
+    expect(r?.suggestions.map((s) => s.estimatedOverallScoreDelta)).toEqual([4, 25, -25]);
+  });
+});
+
+describe('normalizeEstimatedOverallScoreDelta', () => {
+  it('returns undefined for non-finite input', () => {
+    expect(normalizeEstimatedOverallScoreDelta(undefined)).toBeUndefined();
+    expect(normalizeEstimatedOverallScoreDelta('')).toBeUndefined();
+    expect(normalizeEstimatedOverallScoreDelta('x')).toBeUndefined();
   });
 });
