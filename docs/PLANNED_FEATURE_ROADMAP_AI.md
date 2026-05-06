@@ -72,28 +72,6 @@ This outlines the planned features for integrating AI capabilities into Objectif
 |--------|-----------------------------------------------------|
 | #527   | Implementation of Guardrails for prompts/responses  |
 
-### AI-Powered Property Suggestions
-
-**Smart Property Recommendations** 📋 PLANNED
-- ✅ **Trigger Conditions** (#275):
-    - ✅ When creating a new class
-    - ✅ When class name is entered
-    - ✅ On-demand via chat or button
-    - ✅ **Analyze** on Add / Edit Property form (#276)
-    - ✅ After adding first few properties
-- 📋 **Suggestion Types**:
-    - 📋 Common properties for class type (e.g., "User" → email, password, name)
-    - 📋 Missing standard properties (e.g., id, createdAt, updatedAt)
-    - 📋 Related properties based on existing ones
-    - 📋 Industry-standard properties (FHIR for healthcare, etc.)
-- 📋 **Suggestion UI**:
-    - ✅ Property suggestion dropdown (#270)
-    - ✅ Bulk accept/reject (#271)
-    - ✅ Customize before adding (#272)
-    - ✅ "Add all suggested" button (#274)
-    - ✅ Explanation for each suggestion (#273)
-    - ✅ Trigger conditions for opening the dialog (#275)
-
 **Actionable Recommendations** 📋 PLANNED
 - 📋 AI-powered suggestions for improvement:
     - 📋 "Add descriptions to 12 classes to improve docs score"
@@ -282,3 +260,25 @@ This outlines the planned features for integrating AI capabilities into Objectif
 - ✅ Industry-standard property recommendations
 - ✅ Context-aware property suggestions based on existing schema
 - ✅ Property naming convention analysis
+
+### AI-Powered Property Suggestions
+
+**Smart Property Recommendations** 📋 PLANNED
+- ✅ **Trigger Conditions** (#275):
+    - ✅ When creating a new class
+    - ✅ When class name is entered
+    - ✅ On-demand via chat or button
+    - ✅ **Analyze** on Add / Edit Property form (#276)
+    - ✅ After adding first few properties
+- 📋 **Suggestion Types**:
+    - 📋 Common properties for class type (e.g., "User" → email, password, name)
+    - 📋 Missing standard properties (e.g., id, createdAt, updatedAt)
+    - 📋 Related properties based on existing ones
+    - 📋 Industry-standard properties (FHIR for healthcare, etc.)
+- 📋 **Suggestion UI**:
+    - ✅ Property suggestion dropdown (#270)
+    - ✅ Bulk accept/reject (#271)
+    - ✅ Customize before adding (#272)
+    - ✅ "Add all suggested" button (#274)
+    - ✅ Explanation for each suggestion (#273)
+    - ✅ Trigger conditions for opening the dialog (#275)
