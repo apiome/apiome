@@ -94,8 +94,6 @@ This outlines the planned features for integrating AI capabilities into Objectif
 
 | Ticket | Feature Description                                |
 |--------|----------------------------------------------------|
-| #269   | Adds the ability to suggest properties based on AI |
-| #271   | Adds bulk accept/reject for property suggestions ✅ |
 | #272   | Adds customization before adding                   |
 | #273   | Adds explanations for each suggestion              |
 | #274   | Adds "Add all suggested" button                    |
