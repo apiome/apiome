@@ -83,6 +83,76 @@ describe('collectStudioAiBestPracticeTipLines (#615, #616)', () => {
     });
     expect(lines).toHaveLength(0);
   });
+
+  it('adds payment security guidance for ecommerce and finance domains (#617)', () => {
+    const ec = collectStudioAiBestPracticeTipLines({
+      domainCategory: 'ecommerce',
+      classNames: [],
+    });
+    expect(ec.some((l) => l.toLowerCase().includes('cvv'))).toBe(true);
+    expect(ec.some((l) => l.toLowerCase().includes('processor tokens'))).toBe(true);
+
+    const fin = collectStudioAiBestPracticeTipLines({
+      domainCategory: 'finance',
+      classNames: [],
+    });
+    expect(fin.some((l) => l.toLowerCase().includes('cvv'))).toBe(true);
+  });
+
+  it('adds PHI encryption guidance for healthcare domain (#617)', () => {
+    const lines = collectStudioAiBestPracticeTipLines({
+      domainCategory: 'healthcare',
+      classNames: [],
+    });
+    expect(lines.some((l) => l.toLowerCase().includes('encrypt phi'))).toBe(true);
+  });
+
+  it('detects secret-bearing reusable properties for vault and logging guidance (#617)', () => {
+    const lines = collectStudioAiBestPracticeTipLines({
+      domainCategory: '',
+      classNames: [],
+      propertyNames: ['api_key'],
+    });
+    expect(lines.some((l) => l.toLowerCase().includes('vault'))).toBe(true);
+    expect(lines.some((l) => l.toLowerCase().includes('logs'))).toBe(true);
+  });
+
+  it('adds password hashing guidance when password fields are present (#617)', () => {
+    const lines = collectStudioAiBestPracticeTipLines({
+      domainCategory: '',
+      classNames: [],
+      propertyNames: ['password_hash'],
+    });
+    expect(lines.some((l) => l.toLowerCase().includes('cleartext passwords'))).toBe(true);
+    expect(lines.some((l) => l.toLowerCase().includes('vault'))).toBe(false);
+  });
+
+  it('keeps vault guidance scoped to config secrets, not PAN/CVV/SSN fields (#617)', () => {
+    const lines = collectStudioAiBestPracticeTipLines({
+      domainCategory: '',
+      classNames: [],
+      propertyNames: ['card_pan', 'cvv', 'ssn'],
+    });
+    expect(lines.some((l) => l.toLowerCase().includes('vault'))).toBe(false);
+    expect(lines.some((l) => l.toLowerCase().includes('logs'))).toBe(true);
+  });
+
+  it('adds auth endpoint rate-limit guidance when auth class names match (#617)', () => {
+    const lines = collectStudioAiBestPracticeTipLines({
+      domainCategory: '',
+      classNames: ['LoginAttempt'],
+    });
+    expect(lines.some((l) => l.toLowerCase().includes('rate limits'))).toBe(true);
+    expect(lines.some((l) => l.toLowerCase().includes('refresh token'))).toBe(true);
+  });
+
+  it('adds webhook signature verification when webhook classes are present (#617)', () => {
+    const lines = collectStudioAiBestPracticeTipLines({
+      domainCategory: '',
+      classNames: ['StripeWebhookEndpoint'],
+    });
+    expect(lines.some((l) => l.toLowerCase().includes('webhook signatures'))).toBe(true);
+  });
 });
 
 describe('collectStudioAiBestPracticeLinesFromStudio (#615)', () => {
@@ -92,5 +162,14 @@ describe('collectStudioAiBestPracticeLinesFromStudio (#615)', () => {
       classes: [],
     });
     expect(lines.length).toBeGreaterThan(0);
+  });
+
+  it('passes property names for security heuristics (#617)', () => {
+    const lines = collectStudioAiBestPracticeLinesFromStudio({
+      project: null,
+      classes: [],
+      properties: [{ name: 'client_secret' }],
+    });
+    expect(lines.some((l) => l.toLowerCase().includes('vault'))).toBe(true);
   });
 });

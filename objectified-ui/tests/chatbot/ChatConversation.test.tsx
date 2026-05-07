@@ -142,6 +142,7 @@ describe('ChatConversation', () => {
     };
     render(<ChatConversation restoreLastConversation={false} studioContext={studioContext} />);
     expect(screen.getByTestId('studio-ai-chat-best-practice-tips')).toHaveTextContent('inventory tracking');
+    expect(screen.getByTestId('studio-ai-chat-best-practice-tips')).toHaveTextContent('processor tokens');
   });
 
   it('shows auth-oriented tips when class names suggest tokens or sessions (#615)', () => {

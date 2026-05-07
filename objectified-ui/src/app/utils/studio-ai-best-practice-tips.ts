@@ -1,10 +1,11 @@
 /**
- * Context-aware Studio AI best-practice tips (#615, #616).
+ * Context-aware Studio AI best-practice tips (#615, #616, #617).
  *
  * Combines the project metadata `domainCategory` (see project-domain-categories)
- * with light heuristics on class names so e-commerce, multi-tenant, and auth-heavy
- * workspaces get targeted guidance without calling a model. Each known domain emits
- * several industry-specific modeling patterns (not a single generic hint).
+ * with light heuristics on class and property names so e-commerce, multi-tenant,
+ * auth-heavy, and secret-bearing workspaces get targeted guidance without calling
+ * a model. Each known domain emits several industry-specific modeling patterns
+ * (not a single generic hint), plus security-hardening hints when signals match.
  */
 
 import {
@@ -16,6 +17,8 @@ import {
 export type StudioAiTipSignalContext = {
   domainCategory?: string | null;
   classNames: readonly string[];
+  /** Reusable property definition names — used for secret / credential heuristics (#617). */
+  propertyNames?: readonly string[];
 };
 
 /** Several actionable patterns per industry; order is stable for tests and UX. */
@@ -110,6 +113,24 @@ const AUTH_CLASS_SIGNAL =
 
 const TENANT_CLASS_SIGNAL = /\b(Tenant|Tenants|Organization|Organizations|Workspace|Workspaces|OrgMembership)\b/i;
 
+/** Password-like fields on classes or reusable properties (includes camel/snake compounds). */
+const PASSWORD_FIELD_SIGNAL =
+  /\b(password|passwd|pwd)\b|password[_-]?hash|passwd[_-]?hash|\bpassword\s+hash\b/i;
+
+/** Config-secret style names that should suggest vault / secret-manager handling. */
+const CONFIG_SECRET_FIELD_SIGNAL =
+  /\b(secret|secrets|apikey|api[_-]?key|api\s+key|privatekey|private[_-]?key|private\s+key|clientsecret|client[_-]?secret|client\s+secret|signingkey|signing[_-]?key|signing\s+key|accesstoken|access[_-]?token|access\s+token|refreshtoken|refresh[_-]?token|refresh\s+token|bearertoken|bearer[_-]?token|bearer\s+token|webhooksecret|webhook[_-]?secret|webhook\s+secret)\b/i;
+
+/** Sensitive identifiers that should be redacted from logs/exports but not loaded from a vault. */
+const SENSITIVE_DATA_FIELD_SIGNAL =
+  /\b(cvv|cvc|\bpan\b|ssn|social[_-]?security|social\s+security)\b/i;
+
+const SENSITIVE_CLASS_NAME_SIGNAL =
+  /\b(ApiKey|ApiSecret|ClientSecret|PrivateKey|SigningKey|WebhookSecret|HmacSecret)\b/;
+
+/** Compound names like `StripeWebhookEndpoint` must match without assuming token boundaries. */
+const WEBHOOK_CLASS_SIGNAL = /Webhook/i;
+
 function asBullet(line: string): string {
   const t = line.trim();
   if (t.startsWith('-')) return t;
@@ -127,6 +148,85 @@ function dedupeBullets(lines: string[]): string[] {
     out.push(line);
   }
   return out;
+}
+
+function collectSecurityHardeningTipLines(signals: StudioAiTipSignalContext): string[] {
+  const rawDomain = signals.domainCategory?.trim() || '';
+  const domainId = rawDomain === PROJECT_DOMAIN_CATEGORY_NONE ? '' : rawDomain;
+  const classNames = signals.classNames.filter(Boolean);
+  const propertyNames = signals.propertyNames?.filter(Boolean) ?? [];
+
+  const classHaystack = classNames.map((c) => `${c} ${tokenizeClassName(c)}`).join(' ');
+  const propHaystack = propertyNames.map((p) => `${p} ${tokenizeClassName(p)}`).join(' ');
+  const combinedHaystack = `${classHaystack} ${propHaystack}`.trim();
+
+  const lines: string[] = [];
+
+  const configSecretLikePropsOrClasses =
+    CONFIG_SECRET_FIELD_SIGNAL.test(propHaystack) ||
+    CONFIG_SECRET_FIELD_SIGNAL.test(classHaystack) ||
+    SENSITIVE_CLASS_NAME_SIGNAL.test(classHaystack);
+  const sensitiveDataLikePropsOrClasses =
+    SENSITIVE_DATA_FIELD_SIGNAL.test(propHaystack) ||
+    SENSITIVE_DATA_FIELD_SIGNAL.test(classHaystack);
+
+  if (PASSWORD_FIELD_SIGNAL.test(combinedHaystack)) {
+    lines.push(
+      asBullet(
+        'Never persist cleartext passwords; store salted password hashes with explicit algorithm and work-factor metadata.',
+      ),
+    );
+  }
+
+  if (AUTH_CLASS_SIGNAL.test(classHaystack)) {
+    lines.push(
+      asBullet(
+        'Enforce rate limits and credential-stuffing protections on authentication and token issuance endpoints.',
+      ),
+    );
+  }
+
+  if (configSecretLikePropsOrClasses) {
+    lines.push(
+      asBullet(
+        'Load secrets from a vault or secret manager in production; avoid embedding real values in schemas, examples, or defaults.',
+      ),
+    );
+  }
+
+  if (configSecretLikePropsOrClasses || sensitiveDataLikePropsOrClasses) {
+    lines.push(
+      asBullet(
+        'Exclude secret-bearing fields from structured logs, error payloads, and analytics exports.',
+      ),
+    );
+  }
+
+  if (domainId === 'finance' || domainId === 'ecommerce') {
+    lines.push(
+      asBullet(
+        'Avoid storing full card numbers or CVV; reference processor tokens and non-sensitive display fields instead.',
+      ),
+    );
+  }
+
+  if (domainId === 'healthcare') {
+    lines.push(
+      asBullet(
+        'Encrypt PHI at rest and in transit; narrow raw-field access to services that truly require it.',
+      ),
+    );
+  }
+
+  if (WEBHOOK_CLASS_SIGNAL.test(classHaystack)) {
+    lines.push(
+      asBullet(
+        'Verify webhook signatures (and timestamps when replay resistance matters) before trusting inbound payloads.',
+      ),
+    );
+  }
+
+  return lines;
 }
 
 export function collectStudioAiBestPracticeTipLines(signals: StudioAiTipSignalContext): string[] {
@@ -153,17 +253,23 @@ export function collectStudioAiBestPracticeTipLines(signals: StudioAiTipSignalCo
     lines.push(asBullet('Add tenant isolation fields'));
   }
 
+  for (const line of collectSecurityHardeningTipLines(signals)) {
+    lines.push(line);
+  }
+
   return dedupeBullets(lines);
 }
 
 export function collectStudioAiBestPracticeLinesFromStudio(ctx: {
   project?: { domainCategory?: string | null } | null;
   classes: Array<{ name: string }>;
+  properties?: Array<{ name: string }>;
 } | null | undefined): string[] {
   if (!ctx) return [];
   return collectStudioAiBestPracticeTipLines({
     domainCategory: ctx.project?.domainCategory,
     classNames: ctx.classes.map((c) => c.name),
+    propertyNames: ctx.properties?.map((p) => p.name) ?? [],
   });
 }
 

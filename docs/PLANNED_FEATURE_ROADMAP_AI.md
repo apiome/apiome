@@ -80,12 +80,11 @@ This outlines the planned features for integrating AI capabilities into Objectif
     - Multi-tenant / SaaS (when domain is not already SaaS): "Add tenant isolation fields"
     - Several modeling-pattern bullets per registered **project domain** category (catalog in Studio; **#616** expanded from one short line per domain)
 - ✅ Industry-specific patterns (#616): multiple actionable patterns per domain (e.g. inventory/idempotency for e-commerce, ledger/idempotency for finance, FHIR-friendly identifiers for healthcare).
-- Security hardening suggestions
+- ✅ Security hardening suggestions (#617): domain-based payment/PHI guidance, auth rate-limit hints, vault/logging guidance for secret-like properties, password-hash modeling, and webhook signature verification for webhook-style class names.
 - Performance optimization tips
 
 | Ticket | Feature Description            |
 |--------|--------------------------------|
-| #617   | Security Hardening Suggestions |
 | #618   | Performance Optimization Tips  |
 
 ### AI Documentation Generation
