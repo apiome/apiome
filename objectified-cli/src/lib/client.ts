@@ -1,6 +1,16 @@
 import { createClient, type Client } from "../generated/client.js";
-import type { ProjectSchema } from "../generated/models.js";
-import { listProjectsV1ProjectsTenantSlugGet } from "../generated/operations.js";
+import type {
+  ClassSchema,
+  PrimitiveSchema,
+  ProjectSchema,
+  VersionSchema,
+} from "../generated/models.js";
+import {
+  listClassesV1ClassesTenantSlugGet,
+  listPrimitivesV1PrimitivesTenantSlugGet,
+  listProjectsV1ProjectsTenantSlugGet,
+  listVersionsV1VersionsTenantSlugProjectIdGet,
+} from "../generated/operations.js";
 
 import { EXIT_CODES } from "./exit-codes.js";
 import {
@@ -30,6 +40,9 @@ export type ObjectifiedApi = {
   /** Transient HTTP retries consumed on the last instrumented request (429 / 5xx policy). */
   readonly lastRetriesAttempted: number;
   listProjects(tenantSlug: string): Promise<ProjectSchema[]>;
+  listVersions(tenantSlug: string, projectId: string): Promise<VersionSchema[]>;
+  listClasses(tenantSlug: string, versionId?: string): Promise<ClassSchema[]>;
+  listPrimitives(tenantSlug: string): Promise<PrimitiveSchema[]>;
 };
 
 const MAX_RETRY_AFTER_MS = 120_000;
@@ -163,6 +176,143 @@ function parseProjectsPayload(data: unknown): ProjectSchema[] {
   return projects;
 }
 
+function unwrapSdkGet(
+  rawUnknown: unknown,
+  lastRequestId: string | undefined,
+  lastRetriesAttempted: number,
+): unknown {
+  const rawBundle =
+    rawUnknown && typeof rawUnknown === "object"
+      ? (rawUnknown as {
+          data?: unknown;
+          error?: unknown;
+          response?: Response;
+        })
+      : undefined;
+
+  if (rawBundle === undefined) {
+    throw new ObjectifiedCliError({
+      message: "Empty SDK response from the API client.",
+      exitCode: EXIT_CODES.GENERIC,
+      title: "API error",
+      hint: "Retry the command; set OBJECTIFIED_DEBUG=1 if you need a stack trace.",
+    });
+  }
+
+  if (rawBundle.error !== undefined && rawBundle.error !== null && rawBundle.error !== "") {
+    const status = rawBundle.response?.status ?? 0;
+    const hdrId =
+      rawBundle.response?.headers.get("x-request-id") ??
+      rawBundle.response?.headers.get("X-Request-Id") ??
+      undefined;
+    throw httpStatusToCliError(status, formatApiError(rawBundle.error), {
+      requestId: hdrId ?? lastRequestId,
+      retriesAttempted: lastRetriesAttempted,
+    });
+  }
+
+  return rawBundle.data;
+}
+
+function parseVersionsPayload(data: unknown): VersionSchema[] {
+  if (!Array.isArray(data)) {
+    throw new ObjectifiedCliError({
+      message: "Unexpected response shape for versions list.",
+      exitCode: EXIT_CODES.VALIDATION,
+      title: "Validation failed",
+      hint: "The API returned an unexpected JSON shape; try again or upgrade the CLI.",
+    });
+  }
+  const versions: VersionSchema[] = [];
+  for (const raw of data) {
+    if (!raw || typeof raw !== "object") {
+      throw new ObjectifiedCliError({
+        message: "Invalid version entry in response.",
+        exitCode: EXIT_CODES.VALIDATION,
+        title: "Validation failed",
+        hint: "The API returned invalid version rows.",
+      });
+    }
+    const v = raw as Record<string, unknown>;
+    if (typeof v.version_id !== "string" || typeof v.id !== "string") {
+      throw new ObjectifiedCliError({
+        message: "Invalid version fields in response.",
+        exitCode: EXIT_CODES.VALIDATION,
+        title: "Validation failed",
+        hint: "Required version fields were missing or mistyped.",
+      });
+    }
+    versions.push(raw as VersionSchema);
+  }
+  return versions;
+}
+
+function parseClassesPayload(data: unknown): ClassSchema[] {
+  if (!Array.isArray(data)) {
+    throw new ObjectifiedCliError({
+      message: "Unexpected response shape for classes list.",
+      exitCode: EXIT_CODES.VALIDATION,
+      title: "Validation failed",
+      hint: "The API returned an unexpected JSON shape; try again or upgrade the CLI.",
+    });
+  }
+  const classes: ClassSchema[] = [];
+  for (const raw of data) {
+    if (!raw || typeof raw !== "object") {
+      throw new ObjectifiedCliError({
+        message: "Invalid class entry in response.",
+        exitCode: EXIT_CODES.VALIDATION,
+        title: "Validation failed",
+        hint: "The API returned invalid class rows.",
+      });
+    }
+    const c = raw as Record<string, unknown>;
+    if (typeof c.name !== "string") {
+      throw new ObjectifiedCliError({
+        message: "Invalid class fields in response.",
+        exitCode: EXIT_CODES.VALIDATION,
+        title: "Validation failed",
+        hint: "Required class fields were missing or mistyped.",
+      });
+    }
+    classes.push(raw as ClassSchema);
+  }
+  return classes;
+}
+
+function parsePrimitivesPayload(data: unknown): PrimitiveSchema[] {
+  if (!Array.isArray(data)) {
+    throw new ObjectifiedCliError({
+      message: "Unexpected response shape for primitives list.",
+      exitCode: EXIT_CODES.VALIDATION,
+      title: "Validation failed",
+      hint: "The API returned an unexpected JSON shape; try again or upgrade the CLI.",
+    });
+  }
+  const primitives: PrimitiveSchema[] = [];
+  for (const raw of data) {
+    if (!raw || typeof raw !== "object") {
+      throw new ObjectifiedCliError({
+        message: "Invalid primitive entry in response.",
+        exitCode: EXIT_CODES.VALIDATION,
+        title: "Validation failed",
+        hint: "The API returned invalid primitive rows.",
+      });
+    }
+    const p = raw as Record<string, unknown>;
+    if (typeof p.name !== "string") {
+      throw new ObjectifiedCliError({
+        message: "Invalid primitive fields in response.",
+        exitCode: EXIT_CODES.VALIDATION,
+        title: "Validation failed",
+        hint: "Required primitive fields were missing or mistyped.",
+      });
+    }
+    primitives.push(raw as PrimitiveSchema);
+  }
+  return primitives;
+}
+
 function createInstrumentedFetch(opts: {
   inner: typeof fetch;
   auth: ApiAuthSnapshot;
@@ -285,37 +435,62 @@ export function createApiClient(options: CreateApiClientOptions): ObjectifiedApi
         throw e;
       }
 
-      const rawBundle =
-        rawUnknown && typeof rawUnknown === "object"
-          ? (rawUnknown as {
-              data?: unknown;
-              error?: unknown;
-              response?: Response;
-            })
-          : undefined;
+      return parseProjectsPayload(unwrapSdkGet(rawUnknown, lastRequestId, lastRetriesAttempted));
+    },
 
-      if (rawBundle === undefined) {
-        throw new ObjectifiedCliError({
-          message: "Empty SDK response from the API client.",
-          exitCode: EXIT_CODES.GENERIC,
-          title: "API error",
-          hint: "Retry the command; set OBJECTIFIED_DEBUG=1 if you need a stack trace.",
+    async listVersions(tenantSlug: string, projectId: string): Promise<VersionSchema[]> {
+      let rawUnknown: unknown;
+      try {
+        rawUnknown = await listVersionsV1VersionsTenantSlugProjectIdGet({
+          client: hey,
+          path: { tenant_slug: tenantSlug, project_id: projectId },
+          throwOnError: false,
         });
+      } catch (e) {
+        if (e instanceof ObjectifiedCliError) throw e;
+        if (e !== null && typeof e === "object" && "code" in e) {
+          throw networkErrnoToCliError(e as NodeJS.ErrnoException);
+        }
+        throw e;
       }
+      return parseVersionsPayload(unwrapSdkGet(rawUnknown, lastRequestId, lastRetriesAttempted));
+    },
 
-      if (rawBundle.error !== undefined && rawBundle.error !== null && rawBundle.error !== "") {
-        const status = rawBundle.response?.status ?? 0;
-        const hdrId =
-          rawBundle.response?.headers.get("x-request-id") ??
-          rawBundle.response?.headers.get("X-Request-Id") ??
-          undefined;
-        throw httpStatusToCliError(status, formatApiError(rawBundle.error), {
-          requestId: hdrId ?? lastRequestId,
-          retriesAttempted: lastRetriesAttempted,
+    async listClasses(tenantSlug: string, versionId?: string): Promise<ClassSchema[]> {
+      let rawUnknown: unknown;
+      try {
+        rawUnknown = await listClassesV1ClassesTenantSlugGet({
+          client: hey,
+          path: { tenant_slug: tenantSlug },
+          query: versionId !== undefined ? { version_id: versionId } : {},
+          throwOnError: false,
         });
+      } catch (e) {
+        if (e instanceof ObjectifiedCliError) throw e;
+        if (e !== null && typeof e === "object" && "code" in e) {
+          throw networkErrnoToCliError(e as NodeJS.ErrnoException);
+        }
+        throw e;
       }
+      return parseClassesPayload(unwrapSdkGet(rawUnknown, lastRequestId, lastRetriesAttempted));
+    },
 
-      return parseProjectsPayload(rawBundle.data);
+    async listPrimitives(tenantSlug: string): Promise<PrimitiveSchema[]> {
+      let rawUnknown: unknown;
+      try {
+        rawUnknown = await listPrimitivesV1PrimitivesTenantSlugGet({
+          client: hey,
+          path: { tenant_slug: tenantSlug },
+          throwOnError: false,
+        });
+      } catch (e) {
+        if (e instanceof ObjectifiedCliError) throw e;
+        if (e !== null && typeof e === "object" && "code" in e) {
+          throw networkErrnoToCliError(e as NodeJS.ErrnoException);
+        }
+        throw e;
+      }
+      return parsePrimitivesPayload(unwrapSdkGet(rawUnknown, lastRequestId, lastRetriesAttempted));
     },
   };
 }

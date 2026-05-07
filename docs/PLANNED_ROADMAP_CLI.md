@@ -96,7 +96,7 @@ Every command lives in one of three connection modes:
 | 11  | [Migration Plans & Version Tags (CLI)](https://github.com/KenSuenobu/objectified-commercial/issues/3184)   | #3184   | 7           | 0 (v2)       |
 | 12  | [Distribution, Release & Self-Update](https://github.com/KenSuenobu/objectified-commercial/issues/3185)    | #3185   | 8           | 2 of 8       |
 
-Total: **12 epics**, **88 sub-tickets** (open roadmap items; completed work is dropped from the Epic 1 summary table below).
+Total: **12 epics**, **87 sub-tickets** (open roadmap items; completed work is dropped from the Epic 1 summary table below).
 
 ---
 
@@ -104,9 +104,7 @@ Total: **12 epics**, **88 sub-tickets** (open roadmap items; completed work is d
 
 ### Summary Table
 
-| #         | Title                                                              | Description                                                                  | Labels                                          | MVP | Parallel |
-|-----------|--------------------------------------------------------------------|------------------------------------------------------------------------------|-------------------------------------------------|-----|----------|
-| 1.8 (#3193) | Shell completions (bash/zsh/fish/PowerShell)                     | Static completions + dynamic (tenant/project/version slugs)                  | `enhancement`, `cli`, `roadmap-cli`            | No  | Yes      |
+No open tickets in this epic’s summary pack (foundation items #3186–#3193 are complete).
 
 ### Detailed Issue Descriptions
 
@@ -232,18 +230,16 @@ Part of Epic: CLI Foundation & DevEx (#3174)
 
 ---
 
-#### 1.8 (#3193) — Shell completions for bash, zsh, fish, PowerShell
+#### 1.8 (#3193) — Shell completions for bash, zsh, fish, PowerShell (**done**)
 
-Static completions for topics + flags; dynamic completions hit cached REST data for tenant/project/version/class/primitive names.
+Landed: `objectified completion install|show|uninstall`, hidden `completion candidates` driver, bash/zsh/fish/PowerShell wrappers that complete manifest-backed commands/flags offline and merge REST-backed suggestions (projects, versions, classes, primitives; tenant slugs from config for `tenants use`) with a five-minute cache under `~/.cache/objectified/completion/`, degrading to no dynamic hits when offline; managed `# >>> objectified completion >>>` blocks for uninstall; `objectified docs completions` + README coverage.
 
 ```
 $ objectified projects show pay<TAB>
 payments-api      payouts-api      payroll-api
 ```
 
-**Acceptance Criteria:** `completion install` writes to the right rc file; bash/zsh/fish/PowerShell all pass linters; dynamic completion gracefully degrades when offline.
-
-**Parallelism / Dependencies:** Depends on 1.1, 1.2. Best landed after MVP.
+**Parallelism / Dependencies:** Depended on 1.1, 1.2.
 
 Part of Epic: CLI Foundation & DevEx (#3174)
 
@@ -807,7 +803,7 @@ v2 fills out the writable surface for primitives, properties, classes, paths, da
 
 | Epic     | v2 Tickets                                                                                                                     | Count |
 |----------|--------------------------------------------------------------------------------------------------------------------------------|-------|
-| 1 (#3174) | #3193                                                                                                                          | 1     |
+| 1 (#3174) | *(complete in this pack)*                                                                                                       | 0     |
 | 2 (#3175) | #3200, #3201                                                                                                                   | 2     |
 | 3 (#3176) | #3205, #3206, #3207                                                                                                            | 3     |
 | 4 (#3177) | #3211, #3213, #3214, #3215, #3216                                                                                              | 5     |
@@ -868,7 +864,7 @@ v2 fills out the writable surface for primitives, properties, classes, paths, da
 
 The tickets were created in the order below — that is also the recommended **execution** order. Earlier epics provide primitives that later epics rely on.
 
-1. **Epic 1 — Foundation** (#3174: #3186, #3187, #3188, #3189, #3190, #3191, and #3192 landed; next #3193). Without the scaffold, no other command can exist.
+1. **Epic 1 — Foundation** (#3174: #3186, #3187, #3188, #3189, #3190, #3191, #3192, and #3193 landed). Without the scaffold, no other command can exist.
 2. **Epic 2 — Auth & Tenants** (#3175 then #3194 → #3201). Required for any tenant-scoped command.
 3. **Epic 3 — Projects** (#3176 then #3202 → #3207). The first useful read/write surface.
 4. **Epic 4 — Versions** (#3177 then #3208 → #3216). The publish flow that makes the CLI valuable in CI.

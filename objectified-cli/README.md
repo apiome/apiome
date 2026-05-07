@@ -50,7 +50,7 @@ $ npm install -g objectified-cli
 $ objectified COMMAND
 running command...
 $ objectified (--version)
-objectified-cli/0.1.6 <platform> node-v<major.minor.patch>
+objectified-cli/0.1.7 <platform> node-v<major.minor.patch>
 $ objectified --help [COMMAND]
 USAGE
   $ objectified COMMAND
@@ -61,6 +61,10 @@ USAGE
 # Commands
 
 <!-- commands -->
+* [`objectified completion`](#objectified-completion)
+* [`objectified completion install [SHELL]`](#objectified-completion-install-shell)
+* [`objectified completion show [SHELL]`](#objectified-completion-show-shell)
+* [`objectified completion uninstall`](#objectified-completion-uninstall)
 * [`objectified config get KEY`](#objectified-config-get-key)
 * [`objectified config list`](#objectified-config-list)
 * [`objectified config path`](#objectified-config-path)
@@ -76,6 +80,176 @@ USAGE
 * [`objectified help [COMMAND]`](#objectified-help-command)
 * [`objectified projects list`](#objectified-projects-list)
 * [`objectified version`](#objectified-version)
+
+## `objectified completion`
+
+Install or print shell completion scripts for bash, zsh, fish, or PowerShell.
+
+```
+USAGE
+  $ objectified completion [--api-key <value>] [--base-url <value>] [--config <value>] [--json] [--color]
+    [--profile <value>] [-q] [--verbose]
+
+DESCRIPTION
+  Install or print shell completion scripts for bash, zsh, fish, or PowerShell.
+
+EXAMPLES
+  $ objectified completion install
+
+  $ objectified completion install zsh
+
+  $ objectified completion show bash
+
+  $ objectified completion uninstall
+
+COMMON
+  --base-url=<value>  Root REST API URL.
+  --config=<value>    Path to config file (default: XDG config dir / Objectified AppData on Windows — see `objectified
+                      config path`).
+  --profile=<value>   Named credentials profile (OBJECTIFIED_PROFILE); falls back to default_profile in config.
+
+OUTPUT
+  --[no-]color  Enable/disable ANSI colors (--no-color sets NO_COLOR; colors are off when stdout is not a TTY).
+      --[no-]json   Emit machine-readable JSON (OBJECTIFIED_JSON=1; auto-enabled when stdout is not a TTY).
+  -q, --quiet       Suppress non-error stdout (spinners, banners, tips).
+      --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
+
+AUTH
+  --api-key=<value>  API key for direct authentication (bypasses login token).
+
+SEE ALSO
+  objectified docs completions
+
+  objectified hello
+
+  objectified config path
+```
+
+## `objectified completion install [SHELL]`
+
+Append shell completion glue to the right startup file for your shell.
+
+```
+USAGE
+  $ objectified completion install [SHELL] [--api-key <value>] [--base-url <value>] [--config <value>] [--json]
+    [--color] [--profile <value>] [-q] [--verbose]
+
+ARGUMENTS
+  [SHELL]  (bash|zsh|fish|powershell) Shell to install for (default: inferred from $SHELL / OS)
+
+DESCRIPTION
+  Append shell completion glue to the right startup file for your shell.
+
+EXAMPLES
+  $ objectified completion install
+
+  $ objectified completion install fish
+
+  $ objectified --profile staging completion install zsh
+
+COMMON
+  --base-url=<value>  Root REST API URL.
+  --config=<value>    Path to config file (default: XDG config dir / Objectified AppData on Windows — see `objectified
+                      config path`).
+  --profile=<value>   Named credentials profile (OBJECTIFIED_PROFILE); falls back to default_profile in config.
+
+OUTPUT
+  --[no-]color  Enable/disable ANSI colors (--no-color sets NO_COLOR; colors are off when stdout is not a TTY).
+      --[no-]json   Emit machine-readable JSON (OBJECTIFIED_JSON=1; auto-enabled when stdout is not a TTY).
+  -q, --quiet       Suppress non-error stdout (spinners, banners, tips).
+      --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
+
+AUTH
+  --api-key=<value>  API key for direct authentication (bypasses login token).
+
+SEE ALSO
+  objectified completion show
+
+  objectified docs completions
+
+  objectified config path
+```
+
+## `objectified completion show [SHELL]`
+
+Print shell completion glue (with marker comments) to stdout.
+
+```
+USAGE
+  $ objectified completion show [SHELL] [--api-key <value>] [--base-url <value>] [--config <value>] [--json]
+    [--color] [--profile <value>] [-q] [--verbose]
+
+ARGUMENTS
+  [SHELL]  (bash|zsh|fish|powershell) Shell to generate
+
+DESCRIPTION
+  Print shell completion glue (with marker comments) to stdout.
+
+EXAMPLES
+  $ objectified completion show
+
+  $ objectified completion show bash
+
+  $ objectified completion show fish >> ~/.config/fish/completions/objectified.fish
+
+COMMON
+  --base-url=<value>  Root REST API URL.
+  --config=<value>    Path to config file (default: XDG config dir / Objectified AppData on Windows — see `objectified
+                      config path`).
+  --profile=<value>   Named credentials profile (OBJECTIFIED_PROFILE); falls back to default_profile in config.
+
+OUTPUT
+  --[no-]color  Enable/disable ANSI colors (--no-color sets NO_COLOR; colors are off when stdout is not a TTY).
+      --[no-]json   Emit machine-readable JSON (OBJECTIFIED_JSON=1; auto-enabled when stdout is not a TTY).
+  -q, --quiet       Suppress non-error stdout (spinners, banners, tips).
+      --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
+
+AUTH
+  --api-key=<value>  API key for direct authentication (bypasses login token).
+
+SEE ALSO
+  objectified completion install
+
+  objectified docs completions
+```
+
+## `objectified completion uninstall`
+
+Remove Objectified completion blocks added by `completion install`.
+
+```
+USAGE
+  $ objectified completion uninstall [--api-key <value>] [--base-url <value>] [--config <value>] [--json] [--color]
+    [--profile <value>] [-q] [--verbose]
+
+DESCRIPTION
+  Remove Objectified completion blocks added by `completion install`.
+
+EXAMPLES
+  $ objectified completion uninstall
+
+  $ objectified --json completion uninstall
+
+COMMON
+  --base-url=<value>  Root REST API URL.
+  --config=<value>    Path to config file (default: XDG config dir / Objectified AppData on Windows — see `objectified
+                      config path`).
+  --profile=<value>   Named credentials profile (OBJECTIFIED_PROFILE); falls back to default_profile in config.
+
+OUTPUT
+  --[no-]color  Enable/disable ANSI colors (--no-color sets NO_COLOR; colors are off when stdout is not a TTY).
+      --[no-]json   Emit machine-readable JSON (OBJECTIFIED_JSON=1; auto-enabled when stdout is not a TTY).
+  -q, --quiet       Suppress non-error stdout (spinners, banners, tips).
+      --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
+
+AUTH
+  --api-key=<value>  API key for direct authentication (bypasses login token).
+
+SEE ALSO
+  objectified completion install
+
+  objectified docs completions
+```
 
 ## `objectified config get KEY`
 
@@ -288,7 +462,7 @@ SEE ALSO
 
 ## `objectified docs completions`
 
-Shell completions roadmap and interim guidance
+Shell completions (install/show/uninstall, static manifest + cached REST suggestions)
 
 ```
 USAGE
@@ -296,7 +470,7 @@ USAGE
     [--profile <value>] [-q] [--verbose]
 
 DESCRIPTION
-  Shell completions roadmap and interim guidance
+  Shell completions (install/show/uninstall, static manifest + cached REST suggestions)
 
 EXAMPLES
   $ objectified docs completions

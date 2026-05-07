@@ -32,6 +32,17 @@ function runExpectFailure(args: string[], extraEnv: Record<string, string> = {})
   }
 }
 
+function runStdin(args: string[], stdin: string, extraEnv: Record<string, string> = {}): string {
+  const env = { ...process.env, FORCE_COLOR: "0", ...extraEnv };
+  delete env.NODE_OPTIONS;
+  return execFileSync("node", [path.join(pkgRoot, "bin/run.js"), ...args], {
+    cwd: pkgRoot,
+    encoding: "utf8",
+    input: stdin,
+    env,
+  });
+}
+
 describe("objectified CLI", () => {
   it("prints version", () => {
     const out = run(["--version"]);
@@ -86,6 +97,13 @@ describe("objectified CLI", () => {
     expect(out).toMatch(/\bcompletions\b/);
     expect(out).toMatch(/\bplugins\b/);
     expect(out).toMatch(/\btelemetry\b/);
+  });
+
+  it("docs completions describes completion install/show/uninstall", () => {
+    const out = run(["docs", "completions", "--no-json"]);
+    expect(out).toMatch(/completion install/);
+    expect(out).toMatch(/completion show/);
+    expect(out).toMatch(/completion uninstall/);
   });
 
   it("docs output prints long-form prose", () => {
@@ -187,6 +205,28 @@ base_url = "https://api.prod.example"
   it("does not emit ANSI escapes for errors when --no-color is set", () => {
     const err = runExpectFailure(["--no-color", "helol"]);
     expect(err.includes("\u001B[")).toBe(false);
+  });
+
+  it("completion show bash prints bash complete function", () => {
+    const out = run(["completion", "show", "bash", "--no-json"]);
+    expect(out).toContain(">>> objectified completion >>>");
+    expect(out).toMatch(/complete\s+-F/);
+    expect(out).toContain("completion candidates");
+  });
+
+  it("completion candidates lists next static segment offline", () => {
+    const stdin = ["objectified", "projects", ""].join("\n");
+    const out = runStdin(
+      ["--no-json", "completion", "candidates", "--shell", "bash", "--cword", "2"],
+      `${stdin}\n`,
+    );
+    const lines = out
+      .trim()
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
+    expect(lines).toContain("list");
+    expect(lines).toContain("show");
   });
 
   it("cold-starts --version within 200 ms on developer machines", () => {

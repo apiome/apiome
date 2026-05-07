@@ -1,22 +1,25 @@
-.TH OBJECTIFIED\-DOCS\-COMPLETIONS 1 "" "" "User Commands"
+.TH OBJECTIFIED\-COMPLETION\-SHOW 1 "" "" "User Commands"
 .SH NAME
-objectified docs completions \- Shell completions (install/show/uninstall, static manifest + cached REST suggestions)
+objectified completion show \- Print shell completion glue (with marker comments) to stdout.
 .SH DESCRIPTION
 .nf
 USAGE
-  $ objectified docs completions [--api-key <value>] [--base-url <value>]
-    [--config <value>] [--json] [--color] [--profile <value>] [-q] [--verbose]
+  $ objectified completion show [SHELL] [--api-key <value>] [--base-url
+    <value>] [--config <value>] [--json] [--color] [--profile <value>] [-q]
+    [--verbose]
+
+ARGUMENTS
+  [SHELL]  (bash|zsh|fish|powershell) Shell to generate
 
 DESCRIPTION
-  Shell completions (install/show/uninstall, static manifest + cached REST
-  suggestions)
+  Print shell completion glue (with marker comments) to stdout.
 
 EXAMPLES
-  $ objectified docs completions
+  $ objectified completion show
 
-  $ objectified --help
+  $ objectified completion show bash
 
-  $ objectified docs completions --json
+  $ objectified completion show fish >> ~/.config/fish/completions/objectified.fish
 
 COMMON
   --base-url=<value>  Root REST API URL.
@@ -38,7 +41,7 @@ AUTH
   --api-key=<value>  API key for direct authentication (bypasses login token).
 
 SEE ALSO
-  objectified docs
+  objectified completion install
 
-  objectified docs output
+  objectified docs completions
 .fi

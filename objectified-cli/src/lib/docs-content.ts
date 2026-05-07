@@ -38,11 +38,21 @@ Switching profiles
 export const docsTopicCompletions = `
 SHELL COMPLETIONS
 
-Status
-  Interactive completion installers are tracked in roadmap ticket #3193 (bash, zsh, fish, PowerShell). This topic reserves the docs slot until that work lands.
+Commands
+  objectified completion install [bash|zsh|fish|powershell] — append a small wrapper to your shell startup file (bash ~/.bashrc, zsh ~/.zshrc, fish ~/.config/fish/completions/<bin>.fish, PowerShell profile). It prints a one-liner to source or dot the file in the current session.
+  objectified completion show [shell] — print the same managed block to stdout (for packaging or manual install).
+  objectified completion uninstall — remove only the marked block we added.
 
-Today
-  Use objectified --help and objectified docs <topic> for discoverability, or generate completion scripts from oclif once the completion command ships.
+Static vs dynamic
+  Topics, subcommands, and flags are completed offline from the CLI manifest.
+  Tenant slugs from config profiles, project slugs, version identifiers, class names, and primitive names are loaded from the REST API when online, cached for five minutes per profile under ~/.cache/objectified/completion/, and omitted when the API is unreachable.
+
+Examples
+  objectified projects show pay<TAB> completes project slugs for the active tenant profile.
+  objectified versions list my-api v<TAB> completes version_id / revision ids after the project slug.
+
+Linting
+  Generated bash/zsh/fish snippets are written for portability; run shellcheck or fish --no-execute in CI when available.
 `.trim();
 
 export const docsTopicPlugins = `

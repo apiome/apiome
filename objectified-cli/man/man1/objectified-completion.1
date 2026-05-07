@@ -1,22 +1,24 @@
-.TH OBJECTIFIED\-DOCS\-COMPLETIONS 1 "" "" "User Commands"
+.TH OBJECTIFIED\-COMPLETION 1 "" "" "User Commands"
 .SH NAME
-objectified docs completions \- Shell completions (install/show/uninstall, static manifest + cached REST suggestions)
+objectified completion \- Install or print shell completion scripts for bash, zsh, fish, or PowerShell.
 .SH DESCRIPTION
 .nf
 USAGE
-  $ objectified docs completions [--api-key <value>] [--base-url <value>]
+  $ objectified completion [--api-key <value>] [--base-url <value>]
     [--config <value>] [--json] [--color] [--profile <value>] [-q] [--verbose]
 
 DESCRIPTION
-  Shell completions (install/show/uninstall, static manifest + cached REST
-  suggestions)
+  Install or print shell completion scripts for bash, zsh, fish, or
+  PowerShell.
 
 EXAMPLES
-  $ objectified docs completions
+  $ objectified completion install
 
-  $ objectified --help
+  $ objectified completion install zsh
 
-  $ objectified docs completions --json
+  $ objectified completion show bash
+
+  $ objectified completion uninstall
 
 COMMON
   --base-url=<value>  Root REST API URL.
@@ -38,7 +40,9 @@ AUTH
   --api-key=<value>  API key for direct authentication (bypasses login token).
 
 SEE ALSO
-  objectified docs
+  objectified docs completions
 
-  objectified docs output
+  objectified hello
+
+  objectified config path
 .fi

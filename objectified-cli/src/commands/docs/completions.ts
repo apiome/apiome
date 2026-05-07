@@ -2,7 +2,8 @@ import { BaseCommand } from "../../base-command.js";
 import { docsTopicCompletions } from "../../lib/docs-content.js";
 
 export default class DocsCompletions extends BaseCommand {
-  static description = "Shell completions roadmap and interim guidance";
+  static description =
+    "Shell completions (install/show/uninstall, static manifest + cached REST suggestions)";
 
   static examples = [
     "<%= config.bin %> <%= command.id %>",
@@ -10,7 +11,7 @@ export default class DocsCompletions extends BaseCommand {
     "<%= config.bin %> <%= command.id %> --json",
   ];
 
-  static seeAlso = ["docs", "docs output"];
+  static seeAlso = ["completion install", "docs output"];
 
   run(): Promise<void> {
     if (this.context.json) {

@@ -1,6 +1,6 @@
 {
   "name": "objectified-cli",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Objectified command-line interface",
   "author": "Objectified",
   "type": "module",
@@ -71,6 +71,10 @@
     "vitest": "^3.2.4"
   },
   "man": [
+    "./man/man1/objectified-completion-install.1",
+    "./man/man1/objectified-completion-show.1",
+    "./man/man1/objectified-completion-uninstall.1",
+    "./man/man1/objectified-completion.1",
     "./man/man1/objectified-config-get.1",
     "./man/man1/objectified-config-list.1",
     "./man/man1/objectified-config-path.1",
