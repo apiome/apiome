@@ -266,11 +266,9 @@ export function formatAuthStatusHumanLines(opts: FormatAuthStatusHumanOpts): str
     const expLine =
       expiresIso !== null && expiresIso !== "" ? formatRelativeExpiry(expiresIso, now) : "unknown";
     let refreshNote = "";
-    if (opts.model.auth.refresh_valid === true) {
-      refreshNote = " (refresh token valid)";
-    } else if (
-      opts.model.auth.refresh_valid === null &&
-      opts.activeCredentialKind === "oauth_keychain"
+    if (
+      opts.model.auth.refresh_valid === true ||
+      (opts.model.auth.refresh_valid === null && opts.activeCredentialKind === "oauth_keychain")
     ) {
       refreshNote = " (refresh token valid)";
     }
