@@ -1,6 +1,7 @@
 import { Args, Flags } from "@oclif/core";
 import { createHash } from "node:crypto";
-import { writeFile } from "node:fs/promises";
+import { once } from "node:events";
+import { open, writeFile } from "node:fs/promises";
 
 import { BaseCommand } from "../../base-command.js";
 import { formatApiError } from "../../lib/client.js";
@@ -114,9 +115,17 @@ export default class SchemaFetch extends BaseCommand {
       });
     }
 
-    let body = Buffer.from(await res.arrayBuffer());
+    const outRaw = this.flags.output;
+    const outPath = typeof outRaw === "string" ? outRaw.trim() : "";
+    const expectRaw = this.flags["expect-sha256"];
+    const expectedSha =
+      typeof expectRaw === "string" && expectRaw.trim() !== ""
+        ? normalizeExpectSha256Hex(expectRaw)
+        : undefined;
 
-    if (format === "yaml" && className === "") {
+    const convertFullBundleToYaml = format === "yaml" && className === "";
+    if (convertFullBundleToYaml) {
+      let body = Buffer.from(await res.arrayBuffer());
       let parsed: unknown;
       try {
         parsed = JSON.parse(body.toString("utf8")) as unknown;
@@ -129,28 +138,72 @@ export default class SchemaFetch extends BaseCommand {
         });
       }
       body = Buffer.from(stringifyYaml(parsed), "utf8");
+
+      if (expectedSha !== undefined) {
+        const got = createHash("sha256").update(body).digest("hex");
+        if (got !== expectedSha) {
+          throw new ObjectifiedCliError({
+            message: `SHA-256 mismatch: expected ${expectedSha}, got ${got}.`,
+            exitCode: EXIT_CODES.VALIDATION,
+            title: "Checksum mismatch",
+            hint: "The downloaded schema bytes differ from --expect-sha256 (useful to detect unexpected drift in CI).",
+          });
+        }
+      }
+      if (outPath !== "") {
+        await writeFile(outPath, body);
+      } else {
+        process.stdout.write(body);
+      }
+      return;
     }
 
-    const expectRaw = this.flags["expect-sha256"];
-    if (typeof expectRaw === "string" && expectRaw.trim() !== "") {
-      const want = normalizeExpectSha256Hex(expectRaw);
-      const got = createHash("sha256").update(body).digest("hex");
-      if (got !== want) {
+    const hasher = createHash("sha256");
+    const writer = outPath !== "" ? await open(outPath, "w") : undefined;
+
+    const writeStdout = async (chunk: Buffer): Promise<void> => {
+      if (!process.stdout.write(chunk)) {
+        await once(process.stdout, "drain");
+      }
+    };
+
+    try {
+      if (res.body === null) {
+        const chunk = Buffer.from(await res.arrayBuffer());
+        hasher.update(chunk);
+        if (writer !== undefined) {
+          await writer.write(chunk);
+        } else {
+          await writeStdout(chunk);
+        }
+      } else {
+        const reader = res.body.getReader();
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = Buffer.from(value);
+          hasher.update(chunk);
+          if (writer !== undefined) {
+            await writer.write(chunk);
+          } else {
+            await writeStdout(chunk);
+          }
+        }
+      }
+    } finally {
+      await writer?.close();
+    }
+
+    if (expectedSha !== undefined) {
+      const got = hasher.digest("hex");
+      if (got !== expectedSha) {
         throw new ObjectifiedCliError({
-          message: `SHA-256 mismatch: expected ${want}, got ${got}.`,
+          message: `SHA-256 mismatch: expected ${expectedSha}, got ${got}.`,
           exitCode: EXIT_CODES.VALIDATION,
           title: "Checksum mismatch",
           hint: "The downloaded schema bytes differ from --expect-sha256 (useful to detect unexpected drift in CI).",
         });
       }
-    }
-
-    const outRaw = this.flags.output;
-    const outPath = typeof outRaw === "string" ? outRaw.trim() : "";
-    if (outPath !== "") {
-      await writeFile(outPath, body);
-    } else {
-      process.stdout.write(body);
     }
   }
 }

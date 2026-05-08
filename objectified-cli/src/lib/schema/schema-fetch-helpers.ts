@@ -9,7 +9,8 @@ export function parseTenantProjectVersionRef(raw: string): {
   const s = raw.trim();
   const first = s.indexOf("/");
   const second = s.indexOf("/", first + 1);
-  if (first <= 0 || second <= first + 1 || second >= s.length - 1) {
+  const third = s.indexOf("/", second + 1);
+  if (first <= 0 || second <= first + 1 || second >= s.length - 1 || third !== -1) {
     throw new ObjectifiedCliError({
       message: "Expected tenant/project/version (for example acme-corp/payments-api/2.1.0).",
       exitCode: EXIT_CODES.MISUSE,

@@ -71,6 +71,11 @@ describe("schema fetch CLI (#3247)", () => {
   };
   const publishedWire = JSON.stringify(publishedSpec);
 
+  it("rejects refs that are not exactly tenant/project/version", async () => {
+    const out = await runCliCaptureAsync(["schema", "fetch", "acme/payments-api/2.1.0/extra"]);
+    expect(out.code).toBe(2);
+  });
+
   it("downloads OpenAPI JSON for tenant/project/version", async () => {
     const server = http.createServer((req, res) => {
       void (async () => {

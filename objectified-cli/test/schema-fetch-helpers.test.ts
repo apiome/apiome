@@ -27,6 +27,12 @@ describe("schema fetch helpers (#3247)", () => {
     }
   });
 
+  it("rejects more than three segments", () => {
+    expect(() => parseTenantProjectVersionRef("acme/payments-api/2.1.0/extra")).toThrow(
+      ObjectifiedCliError,
+    );
+  });
+
   it("normalizes expect-sha256 hex", () => {
     const lower =
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
