@@ -50,7 +50,7 @@ $ npm install -g objectified-cli
 $ objectified COMMAND
 running command...
 $ objectified (--version)
-objectified-cli/0.1.16 <platform> node-v<major.minor.patch>
+objectified-cli/0.1.17 <platform> node-v<major.minor.patch>
 $ objectified --help [COMMAND]
 USAGE
   $ objectified COMMAND
@@ -88,6 +88,7 @@ USAGE
 * [`objectified tenants list`](#objectified-tenants-list)
 * [`objectified tenants use [SLUG]`](#objectified-tenants-use-slug)
 * [`objectified version`](#objectified-version)
+* [`objectified versions list PROJECT`](#objectified-versions-list-project)
 * [`objectified whoami`](#objectified-whoami)
 
 ## `objectified auth login`
@@ -1351,6 +1352,69 @@ FLAG DESCRIPTIONS
 ```
 
 _See code: [@oclif/plugin-version](https://github.com/oclif/plugin-version/blob/2.2.43/src/commands/version.ts)_
+
+## `objectified versions list PROJECT`
+
+List schema versions for a project (GET /v1/versions/{tenant_slug}/{project_id}; tags joined from version tags)
+
+```
+USAGE
+  $ objectified versions list PROJECT [--api-key <value>] [--api-key-file <value>] [--base-url <value>] [--config
+    <value>] [--json] [--color] [--profile <value>] [--tenant <value>] [-q] [--verbose] [--state <value>] [--limit
+    <value>] [--all] [--sort <value>] [--reverse]
+
+ARGUMENTS
+  PROJECT  Project slug or UUID (uuid-shaped refs resolve as id first)
+
+DESCRIPTION
+  List schema versions for a project (GET /v1/versions/{tenant_slug}/{project_id}; tags joined from version tags)
+
+EXAMPLES
+  $ objectified versions list payments-api
+
+  $ objectified --json versions list payments-api
+
+  $ objectified versions list payments-api --state draft,published --limit 25
+
+  $ objectified versions list payments-api --sort published_at --reverse
+
+  $ objectified --profile staging versions list my-api --all
+
+COMMON
+  --base-url=<value>  Root REST API URL.
+  --config=<value>    Path to config file (default: XDG config dir / Objectified AppData on Windows — see `objectified
+                      config path`).
+  --profile=<value>   Named credentials profile (OBJECTIFIED_PROFILE); falls back to default_profile in config.
+  --tenant=<value>    [env: OBJECTIFIED_TENANT] Tenant slug for this run only (overrides OBJECTIFIED_TENANT and config
+                      tenant_slug).
+
+OUTPUT
+  --[no-]color  Enable/disable ANSI colors (--no-color sets NO_COLOR; colors are off when stdout is not a TTY).
+      --[no-]json   Emit machine-readable JSON (OBJECTIFIED_JSON=1; auto-enabled when stdout is not a TTY).
+  -q, --quiet       Suppress non-error stdout (spinners, banners, tips).
+      --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
+
+AUTH
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
+                          persisted unless you run `auth login --api-key`.
+  --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
+
+OTHER
+  --all            List every matching version after sort/filter (no --limit cap).
+  --limit=<value>  [default: 10] Maximum rows after sort/filter (1–500; default 10). Ignored with --all.
+  --reverse        Reverse the default sort direction (defaults are descending).
+  --sort=<value>   Sort by version, published_at, or created_at (default: version).
+  --state=<value>  Comma-separated filters (OR): draft, published, archived, frozen. Matches CLI-derived states.
+
+SEE ALSO
+  objectified projects show
+
+  objectified projects list
+
+  objectified tenants use
+
+  objectified docs errors
+```
 
 ## `objectified whoami`
 

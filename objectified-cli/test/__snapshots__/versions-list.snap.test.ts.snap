@@ -1,0 +1,11 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`versions list human table snapshots (#3208) > matches issue-style columns (80 cols) with tags joined client-side 1`] = `
+"  VERSION        STATE              TAGS           PUBLISHED  AUTHOR            
+  v2.2.0-rc.1    draft              next           —          morgan@example.com
+  v2.1.0         published          stable, latest 2026-05-04 kenji@example.com 
+  v2.0.0         published [frozen]                2026-02-18 kenji@example.com 
+  v1.4.0         archived                          2025-11-02 —                 
+
+8 versions in 'payments-api' (showing latest 4 of 8). Use --all to list all."
+`;

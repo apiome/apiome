@@ -8,6 +8,7 @@ We continue to improve the platform based on your feedback with improvements and
 - MCP service is now live
 
 ## CLI
+- **`objectified-cli`**: `objectified versions list <project>` lists schema revisions from `GET /v1/versions/{tenant}/{project_id}` with tags merged from version tags, `--state` / `--limit` / `--all` / `--sort` / `--reverse`, frozen revisions marked (`❄` with color or `[frozen]` with `--no-color`), and `--json` for the filtered slice (#3208).
 - **`objectified-cli`**: `objectified projects create` adds projects via `POST /v1/projects/{tenant_slug}`—interactive `@inquirer/prompts` wizard on a TTY, or CI flags (`--name`, `--slug`, `--description`, `--domain`, `--visibility`, `--yes`); `--from-file` JSON/YAML validated with JSON Schema; `--dry-run` prints the POST body; domain ids validated against cached `GET …/domains` (fallback catalog); slug format + pre-create uniqueness (exit **6** conflict, **7** validation) (#3204).
 - **`objectified-cli`**: `objectified projects show <slug-or-id>` resolves UUID vs slug (`GET /v1/projects/{tenant}/by-slug/{slug}` or `GET /v1/projects/{tenant}/{id}`), prints rich detail with version/tag summaries and up to **10** workflow-audit rows; `--json` returns the project object plus `activity[]` (#3203).
 - **`objectified-cli`**: `objectified projects list` calls `GET /v1/projects/{tenant_slug}` with an 80-column table (slug, name, domain, versions, latest published), `--limit` / `--all`, `--sort`, `--filter`, `--search`, `--columns`, `--include-deleted`, and top-level `--json` array output (#3202).
