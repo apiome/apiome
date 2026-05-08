@@ -4,7 +4,16 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const tempDirs: string[] = [];
+
+function makeTempVaultDir(): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "obj-cli-vault-"));
+  tempDirs.push(dir);
+  return dir;
+}
+
 afterEach(() => {
+  for (const dir of tempDirs.splice(0)) fs.rmSync(dir, { force: true, recursive: true });
   delete process.env.OBJECTIFIED_CLI_CREDENTIAL_BACKEND;
   delete process.env.OBJECTIFIED_CLI_CREDENTIAL_VAULT_DIR;
   delete process.env.OBJECTIFIED_CLI_CREDENTIAL_DISABLE_FILE_FALLBACK;
@@ -70,7 +79,7 @@ describe("CLI credential store", () => {
   });
 
   it("persists OAuth in encrypted file vault when keytar is unavailable (#3197)", async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "obj-cli-vault-"));
+    const dir = makeTempVaultDir();
     process.env.OBJECTIFIED_CLI_CREDENTIAL_VAULT_DIR = dir;
     vi.doMock("keytar", () => {
       throw new Error("no native keychain");
@@ -127,7 +136,7 @@ describe("CLI credential store", () => {
   });
 
   it("cleans file-vault credentials on logout even when fallback is disabled", async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "obj-cli-vault-"));
+    const dir = makeTempVaultDir();
     process.env.OBJECTIFIED_CLI_CREDENTIAL_VAULT_DIR = dir;
     vi.doMock("keytar", () => {
       const noNative = async () => Promise.reject(new Error("no native keychain"));
