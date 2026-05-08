@@ -32,7 +32,6 @@ const GLOBAL_FLAG_TOKENS = [
 
 /** Roadmap commands not yet registered — still complete for power users (#3193). */
 const EXTRA_SUBCOMMANDS: Record<string, string[]> = {
-  projects: ["show"],
   versions: ["list", "show"],
   classes: ["show"],
   primitives: ["show"],

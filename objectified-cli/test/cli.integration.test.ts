@@ -825,6 +825,103 @@ tenant_slug = "acme"
     }
   });
 
+  it("projects show resolves by slug and returns composite json (#3203)", async () => {
+    const PROJ = "33333333-4444-5555-6666-777777777777";
+    const projectBody = {
+      id: PROJ,
+      tenant_id: "t1",
+      name: "Showcase",
+      slug: "showcase",
+      enabled: true,
+      description: "Demo",
+      creator_email: "u@example.com",
+      created_at: "2024-08-19T10:00:00Z",
+      updated_at: "2026-04-02T15:00:00Z",
+      metadata: { domain: "finance" },
+    };
+
+    const server = http.createServer((req, res) => {
+      res.setHeader("Connection", "close");
+      if (req.headers["x-api-key"] !== "good-key") {
+        res.statusCode = 401;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ detail: "Authentication required" }));
+        return;
+      }
+
+      const urlRaw = req.url ?? "";
+      const url = new URL(urlRaw, "http://127.0.0.1");
+
+      if (req.method === "GET" && url.pathname === "/v1/projects/acme/by-slug/showcase") {
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify(projectBody));
+        return;
+      }
+
+      if (req.method === "GET" && url.pathname === `/v1/versions/acme/${PROJ}`) {
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify([]));
+        return;
+      }
+
+      if (req.method === "GET" && url.pathname === `/v1/version-tags/acme/${PROJ}`) {
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify([]));
+        return;
+      }
+
+      if (req.method === "GET" && url.pathname === "/v1/versions/acme/workflow-audit") {
+        if (url.searchParams.get("projectId") !== PROJ || url.searchParams.get("limit") !== "10") {
+          res.statusCode = 400;
+          res.end();
+          return;
+        }
+        res.setHeader("Content-Type", "application/json");
+        res.end(
+          JSON.stringify({
+            schemaVersion: 1,
+            items: [],
+            pagination: { limit: 10, total: 0, hasMore: false, offset: 0 },
+          }),
+        );
+        return;
+      }
+
+      res.statusCode = 404;
+      res.end();
+    });
+
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
+    const addr = server.address();
+    if (addr === null || typeof addr === "string") throw new Error("expected AddressInfo");
+
+    try {
+      const { code, stdout } = await spawnCliCaptureAsync(
+        [
+          "--base-url",
+          `http://127.0.0.1:${String(addr.port)}`,
+          "--api-key",
+          "good-key",
+          "--json",
+          "projects",
+          "show",
+          "showcase",
+        ],
+        { OBJECTIFIED_TENANT: "acme" },
+      );
+      expect(code).toBe(0);
+      const parsed = JSON.parse(stdout.trim()) as { slug?: string; activity?: unknown[] };
+      expect(parsed.slug).toBe("showcase");
+      expect(Array.isArray(parsed.activity)).toBe(true);
+      expect(parsed.activity).toHaveLength(0);
+    } finally {
+      server.closeAllConnections?.();
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err !== undefined ? reject(err) : resolve())),
+      );
+    }
+  });
+
   it("projects list rejects --all with --limit before calling the API (#3202)", async () => {
     const { code, stderr } = await spawnCliCaptureAsync(
       [

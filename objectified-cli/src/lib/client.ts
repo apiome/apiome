@@ -6,14 +6,20 @@ import type {
   TenantInfoResponse,
   TenantsMeResponse,
   VersionSchema,
+  VersionTagSchema,
+  WorkflowAuditPageResponse,
 } from "../generated/models.js";
 import {
+  getProjectBySlugV1ProjectsTenantSlugBySlugProjectSlugGet,
+  getProjectV1ProjectsTenantSlugProjectIdGet,
   getTenantInfoV1TenantsTenantSlugGet,
   listClassesV1ClassesTenantSlugGet,
   listMyTenantsV1TenantsMeGet,
   listPrimitivesV1PrimitivesTenantSlugGet,
   listProjectsV1ProjectsTenantSlugGet,
+  listVersionTagsV1VersionTagsTenantSlugProjectIdGet,
   listVersionsV1VersionsTenantSlugProjectIdGet,
+  listWorkflowAuditV1VersionsTenantSlugWorkflowAuditGet,
   verifyTenantAccessV1TenantsTenantSlugHead,
 } from "../generated/operations.js";
 
@@ -21,7 +27,13 @@ import { EXIT_CODES } from "./exit-codes.js";
 import { httpStatusToCliError, networkErrnoToCliError, ObjectifiedCliError } from "./errors.js";
 import { redactApiKeyForLogs } from "./redact-api-key.js";
 
-export type { ProjectSchema };
+export type {
+  ProjectSchema,
+  VersionSchema,
+  VersionTagSchema,
+  WorkflowAuditEntryOut,
+  WorkflowAuditPageResponse,
+} from "../generated/models.js";
 
 /** Mutable auth fields read on every request (supports 401 refresh hook). */
 export type ApiAuthSnapshot = {
@@ -51,7 +63,16 @@ export type ObjectifiedApi = {
   /** Transient HTTP retries consumed on the last instrumented request (429 / 5xx policy). */
   readonly lastRetriesAttempted: number;
   listProjects(tenantSlug: string, options?: ListProjectsOptions): Promise<ProjectSchema[]>;
+  getProject(tenantSlug: string, projectId: string): Promise<ProjectSchema>;
+  getProjectBySlug(tenantSlug: string, projectSlug: string): Promise<ProjectSchema>;
   listVersions(tenantSlug: string, projectId: string): Promise<VersionSchema[]>;
+  listVersionTags(tenantSlug: string, projectId: string): Promise<VersionTagSchema[]>;
+  listWorkflowAudit(opts: {
+    tenantSlug: string;
+    projectId?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<WorkflowAuditPageResponse>;
   listClasses(tenantSlug: string, versionId?: string): Promise<ClassSchema[]>;
   listPrimitives(tenantSlug: string): Promise<PrimitiveSchema[]>;
   listMyTenantsPage(limit: number, offset: number): Promise<TenantsMeResponse>;
@@ -140,6 +161,43 @@ function shouldRetryStatus(status: number, idempotent: boolean): boolean {
   return false;
 }
 
+function parseProjectRecord(raw: unknown, ctx: string): ProjectSchema {
+  if (!raw || typeof raw !== "object") {
+    throw new ObjectifiedCliError({
+      message: `Invalid project entry in ${ctx}.`,
+      exitCode: EXIT_CODES.VALIDATION,
+      title: "Validation failed",
+      hint: "The API returned an unexpected JSON shape; include request-id when reporting.",
+    });
+  }
+  const p = raw as Record<string, unknown>;
+  if (
+    typeof p.id !== "string" ||
+    typeof p.tenant_id !== "string" ||
+    typeof p.name !== "string" ||
+    typeof p.slug !== "string"
+  ) {
+    throw new ObjectifiedCliError({
+      message: "Invalid project fields in response.",
+      exitCode: EXIT_CODES.VALIDATION,
+      title: "Validation failed",
+      hint: "Required project fields were missing or mistyped.",
+    });
+  }
+  if (p.enabled !== undefined && p.enabled !== null && typeof p.enabled !== "boolean") {
+    throw new ObjectifiedCliError({
+      message: "Invalid project fields in response.",
+      exitCode: EXIT_CODES.VALIDATION,
+      title: "Validation failed",
+      hint: "`enabled` must be boolean when present.",
+    });
+  }
+  return {
+    ...(raw as ProjectSchema),
+    enabled: typeof p.enabled === "boolean" ? p.enabled : true,
+  };
+}
+
 /** Validates the list endpoint payload enough for CLI rendering (required OpenAPI fields). */
 function parseProjectsPayload(data: unknown): ProjectSchema[] {
   if (!Array.isArray(data)) {
@@ -152,42 +210,85 @@ function parseProjectsPayload(data: unknown): ProjectSchema[] {
   }
   const projects: ProjectSchema[] = [];
   for (const raw of data) {
-    if (!raw || typeof raw !== "object") {
-      throw new ObjectifiedCliError({
-        message: "Invalid project entry in response.",
-        exitCode: EXIT_CODES.VALIDATION,
-        title: "Validation failed",
-        hint: "The API returned invalid project rows; include request-id when reporting.",
-      });
-    }
-    const p = raw as Record<string, unknown>;
-    if (
-      typeof p.id !== "string" ||
-      typeof p.tenant_id !== "string" ||
-      typeof p.name !== "string" ||
-      typeof p.slug !== "string"
-    ) {
-      throw new ObjectifiedCliError({
-        message: "Invalid project fields in response.",
-        exitCode: EXIT_CODES.VALIDATION,
-        title: "Validation failed",
-        hint: "Required project fields were missing or mistyped.",
-      });
-    }
-    if (p.enabled !== undefined && p.enabled !== null && typeof p.enabled !== "boolean") {
-      throw new ObjectifiedCliError({
-        message: "Invalid project fields in response.",
-        exitCode: EXIT_CODES.VALIDATION,
-        title: "Validation failed",
-        hint: "`enabled` must be boolean when present.",
-      });
-    }
-    projects.push({
-      ...(raw as ProjectSchema),
-      enabled: typeof p.enabled === "boolean" ? p.enabled : true,
-    });
+    projects.push(parseProjectRecord(raw, "projects list"));
   }
   return projects;
+}
+
+function parseProjectPayload(data: unknown): ProjectSchema {
+  return parseProjectRecord(data, "project response");
+}
+
+function parseVersionTagsPayload(data: unknown): VersionTagSchema[] {
+  if (!Array.isArray(data)) {
+    throw new ObjectifiedCliError({
+      message: "Unexpected response shape for version tags list.",
+      exitCode: EXIT_CODES.VALIDATION,
+      title: "Validation failed",
+      hint: "The API returned an unexpected JSON shape; try again or upgrade the CLI.",
+    });
+  }
+  const tags: VersionTagSchema[] = [];
+  for (const raw of data) {
+    if (!raw || typeof raw !== "object") {
+      throw new ObjectifiedCliError({
+        message: "Invalid version tag entry in response.",
+        exitCode: EXIT_CODES.VALIDATION,
+        title: "Validation failed",
+        hint: "The API returned invalid tag rows.",
+      });
+    }
+    const t = raw as Record<string, unknown>;
+    if (
+      typeof t.id !== "string" ||
+      typeof t.project_id !== "string" ||
+      typeof t.version_id !== "string" ||
+      typeof t.name !== "string"
+    ) {
+      throw new ObjectifiedCliError({
+        message: "Invalid version tag fields in response.",
+        exitCode: EXIT_CODES.VALIDATION,
+        title: "Validation failed",
+        hint: "Required tag fields were missing or mistyped.",
+      });
+    }
+    tags.push(raw as VersionTagSchema);
+  }
+  return tags;
+}
+
+function parseWorkflowAuditPayload(data: unknown): WorkflowAuditPageResponse {
+  if (!data || typeof data !== "object") {
+    throw new ObjectifiedCliError({
+      message: "Unexpected response shape for workflow audit.",
+      exitCode: EXIT_CODES.VALIDATION,
+      title: "Validation failed",
+      hint: "The API returned an unexpected JSON shape; try again or upgrade the CLI.",
+    });
+  }
+  const o = data as Record<string, unknown>;
+  if (!Array.isArray(o.items) || !o.pagination || typeof o.pagination !== "object") {
+    throw new ObjectifiedCliError({
+      message: "Unexpected response shape for workflow audit.",
+      exitCode: EXIT_CODES.VALIDATION,
+      title: "Validation failed",
+      hint: "Expected items and pagination from GET .../workflow-audit.",
+    });
+  }
+  const pag = o.pagination as Record<string, unknown>;
+  if (
+    typeof pag.limit !== "number" ||
+    typeof pag.total !== "number" ||
+    typeof pag.hasMore !== "boolean"
+  ) {
+    throw new ObjectifiedCliError({
+      message: "Invalid pagination fields in workflow audit response.",
+      exitCode: EXIT_CODES.VALIDATION,
+      title: "Validation failed",
+      hint: "Expected numeric limit, total, and boolean hasMore.",
+    });
+  }
+  return data as WorkflowAuditPageResponse;
 }
 
 function unwrapSdkGet(
@@ -572,6 +673,46 @@ export function createApiClient(options: CreateApiClientOptions): ObjectifiedApi
       );
     },
 
+    async getProject(tenantSlug: string, projectId: string): Promise<ProjectSchema> {
+      let rawUnknown: unknown;
+      try {
+        rawUnknown = await getProjectV1ProjectsTenantSlugProjectIdGet({
+          client: hey,
+          path: { tenant_slug: tenantSlug, project_id: projectId },
+          throwOnError: false,
+        });
+      } catch (e) {
+        if (e instanceof ObjectifiedCliError) throw e;
+        if (e !== null && typeof e === "object" && "code" in e) {
+          throw networkErrnoToCliError(e as NodeJS.ErrnoException);
+        }
+        throw e;
+      }
+      return parseProjectPayload(
+        unwrapSdkGet(rawUnknown, lastRequestId, lastRetriesAttempted, requestMeta),
+      );
+    },
+
+    async getProjectBySlug(tenantSlug: string, projectSlug: string): Promise<ProjectSchema> {
+      let rawUnknown: unknown;
+      try {
+        rawUnknown = await getProjectBySlugV1ProjectsTenantSlugBySlugProjectSlugGet({
+          client: hey,
+          path: { tenant_slug: tenantSlug, project_slug: projectSlug },
+          throwOnError: false,
+        });
+      } catch (e) {
+        if (e instanceof ObjectifiedCliError) throw e;
+        if (e !== null && typeof e === "object" && "code" in e) {
+          throw networkErrnoToCliError(e as NodeJS.ErrnoException);
+        }
+        throw e;
+      }
+      return parseProjectPayload(
+        unwrapSdkGet(rawUnknown, lastRequestId, lastRetriesAttempted, requestMeta),
+      );
+    },
+
     async listVersions(tenantSlug: string, projectId: string): Promise<VersionSchema[]> {
       let rawUnknown: unknown;
       try {
@@ -588,6 +729,56 @@ export function createApiClient(options: CreateApiClientOptions): ObjectifiedApi
         throw e;
       }
       return parseVersionsPayload(
+        unwrapSdkGet(rawUnknown, lastRequestId, lastRetriesAttempted, requestMeta),
+      );
+    },
+
+    async listVersionTags(tenantSlug: string, projectId: string): Promise<VersionTagSchema[]> {
+      let rawUnknown: unknown;
+      try {
+        rawUnknown = await listVersionTagsV1VersionTagsTenantSlugProjectIdGet({
+          client: hey,
+          path: { tenant_slug: tenantSlug, project_id: projectId },
+          throwOnError: false,
+        });
+      } catch (e) {
+        if (e instanceof ObjectifiedCliError) throw e;
+        if (e !== null && typeof e === "object" && "code" in e) {
+          throw networkErrnoToCliError(e as NodeJS.ErrnoException);
+        }
+        throw e;
+      }
+      return parseVersionTagsPayload(
+        unwrapSdkGet(rawUnknown, lastRequestId, lastRetriesAttempted, requestMeta),
+      );
+    },
+
+    async listWorkflowAudit(opts: {
+      tenantSlug: string;
+      projectId?: string;
+      limit?: number;
+      offset?: number;
+    }): Promise<WorkflowAuditPageResponse> {
+      let rawUnknown: unknown;
+      try {
+        rawUnknown = await listWorkflowAuditV1VersionsTenantSlugWorkflowAuditGet({
+          client: hey,
+          path: { tenant_slug: opts.tenantSlug },
+          query: {
+            projectId: opts.projectId ?? undefined,
+            limit: opts.limit ?? undefined,
+            offset: opts.offset ?? undefined,
+          },
+          throwOnError: false,
+        });
+      } catch (e) {
+        if (e instanceof ObjectifiedCliError) throw e;
+        if (e !== null && typeof e === "object" && "code" in e) {
+          throw networkErrnoToCliError(e as NodeJS.ErrnoException);
+        }
+        throw e;
+      }
+      return parseWorkflowAuditPayload(
         unwrapSdkGet(rawUnknown, lastRequestId, lastRetriesAttempted, requestMeta),
       );
     },
