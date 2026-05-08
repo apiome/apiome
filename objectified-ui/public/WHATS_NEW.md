@@ -8,6 +8,7 @@ We continue to improve the platform based on your feedback with improvements and
 - MCP service is now live
 
 ## CLI
+- **`objectified-cli`**: `objectified projects show <slug-or-id>` resolves UUID vs slug (`GET /v1/projects/{tenant}/by-slug/{slug}` or `GET /v1/projects/{tenant}/{id}`), prints rich detail with version/tag summaries and up to **10** workflow-audit rows; `--json` returns the project object plus `activity[]` (#3203).
 - **`objectified-cli`**: `objectified projects list` calls `GET /v1/projects/{tenant_slug}` with an 80-column table (slug, name, domain, versions, latest published), `--limit` / `--all`, `--sort`, `--filter`, `--search`, `--columns`, `--include-deleted`, and top-level `--json` array output (#3202).
 - **`objectified-cli`**: `objectified tenants list` and `objectified tenants info <slug>` call `GET /v1/tenants/me` and `GET /v1/tenants/{slug}` (REST support in `objectified-rest`); stable `--json`; active profile tenant marker; `--limit` / `--offset` pagination for large tenant lists (#3198).
 - **`objectified-cli`**: `objectified tenants use <slug>` validates access with `HEAD /v1/tenants/{slug}`, writes `tenant_slug` under `profile.<name>` in config.toml, supports `--clear`, global `--tenant` (over `OBJECTIFIED_TENANT` then config), exit **4**/**5** with hints and typo suggestions (#3199).
