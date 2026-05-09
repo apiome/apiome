@@ -261,10 +261,9 @@ async def create_import_job(
             idempotency_key=idem,
             percent=0,
         )
-    except Exception as exc:
-        # Unique-constraint violation: concurrent POST with the same Idempotency-Key raced us.
-        # Re-query and return the existing row (idempotency replay) instead of surfacing a 500.
-        if idem and isinstance(exc.__cause__, psycopg2.errors.UniqueViolation):
+    except psycopg2.errors.UniqueViolation:
+        # Concurrent POST with the same Idempotency-Key raced us — re-query and replay.
+        if idem:
             existing = db.find_import_job_by_idempotency_key(tenant_id, idem)
             if existing:
                 r = _row_to_response(existing)

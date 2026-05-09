@@ -2649,46 +2649,43 @@ class Database:
         expected_state: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         conn = self.connect()
+        _returning = (
+            "RETURNING job_id::text AS job_id, tenant_id::text AS tenant_id,"
+            "  project_id::text AS project_id, state, source_kind,"
+            "  blob_sha, repository_source, input, events, progress, summary,"
+            "  result, percent, error, created_by::text AS created_by,"
+            "  created_at, updated_at, finished_at, expires_at, idempotency_key"
+        )
+        # Build one of four concrete parameterised query strings depending on flags.
+        # None of the f-string interpolations below carry user input — they are all
+        # hardcoded SQL fragments so there is no SQL-injection risk.
+        if finished_at_now and expected_state is not None:
+            sql = (
+                "UPDATE odb.import_jobs SET state = %s, updated_at = NOW(), finished_at = NOW()"
+                " WHERE tenant_id = %s AND job_id = %s AND state = %s " + _returning
+            )
+            params: tuple = (new_state, tenant_id, job_id, expected_state)
+        elif finished_at_now:
+            sql = (
+                "UPDATE odb.import_jobs SET state = %s, updated_at = NOW(), finished_at = NOW()"
+                " WHERE tenant_id = %s AND job_id = %s " + _returning
+            )
+            params = (new_state, tenant_id, job_id)
+        elif expected_state is not None:
+            sql = (
+                "UPDATE odb.import_jobs SET state = %s, updated_at = NOW()"
+                " WHERE tenant_id = %s AND job_id = %s AND state = %s " + _returning
+            )
+            params = (new_state, tenant_id, job_id, expected_state)
+        else:
+            sql = (
+                "UPDATE odb.import_jobs SET state = %s, updated_at = NOW()"
+                " WHERE tenant_id = %s AND job_id = %s " + _returning
+            )
+            params = (new_state, tenant_id, job_id)
         try:
             with conn.cursor() as cursor:
-                # Build WHERE clause; optional expected_state guards against races
-                where = "WHERE tenant_id = %s AND job_id = %s"
-                params_suffix: tuple = (tenant_id, job_id)
-                if expected_state is not None:
-                    where += " AND state = %s"
-                    params_suffix = (tenant_id, job_id, expected_state)
-
-                returning = """
-                        RETURNING job_id::text AS job_id, tenant_id::text AS tenant_id,
-                                  project_id::text AS project_id, state, source_kind,
-                                  blob_sha, repository_source, input, events, progress, summary,
-                                  result, percent, error, created_by::text AS created_by,
-                                  created_at, updated_at, finished_at, expires_at, idempotency_key
-                """
-
-                if finished_at_now:
-                    cursor.execute(
-                        f"""
-                        UPDATE odb.import_jobs
-                        SET state = %s,
-                            updated_at = NOW(),
-                            finished_at = NOW()
-                        {where}
-                        {returning}
-                        """,
-                        (new_state, *params_suffix),
-                    )
-                else:
-                    cursor.execute(
-                        f"""
-                        UPDATE odb.import_jobs
-                        SET state = %s,
-                            updated_at = NOW()
-                        {where}
-                        {returning}
-                        """,
-                        (new_state, *params_suffix),
-                    )
+                cursor.execute(sql, params)
                 row = cursor.fetchone()
                 conn.commit()
                 return dict(row) if row else None
