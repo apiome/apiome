@@ -45,7 +45,7 @@ from .browse_public_routes import router as browse_public_router
 app = FastAPI(
     title="Objectified REST API",
     description="REST API for serving OpenAPI specifications from the Objectified database",
-    version="1.0.62"
+    version="1.0.63"
 )
 
 

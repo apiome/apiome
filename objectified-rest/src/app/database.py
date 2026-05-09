@@ -2921,7 +2921,7 @@ class Database:
         version_id: str,
         imported_by: str,
     ) -> bool:
-        """Mirror objectified-ui/lib/db/repository-import-metrics.ts insert (tenant-owned repo guard)."""
+        """Insert import metric row when repository is tenant-owned (same guard as dashboard metrics)."""
         repo_id = repository_id.strip()
         if not repo_id:
             return False
@@ -2957,6 +2957,55 @@ class Database:
         except Exception as e:
             conn.rollback()
             raise e
+
+    def list_tenant_repository_imports_for_repository(
+        self,
+        tenant_id: str,
+        repository_id: str,
+        limit: int = 100,
+    ) -> List[Dict[str, Any]]:
+        """Catalog import history for repository detail (dashboard Map & Import tab)."""
+        lim = min(max(limit, 1), 200)
+        q = """
+            SELECT tri.id::text AS id,
+                   tri.path,
+                   tri.branch,
+                   tri.blob_sha,
+                   tri.created_at::text AS created_at,
+                   tri.project_id::text AS project_id,
+                   p.name AS project_name,
+                   p.slug AS project_slug,
+                   v.version_id AS catalog_version_label,
+                   v.id::text AS version_uuid,
+                   tri.imported_by::text AS imported_by,
+                   u.name AS imported_by_name,
+                   u.email AS imported_by_email
+             FROM odb.tenant_repository_imports tri
+             JOIN odb.projects p ON p.id = tri.project_id AND p.deleted_at IS NULL
+             JOIN odb.versions v ON v.id = tri.version_id AND v.deleted_at IS NULL
+             LEFT JOIN odb.users u ON u.id = tri.imported_by
+             WHERE tri.tenant_id = %s::uuid AND tri.repository_id = %s::uuid
+             ORDER BY tri.created_at DESC
+             LIMIT %s
+        """
+        rows = self.execute_query(q, (tenant_id, repository_id, lim))
+        return [dict(r) for r in rows]
+
+    def tenant_repository_import_stats_last_30_days(self, tenant_id: str, repository_id: str) -> Dict[str, int]:
+        q = """
+            SELECT COUNT(*)::int AS total_imports,
+                   COUNT(DISTINCT project_id)::int AS distinct_projects
+             FROM odb.tenant_repository_imports
+             WHERE tenant_id = %s::uuid
+               AND repository_id = %s::uuid
+               AND created_at >= NOW() - INTERVAL '30 days'
+        """
+        rows = self.execute_query(q, (tenant_id, repository_id))
+        row = dict(rows[0]) if rows else {}
+        return {
+            "total_imports": int(row.get("total_imports") or 0),
+            "distinct_projects": int(row.get("distinct_projects") or 0),
+        }
 
     def list_workflow_audit_for_version(
         self,

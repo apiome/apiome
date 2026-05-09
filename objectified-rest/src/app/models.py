@@ -1915,6 +1915,41 @@ class TenantRepositoryFileContentResponse(BaseModel):
     truncated: bool = False
 
 
+class TenantRepositoryImportMetricRow(BaseModel):
+    """One recorded catalog import from a registered Git repository."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    path: str
+    branch: str
+    blob_sha: Optional[str] = None
+    created_at: str
+    project_id: str
+    project_name: str
+    project_slug: str
+    catalog_version_label: str
+    version_uuid: str
+    imported_by: Optional[str] = None
+    imported_by_name: Optional[str] = None
+    imported_by_email: Optional[str] = None
+
+
+class TenantRepositoryImportStats30d(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    total_imports: int = Field(serialization_alias="totalImports")
+    distinct_projects: int = Field(serialization_alias="distinctProjects")
+
+
+class TenantRepositoryImportsResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    imports: List[TenantRepositoryImportMetricRow]
+    stats30d: TenantRepositoryImportStats30d
+
+
 # --- CLI / session tenant discovery (#3198) ---
 
 

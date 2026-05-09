@@ -67,10 +67,6 @@ function buildDefaultImportEngineDeps(): ImportEngineDeps {
       checkPlanForNewVersion: async (userId, client) =>
         planEntitlements.getPlanBlockMessageForNewVersion(userId, client),
     }),
-    recordRepositoryImport: async link => {
-      const { recordTenantRepositoryImport } = nodeRequire('../../../objectified-ui/lib/db/repository-import-metrics');
-      await recordTenantRepositoryImport(link);
-    },
     permanentDeleteProject: async projectId => {
       const { permanentDeleteProject } = nodeRequire('../../../objectified-ui/lib/db/helper');
       const raw = await permanentDeleteProject(projectId);

@@ -86,6 +86,49 @@ def test_get_repository_not_found():
     assert r.status_code == 404
 
 
+def test_list_repository_imports_ok():
+    rid = _LIST_ROW["id"]
+    sample_import = {
+        "id": "aa0e8400-e29b-41d4-a716-446655440011",
+        "path": "openapi/petstore.yaml",
+        "branch": "main",
+        "blob_sha": "abc123",
+        "created_at": "2026-05-01 12:00:00",
+        "project_id": "bb0e8400-e29b-41d4-a716-446655440012",
+        "project_name": "Petstore",
+        "project_slug": "petstore",
+        "catalog_version_label": "1.0.0",
+        "version_uuid": "cc0e8400-e29b-41d4-a716-446655440013",
+        "imported_by": _USER_ID,
+        "imported_by_name": "Tester",
+        "imported_by_email": "t@example.com",
+    }
+    with patch("app.tenant_repositories_routes.db") as mdb:
+        mdb.get_tenant_repository.return_value = _LIST_ROW
+        mdb.list_tenant_repository_imports_for_repository.return_value = [sample_import]
+        mdb.tenant_repository_import_stats_last_30_days.return_value = {
+            "total_imports": 3,
+            "distinct_projects": 2,
+        }
+        r = client.get(f"/v1/tenants/acme/repositories/{rid}/imports?limit=50")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["success"] is True
+    assert len(body["imports"]) == 1
+    assert body["imports"][0]["path"] == "openapi/petstore.yaml"
+    assert body["imports"][0]["project_slug"] == "petstore"
+    assert body["stats30d"]["totalImports"] == 3
+    assert body["stats30d"]["distinctProjects"] == 2
+    mdb.list_tenant_repository_imports_for_repository.assert_called_once_with(_TENANT_ID, rid, 50)
+
+
+def test_list_repository_imports_not_found():
+    with patch("app.tenant_repositories_routes.db") as mdb:
+        mdb.get_tenant_repository.return_value = None
+        r = client.get(f"/v1/tenants/acme/repositories/{_LIST_ROW['id']}/imports")
+    assert r.status_code == 404
+
+
 def test_create_public_url_ok():
     meta = {
         "provider": "github",

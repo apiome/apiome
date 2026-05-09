@@ -25,6 +25,9 @@ from .models import (
     TenantRepositoryFileRow,
     TenantRepositoryFilesListResponse,
     TenantRepositoryGetResponse,
+    TenantRepositoryImportMetricRow,
+    TenantRepositoryImportsResponse,
+    TenantRepositoryImportStats30d,
     TenantRepositoryRecord,
     TenantRepositoriesListResponse,
 )
@@ -191,6 +194,33 @@ async def get_tenant_repository(
     if not row:
         raise HTTPException(status_code=404, detail="repository not found")
     return TenantRepositoryGetResponse(success=True, repository=_row_to_record(row))
+
+
+@router.get(
+    "/{tenant_slug}/repositories/{repository_id}/imports",
+    response_model=TenantRepositoryImportsResponse,
+)
+async def list_tenant_repository_import_metrics(
+    tenant_slug: str,
+    repository_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+    limit: int = 100,
+) -> TenantRepositoryImportsResponse:
+    """Recent catalog imports and 30-day stats for Map & Import dashboard (#3313)."""
+    _ = tenant_slug
+    tenant_id = str(auth_data["tenant_id"])
+    rid = str(repository_id)
+    row = db.get_tenant_repository(tenant_id, rid)
+    if not row:
+        raise HTTPException(status_code=404, detail="repository not found")
+    lim = min(max(limit, 1), 200)
+    imports_raw = db.list_tenant_repository_imports_for_repository(tenant_id, rid, lim)
+    stats_raw = db.tenant_repository_import_stats_last_30_days(tenant_id, rid)
+    return TenantRepositoryImportsResponse(
+        success=True,
+        imports=[TenantRepositoryImportMetricRow(**r) for r in imports_raw],
+        stats30d=TenantRepositoryImportStats30d(**stats_raw),
+    )
 
 
 @router.get(

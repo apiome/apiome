@@ -8,6 +8,7 @@ We continue to improve the platform based on your feedback with improvements and
 - MCP service is now live
 
 ## REST
+- **`objectified-rest`**: **`GET /v1/tenants/{slug}/repositories/{id}/imports`** returns recent catalog imports and 30-day stats; **`objectified-ui`** proxies **`/api/repositories/{id}/imports`** to REST and removes duplicated **`lib/db/repository-import-metrics`** (#3313).
 - **`objectified-ui`**: Projects → Import, repository Map & Import, and related panels call spec-import jobs through **`/api/imports`** Next.js route handlers (session JWT → **`/v1/imports/{tenant_slug}`** GET/POST and commit/cancel/rollback); removed in-process **`lib/db/import-actions`** wrappers (#3312).
 - **`objectified-rest`**: import orchestrator (`import_orchestrator.py`) — FastAPI startup workers claim `queued` jobs, spawn **`objectified-importer`** (`OBJECTIFIED_IMPORT_RUNNER_CMD` or `node …/bin/run.js`), stream NDJSON into `import_jobs`, enforce tenant/total concurrency caps, stale-job recovery, cancel via **SIGTERM** when the row is **canceled**, optional standalone **`python -m app.import_runner`**; **`OBJECTIFIED_IMPORT_WORKERS`** defaults off in tests (**`0`** via pytest); production sets workers + caps (#3307).
 - **`objectified-rest`**: `/v1/imports/{tenant_slug}` spec-import jobs API (POST queue + optional **Idempotency-Key**, GET status with weak **ETag**, commit / cancel / rollback), workflow-audit on transitions, DB migration for idempotency keys; **`objectified-cli`** codegen updated (#3306).
