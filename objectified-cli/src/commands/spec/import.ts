@@ -636,7 +636,12 @@ export default class SpecImport extends BaseCommand {
       try {
         createdProject = await this.api.createProject(tenant, createBody);
       } catch (e) {
-        if (e instanceof ObjectifiedCliError && e.exitCode === EXIT_CODES.CONFLICT) {
+        if (
+          e instanceof ObjectifiedCliError &&
+          e.exitCode === EXIT_CODES.CONFLICT &&
+          /\bslug\b/i.test(e.message) &&
+          /\balready exists\b|\balready in use\b/i.test(e.message)
+        ) {
           throw new ObjectifiedCliError({
             message: `Project slug '${mergedSlug}' is already in use for this tenant.`,
             exitCode: EXIT_CODES.CONFLICT,

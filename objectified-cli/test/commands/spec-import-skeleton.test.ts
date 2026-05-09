@@ -78,6 +78,7 @@ describe("spec import skeleton (#3308)", () => {
   it("new project: POST project + POST import + poll (snapshot stdout, #3309)", async () => {
     const projId = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
     const jobId = "55555555-5555-5555-5555-555555555555";
+    const projectRouteMethods: string[] = [];
 
     const server = http.createServer((req, res) => {
       void (async () => {
@@ -93,6 +94,7 @@ describe("spec import skeleton (#3308)", () => {
           return;
         }
         if (req.method === "POST" && url.pathname === "/v1/projects/acme") {
+          projectRouteMethods.push(req.method);
           const raw = await readBody(req);
           const body = JSON.parse(raw) as {
             name?: string;
@@ -120,6 +122,7 @@ describe("spec import skeleton (#3308)", () => {
         }
 
         if (req.method === "POST" && url.pathname === "/v1/imports/acme") {
+          projectRouteMethods.push(req.method);
           const raw = await readBody(req);
           const body = JSON.parse(raw) as {
             sourceKind?: string;
@@ -186,6 +189,7 @@ describe("spec import skeleton (#3308)", () => {
       ]);
       expect(result.code).toBe(0);
       expect(result.stderr.trim()).toBe("");
+      expect(projectRouteMethods).toEqual(["POST", "POST"]);
       expect(result.stdout).toMatchSnapshot();
     } finally {
       server.closeAllConnections?.();
