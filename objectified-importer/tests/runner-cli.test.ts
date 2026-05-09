@@ -155,7 +155,7 @@ describe('runner mocked engine', () => {
     const { stream: stdout, getText } = collectWritable();
     const runPromise = runImportWithEngine(envelope.envelope, stdout, process.stderr, engine);
     await new Promise((r) => setTimeout(r, 10));
-    process.kill(process.pid, 'SIGTERM');
+    process.emit('SIGTERM');
 
     const code = await runPromise;
     expect(code).toBe(0);

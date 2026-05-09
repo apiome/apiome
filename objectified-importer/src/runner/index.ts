@@ -133,7 +133,10 @@ async function streamUntilTerminal(engine: ImportEngine, jobId: string, stdout: 
         emittedEventOrder.push(ev.id);
         while (emittedEventOrder.length > EMITTED_EVENT_IDS_LIMIT) {
           const evictedId = emittedEventOrder.shift();
-          emittedEventIds.delete(evictedId!);
+          if (evictedId === undefined) {
+            continue;
+          }
+          emittedEventIds.delete(evictedId);
         }
         await writeNdjsonLine(stdout, { type: 'event', event: ev });
         observedOutput = true;
