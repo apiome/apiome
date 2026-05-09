@@ -33,6 +33,7 @@ from .change_report_routes import router as change_report_router
 from .version_change_report_routes import router as version_change_report_router
 from .change_report_template_routes import router as change_report_template_router
 from .tenant_repositories_routes import router as tenant_repositories_router
+from .imports_routes import router as imports_router
 from .tenants_session_routes import router as tenants_session_router
 from .browse_public_routes import router as browse_public_router
 
@@ -40,7 +41,7 @@ from .browse_public_routes import router as browse_public_router
 app = FastAPI(
     title="Objectified REST API",
     description="REST API for serving OpenAPI specifications from the Objectified database",
-    version="1.0.46"
+    version="1.0.61"
 )
 
 
@@ -111,6 +112,7 @@ app.include_router(version_change_report_router)
 app.include_router(change_report_template_router)
 app.include_router(tenants_session_router)
 app.include_router(tenant_repositories_router)
+app.include_router(imports_router)
 
 
 _webhook_delivery_task: asyncio.Task | None = None
@@ -291,7 +293,14 @@ async def root():
                 "parameters": "/v1/paths/{tenant-slug}/{version-id}/{path-id}/parameters",
                 "request_bodies": "/v1/paths/{tenant-slug}/{version-id}/{path-id}/request-bodies",
                 "responses": "/v1/paths/{tenant-slug}/{version-id}/{path-id}/responses"
-            }
+            },
+            "imports": {
+                "create": "POST /v1/imports/{tenant-slug}",
+                "status": "GET /v1/imports/{tenant-slug}/{job-id}",
+                "commit": "POST /v1/imports/{tenant-slug}/{job-id}/commit",
+                "cancel": "POST /v1/imports/{tenant-slug}/{job-id}/cancel",
+                "rollback": "POST /v1/imports/{tenant-slug}/{job-id}/rollback",
+            },
         }
     }
 

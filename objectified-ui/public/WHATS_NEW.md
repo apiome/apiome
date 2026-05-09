@@ -7,6 +7,9 @@ We continue to improve the platform based on your feedback with improvements and
 ## MCP
 - MCP service is now live
 
+## REST
+- **`objectified-rest`**: `/v1/imports/{tenant_slug}` spec-import jobs API (POST queue + optional **Idempotency-Key**, GET status with weak **ETag**, commit / cancel / rollback), workflow-audit on transitions, DB migration for idempotency keys; **`objectified-cli`** codegen updated (#3306).
+
 ## CLI
 - **`objectified-importer`**: headless NDJSON sidecar for REST orchestration (`objectified-importer-run` / `objectified-importer/bin/run.js`): one JSON envelope on stdin (`schemaVersion`, orchestrator `jobId`, `ImportJobInput`, Postgres `dbConfig`), NDJSON `event` / `progress` / `result` / `error` lines on stdout (logs on stderr); SIGTERM/SIGINT calls `cancelImport` and exits **0** with `result.state` **`canceled`**; unsupported `schemaVersion` exits **7** with a single error line; `yarn build` emits `dist/run-cli.mjs` (esbuild) for reliable Node resolution (#3304).
 - **`objectified-cli`**: `objectified schema swagger <tenant>/<project>/<version>` opens hosted Swagger UI (`GET /v1/swagger/…`) in the default browser when stdout is a TTY and neither `--output` nor `--format` is set; global `--json` (or non-TTY stdout) skips that default and emits the bundle for piping; `--open` forces browser launch; `--output` / explicit `--format` downloads the published OpenAPI bundle from `GET /v1/schema/…` (YAML converted client-side like `schema fetch`); URL uses the active `--base-url` host (#3248).

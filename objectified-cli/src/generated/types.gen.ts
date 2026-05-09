@@ -20,53 +20,6 @@ export type BrowseDirectoryStats = {
 };
 
 /**
- * BrowsePublicTenantRow
- * One tenant row in the public browse directory.
- */
-export type BrowsePublicTenantRow = {
-    /**
-     * Slug
-     */
-    slug: string;
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Project Count
-     */
-    project_count: number;
-    /**
-     * Published Versions
-     */
-    published_versions: number;
-    /**
-     * Latest Version
-     */
-    latest_version?: string | null;
-    /**
-     * Latest Activity At
-     */
-    latest_activity_at?: string | null;
-};
-
-/**
- * BrowsePublicTenantsResponse
- * Public tenant directory for CLI and integrations (no authentication).
- */
-export type BrowsePublicTenantsResponse = {
-    directory_stats: BrowseDirectoryStats;
-    /**
-     * Tenants
-     */
-    tenants: Array<BrowsePublicTenantRow>;
-    /**
-     * Filtered Count
-     */
-    filtered_count: number;
-};
-
-/**
  * BrowsePublicProjectRow
  * One project row for public browse (per tenant).
  */
@@ -114,6 +67,53 @@ export type BrowsePublicProjectsResponse = {
      * Projects
      */
     projects: Array<BrowsePublicProjectRow>;
+    /**
+     * Filtered Count
+     */
+    filtered_count: number;
+};
+
+/**
+ * BrowsePublicTenantRow
+ * One tenant row in the public browse directory.
+ */
+export type BrowsePublicTenantRow = {
+    /**
+     * Slug
+     */
+    slug: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Project Count
+     */
+    project_count: number;
+    /**
+     * Published Versions
+     */
+    published_versions: number;
+    /**
+     * Latest Version
+     */
+    latest_version?: string | null;
+    /**
+     * Latest Activity At
+     */
+    latest_activity_at?: string | null;
+};
+
+/**
+ * BrowsePublicTenantsResponse
+ * Public tenant directory for CLI and integrations (no authentication).
+ */
+export type BrowsePublicTenantsResponse = {
+    directory_stats: BrowseDirectoryStats;
+    /**
+     * Tenants
+     */
+    tenants: Array<BrowsePublicTenantRow>;
     /**
      * Filtered Count
      */
@@ -642,6 +642,202 @@ export type HttpValidationError = {
      */
     detail?: Array<ValidationError>;
 };
+
+/**
+ * ImportJobCreateRequest
+ * REST body for POST /v1/imports/{tenant_slug} (mirrors importer ImportJobInput minus tenant/user).
+ */
+export type ImportJobCreateRequest = {
+    sourceKind: ImportSourceKind;
+    /**
+     * Document
+     */
+    document: {
+        [key: string]: unknown;
+    };
+    project: ImportJobProjectInput;
+    version: ImportJobVersionInput;
+    /**
+     * Options
+     */
+    options?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Existingprojectid
+     */
+    existingProjectId?: string | null;
+    repositorySource?: ImportJobRepositorySource | null;
+};
+
+/**
+ * ImportJobError
+ */
+export type ImportJobError = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Context
+     */
+    context?: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * ImportJobProgress
+ */
+export type ImportJobProgress = {
+    /**
+     * Phase
+     */
+    phase: string;
+    /**
+     * Total
+     */
+    total?: number;
+    /**
+     * Completed
+     */
+    completed?: number;
+    /**
+     * Currentitem
+     */
+    currentItem?: string | null;
+};
+
+/**
+ * ImportJobProjectInput
+ */
+export type ImportJobProjectInput = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Slug
+     */
+    slug: string;
+    /**
+     * Description
+     */
+    description?: string | null;
+};
+
+/**
+ * ImportJobRepositorySource
+ */
+export type ImportJobRepositorySource = {
+    /**
+     * Repositoryid
+     */
+    repositoryId: string;
+    /**
+     * Branch
+     */
+    branch: string;
+    /**
+     * Path
+     */
+    path: string;
+    /**
+     * Blobsha
+     */
+    blobSha?: string | null;
+};
+
+/**
+ * ImportJobResponse
+ * Unified import job envelope for POST create and GET status (#3306).
+ */
+export type ImportJobResponse = {
+    /**
+     * Jobid
+     */
+    jobId: string;
+    /**
+     * Tenantid
+     */
+    tenantId: string;
+    /**
+     * Projectid
+     */
+    projectId?: string | null;
+    /**
+     * State
+     */
+    state: string;
+    /**
+     * Percent
+     */
+    percent: number;
+    progress?: ImportJobProgress | null;
+    /**
+     * Events
+     */
+    events?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Summary
+     */
+    summary?: {
+        [key: string]: unknown;
+    } | null;
+    result?: ImportJobResult | null;
+    error?: ImportJobError | null;
+    /**
+     * Createdat
+     */
+    createdAt: string;
+    /**
+     * Updatedat
+     */
+    updatedAt: string;
+    /**
+     * Finishedat
+     */
+    finishedAt?: string | null;
+};
+
+/**
+ * ImportJobResult
+ */
+export type ImportJobResult = {
+    /**
+     * Projectid
+     */
+    projectId?: string | null;
+    /**
+     * Versionid
+     */
+    versionId?: string | null;
+};
+
+/**
+ * ImportJobVersionInput
+ */
+export type ImportJobVersionInput = {
+    /**
+     * Versionid
+     */
+    versionId: string;
+    /**
+     * Description
+     */
+    description?: string | null;
+};
+
+/**
+ * ImportSourceKind
+ */
+export type ImportSourceKind = 'openapi' | 'swagger' | 'arazzo';
 
 /**
  * LinkOperationRequest
@@ -3425,18 +3621,6 @@ export type ListPublicBrowseProjectsV1BrowseTenantsTenantSlugProjectsGetData = {
 
 export type ListPublicBrowseProjectsV1BrowseTenantsTenantSlugProjectsGetErrors = {
     /**
-     * Unauthorized — missing or invalid credentials
-     */
-    401: unknown;
-    /**
-     * Forbidden — caller lacks access to this tenant
-     */
-    403: unknown;
-    /**
-     * Tenant not found
-     */
-    404: unknown;
-    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -3486,18 +3670,6 @@ export type ListPublicBrowseVersionsV1BrowseTenantsTenantSlugProjectsProjectSlug
 };
 
 export type ListPublicBrowseVersionsV1BrowseTenantsTenantSlugProjectsProjectSlugVersionsGetErrors = {
-    /**
-     * Unauthorized — missing or invalid credentials
-     */
-    401: unknown;
-    /**
-     * Forbidden — caller lacks access to this tenant
-     */
-    403: unknown;
-    /**
-     * Tenant or project not found
-     */
-    404: unknown;
     /**
      * Validation Error
      */
@@ -6008,10 +6180,6 @@ export type PublishVersionV1VersionsTenantSlugProjectIdVersionRecordIdPublishPos
 };
 
 export type PublishVersionV1VersionsTenantSlugProjectIdVersionRecordIdPublishPostErrors = {
-    /**
-     * Conflict — breaking compatibility change detected when allowBreaking is false
-     */
-    409: HttpValidationError;
     /**
      * Validation Error
      */
@@ -9464,18 +9632,6 @@ export type VerifyTenantAccessV1TenantsTenantSlugHeadData = {
 
 export type VerifyTenantAccessV1TenantsTenantSlugHeadErrors = {
     /**
-     * Unauthorized — missing or invalid credentials
-     */
-    401: unknown;
-    /**
-     * Forbidden — caller lacks access to this tenant
-     */
-    403: unknown;
-    /**
-     * Tenant not found
-     */
-    404: unknown;
-    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -9793,6 +9949,250 @@ export type GetTenantRepositoryFileContentV1TenantsTenantSlugRepositoriesReposit
 };
 
 export type GetTenantRepositoryFileContentV1TenantsTenantSlugRepositoriesRepositoryIdFilesFileIdContentGetResponse = GetTenantRepositoryFileContentV1TenantsTenantSlugRepositoriesRepositoryIdFilesFileIdContentGetResponses[keyof GetTenantRepositoryFileContentV1TenantsTenantSlugRepositoriesRepositoryIdFilesFileIdContentGetResponses];
+
+export type CreateImportJobV1ImportsTenantSlugPostData = {
+    body: ImportJobCreateRequest;
+    headers?: {
+        /**
+         * Idempotency-Key
+         */
+        'Idempotency-Key'?: string | null;
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Tenant Slug
+         */
+        tenant_slug: string;
+    };
+    query?: never;
+    url: '/v1/imports/{tenant_slug}';
+};
+
+export type CreateImportJobV1ImportsTenantSlugPostErrors = {
+    /**
+     * Invalid body or headers
+     */
+    400: unknown;
+    /**
+     * Tenant access denied
+     */
+    403: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateImportJobV1ImportsTenantSlugPostError = CreateImportJobV1ImportsTenantSlugPostErrors[keyof CreateImportJobV1ImportsTenantSlugPostErrors];
+
+export type CreateImportJobV1ImportsTenantSlugPostResponses = {
+    /**
+     * Existing job for Idempotency-Key (replay within 24h)
+     */
+    200: unknown;
+    /**
+     * Job created (queued)
+     */
+    201: ImportJobResponse;
+};
+
+export type CreateImportJobV1ImportsTenantSlugPostResponse = CreateImportJobV1ImportsTenantSlugPostResponses[keyof CreateImportJobV1ImportsTenantSlugPostResponses];
+
+export type GetImportJobV1ImportsTenantSlugJobIdGetData = {
+    body?: never;
+    headers?: {
+        /**
+         * If-None-Match
+         */
+        'If-None-Match'?: string | null;
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Tenant Slug
+         */
+        tenant_slug: string;
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/v1/imports/{tenant_slug}/{job_id}';
+};
+
+export type GetImportJobV1ImportsTenantSlugJobIdGetErrors = {
+    /**
+     * Job not found for tenant
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetImportJobV1ImportsTenantSlugJobIdGetError = GetImportJobV1ImportsTenantSlugJobIdGetErrors[keyof GetImportJobV1ImportsTenantSlugJobIdGetErrors];
+
+export type GetImportJobV1ImportsTenantSlugJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ImportJobResponse;
+};
+
+export type GetImportJobV1ImportsTenantSlugJobIdGetResponse = GetImportJobV1ImportsTenantSlugJobIdGetResponses[keyof GetImportJobV1ImportsTenantSlugJobIdGetResponses];
+
+export type CommitImportJobV1ImportsTenantSlugJobIdCommitPostData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Tenant Slug
+         */
+        tenant_slug: string;
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/v1/imports/{tenant_slug}/{job_id}/commit';
+};
+
+export type CommitImportJobV1ImportsTenantSlugJobIdCommitPostErrors = {
+    /**
+     * Invalid state for commit (need pending-approval)
+     */
+    409: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CommitImportJobV1ImportsTenantSlugJobIdCommitPostError = CommitImportJobV1ImportsTenantSlugJobIdCommitPostErrors[keyof CommitImportJobV1ImportsTenantSlugJobIdCommitPostErrors];
+
+export type CommitImportJobV1ImportsTenantSlugJobIdCommitPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ImportJobResponse;
+};
+
+export type CommitImportJobV1ImportsTenantSlugJobIdCommitPostResponse = CommitImportJobV1ImportsTenantSlugJobIdCommitPostResponses[keyof CommitImportJobV1ImportsTenantSlugJobIdCommitPostResponses];
+
+export type CancelImportJobV1ImportsTenantSlugJobIdCancelPostData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Tenant Slug
+         */
+        tenant_slug: string;
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/v1/imports/{tenant_slug}/{job_id}/cancel';
+};
+
+export type CancelImportJobV1ImportsTenantSlugJobIdCancelPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CancelImportJobV1ImportsTenantSlugJobIdCancelPostError = CancelImportJobV1ImportsTenantSlugJobIdCancelPostErrors[keyof CancelImportJobV1ImportsTenantSlugJobIdCancelPostErrors];
+
+export type CancelImportJobV1ImportsTenantSlugJobIdCancelPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ImportJobResponse;
+};
+
+export type CancelImportJobV1ImportsTenantSlugJobIdCancelPostResponse = CancelImportJobV1ImportsTenantSlugJobIdCancelPostResponses[keyof CancelImportJobV1ImportsTenantSlugJobIdCancelPostResponses];
+
+export type RollbackImportJobV1ImportsTenantSlugJobIdRollbackPostData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Tenant Slug
+         */
+        tenant_slug: string;
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/v1/imports/{tenant_slug}/{job_id}/rollback';
+};
+
+export type RollbackImportJobV1ImportsTenantSlugJobIdRollbackPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RollbackImportJobV1ImportsTenantSlugJobIdRollbackPostError = RollbackImportJobV1ImportsTenantSlugJobIdRollbackPostErrors[keyof RollbackImportJobV1ImportsTenantSlugJobIdRollbackPostErrors];
+
+export type RollbackImportJobV1ImportsTenantSlugJobIdRollbackPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ImportJobResponse;
+};
+
+export type RollbackImportJobV1ImportsTenantSlugJobIdRollbackPostResponse = RollbackImportJobV1ImportsTenantSlugJobIdRollbackPostResponses[keyof RollbackImportJobV1ImportsTenantSlugJobIdRollbackPostResponses];
 
 export type RootGetData = {
     body?: never;

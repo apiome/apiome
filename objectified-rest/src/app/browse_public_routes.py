@@ -143,7 +143,15 @@ async def list_public_browse_tenants(
     )
 
 
-@router.get("/tenants/{tenant_slug}/projects", response_model=BrowsePublicProjectsResponse)
+@router.get(
+    "/tenants/{tenant_slug}/projects",
+    response_model=BrowsePublicProjectsResponse,
+    responses={
+        401: {"description": "Missing or invalid authentication credentials"},
+        403: {"description": "Authenticated user does not belong to this tenant"},
+        404: {"description": "Tenant not found"},
+    },
+)
 async def list_public_browse_projects(
     tenant_slug: str,
     search: str | None = Query(
@@ -207,7 +215,15 @@ async def list_public_browse_projects(
     )
 
 
-@router.get("/tenants/{tenant_slug}/projects/{project_slug}/versions", response_model=BrowsePublicVersionsResponse)
+@router.get(
+    "/tenants/{tenant_slug}/projects/{project_slug}/versions",
+    response_model=BrowsePublicVersionsResponse,
+    responses={
+        401: {"description": "Missing or invalid authentication credentials"},
+        403: {"description": "Authenticated user does not belong to this tenant"},
+        404: {"description": "Tenant or project not found"},
+    },
+)
 async def list_public_browse_versions(
     tenant_slug: str,
     project_slug: str,

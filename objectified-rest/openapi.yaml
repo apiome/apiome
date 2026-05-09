@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Objectified REST API
   description: REST API for serving OpenAPI specifications from the Objectified database
-  version: 1.0.60
+  version: 1.0.61
 paths:
   /v1/browse/tenants:
     get:
@@ -53,10 +53,7 @@ paths:
     get:
       tags:
       - browse
-      summary: List Public Browse Projects For Tenant
-      description: 'Published-public projects for anonymous callers (browse parity). When Authorization
-        or X-API-Key proves tenant membership, private projects are included and counts reflect all
-        published versions.'
+      summary: List Public Browse Projects
       operationId: list_public_browse_projects_v1_browse_tenants__tenant_slug__projects_get
       parameters:
       - name: tenant_slug
@@ -90,11 +87,12 @@ paths:
         required: false
         schema:
           type: boolean
-          description: Only include projects with at least one published version (visibility rules
-            apply).
+          description: Only include projects with at least one published version (visibility
+            rules apply).
           default: false
           title: Has Published
-        description: Only include projects with at least one published version (visibility rules apply).
+        description: Only include projects with at least one published version (visibility
+          rules apply).
       - name: authorization
         in: header
         required: false
@@ -119,9 +117,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/BrowsePublicProjectsResponse'
         '401':
-          description: Unauthorized — missing or invalid credentials
+          description: Missing or invalid authentication credentials
         '403':
-          description: Forbidden — caller lacks access to this tenant
+          description: Authenticated user does not belong to this tenant
         '404':
           description: Tenant not found
         '422':
@@ -134,10 +132,7 @@ paths:
     get:
       tags:
       - browse
-      summary: List Public Browse Versions For Project
-      description: Published versions for anonymous callers (public visibility only). When Authorization
-        or X-API-Key proves tenant membership, all published versions for the project are listed. Sorted
-        by semantic version descending. Optional filters apply after the slice is resolved.
+      summary: List Public Browse Versions
       operationId: list_public_browse_versions_v1_browse_tenants__tenant_slug__projects__project_slug__versions_get
       parameters:
       - name: tenant_slug
@@ -160,9 +155,11 @@ paths:
           - type: string
             format: date-time
           - type: 'null'
-          description: Include only versions whose published_at is at or after this timestamp (ISO 8601).
+          description: Include only versions whose published_at is at or after this
+            timestamp (ISO 8601).
           title: Since
-        description: Include only versions whose published_at is at or after this timestamp (ISO 8601).
+        description: Include only versions whose published_at is at or after this
+          timestamp (ISO 8601).
       - name: authorization
         in: header
         required: false
@@ -187,9 +184,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/BrowsePublicVersionsResponse'
         '401':
-          description: Unauthorized — missing or invalid credentials
+          description: Missing or invalid authentication credentials
         '403':
-          description: Forbidden — caller lacks access to this tenant
+          description: Authenticated user does not belong to this tenant
         '404':
           description: Tenant or project not found
         '422':
@@ -3482,13 +3479,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VersionSchema'
-        '409':
-          description: Conflict — breaking compatibility change detected when allowBreaking
-            is false
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
         '422':
           description: Validation Error
           content:
@@ -7707,12 +7697,9 @@ paths:
       responses:
         '200':
           description: Successful Response
-        '401':
-          description: Unauthorized — missing or invalid credentials
-        '403':
-          description: Forbidden — caller lacks access to this tenant
-        '404':
-          description: Tenant not found
+          content:
+            application/json:
+              schema: {}
         '422':
           description: Validation Error
           content:
@@ -8128,6 +8115,292 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TenantRepositoryFileContentResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/imports/{tenant_slug}:
+    post:
+      tags:
+      - imports
+      summary: Create Import Job
+      description: 'Queue a new import job (``queued``). Optional ``Idempotency-Key``:
+        same tenant + key within 24h
+
+        returns the existing job with **200** instead of creating a duplicate.'
+      operationId: create_import_job_v1_imports__tenant_slug__post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportJobCreateRequest'
+      responses:
+        '201':
+          description: Job created (queued)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJobResponse'
+        '200':
+          description: Existing job for Idempotency-Key (replay within 24h)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJobResponse'
+        '400':
+          description: Invalid body or headers
+        '403':
+          description: Tenant access denied
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/imports/{tenant_slug}/{job_id}:
+    get:
+      tags:
+      - imports
+      summary: Get Import Job
+      description: Return job status (events trimmed to the last 100). Supports weak
+        ETag and 304 Not Modified.
+      operationId: get_import_job_v1_imports__tenant_slug___job_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Job Id
+      - name: If-None-Match
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: If-None-Match
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJobResponse'
+        '304':
+          description: Not modified (If-None-Match)
+        '404':
+          description: Job not found for tenant
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/imports/{tenant_slug}/{job_id}/commit:
+    post:
+      tags:
+      - imports
+      summary: Commit Import Job
+      description: Promote ``pending-approval`` → ``committing`` (orchestrator completes
+        in T6).
+      operationId: commit_import_job_v1_imports__tenant_slug___job_id__commit_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Job Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJobResponse'
+        '409':
+          description: Invalid state for commit (need pending-approval)
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/imports/{tenant_slug}/{job_id}/cancel:
+    post:
+      tags:
+      - imports
+      summary: Cancel Import Job
+      description: Cancel a job that is not yet terminal.
+      operationId: cancel_import_job_v1_imports__tenant_slug___job_id__cancel_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Job Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJobResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/imports/{tenant_slug}/{job_id}/rollback:
+    post:
+      tags:
+      - imports
+      summary: Rollback Import Job
+      description: Roll back a **completed** job to ``rolled-back``.
+      operationId: rollback_import_job_v1_imports__tenant_slug___job_id__rollback_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Job Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJobResponse'
         '422':
           description: Validation Error
           content:
@@ -8625,58 +8898,6 @@ components:
       - version_count
       title: BrowseDirectoryStats
       description: Aggregate counts for published public specs (browse directory home).
-    BrowsePublicTenantRow:
-      properties:
-        slug:
-          type: string
-          title: Slug
-        name:
-          type: string
-          title: Name
-        project_count:
-          type: integer
-          title: Project Count
-        published_versions:
-          type: integer
-          title: Published Versions
-        latest_version:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Latest Version
-        latest_activity_at:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Latest Activity At
-      type: object
-      required:
-      - slug
-      - name
-      - project_count
-      - published_versions
-      title: BrowsePublicTenantRow
-      description: One tenant row in the public browse directory.
-    BrowsePublicTenantsResponse:
-      properties:
-        directory_stats:
-          $ref: '#/components/schemas/BrowseDirectoryStats'
-        tenants:
-          items:
-            $ref: '#/components/schemas/BrowsePublicTenantRow'
-          type: array
-          title: Tenants
-        filtered_count:
-          type: integer
-          title: Filtered Count
-      type: object
-      required:
-      - directory_stats
-      - tenants
-      - filtered_count
-      title: BrowsePublicTenantsResponse
-      description: Public tenant directory for CLI and integrations (no authentication).
     BrowsePublicProjectRow:
       properties:
         slug:
@@ -8733,8 +8954,60 @@ components:
       - projects
       - filtered_count
       title: BrowsePublicProjectsResponse
-      description: Published-public projects for a tenant (anonymous), or full tenant project list for
-        members.
+      description: Published-public projects for a tenant (anonymous), or full tenant
+        project list for members.
+    BrowsePublicTenantRow:
+      properties:
+        slug:
+          type: string
+          title: Slug
+        name:
+          type: string
+          title: Name
+        project_count:
+          type: integer
+          title: Project Count
+        published_versions:
+          type: integer
+          title: Published Versions
+        latest_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Latest Version
+        latest_activity_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Latest Activity At
+      type: object
+      required:
+      - slug
+      - name
+      - project_count
+      - published_versions
+      title: BrowsePublicTenantRow
+      description: One tenant row in the public browse directory.
+    BrowsePublicTenantsResponse:
+      properties:
+        directory_stats:
+          $ref: '#/components/schemas/BrowseDirectoryStats'
+        tenants:
+          items:
+            $ref: '#/components/schemas/BrowsePublicTenantRow'
+          type: array
+          title: Tenants
+        filtered_count:
+          type: integer
+          title: Filtered Count
+      type: object
+      required:
+      - directory_stats
+      - tenants
+      - filtered_count
+      title: BrowsePublicTenantsResponse
+      description: Public tenant directory for CLI and integrations (no authentication).
     BrowsePublicVersionRow:
       properties:
         id:
@@ -8807,7 +9080,8 @@ components:
       - versions
       - filtered_count
       title: BrowsePublicVersionsResponse
-      description: Published versions for browse parity (anonymous public slice or member-authenticated view).
+      description: Published versions for browse parity (anonymous public slice or
+        member-authenticated view).
     ChangeReportModel:
       properties:
         schemaVersion:
@@ -9283,6 +9557,229 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    ImportJobCreateRequest:
+      properties:
+        sourceKind:
+          $ref: '#/components/schemas/ImportSourceKind'
+        document:
+          additionalProperties: true
+          type: object
+          title: Document
+        project:
+          $ref: '#/components/schemas/ImportJobProjectInput'
+        version:
+          $ref: '#/components/schemas/ImportJobVersionInput'
+        options:
+          additionalProperties: true
+          type: object
+          title: Options
+        existingProjectId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Existingprojectid
+        repositorySource:
+          anyOf:
+          - $ref: '#/components/schemas/ImportJobRepositorySource'
+          - type: 'null'
+      type: object
+      required:
+      - sourceKind
+      - document
+      - project
+      - version
+      title: ImportJobCreateRequest
+      description: REST body for POST /v1/imports/{tenant_slug} (mirrors importer
+        ImportJobInput minus tenant/user).
+    ImportJobError:
+      properties:
+        code:
+          type: string
+          title: Code
+        message:
+          type: string
+          title: Message
+        context:
+          additionalProperties: true
+          type: object
+          title: Context
+      type: object
+      required:
+      - code
+      - message
+      title: ImportJobError
+    ImportJobProgress:
+      properties:
+        phase:
+          type: string
+          title: Phase
+        total:
+          type: integer
+          title: Total
+          default: 0
+        completed:
+          type: integer
+          title: Completed
+          default: 0
+        currentItem:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Currentitem
+      type: object
+      required:
+      - phase
+      title: ImportJobProgress
+    ImportJobProjectInput:
+      properties:
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      required:
+      - name
+      - slug
+      title: ImportJobProjectInput
+    ImportJobRepositorySource:
+      properties:
+        repositoryId:
+          type: string
+          title: Repositoryid
+        branch:
+          type: string
+          title: Branch
+        path:
+          type: string
+          title: Path
+        blobSha:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Blobsha
+      type: object
+      required:
+      - repositoryId
+      - branch
+      - path
+      title: ImportJobRepositorySource
+    ImportJobResponse:
+      properties:
+        jobId:
+          type: string
+          title: Jobid
+        tenantId:
+          type: string
+          title: Tenantid
+        projectId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Projectid
+        state:
+          $ref: '#/components/schemas/ImportJobState'
+        percent:
+          type: integer
+          title: Percent
+        progress:
+          anyOf:
+          - $ref: '#/components/schemas/ImportJobProgress'
+          - type: 'null'
+        events:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Events
+        summary:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Summary
+        result:
+          anyOf:
+          - $ref: '#/components/schemas/ImportJobResult'
+          - type: 'null'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ImportJobError'
+          - type: 'null'
+        createdAt:
+          type: string
+          title: Createdat
+        updatedAt:
+          type: string
+          title: Updatedat
+        finishedAt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Finishedat
+      type: object
+      required:
+      - jobId
+      - tenantId
+      - state
+      - percent
+      - createdAt
+      - updatedAt
+      title: ImportJobResponse
+      description: Unified import job envelope for POST create and GET status (#3306).
+    ImportJobResult:
+      properties:
+        projectId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Projectid
+        versionId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Versionid
+      type: object
+      title: ImportJobResult
+    ImportJobState:
+      type: string
+      enum:
+      - queued
+      - running
+      - pending-approval
+      - committing
+      - completed
+      - failed
+      - canceled
+      - rolled-back
+      title: ImportJobState
+    ImportJobVersionInput:
+      properties:
+        versionId:
+          type: string
+          title: Versionid
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      required:
+      - versionId
+      title: ImportJobVersionInput
+    ImportSourceKind:
+      type: string
+      enum:
+      - openapi
+      - swagger
+      - arazzo
+      title: ImportSourceKind
     LinkOperationRequest:
       properties:
         metadata:
@@ -11013,6 +11510,11 @@ components:
         type:
           type: string
           title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
       type: object
       required:
       - loc

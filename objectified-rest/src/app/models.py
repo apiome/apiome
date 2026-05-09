@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import StrEnum
 from pydantic import BaseModel, Field, AliasChoices, ConfigDict, model_validator
 from typing import Optional, Dict, Any, List, Union, Literal
 
@@ -2017,3 +2018,116 @@ class BrowsePublicVersionsResponse(BaseModel):
     project_name: str
     versions: List[BrowsePublicVersionRow]
     filtered_count: int
+
+
+class ImportSourceKind(StrEnum):
+    openapi = "openapi"
+    swagger = "swagger"
+    arazzo = "arazzo"
+
+
+class ImportJobState(StrEnum):
+    queued = "queued"
+    running = "running"
+    pending_approval = "pending-approval"
+    committing = "committing"
+    completed = "completed"
+    failed = "failed"
+    canceled = "canceled"
+    rolled_back = "rolled-back"
+
+
+class ImportJobProjectInput(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str
+    slug: str
+    description: Optional[str] = None
+
+
+class ImportJobVersionInput(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    version_id: str = Field(alias="versionId")
+    description: Optional[str] = None
+
+
+class ImportJobRepositorySource(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    repository_id: str = Field(alias="repositoryId")
+    branch: str
+    path: str
+    blob_sha: Optional[str] = Field(None, alias="blobSha")
+
+
+class ImportJobCreateRequest(BaseModel):
+    """REST body for POST /v1/imports/{tenant_slug} (mirrors importer ImportJobInput minus tenant/user)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    source_kind: ImportSourceKind = Field(alias="sourceKind")
+    document: Dict[str, Any]
+    project: ImportJobProjectInput
+    version: ImportJobVersionInput
+    options: Dict[str, Any] = Field(default_factory=dict)
+    existing_project_id: Optional[str] = Field(None, alias="existingProjectId")
+    repository_source: Optional[ImportJobRepositorySource] = Field(None, alias="repositorySource")
+
+
+class ImportJobProgress(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    phase: str
+    total: int = 0
+    completed: int = 0
+    current_item: Optional[str] = Field(
+        None,
+        alias="currentItem",
+        validation_alias=AliasChoices("currentItem", "current_item"),
+    )
+
+
+class ImportJobEvent(BaseModel):
+    """Single append-only import job event (extra keys allowed)."""
+
+    model_config = ConfigDict(extra="allow")
+
+
+class ImportJobSummary(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+
+class ImportJobError(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    code: str
+    message: str
+    context: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ImportJobResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    project_id: Optional[str] = Field(None, alias="projectId")
+    version_id: Optional[str] = Field(None, alias="versionId")
+
+
+class ImportJobResponse(BaseModel):
+    """Unified import job envelope for POST create and GET status (#3306)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    job_id: str = Field(alias="jobId")
+    tenant_id: str = Field(alias="tenantId")
+    project_id: Optional[str] = Field(None, alias="projectId")
+    state: ImportJobState
+    percent: int
+    progress: Optional[ImportJobProgress] = None
+    events: List[Dict[str, Any]] = Field(default_factory=list)
+    summary: Optional[Dict[str, Any]] = None
+    result: Optional[ImportJobResult] = None
+    error: Optional[ImportJobError] = None
+    created_at: str = Field(alias="createdAt")
+    updated_at: str = Field(alias="updatedAt")
+    finished_at: Optional[str] = Field(None, alias="finishedAt")

@@ -2526,6 +2526,173 @@ class Database:
             conn.rollback()
             _logger.warning("insert_workflow_audit failed: %s", e)
 
+    def resolve_import_job_created_by_user_id(
+        self, tenant_id: str, auth_method: Optional[str], user_id: Optional[str]
+    ) -> Optional[str]:
+        """JWT: authenticated user. API key: first tenant member (FK on import_jobs.created_by)."""
+        if auth_method == "jwt" and user_id:
+            return str(user_id)
+        rows = self.execute_query(
+            """
+            SELECT user_id::text AS user_id
+            FROM odb.tenant_users
+            WHERE tenant_id = %s
+            ORDER BY user_id ASC
+            LIMIT 1
+            """,
+            (tenant_id,),
+        )
+        return str(rows[0]["user_id"]) if rows else None
+
+    def find_import_job_by_idempotency_key(
+        self, tenant_id: str, idempotency_key: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return newest matching row created within the last 24 hours."""
+        rows = self.execute_query(
+            """
+            SELECT job_id::text AS job_id, tenant_id::text AS tenant_id,
+                   project_id::text AS project_id, state, source_kind,
+                   blob_sha, repository_source, input, events, progress, summary,
+                   result, percent, error, created_by::text AS created_by,
+                   created_at, updated_at, finished_at, expires_at, idempotency_key
+            FROM odb.import_jobs
+            WHERE tenant_id = %s
+              AND idempotency_key = %s
+              AND created_at > NOW() - INTERVAL '24 hours'
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (tenant_id, idempotency_key),
+        )
+        return rows[0] if rows else None
+
+    def get_import_job_row(self, tenant_id: str, job_id: str) -> Optional[Dict[str, Any]]:
+        rows = self.execute_query(
+            """
+            SELECT job_id::text AS job_id, tenant_id::text AS tenant_id,
+                   project_id::text AS project_id, state, source_kind,
+                   blob_sha, repository_source, input, events, progress, summary,
+                   result, percent, error, created_by::text AS created_by,
+                   created_at, updated_at, finished_at, expires_at, idempotency_key
+            FROM odb.import_jobs
+            WHERE tenant_id = %s AND job_id = %s
+            LIMIT 1
+            """,
+            (tenant_id, job_id),
+        )
+        return rows[0] if rows else None
+
+    def insert_import_job(
+        self,
+        *,
+        tenant_id: str,
+        project_id: Optional[str],
+        state: str,
+        source_kind: str,
+        input_payload: Dict[str, Any],
+        events: List[Any],
+        created_by: str,
+        blob_sha: Optional[str],
+        repository_source: Optional[Dict[str, Any]],
+        idempotency_key: Optional[str],
+        percent: int = 0,
+    ) -> Dict[str, Any]:
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO odb.import_jobs (
+                        tenant_id, project_id, state, source_kind,
+                        blob_sha, repository_source, input, events,
+                        percent, created_by, idempotency_key
+                    )
+                    VALUES (
+                        %s, %s, %s, %s,
+                        %s, %s::jsonb, %s::jsonb, %s::jsonb,
+                        %s, %s, %s
+                    )
+                    RETURNING job_id::text AS job_id, tenant_id::text AS tenant_id,
+                              project_id::text AS project_id, state, source_kind,
+                              blob_sha, repository_source, input, events, progress, summary,
+                              result, percent, error, created_by::text AS created_by,
+                              created_at, updated_at, finished_at, expires_at, idempotency_key
+                    """,
+                    (
+                        tenant_id,
+                        project_id,
+                        state,
+                        source_kind,
+                        blob_sha,
+                        Json(repository_source) if repository_source is not None else None,
+                        Json(input_payload),
+                        Json(events),
+                        percent,
+                        created_by,
+                        idempotency_key,
+                    ),
+                )
+                row = cursor.fetchone()
+                conn.commit()
+                return dict(row)
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def update_import_job_state(
+        self,
+        tenant_id: str,
+        job_id: str,
+        new_state: str,
+        *,
+        finished_at_now: bool = False,
+        expected_state: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        conn = self.connect()
+        _returning = (
+            "RETURNING job_id::text AS job_id, tenant_id::text AS tenant_id,"
+            "  project_id::text AS project_id, state, source_kind,"
+            "  blob_sha, repository_source, input, events, progress, summary,"
+            "  result, percent, error, created_by::text AS created_by,"
+            "  created_at, updated_at, finished_at, expires_at, idempotency_key"
+        )
+        # Build one of four concrete parameterised query strings depending on flags.
+        # None of the f-string interpolations below carry user input — they are all
+        # hardcoded SQL fragments so there is no SQL-injection risk.
+        if finished_at_now and expected_state is not None:
+            sql = (
+                "UPDATE odb.import_jobs SET state = %s, updated_at = NOW(), finished_at = NOW()"
+                " WHERE tenant_id = %s AND job_id = %s AND state = %s " + _returning
+            )
+            params: tuple = (new_state, tenant_id, job_id, expected_state)
+        elif finished_at_now:
+            sql = (
+                "UPDATE odb.import_jobs SET state = %s, updated_at = NOW(), finished_at = NOW()"
+                " WHERE tenant_id = %s AND job_id = %s " + _returning
+            )
+            params = (new_state, tenant_id, job_id)
+        elif expected_state is not None:
+            sql = (
+                "UPDATE odb.import_jobs SET state = %s, updated_at = NOW()"
+                " WHERE tenant_id = %s AND job_id = %s AND state = %s " + _returning
+            )
+            params = (new_state, tenant_id, job_id, expected_state)
+        else:
+            sql = (
+                "UPDATE odb.import_jobs SET state = %s, updated_at = NOW()"
+                " WHERE tenant_id = %s AND job_id = %s " + _returning
+            )
+            params = (new_state, tenant_id, job_id)
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(sql, params)
+                row = cursor.fetchone()
+                conn.commit()
+                return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
     def list_workflow_audit_for_version(
         self,
         version_id: str,
