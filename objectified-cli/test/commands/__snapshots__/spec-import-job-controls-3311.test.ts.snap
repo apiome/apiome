@@ -1,0 +1,243 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`spec import status / commit / cancel (#3311) > cancel: happy path (snapshot) 1`] = `
+"[ok] Canceled job 7c3d…aaaa. Transaction rolled back.
+"
+`;
+
+exports[`spec import status / commit / cancel (#3311) > commit: 409 surfaces REST detail and import hint (snapshot stderr) 1`] = `
+"✖ Conflict
+Reason: {"detail":"Import job is not pending approval (state=failed)."}
+Hint:   Commit requires state pending-approval; run \`objectified spec import status <job-id>\` to inspect.
+Exit code:  6
+"
+`;
+
+exports[`spec import status / commit / cancel (#3311) > commit: happy path (snapshot) 1`] = `
+"[ok] Committed job 7c3d…aaaa. Project payments-api now has draft revision v2.4.0.
+"
+`;
+
+exports[`spec import status / commit / cancel (#3311) > status: --json full job (snapshot) 1`] = `
+{
+  "createdAt": "2026-05-09T12:00:00.000Z",
+  "error": null,
+  "events": [
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-0",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-1",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-2",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-3",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-4",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-5",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-6",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-7",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-8",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-9",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-10",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-11",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-12",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-13",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-14",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-15",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-16",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-17",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-18",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-19",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-20",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-21",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-22",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-23",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-24",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-25",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-26",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-27",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-28",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-29",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-30",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-31",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-32",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-33",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-34",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-35",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-36",
+    },
+    {
+      "code": "STEP",
+      "level": "info",
+      "message": "event-37",
+    },
+  ],
+  "finishedAt": null,
+  "jobId": "7c3d2a1b-1111-2222-3333-e22aaaaaaaaaa",
+  "percent": 90,
+  "progress": {
+    "completed": 12,
+    "currentItem": null,
+    "phase": "verifying",
+    "total": 12,
+  },
+  "projectId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+  "result": null,
+  "state": "pending-approval",
+  "summary": {
+    "projectSlug": "payments-api",
+  },
+  "tenantId": "t1",
+  "updatedAt": "2026-05-09T12:00:04.000Z",
+}
+`;
+
+exports[`spec import status / commit / cancel (#3311) > status: GET 404 error path (snapshot stderr) 1`] = `
+"✖ Not found
+Reason: {"detail":"Import job not found."}
+Hint:   Check slugs, IDs, and tenant scope.
+Exit code:  5
+"
+`;

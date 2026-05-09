@@ -50,7 +50,7 @@ $ npm install -g objectified-cli
 $ objectified COMMAND
 running command...
 $ objectified (--version)
-objectified-cli/0.1.28 <platform> node-v<major.minor.patch>
+objectified-cli/0.1.29 <platform> node-v<major.minor.patch>
 $ objectified --help [COMMAND]
 USAGE
   $ objectified COMMAND
@@ -91,6 +91,9 @@ USAGE
 * [`objectified schema fetch REF`](#objectified-schema-fetch-ref)
 * [`objectified schema swagger REF`](#objectified-schema-swagger-ref)
 * [`objectified spec import FILE`](#objectified-spec-import-file)
+* [`objectified spec import cancel [JOBID]`](#objectified-spec-import-cancel-jobid)
+* [`objectified spec import commit [JOBID]`](#objectified-spec-import-commit-jobid)
+* [`objectified spec import status [JOBID]`](#objectified-spec-import-status-jobid)
 * [`objectified tenants info SLUG`](#objectified-tenants-info-slug)
 * [`objectified tenants list`](#objectified-tenants-list)
 * [`objectified tenants use [SLUG]`](#objectified-tenants-use-slug)
@@ -1120,6 +1123,12 @@ AUTH
 SEE ALSO
   objectified spec import
 
+  objectified spec import status
+
+  objectified spec import commit
+
+  objectified spec import cancel
+
   objectified docs errors
 
   objectified docs output
@@ -1639,6 +1648,173 @@ SEE ALSO
   objectified docs errors
 
   objectified docs spec-import
+```
+
+## `objectified spec import cancel [JOBID]`
+
+Cancel an import job that is not yet terminal (POST /v1/imports/{tenant_slug}/{job_id}/cancel)
+
+```
+USAGE
+  $ objectified spec import cancel [JOBID] [--api-key <value>] [--api-key-file <value>] [--base-url <value>] [--config
+    <value>] [--json] [--color] [--profile <value>] [--tenant <value>] [-q] [--verbose] [--last] [--yes]
+
+ARGUMENTS
+  [JOBID]  Import job UUID (optional when --last reads ~/.cache/objectified/last-import-job-<tenant>.txt)
+
+DESCRIPTION
+  Cancel an import job that is not yet terminal (POST /v1/imports/{tenant_slug}/{job_id}/cancel)
+
+EXAMPLES
+  $ objectified spec import cancel 7c3d2a1b-…-e22a
+
+  $ objectified spec import cancel --last --yes
+
+  $ objectified --json spec import cancel <job-id> --yes
+
+COMMON
+  --base-url=<value>  Root REST API URL.
+  --config=<value>    Path to config file (default: XDG config dir / Objectified AppData on Windows — see `objectified
+                      config path`).
+  --profile=<value>   Named credentials profile (OBJECTIFIED_PROFILE); falls back to default_profile in config.
+  --tenant=<value>    [env: OBJECTIFIED_TENANT] Tenant slug for this run only (overrides OBJECTIFIED_TENANT and config
+                      tenant_slug).
+
+OUTPUT
+  --[no-]color  Enable/disable ANSI colors (--no-color sets NO_COLOR; colors are off when stdout is not a TTY).
+      --[no-]json   Emit machine-readable JSON (OBJECTIFIED_JSON=1; auto-enabled when stdout is not a TTY).
+  -q, --quiet       Suppress non-error stdout (spinners, banners, tips).
+      --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
+
+AUTH
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
+                          persisted unless you run `auth login --api-key`.
+  --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
+
+OTHER
+  --last  Use the latest job id cached for this tenant after a successful spec import POST.
+  --yes   Skip interactive confirmation (required when stdin is not a TTY).
+
+SEE ALSO
+  objectified spec import status
+
+  objectified spec import commit
+
+  objectified spec import
+
+  objectified docs errors
+```
+
+## `objectified spec import commit [JOBID]`
+
+Commit a pending-approval import job (POST /v1/imports/{tenant_slug}/{job_id}/commit)
+
+```
+USAGE
+  $ objectified spec import commit [JOBID] [--api-key <value>] [--api-key-file <value>] [--base-url <value>] [--config
+    <value>] [--json] [--color] [--profile <value>] [--tenant <value>] [-q] [--verbose] [--last] [--yes]
+
+ARGUMENTS
+  [JOBID]  Import job UUID (optional when --last reads ~/.cache/objectified/last-import-job-<tenant>.txt)
+
+DESCRIPTION
+  Commit a pending-approval import job (POST /v1/imports/{tenant_slug}/{job_id}/commit)
+
+EXAMPLES
+  $ objectified spec import commit 7c3d2a1b-…-e22a
+
+  $ objectified spec import commit --last --yes
+
+  $ objectified --json spec import commit <job-id> --yes
+
+COMMON
+  --base-url=<value>  Root REST API URL.
+  --config=<value>    Path to config file (default: XDG config dir / Objectified AppData on Windows — see `objectified
+                      config path`).
+  --profile=<value>   Named credentials profile (OBJECTIFIED_PROFILE); falls back to default_profile in config.
+  --tenant=<value>    [env: OBJECTIFIED_TENANT] Tenant slug for this run only (overrides OBJECTIFIED_TENANT and config
+                      tenant_slug).
+
+OUTPUT
+  --[no-]color  Enable/disable ANSI colors (--no-color sets NO_COLOR; colors are off when stdout is not a TTY).
+      --[no-]json   Emit machine-readable JSON (OBJECTIFIED_JSON=1; auto-enabled when stdout is not a TTY).
+  -q, --quiet       Suppress non-error stdout (spinners, banners, tips).
+      --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
+
+AUTH
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
+                          persisted unless you run `auth login --api-key`.
+  --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
+
+OTHER
+  --last  Use the latest job id cached for this tenant after a successful spec import POST.
+  --yes   Skip interactive confirmation (required when stdin is not a TTY).
+
+SEE ALSO
+  objectified spec import status
+
+  objectified spec import cancel
+
+  objectified spec import
+
+  objectified docs errors
+```
+
+## `objectified spec import status [JOBID]`
+
+Show import job status (GET /v1/imports/{tenant_slug}/{job_id}); --watch polls until a terminal state
+
+```
+USAGE
+  $ objectified spec import status [JOBID] [--api-key <value>] [--api-key-file <value>] [--base-url <value>] [--config
+    <value>] [--json] [--color] [--profile <value>] [--tenant <value>] [-q] [--verbose] [--last] [--watch]
+
+ARGUMENTS
+  [JOBID]  Import job UUID (optional when --last reads ~/.cache/objectified/last-import-job-<tenant>.txt)
+
+DESCRIPTION
+  Show import job status (GET /v1/imports/{tenant_slug}/{job_id}); --watch polls until a terminal state
+
+EXAMPLES
+  $ objectified spec import status 7c3d2a1b-…-e22a
+
+  $ objectified spec import status --last
+
+  $ objectified --json spec import status --last
+
+  $ objectified spec import status --last --watch
+
+COMMON
+  --base-url=<value>  Root REST API URL.
+  --config=<value>    Path to config file (default: XDG config dir / Objectified AppData on Windows — see `objectified
+                      config path`).
+  --profile=<value>   Named credentials profile (OBJECTIFIED_PROFILE); falls back to default_profile in config.
+  --tenant=<value>    [env: OBJECTIFIED_TENANT] Tenant slug for this run only (overrides OBJECTIFIED_TENANT and config
+                      tenant_slug).
+
+OUTPUT
+  --[no-]color  Enable/disable ANSI colors (--no-color sets NO_COLOR; colors are off when stdout is not a TTY).
+      --[no-]json   Emit machine-readable JSON (OBJECTIFIED_JSON=1; auto-enabled when stdout is not a TTY).
+  -q, --quiet       Suppress non-error stdout (spinners, banners, tips).
+      --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
+
+AUTH
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
+                          persisted unless you run `auth login --api-key`.
+  --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
+
+OTHER
+  --last   Use the latest job id cached for this tenant after a successful spec import POST.
+  --watch  Re-poll every second until a terminal state (exit codes match spec import polling).
+
+SEE ALSO
+  objectified spec import
+
+  objectified spec import commit
+
+  objectified spec import cancel
+
+  objectified docs errors
 ```
 
 ## `objectified tenants info SLUG`

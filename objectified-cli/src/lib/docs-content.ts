@@ -88,6 +88,11 @@ SPEC IMPORT (CI)
 Command
   objectified spec import <file> … — POST /v1/imports/{tenant_slug}, poll GET …/{job_id} until a terminal state.
 
+Async job control
+  objectified spec import status [<job-id>] [--last] [--watch] — GET …/{job_id}; --last reads ~/.cache/objectified/last-import-job-<tenant>.txt (written after each successful import POST); --watch polls until a terminal state with the same exit semantics as import polling; global --json prints the full job object.
+  objectified spec import commit [<job-id>] [--last] [--yes] — POST …/{job_id}/commit; requires --yes when stdin is not a TTY (exit 6); invalid state (HTTP 409) exits 6 with the API message.
+  objectified spec import cancel [<job-id>] [--last] [--yes] — POST …/{job_id}/cancel; same confirmation rules as commit.
+
 Flags
   --dry-run
     Sets options.dryRun=true on the import body. Preview-only path from the engine: exits 0 with the would-be summary; pair with --json for a single JSON object on stdout (the summary payload).

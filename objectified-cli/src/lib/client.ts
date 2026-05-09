@@ -25,7 +25,9 @@ import type {
   WorkflowAuditPageResponse,
 } from "../generated/models.js";
 import {
+  cancelImportJobV1ImportsTenantSlugJobIdCancelPost,
   checkRevisionCompatibilityV1VersionsTenantSlugProjectIdCompatibilityPost,
+  commitImportJobV1ImportsTenantSlugJobIdCommitPost,
   createImportJobV1ImportsTenantSlugPost,
   createVersionTagV1VersionTagsTenantSlugProjectIdPost,
   createVersionV1VersionsTenantSlugProjectIdPost,
@@ -197,6 +199,8 @@ export type ObjectifiedApi = {
   }): Promise<BrowsePublicVersionsResponse>;
   createImportJob(tenantSlug: string, body: ImportJobCreateRequest): Promise<ImportJobResponse>;
   getImportJob(tenantSlug: string, jobId: string): Promise<ImportJobResponse>;
+  commitImportJob(tenantSlug: string, jobId: string): Promise<ImportJobResponse>;
+  cancelImportJob(tenantSlug: string, jobId: string): Promise<ImportJobResponse>;
   /** Raw GET /v1/schema/… for streaming or hashing (published OpenAPI bundle or single class). */
   fetchOpenApiPublishedSchema(opts: {
     tenantSlug: string;
@@ -1945,6 +1949,50 @@ export function createApiClient(options: CreateApiClientOptions): ObjectifiedApi
       return parseImportJobPayload(
         unwrapSdkGet(rawUnknown, lastRequestId, lastRetriesAttempted, requestMeta),
         "import job status",
+        lastRequestId,
+      );
+    },
+
+    async commitImportJob(tenantSlug: string, jobId: string): Promise<ImportJobResponse> {
+      let rawUnknown: unknown;
+      try {
+        rawUnknown = await commitImportJobV1ImportsTenantSlugJobIdCommitPost({
+          client: hey,
+          path: { tenant_slug: tenantSlug, job_id: jobId },
+          throwOnError: false,
+        });
+      } catch (e) {
+        if (e instanceof ObjectifiedCliError) throw e;
+        if (e !== null && typeof e === "object" && "code" in e) {
+          throw networkErrnoToCliError(e as NodeJS.ErrnoException);
+        }
+        throw e;
+      }
+      return parseImportJobPayload(
+        unwrapSdkGet(rawUnknown, lastRequestId, lastRetriesAttempted, requestMeta),
+        "import job commit",
+        lastRequestId,
+      );
+    },
+
+    async cancelImportJob(tenantSlug: string, jobId: string): Promise<ImportJobResponse> {
+      let rawUnknown: unknown;
+      try {
+        rawUnknown = await cancelImportJobV1ImportsTenantSlugJobIdCancelPost({
+          client: hey,
+          path: { tenant_slug: tenantSlug, job_id: jobId },
+          throwOnError: false,
+        });
+      } catch (e) {
+        if (e instanceof ObjectifiedCliError) throw e;
+        if (e !== null && typeof e === "object" && "code" in e) {
+          throw networkErrnoToCliError(e as NodeJS.ErrnoException);
+        }
+        throw e;
+      }
+      return parseImportJobPayload(
+        unwrapSdkGet(rawUnknown, lastRequestId, lastRetriesAttempted, requestMeta),
+        "import job cancel",
         lastRequestId,
       );
     },

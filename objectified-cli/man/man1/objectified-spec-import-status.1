@@ -1,23 +1,29 @@
-.TH OBJECTIFIED\-DOCS\-SPEC\-IMPORT 1 "" "" "User Commands"
+.TH OBJECTIFIED\-SPEC\-IMPORT\-STATUS 1 "" "" "User Commands"
 .SH NAME
-objectified docs spec-import \- Flags for CI pipelines: dry-run, review/hold, NDJSON streaming, reports, and exit codes.
+objectified spec import status \- Show import job status (GET /v1/imports/{tenant_slug}/{job_id}); --watch polls until a terminal state
 .SH DESCRIPTION
 .nf
 USAGE
-  $ objectified docs spec-import [--api-key <value>] [--api-key-file
+  $ objectified spec import status [JOBID] [--api-key <value>] [--api-key-file
     <value>] [--base-url <value>] [--config <value>] [--json] [--color]
-    [--profile <value>] [--tenant <value>] [-q] [--verbose]
+    [--profile <value>] [--tenant <value>] [-q] [--verbose] [--last] [--watch]
+
+ARGUMENTS
+  [JOBID]  Import job UUID (optional when --last reads
+           ~/.cache/objectified/last-import-job-<tenant>.txt)
 
 DESCRIPTION
-  Flags for CI pipelines: dry-run, review/hold, NDJSON streaming, reports, and
-  exit codes.
+  Show import job status (GET /v1/imports/{tenant_slug}/{job_id}); --watch
+  polls until a terminal state
 
 EXAMPLES
-  $ objectified docs spec-import
+  $ objectified spec import status 7c3d2a1b-…-e22a
 
-  $ objectified --json docs spec-import
+  $ objectified spec import status --last
 
-  $ objectified spec import ./openapi.yaml --help
+  $ objectified --json spec import status --last
+
+  $ objectified spec import status --last --watch
 
 COMMON
   --base-url=<value>  Root REST API URL.
@@ -44,16 +50,18 @@ AUTH
   --api-key-file=<value>  Read API key from a file (single line; avoids shell
                           history).
 
+OTHER
+  --last   Use the latest job id cached for this tenant after a successful
+           spec import POST.
+  --watch  Re-poll every second until a terminal state (exit codes match spec
+           import polling).
+
 SEE ALSO
   objectified spec import
-
-  objectified spec import status
 
   objectified spec import commit
 
   objectified spec import cancel
 
   objectified docs errors
-
-  objectified docs output
 .fi

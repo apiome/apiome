@@ -1,23 +1,27 @@
-.TH OBJECTIFIED\-DOCS\-SPEC\-IMPORT 1 "" "" "User Commands"
+.TH OBJECTIFIED\-SPEC\-IMPORT\-COMMIT 1 "" "" "User Commands"
 .SH NAME
-objectified docs spec-import \- Flags for CI pipelines: dry-run, review/hold, NDJSON streaming, reports, and exit codes.
+objectified spec import commit \- Commit a pending-approval import job (POST /v1/imports/{tenant_slug}/{job_id}/commit)
 .SH DESCRIPTION
 .nf
 USAGE
-  $ objectified docs spec-import [--api-key <value>] [--api-key-file
+  $ objectified spec import commit [JOBID] [--api-key <value>] [--api-key-file
     <value>] [--base-url <value>] [--config <value>] [--json] [--color]
-    [--profile <value>] [--tenant <value>] [-q] [--verbose]
+    [--profile <value>] [--tenant <value>] [-q] [--verbose] [--last] [--yes]
+
+ARGUMENTS
+  [JOBID]  Import job UUID (optional when --last reads
+           ~/.cache/objectified/last-import-job-<tenant>.txt)
 
 DESCRIPTION
-  Flags for CI pipelines: dry-run, review/hold, NDJSON streaming, reports, and
-  exit codes.
+  Commit a pending-approval import job (POST
+  /v1/imports/{tenant_slug}/{job_id}/commit)
 
 EXAMPLES
-  $ objectified docs spec-import
+  $ objectified spec import commit 7c3d2a1b-…-e22a
 
-  $ objectified --json docs spec-import
+  $ objectified spec import commit --last --yes
 
-  $ objectified spec import ./openapi.yaml --help
+  $ objectified --json spec import commit <job-id> --yes
 
 COMMON
   --base-url=<value>  Root REST API URL.
@@ -44,16 +48,17 @@ AUTH
   --api-key-file=<value>  Read API key from a file (single line; avoids shell
                           history).
 
+OTHER
+  --last  Use the latest job id cached for this tenant after a successful spec
+          import POST.
+  --yes   Skip interactive confirmation (required when stdin is not a TTY).
+
 SEE ALSO
-  objectified spec import
-
   objectified spec import status
-
-  objectified spec import commit
 
   objectified spec import cancel
 
-  objectified docs errors
+  objectified spec import
 
-  objectified docs output
+  objectified docs errors
 .fi

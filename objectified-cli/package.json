@@ -1,6 +1,6 @@
 {
   "name": "objectified-cli",
-  "version": "0.1.28",
+  "version": "0.1.29",
   "description": "Objectified command-line interface",
   "author": "Objectified",
   "type": "module",
@@ -106,6 +106,9 @@
     "./man/man1/objectified-projects-show.1",
     "./man/man1/objectified-schema-fetch.1",
     "./man/man1/objectified-schema-swagger.1",
+    "./man/man1/objectified-spec-import-cancel.1",
+    "./man/man1/objectified-spec-import-commit.1",
+    "./man/man1/objectified-spec-import-status.1",
     "./man/man1/objectified-spec-import.1",
     "./man/man1/objectified-tenants-info.1",
     "./man/man1/objectified-tenants-list.1",

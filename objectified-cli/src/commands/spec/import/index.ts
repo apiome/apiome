@@ -4,28 +4,30 @@ import path from "node:path";
 import { Args, Flags } from "@oclif/core";
 import YAML from "yaml";
 
-import { BaseCommand } from "../../base-command.js";
-import type { ImportJobResponse, ImportSourceKind, ProjectSchema } from "../../lib/client.js";
-import { ObjectifiedCliError } from "../../lib/errors.js";
-import { EXIT_CODES } from "../../lib/exit-codes.js";
-import { localePrefersAsciiTable } from "../../lib/output.js";
-import { PROJECT_DOMAIN_CATEGORY_NONE } from "../../lib/projects/domain-categories.js";
-import type { Visibility } from "../../lib/projects/project-create-body.js";
-import { buildProjectCreateRequest } from "../../lib/projects/project-create-body.js";
-import { validateProjectSlug } from "../../lib/projects/project-slug.js";
-import { completionProfileCacheKey, resolveProjectForTenant } from "../../lib/resolve.js";
+import { BaseCommand } from "../../../base-command.js";
+import type { ImportJobResponse, ImportSourceKind, ProjectSchema } from "../../../lib/client.js";
+import { ObjectifiedCliError } from "../../../lib/errors.js";
+import { EXIT_CODES } from "../../../lib/exit-codes.js";
+import { localePrefersAsciiTable } from "../../../lib/output.js";
+import { PROJECT_DOMAIN_CATEGORY_NONE } from "../../../lib/projects/domain-categories.js";
+import type { Visibility } from "../../../lib/projects/project-create-body.js";
+import { buildProjectCreateRequest } from "../../../lib/projects/project-create-body.js";
+import { validateProjectSlug } from "../../../lib/projects/project-slug.js";
+import { completionProfileCacheKey, resolveProjectForTenant } from "../../../lib/resolve.js";
 import {
   metadataRecordFromSpecDraft,
   projectDraftFromSpecContent,
   suggestProjectSlugFromSpec,
   type SpecProjectDraft,
-} from "../../lib/spec/project-draft-from-spec.js";
+} from "../../../lib/spec/project-draft-from-spec.js";
+import { progressSpinnerText } from "../../../lib/spec/import-job-display.js";
 import {
   followImportJobPoll,
   openImportReportSink,
   writeReportSummaryLine,
   type ImportReportSink,
-} from "../../lib/spec/import-job-follow.js";
+} from "../../../lib/spec/import-job-follow.js";
+import { writeLastImportJobId } from "../../../lib/spec/last-import-job-cache.js";
 
 const SOURCE_FLAG_OPTIONS = ["openapi", "swagger", "arazzo", "auto"] as const;
 
@@ -227,24 +229,6 @@ function extractVersionMeta(doc: Record<string, unknown>): {
       ? info.description.trim()
       : null;
   return { versionId, description };
-}
-
-function progressSpinnerText(job: ImportJobResponse): string {
-  const p = job.progress;
-  if (p === undefined || p === null) {
-    return `Importing… (${job.state})`;
-  }
-  const phase = p.phase.trim() !== "" ? p.phase : "working";
-  const total = p.total;
-  const done = p.completed;
-  const item =
-    typeof p.currentItem === "string" && p.currentItem.trim() !== ""
-      ? ` ${p.currentItem.trim()}`
-      : "";
-  if (typeof total === "number" && typeof done === "number" && total > 0) {
-    return `[${phase} ${String(done)}/${String(total)}]${item}`;
-  }
-  return `[${phase}]${item}`;
 }
 
 function formatSummaryFollowUp(job: ImportJobResponse, projectSlug: string): string | undefined {
@@ -741,6 +725,7 @@ export default class SpecImport extends BaseCommand {
 
     try {
       const created = await this.api.createImportJob(tenant, body);
+      writeLastImportJobId(tenant, created.jobId);
 
       let reportSink: ImportReportSink | undefined;
       if (reportRaw !== "") {
@@ -870,7 +855,7 @@ export default class SpecImport extends BaseCommand {
       }
       if (!opts.ndjson && !opts.json && !opts.quiet) {
         this.output.text(
-          `Import job ${job.jobId} is pending approval (review in the app or via \`objectified spec import status …\` when available).`,
+          `Import job ${job.jobId} is pending approval (review in the app or via \`objectified spec import status ${job.jobId}\`).`,
         );
       }
       return;

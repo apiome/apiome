@@ -11,7 +11,14 @@ export default class DocsSpecImport extends BaseCommand {
     "<%= config.bin %> spec import ./openapi.yaml --help",
   ];
 
-  static seeAlso = ["spec import", "docs errors", "docs output"];
+  static seeAlso = [
+    "spec import",
+    "spec import status",
+    "spec import commit",
+    "spec import cancel",
+    "docs errors",
+    "docs output",
+  ];
 
   run(): Promise<void> {
     if (this.context.json) {
