@@ -19,8 +19,10 @@
     "docker:remove": "docker stop objectified-browse 2>/dev/null || true && docker rm objectified-browse"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^1.0.4",
     "@monaco-editor/react": "^4.7.0",
     "@types/pg": "^8.20.0",
+    "@xyflow/react": "^12.10.2",
     "diff": "^9.0.0",
     "monaco-editor": "^0.55.1",
     "next": "^16.2.3",

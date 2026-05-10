@@ -18,6 +18,18 @@ const Editor = dynamic(() => import('@monaco-editor/react'), {
   ),
 });
 
+const SpecVisualCanvas = dynamic(() => import('./SpecVisualCanvas').then((m) => m.SpecVisualCanvas), {
+  ssr: false,
+  loading: () => (
+    <div className="flex min-h-[520px] items-center justify-center rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="flex items-center gap-3">
+        <Spinner />
+        <span className="text-sm text-zinc-600 dark:text-zinc-400">Loading visual canvas...</span>
+      </div>
+    </div>
+  ),
+});
+
 interface SpecViewerProps {
   tenantSlug: string;
   projectSlug: string;
@@ -28,7 +40,7 @@ interface SpecViewerProps {
 }
 
 export type SpecFormat = 'openapi' | 'arazzo' | 'jsonschema';
-type ViewMode = 'overview' | 'code';
+type ViewMode = 'overview' | 'code' | 'visual';
 
 const monacoThemeMap: Record<SpecTheme, string> = {
   default: 'vs',
@@ -72,7 +84,7 @@ export function SpecViewer({
   restApiBaseUrl,
   onSpecChange,
 }: SpecViewerProps) {
-  const { specTheme, setSpecTheme } = useTheme();
+  const { specTheme, setSpecTheme, resolvedTheme } = useTheme();
   const [format, setFormat] = useState<SpecFormat>('openapi');
   const [viewFormat, setViewFormat] = useState<'json' | 'yaml'>('json');
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
@@ -189,6 +201,7 @@ export function SpecViewer({
             options={[
               { value: 'overview', label: 'Overview' },
               { value: 'code', label: 'Code' },
+              { value: 'visual', label: 'Visual' },
             ]}
             onChange={(v) => setViewMode(v as ViewMode)}
           />
@@ -355,6 +368,10 @@ export function SpecViewer({
 
       {!loading && !error && spec != null && viewMode === 'overview' && (
         <SpecOverview spec={spec} format={format} />
+      )}
+
+      {!loading && !error && spec != null && viewMode === 'visual' && (
+        <SpecVisualCanvas spec={spec} format={format} isDark={resolvedTheme === 'dark'} />
       )}
 
       {!loading && !error && spec != null && viewMode === 'code' && (
