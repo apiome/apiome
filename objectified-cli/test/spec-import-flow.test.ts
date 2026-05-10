@@ -4,6 +4,7 @@ import {
   clampSpecImportPollIntervalMs,
   DEFAULT_SPEC_IMPORT_POLL_INTERVAL_MS,
   formatSpecImportPollLine,
+  formatSpecImportPollWaitLine,
   pollSpecImportUntilGate,
   pollSpecImportUntilTerminal,
 } from "../src/lib/import/spec-import-flow.js";
@@ -15,7 +16,12 @@ describe("spec-import-flow", () => {
     expect(clampSpecImportPollIntervalMs(400)).toBe(400);
   });
 
-  it("formatSpecImportPollLine includes state, progress, and last event code", () => {
+  it("formatSpecImportPollWaitLine describes the polling delay", () => {
+    expect(formatSpecImportPollWaitLine(400)).toContain("400ms");
+    expect(formatSpecImportPollWaitLine(400)).toContain("requesting import status again");
+  });
+
+  it("formatSpecImportPollLine describes lifecycle, progress, and last event", () => {
     const line = formatSpecImportPollLine(2, {
       job_id: "job-1",
       state: "running",
@@ -36,13 +42,14 @@ describe("spec-import-flow", () => {
         },
       ],
     });
-    expect(line).toContain("poll #2");
-    expect(line).toContain("state=running");
-    expect(line).toContain("percent=50");
-    expect(line).toContain("phase=creating-classes");
-    expect(line).toContain("step=4/10");
-    expect(line).toContain("item=Temperature");
-    expect(line).toContain("last_event=CLASS_CREATED");
+    expect(line).toContain("Import status check #2");
+    expect(line).toContain("job job-1");
+    expect(line).toContain("actively processing");
+    expect(line).toContain("creating-classes");
+    expect(line).toContain("step 4 of 10");
+    expect(line).toContain("Temperature");
+    expect(line).toContain("CLASS_CREATED");
+    expect(line).toContain("Imported class Temperature");
   });
 
   it("pollSpecImportUntilGate waits a fixed pollIntervalMs between running and completed", async () => {
@@ -114,7 +121,8 @@ describe("spec-import-flow", () => {
       log: (line) => lines.push(line),
     });
     expect(st.state).toBe("completed");
-    expect(lines).toEqual([expect.stringMatching(/^poll #0 state=completed/)]);
+    expect(lines).toEqual([expect.stringMatching(/^Import status check #0/)]);
+    expect(lines[0]).toContain("finished successfully");
     expect(getSpecImportStatus).toHaveBeenCalledTimes(1);
   });
 

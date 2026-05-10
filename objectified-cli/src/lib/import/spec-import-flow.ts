@@ -24,26 +24,72 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** One-line snapshot after each GET …/imports/{job_id} (for --verbose). */
-export function formatSpecImportPollLine(attempt: number, st: SpecImportJobStatus): string {
+function describeSpecImportLifecycleState(st: SpecImportJobStatus): string {
   const pct = st.percent ?? 0;
-  const parts = [`poll #${String(attempt)}`, `state=${st.state}`, `percent=${String(pct)}`];
-  const p = st.progress;
-  if (p && typeof p.phase === "string") {
-    parts.push(`phase=${p.phase}`, `step=${String(p.completed)}/${String(p.total)}`);
-    const cur = p.current_item;
-    if (typeof cur === "string" && cur.trim() !== "") {
-      parts.push(`item=${cur}`);
-    }
+  switch (st.state) {
+    case "queued":
+      return `the job is queued on the server (reported progress ${String(pct)}% — work has not started yet or the worker is picking it up)`;
+    case "running":
+      return `the server is actively processing your specification (${String(pct)}% — parsing entities and applying them to the catalog preview)`;
+    case "pending-approval":
+      return `the preview transaction is ready for review (${String(pct)}% — commit to persist, rollback to discard, or stop here with --no-commit)`;
+    case "committing":
+      return `the server is committing the approved preview into the catalog (${String(pct)}%)`;
+    case "completed":
+      return `the import finished successfully (${String(pct)}%)`;
+    case "failed":
+      return `the import failed (${String(pct)}% — inspect events on the job or retry)`;
+    case "canceled":
+      return `the import was canceled (${String(pct)}%)`;
+    case "rolled-back":
+      return `the preview was rolled back (${String(pct)}%)`;
+    default:
+      return `unrecognized lifecycle state ${String(st.state)} (${String(pct)}%)`;
   }
+}
+
+function describeSpecImportProgressDetail(progress: SpecImportJobStatus["progress"]): string | null {
+  if (!progress || typeof progress.phase !== "string") return null;
+  const bits: string[] = [];
+  bits.push(`phase "${progress.phase}"`);
+  if (typeof progress.total === "number" && typeof progress.completed === "number") {
+    bits.push(`step ${String(progress.completed)} of ${String(progress.total)}`);
+  }
+  const cur = progress.current_item;
+  if (typeof cur === "string" && cur.trim() !== "") {
+    bits.push(`currently working on "${cur.trim()}"`);
+  }
+  return `Structured progress from the importer: ${bits.join("; ")}.`;
+}
+
+function describeLatestSpecImportEvent(st: SpecImportJobStatus): string | null {
   const evs = st.events;
-  if (evs !== undefined && evs.length > 0) {
-    const last = evs[evs.length - 1];
-    if (last?.code !== undefined && last.code !== "") {
-      parts.push(`last_event=${last.code}`);
-    }
-  }
-  return parts.join(" ");
+  if (evs === undefined || evs.length === 0) return null;
+  const last = evs[evs.length - 1];
+  if (last?.code === undefined || last.code === "") return null;
+  const msg =
+    typeof last.message === "string" && last.message.trim() !== ""
+      ? `: ${last.message.trim()}`
+      : "";
+  return `Most recent server event: ${last.code}${msg}`;
+}
+
+/**
+ * Human-readable snapshot after each GET …/imports/{job_id}.
+ * Includes plain-language lifecycle state plus structured progress and last event when present.
+ */
+export function formatSpecImportPollLine(attempt: number, st: SpecImportJobStatus): string {
+  const head = `Import status check #${String(attempt)} (job ${st.job_id}): ${describeSpecImportLifecycleState(st)}`;
+  const prog = describeSpecImportProgressDetail(st.progress);
+  const ev = describeLatestSpecImportEvent(st);
+  const tail = [prog, ev].filter((x): x is string => x !== null);
+  if (tail.length === 0) return head;
+  return `${head} ${tail.join(" ")}`;
+}
+
+/** Explains the deliberate delay between poll requests (shown when `--verbose` is set). */
+export function formatSpecImportPollWaitLine(intervalMs: number): string {
+  return `Waiting ${String(intervalMs)}ms before requesting import status again (gives the server time to advance parsing, validation, or catalog writes).`;
 }
 
 /** Poll until the job needs finalize, ends successfully without approval, or fails. */
@@ -71,7 +117,7 @@ export async function pollSpecImportUntilGate(opts: {
     ) {
       return st;
     }
-    opts.log?.(`waiting ${String(intervalMs)}ms before next poll`);
+    opts.log?.(formatSpecImportPollWaitLine(intervalMs));
     await sleep(intervalMs);
     attempt++;
   }
@@ -101,7 +147,7 @@ export async function pollSpecImportUntilTerminal(opts: {
     ) {
       return st;
     }
-    opts.log?.(`waiting ${String(intervalMs)}ms before next poll`);
+    opts.log?.(formatSpecImportPollWaitLine(intervalMs));
     await sleep(intervalMs);
     attempt++;
   }
