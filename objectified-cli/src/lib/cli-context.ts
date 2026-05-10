@@ -23,6 +23,8 @@ export type ObjectifiedContext = {
   baseUrl: string;
   profile: string;
   apiKey: string | undefined;
+  /** True when apiKey came from config.toml api_key (not flag/env). */
+  apiKeyFromConfig?: boolean;
   /** Bearer token when set (env-only until login stores credentials elsewhere). */
   accessToken: string | undefined;
   tenantSlug: string | undefined;
@@ -71,11 +73,12 @@ export function resolveEffectiveProfile(
 export function configLayerForProfile(
   doc: ParsedTomlConfig,
   profileName: string,
-): { baseUrl?: string; tenantSlug?: string } {
+): { baseUrl?: string; tenantSlug?: string; apiKey?: string } {
   const prof = doc.profiles[profileName];
   return {
     baseUrl: firstNonEmpty(prof?.baseUrl, doc.default.baseUrl),
     tenantSlug: firstNonEmpty(prof?.tenantSlug, doc.default.tenantSlug),
+    apiKey: firstNonEmpty(prof?.apiKey, doc.default.apiKey),
   };
 }
 
@@ -93,12 +96,13 @@ export function resolveProfileConfigBaseUrl(doc: ParsedTomlConfig, profileName: 
   return layer.baseUrl ?? DEFAULT_BASE_URL;
 }
 
-/** API keys never come from config.toml (#3188); flag and env only until keychain lands. */
+/** Flag → OBJECTIFIED_API_KEY → optional api_key from profile layer ([profile] over [default]). */
 export function resolveApiKey(
   flag: string | undefined,
   env: NodeJS.ProcessEnv,
+  cfg?: { apiKey?: string },
 ): string | undefined {
-  return firstNonEmpty(flag, env.OBJECTIFIED_API_KEY);
+  return firstNonEmpty(flag, env.OBJECTIFIED_API_KEY, cfg?.apiKey);
 }
 
 export function resolveAccessToken(env: NodeJS.ProcessEnv): string | undefined {
@@ -156,7 +160,12 @@ export function buildObjectifiedContext(opts: {
   const cfgLayer = configLayerForProfile(opts.configDoc, profile);
 
   const baseUrl = resolveBaseUrl(opts.flags.baseUrl, opts.env, cfgLayer);
-  const apiKey = resolveApiKey(opts.flags.apiKey, opts.env);
+  const fromFlagOrEnv = firstNonEmpty(opts.flags.apiKey, opts.env.OBJECTIFIED_API_KEY);
+  const apiKey = resolveApiKey(opts.flags.apiKey, opts.env, cfgLayer);
+  const apiKeyFromConfig =
+    (fromFlagOrEnv === undefined || fromFlagOrEnv === "") &&
+    cfgLayer.apiKey !== undefined &&
+    cfgLayer.apiKey !== "";
   const accessToken = resolveAccessToken(opts.env);
   const tenantSlug = resolveTenantSlug(opts.flags.tenant, opts.env, cfgLayer);
 
@@ -175,6 +184,7 @@ export function buildObjectifiedContext(opts: {
       baseUrl,
       profile,
       apiKey,
+      ...(apiKeyFromConfig ? { apiKeyFromConfig: true } : {}),
       accessToken,
       tenantSlug,
       json,

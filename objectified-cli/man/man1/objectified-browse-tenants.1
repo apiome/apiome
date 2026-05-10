@@ -42,8 +42,9 @@ OUTPUT
 
 AUTH
   --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct
-                          authentication (OBJECTIFIED_API_KEY). Not persisted
-                          unless you run `auth login --api-key`.
+                          authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run
+                          `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell
                           history).
 

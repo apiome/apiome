@@ -18,6 +18,7 @@ function firstNonEmpty(...vals: (string | undefined)[]): string | undefined {
 export type ProfileValues = {
   baseUrl?: string;
   tenantSlug?: string;
+  apiKey?: string;
 };
 
 export type ParsedTomlConfig = {
@@ -33,7 +34,8 @@ function readProfileTable(raw: unknown): ProfileValues {
   const o = raw as Record<string, unknown>;
   const baseUrl = typeof o.base_url === "string" ? o.base_url : undefined;
   const tenantSlug = typeof o.tenant_slug === "string" ? o.tenant_slug : undefined;
-  return { baseUrl, tenantSlug };
+  const apiKey = typeof o.api_key === "string" ? o.api_key : undefined;
+  return { baseUrl, tenantSlug, apiKey };
 }
 
 /** Normalize TOML: `default_profile`, `[default]`, and `[profile.NAME]` (#3188). */
@@ -190,12 +192,23 @@ export function splitDottedKey(key: string): string[] {
 }
 
 export function assertWritableConfigKey(dottedKey: string): void {
+  const parts = splitDottedKey(dottedKey);
   // Normalize each segment: lowercase + strip underscores/hyphens to catch
   // camelCase and snake_case variants (e.g. apiKey, api-key, api_key → apikey).
-  const normalizedSegments = dottedKey
-    .toLowerCase()
-    .split(".")
-    .map((s) => s.replace(/[-_]/g, ""));
+  const normalizedSegments = parts.map((s) => s.toLowerCase().replace(/[-_]/g, ""));
+  const leaf = normalizedSegments[normalizedSegments.length - 1];
+  if (leaf === "apikey") {
+    const underDefault = normalizedSegments.length === 2 && normalizedSegments[0] === "default";
+    const underProfile =
+      normalizedSegments.length === 3 &&
+      normalizedSegments[0] === "profile" &&
+      normalizedSegments[1] !== "";
+    if (underDefault || underProfile) return;
+    throw new CliError(
+      'api_key must be written as default.api_key or profile.<name>.api_key (matches [default] and [profile.NAME] in config.toml).',
+      11,
+    );
+  }
   // Compound keywords are specific enough to use as substrings safely.
   const substringKeywords = ["apikey", "accesstoken", "refreshtoken", "privatekey"];
   // Short/generic keywords use exact segment matching to avoid false positives

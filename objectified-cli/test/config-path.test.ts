@@ -149,7 +149,7 @@ describe("assertWritableConfigKey (#3188)", () => {
     "api-key",
     "apiKey",
     "apikey",
-    "profile.staging.api_key",
+    "secrets.api_key",
     "access_token",
     "accessToken",
     "refresh_token",
@@ -172,5 +172,8 @@ describe("assertWritableConfigKey (#3188)", () => {
     expect(() => assertWritableConfigKey("profile.staging.base_url")).not.toThrow();
     expect(() => assertWritableConfigKey("profile.staging.tenant_slug")).not.toThrow();
     expect(() => assertWritableConfigKey("default_profile")).not.toThrow();
+    expect(() => assertWritableConfigKey("default.api_key")).not.toThrow();
+    expect(() => assertWritableConfigKey("profile.staging.api_key")).not.toThrow();
+    expect(() => assertWritableConfigKey("profile.staging.api-key")).not.toThrow();
   });
 });

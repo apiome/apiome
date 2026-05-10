@@ -142,8 +142,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -194,8 +194,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -243,8 +243,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -301,8 +301,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -360,8 +360,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -420,8 +420,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -475,8 +475,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -524,8 +524,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -573,8 +573,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -615,8 +615,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -662,8 +662,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -706,8 +706,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -750,8 +750,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -798,8 +798,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -842,8 +842,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -888,8 +888,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -932,8 +932,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -978,8 +978,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -1024,8 +1024,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -1068,8 +1068,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -1115,8 +1115,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -1162,8 +1162,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -1245,8 +1245,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -1337,8 +1337,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -1401,8 +1401,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -1463,8 +1463,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -1523,8 +1523,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -1590,8 +1590,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -1645,8 +1645,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -1693,8 +1693,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -1751,8 +1751,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -1826,8 +1826,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -1896,8 +1896,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -1960,8 +1960,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 OTHER
@@ -2027,8 +2027,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO
@@ -2075,8 +2075,8 @@ OUTPUT
       --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
 
 AUTH
-  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY). Not
-                          persisted unless you run `auth login --api-key`.
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
   --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
 
 SEE ALSO

@@ -4,8 +4,11 @@
 #   objectified --config /path/to/this/file.toml …
 #   OBJECTIFIED_CONFIG=/path/to/this/file.toml
 #
-# Secrets (API keys, tokens) are NOT stored here — use `objectified auth login`,
-# `--api-key`, `OBJECTIFIED_API_KEY`, or `--api-key-file`. See `objectified docs profiles`.
+# API key precedence (highest wins): --api-key → OBJECTIFIED_API_KEY → --api-key-file
+#   → api_key here ([profile.NAME] over [default]) → key from `objectified auth login --api-key`.
+# Plain-text api_key in this file is convenient for CI or personal machines; on shared systems
+# prefer env vars or `auth login` (keychain / encrypted vault). OAuth still requires auth login.
+# Details: `objectified docs profiles`
 
 # Profile used when --profile and OBJECTIFIED_PROFILE are unset.
 default_profile = "default"
@@ -14,6 +17,8 @@ default_profile = "default"
 [default]
 base_url = "https://api.objectified.dev"
 # tenant_slug = "your-tenant-slug"
+# Optional fallback API key when no flag/env/file/stored key applies:
+# api_key = "sk_live_…"
 
 [profile.default]
 # Overrides [default] for the "default" profile only (often matches [default]).
@@ -23,3 +28,5 @@ base_url = "https://api.objectified.dev"
 [profile.staging]
 base_url = "https://api.staging.example.com"
 tenant_slug = "acme-staging"
+# Per-profile API key (overrides [default] api_key for this profile only):
+# api_key = "sk_test_…"

@@ -217,6 +217,7 @@ function humanAuthLabel(kind: ActiveCredentialKind): string {
     case "api_key_flag":
     case "api_key_env":
     case "api_key_file":
+    case "api_key_config":
     case "api_key_keychain":
       return "API key";
     default:

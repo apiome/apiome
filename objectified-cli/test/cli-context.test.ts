@@ -171,28 +171,43 @@ base_url = "https://x"
     expect(() => assertProfileExists(doc, "nope")).toThrow(CliError);
   });
 
-  it("resolves API key from flag and env only (never from config file)", () => {
+  it("resolves API key: flag > env > config ([profile] over [default])", () => {
     expect(resolveApiKey("flag-key", { OBJECTIFIED_API_KEY: "env-key" })).toBe("flag-key");
     expect(resolveApiKey(undefined, { OBJECTIFIED_API_KEY: "env-key" })).toBe("env-key");
     expect(resolveApiKey(undefined, {})).toBe(undefined);
+    expect(resolveApiKey(undefined, {}, { apiKey: "cfg-key" })).toBe("cfg-key");
+    expect(resolveApiKey(undefined, { OBJECTIFIED_API_KEY: "env-key" }, { apiKey: "cfg-key" })).toBe(
+      "env-key",
+    );
 
     const doc = parseTomlConfig(`
 [default]
-api_key = "ignored"
+api_key = "default-key"
 
 [profile.prod]
-api_key = "ignored"
+api_key = "prod-key"
 `);
-    expect(
-      buildObjectifiedContext({
-        flags: { profile: "prod" },
-        env: {},
-        stdoutIsTTY: true,
-        supportsColorStdout: true,
-        configDoc: doc,
-        configPath: "/tmp/fake/objectified/config.toml",
-      }).context.apiKey,
-    ).toBe(undefined);
+    const fromProfile = buildObjectifiedContext({
+      flags: { profile: "prod" },
+      env: {},
+      stdoutIsTTY: true,
+      supportsColorStdout: true,
+      configDoc: doc,
+      configPath: "/tmp/fake/objectified/config.toml",
+    });
+    expect(fromProfile.context.apiKey).toBe("prod-key");
+    expect(fromProfile.context.apiKeyFromConfig).toBe(true);
+
+    const fromDefault = buildObjectifiedContext({
+      flags: {},
+      env: {},
+      stdoutIsTTY: true,
+      supportsColorStdout: true,
+      configDoc: doc,
+      configPath: "/tmp/fake/objectified/config.toml",
+    });
+    expect(fromDefault.context.apiKey).toBe("default-key");
+    expect(fromDefault.context.apiKeyFromConfig).toBe(true);
 
     expect(
       buildObjectifiedContext({

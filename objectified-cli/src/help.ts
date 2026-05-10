@@ -10,7 +10,7 @@ const DEFAULT_BASE_URL = "https://api.objectified.dev";
 const GLOBAL_FLAGS_BODY = [
   "Global flags apply to every command:",
   "",
-  `  --api-key       OBJECTIFIED_API_KEY       Direct API-key auth (not read from config.toml; never persisted unless auth login --api-key)`,
+  `  --api-key       OBJECTIFIED_API_KEY       Direct API-key auth (overrides config api_key; never persisted unless auth login --api-key)`,
   `  --api-key-file                            Read API key from a file (single line)`,
   `  --base-url      OBJECTIFIED_BASE_URL      Root REST endpoint (built-in default: ${DEFAULT_BASE_URL})`,
   `  --config        OBJECTIFIED_CONFIG        config.toml (default: XDG config dir, or %APPDATA%\\Objectified on Windows)`,
@@ -27,7 +27,7 @@ const GLOBAL_FLAGS_BODY = [
   "  4. Config [default]              (base_url=…)",
   `  5. Built-in default              (${DEFAULT_BASE_URL})`,
   "",
-  "Resolution order for API key: --api-key, then OBJECTIFIED_API_KEY, then --api-key-file (never from config file; see #3188). Stored keys follow explicit auth login --api-key (#3195).",
+  "Resolution order for API key: --api-key, OBJECTIFIED_API_KEY, --api-key-file, then api_key in config ([profile] over [default]), then credentials from auth login --api-key (#3195).",
   "Resolution order for tenant slug: OBJECTIFIED_TENANT, then config profile / [default] (tenant_slug).",
 ].join("\n");
 

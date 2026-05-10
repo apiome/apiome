@@ -36,7 +36,7 @@ export abstract class BaseCommand extends Command {
   static baseFlags = {
     "api-key": Flags.string({
       description:
-        "API key for direct authentication (OBJECTIFIED_API_KEY). Not persisted unless you run `auth login --api-key`.",
+        "API key for direct authentication (OBJECTIFIED_API_KEY); overrides config.toml api_key. Not persisted unless you run `auth login --api-key`.",
       helpGroup: "Auth",
       env: "OBJECTIFIED_API_KEY",
     }),
@@ -107,7 +107,7 @@ export abstract class BaseCommand extends Command {
     return this.cliOutput;
   }
 
-  /** Resolved API/client context (flag > env > profile config > [default] > built-ins). */
+  /** Resolved API/client context (URLs/slugs: flag > env > profile > [default]; API key also reads api_key from config before stored credentials). */
   context!: ObjectifiedContext;
 
   /** argv after global promotion + auth login sentinel normalization (matches oclif input). */
@@ -219,6 +219,7 @@ export abstract class BaseCommand extends Command {
       argv: this.normalizedArgv,
       env: process.env,
       transientApiKey: this.transientApiKey,
+      apiKeyFromConfig: Boolean(this.context.apiKeyFromConfig),
       effectiveApiKey: this.apiAuth.apiKey,
       effectiveBearer: this.apiAuth.bearer,
     });
@@ -238,7 +239,7 @@ export abstract class BaseCommand extends Command {
         message: "No API key or OAuth token available for this command.",
         exitCode: EXIT_CODES.NOT_AUTHENTICATED,
         title: "Not authenticated",
-        hint: "Run `objectified auth login`, set OBJECTIFIED_API_KEY, or pass --api-key / --api-key-file.",
+        hint: "Run `objectified auth login`, set OBJECTIFIED_API_KEY, add api_key under [default] or [profile] in config.toml, or pass --api-key / --api-key-file.",
       });
     }
   }

@@ -5,6 +5,7 @@ export type ActiveCredentialKind =
   | "api_key_flag"
   | "api_key_env"
   | "api_key_file"
+  | "api_key_config"
   | "api_key_keychain"
   | "oauth_keychain"
   | "bearer_env";
@@ -41,12 +42,14 @@ function argvReferencesApiKeyFile(argv: string[]): boolean {
 export function describeActiveCredential(opts: {
   argv: string[];
   env: NodeJS.ProcessEnv;
-  /** Transient API key from flags/env/file before keychain merge (undefined if none). */
+  /** Transient API key from flags/env/file/config before keychain merge (undefined if none). */
   transientApiKey?: string;
+  /** True when transient API key was read from config.toml api_key. */
+  apiKeyFromConfig?: boolean;
   effectiveApiKey?: string;
   effectiveBearer?: string;
 }): ActiveCredential {
-  const { argv, env, transientApiKey, effectiveApiKey, effectiveBearer } = opts;
+  const { argv, env, transientApiKey, apiKeyFromConfig, effectiveApiKey, effectiveBearer } = opts;
 
   if (effectiveApiKey) {
     const explicitFlag = readExplicitApiKeyFromArgv(argv);
@@ -63,6 +66,13 @@ export function describeActiveCredential(opts: {
     }
     if (transientApiKey && argvReferencesApiKeyFile(argv) && transientApiKey === effectiveApiKey) {
       return { kind: "api_key_file", authenticated: true };
+    }
+    if (
+      apiKeyFromConfig &&
+      transientApiKey &&
+      transientApiKey === effectiveApiKey
+    ) {
+      return { kind: "api_key_config", authenticated: true };
     }
     return { kind: "api_key_keychain", authenticated: true };
   }
@@ -85,6 +95,8 @@ export function credentialKindLabel(kind: ActiveCredentialKind): string {
       return "API key (OBJECTIFIED_API_KEY)";
     case "api_key_file":
       return "API key (--api-key-file)";
+    case "api_key_config":
+      return "API key (config.toml)";
     case "api_key_keychain":
       return "API key (stored for profile)";
     case "oauth_keychain":

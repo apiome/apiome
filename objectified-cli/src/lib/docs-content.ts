@@ -32,7 +32,7 @@ default_profile
   default_profile selects which profile is active when --profile is omitted. Use objectified config get default_profile or objectified config set default_profile staging.
 
 Resolution order
-  Base URL and tenant slug resolve per profile: explicit flags and env vars override profile values, which override [default]. API keys are never read from config.toml (#3188); use --api-key, OBJECTIFIED_API_KEY, --api-key-file, or store one with objectified auth login --api-key (#3195).
+  Base URL and tenant slug resolve per profile: explicit flags and env vars override profile values, which override [default]. API keys resolve in order: --api-key, OBJECTIFIED_API_KEY, --api-key-file, then optional api_key in config.toml ([profile.NAME] over [default]), then a key stored with objectified auth login --api-key (#3195). Prefer env or keychain over plain config files on shared machines (see cli-security.md).
 
 Stored credentials (#3197)
   OAuth and API keys from auth login are stored in the OS keychain when available; otherwise in an AES-256-GCM encrypted file next to config (threat model: https://github.com/KenSuenobu/objectified-commercial/blob/main/objectified-cli/docs/cli-security.md). Environment overrides: OBJECTIFIED_CLI_CREDENTIAL_VAULT_DIR, OBJECTIFIED_CLI_CREDENTIAL_VAULT_RESET, OBJECTIFIED_CLI_CREDENTIAL_DISABLE_FILE_FALLBACK.
