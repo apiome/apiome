@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from app.auth import validate_authentication
 from app.main import app
+from app.models import SpecImportJobStatus
 
 client = TestClient(app)
 
@@ -269,6 +270,43 @@ def test_resolve_spec_import_worker_argv_prefers_yarn_when_on_path(monkeypatch):
 
     argv = resolve_spec_import_worker_argv()
     assert argv[:4] == ["yarn", "workspace", "objectified-ui", "exec"]
+
+
+async def test_apply_streaming_spec_import_status_updates_percent():
+    """Partial worker lines should refresh poll-visible percent/progress before the job finishes."""
+    from app import spec_import_engine as sie
+
+    jid = "11111111-1111-1111-1111-111111111111"
+    sie._jobs[jid] = sie._JobRecord(
+        tenant_slug="acme",
+        job_id=jid,
+        state="running",
+        status=SpecImportJobStatus(job_id=jid, state="running", percent=0, events=[]),
+    )
+    await sie._apply_streaming_spec_import_status(
+        jid,
+        {
+            "job_id": jid,
+            "state": "running",
+            "percent": 37,
+            "events": [],
+            "progress": {
+                "phase": "creating-classes",
+                "total": 10,
+                "completed": 3,
+                "current_item": "Pet",
+            },
+        },
+    )
+    assert sie._jobs[jid].status.percent == 37
+    assert sie._jobs[jid].status.progress is not None
+    assert sie._jobs[jid].status.progress.completed == 3
+
+    await sie._apply_streaming_spec_import_status(
+        jid,
+        {"job_id": "wrong-id", "state": "running", "percent": 99, "events": []},
+    )
+    assert sie._jobs[jid].status.percent == 37
 
 
 def test_resolve_spec_import_worker_argv_falls_back_to_npm(monkeypatch):

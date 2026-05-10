@@ -10,6 +10,7 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import YAML from 'yaml';
 import { useStudio } from '../StudioContext';
 import { getVersionRevisionNote } from '@/app/utils/version-display';
+import { sortProjectsForSelector } from '@/app/utils/project-selector-sort';
 import {
   coerceProjectMetadataRecord,
   projectDescriptionForOpenApiPreview,
@@ -182,7 +183,7 @@ export default function CodePage() {
         }
         const data = await response.json();
         if (data.success && data.projects) {
-          setProjects(data.projects);
+          setProjects(sortProjectsForSelector(data.projects));
         } else {
           throw new Error(data.error || 'Failed to load projects');
         }

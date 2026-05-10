@@ -9,6 +9,7 @@ import type { editor } from 'monaco-editor';
 import { useStudio } from '../../StudioContext';
 import { loadPathsCodeSpec } from '../lib/load-paths-code-spec';
 import { markersForParsedText } from '../lib/paths-code-markers';
+import { sortProjectsForSelector } from '@/app/utils/project-selector-sort';
 import { AlertTriangle } from 'lucide-react';
 
 const Editor = dynamic(() => import('@monaco-editor/react'), {
@@ -71,7 +72,7 @@ export default function PathsCodeView({ refreshKey }: PathsCodeViewProps) {
         if (!res.ok) return;
         const data = await res.json();
         if (!cancelled && data.success && data.projects) {
-          setProjects(data.projects);
+          setProjects(sortProjectsForSelector(data.projects));
         }
       } catch {
         if (!cancelled) setProjects([]);

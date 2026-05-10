@@ -29,6 +29,7 @@ import ServerAheadPushBanner from '@/app/components/ade/ServerAheadPushBanner';
 import { usePushConflictBanner } from '@/app/providers/PushConflictBannerProvider';
 import { isRevisionDeprecated } from '@/app/utils/revision-deprecation';
 import { formatVersionSelectorLabel } from '@/app/utils/version-display';
+import { sortProjectsForSelector } from '@/app/utils/project-selector-sort';
 import {
   countAuthoredRevisionsTowardHead,
   isRemoteHeadAheadOfSelection,
@@ -287,7 +288,7 @@ export default function StudioHeader({ onProjectTagsLoaded }: StudioHeaderProps)
         }
         const data = await response.json();
         if (data.success && data.projects) {
-          setProjects(data.projects);
+          setProjects(sortProjectsForSelector(data.projects));
         } else {
           throw new Error(data.error || 'Failed to load projects');
         }

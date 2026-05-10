@@ -1,6 +1,7 @@
 /**
  * Runs a single specification import for objectified-rest (tsx subprocess).
- * Reads JSON stdin from the REST layer; prints one JSON object to stdout (logs on stderr only).
+ * Reads JSON stdin from the REST layer; prints newline-delimited JSON to stdout (logs on stderr only).
+ * While the import is in progress, emits `{ partial: true, status }` lines; the final line omits `partial`.
  */
 
 import { stdin as input } from "node:process";
@@ -120,6 +121,34 @@ function resultToRest(
   };
 }
 
+function buildRestStatus(
+  st: Awaited<ReturnType<typeof getImportStatus>>,
+  restJobId: string,
+  meta: Payload["metadata"],
+): Record<string, unknown> {
+  return {
+    job_id: restJobId,
+    state: st.state,
+    percent: st.percent,
+    events: st.events.map((e) => ({
+      id: e.id,
+      ts: e.ts,
+      level: e.level,
+      code: e.code,
+      message: e.message,
+      context: e.context ?? null,
+    })),
+    progress: progressToRest(st),
+    summary: st.summary ?? null,
+    result: resultToRest(st, meta),
+  };
+}
+
+/** One JSON object per line so objectified-rest can update poll status while the import runs. */
+function writeWorkerStdoutLine(obj: unknown): void {
+  process.stdout.write(`${JSON.stringify(obj)}\n`);
+}
+
 async function runFromPayload(payload: Payload): Promise<void> {
   const sourceKind = mapSourceKind(payload.metadata.source_kind);
   let document: unknown;
@@ -156,26 +185,17 @@ async function runFromPayload(payload: Payload): Promise<void> {
 
   for (;;) {
     const st = await getImportStatus(jobId);
+    const restStatus = buildRestStatus(st, payload.rest_job_id, payload.metadata);
     if (!pending.has(st.state)) {
-      const restStatus = {
-        job_id: payload.rest_job_id,
-        state: st.state,
-        percent: st.percent,
-        events: st.events.map((e) => ({
-          id: e.id,
-          ts: e.ts,
-          level: e.level,
-          code: e.code,
-          message: e.message,
-          context: e.context ?? null,
-        })),
-        progress: progressToRest(st),
-        summary: st.summary ?? null,
-        result: resultToRest(st, payload.metadata),
-      };
-      process.stdout.write(`${JSON.stringify({ ok: true, job_id: payload.rest_job_id, status: restStatus })}\n`);
+      writeWorkerStdoutLine({ ok: true, job_id: payload.rest_job_id, status: restStatus });
       return;
     }
+    writeWorkerStdoutLine({
+      ok: true,
+      partial: true,
+      job_id: payload.rest_job_id,
+      status: restStatus,
+    });
     await sleep(400);
   }
 }
@@ -193,6 +213,6 @@ async function main(): Promise<void> {
 
 main().catch((err: unknown) => {
   const message = err instanceof Error ? err.message : String(err);
-  process.stdout.write(`${JSON.stringify({ ok: false, error: message })}\n`);
+  writeWorkerStdoutLine({ ok: false, error: message });
   process.exit(1);
 });

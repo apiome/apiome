@@ -83,6 +83,7 @@ import TagManager from '../../../components/ade/studio/TagManager';
 import ClassEditDialog from '../../../components/ade/studio/ClassEditDialog';
 import ExportWizard from '../../../components/ade/studio/ExportWizard';
 import { formatVersionSelectorLabel } from '@/app/utils/version-display';
+import { sortProjectsForSelector } from '@/app/utils/project-selector-sort';
 import {
   coerceProjectMetadataRecord,
   projectDescriptionForOpenApiPreview,
@@ -7722,7 +7723,7 @@ const StudioContent = () => {
       }
       const data = await response.json();
       if (data.success && data.projects) {
-        setProjects(data.projects);
+        setProjects(sortProjectsForSelector(data.projects));
       } else {
         throw new Error(data.error || 'Failed to load projects');
       }

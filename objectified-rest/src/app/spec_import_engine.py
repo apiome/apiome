@@ -159,6 +159,24 @@ def _maybe_build_commit_response(
     )
 
 
+async def _apply_streaming_spec_import_status(job_id: str, status_raw: Dict[str, Any]) -> None:
+    """Merge a worker-emitted partial status snapshot into the in-memory job record."""
+    try:
+        status = SpecImportJobStatus.model_validate(status_raw)
+    except Exception as e:  # noqa: BLE001
+        logger.debug("Ignoring invalid partial import status job=%s: %s", job_id, e)
+        return
+    if status.job_id != job_id:
+        logger.debug("Partial import status job_id mismatch (expected %s)", job_id)
+        return
+    async with _jobs_lock:
+        rec = _jobs.get(job_id)
+        if rec is None or rec.cancel_requested:
+            return
+        rec.state = status.state
+        rec.status = status
+
+
 async def _run_subprocess_worker(payload: Dict[str, Any]) -> Dict[str, Any]:
     env = {**os.environ}
     db_url = os.environ.get("DATABASE_URL") or settings.effective_database_url
@@ -166,6 +184,10 @@ async def _run_subprocess_worker(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     argv = resolve_spec_import_worker_argv()
     logger.debug("spec import worker spawn argv=%s cwd=%s", argv, _REPO_ROOT)
+    job_id = str(payload.get("rest_job_id", ""))
+    data = json.dumps(payload).encode("utf-8")
+    stderr_chunks: List[bytes] = []
+
     try:
         proc = await asyncio.create_subprocess_exec(
             *argv,
@@ -185,40 +207,81 @@ async def _run_subprocess_worker(payload: Dict[str, Any]) -> Dict[str, Any]:
             '(example: ["/home/you/.local/bin/yarn","workspace","objectified-ui","exec","tsx",'
             f'"{_WORKER_SCRIPT}"].)'
         ) from exc
-    job_id = str(payload.get("rest_job_id", ""))
+
     async with _jobs_lock:
         rec = _jobs.get(job_id)
         if rec is not None:
             rec.proc = proc
-    data = json.dumps(payload).encode("utf-8")
+
+    last: Dict[str, Any] = {}
+    parse_error: Optional[str] = None
+
+    async def drain_stderr() -> None:
+        assert proc.stderr is not None
+        while True:
+            chunk = await proc.stderr.read(65536)
+            if not chunk:
+                break
+            stderr_chunks.append(chunk)
+
+    stderr_task = asyncio.create_task(drain_stderr())
+
     try:
-        stdout_b, stderr_b = await proc.communicate(data)
+        assert proc.stdin is not None
+        proc.stdin.write(data)
+        await proc.stdin.drain()
+        proc.stdin.close()
+
+        assert proc.stdout is not None
+        while True:
+            line_b = await proc.stdout.readline()
+            if not line_b:
+                break
+            line = line_b.decode("utf-8", errors="replace").strip()
+            if not line:
+                continue
+            try:
+                parsed_line: Dict[str, Any] = json.loads(line)
+            except json.JSONDecodeError:
+                parse_error = line[:200]
+                break
+
+            if parsed_line.get("partial"):
+                status_raw = parsed_line.get("status")
+                if isinstance(status_raw, dict):
+                    await _apply_streaming_spec_import_status(job_id, status_raw)
+                continue
+
+            last = parsed_line
     finally:
+        if proc.returncode is None:
+            await proc.wait()
+        await stderr_task
         async with _jobs_lock:
             r2 = _jobs.get(job_id)
             if r2 is not None:
                 r2.proc = None
 
-    stderr_text = (stderr_b or b"").decode("utf-8", errors="replace").strip()
+    stderr_text = b"".join(stderr_chunks).decode("utf-8", errors="replace").strip()
     if stderr_text:
         logger.warning("spec import worker stderr job=%s: %s", job_id, stderr_text[:4000])
 
-    raw_out = (stdout_b or b"").decode("utf-8", errors="replace").strip()
-    if not raw_out:
+    if parse_error is not None:
+        return {
+            "ok": False,
+            "error": f"Worker stdout is not JSON (exit {proc.returncode}): {parse_error}",
+        }
+
+    if not last:
         return {"ok": False, "error": "Worker produced no stdout"}
 
-    try:
-        parsed: Dict[str, Any] = json.loads(raw_out)
-    except json.JSONDecodeError:
-        return {"ok": False, "error": f"Worker stdout is not JSON (exit {proc.returncode})"}
-
-    if proc.returncode != 0 and not parsed.get("ok"):
-        return parsed
+    if proc.returncode != 0 and not last.get("ok"):
+        return last
 
     if proc.returncode != 0:
-        return {"ok": False, "error": parsed.get("error") or f"Worker exited {proc.returncode}"}
+        return {"ok": False, "error": last.get("error") or f"Worker exited {proc.returncode}"}
 
-    return parsed
+    return last
 
 
 async def _invoke_worker(payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -237,7 +300,7 @@ async def _drive_job(job_id: str, payload: Dict[str, Any]) -> None:
             rec.status = SpecImportJobStatus(job_id=job_id, state="canceled", percent=0)
             return
         rec.state = "running"
-        rec.status = SpecImportJobStatus(job_id=job_id, state="running", percent=5)
+        rec.status = SpecImportJobStatus(job_id=job_id, state="running", percent=0)
 
     try:
         raw = await _invoke_worker(payload)
