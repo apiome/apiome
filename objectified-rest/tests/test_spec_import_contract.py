@@ -258,6 +258,55 @@ def test_resolve_spec_import_worker_argv_env_json(monkeypatch):
     assert resolve_spec_import_worker_argv() == ["/bin/true"]
 
 
+def test_resolve_worker_subprocess_stream_limit_default(monkeypatch):
+    monkeypatch.delenv("SPEC_IMPORT_WORKER_STREAM_LIMIT", raising=False)
+    monkeypatch.delenv("OBJECTIFIED_SPEC_IMPORT_WORKER_STREAM_LIMIT", raising=False)
+    from app.spec_import_engine import (
+        _DEFAULT_WORKER_STREAM_LIMIT,
+        _resolve_worker_subprocess_stream_limit,
+    )
+
+    assert _resolve_worker_subprocess_stream_limit() == _DEFAULT_WORKER_STREAM_LIMIT
+
+
+def test_resolve_worker_subprocess_stream_limit_from_env(monkeypatch):
+    monkeypatch.delenv("OBJECTIFIED_SPEC_IMPORT_WORKER_STREAM_LIMIT", raising=False)
+    monkeypatch.setenv("SPEC_IMPORT_WORKER_STREAM_LIMIT", "2097152")
+    from app.spec_import_engine import _resolve_worker_subprocess_stream_limit
+
+    assert _resolve_worker_subprocess_stream_limit() == 2097152
+
+
+def test_resolve_worker_subprocess_stream_limit_prefers_first_env(monkeypatch):
+    monkeypatch.setenv("SPEC_IMPORT_WORKER_STREAM_LIMIT", "131072")
+    monkeypatch.setenv("OBJECTIFIED_SPEC_IMPORT_WORKER_STREAM_LIMIT", "262144")
+    from app.spec_import_engine import _resolve_worker_subprocess_stream_limit
+
+    assert _resolve_worker_subprocess_stream_limit() == 131072
+
+
+def test_resolve_worker_subprocess_stream_limit_invalid_falls_back(monkeypatch):
+    monkeypatch.delenv("OBJECTIFIED_SPEC_IMPORT_WORKER_STREAM_LIMIT", raising=False)
+    monkeypatch.setenv("SPEC_IMPORT_WORKER_STREAM_LIMIT", "not-int")
+    from app.spec_import_engine import (
+        _DEFAULT_WORKER_STREAM_LIMIT,
+        _resolve_worker_subprocess_stream_limit,
+    )
+
+    assert _resolve_worker_subprocess_stream_limit() == _DEFAULT_WORKER_STREAM_LIMIT
+
+
+def test_resolve_worker_subprocess_stream_limit_below_min_ignored(monkeypatch):
+    monkeypatch.delenv("OBJECTIFIED_SPEC_IMPORT_WORKER_STREAM_LIMIT", raising=False)
+    monkeypatch.setenv("SPEC_IMPORT_WORKER_STREAM_LIMIT", "1000")
+    from app.spec_import_engine import (
+        _DEFAULT_WORKER_STREAM_LIMIT,
+        _resolve_worker_subprocess_stream_limit,
+    )
+
+    assert _resolve_worker_subprocess_stream_limit() == _DEFAULT_WORKER_STREAM_LIMIT
+
+
 def test_resolve_spec_import_worker_argv_prefers_yarn_when_on_path(monkeypatch):
     monkeypatch.delenv("SPEC_IMPORT_WORKER_ARGV", raising=False)
     monkeypatch.delenv("OBJECTIFIED_SPEC_IMPORT_WORKER_ARGV", raising=False)
@@ -321,3 +370,43 @@ def test_resolve_spec_import_worker_argv_falls_back_to_npm(monkeypatch):
 
     argv = resolve_spec_import_worker_argv()
     assert argv[:3] == ["npm", "exec", "--workspace=objectified-ui"]
+
+
+def test_resolve_spec_import_worker_invocation_uses_local_tsx_bin(monkeypatch, tmp_path):
+    monkeypatch.delenv("SPEC_IMPORT_WORKER_ARGV", raising=False)
+    monkeypatch.delenv("OBJECTIFIED_SPEC_IMPORT_WORKER_ARGV", raising=False)
+    repo = tmp_path
+    ui = repo / "objectified-ui"
+    scripts = ui / "scripts"
+    scripts.mkdir(parents=True)
+    (scripts / "rest-spec-import-worker.ts").write_text("//", encoding="utf-8")
+    bin_dir = ui / "node_modules" / ".bin"
+    bin_dir.mkdir(parents=True)
+    tsx_sh = bin_dir / "tsx"
+    tsx_sh.write_text("#!/bin/sh\n", encoding="utf-8")
+    monkeypatch.setattr("app.spec_import_engine._REPO_ROOT", repo)
+    monkeypatch.setattr("app.spec_import_engine.shutil.which", lambda _: None)
+
+    from app.spec_import_engine import resolve_spec_import_worker_invocation
+
+    argv, cwd = resolve_spec_import_worker_invocation()
+    assert cwd == ui
+    assert argv[0] == str(tsx_sh)
+    assert argv[1] == "scripts/rest-spec-import-worker.ts"
+
+
+def test_resolve_spec_import_worker_invocation_raises_without_runner(monkeypatch, tmp_path):
+    monkeypatch.delenv("SPEC_IMPORT_WORKER_ARGV", raising=False)
+    monkeypatch.delenv("OBJECTIFIED_SPEC_IMPORT_WORKER_ARGV", raising=False)
+    repo = tmp_path
+    ui = repo / "objectified-ui"
+    scripts = ui / "scripts"
+    scripts.mkdir(parents=True)
+    (scripts / "rest-spec-import-worker.ts").write_text("//", encoding="utf-8")
+    monkeypatch.setattr("app.spec_import_engine._REPO_ROOT", repo)
+    monkeypatch.setattr("app.spec_import_engine.shutil.which", lambda _: None)
+
+    from app.spec_import_engine import resolve_spec_import_worker_invocation
+
+    with pytest.raises(RuntimeError, match="SPEC_IMPORT_WORKER_ARGV"):
+        resolve_spec_import_worker_invocation()

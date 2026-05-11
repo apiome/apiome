@@ -35,13 +35,45 @@ from .models import (
 logger = logging.getLogger(__name__)
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_WORKER_SCRIPT = "scripts/rest-spec-import-worker.ts"
+# Path segments relative to the ``objectified-ui`` package (yarn workspace cwd).
+_WORKER_SCRIPT_UI_REL = Path("scripts") / "rest-spec-import-worker.ts"
 
 # Override with JSON argv, e.g. ["yarn","workspace","objectified-ui","exec","tsx","scripts/rest-spec-import-worker.ts"]
 _WORKER_ARGV_ENV_KEYS = ("SPEC_IMPORT_WORKER_ARGV", "OBJECTIFIED_SPEC_IMPORT_WORKER_ARGV")
 
+# asyncio subprocess StreamReader default limit is 64KiB; ``readline()`` raises
+# ``ValueError: Separator is found, but chunk is longer than limit`` when one NDJSON
+# line from the worker exceeds that. Large status payloads need a higher ceiling.
+_DEFAULT_WORKER_STREAM_LIMIT = 256 * 1024 * 1024
+_ENV_WORKER_STREAM_LIMIT_KEYS = (
+    "SPEC_IMPORT_WORKER_STREAM_LIMIT",
+    "OBJECTIFIED_SPEC_IMPORT_WORKER_STREAM_LIMIT",
+)
+
 # Test hook: monkeypatch ``_worker_runner`` to an async callable(payload) -> dict (worker JSON).
 _worker_runner: Optional[Callable[[Dict[str, Any]], Awaitable[Dict[str, Any]]]] = None
+
+
+def _resolve_worker_subprocess_stream_limit() -> int:
+    """Max bytes per line (excluding newline) for stdout/stderr StreamReaders."""
+    for key in _ENV_WORKER_STREAM_LIMIT_KEYS:
+        raw = (os.environ.get(key) or "").strip()
+        if not raw:
+            continue
+        try:
+            n = int(raw, 10)
+        except ValueError:
+            logger.warning("Ignoring invalid %s=%r (expected integer bytes)", key, raw)
+            continue
+        if n < 65536:
+            logger.warning(
+                "Ignoring %s=%s (below minimum 65536); using default stream limit",
+                key,
+                raw,
+            )
+            continue
+        return n
+    return _DEFAULT_WORKER_STREAM_LIMIT
 
 
 def _parse_worker_argv_env(raw: str) -> List[str]:
@@ -53,35 +85,86 @@ def _parse_worker_argv_env(raw: str) -> List[str]:
     return list(parsed)
 
 
-def resolve_spec_import_worker_argv() -> List[str]:
-    """Argv to spawn the UI tsx worker from the monorepo root (``_REPO_ROOT``).
+def resolve_spec_import_worker_invocation() -> tuple[List[str], Path]:
+    """Argv and working directory for the UI ``tsx`` worker subprocess.
 
-    ``FileNotFoundError`` from asyncio subprocess almost always means the *executable*
-    (first element) is missing from ``PATH`` — not the uploaded spec path.
+    ``FileNotFoundError`` / errno 2 from asyncio subprocess almost always means the *executable*
+    (first argv element) is missing from ``PATH`` — not the uploaded spec path.
 
     Resolution order:
 
-    1. ``SPEC_IMPORT_WORKER_ARGV`` or ``OBJECTIFIED_SPEC_IMPORT_WORKER_ARGV`` — JSON array.
-    2. ``yarn workspace objectified-ui exec tsx …`` if ``yarn`` is on ``PATH``.
-    3. ``corepack yarn workspace …`` if ``corepack`` is on ``PATH``.
-    4. ``npm exec --workspace=objectified-ui -- tsx …`` if ``npm`` is on ``PATH``.
-    5. Fallback to the ``yarn`` form so errors stay actionable.
+    1. ``SPEC_IMPORT_WORKER_ARGV`` or ``OBJECTIFIED_SPEC_IMPORT_WORKER_ARGV`` — JSON array;
+       cwd is always the monorepo root (``_REPO_ROOT``).
+    2. ``yarn workspace objectified-ui exec tsx …`` from repo root if ``yarn`` is on ``PATH``.
+    3. ``corepack yarn workspace …`` from repo root if ``corepack`` is on ``PATH``.
+    4. ``npm exec --workspace=objectified-ui -- tsx …`` from repo root if ``npm`` is on ``PATH``.
+    5. ``objectified-ui/node_modules/.bin/tsx`` if present (after ``yarn install``).
+    6. Global ``tsx`` on ``PATH``, cwd ``objectified-ui/``.
+    7. ``npx --yes tsx …``, cwd ``objectified-ui/``.
+
+    If nothing matches, raises ``RuntimeError`` with remediation hints (no silent fallback to a
+    missing ``yarn`` binary).
     """
+    repo = _REPO_ROOT
+    ui_root = repo / "objectified-ui"
+    worker_rel = _WORKER_SCRIPT_UI_REL
+
     for key in _WORKER_ARGV_ENV_KEYS:
         raw = (os.environ.get(key) or "").strip()
         if raw:
-            return _parse_worker_argv_env(raw)
+            return _parse_worker_argv_env(raw), repo
 
-    tail_yarn = ["workspace", "objectified-ui", "exec", "tsx", _WORKER_SCRIPT]
-    candidates: Sequence[List[str]] = (
+    tail_yarn = ["workspace", "objectified-ui", "exec", "tsx", str(worker_rel)]
+    candidates_repo_cwd: Sequence[List[str]] = (
         ["yarn", *tail_yarn],
         ["corepack", "yarn", *tail_yarn],
-        ["npm", "exec", "--workspace=objectified-ui", "--", "tsx", _WORKER_SCRIPT],
+        ["npm", "exec", "--workspace=objectified-ui", "--", "tsx", str(worker_rel)],
     )
-    for argv in candidates:
+    for argv in candidates_repo_cwd:
         if shutil.which(argv[0]):
-            return list(argv)
-    return list(candidates[0])
+            return list(argv), repo
+
+    local_tsx = ui_root / "node_modules" / ".bin" / "tsx"
+    if local_tsx.is_file():
+        return [str(local_tsx), str(worker_rel)], ui_root
+
+    tsx_global = shutil.which("tsx")
+    if tsx_global:
+        return [tsx_global, str(worker_rel)], ui_root
+
+    npx = shutil.which("npx")
+    if npx:
+        return [npx, "--yes", "tsx", str(worker_rel)], ui_root
+
+    wr = worker_rel.as_posix()
+    raise RuntimeError(
+        "Cannot run the specification import worker: no usable Node runner found. "
+        "Checked PATH for yarn, corepack, npm, tsx, and npx, and looked for "
+        f"{local_tsx} (run `yarn install` at the monorepo root if this file is missing). "
+        "Install Node.js + Yarn or npm on the API host, install workspace dependencies, "
+        "or set SPEC_IMPORT_WORKER_ARGV (or OBJECTIFIED_SPEC_IMPORT_WORKER_ARGV) to a JSON argv "
+        "array whose first element is an absolute path to an executable, e.g. "
+        f'["/usr/bin/yarn","workspace","objectified-ui","exec","tsx","{wr}"].'
+    )
+
+
+def resolve_spec_import_worker_argv() -> List[str]:
+    """Argv only (cwd is ``_REPO_ROOT`` for env overrides and yarn/npm; else see invocation)."""
+    argv, _cwd = resolve_spec_import_worker_invocation()
+    return argv
+
+
+def _format_worker_spawn_errno2_message(argv: List[str], cwd: Path, exc: OSError) -> str:
+    exe = argv[0] if argv else "(empty argv)"
+    return (
+        f"{exc}; failed to execute {exe!r} while spawning spec import worker (cwd={cwd}). "
+        "Errno 2 means the program was not found on PATH or is not executable — "
+        "not your uploaded spec path. Install Node tooling on the API host, run `yarn install` "
+        "at the monorepo root so objectified-ui/node_modules/.bin/tsx exists, or set "
+        "SPEC_IMPORT_WORKER_ARGV to a JSON argv array whose first token is an absolute path "
+        '(example: ["/usr/bin/yarn","workspace","objectified-ui","exec","tsx",'
+        f'"{_WORKER_SCRIPT_UI_REL.as_posix()}"].)'
+    )
 
 
 @dataclass
@@ -182,31 +265,28 @@ async def _run_subprocess_worker(payload: Dict[str, Any]) -> Dict[str, Any]:
     db_url = os.environ.get("DATABASE_URL") or settings.effective_database_url
     env["DATABASE_URL"] = db_url
 
-    argv = resolve_spec_import_worker_argv()
-    logger.debug("spec import worker spawn argv=%s cwd=%s", argv, _REPO_ROOT)
+    argv, worker_cwd = resolve_spec_import_worker_invocation()
+    logger.info("spec import worker spawn argv=%s cwd=%s", argv, worker_cwd)
     job_id = str(payload.get("rest_job_id", ""))
     data = json.dumps(payload).encode("utf-8")
     stderr_chunks: List[bytes] = []
 
+    stream_limit = _resolve_worker_subprocess_stream_limit()
     try:
         proc = await asyncio.create_subprocess_exec(
             *argv,
-            cwd=str(_REPO_ROOT),
+            cwd=str(worker_cwd),
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             env=env,
+            limit=stream_limit,
         )
-    except FileNotFoundError as exc:
-        exe = argv[0]
-        raise FileNotFoundError(
-            f"{exc}; failed to execute {exe!r} while spawning spec import worker "
-            f"(cwd={_REPO_ROOT}). errno 2 means the program was not found on PATH — "
-            "not your uploaded spec path. Install Node tooling (yarn, or npm/corepack) on the API host, "
-            "or set SPEC_IMPORT_WORKER_ARGV to a JSON argv array whose first token is an absolute path "
-            '(example: ["/home/you/.local/bin/yarn","workspace","objectified-ui","exec","tsx",'
-            f'"{_WORKER_SCRIPT}"].)'
-        ) from exc
+    except OSError as exc:
+        errno = getattr(exc, "errno", None)
+        if isinstance(exc, FileNotFoundError) or errno == 2:
+            raise FileNotFoundError(_format_worker_spawn_errno2_message(argv, worker_cwd, exc)) from exc
+        raise
 
     async with _jobs_lock:
         rec = _jobs.get(job_id)
