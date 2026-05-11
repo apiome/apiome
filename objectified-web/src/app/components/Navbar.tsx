@@ -12,6 +12,8 @@ import { cn } from '@/lib/utils';
 
 const NAV_LINKS = [
   { href: '/features', label: 'Features' },
+  { href: '/screenshots', label: 'Screenshots' },
+  { href: '/mcp', label: 'MCP' },
   { href: '/for-teams', label: 'For Teams' },
   { href: '/pricing', label: 'Pricing' },
 ];

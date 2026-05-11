@@ -66,6 +66,8 @@ export function Footer() {
                 Launch App
               </FooterLink>
               <FooterLink href="/features">Features</FooterLink>
+              <FooterLink href="/screenshots">Screenshots</FooterLink>
+              <FooterLink href="/mcp">MCP</FooterLink>
               <FooterLink href="/for-teams">For Teams</FooterLink>
               <FooterLink href="/pricing">Pricing</FooterLink>
               <FooterLink href="https://browse.objectified.dev" external>

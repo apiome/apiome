@@ -191,10 +191,16 @@ export default function Home() {
           </StaggerGroup>
 
           <Reveal delay={0.1}>
-            <div className="mt-14 text-center">
+            <div className="mt-14 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link href="/features">
                 <Button size="lg" variant="outline" className="group">
                   See All Features
+                  <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+              <Link href="/screenshots">
+                <Button size="lg" variant="outline" className="group">
+                  Product screenshots
                   <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
