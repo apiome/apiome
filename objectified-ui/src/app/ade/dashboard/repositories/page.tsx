@@ -41,7 +41,7 @@ import {
   ProviderBadge,
   RepositoryCard,
   RepositoryKpiCard,
-  RepositorySparkline,
+  RepositoryIndexSnapshot,
   dashboardRepositoriesFromListPayload,
   formatLastScan,
   repoInitials,
@@ -434,14 +434,14 @@ export default function RepositoriesPage() {
                 <table className="w-full text-sm">
                   <thead className={dashboardTableTheadClass}>
                     <tr>
-                      <th className={dashboardThClass}>Repository</th>
-                      <th className={dashboardThClass}>Provider</th>
-                      <th className={dashboardThClass}>Branch</th>
-                      <th className={dashboardThRightClass}>Files</th>
-                      <th className={dashboardThClass}>Status</th>
-                      <th className={dashboardThClass}>Last scan</th>
-                      <th className={dashboardThClass}>Activity</th>
-                      <th className={cn(dashboardThRightClass, "pr-6")}>
+                      <th className={cn(dashboardThClass, "align-middle")}>Repository</th>
+                      <th className={cn(dashboardThClass, "align-middle")}>Provider</th>
+                      <th className={cn(dashboardThClass, "align-middle")}>Branch</th>
+                      <th className={cn(dashboardThRightClass, "align-middle")}>Files</th>
+                      <th className={cn(dashboardThClass, "align-middle")}>Status</th>
+                      <th className={cn(dashboardThClass, "align-middle")}>Last scan</th>
+                      <th className={cn(dashboardThClass, "align-middle")}>Importable</th>
+                      <th className={cn(dashboardThRightClass, "pr-6 align-middle")}>
                         Actions
                       </th>
                     </tr>
@@ -449,7 +449,7 @@ export default function RepositoriesPage() {
                   <tbody className={dashboardTbodyClass}>
                     {filtered.map((repo, i) => (
                       <tr key={repo.id} className={dashboardTrHoverClass}>
-                        <td className="px-6 py-3">
+                        <td className="px-6 py-3 align-middle">
                           <Link
                             href={`/ade/dashboard/repositories/${repo.id}/preview`}
                             className="flex min-w-0 items-center gap-2 rounded-md text-left outline-none ring-indigo-500/40 focus-visible:ring-2"
@@ -482,16 +482,16 @@ export default function RepositoriesPage() {
                             </span>
                           </Link>
                         </td>
-                        <td className="py-3">
+                        <td className="px-6 py-3 align-middle">
                           <ProviderBadge provider={repo.provider} />
                         </td>
-                        <td className="font-mono text-xs">
+                        <td className="px-6 py-3 align-middle font-mono text-xs">
                           {repo.default_branch}
                         </td>
-                        <td className="text-right font-mono text-xs">
+                        <td className="px-6 py-3 align-middle text-right font-mono text-xs">
                           {(repo.total_files ?? 0).toLocaleString()}
                         </td>
-                        <td className="py-3">
+                        <td className="px-6 py-3 align-middle">
                           <span
                             className={cn(
                               "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
@@ -507,19 +507,16 @@ export default function RepositoriesPage() {
                             {repositoryStatusLabel(repo.status)}
                           </span>
                         </td>
-                        <td className="text-xs text-gray-500 dark:text-gray-400">
+                        <td className="px-6 py-3 align-middle text-xs text-gray-500 dark:text-gray-400">
                           {formatLastScan(
                             repo.last_scanned_at,
                             repo.status === "error",
                           )}
                         </td>
-                        <td className="py-3">
-                          <RepositorySparkline
-                            seed={repo.id}
-                            errorTint={repo.status === "error"}
-                          />
+                        <td className="px-6 py-3 align-middle">
+                          <RepositoryIndexSnapshot repo={repo} />
                         </td>
-                        <td className="pr-6 text-right">
+                        <td className="px-6 py-3 align-middle text-right">
                           <div className="flex items-center justify-end gap-1">
                             <Link
                               href={`/ade/dashboard/repositories/${repo.id}/preview`}

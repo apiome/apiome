@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import {
   Folder,
   GitBranch,
@@ -11,6 +10,7 @@ import {
   Clock,
   TrendingUp,
   LayoutDashboard,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   dashboardContentStackClass,
@@ -48,7 +48,6 @@ interface RecentActivity {
 
 const Dashboard = () => {
   const { data: session } = useSession();
-  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>({
     total_tenants: 0,
     admin_tenants: 0,
@@ -65,7 +64,7 @@ const Dashboard = () => {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const userId = (session?.user as any)?.user_id;
+  const userId = (session?.user as { user_id?: string } | undefined)?.user_id;
   const userName = session?.user?.name || 'User';
 
   useEffect(() => {
@@ -135,6 +134,8 @@ const Dashboard = () => {
     return `${years} year${years !== 1 ? 's' : ''} ago`;
   };
 
+  const unpublishedVersionCount = Math.max(0, stats.total_versions - stats.published_versions);
+
   const statsConfig = [
     {
       icon: Folder,
@@ -154,8 +155,15 @@ const Dashboard = () => {
       icon: GitBranch,
       label: 'Versions',
       value: stats.total_versions,
-      subtitle: `${stats.published_versions} published`,
+      subtitle: `${stats.created_versions} created`,
       iconColor: 'text-emerald-600 dark:text-emerald-400',
+    },
+    {
+      icon: CheckCircle2,
+      label: 'Published',
+      value: stats.published_versions,
+      subtitle: `${unpublishedVersionCount} draft${unpublishedVersionCount === 1 ? '' : 's'}`,
+      iconColor: 'text-green-600 dark:text-green-400',
     },
     {
       icon: Box,
@@ -194,7 +202,7 @@ const Dashboard = () => {
       <main className={dashboardMainClass}>
         <div className={dashboardContentStackClass}>
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {statsConfig.map((stat) => {
           const IconComponent = stat.icon;
           return (

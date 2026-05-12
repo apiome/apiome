@@ -159,7 +159,6 @@ export function RepositoryFilesBrowser({
   const [data, setData] = useState<FilesApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [detailFile, setDetailFile] = useState<RepositoryFileApiRow | null>(null);
   const [importFile, setImportFile] = useState<RepositoryFileApiRow | null>(null);
 
@@ -215,7 +214,6 @@ export function RepositoryFilesBrowser({
         }
         setData(json);
         setBranches(json.branches?.length ? json.branches : [branchForReq]);
-        setSelected({});
         if (opts?.deepLink?.path) {
           const wantPath = opts.deepLink.path;
           const hit = json.files?.find((f) => f.path === wantPath);
@@ -285,17 +283,6 @@ export function RepositoryFilesBrowser({
     if (!q) return branches;
     return branches.filter((b) => b.toLowerCase().includes(q));
   }, [branches, branchSearch]);
-
-  const allSelected =
-    !!data?.files.length && data.files.every((f) => selected[f.id]);
-
-  const toggleAll = () => {
-    if (!data?.files.length) return;
-    const next = !allSelected;
-    const m: Record<string, boolean> = {};
-    if (next) for (const f of data.files) m[f.id] = true;
-    setSelected(m);
-  };
 
   const pathBreadcrumb = '/';
 
@@ -591,30 +578,20 @@ export function RepositoryFilesBrowser({
           <table className={cn('w-full table-fixed text-sm', loading && 'opacity-60')}>
             <thead className="border-b border-gray-200 bg-gray-50 text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
               <tr>
-                <th className="w-12 shrink-0 px-4 py-2 text-left font-semibold">
-                  <input
-                    type="checkbox"
-                    className="rounded border-gray-300 dark:border-gray-600"
-                    checked={allSelected}
-                    onChange={toggleAll}
-                    disabled={!data?.files?.length}
-                    aria-label="Select all on page"
-                  />
-                </th>
-                <th className="min-w-[22rem] w-[52%] py-2 pr-4 text-left font-semibold lg:min-w-[28rem] xl:min-w-[36rem]">
+                <th className="min-w-[22rem] w-[54%] px-4 py-2 text-left align-middle font-semibold lg:min-w-[28rem] xl:min-w-[36rem]">
                   Path
                 </th>
-                <th className="w-[11%] whitespace-nowrap py-2 text-left font-semibold">Detected kind</th>
-                <th className="w-[9%] whitespace-nowrap py-2 text-left font-semibold">Confidence</th>
-                <th className="w-[7%] whitespace-nowrap py-2 text-left font-semibold">Size</th>
-                <th className="w-[8%] whitespace-nowrap py-2 text-left font-semibold">Blob</th>
-                <th className="w-[8%] whitespace-nowrap py-2 pr-4 text-right font-semibold">Actions</th>
+                <th className="w-[11%] whitespace-nowrap py-2 text-left align-middle font-semibold">Detected kind</th>
+                <th className="w-[9%] whitespace-nowrap py-2 text-left align-middle font-semibold">Confidence</th>
+                <th className="w-[7%] whitespace-nowrap py-2 text-left align-middle font-semibold">Size</th>
+                <th className="w-[8%] whitespace-nowrap py-2 text-left align-middle font-semibold">Blob</th>
+                <th className="w-[8%] whitespace-nowrap py-2 pr-4 text-right align-middle font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {!loading && data && data.files.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+                  <td colSpan={6} className="px-4 py-12 text-center text-sm leading-relaxed text-gray-500 dark:text-gray-400">
                     No indexed files for this branch yet. Run a successful repository scan, or widen filters (turn off
                     &quot;Hide non-importable&quot;, clear regex).
                   </td>
@@ -624,21 +601,7 @@ export function RepositoryFilesBrowser({
                 const cb = confidenceBadge(f.confidence);
                 return (
                   <tr key={f.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-900/20">
-                    <td className="align-top px-4 py-2">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-300 dark:border-gray-600"
-                        checked={!!selected[f.id]}
-                        onChange={(e) =>
-                          setSelected((m) => ({
-                            ...m,
-                            [f.id]: e.target.checked,
-                          }))
-                        }
-                        aria-label={`Select ${f.path}`}
-                      />
-                    </td>
-                    <td className="min-w-0 py-2 pr-4 align-top">
+                    <td className="min-w-0 px-4 py-2 pr-4 align-middle">
                       <button
                         type="button"
                         className="block w-full whitespace-normal break-all text-left font-mono text-xs leading-snug text-indigo-600 hover:underline dark:text-indigo-400"
@@ -647,7 +610,7 @@ export function RepositoryFilesBrowser({
                         {f.path}
                       </button>
                     </td>
-                    <td className="align-top">
+                    <td className="align-middle">
                       <span
                         className={cn(
                           'inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold',
@@ -657,18 +620,18 @@ export function RepositoryFilesBrowser({
                         {f.display_kind}
                       </span>
                     </td>
-                    <td className="align-top">
+                    <td className="align-middle">
                       <span className={cn('font-mono text-[11px] px-2 py-0.5 rounded', cb.className)}>
                         {cb.label}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap align-top font-mono text-xs text-gray-500 dark:text-gray-400">
+                    <td className="whitespace-nowrap align-middle font-mono text-xs text-gray-500 dark:text-gray-400">
                       {formatBytes(f.size_bytes)}
                     </td>
-                    <td className="whitespace-nowrap align-top font-mono text-xs text-gray-500 dark:text-gray-400">
+                    <td className="whitespace-nowrap align-middle font-mono text-xs text-gray-500 dark:text-gray-400">
                       {shortSha(f.blob_sha)}
                     </td>
-                    <td className="align-top pr-4 text-right">
+                    <td className="align-middle pr-4 text-right">
                       <button
                         type="button"
                         className="inline-flex items-center gap-1 text-[11px] text-indigo-500 hover:text-indigo-600 dark:text-indigo-400"

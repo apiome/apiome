@@ -253,19 +253,115 @@ export function repoInitials(name: string): string {
   return compact.slice(0, 2).toUpperCase() || 'R';
 }
 
-export function RepositorySparkline({ seed, errorTint }: { seed: string; errorTint?: boolean }) {
-  const h = hashSeed(seed);
-  const heights = Array.from({ length: 8 }, (_, i) => 4 + ((h >> (i * 3)) % 14));
+/**
+ * Compact snapshot of repository scan/index data: importable share of indexed files,
+ * or recent scan outcomes when `recent_scans` is populated (e.g. detail views).
+ */
+export function RepositoryIndexSnapshot({ repo }: { repo: DashboardRepository }) {
+  const scans = repo.recent_scans?.length
+    ? [...repo.recent_scans].sort(
+        (a, b) => new Date(a.finished_at).getTime() - new Date(b.finished_at).getTime(),
+      )
+    : [];
+  const totalFiles = typeof repo.total_files === 'number' ? repo.total_files : null;
+  const importable = typeof repo.importable_count === 'number' ? repo.importable_count : null;
+  const hasError = repo.status === 'error';
+
+  let ariaLabel: string;
+  let body: ReactNode;
+
+  if (scans.length > 0) {
+    const shown = scans.slice(-10);
+    const failCount = shown.filter((s) => s.failed).length;
+    ariaLabel =
+      failCount > 0
+        ? `${shown.length} recent scans, ${failCount} failed, latest on ${shown[shown.length - 1]?.branch ?? 'unknown branch'}.`
+        : `${shown.length} recent scans, all succeeded, latest on ${shown[shown.length - 1]?.branch ?? 'unknown branch'}.`;
+    body = (
+      <div className="flex h-5 min-w-[72px] max-w-[96px] items-end justify-stretch gap-px" role="img" aria-label={ariaLabel}>
+        {shown.map((s, i) => (
+          <span
+            key={`${s.finished_at}-${i}`}
+            title={`${s.branch} · ${s.failed ? 'failed' : 'ok'} · ${s.finished_at}`}
+            className={cn(
+              'min-w-[3px] flex-1 rounded-sm',
+              s.failed ? 'bg-rose-500/80 dark:bg-rose-400/80' : 'bg-emerald-500/80 dark:bg-emerald-400/80',
+            )}
+            style={{ height: s.failed ? 6 : 18 }}
+          />
+        ))}
+      </div>
+    );
+  } else if (totalFiles != null && totalFiles > 0) {
+    const hasImportable = importable != null;
+    const clampedImportable = hasImportable ? Math.max(0, Math.min(importable, totalFiles)) : 0;
+    const pct = hasImportable ? Math.round((clampedImportable / totalFiles) * 100) : null;
+    ariaLabel = hasImportable
+      ? `${clampedImportable.toLocaleString()} of ${totalFiles.toLocaleString()} indexed files matched importable patterns (${pct}%).`
+      : `${totalFiles.toLocaleString()} indexed files; importable tally not available yet.`;
+    body = (
+      <div className="flex w-[88px] flex-col gap-0.5" role="img" aria-label={ariaLabel}>
+        <div
+          className={cn(
+            'relative h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700',
+            hasError && 'ring-1 ring-rose-400/60 dark:ring-rose-500/50',
+          )}
+        >
+          {hasImportable ? (
+            <div
+              className={cn(
+                'h-full rounded-full transition-[width]',
+                pct === 0 ? 'bg-amber-500/90 dark:bg-amber-400/90' : 'bg-emerald-500 dark:bg-emerald-400',
+              )}
+              style={{ width: `${pct}%` }}
+            />
+          ) : (
+            <div className="h-full w-full rounded-full bg-slate-400/35 dark:bg-slate-500/40" />
+          )}
+        </div>
+        {hasImportable ? (
+          <span className="text-[9px] font-medium tabular-nums leading-none text-slate-600 dark:text-slate-400">
+            {pct}%
+          </span>
+        ) : (
+          <span className="text-[9px] font-medium leading-none text-slate-500 dark:text-slate-400">…</span>
+        )}
+      </div>
+    );
+  } else if (repo.status === 'scanning') {
+    ariaLabel = 'Repository scan in progress.';
+    body = (
+      <div className="flex h-5 w-[72px] items-center justify-start" role="img" aria-label={ariaLabel}>
+        <Loader2 className="h-4 w-4 animate-spin text-indigo-500 dark:text-indigo-400" aria-hidden />
+      </div>
+    );
+  } else if (repo.status === 'pending') {
+    ariaLabel = 'Scan not started yet.';
+    body = (
+      <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500" title="No scan yet">
+        —
+      </span>
+    );
+  } else {
+    ariaLabel = 'No indexed files yet.';
+    body = (
+      <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500" title="No indexed files">
+        —
+      </span>
+    );
+  }
+
   return (
-    <div className="flex h-5 items-end gap-[2px]">
-      {heights.map((px, i) => (
-        <span
-          key={i}
-          className={cn('inline-block w-[3px] rounded-sm', errorTint && i >= 5 ? 'bg-rose-400/70' : 'bg-indigo-400/70')}
-          style={{ height: `${px}px` }}
-        />
-      ))}
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="inline-flex cursor-default outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 rounded">
+          {body}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="left" align="center" className="max-w-xs text-left text-xs leading-snug">
+        {ariaLabel}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -428,7 +524,9 @@ export function RepositoryCard({
       </div>
       <div className="flex items-center justify-between border-t border-gray-100 pt-3 dark:border-gray-700">
         <span className="text-[11px] text-gray-500 dark:text-gray-400">{scanLabel}</span>
-        <RepositorySparkline seed={repo.id} errorTint={repo.status === 'error'} />
+        <div className="pointer-events-auto" onPointerDown={(e) => e.stopPropagation()}>
+          <RepositoryIndexSnapshot repo={repo} />
+        </div>
       </div>
     </>
   );

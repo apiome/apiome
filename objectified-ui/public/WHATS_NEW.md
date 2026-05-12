@@ -4,6 +4,9 @@ We continue to improve the platform based on your feedback with improvements and
 
 ---
 
+## Bug Fixes
+- Repositories: Visualize functionality has been restored
+
 ## MCP
 - MCP service is now live
 - Updated MCP to search for data using vectorized data for speed
@@ -50,6 +53,10 @@ We continue to improve the platform based on your feedback with improvements and
 - Files in the imports tab now leads to the original file that was imported
 - Cleaned up UI for main page, removed redundant information
 - Search with regex and glob works as expected, and auto-refreshes when typing after a small delay
+- Grid now shows a meaningful graph, showing the number of importable files that were found in the repository
+- List mode now lines up the columns correctly vertically
+- Files list columns now show up vertically centered as expected in preview screen
+- Viewing an unimportable file (unrecognized) shows the contents of the file for viewing
 
 ## UI
 - Adds the ability to view projects that were deleted (show deleted toggle)
@@ -57,6 +64,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Updates Projects page to improve layout and display
 - Updates Designer and Paths top header to allow for projects and versions to be filtered
 - Optimized loading of class properties to be batched instead of singular when loading the canvas
+- Adds link to the dashboard in the control panel
 
 ## Dashboard
 - **Published Versions**: opening a **private** revision’s OpenAPI, Swagger UI, Arazzo, or JSON Schema link **reuses an API key saved in this browser** for the current tenant when present, so you are not prompted every time; otherwise the key dialog appears, with optional **remember** and a **clear saved key** control (#3132).

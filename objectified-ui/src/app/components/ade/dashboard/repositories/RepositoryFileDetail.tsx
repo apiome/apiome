@@ -30,6 +30,8 @@ import {
   type RepositoryFileDetailPropertyRow,
   type RepositoryFileDetailTables,
 } from '@lib/repository-file-spec-metadata';
+import { analyzeSpecification, type AnalysisResult } from '@/app/utils/openapi-analyzer';
+import { RepositoryFileSpecRelationshipFlow } from '@/app/components/ade/dashboard/repositories/RepositoryFileSpecRelationshipFlow';
 
 /** Indexed file row from the repository files list API (subset used by file detail). */
 export type RepositoryFileDetailRow = {
@@ -56,6 +58,22 @@ type FileContentApi = {
   truncated?: boolean;
   error?: string;
 };
+
+const REPOSITORY_FILE_OVERSIZED_MESSAGE = 'The contents of this file is too large';
+
+const REPOSITORY_FILE_UNRECOGNIZED_FORMAT_BLURB =
+  'This file format is not recognized, you are viewing the raw file data.';
+
+function fetchErrorIndicatesOversizedBody(message: string | null): boolean {
+  if (!message) return false;
+  const m = message.toLowerCase();
+  return (
+    m.includes('too large') ||
+    m.includes('request entity too large') ||
+    m.includes('payload too large') ||
+    m.includes('413')
+  );
+}
 
 type FileViewTab = 'source' | 'diff' | 'visualize' | 'details';
 
@@ -804,6 +822,9 @@ export function RepositoryFileDetail({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDark, setIsDark] = useState(false);
+  const [vizAnalysis, setVizAnalysis] = useState<AnalysisResult | null>(null);
+  const [vizLoading, setVizLoading] = useState(false);
+  const [vizError, setVizError] = useState<string | null>(null);
 
   useEffect(() => {
     const sync = () => setIsDark(document.documentElement.classList.contains('dark'));
@@ -852,6 +873,30 @@ export function RepositoryFileDetail({
     return 'Map & import is available only after the loaded file validates as OpenAPI 3.0 / 3.1 or another supported catalog format (AsyncAPI, Arazzo, JSON Schema, GraphQL SDL).';
   }, [loading, error, payload, importableVerdict]);
 
+  const sourceOnlyLayout = !loading && importableVerdict.status !== 'importable';
+
+  const showOversizedSourcePlaceholder =
+    sourceOnlyLayout &&
+    (Boolean(payload?.truncated) || fetchErrorIndicatesOversizedBody(error));
+
+  const showUnrecognizedImportFormatBlurb = useMemo(() => {
+    if (!sourceOnlyLayout || !payload || showOversizedSourcePlaceholder) return false;
+    if (importableVerdict.status === 'not_importable' && importableVerdict.format === 'unknown') {
+      return true;
+    }
+    if (
+      importableVerdict.status === 'parse_failed' &&
+      (importableVerdict.format == null || importableVerdict.format === 'unknown')
+    ) {
+      return true;
+    }
+    return false;
+  }, [sourceOnlyLayout, payload, showOversizedSourcePlaceholder, importableVerdict]);
+
+  useEffect(() => {
+    if (sourceOnlyLayout) setTab('source');
+  }, [sourceOnlyLayout]);
+
   const sourceViewStats = useMemo(() => {
     if (!payload) return null;
     return {
@@ -890,6 +935,47 @@ export function RepositoryFileDetail({
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (loading || sourceOnlyLayout) {
+      setVizLoading(false);
+      setVizAnalysis(null);
+      setVizError(null);
+      return;
+    }
+    const content = payload?.content;
+    if (content == null || content === '') {
+      setVizAnalysis(null);
+      setVizError(null);
+      setVizLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setVizLoading(true);
+    setVizError(null);
+    void analyzeSpecification(content, file.path || file.name || 'spec.yaml')
+      .then((r) => {
+        if (cancelled) return;
+        setVizAnalysis(r);
+        if (!r.isValid && r.errors?.length) {
+          setVizError(r.errors.map((e) => e.message).join(' '));
+        } else {
+          setVizError(null);
+        }
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setVizAnalysis(null);
+          setVizError(e instanceof Error ? e.message : 'Analysis failed');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setVizLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, sourceOnlyLayout, payload?.content, file.path, file.name, file.id]);
+
   const blobUrl = githubBlobHref(githubWebBase, branch, file.path);
   const displayKind = payload?.display_kind ?? file.display_kind;
   const confLabel =
@@ -921,17 +1007,21 @@ export function RepositoryFileDetail({
             <div className="min-w-0 flex-1">
               <h2 className="break-all font-mono text-xl font-bold text-gray-900 dark:text-gray-100">{file.path}</h2>
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span
-                  className={cn(
-                    'rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                    kindPillClass(displayKind)
-                  )}
-                >
-                  {displayKind}
-                </span>
-                <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-mono text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                  confidence: {confLabel}
-                </span>
+                {!sourceOnlyLayout ? (
+                  <>
+                    <span
+                      className={cn(
+                        'rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                        kindPillClass(displayKind)
+                      )}
+                    >
+                      {displayKind}
+                    </span>
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-mono text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                      confidence: {confLabel}
+                    </span>
+                  </>
+                ) : null}
                 <span className="inline-flex flex-wrap items-center gap-x-1.5 font-mono text-[11px] text-gray-500 dark:text-gray-400">
                   {loading ? (
                     <span className="inline-flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400">
@@ -948,19 +1038,21 @@ export function RepositoryFileDetail({
                 </span>
               </div>
             </div>
-            <Button
-              type="button"
-              size="sm"
-              className="shrink-0 gap-1.5 bg-indigo-600 hover:bg-indigo-700"
-              onClick={onMapImport}
-              disabled={!mapImportAllowed}
-              title={!mapImportAllowed ? mapImportBlockHint ?? undefined : undefined}
-            >
-              <Download className="h-3.5 w-3.5" aria-hidden />
-              Map &amp; import
-            </Button>
+            {!sourceOnlyLayout ? (
+              <Button
+                type="button"
+                size="sm"
+                className="shrink-0 gap-1.5 bg-indigo-600 hover:bg-indigo-700"
+                onClick={onMapImport}
+                disabled={!mapImportAllowed}
+                title={!mapImportAllowed ? mapImportBlockHint ?? undefined : undefined}
+              >
+                <Download className="h-3.5 w-3.5" aria-hidden />
+                Map &amp; import
+              </Button>
+            ) : null}
           </div>
-          {mapImportBlockHint ? (
+          {!sourceOnlyLayout && mapImportBlockHint ? (
             <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-900/25 dark:text-amber-100">
               <p className="text-xs font-semibold uppercase tracking-wide text-amber-900/90 dark:text-amber-200/90">
                 Map &amp; import unavailable
@@ -970,7 +1062,8 @@ export function RepositoryFileDetail({
           ) : null}
         </div>
 
-        <div className="grid grid-cols-1 gap-5 px-6 py-6 lg:grid-cols-3">
+        <div className={cn('grid grid-cols-1 gap-5 px-6 py-6', !sourceOnlyLayout && 'lg:grid-cols-3')}>
+          {!sourceOnlyLayout ? (
           <div className="space-y-4 lg:col-span-1">
             {loading ? (
               <>
@@ -1154,8 +1247,14 @@ export function RepositoryFileDetail({
               </>
             ) : null}
           </div>
+          ) : null}
 
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 lg:col-span-2">
+          <div
+            className={cn(
+              'overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800',
+              !sourceOnlyLayout && 'lg:col-span-2'
+            )}
+          >
             {loading ? (
               <>
                 <div className="flex flex-col gap-2 border-b border-gray-200 px-4 py-2 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
@@ -1168,6 +1267,92 @@ export function RepositoryFileDetail({
                   <Skeleton className="h-4 w-28 shrink-0 max-sm:hidden" />
                 </div>
                 <SourcePanelSkeleton />
+              </>
+            ) : sourceOnlyLayout ? (
+              <>
+                <div className="flex flex-col gap-2 border-b border-gray-200 px-4 py-2 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    Source
+                  </span>
+                  {blobUrl ? (
+                    <a
+                      href={blobUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex shrink-0 items-center gap-1 text-[11px] text-indigo-500 hover:text-indigo-600 dark:text-indigo-400"
+                    >
+                      <ExternalLink className="h-3 w-3" aria-hidden />
+                      View on GitHub
+                    </a>
+                  ) : (
+                    <span className="text-[11px] text-gray-400">GitHub web link unavailable for this clone URL.</span>
+                  )}
+                </div>
+                {showUnrecognizedImportFormatBlurb ? (
+                  <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-900/25 dark:text-amber-100">
+                    <p className="flex items-start gap-2 leading-relaxed">
+                      <AlertTriangle
+                        className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
+                        aria-hidden
+                      />
+                      <span>{REPOSITORY_FILE_UNRECOGNIZED_FORMAT_BLURB}</span>
+                    </p>
+                  </div>
+                ) : null}
+                {error && !payload ? (
+                  <p
+                    className={cn(
+                      'px-4 py-12 text-center text-sm',
+                      fetchErrorIndicatesOversizedBody(error)
+                        ? 'text-gray-600 dark:text-gray-400'
+                        : 'text-rose-600 dark:text-rose-400'
+                    )}
+                  >
+                    {fetchErrorIndicatesOversizedBody(error) ? REPOSITORY_FILE_OVERSIZED_MESSAGE : error}
+                  </p>
+                ) : showOversizedSourcePlaceholder ? (
+                  <div className="flex h-[min(520px,70vh)] min-h-[240px] flex-col items-center justify-center px-6 text-center text-sm text-gray-600 dark:text-gray-400">
+                    {REPOSITORY_FILE_OVERSIZED_MESSAGE}
+                  </div>
+                ) : (
+                  <div className="flex flex-col">
+                    <div className="flex w-full min-w-0 flex-nowrap items-center gap-2 border-b border-gray-200 bg-gray-50 px-3 py-1.5 font-mono text-[10px] text-gray-500 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-400">
+                      <span className="min-w-0 flex-1">
+                        Syntax: <span className="text-indigo-600 dark:text-indigo-400">{monacoLanguage}</span>
+                        <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
+                        read-only
+                      </span>
+                      {sourceViewStats ? (
+                        <span className="shrink-0 text-right tabular-nums text-gray-600 dark:text-gray-300">
+                          {sourceViewStats.lines.toLocaleString()} line{sourceViewStats.lines === 1 ? '' : 's'}
+                          <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
+                          {sourceViewStats.sizeLabel}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="h-[min(520px,70vh)] min-h-[240px] w-full overflow-hidden">
+                      <MonacoEditor
+                        height="100%"
+                        path={file.path}
+                        language={monacoLanguage}
+                        value={payload?.content ?? ''}
+                        theme={isDark ? 'vs-dark' : 'light'}
+                        options={{
+                          readOnly: true,
+                          minimap: { enabled: true },
+                          scrollBeyondLastLine: false,
+                          fontSize: 12,
+                          wordWrap: 'on',
+                          lineNumbers: 'on',
+                          folding: true,
+                          padding: { top: 8, bottom: 8 },
+                          renderWhitespace: 'selection',
+                          automaticLayout: true,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <>
@@ -1270,12 +1455,27 @@ export function RepositoryFileDetail({
                   </div>
                 )}
                 {tab === 'visualize' && (
-                  <div className="max-h-[min(520px,70vh)] overflow-y-auto bg-gray-50 p-4 dark:bg-gray-900/50">
-                    <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
-                      The mockup&apos;s Visualize tab will use <span className="font-mono">@xyflow/react</span> with
-                      nodes and edges from the parsed spec. Hydrate from the importer pipeline when content sniffing is
-                      available.
-                    </p>
+                  <div className="flex min-h-[min(520px,70vh)] flex-col bg-gray-50 dark:bg-gray-900/50">
+                    {vizLoading ? (
+                      <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 py-16 text-sm text-gray-500 dark:text-gray-400">
+                        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" aria-hidden />
+                        Building relationship diagram from this file…
+                      </div>
+                    ) : vizError && !vizAnalysis?.document ? (
+                      <p className="px-4 py-8 text-center text-sm text-rose-600 dark:text-rose-400">{vizError}</p>
+                    ) : (
+                      <>
+                        {vizAnalysis && !vizAnalysis.isValid ? (
+                          <p className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-900/25 dark:text-amber-200">
+                            Spec has validation issues; diagram may be incomplete.{' '}
+                            {vizError ?? vizAnalysis.errors?.[0]?.message ?? ''}
+                          </p>
+                        ) : null}
+                        <div className="min-h-0 flex-1 border-t border-gray-200 dark:border-gray-700">
+                          <RepositoryFileSpecRelationshipFlow document={vizAnalysis?.document} />
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
                 {tab === 'details' && payload ? (

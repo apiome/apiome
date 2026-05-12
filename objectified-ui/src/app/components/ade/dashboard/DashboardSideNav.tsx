@@ -5,7 +5,18 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React from 'react';
 import { useSession } from 'next-auth/react';
-import { User, Building2, Folders, FolderGit2, Key, Eye, Link as LinkIcon, Database, Sun } from 'lucide-react';
+import {
+  User,
+  Building2,
+  Folders,
+  FolderGit2,
+  Key,
+  Eye,
+  Link as LinkIcon,
+  Database,
+  Sun,
+  LayoutDashboard,
+} from 'lucide-react';
 import { useDarkMode } from '@/app/hooks/useDarkMode';
 
 interface NavItem {
@@ -18,7 +29,8 @@ interface NavItem {
 }
 
 interface NavSection {
-  header: string;
+  /** When omitted, section items render without a group heading (e.g. top-level Dashboard). */
+  header?: string;
   items: NavItem[];
 }
 
@@ -31,6 +43,9 @@ const DashboardSideNav: React.FC = () => {
   const hasTenant = !!currentTenantId;
 
   const navSections: NavSection[] = [
+    {
+      items: [{ label: 'Dashboard', href: '/ade/dashboard', icon: LayoutDashboard }],
+    },
     {
       header: 'Account',
       items: [
@@ -101,7 +116,8 @@ const DashboardSideNav: React.FC = () => {
     >
       <div className="overflow-auto p-4">
         {navSections.map((section, index) => (
-          <div key={section.header} className={index < navSections.length - 1 ? 'mb-6' : ''}>
+          <div key={section.header ?? `section-${index}`} className={index < navSections.length - 1 ? 'mb-6' : ''}>
+            {section.header ? (
             <div
               className="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em]"
               style={{ color: isDark ? '#94a3b8' : '#64748b' }}
@@ -112,7 +128,8 @@ const DashboardSideNav: React.FC = () => {
               />
               {section.header}
             </div>
-            <ul className="m-0 mt-1 list-none space-y-1 p-0">
+            ) : null}
+            <ul className={`m-0 list-none space-y-1 p-0 ${section.header ? 'mt-1' : ''}`}>
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
