@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marketplace · Plan Builder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <!-- Top Nav -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center"><i data-lucide="store" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Marketplace</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Publisher</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Plan Builder</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-orange-500">← Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <!-- Sidebar -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Discover</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="home.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="home" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Home</span></a></li>
+            <li><a href="browse.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="search" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Browse</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> APIs</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="api-listing.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="file-code-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">API Listing</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> My Account</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="my-subscriptions.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="layers" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">My Subscriptions</span></a></li>
+            <li><a href="consumer-usage.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="bar-chart-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Usage</span></a></li>
+            <li><a href="webhook-subs.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="webhook" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Webhooks</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Publisher</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="publisher-dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="trending-up" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Dashboard</span></a></li>
+            <li><a href="publish-api.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="rocket" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Publish API</span></a></li>
+            <li><a href="plan-builder.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-orange-200 dark:border-orange-700/70 bg-orange-500/10"><i data-lucide="coins" class="w-5 h-5 text-orange-500"></i><span class="text-sm font-semibold flex-1 text-orange-600 dark:text-orange-400">Plan Builder</span><span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Admin</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="admin-overview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="shield" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Admin Overview</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div>
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Navigation</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="../index.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Mockup hub</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 overflow-auto p-6 bg-gray-50 dark:bg-gray-900 space-y-5">
+
+      <!-- Page Header -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-xl font-bold mb-0.5">Plan Builder</h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Configure pricing tiers for <span class="font-medium text-gray-700 dark:text-gray-200">Commerce API</span></p>
+        </div>
+        <button class="px-4 py-2 rounded-lg border border-orange-500 text-orange-600 dark:text-orange-400 text-sm font-semibold hover:bg-orange-50 dark:hover:bg-orange-900/20 flex items-center gap-2"><i data-lucide="plus" class="w-4 h-4"></i>Add Plan</button>
+      </div>
+
+      <!-- Plan Cards (3 column) -->
+      <div class="grid grid-cols-3 gap-4">
+
+        <!-- Free Plan -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div class="bg-gray-50 dark:bg-gray-900/60 px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Free Tier</span>
+            <div class="flex gap-1">
+              <button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"><i data-lucide="pencil" class="w-3.5 h-3.5 text-gray-500"></i></button>
+              <button class="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30"><i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-400"></i></button>
+            </div>
+          </div>
+          <div class="p-4 space-y-3">
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-1">Plan Name</label>
+              <input type="text" class="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300" value="Free" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-1">Monthly Price</label>
+              <div class="flex items-center gap-1 text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900"><span class="text-gray-400">$</span><input type="text" class="flex-1 bg-transparent outline-none mono" value="0" /></div>
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-1">Monthly Call Quota</label>
+              <input type="text" class="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300 mono" value="1,000" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-1">Rate Limit (req/min)</label>
+              <input type="text" class="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300 mono" value="10" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-2">License Type</label>
+              <select class="w-full text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                <option>Single Tenant</option>
+                <option>Multi-Tenant</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-2">Feature Flags</label>
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs"><span class="text-gray-700 dark:text-gray-300">Sandbox access</span>
+                  <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" checked /><div class="w-8 h-4 bg-gray-200 peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:bg-orange-500 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-3 after:h-3 after:transition-all peer-checked:after:translate-x-4"></div></label>
+                </div>
+                <div class="flex items-center justify-between text-xs"><span class="text-gray-700 dark:text-gray-300">Webhooks</span>
+                  <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" /><div class="w-8 h-4 bg-gray-200 peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:bg-orange-500 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-3 after:h-3 after:transition-all peer-checked:after:translate-x-4"></div></label>
+                </div>
+                <div class="flex items-center justify-between text-xs"><span class="text-gray-700 dark:text-gray-300">Analytics export</span>
+                  <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" /><div class="w-8 h-4 bg-gray-200 peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:bg-orange-500 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-3 after:h-3 after:transition-all peer-checked:after:translate-x-4"></div></label>
+                </div>
+                <div class="flex items-center justify-between text-xs"><span class="text-gray-700 dark:text-gray-300">SLA guarantee</span>
+                  <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" /><div class="w-8 h-4 bg-gray-200 peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:bg-orange-500 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-3 after:h-3 after:transition-all peer-checked:after:translate-x-4"></div></label>
+                </div>
+              </div>
+            </div>
+            <button class="w-full py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Save Plan</button>
+          </div>
+        </div>
+
+        <!-- Growth Plan (highlighted) -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border-2 border-orange-400 dark:border-orange-500 overflow-hidden shadow-md shadow-orange-100 dark:shadow-orange-900/30">
+          <div class="bg-orange-500 px-4 py-3 border-b border-orange-400 flex items-center justify-between">
+            <div class="flex items-center gap-2"><span class="text-xs font-bold uppercase tracking-wide text-white">Growth</span><span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-white/20 text-white">Popular</span></div>
+            <div class="flex gap-1">
+              <button class="p-1 rounded hover:bg-white/20"><i data-lucide="pencil" class="w-3.5 h-3.5 text-white/80"></i></button>
+              <button class="p-1 rounded hover:bg-white/20"><i data-lucide="trash-2" class="w-3.5 h-3.5 text-white/80"></i></button>
+            </div>
+          </div>
+          <div class="p-4 space-y-3">
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-1">Plan Name</label>
+              <input type="text" class="w-full text-sm px-3 py-1.5 rounded-lg border border-orange-200 dark:border-orange-600 bg-orange-50 dark:bg-orange-900/10 focus:outline-none focus:ring-2 focus:ring-orange-300" value="Growth" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-1">Monthly Price</label>
+              <div class="flex items-center gap-1 text-sm px-3 py-1.5 rounded-lg border border-orange-200 dark:border-orange-600 bg-orange-50 dark:bg-orange-900/10"><span class="text-gray-400">$</span><input type="text" class="flex-1 bg-transparent outline-none mono font-semibold text-orange-700 dark:text-orange-400" value="49" /></div>
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-1">Monthly Call Quota</label>
+              <input type="text" class="w-full text-sm px-3 py-1.5 rounded-lg border border-orange-200 dark:border-orange-600 bg-orange-50 dark:bg-orange-900/10 focus:outline-none focus:ring-2 focus:ring-orange-300 mono" value="100,000" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-1">Rate Limit (req/min)</label>
+              <input type="text" class="w-full text-sm px-3 py-1.5 rounded-lg border border-orange-200 dark:border-orange-600 bg-orange-50 dark:bg-orange-900/10 focus:outline-none focus:ring-2 focus:ring-orange-300 mono" value="500" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-2">License Type</label>
+              <select class="w-full text-xs px-3 py-1.5 rounded-lg border border-orange-200 dark:border-orange-600 bg-orange-50 dark:bg-orange-900/10 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                <option>Single Tenant</option>
+                <option>Multi-Tenant</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-2">Feature Flags</label>
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs"><span class="text-gray-700 dark:text-gray-300">Sandbox access</span>
+                  <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" checked /><div class="w-8 h-4 bg-gray-200 peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:bg-orange-500 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-3 after:h-3 after:transition-all peer-checked:after:translate-x-4"></div></label>
+                </div>
+                <div class="flex items-center justify-between text-xs"><span class="text-gray-700 dark:text-gray-300">Webhooks</span>
+                  <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" checked /><div class="w-8 h-4 bg-gray-200 peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:bg-orange-500 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-3 after:h-3 after:transition-all peer-checked:after:translate-x-4"></div></label>
+                </div>
+                <div class="flex items-center justify-between text-xs"><span class="text-gray-700 dark:text-gray-300">Analytics export</span>
+                  <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" checked /><div class="w-8 h-4 bg-gray-200 peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:bg-orange-500 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-3 after:h-3 after:transition-all peer-checked:after:translate-x-4"></div></label>
+                </div>
+                <div class="flex items-center justify-between text-xs"><span class="text-gray-700 dark:text-gray-300">SLA guarantee</span>
+                  <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" /><div class="w-8 h-4 bg-gray-200 peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:bg-orange-500 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-3 after:h-3 after:transition-all peer-checked:after:translate-x-4"></div></label>
+                </div>
+              </div>
+            </div>
+            <button class="w-full py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold">Save Plan</button>
+          </div>
+        </div>
+
+        <!-- Enterprise Plan -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div class="bg-gray-900 dark:bg-gray-950 px-4 py-3 border-b border-gray-700 flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wide text-gray-100">Enterprise</span>
+            <div class="flex gap-1">
+              <button class="p-1 rounded hover:bg-white/10"><i data-lucide="pencil" class="w-3.5 h-3.5 text-gray-400"></i></button>
+              <button class="p-1 rounded hover:bg-red-900/30"><i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-400"></i></button>
+            </div>
+          </div>
+          <div class="p-4 space-y-3">
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-1">Plan Name</label>
+              <input type="text" class="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300" value="Enterprise" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-1">Monthly Price</label>
+              <div class="flex items-center gap-1 text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900">
+                <span class="text-gray-400">$</span><input type="text" class="flex-1 bg-transparent outline-none mono" value="299" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-1">Monthly Call Quota</label>
+              <input type="text" class="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300 mono" value="Unlimited" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-1">Rate Limit (req/min)</label>
+              <input type="text" class="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300 mono" value="5,000" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-2">License Type</label>
+              <select class="w-full text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                <option>Multi-Tenant</option>
+                <option>Single Tenant</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-gray-500 mb-2">Feature Flags</label>
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs"><span class="text-gray-700 dark:text-gray-300">Sandbox access</span>
+                  <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" checked /><div class="w-8 h-4 bg-gray-200 peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:bg-orange-500 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-3 after:h-3 after:transition-all peer-checked:after:translate-x-4"></div></label>
+                </div>
+                <div class="flex items-center justify-between text-xs"><span class="text-gray-700 dark:text-gray-300">Webhooks</span>
+                  <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" checked /><div class="w-8 h-4 bg-gray-200 peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:bg-orange-500 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-3 after:h-3 after:transition-all peer-checked:after:translate-x-4"></div></label>
+                </div>
+                <div class="flex items-center justify-between text-xs"><span class="text-gray-700 dark:text-gray-300">Analytics export</span>
+                  <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" checked /><div class="w-8 h-4 bg-gray-200 peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:bg-orange-500 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-3 after:h-3 after:transition-all peer-checked:after:translate-x-4"></div></label>
+                </div>
+                <div class="flex items-center justify-between text-xs"><span class="text-gray-700 dark:text-gray-300">SLA guarantee</span>
+                  <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" checked /><div class="w-8 h-4 bg-gray-200 peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:bg-orange-500 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-3 after:h-3 after:transition-all peer-checked:after:translate-x-4"></div></label>
+                </div>
+              </div>
+            </div>
+            <button class="w-full py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Save Plan</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metering Configuration -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+        <h3 class="font-bold text-sm mb-1 flex items-center gap-2"><i data-lucide="gauge" class="w-4 h-4 text-orange-500"></i>Metering Configuration</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Define how usage is measured and what happens when consumers exceed their quota.</p>
+        <div class="grid grid-cols-4 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Metering Unit</label>
+            <select class="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300">
+              <option>API calls</option>
+              <option>Data transfer (MB)</option>
+              <option>Compute units</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Overage Policy</label>
+            <select class="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300">
+              <option>Block (hard limit)</option>
+              <option>Charge per unit</option>
+              <option>Throttle to burst</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Overage Rate</label>
+            <div class="flex items-center gap-1 text-sm px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900"><span class="text-gray-400">$</span><input type="text" class="flex-1 bg-transparent outline-none mono" value="0.001" /><span class="text-gray-400 text-xs">/call</span></div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Reset Cadence</label>
+            <select class="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300">
+              <option>Calendar month</option>
+              <option>Billing cycle start</option>
+              <option>Rolling 30 days</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-3 flex items-center gap-2">
+          <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" checked /><div class="w-9 h-5 bg-gray-200 peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:bg-orange-500 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-4 after:h-4 after:transition-all peer-checked:after:translate-x-4"></div></label>
+          <span class="text-xs text-gray-700 dark:text-gray-300">Send consumer email warning at 80% quota usage</span>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    const themeKey = 'mockup-marketplace-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

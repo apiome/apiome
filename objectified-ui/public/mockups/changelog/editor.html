@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Changelog — Editor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+    .entry-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-orange-500 to-red-400 flex items-center justify-center"><i data-lucide="file-diff" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Changelog</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Changelog Editor</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-orange-500">&larr; Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 260px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Diff &amp; Analysis</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="diff.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="git-compare-arrows" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Version Diff</span></a></li>
+            <li><a href="breaking-changes.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="triangle-alert" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Breaking Changes</span></a></li>
+            <li><a href="schema-changes.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="layers" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Schema Changes</span></a></li>
+            <li><a href="new-endpoints.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="route" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Path Changes</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Authoring</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="editor.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-orange-200 dark:border-orange-700/70 bg-orange-500/10"><i data-lucide="file-pen" class="w-5 h-5 text-orange-500"></i><span class="text-sm font-semibold flex-1 text-orange-600 dark:text-orange-400">Changelog Editor</span><span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span></a></li>
+            <li><a href="preview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="eye" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Format Preview</span></a></li>
+            <li><a href="attribution.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="git-merge" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Merge Attribution</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Publishing</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="export.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="share-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Export &amp; Publish</span></a></li>
+            <li><a href="history.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="history" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Release History</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5"><ul class="m-0 mt-1 list-none space-y-1 p-0"><li><a href="settings.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="settings-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Settings</span></a></li></ul></div>
+        <hr class="my-3 border-orange-500/10" />
+        <div><ul class="m-0 mt-1 list-none space-y-1 p-0"><li><a href="../index.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Mockup hub</span></a></li></ul></div>
+      </div>
+    </aside>
+
+    <main class="flex-1 overflow-auto p-6">
+      <div class="max-w-4xl mx-auto space-y-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-xl font-bold">Changelog Editor</h1>
+            <p class="text-sm text-gray-500 mt-0.5">v2.4.1 — <span class="mono">Draft</span> · 32 entries · Last saved 2 min ago</p>
+          </div>
+          <div class="flex gap-2">
+            <button class="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"><i data-lucide="eye" class="w-4 h-4"></i> Preview</button>
+            <button class="flex items-center gap-1.5 px-3 py-2 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700"><i data-lucide="send" class="w-4 h-4"></i> Publish</button>
+          </div>
+        </div>
+
+        <!-- Section: Breaking Changes -->
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+          <div class="flex items-center gap-2 px-5 py-3 bg-red-50 dark:bg-red-900/10 border-b border-red-100 dark:border-red-800/30">
+            <i data-lucide="triangle-alert" class="w-4 h-4 text-red-500"></i>
+            <span class="text-sm font-semibold text-red-700 dark:text-red-300">Breaking Changes</span>
+            <span class="mono text-xs text-gray-400 ml-1">4 entries</span>
+            <button class="ml-auto text-xs text-gray-400 hover:text-gray-600">+ Add entry</button>
+          </div>
+          <div class="divide-y divide-gray-100 dark:divide-gray-700">
+            <div class="entry-card px-5 py-3 flex items-start gap-3">
+              <i data-lucide="grip-vertical" class="w-4 h-4 text-gray-300 mt-1 flex-shrink-0 cursor-grab"></i>
+              <div class="flex-1">
+                <textarea rows="2" class="w-full text-sm bg-transparent border-none outline-none resize-none text-gray-700 dark:text-gray-300">Removed DELETE /payments/{id}. Use POST /payments/{id}/cancel instead to preserve audit trails.</textarea>
+              </div>
+              <div class="flex gap-1.5 flex-shrink-0 mt-0.5">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">BREAKING</span>
+                <button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="trash-2" class="w-3.5 h-3.5 text-gray-400"></i></button>
+              </div>
+            </div>
+            <div class="entry-card px-5 py-3 flex items-start gap-3">
+              <i data-lucide="grip-vertical" class="w-4 h-4 text-gray-300 mt-1 flex-shrink-0 cursor-grab"></i>
+              <div class="flex-1">
+                <textarea rows="2" class="w-full text-sm bg-transparent border-none outline-none resize-none text-gray-700 dark:text-gray-300">PaymentIntent.amount type changed from float to integer (minor currency units). Example: 49.99 → 4999.</textarea>
+              </div>
+              <div class="flex gap-1.5 flex-shrink-0 mt-0.5">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">BREAKING</span>
+                <button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="trash-2" class="w-3.5 h-3.5 text-gray-400"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: New Features -->
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+          <div class="flex items-center gap-2 px-5 py-3 bg-emerald-50 dark:bg-emerald-900/10 border-b border-emerald-100 dark:border-emerald-800/30">
+            <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-500"></i>
+            <span class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">New Features</span>
+            <span class="mono text-xs text-gray-400 ml-1">12 entries</span>
+            <button class="ml-auto text-xs text-gray-400 hover:text-gray-600">+ Add entry</button>
+          </div>
+          <div class="divide-y divide-gray-100 dark:divide-gray-700">
+            <div class="entry-card px-5 py-3 flex items-start gap-3">
+              <i data-lucide="grip-vertical" class="w-4 h-4 text-gray-300 mt-1 flex-shrink-0 cursor-grab"></i>
+              <div class="flex-1">
+                <textarea rows="2" class="w-full text-sm bg-transparent border-none outline-none resize-none text-gray-700 dark:text-gray-300">Added POST /payments/{id}/cancel endpoint for explicit cancellation with audit trail support.</textarea>
+              </div>
+              <div class="flex gap-1.5 flex-shrink-0 mt-0.5">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">NEW</span>
+                <button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="trash-2" class="w-3.5 h-3.5 text-gray-400"></i></button>
+              </div>
+            </div>
+            <div class="entry-card px-5 py-3 flex items-start gap-3">
+              <i data-lucide="grip-vertical" class="w-4 h-4 text-gray-300 mt-1 flex-shrink-0 cursor-grab"></i>
+              <div class="flex-1">
+                <textarea rows="2" class="w-full text-sm bg-transparent border-none outline-none resize-none text-gray-700 dark:text-gray-300">Payment methods API: attach, list, and detach saved cards/bank accounts via /payment-methods.</textarea>
+              </div>
+              <div class="flex gap-1.5 flex-shrink-0 mt-0.5">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">NEW</span>
+                <button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="trash-2" class="w-3.5 h-3.5 text-gray-400"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Deprecations -->
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+          <div class="flex items-center gap-2 px-5 py-3 bg-amber-50 dark:bg-amber-900/10 border-b border-amber-100 dark:border-amber-800/30">
+            <i data-lucide="clock" class="w-4 h-4 text-amber-500"></i>
+            <span class="text-sm font-semibold text-amber-700 dark:text-amber-300">Deprecations</span>
+            <span class="mono text-xs text-gray-400 ml-1">7 entries</span>
+            <button class="ml-auto text-xs text-gray-400 hover:text-gray-600">+ Add entry</button>
+          </div>
+          <div class="divide-y divide-gray-100 dark:divide-gray-700">
+            <div class="entry-card px-5 py-3 flex items-start gap-3">
+              <i data-lucide="grip-vertical" class="w-4 h-4 text-gray-300 mt-1 flex-shrink-0 cursor-grab"></i>
+              <div class="flex-1">
+                <textarea rows="2" class="w-full text-sm bg-transparent border-none outline-none resize-none text-gray-700 dark:text-gray-300">PaymentIntent.customer_id is deprecated. Use the nested customer.id field. Will be removed in v3.0.</textarea>
+              </div>
+              <div class="flex gap-1.5 flex-shrink-0 mt-0.5">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">DEPRECATED</span>
+                <button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="trash-2" class="w-3.5 h-3.5 text-gray-400"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    const btn = document.getElementById('themeBtn');
+    const stored = localStorage.getItem('changelog-mockup-theme');
+    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+    btn.addEventListener('click', () => { document.documentElement.classList.toggle('dark'); localStorage.setItem('changelog-mockup-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catalog · Search &amp; Browse</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #0d2424 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <!-- Top Nav -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center"><i data-lucide="book-open" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Catalog</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Search</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-cyan-500">← Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <!-- Sidebar -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-cyan-500 opacity-60"></span> Discover</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="home" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Home</span></a></li>
+            <li><a href="search.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-cyan-200 dark:border-cyan-700/70 bg-cyan-500/10"><i data-lucide="search" class="w-5 h-5 text-cyan-500"></i><span class="text-sm font-semibold flex-1 text-cyan-600 dark:text-cyan-400">Search &amp; Browse</span><span class="h-1.5 w-1.5 rounded-full bg-cyan-500"></span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-cyan-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-cyan-500 opacity-60"></span> Catalog</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="api-catalog.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="cable" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">API Catalog</span></a></li>
+            <li><a href="asset-detail.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="box" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Data Objects</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-cyan-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-cyan-500 opacity-60"></span> Business Glossary</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="glossary.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="book-marked" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Glossary Terms</span></a></li>
+            <li><a href="term-detail.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="bookmark" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Term Detail</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-cyan-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-cyan-500 opacity-60"></span> Governance</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="ownership.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="users" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Ownership &amp; Stewardship</span></a></li>
+            <li><a href="domains.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="layers" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Data Domains</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-cyan-500/10" />
+        <div>
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-cyan-500 opacity-60"></span> Lineage &amp; Organization</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="lineage.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="git-fork" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Lineage Explorer</span></a></li>
+            <li><a href="tags.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="tags" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Tags &amp; Classifications</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex min-w-0 overflow-hidden">
+
+      <!-- Filter Panel -->
+      <div class="flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-y-auto p-4" style="width: 240px;">
+        <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i data-lucide="sliders-horizontal" class="w-4 h-4 text-cyan-500"></i> Filters</h3>
+
+        <!-- Asset Type -->
+        <div class="mb-5">
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Asset Type</p>
+          <ul class="space-y-1.5">
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="w-3.5 h-3.5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500" /><span class="text-sm">API</span><span class="ml-auto text-[11px] mono text-gray-400">127</span></label></li>
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="w-3.5 h-3.5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500" /><span class="text-sm">Data Object</span><span class="ml-auto text-[11px] mono text-gray-400">891</span></label></li>
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-3.5 h-3.5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500" /><span class="text-sm">Schema</span><span class="ml-auto text-[11px] mono text-gray-400">342</span></label></li>
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-3.5 h-3.5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500" /><span class="text-sm">Field</span><span class="ml-auto text-[11px] mono text-gray-400">4218</span></label></li>
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-3.5 h-3.5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500" /><span class="text-sm">Metric</span><span class="ml-auto text-[11px] mono text-gray-400">89</span></label></li>
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="w-3.5 h-3.5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500" /><span class="text-sm">Glossary Term</span><span class="ml-auto text-[11px] mono text-gray-400">234</span></label></li>
+          </ul>
+        </div>
+
+        <!-- Domain -->
+        <div class="mb-5">
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Domain</p>
+          <ul class="space-y-1.5">
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="w-3.5 h-3.5 rounded border-gray-300 text-cyan-600" /><span class="text-sm">Commerce</span></label></li>
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-3.5 h-3.5 rounded border-gray-300 text-cyan-600" /><span class="text-sm">Identity</span></label></li>
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-3.5 h-3.5 rounded border-gray-300 text-cyan-600" /><span class="text-sm">Payments</span></label></li>
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-3.5 h-3.5 rounded border-gray-300 text-cyan-600" /><span class="text-sm">Analytics</span></label></li>
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-3.5 h-3.5 rounded border-gray-300 text-cyan-600" /><span class="text-sm">Logistics</span></label></li>
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-3.5 h-3.5 rounded border-gray-300 text-cyan-600" /><span class="text-sm">Platform</span></label></li>
+          </ul>
+        </div>
+
+        <!-- Quality -->
+        <div class="mb-5">
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Quality</p>
+          <ul class="space-y-1.5">
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="quality" checked class="w-3.5 h-3.5 border-gray-300 text-cyan-600" /><span class="text-sm">All</span></label></li>
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="quality" class="w-3.5 h-3.5 border-gray-300 text-cyan-600" /><span class="text-sm">High <span class="text-gray-400 text-xs">≥ 80</span></span></label></li>
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="quality" class="w-3.5 h-3.5 border-gray-300 text-cyan-600" /><span class="text-sm">Medium <span class="text-gray-400 text-xs">50–79</span></span></label></li>
+            <li><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="quality" class="w-3.5 h-3.5 border-gray-300 text-cyan-600" /><span class="text-sm">Low <span class="text-gray-400 text-xs">&lt; 50</span></span></label></li>
+          </ul>
+        </div>
+
+        <!-- Owner -->
+        <div class="mb-5">
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Owner</p>
+          <div class="relative">
+            <i data-lucide="search" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"></i>
+            <input type="text" placeholder="Filter by owner…" class="w-full pl-8 pr-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-600 bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-cyan-400" />
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Tags</p>
+          <div class="flex flex-wrap gap-1.5">
+            <span class="px-2 py-0.5 rounded-full text-[11px] border border-cyan-300 dark:border-cyan-700 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300 cursor-pointer">PII</span>
+            <span class="px-2 py-0.5 rounded-full text-[11px] border border-gray-300 dark:border-gray-600 cursor-pointer hover:border-cyan-300">Core Entity</span>
+            <span class="px-2 py-0.5 rounded-full text-[11px] border border-gray-300 dark:border-gray-600 cursor-pointer hover:border-cyan-300">MDM</span>
+            <span class="px-2 py-0.5 rounded-full text-[11px] border border-gray-300 dark:border-gray-600 cursor-pointer hover:border-cyan-300">Certified</span>
+            <span class="px-2 py-0.5 rounded-full text-[11px] border border-gray-300 dark:border-gray-600 cursor-pointer hover:border-cyan-300">Event</span>
+            <span class="px-2 py-0.5 rounded-full text-[11px] border border-gray-300 dark:border-gray-600 cursor-pointer hover:border-cyan-300">PCI</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Area -->
+      <div class="flex-1 overflow-y-auto">
+        <!-- Search Bar -->
+        <div class="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-5 py-3 flex items-center gap-3">
+          <div class="flex-1 relative">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+            <input type="text" value="customer" class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+          </div>
+          <select class="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-1 focus:ring-cyan-400">
+            <option>Most Relevant</option>
+            <option>Most Viewed</option>
+            <option>Recently Updated</option>
+            <option>Name A–Z</option>
+          </select>
+          <span class="text-sm text-gray-500 whitespace-nowrap">47 results for <strong class="text-gray-900 dark:text-gray-100">'customer'</strong></span>
+        </div>
+
+        <div class="p-5 space-y-3">
+
+          <!-- Result Row -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex items-start gap-4 hover:border-cyan-300 dark:hover:border-cyan-600 transition-colors">
+            <div class="w-9 h-9 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="box" class="w-5 h-5 text-violet-600 dark:text-violet-400"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                <a href="asset-detail.html" class="font-semibold text-sm hover:text-cyan-600 dark:hover:text-cyan-400">Customer</a>
+                <span class="text-xs text-gray-400">commerce / classes / Customer</span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Represents an individual or organization that has entered into a commercial relationship with the business. Core MDM entity.</p>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">Commerce</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Q: 92</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">PII</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">Core Entity</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">MDM</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="flex items-center gap-1.5"><div class="w-6 h-6 rounded-full bg-cyan-600 flex items-center justify-center text-white text-[9px] font-bold">JS</div><span class="text-xs text-gray-500">Jane Smith</span></div>
+              <a href="asset-detail.html" class="px-3 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold">View</a>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex items-start gap-4 hover:border-cyan-300 dark:hover:border-cyan-600 transition-colors">
+            <div class="w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="cable" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                <a href="api-catalog.html" class="font-semibold text-sm hover:text-cyan-600 dark:hover:text-cyan-400">Commerce API v2.1</a>
+                <span class="text-xs text-gray-400">commerce / apis / commerce-api</span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Primary REST API for commerce operations including <em>customer</em> management, orders, and catalog access. 142 endpoints.</p>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">Commerce</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Q: 95</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">Active</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">Certified</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="flex items-center gap-1.5"><div class="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-white text-[9px] font-bold">MK</div><span class="text-xs text-gray-500">Marcus Kim</span></div>
+              <a href="api-catalog.html" class="px-3 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold">View</a>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex items-start gap-4 hover:border-cyan-300 dark:hover:border-cyan-600 transition-colors">
+            <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="book-marked" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                <a href="term-detail.html" class="font-semibold text-sm hover:text-cyan-600 dark:hover:text-cyan-400">Customer <span class="text-gray-400 font-normal">(Glossary Term)</span></a>
+                <span class="text-xs text-gray-400">glossary / commerce / Customer</span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">A person or legal entity that has completed at least one purchase transaction and has an active account. Distinct from Prospect and Contact.</p>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">Commerce</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Approved</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">5 assets</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="flex items-center gap-1.5"><div class="w-6 h-6 rounded-full bg-cyan-600 flex items-center justify-center text-white text-[9px] font-bold">JS</div><span class="text-xs text-gray-500">Jane Smith</span></div>
+              <a href="term-detail.html" class="px-3 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold">View</a>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex items-start gap-4 hover:border-cyan-300 dark:hover:border-cyan-600 transition-colors">
+            <div class="w-9 h-9 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="box" class="w-5 h-5 text-violet-600 dark:text-violet-400"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                <a href="asset-detail.html" class="font-semibold text-sm hover:text-cyan-600 dark:hover:text-cyan-400">CustomerAddress</a>
+                <span class="text-xs text-gray-400">commerce / classes / CustomerAddress</span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Physical and mailing address information associated with a <em>customer</em> account. Supports multiple address types.</p>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">Commerce</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Q: 88</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">PII</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="flex items-center gap-1.5"><div class="w-6 h-6 rounded-full bg-cyan-600 flex items-center justify-center text-white text-[9px] font-bold">JS</div><span class="text-xs text-gray-500">Jane Smith</span></div>
+              <a href="asset-detail.html" class="px-3 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold">View</a>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex items-start gap-4 hover:border-cyan-300 dark:hover:border-cyan-600 transition-colors">
+            <div class="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="hash" class="w-5 h-5 text-slate-600 dark:text-slate-400"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                <span class="font-semibold text-sm">customer_id <span class="text-gray-400 font-normal">(Field)</span></span>
+                <span class="text-xs text-gray-400">commerce / Customer / customer_id</span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Unique identifier for a <em>customer</em>. UUID v4. Used as foreign key across Orders, Payments, and Subscriptions.</p>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">Commerce</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Q: 99</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">PII</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 dark:bg-gray-700 mono text-xs">uuid</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="flex items-center gap-1.5"><div class="w-6 h-6 rounded-full bg-cyan-600 flex items-center justify-center text-white text-[9px] font-bold">JS</div><span class="text-xs text-gray-500">Jane Smith</span></div>
+              <button class="px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs font-semibold">View</button>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex items-start gap-4 hover:border-cyan-300 dark:hover:border-cyan-600 transition-colors">
+            <div class="w-9 h-9 rounded-lg bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="trending-up" class="w-5 h-5 text-orange-600 dark:text-orange-400"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                <span class="font-semibold text-sm">Customer Lifetime Value <span class="text-gray-400 font-normal">(Metric)</span></span>
+                <span class="text-xs text-gray-400">analytics / metrics / customer-ltv</span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Predicted net revenue from a <em>customer</em> over their entire relationship. Calculated quarterly using ML model.</p>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">Analytics</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Q: 74</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">Provisional</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="flex items-center gap-1.5"><div class="w-6 h-6 rounded-full bg-orange-600 flex items-center justify-center text-white text-[9px] font-bold">DR</div><span class="text-xs text-gray-500">David Reyes</span></div>
+              <button class="px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs font-semibold">View</button>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex items-start gap-4 hover:border-cyan-300 dark:hover:border-cyan-600 transition-colors">
+            <div class="w-9 h-9 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="box" class="w-5 h-5 text-violet-600 dark:text-violet-400"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                <span class="font-semibold text-sm">CustomerPreferences</span>
+                <span class="text-xs text-gray-400">commerce / classes / CustomerPreferences</span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Stores notification, communication, and product <em>preferences</em> for a customer account. Linked to GDPR consent records.</p>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">Commerce</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Q: 81</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">PII</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">GDPR</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="flex items-center gap-1.5"><div class="w-6 h-6 rounded-full bg-cyan-600 flex items-center justify-center text-white text-[9px] font-bold">JS</div><span class="text-xs text-gray-500">Jane Smith</span></div>
+              <button class="px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs font-semibold">View</button>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex items-start gap-4 hover:border-cyan-300 dark:hover:border-cyan-600 transition-colors opacity-75">
+            <div class="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="cable" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                <span class="font-semibold text-sm">Identity Service v3.0</span>
+                <span class="text-xs text-gray-400">identity / apis / identity-service</span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Authentication, authorization, and <em>customer</em> profile management API. Handles OAuth2, SAML, and API key issuance.</p>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">Identity</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Q: 87</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">PII</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">Active</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="flex items-center gap-1.5"><div class="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-[9px] font-bold">AP</div><span class="text-xs text-gray-500">Aisha Patel</span></div>
+              <button class="px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs font-semibold">View</button>
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+            <span class="text-sm text-gray-500">Showing 1–8 of 47 results</span>
+            <div class="flex items-center gap-1">
+              <button class="w-8 h-8 rounded border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+              <button class="w-8 h-8 rounded border border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 text-sm font-semibold">1</button>
+              <button class="w-8 h-8 rounded border border-gray-200 dark:border-gray-600 text-sm hover:bg-gray-50 dark:hover:bg-gray-700">2</button>
+              <button class="w-8 h-8 rounded border border-gray-200 dark:border-gray-600 text-sm hover:bg-gray-50 dark:hover:bg-gray-700">3</button>
+              <span class="px-1 text-gray-400">…</span>
+              <button class="w-8 h-8 rounded border border-gray-200 dark:border-gray-600 text-sm hover:bg-gray-50 dark:hover:bg-gray-700">6</button>
+              <button class="w-8 h-8 rounded border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const themeKey = 'mockup-catalog-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

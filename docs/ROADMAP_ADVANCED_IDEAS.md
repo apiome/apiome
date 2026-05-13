@@ -1,81 +1,10 @@
 # Objectified Suite — Advanced Product Roadmap Ideas
 
-This document captures potential new products for the Objectified enterprise suite. These ideas are based on analysis of the 44 existing UI mockups, the 62-table database schema, and the existing utility/conversion capabilities in `objectified-ui`. Each proposed product fills a genuine gap not covered by existing mockups and is grounded in concrete database hooks already present in the schema.
-
----
-
-Create a mockup in the objectified-ui /mockups directory that creates a new Change Advisory Board project in /mockups/cab as follows: ### Objectified CAB
-**Change Advisory Board workflow**
-
-Structured, multi-stage approval workflow for publishing API changes: design review → security review → architecture board sign-off → legal review (for external APIs) → release gate. Each stage has assigned reviewers, SLA deadlines, inline comments, and override audit logs. Complements the `diff` and `contracts` mockups by adding the human governance layer.
-
-- **DB Hooks:** `versions`, `merge_sessions`, `workflow_audit`, `user_entitlements`, `tenant_administrators`
-- **Target Buyer:** Enterprises with change management/ITIL processes
-- **Enterprise Value:** ⭐⭐⭐⭐
-
-Update the /mockups/index.html page after implementing the mockup so the index is updated with the latest addition.
-
----
-
-## 🔍 Discovery & Catalog
-
-Create a mockup in the objectified-ui /mockups directory that creates a new Catalog project in /mockups/catalog as follows:
-### Objectified Catalog
-**Enterprise API and data catalog with business glossary**
-
-A searchable, business-facing catalog of all APIs, data objects, and schemas across the organization — not just for developers. Includes a business glossary (what does "Customer" mean vs. "Account"?), data ownership records, data stewardship assignments, lineage summaries, and discoverability for analysts and product managers. Think Alation or Collibra, but built natively on Objectified's class/property model.
-
-- **DB Hooks:** `classes`, `projects`, `versions`, `tenants`, `tags`, `groups`
-- **Target Buyer:** Data governance teams, CDOs, business analysts
-- **Enterprise Value:** ⭐⭐⭐⭐⭐
-
-Update the /mockups/index.html page after implementing the mockup so the index is updated with the latest addition.
-
----
-
-Create a mockup in the objectified-ui /mockups directory that creates a new Marketplace project in /mockups/marketplace as follows:
-### Objectified Marketplace
-**Internal/external API marketplace with subscriptions**
-
-A full developer marketplace where teams publish versioned APIs with pricing tiers (free, metered, enterprise), consumers subscribe, and usage is metered and billed. Distinct from the `portal` mockup (which serves a single API's developer portal) — this is a multi-publisher marketplace across all tenants in the organization. Feeds naturally into the existing `monetization` mockup infrastructure.
-
-- **DB Hooks:** `projects`, `versions`, `api_keys`, `licenses`, `license_feature_flags`, `push_webhook_subscriptions`
-- **Target Buyer:** Platform teams, API product managers
-- **Enterprise Value:** ⭐⭐⭐⭐
-
-Update the /mockups/index.html page after implementing the mockup so the index is updated with the latest addition.
-
----
-
-Create a mockup in the objectified-ui /mockups directory that creates a new Harvest project in /mockups/harvest as follows:
-### Objectified Harvest
-**Reverse engineering — auto-discover APIs from existing systems**
-
-Upload a codebase, point at a running service URL, or connect to a database and automatically generate an OpenAPI spec or class diagram. Targets brownfield enterprise adoption where thousands of undocumented internal services need to be cataloged. Parses Express/FastAPI/Spring annotations, database DDL, Postman collections, HAR files, and traffic captures into structured Objectified specs.
-
-- **DB Hooks:** `tenant_repositories`, `tenant_repository_files`, `tenant_repository_imports`, `tenant_repository_file_scan_jobs`, `versions`
-- **Target Buyer:** Any enterprise with legacy/undocumented services (virtually universal)
-- **Enterprise Value:** ⭐⭐⭐⭐⭐
-
-Update the /mockups/index.html page after implementing the mockup so the index is updated with the latest addition.
+This document captures potential new products for the Objectified enterprise suite. These ideas are based on analysis of the 50 existing UI mockups, the 62-table database schema, and the existing utility/conversion capabilities in `objectified-ui`. Each proposed product fills a genuine gap not covered by existing mockups and is grounded in concrete database hooks already present in the schema.
 
 ---
 
 ## 🧪 Testing & Quality
-
-Create a mockup in the objectified-ui /mockups directory that creates a new Bench project in /mockups/bench as follows:
-### Objectified Bench
-**API load and performance test designer**
-
-Design load test scenarios directly from OpenAPI path definitions. Define virtual user profiles, ramp patterns, think times, and assertion thresholds — then execute against a target environment. Results feed back into the `monitoring` and `analytics` modules. Bridges the gap between spec design and performance validation, similar to k6 or Gatling but with a visual UI tied to spec metadata.
-
-- **DB Hooks:** `path_operation`, `version_server`, `versions`, `projects`
-- **Target Buyer:** QA teams, SRE teams, API platform engineers
-- **Enterprise Value:** ⭐⭐⭐⭐
-
-Update the /mockups/index.html page after implementing the mockup so the index is updated with the latest addition.
-
----
 
 Create a mockup in the objectified-ui /mockups directory that creates a new Simulate project in /mockups/simulate as follows:
 ### Objectified Simulate
@@ -212,6 +141,9 @@ Update the /mockups/index.html page after implementing the mockup so the index i
 | **Topology** | Architecture | Medium | ⭐⭐⭐⭐ |
 | **Registry** | Architecture | Medium | ⭐⭐⭐⭐⭐ |
 | **Advisor** | AI | High | ⭐⭐⭐⭐⭐ |
+| **Scribe** | Documentation | Medium | ⭐⭐⭐⭐⭐ |
+| **Slate** | Documentation | Medium | ⭐⭐⭐⭐⭐ |
+| **Changelog** | Documentation | Low | ⭐⭐⭐⭐ |
 | **Cost** | Operations | Low | ⭐⭐⭐⭐ |
 | **Federate** | Operations | High | ⭐⭐⭐⭐⭐ |
 
@@ -223,6 +155,9 @@ Based on market demand, natural fit with the existing DB schema, and lowest incr
 
 1. **Comply** — sells directly to regulated industries (finance, healthcare, government); existing class/property tagging model maps cleanly
 2. **Lineage** — top analyst and CDO ask for any data governance platform; blast-radius analysis builds on existing merge conflict detection
-3. **Registry** — completes the event-driven/streaming story; Avro and Protobuf converters already exist in `objectified-ui`
-4. **Harvest** — lowest barrier to enterprise adoption; gives brownfield orgs an entry point without starting from scratch
-5. **Advisor** — differentiates on AI, highest perceived value in demos; builds on existing quality scoring infrastructure
+3. **Scribe** — highest perceived value per effort; immediately improves spec quality and reduces time-to-publish for every team; AI documentation generation already listed in `FEATURE_ROADMAP_AI.md`
+4. **Registry** — completes the event-driven/streaming story; Avro and Protobuf converters already exist in `objectified-ui`
+5. **Harvest** — lowest barrier to enterprise adoption; gives brownfield orgs an entry point without starting from scratch
+6. **Changelog** — low complexity, universally demanded; version diff infrastructure already exists and every API team needs automated release notes
+7. **Slate** — high enterprise value for ISVs and regulated industries needing offline/air-gapped documentation bundles
+8. **Advisor** — differentiates on AI, highest perceived value in demos; builds on existing quality scoring infrastructure

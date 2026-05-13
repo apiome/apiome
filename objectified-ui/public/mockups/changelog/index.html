@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Objectified Changelog — Mockup Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .screen-card:hover { transform: translateY(-1px); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-6">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-orange-500 to-red-400 flex items-center justify-center"><i data-lucide="file-diff" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified Changelog</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 font-medium">Mockup</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="../index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-orange-500">&larr; Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+    </div>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 py-10">
+    <!-- Hero -->
+    <div class="flex items-start gap-5 mb-10">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-red-400 flex items-center justify-center flex-shrink-0 shadow-lg">
+        <i data-lucide="file-diff" class="w-8 h-8 text-white"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold">Changelog</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm leading-relaxed max-w-2xl">Automated changelog and release notes generator. Diff any two versions and produce structured, human-readable changelogs categorized by breaking changes, new paths, deprecated fields, schema renames, and behavioral amendments — published in Markdown, JIRA wiki, Confluence, and email digest.</p>
+        <div class="flex flex-wrap items-center gap-2 mt-3">
+          <span class="text-[10px] mono px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">versions</span>
+          <span class="text-[10px] mono px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">version_branches</span>
+          <span class="text-[10px] mono px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">merge_sessions</span>
+          <span class="text-[10px] mono px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">merge_session_conflicts</span>
+          <span class="text-[10px] mono px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">path_operation</span>
+          <span class="text-[10px] mono px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">classes</span>
+          <span class="text-[10px] mono px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">class_properties</span>
+          <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">API platform teams · DevRel · Release managers</span>
+          <span class="text-[10px] font-medium px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">⭐⭐⭐⭐ Enterprise Value</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Epic 1: Diff & Analysis -->
+    <div class="mb-8">
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-orange-500 dark:text-orange-400 mb-3 flex items-center gap-2"><i data-lucide="git-compare" class="w-3.5 h-3.5"></i> Diff &amp; Analysis</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <a href="diff.html" class="screen-card block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md transition-all">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-400 flex items-center justify-center mb-3"><i data-lucide="git-compare-arrows" class="w-4 h-4 text-white"></i></div>
+          <p class="text-sm font-semibold">Version Diff</p>
+          <p class="text-xs text-gray-400 mt-1">Select two versions and view categorized summary of all changes.</p>
+        </a>
+        <a href="breaking-changes.html" class="screen-card block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md transition-all">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-400 flex items-center justify-center mb-3"><i data-lucide="triangle-alert" class="w-4 h-4 text-white"></i></div>
+          <p class="text-sm font-semibold">Breaking Changes</p>
+          <p class="text-xs text-gray-400 mt-1">Detailed view of breaking changes with consumer impact analysis.</p>
+        </a>
+        <a href="schema-changes.html" class="screen-card block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md transition-all">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-400 flex items-center justify-center mb-3"><i data-lucide="layers" class="w-4 h-4 text-white"></i></div>
+          <p class="text-sm font-semibold">Schema Changes</p>
+          <p class="text-xs text-gray-400 mt-1">Class renames, deprecated fields, new properties, and type mutations.</p>
+        </a>
+        <a href="new-endpoints.html" class="screen-card block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md transition-all">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-400 flex items-center justify-center mb-3"><i data-lucide="route" class="w-4 h-4 text-white"></i></div>
+          <p class="text-sm font-semibold">Path Changes</p>
+          <p class="text-xs text-gray-400 mt-1">New, removed, and modified API paths and operations.</p>
+        </a>
+      </div>
+    </div>
+
+    <!-- Epic 2: Authoring -->
+    <div class="mb-8">
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-orange-500 dark:text-orange-400 mb-3 flex items-center gap-2"><i data-lucide="pencil" class="w-3.5 h-3.5"></i> Changelog Authoring</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <a href="editor.html" class="screen-card block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md transition-all">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-400 flex items-center justify-center mb-3"><i data-lucide="file-pen" class="w-4 h-4 text-white"></i></div>
+          <p class="text-sm font-semibold">Changelog Editor</p>
+          <p class="text-xs text-gray-400 mt-1">Review, reorder, and annotate auto-generated changelog entries before publishing.</p>
+        </a>
+        <a href="preview.html" class="screen-card block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md transition-all">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-400 flex items-center justify-center mb-3"><i data-lucide="eye" class="w-4 h-4 text-white"></i></div>
+          <p class="text-sm font-semibold">Format Preview</p>
+          <p class="text-xs text-gray-400 mt-1">Preview changelog in Markdown, JIRA wiki markup, Confluence, and email digest.</p>
+        </a>
+        <a href="attribution.html" class="screen-card block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md transition-all">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-400 flex items-center justify-center mb-3"><i data-lucide="git-merge" class="w-4 h-4 text-white"></i></div>
+          <p class="text-sm font-semibold">Merge Attribution</p>
+          <p class="text-xs text-gray-400 mt-1">Trace each change to its originating merge request, author, and timestamp.</p>
+        </a>
+      </div>
+    </div>
+
+    <!-- Epic 3: Publishing -->
+    <div class="mb-8">
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-orange-500 dark:text-orange-400 mb-3 flex items-center gap-2"><i data-lucide="send" class="w-3.5 h-3.5"></i> Publishing</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <a href="export.html" class="screen-card block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md transition-all">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-400 flex items-center justify-center mb-3"><i data-lucide="share-2" class="w-4 h-4 text-white"></i></div>
+          <p class="text-sm font-semibold">Export &amp; Publish</p>
+          <p class="text-xs text-gray-400 mt-1">Push changelogs to Confluence, JIRA, email lists, Slack, or GitHub Releases.</p>
+        </a>
+        <a href="history.html" class="screen-card block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md transition-all">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-400 flex items-center justify-center mb-3"><i data-lucide="history" class="w-4 h-4 text-white"></i></div>
+          <p class="text-sm font-semibold">Release History</p>
+          <p class="text-xs text-gray-400 mt-1">Archive of all published changelogs with version, date, and format index.</p>
+        </a>
+      </div>
+    </div>
+
+    <!-- Epic 4: Settings -->
+    <div class="mb-8">
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-orange-500 dark:text-orange-400 mb-3 flex items-center gap-2"><i data-lucide="settings-2" class="w-3.5 h-3.5"></i> Settings</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <a href="settings.html" class="screen-card block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md transition-all">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-400 flex items-center justify-center mb-3"><i data-lucide="settings-2" class="w-4 h-4 text-white"></i></div>
+          <p class="text-sm font-semibold">Settings</p>
+          <p class="text-xs text-gray-400 mt-1">Templates, change categories, notification rules, and auto-publish triggers.</p>
+        </a>
+      </div>
+    </div>
+
+    <div class="mt-8 p-4 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/50 rounded-xl flex items-center gap-3 text-xs text-orange-700 dark:text-orange-400">
+      <i data-lucide="info" class="w-4 h-4 flex-shrink-0"></i>
+      Static mockup — no backend. All data is illustrative. 10 screens across 4 epics.
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    const btn = document.getElementById('themeBtn');
+    const stored = localStorage.getItem('changelog-mockup-theme');
+    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+    btn.addEventListener('click', () => { document.documentElement.classList.toggle('dark'); localStorage.setItem('changelog-mockup-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scribe — Style Guide</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+    .tone-active { border-color: #7c3aed; background: rgba(124,58,237,0.08); color: #7c3aed; }
+    .tone-inactive { border-color: #e5e7eb; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-purple-400 flex items-center justify-center"><i data-lucide="pen-line" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Scribe</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Style Guide</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-violet-500">&larr; Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-violet-500 opacity-60"></span> Coverage Overview</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Dashboard</span></a></li>
+            <li><a href="project-overview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="folder-open" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Project Overview</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-violet-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-violet-500 opacity-60"></span> AI Authoring</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="path-editor.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="route" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Path Editor</span></a></li>
+            <li><a href="schema-editor.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="box" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Schema Editor</span></a></li>
+            <li><a href="property-editor.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="text-cursor-input" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Property Editor</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-violet-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-violet-500 opacity-60"></span> Content Generation</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="sdk-guide.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="code-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">SDK Guide Generator</span></a></li>
+            <li><a href="readme-generator.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="file-text" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">README Generator</span></a></li>
+            <li><a href="style-guide.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-violet-200 dark:border-violet-700/70 bg-violet-500/10"><i data-lucide="book-open" class="w-5 h-5 text-violet-500"></i><span class="text-sm font-semibold flex-1 text-violet-600 dark:text-violet-400">Style Guide</span><span class="h-1.5 w-1.5 rounded-full bg-violet-500"></span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-violet-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-violet-500 opacity-60"></span> Quality &amp; Config</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="stale-alerts.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="bell-ring" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Stale Alerts</span></a></li>
+            <li><a href="settings.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="settings-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Settings</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-violet-500/10" />
+        <div><ul class="m-0 mt-1 list-none space-y-1 p-0"><li><a href="../index.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Mockup hub</span></a></li></ul></div>
+      </div>
+    </aside>
+
+    <main class="flex-1 overflow-auto p-6">
+      <div class="max-w-4xl mx-auto space-y-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">Documentation Style Guide</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Define tone, terminology rules, and naming conventions applied org-wide when Scribe generates content</p>
+          </div>
+          <div class="flex gap-2">
+            <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700"><i data-lucide="upload" class="w-3.5 h-3.5"></i> Import existing guide</button>
+            <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700"><i data-lucide="save" class="w-3.5 h-3.5"></i> Save guide</button>
+          </div>
+        </div>
+
+        <!-- Tone presets -->
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+          <h2 class="text-sm font-semibold mb-1">Tone Preset</h2>
+          <p class="text-xs text-gray-500 mb-4">Controls how generated prose reads across all Scribe outputs</p>
+          <div class="grid grid-cols-4 gap-3">
+            <button class="p-3 rounded-lg border-2 tone-active text-left">
+              <div class="font-semibold text-sm mb-1">Technical</div>
+              <div class="text-[11px] text-gray-500 dark:text-gray-400">Precise, formal, assumes developer audience. Avoids colloquialisms.</div>
+            </button>
+            <button class="p-3 rounded-lg border-2 tone-inactive dark:border-gray-600 text-left hover:border-violet-300">
+              <div class="font-semibold text-sm mb-1 text-gray-700 dark:text-gray-200">Friendly</div>
+              <div class="text-[11px] text-gray-500 dark:text-gray-400">Approachable, uses "you", encourages exploration, beginner-friendly.</div>
+            </button>
+            <button class="p-3 rounded-lg border-2 tone-inactive dark:border-gray-600 text-left hover:border-violet-300">
+              <div class="font-semibold text-sm mb-1 text-gray-700 dark:text-gray-200">Concise</div>
+              <div class="text-[11px] text-gray-500 dark:text-gray-400">Short sentences, no filler words, imperative tense for instructions.</div>
+            </button>
+            <button class="p-3 rounded-lg border-2 tone-inactive dark:border-gray-600 text-left hover:border-violet-300">
+              <div class="font-semibold text-sm mb-1 text-gray-700 dark:text-gray-200">Enterprise</div>
+              <div class="text-[11px] text-gray-500 dark:text-gray-400">Formal, passive voice allowed, compliance-aware, avoids contractions.</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Terminology rules -->
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-sm font-semibold">Terminology Rules</h2>
+              <p class="text-xs text-gray-500 mt-0.5">Terms Scribe will enforce when generating descriptions and guides</p>
+            </div>
+            <button class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 text-xs hover:bg-gray-50 dark:hover:bg-gray-700"><i data-lucide="plus" class="w-3 h-3"></i> Add rule</button>
+          </div>
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="text-left border-b border-gray-100 dark:border-gray-700">
+                <th class="pb-2 pr-4 font-medium text-gray-500">Preferred term</th>
+                <th class="pb-2 pr-4 font-medium text-gray-500">Avoid / replace</th>
+                <th class="pb-2 pr-4 font-medium text-gray-500">Scope</th>
+                <th class="pb-2 font-medium text-gray-500 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
+              <tr class="group">
+                <td class="py-2.5 pr-4"><span class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 mono">payment intent</span></td>
+                <td class="py-2.5 pr-4 text-gray-500">charge, transaction, order</td>
+                <td class="py-2.5 pr-4"><span class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">Payments API</span></td>
+                <td class="py-2.5 text-right opacity-0 group-hover:opacity-100"><button class="text-gray-400 hover:text-red-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
+              </tr>
+              <tr class="group">
+                <td class="py-2.5 pr-4"><span class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 mono">API key</span></td>
+                <td class="py-2.5 pr-4 text-gray-500">secret, token, credential</td>
+                <td class="py-2.5 pr-4"><span class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">All projects</span></td>
+                <td class="py-2.5 text-right opacity-0 group-hover:opacity-100"><button class="text-gray-400 hover:text-red-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
+              </tr>
+              <tr class="group">
+                <td class="py-2.5 pr-4"><span class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 mono">endpoint</span></td>
+                <td class="py-2.5 pr-4 text-gray-500">route, path, URL, method</td>
+                <td class="py-2.5 pr-4"><span class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">All projects</span></td>
+                <td class="py-2.5 text-right opacity-0 group-hover:opacity-100"><button class="text-gray-400 hover:text-red-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
+              </tr>
+              <tr class="group">
+                <td class="py-2.5 pr-4"><span class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 mono">idempotency key</span></td>
+                <td class="py-2.5 pr-4 text-gray-500">dedup ID, request ID</td>
+                <td class="py-2.5 pr-4"><span class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">Payments API</span></td>
+                <td class="py-2.5 text-right opacity-0 group-hover:opacity-100"><button class="text-gray-400 hover:text-red-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Preview panel -->
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-semibold">Preview Effect</h2>
+            <button class="flex items-center gap-1 text-xs text-violet-600 hover:underline"><i data-lucide="sparkles" class="w-3 h-3"></i> Re-apply style</button>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wider">Before</p>
+              <div class="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-700/40 text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                Initiates a charge for the given transaction amount. Provide the secret along with the request to authenticate. The route will return the order details on success.
+              </div>
+            </div>
+            <div>
+              <p class="text-[10px] text-gray-400 font-semibold mb-2 uppercase tracking-wider">After</p>
+              <div class="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-700/40 text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                Creates a new payment intent for the specified amount. Authenticate requests using your <span class="text-violet-600 dark:text-violet-400 font-medium">API key</span> in the Authorization header. The endpoint returns the payment intent details on success.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    const btn = document.getElementById('themeBtn');
+    const stored = localStorage.getItem('scribe-mockup-theme');
+    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+    btn.addEventListener('click', () => { document.documentElement.classList.toggle('dark'); localStorage.setItem('scribe-mockup-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); });
+  </script>
+</body>
+</html>

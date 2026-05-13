@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAB · Board</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg,#ffffff 0%,#f8fafc 100%); box-shadow: 4px 0 18px rgba(15,23,42,0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg,#172033 0%,#0f172a 100%); box-shadow: 4px 0 18px rgba(2,6,23,0.32); }
+    .sla-ok   { background: rgba(16,185,129,0.12); border-left: 3px solid rgba(16,185,129,0.7); }
+    .sla-warn { background: rgba(245,158,11,0.12); border-left: 3px solid rgba(245,158,11,0.7); }
+    .sla-crit { background: rgba(244,63,94,0.12);  border-left: 3px solid rgba(244,63,94,0.7); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <!-- Top bar -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-rose-500 flex items-center justify-center"><i data-lucide="clipboard-check" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">CAB</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm font-medium text-violet-600 dark:text-violet-400">Board</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-violet-500">← Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height:calc(100vh - 48px);">
+    <!-- Sidebar -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width:260px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-violet-500 opacity-60"></span>Overview</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="board.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-violet-200 dark:border-violet-700/70 bg-violet-500/10"><i data-lucide="kanban" class="w-5 h-5 text-violet-500"></i><span class="text-sm font-semibold flex-1 text-violet-600 dark:text-violet-400">CAB Board</span><span class="h-1.5 w-1.5 rounded-full bg-violet-500"></span></a></li>
+            <li><a href="request-detail.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="file-clock" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Change Request</span><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">3</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-violet-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-violet-500 opacity-60"></span>Workflow Stages</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="design-review.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="pen-ruler" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Design Review</span><span class="text-[10px] text-gray-400 mono">3</span></a></li>
+            <li><a href="security-review.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="shield-alert" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Security Review</span><span class="text-[10px] text-gray-400 mono">2</span></a></li>
+            <li><a href="arch-review.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="layers-3" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Architecture Board</span><span class="text-[10px] text-gray-400 mono">1</span></a></li>
+            <li><a href="legal-review.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="scale" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Legal Review</span><span class="text-[10px] text-gray-400 mono">1</span></a></li>
+            <li><a href="release-gate.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="rocket" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Release Gate</span><span class="text-[10px] text-gray-400 mono">2</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-violet-500/10" />
+        <div>
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-violet-500 opacity-60"></span>Governance</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="audit-log.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="scroll-text" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Audit Log</span></a></li>
+            <li><a href="sla-config.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="sliders-horizontal" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">SLA &amp; Config</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
+      <!-- Board header -->
+      <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-bold">Change Advisory Board</h2>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">9 active change requests · 2 SLA breaches · Next release window: Fri 22:00 UTC</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"><i data-lucide="filter" class="w-3.5 h-3.5"></i> Filter</button>
+          <button class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-violet-600 text-white hover:bg-violet-700 transition-colors"><i data-lucide="plus" class="w-3.5 h-3.5"></i> New Change Request</button>
+        </div>
+      </div>
+
+      <!-- Kanban board -->
+      <div class="p-6 overflow-x-auto">
+        <div class="flex gap-4 min-w-max">
+
+          <!-- Stage 1: Design Review -->
+          <div class="w-72 flex-shrink-0">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center"><i data-lucide="pen-ruler" class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400"></i></div>
+                <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Design Review</span>
+              </div>
+              <span class="text-[10px] mono bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full">3</span>
+            </div>
+            <div class="space-y-2.5">
+              <!-- CR-2847 -->
+              <a href="request-detail.html" class="block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-violet-300 dark:hover:border-violet-600 transition-colors sla-ok">
+                <div class="flex items-start justify-between mb-2">
+                  <span class="text-[10px] mono text-gray-400">CR-2847</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">Internal</span>
+                </div>
+                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight">Payment API v3.2 — add <code class="mono text-xs">metadata</code> field</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">POST /payments · non-breaking</p>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="flex -space-x-1.5">
+                    <div class="w-5 h-5 rounded-full bg-indigo-500 border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-[9px] font-bold">SR</div>
+                    <div class="w-5 h-5 rounded-full bg-teal-500 border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-[9px] font-bold">ML</div>
+                  </div>
+                  <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> 18h left</span>
+                </div>
+              </a>
+              <!-- CR-2760 -->
+              <a href="design-review.html" class="block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-violet-300 dark:hover:border-violet-600 transition-colors sla-warn">
+                <div class="flex items-start justify-between mb-2">
+                  <span class="text-[10px] mono text-gray-400">CR-2760</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">Internal</span>
+                </div>
+                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight">Events API v1 — change event payload structure</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">POST /events · breaking change</p>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="flex -space-x-1.5">
+                    <div class="w-5 h-5 rounded-full bg-amber-500 border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-[9px] font-bold">JK</div>
+                  </div>
+                  <span class="text-[10px] text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> 4h left</span>
+                </div>
+              </a>
+              <!-- CR-2798 -->
+              <a href="design-review.html" class="block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-violet-300 dark:hover:border-violet-600 transition-colors sla-crit">
+                <div class="flex items-start justify-between mb-2">
+                  <span class="text-[10px] mono text-gray-400">CR-2798</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300">External</span>
+                </div>
+                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight">Notification API v2 — webhook signature headers</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">All webhook endpoints · security update</p>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="flex -space-x-1.5">
+                    <div class="w-5 h-5 rounded-full bg-rose-500 border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-[9px] font-bold">AH</div>
+                    <div class="w-5 h-5 rounded-full bg-gray-400 border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-[9px] font-bold">+1</div>
+                  </div>
+                  <span class="text-[10px] text-rose-600 dark:text-rose-400 font-medium flex items-center gap-1"><i data-lucide="alert-circle" class="w-3 h-3"></i> Overdue</span>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Stage 2: Security Review -->
+          <div class="w-72 flex-shrink-0">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center"><i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400"></i></div>
+                <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Security Review</span>
+              </div>
+              <span class="text-[10px] mono bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full">2</span>
+            </div>
+            <div class="space-y-2.5">
+              <!-- CR-2831 -->
+              <a href="security-review.html" class="block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-violet-300 dark:hover:border-violet-600 transition-colors sla-ok">
+                <div class="flex items-start justify-between mb-2">
+                  <span class="text-[10px] mono text-gray-400">CR-2831</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">Internal</span>
+                </div>
+                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight">Auth Service v2.1 — reduce token TTL to 2h</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">POST /auth/token · security hardening</p>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="flex -space-x-1.5">
+                    <div class="w-5 h-5 rounded-full bg-violet-500 border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-[9px] font-bold">PD</div>
+                  </div>
+                  <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> 22h left</span>
+                </div>
+              </a>
+              <!-- CR-2819 -->
+              <a href="security-review.html" class="block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-violet-300 dark:hover:border-violet-600 transition-colors sla-warn">
+                <div class="flex items-start justify-between mb-2">
+                  <span class="text-[10px] mono text-gray-400">CR-2819</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">Internal</span>
+                </div>
+                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight">Catalog API v1.5 — deprecate /v1/items endpoint</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">GET /v1/items · deprecation</p>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="flex -space-x-1.5">
+                    <div class="w-5 h-5 rounded-full bg-sky-500 border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-[9px] font-bold">TN</div>
+                    <div class="w-5 h-5 rounded-full bg-emerald-500 border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-[9px] font-bold">RB</div>
+                  </div>
+                  <span class="text-[10px] text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> 6h left</span>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Stage 3: Architecture Board -->
+          <div class="w-72 flex-shrink-0">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center"><i data-lucide="layers-3" class="w-3.5 h-3.5 text-violet-600 dark:text-violet-400"></i></div>
+                <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Architecture Board</span>
+              </div>
+              <span class="text-[10px] mono bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full">1</span>
+            </div>
+            <div class="space-y-2.5">
+              <!-- CR-2808 -->
+              <a href="arch-review.html" class="block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-violet-300 dark:hover:border-violet-600 transition-colors sla-ok">
+                <div class="flex items-start justify-between mb-2">
+                  <span class="text-[10px] mono text-gray-400">CR-2808</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300">External</span>
+                </div>
+                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight">Webhook API v1.0 — mandatory sig verification</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">POST /webhooks/register · breaking change</p>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="flex -space-x-1.5">
+                    <div class="w-5 h-5 rounded-full bg-violet-600 border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-[9px] font-bold">KS</div>
+                    <div class="w-5 h-5 rounded-full bg-gray-500 border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-[9px] font-bold">FC</div>
+                    <div class="w-5 h-5 rounded-full bg-gray-400 border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-[9px] font-bold">LH</div>
+                  </div>
+                  <div class="text-[10px] text-violet-600 dark:text-violet-400 font-medium">
+                    <span class="text-emerald-600 dark:text-emerald-400">1</span> / 3 votes
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Stage 4: Legal Review -->
+          <div class="w-72 flex-shrink-0">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded bg-sky-100 dark:bg-sky-900/40 flex items-center justify-center"><i data-lucide="scale" class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400"></i></div>
+                <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Legal Review</span>
+              </div>
+              <span class="text-[10px] mono bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 px-2 py-0.5 rounded-full">1</span>
+            </div>
+            <div class="space-y-2.5">
+              <!-- CR-2789 -->
+              <a href="legal-review.html" class="block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-violet-300 dark:hover:border-violet-600 transition-colors sla-ok">
+                <div class="flex items-start justify-between mb-2">
+                  <span class="text-[10px] mono text-gray-400">CR-2789</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300">External</span>
+                </div>
+                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight">Partner API v2 — new /partner/accounts endpoint</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">POST /partner/accounts · new endpoint</p>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="flex -space-x-1.5">
+                    <div class="w-5 h-5 rounded-full bg-sky-600 border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-[9px] font-bold">GP</div>
+                  </div>
+                  <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> 36h left</span>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Stage 5: Release Gate -->
+          <div class="w-72 flex-shrink-0">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center"><i data-lucide="rocket" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i></div>
+                <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Release Gate</span>
+              </div>
+              <span class="text-[10px] mono bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full">2</span>
+            </div>
+            <div class="space-y-2.5">
+              <!-- CR-2801 -->
+              <a href="release-gate.html" class="block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-violet-300 dark:hover:border-violet-600 transition-colors sla-ok">
+                <div class="flex items-start justify-between mb-2">
+                  <span class="text-[10px] mono text-gray-400">CR-2801</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300">External</span>
+                </div>
+                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight">User API v4 — remove SSN field (breaking)</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">GET /users · GDPR compliance</p>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">All stages ✓</div>
+                  <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Ready</span>
+                </div>
+              </a>
+              <!-- CR-2775 -->
+              <a href="release-gate.html" class="block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-violet-300 dark:hover:border-violet-600 transition-colors sla-ok">
+                <div class="flex items-start justify-between mb-2">
+                  <span class="text-[10px] mono text-gray-400">CR-2775</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">Internal</span>
+                </div>
+                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight">Admin API v3 — add bulk-delete endpoint</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">DELETE /admin/bulk · new endpoint</p>
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">All stages ✓</div>
+                  <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Ready</span>
+                </div>
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SLA summary bar -->
+      <div class="mx-6 mb-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">SLA Health</h3>
+        <div class="grid grid-cols-4 gap-4">
+          <div class="text-center">
+            <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">6</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">On track</p>
+          </div>
+          <div class="text-center">
+            <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">1</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">At risk (&lt;8h)</p>
+          </div>
+          <div class="text-center">
+            <p class="text-2xl font-bold text-rose-600 dark:text-rose-400">1</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Breached</p>
+          </div>
+          <div class="text-center">
+            <p class="text-2xl font-bold text-violet-600 dark:text-violet-400">2</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Pending release</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const key = 'cab-theme';
+    const stored = localStorage.getItem(key);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(key, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scribe — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <!-- Top nav -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-purple-400 flex items-center justify-center"><i data-lucide="pen-line" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Scribe</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Dashboard</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-violet-500">&larr; Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <!-- Sidebar -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-violet-500 opacity-60"></span> Coverage Overview</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-violet-200 dark:border-violet-700/70 bg-violet-500/10"><i data-lucide="layout-dashboard" class="w-5 h-5 text-violet-500"></i><span class="text-sm font-semibold flex-1 text-violet-600 dark:text-violet-400">Dashboard</span><span class="h-1.5 w-1.5 rounded-full bg-violet-500"></span></a></li>
+            <li><a href="project-overview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="folder-open" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Project Overview</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-violet-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-violet-500 opacity-60"></span> AI Authoring</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="path-editor.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="route" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Path Editor</span></a></li>
+            <li><a href="schema-editor.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="box" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Schema Editor</span></a></li>
+            <li><a href="property-editor.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="text-cursor-input" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Property Editor</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-violet-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-violet-500 opacity-60"></span> Content Generation</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="sdk-guide.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="code-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">SDK Guide Generator</span></a></li>
+            <li><a href="readme-generator.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="file-text" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">README Generator</span></a></li>
+            <li><a href="style-guide.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="book-open" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Style Guide</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-violet-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-violet-500 opacity-60"></span> Quality &amp; Config</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="stale-alerts.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="bell-ring" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Stale Alerts</span></a></li>
+            <li><a href="settings.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="settings-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Settings</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-violet-500/10" />
+        <div>
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-violet-500 opacity-60"></span> Navigation</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="../index.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-violet-500/10 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Mockup hub</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 overflow-auto p-6">
+      <!-- Stat tiles -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Overall Coverage</p>
+          <p class="text-2xl font-bold text-violet-600 dark:text-violet-400">68%</p>
+          <div class="mt-2 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-1.5 rounded-full bg-violet-500" style="width:68%"></div></div>
+          <p class="text-[10px] text-gray-400 mt-1">+4% vs last week</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Paths Documented</p>
+          <p class="text-2xl font-bold">142 <span class="text-sm font-normal text-gray-400">/ 209</span></p>
+          <div class="mt-2 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-1.5 rounded-full bg-blue-400" style="width:68%"></div></div>
+          <p class="text-[10px] text-gray-400 mt-1">67 paths missing summaries</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Schemas Documented</p>
+          <p class="text-2xl font-bold">87 <span class="text-sm font-normal text-gray-400">/ 114</span></p>
+          <div class="mt-2 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-1.5 rounded-full bg-emerald-400" style="width:76%"></div></div>
+          <p class="text-[10px] text-gray-400 mt-1">27 schemas missing overviews</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Stale Alerts</p>
+          <p class="text-2xl font-bold text-amber-500">14</p>
+          <p class="text-[10px] text-gray-400 mt-3">Descriptions flagged after spec changes</p>
+          <a href="stale-alerts.html" class="text-[10px] text-violet-500 hover:underline">Review queue →</a>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Project coverage table -->
+        <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-semibold">Project Coverage</h2>
+            <a href="project-overview.html" class="text-xs text-violet-500 hover:underline">View all →</a>
+          </div>
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="text-left border-b border-gray-100 dark:border-gray-700">
+                <th class="pb-2 font-medium text-gray-500">Project</th>
+                <th class="pb-2 font-medium text-gray-500">Version</th>
+                <th class="pb-2 font-medium text-gray-500">Paths</th>
+                <th class="pb-2 font-medium text-gray-500">Schemas</th>
+                <th class="pb-2 font-medium text-gray-500">Score</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="py-2.5 font-medium">Payments API</td>
+                <td class="py-2.5 mono text-gray-400">v2.4.1</td>
+                <td class="py-2.5"><span class="text-emerald-600 dark:text-emerald-400">38/38</span></td>
+                <td class="py-2.5"><span class="text-emerald-600 dark:text-emerald-400">22/22</span></td>
+                <td class="py-2.5"><span class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">100%</span></td>
+              </tr>
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="py-2.5 font-medium">User Service</td>
+                <td class="py-2.5 mono text-gray-400">v1.9.0</td>
+                <td class="py-2.5"><span class="text-blue-600 dark:text-blue-400">24/31</span></td>
+                <td class="py-2.5"><span class="text-blue-600 dark:text-blue-400">18/24</span></td>
+                <td class="py-2.5"><span class="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">76%</span></td>
+              </tr>
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="py-2.5 font-medium">Inventory API</td>
+                <td class="py-2.5 mono text-gray-400">v3.1.0</td>
+                <td class="py-2.5"><span class="text-amber-600 dark:text-amber-400">41/67</span></td>
+                <td class="py-2.5"><span class="text-amber-600 dark:text-amber-400">19/31</span></td>
+                <td class="py-2.5"><span class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">61%</span></td>
+              </tr>
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="py-2.5 font-medium">Notification Service</td>
+                <td class="py-2.5 mono text-gray-400">v1.2.0</td>
+                <td class="py-2.5"><span class="text-red-500">12/44</span></td>
+                <td class="py-2.5"><span class="text-red-500">8/29</span></td>
+                <td class="py-2.5"><span class="px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">29%</span></td>
+              </tr>
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="py-2.5 font-medium">Analytics API</td>
+                <td class="py-2.5 mono text-gray-400">v2.0.0</td>
+                <td class="py-2.5"><span class="text-amber-600 dark:text-amber-400">27/29</span></td>
+                <td class="py-2.5"><span class="text-emerald-600 dark:text-emerald-400">8/8</span></td>
+                <td class="py-2.5"><span class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">93%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Right column -->
+        <div class="space-y-5">
+          <!-- AI activity feed -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <h2 class="text-sm font-semibold mb-3">Recent AI Activity</h2>
+            <ul class="space-y-3 text-xs">
+              <li class="flex gap-2 items-start">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></span>
+                <div><p class="font-medium text-gray-700 dark:text-gray-300">Generated 8 path summaries</p><p class="text-gray-400">Inventory API · 2 min ago</p></div>
+              </li>
+              <li class="flex gap-2 items-start">
+                <span class="w-1.5 h-1.5 rounded-full bg-violet-400 mt-1.5 flex-shrink-0"></span>
+                <div><p class="font-medium text-gray-700 dark:text-gray-300">Completed schema overview</p><p class="text-gray-400">OrderLineItem · 11 min ago</p></div>
+              </li>
+              <li class="flex gap-2 items-start">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 flex-shrink-0"></span>
+                <div><p class="font-medium text-gray-700 dark:text-gray-300">Flagged 3 stale descriptions</p><p class="text-gray-400">User Service v1.9.0 · 34 min ago</p></div>
+              </li>
+              <li class="flex gap-2 items-start">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 flex-shrink-0"></span>
+                <div><p class="font-medium text-gray-700 dark:text-gray-300">README generated</p><p class="text-gray-400">Payments API · 1 hr ago</p></div>
+              </li>
+              <li class="flex gap-2 items-start">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></span>
+                <div><p class="font-medium text-gray-700 dark:text-gray-300">SDK guide published (5 languages)</p><p class="text-gray-400">Payments API · 2 hr ago</p></div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick actions -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <h2 class="text-sm font-semibold mb-3">Quick Actions</h2>
+            <div class="space-y-2">
+              <a href="path-editor.html" class="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700/40 text-xs font-medium text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Auto-fill missing path summaries
+              </a>
+              <a href="schema-editor.html" class="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <i data-lucide="box" class="w-3.5 h-3.5"></i> Document undocumented schemas
+              </a>
+              <a href="stale-alerts.html" class="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 text-xs font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors">
+                <i data-lucide="bell-ring" class="w-3.5 h-3.5"></i> Review 14 stale alerts
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    const btn = document.getElementById('themeBtn');
+    const stored = localStorage.getItem('scribe-mockup-theme');
+    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+    btn.addEventListener('click', () => { document.documentElement.classList.toggle('dark'); localStorage.setItem('scribe-mockup-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); });
+  </script>
+</body>
+</html>

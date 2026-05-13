@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Slate — Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+    .device-btn.active { background: rgba(8,145,178,0.1); border-color: #0891b2; color: #0891b2; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-cyan-500 to-blue-400 flex items-center justify-center"><i data-lucide="layout-template" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Slate</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Preview</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-cyan-500">&larr; Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-cyan-500 opacity-60"></span> Site Overview</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Dashboard</span></a></li>
+            <li><a href="build-history.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="history" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Build History</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-cyan-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-cyan-500 opacity-60"></span> Content &amp; Theme</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="theme-editor.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="palette" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Theme Editor</span></a></li>
+            <li><a href="navigation.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="panel-left" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Navigation</span></a></li>
+            <li><a href="content-blocks.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="layout-list" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Content Blocks</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-cyan-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-cyan-500 opacity-60"></span> Preview &amp; Export</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="preview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-cyan-200 dark:border-cyan-700/70 bg-cyan-500/10"><i data-lucide="eye" class="w-5 h-5 text-cyan-500"></i><span class="text-sm font-semibold flex-1 text-cyan-600 dark:text-cyan-400">Preview</span><span class="h-1.5 w-1.5 rounded-full bg-cyan-500"></span></a></li>
+            <li><a href="export.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="download-cloud" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Export</span></a></li>
+            <li><a href="version-switcher.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="git-branch" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Version Switcher</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-cyan-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-cyan-500 opacity-60"></span> Settings</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="custom-domain.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="globe" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Custom Domain</span></a></li>
+            <li><a href="settings.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="settings-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Settings</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-cyan-500/10" />
+        <div><ul class="m-0 mt-1 list-none space-y-1 p-0"><li><a href="../index.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Mockup hub</span></a></li></ul></div>
+      </div>
+    </aside>
+
+    <main class="flex-1 overflow-auto flex flex-col">
+      <!-- Browser chrome toolbar -->
+      <div class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 flex items-center gap-3">
+        <div class="flex gap-1.5">
+          <div class="w-3 h-3 rounded-full bg-red-400"></div>
+          <div class="w-3 h-3 rounded-full bg-amber-400"></div>
+          <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+        </div>
+        <div class="flex-1 flex items-center gap-2">
+          <button class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="chevron-left" class="w-4 h-4 text-gray-400"></i></button>
+          <div class="flex-1 flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-1.5">
+            <i data-lucide="lock" class="w-3 h-3 text-emerald-500"></i>
+            <span class="mono text-xs text-gray-600 dark:text-gray-300">https://payments-docs.acme.io/v2.4.1/</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button class="device-btn active px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-600 text-xs flex items-center gap-1"><i data-lucide="monitor" class="w-3.5 h-3.5"></i> Desktop</button>
+          <button class="device-btn px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-600 text-xs flex items-center gap-1 text-gray-500"><i data-lucide="tablet" class="w-3.5 h-3.5"></i> Tablet</button>
+          <button class="device-btn px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-600 text-xs flex items-center gap-1 text-gray-500"><i data-lucide="smartphone" class="w-3.5 h-3.5"></i> Mobile</button>
+        </div>
+      </div>
+
+      <!-- Static site preview frame -->
+      <div class="flex-1 overflow-auto bg-gray-200 dark:bg-gray-950 flex items-start justify-center p-6">
+        <div class="w-full max-w-5xl rounded-xl border border-gray-300 dark:border-gray-700 overflow-hidden shadow-2xl bg-white" style="min-height: 600px;">
+          <!-- Site top bar -->
+          <div class="h-10 flex items-center px-4 gap-4 border-b border-gray-200 bg-white">
+            <div class="flex items-center gap-2">
+              <div class="w-5 h-5 rounded bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center"><i data-lucide="zap" class="w-3 h-3 text-white"></i></div>
+              <span class="text-sm font-bold text-gray-900">Payments API</span>
+            </div>
+            <nav class="flex gap-4 ml-4">
+              <span class="text-xs text-gray-500 cursor-pointer hover:text-cyan-600">Overview</span>
+              <span class="text-xs text-cyan-600 font-medium cursor-pointer border-b border-cyan-500">Reference</span>
+              <span class="text-xs text-gray-500 cursor-pointer hover:text-cyan-600">Guides</span>
+              <span class="text-xs text-gray-500 cursor-pointer hover:text-cyan-600">Changelog</span>
+            </nav>
+            <div class="ml-auto flex items-center gap-2">
+              <select class="text-[10px] border border-gray-200 rounded px-1.5 py-0.5 text-gray-600">
+                <option>v2.4.1 (latest)</option>
+                <option>v2.3.0</option>
+                <option>v2.0.0 (LTS)</option>
+              </select>
+              <div class="w-5 h-5 flex items-center justify-center cursor-pointer"><i data-lucide="search" class="w-3.5 h-3.5 text-gray-400"></i></div>
+            </div>
+          </div>
+          <!-- Site body -->
+          <div class="flex" style="min-height: 560px;">
+            <div class="w-52 border-r border-gray-100 p-4 text-xs bg-gray-50">
+              <p class="font-semibold text-gray-400 uppercase text-[9px] tracking-wider mb-2">Getting Started</p>
+              <ul class="space-y-1 mb-4">
+                <li class="px-2 py-1 rounded text-[11px] text-gray-600 hover:bg-gray-100 cursor-pointer">Overview</li>
+                <li class="px-2 py-1 rounded text-[11px] text-gray-600 hover:bg-gray-100 cursor-pointer">Authentication</li>
+                <li class="px-2 py-1 rounded text-[11px] text-gray-600 hover:bg-gray-100 cursor-pointer">Quick Start</li>
+                <li class="px-2 py-1 rounded text-[11px] text-gray-600 hover:bg-gray-100 cursor-pointer">Error Handling</li>
+              </ul>
+              <p class="font-semibold text-gray-400 uppercase text-[9px] tracking-wider mb-2">Payments</p>
+              <ul class="space-y-1 mb-4">
+                <li class="px-2 py-1 rounded text-[11px] font-medium cursor-pointer" style="background:#e0f7fa; color:#0891b2;">POST /payments</li>
+                <li class="px-2 py-1 rounded text-[11px] text-gray-600 hover:bg-gray-100 cursor-pointer">GET /payments</li>
+                <li class="px-2 py-1 rounded text-[11px] text-gray-600 hover:bg-gray-100 cursor-pointer">GET /payments/{'{id}'}</li>
+                <li class="px-2 py-1 rounded text-[11px] text-gray-600 hover:bg-gray-100 cursor-pointer">POST /payments/{'{id}'}/capture</li>
+              </ul>
+              <p class="font-semibold text-gray-400 uppercase text-[9px] tracking-wider mb-2">Refunds</p>
+              <ul class="space-y-1">
+                <li class="px-2 py-1 rounded text-[11px] text-gray-600 hover:bg-gray-100 cursor-pointer">POST /refunds</li>
+                <li class="px-2 py-1 rounded text-[11px] text-gray-600 hover:bg-gray-100 cursor-pointer">GET /refunds/{'{id}'}</li>
+              </ul>
+            </div>
+            <div class="flex-1 p-6 overflow-auto">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">POST</span>
+                <span class="mono text-sm font-semibold text-gray-900">/payments</span>
+              </div>
+              <h1 class="text-xl font-bold text-gray-900 mb-2">Create a payment intent</h1>
+              <p class="text-sm text-gray-600 leading-relaxed mb-4">Creates a new payment intent in <code class="mono bg-gray-100 px-1.5 py-0.5 rounded text-[11px]">pending</code> state. The payment must be explicitly captured via <code class="mono bg-gray-100 px-1.5 py-0.5 rounded text-[11px]">POST /payments/{'{id}'}/capture</code> unless <code class="mono bg-gray-100 px-1.5 py-0.5 rounded text-[11px]">capture_immediately</code> is set to <code class="mono bg-gray-100 px-1.5 py-0.5 rounded text-[11px]">true</code>.</p>
+              <!-- Language tabs -->
+              <div class="flex gap-1 mb-0">
+                <button class="mono text-[10px] px-3 py-1 rounded-t-md bg-gray-900 text-white">curl</button>
+                <button class="mono text-[10px] px-3 py-1 rounded-t-md bg-gray-100 text-gray-500">Python</button>
+                <button class="mono text-[10px] px-3 py-1 rounded-t-md bg-gray-100 text-gray-500">JS</button>
+              </div>
+              <pre class="mono text-[10px] bg-gray-900 text-gray-300 rounded-b-lg rounded-tr-lg p-4 leading-relaxed mb-4"><span class="text-emerald-400">curl</span> -X POST https://api.acme.io/v2/payments \
+  -H <span class="text-amber-300">"Authorization: Bearer $TOKEN"</span> \
+  -d <span class="text-blue-300">'{"amount":4999,"currency":"USD"}'</span></pre>
+              <!-- Try it live badge -->
+              <button class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100"><i data-lucide="play" class="w-3 h-3"></i> Try it live</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    const btn = document.getElementById('themeBtn');
+    const stored = localStorage.getItem('slate-mockup-theme');
+    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+    btn.addEventListener('click', () => { document.documentElement.classList.toggle('dark'); localStorage.setItem('slate-mockup-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); });
+  </script>
+</body>
+</html>

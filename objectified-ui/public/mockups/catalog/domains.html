@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catalog · Data Domains</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #0d2424 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <!-- Top Nav -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center"><i data-lucide="book-open" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Catalog</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Domains</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-cyan-500">← Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <!-- Sidebar -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-cyan-500 opacity-60"></span> Discover</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="home" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Home</span></a></li>
+            <li><a href="search.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="search" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Search &amp; Browse</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-cyan-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-cyan-500 opacity-60"></span> Catalog</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="api-catalog.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="cable" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">API Catalog</span></a></li>
+            <li><a href="asset-detail.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="box" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Data Objects</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-cyan-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-cyan-500 opacity-60"></span> Business Glossary</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="glossary.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="book-marked" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Glossary Terms</span></a></li>
+            <li><a href="term-detail.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="bookmark" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Term Detail</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-cyan-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-cyan-500 opacity-60"></span> Governance</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="ownership.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="users" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Ownership &amp; Stewardship</span></a></li>
+            <li><a href="domains.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-cyan-200 dark:border-cyan-700/70 bg-cyan-500/10"><i data-lucide="layers" class="w-5 h-5 text-cyan-500"></i><span class="text-sm font-semibold flex-1 text-cyan-600 dark:text-cyan-400">Data Domains</span><span class="h-1.5 w-1.5 rounded-full bg-cyan-500"></span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-cyan-500/10" />
+        <div>
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-cyan-500 opacity-60"></span> Lineage &amp; Organization</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="lineage.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="git-fork" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Lineage Explorer</span></a></li>
+            <li><a href="tags.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-cyan-500/10 transition-colors"><i data-lucide="tags" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Tags &amp; Classifications</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main + Detail Panel -->
+    <div class="flex-1 flex min-w-0 overflow-hidden">
+      <!-- Domain Grid -->
+      <div class="flex-1 overflow-y-auto">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="layers" class="w-5 h-5 text-rose-500"></i> Data Domains</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">14 domains across the organization</p>
+          </div>
+          <button class="px-3 py-1.5 text-sm rounded-md bg-cyan-600 hover:bg-cyan-700 text-white flex items-center gap-2"><i data-lucide="plus" class="w-4 h-4"></i> New Domain</button>
+        </div>
+
+        <div class="p-6 grid grid-cols-2 gap-4">
+          <!-- Commerce (selected / highlighted) -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg border-2 border-cyan-400 dark:border-cyan-600 p-5 cursor-pointer">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-cyan-500 flex items-center justify-center"><i data-lucide="shopping-cart" class="w-5 h-5 text-white"></i></div>
+                <div>
+                  <h3 class="font-bold">Commerce</h3>
+                  <p class="text-[11px] text-gray-500">Orders, products, customers, catalog</p>
+                </div>
+              </div>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></span>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-gray-500 mb-3">
+              <span class="flex items-center gap-1"><i data-lucide="cable" class="w-3.5 h-3.5 text-indigo-400"></i> 34 APIs</span>
+              <span class="flex items-center gap-1"><i data-lucide="box" class="w-3.5 h-3.5 text-violet-400"></i> 218 objects</span>
+              <span class="flex items-center gap-1"><i data-lucide="book-marked" class="w-3.5 h-3.5 text-emerald-400"></i> 42 terms</span>
+            </div>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-white text-[9px] font-bold">MK</div>
+              <span class="text-xs text-gray-500">Marcus Kim · Owner</span>
+              <span class="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold">Good</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5 mb-3">
+              <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">Core</span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">PII</span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] border border-gray-200 dark:border-gray-600">MDM</span>
+            </div>
+            <button class="w-full px-3 py-1.5 text-sm rounded-md bg-cyan-600 hover:bg-cyan-700 text-white font-semibold">View Domain</button>
+          </div>
+
+          <!-- Identity -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 cursor-pointer hover:border-cyan-300 dark:hover:border-cyan-600 transition-colors">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-purple-500 flex items-center justify-center"><i data-lucide="fingerprint" class="w-5 h-5 text-white"></i></div>
+                <div><h3 class="font-bold">Identity</h3><p class="text-[11px] text-gray-500">Auth, users, permissions, tenants</p></div>
+              </div>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 mt-1.5"></span>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-gray-500 mb-3">
+              <span class="flex items-center gap-1"><i data-lucide="cable" class="w-3.5 h-3.5 text-indigo-400"></i> 21 APIs</span>
+              <span class="flex items-center gap-1"><i data-lucide="box" class="w-3.5 h-3.5 text-violet-400"></i> 134 objects</span>
+              <span class="flex items-center gap-1"><i data-lucide="book-marked" class="w-3.5 h-3.5 text-emerald-400"></i> 28 terms</span>
+            </div>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-[9px] font-bold">AP</div>
+              <span class="text-xs text-gray-500">Aisha Patel · Owner</span>
+              <span class="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold">Good</span>
+            </div>
+            <button class="w-full px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">View Domain</button>
+          </div>
+
+          <!-- Payments -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 cursor-pointer hover:border-cyan-300 dark:hover:border-cyan-600 transition-colors">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center"><i data-lucide="credit-card" class="w-5 h-5 text-white"></i></div>
+                <div><h3 class="font-bold">Payments</h3><p class="text-[11px] text-gray-500">Transactions, billing, refunds, PCI</p></div>
+              </div>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 mt-1.5"></span>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-gray-500 mb-3">
+              <span class="flex items-center gap-1"><i data-lucide="cable" class="w-3.5 h-3.5 text-indigo-400"></i> 18 APIs</span>
+              <span class="flex items-center gap-1"><i data-lucide="box" class="w-3.5 h-3.5 text-violet-400"></i> 97 objects</span>
+              <span class="flex items-center gap-1"><i data-lucide="book-marked" class="w-3.5 h-3.5 text-emerald-400"></i> 31 terms</span>
+            </div>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-6 h-6 rounded-full bg-teal-600 flex items-center justify-center text-white text-[9px] font-bold">RN</div>
+              <span class="text-xs text-gray-500">Rachel Ng · Owner</span>
+              <span class="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold">Good</span>
+            </div>
+            <button class="w-full px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">View Domain</button>
+          </div>
+
+          <!-- Analytics -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 cursor-pointer hover:border-cyan-300 dark:hover:border-cyan-600 transition-colors">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center"><i data-lucide="bar-chart-3" class="w-5 h-5 text-white"></i></div>
+                <div><h3 class="font-bold">Analytics</h3><p class="text-[11px] text-gray-500">Metrics, events, pipelines, reporting</p></div>
+              </div>
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400 mt-1.5"></span>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-gray-500 mb-3">
+              <span class="flex items-center gap-1"><i data-lucide="cable" class="w-3.5 h-3.5 text-indigo-400"></i> 12 APIs</span>
+              <span class="flex items-center gap-1"><i data-lucide="box" class="w-3.5 h-3.5 text-violet-400"></i> 156 objects</span>
+              <span class="flex items-center gap-1"><i data-lucide="book-marked" class="w-3.5 h-3.5 text-emerald-400"></i> 44 terms</span>
+            </div>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-6 h-6 rounded-full bg-orange-600 flex items-center justify-center text-white text-[9px] font-bold">DR</div>
+              <span class="text-xs text-gray-500">David Reyes · Owner</span>
+              <span class="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-semibold">Warning</span>
+            </div>
+            <button class="w-full px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">View Domain</button>
+          </div>
+
+          <!-- Logistics -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 cursor-pointer hover:border-cyan-300 dark:hover:border-cyan-600 transition-colors">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center"><i data-lucide="truck" class="w-5 h-5 text-white"></i></div>
+                <div><h3 class="font-bold">Logistics</h3><p class="text-[11px] text-gray-500">Shipping, fulfillment, tracking</p></div>
+              </div>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 mt-1.5"></span>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-gray-500 mb-3">
+              <span class="flex items-center gap-1"><i data-lucide="cable" class="w-3.5 h-3.5 text-indigo-400"></i> 9 APIs</span>
+              <span class="flex items-center gap-1"><i data-lucide="box" class="w-3.5 h-3.5 text-violet-400"></i> 88 objects</span>
+              <span class="flex items-center gap-1"><i data-lucide="book-marked" class="w-3.5 h-3.5 text-emerald-400"></i> 19 terms</span>
+            </div>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-[9px] font-bold">TC</div>
+              <span class="text-xs text-gray-500">Tom Chen · Owner</span>
+              <span class="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold">Good</span>
+            </div>
+            <button class="w-full px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">View Domain</button>
+          </div>
+
+          <!-- Platform -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 cursor-pointer hover:border-cyan-300 dark:hover:border-cyan-600 transition-colors">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-slate-500 flex items-center justify-center"><i data-lucide="server" class="w-5 h-5 text-white"></i></div>
+                <div><h3 class="font-bold">Platform</h3><p class="text-[11px] text-gray-500">Core infra, config, system events</p></div>
+              </div>
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-400 mt-1.5"></span>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-gray-500 mb-3">
+              <span class="flex items-center gap-1"><i data-lucide="cable" class="w-3.5 h-3.5 text-indigo-400"></i> 33 APIs</span>
+              <span class="flex items-center gap-1"><i data-lucide="box" class="w-3.5 h-3.5 text-violet-400"></i> 198 objects</span>
+              <span class="flex items-center gap-1"><i data-lucide="book-marked" class="w-3.5 h-3.5 text-emerald-400"></i> 70 terms</span>
+            </div>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-white text-[9px] font-bold">BW</div>
+              <span class="text-xs text-gray-500">Ben Walsh · Owner</span>
+              <span class="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 font-semibold">Critical</span>
+            </div>
+            <button class="w-full px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">View Domain</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Domain Detail Side Panel -->
+      <div class="flex-shrink-0 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-y-auto p-5" style="width: 320px;">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-cyan-500 flex items-center justify-center"><i data-lucide="shopping-cart" class="w-5 h-5 text-white"></i></div>
+          <div>
+            <h3 class="font-bold">Commerce</h3>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Good Health</span>
+          </div>
+        </div>
+        <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">The Commerce domain encompasses all customer-facing transactional data — orders, products, catalog, pricing, subscriptions, and customer lifecycle management. This is the highest-traffic domain in the organization.</p>
+
+        <div class="mb-4">
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Subdomains</p>
+          <ul class="space-y-1.5">
+            <li class="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-100 dark:border-cyan-800">
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cyan-500"></i>
+              <span class="text-sm font-medium">Orders</span>
+              <span class="ml-auto text-[11px] mono text-gray-400">84 assets</span>
+            </li>
+            <li class="flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-900/30 cursor-pointer">
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-gray-400"></i>
+              <span class="text-sm">Products</span>
+              <span class="ml-auto text-[11px] mono text-gray-400">67 assets</span>
+            </li>
+            <li class="flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-900/30 cursor-pointer">
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-gray-400"></i>
+              <span class="text-sm">Customers</span>
+              <span class="ml-auto text-[11px] mono text-gray-400">58 assets</span>
+            </li>
+            <li class="flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-900/30 cursor-pointer">
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-gray-400"></i>
+              <span class="text-sm">Catalog</span>
+              <span class="ml-auto text-[11px] mono text-gray-400">43 assets</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mb-4">
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Key Contacts</p>
+          <ul class="space-y-2">
+            <li class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-bold">MK</div><div><p class="text-xs font-medium">Marcus Kim</p><p class="text-[10px] text-gray-400">Data Owner</p></div></li>
+            <li class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-cyan-600 flex items-center justify-center text-white text-xs font-bold">JS</div><div><p class="text-xs font-medium">Jane Smith</p><p class="text-[10px] text-gray-400">Data Steward</p></div></li>
+            <li class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center text-white text-xs font-bold">PR</div><div><p class="text-xs font-medium">Priya Rao</p><p class="text-[10px] text-gray-400">Product Manager</p></div></li>
+          </ul>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 text-center mb-4">
+          <div class="bg-gray-50 dark:bg-gray-900/50 rounded p-2"><p class="font-bold mono">34</p><p class="text-[10px] text-gray-500">APIs</p></div>
+          <div class="bg-gray-50 dark:bg-gray-900/50 rounded p-2"><p class="font-bold mono">218</p><p class="text-[10px] text-gray-500">Objects</p></div>
+          <div class="bg-gray-50 dark:bg-gray-900/50 rounded p-2"><p class="font-bold mono">42</p><p class="text-[10px] text-gray-500">Terms</p></div>
+        </div>
+
+        <button class="flex w-full items-center justify-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold"><i data-lucide="external-link" class="w-4 h-4"></i> Open Commerce Domain</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const themeKey = 'mockup-catalog-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

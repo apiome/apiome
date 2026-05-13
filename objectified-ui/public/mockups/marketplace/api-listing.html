@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marketplace · Commerce API</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+    .tab-active { border-bottom: 2px solid #f97316; color: #f97316; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <!-- Top Nav -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center"><i data-lucide="store" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Marketplace</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Commerce</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Commerce API</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-orange-500">← Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <!-- Sidebar -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Discover</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="home.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="home" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Home</span></a></li>
+            <li><a href="browse.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="search" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Browse</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> APIs</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="api-listing.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-orange-200 dark:border-orange-700/70 bg-orange-500/10"><i data-lucide="file-code-2" class="w-5 h-5 text-orange-500"></i><span class="text-sm font-semibold flex-1 text-orange-600 dark:text-orange-400">API Listing</span><span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> My Account</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="my-subscriptions.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="layers" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">My Subscriptions</span></a></li>
+            <li><a href="consumer-usage.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="bar-chart-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Usage</span></a></li>
+            <li><a href="webhook-subs.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="webhook" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Webhooks</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Publisher</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="publisher-dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="trending-up" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Dashboard</span></a></li>
+            <li><a href="publish-api.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="rocket" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Publish API</span></a></li>
+            <li><a href="plan-builder.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="coins" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Plan Builder</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Admin</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="admin-overview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="shield" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Admin Overview</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div>
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Navigation</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="../index.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Mockup hub</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
+
+      <!-- Page Header -->
+      <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-5">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex items-start gap-4">
+            <div class="w-14 h-14 rounded-xl bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="shopping-cart" class="w-7 h-7 text-orange-600 dark:text-orange-400"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-3 flex-wrap">
+                <h1 class="text-2xl font-bold">Commerce API</h1>
+                <span class="text-xs font-bold px-2 py-0.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 mono">v2.1</span>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">Commerce</span>
+              </div>
+              <div class="flex items-center gap-4 mt-1 flex-wrap">
+                <span class="text-sm text-amber-500 font-semibold">★ 4.8</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">(124 reviews)</span>
+                <span class="text-xs text-gray-400">·</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400"><span class="font-semibold text-gray-900 dark:text-gray-100">2,847</span> subscribers</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <a href="subscribe.html" class="px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4"></i>Subscribe</a>
+            <button class="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4"></i>View Docs</button>
+            <button class="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i data-lucide="play-circle" class="w-4 h-4"></i>Playground</button>
+          </div>
+        </div>
+
+        <!-- Publisher Info -->
+        <div class="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+          <div class="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold">A</div>
+          <span class="text-sm text-gray-600 dark:text-gray-300">Published by <span class="font-semibold text-gray-900 dark:text-gray-100">Acme Corp</span></span>
+          <span class="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"><i data-lucide="badge-check" class="w-3 h-3"></i>Verified Publisher</span>
+          <button class="ml-2 text-xs text-orange-600 dark:text-orange-400 hover:underline">Contact</button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex items-center gap-0 mt-4 -mb-5">
+          <button class="px-4 py-2.5 text-sm font-semibold tab-active">Overview</button>
+          <button class="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">Plans &amp; Pricing</button>
+          <button class="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">Documentation</button>
+          <button class="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">Changelog</button>
+          <button class="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">Reviews <span class="text-[10px] ml-1 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded mono">124</span></button>
+          <button class="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">Publisher</button>
+        </div>
+      </div>
+
+      <div class="p-6 space-y-6">
+        <div class="grid grid-cols-3 gap-6">
+          <!-- Left column: Description + features -->
+          <div class="col-span-2 space-y-6">
+
+            <!-- Description -->
+            <section class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+              <h2 class="font-bold mb-3">About Commerce API</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                The Commerce API provides a comprehensive, production-ready platform for building modern e-commerce experiences.
+                It exposes a RESTful interface over 47 endpoints covering the full commerce lifecycle — from product catalog
+                management and dynamic pricing to order processing, inventory tracking, and fulfillment coordination.
+                The API is designed for high-throughput environments, with 99.95% SLA, sub-150ms average latency,
+                and built-in idempotency on all write operations. It supports multi-tenant merchant architectures and
+                integrates natively with the Objectified Identity and Payments Gateway APIs.
+              </p>
+
+              <h3 class="font-semibold mt-5 mb-3 text-sm">What you can do</h3>
+              <ul class="space-y-2">
+                <li class="flex items-start gap-2 text-sm"><i data-lucide="check-circle" class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0"></i><span>Manage the full product catalog — create, update, version, and archive products with rich metadata and variant support</span></li>
+                <li class="flex items-start gap-2 text-sm"><i data-lucide="check-circle" class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0"></i><span>Process orders end-to-end with real-time inventory reservation, tax calculation, and multi-warehouse fulfillment routing</span></li>
+                <li class="flex items-start gap-2 text-sm"><i data-lucide="check-circle" class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0"></i><span>Configure dynamic pricing rules, bulk discounts, coupon codes, and promotional campaigns via the Pricing Engine</span></li>
+                <li class="flex items-start gap-2 text-sm"><i data-lucide="check-circle" class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0"></i><span>Subscribe to real-time inventory and order events via webhook delivery to build reactive integrations</span></li>
+              </ul>
+            </section>
+
+            <!-- Quick Stats -->
+            <section class="grid grid-cols-4 gap-4">
+              <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
+                <p class="text-2xl font-bold mono text-orange-600 dark:text-orange-400">47</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Endpoints</p>
+              </div>
+              <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
+                <p class="text-2xl font-bold mono text-orange-600 dark:text-orange-400">12</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Data Objects</p>
+              </div>
+              <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
+                <p class="text-2xl font-bold mono text-emerald-600 dark:text-emerald-400">99.95%</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">SLA</p>
+              </div>
+              <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
+                <p class="text-2xl font-bold mono text-blue-600 dark:text-blue-400">142ms</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Avg Latency</p>
+              </div>
+            </section>
+
+            <!-- Plans & Pricing (shown inline) -->
+            <section class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+              <h2 class="font-bold mb-4">Plans &amp; Pricing</h2>
+              <div class="grid grid-cols-3 gap-4">
+                <!-- Free Plan -->
+                <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                  <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-bold">Free</h3>
+                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400">Free</span>
+                  </div>
+                  <p class="text-3xl font-bold mono mb-1">$0</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">per month</p>
+                  <ul class="space-y-1.5 text-xs text-gray-600 dark:text-gray-300">
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>1,000 calls/day</li>
+                    <li class="flex items-center gap-2"><i data-lucide="x" class="w-3 h-3 text-gray-300 dark:text-gray-600"></i>No SLA guarantee</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>Community support</li>
+                    <li class="flex items-center gap-2"><i data-lucide="x" class="w-3 h-3 text-gray-300 dark:text-gray-600"></i>No webhooks</li>
+                  </ul>
+                  <button class="w-full mt-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm hover:bg-gray-50 dark:hover:bg-gray-700">Get started</button>
+                </div>
+                <!-- Growth Plan -->
+                <div class="rounded-xl border-2 border-orange-500 p-4 relative">
+                  <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-orange-500 text-white text-[10px] font-bold uppercase">Current Plan</div>
+                  <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-bold">Growth</h3>
+                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">Metered</span>
+                  </div>
+                  <p class="text-3xl font-bold mono text-orange-600 mb-1">$149</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">per month</p>
+                  <ul class="space-y-1.5 text-xs text-gray-600 dark:text-gray-300">
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>100,000 calls/day</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>99.9% SLA</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>Email support</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>Webhook delivery</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>$0.002 overage/1k</li>
+                  </ul>
+                  <button class="w-full mt-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold">Manage plan</button>
+                </div>
+                <!-- Enterprise Plan -->
+                <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                  <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-bold">Enterprise</h3>
+                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400">Custom</span>
+                  </div>
+                  <p class="text-3xl font-bold mono mb-1">Custom</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">contact sales</p>
+                  <ul class="space-y-1.5 text-xs text-gray-600 dark:text-gray-300">
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>Unlimited calls</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>99.99% SLA</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>Dedicated support</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>All features</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>Custom SLA agreement</li>
+                  </ul>
+                  <button class="w-full mt-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm hover:bg-gray-50 dark:hover:bg-gray-700">Contact sales</button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Right column -->
+          <div class="space-y-4">
+            <!-- Latest Version -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <h3 class="font-bold text-sm mb-3">Latest Version</h3>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-lg font-bold mono">v2.1</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold">Stable</span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Released 2025-11-14</p>
+              <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">3 new endpoints · 2 bug fixes</p>
+            </div>
+
+            <!-- Tags -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <h3 class="font-bold text-sm mb-3">Tags</h3>
+              <div class="flex flex-wrap gap-2">
+                <span class="px-2.5 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 text-xs">Commerce</span>
+                <span class="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs">Orders</span>
+                <span class="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs">Products</span>
+                <span class="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs">Inventory</span>
+                <span class="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs">Pricing</span>
+              </div>
+            </div>
+
+            <!-- Compatible With -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <h3 class="font-bold text-sm mb-3">SDKs Available</h3>
+              <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm"><span class="w-2 h-2 rounded-full bg-blue-500"></span>TypeScript / Node.js</div>
+                <div class="flex items-center gap-2 text-sm"><span class="w-2 h-2 rounded-full bg-yellow-500"></span>Python</div>
+                <div class="flex items-center gap-2 text-sm"><span class="w-2 h-2 rounded-full bg-cyan-500"></span>Go</div>
+                <div class="flex items-center gap-2 text-sm"><span class="w-2 h-2 rounded-full bg-orange-500"></span>Java</div>
+                <div class="flex items-center gap-2 text-sm"><span class="w-2 h-2 rounded-full bg-rose-500"></span>Ruby</div>
+              </div>
+            </div>
+
+            <!-- API Info -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <h3 class="font-bold text-sm mb-3">API Info</h3>
+              <div class="space-y-2 text-xs">
+                <div class="flex justify-between"><span class="text-gray-500">Type</span><span class="font-medium">REST / OpenAPI 3.1</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Auth</span><span class="font-medium">API Key / OAuth 2.0</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Format</span><span class="font-medium">JSON</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Versions</span><span class="font-medium mono">v1.0, v1.5, v2.0, v2.1</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const themeKey = 'mockup-marketplace-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

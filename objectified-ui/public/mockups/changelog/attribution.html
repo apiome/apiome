@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Changelog — Merge Attribution</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+    .timeline-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-orange-500 to-red-400 flex items-center justify-center"><i data-lucide="file-diff" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Changelog</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Merge Attribution</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-orange-500">&larr; Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 260px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Diff &amp; Analysis</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="diff.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="git-compare-arrows" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Version Diff</span></a></li>
+            <li><a href="breaking-changes.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="triangle-alert" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Breaking Changes</span></a></li>
+            <li><a href="schema-changes.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="layers" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Schema Changes</span></a></li>
+            <li><a href="new-endpoints.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="route" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Path Changes</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Authoring</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="editor.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="file-pen" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Changelog Editor</span></a></li>
+            <li><a href="preview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="eye" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Format Preview</span></a></li>
+            <li><a href="attribution.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-orange-200 dark:border-orange-700/70 bg-orange-500/10"><i data-lucide="git-merge" class="w-5 h-5 text-orange-500"></i><span class="text-sm font-semibold flex-1 text-orange-600 dark:text-orange-400">Merge Attribution</span><span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Publishing</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="export.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="share-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Export &amp; Publish</span></a></li>
+            <li><a href="history.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="history" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Release History</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5"><ul class="m-0 mt-1 list-none space-y-1 p-0"><li><a href="settings.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="settings-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Settings</span></a></li></ul></div>
+        <hr class="my-3 border-orange-500/10" />
+        <div><ul class="m-0 mt-1 list-none space-y-1 p-0"><li><a href="../index.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Mockup hub</span></a></li></ul></div>
+      </div>
+    </aside>
+
+    <main class="flex-1 overflow-auto p-6">
+      <div class="max-w-4xl mx-auto space-y-5">
+        <div>
+          <h1 class="text-xl font-bold">Merge Attribution</h1>
+          <p class="text-sm text-gray-500 mt-0.5">Trace each changelog entry back to its originating merge request, author, and timestamp.</p>
+        </div>
+
+        <!-- Timeline -->
+        <div class="space-y-3">
+          <!-- MR row -->
+          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+            <div class="flex items-center gap-3 px-5 py-3 border-b border-gray-100 dark:border-gray-700 bg-red-50 dark:bg-red-900/10">
+              <div class="timeline-dot bg-red-500"></div>
+              <div class="flex-1">
+                <span class="mono text-xs font-semibold text-red-700 dark:text-red-300">MR-4821</span>
+                <span class="ml-2 text-xs text-gray-600 dark:text-gray-400">feat: replace DELETE /payments with cancellation endpoint</span>
+              </div>
+              <div class="flex items-center gap-3 text-xs text-gray-400">
+                <span class="flex items-center gap-1"><div class="w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center text-[9px] text-white font-bold">SR</div> S. Reeves</span>
+                <span>2026-04-28 14:22</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-700">Breaking</span>
+              </div>
+            </div>
+            <div class="px-5 py-3 space-y-1.5">
+              <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400"><i data-lucide="minus-circle" class="w-3.5 h-3.5 text-red-500"></i> Removed <span class="mono bg-gray-100 dark:bg-gray-700 px-1 rounded">DELETE /payments/{'{id}'}</span></div>
+              <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400"><i data-lucide="plus-circle" class="w-3.5 h-3.5 text-emerald-500"></i> Added <span class="mono bg-gray-100 dark:bg-gray-700 px-1 rounded">POST /payments/{'{id}'}/cancel</span></div>
+              <div class="mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p class="text-xs text-gray-500 italic">"Delete semantics were ambiguous for auditors. New cancel endpoint captures reason, operator ID, and timestamp explicitly." — MR description</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- MR-4833 -->
+          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+            <div class="flex items-center gap-3 px-5 py-3 border-b border-gray-100 dark:border-gray-700">
+              <div class="timeline-dot bg-emerald-500"></div>
+              <div class="flex-1">
+                <span class="mono text-xs font-semibold text-gray-700 dark:text-gray-300">MR-4833</span>
+                <span class="ml-2 text-xs text-gray-600 dark:text-gray-400">feat: add dispute filing endpoint</span>
+              </div>
+              <div class="flex items-center gap-3 text-xs text-gray-400">
+                <span class="flex items-center gap-1"><div class="w-5 h-5 rounded-full bg-cyan-500 flex items-center justify-center text-[9px] text-white font-bold">AM</div> A. Markov</span>
+                <span>2026-04-30 09:41</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">New</span>
+              </div>
+            </div>
+            <div class="px-5 py-3 space-y-1.5">
+              <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400"><i data-lucide="plus-circle" class="w-3.5 h-3.5 text-emerald-500"></i> Added <span class="mono bg-gray-100 dark:bg-gray-700 px-1 rounded">POST /payments/{'{id}'}/dispute</span></div>
+            </div>
+          </div>
+
+          <!-- MR-4840 -->
+          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+            <div class="flex items-center gap-3 px-5 py-3 border-b border-gray-100 dark:border-gray-700">
+              <div class="timeline-dot bg-emerald-500"></div>
+              <div class="flex-1">
+                <span class="mono text-xs font-semibold text-gray-700 dark:text-gray-300">MR-4840</span>
+                <span class="ml-2 text-xs text-gray-600 dark:text-gray-400">feat: payment methods resource</span>
+              </div>
+              <div class="flex items-center gap-3 text-xs text-gray-400">
+                <span class="flex items-center gap-1"><div class="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-[9px] text-white font-bold">KS</div> K. Suenobu</span>
+                <span>2026-05-02 16:05</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">New</span>
+              </div>
+            </div>
+            <div class="px-5 py-3 space-y-1.5">
+              <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400"><i data-lucide="plus-circle" class="w-3.5 h-3.5 text-emerald-500"></i> 3 paths added for payment methods CRUD</div>
+            </div>
+          </div>
+
+          <!-- MR-4855 -->
+          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+            <div class="flex items-center gap-3 px-5 py-3 border-b border-gray-100 dark:border-gray-700">
+              <div class="timeline-dot bg-blue-500"></div>
+              <div class="flex-1">
+                <span class="mono text-xs font-semibold text-gray-700 dark:text-gray-300">MR-4855</span>
+                <span class="ml-2 text-xs text-gray-600 dark:text-gray-400">fix: amount float → int + currency required</span>
+              </div>
+              <div class="flex items-center gap-3 text-xs text-gray-400">
+                <span class="flex items-center gap-1"><div class="w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center text-[9px] text-white font-bold">SR</div> S. Reeves</span>
+                <span>2026-05-07 11:18</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-700">Breaking</span>
+              </div>
+            </div>
+            <div class="px-5 py-3 space-y-1.5">
+              <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400"><i data-lucide="pencil" class="w-3.5 h-3.5 text-blue-500"></i> Type change: <span class="mono bg-gray-100 dark:bg-gray-700 px-1 rounded">amount</span> float → integer</div>
+              <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400"><i data-lucide="pencil" class="w-3.5 h-3.5 text-blue-500"></i> Made <span class="mono bg-gray-100 dark:bg-gray-700 px-1 rounded">currency</span> required on POST /payments</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    const btn = document.getElementById('themeBtn');
+    const stored = localStorage.getItem('changelog-mockup-theme');
+    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+    btn.addEventListener('click', () => { document.documentElement.classList.toggle('dark'); localStorage.setItem('changelog-mockup-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); });
+  </script>
+</body>
+</html>

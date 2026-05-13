@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scan Results — Harvest</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-green-500 to-lime-400 flex items-center justify-center"><i data-lucide="scan-search" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Harvest</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Scan Results</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-green-500">&larr; Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Ingestion</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+          <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Dashboard</span></a></li>
+          <li><a href="new-source.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="plus-circle" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">New Source</span></a></li>
+          <li><a href="repo-connect.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="git-branch" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Connect Repo</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-green-500/10" />
+        <div class="mb-5">
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Scan &amp; Analysis</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+          <li><a href="scan-jobs.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="cpu" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Scan Jobs</span></a></li>
+          <li><a href="file-explorer.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="folder-open" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">File Explorer</span></a></li>
+          <li><a href="scan-results.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-green-200 dark:border-green-700/70 bg-green-500/10"><i data-lucide="bar-chart-2" class="w-5 h-5 text-green-500"></i><span class="text-sm font-semibold flex-1 text-green-600 dark:text-green-400">Scan Results</span><span class="h-1.5 w-1.5 rounded-full bg-green-500"></span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-green-500/10" />
+        <div class="mb-5">
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Spec Generation</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+          <li><a href="spec-preview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="eye" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Spec Preview</span></a></li>
+          <li><a href="conflict-resolution.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="alert-triangle" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Conflict Resolution</span></a></li>
+          <li><a href="export.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="upload-cloud" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Export &amp; Publish</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-green-500/10" />
+        <div class="mb-5">
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Management</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+          <li><a href="sources.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="database" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Connected Sources</span></a></li>
+          <li><a href="imports-history.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="history" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Import History</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-green-500/10" />
+        <div>
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Navigation</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="../index.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Mockup hub</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+    <main class="flex-1 overflow-auto p-6 bg-gray-50 dark:bg-gray-900">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <div class="flex items-center gap-3 mb-0.5">
+            <h1 class="text-xl font-bold">Scan Results</h1>
+            <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-2.5 py-1 rounded-full font-medium">Completed</span>
+          </div>
+          <div class="text-xs text-gray-500 mono">job_01HX3KMPB3 &nbsp;&bull;&nbsp; acme-commerce-api &nbsp;&bull;&nbsp; main &nbsp;&bull;&nbsp; 3m 41s</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="flex items-center gap-2 text-sm border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"><i data-lucide="download" class="w-4 h-4"></i> Export Report</button>
+          <a href="spec-preview.html" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"><i data-lucide="eye" class="w-4 h-4"></i> Preview Spec</a>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="grid grid-cols-6 gap-3 mb-5">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div class="text-xs text-gray-500 mb-1">Files Scanned</div><div class="text-2xl font-bold">1,247</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div class="text-xs text-gray-500 mb-1">Endpoints</div><div class="text-2xl font-bold text-green-600 dark:text-green-400">134</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div class="text-xs text-gray-500 mb-1">Schemas</div><div class="text-2xl font-bold text-blue-600 dark:text-blue-400">28</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div class="text-xs text-gray-500 mb-1">Classes</div><div class="text-2xl font-bold">9</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div class="text-xs text-gray-500 mb-1">Warnings</div><div class="text-2xl font-bold text-amber-500">7</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div class="text-xs text-gray-500 mb-1">Confidence</div><div class="text-2xl font-bold text-green-600 dark:text-green-400">93%</div>
+        </div>
+      </div>
+
+      <!-- Two-col layout -->
+      <div class="flex gap-4">
+        <!-- Left: Endpoints breakdown -->
+        <div class="flex-1 min-w-0 space-y-4">
+          <!-- Endpoint Summary Table -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+              <span class="font-semibold text-sm">Discovered Endpoints</span>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500">134 total</span>
+                <a href="file-explorer.html" class="text-xs text-green-600 hover:underline">Browse files →</a>
+              </div>
+            </div>
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 dark:bg-gray-900/40 text-xs text-gray-500 uppercase tracking-wider">
+                <tr><th class="text-left px-4 py-2">Method</th><th class="text-left px-4 py-2">Path</th><th class="text-left px-4 py-2">Source File</th><th class="text-left px-4 py-2">Confidence</th><th class="text-left px-4 py-2">Params</th><th class="text-left px-4 py-2">Status</th></tr>
+              </thead>
+              <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2.5"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold">GET</span></td><td class="px-4 py-2.5 mono text-xs">/api/v2/orders</td><td class="px-4 py-2.5 mono text-xs text-gray-500">routes/orders.ts:18</td><td class="px-4 py-2.5 text-xs text-green-600 dark:text-green-400 font-semibold">97%</td><td class="px-4 py-2.5 text-xs">3</td><td class="px-4 py-2.5"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded font-medium">Added</span></td></tr>
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2.5"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded font-bold">POST</span></td><td class="px-4 py-2.5 mono text-xs">/api/v2/orders</td><td class="px-4 py-2.5 mono text-xs text-gray-500">routes/orders.ts:32</td><td class="px-4 py-2.5 text-xs text-green-600 dark:text-green-400 font-semibold">94%</td><td class="px-4 py-2.5 text-xs">0</td><td class="px-4 py-2.5"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded font-medium">Added</span></td></tr>
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2.5"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold">GET</span></td><td class="px-4 py-2.5 mono text-xs">/api/v2/orders/{orderId}</td><td class="px-4 py-2.5 mono text-xs text-gray-500">routes/orders.ts:47</td><td class="px-4 py-2.5 text-xs text-green-600 dark:text-green-400 font-semibold">98%</td><td class="px-4 py-2.5 text-xs">1</td><td class="px-4 py-2.5"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded font-medium">Added</span></td></tr>
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2.5"><span class="text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-bold">PUT</span></td><td class="px-4 py-2.5 mono text-xs">/api/v2/orders/{orderId}</td><td class="px-4 py-2.5 mono text-xs text-gray-500">routes/orders.ts:63</td><td class="px-4 py-2.5 text-xs text-green-600 dark:text-green-400 font-semibold">91%</td><td class="px-4 py-2.5 text-xs">1</td><td class="px-4 py-2.5"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded font-medium">Added</span></td></tr>
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2.5"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded font-bold">DEL</span></td><td class="px-4 py-2.5 mono text-xs">/api/v2/orders/{orderId}</td><td class="px-4 py-2.5 mono text-xs text-gray-500">routes/orders.ts:82</td><td class="px-4 py-2.5 text-xs text-amber-500 font-semibold">89%</td><td class="px-4 py-2.5 text-xs">1</td><td class="px-4 py-2.5"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded font-medium">Added</span></td></tr>
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2.5"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold">GET</span></td><td class="px-4 py-2.5 mono text-xs">/api/v2/products</td><td class="px-4 py-2.5 mono text-xs text-gray-500">routes/products.ts:12</td><td class="px-4 py-2.5 text-xs text-green-600 dark:text-green-400 font-semibold">96%</td><td class="px-4 py-2.5 text-xs">4</td><td class="px-4 py-2.5"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded font-medium">Added</span></td></tr>
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2.5"><span class="text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-bold">PATCH</span></td><td class="px-4 py-2.5 mono text-xs">/api/v2/products/{id}/price</td><td class="px-4 py-2.5 mono text-xs text-gray-500">routes/products.ts:78</td><td class="px-4 py-2.5 text-xs text-amber-500 font-semibold">74%</td><td class="px-4 py-2.5 text-xs">1</td><td class="px-4 py-2.5"><span class="text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-medium">Review</span></td></tr>
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2.5"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold">GET</span></td><td class="px-4 py-2.5 mono text-xs">/api/v2/customers</td><td class="px-4 py-2.5 mono text-xs text-gray-500">routes/customers.ts:9</td><td class="px-4 py-2.5 text-xs text-green-600 dark:text-green-400 font-semibold">95%</td><td class="px-4 py-2.5 text-xs">3</td><td class="px-4 py-2.5"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded font-medium">Added</span></td></tr>
+              </tbody>
+            </table>
+            <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <span class="text-xs text-gray-500">Showing 8 of 134</span>
+              <button class="text-xs text-green-600 hover:underline">Show all →</button>
+            </div>
+          </div>
+
+          <!-- Warnings -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-700/50 overflow-hidden">
+            <div class="flex items-center gap-2 px-4 py-3 border-b border-amber-100 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-900/10">
+              <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>
+              <span class="font-semibold text-sm">Warnings (7)</span>
+            </div>
+            <div class="divide-y divide-gray-100 dark:divide-gray-700/50">
+              <div class="flex items-start gap-3 px-4 py-3">
+                <i data-lucide="info" class="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0"></i>
+                <div><div class="text-sm font-medium">Low confidence endpoint</div><div class="text-xs text-gray-500 mono">routes/products.ts:78 — PATCH /api/v2/products/{id}/price (74%)</div></div>
+              </div>
+              <div class="flex items-start gap-3 px-4 py-3">
+                <i data-lucide="info" class="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0"></i>
+                <div><div class="text-sm font-medium">Missing response schema</div><div class="text-xs text-gray-500 mono">routes/auth.ts:94 — POST /api/v2/auth/refresh — no return type annotation</div></div>
+              </div>
+              <div class="flex items-start gap-3 px-4 py-3">
+                <i data-lucide="info" class="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0"></i>
+                <div><div class="text-sm font-medium">Deprecated decorator detected</div><div class="text-xs text-gray-500 mono">controllers/CartController.ts:12 — @ApiController is deprecated</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Breakdown charts + quick actions -->
+        <div class="flex-shrink-0 w-72 space-y-4">
+          <!-- By Method -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <div class="font-semibold text-sm mb-3">Endpoints by Method</div>
+            <div class="space-y-2 text-sm">
+              <div><div class="flex justify-between text-xs mb-1"><span class="text-blue-600 dark:text-blue-400 font-medium">GET</span><span class="text-gray-500">58</span></div><div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-2 rounded-full bg-blue-500" style="width:43%"></div></div></div>
+              <div><div class="flex justify-between text-xs mb-1"><span class="text-green-600 dark:text-green-400 font-medium">POST</span><span class="text-gray-500">34</span></div><div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-2 rounded-full bg-green-500" style="width:25%"></div></div></div>
+              <div><div class="flex justify-between text-xs mb-1"><span class="text-amber-600 dark:text-amber-400 font-medium">PUT</span><span class="text-gray-500">19</span></div><div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-2 rounded-full bg-amber-500" style="width:14%"></div></div></div>
+              <div><div class="flex justify-between text-xs mb-1"><span class="text-purple-600 dark:text-purple-400 font-medium">PATCH</span><span class="text-gray-500">11</span></div><div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-2 rounded-full bg-purple-500" style="width:8%"></div></div></div>
+              <div><div class="flex justify-between text-xs mb-1"><span class="text-red-600 dark:text-red-400 font-medium">DELETE</span><span class="text-gray-500">12</span></div><div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-2 rounded-full bg-red-500" style="width:9%"></div></div></div>
+            </div>
+          </div>
+          <!-- By Confidence -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <div class="font-semibold text-sm mb-3">Confidence Distribution</div>
+            <div class="space-y-2 text-sm">
+              <div><div class="flex justify-between text-xs mb-1"><span class="text-green-600 dark:text-green-400 font-medium">90-100%</span><span class="text-gray-500">98 ✨</span></div><div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-2 rounded-full bg-green-500" style="width:73%"></div></div></div>
+              <div><div class="flex justify-between text-xs mb-1"><span class="text-lime-600 dark:text-lime-400 font-medium">75-89%</span><span class="text-gray-500">24</span></div><div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-2 rounded-full bg-lime-500" style="width:18%"></div></div></div>
+              <div><div class="flex justify-between text-xs mb-1"><span class="text-amber-600 dark:text-amber-400 font-medium">50-74%</span><span class="text-gray-500">9</span></div><div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-2 rounded-full bg-amber-500" style="width:7%"></div></div></div>
+              <div><div class="flex justify-between text-xs mb-1"><span class="text-red-600 dark:text-red-400 font-medium">&lt;50%</span><span class="text-gray-500">3</span></div><div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-2 rounded-full bg-red-500" style="width:2%"></div></div></div>
+            </div>
+          </div>
+          <!-- Quick Actions -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-2">
+            <div class="font-semibold text-sm mb-3">Quick Actions</div>
+            <a href="spec-preview.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 border border-green-200 dark:border-green-700/50 transition-colors">
+              <i data-lucide="eye" class="w-4 h-4 text-green-600 dark:text-green-400"></i>
+              <div><div class="text-sm font-medium text-green-700 dark:text-green-300">Preview Spec</div><div class="text-xs text-gray-500">View generated OpenAPI YAML</div></div>
+            </a>
+            <a href="conflict-resolution.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 transition-colors">
+              <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>
+              <div><div class="text-sm font-medium text-amber-700 dark:text-amber-300">Resolve Conflicts</div><div class="text-xs text-gray-500">3 conflicts need review</div></div>
+            </a>
+            <a href="export.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/30 border border-gray-200 dark:border-gray-700 transition-colors">
+              <i data-lucide="upload-cloud" class="w-4 h-4 text-gray-500"></i>
+              <div><div class="text-sm font-medium">Export &amp; Publish</div><div class="text-xs text-gray-500">Push to registry or download</div></div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+  <script>
+    const themeKey = 'mockup-harvest-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

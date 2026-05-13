@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>File Explorer — Harvest</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-green-500 to-lime-400 flex items-center justify-center"><i data-lucide="scan-search" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Harvest</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">File Explorer</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-green-500">&larr; Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Ingestion</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+          <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Dashboard</span></a></li>
+          <li><a href="new-source.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="plus-circle" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">New Source</span></a></li>
+          <li><a href="repo-connect.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="git-branch" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Connect Repo</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-green-500/10" />
+        <div class="mb-5">
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Scan &amp; Analysis</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+          <li><a href="scan-jobs.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="cpu" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Scan Jobs</span></a></li>
+          <li><a href="file-explorer.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-green-200 dark:border-green-700/70 bg-green-500/10"><i data-lucide="folder-open" class="w-5 h-5 text-green-500"></i><span class="text-sm font-semibold flex-1 text-green-600 dark:text-green-400">File Explorer</span><span class="h-1.5 w-1.5 rounded-full bg-green-500"></span></a></li>
+          <li><a href="scan-results.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="bar-chart-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Scan Results</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-green-500/10" />
+        <div class="mb-5">
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Spec Generation</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+          <li><a href="spec-preview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="eye" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Spec Preview</span></a></li>
+          <li><a href="conflict-resolution.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="alert-triangle" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Conflict Resolution</span></a></li>
+          <li><a href="export.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="upload-cloud" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Export &amp; Publish</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-green-500/10" />
+        <div class="mb-5">
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Management</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+          <li><a href="sources.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="database" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Connected Sources</span></a></li>
+          <li><a href="imports-history.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="history" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Import History</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-green-500/10" />
+        <div>
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Navigation</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="../index.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Mockup hub</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+    <main class="flex-1 overflow-hidden p-6 bg-gray-50 dark:bg-gray-900 flex flex-col">
+
+      <!-- Page Header -->
+      <div class="flex items-center gap-3 mb-4">
+        <h1 class="text-xl font-bold">acme-commerce-api</h1>
+        <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full font-mono font-medium">main</span>
+        <span class="text-sm text-gray-400">Last scanned 2 hours ago</span>
+        <button class="flex items-center gap-2 text-sm border border-green-500 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors ml-auto"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Re-scan</button>
+      </div>
+
+      <!-- Split Layout -->
+      <div class="flex gap-0 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden" style="height: calc(100vh - 170px);">
+        <!-- File Tree -->
+        <div class="flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col" style="width: 260px;">
+          <div class="p-3 border-b border-gray-100 dark:border-gray-700">
+            <div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-600">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-gray-400"></i>
+              <input type="text" placeholder="Search files..." class="bg-transparent text-xs outline-none flex-1" />
+            </div>
+          </div>
+          <div class="overflow-auto flex-1 py-2">
+            <!-- src/ -->
+            <div class="flex items-center gap-2 px-3 py-1.5 font-medium text-gray-700 dark:text-gray-300 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30">
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-gray-400"></i><i data-lucide="folder-open" class="w-4 h-4 text-amber-500"></i><span>src/</span>
+            </div>
+            <!-- routes/ -->
+            <div class="flex items-center gap-2 pl-6 pr-3 py-1.5 font-medium text-gray-600 dark:text-gray-400 text-xs cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30">
+              <i data-lucide="chevron-down" class="w-3 h-3 text-gray-400"></i><i data-lucide="folder-open" class="w-3.5 h-3.5 text-amber-400"></i><span>routes/</span>
+            </div>
+            <!-- orders.ts ACTIVE -->
+            <div class="flex items-center gap-2 pl-10 pr-3 py-1.5 rounded text-xs cursor-pointer bg-green-500/10 text-green-700 dark:text-green-400 font-medium">
+              <i data-lucide="file-code-2" class="w-3.5 h-3.5"></i><span class="flex-1">orders.ts</span><span class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" title="8 endpoints"></span>
+            </div>
+            <div class="flex items-center gap-2 pl-10 pr-3 py-1.5 rounded text-xs cursor-pointer hover:bg-green-500/10 transition-colors">
+              <i data-lucide="file-code-2" class="w-3.5 h-3.5 text-gray-400"></i><span class="flex-1 text-gray-600 dark:text-gray-300">products.ts</span><span class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span>
+            </div>
+            <div class="flex items-center gap-2 pl-10 pr-3 py-1.5 rounded text-xs cursor-pointer hover:bg-green-500/10 transition-colors">
+              <i data-lucide="file-code-2" class="w-3.5 h-3.5 text-gray-400"></i><span class="flex-1 text-gray-600 dark:text-gray-300">customers.ts</span><span class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span>
+            </div>
+            <div class="flex items-center gap-2 pl-10 pr-3 py-1.5 rounded text-xs cursor-pointer hover:bg-green-500/10 transition-colors">
+              <i data-lucide="file-code-2" class="w-3.5 h-3.5 text-gray-400"></i><span class="flex-1 text-gray-600 dark:text-gray-300">auth.ts</span><span class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span>
+            </div>
+            <!-- models/ -->
+            <div class="flex items-center gap-2 pl-6 pr-3 py-1.5 font-medium text-gray-600 dark:text-gray-400 text-xs cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30">
+              <i data-lucide="chevron-down" class="w-3 h-3 text-gray-400"></i><i data-lucide="folder" class="w-3.5 h-3.5 text-amber-400"></i><span>models/</span>
+            </div>
+            <div class="flex items-center gap-2 pl-10 pr-3 py-1.5 rounded text-xs cursor-pointer hover:bg-green-500/10 transition-colors">
+              <i data-lucide="file-code-2" class="w-3.5 h-3.5 text-gray-400"></i><span class="flex-1 text-gray-600 dark:text-gray-300">Order.ts</span><span class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></span>
+            </div>
+            <div class="flex items-center gap-2 pl-10 pr-3 py-1.5 rounded text-xs cursor-pointer hover:bg-green-500/10 transition-colors">
+              <i data-lucide="file-code-2" class="w-3.5 h-3.5 text-gray-400"></i><span class="flex-1 text-gray-600 dark:text-gray-300">Product.ts</span><span class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></span>
+            </div>
+            <div class="flex items-center gap-2 pl-10 pr-3 py-1.5 rounded text-xs cursor-pointer hover:bg-green-500/10 transition-colors">
+              <i data-lucide="file-code-2" class="w-3.5 h-3.5 text-gray-400"></i><span class="flex-1 text-gray-600 dark:text-gray-300">Customer.ts</span><span class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></span>
+            </div>
+            <!-- middleware/ -->
+            <div class="flex items-center gap-2 pl-6 pr-3 py-1.5 font-medium text-gray-600 dark:text-gray-400 text-xs cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30">
+              <i data-lucide="chevron-right" class="w-3 h-3 text-gray-400"></i><i data-lucide="folder" class="w-3.5 h-3.5 text-amber-400"></i><span>middleware/</span>
+            </div>
+            <div class="flex items-center gap-2 pl-10 pr-3 py-1.5 rounded text-xs cursor-pointer hover:bg-green-500/10 transition-colors">
+              <i data-lucide="file-code-2" class="w-3.5 h-3.5 text-gray-400"></i><span class="flex-1 text-gray-600 dark:text-gray-300">auth.ts</span><span class="w-2 h-2 rounded-full bg-gray-400 flex-shrink-0"></span>
+            </div>
+            <div class="flex items-center gap-2 pl-10 pr-3 py-1.5 rounded text-xs cursor-pointer hover:bg-green-500/10 transition-colors">
+              <i data-lucide="file-code-2" class="w-3.5 h-3.5 text-gray-400"></i><span class="flex-1 text-gray-600 dark:text-gray-300">logger.ts</span><span class="w-2 h-2 rounded-full bg-gray-400 flex-shrink-0"></span>
+            </div>
+            <!-- utils/ -->
+            <div class="flex items-center gap-2 pl-6 pr-3 py-1.5 font-medium text-gray-600 dark:text-gray-400 text-xs cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30">
+              <i data-lucide="chevron-right" class="w-3 h-3 text-gray-400"></i><i data-lucide="folder" class="w-3.5 h-3.5 text-amber-400"></i><span>utils/</span>
+            </div>
+            <div class="flex items-center gap-2 pl-10 pr-3 py-1.5 rounded text-xs cursor-pointer hover:bg-green-500/10 transition-colors">
+              <i data-lucide="file-code-2" class="w-3.5 h-3.5 text-gray-400"></i><span class="flex-1 text-gray-600 dark:text-gray-300">validation.ts</span><span class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></span>
+            </div>
+            <!-- root files -->
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded text-xs cursor-pointer hover:bg-green-500/10 transition-colors">
+              <i data-lucide="file-code-2" class="w-3.5 h-3.5 text-gray-400"></i><span class="flex-1 text-gray-600 dark:text-gray-300">app.ts</span><span class="w-2 h-2 rounded-full bg-gray-400 flex-shrink-0"></span>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded text-xs cursor-pointer hover:bg-green-500/10 transition-colors">
+              <i data-lucide="file-json" class="w-3.5 h-3.5 text-gray-400"></i><span class="flex-1 text-gray-600 dark:text-gray-300">package.json</span><span class="w-2 h-2 rounded-full bg-gray-300 flex-shrink-0"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- File Detail Panel -->
+        <div class="flex-1 bg-gray-50 dark:bg-gray-900/50 flex flex-col overflow-hidden">
+          <!-- Detail Header -->
+          <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-5 py-3 flex items-center gap-3 flex-wrap">
+            <span class="text-xs text-gray-400 mono">src / routes / <span class="text-gray-700 dark:text-gray-200 font-medium">orders.ts</span></span>
+            <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full font-medium">8 endpoints</span>
+            <span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">3 schemas</span>
+            <span class="text-xs text-green-600 dark:text-green-400 font-semibold">Confidence: 94%</span>
+          </div>
+
+          <div class="flex-1 overflow-auto p-5 space-y-4">
+            <!-- Endpoints Table -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div class="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 font-medium text-sm">Detected Endpoints</div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs">
+                  <thead class="bg-gray-50 dark:bg-gray-900/40 text-gray-500 uppercase tracking-wider">
+                    <tr><th class="text-left px-4 py-2">Method</th><th class="text-left px-4 py-2">Path</th><th class="text-left px-4 py-2">Handler</th><th class="text-left px-4 py-2">Confidence</th><th class="text-left px-4 py-2">Params</th><th class="text-left px-4 py-2">Response</th></tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2"><span class="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold">GET</span></td><td class="px-4 py-2 mono text-gray-700 dark:text-gray-200">/api/v2/orders</td><td class="px-4 py-2 mono text-gray-600 dark:text-gray-300">getOrders</td><td class="px-4 py-2 text-green-600 dark:text-green-400 font-semibold">97% ✨</td><td class="px-4 py-2">3</td><td class="px-4 py-2 mono text-gray-500">Order[]</td></tr>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2"><span class="bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded font-bold">POST</span></td><td class="px-4 py-2 mono text-gray-700 dark:text-gray-200">/api/v2/orders</td><td class="px-4 py-2 mono text-gray-600 dark:text-gray-300">createOrder</td><td class="px-4 py-2 text-green-600 dark:text-green-400 font-semibold">94% ✨</td><td class="px-4 py-2">0</td><td class="px-4 py-2 mono text-gray-500">Order</td></tr>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2"><span class="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold">GET</span></td><td class="px-4 py-2 mono text-gray-700 dark:text-gray-200">/api/v2/orders/{orderId}</td><td class="px-4 py-2 mono text-gray-600 dark:text-gray-300">getOrderById</td><td class="px-4 py-2 text-green-600 dark:text-green-400 font-semibold">98% ✨</td><td class="px-4 py-2">1</td><td class="px-4 py-2 mono text-gray-500">Order</td></tr>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2"><span class="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-bold">PUT</span></td><td class="px-4 py-2 mono text-gray-700 dark:text-gray-200">/api/v2/orders/{orderId}</td><td class="px-4 py-2 mono text-gray-600 dark:text-gray-300">updateOrder</td><td class="px-4 py-2 text-green-600 dark:text-green-400 font-semibold">91% ✨</td><td class="px-4 py-2">1</td><td class="px-4 py-2 mono text-gray-500">Order</td></tr>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2"><span class="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded font-bold">DEL</span></td><td class="px-4 py-2 mono text-gray-700 dark:text-gray-200">/api/v2/orders/{orderId}</td><td class="px-4 py-2 mono text-gray-600 dark:text-gray-300">deleteOrder</td><td class="px-4 py-2 text-amber-500 font-semibold">89%</td><td class="px-4 py-2">1</td><td class="px-4 py-2 mono text-gray-500">204</td></tr>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2"><span class="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold">GET</span></td><td class="px-4 py-2 mono text-gray-700 dark:text-gray-200">/api/v2/orders/{orderId}/items</td><td class="px-4 py-2 mono text-gray-600 dark:text-gray-300">getOrderItems</td><td class="px-4 py-2 text-green-600 dark:text-green-400 font-semibold">96% ✨</td><td class="px-4 py-2">2</td><td class="px-4 py-2 mono text-gray-500">OrderItem[]</td></tr>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2"><span class="bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded font-bold">POST</span></td><td class="px-4 py-2 mono text-gray-700 dark:text-gray-200">/api/v2/orders/{orderId}/items</td><td class="px-4 py-2 mono text-gray-600 dark:text-gray-300">addOrderItem</td><td class="px-4 py-2 text-green-600 dark:text-green-400 font-semibold">93% ✨</td><td class="px-4 py-2">1</td><td class="px-4 py-2 mono text-gray-500">OrderItem</td></tr>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/20"><td class="px-4 py-2"><span class="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded font-bold">DEL</span></td><td class="px-4 py-2 mono text-gray-700 dark:text-gray-200">/api/v2/orders/{orderId}/items/{itemId}</td><td class="px-4 py-2 mono text-gray-600 dark:text-gray-300">removeOrderItem</td><td class="px-4 py-2 text-amber-500 font-semibold">72%</td><td class="px-4 py-2">2</td><td class="px-4 py-2 mono text-gray-500">204</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Source code preview -->
+            <div class="bg-gray-900 dark:bg-gray-950 rounded-lg border border-gray-700 overflow-hidden">
+              <div class="flex items-center justify-between px-4 py-2 border-b border-gray-700 bg-gray-800">
+                <span class="text-xs text-gray-400 mono">routes/orders.ts</span>
+                <span class="text-xs bg-green-900/40 text-green-400 px-2 py-0.5 rounded">Harvest detected</span>
+              </div>
+              <pre class="text-xs mono p-4 overflow-auto text-gray-300 leading-relaxed" style="max-height: 320px;"><span class="text-gray-500">// routes/orders.ts — detected by Harvest</span>
+<span class="text-purple-400">import</span> <span class="text-gray-200">{ Router, Request, Response }</span> <span class="text-purple-400">from</span> <span class="text-green-400">'express'</span><span class="text-gray-200">;</span>
+<span class="text-purple-400">import</span> <span class="text-gray-200">{ OrderService }</span> <span class="text-purple-400">from</span> <span class="text-green-400">'../services/OrderService'</span><span class="text-gray-200">;</span>
+<span class="text-purple-400">import</span> <span class="text-gray-200">{ validateOrder }</span> <span class="text-purple-400">from</span> <span class="text-green-400">'../utils/validation'</span><span class="text-gray-200">;</span>
+
+<span class="text-purple-400">const</span> <span class="text-blue-400">router</span> <span class="text-gray-400">=</span> <span class="text-blue-400">Router</span><span class="text-gray-200">();</span>
+
+<span class="text-gray-500">/**</span>
+<span class="text-gray-500"> * @swagger</span>
+<span class="text-gray-500"> * /api/v2/orders:</span>
+<span class="text-gray-500"> *   get:</span>
+<span class="text-gray-500"> *     summary: List all orders</span>
+<span class="text-gray-500"> *     tags: [Orders]</span>
+<span class="text-gray-500"> *     parameters:</span>
+<span class="text-gray-500"> *       - in: query</span>
+<span class="text-gray-500"> *         name: status</span>
+<span class="text-gray-500"> *         schema: { type: string }</span>
+<span class="text-gray-500"> *       - in: query</span>
+<span class="text-gray-500"> *         name: cursor</span>
+<span class="text-gray-500"> *         schema: { type: string }</span>
+<span class="text-gray-500"> */</span>
+<span class="text-blue-400">router</span><span class="text-gray-400">.</span><span class="text-blue-300">get</span><span class="text-gray-200">(</span><span class="text-green-400">'/api/v2/orders'</span><span class="text-gray-200">,</span> <span class="text-purple-400">async</span> <span class="text-gray-200">(req: Request, res: Response) =&gt; {</span>
+  <span class="text-purple-400">const</span> <span class="text-blue-400">orders</span> <span class="text-gray-400">=</span> <span class="text-purple-400">await</span> <span class="text-blue-400">OrderService</span><span class="text-gray-400">.</span><span class="text-blue-300">findAll</span><span class="text-gray-200">(req.query);</span>
+  <span class="text-blue-400">res</span><span class="text-gray-400">.</span><span class="text-blue-300">json</span><span class="text-gray-200">({ data: orders, total: orders.length });</span>
+<span class="text-gray-200">});</span>
+
+<span class="text-blue-400">router</span><span class="text-gray-400">.</span><span class="text-blue-300">post</span><span class="text-gray-200">(</span><span class="text-green-400">'/api/v2/orders'</span><span class="text-gray-200">, validateOrder,</span> <span class="text-purple-400">async</span> <span class="text-gray-200">(req, res) =&gt; {</span>
+  <span class="text-purple-400">const</span> <span class="text-blue-400">order</span> <span class="text-gray-400">=</span> <span class="text-purple-400">await</span> <span class="text-blue-400">OrderService</span><span class="text-gray-400">.</span><span class="text-blue-300">create</span><span class="text-gray-200">(req.body);</span>
+  <span class="text-blue-400">res</span><span class="text-gray-400">.</span><span class="text-blue-300">status</span><span class="text-gray-200">(</span><span class="text-amber-400">201</span><span class="text-gray-200">).</span><span class="text-blue-300">json</span><span class="text-gray-200">(order);</span>
+<span class="text-gray-200">});</span>
+</pre>
+            </div>
+            <div class="flex justify-end">
+              <button class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors"><i data-lucide="file-code-2" class="w-4 h-4"></i> Generate Spec for this file</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+  <script>
+    const themeKey = 'mockup-harvest-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marketplace · My Subscriptions</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <!-- Top Nav -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center"><i data-lucide="store" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Marketplace</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">My Account</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Subscriptions</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-orange-500">← Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <!-- Sidebar -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Discover</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="home.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="home" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Home</span></a></li>
+            <li><a href="browse.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="search" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Browse</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> APIs</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="api-listing.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="file-code-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">API Listing</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> My Account</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="my-subscriptions.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-orange-200 dark:border-orange-700/70 bg-orange-500/10"><i data-lucide="layers" class="w-5 h-5 text-orange-500"></i><span class="text-sm font-semibold flex-1 text-orange-600 dark:text-orange-400">My Subscriptions</span><span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span></a></li>
+            <li><a href="consumer-usage.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="bar-chart-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Usage</span></a></li>
+            <li><a href="webhook-subs.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="webhook" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Webhooks</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Publisher</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="publisher-dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="trending-up" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Dashboard</span></a></li>
+            <li><a href="publish-api.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="rocket" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Publish API</span></a></li>
+            <li><a href="plan-builder.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="coins" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Plan Builder</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Admin</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="admin-overview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="shield" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Admin Overview</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-orange-500/10" />
+        <div>
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-orange-500 opacity-60"></span> Navigation</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="../index.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-orange-500/10 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Mockup hub</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 overflow-auto p-6 bg-gray-50 dark:bg-gray-900 space-y-6">
+
+      <!-- Stats Row -->
+      <div class="grid grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div class="flex items-center gap-3 mb-2"><div class="w-9 h-9 rounded-lg bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center"><i data-lucide="layers" class="w-5 h-5 text-orange-600 dark:text-orange-400"></i></div><span class="text-xs text-gray-500 dark:text-gray-400">Active Subs</span></div>
+          <p class="text-3xl font-bold mono">7</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div class="flex items-center gap-3 mb-2"><div class="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center"><i data-lucide="activity" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i></div><span class="text-xs text-gray-500 dark:text-gray-400">API Calls Today</span></div>
+          <p class="text-3xl font-bold mono">84,231</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div class="flex items-center gap-3 mb-2"><div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center"><i data-lucide="dollar-sign" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i></div><span class="text-xs text-gray-500 dark:text-gray-400">Monthly Spend</span></div>
+          <p class="text-3xl font-bold mono">$497</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div class="flex items-center gap-3 mb-2"><div class="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center"><i data-lucide="key" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i></div><span class="text-xs text-gray-500 dark:text-gray-400">Keys Active</span></div>
+          <p class="text-3xl font-bold mono">12</p>
+        </div>
+      </div>
+
+      <!-- Subscriptions Table -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+          <h2 class="font-bold">Active Subscriptions</h2>
+          <a href="browse.html" class="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold flex items-center gap-1.5"><i data-lucide="plus" class="w-3 h-3"></i>Add API</a>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                <th class="text-left px-4 py-3">API</th>
+                <th class="text-left px-4 py-3">Publisher</th>
+                <th class="text-left px-4 py-3">Plan</th>
+                <th class="text-left px-4 py-3 w-48">Usage Today</th>
+                <th class="text-left px-4 py-3">Monthly</th>
+                <th class="text-left px-4 py-3">Renewal</th>
+                <th class="text-left px-4 py-3">Status</th>
+                <th class="text-left px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+              <!-- Row 1 -->
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="px-4 py-3"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-lg bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center"><i data-lucide="shopping-cart" class="w-3.5 h-3.5 text-orange-600 dark:text-orange-400"></i></div><span class="font-medium">Commerce API</span></div></td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">Acme Corp</td>
+                <td class="px-4 py-3"><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">Growth</span></td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-2"><div class="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-1.5 rounded-full bg-orange-500" style="width:84%"></div></div><span class="text-xs mono text-gray-500">84k/100k</span></div>
+                </td>
+                <td class="px-4 py-3 mono text-xs">$149</td>
+                <td class="px-4 py-3 text-xs text-gray-500">Dec 1</td>
+                <td class="px-4 py-3"><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">Active</span></td>
+                <td class="px-4 py-3"><div class="flex items-center gap-1"><button class="px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">Manage</button><button class="px-2 py-1 text-xs rounded border border-orange-200 dark:border-orange-700/50 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20">Upgrade</button></div></td>
+              </tr>
+              <!-- Row 2 -->
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="px-4 py-3"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center"><i data-lucide="fingerprint" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400"></i></div><span class="font-medium">Identity Service</span></div></td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">FinTech Solutions</td>
+                <td class="px-4 py-3"><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400">Free</span></td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-2"><div class="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-1.5 rounded-full bg-emerald-500" style="width:89%"></div></div><span class="text-xs mono text-gray-500">892/1k</span></div>
+                </td>
+                <td class="px-4 py-3 mono text-xs">$0</td>
+                <td class="px-4 py-3 text-xs text-gray-500">—</td>
+                <td class="px-4 py-3"><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">Active</span></td>
+                <td class="px-4 py-3"><div class="flex items-center gap-1"><button class="px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">Manage</button><button class="px-2 py-1 text-xs rounded border border-orange-200 dark:border-orange-700/50 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20">Upgrade</button></div></td>
+              </tr>
+              <!-- Row 3 -->
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="px-4 py-3"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center"><i data-lucide="credit-card" class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400"></i></div><span class="font-medium">Payments Gateway</span></div></td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">PayStream Inc</td>
+                <td class="px-4 py-3"><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400">Enterprise</span></td>
+                <td class="px-4 py-3 text-xs text-gray-400">Unlimited</td>
+                <td class="px-4 py-3 mono text-xs">Custom</td>
+                <td class="px-4 py-3 text-xs text-gray-500">Jan 1</td>
+                <td class="px-4 py-3"><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">Active</span></td>
+                <td class="px-4 py-3"><button class="px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">Manage</button></td>
+              </tr>
+              <!-- Row 4 -->
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="px-4 py-3"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-lg bg-cyan-100 dark:bg-cyan-900/40 flex items-center justify-center"><i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400"></i></div><span class="font-medium">Analytics Stream</span></div></td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">DataStream Inc</td>
+                <td class="px-4 py-3"><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">Growth</span></td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-2"><div class="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-1.5 rounded-full bg-blue-500" style="width:45%"></div></div><span class="text-xs mono text-gray-500">45k/100k</span></div>
+                </td>
+                <td class="px-4 py-3 mono text-xs">$149</td>
+                <td class="px-4 py-3 text-xs text-gray-500">Dec 1</td>
+                <td class="px-4 py-3"><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">Active</span></td>
+                <td class="px-4 py-3"><div class="flex items-center gap-1"><button class="px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">Manage</button><button class="px-2 py-1 text-xs rounded border border-orange-200 dark:border-orange-700/50 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20">Upgrade</button></div></td>
+              </tr>
+              <!-- Row 5 -->
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="px-4 py-3"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-lg bg-green-100 dark:bg-green-900/40 flex items-center justify-center"><i data-lucide="truck" class="w-3.5 h-3.5 text-green-600 dark:text-green-400"></i></div><span class="font-medium">Logistics API</span></div></td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">ShipFast Corp</td>
+                <td class="px-4 py-3"><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400">Free</span></td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-2"><div class="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-1.5 rounded-full bg-emerald-500" style="width:23%"></div></div><span class="text-xs mono text-gray-500">234/1k</span></div>
+                </td>
+                <td class="px-4 py-3 mono text-xs">$0</td>
+                <td class="px-4 py-3 text-xs text-gray-500">—</td>
+                <td class="px-4 py-3"><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">Active</span></td>
+                <td class="px-4 py-3"><div class="flex items-center gap-1"><button class="px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">Manage</button><button class="px-2 py-1 text-xs rounded border border-orange-200 dark:border-orange-700/50 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20">Upgrade</button></div></td>
+              </tr>
+              <!-- Row 6 -->
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="px-4 py-3"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center"><i data-lucide="bell" class="w-3.5 h-3.5 text-slate-600 dark:text-slate-400"></i></div><span class="font-medium">Notification Service</span></div></td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">CloudOps Ltd</td>
+                <td class="px-4 py-3"><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">Metered</span></td>
+                <td class="px-4 py-3 text-xs text-gray-500 mono">12,441 calls</td>
+                <td class="px-4 py-3 mono text-xs text-gray-500">$0.002/call</td>
+                <td class="px-4 py-3 text-xs text-gray-500">Dec 1</td>
+                <td class="px-4 py-3"><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">Active</span></td>
+                <td class="px-4 py-3"><button class="px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">Manage</button></td>
+              </tr>
+              <!-- Row 7 - Near Limit -->
+              <tr class="hover:bg-amber-50 dark:hover:bg-amber-900/10 bg-amber-50/50 dark:bg-amber-900/5">
+                <td class="px-4 py-3"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center"><i data-lucide="database" class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400"></i></div><span class="font-medium">Data Enrichment</span></div></td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">DataStream Inc</td>
+                <td class="px-4 py-3"><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">Growth</span></td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-2"><div class="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-1.5 rounded-full bg-red-500" style="width:99%"></div></div><span class="text-xs mono text-red-500 font-semibold">99k/100k</span></div>
+                </td>
+                <td class="px-4 py-3 mono text-xs">$149</td>
+                <td class="px-4 py-3 text-xs text-gray-500">Dec 1</td>
+                <td class="px-4 py-3"><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">⚠ Near Limit</span></td>
+                <td class="px-4 py-3"><div class="flex items-center gap-1"><button class="px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">Manage</button><button class="px-2 py-1 text-xs rounded bg-orange-600 hover:bg-orange-700 text-white">Upgrade</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Webhooks Panel -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+          <h2 class="font-bold flex items-center gap-2"><i data-lucide="webhook" class="w-4 h-4 text-orange-500"></i>Active Webhook Endpoints</h2>
+          <a href="webhook-subs.html" class="text-xs text-orange-600 dark:text-orange-400 hover:underline">Manage all →</a>
+        </div>
+        <div class="divide-y divide-gray-100 dark:divide-gray-700">
+          <div class="flex items-center gap-4 px-5 py-3">
+            <span class="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
+            <span class="text-sm mono flex-1 truncate text-gray-700 dark:text-gray-300">https://api.acme.com/hooks/commerce</span>
+            <span class="text-xs text-gray-500">Commerce API</span>
+            <span class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">98.2%</span>
+            <span class="text-xs text-gray-400">Last: 2 min ago</span>
+          </div>
+          <div class="flex items-center gap-4 px-5 py-3">
+            <span class="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
+            <span class="text-sm mono flex-1 truncate text-gray-700 dark:text-gray-300">https://hooks.acme.io/payments</span>
+            <span class="text-xs text-gray-500">Payments Gateway</span>
+            <span class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">100%</span>
+            <span class="text-xs text-gray-400">Last: 5 min ago</span>
+          </div>
+          <div class="flex items-center gap-4 px-5 py-3">
+            <span class="h-2 w-2 rounded-full bg-red-500 flex-shrink-0"></span>
+            <span class="text-sm mono flex-1 truncate text-gray-700 dark:text-gray-300">https://legacy.acme.com/webhook-recv</span>
+            <span class="text-xs text-gray-500">Analytics Stream</span>
+            <span class="text-xs text-red-600 dark:text-red-400 font-semibold">⚠ 67.4%</span>
+            <span class="text-xs text-gray-400">Last: 34 min ago</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    const themeKey = 'mockup-marketplace-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

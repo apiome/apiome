@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Objectified Harvest — Mockup Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>html, body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <header class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10">
+    <div class="px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-green-500 to-lime-400 flex items-center justify-center">
+          <i data-lucide="scan-search" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold flex items-center gap-2">
+            Objectified Harvest
+            <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">Mockup</span>
+          </h1>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Reverse-engineer APIs from codebases, databases, traffic, and files &middot; Epics 1&ndash;4</p>
+        </div>
+      </div>
+      <button id="themeBtn" class="w-9 h-9 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center" title="Toggle theme">
+        <i data-lucide="sun-moon" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+  <main class="max-w-6xl mx-auto px-6 py-10">
+    <section class="mb-10">
+      <h2 class="text-3xl font-bold mb-2">Harvest mockups</h2>
+      <p class="text-gray-600 dark:text-gray-400 max-w-2xl">Enterprise systems accumulate thousands of undocumented internal services over time. Harvest solves the brownfield cataloging problem by automatically ingesting Express, FastAPI, Spring Boot, Django, and Rails codebases; reverse-engineering database DDL and PostgreSQL schemas; capturing live HTTP traffic; and parsing Postman collections and HAR files — then turning everything into structured Objectified specs and OpenAPI 3.1 documents ready for versioning, diffing, and publishing.</p>
+    </section>
+    <!-- Epic 1 -->
+    <section class="mb-10">
+      <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 mb-2"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Epic 1 &middot; Ingestion Sources</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a href="dashboard.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-green-300 dark:hover:border-green-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="layout-dashboard" class="w-5 h-5 text-green-600 dark:text-green-400"></i></div>
+            <div><h3 class="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400">Dashboard</h3><p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Overview of connected sources, active scan jobs, and recent discoveries.</p><p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">Epic 1</p></div>
+          </div>
+        </a>
+        <a href="new-source.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-green-300 dark:hover:border-green-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-lime-100 dark:bg-lime-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="plus-circle" class="w-5 h-5 text-lime-600 dark:text-lime-400"></i></div>
+            <div><h3 class="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400">New Source</h3><p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Ingestion wizard step 1: choose source type (repo, upload, URL, database).</p><p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">Epic 1</p></div>
+          </div>
+        </a>
+        <a href="repo-connect.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-green-300 dark:hover:border-green-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="git-branch" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i></div>
+            <div><h3 class="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400">Connect Repo</h3><p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Step 2 configure: VCS provider, branch, framework detection, annotation parsers.</p><p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">Epic 1</p></div>
+          </div>
+        </a>
+      </div>
+    </section>
+    <!-- Epic 2 -->
+    <section class="mb-10">
+      <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 mb-2"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Epic 2 &middot; Scan &amp; Analysis</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a href="scan-jobs.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-green-300 dark:hover:border-green-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="cpu" class="w-5 h-5 text-green-600 dark:text-green-400"></i></div>
+            <div><h3 class="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400">Scan Jobs</h3><p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Full list of tenant_repository_file_scan_jobs with live progress and history.</p><p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">Epic 2</p></div>
+          </div>
+        </a>
+        <a href="file-explorer.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-green-300 dark:hover:border-green-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-lime-100 dark:bg-lime-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="folder-open" class="w-5 h-5 text-lime-600 dark:text-lime-400"></i></div>
+            <div><h3 class="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400">File Explorer</h3><p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Browse tenant_repository_files with endpoint/schema detection status per file.</p><p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">Epic 2</p></div>
+          </div>
+        </a>
+        <a href="scan-results.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-green-300 dark:hover:border-green-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="bar-chart-2" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i></div>
+            <div><h3 class="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400">Scan Results</h3><p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Completed scan summary: endpoints, classes, warnings, confidence distribution.</p><p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">Epic 2</p></div>
+          </div>
+        </a>
+      </div>
+    </section>
+    <!-- Epic 3 -->
+    <section class="mb-10">
+      <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 mb-2"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Epic 3 &middot; Spec Generation</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a href="spec-preview.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-green-300 dark:hover:border-green-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="eye" class="w-5 h-5 text-green-600 dark:text-green-400"></i></div>
+            <div><h3 class="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400">Spec Preview</h3><p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Side-by-side YAML diff of generated OpenAPI 3.1 spec vs. existing version.</p><p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">Epic 3</p></div>
+          </div>
+        </a>
+        <a href="conflict-resolution.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-green-300 dark:hover:border-green-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 dark:text-amber-400"></i></div>
+            <div><h3 class="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400">Conflict Resolution</h3><p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Resolve schema mismatches between harvested spec and existing API version.</p><p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">Epic 3</p></div>
+          </div>
+        </a>
+        <a href="export.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-green-300 dark:hover:border-green-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-lime-100 dark:bg-lime-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="upload-cloud" class="w-5 h-5 text-lime-600 dark:text-lime-400"></i></div>
+            <div><h3 class="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400">Export &amp; Publish</h3><p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Publish the resolved spec to an Objectified project version.</p><p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">Epic 3</p></div>
+          </div>
+        </a>
+      </div>
+    </section>
+    <!-- Epic 4 -->
+    <section class="mb-10">
+      <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 mb-2"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Epic 4 &middot; Source Management</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a href="sources.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-green-300 dark:hover:border-green-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="database" class="w-5 h-5 text-green-600 dark:text-green-400"></i></div>
+            <div><h3 class="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400">Connected Sources</h3><p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage all tenant_repositories: health, auth, schedules, and scan history.</p><p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">Epic 4</p></div>
+          </div>
+        </a>
+        <a href="imports-history.html" class="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 hover:border-green-300 dark:hover:border-green-600 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="history" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i></div>
+            <div><h3 class="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400">Import History</h3><p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Full log of tenant_repository_imports with rollback support and diff viewer.</p><p class="text-[10px] uppercase tracking-wider text-gray-400 mt-2">Epic 4</p></div>
+          </div>
+        </a>
+      </div>
+    </section>
+    <footer class="mt-16 pt-8 border-t border-gray-200 dark:border-gray-700 text-center">
+      <a href="../index.html" class="text-sm text-gray-500 dark:text-gray-400 hover:text-green-500">&larr; Back to Mockup Hub</a>
+    </footer>
+  </main>
+  <script>
+    const themeKey = 'mockup-harvest-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spec Preview — Harvest</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-green-500 to-lime-400 flex items-center justify-center"><i data-lucide="scan-search" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Harvest</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Spec Preview</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-green-500">&larr; Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Ingestion</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+          <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Dashboard</span></a></li>
+          <li><a href="new-source.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="plus-circle" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">New Source</span></a></li>
+          <li><a href="repo-connect.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="git-branch" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Connect Repo</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-green-500/10" />
+        <div class="mb-5">
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Scan &amp; Analysis</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+          <li><a href="scan-jobs.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="cpu" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Scan Jobs</span></a></li>
+          <li><a href="file-explorer.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="folder-open" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">File Explorer</span></a></li>
+          <li><a href="scan-results.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="bar-chart-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Scan Results</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-green-500/10" />
+        <div class="mb-5">
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Spec Generation</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+          <li><a href="spec-preview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-green-200 dark:border-green-700/70 bg-green-500/10"><i data-lucide="eye" class="w-5 h-5 text-green-500"></i><span class="text-sm font-semibold flex-1 text-green-600 dark:text-green-400">Spec Preview</span><span class="h-1.5 w-1.5 rounded-full bg-green-500"></span></a></li>
+          <li><a href="conflict-resolution.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="alert-triangle" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Conflict Resolution</span></a></li>
+          <li><a href="export.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="upload-cloud" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Export &amp; Publish</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-green-500/10" />
+        <div class="mb-5">
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Management</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+          <li><a href="sources.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="database" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Connected Sources</span></a></li>
+          <li><a href="imports-history.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="history" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Import History</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-green-500/10" />
+        <div>
+        <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-green-500 opacity-60"></span> Navigation</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="../index.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-green-500/10 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Mockup hub</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+    <main class="flex-1 overflow-auto p-6 bg-gray-50 dark:bg-gray-900">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-3">
+          <h1 class="text-xl font-bold">Spec Preview</h1>
+          <span class="mono text-xs text-gray-500">acme-commerce-api &middot; v2.4.1</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="flex items-center gap-2 text-sm border border-gray-200 dark:border-gray-700 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"><i data-lucide="copy" class="w-4 h-4"></i> Copy YAML</button>
+          <button class="flex items-center gap-2 text-sm border border-gray-200 dark:border-gray-700 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"><i data-lucide="download" class="w-4 h-4"></i> Download</button>
+          <a href="export.html" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"><i data-lucide="upload-cloud" class="w-4 h-4"></i> Publish</a>
+        </div>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="flex items-center gap-4 mb-5 text-sm">
+        <div class="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2">
+          <i data-lucide="zap" class="w-4 h-4 text-green-500"></i>
+          <span class="font-medium text-green-600 dark:text-green-400">134</span><span class="text-gray-500">endpoints</span>
+        </div>
+        <div class="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2">
+          <i data-lucide="layers" class="w-4 h-4 text-blue-500"></i>
+          <span class="font-medium text-blue-600 dark:text-blue-400">28</span><span class="text-gray-500">schemas</span>
+        </div>
+        <div class="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2">
+          <i data-lucide="server" class="w-4 h-4 text-purple-500"></i>
+          <span class="font-medium text-purple-600 dark:text-purple-400">2</span><span class="text-gray-500">servers</span>
+        </div>
+        <div class="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700/50 px-4 py-2">
+          <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
+          <span class="font-medium text-green-600 dark:text-green-400">Valid</span><span class="text-gray-500">OpenAPI 3.0.3</span>
+        </div>
+        <div class="ml-auto flex items-center gap-2">
+          <span class="text-xs text-gray-500">Format:</span>
+          <div class="flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
+            <button class="text-xs px-3 py-1 rounded-md bg-green-500 text-white font-medium">YAML</button>
+            <button class="text-xs px-3 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">JSON</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two-pane layout -->
+      <div class="flex gap-4" style="height: calc(100vh - 230px);">
+        <!-- Left: YAML output -->
+        <div class="flex-1 min-w-0 bg-gray-900 dark:bg-gray-950 rounded-xl border border-gray-700 overflow-hidden flex flex-col">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-gray-700 bg-gray-800">
+            <span class="text-xs text-gray-400 mono">openapi.yaml &nbsp;&mdash;&nbsp; Generated by Harvest</span>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-red-500 opacity-70"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500 opacity-70"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-green-500 opacity-70"></span>
+            </div>
+          </div>
+          <div class="overflow-auto flex-1 p-4">
+            <pre class="mono text-xs leading-[1.7] text-gray-300"><span class="text-gray-400"># Generated OpenAPI 3.0 specification for acme-commerce-api</span>
+<span class="text-gray-400"># Harvest engine v2.4.1 — job_01HX3KMPB3 — 2025-01-14T09:23:41Z</span>
+<span class="text-blue-600 dark:text-blue-400">openapi:</span><span class="text-green-600 dark:text-green-400"> 3.0.3</span>
+<span class="text-blue-600 dark:text-blue-400">info:</span>
+  <span class="text-blue-600 dark:text-blue-400">title:</span><span class="text-green-600 dark:text-green-400"> 'Acme Commerce API'</span>
+  <span class="text-blue-600 dark:text-blue-400">version:</span><span class="text-green-600 dark:text-green-400"> '2.4.1'</span>
+  <span class="text-blue-600 dark:text-blue-400">description:</span><span class="text-green-600 dark:text-green-400"> 'Automatically harvested from acme-commerce-api@main'</span>
+  <span class="text-blue-600 dark:text-blue-400">contact:</span>
+    <span class="text-blue-600 dark:text-blue-400">name:</span><span class="text-green-600 dark:text-green-400"> 'API Support'</span>
+    <span class="text-blue-600 dark:text-blue-400">email:</span><span class="text-green-600 dark:text-green-400"> 'api@acme.example.com'</span>
+<span class="text-blue-600 dark:text-blue-400">servers:</span>
+  - <span class="text-blue-600 dark:text-blue-400">url:</span><span class="text-green-600 dark:text-green-400"> https://api.acme.example.com/v2</span>
+    <span class="text-blue-600 dark:text-blue-400">description:</span><span class="text-green-600 dark:text-green-400"> Production</span>
+  - <span class="text-blue-600 dark:text-blue-400">url:</span><span class="text-green-600 dark:text-green-400"> https://staging-api.acme.example.com/v2</span>
+    <span class="text-blue-600 dark:text-blue-400">description:</span><span class="text-green-600 dark:text-green-400"> Staging</span>
+<span class="text-blue-600 dark:text-blue-400">tags:</span>
+  - <span class="text-blue-600 dark:text-blue-400">name:</span><span class="text-green-600 dark:text-green-400"> Orders</span>
+    <span class="text-blue-600 dark:text-blue-400">description:</span><span class="text-green-600 dark:text-green-400"> Order management endpoints</span>
+  - <span class="text-blue-600 dark:text-blue-400">name:</span><span class="text-green-600 dark:text-green-400"> Products</span>
+  - <span class="text-blue-600 dark:text-blue-400">name:</span><span class="text-green-600 dark:text-green-400"> Customers</span>
+  - <span class="text-blue-600 dark:text-blue-400">name:</span><span class="text-green-600 dark:text-green-400"> Auth</span>
+<span class="text-blue-600 dark:text-blue-400">paths:</span>
+  <span class="text-blue-600 dark:text-blue-400">/orders:</span>
+    <span class="text-blue-600 dark:text-blue-400">get:</span>
+      <span class="text-blue-600 dark:text-blue-400">summary:</span><span class="text-green-600 dark:text-green-400"> 'List all orders'</span>
+      <span class="text-blue-600 dark:text-blue-400">operationId:</span><span class="text-green-600 dark:text-green-400"> 'getOrders'</span>
+      <span class="text-blue-600 dark:text-blue-400">      tags:</span> [<span class="text-green-600 dark:text-green-400">Orders</span>]
+      <span class="text-blue-600 dark:text-blue-400">parameters:</span>
+        - <span class="text-blue-600 dark:text-blue-400">name:</span><span class="text-green-600 dark:text-green-400"> status</span>
+          <span class="text-blue-600 dark:text-blue-400">in:</span><span class="text-green-600 dark:text-green-400"> query</span>
+          <span class="text-blue-600 dark:text-blue-400">required:</span><span class="text-green-600 dark:text-green-400"> false</span>
+          <span class="text-blue-600 dark:text-blue-400">schema:</span>
+            <span class="text-blue-600 dark:text-blue-400">type:</span><span class="text-green-600 dark:text-green-400"> string</span>
+            <span class="text-blue-600 dark:text-blue-400">enum:</span> [<span class="text-green-600 dark:text-green-400">pending, processing, shipped, delivered, cancelled</span>]
+        - <span class="text-blue-600 dark:text-blue-400">name:</span><span class="text-green-600 dark:text-green-400"> cursor</span>
+          <span class="text-blue-600 dark:text-blue-400">in:</span><span class="text-green-600 dark:text-green-400"> query</span>
+          <span class="text-blue-600 dark:text-blue-400">schema:</span>
+            <span class="text-blue-600 dark:text-blue-400">type:</span><span class="text-green-600 dark:text-green-400"> string</span>
+        - <span class="text-blue-600 dark:text-blue-400">name:</span><span class="text-green-600 dark:text-green-400"> limit</span>
+          <span class="text-blue-600 dark:text-blue-400">in:</span><span class="text-green-600 dark:text-green-400"> query</span>
+          <span class="text-blue-600 dark:text-blue-400">schema:</span>
+            <span class="text-blue-600 dark:text-blue-400">type:</span><span class="text-amber-600 dark:text-amber-400"> integer</span>
+            <span class="text-blue-600 dark:text-blue-400">default:</span><span class="text-amber-600 dark:text-amber-400"> 20</span>
+            <span class="text-blue-600 dark:text-blue-400">maximum:</span><span class="text-amber-600 dark:text-amber-400"> 100</span>
+      <span class="text-blue-600 dark:text-blue-400">responses:</span>
+        <span class="text-blue-600 dark:text-blue-400">'200':</span>
+          <span class="text-blue-600 dark:text-blue-400">description:</span><span class="text-green-600 dark:text-green-400"> 'Paginated list of orders'</span>
+          <span class="text-blue-600 dark:text-blue-400">content:</span>
+            <span class="text-blue-600 dark:text-blue-400">application/json:</span>
+              <span class="text-blue-600 dark:text-blue-400">schema:</span>
+                <span class="text-blue-600 dark:text-blue-400">type:</span><span class="text-green-600 dark:text-green-400"> object</span>
+                <span class="text-blue-600 dark:text-blue-400">properties:</span>
+                  <span class="text-blue-600 dark:text-blue-400">data:</span>
+                    <span class="text-blue-600 dark:text-blue-400">type:</span><span class="text-green-600 dark:text-green-400"> array</span>
+                    <span class="text-blue-600 dark:text-blue-400">items:</span>
+                        <span class="text-blue-600 dark:text-blue-400">$ref:</span><span class="text-green-600 dark:text-green-400"> '#/components/schemas/Order'</span>
+                  <span class="text-blue-600 dark:text-blue-400">total:</span>
+                    <span class="text-blue-600 dark:text-blue-400">type:</span><span class="text-green-600 dark:text-green-400"> integer</span>
+                  <span class="text-blue-600 dark:text-blue-400">nextCursor:</span>
+                    <span class="text-blue-600 dark:text-blue-400">type:</span><span class="text-green-600 dark:text-green-400"> string</span>
+                    <span class="text-blue-600 dark:text-blue-400">nullable:</span><span class="text-green-600 dark:text-green-400"> true</span>
+    <span class="text-blue-600 dark:text-blue-400">post:</span>
+      <span class="text-blue-600 dark:text-blue-400">summary:</span><span class="text-green-600 dark:text-green-400"> 'Create an order'</span>
+      <span class="text-blue-600 dark:text-blue-400">operationId:</span><span class="text-green-600 dark:text-green-400"> 'createOrder'</span>
+      <span class="text-blue-600 dark:text-blue-400">requestBody:</span>
+        <span class="text-blue-600 dark:text-blue-400">required:</span><span class="text-green-600 dark:text-green-400"> true</span>
+        <span class="text-blue-600 dark:text-blue-400">content:</span>
+          <span class="text-blue-600 dark:text-blue-400">application/json:</span>
+            <span class="text-blue-600 dark:text-blue-400">schema:</span>
+              <span class="text-blue-600 dark:text-blue-400">        $ref:</span><span class="text-green-600 dark:text-green-400"> '#/components/schemas/CreateOrderRequest'</span>
+<span class="text-blue-600 dark:text-blue-400">components:</span>
+  <span class="text-blue-600 dark:text-blue-400">schemas:</span>
+    <span class="text-blue-600 dark:text-blue-400">Order:</span>
+      <span class="text-blue-600 dark:text-blue-400">type:</span><span class="text-green-600 dark:text-green-400"> object</span>
+      <span class="text-blue-600 dark:text-blue-400">required:</span>
+        - <span class="text-green-600 dark:text-green-400">id</span>
+        - <span class="text-green-600 dark:text-green-400">status</span>
+        - <span class="text-green-600 dark:text-green-400">customerId</span>
+      <span class="text-blue-600 dark:text-blue-400">properties:</span>
+        <span class="text-blue-600 dark:text-blue-400">id:</span>
+          <span class="text-blue-600 dark:text-blue-400">type:</span><span class="text-green-600 dark:text-green-400"> string</span>
+          <span class="text-blue-600 dark:text-blue-400">format:</span><span class="text-green-600 dark:text-green-400"> 'ulid'</span>
+          <span class="text-blue-600 dark:text-blue-400">          example:</span><span class="text-green-600 dark:text-green-400"> 01ARZ3NDEKTSV4RRFFQ69G5FAV</span>
+        <span class="text-blue-600 dark:text-blue-400">status:</span>
+          <span class="text-blue-600 dark:text-blue-400">type:</span><span class="text-green-600 dark:text-green-400"> string</span>
+          <span class="text-blue-600 dark:text-blue-400">          enum:</span> [<span class="text-green-600 dark:text-green-400">pending, processing, shipped, delivered, cancelled</span>]
+        <span class="text-blue-600 dark:text-blue-400">customerId:</span>
+          <span class="text-blue-600 dark:text-blue-400">type:</span><span class="text-green-600 dark:text-green-400"> string</span>
+          <span class="text-blue-600 dark:text-blue-400">format:</span><span class="text-green-600 dark:text-green-400"> 'ulid'</span>
+        <span class="text-blue-600 dark:text-blue-400">totalAmount:</span>
+          <span class="text-blue-600 dark:text-blue-400">type:</span><span class="text-green-600 dark:text-green-400"> number</span>
+          <span class="text-blue-600 dark:text-blue-400">format:</span><span class="text-green-600 dark:text-green-400"> 'decimal'</span>
+          <span class="text-blue-600 dark:text-blue-400">          minimum:</span><span class="text-amber-600 dark:text-amber-400"> 0</span>
+        <span class="text-blue-600 dark:text-blue-400">createdAt:</span>
+          <span class="text-blue-600 dark:text-blue-400">type:</span><span class="text-green-600 dark:text-green-400"> string</span>
+          <span class="text-blue-600 dark:text-blue-400">format:</span><span class="text-green-600 dark:text-green-400"> 'date-time'</span>
+        <span class="text-blue-600 dark:text-blue-400">items:</span>
+          <span class="text-blue-600 dark:text-blue-400">type:</span><span class="text-green-600 dark:text-green-400"> array</span>
+          <span class="text-blue-600 dark:text-blue-400">items:</span>
+            <span class="text-blue-600 dark:text-blue-400">            $ref:</span><span class="text-green-600 dark:text-green-400"> '#/components/schemas/OrderItem'</span></pre>
+          </div>
+        </div>
+
+        <!-- Right: Summary sidebar -->
+        <div class="flex-shrink-0 w-72 flex flex-col gap-4 overflow-auto">
+          <!-- Endpoint coverage by tag -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <div class="font-semibold text-sm mb-3">Endpoint Coverage</div>
+            <div class="space-y-2">
+              <div><div class="flex justify-between text-xs mb-1"><span class="font-medium">Orders</span><span class="text-gray-500">42 endpoints</span></div><div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-2 rounded-full bg-green-500" style="width:100%"></div></div></div>
+              <div><div class="flex justify-between text-xs mb-1"><span class="font-medium">Products</span><span class="text-gray-500">38 endpoints</span></div><div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-2 rounded-full bg-green-500" style="width:90%"></div></div></div>
+              <div><div class="flex justify-between text-xs mb-1"><span class="font-medium">Customers</span><span class="text-gray-500">24 endpoints</span></div><div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-2 rounded-full bg-green-400" style="width:57%"></div></div></div>
+              <div><div class="flex justify-between text-xs mb-1"><span class="font-medium">Auth</span><span class="text-gray-500">18 endpoints</span></div><div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-2 rounded-full bg-green-400" style="width:43%"></div></div></div>
+              <div><div class="flex justify-between text-xs mb-1"><span class="font-medium">Misc</span><span class="text-gray-500">12 endpoints</span></div><div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700"><div class="h-2 rounded-full bg-gray-300 dark:bg-gray-600" style="width:29%"></div></div></div>
+            </div>
+          </div>
+          <!-- Changes vs previous -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <div class="font-semibold text-sm mb-3">Changes vs Previous</div>
+            <div class="space-y-2 text-sm">
+              <div class="flex items-center gap-2 text-green-600 dark:text-green-400"><i data-lucide="plus-circle" class="w-4 h-4"></i><span>12 new endpoints</span></div>
+              <div class="flex items-center gap-2 text-amber-500"><i data-lucide="edit-3" class="w-4 h-4"></i><span>7 modified schemas</span></div>
+              <div class="flex items-center gap-2 text-red-500"><i data-lucide="minus-circle" class="w-4 h-4"></i><span>2 removed endpoints</span></div>
+              <div class="flex items-center gap-2 text-gray-500"><i data-lucide="equal" class="w-4 h-4"></i><span>113 unchanged</span></div>
+            </div>
+          </div>
+          <!-- Actions -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-2">
+            <div class="font-semibold text-sm mb-3">Actions</div>
+            <a href="conflict-resolution.html" class="flex items-center gap-3 p-2.5 rounded-lg border border-amber-200 dark:border-amber-700/50 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-sm transition-colors"><i data-lucide="alert-triangle" class="w-4 h-4"></i>Resolve 3 conflicts</a>
+            <a href="export.html" class="flex items-center gap-3 p-2.5 rounded-lg border border-green-200 dark:border-green-700/50 hover:bg-green-50 dark:hover:bg-green-900/20 text-green-700 dark:text-green-300 text-sm transition-colors"><i data-lucide="upload-cloud" class="w-4 h-4"></i>Export &amp; Publish</a>
+            <button class="flex items-center gap-3 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 text-gray-700 dark:text-gray-300 text-sm w-full transition-colors"><i data-lucide="git-branch" class="w-4 h-4"></i>Create PR</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+  <script>
+    const themeKey = 'mockup-harvest-theme';
+    const stored = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'dark' || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem(themeKey, document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>
