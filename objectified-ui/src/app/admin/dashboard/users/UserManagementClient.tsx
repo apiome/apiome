@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import {
   Users,
   UserPlus,
@@ -16,9 +16,12 @@ import {
   Power,
   Award,
   Flag,
+  Plus,
+  X,
 } from 'lucide-react';
 import {
   getAllSignups,
+  createUser,
   createUserFromSignup,
   deleteSignup,
   updateUser,
@@ -96,6 +99,15 @@ export default function UserManagementClient() {
   const [userDropdownPos, setUserDropdownPos] = useState<{ top: number; right: number } | null>(null);
   const [licenseSubMenu, setLicenseSubMenu] = useState<string | null>(null);
   const [flagsUser, setFlagsUser] = useState<User | null>(null);
+  const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    password: '',
+    verified: true,
+    enabled: true,
+  });
 
   useEffect(() => {
     loadData();
@@ -174,6 +186,55 @@ export default function UserManagementClient() {
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 5000);
+  };
+
+  const resetNewUserForm = () => {
+    setNewUser({
+      name: '',
+      email: '',
+      password: '',
+      verified: true,
+      enabled: true,
+    });
+  };
+
+  const handleCreateUser = async (event: FormEvent) => {
+    event.preventDefault();
+
+    const name = newUser.name.trim();
+    const email = newUser.email.trim().toLowerCase();
+
+    if (!name || !email || !newUser.password) {
+      showMessage('error', 'Name, email, and password are required');
+      return;
+    }
+
+    setCreatingUser(true);
+    try {
+      const result = await createUser(
+        name,
+        email,
+        newUser.password,
+        newUser.verified,
+        newUser.enabled
+      );
+      const data = JSON.parse(result);
+
+      if (data.success) {
+        showMessage('success', `User created successfully for ${name}`);
+        setShowCreateUserDialog(false);
+        resetNewUserForm();
+        setActiveTab('users');
+        await loadData();
+      } else {
+        showMessage('error', data.error || 'Failed to create user');
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+      showMessage('error', 'Failed to create user');
+    } finally {
+      setCreatingUser(false);
+    }
   };
 
   const handleCreateUserFromSignup = async (signup: Signup) => {
@@ -288,8 +349,20 @@ export default function UserManagementClient() {
       {/* Header */}
       <header className="shrink-0 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="px-6 py-4">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h2>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage user accounts and approve signups</p>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h2>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage user accounts and approve signups</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowCreateUserDialog(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              New User
+            </button>
+          </div>
         </div>
       </header>
 
@@ -776,6 +849,117 @@ export default function UserManagementClient() {
       )}
         </div>
       </main>
+
+      {/* Create User Dialog */}
+      {showCreateUserDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg max-w-md w-full">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Create New User</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateUserDialog(false);
+                  resetNewUserForm();
+                }}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateUser} className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600"
+                  placeholder="Jane Doe"
+                  required
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600"
+                  placeholder="jane@example.com"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Password *
+                </label>
+                <input
+                  type="password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600"
+                  placeholder="Temporary password"
+                  required
+                  minLength={8}
+                />
+                <p className="text-gray-500 text-xs mt-1">Minimum 8 characters. Stored as a bcrypt hash.</p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="newUserVerified"
+                    checked={newUser.verified}
+                    onChange={(e) => setNewUser({ ...newUser, verified: e.target.checked })}
+                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-red-600 focus:ring-2 focus:ring-red-600 focus:ring-offset-0"
+                  />
+                  <label htmlFor="newUserVerified" className="text-sm text-gray-700 dark:text-gray-300">
+                    Mark email as verified
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="newUserEnabled"
+                    checked={newUser.enabled}
+                    onChange={(e) => setNewUser({ ...newUser, enabled: e.target.checked })}
+                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-red-600 focus:ring-2 focus:ring-red-600 focus:ring-offset-0"
+                  />
+                  <label htmlFor="newUserEnabled" className="text-sm text-gray-700 dark:text-gray-300">
+                    Enable account immediately
+                  </label>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateUserDialog(false);
+                    resetNewUserForm();
+                  }}
+                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                  disabled={creatingUser}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingUser}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {creatingUser ? 'Creating…' : 'Create User'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Feature Flags Modal */}
       {flagsUser && (
