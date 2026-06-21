@@ -4,12 +4,14 @@ on:
   push:
     paths:
       - "objectified-cli/**"
+      - "docs/CLI_SPEC_IMPORT_FORMAT_PARITY.md"
       - ".github/workflows/objectified-cli.yml"
       - "yarn.lock"
       - "package.json"
   pull_request:
     paths:
       - "objectified-cli/**"
+      - "docs/CLI_SPEC_IMPORT_FORMAT_PARITY.md"
       - ".github/workflows/objectified-cli.yml"
       - "yarn.lock"
       - "package.json"
