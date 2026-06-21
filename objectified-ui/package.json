@@ -61,7 +61,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@radix-ui/themes": "^3.3.0",
     "@seriousme/openapi-schema-validator": "^2.8.0",
-    "@xyflow/react": "^12.10.2",
+    "@xyflow/react": "12.10.2",
     "ajv": "^8.18.0",
     "ajv-formats": "^3.0.1",
     "bcrypt": "^6.0.0",
