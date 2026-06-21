@@ -31,6 +31,19 @@ jest.mock('crypto', () => ({
   randomBytes: jest.fn(() => Buffer.from('test-api-key-data')),
 }));
 
+// createProject/createVersion enforce session + plan limits; keep unit tests isolated from entitlements DB queries
+jest.mock('../lib/db/plan-entitlements', () => ({
+  getPlanBlockMessageForNewProject: jest.fn(async () => null),
+  getPlanBlockMessageForNewVersion: jest.fn(async () => null),
+}));
+
+function mockAuthenticatedSession(userId = 'user-1') {
+  const serverSession = require('../lib/auth/server-session');
+  (serverSession.getAuthSession as jest.Mock).mockResolvedValue({
+    user: { user_id: userId },
+  });
+}
+
 describe('Database Helper - User Functions', () => {
   let mockQuery: jest.Mock;
 
@@ -1615,6 +1628,7 @@ describe('Database Helper - Edge Cases and Boundaries', () => {
     const db = require('../lib/db/db');
     mockQuery = db.query as jest.Mock;
     mockQuery.mockClear();
+    mockAuthenticatedSession();
   });
 
   test('should handle null descriptions', async () => {
@@ -1744,6 +1758,7 @@ describe('Database Helper - Version Copy and Creation Edge Cases', () => {
     const db = require('../lib/db/db');
     mockQuery = db.query as jest.Mock;
     mockQuery.mockClear();
+    mockAuthenticatedSession();
   });
 
   test('createVersion with sourceVersionId should copy classes', async () => {
@@ -1812,7 +1827,6 @@ describe('Database Helper - Version Copy and Creation Edge Cases', () => {
   test('createVersion accepts prerelease version_id (e.g. 1.0.0b) (#590)', async () => {
     const { createVersion } = await import('../lib/db/helper');
 
-    mockQuery.mockResolvedValueOnce({ rowCount: 0, rows: [] });
     mockQuery.mockResolvedValueOnce({
       rows: [{
         id: 'ver-1.0.0b',
@@ -1829,6 +1843,11 @@ describe('Database Helper - Version Copy and Creation Edge Cases', () => {
 });
 
 describe('Database Helper - bumpPrereleaseVersion and getVersionById (#590)', () => {
+  beforeEach(() => {
+    const db = require('../lib/db/db');
+    (db.query as jest.Mock).mockReset();
+  });
+
   test('bumpPrereleaseVersion appends suffix to base version', async () => {
     const { bumpPrereleaseVersion } = await import('../lib/db/helper');
     expect(await bumpPrereleaseVersion('1.0.0', 'b')).toBe('1.0.0b');
@@ -2288,6 +2307,7 @@ describe('Database Helper - Validation and Constraints', () => {
     const db = require('../lib/db/db');
     mockQuery = db.query as jest.Mock;
     mockQuery.mockClear();
+    mockAuthenticatedSession();
   });
 
   test('should validate email format in user operations', async () => {
