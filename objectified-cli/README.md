@@ -89,9 +89,11 @@ USAGE
 * [`objectified help [COMMAND]`](#objectified-help-command)
 * [`objectified import jobs`](#objectified-import-jobs)
 * [`objectified import spec PATH`](#objectified-import-spec-path)
+* [`objectified interactive`](#objectified-interactive)
 * [`objectified projects create`](#objectified-projects-create)
 * [`objectified projects list`](#objectified-projects-list)
 * [`objectified projects show REF`](#objectified-projects-show-ref)
+* [`objectified repl`](#objectified-repl)
 * [`objectified schema fetch REF`](#objectified-schema-fetch-ref)
 * [`objectified schema swagger REF`](#objectified-schema-swagger-ref)
 * [`objectified tenants info SLUG`](#objectified-tenants-info-slug)
@@ -1478,6 +1480,56 @@ SEE ALSO
   objectified tenants use
 ```
 
+## `objectified interactive`
+
+Start an interactive session (REPL) that runs many commands in one process, with Tab completion. Running the CLI with no arguments enters this mode.
+
+```
+USAGE
+  $ objectified interactive [--api-key <value>] [--api-key-file <value>] [--base-url <value>] [--config <value>]
+    [--json] [--color] [--profile <value>] [--tenant <value>] [-q] [--verbose]
+
+DESCRIPTION
+  Start an interactive session (REPL) that runs many commands in one process, with Tab completion. Running the CLI with
+  no arguments enters this mode.
+
+EXAMPLES
+  $ objectified
+
+  $ objectified interactive
+
+  printf "%s\n" "projects list" "tenants list" | objectified interactive
+
+COMMON
+  --base-url=<value>  Root REST API URL.
+  --config=<value>    Path to config file (default: XDG config dir / Objectified AppData on Windows — see `objectified
+                      config path`).
+  --profile=<value>   Named credentials profile (OBJECTIFIED_PROFILE); falls back to default_profile in config.
+  --tenant=<value>    [env: OBJECTIFIED_TENANT] Tenant slug for this run only (overrides OBJECTIFIED_TENANT and config
+                      tenant_slug).
+
+OUTPUT
+  --[no-]color  Enable/disable ANSI colors (--no-color sets NO_COLOR; colors are off when stdout is not a TTY).
+      --[no-]json   Emit machine-readable JSON (OBJECTIFIED_JSON=1; auto-enabled when stdout is not a TTY).
+  -q, --quiet       Suppress non-error stdout (spinners, banners, tips).
+      --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
+
+AUTH
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
+  --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
+
+SEE ALSO
+  objectified completion
+
+  objectified hello
+
+  objectified config path
+
+ALIASES
+  $ objectified repl
+```
+
 ## `objectified projects create`
 
 Create a project for the active tenant (POST /v1/projects/{tenant_slug}); interactive or CI flags.
@@ -1651,6 +1703,56 @@ SEE ALSO
   objectified tenants use
 
   objectified docs errors
+```
+
+## `objectified repl`
+
+Start an interactive session (REPL) that runs many commands in one process, with Tab completion. Running the CLI with no arguments enters this mode.
+
+```
+USAGE
+  $ objectified repl [--api-key <value>] [--api-key-file <value>] [--base-url <value>] [--config <value>]
+    [--json] [--color] [--profile <value>] [--tenant <value>] [-q] [--verbose]
+
+DESCRIPTION
+  Start an interactive session (REPL) that runs many commands in one process, with Tab completion. Running the CLI with
+  no arguments enters this mode.
+
+EXAMPLES
+  $ objectified
+
+  $ objectified repl
+
+  printf "%s\n" "projects list" "tenants list" | objectified repl
+
+COMMON
+  --base-url=<value>  Root REST API URL.
+  --config=<value>    Path to config file (default: XDG config dir / Objectified AppData on Windows — see `objectified
+                      config path`).
+  --profile=<value>   Named credentials profile (OBJECTIFIED_PROFILE); falls back to default_profile in config.
+  --tenant=<value>    [env: OBJECTIFIED_TENANT] Tenant slug for this run only (overrides OBJECTIFIED_TENANT and config
+                      tenant_slug).
+
+OUTPUT
+  --[no-]color  Enable/disable ANSI colors (--no-color sets NO_COLOR; colors are off when stdout is not a TTY).
+      --[no-]json   Emit machine-readable JSON (OBJECTIFIED_JSON=1; auto-enabled when stdout is not a TTY).
+  -q, --quiet       Suppress non-error stdout (spinners, banners, tips).
+      --verbose     Verbose logging on stderr (OBJECTIFIED_VERBOSE=1).
+
+AUTH
+  --api-key=<value>       [env: OBJECTIFIED_API_KEY] API key for direct authentication (OBJECTIFIED_API_KEY); overrides
+                          config.toml api_key. Not persisted unless you run `auth login --api-key`.
+  --api-key-file=<value>  Read API key from a file (single line; avoids shell history).
+
+SEE ALSO
+  objectified completion
+
+  objectified hello
+
+  objectified config path
+
+ALIASES
+  $ objectified repl
 ```
 
 ## `objectified schema fetch REF`

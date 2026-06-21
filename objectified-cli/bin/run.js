@@ -7,7 +7,9 @@ import { run } from "@oclif/core/run";
 import { normalizeCliArgv } from "../dist/lib/normalize-argv.js";
 import { formatAndReportCliFailure, resolveDebugStacks } from "../dist/lib/handle-error.js";
 
-const argv = normalizeCliArgv(process.argv.slice(2));
+const rawArgs = process.argv.slice(2);
+// No arguments at all → drop into the interactive session (REPL).
+const argv = rawArgs.length === 0 ? ["interactive"] : normalizeCliArgv(rawArgs);
 
 try {
   await run(argv, import.meta.url);
