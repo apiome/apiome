@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atlas — Namespaces & Scopes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #0f2027 0%, #0b1620 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <!-- Top nav -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-teal-500 to-emerald-400 flex items-center justify-center"><i data-lucide="library" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Atlas</span>
+      <span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Namespaces &amp; Scopes</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="hidden md:flex items-center gap-1.5 text-[10px] mono px-2 py-1 rounded-full bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-700/50"><i data-lucide="database" class="w-3 h-3"></i> objectified-types-db</span>
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-teal-500">&larr; Atlas hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <!-- Sidebar -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto p-4 h-full">
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-teal-500 opacity-60"></span> Registry Overview</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-teal-500/10 transition-colors"><i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Dashboard</span></a></li>
+            <li><a href="browser.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-teal-500/10 transition-colors"><i data-lucide="folder-tree" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Type Browser</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-teal-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-teal-500 opacity-60"></span> Type Authoring</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="type-detail.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-teal-500/10 transition-colors"><i data-lucide="file-json-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Type Detail</span></a></li>
+            <li><a href="create-type.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-teal-500/10 transition-colors"><i data-lucide="square-pen" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Type Builder</span></a></li>
+            <li><a href="property-binding.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-teal-500/10 transition-colors"><i data-lucide="link" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Property Binding</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-teal-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-teal-500 opacity-60"></span> Import &amp; Resolution</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="import.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-teal-500/10 transition-colors"><i data-lucide="download" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Import</span></a></li>
+            <li><a href="import-review.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-teal-500/10 transition-colors"><i data-lucide="git-pull-request-arrow" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Import Review</span></a></li>
+            <li><a href="resolver.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-teal-500/10 transition-colors"><i data-lucide="waypoints" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Reference Resolver</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-teal-500/10" />
+        <div class="mb-5">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-teal-500 opacity-60"></span> Scopes &amp; Config</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="namespaces.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-teal-200 dark:border-teal-700/70 bg-teal-500/10"><i data-lucide="layers-3" class="w-5 h-5 text-teal-500"></i><span class="text-sm font-semibold flex-1 text-teal-600 dark:text-teal-400">Namespaces &amp; Scopes</span><span class="h-1.5 w-1.5 rounded-full bg-teal-500"></span></a></li>
+            <li><a href="settings.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-teal-500/10 transition-colors"><i data-lucide="settings-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Settings</span></a></li>
+          </ul>
+        </div>
+        <hr class="my-3 border-teal-500/10" />
+        <div>
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-teal-500 opacity-60"></span> Navigation</div>
+          <ul class="m-0 mt-1 list-none space-y-1 p-0">
+            <li><a href="../index.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-teal-500/10 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Mockup hub</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 overflow-auto p-6">
+      <div class="mb-6">
+        <h1 class="text-lg font-bold">Namespaces &amp; scopes</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Core system types live under the shared system root and are available to every tenant. Tenants also have private namespaces.</p>
+      </div>
+
+      <!-- Explainer cards -->
+      <div class="grid sm:grid-cols-2 gap-4 mb-6">
+        <div class="bg-teal-50/70 dark:bg-teal-900/15 rounded-xl border border-teal-200 dark:border-teal-700/50 p-5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-8 h-8 rounded-lg bg-teal-500/15 flex items-center justify-center"><i data-lucide="shield-check" class="w-4 h-4 text-teal-600 dark:text-teal-400"></i></div>
+            <h2 class="text-sm font-semibold text-teal-700 dark:text-teal-300">System root (core)</h2>
+          </div>
+          <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-3"><span class="mono">std/*</span> — core system types curated by the platform; visible to all tenants; immutable except by platform governance.</p>
+          <div class="rounded-lg bg-gray-900 dark:bg-black/40 p-3 mono text-[11px] leading-relaxed text-gray-300 overflow-x-auto">
+            <span class="text-gray-500"># base URI</span><br/>
+            api.objectified.dev/types/<span class="text-teal-300">std/</span>
+          </div>
+        </div>
+        <div class="bg-emerald-50/70 dark:bg-emerald-900/15 rounded-xl border border-emerald-200 dark:border-emerald-700/50 p-5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center"><i data-lucide="building-2" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i></div>
+            <h2 class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Tenant namespaces</h2>
+          </div>
+          <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-3"><span class="mono">tenant/&lt;slug&gt;/*</span> — each tenant's private types; can reference core types but are isolated from other tenants.</p>
+          <div class="rounded-lg bg-gray-900 dark:bg-black/40 p-3 mono text-[11px] leading-relaxed text-gray-300 overflow-x-auto">
+            <span class="text-gray-500"># base URI</span><br/>
+            api.objectified.dev/types/<span class="text-emerald-300">tenant/&lt;slug&gt;/</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Namespaces table -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-semibold">Namespaces</h2>
+          <button class="flex items-center gap-2 px-3 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium"><i data-lucide="plus" class="w-3.5 h-3.5"></i> New namespace</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="text-left border-b border-gray-100 dark:border-gray-700">
+                <th class="pb-2 font-medium text-gray-500">Namespace</th>
+                <th class="pb-2 font-medium text-gray-500">Scope</th>
+                <th class="pb-2 font-medium text-gray-500">Base URI</th>
+                <th class="pb-2 font-medium text-gray-500">Version root</th>
+                <th class="pb-2 font-medium text-gray-500">Types</th>
+                <th class="pb-2 font-medium text-gray-500">Visibility</th>
+                <th class="pb-2 font-medium text-gray-500">Default</th>
+                <th class="pb-2 font-medium text-gray-500"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="py-2.5 mono text-gray-700 dark:text-gray-200">std/v0/primitives</td>
+                <td class="py-2.5"><span class="px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300">System · core</span></td>
+                <td class="py-2.5 mono text-[10px] text-gray-400">…/types/std/v0/</td>
+                <td class="py-2.5 mono text-gray-500">v0</td>
+                <td class="py-2.5">8</td>
+                <td class="py-2.5 text-gray-500 dark:text-gray-400">All tenants</td>
+                <td class="py-2.5 text-gray-400">—</td>
+                <td class="py-2.5 text-right"><a href="browser.html" class="text-teal-500 hover:underline">Edit</a></td>
+              </tr>
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="py-2.5 mono text-gray-700 dark:text-gray-200">std/v0/types</td>
+                <td class="py-2.5"><span class="px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300">System · core</span></td>
+                <td class="py-2.5 mono text-[10px] text-gray-400">…/types/std/v0/</td>
+                <td class="py-2.5 mono text-gray-500">v0</td>
+                <td class="py-2.5">56</td>
+                <td class="py-2.5 text-gray-500 dark:text-gray-400">All tenants</td>
+                <td class="py-2.5"><span class="inline-flex items-center gap-1 text-teal-600 dark:text-teal-400"><i data-lucide="star" class="w-3 h-3"></i> default core</span></td>
+                <td class="py-2.5 text-right"><a href="browser.html" class="text-teal-500 hover:underline">Edit</a></td>
+              </tr>
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="py-2.5 mono text-gray-700 dark:text-gray-200">std/v1/types</td>
+                <td class="py-2.5"><span class="px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300">System · core</span></td>
+                <td class="py-2.5 mono text-[10px] text-gray-400">…/types/std/v1/</td>
+                <td class="py-2.5 mono text-gray-500">v1 <span class="text-amber-500">(draft)</span></td>
+                <td class="py-2.5">12</td>
+                <td class="py-2.5 text-gray-500 dark:text-gray-400">All tenants</td>
+                <td class="py-2.5 text-gray-400">—</td>
+                <td class="py-2.5 text-right"><a href="browser.html" class="text-teal-500 hover:underline">Edit</a></td>
+              </tr>
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="py-2.5 mono text-gray-700 dark:text-gray-200">tenant/acme/v1/types</td>
+                <td class="py-2.5"><span class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">Tenant · acme</span></td>
+                <td class="py-2.5 mono text-[10px] text-gray-400">…/tenant/acme/v1/</td>
+                <td class="py-2.5 mono text-gray-500">v1</td>
+                <td class="py-2.5">48</td>
+                <td class="py-2.5 text-gray-500 dark:text-gray-400">acme only</td>
+                <td class="py-2.5"><span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><i data-lucide="star" class="w-3 h-3"></i> default (acme)</span></td>
+                <td class="py-2.5 text-right"><a href="browser.html" class="text-teal-500 hover:underline">Edit</a></td>
+              </tr>
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="py-2.5 mono text-gray-700 dark:text-gray-200">tenant/acme/v1/payments</td>
+                <td class="py-2.5"><span class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">Tenant · acme</span></td>
+                <td class="py-2.5 mono text-[10px] text-gray-400">…/tenant/acme/v1/</td>
+                <td class="py-2.5 mono text-gray-500">v1</td>
+                <td class="py-2.5">31</td>
+                <td class="py-2.5 text-gray-500 dark:text-gray-400">acme only</td>
+                <td class="py-2.5 text-gray-400">—</td>
+                <td class="py-2.5 text-right"><a href="browser.html" class="text-teal-500 hover:underline">Edit</a></td>
+              </tr>
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="py-2.5 mono text-gray-700 dark:text-gray-200">tenant/globex/v2/types</td>
+                <td class="py-2.5"><span class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">Tenant · globex</span></td>
+                <td class="py-2.5 mono text-[10px] text-gray-400">…/tenant/globex/v2/</td>
+                <td class="py-2.5 mono text-gray-500">v2</td>
+                <td class="py-2.5">63</td>
+                <td class="py-2.5 text-gray-500 dark:text-gray-400">globex only</td>
+                <td class="py-2.5 text-gray-400">—</td>
+                <td class="py-2.5 text-right"><a href="browser.html" class="text-teal-500 hover:underline">Edit</a></td>
+              </tr>
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <td class="py-2.5 mono text-gray-700 dark:text-gray-200">vendor/fhir/r4 <span class="text-[9px] not-italic px-1 rounded bg-sky-100 dark:bg-sky-900/30 text-sky-600">imported</span></td>
+                <td class="py-2.5"><span class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">Tenant · globex</span></td>
+                <td class="py-2.5 mono text-[10px] text-gray-400">…/tenant/globex/v2/</td>
+                <td class="py-2.5 mono text-gray-500">v2</td>
+                <td class="py-2.5">40</td>
+                <td class="py-2.5 text-gray-500 dark:text-gray-400">globex only</td>
+                <td class="py-2.5 text-gray-400">—</td>
+                <td class="py-2.5 text-right"><a href="browser.html" class="text-teal-500 hover:underline">Edit</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Scope precedence & resolution order -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <i data-lucide="list-ordered" class="w-4 h-4 text-teal-500"></i>
+            <h2 class="text-sm font-semibold">Scope precedence &amp; resolution order</h2>
+          </div>
+          <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-4">When a property's type lookup resolves a bare name or relative <span class="mono">$ref</span>, namespaces are searched in this order:</p>
+          <ol class="space-y-3">
+            <li class="flex gap-3">
+              <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center justify-center">1</span>
+              <div>
+                <p class="text-xs font-medium text-gray-700 dark:text-gray-200">Tenant namespace <span class="mono text-[10px] text-gray-400">tenant/&lt;slug&gt;/…</span></p>
+                <p class="text-[11px] text-gray-500 dark:text-gray-400">Most specific — the tenant's own types take precedence.</p>
+              </div>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex-shrink-0 w-6 h-6 rounded-full bg-sky-500/15 text-sky-600 dark:text-sky-400 text-xs font-semibold flex items-center justify-center">2</span>
+              <div>
+                <p class="text-xs font-medium text-gray-700 dark:text-gray-200">Imported vendor namespaces</p>
+                <p class="text-[11px] text-gray-500 dark:text-gray-400">Vendor schemas imported for that tenant, e.g. <span class="mono text-[10px]">vendor/fhir/r4</span>.</p>
+              </div>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex-shrink-0 w-6 h-6 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 text-xs font-semibold flex items-center justify-center">3</span>
+              <div>
+                <p class="text-xs font-medium text-gray-700 dark:text-gray-200">System core <span class="mono text-[10px] text-gray-400">std/…</span></p>
+                <p class="text-[11px] text-gray-500 dark:text-gray-400">Shared fallback available to every tenant.</p>
+              </div>
+            </li>
+          </ol>
+          <div class="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 dark:border-amber-700/50 bg-amber-50/70 dark:bg-amber-900/15 p-3">
+            <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"></i>
+            <p class="text-[11px] text-amber-800 dark:text-amber-200 leading-relaxed">Core types may be referenced by tenant types; tenant types are never visible across tenants or from core.</p>
+          </div>
+        </div>
+
+        <!-- Promote to core -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <i data-lucide="arrow-up-circle" class="w-4 h-4 text-teal-500"></i>
+            <h2 class="text-sm font-semibold">Promote to core</h2>
+          </div>
+          <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-4 leading-relaxed">Promote a vetted tenant type into the system root <span class="mono">std/*</span> so all tenants can reference it. Promotion requires platform governance review.</p>
+          <div class="rounded-lg bg-gray-900 dark:bg-black/40 p-4 mono text-[11px] leading-relaxed text-gray-300 overflow-x-auto mb-4">
+            <span class="text-gray-500"># promotion example</span><br/>
+            <span class="text-emerald-300">tenant/acme/v1/types/money</span><br/>
+            <span class="text-gray-500">  &nbsp;&nbsp;↓ promote</span><br/>
+            <span class="text-teal-300">std/v0/types/money</span> <span class="text-gray-500"># visible to all tenants</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <button class="flex items-center gap-2 px-3 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium"><i data-lucide="send" class="w-3.5 h-3.5"></i> Request promotion</button>
+            <span class="flex items-center gap-1.5 text-[11px] text-gray-400"><i data-lucide="lock" class="w-3 h-3"></i> requires platform admin approval</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    const btn = document.getElementById('themeBtn');
+    const stored = localStorage.getItem('atlas-mockup-theme');
+    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+    btn.addEventListener('click', () => { document.documentElement.classList.toggle('dark'); localStorage.setItem('atlas-mockup-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); });
+  </script>
+</body>
+</html>

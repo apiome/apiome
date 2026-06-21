@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control Panel — Type Registry</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html, body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
+    .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <!-- ░░ App top bar (objectified-ui TopHeader) ░░ -->
+  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="layout-dashboard" class="w-4 h-4 text-white"></i></div>
+      <span class="text-sm font-semibold">Objectified</span><span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Control Panel</span><span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Governance</span><span class="text-xs text-gray-400">/</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Type Registry</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="hidden lg:flex items-center gap-1.5 rounded-lg border border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50 px-3 py-1 text-xs font-medium text-indigo-700 dark:border-indigo-800/50 dark:from-indigo-900/20 dark:to-purple-900/20 dark:text-indigo-300"><span class="h-2 w-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500"></span> Acme Corp</span>
+      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-500">&larr; Mockup hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <div class="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-medium">KS</div>
+    </div>
+  </div>
+
+  <div class="flex" style="height: calc(100vh - 48px);">
+    <!-- ░░ Control Panel left nav (DashboardSideNav) ░░ -->
+    <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
+      <div class="overflow-auto h-full flex flex-col">
+        <div class="p-3"><button class="w-full flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-left"><div class="w-8 h-8 rounded-md bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-xs">AC</div><div class="flex-1 min-w-0"><p class="text-xs text-gray-500 dark:text-gray-400">Workspace</p><p class="text-sm font-semibold truncate">Acme Corp</p></div><i data-lucide="chevrons-up-down" class="w-4 h-4 text-gray-400"></i></button></div>
+        <hr class="border-indigo-500/10 mx-3" />
+        <div class="p-4 flex-1">
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Overview</div><ul class="m-0 mt-1 list-none space-y-1 p-0"><li><a href="../dashboard/overview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Control panel</span></a></li></ul></div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Identity</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="../dashboard/profile.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="user-round" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Profile</span></a></li>
+              <li><a href="../dashboard/linked-accounts.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="link-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Linked accounts</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Workspace</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="../dashboard/tenants.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="building-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Tenants</span></a></li>
+              <li><a href="../dashboard/api-keys.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="key-round" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">API keys</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <div class="mb-5"><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Specifications</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="../dashboard/projects.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="folders" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Projects</span></a></li>
+              <li><a href="../dashboard/versions.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="git-branch" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Versions</span></a></li>
+              <li><a href="../dashboard/published.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="globe-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Published</span></a></li>
+            </ul>
+          </div>
+          <hr class="my-3 border-indigo-500/10" />
+          <!-- ▼ GOVERNANCE — the section this feature lives in -->
+          <div><div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Governance</div>
+            <ul class="m-0 mt-1 list-none space-y-1 p-0">
+              <li><a href="../dashboard/primitives.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="atom" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Primitives</span></a></li>
+              <li><a href="type-registry.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-indigo-200 dark:border-indigo-700/70 bg-indigo-500/10"><i data-lucide="library" class="w-5 h-5 text-indigo-500"></i><span class="text-sm font-semibold flex-1 text-indigo-600 dark:text-indigo-400">Type Registry</span><span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span></a></li>
+              <li><a href="overview.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="shield-check" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Governance overview</span></a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ░░ Content ░░ -->
+    <div class="flex-1 flex flex-col min-w-0">
+      <header class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div class="px-6 pt-4 flex items-end justify-between">
+          <div>
+            <h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="library" class="w-6 h-6 text-indigo-500"></i> Type Registry</h2>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">JSON Schema <span class="mono">2020-12</span> types · core system &amp; per-tenant scopes · relative <span class="mono">$ref</span> resolution · stored in <span class="mono">objectified-types-db</span></p>
+          </div>
+          <div class="flex items-center gap-2">
+            <a href="type-import.html" class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Import schema</a>
+            <button class="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2"><i data-lucide="plus" class="w-4 h-4"></i> New type</button>
+          </div>
+        </div>
+        <!-- In-page secondary tabs (feature sub-navigation) -->
+        <nav class="px-6 mt-3 flex items-center gap-1 text-sm">
+          <a href="type-registry.html" class="px-3 py-2 border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-medium">Overview</a>
+          <a href="type-import.html" class="px-3 py-2 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-indigo-500">Import</a>
+          <a href="type-resolver.html" class="px-3 py-2 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-indigo-500">Reference Resolver</a>
+          <a href="type-namespaces.html" class="px-3 py-2 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-indigo-500">Namespaces &amp; Scopes</a>
+          <a href="type-settings.html" class="px-3 py-2 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-indigo-500">Settings</a>
+        </nav>
+      </header>
+
+      <main class="flex-1 overflow-y-auto p-6 space-y-6">
+        <!-- KPIs -->
+        <section class="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"><div class="flex items-center justify-between"><p class="text-xs text-gray-500">Core system types</p><i data-lucide="shield-check" class="w-4 h-4 text-teal-400"></i></div><p class="text-2xl font-bold mt-2 mono text-indigo-600 dark:text-indigo-400">64</p><p class="text-[10px] text-gray-500 mt-1 mono">8 primitives · 56 std · all tenants</p></div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"><div class="flex items-center justify-between"><p class="text-xs text-gray-500">Tenant types</p><i data-lucide="building-2" class="w-4 h-4 text-emerald-400"></i></div><p class="text-2xl font-bold mt-2 mono">182</p><p class="text-[10px] text-gray-500 mt-1 mono">acme · 7 namespaces</p></div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"><div class="flex items-center justify-between"><p class="text-xs text-gray-500">Imported schemas</p><i data-lucide="download" class="w-4 h-4 text-sky-400"></i></div><p class="text-2xl font-bold mt-2 mono">23</p><p class="text-[10px] text-gray-500 mt-1 mono">JSON Schema + type-defs</p></div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"><div class="flex items-center justify-between"><p class="text-xs text-gray-500">Properties bound</p><i data-lucide="link" class="w-4 h-4 text-indigo-400"></i></div><p class="text-2xl font-bold mt-2 mono">1 204</p><p class="text-[10px] text-gray-500 mt-1 mono">across 318 classes</p></div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"><div class="flex items-center justify-between"><p class="text-xs text-gray-500">Unresolved $ref</p><i data-lucide="link-2" class="w-4 h-4 text-amber-400"></i></div><p class="text-2xl font-bold mt-2 mono text-amber-500">3</p><a href="type-resolver.html" class="text-[10px] text-indigo-500 hover:underline mt-1 inline-block mono">open resolver →</a></div>
+        </section>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <!-- Collections / types table -->
+          <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 xl:col-span-2 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+              <div class="flex items-center gap-3"><i data-lucide="folder-tree" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold">Type collections</h3><p class="text-xs text-gray-500 dark:text-gray-400">Grouped by namespace · click a row to open the type</p></div></div>
+              <div class="flex items-center gap-1 border border-gray-200 dark:border-gray-700 rounded-md p-0.5 text-xs">
+                <button class="px-2 py-1 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium">All</button>
+                <button class="px-2 py-1 rounded text-gray-500">System · core</button>
+                <button class="px-2 py-1 rounded text-gray-500">Tenant</button>
+                <button class="px-2 py-1 rounded text-gray-500">Imported</button>
+              </div>
+            </div>
+            <table class="w-full text-sm">
+              <thead class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-50/60 dark:bg-gray-900/40">
+                <tr><th class="text-left px-5 py-2 font-semibold">Namespace</th><th class="text-left px-3 py-2 font-semibold">Scope</th><th class="text-right px-3 py-2 font-semibold">Types</th><th class="text-left px-3 py-2 font-semibold">Draft</th><th class="text-right px-5 py-2 font-semibold">Status</th></tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30 cursor-pointer"><td class="px-5 py-3"><div class="flex items-center gap-3"><span class="w-8 h-8 rounded-md bg-teal-100 dark:bg-teal-900/40 inline-flex items-center justify-center text-teal-600 dark:text-teal-300"><i data-lucide="shapes" class="w-4 h-4"></i></span><div><p class="font-medium mono">std/v0/primitives</p><p class="text-[10px] text-gray-400">string · number · integer · boolean · …</p></div></div></td><td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">System · core</span></td><td class="px-3 py-3 text-right mono text-xs">8</td><td class="px-3 py-3 mono text-xs text-gray-400">2020-12</td><td class="px-5 py-3 text-right"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Resolved</span></td></tr>
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30 cursor-pointer"><td class="px-5 py-3"><div class="flex items-center gap-3"><span class="w-8 h-8 rounded-md bg-teal-100 dark:bg-teal-900/40 inline-flex items-center justify-center text-teal-600 dark:text-teal-300"><i data-lucide="library" class="w-4 h-4"></i></span><div><p class="font-medium mono">std/v0/types</p><p class="text-[10px] text-gray-400">date · uuid · email · money · decimal · …</p></div></div></td><td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">System · core</span></td><td class="px-3 py-3 text-right mono text-xs">56</td><td class="px-3 py-3 mono text-xs text-gray-400">2020-12</td><td class="px-5 py-3 text-right"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Resolved</span></td></tr>
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30 cursor-pointer"><td class="px-5 py-3"><div class="flex items-center gap-3"><span class="w-8 h-8 rounded-md bg-indigo-100 dark:bg-indigo-900/40 inline-flex items-center justify-center text-indigo-600 dark:text-indigo-300"><i data-lucide="building-2" class="w-4 h-4"></i></span><div><p class="font-medium mono">tenant/acme/v1/types</p><p class="text-[10px] text-gray-400">sku · customer-id · address</p></div></div></td><td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">Tenant · acme</span></td><td class="px-3 py-3 text-right mono text-xs">48</td><td class="px-3 py-3 mono text-xs text-gray-400">2020-12</td><td class="px-5 py-3 text-right"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Resolved</span></td></tr>
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30 cursor-pointer"><td class="px-5 py-3"><div class="flex items-center gap-3"><span class="w-8 h-8 rounded-md bg-indigo-100 dark:bg-indigo-900/40 inline-flex items-center justify-center text-indigo-600 dark:text-indigo-300"><i data-lucide="credit-card" class="w-4 h-4"></i></span><div><p class="font-medium mono">tenant/acme/v1/payments</p><p class="text-[10px] text-gray-400">charge · refund · money · …</p></div></div></td><td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">Tenant · acme</span></td><td class="px-3 py-3 text-right mono text-xs">31</td><td class="px-3 py-3 mono text-xs text-gray-400">2020-12</td><td class="px-5 py-3 text-right"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">2 unresolved</span></td></tr>
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-900/30 cursor-pointer"><td class="px-5 py-3"><div class="flex items-center gap-3"><span class="w-8 h-8 rounded-md bg-sky-100 dark:bg-sky-900/40 inline-flex items-center justify-center text-sky-600 dark:text-sky-300"><i data-lucide="download" class="w-4 h-4"></i></span><div><p class="font-medium mono">vendor/fhir/r4 <span class="text-[9px] px-1 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-600">imported</span></p><p class="text-[10px] text-gray-400">HumanName · Address · …</p></div></div></td><td class="px-3 py-3"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">Tenant · acme</span></td><td class="px-3 py-3 text-right mono text-xs">40</td><td class="px-3 py-3 mono text-xs text-gray-400">2020-12</td><td class="px-5 py-3 text-right"><span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Resolved</span></td></tr>
+              </tbody>
+            </table>
+            <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700/60 text-xs text-gray-500 flex items-center justify-between"><span>5 of 9 collections</span><a href="type-detail.html" class="text-indigo-500 hover:underline">Open sample type: std/v0/types/money →</a></div>
+          </section>
+
+          <!-- Right rail -->
+          <div class="space-y-6">
+            <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+              <h3 class="text-sm font-semibold mb-2 flex items-center gap-2"><i data-lucide="waypoints" class="w-4 h-4 text-indigo-500"></i> Relative <span class="mono">$ref</span> resolution</h3>
+              <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-2">References resolve against the type's import-source base URL in the API server.</p>
+              <div class="rounded-lg bg-gray-900 dark:bg-black/40 p-3 mono text-[10px] leading-relaxed text-gray-300 overflow-x-auto">
+                <span class="text-gray-500"># std/v0/types/date</span><br/>
+                "$ref": <span class="text-emerald-300">"../primitives/string"</span><br/>
+                <span class="text-gray-500"># base</span> api.objectified.dev/types/<span class="text-indigo-300">std/v0/types/</span><br/>
+                <span class="text-gray-500"># resolves →</span> <span class="text-indigo-300">std/v0/primitives/string</span>
+              </div>
+              <a href="type-resolver.html" class="text-[11px] text-indigo-500 hover:underline mt-2 inline-block">Open reference resolver →</a>
+            </section>
+            <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+              <h3 class="text-sm font-semibold mb-3">Recent activity</h3>
+              <ul class="space-y-3 text-xs">
+                <li class="flex gap-2 items-start"><span class="w-1.5 h-1.5 rounded-full bg-sky-400 mt-1.5"></span><div><p class="font-medium text-gray-700 dark:text-gray-300">Imported <span class="mono">stripe.openapi.json</span> (40 types)</p><p class="text-gray-400">JSON Schema · 6 min ago</p></div></li>
+                <li class="flex gap-2 items-start"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5"></span><div><p class="font-medium text-gray-700 dark:text-gray-300">Created <span class="mono">tenant/acme/v1/types/sku</span></p><p class="text-gray-400">$ref → ../../std/v0/types/string · 1 hr ago</p></div></li>
+                <li class="flex gap-2 items-start"><span class="w-1.5 h-1.5 rounded-full bg-teal-400 mt-1.5"></span><div><p class="font-medium text-gray-700 dark:text-gray-300">Published core type <span class="mono">std/v0/types/money</span></p><p class="text-gray-400">System · all tenants · 3 hr ago</p></div></li>
+                <li class="flex gap-2 items-start"><span class="w-1.5 h-1.5 rounded-full bg-sky-400 mt-1.5"></span><div><p class="font-medium text-gray-700 dark:text-gray-300">Imported type-def bundle <span class="mono">geo.types.zip</span></p><p class="text-gray-400">Type definitions · 1 d ago</p></div></li>
+              </ul>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    const btn = document.getElementById('themeBtn');
+    const stored = localStorage.getItem('ade-mockup-theme');
+    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+    btn.addEventListener('click', () => { document.documentElement.classList.toggle('dark'); localStorage.setItem('ade-mockup-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); });
+  </script>
+</body>
+</html>
