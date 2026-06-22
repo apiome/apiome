@@ -24,6 +24,7 @@ import {
 import { Button, buttonVariants } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
 import { LoadingState } from '@/app/components/ui/LoadingState';
+import { Switch } from '@/app/components/ui/Switch';
 import {
   Select,
   SelectContent,
@@ -208,6 +209,7 @@ export function RepositoryDetailClient() {
   const [tab, setTab] = useState<RepoTab>('preview');
   const [removing, setRemoving] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [savingAutoRefresh, setSavingAutoRefresh] = useState(false);
   const [repoImports, setRepoImports] = useState<RepositoryImportMetricApiRow[]>([]);
   const [importsLoading, setImportsLoading] = useState(false);
   const [importsError, setImportsError] = useState<string | null>(null);
@@ -354,6 +356,40 @@ export function RepositoryDetailClient() {
       toast.error(e instanceof Error ? e.message : 'Could not remove repository.');
     } finally {
       setRemoving(false);
+    }
+  };
+
+  /**
+   * Toggle this repository's auto-refresh opt-out (RAR-3.3). Optimistically flips
+   * the local switch, PATCHes the repo, and reconciles to the server's returned
+   * value — rolling back on error so the UI never lies about persisted state.
+   */
+  const performToggleAutoRefresh = async (next: boolean) => {
+    if (!id || !repo || savingAutoRefresh) return;
+    const previous = repo.auto_refresh_enabled ?? true;
+    setSavingAutoRefresh(true);
+    setRepo({ ...repo, auto_refresh_enabled: next });
+    try {
+      const res = await fetch(`/api/repositories/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auto_refresh_enabled: next }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(typeof data.error === 'string' ? data.error : res.statusText);
+      }
+      const parsed = dashboardRepositoryFromApi(
+        data && typeof data === 'object' ? (data as { repository?: unknown }).repository : null,
+      );
+      if (parsed) setRepo(parsed);
+      toast.success(next ? 'Auto-refresh enabled.' : 'Auto-refresh disabled.');
+    } catch (e) {
+      setRepo({ ...repo, auto_refresh_enabled: previous });
+      toast.error(e instanceof Error ? e.message : 'Could not update auto-refresh.');
+    } finally {
+      setSavingAutoRefresh(false);
     }
   };
 
@@ -899,6 +935,32 @@ export function RepositoryDetailClient() {
 
           <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
             <h3 className="border-b border-gray-100 pb-2 text-sm font-semibold dark:border-gray-700 dark:text-gray-100">Scan cadence</h3>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-1">
+                <label
+                  htmlFor="auto-refresh-toggle"
+                  className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                >
+                  Auto-refresh
+                </label>
+                <p className="max-w-md text-xs text-gray-500 dark:text-gray-400">
+                  When on, this repository is rescanned on its cadence and changed files are re-imported automatically.
+                  Turn it off to pause auto-refresh for this repo. Manual “Refresh now” is unaffected.
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Switch
+                  id="auto-refresh-toggle"
+                  checked={repo.auto_refresh_enabled ?? true}
+                  disabled={savingAutoRefresh}
+                  onCheckedChange={(next) => void performToggleAutoRefresh(next)}
+                  aria-label="Toggle auto-refresh for this repository"
+                />
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                  {(repo.auto_refresh_enabled ?? true) ? 'Enabled' : 'Disabled'}
+                </span>
+              </div>
+            </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Scheduling + webhook secrets are product decisions: poll interval vs GitHub/GitLab push hooks. Persist on a
               repo settings extension once requirements settle.

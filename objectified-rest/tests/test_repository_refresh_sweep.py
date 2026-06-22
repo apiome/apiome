@@ -243,6 +243,56 @@ def test_idempotent_enqueue_not_double_counted():
     assert len(db.enqueued) == 1
 
 
+def test_global_kill_switch_halts_sweep(monkeypatch):
+    """OBJECTIFIED_REFRESH_ENABLED=False halts the tick before any repo work (RAR-3.3)."""
+    import app.config as config
+
+    monkeypatch.setattr(config.settings, "refresh_enabled", False)
+
+    stale = _candidate(
+        "api/openapi.yaml",
+        remote_committed_at=NEWER, remote_blob="blob-new",
+        last_committed_at=OLDER, last_blob="blob-old",
+    )
+    db = FakeDB(
+        due=[{"id": "r1", "tenant_id": "t1"}],
+        branches={"r1": ["main"]},
+        candidates={("r1", "main"): [stale]},
+    )
+
+    enqueued = process_repository_refresh_sweep(db)
+
+    assert enqueued == 0
+    # Halt is total: no lock taken, no scan, no enqueue, no anchor advance.
+    assert db.acquired == []
+    assert db.scanned == []
+    assert db.enqueued == []
+    assert db.refreshed == []
+
+
+def test_global_kill_switch_enabled_runs_sweep(monkeypatch):
+    """With the kill switch explicitly enabled the sweep behaves normally (RAR-3.3)."""
+    import app.config as config
+
+    monkeypatch.setattr(config.settings, "refresh_enabled", True)
+
+    stale = _candidate(
+        "api/openapi.yaml",
+        remote_committed_at=NEWER, remote_blob="blob-new",
+        last_committed_at=OLDER, last_blob="blob-old",
+    )
+    db = FakeDB(
+        due=[{"id": "r1", "tenant_id": "t1"}],
+        branches={"r1": ["main"]},
+        candidates={("r1", "main"): [stale]},
+    )
+
+    enqueued = process_repository_refresh_sweep(db)
+
+    assert enqueued == 1
+    assert db.refreshed == ["r1"]
+
+
 def test_multiple_branches_each_rescanned():
     """Every branch with a stored spec is rescanned and evaluated."""
     stale_main = _candidate(

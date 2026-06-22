@@ -28,6 +28,7 @@ from .models import (
     TenantRepositoryFilesListResponse,
     TenantRepositoryGetResponse,
     TenantRepositoryRecord,
+    TenantRepositoryUpdate,
     TenantRepositoriesListResponse,
 )
 from .repository_file_scan import _github_owner_repo, fetch_github_repository_file_text
@@ -149,6 +150,8 @@ def _row_to_record(row: Dict[str, Any]) -> TenantRepositoryRecord:
         total_files=row.get("total_files") if isinstance(row.get("total_files"), int) else None,
         importable_count=row.get("importable_count") if isinstance(row.get("importable_count"), int) else None,
         branch_count=row.get("branch_count") if isinstance(row.get("branch_count"), int) else None,
+        # Default-on so a repo whose row predates the RAR-3.3 column reads as enabled.
+        auto_refresh_enabled=bool(row.get("auto_refresh_enabled", True)),
         created_at=_ts(row.get("created_at")),
         updated_at=_ts(row.get("updated_at")),
     )
@@ -592,6 +595,40 @@ async def create_tenant_repository(
 
     record = _row_to_record(inserted)
     return TenantRepositoryCreateResponse(success=True, repository=record)
+
+
+@router.patch(
+    "/{tenant_slug}/repositories/{repository_id}",
+    response_model=TenantRepositoryGetResponse,
+)
+async def update_tenant_repository(
+    tenant_slug: str,
+    repository_id: uuid.UUID,
+    payload: TenantRepositoryUpdate,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> TenantRepositoryGetResponse:
+    """Patch mutable repository settings (RAR-3.3 auto-refresh toggle, #3524).
+
+    Applies only the fields present in the request body. Currently the per-repo
+    ``auto_refresh_enabled`` opt-out: when set to False the auto-refresh sweep skips
+    this repository (manual "Refresh Now" is unaffected). Returns the updated
+    repository record. 404 when the repository does not belong to the tenant.
+    """
+    _ = tenant_slug
+    tenant_id = str(auth_data["tenant_id"])
+    rid = str(repository_id)
+
+    if payload.auto_refresh_enabled is not None:
+        updated = db.set_repository_auto_refresh_enabled(
+            tenant_id, rid, payload.auto_refresh_enabled
+        )
+        if updated is None:
+            raise HTTPException(status_code=404, detail="repository not found")
+
+    row = db.get_tenant_repository(tenant_id, rid)
+    if not row:
+        raise HTTPException(status_code=404, detail="repository not found")
+    return TenantRepositoryGetResponse(success=True, repository=_row_to_record(row))
 
 
 @router.delete("/{tenant_slug}/repositories/{repository_id}")

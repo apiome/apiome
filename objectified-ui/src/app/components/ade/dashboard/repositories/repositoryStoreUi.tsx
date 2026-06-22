@@ -42,6 +42,8 @@ export interface DashboardRepository {
   importable_count?: number | null;
   /** Git remote branches (GitHub list-branches at registration); null if unknown. */
   branch_count?: number | null;
+  /** Per-repo auto-refresh opt-out (RAR-3.3). True (default) = sweep may refresh this repo. */
+  auto_refresh_enabled?: boolean;
   clone_url?: string | null;
   source?: string | null;
   created_at?: string | null;
@@ -111,6 +113,11 @@ export function dashboardRepositoryFromApi(x: unknown): DashboardRepository | nu
     total_files: typeof o.total_files === 'number' ? o.total_files : null,
     importable_count: typeof o.importable_count === 'number' ? o.importable_count : null,
     branch_count: typeof o.branch_count === 'number' ? o.branch_count : null,
+    // Default-on: a repo whose API payload omits the flag (older row) reads as enabled.
+    auto_refresh_enabled: (() => {
+      const v = o.auto_refresh_enabled ?? (o as { autoRefreshEnabled?: unknown }).autoRefreshEnabled;
+      return v == null ? true : Boolean(v);
+    })(),
     clone_url: o.clone_url != null ? String(o.clone_url) : null,
     source: o.source != null ? String(o.source) : null,
     created_at: o.created_at != null ? String(o.created_at) : null,

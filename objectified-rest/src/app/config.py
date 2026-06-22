@@ -59,6 +59,18 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Global auto-refresh kill switch (RAR-3.3, #3524). When False, the refresh
+    # sweep halts entirely (no repository is auto-refreshed) regardless of per-repo
+    # auto_refresh_enabled. Intended for incident response. Manual "Refresh Now"
+    # (RAR-5.2) is unaffected. Per-repo opt-out is the auto_refresh_enabled column.
+    refresh_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "OBJECTIFIED_REFRESH_ENABLED",
+            "refresh_enabled",
+        ),
+    )
+
     @property
     def effective_database_url(self) -> str:
         """Get the database URL, preferring DATABASE_URL over building from components."""

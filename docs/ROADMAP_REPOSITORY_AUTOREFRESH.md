@@ -122,7 +122,7 @@ epic. Use this table to resolve any `RAR-*` reference below to its issue number.
 | ~~RAR-1.4~~ ✅ | ~~#3515~~ | ~~RAR-1.5~~ ✅ | ~~#3516~~ | RAR-1.6 | #3517 |
 | ~~RAR-2.1~~ ✅ | ~~#3518~~ | ~~RAR-2.2~~ ✅ | ~~#3519~~ | ~~RAR-2.3~~ ✅ | ~~#3520~~ |
 | ~~RAR-2.4~~ ✅ | ~~#3521~~ | ~~RAR-3.1~~ ✅ | ~~#3522~~ | ~~RAR-3.2~~ ✅ | ~~#3523~~ |
-| RAR-3.3 | #3524 | RAR-3.4 | #3525 | RAR-3.5 | #3526 |
+| ~~RAR-3.3~~ ✅ | ~~#3524~~ | RAR-3.4 | #3525 | RAR-3.5 | #3526 |
 | RAR-4.1 | #3527 | RAR-4.2 | #3528 | RAR-4.3 | #3529 |
 | RAR-4.4 | #3530 | RAR-4.5 | #3531 | RAR-5.1 | #3532 |
 | RAR-5.2 | #3533 | RAR-5.3 | #3534 | RAR-5.4 | #3535 |
@@ -364,7 +364,7 @@ Refresh "after a few minutes," configurable, safe under load.
 |----|-------|---------|--------|----------|-----|-------|---------|
 | ~~RAR-3.1~~ ✅ **Done** (#3522) | Configurable refresh cadence | Replace hardcoded 5s; per-repo interval (default ~5 min, min bound) | `enhancement`,`mvp`,`import`,`repository`,`automation` | N | Y | M | objectified-rest, objectified-db |
 | ~~RAR-3.2~~ ✅ **Done** (#3523) | Refresh sweep → enqueue stale files | Periodic worker enqueues re-import jobs for stale, newer files | `enhancement`,`mvp`,`import`,`repository`,`automation` | N | Y | L | objectified-rest |
-| RAR-3.3 | Enable/disable auto-refresh (per-repo + global kill switch) | Toggle, with global env override | `enhancement`,`mvp`,`import`,`repository` | Y | Y | S | objectified-rest, objectified-ui |
+| ~~RAR-3.3~~ ✅ **Done** (#3524) | Enable/disable auto-refresh (per-repo + global kill switch) | Toggle, with global env override | `enhancement`,`mvp`,`import`,`repository` | Y | Y | S | objectified-rest, objectified-ui |
 | RAR-3.4 | Refresh backoff + auto-pause (extend REPO-4.5) | Pause a repo's refresh after N consecutive failures | `enhancement`,`import`,`repository`,`automation` | Y | N | M | objectified-rest |
 | RAR-3.5 | Per-tenant refresh quotas / fairness (extend REPO-4.6) | Bound refresh jobs per tenant per window | `enhancement`,`import`,`repository` | Y | N | M | objectified-rest |
 
@@ -446,8 +446,36 @@ enqueue, spec snapshot carried, lock-held skip, anchor advanced on success/empty
 no-double-count, multi-branch) and the static migration guard
 `tests/test_repository_refresh_jobs_migration.py`.
 
-### RAR-3.3 / 3.4 / 3.5
-- **3.3** per-repo `auto_refresh_enabled` + a global kill switch (ops safety).
+### RAR-3.3 — Enable/disable auto-refresh (per-repo + global kill switch)
+
+**Problem.** Auto-refresh must be controllable: a repo owner may want it off, and operators need a
+global kill switch for incident response.
+**Solution / scope.** Add `auto_refresh_enabled` per repo (default on) and a global
+`OBJECTIFIED_REFRESH_ENABLED` env override. The sweep skips repos where either is disabled.
+**Acceptance criteria.** Per-repo toggle persisted and surfaced in the UI; global kill switch halts all
+refresh sweeps; disabling does not affect manual "Refresh Now" (RAR-5.2).
+**Dependencies.** Parallel with RAR-3.1/3.2. **Parallel = Y.**
+
+**Status: ✅ Done (#3524).** Migration `objectified-db/scripts/20260622-120000.sql` adds
+`auto_refresh_enabled` (`BOOLEAN NOT NULL DEFAULT TRUE`) to `odb.tenant_repositories`, so existing
+repositories keep auto-refreshing. `config.py` adds the global kill switch `OBJECTIFIED_REFRESH_ENABLED`
+(`refresh_enabled`, default True). The **per-repo opt-out** is enforced in `database.py`
+`list_due_repositories`, which now filters `auto_refresh_enabled = TRUE` (so a disabled repo is never
+selected as due) and surfaces the column on the repo read queries; a new setter
+`set_repository_auto_refresh_enabled` persists the flag (tenant-scoped). The **global kill switch** is
+enforced in `repository_refresh_sweep.process_repository_refresh_sweep`, which short-circuits the whole
+tick (no lock, scan, enqueue, or anchor advance) when `settings.refresh_enabled` is False. Both gates
+are independent of manual "Refresh Now" (RAR-5.2), which does not run through the sweep. REST surfaces
+the flag on `TenantRepositoryRecord` and a new `PATCH /v1/tenants/{slug}/repositories/{id}` endpoint
+(`TenantRepositoryUpdate`) toggles it. The UI exposes an **Auto-refresh** Switch in the repository
+Settings tab (`RepositoryDetailClient`), which optimistically PATCHes via the Next route handler
+(`/api/repositories/[id]` PATCH) and reconciles to the server's returned value, rolling back on error.
+Tests: `tests/test_repository_refresh_sweep.py` adds the kill-switch halt/enabled cases,
+`tests/test_repository_auto_refresh_toggle_migration.py` guards the migration, and
+`tests/unit/repository-auto-refresh-toggle.test.ts` pins the UI flag parsing (explicit true/false,
+camelCase, default-on for older rows / null).
+
+### RAR-3.4 / 3.5
 - **3.4** (v2) extend REPO-4.5 backoff specifically to the refresh loop.
 - **3.5** (v2) per-tenant fairness so one busy tenant can't starve the sweep.
 

@@ -6454,7 +6454,7 @@ class Database:
             SELECT id, tenant_id, source, provider, clone_url, repository_full_name,
                    description, default_branch, visibility, status, created_at, updated_at,
                    linked_account_id, last_scanned_at, total_files, importable_count, branch_count,
-                   refresh_interval_seconds, last_refreshed_at
+                   refresh_interval_seconds, last_refreshed_at, auto_refresh_enabled
             FROM odb.tenant_repositories
             WHERE tenant_id = %s::uuid AND deleted_at IS NULL
             ORDER BY created_at DESC
@@ -6466,7 +6466,7 @@ class Database:
             SELECT id, tenant_id, source, provider, clone_url, repository_full_name,
                    description, default_branch, visibility, status, created_at, updated_at,
                    linked_account_id, last_scanned_at, total_files, importable_count, branch_count, created_by,
-                   refresh_interval_seconds, last_refreshed_at
+                   refresh_interval_seconds, last_refreshed_at, auto_refresh_enabled
             FROM odb.tenant_repositories
             WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
             LIMIT 1
@@ -6486,7 +6486,8 @@ class Database:
         has elapsed since the last tick. The effective interval is the per-repo
         ``refresh_interval_seconds`` clamped up to the global floor, so a
         too-aggressive per-repo cadence cannot defeat the floor. Soft-deleted
-        repositories and those not in a scannable ``ready``/``error`` state are
+        repositories, those not in a scannable ``ready``/``error`` state, and those
+        with ``auto_refresh_enabled = FALSE`` (the per-repo RAR-3.3 opt-out) are
         excluded. The recency comparison is done in the database against
         ``now()`` so it does not depend on application clock skew.
 
@@ -6513,10 +6514,11 @@ class Database:
             SELECT id, tenant_id, source, provider, clone_url, repository_full_name,
                    description, default_branch, visibility, status, created_at, updated_at,
                    linked_account_id, last_scanned_at, total_files, importable_count, branch_count,
-                   refresh_interval_seconds, last_refreshed_at
+                   refresh_interval_seconds, last_refreshed_at, auto_refresh_enabled
             FROM odb.tenant_repositories
             WHERE deleted_at IS NULL
               AND status IN ('ready', 'error')
+              AND auto_refresh_enabled = TRUE
               AND (
                 last_refreshed_at IS NULL
                 OR last_refreshed_at <= now() - make_interval(
@@ -6603,6 +6605,46 @@ class Database:
                 row = cursor.fetchone()
                 conn.commit()
                 return effective if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def set_repository_auto_refresh_enabled(
+        self,
+        tenant_id: str,
+        repository_id: str,
+        enabled: bool,
+    ) -> Optional[bool]:
+        """Set a repository's per-repo auto-refresh opt-out flag (RAR-3.3).
+
+        When ``enabled`` is False the refresh sweep's due-selection
+        (:meth:`list_due_repositories`) skips this repository, so it is never
+        auto-refreshed. The global ``OBJECTIFIED_REFRESH_ENABLED`` kill switch and
+        manual "Refresh Now" (RAR-5.2) are independent of this flag.
+
+        Args:
+            tenant_id: Owning tenant id (scopes the update for isolation).
+            repository_id: The repository to update.
+            enabled: True to allow auto-refresh, False to opt this repo out.
+
+        Returns:
+            The stored value (``enabled``) when a live repository matched the
+            tenant + id, or None when no row was updated.
+        """
+        q = """
+            UPDATE odb.tenant_repositories
+            SET auto_refresh_enabled = %s,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
+            RETURNING id
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(q, (bool(enabled), repository_id, tenant_id))
+                row = cursor.fetchone()
+                conn.commit()
+                return bool(enabled) if row else None
         except Exception as e:
             conn.rollback()
             raise e

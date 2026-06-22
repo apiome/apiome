@@ -142,13 +142,30 @@ def process_repository_refresh_sweep(db: Database) -> int:
     fails — so the cadence keeps moving and a broken repo cannot monopolize the
     sweep.
 
+    The global ``OBJECTIFIED_REFRESH_ENABLED`` kill switch (RAR-3.3) short-circuits
+    the whole tick: when it is disabled the sweep halts immediately without touching
+    any repository (no rescan, no enqueue, no anchor advance), so operators can stop
+    all auto-refresh for incident response. The per-repo ``auto_refresh_enabled``
+    opt-out is enforced earlier, in ``list_due_repositories``. Neither gate affects
+    manual "Refresh Now" (RAR-5.2), which does not run through this sweep.
+
     Args:
         db: Database handle for this tick (one connection holds the advisory
             locks; the caller uses a dedicated ``Database`` per tick).
 
     Returns:
-        The total number of refresh jobs enqueued this tick.
+        The total number of refresh jobs enqueued this tick (0 when the global
+        kill switch is disabled).
     """
+    from .config import settings
+
+    if not settings.refresh_enabled:
+        # Global kill switch (RAR-3.3): halt all auto-refresh for this tick.
+        _logger.info(
+            "repository refresh sweep halted: OBJECTIFIED_REFRESH_ENABLED is disabled"
+        )
+        return 0
+
     enqueued_total = 0
     for due_row in db.list_due_repositories():
         repository_id = str(due_row["id"])

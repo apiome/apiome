@@ -2363,8 +2363,28 @@ class TenantRepositoryRecord(BaseModel):
     total_files: Optional[int] = None
     importable_count: Optional[int] = None
     branch_count: Optional[int] = None
+    # Per-repo auto-refresh opt-out (RAR-3.3, #3524). True = sweep may refresh this
+    # repo on its cadence; False = the sweep skips it. Defaults to True for repos
+    # whose row predates the column.
+    auto_refresh_enabled: bool = True
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+
+
+class TenantRepositoryUpdate(BaseModel):
+    """Dashboard: patch mutable settings on a registered repository (RAR-3.3).
+
+    Only fields present in the request body are applied. Currently the per-repo
+    auto-refresh toggle (``auto_refresh_enabled``); accepts both the snake_case and
+    camelCase spellings so the UI can send either.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    auto_refresh_enabled: Optional[bool] = Field(
+        None,
+        validation_alias=AliasChoices("autoRefreshEnabled", "auto_refresh_enabled"),
+    )
 
 
 class TenantRepositoriesListResponse(BaseModel):
