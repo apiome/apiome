@@ -221,7 +221,7 @@ erDiagram
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
 | 1.1 #3446 | ~~Provision separate registry database & connection~~ ✅ **Done** | Stand up `objectified-types-db` + connection/pool config | `type-registry`,`types-db`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-db, objectified-rest |
-| 1.2 #3447 | Core registry schema (namespaces, types, refs) | Migrations for `type_namespace`, `type_definition`, `type_ref` | `type-registry`,`types-db`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-db |
+| 1.2 #3447 | ~~Core registry schema (namespaces, types, refs)~~ ✅ **Done** | Migrations for `type_namespace`, `type_definition`, `type_ref` | `type-registry`,`types-db`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-db |
 | 1.3 #3448 | Import & binding tables | `type_import` records + property↔type binding link model | `type-registry`,`types-db`,`import`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-db |
 | 1.4 #3449 | Seed core system types (`std/v0`) | Seed 8 primitives + std types (date, uuid, money, …) as system-core | `type-registry`,`registry`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-db, objectified-rest |
 
@@ -244,7 +244,17 @@ erDiagram
 - **Parallelism/Dependencies.** Foundational — blocks 1.2/1.3 and Epic 2.
 - **Technical Stack.** PostgreSQL, docker-compose, FastAPI DB pool.
 
-### Issue 1.2 — Core registry schema (namespaces, types, refs)
+### Issue 1.2 — Core registry schema (namespaces, types, refs) ✅ Done (#3447)
+- **Delivered.** Migrations under `objectified-db/registry-scripts/` create the three core
+  entity tables inside the `otr` schema of `objectified-types-db`: `type_namespace`
+  (path, scope, base_uri, version_root, visibility, tenant_id, is_default; scope/tenant
+  check; path unique per scope), `type_definition` (namespace_id, name, schema_id=`$id`,
+  `json_schema` JSONB, draft, scope, source, mutability, soft delete; **unique
+  `(namespace_id, name)`**), and `type_ref` (source_type_id, relative_ref, resolved_target,
+  status ∈ {resolved, unresolved, circular}). UUID PKs, soft deletes, partial unique
+  indices, and cascade FKs throughout; no cross-database FK to `odb`. Verified against a
+  live Postgres 16: migrations apply, a type with an internal `$ref` round-trips its
+  `type_ref` rows, and the uniqueness/scope constraints reject violations.
 - **Problem.** No storage exists for namespaces, type definitions, or their references.
 - **Solution/Scope.** Migrations creating: `type_namespace` (path, `scope` ∈ {system, tenant},
   `base_uri`, `version_root`, `visibility`, `tenant_id` nullable, `is_default`); `type_definition`

@@ -163,4 +163,15 @@ tables are created in the `otr` schema by migrations under
 - The registry database name resolves from `--registry-database` → `OBJECTIFIED_TYPES_DB`
   env → `objectified-types-db` (default). To place the registry on a *different* server, set
   `OBJECTIFIED_TYPES_DB_URL` to a full connection string.
-- This is ticket #3446 (foundation); the registry entity tables arrive in #3447.
+
+The `otr` schema holds three core entity tables (#3447):
+
+| Table | Role | Key constraints |
+|-------|------|-----------------|
+| `type_namespace` | Scoped, addressable collection of types (`std/*` system or `tenant/<slug>/*`) | `scope ∈ {system, tenant}`; system ⇒ `tenant_id` NULL, tenant ⇒ `tenant_id` set; namespace `path` unique per scope |
+| `type_definition` | A JSON Schema 2020-12 type (`json_schema` JSONB, `$id`, draft, source, mutability) | **unique `(namespace_id, name)`**; FK → `type_namespace` (cascade) |
+| `type_ref` | A relative `$ref` edge from one type to another, with resolution status | `status ∈ {resolved, unresolved, circular}`; FK → `type_definition` (cascade); unique `(source_type_id, relative_ref)` |
+
+All tables use UUID PKs, soft deletes (`deleted_at`), and carry no cross-database foreign keys
+(the core `odb` schema lives in a separate database). Resolution of `relative_ref` →
+`resolved_target` is implemented in Epic 3; the `std/v0` core types are seeded in #3449.
