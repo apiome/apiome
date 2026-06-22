@@ -63,12 +63,6 @@ Create a `.env` file based on `.env.example`:
 DATABASE_URL=postgresql://user:password@localhost:5432/objectified
 API_HOST=0.0.0.0
 API_PORT=8000
-
-# Separate type-registry database (objectified-types-db, #3446). By default it reuses the
-# core connection above and only swaps the database name; set OBJECTIFIED_TYPES_DB_URL to
-# point at a different server. Provision it with `objectified-db registry migrate`.
-# OBJECTIFIED_TYPES_DB=objectified-types-db
-# OBJECTIFIED_TYPES_DB_URL=postgresql://user:password@localhost:5432/objectified-types-db
 ```
 
 ### Running the Server
@@ -159,14 +153,7 @@ Returns API information and available endpoints.
 ```
 GET /health
 ```
-Returns API health status and database connection status. The response reports the core
-database (`database`) and the separate type-registry database (`registry_database`)
-independently; overall `status` is `healthy` when the core database is reachable (the
-registry is reported but does not, on its own, mark the service unhealthy). Example:
-
-```json
-{ "database": "connected", "registry_database": "connected", "status": "healthy" }
-```
+Returns API health status and database connection status.
 
 ## Content Negotiation
 

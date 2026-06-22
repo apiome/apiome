@@ -15,19 +15,6 @@ class Settings(BaseSettings):
     postgres_port: int = 5432
     postgres_db: str = "objectified"
 
-    # Separate type-registry database (objectified-types-db, #3446). The registry's
-    # namespaces / type definitions / $ref edges live here, isolated from the core
-    # ADE schema. By default it reuses the core host/port/user/password and only the
-    # database name differs; set OBJECTIFIED_TYPES_DB_URL to point at another server.
-    types_database_url: Optional[str] = Field(
-        default=None,
-        validation_alias=AliasChoices("OBJECTIFIED_TYPES_DB_URL", "types_database_url"),
-    )
-    types_postgres_db: str = Field(
-        default="objectified-types-db",
-        validation_alias=AliasChoices("OBJECTIFIED_TYPES_DB", "types_postgres_db"),
-    )
-
     host: str = "0.0.0.0"
     port: int = 8000
     reload: bool = True
@@ -90,19 +77,6 @@ class Settings(BaseSettings):
         if self.database_url:
             return self.database_url
         return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
-
-    @property
-    def effective_types_database_url(self) -> str:
-        """Get the type-registry database URL (#3446).
-
-        Prefers an explicit OBJECTIFIED_TYPES_DB_URL. Otherwise it reuses the core
-        connection's host/port/user/password and only swaps the database name to
-        ``types_postgres_db`` (default ``objectified-types-db``), so the registry can
-        share the core Postgres instance while remaining an independent database.
-        """
-        if self.types_database_url:
-            return self.types_database_url
-        return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.types_postgres_db}"
 
     @property
     def effective_jwt_secret(self) -> str:

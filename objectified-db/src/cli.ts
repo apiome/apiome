@@ -15,7 +15,6 @@ import { Command, CommanderError } from "commander";
 import { runInteractiveRepl } from "./lib/interactive/repl.js";
 import * as apikeys from "./commands/apikeys.js";
 import * as migrate from "./commands/migrate.js";
-import * as registry from "./commands/registry.js";
 import * as tenants from "./commands/tenants.js";
 import * as users from "./commands/users.js";
 import { type ConnectionOptions, describeConnection, withClient } from "./db.js";
@@ -141,69 +140,6 @@ migrateCmd
         { scriptsDir: opts.scriptsDir },
         modeOf(g),
       ),
-    );
-  });
-
-// ──────────────────────────── registry ───────────────────────────
-// Separate type-registry database (objectified-types-db). Reuses the global
-// connection flags/env for host/port/user/password; only the database name
-// changes (override with --registry-database / OBJECTIFIED_TYPES_DB).
-const registryCmd = program
-  .command("registry")
-  .description("Provision and migrate the separate type-registry database (objectified-types-db)");
-
-registryCmd
-  .command("provision")
-  .description("Create the registry database if it does not exist")
-  .option("--registry-database <name>", "Registry database name (env: OBJECTIFIED_TYPES_DB; default objectified-types-db)")
-  .action(async (opts, cmd: Command) => {
-    const g = cmd.optsWithGlobals() as GlobalOpts;
-    await registry.runRegistryProvision(
-      connectionOf(g),
-      { registryDatabase: opts.registryDatabase },
-      modeOf(g),
-    );
-  });
-
-const registryMigrateCmd = registryCmd
-  .command("migrate")
-  .description("Provision (if needed) and apply pending registry migrations from registry-scripts/")
-  .option("--registry-database <name>", "Registry database name (env: OBJECTIFIED_TYPES_DB; default objectified-types-db)")
-  .option("--scripts-dir <path>", "Directory containing *.sql migrations (default: package registry-scripts/)")
-  .option("--dry-run", "Print pending scripts without applying them", false)
-  .action(async (opts, cmd: Command) => {
-    const g = cmd.optsWithGlobals() as GlobalOpts;
-    await registry.runRegistryMigrate(
-      connectionOf(g),
-      { registryDatabase: opts.registryDatabase, scriptsDir: opts.scriptsDir, dryRun: Boolean(opts.dryRun) },
-      modeOf(g),
-    );
-  });
-
-registryMigrateCmd
-  .command("status")
-  .description("List applied and pending registry migration scripts")
-  .option("--registry-database <name>", "Registry database name (env: OBJECTIFIED_TYPES_DB; default objectified-types-db)")
-  .option("--scripts-dir <path>", "Directory containing *.sql migrations (default: package registry-scripts/)")
-  .action(async (opts, cmd: Command) => {
-    const g = cmd.optsWithGlobals() as GlobalOpts;
-    await registry.runRegistryMigrateStatus(
-      connectionOf(g),
-      { registryDatabase: opts.registryDatabase, scriptsDir: opts.scriptsDir },
-      modeOf(g),
-    );
-  });
-
-registryCmd
-  .command("ping")
-  .description("Verify the registry database connection")
-  .option("--registry-database <name>", "Registry database name (env: OBJECTIFIED_TYPES_DB; default objectified-types-db)")
-  .action(async (opts, cmd: Command) => {
-    const g = cmd.optsWithGlobals() as GlobalOpts;
-    await registry.runRegistryPing(
-      connectionOf(g),
-      { registryDatabase: opts.registryDatabase },
-      modeOf(g),
     );
   });
 

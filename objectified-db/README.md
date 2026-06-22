@@ -64,14 +64,6 @@ objectified-db ping                         Verify the database connection
 migrate [--dry-run] [--scripts-dir <path>]  Apply pending SQL migrations
 migrate status [--scripts-dir <path>]       List applied / pending migrations
 
-registry provision [--registry-database <name>]
-                                            Create the registry database if absent
-registry migrate [--dry-run] [--registry-database <name>] [--scripts-dir <path>]
-                                            Provision (if needed) + apply registry migrations
-registry migrate status [--registry-database <name>] [--scripts-dir <path>]
-                                            List applied / pending registry migrations
-registry ping [--registry-database <name>]  Verify the registry database connection
-
 users create   --name --email (--password | --password-stdin | --random-password)
                                             [--unverified] [--disabled]
 users list     [--all]
@@ -118,13 +110,6 @@ objectified-db migrate
 objectified-db migrate status
 objectified-db migrate --dry-run
 
-# Stand up the separate type-registry database (objectified-types-db) and migrate it.
-# Reuses the same connection flags/env; only the database name differs
-# (override with --registry-database or OBJECTIFIED_TYPES_DB).
-objectified-db registry migrate          # provisions the DB (if absent) then applies registry-scripts/
-objectified-db registry migrate status
-objectified-db registry ping
-
 # Create a user with a generated password (printed once)
 objectified-db users create --name "Ada Lovelace" --email ada@example.com --random-password
 
@@ -149,29 +134,27 @@ objectified-db --yes api-keys revoke sk_265e18808...
 - `api-keys create` writes `created_by_user_id` when the column exists and transparently falls
   back for older databases (same behavior as the REST service).
 
-### Type registry database (`objectified-types-db`)
+### Type registry (extends `odb.primitives`)
 
-The JSON Schema type registry lives in a **separate database** so its namespaces, type
-definitions, and `$ref` edges never share tables with the core ADE schema (`odb`). Registry
-tables are created in the `otr` schema by migrations under
-[`registry-scripts/`](./registry-scripts), tracked independently from the core
-[`scripts/`](./scripts) (each database keeps its own `schema_evolution_manager.scripts`).
+The JSON Schema type registry is **not** a separate database. It lives in this same
+`objectified-db` database, in the `odb` schema, by **extending the existing `odb.primitives`
+table in place**. Primitives are tenant-scoped (each row's `tenant_id`) **and** system-wide
+(`is_system` / `is_public`), so a tenant's own types and the shared `std/*` types compose across
+the tenant's projects with ordinary same-database foreign keys.
 
-- `registry migrate` connects to the **same** Postgres server using the global connection
-  flags/env, then provisions the registry database (issuing `CREATE DATABASE` from the
-  `postgres` maintenance database if absent) and applies pending registry migrations.
-- The registry database name resolves from `--registry-database` → `OBJECTIFIED_TYPES_DB`
-  env → `objectified-types-db` (default). To place the registry on a *different* server, set
-  `OBJECTIFIED_TYPES_DB_URL` to a full connection string.
+Migration `20260622-230000.sql` adds these registry columns to `odb.primitives` (no new tables,
+no separate schema):
 
-The `otr` schema holds three core entity tables (#3447):
+| Column | Role |
+|--------|------|
+| `namespace` | Namespace path, e.g. `std/v0/types` (system-wide) or `tenant/<slug>/types` (tenant-owned) |
+| `base_uri` | Import-source base URL the relative `$ref` values resolve against (Epic 3) |
+| `schema_id` | The JSON Schema `$id` (namespace base + name) |
+| `draft` | JSON Schema dialect/draft, default `2020-12` |
+| `source` | Provenance: `human` or `imported` (`primitives_source_ck` check) |
+| `refs` | JSONB array of `$ref` edges: `[{relative_ref, resolved_target, status ∈ {resolved, unresolved, circular}}]` |
 
-| Table | Role | Key constraints |
-|-------|------|-----------------|
-| `type_namespace` | Scoped, addressable collection of types (`std/*` system or `tenant/<slug>/*`) | `scope ∈ {system, tenant}`; system ⇒ `tenant_id` NULL, tenant ⇒ `tenant_id` set; namespace `path` unique per scope |
-| `type_definition` | A JSON Schema 2020-12 type (`json_schema` JSONB, `$id`, draft, source, mutability) | **unique `(namespace_id, name)`**; FK → `type_namespace` (cascade) |
-| `type_ref` | A relative `$ref` edge from one type to another, with resolution status | `status ∈ {resolved, unresolved, circular}`; FK → `type_definition` (cascade); unique `(source_type_id, relative_ref)` |
-
-All tables use UUID PKs, soft deletes (`deleted_at`), and carry no cross-database foreign keys
-(the core `odb` schema lives in a separate database). Resolution of `relative_ref` →
-`resolved_target` is implemented in Epic 3; the `std/v0` core types are seeded in #3449.
+The same migration drops the obsolete `otr` schema if an earlier build created it (the separate
+`objectified-types-db` design was reversed — see #3446). Tenant vs system scope reuses the
+existing `tenant_id` / `is_system` columns; the `std/v0` core system primitives are seeded in
+#3449; `$ref` resolution (`relative_ref` → `resolved_target`) is implemented in Epic 3.

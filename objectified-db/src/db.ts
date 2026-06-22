@@ -33,45 +33,6 @@ function buildPgConfig(opts: ConnectionOptions): pg.ClientConfig {
   };
 }
 
-/**
- * Return a copy of `opts` pointed at a different database on the *same* server.
- *
- * This is the basis for talking to the separate registry database
- * (`objectified-types-db`) and to the `postgres` maintenance database (needed to
- * `CREATE DATABASE`) while reusing the operator's host/port/user/password.
- *
- * It deliberately mirrors the connection resolution in {@link buildPgConfig}: a
- * connection string (flag or `OBJECTIFIED_DB_URL`/`DATABASE_URL` env) wins, so
- * when one is present we rewrite its path segment; otherwise we override the
- * discrete `database` field and let env/defaults fill the rest.
- *
- * @param opts     Base connection options.
- * @param database Target database name (used verbatim as the connection database).
- * @returns        New `ConnectionOptions` selecting `database`.
- */
-export function withDatabaseOverride(
-  opts: ConnectionOptions,
-  database: string,
-): ConnectionOptions {
-  const url = opts.databaseUrl ?? process.env.OBJECTIFIED_DB_URL ?? process.env.DATABASE_URL;
-  if (url && url.trim() !== "") {
-    try {
-      const u = new URL(url.trim());
-      u.pathname = `/${database}`;
-      return { databaseUrl: u.toString() };
-    } catch {
-      // Not a parseable URL — fall through to discrete-field override below.
-    }
-  }
-  return {
-    host: opts.host,
-    port: opts.port,
-    user: opts.user,
-    password: opts.password,
-    database,
-  };
-}
-
 /** Human-readable target (no secrets) for status output / errors. */
 export function describeConnection(opts: ConnectionOptions): string {
   const url = opts.databaseUrl ?? process.env.OBJECTIFIED_DB_URL ?? process.env.DATABASE_URL;

@@ -41,29 +41,6 @@ services:
     networks:
       - objectified-mcp
 
-  # Provisions the separate type-registry database (objectified-types-db) on the same
-  # Postgres instance and applies its registry-scripts/ migrations. `registry migrate`
-  # self-provisions: it creates the database from the `postgres` maintenance database
-  # if absent, then migrates it. Independent of the core `migrate` service above.
-  types-migrate:
-    build:
-      context: ./objectified-db
-      dockerfile: Dockerfile
-    command: ["registry", "migrate"]
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-objectified_local_dev}
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: "5432"
-      POSTGRES_DB: ${POSTGRES_DB:-objectified}
-      OBJECTIFIED_TYPES_DB: ${OBJECTIFIED_TYPES_DB:-objectified-types-db}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: "no"
-    networks:
-      - objectified-mcp
-
   mcp:
     build:
       context: .

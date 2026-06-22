@@ -23,7 +23,6 @@ COPY package.json ./
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
 COPY scripts ./scripts/
-COPY registry-scripts ./registry-scripts/
 
 # Default: apply pending migrations (override with users, tenants, ping, etc.)
 ENTRYPOINT ["node", "dist/cli.js"]

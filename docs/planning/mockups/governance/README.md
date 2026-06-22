@@ -38,15 +38,17 @@ drill-downs reached from those views.
 | `type-import.html` | Governance › Type Registry · Import | Import wizard — JSON Schema **and** type-definition bundles (+ OpenAPI 3.1), namespace/scope target, `$ref` rewrite options |
 | `type-resolver.html` | Governance › Type Registry · Reference Resolver | Relative `$ref` graph + table, resolution-base math, unresolved & circular detection |
 | `type-namespaces.html` | Governance › Type Registry · Namespaces & Scopes | System root (all tenants) vs per-tenant namespaces, base URIs, version roots, scope precedence, promote-to-core |
-| `type-settings.html` | Governance › Type Registry · Settings | Separate registry DB, default draft, `$ref` resolution policy, import defaults, validation/publishing governance |
+| `type-settings.html` | Governance › Type Registry · Settings | Registry storage (extended `odb.primitives`), default draft, `$ref` resolution policy, import defaults, validation/publishing governance |
 | `property-binding.html` | Designer › property editor | Cross-app integration: bind a class property to a standard or custom registry type (resulting `$ref`) |
 
 ## Core concepts depicted
 
-- **Separate database** `objectified-types-db` — distinct from `objectified-db` (application data).
-- **Scopes**: *System · core* (`std/v0/*`) is curated by the platform and visible to **all
-  tenants**; *Tenant* (`tenant/<slug>/*`) types are private to that tenant. A tenant type may
-  `$ref` a core type; a core type may not `$ref` a tenant type.
+- **Single database** — the type registry lives in the existing `objectified-db` (`odb` schema)
+  by **extending the `odb.primitives` table** (tenant-owned rows via `tenant_id`, system-wide
+  rows via `is_system`/`is_public`). There is **no** separate `objectified-types-db`.
+- **Scopes**: *System · core* (`std/v0/*`, `is_system`) is curated by the platform and visible
+  to **all tenants**; *Tenant* (`tenant/<slug>/*`, owned by `tenant_id`) types are private to
+  that tenant. A tenant type may `$ref` a core type; a core type may not `$ref` a tenant type.
 - **Relative `$ref`** resolves against each type's **import-source base URL** in the API
   server. Canonical example: `std/v0/types/date` → `"$ref": "../primitives/string"`, base
   `api.objectified.dev/types/std/v0/types/` → resolves to `std/v0/primitives/string`.
@@ -72,12 +74,12 @@ Suggested implementation surfaces this mockup implies:
   - Type registry API: CRUD types/namespaces, **import** (schema + type-def + OpenAPI),
     **`$ref` resolver** (relative→absolute, unresolved/circular), coverage of bindings,
     promote-to-core (governed).
-- **objectified-types-db** (new, separate database)
-  - Entities: `type_namespace` (path, scope system|tenant, base_uri, version_root,
-    visibility, default), `type_definition` (`$id`, namespace_id, name, json_schema JSONB,
-    draft, scope, mutability, source human|imported), `type_ref` (source_type, relative_ref,
-    resolved_target, status resolved|unresolved|circular), `type_import` (source_kind, target
-    namespace/scope, options, report), and a property↔type binding link consumed by the
+- **objectified-db** (existing database — extend `odb.primitives`, no separate DB)
+  - Extend `odb.primitives` with: `namespace` (path; system `std/v0/*` or `tenant/<slug>/*`),
+    `base_uri`, `schema_id` (`$id`), `draft`, `source` (human|imported), and `refs` JSONB
+    (relative_ref, resolved_target, status resolved|unresolved|circular). Tenant vs system
+    scope reuses `tenant_id` / `is_system`. Import provenance reuses existing import-history
+    infra; a property↔primitive binding link (same-DB FK on `class_property`) is consumed by the
     Designer (`class_property` → `$ref`).
 - **Suggested labels**: reuse `governance`, `registry`, `ui`, `rest`, `import`; add
   `type-registry` / `atlas`.

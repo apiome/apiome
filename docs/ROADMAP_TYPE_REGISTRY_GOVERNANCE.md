@@ -22,13 +22,24 @@ tracked separately in `docs/ROADMAP_AUTHORING_PLATFORM.md`.
 
 ---
 
+## 1a. Design change (2026-06): single database — extend `odb.primitives`
+
+> **The type registry is NOT a separate database.** An earlier iteration provisioned a separate
+> `objectified-types-db` (its own `otr` schema, `registry` CLI, dedicated REST connection). That
+> is the wrong design and has been reversed. The registry lives in the **existing `objectified-db`
+> database (`odb` schema) by extending the `odb.primitives` table in place**. Primitives are
+> tenant-associated (a tenant has its own primitives via `tenant_id`) **and** system-wide (via
+> `is_system`/`is_public`), so they must compose with the tenant's other data through ordinary
+> same-database foreign keys. Epic 1 reflects this: 1.1 removes the separate DB, 1.2 extends
+> `odb.primitives`, 1.3 adds same-DB import/binding links, 1.4 seeds system primitives.
+
 ## 1b. Existing Primitives Baseline (shipped)
 
 Before implementing net-new registry mechanics, account for what is **already live**:
 
 | Layer | Implementation | Gap vs this roadmap |
 |---|---|---|
-| Storage | `odb.primitives` in **objectified-db** | No separate `objectified-types-db`; no `type_namespace` / `type_ref` |
+| Storage | `odb.primitives` in **objectified-db** (tenant-scoped via `tenant_id`; system-wide via `is_system`/`is_public`) | No `namespace` / `base_uri` / `$id` / `draft` / `$ref` columns on `odb.primitives` — **extend the existing table in place** (same database, `odb` schema; no separate database, no new schema, no new tables) |
 | System seed | 36 ISO-aligned system primitives (`20260124-140000.sql`) | Flat schemas; no `std/v0` namespace or composite `$ref` chains (`money` → `decimal`) |
 | REST | `/v1/primitives/{tenant_slug}` CRUD + `/import` from `$defs` | No namespaces, resolver, stats, or server-side draft 2020-12 gate |
 | UI proxy | `/api/primitives/*` | ✅ **Done** — closed as duplicate (#3455) |
@@ -41,14 +52,17 @@ Before implementing net-new registry mechanics, account for what is **already li
 issues remain open with scopes adjusted to **extend** Primitives toward full JSON Schema 2020-12 support.
 
 **What the registry must do (from the mockups & conversation):**
-- Store JSON Schema **draft 2020-12** types in a **separate database** (`objectified-types-db`),
-  distinct from `objectified-db`.
+- Store JSON Schema **draft 2020-12** types **in the existing `objectified-db` database (`odb`
+  schema), by extending the `odb.primitives` table** — *not* in a separate database. Primitives
+  are the type registry: a tenant owns its own primitives (via `tenant_id`) and also sees
+  system-wide primitives (via `is_system`/`is_public`), all in one table so they compose across
+  the tenant's projects with ordinary same-database foreign keys.
 - Address types by **relative `$ref`** rooted at each type's **import-source base URL** in the
   API server. Canonical example: `std/v0/types/date` → `"$ref": "../primitives/string"`, base
   `api.objectified.dev/types/std/v0/types/` → resolves to `std/v0/primitives/string`.
-- Provide **core system types** (`std/v0/*`) visible to **all tenants**, and **per-tenant**
-  private types (`tenant/<slug>/*`). A tenant type may `$ref` a core type; a core type may not
-  `$ref` a tenant type.
+- Provide **system-wide types** (`std/v0/*`, `is_system`) visible to **all tenants**, and
+  **per-tenant** private types (`tenant/<slug>/*`, owned by `tenant_id`). A tenant type may
+  `$ref` a system type; a system type may not `$ref` a tenant type.
 - **Import** both raw **JSON Schema** documents (single or `$defs`-bundled) *and* **Objectified
   type-definition bundles** (`.zip`/`.json`). (OpenAPI 3.1 components is a V2 extension.)
 - Let the **visual editor** (Designer) bind a property to a **standard** (primitive) or
@@ -58,7 +72,7 @@ issues remain open with scopes adjusted to **extend** Primitives toward full JSO
 
 ## 2. MVP Definition
 
-The MVP delivers a **working type registry loop**: a separate registry database seeded with
+The MVP delivers a **working type registry loop**: an extended `odb.primitives` table seeded with
 core system types; a service+API to manage namespaces and draft-2020-12 types with scope rules;
 a relative-`$ref` resolver that flags unresolved references; an import surface that ingests JSON
 Schemas **and** type-definition bundles; a Governance → Type Registry UI (overview, type detail,
@@ -69,7 +83,7 @@ import, resolver, namespaces, settings); and the Designer property→type bindin
 
 | Area | MVP capability |
 |---|---|
-| Database | Separate `objectified-types-db`; namespaces, type-definitions, type-refs, import & binding tables; seeded `std/v0` core types |
+| Database | Extend `odb.primitives` in **objectified-db** (`odb` schema) with namespace / `$id` / `base_uri` / draft / source / `$ref` columns + import & property-binding links; seeded `std/v0` core system primitives. **No separate database.** |
 | Service/API | Namespace CRUD; type CRUD with draft-2020-12 validation; system-core vs tenant scope enforcement; coverage stats; UI proxy + client |
 | Resolution | Relative `$ref` resolution against import-source base; unresolved-reference detection; resolver API + basic dependency listing |
 | Import | Pipeline + ingestion (file/paste/URL/git); JSON Schema doc parser (single + `$defs`); type-definition bundle importer; `$ref` rewrite + namespace/scope mapping; conflict/dedupe + validation report |
@@ -110,20 +124,19 @@ flowchart TB
     bind["Property↔type binding read model"]
   end
 
-  subgraph TDB[("objectified-types-db (separate)")]
-    ns[("type_namespace")]
-    td[("type_definition (json_schema JSONB)")]
-    tr[("type_ref")]
-    imp[("type_import")]
+  subgraph ODB[("objectified-db — odb schema (single database)")]
+    prim[("odb.primitives (extended)\nschema JSONB · namespace · base_uri · $id · draft · source · refs JSONB")]
+    cls[("odb.class_property\n(property → primitive $ref binding)")]
+    imp[("import provenance (existing infra, reused)")]
   end
 
   proxy --> api & resolver & import & bind
-  api --> ns & td
-  resolver --> tr
-  resolver --> td
-  import --> td & ns & imp
-  bind -->|$ref| coreDB[("objectified-db: class_property")]
-  api -. seeds .-> seed["std/v0 core types\n(primitives + std types)"]
+  api --> prim
+  resolver --> prim
+  import --> prim & imp
+  bind -->|$ref| cls
+  cls -->|primitive_id / $ref| prim
+  api -. seeds .-> seed["std/v0 core system primitives\n(is_system rows: primitives + std types)"]
 ```
 
 **Conventions inherited from the codebase (verified):**
@@ -132,7 +145,9 @@ flowchart TB
   `objectified-rest` with `createRestAuthHeaders()`.
 - REST: FastAPI; tenant-scoped `/v1/...` with `validate_authentication()`.
 - DB: PostgreSQL `odb` schema, UUID PKs, soft deletes, JSONB; migrations in
-  `objectified-db/scripts/<timestamp>.sql`. The registry is a **new, separate database**.
+  `objectified-db/scripts/<timestamp>.sql`. The registry **extends the existing `odb.primitives`
+  table in the same `objectified-db` database** — no separate database, no new schema; bindings
+  reference primitives with ordinary same-database foreign keys.
 - Brand: in-app the feature uses the Control Panel **indigo** accent; the standalone Atlas
   mockups use teal.
 
@@ -149,8 +164,8 @@ These open issues are *adjacent* and must be cross-linked, **not duplicated**:
 | #2299 Import History Data Model · #2305 User Attribution on Import · #2316 REST API for Import (`import`) | The Type Registry import (Epic 4) should **reuse** the existing import history/attribution infrastructure rather than re-implement it; this roadmap adds the type-specific source parsers + `$ref` rewrite. |
 | #1130 Type Mapping Registry (mobile-sdk) | Different concern (code-gen type mapping). No overlap beyond the word "type". |
 
-No existing issue implements a JSON Schema 2020-12 **type registry with a separate database and
-relative `$ref` resolution**, so the core of this roadmap is net-new.
+No existing issue implements a JSON Schema 2020-12 **type registry (an extended `odb.primitives`
+table) with relative `$ref` resolution**, so the core of this roadmap is net-new.
 
 ---
 
@@ -158,7 +173,7 @@ relative `$ref` resolution**, so the core of this roadmap is net-new.
 
 | # | Epic | Theme | Primary module(s) |
 |---|---|---|---|
-| 1 (#3439) | Type Registry Database | Separate `objectified-types-db`, entities, core-type seed | objectified-db (new DB) |
+| 1 (#3439) | Primitives Registry Schema | Extend `odb.primitives` (namespace/`$ref`/draft columns), bindings, core-type seed | objectified-db (`odb` schema) |
 | 2 (#3440) | Registry Service & API | Namespace/type CRUD, scope rules, validation, proxy | objectified-rest, objectified-ui |
 | 3 (#3441) | Reference Resolution Engine | Relative `$ref` resolve, unresolved/circular, graph | objectified-rest |
 | 4 (#3442) | Import System | JSON Schema + type-def bundle (+ OpenAPI 3.1 v2) | objectified-rest |
@@ -172,121 +187,115 @@ relative `$ref` resolution**, so the core of this roadmap is net-new.
 | Label | Color | Description |
 |---|---|---|
 | `type-registry` | `#0E7490` | Objectified Primitives — JSON Schema 2020-12 types (extends `/ade/dashboard/primitives`) |
-| `types-db` | `#0B5563` | Separate type registry database (objectified-types-db) |
+| `types-db` | `#0B5563` | Primitives registry storage — extends `odb.primitives` in `objectified-db` (single database) |
 | `roadmap-type-registry` | `#BFDADC` | ROADMAP_TYPE_REGISTRY_GOVERNANCE.md ticket pack |
 
 Issue naming: `Primitives: [<epic#.issue#>] <title>`.
 
 ---
 
-## 6. Epic 1 — Type Registry Database (`objectified-types-db`)
+## 6. Epic 1 — Primitives Registry Schema (extend `odb.primitives`)
 
-A dedicated registry database, its entity model, and a seed of the core system types. This is
-the foundation everything else builds on.
+The registry's data model is the **existing `odb.primitives` table, extended in place** — *not*
+a separate database. A tenant owns its own primitives (`tenant_id`) and also sees system-wide
+primitives (`is_system`/`is_public`), all in one table in the `objectified-db` `odb` schema, so
+they compose across the tenant's projects with ordinary same-database foreign keys. This epic
+adds the namespace / `$id` / `$ref` / draft-2020-12 columns, the import + property-binding links,
+and the core system-primitive seed.
 
 ```mermaid
 erDiagram
-  type_namespace ||--o{ type_definition : contains
-  type_definition ||--o{ type_ref : "has $ref"
-  type_import ||--o{ type_definition : produced
-  type_namespace {
+  tenants ||--o{ primitives : owns
+  primitives ||--o{ primitives : "$ref (refs JSONB)"
+  class_property }o--|| primitives : "binds via $ref"
+  primitives {
     uuid id
-    text path
-    text scope "system|tenant"
-    text base_uri
-    text version_root
-    text visibility
-    uuid tenant_id
-  }
-  type_definition {
-    uuid id
-    uuid namespace_id
+    uuid tenant_id "owning tenant (NULL-equivalent system rows via is_system)"
     text name
+    text category
+    jsonb schema "JSON Schema 2020-12 document"
+    text namespace "e.g. std/v0/types or tenant/acme/types"
+    text base_uri "import-source base URL for relative $ref"
     text schema_id "$id"
-    jsonb json_schema
-    text draft
-    text scope
+    text draft "default 2020-12"
     text source "human|imported"
-    text mutability
+    jsonb refs "array of {relative_ref, resolved_target, status}"
+    bool is_system "system-wide (visible to all tenants)"
+    bool is_public
   }
-  type_ref {
+  class_property {
     uuid id
-    uuid source_type_id
-    text relative_ref
-    text resolved_target
-    text status "resolved|unresolved|circular"
+    uuid primitive_id "bound primitive (same-DB FK)"
+    text primitive_ref "stored $ref"
   }
 ```
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 1.1 #3446 | ~~Provision separate registry database & connection~~ ✅ **Done** | Stand up `objectified-types-db` + connection/pool config | `type-registry`,`types-db`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-db, objectified-rest |
-| 1.2 #3447 | ~~Core registry schema (namespaces, types, refs)~~ ✅ **Done** | Migrations for `type_namespace`, `type_definition`, `type_ref` | `type-registry`,`types-db`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-db |
-| 1.3 #3448 | Import & binding tables | `type_import` records + property↔type binding link model | `type-registry`,`types-db`,`import`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-db |
-| 1.4 #3449 | Seed core system types (`std/v0`) | Seed 8 primitives + std types (date, uuid, money, …) as system-core | `type-registry`,`registry`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-db, objectified-rest |
+| 1.1 #3446 | Consolidate registry into `objectified-db` (remove separate DB) | Rip out the `objectified-types-db` provisioning shipped earlier; registry lives in `odb` | `type-registry`,`types-db`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-db, objectified-rest |
+| 1.2 #3447 | Extend `odb.primitives` (namespace, `$id`, `$ref`, draft 2020-12) | Migration adding namespace/`base_uri`/`schema_id`/`draft`/`source`/`refs` columns to `odb.primitives` | `type-registry`,`types-db`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-db |
+| 1.3 #3448 | Import provenance & property binding | Import-history reuse + property↔primitive binding column on `class_property` | `type-registry`,`types-db`,`import`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-db |
+| 1.4 #3449 | Seed core system primitives (`std/v0`) | Seed primitives + std types (date, uuid, money, …) as system-wide `is_system` rows | `type-registry`,`registry`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-db, objectified-rest |
 
-### Issue 1.1 — Provision separate registry database & connection ✅ Done (#3446)
-- **Delivered.** Separate logical database `objectified-types-db` (its own `otr` schema)
-  provisioned on the core Postgres instance. `objectified-db` gained a `registry` command
-  group (`provision` / `migrate` / `migrate status` / `ping`) with an independent
-  `registry-scripts/` migration directory; docker-compose adds a `types-migrate` service that
-  self-provisions and migrates it. `objectified-rest` connects to it independently
-  (`registry_database.py`, `OBJECTIFIED_TYPES_DB` / `OBJECTIFIED_TYPES_DB_URL`) and `GET /health`
-  reports its status. Existing `/v1/primitives` (`odb.primitives`) is untouched.
-- **Problem.** The registry must live in its own database (`objectified-types-db`), separate
-  from `objectified-db`, per the Settings mockup and conversation.
-- **Solution/Scope.** Add the new database (docker-compose service + env), a dedicated
-  connection/pool in `objectified-rest`, and migration tooling targeting it (mirroring the
-  `objectified-db/scripts/<timestamp>.sql` convention but in a separate schema/DB). Source:
-  `governance/type-settings.html` (Registry database card), `governance/README.md`.
-- **Acceptance Criteria.** Service connects to `objectified-types-db` independently of
-  `objectified-db`; health check reports "Connected"; credentials are configurable + not logged.
-- **Parallelism/Dependencies.** Foundational — blocks 1.2/1.3 and Epic 2.
-- **Technical Stack.** PostgreSQL, docker-compose, FastAPI DB pool.
+### Issue 1.1 — Consolidate registry into `objectified-db` (remove separate DB)
+- **Problem.** An earlier iteration provisioned a **separate** `objectified-types-db` database
+  (its own `otr` schema, a `registry` CLI command group, `registry-scripts/`, a dedicated
+  `objectified-rest` connection, a docker-compose `types-migrate` service). This is the wrong
+  design: primitives are tenant-associated **and** system-wide and must live with the rest of the
+  tenant's data in `objectified-db` so they compose with ordinary foreign keys. A separate
+  database forces cross-database references and duplicate connection/migration machinery.
+- **Solution/Scope.** Reverse the separate-database work: remove the `objectified-types-db`
+  provisioning and `otr` schema, the `registry` command group + `registry-scripts/` +
+  `registry.ts` in `objectified-db`, the `RegistryDatabase` connection / `OBJECTIFIED_TYPES_DB*`
+  config / health reporting in `objectified-rest`, and the `types-migrate` docker-compose service
+  and env. The registry's storage is the existing `odb.primitives` table (extended in 1.2).
+- **Acceptance Criteria.** No `objectified-types-db`, `otr` schema, `registry` command, or
+  `RegistryDatabase` connection remains; the stack builds and migrates with a single database;
+  `GET /health` no longer reports a separate registry database; existing `/v1/primitives` works.
+- **Parallelism/Dependencies.** Foundational — precedes 1.2.
+- **Technical Stack.** PostgreSQL, docker-compose, FastAPI.
 
-### Issue 1.2 — Core registry schema (namespaces, types, refs) ✅ Done (#3447)
-- **Delivered.** Migrations under `objectified-db/registry-scripts/` create the three core
-  entity tables inside the `otr` schema of `objectified-types-db`: `type_namespace`
-  (path, scope, base_uri, version_root, visibility, tenant_id, is_default; scope/tenant
-  check; path unique per scope), `type_definition` (namespace_id, name, schema_id=`$id`,
-  `json_schema` JSONB, draft, scope, source, mutability, soft delete; **unique
-  `(namespace_id, name)`**), and `type_ref` (source_type_id, relative_ref, resolved_target,
-  status ∈ {resolved, unresolved, circular}). UUID PKs, soft deletes, partial unique
-  indices, and cascade FKs throughout; no cross-database FK to `odb`. Verified against a
-  live Postgres 16: migrations apply, a type with an internal `$ref` round-trips its
-  `type_ref` rows, and the uniqueness/scope constraints reject violations.
-- **Problem.** No storage exists for namespaces, type definitions, or their references.
-- **Solution/Scope.** Migrations creating: `type_namespace` (path, `scope` ∈ {system, tenant},
-  `base_uri`, `version_root`, `visibility`, `tenant_id` nullable, `is_default`); `type_definition`
-  (namespace_id, name, `schema_id` = `$id`, `json_schema` JSONB, `draft`, `scope`, `source` ∈
-  {human, imported}, `mutability`, soft delete, unique `(namespace_id, name)`); `type_ref`
-  (source_type_id, `relative_ref`, `resolved_target`, `status` ∈ {resolved, unresolved,
-  circular}). Source: `governance/type-namespaces.html`, `types/*` entity tags.
-- **Acceptance Criteria.** Migrations apply to `objectified-types-db`; constraints + indices in
-  place; a type with a `$ref` round-trips with its `type_ref` rows.
+### Issue 1.2 — Extend `odb.primitives` (namespace, `$id`, `$ref`, draft 2020-12)
+- **Problem.** `odb.primitives` stores flat JSON Schemas with no namespace, no `$id`/base-uri,
+  no draft marker, and no record of a type's relative `$ref` edges.
+- **Solution/Scope.** A single `objectified-db/scripts/<timestamp>.sql` migration that **adds
+  columns to the existing `odb.primitives` table** (no new tables, no new schema): `namespace`
+  (e.g. `std/v0/types`, `tenant/<slug>/types`), `base_uri` (import-source base URL for relative
+  `$ref` resolution), `schema_id` (`$id`), `draft` (default `2020-12`), `source` ∈ {human,
+  imported}, and `refs` JSONB (array of `{relative_ref, resolved_target, status ∈
+  {resolved, unresolved, circular}}`). Tenant scoping reuses the existing `tenant_id` FK to
+  `odb.tenants`; system-wide reuses `is_system`/`is_public`; immutability reuses `is_system`.
+  Add indices (`namespace`, `schema_id`, `source`, GIN on `refs`). Source:
+  `governance/type-namespaces.html`, `types/*` entity tags.
+- **Acceptance Criteria.** Migration applies to `objectified-db`; the new columns + indices exist
+  on `odb.primitives`; a primitive with an internal `$ref` round-trips its `refs` JSONB; the
+  existing `(tenant_id, category, name)` uniqueness and all current `/v1/primitives` behaviour
+  are preserved (no data loss).
 - **Parallelism/Dependencies.** Depends on 1.1; blocks Epic 2/3/4.
 - **Technical Stack.** PostgreSQL, JSONB.
 
-### Issue 1.3 — Import & binding tables
-- **Problem.** Imports and property bindings need durable records.
-- **Solution/Scope.** `type_import` (source_kind ∈ {json-schema, type-def-bundle, openapi},
-  target namespace/scope, options JSONB, report JSONB, attribution, timestamps) — reuse existing
-  import-history/attribution infra (#2299/#2305) where possible; and a **binding link** read by
-  the Designer associating an `objectified-db` `class_property` with a registry type (`$ref` +
-  resolved target). Source: `governance/type-import.html`, `governance/property-binding.html`.
-- **Acceptance Criteria.** An import persists a `type_import` row with its report; a property
-  binding persists and is queryable from the Designer read path.
+### Issue 1.3 — Import provenance & property binding
+- **Problem.** Imports and property bindings need durable records — in the same database.
+- **Solution/Scope.** Reuse the existing import-history/attribution infrastructure (#2299/#2305)
+  to record primitive imports (source_kind ∈ {json-schema, type-def-bundle, openapi}, target
+  namespace/scope, options/report JSONB, attribution); and add a **property→primitive binding**
+  by extending `odb.class_property` with a same-database foreign key to `odb.primitives` plus the
+  stored `$ref` (and resolved target), read by the Designer. No separate database, no cross-DB
+  id references. Source: `governance/type-import.html`, `governance/property-binding.html`.
+- **Acceptance Criteria.** An import persists a provenance record with its report; a property
+  binding persists with a real FK to `odb.primitives` and is queryable from the Designer read path.
 - **Parallelism/Dependencies.** Depends on 1.2; parallel with 1.4.
-- **Technical Stack.** PostgreSQL, JSONB; cross-DB reference by id (no FK across databases).
+- **Technical Stack.** PostgreSQL, JSONB; ordinary same-database foreign keys.
 
-### Issue 1.4 — Seed core system types (`std/v0`)
+### Issue 1.4 — Seed core system primitives (`std/v0`)
 - **Problem.** Tenants need a baseline of core types available to all.
 - **Solution/Scope.** Seed `std/v0/primitives` (string, number, integer, boolean, null, array,
   object) and `std/v0/types` (date, date-time, uuid, email, uri, decimal, currency-code, money,
-  …) as **system-core**, with correct relative `$ref`s (e.g. `date` → `../primitives/string` +
-  `format: date`; `money` → `./decimal`, `./currency-code`). Idempotent seeding migration/script.
-  Source: `types/browser.html`, `types/type-detail.html` (money), `governance/type-detail.html`.
-- **Acceptance Criteria.** After seed, core namespaces resolve fully (0 unresolved); `money` and
+  …) as **system-wide `is_system` primitives** in `odb.primitives`, with correct relative `$ref`s
+  recorded in `refs` (e.g. `date` → `../primitives/string` + `format: date`; `money` →
+  `./decimal`, `./currency-code`). Idempotent seeding migration/script. Source:
+  `types/browser.html`, `types/type-detail.html` (money), `governance/type-detail.html`.
+- **Acceptance Criteria.** After seed, core primitives resolve fully (0 unresolved); `money` and
   `date` match the canonical schemas; re-running the seed is idempotent.
 - **Parallelism/Dependencies.** Depends on 1.2; uses 3.1 for resolution verification.
 - **Technical Stack.** SQL/Python seed, JSON Schema 2020-12.
@@ -300,7 +309,7 @@ enforcement, plus the `objectified-ui` proxy + typed client.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 2.1 #3450 | Registry service skeleton + auth/scoping | New `/v1/types/*` surface, tenant/scope auth, DB wiring | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-rest |
+| 2.1 #3450 | Registry service skeleton + auth/scoping | Registry surface over the extended `odb.primitives`, tenant/scope auth, DB wiring | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-rest |
 | 2.2 #3451 | Namespace CRUD API | Create/list/update namespaces with scope, base URI, version root | `type-registry`,`registry`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-rest |
 | 2.3 #3452 | Type definition CRUD + draft 2020-12 validation | CRUD types; validate `json_schema` against draft 2020-12 | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | L | objectified-rest |
 | 2.4 #3453 | Scope & visibility enforcement | System-core vs tenant access + ref-direction rules | `type-registry`,`governance`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-rest |
@@ -308,12 +317,14 @@ enforcement, plus the `objectified-ui` proxy + typed client.
 | 2.6 #3455 | ~~UI proxy routes + typed client~~ | **CLOSED — duplicate** (`/api/primitives/*` shipped) | `type-registry`,`ui`,`mvp`,`roadmap-type-registry` | N | Y | S | objectified-ui |
 
 ### Issue 2.1 — Registry service skeleton + auth/scoping
-- **Problem.** No service entrypoint exists for the registry DB.
-- **Solution/Scope.** Add `types_routes.py` (or a dedicated module) with `/v1/types/{tenant_slug}/...`
-  base, `validate_authentication()`, and a connection to `objectified-types-db` (1.1). Pydantic
-  DTOs in `models.py`.
-- **Acceptance Criteria.** Authenticated, tenant-scoped requests reach the registry DB; a health/
-  ping endpoint returns DB status.
+- **Problem.** The registry service must read/write the **extended `odb.primitives`** table over
+  the existing `objectified-db` connection — there is no separate database to wire to.
+- **Solution/Scope.** Extend the existing primitives service (`/v1/primitives/{tenant_slug}/...`)
+  / add registry routes that operate on the extended `odb.primitives` columns (1.2), using the
+  existing `objectified-db` connection and `validate_authentication()`. Pydantic DTOs in
+  `models.py`. No separate DB connection or pool.
+- **Acceptance Criteria.** Authenticated, tenant-scoped requests read/write `odb.primitives`
+  (tenant rows + system rows); no separate registry connection is introduced.
 - **Parallelism/Dependencies.** Depends on 1.1/1.2; blocks 2.2–2.6.
 - **Technical Stack.** FastAPI, asyncpg/pg, Pydantic.
 
@@ -751,8 +762,9 @@ flowchart TB
   classDef v fill:#eee,stroke:#999,stroke-dasharray:4;
 ```
 
-1. **Wave 1 — Foundation (Epic 1).** Provision `objectified-types-db` (1.1) → core schema (1.2)
-   → import/binding tables (1.3) + seed `std/v0` core types (1.4).
+1. **Wave 1 — Foundation (Epic 1).** Consolidate the registry into `objectified-db` / remove the
+   separate DB (1.1) → extend `odb.primitives` (1.2) → import provenance + property binding (1.3)
+   + seed `std/v0` core system primitives (1.4).
 2. **Wave 2 — Service + Resolver (Epics 2 & 3).** Service (2.1) → namespaces (2.2) → types +
    validation (2.3) → scope (2.4) → stats (2.5) → proxy/client (2.6); resolver
    (3.1→3.2→3.4) in parallel once 2.3 lands.
@@ -769,7 +781,7 @@ flowchart TB
 This roadmap defines **37 issues** across **7 epics** (29 MVP open + 2 closed duplicates + 6 V2). Issues follow
 `Primitives: [<epic#.issue#>] <title>`, e.g.:
 
-- `Primitives: [1.1] Provision separate registry database & connection`
+- `Primitives: [1.1] Consolidate registry into objectified-db (remove separate DB)`
 - `Primitives: [3.1] Relative $ref resolution against import-source base`
 - `Primitives: [4.3] Type-definition bundle importer`
 - `Primitives: [6.1] Type picker component (Standard/Core/Tenant/Custom)`

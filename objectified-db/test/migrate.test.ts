@@ -37,10 +37,4 @@ describe("listMigrationFiles", () => {
     const sorted = [...files].sort();
     expect(files).toEqual(sorted);
   });
-
-  it("returns valid timestamped filenames from registry-scripts/", async () => {
-    const files = await listMigrationFiles(new URL("../registry-scripts", import.meta.url).pathname);
-    expect(files.length).toBeGreaterThan(0);
-    for (const f of files) expect(f).toMatch(/^\d{8}-\d{6}\.sql$/);
-  });
 });

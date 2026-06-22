@@ -5,14 +5,13 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.6] - 2026-06-22
+## [1.0.7] - 2026-06-22
 
-### Added
-- **Type-registry database connection (#3446)** — dedicated, independent connection to the
-  separate `objectified-types-db` database (`registry_database.py`, `RegistryDatabase`),
-  configured via `OBJECTIFIED_TYPES_DB` / `OBJECTIFIED_TYPES_DB_URL` (defaults to the core
-  connection with the database name swapped). `GET /health` now reports the registry status
-  (`registry_database`: `connected`/`disconnected`) independently of the core database.
+### Removed
+- **Separate type-registry database (#3447)** — removed the separate type-registry database
+  and its dedicated REST connection, configuration, and health reporting. The type registry
+  now lives in the main `objectified-db` database; `GET /health` reports only the core
+  database status again. Reverses #3446.
 
 ## [1.2.0] - 2024-12-07
 

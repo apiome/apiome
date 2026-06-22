@@ -1,6 +1,6 @@
 {
   "name": "objectified-db",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Objectified database migrations and the direct-to-database admin CLI (objectified-db).",
   "author": "Objectified",
   "type": "module",
@@ -9,8 +9,7 @@
   "files": [
     "/bin",
     "/dist",
-    "/scripts",
-    "/registry-scripts"
+    "/scripts"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
