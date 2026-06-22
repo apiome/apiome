@@ -1,6 +1,6 @@
 [project]
 name = "objectified-rest"
-version = "1.0.64"
+version = "1.0.65"
 description = "REST API for serving OpenAPI specifications from the Objectified database"
 readme = "README.md"
 requires-python = ">=3.11"

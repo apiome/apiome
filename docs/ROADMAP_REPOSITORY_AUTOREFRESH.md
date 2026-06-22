@@ -120,7 +120,7 @@ epic. Use this table to resolve any `RAR-*` reference below to its issue number.
 | RAR-EPIC-4 | #3509 | RAR-EPIC-5 | #3510 | RAR-EPIC-6 | #3511 |
 | ~~RAR-1.1~~ ✅ | ~~#3512~~ | ~~RAR-1.2~~ ✅ | ~~#3513~~ | ~~RAR-1.3~~ ✅ | ~~#3514~~ |
 | ~~RAR-1.4~~ ✅ | ~~#3515~~ | ~~RAR-1.5~~ ✅ | ~~#3516~~ | RAR-1.6 | #3517 |
-| ~~RAR-2.1~~ ✅ | ~~#3518~~ | RAR-2.2 | #3519 | RAR-2.3 | #3520 |
+| ~~RAR-2.1~~ ✅ | ~~#3518~~ | ~~RAR-2.2~~ ✅ | ~~#3519~~ | RAR-2.3 | #3520 |
 | RAR-2.4 | #3521 | RAR-3.1 | #3522 | RAR-3.2 | #3523 |
 | RAR-3.3 | #3524 | RAR-3.4 | #3525 | RAR-3.5 | #3526 |
 | RAR-4.1 | #3527 | RAR-4.2 | #3528 | RAR-4.3 | #3529 |
@@ -247,7 +247,7 @@ Re-import only files genuinely newer than what's already in the system.
 | ID | Title | Summary | Labels | Parallel | MVP | Cmplx | Modules |
 |----|-------|---------|--------|----------|-----|-------|---------|
 | ~~RAR-2.1~~ ✅ **Done** (#3518) | Capture freshness signal at import | Store source commit SHA + committed-at + blob_sha as `last_imported_*` | `enhancement`,`mvp`,`import`,`repository`,`data-model` | Y | Y | M | objectified-db, objectified-rest |
-| RAR-2.2 | "Newer-than" comparator | Re-import only when remote commit is newer than last imported | `enhancement`,`mvp`,`import`,`repository` | N | Y | M | objectified-rest |
+| ~~RAR-2.2~~ ✅ **Done** (#3519) | "Newer-than" comparator | Re-import only when remote commit is newer than last imported | `enhancement`,`mvp`,`import`,`repository` | N | Y | M | objectified-rest |
 | RAR-2.3 | Per-file refresh state machine | up-to-date / stale / refreshing / failed / diverged | `enhancement`,`mvp`,`import`,`repository` | Y | Y | M | objectified-rest, objectified-ui |
 | RAR-2.4 | Checksum idempotency guard | Suppress no-op refreshes when content unchanged despite newer commit | `enhancement`,`mvp`,`import` | Y | Y | S | objectified-rest |
 
@@ -291,6 +291,21 @@ equal-timestamp when timestamps are unavailable.
 **Acceptance criteria.** Reverting a file to older content does **not** trigger re-import; forward
 edits do; deterministic fixtures cover all four rows.
 **Dependencies.** Depends RAR-2.1. Blocks RAR-3.2, RAR-4.1. **Parallel = N.**
+
+**Status: ✅ Done (#3519).** New pure module
+`objectified-rest/src/app/repository_refresh_comparator.py` exposes `evaluate_refresh(...)`, a
+side-effect-free decision function that gates dispatch on commit recency rather than raw checksum
+drift. It takes the remote file's `committed_at` + content identity and the stored RAR-2.1
+`last_imported_committed_at` / `last_imported_blob_sha` anchors and returns a `RefreshDecision`
+(`should_refresh`, a stable `RefreshReason` code, and whether the timestamp comparison or the
+checksum fallback was used). When both timestamps parse the comparison is authoritative — newer +
+changed → REFRESH, newer + same → SKIP (idempotent), older/equal → SKIP (stale guard); when either
+timestamp is missing/unparseable it falls back to legacy checksum-changed gating. Timestamps accept
+ISO-8601 (incl. trailing `Z`) or `datetime`; naive datetimes are assumed UTC.
+`tests/test_repository_refresh_comparator.py` covers all four decision rows, both acceptance
+criteria, input-shape handling (datetime/naive/mixed-offset/blank/unparseable), and the
+no-prior-import case (19 deterministic DB-free fixtures). The dispatch wiring into the auto-refresh
+worker is RAR-4.1.
 
 ### RAR-2.3 / 2.4
 - **2.3** materialize a per-file refresh status (joins scan recency vs `last_imported_*`) surfaced to
