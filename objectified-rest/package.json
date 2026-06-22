@@ -1,6 +1,6 @@
 {
   "name": "objectified-rest",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "Trigger file for Objectified REST Docker publish workflow; app is Python (pyproject.toml).",
   "scripts": {

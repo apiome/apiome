@@ -225,6 +225,57 @@ class SpecImportOptions(BaseModel):
     )
 
 
+# Current envelope version for a persisted repository import spec. Bumped by
+# RAR-1.4 when the stored option shape changes; readers use it to migrate older
+# rows forward without losing data.
+REPOSITORY_IMPORT_SPEC_SCHEMA_VERSION = 1
+
+
+class RepositoryImportSpec(BaseModel):
+    """Persisted import specification for one imported repository file (RAR-1.1).
+
+    Mirrors the ``odb.repository_import_spec`` row. Keyed to the imported-file
+    lineage ``(repository_id, branch, path)`` it captures the full
+    ``SpecImportOptions`` payload plus the source descriptor used at import time,
+    so a repository auto-refresh can replay the user's original request instead
+    of falling back to importer defaults.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: Optional[str] = Field(
+        default=None,
+        description="Row id; absent for a not-yet-persisted spec.",
+    )
+    tenant_id: str
+    repository_id: str
+    branch: str
+    path: str = Field(description="Repository-relative file path (lineage key).")
+    project_id: str
+    source_kind: str = Field(
+        description="Importer discriminator (for example openapi-3, arazzo).",
+    )
+    format_override: Optional[str] = Field(
+        default=None,
+        description="Explicit format override (the importer --format flag), when the user forced one.",
+    )
+    content_type: Optional[str] = Field(
+        default=None,
+        description="MIME type used to read the file (for example application/yaml), when known.",
+    )
+    options: SpecImportOptions = Field(
+        default_factory=SpecImportOptions,
+        description="Full SpecImportOptions payload submitted at import time.",
+    )
+    spec_schema_version: int = Field(
+        default=REPOSITORY_IMPORT_SPEC_SCHEMA_VERSION,
+        description="Envelope version of the stored spec.",
+    )
+    created_by: Optional[str] = None
+    created_at: Optional[Union[datetime, str]] = None
+    updated_at: Optional[Union[datetime, str]] = None
+
+
 class SpecImportStartMetadata(BaseModel):
     """Shared metadata for JSON-base64 and multipart upload flows."""
 

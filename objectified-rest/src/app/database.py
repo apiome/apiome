@@ -6848,6 +6848,128 @@ class Database:
             conn.rollback()
             raise e
 
+    def upsert_repository_import_spec(
+        self,
+        tenant_id: str,
+        repository_id: str,
+        branch: str,
+        path: str,
+        project_id: str,
+        source_kind: str,
+        options: Dict[str, Any],
+        format_override: Optional[str] = None,
+        content_type: Optional[str] = None,
+        spec_schema_version: int = 1,
+        created_by: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Insert or refresh the persisted import spec for one repository file (RAR-1.1).
+
+        Keyed on the imported-file lineage ``(repository_id, branch, path)``: a
+        repeat import of the same file updates the existing row in place so the
+        table always holds the latest spec. ``options`` is the full
+        ``SpecImportOptions`` payload and is stored verbatim in ``options_json``.
+
+        The insert is guarded by a subquery so a row is only written when the
+        repository belongs to the given tenant.
+
+        Args:
+            tenant_id: Owning tenant id.
+            repository_id: Source repository id (must belong to ``tenant_id``).
+            branch: Branch the file was imported from.
+            path: Repository-relative file path (lineage key).
+            project_id: Catalog project the import targeted.
+            source_kind: Importer discriminator (for example ``openapi-3``).
+            options: Full ``SpecImportOptions`` payload to persist.
+            format_override: Explicit importer ``--format`` override, if any.
+            content_type: MIME type used to read the file, if known.
+            spec_schema_version: Envelope version of the stored spec.
+            created_by: User id that initiated the import, if known.
+
+        Returns:
+            The persisted row as a dict.
+
+        Raises:
+            ValueError: If the repository does not belong to the tenant.
+        """
+        import json
+
+        query = """
+            INSERT INTO odb.repository_import_spec (
+                tenant_id, repository_id, branch, path, project_id,
+                source_kind, format_override, content_type,
+                options_json, spec_schema_version, created_by
+            )
+            SELECT %s::uuid, %s::uuid, %s, %s, %s::uuid,
+                   %s, %s, %s,
+                   %s::jsonb, %s, %s::uuid
+            FROM odb.tenant_repositories tr
+            WHERE tr.id = %s::uuid AND tr.tenant_id = %s::uuid AND tr.deleted_at IS NULL
+            ON CONFLICT ON CONSTRAINT uq_repository_import_spec_repo_branch_path
+            DO UPDATE SET
+                tenant_id = EXCLUDED.tenant_id,
+                project_id = EXCLUDED.project_id,
+                source_kind = EXCLUDED.source_kind,
+                format_override = EXCLUDED.format_override,
+                content_type = EXCLUDED.content_type,
+                options_json = EXCLUDED.options_json,
+                spec_schema_version = EXCLUDED.spec_schema_version,
+                created_by = EXCLUDED.created_by,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING id, tenant_id, repository_id, branch, path, project_id,
+                      source_kind, format_override, content_type,
+                      options_json, spec_schema_version, created_by,
+                      created_at, updated_at
+        """
+        params = (
+            tenant_id, repository_id, branch, path, project_id,
+            source_kind, format_override, content_type,
+            json.dumps(options or {}), spec_schema_version, created_by,
+            repository_id, tenant_id,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+                conn.commit()
+            if row is None:
+                raise ValueError(
+                    f"Repository {repository_id} not found for tenant {tenant_id}; "
+                    "import spec not persisted."
+                )
+            return row
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def get_repository_import_spec(
+        self, tenant_id: str, repository_id: str, branch: str, path: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return the persisted import spec for one repository file, or None.
+
+        Args:
+            tenant_id: Owning tenant id (scopes the lookup).
+            repository_id: Source repository id.
+            branch: Branch the file was imported from.
+            path: Repository-relative file path (lineage key).
+
+        Returns:
+            The stored row as a dict, or None when no spec exists.
+        """
+        query = """
+            SELECT id, tenant_id, repository_id, branch, path, project_id,
+                   source_kind, format_override, content_type,
+                   options_json, spec_schema_version, created_by,
+                   created_at, updated_at
+            FROM odb.repository_import_spec
+            WHERE tenant_id = %s::uuid
+              AND repository_id = %s::uuid
+              AND branch = %s
+              AND path = %s
+        """
+        results = self.execute_query(query, (tenant_id, repository_id, branch, path))
+        return results[0] if results else None
+
     def get_public_browse_directory_stats(self) -> Dict[str, int]:
         """Counts for tenants/projects/versions with published public revisions (browse directory)."""
         query = """
