@@ -45,6 +45,7 @@ We continue to improve the platform based on your feedback with improvements and
 - **`objectified-cli`**: shared output layer (`lib/output.ts`) with `this.output` on `BaseCommand` — tables (`cli-table3`), stable sorted JSON/YAML, ora spinners, stderr warnings/errors, and TTY / `--json` / `--quiet` / `--no-color` / `LANG=C` behavior; Vitest snapshots cover render modes (#3189).
 
 ## Import
+- **Primitives import review** (`objectified-rest`): `POST /v1/primitives/{tenant}/import/review` dry-runs an import and classifies each definition as **New**, **Identical**, or **Conflict** against the registry, with a draft 2020-12 validation report, `$ref` rewrites, and resolution choices; `POST …/import` honors `dedupe` (default on) and per-type `resolutions` (`keep` / `overwrite` / `rename`) so conflicts are surfaced instead of skipped silently (#3464).
 - Import supports Swagger 2.0 format
 - Adds the ability to import multiple versions of the same project 
 
