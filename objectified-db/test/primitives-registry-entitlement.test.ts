@@ -15,7 +15,7 @@ import { describe, expect, it, beforeAll } from "vitest";
 import { listMigrationFiles } from "../src/migrate.js";
 
 const SCRIPTS_DIR = new URL("../scripts", import.meta.url).pathname;
-const MIGRATION = "20260623-130000.sql";
+const MIGRATION = "V116__primitives_type_registry_entitlement_fea.sql";
 
 let sql = "";
 

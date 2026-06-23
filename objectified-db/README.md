@@ -2,12 +2,59 @@
 
 Database migrations **and** the `objectified-db` admin CLI for the Objectified platform.
 
-- **Migrations** — SQL scripts in [`scripts/`](./scripts) applied by the CLI
-  `objectified-db migrate` (compatible with
-  [schema-evolution-manager](https://github.com/mbryzek/schema-evolution-manager)
-  tracking in `schema_evolution_manager.scripts`). See the [`Dockerfile`](./Dockerfile).
+- **Migrations** — [Flyway](https://documentation.red-gate.com/flyway)-style versioned SQL
+  scripts in [`scripts/`](./scripts) (`V<version>__<description>.sql`) applied by
+  `objectified-db migrate`, tracked in a Flyway-shaped `flyway_schema_history` table. See
+  [Migrations](#migrations) below and the [`Dockerfile`](./Dockerfile).
+- **Seed data** — idempotent dev fixtures in [`seed/dev/`](./seed/dev) loaded with
+  `objectified-db seed` (development only).
 - **Admin CLI** — a direct-to-database tool for privileged operations (users, tenants,
   membership, API keys), documented below.
+
+## Migrations
+
+Migrations follow Flyway conventions (a self-contained TypeScript engine — no Java required):
+
+- **Naming** — `V<version>__<description>.sql`. The version is a zero-padded sequential number
+  (`V001`, `V002`, … e.g. `V001__multitenant_init.sql`); scripts apply in version order. When
+  adding a migration, use the next number after the highest existing one.
+- **Tracking** — applied scripts are recorded in `flyway_schema_history` (in the `public`
+  schema by default, so it survives the app `odb` schema being dropped) with a CRC32 `checksum`
+  of each script's contents.
+- **Validation** — on every run the recorded checksum of each applied script is compared with
+  the file on disk; editing an already-applied migration is rejected (resolve with `repair`).
+- **Transactions** — each migration runs in its own transaction (the history insert included),
+  so a failure rolls back cleanly with no orphan row.
+
+```bash
+objectified-db migrate                 # apply pending migrations
+objectified-db migrate status          # list applied / pending
+objectified-db migrate --dry-run       # show what would apply
+objectified-db repair                  # realign checksums + drop failed rows
+objectified-db clean                   # drop the odb schema + history (guarded; see below)
+objectified-db seed                    # load dev fixtures (development only)
+```
+
+`clean` is **destructive** and **disabled by default** (matching Flyway 10): it refuses unless
+`FLYWAY_CLEAN_DISABLED=false` (or `--force`), refuses under `NODE_ENV=production`, and requires
+`--yes`/a TTY confirmation. Flyway behaviour is tunable via env (see
+[`.env.example`](./.env.example)): `FLYWAY_SCHEMA_HISTORY_TABLE`, `FLYWAY_DEFAULT_SCHEMA`,
+`FLYWAY_CLEAN_DISABLED`, and `OBJECTIFIED_DB_SEED_DIR`.
+
+### Seed data (development only)
+
+`objectified-db seed` applies the idempotent `*.sql` files in [`seed/dev/`](./seed/dev) (override
+with `--dir` or `OBJECTIFIED_DB_SEED_DIR`), creating a runnable local fixture:
+
+| Fixture | Value |
+|---------|-------|
+| User | `ada@example.com` / password `objectified-dev` |
+| Tenant | `acme-corp` (Ada is a member + administrator) |
+| License | `Dev` (free tier) |
+| API key | prefix `sk_devseed00...` (raw key in [`seed/dev/005_api_key.sql`](./seed/dev/005_api_key.sql)) |
+
+Seeds are **never** run automatically (not wired into the Docker entrypoint or compose) and the
+command refuses under `NODE_ENV=production` without `--force`.
 
 ## Admin CLI
 
@@ -61,8 +108,11 @@ required for destructive operations when there is no TTY).
 ```
 objectified-db ping                         Verify the database connection
 
-migrate [--dry-run] [--scripts-dir <path>]  Apply pending SQL migrations
+migrate [--dry-run] [--scripts-dir <path>]  Apply pending Flyway migrations (V*__*.sql)
 migrate status [--scripts-dir <path>]       List applied / pending migrations
+repair [--scripts-dir <path>]               Realign flyway_schema_history checksums; drop failed rows
+clean [--force]                             Drop the odb schema + history (destructive; guarded)
+seed [--dir <path>] [--dry-run] [--force]   Load dev seed data (development only)
 
 users create   --name --email (--password | --password-stdin | --random-password)
                                             [--unverified] [--disabled]
@@ -142,8 +192,8 @@ table in place**. Primitives are tenant-scoped (each row's `tenant_id`) **and** 
 (`is_system` / `is_public`), so a tenant's own types and the shared `std/*` types compose across
 the tenant's projects with ordinary same-database foreign keys.
 
-Migration `20260622-230000.sql` adds these registry columns to `odb.primitives` (no new tables,
-no separate schema):
+Migration `V111__consolidate_the_type_registry_into_objec.sql` adds these registry
+columns to `odb.primitives` (no new tables, no separate schema):
 
 | Column | Role |
 |--------|------|

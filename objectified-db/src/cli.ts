@@ -114,8 +114,8 @@ program
 
 const migrateCmd = program
   .command("migrate")
-  .description("Apply pending SQL migrations from scripts/ (SEM-compatible tracking)")
-  .option("--scripts-dir <path>", "Directory containing *.sql migrations (default: package scripts/)")
+  .description("Apply pending Flyway migrations (V*__*.sql) from scripts/ (flyway_schema_history)")
+  .option("--scripts-dir <path>", "Directory containing V*__*.sql migrations (default: package scripts/)")
   .option("--dry-run", "Print pending scripts without applying them", false)
   .action(async (opts, cmd: Command) => {
     const g = cmd.optsWithGlobals() as GlobalOpts;
@@ -131,13 +131,52 @@ const migrateCmd = program
 migrateCmd
   .command("status")
   .description("List applied and pending migration scripts")
-  .option("--scripts-dir <path>", "Directory containing *.sql migrations (default: package scripts/)")
+  .option("--scripts-dir <path>", "Directory containing V*__*.sql migrations (default: package scripts/)")
   .action(async (opts, cmd: Command) => {
     const g = cmd.optsWithGlobals() as GlobalOpts;
     await withClient(connectionOf(g), (client) =>
       migrate.runMigrateStatus(
         client,
         { scriptsDir: opts.scriptsDir },
+        modeOf(g),
+      ),
+    );
+  });
+
+program
+  .command("repair")
+  .description("Realign flyway_schema_history checksums to the current files and drop failed rows")
+  .option("--scripts-dir <path>", "Directory containing V*__*.sql migrations (default: package scripts/)")
+  .action(async (opts, cmd: Command) => {
+    const g = cmd.optsWithGlobals() as GlobalOpts;
+    await withClient(connectionOf(g), (client) =>
+      migrate.runRepair(client, { scriptsDir: opts.scriptsDir }, modeOf(g)),
+    );
+  });
+
+program
+  .command("clean")
+  .description("Drop the odb schema and migration history (destructive; disabled by default)")
+  .option("--force", "Override FLYWAY_CLEAN_DISABLED / NODE_ENV=production guards", false)
+  .action(async (opts, cmd: Command) => {
+    const g = cmd.optsWithGlobals() as GlobalOpts;
+    await withClient(connectionOf(g), (client) =>
+      migrate.runClean(client, { yes: Boolean(g.yes), force: Boolean(opts.force) }, modeOf(g)),
+    );
+  });
+
+program
+  .command("seed")
+  .description("Load dev seed data (sample user/tenant/license/API key) — development only")
+  .option("--dir <path>", "Seed directory of *.sql files (default: package seed/dev/)")
+  .option("--dry-run", "List seed files without applying them", false)
+  .option("--force", "Allow seeding even when NODE_ENV=production", false)
+  .action(async (opts, cmd: Command) => {
+    const g = cmd.optsWithGlobals() as GlobalOpts;
+    await withClient(connectionOf(g), (client) =>
+      migrate.runSeed(
+        client,
+        { seedDir: opts.dir, dryRun: Boolean(opts.dryRun), force: Boolean(opts.force) },
         modeOf(g),
       ),
     );
