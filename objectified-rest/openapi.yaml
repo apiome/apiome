@@ -1012,14 +1012,21 @@ paths:
       tags:
       - primitives
       summary: Import Primitives
-      description: "Import primitives from a JSON Schema document.\n\nExtracts type\
-        \ definitions from JSON Schema's $defs or definitions\nand creates primitives\
-        \ from them.\n\nSupports authentication via JWT token or API key.\nWhen using\
-        \ JWT, the created_by field will be set to the authenticated user.\n\nArgs:\n\
-        \    tenant_slug: The tenant slug\n    request: Import request with JSON Schema\
-        \ document\n    auth_data: Authentication data (injected by dependency)\n\n\
-        Returns:\n    Summary of imported primitives plus the id of the recorded provenance\
-        \ row."
+      description: "Import primitives from a JSON Schema document or an Objectified\
+        \ type-def bundle.\n\nFor ``source_kind='json-schema'`` (the default) and\
+        \ ``'openapi'``, type definitions are\nextracted from the document's ``$defs``\
+        \ / ``definitions`` and each becomes a primitive.\nFor ``source_kind='type-def-bundle'``\
+        \ (#3462), the request ``schema`` is expanded as an\nObjectified type-definition\
+        \ bundle — its ``types`` (or ``$defs`` / ``definitions``)\ncontainer is read\
+        \ into many interlinked types, each committed as a primitive with its\ninter-type\
+        \ ``$ref`` edges captured in the ``refs`` JSONB column for the rewrite stage\n\
+        (#3463). A bundle of N types imports N rows; a malformed bundle is rejected\
+        \ with a clear\n400 error.\n\nSupports authentication via JWT token or API\
+        \ key.\nWhen using JWT, the created_by field will be set to the authenticated\
+        \ user.\n\nArgs:\n    tenant_slug: The tenant slug\n    request: Import request\
+        \ with the JSON Schema document or bundle\n    auth_data: Authentication data\
+        \ (injected by dependency)\n\nReturns:\n    Summary of imported primitives\
+        \ plus the id of the recorded provenance row."
       operationId: import_primitives_v1_primitives__tenant_slug__import_post
       parameters:
       - name: tenant_slug
@@ -13045,12 +13052,30 @@ components:
           type: integer
           title: Ref Count
           default: 0
+        internal_refs:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Internal Refs
+          default: []
+        valid:
+          type: boolean
+          title: Valid
+          default: true
+        validation_errors:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Validation Errors
+          default: []
       type: object
       required:
       - name
       - pointer
       title: StagedTypeCandidate
-      description: One candidate type detected in a staged import (#3460).
+      description: 'One candidate type detected in a staged import (#3460, #3461).'
     SunsetTimelineEntryOut:
       properties:
         revisionId:

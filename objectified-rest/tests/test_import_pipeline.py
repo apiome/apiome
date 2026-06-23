@@ -74,6 +74,33 @@ def test_bundle_empty_warns_with_no_candidates():
     assert warnings and "types" in warnings[0]
 
 
+def test_bundle_candidates_carry_inter_type_refs_and_validation():
+    """The bundle importer (#3462) deep-parses: inter-type refs + per-type validation."""
+    doc = {
+        "types": {
+            "Order": {"type": "object", "properties": {"l": {"$ref": "#/types/Line"}}},
+            "Line": {"type": "object"},
+            "Bad": {"type": "stringg"},
+        }
+    }
+    candidates, warnings = detect_candidates(doc, "type-def-bundle")
+    by_name = {c.name: c for c in candidates}
+    # Inter-type #/types ref captured for the rewrite stage (#3463).
+    assert by_name["Order"].internal_refs == [
+        {"relative_ref": "#/types/Line", "resolved_target": "Line", "status": "internal"}
+    ]
+    assert by_name["Line"].valid is True
+    assert by_name["Bad"].valid is False
+    assert warnings == []
+
+
+def test_bundle_staged_report_includes_inter_type_refs():
+    doc = {"types": {"Order": {"properties": {"l": {"$ref": "#/types/Line"}}}, "Line": {"type": "object"}}}
+    staged = build_staged_import(doc, source_kind="type-def-bundle", source_method="paste")
+    entry = {s["name"]: s for s in staged.report()["staged"]}["Order"]
+    assert entry["internal_refs"][0]["resolved_target"] == "Line"
+
+
 # ===========================================================================
 # openapi detection
 # ===========================================================================

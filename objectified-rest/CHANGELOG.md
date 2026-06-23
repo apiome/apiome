@@ -5,6 +5,24 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.18] - 2026-06-22
+
+### Added
+- **Type-definition bundle importer (#3462)** — the `type-def-bundle` source kind now expands into
+  many interlinked primitives instead of being enumerated shallowly. New `app/primitives_bundle.py`
+  provides `parse_type_def_bundle()` (a parsed `.json`/`.yaml` bundle → discrete types) and
+  `expand_zip_bundle()` (a `.zip` archive whose JSON/YAML members are each one type → a merged bundle
+  document). A bundle reads its types from a `types` container (`$defs`/`definitions` accepted as
+  equivalents); each type captures its **inter-type** `$ref` edges — refs at a sibling bundle type
+  (`#/types/Money`, `#/$defs/Money`, `#/definitions/Money`) — as `internal` edges in the `refs` JSONB
+  column for the rewrite stage (#3463), and is validated against draft 2020-12. The staging pipeline
+  (`POST /import/stage`) now deep-parses bundle candidates (internal refs + per-type validation,
+  matching the JSON Schema path), and `POST /v1/primitives/{tenant_slug}/import` with
+  `source_kind='type-def-bundle'` commits a bundle of N types as N `odb.primitives` rows with their
+  refs intact. A malformed bundle (no recognizable container, no usable types, bad/oversized/duplicate
+  zip members) is rejected with a clear 400 / `BundleError` message. The per-definition commit loop is
+  shared by the JSON Schema and bundle paths via `_commit_imported_definitions()`.
+
 ## [1.0.16] - 2026-06-22
 
 ### Added

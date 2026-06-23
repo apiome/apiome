@@ -13,6 +13,11 @@ from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
 from .import_ingestion import IngestionError, ingest_source
 from .import_pipeline import VALID_SOURCE_KINDS, build_staged_import
+from .primitives_bundle import (
+    BundleError,
+    build_bundle_internal_ref_edges,
+    parse_type_def_bundle,
+)
 from .models import (
     PrimitiveCreateRequest,
     PrimitiveImportRecord,
@@ -729,6 +734,98 @@ async def delete_primitive(
     return {"message": "Primitive deleted successfully"}
 
 
+def _commit_imported_definitions(
+    definitions: Dict[str, Any],
+    internal_edge_builder,
+    *,
+    tenant_id: str,
+    tenant_slug: str,
+    target_namespace: Optional[str],
+    created_by: Optional[str],
+) -> Dict[str, List[Any]]:
+    """Commit a ``name -> schema`` map of imported definitions as primitive rows.
+
+    Shared by the JSON Schema ``$defs`` import and the type-definition bundle import
+    (#3462) so both create rows identically: each definition goes through the same draft
+    2020-12 validator, ``$id`` derivation, and scope enforcement as create/update (#3452,
+    #3453); its relative ``$ref`` edges are resolved against the registry (#3456) and its
+    intra-source refs appended as ``internal`` edges for the rewrite stage (#3463); and any
+    dependents' dangling refs are reconciled (#3457). An invalid or scope-violating
+    definition is recorded under ``errors`` and skipped without blocking the others, so a
+    bundle of N valid types commits N rows.
+
+    Args:
+        definitions: The ``name -> schema fragment`` map to import.
+        internal_edge_builder: Callable mapping an identity-stamped schema to its
+            ``internal`` ``$ref`` edges — ``build_internal_ref_edges`` for JSON Schema
+            (``#/$defs/...``) or ``build_bundle_internal_ref_edges`` for a bundle
+            (``#/types/...`` too).
+        tenant_id: The caller's tenant id (scopes ref resolution and reconciliation).
+        tenant_slug: The tenant slug (used for the default base URI).
+        target_namespace: Optional registry namespace each definition is imported into.
+        created_by: The authenticated user id (None for API-key auth).
+
+    Returns:
+        A ``{"imported": [...names], "skipped": [...names], "errors": [...]}`` outcome,
+        where each error is ``{"name", "error"[, "details"]}``.
+    """
+    imported: List[str] = []
+    skipped: List[str] = []
+    errors: List[Dict[str, Any]] = []
+
+    for def_name, def_schema in definitions.items():
+        try:
+            identity = resolve_primitive_identity(
+                def_schema,
+                name=def_name,
+                namespace=target_namespace,
+                base_uri=None,
+                tenant_slug=tenant_slug,
+            )
+        except SchemaValidationError as e:
+            errors.append({"name": def_name, "error": "invalid_schema", "details": e.errors})
+            continue
+        except ScopeViolationError as e:
+            errors.append({"name": def_name, "error": "scope_violation", "details": e.violations})
+            continue
+
+        # Resolve relative registry refs (#3456), then append intra-source refs as
+        # 'internal' edges (#3461/#3462) so the committed row carries them for rewrite
+        # (#3463). Both kinds share the refs JSONB column; 'internal' status keeps the
+        # inter-type edges out of the unresolved aggregates.
+        refs = resolve_primitive_refs(
+            identity['schema'], base_uri=identity['base_uri'], tenant_id=tenant_id
+        )
+        refs = refs + internal_edge_builder(identity['schema'])
+
+        try:
+            schema_type = determine_category_from_schema(def_schema)
+            db.create_primitive(
+                tenant_id=tenant_id,
+                name=def_name,
+                category=schema_type,
+                schema=identity['schema'],
+                description=def_schema.get('description'),
+                tags=def_schema.get('tags', []),
+                created_by=created_by,
+                source='imported',
+                schema_id=identity['schema_id'],
+                draft=identity['draft'],
+                namespace=target_namespace,
+                base_uri=identity['base_uri'],
+                refs=refs,
+            )
+            imported.append(def_name)
+            reconcile_dependents_for_target(identity['schema_id'], tenant_id=tenant_id)
+        except Exception as e:
+            if "unique constraint" in str(e).lower():
+                skipped.append(def_name)
+            else:
+                errors.append({"name": def_name, "error": str(e)})
+
+    return {"imported": imported, "skipped": skipped, "errors": errors}
+
+
 @router.post("/{tenant_slug}/import")
 async def import_primitives(
     tenant_slug: str,
@@ -736,17 +833,23 @@ async def import_primitives(
     auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> Dict[str, Any]:
     """
-    Import primitives from a JSON Schema document.
+    Import primitives from a JSON Schema document or an Objectified type-def bundle.
 
-    Extracts type definitions from JSON Schema's $defs or definitions
-    and creates primitives from them.
+    For ``source_kind='json-schema'`` (the default) and ``'openapi'``, type definitions are
+    extracted from the document's ``$defs`` / ``definitions`` and each becomes a primitive.
+    For ``source_kind='type-def-bundle'`` (#3462), the request ``schema`` is expanded as an
+    Objectified type-definition bundle — its ``types`` (or ``$defs`` / ``definitions``)
+    container is read into many interlinked types, each committed as a primitive with its
+    inter-type ``$ref`` edges captured in the ``refs`` JSONB column for the rewrite stage
+    (#3463). A bundle of N types imports N rows; a malformed bundle is rejected with a clear
+    400 error.
 
     Supports authentication via JWT token or API key.
     When using JWT, the created_by field will be set to the authenticated user.
 
     Args:
         tenant_slug: The tenant slug
-        request: Import request with JSON Schema document
+        request: Import request with the JSON Schema document or bundle
         auth_data: Authentication data (injected by dependency)
 
     Returns:
@@ -762,22 +865,35 @@ async def import_primitives(
             )
         )
 
-    # Extract definitions from schema
-    definitions = {}
+    # Resolve the source into a {name: schema} map of definitions plus the internal-edge
+    # builder appropriate to its shape. A type-def bundle is expanded by the bundle importer
+    # (#3462) — capturing #/types/... inter-type refs — and a malformed bundle is a clear
+    # 400. JSON Schema / OpenAPI documents extract their $defs / definitions as before.
+    warnings: List[str] = []
+    if request.source_kind == 'type-def-bundle':
+        try:
+            parsed_types, warnings = parse_type_def_bundle(
+                request.schema, source_label=request.source_label
+            )
+        except BundleError as e:
+            raise HTTPException(status_code=400, detail=e.message)
+        definitions = {p.name: p.schema for p in parsed_types}
+        internal_edge_builder = build_bundle_internal_ref_edges
+    else:
+        definitions = {}
+        # Check for $defs (JSON Schema 2020-12)
+        if '$defs' in request.schema:
+            definitions.update(request.schema['$defs'])
+        # Check for definitions (older JSON Schema versions)
+        if 'definitions' in request.schema:
+            definitions.update(request.schema['definitions'])
 
-    # Check for $defs (JSON Schema 2020-12)
-    if '$defs' in request.schema:
-        definitions.update(request.schema['$defs'])
-
-    # Check for definitions (older JSON Schema versions)
-    if 'definitions' in request.schema:
-        definitions.update(request.schema['definitions'])
-
-    if not definitions:
-        raise HTTPException(
-            status_code=400,
-            detail="No definitions found in JSON Schema. Schema must contain $defs or definitions."
-        )
+        if not definitions:
+            raise HTTPException(
+                status_code=400,
+                detail="No definitions found in JSON Schema. Schema must contain $defs or definitions."
+            )
+        internal_edge_builder = build_internal_ref_edges
 
     # Filter definitions if specific ones are requested
     if not request.import_all and request.selected_definitions:
@@ -795,78 +911,25 @@ async def import_primitives(
     # Get user_id from auth data (will be None for API key auth)
     created_by = get_authenticated_user_id(auth_data)
 
-    # Import each definition as a primitive
-    imported = []
-    skipped = []
-    errors = []
-
-    for def_name, def_schema in definitions.items():
-        # Each imported definition goes through the SAME draft 2020-12 validator,
-        # $id derivation, and scope enforcement as create/update (#3452, #3453). An
-        # invalid or scope-violating definition is rejected with its details and
-        # skipped; valid ones are not blocked by it.
-        try:
-            identity = resolve_primitive_identity(
-                def_schema,
-                name=def_name,
-                namespace=request.target_namespace,
-                base_uri=None,
-                tenant_slug=tenant_slug,
-            )
-        except SchemaValidationError as e:
-            errors.append({"name": def_name, "error": "invalid_schema", "details": e.errors})
-            continue
-        except ScopeViolationError as e:
-            errors.append({"name": def_name, "error": "scope_violation", "details": e.violations})
-            continue
-
-        # Resolve relative $ref edges for the imported definition (#3456), then append
-        # its intra-document #/$defs refs as 'internal' edges (#3461) so the committed
-        # row carries them for the rewrite stage (#3463). Both kinds share the refs
-        # JSONB column; the 'internal' status keeps them out of unresolved aggregates.
-        refs = resolve_primitive_refs(
-            identity['schema'], base_uri=identity['base_uri'], tenant_id=auth_data['tenant_id']
-        )
-        refs = refs + build_internal_ref_edges(identity['schema'])
-
-        try:
-            # Determine category from schema
-            schema_type = determine_category_from_schema(def_schema)
-
-            # Create primitive - the full (identity-stamped) schema with all metadata is
-            # stored. source='imported' marks its provenance on odb.primitives (#3448).
-            primitive = db.create_primitive(
-                tenant_id=auth_data['tenant_id'],
-                name=def_name,
-                category=schema_type,
-                schema=identity['schema'],  # Full schema (x-license, $comment, examples, …) + stamped $id.
-                description=def_schema.get('description'),
-                tags=def_schema.get('tags', []),
-                created_by=created_by,
-                source='imported',
-                schema_id=identity['schema_id'],
-                draft=identity['draft'],
-                namespace=request.target_namespace,
-                base_uri=identity['base_uri'],
-                refs=refs,
-            )
-            imported.append(primitive['name'])
-            # Each imported type may be the target of an earlier definition's ref (within
-            # this same batch or a prior import) — clear those unresolved flags (#3457).
-            reconcile_dependents_for_target(
-                identity['schema_id'], tenant_id=auth_data['tenant_id']
-            )
-        except Exception as e:
-            if "unique constraint" in str(e).lower():
-                skipped.append(def_name)
-            else:
-                errors.append({"name": def_name, "error": str(e)})
+    # Commit each definition as a primitive (shared by JSON Schema and bundle imports).
+    outcome = _commit_imported_definitions(
+        definitions,
+        internal_edge_builder,
+        tenant_id=auth_data['tenant_id'],
+        tenant_slug=tenant_slug,
+        target_namespace=request.target_namespace,
+        created_by=created_by,
+    )
+    imported = outcome["imported"]
+    skipped = outcome["skipped"]
+    errors = outcome["errors"]
 
     # Build the auditable report and persist a provenance record (#3448).
     report = {
         "imported": imported,
         "skipped": skipped,
         "errors": errors,
+        "warnings": warnings,
         "total_imported": len(imported),
         "total_skipped": len(skipped),
         "total_errors": len(errors),

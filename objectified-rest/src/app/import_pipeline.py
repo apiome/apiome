@@ -21,6 +21,7 @@ source **kind**:
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+from .primitives_bundle import BundleError, parse_type_def_bundle
 from .primitives_parser import parse_json_schema_document
 from .primitives_scope import iter_refs
 
@@ -161,22 +162,36 @@ def _detect_json_schema(
 def _detect_type_def_bundle(
     document: Dict[str, Any], source_label: Optional[str]
 ) -> Tuple[List[StagedCandidate], List[str]]:
-    """Detect candidates in an Objectified type-definition bundle.
+    """Detect candidates in an Objectified type-definition bundle via the expander (#3462).
 
-    A bundle carries many interlinked types under a ``types`` mapping; ``$defs`` /
-    ``definitions`` are accepted as equivalent containers. The full expansion that
-    preserves inter-type refs is #3462 — here we only enumerate the candidates.
+    Delegates to :func:`app.primitives_bundle.parse_type_def_bundle`, which reads the
+    bundle's ``types`` (or legacy ``$defs`` / ``definitions``) container, turns each entry
+    into a discrete type, captures its inter-type ``$ref`` edges for rewrite (#3463), and
+    validates each fragment against draft 2020-12 — so a staged bundle candidate carries the
+    same internal refs and per-type validation report as the JSON Schema path.
+
+    A malformed bundle (no recognizable container, no usable types) is non-fatal at the
+    *staging* step: its clear :class:`~app.primitives_bundle.BundleError` message is surfaced
+    as a warning with no candidates, mirroring the prior empty-bundle behavior. The commit
+    path (``POST /import``) turns the same error into a 400.
     """
-    warnings: List[str] = []
-    for key, pointer in (("types", "#/types"), ("$defs", "#/$defs"), ("definitions", "#/definitions")):
-        container = document.get(key)
-        if isinstance(container, dict) and container:
-            return _candidates_from_mapping(container, pointer), warnings
+    try:
+        parsed, warnings = parse_type_def_bundle(document, source_label=source_label)
+    except BundleError as exc:
+        return [], [exc.message]
 
-    warnings.append(
-        "No 'types', '$defs', or 'definitions' container found in the bundle"
-    )
-    return [], warnings
+    candidates = [
+        StagedCandidate(
+            name=p.name,
+            pointer=p.pointer,
+            ref_count=p.ref_count,
+            internal_refs=p.internal_refs,
+            valid=p.valid,
+            validation_errors=p.validation_errors,
+        )
+        for p in parsed
+    ]
+    return candidates, warnings
 
 
 def _detect_openapi(
