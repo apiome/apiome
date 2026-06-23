@@ -14,6 +14,7 @@ from .arazzo_generator import generate_arazzo_spec, generate_class_arazzo_spec
 from .jsonschema_generator import generate_jsonschema_spec, generate_class_jsonschema_spec
 from .models import OpenAPIResponse
 from .primitives_routes import router as primitives_router
+from .registry_audit_routes import router as registry_audit_router
 from .type_namespaces_routes import router as type_namespaces_router
 from .classes_routes import router as classes_router
 from .projects_routes import router as projects_router
@@ -95,6 +96,9 @@ app.add_middleware(
 # data_router next so /v1/data/* is matched before any generic patterns)
 app.include_router(browse_public_router)
 app.include_router(data_router)
+# registry_audit_router before primitives_router so its literal /{tenant_slug}/audit route is
+# matched ahead of the primitives /{tenant_slug}/{primitive_id} catch-all (#3481).
+app.include_router(registry_audit_router)
 app.include_router(primitives_router)
 app.include_router(type_namespaces_router)
 app.include_router(classes_router)

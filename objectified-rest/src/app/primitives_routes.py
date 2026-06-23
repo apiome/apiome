@@ -41,6 +41,15 @@ from .primitives_review import (
     decide,
 )
 from .primitives_rewrite import rewrite_import_schema
+from .registry_audit import (
+    ACTION_CREATE,
+    ACTION_DELETE,
+    ACTION_IMPORT,
+    ACTION_UPDATE,
+    OUTCOME_FAILURE,
+    OUTCOME_SUCCESS,
+    record_registry_audit,
+)
 from .primitives_scope import (
     ScopeViolationError,
     enforce_ref_scope,
@@ -602,6 +611,21 @@ async def create_primitive(
             identity['schema_id'], tenant_id=auth_data['tenant_id']
         )
 
+        # Record the governed create in the registry audit log (#3481).
+        record_registry_audit(
+            db,
+            auth_data,
+            ACTION_CREATE,
+            primitive_id=str(primitive['id']),
+            schema_id=identity['schema_id'],
+            namespace=request.namespace,
+            detail={
+                "name": request.name,
+                "category": request.category,
+                "draft": identity['draft'],
+            },
+        )
+
         return PrimitiveSchema(**primitive)
     except HTTPException:
         raise
@@ -730,6 +754,21 @@ async def update_primitive(
                 updates.get('schema_id'), tenant_id=auth_data['tenant_id']
             )
 
+        # Record the governed update in the registry audit log (#3481). The changed-field
+        # list reflects what the request actually touched (drives a human-readable diff).
+        record_registry_audit(
+            db,
+            auth_data,
+            ACTION_UPDATE,
+            primitive_id=str(primitive['id']),
+            schema_id=primitive.get('schema_id'),
+            namespace=primitive.get('namespace'),
+            detail={
+                "name": primitive.get('name'),
+                "changed_fields": sorted(updates.keys()),
+            },
+        )
+
         return PrimitiveSchema(**primitive)
     except HTTPException:
         raise
@@ -785,6 +824,21 @@ async def delete_primitive(
             status_code=500,
             detail="Failed to delete primitive"
         )
+
+    # Record the governed delete in the registry audit log (#3481). The primitive's $id and
+    # namespace are captured here so the trail survives the (soft) deletion of the row.
+    record_registry_audit(
+        db,
+        auth_data,
+        ACTION_DELETE,
+        primitive_id=primitive_id,
+        schema_id=existing.get('schema_id'),
+        namespace=existing.get('namespace'),
+        detail={
+            "name": existing.get('name'),
+            "category": existing.get('category'),
+        },
+    )
 
     return {"message": "Primitive deleted successfully"}
 
@@ -1495,6 +1549,28 @@ async def import_primitives(
         # Provenance is best-effort: a failure here must not lose a successful import,
         # but it is surfaced so the audit gap is visible.
         errors.append({"name": "_provenance", "error": f"Failed to record import provenance: {e}"})
+
+    # Record the governed import as a single audit event (#3481). One import call binds many
+    # types, so the event carries the per-outcome counts and the provenance id rather than a
+    # row per type; an import that committed nothing but logged errors is a failure outcome.
+    record_registry_audit(
+        db,
+        auth_data,
+        ACTION_IMPORT,
+        outcome=OUTCOME_SUCCESS if written_count > 0 or not errors else OUTCOME_FAILURE,
+        namespace=request.target_namespace,
+        detail={
+            "import_id": import_id,
+            "source_kind": request.source_kind,
+            "source_label": request.source_label,
+            "total_imported": len(imported),
+            "total_overwritten": len(overwritten),
+            "total_renamed": len(renamed),
+            "total_identical": len(identical),
+            "total_skipped": len(skipped),
+            "total_errors": len(errors),
+        },
+    )
 
     return {
         "message": "Import completed",

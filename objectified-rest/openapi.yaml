@@ -536,6 +536,154 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/primitives/{tenant_slug}/audit:
+    get:
+      tags:
+      - registry-audit
+      summary: List Registry Audit
+      description: 'List type-registry audit events for the tenant (newest first).
+
+
+        Pagination: use **offset** + **limit**, or **cursor** + **limit**. Do not
+        combine
+
+        **cursor** with a non-zero **offset**.'
+      operationId: list_registry_audit_v1_primitives__tenant_slug__audit_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+      - name: action
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          description: Filter by action (repeat for multiple, e.g. primitive.create).
+          title: Action
+        description: Filter by action (repeat for multiple, e.g. primitive.create).
+      - name: actorId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by actor user id (UUID).
+          title: Actorid
+        description: Filter by actor user id (UUID).
+      - name: outcome
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: 'Filter by outcome: success or failure.'
+          title: Outcome
+        description: 'Filter by outcome: success or failure.'
+      - name: primitiveId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by affected primitive id (UUID).
+          title: Primitiveid
+        description: Filter by affected primitive id (UUID).
+      - name: schemaId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by the affected type's derived $id.
+          title: Schemaid
+        description: Filter by the affected type's derived $id.
+      - name: since
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Inclusive lower bound on createdAt (ISO 8601).
+          title: Since
+        description: Inclusive lower bound on createdAt (ISO 8601).
+      - name: until
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Inclusive upper bound on createdAt (ISO 8601).
+          title: Until
+        description: Inclusive upper bound on createdAt (ISO 8601).
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Opaque next-page token from pagination.nextCursor (cursor mode).
+          title: Cursor
+        description: Opaque next-page token from pagination.nextCursor (cursor mode).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistryAuditPageResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/primitives/health:
     get:
       tags:
@@ -1199,6 +1347,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/types/{tenant_slug}/stats:
+    get:
+      tags:
+      - type-registry
+      summary: Get Registry Coverage Stats
+      description: "Return aggregate registry coverage KPIs for the Primitives overview\
+        \ (#3454).\n\nCounts core vs tenant types, imported schemas, property bindings,\
+        \ unresolved ``$ref``\nedges, and distinct namespaces. Feeds the Governance\
+        \ → Primitives KPI strip (#3467).\n\nArgs:\n    tenant_slug: The tenant slug.\n\
+        \    auth_data: Authentication data (injected by dependency).\n\nReturns:\n\
+        \    ``RegistryCoverageStatsResponse`` with the tenant's registry coverage\
+        \ counts."
+      operationId: get_registry_coverage_stats_v1_types__tenant_slug__stats_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistryCoverageStatsResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/types/{tenant_slug}/namespaces:
     get:
       tags:
@@ -1358,6 +1555,111 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TypeNamespaceSchema'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/types/{tenant_slug}/settings:
+    get:
+      tags:
+      - type-registry
+      summary: Get Registry Settings
+      description: "Return the tenant's type-registry settings (#3472).\n\nServes\
+        \ the saved row when one exists. A tenant that has never saved settings receives\
+        \ the\nmodel defaults with ``is_default = true`` (a pure read never materializes\
+        \ a row), so the\nSettings UI always has a complete, effective configuration\
+        \ to render.\n\nArgs:\n    tenant_slug: The tenant slug (caller scope comes\
+        \ from the authenticated token).\n    auth_data: Authentication data (injected\
+        \ by dependency).\n\nReturns:\n    The tenant's effective type-registry settings."
+      operationId: get_registry_settings_v1_types__tenant_slug__settings_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TypeRegistrySettingsSchema'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - type-registry
+      summary: Update Registry Settings
+      description: "Save the tenant's type-registry settings (#3472).\n\nTenant-administrator\
+        \ only. The request may be partial — omitted fields keep their current\npersisted\
+        \ value (or the table default on the first save). Enum and range validation\
+        \ happens\non the request model, so an invalid value is rejected with 422\
+        \ before the upsert. The saved\nsettings become the source of truth the resolver\
+        \ and the validation gate (#3479) read.\n\nArgs:\n    tenant_slug: The tenant\
+        \ slug.\n    request: The settings to persist (partial allowed).\n    auth_data:\
+        \ Authentication data (injected by dependency).\n\nReturns:\n    The full\
+        \ persisted settings after the write."
+      operationId: update_registry_settings_v1_types__tenant_slug__settings_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypeRegistrySettingsUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TypeRegistrySettingsSchema'
         '422':
           description: Validation Error
           content:
@@ -11923,6 +12225,161 @@ components:
         Values are the stable wire/display codes (kebab-case) surfaced to the UI and
 
         the sweep; they match the states in the roadmap state diagram.'
+    RegistryAuditEntryOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        tenantId:
+          type: string
+          title: Tenantid
+        primitiveId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Primitiveid
+        schemaId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Schemaid
+        namespace:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Namespace
+        action:
+          type: string
+          title: Action
+        outcome:
+          type: string
+          title: Outcome
+        actorId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Actorid
+        detail:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Detail
+        createdAt:
+          type: string
+          title: Createdat
+      type: object
+      required:
+      - id
+      - tenantId
+      - action
+      - outcome
+      - createdAt
+      title: RegistryAuditEntryOut
+      description: One row from odb.registry_audit (newest-first list endpoint).
+    RegistryAuditPageResponse:
+      properties:
+        schemaVersion:
+          type: integer
+          title: Schemaversion
+          description: Bumped only when item or pagination shape changes incompatibly.
+          default: 1
+        items:
+          items:
+            $ref: '#/components/schemas/RegistryAuditEntryOut'
+          type: array
+          title: Items
+        pagination:
+          $ref: '#/components/schemas/RegistryAuditPaginationOut'
+      type: object
+      required:
+      - items
+      - pagination
+      title: RegistryAuditPageResponse
+      description: Stable JSON envelope for GET /v1/primitives/{tenant_slug}/audit
+        (schemaVersion bumps on breaking changes).
+    RegistryAuditPaginationOut:
+      properties:
+        limit:
+          type: integer
+          title: Limit
+        total:
+          type: integer
+          title: Total
+        hasMore:
+          type: boolean
+          title: Hasmore
+        offset:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Offset
+          description: Effective offset for this page (offset mode only).
+        nextOffset:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Nextoffset
+          description: Pass as offset for the next page when hasMore is true (offset
+            mode).
+        nextCursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nextcursor
+          description: Opaque cursor for the next page when hasMore is true (cursor
+            mode).
+      type: object
+      required:
+      - limit
+      - total
+      - hasMore
+      title: RegistryAuditPaginationOut
+      description: Offset and/or cursor pagination metadata for the registry audit
+        log.
+    RegistryCoverageStatsResponse:
+      properties:
+        core_type_count:
+          type: integer
+          title: Core Type Count
+          default: 0
+        tenant_type_count:
+          type: integer
+          title: Tenant Type Count
+          default: 0
+        imported_count:
+          type: integer
+          title: Imported Count
+          default: 0
+        properties_bound_count:
+          type: integer
+          title: Properties Bound Count
+          default: 0
+        bound_class_count:
+          type: integer
+          title: Bound Class Count
+          default: 0
+        unresolved_ref_count:
+          type: integer
+          title: Unresolved Ref Count
+          default: 0
+        namespace_count:
+          type: integer
+          title: Namespace Count
+          default: 0
+      type: object
+      title: RegistryCoverageStatsResponse
+      description: 'Aggregate registry coverage KPIs for the Primitives overview (#3454).
+
+
+        Counts are scoped to the caller''s tenant: system-core types are seeded per
+        tenant
+
+        (``is_system = true`` rows owned by the tenant), tenant types are private
+        rows
+
+        (``is_system = false``). ``unresolved_ref_count`` mirrors ``GET …/unresolved``
+        (#3457).'
     RegistryHealthResponse:
       properties:
         status:
@@ -13856,6 +14313,275 @@ components:
         and the
 
         default flag may change.'
+    TypeRegistrySettingsSchema:
+      properties:
+        default_draft:
+          type: string
+          enum:
+          - 2020-12
+          - 2019-09
+          - draft-07
+          title: Default Draft
+          default: 2020-12
+        strict_validation:
+          type: boolean
+          title: Strict Validation
+          default: true
+        allow_annotation_keywords:
+          type: boolean
+          title: Allow Annotation Keywords
+          default: true
+        coerce_imported_drafts:
+          type: boolean
+          title: Coerce Imported Drafts
+          default: true
+        resolution_base_url:
+          type: string
+          title: Resolution Base Url
+          default: https://api.objectified.dev/types/
+        ref_style:
+          type: string
+          enum:
+          - relative
+          - absolute
+          - anchor
+          title: Ref Style
+          default: relative
+        allow_remote_refs:
+          type: boolean
+          title: Allow Remote Refs
+          default: false
+        remote_host_allowlist:
+          items:
+            type: string
+          type: array
+          title: Remote Host Allowlist
+          default:
+          - json-schema.org
+          - spec.openapis.org
+        max_resolution_depth:
+          type: integer
+          title: Max Resolution Depth
+          default: 12
+        circular_ref_policy:
+          type: string
+          enum:
+          - error
+          - warn
+          title: Circular Ref Policy
+          default: error
+        default_import_scope:
+          type: string
+          enum:
+          - tenant
+          - system
+          title: Default Import Scope
+          default: tenant
+        default_target_namespace:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Default Target Namespace
+        rewrite_refs_on_import:
+          type: boolean
+          title: Rewrite Refs On Import
+          default: true
+        accepted_formats:
+          items:
+            type: string
+          type: array
+          title: Accepted Formats
+          default:
+          - json-schema-2020-12
+          - type-def-bundle
+          - openapi-3.1
+        dedupe_identical_types:
+          type: boolean
+          title: Dedupe Identical Types
+          default: true
+        validate_on_save:
+          type: boolean
+          title: Validate On Save
+          default: true
+        block_publish_on_errors:
+          type: boolean
+          title: Block Publish On Errors
+          default: true
+        core_publish_role:
+          type: string
+          enum:
+          - platform_admin
+          - tenant_admin
+          - maintainer
+          title: Core Publish Role
+          default: platform_admin
+        is_default:
+          type: boolean
+          title: Is Default
+          default: true
+        updated_by:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Updated By
+        created_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: string
+          - type: 'null'
+          title: Created At
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: string
+          - type: 'null'
+          title: Updated At
+      type: object
+      title: TypeRegistrySettingsSchema
+      description: 'Per-tenant type-registry behavior settings (#3472).
+
+
+        Configures the default JSON Schema dialect, the ``$ref`` resolution policy,
+        import
+
+        defaults, and the validation/publishing governance toggles read by the validation
+        gate
+
+        (#3479). A tenant that has never saved settings receives the column defaults
+        below.'
+    TypeRegistrySettingsUpdateRequest:
+      properties:
+        default_draft:
+          anyOf:
+          - type: string
+            enum:
+            - 2020-12
+            - 2019-09
+            - draft-07
+          - type: 'null'
+          title: Default Draft
+        strict_validation:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Strict Validation
+        allow_annotation_keywords:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Allow Annotation Keywords
+        coerce_imported_drafts:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Coerce Imported Drafts
+        resolution_base_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Resolution Base Url
+        ref_style:
+          anyOf:
+          - type: string
+            enum:
+            - relative
+            - absolute
+            - anchor
+          - type: 'null'
+          title: Ref Style
+        allow_remote_refs:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Allow Remote Refs
+        remote_host_allowlist:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Remote Host Allowlist
+        max_resolution_depth:
+          anyOf:
+          - type: integer
+            maximum: 64.0
+            minimum: 1.0
+          - type: 'null'
+          title: Max Resolution Depth
+        circular_ref_policy:
+          anyOf:
+          - type: string
+            enum:
+            - error
+            - warn
+          - type: 'null'
+          title: Circular Ref Policy
+        default_import_scope:
+          anyOf:
+          - type: string
+            enum:
+            - tenant
+            - system
+          - type: 'null'
+          title: Default Import Scope
+        default_target_namespace:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Default Target Namespace
+        rewrite_refs_on_import:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Rewrite Refs On Import
+        accepted_formats:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Accepted Formats
+        dedupe_identical_types:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Dedupe Identical Types
+        validate_on_save:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Validate On Save
+        block_publish_on_errors:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Block Publish On Errors
+        core_publish_role:
+          anyOf:
+          - type: string
+            enum:
+            - platform_admin
+            - tenant_admin
+            - maintainer
+          - type: 'null'
+          title: Core Publish Role
+      type: object
+      title: TypeRegistrySettingsUpdateRequest
+      description: 'Request model for saving a tenant''s type-registry settings (#3472).
+
+
+        Every field is optional so the UI may send a partial update; omitted fields
+        keep their
+
+        current persisted value (or the default when no row exists yet). Enum and
+        range checks
+
+        here mirror the ``odb.type_registry_settings`` CHECK constraints so an invalid
+        value is
+
+        rejected with a clean 422 before it ever reaches the database.'
     UnresolvedRefPrimitive:
       properties:
         id:

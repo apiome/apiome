@@ -3727,6 +3727,182 @@ class Database:
             params.append(offset)
         return self.execute_query(q, tuple(params))
 
+    def insert_registry_audit(
+        self,
+        tenant_id: str,
+        action: str,
+        outcome: str,
+        *,
+        primitive_id: Optional[str] = None,
+        schema_id: Optional[str] = None,
+        namespace: Optional[str] = None,
+        actor_id: Optional[str] = None,
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Append-only type-registry audit row (#3481).
+
+        Best-effort: logs and swallows DB errors so a failed audit write can never fail the
+        governed registry action (create/update/delete/import) it records.
+
+        Args:
+            tenant_id: Owning tenant (required).
+            action: Registry verb, e.g. ``primitive.create``.
+            outcome: ``success`` or ``failure``.
+            primitive_id: Affected primitive id, when one exists.
+            schema_id: Derived ``$id`` of the affected type, for traceability.
+            namespace: Registry namespace path of the affected type, when applicable.
+            actor_id: User who performed the action (None for unattributable API-key calls).
+            detail: Structured JSON context (changed fields, import counts, error info).
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO odb.registry_audit
+                      (tenant_id, primitive_id, schema_id, namespace, action, outcome,
+                       actor_id, detail)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                    """,
+                    (
+                        tenant_id,
+                        primitive_id,
+                        schema_id,
+                        namespace,
+                        action,
+                        outcome,
+                        actor_id,
+                        json.dumps(detail) if detail is not None else None,
+                    ),
+                )
+                conn.commit()
+        except Exception as e:
+            conn.rollback()
+            _logger.warning("insert_registry_audit failed: %s", e)
+
+    def _registry_audit_filter_clauses(
+        self,
+        tenant_id: str,
+        *,
+        primitive_id: Optional[str] = None,
+        actions: Optional[List[str]] = None,
+        actor_id: Optional[str] = None,
+        outcome: Optional[str] = None,
+        schema_id: Optional[str] = None,
+        since=None,
+        until=None,
+        cursor_created_at=None,
+        cursor_id: Optional[str] = None,
+    ) -> Tuple[str, List[Any]]:
+        """Build WHERE fragment and params for tenant-scoped registry_audit queries (#3481)."""
+        clauses = ["ra.tenant_id = %s"]
+        params: List[Any] = [tenant_id]
+        if primitive_id is not None:
+            clauses.append("ra.primitive_id = %s")
+            params.append(primitive_id)
+        if actions:
+            placeholders = ",".join(["%s"] * len(actions))
+            clauses.append(f"ra.action IN ({placeholders})")
+            params.extend(actions)
+        if actor_id is not None:
+            clauses.append("ra.actor_id = %s")
+            params.append(actor_id)
+        if outcome is not None:
+            clauses.append("ra.outcome = %s")
+            params.append(outcome)
+        if schema_id is not None:
+            clauses.append("ra.schema_id = %s")
+            params.append(schema_id)
+        if since is not None:
+            clauses.append("ra.created_at >= %s")
+            params.append(since)
+        if until is not None:
+            clauses.append("ra.created_at <= %s")
+            params.append(until)
+        if cursor_created_at is not None and cursor_id is not None:
+            clauses.append("(ra.created_at, ra.id) < (%s, %s::uuid)")
+            params.extend([cursor_created_at, cursor_id])
+        where_sql = " AND ".join(clauses)
+        return where_sql, params
+
+    def count_registry_audit_filtered(
+        self,
+        tenant_id: str,
+        *,
+        primitive_id: Optional[str] = None,
+        actions: Optional[List[str]] = None,
+        actor_id: Optional[str] = None,
+        outcome: Optional[str] = None,
+        schema_id: Optional[str] = None,
+        since=None,
+        until=None,
+    ) -> int:
+        """Count registry_audit rows matching filters (no cursor)."""
+        where_sql, params = self._registry_audit_filter_clauses(
+            tenant_id,
+            primitive_id=primitive_id,
+            actions=actions,
+            actor_id=actor_id,
+            outcome=outcome,
+            schema_id=schema_id,
+            since=since,
+            until=until,
+            cursor_created_at=None,
+            cursor_id=None,
+        )
+        q = f"SELECT COUNT(*)::bigint AS cnt FROM odb.registry_audit ra WHERE {where_sql}"
+        rows = self.execute_query(q, tuple(params))
+        if not rows:
+            return 0
+        return int(rows[0].get("cnt") or 0)
+
+    def search_registry_audit(
+        self,
+        tenant_id: str,
+        *,
+        primitive_id: Optional[str] = None,
+        actions: Optional[List[str]] = None,
+        actor_id: Optional[str] = None,
+        outcome: Optional[str] = None,
+        schema_id: Optional[str] = None,
+        since=None,
+        until=None,
+        limit: int = 50,
+        offset: int = 0,
+        cursor_created_at=None,
+        cursor_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Paginated registry_audit rows, newest first (created_at DESC, id DESC).
+        Use either (offset) or (cursor_created_at + cursor_id), not both.
+        """
+        where_sql, params = self._registry_audit_filter_clauses(
+            tenant_id,
+            primitive_id=primitive_id,
+            actions=actions,
+            actor_id=actor_id,
+            outcome=outcome,
+            schema_id=schema_id,
+            since=since,
+            until=until,
+            cursor_created_at=cursor_created_at,
+            cursor_id=cursor_id,
+        )
+        use_cursor = cursor_created_at is not None and cursor_id is not None
+        q = f"""
+            SELECT ra.id, ra.tenant_id, ra.primitive_id, ra.schema_id, ra.namespace,
+                   ra.action, ra.outcome, ra.actor_id, ra.detail, ra.created_at
+            FROM odb.registry_audit ra
+            WHERE {where_sql}
+            ORDER BY ra.created_at DESC, ra.id DESC
+            LIMIT %s
+        """
+        params.append(limit)
+        if not use_cursor:
+            q += " OFFSET %s"
+            params.append(offset)
+        return self.execute_query(q, tuple(params))
+
     def _refresh_audit_filter_clauses(
         self,
         tenant_id: str,

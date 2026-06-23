@@ -2687,6 +2687,64 @@ class WorkflowAuditPageResponse(BaseModel):
     pagination: WorkflowAuditPaginationOut
 
 
+# ==================== Registry audit log (7.4, #3481) ====================
+
+
+class RegistryAuditEntryOut(BaseModel):
+    """One row from odb.registry_audit (newest-first list endpoint)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    tenant_id: str = Field(serialization_alias="tenantId")
+    primitive_id: Optional[str] = Field(None, serialization_alias="primitiveId")
+    schema_id: Optional[str] = Field(None, serialization_alias="schemaId")
+    namespace: Optional[str] = None
+    action: str
+    outcome: str
+    actor_id: Optional[str] = Field(None, serialization_alias="actorId")
+    detail: Optional[Dict[str, Any]] = None
+    created_at: str = Field(serialization_alias="createdAt")
+
+
+class RegistryAuditPaginationOut(BaseModel):
+    """Offset and/or cursor pagination metadata for the registry audit log."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    limit: int
+    total: int
+    has_more: bool = Field(serialization_alias="hasMore")
+    offset: Optional[int] = Field(
+        None,
+        description="Effective offset for this page (offset mode only).",
+    )
+    next_offset: Optional[int] = Field(
+        None,
+        serialization_alias="nextOffset",
+        description="Pass as offset for the next page when hasMore is true (offset mode).",
+    )
+    next_cursor: Optional[str] = Field(
+        None,
+        serialization_alias="nextCursor",
+        description="Opaque cursor for the next page when hasMore is true (cursor mode).",
+    )
+
+
+class RegistryAuditPageResponse(BaseModel):
+    """Stable JSON envelope for GET /v1/primitives/{tenant_slug}/audit (schemaVersion bumps on breaking changes)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    schema_version: int = Field(
+        default=1,
+        serialization_alias="schemaVersion",
+        description="Bumped only when item or pagination shape changes incompatibly.",
+    )
+    items: List[RegistryAuditEntryOut]
+    pagination: RegistryAuditPaginationOut
+
+
 # ==================== Repository refresh history (RAR-5.3, #3534) ====================
 
 

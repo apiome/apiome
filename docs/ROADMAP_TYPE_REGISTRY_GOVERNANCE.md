@@ -770,7 +770,7 @@ Governance controls around the registry: entitlements, publish gates, promotion,
 | 7.1 #3478 ✅ | Entitlement & feature gating | **DONE** — optional `primitives-registry` entitlement gates the advanced Type Registry surface (resolver, namespaces, settings, stats, import) in `objectified-rest`; baseline primitives CRUD + `/health` stay always-on | `type-registry`,`governance`,`rest`,`ui`,`mvp`,`roadmap-type-registry` | Y | Y | S | objectified-rest, objectified-ui |
 | 7.2 #3479 ✅ | Type publishing & validation gate | **DONE** — Primitive create/update now consult the tenant's type-registry settings (#3472) before persisting: `load_publish_gate()` reads `validate_on_save` / `block_publish_on_errors` and threads them through `resolve_primitive_identity` (#3452). With the gate on (the default, and the behavior when a tenant has no saved settings) an invalid draft 2020-12 schema is rejected with field-level 422 errors; relaxing `block_publish_on_errors` lets it persist (advisory), and `validate_on_save=false` skips the meta-schema check entirely. Structural reachability (schema must be a JSON object) and cross-tenant `$ref` scope enforcement (#3453) stay always-on regardless of the gate. Covered by `test_primitives_publish_gate.py` | `type-registry`,`governance`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-rest |
 | 7.3 #3480 | Promote tenant type → core (CAB) | Governed promotion of a vetted tenant type to `std/*` | `type-registry`,`governance`,`rest`,`ui`,`roadmap-type-registry` | Y | N | M | objectified-rest, objectified-ui |
-| 7.4 #3481 | Registry audit log | Record create/update/import/publish/bind events | `type-registry`,`governance`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | S | objectified-rest |
+| 7.4 #3481 ✅ | Registry audit log | **DONE** — append-only `odb.registry_audit` ledger (migration `20260623-140000.sql`) records each governed primitive action (`primitive.create` / `update` / `delete` / `import`) with the acting user, the affected type's `$id`/namespace, and structured detail. Writes are best-effort (a failed audit insert never fails the action) and wired into the create/update/delete/import routes via `record_registry_audit`. Queryable per tenant, newest first, with offset + cursor pagination and action/actor/outcome/date filters at `GET /v1/primitives/{tenant_slug}/audit` (behind the same `primitives-registry` entitlement as the rest of the advanced surface). Covered by `test_registry_audit_api.py`, `test_registry_audit_db.py`, `test_primitives_audit_writes.py` | `type-registry`,`governance`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | S | objectified-rest |
 | 7.5 #3482 | Version roots & deprecation lifecycle | Manage `v0`/`v1` roots; deprecate/sunset types | `type-registry`,`versions`,`governance`,`roadmap-type-registry` | Y | N | M | objectified-rest, objectified-ui |
 
 ### Issue 7.1 — Entitlement & feature gating ✅ DONE (#3478)
@@ -808,12 +808,26 @@ Governance controls around the registry: entitlements, publish gates, promotion,
 - **Parallelism/Dependencies.** Depends on 2.2/2.4, 7.4.
 - **Technical Stack.** FastAPI, Next.js.
 
-### Issue 7.4 — Registry audit log
+### Issue 7.4 — Registry audit log ✅ DONE (#3481)
 - **Solution/Scope.** Append-only audit of registry events (create/update/import/publish/bind/
   promote), with actor + timestamp; reuse existing audit infra where available.
 - **Acceptance Criteria.** Each governed action writes an audit record; queryable per tenant.
 - **Parallelism/Dependencies.** Parallel; consumed by 7.3.
 - **Technical Stack.** FastAPI, PostgreSQL.
+- **DONE.** New append-only table `odb.registry_audit` (migration `20260623-140000.sql`),
+  modeled on the `workflow_audit` ledger (#2577): `tenant_id`, optional `primitive_id`, the
+  affected type's `schema_id`/`namespace`, `action`, `outcome`, `actor_id`, JSONB `detail`, and
+  `created_at`. A shared `record_registry_audit` helper (`app/registry_audit.py`) resolves the
+  actor from the request auth and writes one row per governed action; it is best-effort at both
+  the helper and DB layers, so a failed audit can never fail the create/update/delete/import it
+  records. The publish gate (#3479) means an invalid create/update is rejected *before* any
+  audit row is written. The read side is `GET /v1/primitives/{tenant_slug}/audit`
+  (`app/registry_audit_routes.py`, registered ahead of the primitives catch-all): tenant-scoped,
+  newest first, offset + cursor pagination, filterable by action/actor/outcome/schemaId/date, and
+  gated by the `primitives-registry` entitlement like the rest of the advanced surface. Imports
+  write a single summary event (counts + provenance id) rather than a row per bound type.
+  Promote-to-core (7.3) is not yet implemented, so its `primitive.promote` event is deferred to
+  that ticket.
 
 ### Issue 7.5 — Version roots & deprecation lifecycle — V2
 - **Solution/Scope.** Manage version roots (`v0` stable, `v1` draft) and type deprecation/sunset;
