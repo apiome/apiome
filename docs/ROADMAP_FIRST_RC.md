@@ -89,11 +89,14 @@ Five phases. Ship gates at the end of Phase 4 (`RC1`) and Phase 5 (`GA-ready`). 
 ### Phase 0 — Prove the Spine & Stop the Bleeding  *(week 1)*  · **Epic #3603**
 *Lock down what's already built before adding anything. Nothing here is optional.*
 
-**0.1 — End-to-end spine smoke test** (#3608) · **M** · *blocks everything*
+**0.1 — End-to-end spine smoke test** (#3608) · **M** · *blocks everything* · ✅ **Done**
 Author one golden path exercised in CI and by hand: `import an OpenAPI doc → edit a class & a path in the
 UI → lint → cut a version → publish → view in browse → export OpenAPI + download via CLI → query via MCP`.
 This is both a regression net and the definition of "the product works."
 *Exit:* a scripted run (and a manual checklist) that goes green start-to-finish on a clean `docker compose up`.
+*Delivered:* `scripts/golden_path/` (harness + `run.sh` + fixture), [`docs/GOLDEN_PATH.md`](GOLDEN_PATH.md)
+manual checklist, `rest` + `seed` services added to `docker-compose.yml`, and the
+`.github/workflows/golden-path.yml` CI check.
 
 **0.2 — Real quality-scoring / linting service** (#3609) · **L** · *blocks RC; gap #1*
 Promote the A–F score from localStorage to a backend endpoint: a rule set over the OpenAPI/JSON-Schema
@@ -251,7 +254,6 @@ Created in `objectified-project/objectified` (pack label `roadmap-first-rc`, all
 | Issue | Title | Phase |
 |---|---|---|
 | #3603 | Epic: RC1 Phase 0 — Prove the Spine & Stop the Bleeding | 0 |
-| #3608 | RC1-0.1 — End-to-end spine smoke test (golden path) | 0 |
 | #3609 | RC1-0.2 — Real quality-scoring / linting service | 0 |
 | #3610 | RC1-0.3 — Auth & secret hardening pass | 0 |
 | #3604 | Epic: RC1 Phase 1 — Access & Trust | 1 |

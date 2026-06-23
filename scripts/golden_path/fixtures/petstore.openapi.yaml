@@ -1,0 +1,96 @@
+openapi: 3.1.0
+info:
+  title: Golden Path Petstore
+  version: 1.0.0
+  description: >-
+    Minimal but real OpenAPI document imported by the end-to-end golden-path smoke
+    test (scripts/golden_path/smoke.py). It carries two schemas ("classes") and two
+    paths so the edit / lint / version / publish / export steps have meaningful content.
+servers:
+  - url: https://example.invalid/api
+paths:
+  /pets:
+    get:
+      operationId: getDefaultPet
+      summary: Get the featured pet
+      tags:
+        - pets
+      responses:
+        "200":
+          description: The featured pet.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+    post:
+      operationId: createPet
+      summary: Create a pet
+      tags:
+        - pets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Pet"
+      responses:
+        "201":
+          description: The created pet.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+  /pets/{petId}:
+    get:
+      operationId: getPetById
+      summary: Get a pet by id
+      tags:
+        - pets
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The requested pet.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+        "404":
+          description: Pet not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    Pet:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the pet.
+        name:
+          type: string
+          description: The pet's name.
+        tag:
+          type: string
+          description: An optional category tag.
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.

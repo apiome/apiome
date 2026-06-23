@@ -5920,7 +5920,11 @@ class Database:
                         prop["property_id"],
                         prop["name"],
                         prop["description"],
-                        prop["data"],
+                        # ``data`` is a JSONB column read back as a Python dict; it must be
+                        # re-wrapped with Json() before re-insertion or psycopg2 raises
+                        # "can't adapt type 'dict'". Preserve SQL NULL (vs JSON null) for
+                        # properties that have no data payload.
+                        Json(prop["data"]) if prop["data"] is not None else None,
                         new_parent,
                         prop.get("primitive_id"),
                         prop.get("primitive_ref"),

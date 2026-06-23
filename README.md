@@ -24,6 +24,26 @@ database, now defunct.)  Official work on this project started in 2021.
 
 ## Getting Started
 
+Bring up the full local spine (Postgres, migrations, dev seed data, the REST API on `:8000`, and the
+MCP server on `:8765`) with Docker:
+
+```bash
+docker compose up --build --wait
+docker compose run --rm seed   # loads the dev tenant (acme-corp) + sample API key
+```
+
+### Golden path (does it all work?)
+
+The end-to-end **golden path** — `import OpenAPI → edit a class & a path → lint → cut a version →
+publish → view in browse → export via CLI → query via MCP` — is both a smoke test and the executable
+definition of "the product works." Run it against a clean stack with:
+
+```bash
+scripts/golden_path/run.sh
+```
+
+See [docs/GOLDEN_PATH.md](docs/GOLDEN_PATH.md) for the step-by-step automated harness and the manual
+UI checklist.
 
 ## LLMs Used
 

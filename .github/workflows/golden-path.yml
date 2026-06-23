@@ -1,0 +1,87 @@
+name: Golden Path
+
+# End-to-end spine smoke test (RC1-0.1, #3608). Brings up the full spine via the root
+# docker-compose (postgres -> migrate -> seed -> rest -> mcp) and runs the golden path:
+#   import OpenAPI -> edit a class & a path -> lint -> cut a version -> publish
+#                 -> view in browse -> export via CLI -> query via MCP
+# This is intended to be a REQUIRED status check on `main`: a red run means the spine regressed.
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - '.github/workflows/golden-path.yml'
+      - 'scripts/golden_path/**'
+      - 'docker-compose.yml'
+      - 'docker-compose.env.example'
+      - 'objectified-rest/**'
+      - 'objectified-mcp/**'
+      - 'objectified-db/**'
+      - 'objectified-cli/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - '.github/workflows/golden-path.yml'
+      - 'scripts/golden_path/**'
+      - 'docker-compose.yml'
+      - 'docker-compose.env.example'
+      - 'objectified-rest/**'
+      - 'objectified-mcp/**'
+      - 'objectified-db/**'
+      - 'objectified-cli/**'
+  workflow_dispatch:
+
+jobs:
+  golden-path:
+    name: End-to-end golden path
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose specification
+        run: docker compose config
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install objectified-cli (harness + CLI deps)
+        run: uv sync
+        working-directory: objectified-cli
+
+      - name: Bring up the spine
+        run: docker compose up --build --wait
+
+      - name: Load dev seed data
+        run: docker compose run --rm seed
+
+      - name: Run the golden-path smoke test
+        env:
+          OBJECTIFIED_REST_URL: http://localhost:8000
+          OBJECTIFIED_MCP_URL: http://localhost:8765/mcp
+          OBJECTIFIED_CLI_CMD: uv run --project objectified-cli objectified
+        run: uv run --project objectified-cli python scripts/golden_path/smoke.py
+
+      - name: Dump stack logs on failure
+        if: failure()
+        run: docker compose logs --no-color > docker-compose.logs.txt 2>&1 || true
+
+      - name: Upload stack logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-path-stack-logs
+          path: docker-compose.logs.txt
+          if-no-files-found: ignore
+        continue-on-error: true
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

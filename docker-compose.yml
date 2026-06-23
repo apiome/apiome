@@ -1,6 +1,15 @@
-# Local MCP stack: Postgres 16 (persistent volume), schema migrations, objectified-mcp (HTTP).
+# Local spine stack: Postgres 16 (persistent volume), schema migrations, dev seed, objectified-rest
+# (HTTP API) and objectified-mcp (HTTP). This is the stack exercised by the end-to-end golden-path
+# smoke test (scripts/golden_path/, docs/GOLDEN_PATH.md).
 # From repo root:
 #   docker compose up --build --wait
+#
+# Services:
+#   postgres  Postgres 16 with a persistent volume.
+#   migrate   One-shot Flyway migrations (runs to completion, then exits).
+#   seed      One-shot dev seed data (sample tenant `acme-corp` + API key); runs after migrate.
+#   rest      objectified-rest FastAPI service on :8000 (depends on migrate + seed).
+#   mcp       objectified-mcp HTTP service on :8765 (depends on migrate + seed).
 #
 # Override secrets via environment or a `.env` file (see docker-compose.env.example).
 
@@ -41,6 +50,62 @@ services:
     networks:
       - objectified-mcp
 
+  # One-shot dev seed (sample tenant `acme-corp`, sample user, dev API key). Runs after migrations
+  # complete and exits. NODE_ENV is forced to development so the seed guard (which refuses to load
+  # dev data under NODE_ENV=production) allows it. Seed SQL is idempotent (ON CONFLICT DO NOTHING).
+  seed:
+    build:
+      context: ./objectified-db
+      dockerfile: Dockerfile
+    command: ["seed"]
+    environment:
+      NODE_ENV: development
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-objectified_local_dev}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-objectified}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+    networks:
+      - objectified-mcp
+
+  # objectified-rest FastAPI service. The golden-path smoke test drives import / edit / version /
+  # publish / browse / export through this service (the same endpoints the UI calls).
+  rest:
+    build:
+      context: ./objectified-rest
+      dockerfile: Dockerfile
+    ports:
+      - "${OBJECTIFIED_REST_HTTP_PORT:-8000}:8000"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-objectified_local_dev}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-objectified}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      seed:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)\""
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    networks:
+      - objectified-mcp
+
   mcp:
     build:
       context: .
@@ -56,6 +121,8 @@ services:
       postgres:
         condition: service_healthy
       migrate:
+        condition: service_completed_successfully
+      seed:
         condition: service_completed_successfully
     networks:
       - objectified-mcp
