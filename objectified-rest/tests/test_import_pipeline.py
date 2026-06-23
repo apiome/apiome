@@ -121,3 +121,38 @@ def test_build_staged_import_assembles_result_and_report():
     assert report["status"] == "staged"
     assert report["detected_count"] == 2
     assert {s["name"] for s in report["staged"]} == {"A", "B"}
+
+
+# ===========================================================================
+# json-schema parser integration (#3461) — internal refs + validation report
+# ===========================================================================
+
+
+def test_json_schema_candidates_carry_internal_refs_and_validation():
+    doc = {
+        "$defs": {
+            "Money": {"properties": {"c": {"$ref": "#/$defs/Currency"}}},
+            "Currency": {"type": "string"},
+            "Bad": {"type": "stringg"},
+        }
+    }
+    candidates, warnings = detect_candidates(doc, "json-schema")
+    by_name = {c.name: c for c in candidates}
+    # Intra-doc #/$defs ref captured for the rewrite stage (#3463).
+    assert by_name["Money"].internal_refs == [
+        {"relative_ref": "#/$defs/Currency", "resolved_target": "Currency", "status": "internal"}
+    ]
+    # Per-candidate draft 2020-12 validation report.
+    assert by_name["Currency"].valid is True
+    assert by_name["Bad"].valid is False
+    assert by_name["Bad"].validation_errors[0]["path"] == "type"
+    assert warnings == []
+
+
+def test_staged_report_includes_internal_refs_and_validity():
+    doc = {"$defs": {"Money": {"properties": {"c": {"$ref": "#/$defs/Money"}}}}}
+    staged = build_staged_import(doc, source_kind="json-schema", source_method="paste")
+    entry = staged.report()["staged"][0]
+    assert entry["internal_refs"][0]["resolved_target"] == "Money"
+    assert entry["valid"] is True
+    assert entry["validation_errors"] == []

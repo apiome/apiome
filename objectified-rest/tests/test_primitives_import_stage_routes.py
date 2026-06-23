@@ -211,6 +211,36 @@ def test_stage_url_fetch_failure_502():
     assert r.status_code == 502
 
 
+def test_stage_three_defs_carry_internal_refs_and_validation():
+    """#3461: a doc with 3 $defs stages 3 candidates with internal refs captured."""
+    with patch("app.primitives_routes.db") as mdb:
+        mdb.create_primitive_import.return_value = _import_row()
+        r = client.post(
+            "/v1/primitives/std/import/stage",
+            json={
+                "source_kind": "json-schema",
+                "source_method": "paste",
+                "content": (
+                    '{"$defs": {'
+                    '"Money": {"properties": {"c": {"$ref": "#/$defs/Currency"}}},'
+                    '"Currency": {"type": "string"},'
+                    '"Invoice": {"properties": {"t": {"$ref": "#/$defs/Money"}}}}}'
+                ),
+            },
+        )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["detected_count"] == 3
+    by_name = {c["name"]: c for c in body["candidates"]}
+    assert by_name["Money"]["internal_refs"][0]["resolved_target"] == "Currency"
+    assert by_name["Money"]["internal_refs"][0]["status"] == "internal"
+    assert by_name["Currency"]["valid"] is True
+    # The staged provenance report carries the same per-def detail.
+    _, kwargs = mdb.create_primitive_import.call_args
+    staged = {s["name"]: s for s in kwargs["report"]["staged"]}
+    assert staged["Invoice"]["internal_refs"][0]["resolved_target"] == "Money"
+
+
 def test_stage_provenance_failure_is_surfaced_as_warning():
     # A record-write failure must not lose the staged result; it becomes a warning.
     with patch("app.primitives_routes.db") as mdb:

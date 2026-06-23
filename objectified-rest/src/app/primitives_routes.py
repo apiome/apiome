@@ -25,6 +25,7 @@ from .models import (
     UnresolvedRefPrimitive,
     UnresolvedRefsResponse,
 )
+from .primitives_parser import build_internal_ref_edges
 from .primitives_resolver import build_ref_edges
 from .primitives_scope import (
     ScopeViolationError,
@@ -819,10 +820,14 @@ async def import_primitives(
             errors.append({"name": def_name, "error": "scope_violation", "details": e.violations})
             continue
 
-        # Resolve relative $ref edges for the imported definition (#3456).
+        # Resolve relative $ref edges for the imported definition (#3456), then append
+        # its intra-document #/$defs refs as 'internal' edges (#3461) so the committed
+        # row carries them for the rewrite stage (#3463). Both kinds share the refs
+        # JSONB column; the 'internal' status keeps them out of unresolved aggregates.
         refs = resolve_primitive_refs(
             identity['schema'], base_uri=identity['base_uri'], tenant_id=auth_data['tenant_id']
         )
+        refs = refs + build_internal_ref_edges(identity['schema'])
 
         try:
             # Determine category from schema

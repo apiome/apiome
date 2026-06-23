@@ -21,6 +21,7 @@ source **kind**:
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+from .primitives_parser import parse_json_schema_document
 from .primitives_scope import iter_refs
 
 # Source document shapes the pipeline understands. Must stay in sync with the
@@ -39,15 +40,34 @@ class StagedCandidate:
             (e.g. ``#/$defs/Money``), so a later stage can re-read it.
         ref_count: How many ``$ref`` values the fragment contains — a cheap signal
             of how much ref rewriting (#3463) the candidate will need.
+        internal_refs: The candidate's intra-document ``$ref`` edges (``#/$defs/...``)
+            captured for the rewrite stage (#3463), each
+            ``{relative_ref, resolved_target, status}`` with ``status == "internal"``.
+            Populated by the JSON Schema parser (#3461); empty for source kinds whose
+            deep parse is a later ticket.
+        valid: Whether the fragment is a valid draft 2020-12 schema (the per-candidate
+            validation report). Defaults to ``True`` for kinds not yet deep-parsed.
+        validation_errors: Field-level draft 2020-12 errors when ``valid`` is
+            ``False`` (empty otherwise).
     """
 
     name: str
     pointer: str
     ref_count: int = 0
+    internal_refs: List[Dict[str, str]] = field(default_factory=list)
+    valid: bool = True
+    validation_errors: List[Dict[str, str]] = field(default_factory=list)
 
     def as_dict(self) -> Dict[str, Any]:
         """Return the candidate as a plain JSON-serializable mapping."""
-        return {"name": self.name, "pointer": self.pointer, "ref_count": self.ref_count}
+        return {
+            "name": self.name,
+            "pointer": self.pointer,
+            "ref_count": self.ref_count,
+            "internal_refs": self.internal_refs,
+            "valid": self.valid,
+            "validation_errors": self.validation_errors,
+        }
 
 
 @dataclass
@@ -91,29 +111,6 @@ def _ref_count(fragment: Any) -> int:
     return sum(1 for _ in iter_refs(fragment))
 
 
-def _derive_single_name(document: Dict[str, Any], source_label: Optional[str]) -> str:
-    """Derive a name for a bare single-document import.
-
-    Prefers the document's ``title``, then the last path segment of its ``$id``,
-    then the source label; falls back to ``"document"``.
-    """
-    title = document.get("title")
-    if isinstance(title, str) and title.strip():
-        return title.strip()
-
-    doc_id = document.get("$id")
-    if isinstance(doc_id, str) and doc_id.strip():
-        tail = doc_id.rstrip("/").rsplit("/", 1)[-1]
-        if tail:
-            return tail
-
-    if source_label and source_label.strip():
-        # Strip a trailing filename extension for a cleaner name.
-        return source_label.strip().rsplit("/", 1)[-1].rsplit(".", 1)[0] or source_label.strip()
-
-    return "document"
-
-
 def _candidates_from_mapping(
     mapping: Dict[str, Any], pointer_prefix: str
 ) -> List[StagedCandidate]:
@@ -137,31 +134,27 @@ def _candidates_from_mapping(
 def _detect_json_schema(
     document: Dict[str, Any], source_label: Optional[str]
 ) -> Tuple[List[StagedCandidate], List[str]]:
-    """Detect candidates in a JSON Schema document.
+    """Detect candidates in a JSON Schema document via the 2020-12 parser (#3461).
 
-    ``$defs`` / ``definitions`` entries become candidates; a document with neither
-    is itself a single candidate (a single-schema import).
+    Delegates to :func:`app.primitives_parser.parse_json_schema_document`, which
+    turns each ``$defs`` / ``definitions`` entry into a discrete type (a document with
+    neither container is itself one type), captures each type's intra-document
+    ``$ref`` edges for rewrite (#3463), and validates each fragment against draft
+    2020-12 — so the staged candidate now carries internal refs and a validation
+    report, not just a ref count.
     """
-    warnings: List[str] = []
-    candidates: List[StagedCandidate] = []
-
-    defs = document.get("$defs")
-    if isinstance(defs, dict) and defs:
-        candidates.extend(_candidates_from_mapping(defs, "#/$defs"))
-
-    legacy = document.get("definitions")
-    if isinstance(legacy, dict) and legacy:
-        candidates.extend(_candidates_from_mapping(legacy, "#/definitions"))
-
-    if not candidates:
-        # No $defs/definitions: treat the whole document as one candidate.
-        candidates.append(
-            StagedCandidate(
-                name=_derive_single_name(document, source_label),
-                pointer="#",
-                ref_count=_ref_count(document),
-            )
+    parsed, warnings = parse_json_schema_document(document, source_label=source_label)
+    candidates = [
+        StagedCandidate(
+            name=p.name,
+            pointer=p.pointer,
+            ref_count=p.ref_count,
+            internal_refs=p.internal_refs,
+            valid=p.valid,
+            validation_errors=p.validation_errors,
         )
+        for p in parsed
+    ]
     return candidates, warnings
 
 
