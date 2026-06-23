@@ -267,10 +267,15 @@ class PrimitiveImportStageRequest(BaseModel):
 
 
 class StagedTypeCandidate(BaseModel):
-    """One candidate type detected in a staged import (#3460)."""
+    """One candidate type detected in a staged import (#3460, #3461)."""
     name: str  # The candidate's name (schema key or derived single-doc name).
     pointer: str  # JSON Pointer to the fragment within the source (e.g. #/$defs/Money).
     ref_count: int = 0  # Number of $ref values in the fragment (rewrite signal).
+    # Intra-document $ref edges (#/$defs/...) captured for the rewrite stage (#3463),
+    # each {relative_ref, resolved_target, status} with status == 'internal' (#3461).
+    internal_refs: List[Dict[str, Any]] = []
+    valid: bool = True  # Whether the fragment is a valid draft 2020-12 schema (#3461).
+    validation_errors: List[Dict[str, Any]] = []  # Field-level errors when not valid.
 
     class Config:
         from_attributes = True

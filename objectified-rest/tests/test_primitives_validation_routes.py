@@ -215,6 +215,41 @@ def test_import_rejects_invalid_definition_but_imports_valid():
     assert mdb.create_primitive.call_count == 1
 
 
+def test_import_captures_internal_defs_refs_in_refs_jsonb():
+    """#3461: a committed primitive's refs JSONB carries its intra-doc #/$defs edges."""
+    captured = {}
+
+    def _create(**kwargs):
+        captured[kwargs["name"]] = kwargs
+        return {"name": kwargs["name"]}
+
+    with patch("app.primitives_routes.db") as mdb:
+        mdb.create_primitive.side_effect = _create
+        mdb.create_primitive_import.return_value = {"id": "imp1"}
+        mdb.get_primitive_by_schema_id.return_value = None  # no cross-type targets exist
+        r = client.post(
+            "/v1/primitives/acme/import",
+            json={
+                "schema": {
+                    "$defs": {
+                        "Money": {
+                            "type": "object",
+                            "properties": {"c": {"$ref": "#/$defs/Currency"}},
+                        },
+                        "Currency": {"type": "string"},
+                    }
+                },
+                "import_all": True,
+            },
+        )
+    assert r.status_code == 200
+    money_refs = captured["Money"]["refs"]
+    assert {"relative_ref": "#/$defs/Currency", "resolved_target": "Currency",
+            "status": "internal"} in money_refs
+    # A def with no internal refs commits an empty edge list.
+    assert captured["Currency"]["refs"] == []
+
+
 def test_import_stamps_identity_using_target_namespace():
     with patch("app.primitives_routes.db") as mdb:
         mdb.create_primitive.return_value = {"name": "Good"}
