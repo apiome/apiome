@@ -137,6 +137,70 @@ Soft-delete is the default for `delete`/`revoke` (`deleted_at` set, row disabled
 removes the row. References accept either a UUID id or the natural key (user email, tenant
 slug, API-key prefix).
 
+## Backups & disaster recovery
+
+Scheduled, encrypted backups and point-in-time recovery (PITR) for the database, exposed through
+the `backup` command group. The full operational procedure — RPO/RTO targets, scheduling, restore
+steps, and the monthly DR drill — is in
+[`docs/runbooks/BACKUP_AND_DR.md`](../docs/runbooks/BACKUP_AND_DR.md).
+
+Two backup kinds, both AES-256-GCM encrypted at rest and mirrored off-site:
+
+- **Logical, scoped** (`--tenant`/`--project`) — exports the event/snapshot model
+  (`class_schema`, `data_record`, `data_snapshot`) as a JSON dataset. This is what PITR replays.
+- **Full cluster** (`--full`) — a whole-database `pg_dump` (custom format) for total-loss DR.
+
+Each backup writes the (encrypted) artifact plus a plaintext `*.manifest.json` sidecar recording
+scope, size, SHA-256 integrity, encryption status, recovery-point marker, and row counts.
+
+```
+backup create [--tenant <slug|id>] [--project <slug|id>] [--full]
+              [--out <dir>] [--offsite <dir>] [--encrypt-key-file <path>]
+              [--require-encryption]        Create a backup (logical or pg_dump)
+backup list   [--out <dir>]                 List backups from manifest sidecars
+backup restore <id> --sandbox <schema>
+              [--as-of <iso8601>] [--out <dir>] [--encrypt-key-file <path>]
+                                            Restore into an isolated sandbox schema (PITR
+                                            with --as-of); never touches the live odb schema
+backup prune  [--keep-days N] [--keep-last N] [--out <dir>]
+                                            Delete backups that have aged out of retention
+backup drill  [--backup-id <id>] [--sandbox <schema>] [--as-of <iso8601>]
+              [--rto-target-minutes N] [--rpo-target-minutes N]
+                                            Restore to a throwaway sandbox, verify, measure
+                                            RPO/RTO, then tear it down (pass/warn/fail)
+```
+
+Configuration is via env (or flags): `OBJECTIFIED_BACKUP_DIR`, `OBJECTIFIED_BACKUP_OFFSITE_DIR`,
+`OBJECTIFIED_BACKUP_KEY` (32-byte AES-256 key as hex/base64), `OBJECTIFIED_BACKUP_KEEP_DAYS`,
+`OBJECTIFIED_BACKUP_KEEP_LAST` (see [`.env.example`](./.env.example)). The encryption key is the
+key recovery dependency — store it in a secrets manager, **separate from the artifacts**.
+
+### Examples
+
+```bash
+# One-time: generate and export the data key (store it in a secrets manager).
+openssl rand -hex 32 > /secure/objectified-backup.key
+export OBJECTIFIED_BACKUP_KEY="$(cat /secure/objectified-backup.key)"
+export OBJECTIFIED_BACKUP_DIR=/var/backups/objectified
+export OBJECTIFIED_BACKUP_OFFSITE_DIR=/mnt/offsite/objectified
+
+# Create an encrypted, off-site-mirrored tenant backup.
+objectified-db backup create --tenant acme-corp --require-encryption
+
+# Recover state as of a point in time into a sandbox, then inspect.
+objectified-db backup list
+objectified-db backup restore tenant-acme-corp-20260623T094730Z \
+  --sandbox recovery --as-of 2026-06-23T09:29:59Z
+#   SELECT * FROM recovery.pitr_records;
+
+# Prove restorability and measure RPO/RTO.
+objectified-db backup drill --rto-target-minutes 30 --rpo-target-minutes 60
+```
+
+Scheduling uses [`scripts/backup/scheduled-backup.sh`](./scripts/backup/scheduled-backup.sh)
+(`full` | `tenant <slug>` | `project <tenant> <proj>`), which always encrypts and then prunes per
+the retention policy — see the runbook for cron examples.
+
 ### Docker
 
 The image runs the compiled CLI. By default it applies migrations:

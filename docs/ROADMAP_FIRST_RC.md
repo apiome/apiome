@@ -139,11 +139,16 @@ and multi-tenant data-isolation findings. Add per-tenant rate limiting on public
 branches), per-tenant rate-limit middleware (`app/rate_limit.py`), and a fixed GitLab-branch host-controlled
 SSRF surfaced by the review. Tenant-isolation auth tests pass.
 
-**1.3 — Backup & DR baseline** (#3613) · **M** · *blocks RC; gap #3*
+**1.3 — Backup & DR baseline** (#3613) · **M** · *blocks RC; gap #3* · ✅ **Done**
 Implement the `backup/` mockup at MVP depth: scheduled logical backups (tenant + project scope), encrypted
 off-site copy, a **documented and tested** restore runbook, and at least a manual PITR using the existing
 snapshot+event model. Full DR-drill automation can trail into Phase 5.
 *Exit:* a backup can be taken and **restored to a sandbox** successfully in a drill; RPO/RTO documented.
+*Shipped:* `objectified-db backup` command group (`create`/`list`/`restore`/`prune`/`drill`) — AES-256-GCM
+encrypted, off-site-mirrored logical (tenant/project) + full `pg_dump` backups with manifests + SHA-256
+integrity; event-log PITR (`--as-of`) restored into an isolated sandbox schema; retention policy + cron
+wrapper (`scripts/backup/scheduled-backup.sh`); RPO/RTO targets, restore runbook, and a verified DR drill in
+[`docs/runbooks/BACKUP_AND_DR.md`](runbooks/BACKUP_AND_DR.md). 107 unit tests; end-to-end drill verified.
 
 ---
 
@@ -268,7 +273,6 @@ Created in `objectified-project/objectified` (pack label `roadmap-first-rc`, all
 |---|---|---|
 | #3603 | Epic: RC1 Phase 0 — Prove the Spine & Stop the Bleeding | 0 |
 | #3604 | Epic: RC1 Phase 1 — Access & Trust | 1 |
-| #3613 | RC1-1.3 — Backup & disaster-recovery baseline | 1 |
 | #3605 | Epic: RC1 Phase 2 — Developer Value & First-Run | 2 |
 | #3614 | RC1-2.1 — Onboarding, sample project & starter templates | 2 |
 | #3615 | RC1-2.2 — Mock Server | 2 |

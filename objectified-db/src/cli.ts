@@ -14,6 +14,7 @@ import { Command, CommanderError } from "commander";
 
 import { runInteractiveRepl } from "./lib/interactive/repl.js";
 import * as apikeys from "./commands/apikeys.js";
+import * as backup from "./commands/backup.js";
 import * as migrate from "./commands/migrate.js";
 import * as tenants from "./commands/tenants.js";
 import * as users from "./commands/users.js";
@@ -65,6 +66,15 @@ async function resolvePassword(opts: PasswordOpts): Promise<users.PasswordInput>
   throw new CliError("A password is required.", {
     hint: "Pass --password <pw>, --password-stdin, or --random-password.",
   });
+}
+
+function parseCount(value: string | undefined, label: string): number | undefined {
+  if (value === undefined) return undefined;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 0) {
+    throw new CliError(`${label} must be a non-negative integer (got "${value}").`);
+  }
+  return n;
 }
 
 function parseExpiresDays(value: string | undefined): number | undefined {
@@ -383,6 +393,121 @@ apiKeysCmd
     const g = cmd.optsWithGlobals() as GlobalOpts;
     await withClient(connectionOf(g), (client) =>
       apikeys.revokeApiKey(client, key, { hard: Boolean(opts.hard), yes: Boolean(g.yes) }, modeOf(g)),
+    );
+  });
+
+// ───────────────────────────── backup ────────────────────────────
+const backupCmd = program
+  .command("backup")
+  .description("Create, list, restore, prune, and drill database backups (logical + PITR)");
+
+backupCmd
+  .command("create")
+  .description("Create a backup (logical tenant/project export, or --full pg_dump of the cluster)")
+  .option("--tenant <tenant>", "Scope the backup to a tenant (slug or id)")
+  .option("--project <project>", "Scope to a project within --tenant (slug or id)")
+  .option("--full", "Whole-cluster logical backup via pg_dump (ignores --tenant/--project)", false)
+  .option("--out <dir>", "Backup directory (env: OBJECTIFIED_BACKUP_DIR; default ./backups)")
+  .option("--offsite <dir>", "Also mirror the artifact to this off-site directory (env: OBJECTIFIED_BACKUP_OFFSITE_DIR)")
+  .option("--encrypt-key-file <path>", "32-byte AES-256 key file (env: OBJECTIFIED_BACKUP_KEY)")
+  .option("--require-encryption", "Fail rather than write an unencrypted backup", false)
+  .action(async (opts, cmd: Command) => {
+    const g = cmd.optsWithGlobals() as GlobalOpts;
+    await withClient(connectionOf(g), (client) =>
+      backup.runBackupCreate(
+        client,
+        connectionOf(g),
+        {
+          tenant: opts.tenant,
+          project: opts.project,
+          full: Boolean(opts.full),
+          outDir: opts.out,
+          offsiteDir: opts.offsite,
+          keyFile: opts.encryptKeyFile,
+          requireEncryption: Boolean(opts.requireEncryption),
+        },
+        modeOf(g),
+      ),
+    );
+  });
+
+backupCmd
+  .command("list")
+  .description("List backups (reads the manifest sidecars in the backup directory)")
+  .option("--out <dir>", "Backup directory (env: OBJECTIFIED_BACKUP_DIR; default ./backups)")
+  .action(async (opts, cmd: Command) => {
+    const g = cmd.optsWithGlobals() as GlobalOpts;
+    await backup.runBackupList(opts.out, modeOf(g));
+  });
+
+backupCmd
+  .command("restore <backup-id>")
+  .description("Restore a logical backup into a sandbox schema (PITR via --as-of); never touches odb")
+  .requiredOption("--sandbox <schema>", "Target sandbox schema name (created/replaced)")
+  .option("--as-of <timestamp>", "Recover state as of an ISO 8601 instant (default: latest)")
+  .option("--out <dir>", "Backup directory (env: OBJECTIFIED_BACKUP_DIR; default ./backups)")
+  .option("--encrypt-key-file <path>", "32-byte AES-256 key file (env: OBJECTIFIED_BACKUP_KEY)")
+  .action(async (backupId: string, opts, cmd: Command) => {
+    const g = cmd.optsWithGlobals() as GlobalOpts;
+    await withClient(connectionOf(g), (client) =>
+      backup.runBackupRestore(
+        client,
+        {
+          backupId,
+          sandbox: opts.sandbox,
+          asOf: opts.asOf,
+          outDir: opts.out,
+          keyFile: opts.encryptKeyFile,
+        },
+        modeOf(g),
+      ),
+    );
+  });
+
+backupCmd
+  .command("prune")
+  .description("Delete backups that have aged out of the retention policy")
+  .option("--out <dir>", "Backup directory (env: OBJECTIFIED_BACKUP_DIR; default ./backups)")
+  .option("--keep-days <days>", "Delete backups older than N days (default 30)")
+  .option("--keep-last <count>", "Always keep the N most-recent backups (default 7)")
+  .action(async (opts, cmd: Command) => {
+    const g = cmd.optsWithGlobals() as GlobalOpts;
+    await backup.runBackupPrune(
+      {
+        outDir: opts.out,
+        keepDays: parseCount(opts.keepDays, "--keep-days"),
+        keepLast: parseCount(opts.keepLast, "--keep-last"),
+      },
+      modeOf(g),
+    );
+  });
+
+backupCmd
+  .command("drill")
+  .description("Restore a backup into a throwaway sandbox, verify it, and measure RPO/RTO")
+  .option("--backup-id <id>", "Backup to drill (default: newest logical backup)")
+  .option("--out <dir>", "Backup directory (env: OBJECTIFIED_BACKUP_DIR; default ./backups)")
+  .option("--encrypt-key-file <path>", "32-byte AES-256 key file (env: OBJECTIFIED_BACKUP_KEY)")
+  .option("--sandbox <schema>", "Sandbox schema name (default: derived from the backup id)")
+  .option("--as-of <timestamp>", "Recover state as of an ISO 8601 instant (default: latest)")
+  .option("--rto-target-minutes <n>", "Warn if measured restore time exceeds N minutes")
+  .option("--rpo-target-minutes <n>", "Warn if the recovery-point age exceeds N minutes")
+  .action(async (opts, cmd: Command) => {
+    const g = cmd.optsWithGlobals() as GlobalOpts;
+    await withClient(connectionOf(g), (client) =>
+      backup.runBackupDrill(
+        client,
+        {
+          backupId: opts.backupId,
+          outDir: opts.out,
+          keyFile: opts.encryptKeyFile,
+          sandbox: opts.sandbox,
+          asOf: opts.asOf,
+          rtoTargetMinutes: parseCount(opts.rtoTargetMinutes, "--rto-target-minutes"),
+          rpoTargetMinutes: parseCount(opts.rpoTargetMinutes, "--rpo-target-minutes"),
+        },
+        modeOf(g),
+      ),
     );
   });
 

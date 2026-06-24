@@ -18,7 +18,7 @@ export type ConnectionOptions = {
   database?: string;
 };
 
-function buildPgConfig(opts: ConnectionOptions): pg.ClientConfig {
+export function buildPgConfig(opts: ConnectionOptions): pg.ClientConfig {
   const url = opts.databaseUrl ?? process.env.OBJECTIFIED_DB_URL ?? process.env.DATABASE_URL;
   if (url && url.trim() !== "") {
     return { connectionString: url.trim() };
