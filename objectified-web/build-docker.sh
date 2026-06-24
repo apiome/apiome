@@ -51,199 +51,481 @@ check_docker() {
     print_success "Docker is running"
 }
 
-# Function to build Docker image
+# Function to check if required files exist
+check_files() {
+    print_info "Checking required files..."
+
+    local required_files=("Dockerfile" "package.json" "next.config.ts")
+    for file in "${required_files[@]}"; do
+        if [ ! -f "$file" ]; then
+            print_error "Required file not found: $file"
+            exit 1
+        fi
+    done
+
+    print_success "All required files found"
+}
+
+# Function to build the Docker image
 build_image() {
     print_info "Building Docker image..."
-    print_info "Image: ${IMAGE_NAME}"
+    print_info "Image: ${IMAGE_NAME}:${TAG}"
     print_info "Version: ${VERSION}"
-    print_info "Tag: ${TAG}"
 
-    # Build for multiple platforms
-    docker buildx create --use --name objectified-web-builder 2>/dev/null || docker buildx use objectified-web-builder
+    # Determine platform to use
+    local platform=""
 
-    if [ -n "$REGISTRY" ]; then
-        FULL_IMAGE="${REGISTRY}/${IMAGE_NAME}"
+    # Priority: PLATFORM env var > BUILDPLATFORM env var > auto-detect
+    if [ -n "$PLATFORM" ]; then
+        platform="$PLATFORM"
+        print_info "Using PLATFORM environment variable: $platform"
+    elif [ -n "$BUILDPLATFORM" ]; then
+        platform="$BUILDPLATFORM"
+        print_info "Using BUILDPLATFORM environment variable: $platform"
     else
-        FULL_IMAGE="${IMAGE_NAME}"
+        # Auto-detect platform
+        if [[ "$(uname -m)" == "arm64" ]] || [[ "$(uname -m)" == "aarch64" ]]; then
+            platform="linux/arm64"
+            print_info "Auto-detected ARM64 platform"
+        else
+            platform="linux/amd64"
+            print_info "Auto-detected AMD64 platform"
+        fi
     fi
 
-    print_info "Building for linux/amd64 and linux/arm64..."
-    docker buildx build \
-        --platform linux/amd64,linux/arm64 \
-        -t "${FULL_IMAGE}:${TAG}" \
-        -t "${FULL_IMAGE}:${VERSION}" \
-        --load \
-        .
+    # Build with multiple tags
+    local build_args=(
+        "--platform" "$platform"
+        "--build-arg" "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+        "--build-arg" "VERSION=${VERSION}"
+        "-t" "${IMAGE_NAME}:${TAG}"
+        "-t" "${IMAGE_NAME}:${VERSION}"
+    )
 
-    print_success "Docker image built successfully!"
-    print_info "Tags: ${FULL_IMAGE}:${TAG}, ${FULL_IMAGE}:${VERSION}"
+    # Add registry prefix if set
+    if [ -n "$REGISTRY" ]; then
+        build_args+=("-t" "${REGISTRY}/${IMAGE_NAME}:${TAG}")
+        build_args+=("-t" "${REGISTRY}/${IMAGE_NAME}:${VERSION}")
+    fi
+
+    # Execute build
+    docker build --platform linux/amd64 "${build_args[@]}" .
+
+    if [ $? -eq 0 ]; then
+        print_success "Docker image built successfully"
+    else
+        print_error "Docker build failed"
+        exit 1
+    fi
 }
 
-# Function to save image to tar
+# Function to test the image
+test_image() {
+    print_info "Testing Docker image..."
+
+    # Start container for testing
+    local test_container="objectified-web-test-$$"
+    docker run -d \
+        --name "$test_container" \
+        -p 3001:3002 \
+        "${IMAGE_NAME}:${TAG}" > /dev/null
+
+    # Wait for container to start
+    sleep 5
+
+    # Test if container is running
+    if docker ps | grep -q "$test_container"; then
+        print_success "Container started successfully"
+
+        # Test if application responds
+        if curl -f http://localhost:3001 &> /dev/null; then
+            print_success "Application is responding"
+        else
+            print_warning "Application not responding on port 3001"
+        fi
+
+        # Cleanup test container
+        docker stop "$test_container" > /dev/null 2>&1
+        docker rm "$test_container" > /dev/null 2>&1
+        print_info "Test container cleaned up"
+    else
+        print_error "Container failed to start"
+        docker logs "$test_container" 2>&1 || true
+        docker rm -f "$test_container" > /dev/null 2>&1 || true
+        exit 1
+    fi
+}
+
+# Function to get image size
+show_image_info() {
+    print_info "Image Information:"
+    echo ""
+    docker images "${IMAGE_NAME}" --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" | head -n 5
+    echo ""
+}
+
+# Function to save image to tar file
 save_image() {
-    if [ -n "$REGISTRY" ]; then
-        FULL_IMAGE="${REGISTRY}/${IMAGE_NAME}"
+    print_info "Saving Docker image to tar file..."
+
+    local output_file="${IMAGE_NAME}-${VERSION}.tar"
+    docker save "${IMAGE_NAME}:${TAG}" -o "$output_file"
+
+    if [ -f "$output_file" ]; then
+        local size=$(du -h "$output_file" | cut -f1)
+        print_success "Image saved to: $output_file (Size: $size)"
+
+        # Compress the tar file
+        print_info "Compressing tar file..."
+        gzip -f "$output_file"
+
+        if [ -f "${output_file}.gz" ]; then
+            local compressed_size=$(du -h "${output_file}.gz" | cut -f1)
+            print_success "Compressed image: ${output_file}.gz (Size: $compressed_size)"
+        fi
     else
-        FULL_IMAGE="${IMAGE_NAME}"
+        print_error "Failed to save image"
+        exit 1
     fi
-
-    OUTPUT_FILE="${IMAGE_NAME}-${VERSION}.tar"
-
-    print_info "Saving Docker image to ${OUTPUT_FILE}..."
-    docker save -o "${OUTPUT_FILE}" "${FULL_IMAGE}:${TAG}"
-
-    print_success "Image saved to ${OUTPUT_FILE}"
-    print_info "File size: $(du -h ${OUTPUT_FILE} | cut -f1)"
 }
 
-# Function to push to registry
+# Function to push image to registry
 push_image() {
     if [ -z "$REGISTRY" ]; then
         print_warning "No registry specified. Skipping push."
-        print_info "To push to a registry, set DOCKER_REGISTRY environment variable"
+        print_info "Set DOCKER_REGISTRY environment variable to enable push."
         return
     fi
 
-    FULL_IMAGE="${REGISTRY}/${IMAGE_NAME}"
+    print_info "Pushing image to registry: $REGISTRY"
 
-    print_info "Pushing to registry: ${REGISTRY}"
-    docker push "${FULL_IMAGE}:${TAG}"
-    docker push "${FULL_IMAGE}:${VERSION}"
+    # Push both tags
+    docker push "${REGISTRY}/${IMAGE_NAME}:${TAG}"
+    docker push "${REGISTRY}/${IMAGE_NAME}:${VERSION}"
 
-    print_success "Image pushed to registry!"
+    if [ $? -eq 0 ]; then
+        print_success "Image pushed successfully"
+        print_info "Pull with: docker pull ${REGISTRY}/${IMAGE_NAME}:${TAG}"
+    else
+        print_error "Failed to push image"
+        exit 1
+    fi
 }
 
-# Function to test the image locally
-test_image() {
-    if [ -n "$REGISTRY" ]; then
-        FULL_IMAGE="${REGISTRY}/${IMAGE_NAME}"
-    else
-        FULL_IMAGE="${IMAGE_NAME}"
+# Function to generate deployment script
+generate_deployment_script() {
+    print_info "Generating deployment script..."
+
+    local deploy_script="deploy-${VERSION}.sh"
+
+    cat > "$deploy_script" << 'EOF'
+#!/bin/bash
+
+# Deployment script for Objectified Web
+# Generated automatically - customize as needed
+
+set -e
+
+IMAGE_NAME="objectified-web"
+VERSION="VERSION_PLACEHOLDER"
+TAG="TAG_PLACEHOLDER"
+REGISTRY="REGISTRY_PLACEHOLDER"
+
+echo "Deploying Objectified Web..."
+echo "Version: $VERSION"
+
+# Load image if tar file exists
+if [ -f "${IMAGE_NAME}-${VERSION}.tar.gz" ]; then
+    echo "Loading image from tar file..."
+    gunzip -c "${IMAGE_NAME}-${VERSION}.tar.gz" | docker load
+elif [ -n "$REGISTRY" ]; then
+    echo "Pulling image from registry..."
+    docker pull "${REGISTRY}/${IMAGE_NAME}:${TAG}"
+else
+    echo "Using local image..."
+fi
+
+# Stop and remove existing container
+echo "Stopping existing container..."
+docker stop objectified-web 2>/dev/null || true
+docker rm objectified-web 2>/dev/null || true
+
+# Start new container
+echo "Starting new container..."
+docker run -d \
+    --name objectified-web \
+    --restart unless-stopped \
+    -p 3002:3002 \
+    --env-file .env \
+    "${IMAGE_NAME}:${TAG}"
+
+echo "Deployment complete!"
+echo "Application available at: http://localhost:3002"
+
+# Show logs
+echo ""
+echo "Container logs:"
+docker logs --tail 50 objectified-web
+EOF
+
+    # Replace placeholders
+    sed -i.bak "s/VERSION_PLACEHOLDER/${VERSION}/g" "$deploy_script"
+    sed -i.bak "s/TAG_PLACEHOLDER/${TAG}/g" "$deploy_script"
+    sed -i.bak "s/REGISTRY_PLACEHOLDER/${REGISTRY}/g" "$deploy_script"
+    rm "${deploy_script}.bak" 2>/dev/null || true
+
+    chmod +x "$deploy_script"
+    print_success "Deployment script created: $deploy_script"
+}
+
+# Function to generate docker-compose for remote deployment
+generate_compose_file() {
+    print_info "Generating deployment docker-compose.yml..."
+
+    local compose_file="docker-compose.deploy-${VERSION}.yml"
+
+    cat > "$compose_file" << EOF
+version: '3.8'
+
+services:
+  objectified-web:
+    image: ${REGISTRY:+${REGISTRY}/}${IMAGE_NAME}:${TAG}
+    container_name: objectified-web
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      - NEXT_PUBLIC_BASE_PATH=\${NEXT_PUBLIC_BASE_PATH:-}
+      - NEXT_PUBLIC_APP_URL=\${NEXT_PUBLIC_APP_URL:-https://app.objectified.dev}
+      - NEXT_PUBLIC_BROWSE_URL=\${NEXT_PUBLIC_BROWSE_URL:-https://browse.objectified.dev}
+      - NEXT_PUBLIC_DOCS_URL=\${NEXT_PUBLIC_DOCS_URL:-https://docs.objectified.dev}
+    networks:
+      - objectified-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3002"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  objectified-network:
+    driver: bridge
+EOF
+
+    print_success "Deployment compose file created: $compose_file"
+}
+
+# Function to create deployment package
+create_deployment_package() {
+    print_info "Creating deployment package..."
+
+    local package_dir="objectified-web-deploy-${VERSION}"
+    local package_file="${package_dir}.tar.gz"
+
+    # Create package directory
+    mkdir -p "$package_dir"
+
+    # Generate an environment template (objectified-web ships no committed .env)
+    cat > "${package_dir}/.env.template" << 'EOF'
+# Objectified Web environment template — copy to .env and adjust as needed.
+NEXT_PUBLIC_BASE_PATH=
+NEXT_PUBLIC_APP_URL=https://app.objectified.dev
+NEXT_PUBLIC_BROWSE_URL=https://browse.objectified.dev
+NEXT_PUBLIC_DOCS_URL=https://docs.objectified.dev
+EOF
+    cp "docker-compose.deploy-${VERSION}.yml" "${package_dir}/docker-compose.yml"
+    cp "deploy-${VERSION}.sh" "${package_dir}/deploy.sh"
+
+    # Copy compressed image if it exists
+    if [ -f "${IMAGE_NAME}-${VERSION}.tar.gz" ]; then
+        cp "${IMAGE_NAME}-${VERSION}.tar.gz" "$package_dir/"
     fi
 
-    print_info "Testing Docker image..."
-    print_info "Starting container on port 3002..."
+    # Create README
+    cat > "${package_dir}/README.md" << EOF
+# Objectified Web Deployment Package
 
-    # Stop existing container if running
-    docker rm -f objectified-web-test 2>/dev/null || true
+Version: ${VERSION}
+Build Date: $(date)
 
-    # Run container
-    docker run -d \
-        --name objectified-web-test \
-        -p 3002:3002 \
-        "${FULL_IMAGE}:${TAG}"
+## Quick Deployment
 
-    print_success "Test container started!"
-    print_info "Container name: objectified-web-test"
-    print_info "Access at: http://localhost:3002"
-    print_info ""
-    print_info "To view logs: docker logs -f objectified-web-test"
-    print_info "To stop: docker stop objectified-web-test"
-    print_info "To remove: docker rm -f objectified-web-test"
+1. Copy \`.env.template\` to \`.env\` and configure:
+   \`\`\`bash
+   cp .env.template .env
+   nano .env  # Edit with your values
+   \`\`\`
+
+2. Run deployment script:
+   \`\`\`bash
+   ./deploy.sh
+   \`\`\`
+
+Or use docker-compose:
+   \`\`\`bash
+   docker-compose up -d
+   \`\`\`
+
+## Access
+
+- Application: http://localhost:3002
+
+## Support
+
+Check logs: \`docker logs objectified-web\`
+Stop: \`docker stop objectified-web\`
+Restart: \`docker restart objectified-web\`
+EOF
+
+    # Create tarball
+    tar czf "$package_file" "$package_dir"
+
+    if [ -f "$package_file" ]; then
+        local size=$(du -h "$package_file" | cut -f1)
+        print_success "Deployment package created: $package_file (Size: $size)"
+
+        # Cleanup
+        rm -rf "$package_dir"
+    else
+        print_error "Failed to create deployment package"
+        exit 1
+    fi
 }
 
-# Function to display usage
-usage() {
-    echo "Usage: $0 [OPTIONS]"
-    echo ""
-    echo "Options:"
-    echo "  -b, --build         Build Docker image only"
-    echo "  -s, --save          Build and save image to tar file"
-    echo "  -p, --push          Build and push to registry"
-    echo "  -t, --test          Build and test locally"
-    echo "  -a, --all           Build, save, and push (if registry set)"
-    echo "  -h, --help          Display this help message"
-    echo ""
-    echo "Environment Variables:"
-    echo "  DOCKER_REGISTRY     Docker registry URL (e.g., docker.io/username)"
-    echo "  VERSION             Image version (default: timestamp)"
-    echo "  TAG                 Image tag (default: latest)"
-    echo ""
-    echo "Examples:"
-    echo "  $0 --build                              # Build image locally"
-    echo "  $0 --test                               # Build and test locally"
-    echo "  DOCKER_REGISTRY=myregistry.com $0 -p    # Build and push to registry"
-    exit 0
+# Function to show usage
+show_usage() {
+    cat << EOF
+Usage: $0 [OPTIONS]
+
+Options:
+  --tag TAG           Set image tag (default: latest)
+  --version VERSION   Set version (default: timestamp)
+  --registry REGISTRY Set Docker registry
+  --no-test          Skip image testing
+  --no-save          Skip saving to tar file
+  --push             Push to registry
+  --package          Create deployment package
+  --help             Show this help message
+
+Environment Variables:
+  DOCKER_REGISTRY    Docker registry URL
+  VERSION            Image version
+  TAG                Image tag
+
+Examples:
+  # Build with default settings
+  $0
+
+  # Build and push to registry
+  DOCKER_REGISTRY=myregistry.com $0 --push
+
+  # Build with custom tag and create package
+  $0 --tag v1.0.0 --package
+
+  # Build and skip testing
+  $0 --no-test
+EOF
 }
 
-# Main script
+# Main execution
 main() {
     print_info "=== Objectified Web Docker Build Script ==="
-    print_info ""
+    echo ""
 
-    # Parse arguments
-    ACTION=""
+    # Parse command line arguments
+    local skip_test=false
+    local skip_save=false
+    local do_push=false
+    local do_package=false
+
     while [[ $# -gt 0 ]]; do
         case $1 in
-            -b|--build)
-                ACTION="build"
+            --tag)
+                TAG="$2"
+                shift 2
+                ;;
+            --version)
+                VERSION="$2"
+                shift 2
+                ;;
+            --registry)
+                REGISTRY="$2"
+                shift 2
+                ;;
+            --no-test)
+                skip_test=true
                 shift
                 ;;
-            -s|--save)
-                ACTION="save"
+            --no-save)
+                skip_save=true
                 shift
                 ;;
-            -p|--push)
-                ACTION="push"
+            --push)
+                do_push=true
                 shift
                 ;;
-            -t|--test)
-                ACTION="test"
+            --package)
+                do_package=true
                 shift
                 ;;
-            -a|--all)
-                ACTION="all"
-                shift
-                ;;
-            -h|--help)
-                usage
+            --help)
+                show_usage
+                exit 0
                 ;;
             *)
                 print_error "Unknown option: $1"
-                usage
+                show_usage
+                exit 1
                 ;;
         esac
     done
 
-    # Default action if none specified
-    if [ -z "$ACTION" ]; then
-        ACTION="build"
+    # Execute build steps
+    check_docker
+    check_files
+    build_image
+    show_image_info
+
+    if [ "$skip_test" = false ]; then
+        test_image
+    else
+        print_warning "Skipping image testing"
     fi
 
-    # Check Docker
-    check_docker
+    if [ "$skip_save" = false ]; then
+        save_image
+    else
+        print_warning "Skipping image save"
+    fi
 
-    # Execute action
-    case $ACTION in
-        build)
-            build_image
-            ;;
-        save)
-            build_image
-            save_image
-            ;;
-        push)
-            build_image
-            push_image
-            ;;
-        test)
-            build_image
-            test_image
-            ;;
-        all)
-            build_image
-            save_image
-            if [ -n "$REGISTRY" ]; then
-                push_image
-            else
-                print_warning "No registry specified, skipping push"
-            fi
-            ;;
-    esac
+    if [ "$do_push" = true ]; then
+        push_image
+    fi
 
-    print_info ""
-    print_success "=== Build process completed successfully! ==="
+    # Always generate deployment files
+    generate_deployment_script
+    generate_compose_file
+
+    if [ "$do_package" = true ]; then
+        create_deployment_package
+    fi
+
+    # Summary
+    echo ""
+    print_success "=== Build Complete ==="
+    echo ""
+    print_info "Image: ${IMAGE_NAME}:${TAG}"
+    print_info "Version: ${VERSION}"
+    [ -n "$REGISTRY" ] && print_info "Registry: ${REGISTRY}"
+    echo ""
+    print_info "Next Steps:"
+    echo "  1. Test locally: docker run -p 3002:3002 ${IMAGE_NAME}:${TAG}"
+    echo "  2. Deploy with: ./deploy-${VERSION}.sh"
+    echo "  3. Or use: docker-compose -f docker-compose.deploy-${VERSION}.yml up -d"
+    [ "$do_package" = true ] && echo "  4. Transfer: objectified-web-deploy-${VERSION}.tar.gz to remote server"
+    echo ""
 }
 
-# Run main
+# Run main function
 main "$@"
