@@ -58,6 +58,7 @@ from .version_notes import (
     validate_version_notes,
 )
 from .published_immutability import IMMUTABLE_DETAIL, revision_is_published_immutable
+from .permissions import enforce_permission, Resource, Action
 
 
 router = APIRouter(prefix="/v1/versions", tags=["versions"])
@@ -428,6 +429,7 @@ async def version_branch_from_revision(
     ``idempotentReplay: true`` when the branch already exists with that tip (and compatible lineage).
     Conflicting reuse of ``branchName`` returns **409** with a clear message.
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.CREATE)
     tenant_id = auth_data["tenant_id"]
 
     if not _is_valid_version_branch_name(body.branch_name):
@@ -488,6 +490,7 @@ async def patch_version_branch_policy(
     """
     Tenant administrators: set ``protected`` and/or ``requireMergePath`` and/or promote default branch.
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     tenant_id = auth_data["tenant_id"]
     uid = get_authenticated_user_id(auth_data)
     if not uid or not db.is_user_tenant_admin(tenant_id, uid):
@@ -693,6 +696,7 @@ async def version_branch_merge_preview(
     Dry-run merge (no DB writes): merge-base id, two-way summary counts, per-kind conflict metadata,
     classification, and optional capped merged OpenAPI when auto-merge is possible (#2572).
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
     project = db.get_project_by_id(project_id, tenant_id)
     if not project:
@@ -834,6 +838,7 @@ async def version_branch_merge(
     """
     Execute merge into target branch: new revision with two parents, three-way materialization.
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     tenant_id = auth_data["tenant_id"]
     creator_id = get_authenticated_user_id(auth_data)
     if not creator_id:
@@ -1414,6 +1419,7 @@ async def version_branch_rollback_preview(
     """
     Dry-run rollback: schema compatibility tip→target, deprecation warnings (#506), fingerprint.
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
     _project, _branch, head_ver, target_ver, head_tip, tgt_id = _rollback_validate_branch_and_revisions(
         project_id, tenant_id, body.branch_name, body.target_revision_id
@@ -1467,6 +1473,7 @@ async def version_branch_rollback(
     """
     Apply revert-style rollback: new revision with target snapshot, parent = prior tip (#745).
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     tenant_id = auth_data["tenant_id"]
     audit_reason = (body.reason or "").strip() or None
     branch_label = (body.branch_name or "").strip()
@@ -1869,6 +1876,7 @@ async def patch_merge_session_status(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Dict[str, Any]:
     """Transition merge session status with audited events (#2573)."""
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     tenant_id = auth_data["tenant_id"]
     project = db.get_project_by_id(project_id, tenant_id)
     if not project:

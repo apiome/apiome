@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from .auth import validate_authentication
 from .compatibility_engine import CompatibilityCheckEngine, compat_report_fingerprint, openapi_for_revision
 from .database import db
+from .permissions import enforce_permission, Resource, Action
 from .models import (
     CompatibilityCheckRequest,
     CompatibilityCheckResponse,
@@ -74,6 +75,7 @@ async def check_revision_compatibility(
     Compare **baseRevisionId** (older / consumer expectation) to **headRevisionId** (newer).
     Returns structured safe / breaking / unknown findings for CI-style merge gates.
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
     project = db.get_project_by_id(project_id, tenant_id)
     if not project:

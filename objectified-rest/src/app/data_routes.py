@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from .database import db
 from .auth import validate_authentication, get_authenticated_user_id
+from .permissions import enforce_permission, Resource, Action
 from .embedding import embed_record_data, EMBEDDING_MODEL
 
 logger = logging.getLogger(__name__)
@@ -83,6 +84,7 @@ async def create_data_record(
     Create a new data record and data_snapshot row.
     Embedding is computed asynchronously and stored in data_snapshot.
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.CREATE)
     tenant_id = auth_data["tenant_id"]
     user_id = get_authenticated_user_id(auth_data)
 
@@ -146,6 +148,7 @@ async def update_data_record(
     Update an existing data record and data_snapshot.
     Embedding is recomputed asynchronously and stored in data_snapshot.
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     tenant_id = auth_data["tenant_id"]
     user_id = get_authenticated_user_id(auth_data)
 
@@ -184,6 +187,7 @@ async def delete_data_record(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Dict[str, Any]:
     """Delete a data record (append deleted event, remove data_snapshot row)."""
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.DELETE)
     tenant_id = auth_data["tenant_id"]
     user_id = get_authenticated_user_id(auth_data)
 
@@ -215,6 +219,7 @@ async def restore_data_record(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Dict[str, Any]:
     """Restore a deleted data record (recreate data_snapshot from deleted event, append restored event)."""
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     tenant_id = auth_data["tenant_id"]
     user_id = get_authenticated_user_id(auth_data)
 

@@ -125,7 +125,7 @@ configuration-driven REST CORS allow-list and a fail-closed production JWT secre
 ### Phase 1 — Access & Trust  *(weeks 2–4)*  · **Epic #3604**
 *The things that make multi-tenant exposure safe. Highest-priority gap fills.*
 
-**1.1 — Granular RBAC + platform-admin plane** (#3611) · **L** · *blocks RC; gap #2*
+**1.1 — Granular RBAC + platform-admin plane** (#3611) · **L** · *blocks RC; gap #2* · ✅ **Done**
 Implement the `access/` mockup: roles (`Owner/Admin/Editor/Viewer` + custom), a `role_permissions` model,
 and a **central permission guard** replacing ad-hoc `_assert_tenant_admin` checks on every route. Separate
 platform-admin from tenant-admin. Member lifecycle (invite/suspend/offboard) UI.
@@ -265,7 +265,6 @@ Created in `objectified-project/objectified` (pack label `roadmap-first-rc`, all
 |---|---|---|
 | #3603 | Epic: RC1 Phase 0 — Prove the Spine & Stop the Bleeding | 0 |
 | #3604 | Epic: RC1 Phase 1 — Access & Trust | 1 |
-| #3611 | RC1-1.1 — Granular RBAC + platform-admin plane | 1 |
 | #3612 | RC1-1.2 — Security review + per-tenant rate limiting | 1 |
 | #3613 | RC1-1.3 — Backup & disaster-recovery baseline | 1 |
 | #3605 | Epic: RC1 Phase 2 — Developer Value & First-Run | 2 |

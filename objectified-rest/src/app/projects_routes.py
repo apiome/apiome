@@ -15,6 +15,7 @@ from .models import (
     ProjectUpdateRequest
 )
 from .auth import validate_authentication, get_authenticated_user_id
+from .permissions import enforce_permission, Resource, Action
 
 router = APIRouter(prefix="/v1/projects", tags=["projects"])
 
@@ -169,6 +170,7 @@ async def create_project(
     Returns:
         The created project
     """
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.CREATE)
     # Validate required fields
     if not request.name or not request.name.strip():
         raise HTTPException(
@@ -257,6 +259,7 @@ async def update_project(
     Returns:
         The updated project
     """
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
     # Check if project exists
     existing = db.get_project_by_id(project_id, auth_data['tenant_id'])
     if not existing:
@@ -353,6 +356,7 @@ async def delete_project(
     Returns:
         Success message
     """
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.DELETE)
     # Check if project exists
     existing = db.get_project_by_id(project_id, auth_data['tenant_id'])
     if not existing:
@@ -380,6 +384,7 @@ async def restore_project(
     auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> ProjectSchema:
     """Restore a soft-deleted project (clears deleted_at, sets enabled)."""
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
     row = db.get_project_by_id(
         project_id, auth_data['tenant_id'], include_deleted=True
     )

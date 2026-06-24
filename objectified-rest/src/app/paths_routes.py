@@ -31,6 +31,7 @@ from .models import (
 )
 from .auth import validate_authentication
 from .path_template_validation import validate_openapi_path_template
+from .permissions import enforce_permission, Resource, Action
 
 router = APIRouter(prefix="/v1/paths", tags=["paths"])
 
@@ -137,6 +138,7 @@ async def put_path_canvas(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Dict[str, Any]:
     """Replace Paths canvas JSON for this path (last-write-wins, #2642)."""
+    enforce_permission(db, auth_data, Resource.PATHS, Action.EDIT)
     version = db.get_version_for_tenant(auth_data["tenant_id"], version_id)
     if not version:
         raise HTTPException(status_code=404, detail=f"Version not found: {version_id}")
@@ -173,6 +175,7 @@ async def create_path(
     Returns:
         The created path
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.CREATE)
     # Verify version belongs to tenant
     version = db.get_version_for_tenant(auth_data['tenant_id'], version_id)
     if not version:
@@ -223,6 +226,7 @@ async def update_path(
     Returns:
         The updated path
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.EDIT)
     updates = request.model_dump(exclude_unset=True)
     if updates.get("pathname") is not None:
         try:
@@ -260,6 +264,7 @@ async def delete_path(
     Returns:
         Success status
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.DELETE)
     deleted = db.delete_path(path_id, auth_data['tenant_id'])
     if not deleted:
         raise HTTPException(
@@ -302,6 +307,7 @@ async def create_operation(
     """
     Create a new operation for a path.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.CREATE)
     # Verify path belongs to tenant
     path = db.get_path_by_id(path_id, auth_data['tenant_id'])
     if not path:
@@ -335,6 +341,7 @@ async def update_operation(
     """
     Update an operation.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.EDIT)
     updates = request.model_dump(exclude_unset=True)
     operation = db.update_operation(operation_id, auth_data['tenant_id'], updates)
 
@@ -355,6 +362,7 @@ async def delete_operation(
     """
     Delete an operation.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.DELETE)
     deleted = db.delete_operation(operation_id, auth_data['tenant_id'])
     if not deleted:
         raise HTTPException(status_code=404, detail=f"Operation not found: {operation_id}")
@@ -396,6 +404,7 @@ async def update_operation_description(
     """
     Create or update operation description.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.EDIT)
     # Verify operation belongs to tenant
     operation = db.get_operation_by_id(operation_id, auth_data['tenant_id'])
     if not operation:
@@ -442,6 +451,7 @@ async def create_shared_parameter(
     """
     Create a shared parameter for a path.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.CREATE)
     path = db.get_path_by_id(path_id, auth_data['tenant_id'])
     if not path:
         raise HTTPException(status_code=404, detail=f"Path not found: {path_id}")
@@ -469,6 +479,7 @@ async def link_parameter_to_operation(
     """
     Link a shared parameter to an operation.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.CREATE)
     operation = db.get_operation_by_id(operation_id, auth_data['tenant_id'])
     if not operation:
         raise HTTPException(status_code=404, detail=f"Operation not found: {operation_id}")
@@ -489,6 +500,7 @@ async def unlink_parameter_from_operation(
     """
     Unlink a shared parameter from an operation.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.DELETE)
     deleted = db.unlink_parameter_from_operation(operation_id, parameter_id)
     return {"success": deleted}
 
@@ -504,6 +516,7 @@ async def delete_shared_parameter(
     """
     Delete a shared parameter.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.DELETE)
     deleted = db.delete_shared_parameter(parameter_id, auth_data['tenant_id'])
     if not deleted:
         raise HTTPException(status_code=404, detail=f"Parameter not found: {parameter_id}")
@@ -542,6 +555,7 @@ async def create_shared_request_body(
     """
     Create a shared request body for a path.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.CREATE)
     path = db.get_path_by_id(path_id, auth_data['tenant_id'])
     if not path:
         raise HTTPException(status_code=404, detail=f"Path not found: {path_id}")
@@ -567,6 +581,7 @@ async def add_request_body_content_type(
     """
     Add a content type to a request body.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.CREATE)
     content = db.add_request_body_content_type(
         shared_request_body_id=request_body_id,
         media_type=request.media_type,
@@ -592,6 +607,7 @@ async def copy_class_to_request_body_inline_schema(
     Copy class properties to create an inline schema for the request body content type.
     This creates a copy of the class schema, not a reference.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.CREATE)
     # Get class properties and build inline schema
     inline_schema = db.copy_class_properties_to_inline_schema(request.class_id)
 
@@ -618,6 +634,7 @@ async def link_request_body_to_operation(
     """
     Link a shared request body to an operation.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.CREATE)
     operation = db.get_operation_by_id(operation_id, auth_data['tenant_id'])
     if not operation:
         raise HTTPException(status_code=404, detail=f"Operation not found: {operation_id}")
@@ -638,6 +655,7 @@ async def unlink_request_body_from_operation(
     """
     Unlink request body from an operation.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.DELETE)
     deleted = db.unlink_request_body_from_operation(operation_id)
     return {"success": deleted}
 
@@ -653,6 +671,7 @@ async def delete_shared_request_body(
     """
     Delete a shared request body.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.DELETE)
     deleted = db.delete_shared_request_body(request_body_id, auth_data['tenant_id'])
     if not deleted:
         raise HTTPException(status_code=404, detail=f"Request body not found: {request_body_id}")
@@ -691,6 +710,7 @@ async def create_shared_response(
     """
     Create a shared response for a path.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.CREATE)
     path = db.get_path_by_id(path_id, auth_data['tenant_id'])
     if not path:
         raise HTTPException(status_code=404, detail=f"Path not found: {path_id}")
@@ -718,6 +738,7 @@ async def add_response_content_type(
     """
     Add a content type to a response.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.CREATE)
     content = db.add_response_content_type(
         shared_response_id=response_id,
         media_type=request.media_type,
@@ -742,6 +763,7 @@ async def copy_class_to_response_inline_schema(
     Copy class properties to create an inline schema for the response content type.
     This creates a copy of the class schema, not a reference.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.CREATE)
     inline_schema = db.copy_class_properties_to_inline_schema(request.class_id)
 
     content = db.add_response_content_type(
@@ -766,6 +788,7 @@ async def link_response_to_operation(
     """
     Link a shared response to an operation.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.CREATE)
     operation = db.get_operation_by_id(operation_id, auth_data['tenant_id'])
     if not operation:
         raise HTTPException(status_code=404, detail=f"Operation not found: {operation_id}")
@@ -787,6 +810,7 @@ async def unlink_response_from_operation(
     """
     Unlink a shared response from an operation.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.DELETE)
     deleted = db.unlink_response_from_operation(operation_id, response_id)
     return {"success": deleted}
 
@@ -802,6 +826,7 @@ async def delete_shared_response(
     """
     Delete a shared response.
     """
+    enforce_permission(db, auth_data, Resource.PATHS, Action.DELETE)
     deleted = db.delete_shared_response(response_id, auth_data['tenant_id'])
     if not deleted:
         raise HTTPException(status_code=404, detail=f"Response not found: {response_id}")

@@ -32,6 +32,7 @@ from .publication_change_report import (
     generate_change_report_on_publish,
     validate_manual_baseline_revision,
 )
+from .permissions import enforce_permission, Resource, Action
 from .published_immutability import IMMUTABLE_DETAIL, revision_is_published_immutable
 from .revision_deprecation import (
     coerce_metadata,
@@ -1247,6 +1248,7 @@ async def create_version(
     Returns:
         The created version
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.CREATE)
     tenant_id = auth_data["tenant_id"]
     push_actor = get_authenticated_user_id(auth_data)
     # Verify project belongs to tenant
@@ -1603,6 +1605,7 @@ async def fork_version_from_revision(
 
     Not the same as a named branch within one project (#500): fork is cross-project isolation with recorded lineage.
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.CREATE)
     target_project = db.get_project_by_id(project_id, auth_data["tenant_id"])
     if not target_project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
@@ -1702,6 +1705,7 @@ async def update_version(
     Returns:
         The updated version
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     # Check if version exists
     existing = db.get_version_by_id(version_record_id, auth_data['tenant_id'])
     if not existing:
@@ -1863,6 +1867,7 @@ async def publish_version(
     Returns:
         The published version
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
     # Check if version exists
     existing = db.get_version_by_id(version_record_id, auth_data['tenant_id'])
     if not existing:
@@ -1990,6 +1995,7 @@ async def unpublish_version(
     Returns:
         The unpublished version
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
     # Check if version exists
     existing = db.get_version_by_id(version_record_id, auth_data['tenant_id'])
     if not existing:
@@ -2052,6 +2058,7 @@ async def freeze_version_schema(
     Only available when the version has no class_schema rows yet (e.g. published before schema capture existed).
     Only the version creator or a tenant administrator can freeze schema.
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     existing = db.get_version_by_id(version_record_id, auth_data["tenant_id"])
     if not existing:
         raise HTTPException(
@@ -2104,6 +2111,7 @@ async def delete_version(
     Returns:
         Success message
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.DELETE)
     # Check if version exists
     existing = db.get_version_by_id(version_record_id, auth_data['tenant_id'])
     if not existing:

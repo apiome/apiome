@@ -20,6 +20,7 @@ from psycopg2 import errors as pg_errors
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
+from .permissions import enforce_permission, Resource, Action
 from .models import (
     RefreshHistoryEntryOut,
     RefreshHistoryPageResponse,
@@ -490,6 +491,7 @@ async def create_tenant_repository(
     body: TenantRepositoryCreate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> TenantRepositoryCreateResponse:
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
     user_id = _require_jwt_user(auth_data)
@@ -622,6 +624,7 @@ async def update_tenant_repository(
     this repository (manual "Refresh Now" is unaffected). Returns the updated
     repository record. 404 when the repository does not belong to the tenant.
     """
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT)
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
     rid = str(repository_id)
@@ -674,6 +677,7 @@ async def refresh_tenant_repository_now(
     Raises:
         HTTPException: 404 when the repository does not belong to the tenant.
     """
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT)
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
 
@@ -886,6 +890,7 @@ async def delete_tenant_repository(
     repository_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Dict[str, bool]:
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.DELETE)
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
     if not db.delete_tenant_repository(tenant_id, str(repository_id)):

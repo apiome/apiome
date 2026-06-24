@@ -24,6 +24,8 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, Upl
 from pydantic import ValidationError
 
 from .auth import get_authenticated_user_id, validate_authentication
+from .database import db
+from .permissions import enforce_permission, Resource, Action
 from .models import (
     SpecImportCommitResponse,
     SpecImportJobAccepted,
@@ -94,6 +96,7 @@ async def start_spec_import_json(
     body: SpecImportStartJsonRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SpecImportJobAccepted:
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
     tenant_id, user_id = _require_tenant_and_user(auth_data)
     return await schedule_spec_import(tenant_slug, tenant_id, user_id, body)
 
@@ -119,6 +122,7 @@ async def start_spec_import_multipart(
     ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SpecImportJobAccepted:
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
     tenant_id, user_id = _require_tenant_and_user(auth_data)
     try:
         meta = SpecImportStartMetadata.model_validate_json(metadata)
@@ -163,6 +167,7 @@ async def cancel_spec_import_job(
     # NB: return a Response (not `-> None`) — under `from __future__ import annotations`
     # FastAPI evaluates a `None` return annotation to NoneType and asserts that a 204
     # cannot carry a body. Mirrors the draft-lock release routes.
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.DELETE)
     _ = auth_data
     await engine_cancel_spec_import_job(tenant_slug, job_id)
     return Response(status_code=204)
@@ -178,6 +183,7 @@ async def commit_spec_import_job(
     job_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SpecImportCommitResponse:
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
     _ = auth_data
     return engine_commit_spec_import_job(tenant_slug, job_id)
 
@@ -192,5 +198,6 @@ async def rollback_spec_import_job(
     job_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SpecImportRollbackResponse:
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
     _ = auth_data
     return engine_rollback_spec_import_job(tenant_slug, job_id)

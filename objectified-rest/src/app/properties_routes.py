@@ -15,6 +15,7 @@ from .models import (
     ProjectPropertyUpdateRequest
 )
 from .auth import validate_authentication, get_authenticated_user_id
+from .permissions import enforce_permission, Resource, Action
 
 router = APIRouter(prefix="/v1/properties", tags=["properties"])
 
@@ -131,6 +132,7 @@ async def create_property(
     Returns:
         The created property
     """
+    enforce_permission(db, auth_data, Resource.PROPERTIES, Action.CREATE)
     # Validate required fields
     if not request.name or not request.name.strip():
         raise HTTPException(
@@ -195,6 +197,7 @@ async def update_property(
     Returns:
         The updated property
     """
+    enforce_permission(db, auth_data, Resource.PROPERTIES, Action.EDIT)
     # Validate project belongs to tenant
     project = db.get_project_by_id(project_id, auth_data['tenant_id'])
     if not project:
@@ -277,6 +280,7 @@ async def delete_property(
     Returns:
         Success message
     """
+    enforce_permission(db, auth_data, Resource.PROPERTIES, Action.DELETE)
     # Validate project belongs to tenant
     project = db.get_project_by_id(project_id, auth_data['tenant_id'])
     if not project:

@@ -16,6 +16,9 @@ import {
   Database,
   Sun,
   LayoutDashboard,
+  Shield,
+  Users,
+  ScrollText,
 } from 'lucide-react';
 import { useDarkMode } from '@/app/hooks/useDarkMode';
 
@@ -64,6 +67,14 @@ const DashboardSideNav: React.FC = () => {
       header: 'Data Management',
       items: [
         { label: 'Primitives', href: '/ade/dashboard/primitives', icon: Database, disabled: !hasTenant },
+      ],
+    },
+    {
+      header: 'Access & IAM',
+      items: [
+        { label: 'Roles', href: '/ade/dashboard/roles', icon: Shield, disabled: !hasTenant },
+        { label: 'Members', href: '/ade/dashboard/members', icon: Users, disabled: !hasTenant },
+        { label: 'Access Audit', href: '/ade/dashboard/audit', icon: ScrollText, disabled: !hasTenant },
       ],
     },
     {

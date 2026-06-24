@@ -14,6 +14,7 @@ from .auth import get_authenticated_user_id, validate_authentication
 from .change_report_render import validate_change_report_templates, validate_template_semver
 from .change_report_template_resolve import template_accessible_to_tenant
 from .database import db
+from .permissions import enforce_permission, Resource, Action
 from .models import (
     ChangeReportTemplateDefaultPut,
     ChangeReportTemplateVersionCreate,
@@ -94,6 +95,7 @@ async def create_change_report_template_version(
 
     Invalid templates return **400** with a short validation message.
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
     user_id = _assert_jwt_user(auth_data)
@@ -148,6 +150,7 @@ async def put_tenant_change_report_template_default(
     Set the tenant default template pointer. **Tenant administrators only** (JWT).
     ``templateVersionId: null`` clears the tenant default (fall back to system default).
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
     user_id = _assert_jwt_user(auth_data)
@@ -169,6 +172,7 @@ async def put_project_change_report_template_default(
 
     ``templateVersionId: null`` clears the project override.
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
     user_id = _assert_jwt_user(auth_data)

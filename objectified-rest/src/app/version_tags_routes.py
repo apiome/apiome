@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from .auth import validate_authentication, get_authenticated_user_id
 from .database import db
+from .permissions import enforce_permission, Resource, Action
 from .models import VersionTagSchema, VersionTagCreateRequest, VersionTagUpdateRequest
 
 router = APIRouter(prefix="/v1/version-tags", tags=["version-tags"])
@@ -51,6 +52,7 @@ async def create_version_tag(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> VersionTagSchema:
     """Create a tag pointing at an existing schema revision."""
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.CREATE)
     tenant_id = _tenant_id(auth_data)
     project = db.get_project_by_id(project_id, tenant_id)
     if not project:
@@ -108,6 +110,7 @@ async def patch_version_tag(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> VersionTagSchema:
     """Move a tag to another revision and/or set immutable lock / protection policy."""
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     tenant_id = _tenant_id(auth_data)
     project = db.get_project_by_id(project_id, tenant_id)
     if not project:
@@ -172,6 +175,7 @@ async def delete_version_tag(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Dict[str, str]:
     """Delete a tag (not allowed when immutable; protected tags require admin)."""
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.DELETE)
     tenant_id = _tenant_id(auth_data)
     project = db.get_project_by_id(project_id, tenant_id)
     if not project:

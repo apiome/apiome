@@ -15,6 +15,7 @@ from .models import (
     ClassUpdateRequest
 )
 from .auth import validate_authentication, get_authenticated_user_id
+from .permissions import enforce_permission, Resource, Action
 
 router = APIRouter(prefix="/v1/classes", tags=["classes"])
 
@@ -114,6 +115,7 @@ async def create_class(
     Returns:
         The created class
     """
+    enforce_permission(db, auth_data, Resource.CLASSES, Action.CREATE)
     # Verify version belongs to tenant
     version = db.get_version_for_tenant(auth_data['tenant_id'], request.version_id)
     if not version:
@@ -163,6 +165,7 @@ async def update_class(
     Returns:
         The updated class
     """
+    enforce_permission(db, auth_data, Resource.CLASSES, Action.EDIT)
     # Build updates dict from request, excluding None values
     updates = {}
     if request.name is not None:
@@ -221,6 +224,7 @@ async def delete_class(
     Returns:
         Success message
     """
+    enforce_permission(db, auth_data, Resource.CLASSES, Action.DELETE)
     deleted = db.delete_class(class_id, auth_data['tenant_id'])
 
     if not deleted:
@@ -290,6 +294,7 @@ async def add_property_to_class(
     Returns:
         The created class property
     """
+    enforce_permission(db, auth_data, Resource.PROPERTIES, Action.CREATE)
     # First verify the class exists and belongs to tenant
     class_data = db.get_class_by_id(class_id, auth_data['tenant_id'])
 
@@ -367,6 +372,7 @@ async def update_class_property(
     Returns:
         The updated class property
     """
+    enforce_permission(db, auth_data, Resource.PROPERTIES, Action.EDIT)
     # First verify the class exists and belongs to tenant
     class_data = db.get_class_by_id(class_id, auth_data['tenant_id'])
 
@@ -449,6 +455,7 @@ async def delete_class_property(
     Returns:
         Success message
     """
+    enforce_permission(db, auth_data, Resource.PROPERTIES, Action.DELETE)
     # First verify the class exists and belongs to tenant
     class_data = db.get_class_by_id(class_id, auth_data['tenant_id'])
 

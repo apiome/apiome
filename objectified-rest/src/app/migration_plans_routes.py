@@ -10,6 +10,7 @@ from typing import Dict, Any
 
 from .database import db
 from .auth import validate_authentication
+from .permissions import enforce_permission, Resource, Action
 
 router = APIRouter(prefix="/v1/migration-plans", tags=["migration-plans"])
 
@@ -47,6 +48,7 @@ async def save_migration_plan_rules(
     Save migration plan rules for a (project, from_version, to_version, class_name).
     Body: project_id, from_version_id, to_version_id, class_name, rules.
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     project_id = request.get("project_id")
     from_version_id = request.get("from_version_id")
     to_version_id = request.get("to_version_id")

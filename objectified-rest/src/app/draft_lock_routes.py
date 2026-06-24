@@ -12,6 +12,7 @@ from fastapi.responses import Response
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
+from .permissions import enforce_permission, Resource, Action
 from .models import (
     VersionDraftLockAcquireRequest,
     VersionDraftLockRenewRequest,
@@ -110,6 +111,7 @@ async def acquire_draft_lock(
     Returns **409** with ``code: DRAFT_LOCK_CONFLICT`` and ``ownerUserId`` / ``expiresAt`` when
     another user holds an active lock.
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
     user_id = _require_jwt_user(auth_data)
@@ -152,6 +154,7 @@ async def renew_draft_lock(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> VersionDraftLockResponse:
     """Extend the lease on an active lock held by the current user."""
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
     user_id = _require_jwt_user(auth_data)
@@ -198,6 +201,7 @@ async def release_draft_lock(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Response:
     """Release the current user's lock. Idempotent when no lock exists (**204**)."""
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
     user_id = _require_jwt_user(auth_data)
@@ -228,6 +232,7 @@ async def force_release_draft_lock(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Response:
     """Remove any lock on the revision (**tenant administrators** only)."""
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
     uid = _require_jwt_user(auth_data)

@@ -3399,6 +3399,370 @@ class Database:
         """
         return bool(self.execute_query(q, (tenant_id, user_id)))
 
+    # ------------------------------------------------------------------
+    # Granular RBAC (#3611): roles, permissions, members, access audit
+    # ------------------------------------------------------------------
+
+    def user_has_permission(
+        self, tenant_id: str, user_id: str, resource: str, action: str
+    ) -> bool:
+        """
+        Central authorization predicate used by the permission guard.
+
+        A tenant administrator (Owner-equivalent / legacy ``tenant_administrators``) is allowed
+        everything; otherwise the user's assigned role — or the built-in Editor default for a member
+        with no explicit role — must grant ``resource:action``.
+        """
+        if self.is_user_tenant_admin(tenant_id, user_id):
+            return True
+        return f"{resource}:{action}" in self.get_effective_permissions(
+            tenant_id, user_id
+        )
+
+    def _modify(self, query: str, params: tuple = None) -> int:
+        """Execute a write that returns no rows (UPDATE/DELETE/INSERT-without-RETURNING).
+
+        Commits on success and returns the affected row count, mirroring ``execute_query``'s
+        connection hygiene (a committed write leaves the shared connection IDLE).
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                affected = cursor.rowcount
+            conn.commit()
+            return affected
+        except Exception:
+            conn.rollback()
+            raise
+
+    def is_platform_admin(self, user_id: Optional[str]) -> bool:
+        """True when the user is a platform administrator (the plane separate from tenant admin)."""
+        if not user_id:
+            return False
+        return bool(
+            self.execute_query(
+                "SELECT 1 FROM odb.platform_administrators WHERE user_id = %s::uuid LIMIT 1",
+                (user_id,),
+            )
+        )
+
+    def ensure_builtin_roles(self, tenant_id: str) -> None:
+        """Idempotently seed the four built-in roles + grids for a tenant (safe to call on every read)."""
+        self.execute_query("SELECT odb.seed_builtin_roles(%s::uuid)", (tenant_id,))
+
+    def get_effective_permissions(self, tenant_id: str, user_id: str) -> Set[str]:
+        """
+        Resolve a member's granted ``resource:action`` permissions from their assigned role.
+
+        A member with no explicit role assignment inherits the built-in **Editor** grid (any member
+        could create/edit content before RBAC). A suspended member has no permissions. Tenant
+        administrators are handled upstream by the guard's full-access plane and never reach here.
+        """
+        rows = self.execute_query(
+            """
+            SELECT rp.resource, rp.action
+            FROM odb.tenant_user_roles tur
+            JOIN odb.role_permissions rp ON rp.role_id = tur.role_id
+            WHERE tur.tenant_id = %s::uuid AND tur.user_id = %s::uuid
+            """,
+            (tenant_id, user_id),
+        )
+        if rows:
+            return {f"{r['resource']}:{r['action']}" for r in rows}
+
+        member = self.execute_query(
+            """
+            SELECT 1 FROM odb.tenant_users
+            WHERE tenant_id = %s::uuid AND user_id = %s::uuid AND status <> 'suspended'
+            LIMIT 1
+            """,
+            (tenant_id, user_id),
+        )
+        if not member:
+            return set()
+
+        editor_rows = self.execute_query(
+            """
+            SELECT rp.resource, rp.action
+            FROM odb.roles r
+            JOIN odb.role_permissions rp ON rp.role_id = r.id
+            WHERE r.tenant_id = %s::uuid AND r.slug = 'editor'
+            """,
+            (tenant_id,),
+        )
+        return {f"{r['resource']}:{r['action']}" for r in editor_rows}
+
+    def write_access_audit(
+        self,
+        *,
+        tenant_id: Optional[str],
+        action: str,
+        actor_id: Optional[str] = None,
+        actor_label: Optional[str] = None,
+        target: Optional[str] = None,
+        source: str = "web",
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Append a hash-chained row to ``odb.access_audit`` (best-effort; callers swallow failures)."""
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT entry_hash FROM odb.access_audit
+                    WHERE tenant_id IS NOT DISTINCT FROM %s::uuid
+                    ORDER BY created_at DESC, id DESC LIMIT 1
+                    """,
+                    (tenant_id,),
+                )
+                prev_row = cursor.fetchone()
+                prev_hash = prev_row["entry_hash"] if prev_row else None
+                detail_json = (
+                    json.dumps(detail, sort_keys=True, default=str)
+                    if detail is not None
+                    else None
+                )
+                payload = "|".join(
+                    [
+                        prev_hash or "",
+                        str(tenant_id or ""),
+                        str(actor_id or actor_label or ""),
+                        action,
+                        str(target or ""),
+                        detail_json or "",
+                    ]
+                )
+                entry_hash = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+                cursor.execute(
+                    """
+                    INSERT INTO odb.access_audit
+                        (tenant_id, actor_id, actor_label, action, target, source, detail, prev_hash, entry_hash)
+                    VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s::jsonb, %s, %s)
+                    """,
+                    (
+                        tenant_id,
+                        actor_id,
+                        actor_label,
+                        action,
+                        target,
+                        source,
+                        detail_json,
+                        prev_hash,
+                        entry_hash,
+                    ),
+                )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+
+    def list_access_audit(
+        self, tenant_id: str, *, action_prefix: Optional[str] = None, limit: int = 200
+    ) -> List[Dict[str, Any]]:
+        """Return access-audit rows for a tenant, newest first, optionally filtered by action prefix."""
+        params: list = [tenant_id]
+        where = "tenant_id = %s::uuid"
+        if action_prefix:
+            where += " AND action LIKE %s"
+            params.append(f"{action_prefix}%")
+        params.append(max(1, min(int(limit), 1000)))
+        return self.execute_query(
+            f"""
+            SELECT id::text, actor_id::text, actor_label, action, target, source,
+                   detail, created_at
+            FROM odb.access_audit
+            WHERE {where}
+            ORDER BY created_at DESC, id DESC
+            LIMIT %s
+            """,
+            tuple(params),
+        )
+
+    # ---- Roles -------------------------------------------------------
+
+    def list_roles(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """List a tenant's roles with their assigned-member counts (built-in first, then by name)."""
+        return self.execute_query(
+            """
+            SELECT r.id::text, r.slug, r.name, r.description, r.is_builtin,
+                   r.created_at, r.updated_at,
+                   (SELECT COUNT(*) FROM odb.tenant_user_roles tur WHERE tur.role_id = r.id) AS member_count
+            FROM odb.roles r
+            WHERE r.tenant_id = %s::uuid
+            ORDER BY r.is_builtin DESC,
+                     CASE r.slug WHEN 'owner' THEN 0 WHEN 'admin' THEN 1
+                                 WHEN 'editor' THEN 2 WHEN 'viewer' THEN 3 ELSE 4 END,
+                     r.name ASC
+            """,
+            (tenant_id,),
+        )
+
+    def get_role(self, tenant_id: str, role_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch one role scoped to a tenant, or None."""
+        rows = self.execute_query(
+            """
+            SELECT id::text, slug, name, description, is_builtin, created_at, updated_at
+            FROM odb.roles WHERE id = %s::uuid AND tenant_id = %s::uuid
+            """,
+            (role_id, tenant_id),
+        )
+        return rows[0] if rows else None
+
+    def get_role_permissions(self, role_id: str) -> List[Dict[str, str]]:
+        """Return the allowed ``resource``/``action`` pairs for a role."""
+        return self.execute_query(
+            "SELECT resource, action FROM odb.role_permissions WHERE role_id = %s::uuid",
+            (role_id,),
+        )
+
+    def create_role(
+        self, tenant_id: str, slug: str, name: str, description: Optional[str]
+    ) -> Dict[str, Any]:
+        """Create a custom (non-built-in) role and return it."""
+        rows = self.execute_query(
+            """
+            INSERT INTO odb.roles (tenant_id, slug, name, description, is_builtin)
+            VALUES (%s::uuid, %s, %s, %s, false)
+            RETURNING id::text, slug, name, description, is_builtin, created_at, updated_at
+            """,
+            (tenant_id, slug, name, description),
+        )
+        return rows[0]
+
+    def update_role(
+        self, tenant_id: str, role_id: str, name: str, description: Optional[str]
+    ) -> Optional[Dict[str, Any]]:
+        """Update a role's name/description (built-in or custom). Returns the updated row or None."""
+        rows = self.execute_query(
+            """
+            UPDATE odb.roles SET name = %s, description = %s
+            WHERE id = %s::uuid AND tenant_id = %s::uuid
+            RETURNING id::text, slug, name, description, is_builtin, created_at, updated_at
+            """,
+            (name, description, role_id, tenant_id),
+        )
+        return rows[0] if rows else None
+
+    def set_role_permissions(self, role_id: str, pairs: List[Tuple[str, str]]) -> None:
+        """Replace a role's permission grid with the given ``(resource, action)`` pairs."""
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM odb.role_permissions WHERE role_id = %s::uuid", (role_id,)
+                )
+                for resource, action in pairs:
+                    cursor.execute(
+                        """
+                        INSERT INTO odb.role_permissions (role_id, resource, action)
+                        VALUES (%s::uuid, %s, %s)
+                        ON CONFLICT (role_id, resource, action) DO NOTHING
+                        """,
+                        (role_id, resource, action),
+                    )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+
+    def delete_role(self, tenant_id: str, role_id: str) -> int:
+        """Delete a custom role (assignments cascade). Returns rows deleted."""
+        return self._modify(
+            "DELETE FROM odb.roles WHERE id = %s::uuid AND tenant_id = %s::uuid AND is_builtin = false",
+            (role_id, tenant_id),
+        )
+
+    # ---- Members -----------------------------------------------------
+
+    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Resolve an active user by email (for member invites)."""
+        rows = self.execute_query(
+            """
+            SELECT id::text, name, email FROM odb.users
+            WHERE lower(email) = lower(%s) AND deleted_at IS NULL
+            LIMIT 1
+            """,
+            (email,),
+        )
+        return rows[0] if rows else None
+
+    def list_members(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """List tenant members with their role, lifecycle status, and admin flag."""
+        return self.execute_query(
+            """
+            SELECT u.id::text AS user_id, u.name, u.email,
+                   tu.status,
+                   tu.updated_at AS member_since,
+                   r.id::text AS role_id, r.name AS role_name, r.slug AS role_slug,
+                   EXISTS (
+                       SELECT 1 FROM odb.tenant_administrators ta
+                       WHERE ta.tenant_id = tu.tenant_id AND ta.user_id = u.id
+                   ) AS is_admin
+            FROM odb.tenant_users tu
+            JOIN odb.users u ON u.id = tu.user_id
+            LEFT JOIN odb.tenant_user_roles tur
+                   ON tur.tenant_id = tu.tenant_id AND tur.user_id = tu.user_id
+            LEFT JOIN odb.roles r ON r.id = tur.role_id
+            WHERE tu.tenant_id = %s::uuid AND u.deleted_at IS NULL
+            ORDER BY u.name ASC
+            """,
+            (tenant_id,),
+        )
+
+    def add_member(self, tenant_id: str, user_id: str, status: str = "active") -> None:
+        """Add (or reactivate) a tenant membership with the given lifecycle status."""
+        self._modify(
+            """
+            INSERT INTO odb.tenant_users (tenant_id, user_id, status)
+            VALUES (%s::uuid, %s::uuid, %s)
+            ON CONFLICT (tenant_id, user_id) DO UPDATE SET status = EXCLUDED.status
+            """,
+            (tenant_id, user_id, status),
+        )
+
+    def set_member_status(self, tenant_id: str, user_id: str, status: str) -> int:
+        """Set a member's lifecycle status (active/pending/suspended). Returns rows updated."""
+        return self._modify(
+            "UPDATE odb.tenant_users SET status = %s WHERE tenant_id = %s::uuid AND user_id = %s::uuid",
+            (status, tenant_id, user_id),
+        )
+
+    def assign_member_role(self, tenant_id: str, user_id: str, role_id: str) -> None:
+        """Assign (replacing any existing) a role to a tenant member."""
+        self._modify(
+            """
+            INSERT INTO odb.tenant_user_roles (tenant_id, user_id, role_id)
+            VALUES (%s::uuid, %s::uuid, %s::uuid)
+            ON CONFLICT (tenant_id, user_id) DO UPDATE SET role_id = EXCLUDED.role_id
+            """,
+            (tenant_id, user_id, role_id),
+        )
+
+    def remove_member(self, tenant_id: str, user_id: str) -> int:
+        """Offboard a member: drop membership, role assignment, and any tenant-admin row."""
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM odb.tenant_user_roles WHERE tenant_id = %s::uuid AND user_id = %s::uuid",
+                    (tenant_id, user_id),
+                )
+                cursor.execute(
+                    "DELETE FROM odb.tenant_administrators WHERE tenant_id = %s::uuid AND user_id = %s::uuid",
+                    (tenant_id, user_id),
+                )
+                cursor.execute(
+                    "DELETE FROM odb.tenant_users WHERE tenant_id = %s::uuid AND user_id = %s::uuid",
+                    (tenant_id, user_id),
+                )
+                affected = cursor.rowcount
+            conn.commit()
+            return affected
+        except Exception:
+            conn.rollback()
+            raise
+
     def tenant_has_feature_flag(
         self,
         tenant_id: Optional[str],
@@ -3489,6 +3853,7 @@ class Database:
             SELECT 1
             FROM odb.tenant_users
             WHERE user_id = %s::uuid AND tenant_id = %s::uuid
+              AND status <> 'suspended'
             LIMIT 1
         """
         if self.execute_query(member_q, (user_id, tenant_id)):

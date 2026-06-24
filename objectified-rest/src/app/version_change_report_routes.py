@@ -12,6 +12,7 @@ from .auth import get_authenticated_user_id, validate_authentication
 from .change_report_render import render_from_template_row
 from .change_report_template_resolve import resolve_effective_change_report_template
 from .database import db
+from .permissions import enforce_permission, Resource, Action
 from .models import (
     VersionChangeReportOut,
     VersionChangeReportPatch,
@@ -151,6 +152,7 @@ async def patch_version_change_report(
     **Semantics:** Each optional field is a full snapshot of that slice (not a diff). Sending
     ``null`` for a field clears that user override. ``clearEdits: true`` removes all overrides.
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
     user_id = get_authenticated_user_id(auth_data)
     if not user_id:
@@ -240,6 +242,7 @@ async def regenerate_version_change_report(
 
     **Authorization:** Same as PATCH (creator or tenant admin, JWT required).
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
     user_id = get_authenticated_user_id(auth_data)
     if not user_id:
@@ -319,6 +322,7 @@ async def preview_change_report_for_publish(
     Same baseline options as ``POST …/publish`` (``changeReportBaselineMode`` / ``changeReportBaselineRevisionId``).
     Requires JWT; same authorization as publishing (revision creator or tenant admin).
     """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     user_id = get_authenticated_user_id(auth_data)
     if not user_id:
         raise HTTPException(

@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from .auth import get_authenticated_user_id, validate_authentication
 from .feature_gating import require_primitives_registry
 from .database import db
+from .permissions import enforce_permission, Resource, Action
 from .import_ingestion import IngestionError, ingest_source
 from .import_pipeline import VALID_SOURCE_KINDS, build_staged_import
 from .models import (
@@ -562,6 +563,7 @@ async def create_primitive(
     Returns:
         The created primitive
     """
+    enforce_permission(db, auth_data, Resource.TYPES, Action.CREATE)
     # Server-side draft 2020-12 validation + stable $id derivation (#3452), gated by the
     # tenant's publish/save settings (#3479): block invalid schemas only when the gate is on.
     validate_on_save, block_on_errors = load_publish_gate(auth_data['tenant_id'])
@@ -660,6 +662,7 @@ async def update_primitive(
     Returns:
         The updated primitive
     """
+    enforce_permission(db, auth_data, Resource.TYPES, Action.EDIT)
     # Check if primitive exists
     existing = db.get_primitive_by_id(primitive_id, auth_data['tenant_id'])
     if not existing:
@@ -801,6 +804,7 @@ async def delete_primitive(
     Returns:
         Success message
     """
+    enforce_permission(db, auth_data, Resource.TYPES, Action.DELETE)
     # Check if primitive exists
     existing = db.get_primitive_by_id(primitive_id, auth_data['tenant_id'])
     if not existing:
@@ -1416,6 +1420,7 @@ async def review_import_primitives(
     Returns:
         A ``{"status": "review", "summary", "types", ...}`` report.
     """
+    enforce_permission(db, auth_data, Resource.TYPES, Action.VIEW)
     definitions, warnings = _resolve_import_definitions(request)
 
     review = _review_imported_definitions(
@@ -1465,6 +1470,7 @@ async def import_primitives(
     Returns:
         Summary of imported primitives plus the id of the recorded provenance row.
     """
+    enforce_permission(db, auth_data, Resource.TYPES, Action.CREATE)
     # Resolve the source into a {name: schema} map of definitions (shared with /import/review).
     # A malformed bundle / empty document is a clear 400. Each definition's intra-source and
     # core-format refs are rewritten during commit (#3463).
@@ -1610,6 +1616,7 @@ async def stage_import(
         HTTPException: 400 for an invalid source kind/method or missing locator,
             422 for an unparseable source, 502 for a fetch failure.
     """
+    enforce_permission(db, auth_data, Resource.TYPES, Action.CREATE)
     if request.source_kind not in VALID_IMPORT_SOURCE_KINDS:
         raise HTTPException(
             status_code=400,

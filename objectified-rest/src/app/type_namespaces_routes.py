@@ -21,6 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from .auth import get_authenticated_user_id
 from .database import db
 from .feature_gating import require_primitives_registry
+from .permissions import enforce_permission, Resource, Action
 from .models import (
     RegistryCoverageStatsResponse,
     ResolvedPrimitiveRefs,
@@ -165,6 +166,7 @@ async def create_namespace(
     Returns:
         The created namespace.
     """
+    enforce_permission(db, auth_data, Resource.TYPES, Action.CREATE)
     tenant_id = auth_data["tenant_id"]
     user_id = _assert_jwt_user(auth_data)
     _assert_tenant_admin(tenant_id, user_id)
@@ -241,6 +243,7 @@ async def update_namespace(
     Returns:
         The updated namespace.
     """
+    enforce_permission(db, auth_data, Resource.TYPES, Action.EDIT)
     tenant_id = auth_data["tenant_id"]
     user_id = _assert_jwt_user(auth_data)
     _assert_tenant_admin(tenant_id, user_id)
@@ -350,6 +353,7 @@ async def update_registry_settings(
     Returns:
         The full persisted settings after the write.
     """
+    enforce_permission(db, auth_data, Resource.TYPES, Action.EDIT)
     tenant_id = auth_data["tenant_id"]
     user_id = _assert_jwt_user(auth_data)
     _assert_tenant_admin(tenant_id, user_id)
@@ -398,6 +402,7 @@ async def resolve_refs(
         ``ResolveResponse`` with tenant-wide edge counts, the number of primitives whose
         stored statuses were updated by this pass, and the per-primitive dependency listing.
     """
+    enforce_permission(db, auth_data, Resource.TYPES, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
     primitives = db.get_primitives_for_tenant(tenant_id)
 

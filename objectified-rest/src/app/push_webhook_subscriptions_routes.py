@@ -16,6 +16,7 @@ from pydantic import HttpUrl, TypeAdapter
 
 from .auth import validate_authentication
 from .database import db
+from .permissions import enforce_permission, Resource, Action
 from .models import (
     PushWebhookDeadLetterItem,
     PushWebhookDeliveryAttemptItem,
@@ -160,6 +161,7 @@ async def create_push_webhook_subscription(
     body: PushWebhookSubscriptionCreateRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> PushWebhookSubscriptionResponse:
+    enforce_permission(db, auth_data, Resource.API_KEYS, Action.CREATE)
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
     try:
@@ -205,6 +207,7 @@ async def update_push_webhook_subscription(
     body: PushWebhookSubscriptionUpdateRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> PushWebhookSubscriptionResponse:
+    enforce_permission(db, auth_data, Resource.API_KEYS, Action.EDIT)
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
 
