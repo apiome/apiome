@@ -15,6 +15,7 @@ describe("listSeedFiles", () => {
       "003_membership.sql",
       "004_license.sql",
       "005_api_key.sql",
+      "006_sample_project.sql",
     ]);
   });
 });

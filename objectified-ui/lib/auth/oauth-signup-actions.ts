@@ -8,6 +8,7 @@ import {
   addTenantAdministrator,
   deleteUser,
   deleteTenant,
+  provisionSampleProject,
 } from '../db/admin-helper';
 import { linkExternalAccount } from '../db/helper';
 import {
@@ -150,6 +151,11 @@ export async function completeOAuthSignup(
   }
 
   await insertFreeTierEntitlements(userId);
+
+  // Best-effort: seed the curated sample project so the new tenant isn't empty. Never block signup
+  // if this fails — the user/tenant are already committed and a fresh tenant can simply start empty.
+  await provisionSampleProject(tenantId, userId);
+
   await deleteOauthSignupPendingById(pendingId);
 
   const oneTimeCode = await insertAuthOneTimeCode(userId, tenantId);

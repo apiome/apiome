@@ -269,16 +269,20 @@ tenantsCmd
   .option("--slug <slug>", "URL slug (lowercase-hyphenated; derived from --name if omitted)")
   .option("--description <description>", "Optional description")
   .option("--disabled", "Create the tenant in a disabled state", false)
+  .option("--sample-creator <user>", "Also provision the sample project, owned by this user (email or id)")
   .action(async (opts, cmd: Command) => {
     const g = cmd.optsWithGlobals() as GlobalOpts;
     const slug = typeof opts.slug === "string" && opts.slug.trim() !== "" ? opts.slug.trim() : slugify(opts.name);
-    await withClient(connectionOf(g), (client) =>
-      tenants.createTenant(
+    await withClient(connectionOf(g), async (client) => {
+      await tenants.createTenant(
         client,
         { name: opts.name, slug, description: opts.description, enabled: !opts.disabled },
         modeOf(g),
-      ),
-    );
+      );
+      if (typeof opts.sampleCreator === "string" && opts.sampleCreator.trim() !== "") {
+        await tenants.provisionSample(client, slug, opts.sampleCreator.trim(), modeOf(g));
+      }
+    });
   });
 
 tenantsCmd
@@ -338,6 +342,16 @@ tenantsCmd
     const g = cmd.optsWithGlobals() as GlobalOpts;
     await withClient(connectionOf(g), (client) =>
       tenants.listTenantMembers(client, tenant, modeOf(g)),
+    );
+  });
+
+tenantsCmd
+  .command("provision-sample <tenant> <user>")
+  .description("Provision the curated sample project for a tenant, owned by <user> (idempotent)")
+  .action(async (tenant: string, user: string, _opts, cmd: Command) => {
+    const g = cmd.optsWithGlobals() as GlobalOpts;
+    await withClient(connectionOf(g), (client) =>
+      tenants.provisionSample(client, tenant, user, modeOf(g)),
     );
   });
 

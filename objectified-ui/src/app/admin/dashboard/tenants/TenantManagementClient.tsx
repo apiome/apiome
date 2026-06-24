@@ -31,6 +31,7 @@ import {
   removeTenantAdministrator,
   getUsersNotInTenant,
   getAllUsers,
+  provisionSampleProject,
 } from '../../../../../lib/db/admin-helper';
 
 interface Tenant {
@@ -182,6 +183,10 @@ export default function TenantManagementClient() {
             if (newTenant.makeAdmin) {
               await addTenantAdministrator(tenantId, newTenant.initialUserId);
             }
+
+            // Best-effort: seed the curated sample project so the tenant isn't empty (needs a
+            // creator, which we have here). Never fail tenant creation if this errors.
+            await provisionSampleProject(tenantId, newTenant.initialUserId);
 
             showMessage('success', `Tenant created successfully${newTenant.makeAdmin ? ' with admin user' : ' with user'}`);
           } catch (userError) {

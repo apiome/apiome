@@ -38,6 +38,32 @@ export async function createTenant(
   }
 }
 
+/**
+ * Provision the curated sample project for a tenant, owned by `userRef`. Delegates to the shared,
+ * idempotent `odb.provision_sample_project()` routine (migration V122) — the same one used by the
+ * dev seed and the UI tenant-creation paths. Reports the new project id, or that the sample was
+ * already present.
+ */
+export async function provisionSample(
+  client: pg.Client,
+  tenantRef: string,
+  userRef: string,
+  mode: OutputMode,
+): Promise<void> {
+  const tenant = await resolveTenant(client, tenantRef);
+  const user = await resolveUser(client, userRef);
+  const res = await client.query<{ project_id: string | null }>(
+    "SELECT odb.provision_sample_project($1, $2) AS project_id",
+    [tenant.id, user.id],
+  );
+  const projectId = res.rows[0]?.project_id ?? null;
+  printRecord(mode, {
+    tenant: tenant.slug,
+    creator: user.email,
+    project_id: projectId ?? "(already provisioned)",
+  });
+}
+
 export async function listTenants(
   client: pg.Client,
   opts: { all: boolean },

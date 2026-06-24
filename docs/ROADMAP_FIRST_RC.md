@@ -155,10 +155,19 @@ wrapper (`scripts/backup/scheduled-backup.sh`); RPO/RTO targets, restore runbook
 ### Phase 2 — Developer Value & First-Run  *(weeks 4–6, overlaps Phase 1)*  · **Epic #3605**
 *Make the first five minutes great and close the consume loop.*
 
-**2.1 — Onboarding & sample content** (#3614) · **M** · *blocks RC; gap #5*
+**2.1 — Onboarding & sample content** (#3614) · **M** · *blocks RC; gap #5* · ✅ **Done**
 Fill `README.md` Getting Started (compose quick-start + first-project walkthrough). Add a seeded **sample
 project** and 2–3 **starter templates/blueprints** so a new tenant isn't empty. Guided first-run in the UI.
 *Exit:* a brand-new user reaches a published, browsable spec in < 10 minutes without docs spelunking.
+*Shipped:* shared idempotent `odb.provision_sample_project()` (objectified-db V122) auto-seeds a curated,
+published+public "Pet Store" sample on **every** tenant-creation path — OAuth self-signup, admin tenant
+create, the `objectified-db tenants provision-sample` / `tenants create --sample-creator` CLI, and the dev
+seed; the sample renders end-to-end in Browse (verified live via `GET /v1/schema/.../petstore-sample/1.0.0`).
+Starter templates reuse the existing 50 system `class_templates` (surfaced via the Designer template
+browser). A dismissible **Get started** checklist on the dashboard derives completion from real stats
+(localStorage-persisted). README "Your first project in ~10 minutes" walkthrough added. Tests: objectified-db
+vitest (migration shape), objectified-rest pytest (sample render contract), objectified-ui jest (checklist
+logic + component).
 
 **2.2 — Mock Server** (#3615) · **L** · *high value; gap #4* · ‖ parallel with 2.1
 Implement the `mock-server/` mockup: one-click hosted mock from a published version, schema-valid responses
@@ -274,7 +283,6 @@ Created in `objectified-project/objectified` (pack label `roadmap-first-rc`, all
 | #3603 | Epic: RC1 Phase 0 — Prove the Spine & Stop the Bleeding | 0 |
 | #3604 | Epic: RC1 Phase 1 — Access & Trust | 1 |
 | #3605 | Epic: RC1 Phase 2 — Developer Value & First-Run | 2 |
-| #3614 | RC1-2.1 — Onboarding, sample project & starter templates | 2 |
 | #3615 | RC1-2.2 — Mock Server | 2 |
 | #3606 | Epic: RC1 Phase 3 — Release Engineering & Operability | 3 |
 | #3616 | RC1-3.1 — Test coverage across the spine | 3 |

@@ -19,6 +19,7 @@ import {
 } from '@/app/components/ade/dashboard/dashboardScreenClasses';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Badge } from '../../components/ui/Badge';
+import { FirstRunChecklist } from '../../components/ade/dashboard/FirstRunChecklist';
 import { cn } from '../../../../lib/utils';
 import { getDashboardStats, getRecentActivity } from '../../../../lib/db/helper';
 
@@ -201,6 +202,9 @@ const Dashboard = () => {
 
       <main className={dashboardMainClass}>
         <div className={dashboardContentStackClass}>
+      {/* First-run onboarding checklist (dismissible; completion derived from stats) */}
+      {!isLoading && <FirstRunChecklist stats={stats} />}
+
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {statsConfig.map((stat) => {

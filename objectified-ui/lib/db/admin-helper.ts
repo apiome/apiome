@@ -631,6 +631,26 @@ export async function addTenantAdministrator(tenantId: string, userId: string) {
 }
 
 /**
+ * Provision the curated sample project for a tenant via the shared, idempotent
+ * `odb.provision_sample_project()` routine (objectified-db migration V122), owned by `creatorId`.
+ * Best-effort: callers should NOT fail tenant creation if this errors — a fresh tenant simply
+ * starts empty. Returns the standard JSON envelope ({ success, project_id } | { success:false }).
+ */
+export async function provisionSampleProject(tenantId: string, creatorId: string) {
+  try {
+    const result = await connectionPool.query(
+      'SELECT odb.provision_sample_project($1, $2) AS project_id',
+      [tenantId, creatorId]
+    );
+    // project_id is NULL when the sample already existed (idempotent no-op).
+    return successResponse({ project_id: result.rows[0]?.project_id ?? null });
+  } catch (error) {
+    console.error('Error provisioning sample project:', error);
+    return errorResponse(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/**
  * Remove a user as tenant administrator
  */
 export async function removeTenantAdministrator(tenantId: string, userId: string) {
