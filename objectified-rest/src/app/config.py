@@ -168,6 +168,38 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Mock Server (#3615, RC1-2.2). Free-tier mocks auto-expire after a default TTL (capped at a
+    # maximum) and are rate limited per instance on the data plane. Set
+    # OBJECTIFIED_MOCK_SERVER_ENABLED=false to disable provisioning + serving entirely.
+    mock_server_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "OBJECTIFIED_MOCK_SERVER_ENABLED",
+            "mock_server_enabled",
+        ),
+    )
+    mock_default_ttl_hours: int = Field(
+        default=24,
+        validation_alias=AliasChoices(
+            "OBJECTIFIED_MOCK_DEFAULT_TTL_HOURS",
+            "mock_default_ttl_hours",
+        ),
+    )
+    mock_max_ttl_hours: int = Field(
+        default=168,  # 7 days
+        validation_alias=AliasChoices(
+            "OBJECTIFIED_MOCK_MAX_TTL_HOURS",
+            "mock_max_ttl_hours",
+        ),
+    )
+    mock_rate_limit_per_minute: int = Field(
+        default=60,
+        validation_alias=AliasChoices(
+            "OBJECTIFIED_MOCK_RATE_LIMIT_PER_MINUTE",
+            "mock_rate_limit_per_minute",
+        ),
+    )
+
     # Global auto-refresh kill switch (RAR-3.3, #3524). When False, the refresh
     # sweep halts entirely (no repository is auto-refreshed) regardless of per-repo
     # auto_refresh_enabled. Intended for incident response. Manual "Refresh Now"

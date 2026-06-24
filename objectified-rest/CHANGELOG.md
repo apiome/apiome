@@ -5,6 +5,25 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-06-23
+
+### Added
+- **Mock Server (#3615, RC1-2.2)** — provision a hosted mock from any published version and consume
+  the designed API before a backend exists. New management plane `POST/GET /v1/mocks/{tenant_slug}`
+  (provision, list), `GET/DELETE /v1/mocks/{tenant_slug}/{id}` (inspect, destroy), and
+  `PUT .../active-scenario` (switch scenario), all tenant-scoped + authenticated. The OpenAPI
+  document generated for the version (same output as `/v1/swagger/...`) is frozen into the instance,
+  so the mock is stable for its lifetime. New public data plane `ANY /v1/mock/{id}/...` replays
+  schema-valid responses synthesised deterministically from the response schemas
+  (`app/mock_data_generator.py`, validated with `jsonschema`) and applies the selected scenario
+  (`app/mock_engine.py`). Per-operation scenarios override status / latency / body and are selectable
+  per instance or per request via the `X-Mock-Scenario` header; four built-ins ship (happy-path,
+  server-error, not-found, slow). Free-tier guardrails: instances auto-expire (`410 Gone` past
+  `expires_at`) and are rate limited per instance (`429` with `Retry-After`). Backed by migration
+  V123 (`odb.mock_instances`). Configurable via `OBJECTIFIED_MOCK_SERVER_ENABLED` (default on),
+  `OBJECTIFIED_MOCK_DEFAULT_TTL_HOURS` (default 24), `OBJECTIFIED_MOCK_MAX_TTL_HOURS` (default 168),
+  and `OBJECTIFIED_MOCK_RATE_LIMIT_PER_MINUTE` (default 60).
+
 ## [1.2.0] - 2026-06-23
 
 ### Added

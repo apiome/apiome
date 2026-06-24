@@ -42,12 +42,13 @@ from .tenants_session_routes import router as tenants_session_router
 from .browse_public_routes import router as browse_public_router
 from .spec_import_routes import router as spec_import_router
 from .access_routes import router as access_router, platform_router as access_platform_router
+from .mock_routes import router as mock_router, data_router as mock_data_router
 
 # Create FastAPI app
 app = FastAPI(
     title="Objectified REST API",
     description="REST API for serving OpenAPI specifications from the Objectified database",
-    version="1.0.62"
+    version="1.0.63"
 )
 
 
@@ -130,6 +131,9 @@ app.include_router(spec_import_router)
 app.include_router(tenant_repositories_router)
 app.include_router(access_router)
 app.include_router(access_platform_router)
+# Mock Server (#3615): tenant-scoped management plane, then the public data plane catch-all.
+app.include_router(mock_router)
+app.include_router(mock_data_router)
 
 
 _webhook_delivery_task: asyncio.Task | None = None

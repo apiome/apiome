@@ -9529,6 +9529,145 @@ class Database:
         """
         return self.execute_query(query, tuple(params))
 
+    # ------------------------------------------------------------------
+    # Mock Server instances (#3615, RC1-2.2)
+    # ------------------------------------------------------------------
+
+    # Columns returned for every mock-instance read, kept in one place so the management and data
+    # planes always see the same shape.
+    _MOCK_INSTANCE_COLUMNS = (
+        "id, tenant_id, version_id, tenant_slug, project_slug, version_slug, name, "
+        "spec, config, rate_limit_per_minute, status, created_by, request_count, "
+        "created_at, expires_at, last_activity_at"
+    )
+
+    def create_mock_instance(
+        self,
+        tenant_id: str,
+        version_id: Optional[str],
+        tenant_slug: str,
+        project_slug: str,
+        version_slug: str,
+        name: str,
+        spec: Dict[str, Any],
+        config: Dict[str, Any],
+        rate_limit_per_minute: int,
+        created_by: Optional[str],
+        expires_at: Optional[datetime],
+    ) -> Dict[str, Any]:
+        """Provision a mock instance from a published version's frozen spec.
+
+        Args:
+            tenant_id: Owning tenant (for management/listing scope).
+            version_id: ``odb.versions.id`` the mock was generated from (nullable).
+            tenant_slug/project_slug/version_slug: Human coordinates for display.
+            name: Display name.
+            spec: Frozen OpenAPI document the data plane replays from.
+            config: Scenario / generation configuration (stored as JSONB).
+            rate_limit_per_minute: Per-instance free-tier request budget.
+            created_by: User id for attribution (nullable).
+            expires_at: Auto-expiry timestamp, or ``None`` for no expiry.
+
+        Returns:
+            The newly created mock-instance row.
+        """
+        query = f"""
+            INSERT INTO odb.mock_instances
+                (tenant_id, version_id, tenant_slug, project_slug, version_slug, name,
+                 spec, config, rate_limit_per_minute, created_by, expires_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING {self._MOCK_INSTANCE_COLUMNS}
+        """
+        rows = self.execute_query(
+            query,
+            (
+                tenant_id,
+                version_id,
+                tenant_slug,
+                project_slug,
+                version_slug,
+                name,
+                Json(spec),
+                Json(config),
+                rate_limit_per_minute,
+                created_by,
+                expires_at,
+            ),
+        )
+        return rows[0]
+
+    def list_mock_instances(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """List a tenant's mock instances, newest first."""
+        query = f"""
+            SELECT {self._MOCK_INSTANCE_COLUMNS}
+            FROM odb.mock_instances
+            WHERE tenant_id = %s
+            ORDER BY created_at DESC
+        """
+        return self.execute_query(query, (tenant_id,))
+
+    def get_mock_instance_for_tenant(
+        self, mock_id: str, tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch a single mock instance scoped to its owning tenant (management plane)."""
+        query = f"""
+            SELECT {self._MOCK_INSTANCE_COLUMNS}
+            FROM odb.mock_instances
+            WHERE id = %s AND tenant_id = %s
+        """
+        rows = self.execute_query(query, (mock_id, tenant_id))
+        return rows[0] if rows else None
+
+    def get_mock_instance(self, mock_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch a mock instance by id without a tenant filter (public data plane)."""
+        query = f"""
+            SELECT {self._MOCK_INSTANCE_COLUMNS}
+            FROM odb.mock_instances
+            WHERE id = %s
+        """
+        rows = self.execute_query(query, (mock_id,))
+        return rows[0] if rows else None
+
+    def update_mock_instance_config(
+        self, mock_id: str, tenant_id: str, config: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Replace a mock instance's config JSONB (e.g. switch the active scenario)."""
+        query = f"""
+            UPDATE odb.mock_instances
+            SET config = %s
+            WHERE id = %s AND tenant_id = %s
+            RETURNING {self._MOCK_INSTANCE_COLUMNS}
+        """
+        rows = self.execute_query(query, (Json(config), mock_id, tenant_id))
+        return rows[0] if rows else None
+
+    def delete_mock_instance(self, mock_id: str, tenant_id: str) -> bool:
+        """Destroy a mock instance; returns ``True`` if a row was removed."""
+        query = """
+            DELETE FROM odb.mock_instances
+            WHERE id = %s AND tenant_id = %s
+            RETURNING id
+        """
+        rows = self.execute_query(query, (mock_id, tenant_id))
+        return bool(rows)
+
+    def touch_mock_instance(self, mock_id: str) -> None:
+        """Best-effort: bump request_count and last_activity_at for a served data-plane request.
+
+        Failures are swallowed — usage accounting must never break the mock response itself.
+        """
+        query = """
+            UPDATE odb.mock_instances
+            SET request_count = request_count + 1,
+                last_activity_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+            RETURNING id
+        """
+        try:
+            self.execute_query(query, (mock_id,))
+        except Exception as exc:  # pragma: no cover - accounting must never raise
+            _logger.warning("Failed to update mock instance activity for %s: %s", mock_id, exc)
+
 
 # Global database instance
 db = Database()
