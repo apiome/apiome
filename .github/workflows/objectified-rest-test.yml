@@ -1,0 +1,73 @@
+name: Objectified REST Tests
+
+# Runs the objectified-rest pytest suite with coverage on every push / PR that touches the service
+# (RC1-3.1, #3616). This gates merges on the REST spine endpoints: a regression here goes red.
+# The suite is self-contained (no external database) — the handful of live-DB integration tests skip
+# themselves when DATABASE_URL is unset. Full end-to-end DB coverage is the golden-path workflow's
+# job (postgres -> migrate -> seed -> rest -> mcp).
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'objectified-rest/**'
+      - '.github/workflows/objectified-rest-test.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'objectified-rest/**'
+      - '.github/workflows/objectified-rest-test.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: pytest + coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: objectified-rest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies (incl. dev/test group)
+        run: uv sync
+
+      - name: Run tests with coverage
+        run: |
+          uv run pytest \
+            --cov --cov-report=term-missing --cov-report=xml \
+            --junitxml=pytest-report.xml
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          {
+            echo '### objectified-rest coverage'
+            echo ''
+            echo '```'
+            uv run coverage report || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: objectified-rest-coverage
+          path: |
+            objectified-rest/coverage.xml
+            objectified-rest/pytest-report.xml
+          if-no-files-found: ignore
+        continue-on-error: true

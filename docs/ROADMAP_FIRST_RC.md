@@ -186,10 +186,15 @@ synthesis (`mock_data_generator`) validated with jsonschema; selectable per-oper
 ### Phase 3 — Release Engineering & Operability  *(weeks 5–7, overlaps Phase 2)*  · **Epic #3606**
 *What turns "works" into "operable in production."*
 
-**3.1 — Test coverage across the spine** (#3616) · **L** · *blocks RC*
+**3.1 — Test coverage across the spine** (#3616) · **L** · *blocks RC* · ✅ **Done**
 Integration tests on the REST routers touched by the golden path; component tests on the UI editors;
 contract tests between UI ↔ REST. CI gates merges on them.
 *Exit:* spine endpoints + editors covered; CI red on regression of the golden path.
+*Delivered:* the objectified-rest pytest suite was repaired (collection errors fixed, suite made
+deterministic and DB-free) and is now gated in CI with coverage (`objectified-rest-test.yml`);
+objectified-ui CI now reports coverage; a shared UI↔REST golden-path contract
+(`scripts/golden_path/contract.json`) is verified from both sides; and the class-designer editor
+toolbar gained component tests. See `docs/TESTING.md`.
 
 **3.2 — Observability & error handling** (#3617) · **M** · *blocks RC* · ‖ parallel
 Structured logs (MCP already uses structlog — extend to REST), health/readiness endpoints, error tracking,
@@ -289,7 +294,6 @@ Created in `objectified-project/objectified` (pack label `roadmap-first-rc`, all
 | #3604 | Epic: RC1 Phase 1 — Access & Trust | 1 |
 | #3605 | Epic: RC1 Phase 2 — Developer Value & First-Run | 2 |
 | #3606 | Epic: RC1 Phase 3 — Release Engineering & Operability | 3 |
-| #3616 | RC1-3.1 — Test coverage across the spine | 3 |
 | #3617 | RC1-3.2 — Observability & error handling | 3 |
 | #3618 | RC1-3.3 — Production deployment story | 3 |
 | #3619 | RC1-3.4 — Documentation set (spine + API/MCP/CLI) | 3 |

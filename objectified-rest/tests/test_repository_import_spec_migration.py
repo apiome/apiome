@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-_MIGRATION = "objectified-db/scripts/20260621-120000.sql"
+_MIGRATION = "objectified-db/scripts/V105__persisted_import_specification_per_impor.sql"
 
 # Fragments the migration must contain so the table, keys, and indexes survive
 # accidental edits. Acceptance criteria for #3512:

@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-_MIGRATION = "objectified-db/scripts/20260621-140000.sql"
+_MIGRATION = "objectified-db/scripts/V107__configurable_refresh_cadence_rar_3_1_352.sql"
 
 # Fragments the migration must contain so the cadence columns + constraint survive
 # accidental edits. Acceptance criteria for #3522:

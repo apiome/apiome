@@ -6,8 +6,8 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-from src.app.auth import validate_authentication
-from src.app.main import app
+from app.auth import validate_authentication
+from app.main import app
 
 client = TestClient(app)
 
@@ -121,9 +121,9 @@ def test_provision_returns_base_url_and_metadata():
             expires_at=kwargs["expires_at"],
         )
 
-    with patch("src.app.mock_routes.db.get_version_by_slugs", return_value=version), patch(
-        "src.app.mock_routes._build_spec_for_version", return_value=SPEC
-    ), patch("src.app.mock_routes.db.create_mock_instance", side_effect=_create):
+    with patch("app.mock_routes.db.get_version_by_slugs", return_value=version), patch(
+        "app.mock_routes._build_spec_for_version", return_value=SPEC
+    ), patch("app.mock_routes.db.create_mock_instance", side_effect=_create):
         r = client.post(
             f"/v1/mocks/{TENANT}",
             json={"projectSlug": "petstore", "versionSlug": "1.0.0", "ttlHours": 12},
@@ -140,7 +140,7 @@ def test_provision_returns_base_url_and_metadata():
 
 def test_provision_rejects_unpublished_version():
     version = {"id": "v1", "version_id": "1.0.0", "published": False}
-    with patch("src.app.mock_routes.db.get_version_by_slugs", return_value=version):
+    with patch("app.mock_routes.db.get_version_by_slugs", return_value=version):
         r = client.post(
             f"/v1/mocks/{TENANT}",
             json={"projectSlug": "petstore", "versionSlug": "1.0.0"},
@@ -149,7 +149,7 @@ def test_provision_rejects_unpublished_version():
 
 
 def test_provision_404_for_missing_version():
-    with patch("src.app.mock_routes.db.get_version_by_slugs", return_value=None):
+    with patch("app.mock_routes.db.get_version_by_slugs", return_value=None):
         r = client.post(
             f"/v1/mocks/{TENANT}",
             json={"projectSlug": "nope", "versionSlug": "9.9.9"},
@@ -159,8 +159,8 @@ def test_provision_404_for_missing_version():
 
 def test_provision_rejects_unknown_active_scenario():
     version = {"id": "v1", "version_id": "1.0.0", "published": True}
-    with patch("src.app.mock_routes.db.get_version_by_slugs", return_value=version), patch(
-        "src.app.mock_routes._build_spec_for_version", return_value=SPEC
+    with patch("app.mock_routes.db.get_version_by_slugs", return_value=version), patch(
+        "app.mock_routes._build_spec_for_version", return_value=SPEC
     ):
         r = client.post(
             f"/v1/mocks/{TENANT}",
@@ -174,17 +174,17 @@ def test_provision_rejects_unknown_active_scenario():
 
 
 def test_list_mocks():
-    with patch("src.app.mock_routes.db.list_mock_instances", return_value=[_instance_row()]):
+    with patch("app.mock_routes.db.list_mock_instances", return_value=[_instance_row()]):
         r = client.get(f"/v1/mocks/{TENANT}")
     assert r.status_code == 200
     assert r.json()[0]["id"] == MOCK_ID
 
 
 def test_get_mock_detail_and_404():
-    with patch("src.app.mock_routes.db.get_mock_instance_for_tenant", return_value=_instance_row()):
+    with patch("app.mock_routes.db.get_mock_instance_for_tenant", return_value=_instance_row()):
         r = client.get(f"/v1/mocks/{TENANT}/{MOCK_ID}")
     assert r.status_code == 200
-    with patch("src.app.mock_routes.db.get_mock_instance_for_tenant", return_value=None):
+    with patch("app.mock_routes.db.get_mock_instance_for_tenant", return_value=None):
         r = client.get(f"/v1/mocks/{TENANT}/{MOCK_ID}")
     assert r.status_code == 404
 
@@ -194,8 +194,8 @@ def test_switch_active_scenario():
         config={"scenarios": [], "active_scenario": "server-error", "seed": 0}
     )
     with patch(
-        "src.app.mock_routes.db.get_mock_instance_for_tenant", return_value=_instance_row()
-    ), patch("src.app.mock_routes.db.update_mock_instance_config", return_value=updated):
+        "app.mock_routes.db.get_mock_instance_for_tenant", return_value=_instance_row()
+    ), patch("app.mock_routes.db.update_mock_instance_config", return_value=updated):
         r = client.put(
             f"/v1/mocks/{TENANT}/{MOCK_ID}/active-scenario",
             json={"activeScenario": "server-error"},
@@ -206,7 +206,7 @@ def test_switch_active_scenario():
 
 def test_switch_unknown_scenario_rejected():
     with patch(
-        "src.app.mock_routes.db.get_mock_instance_for_tenant", return_value=_instance_row()
+        "app.mock_routes.db.get_mock_instance_for_tenant", return_value=_instance_row()
     ):
         r = client.put(
             f"/v1/mocks/{TENANT}/{MOCK_ID}/active-scenario",
@@ -216,10 +216,10 @@ def test_switch_unknown_scenario_rejected():
 
 
 def test_destroy_mock():
-    with patch("src.app.mock_routes.db.delete_mock_instance", return_value=True):
+    with patch("app.mock_routes.db.delete_mock_instance", return_value=True):
         r = client.delete(f"/v1/mocks/{TENANT}/{MOCK_ID}")
     assert r.status_code == 204
-    with patch("src.app.mock_routes.db.delete_mock_instance", return_value=False):
+    with patch("app.mock_routes.db.delete_mock_instance", return_value=False):
         r = client.delete(f"/v1/mocks/{TENANT}/{MOCK_ID}")
     assert r.status_code == 404
 
@@ -232,8 +232,8 @@ def test_destroy_mock():
 def test_data_plane_serves_schema_valid_response():
     mid = "00000000-0000-0000-0000-0000000000b1"
     with patch(
-        "src.app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)
-    ), patch("src.app.mock_routes.db.touch_mock_instance"):
+        "app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)
+    ), patch("app.mock_routes.db.touch_mock_instance"):
         r = client.get(f"/v1/mock/{mid}/pets/7")
     assert r.status_code == 200
     body = r.json()
@@ -245,8 +245,8 @@ def test_data_plane_serves_schema_valid_response():
 def test_data_plane_list_endpoint():
     mid = "00000000-0000-0000-0000-0000000000b2"
     with patch(
-        "src.app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)
-    ), patch("src.app.mock_routes.db.touch_mock_instance"):
+        "app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)
+    ), patch("app.mock_routes.db.touch_mock_instance"):
         r = client.get(f"/v1/mock/{mid}/pets")
     assert r.status_code == 200
     assert isinstance(r.json(), list)
@@ -255,15 +255,15 @@ def test_data_plane_list_endpoint():
 def test_data_plane_unknown_path_404():
     mid = "00000000-0000-0000-0000-0000000000b3"
     with patch(
-        "src.app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)
-    ), patch("src.app.mock_routes.db.touch_mock_instance"):
+        "app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)
+    ), patch("app.mock_routes.db.touch_mock_instance"):
         r = client.get(f"/v1/mock/{mid}/widgets")
     assert r.status_code == 404
     assert r.headers["X-Mock-Matched"] == "false"
 
 
 def test_data_plane_missing_instance_404():
-    with patch("src.app.mock_routes.db.get_mock_instance", return_value=None):
+    with patch("app.mock_routes.db.get_mock_instance", return_value=None):
         r = client.get("/v1/mock/00000000-0000-0000-0000-0000000000b4/pets")
     assert r.status_code == 404
 
@@ -273,7 +273,7 @@ def test_data_plane_expired_returns_410():
     expired = _instance_row(
         id=mid, expires_at=datetime.now(timezone.utc) - timedelta(hours=1)
     )
-    with patch("src.app.mock_routes.db.get_mock_instance", return_value=expired):
+    with patch("app.mock_routes.db.get_mock_instance", return_value=expired):
         r = client.get(f"/v1/mock/{mid}/pets")
     assert r.status_code == 410
 
@@ -281,8 +281,8 @@ def test_data_plane_expired_returns_410():
 def test_data_plane_scenario_header_overrides():
     mid = "00000000-0000-0000-0000-0000000000b6"
     with patch(
-        "src.app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)
-    ), patch("src.app.mock_routes.db.touch_mock_instance"):
+        "app.mock_routes.db.get_mock_instance", return_value=_instance_row(id=mid)
+    ), patch("app.mock_routes.db.touch_mock_instance"):
         r = client.get(
             f"/v1/mock/{mid}/pets/1", headers={"X-Mock-Scenario": "server-error"}
         )
@@ -293,8 +293,8 @@ def test_data_plane_scenario_header_overrides():
 def test_data_plane_per_instance_rate_limit():
     mid = "00000000-0000-0000-0000-0000000000b7"
     row = _instance_row(id=mid, rate_limit_per_minute=2)
-    with patch("src.app.mock_routes.db.get_mock_instance", return_value=row), patch(
-        "src.app.mock_routes.db.touch_mock_instance"
+    with patch("app.mock_routes.db.get_mock_instance", return_value=row), patch(
+        "app.mock_routes.db.touch_mock_instance"
     ):
         statuses = [client.get(f"/v1/mock/{mid}/pets").status_code for _ in range(3)]
     assert statuses[:2] == [200, 200]
@@ -302,6 +302,6 @@ def test_data_plane_per_instance_rate_limit():
 
 
 def test_data_plane_respects_feature_flag(monkeypatch):
-    monkeypatch.setattr("src.app.mock_routes.settings.mock_server_enabled", False)
+    monkeypatch.setattr("app.mock_routes.settings.mock_server_enabled", False)
     r = client.get("/v1/mock/00000000-0000-0000-0000-0000000000b8/pets")
     assert r.status_code == 404

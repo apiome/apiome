@@ -7,7 +7,7 @@ in-place ``UPDATE`` that re-resolves dependents. The connection/cursor is mocked
 
 from unittest.mock import MagicMock, patch
 
-from src.app.database import Database
+from app.database import Database
 
 _TID = "tenant-1"
 _TARGET = "https://api.objectified.dev/types/std/v0/primitives/string"

@@ -21,7 +21,7 @@ from app.database import Database
 from app.models import repository_import_spec_read_from_row
 from app.repository_file_scan import fetch_github_tree_blobs
 
-_MIGRATION = "objectified-db/scripts/20260621-130000.sql"
+_MIGRATION = "objectified-db/scripts/V106__freshness_signal_capture_at_import_rar_2.sql"
 
 
 # --- scan: branch tip commit attached to every blob -------------------------

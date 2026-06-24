@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-_MIGRATION = "objectified-db/scripts/20260622-120000.sql"
+_MIGRATION = "objectified-db/scripts/V109__enable_disable_auto_refresh_per_reposito.sql"
 
 # Fragments the migration must keep so the per-repo toggle survives accidental
 # edits. Acceptance criteria for #3524: a per-repo `auto_refresh_enabled` flag,

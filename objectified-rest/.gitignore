@@ -44,3 +44,9 @@ ENV/
 .DS_Store
 Thumbs.db
 
+
+# Coverage
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/

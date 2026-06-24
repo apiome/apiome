@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.app.mock_engine import (
+from app.mock_engine import (
     BUILTIN_SCENARIOS,
     extract_operations,
     match_operation,

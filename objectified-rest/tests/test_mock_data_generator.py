@@ -3,7 +3,7 @@
 import jsonschema
 import pytest
 
-from src.app.mock_data_generator import generate_example, validate_value
+from app.mock_data_generator import generate_example, validate_value
 
 
 def _valid(value, schema, root=None):

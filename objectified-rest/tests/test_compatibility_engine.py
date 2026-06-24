@@ -2,13 +2,13 @@
 
 import json
 
-from src.app.compatibility_engine import (
+from app.compatibility_engine import (
     CompatibilityCheckEngine,
     compat_audit_detail,
     compat_report_fingerprint,
     rule_hits_from_findings,
 )
-from src.app.schema_compatibility import CompatibilityFinding, CompatibilityRules
+from app.schema_compatibility import CompatibilityFinding, CompatibilityRules
 
 
 def test_rule_hits_aggregation():

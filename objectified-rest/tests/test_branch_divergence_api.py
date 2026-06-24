@@ -5,9 +5,9 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-from src.app.auth import validate_authentication
-from src.app.main import app
-from src.app.version_merge_routes import _strong_etag_for_branch_tips
+from app.auth import validate_authentication
+from app.main import app
+from app.version_merge_routes import _strong_etag_for_branch_tips
 
 client = TestClient(app)
 
@@ -42,7 +42,7 @@ def _branch_row(branch_id: str, project_id: str, name: str, tip_id: str, *, is_d
 
 
 def test_divergence_success_with_against_branch_and_etag():
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
         mdb.get_version_branch_by_id.side_effect = [
             _branch_row(_BRANCH_ID, _PROJECT_ID, "feature/x", "rev-feature"),
@@ -81,7 +81,7 @@ def test_divergence_success_with_against_branch_and_etag():
 
 
 def test_divergence_defaults_to_project_default_branch():
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
         mdb.get_version_branch_by_id.return_value = _branch_row(
             _BRANCH_ID, _PROJECT_ID, "feature/x", "rev-feature"
@@ -106,7 +106,7 @@ def test_divergence_defaults_to_project_default_branch():
 
 
 def test_divergence_self_divergence_400():
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
         r = client.get(
             f"/v1/versions/acme/{_PROJECT_ID}/version-branches/{_BRANCH_ID}/divergence?against={_BRANCH_ID}"
@@ -118,7 +118,7 @@ def test_divergence_self_divergence_400():
 
 
 def test_divergence_against_branch_project_mismatch_400():
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
         mdb.get_version_branch_by_id.side_effect = [
             _branch_row(_BRANCH_ID, _PROJECT_ID, "feature/x", "rev-feature"),
@@ -134,7 +134,7 @@ def test_divergence_against_branch_project_mismatch_400():
 
 
 def test_divergence_returns_304_when_if_none_match_matches_tip_hash():
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
         mdb.get_version_branch_by_id.side_effect = [
             _branch_row(_BRANCH_ID, _PROJECT_ID, "feature/x", "rev-feature"),

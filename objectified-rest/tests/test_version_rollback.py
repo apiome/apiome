@@ -123,6 +123,8 @@ def test_rollback_apply_protected_branch_forbidden(auth_client):
     ), patch(
         "app.version_merge_routes.db.is_user_tenant_admin", return_value=False
     ), patch(
+        "app.version_merge_routes.db.insert_workflow_audit", side_effect=lambda *a, **k: None
+    ), patch(
         "app.version_merge_routes._rollback_analyze",
         return_value=(
             "safe",

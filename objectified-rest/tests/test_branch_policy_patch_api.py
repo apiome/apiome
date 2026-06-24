@@ -18,8 +18,8 @@ from unittest.mock import patch, call
 import pytest
 from fastapi.testclient import TestClient
 
-from src.app.main import app
-from src.app.auth import validate_authentication
+from app.main import app
+from app.auth import validate_authentication
 
 client = TestClient(app)
 
@@ -63,7 +63,7 @@ def _auth():
 # ---------------------------------------------------------------------------
 
 def test_patch_branch_policy_non_admin_403():
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.is_user_tenant_admin.return_value = False
         r = client.patch(_PATCH_URL, json={"protected": True})
     assert r.status_code == 403
@@ -76,7 +76,7 @@ def test_patch_branch_policy_non_admin_403():
 
 def test_patch_branch_policy_no_fields_422():
     """Pydantic model_validator rejects body with no recognised fields."""
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.is_user_tenant_admin.return_value = True
         r = client.patch(_PATCH_URL, json={})
     assert r.status_code == 422
@@ -87,7 +87,7 @@ def test_patch_branch_policy_no_fields_422():
 # ---------------------------------------------------------------------------
 
 def test_patch_branch_policy_protected_only_200():
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.is_user_tenant_admin.return_value = True
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
         updated_row = dict(_BRANCH_ROW, protected=True)
@@ -107,7 +107,7 @@ def test_patch_branch_policy_protected_only_200():
 # ---------------------------------------------------------------------------
 
 def test_patch_branch_policy_require_merge_path_only_200():
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.is_user_tenant_admin.return_value = True
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
         updated_row = dict(_BRANCH_ROW, require_merge_path=True)
@@ -127,7 +127,7 @@ def test_patch_branch_policy_require_merge_path_only_200():
 # ---------------------------------------------------------------------------
 
 def test_patch_branch_policy_both_fields_200():
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.is_user_tenant_admin.return_value = True
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
         updated_row = dict(_BRANCH_ROW, protected=True, require_merge_path=True)
@@ -148,7 +148,7 @@ def test_patch_branch_policy_both_fields_200():
 # ---------------------------------------------------------------------------
 
 def test_patch_branch_policy_is_default_only_200():
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.is_user_tenant_admin.return_value = True
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
         updated_row = dict(_BRANCH_ROW, is_default=True, require_merge_path=True)
@@ -166,7 +166,7 @@ def test_patch_branch_policy_is_default_only_200():
 
 
 def test_patch_branch_policy_passes_actor_id_to_database():
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.is_user_tenant_admin.return_value = True
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
         mdb.update_version_branch_protection_policy.return_value = dict(_BRANCH_ROW)
@@ -182,7 +182,7 @@ def test_patch_branch_policy_passes_actor_id_to_database():
 # ---------------------------------------------------------------------------
 
 def test_patch_branch_policy_is_default_false_400():
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.is_user_tenant_admin.return_value = True
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
         r = client.patch(_PATCH_URL, json={"isDefault": False})
@@ -196,7 +196,7 @@ def test_patch_branch_policy_is_default_false_400():
 # ---------------------------------------------------------------------------
 
 def test_patch_branch_policy_branch_not_found_404():
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.is_user_tenant_admin.return_value = True
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
         mdb.update_version_branch_protection_policy.return_value = None
@@ -213,7 +213,7 @@ _OTHER_PROJECT_ID = "00000000-0000-0000-0000-0000000000a2"
 
 
 def test_patch_branch_policy_branch_not_in_project_400():
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.is_user_tenant_admin.return_value = True
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
         mdb.update_version_branch_protection_policy.return_value = None
@@ -230,9 +230,9 @@ def test_patch_branch_policy_branch_not_in_project_400():
 # ---------------------------------------------------------------------------
 
 def test_patch_branch_policy_default_conflict_409():
-    from src.app.database import BranchDefaultConflictError
+    from app.database import BranchDefaultConflictError
 
-    with patch("src.app.version_merge_routes.db") as mdb:
+    with patch("app.version_merge_routes.db") as mdb:
         mdb.is_user_tenant_admin.return_value = True
         mdb.get_project_by_id.return_value = {"id": _PROJECT_ID}
         mdb.update_version_branch_protection_policy.side_effect = BranchDefaultConflictError()

@@ -14,7 +14,9 @@ const config: Config = {
     '!src/**/*.test.{ts,tsx}',
   ],
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
+  // `text-summary` gives a compact console table; `json-summary` writes
+  // coverage/coverage-summary.json which CI parses into the job summary (RC1-3.1, #3616).
+  coverageReporters: ['text', 'text-summary', 'json-summary', 'lcov', 'html'],
   transform: {
     '^.+\\.[tj]sx?$': ['ts-jest', {
       tsconfig: {

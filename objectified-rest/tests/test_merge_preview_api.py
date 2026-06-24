@@ -5,8 +5,8 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-from src.app.main import app
-from src.app.auth import validate_authentication
+from app.main import app
+from app.auth import validate_authentication
 
 client = TestClient(app)
 
@@ -42,9 +42,9 @@ def _auth():
 
 def _preview_mocks():
     return (
-        patch("src.app.version_merge_routes.db.get_project_by_id", return_value={"id": PID}),
+        patch("app.version_merge_routes.db.get_project_by_id", return_value={"id": PID}),
         patch(
-            "src.app.version_merge_routes.db.get_version_branch_by_name",
+            "app.version_merge_routes.db.get_version_branch_by_name",
             side_effect=lambda pid, tid, name: (
                 {"tip_version_id": "vs", "id": "1"}
                 if name == "src"
@@ -52,15 +52,15 @@ def _preview_mocks():
             ),
         ),
         patch(
-            "src.app.version_merge_routes.db.get_version_by_id",
+            "app.version_merge_routes.db.get_version_by_id",
             side_effect=lambda vid, tid: {
                 "id": vid,
                 "project_id": PID,
                 "published": False,
             },
         ),
-        patch("src.app.version_merge_routes.db.compute_merge_base_revision_id", return_value="vb"),
-        patch("src.app.version_merge_routes._openapi_for_revision", return_value=SPEC),
+        patch("app.version_merge_routes.db.compute_merge_base_revision_id", return_value="vb"),
+        patch("app.version_merge_routes.openapi_for_revision", return_value=SPEC),
     )
 
 
@@ -90,7 +90,7 @@ def test_merge_preview_dry_run_counts_and_merged_openapi():
 def test_merge_preview_conflict_records_and_no_merged_when_blocked():
     p0, p1, p2, p3, p4 = _preview_mocks()
     with p0, p1, p2, p3, p4, patch(
-        "src.app.version_merge_routes.merge_components_schemas_three_way",
+        "app.version_merge_routes.merge_components_schemas_three_way",
         return_value=(None, ["schemas.Foo"]),
     ):
         r = client.post(
@@ -127,7 +127,7 @@ def test_merge_preview_omit_merged_openapi_flag():
 def test_merge_preview_merged_omitted_when_over_size_cap():
     p0, p1, p2, p3, p4 = _preview_mocks()
     with p0, p1, p2, p3, p4, patch(
-        "src.app.version_merge_routes._MERGE_PREVIEW_MAX_JSON_BYTES",
+        "app.version_merge_routes._MERGE_PREVIEW_MAX_JSON_BYTES",
         10,
     ):
         r = client.post(
@@ -159,7 +159,7 @@ def test_merge_preview_persist_merge_session_calls_db():
     }
     p0, p1, p2, p3, p4 = _preview_mocks()
     with p0, p1, p2, p3, p4, patch(
-        "src.app.version_merge_routes.db.create_merge_session_for_preview",
+        "app.version_merge_routes.db.create_merge_session_for_preview",
         return_value=fake_ms,
     ) as pcm:
         r = client.post(

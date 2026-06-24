@@ -34,7 +34,7 @@ _FIXTURE_FRAGMENTS = (
 
 
 def test_migration_defines_mcp_v_public_specs(repo_root: Path) -> None:
-    migration = repo_root / "objectified-db" / "scripts" / "20260502-130000.sql"
+    migration = repo_root / "objectified-db" / "scripts" / "V095__mcp_read_model_published_public_schema_r.sql"
     text = migration.read_text()
     missing = [frag for frag in _MIGRATION_FRAGMENTS if frag not in text]
     assert not missing, f"Migration missing expected fragments: {missing}"
@@ -42,7 +42,7 @@ def test_migration_defines_mcp_v_public_specs(repo_root: Path) -> None:
 
 def test_migration_tag_subquery_guards_project_id(repo_root: Path) -> None:
     """Tag subquery must filter by both version_id and project_id to avoid cross-project contamination."""
-    migration = repo_root / "objectified-db" / "scripts" / "20260502-130000.sql"
+    migration = repo_root / "objectified-db" / "scripts" / "V095__mcp_read_model_published_public_schema_r.sql"
     text = migration.read_text()
     # The WHERE clause inside the lateral must reference project_id scoped to the outer versions alias
     assert re.search(r"vt\.project_id\s*=\s*v\.project_id", text), (
@@ -52,7 +52,7 @@ def test_migration_tag_subquery_guards_project_id(repo_root: Path) -> None:
 
 def test_migration_updated_at_is_composite_freshness_cursor(repo_root: Path) -> None:
     """updated_at must advance on project renames and tag mutations, not just revision edits."""
-    migration = repo_root / "objectified-db" / "scripts" / "20260502-130000.sql"
+    migration = repo_root / "objectified-db" / "scripts" / "V095__mcp_read_model_published_public_schema_r.sql"
     text = migration.read_text()
     assert re.search(r"GREATEST\s*\(", text, re.IGNORECASE), (
         "updated_at must use GREATEST(...) to combine updated_at from versions, projects, and version_tags"
@@ -84,7 +84,7 @@ _requires_db = pytest.mark.skipif(
 def test_view_exists_and_columns_match_contract(repo_root: Path) -> None:
     """View must exist with the documented column contract and correct filter behaviour."""
     psycopg2 = pytest.importorskip("psycopg2")
-    migration = repo_root / "objectified-db" / "scripts" / "20260502-130000.sql"
+    migration = repo_root / "objectified-db" / "scripts" / "V095__mcp_read_model_published_public_schema_r.sql"
 
     with psycopg2.connect(_db_url) as conn:
         conn.autocommit = False
@@ -109,7 +109,7 @@ def test_view_exists_and_columns_match_contract(repo_root: Path) -> None:
 def test_fixture_yields_one_visible_row(repo_root: Path) -> None:
     """Loading the dev fixture must produce exactly one row in mcp_v_public_specs."""
     psycopg2 = pytest.importorskip("psycopg2")
-    migration = repo_root / "objectified-db" / "scripts" / "20260502-130000.sql"
+    migration = repo_root / "objectified-db" / "scripts" / "V095__mcp_read_model_published_public_schema_r.sql"
     fixture = repo_root / "objectified-db" / "fixtures" / "mcp_public_specs_dev.sql"
 
     with psycopg2.connect(_db_url) as conn:

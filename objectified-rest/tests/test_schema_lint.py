@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from src.app.schema_lint import (
+from app.schema_lint import (
     GRADE_THRESHOLDS,
     lint_openapi_spec,
     merge_compatibility_findings,

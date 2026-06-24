@@ -22,7 +22,7 @@ _REQUIRED_FRAGMENTS = (
 
 
 def test_migration_creates_mcp_api_keys_table(repo_root: Path) -> None:
-    migration = repo_root / "objectified-db" / "scripts" / "20260502-120000.sql"
+    migration = repo_root / "objectified-db" / "scripts" / "V094__mcp_api_keys_hashed_secrets_tenant_bindi.sql"
     text = migration.read_text()
     missing = [frag for frag in _REQUIRED_FRAGMENTS if frag not in text]
     assert not missing, f"Migration missing expected fragments: {missing}"

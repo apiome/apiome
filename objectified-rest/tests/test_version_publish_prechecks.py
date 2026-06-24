@@ -92,7 +92,10 @@ def test_publish_blocks_when_class_descriptions_missing():
     with patch("app.versions_routes.db", shared), patch(
         "app.version_publish_prechecks.db", shared,
     ), patch("app.version_publish_prechecks.openapi_for_revision", return_value=_OPENAPI):
-        res = client.post("/v1/versions/acme/pid-1/vid-1/publish", json={})
+        res = client.post(
+            "/v1/versions/acme/pid-1/vid-1/publish",
+            json={"shortMessage": "Test revision note"},
+        )
 
     assert res.status_code == 422
     assert "missing required descriptions" in res.json()["detail"]
@@ -130,7 +133,10 @@ def test_publish_blocks_breaking_without_allow_breaking():
         "app.version_publish_prechecks.CompatibilityCheckEngine.run",
         return_value=breaking,
     ):
-        res = client.post("/v1/versions/acme/pid-1/vid-1/publish", json={})
+        res = client.post(
+            "/v1/versions/acme/pid-1/vid-1/publish",
+            json={"shortMessage": "Test revision note"},
+        )
 
     assert res.status_code == 409
     body = res.json()
@@ -179,7 +185,7 @@ def test_publish_allows_breaking_when_allow_breaking_true():
     ):
         res = client.post(
             "/v1/versions/acme/pid-1/vid-1/publish",
-            json={"allowBreaking": True},
+            json={"allowBreaking": True, "shortMessage": "Test revision note"},
         )
 
     assert res.status_code == 200

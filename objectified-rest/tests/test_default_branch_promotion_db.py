@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from src.app.database import Database
+from app.database import Database
 
 _PID = "00000000-0000-0000-0000-0000000000a1"
 _TID = "tenant-1"

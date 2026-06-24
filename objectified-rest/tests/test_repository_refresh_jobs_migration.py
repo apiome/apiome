@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-_MIGRATION = "objectified-db/scripts/20260621-150000.sql"
+_MIGRATION = "objectified-db/scripts/V108__repository_auto_refresh_job_queue_rar_3.sql"
 
 # Fragments the migration must contain so the queue + its single-flight guard
 # survive accidental edits. Acceptance criteria for #3523:

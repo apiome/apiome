@@ -14,7 +14,7 @@ from app.models import (
     VersionSchema,
 )
 
-_MIGRATION = "objectified-db/scripts/20260622-130000.sql"
+_MIGRATION = "objectified-db/scripts/V110__refresh_provenance_on_schema_revisions_r.sql"
 
 _COMMIT_SHA = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"
 _COMMITTED_AT = "2026-06-22T10:00:00Z"

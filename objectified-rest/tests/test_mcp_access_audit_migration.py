@@ -17,7 +17,7 @@ _REQUIRED_FRAGMENTS = (
 
 
 def test_migration_creates_mcp_access_audit_table(repo_root: Path) -> None:
-    migration = repo_root / "objectified-db" / "scripts" / "20260502-140000.sql"
+    migration = repo_root / "objectified-db" / "scripts" / "V096__mcp_private_access_audit_trail_3013.sql"
     text = migration.read_text()
     missing = [frag for frag in _REQUIRED_FRAGMENTS if frag not in text]
     assert not missing, f"Migration missing expected fragments: {missing}"

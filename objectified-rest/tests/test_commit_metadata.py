@@ -62,7 +62,7 @@ def _make_version_row(commit_author=None, commit_message=None, external_ref=None
 
 
 def test_migration_adds_commit_metadata_columns(repo_root: Path):
-    migration = repo_root / "objectified-db" / "scripts" / "20260411-120000.sql"
+    migration = repo_root / "objectified-db" / "scripts" / "V077__git_like_commit_metadata_on_schema_revis.sql"
     text = migration.read_text()
     assert "commit_author" in text
     assert "commit_message" in text

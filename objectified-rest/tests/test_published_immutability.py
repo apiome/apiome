@@ -261,7 +261,7 @@ def test_merge_preview_override_does_not_write_audit(auth_client):
     audit_calls = []
 
     with patch("app.version_merge_routes.db") as mdb, patch(
-        "app.version_merge_routes._openapi_for_revision", return_value=SPEC
+        "app.version_merge_routes.openapi_for_revision", return_value=SPEC
     ):
         mdb.get_project_by_id.return_value = proj
         mdb.get_version_branch_by_name.side_effect = branch_by_name

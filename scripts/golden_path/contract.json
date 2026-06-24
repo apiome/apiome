@@ -1,0 +1,50 @@
+{
+  "description": "UI <-> REST contract for the golden-path spine (RC1-3.1, #3616). Single source of truth shared by objectified-rest/tests/test_golden_path_contract.py (asserts each operation exists in the REST OpenAPI surface) and objectified-ui/tests/contract/rest-golden-path-contract.test.ts (asserts the UI proxy routes still call the operations the UI owns). A rename/removal on either side turns the contract red. Path templates use the REST parameter names; matching is structural (per-segment), so the UI's differing parameter identifiers are irrelevant.",
+  "source": "docs/GOLDEN_PATH.md",
+  "operations": [
+    {
+      "step": "import OpenAPI",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant_slug}/imports",
+      "ui": false,
+      "notes": "Driven by the CLI/harness and the UI import dialog; not a thin UI proxy route, so not asserted on the UI side."
+    },
+    {
+      "step": "commit import",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant_slug}/imports/{job_id}/commit",
+      "ui": false
+    },
+    {
+      "step": "edit a class",
+      "method": "PUT",
+      "path": "/v1/classes/{tenant_slug}/{class_id}",
+      "ui": true
+    },
+    {
+      "step": "edit a path",
+      "method": "PUT",
+      "path": "/v1/paths/{tenant_slug}/{version_id}/{path_id}",
+      "ui": true
+    },
+    {
+      "step": "cut a version",
+      "method": "POST",
+      "path": "/v1/versions/{tenant_slug}/{project_id}",
+      "ui": true
+    },
+    {
+      "step": "publish",
+      "method": "POST",
+      "path": "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/publish",
+      "ui": true
+    },
+    {
+      "step": "view in browse",
+      "method": "GET",
+      "path": "/v1/browse/tenants/{tenant_slug}/projects/{project_slug}/versions",
+      "ui": false,
+      "notes": "Served by objectified-browse, not objectified-ui."
+    }
+  ]
+}
