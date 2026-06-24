@@ -12,6 +12,7 @@ from objectified_cli.commands import (
     config,
     doctor,
     health,
+    lint,
     operations,
     paths,
     projects,
@@ -59,6 +60,7 @@ app.add_typer(schemas.app, name="schemas")
 app.add_typer(types.app, name="types")
 app.add_typer(versions.app, name="versions")
 app.add_typer(paths.app, name="paths")
+app.add_typer(lint.app, name="lint")
 app.add_typer(spec.app, name="spec")
 app.add_typer(operations.app, name="operations")
 app.add_typer(import_commands.app, name="import")

@@ -2274,6 +2274,59 @@ class CompatibilityCheckResponse(BaseModel):
     )
 
 
+class LintFindingOut(BaseModel):
+    """One itemized lint finding from the deterministic quality-scoring service (#3609)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    path: str
+    category: str
+    rule: str
+    severity: str
+    message: str
+
+
+class LintReportResponse(BaseModel):
+    """Server-computed quality score + itemized findings for one project version (#3609)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    project_id: str = Field(serialization_alias="projectId")
+    version_record_id: str = Field(serialization_alias="versionRecordId")
+    version_id: str = Field(
+        serialization_alias="versionId",
+        description="Human-readable version label (e.g. 1.0.0).",
+    )
+    score: int = Field(description="Deterministic 0-100 quality score.")
+    grade: str = Field(description="A-F letter grade derived from the score.")
+    findings: List[LintFindingOut]
+    rule_hits: Dict[str, int] = Field(
+        default_factory=dict,
+        serialization_alias="ruleHits",
+        description="Count of findings per rule id (deterministic).",
+    )
+    severity_counts: Dict[str, int] = Field(
+        default_factory=dict,
+        serialization_alias="severityCounts",
+        description="Count of findings per severity (error/warning/info).",
+    )
+    report_fingerprint: str = Field(
+        serialization_alias="reportFingerprint",
+        description="Stable hash over score, grade, and findings for a fixed input.",
+    )
+    base_revision_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="baseRevisionId",
+        description="Base revision used for breaking-change comparison, when provided.",
+    )
+    compatibility_overall: Optional[str] = Field(
+        default=None,
+        serialization_alias="compatibilityOverall",
+        description="Compatibility verdict vs base revision (safe/breaking/unknown), when compared.",
+    )
+
+
 class VersionTagSchema(BaseModel):
     """Git-like tag pointing at a schema revision (versions.id)."""
 

@@ -100,6 +100,7 @@ Registered in `main.py`:
 | `types` | `list`, `show`, `search` (public `GET /types`; no API key), `publish`, `unpublish` (master tenant API key) |
 | `versions` | `list`, `get` (REST path `project-versions`) |
 | `paths` | `list`, `show` (`GET /versions/{version_id}/paths`, filters: `--method`, `--tag`, `--q`) |
+| `lint` | Quality score + findings for a version (`GET /versions/{tenant}/{project}/{version}/lint`); `--base-version` folds breaking-change risk; `--min-grade A..F` gates CI exit code |
 | `operations` | `show` (resolve by operation UUID or `operationId`) |
 | `workflows` | `list`, `show` (`GET /versions/{version_id}/workflows`, steps sub-resource) |
 | `spec` | `export` (browse reconstructed OpenAPI/Arazzo), `download-original` (`GET /versions/{id}/import-source`) |

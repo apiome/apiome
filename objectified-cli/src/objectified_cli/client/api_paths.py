@@ -83,6 +83,15 @@ def version_by_semver(
     return f"{V1}/versions/{tenant_slug}/{project_id}/by-version/{version_semver}"
 
 
+def version_lint(
+    tenant_slug: str,
+    project_id: str | UUID,
+    version_record_id: str | UUID,
+) -> str:
+    """Quality-scoring / lint report for a version (GET .../lint)."""
+    return f"{version_record(tenant_slug, project_id, version_record_id)}/lint"
+
+
 def version_publish(
     tenant_slug: str,
     project_id: str | UUID,

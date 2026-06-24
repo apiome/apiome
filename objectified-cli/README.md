@@ -289,6 +289,11 @@ objectified paths list --project payments-api --version 1.0.0
 objectified paths show /payments --project payments-api --version 1.0.0
 objectified operations show createPayment --project payments-api --version 1.0.0
 
+# Score schema quality (server-computed, deterministic) and gate CI
+objectified lint --project payments-api --version 1.0.0
+objectified lint --project payments-api --version 1.0.0 --base-version 0.9.0
+objectified lint --project payments-api --version 1.0.0 --min-grade B
+
 # Arazzo workflows (after arazzo import)
 objectified workflows list --project checkout-flow --version 1.0.0
 objectified workflows show checkout --project checkout-flow --version 1.0.0

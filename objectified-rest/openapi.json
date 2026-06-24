@@ -4426,6 +4426,117 @@
         }
       }
     },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint": {
+      "get": {
+        "tags": [
+          "lint"
+        ],
+        "summary": "Lint Revision",
+        "description": "Score the quality of a schema revision and return itemized, deterministic lint findings.\n\nThe score (0-100) and A-F grade are computed by the server from the reconstructed\nOpenAPI/JSON-Schema \u2014 no client-side scoring. When ``baseRevisionId`` is supplied, breaking\nand unknown compatibility findings relative to that revision are folded into the report.",
+        "operationId": "lint_revision_v1_versions__tenant_slug___project_id___version_record_id__lint_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id"
+            }
+          },
+          {
+            "name": "baseRevisionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional base revision (versions.id) to flag breaking changes against.",
+              "title": "Baserevisionid"
+            },
+            "description": "Optional base revision (versions.id) to flag breaking changes against."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LintReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/versions/{tenant_slug}/{project_id}/version-branches/from-revision": {
       "post": {
         "tags": [
@@ -17166,6 +17277,136 @@
         "type": "object",
         "title": "LinkOperationRequest",
         "description": "Request model for linking entities to operations."
+      },
+      "LintFindingOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "rule": {
+            "type": "string",
+            "title": "Rule"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "category",
+          "rule",
+          "severity",
+          "message"
+        ],
+        "title": "LintFindingOut",
+        "description": "One itemized lint finding from the deterministic quality-scoring service (#3609)."
+      },
+      "LintReportResponse": {
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "title": "Projectid"
+          },
+          "versionRecordId": {
+            "type": "string",
+            "title": "Versionrecordid"
+          },
+          "versionId": {
+            "type": "string",
+            "title": "Versionid",
+            "description": "Human-readable version label (e.g. 1.0.0)."
+          },
+          "score": {
+            "type": "integer",
+            "title": "Score",
+            "description": "Deterministic 0-100 quality score."
+          },
+          "grade": {
+            "type": "string",
+            "title": "Grade",
+            "description": "A-F letter grade derived from the score."
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/LintFindingOut"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "ruleHits": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Rulehits",
+            "description": "Count of findings per rule id (deterministic)."
+          },
+          "severityCounts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Severitycounts",
+            "description": "Count of findings per severity (error/warning/info)."
+          },
+          "reportFingerprint": {
+            "type": "string",
+            "title": "Reportfingerprint",
+            "description": "Stable hash over score, grade, and findings for a fixed input."
+          },
+          "baseRevisionId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baserevisionid",
+            "description": "Base revision used for breaking-change comparison, when provided."
+          },
+          "compatibilityOverall": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compatibilityoverall",
+            "description": "Compatibility verdict vs base revision (safe/breaking/unknown), when compared."
+          }
+        },
+        "type": "object",
+        "required": [
+          "projectId",
+          "versionRecordId",
+          "versionId",
+          "score",
+          "grade",
+          "findings",
+          "reportFingerprint"
+        ],
+        "title": "LintReportResponse",
+        "description": "Server-computed quality score + itemized findings for one project version (#3609)."
       },
       "MergeSessionStatusPatchRequest": {
         "properties": {

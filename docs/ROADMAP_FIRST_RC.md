@@ -104,6 +104,11 @@ output (naming, descriptions, missing examples, unbounded arrays, breaking-chang
 `compatibility_engine`), returning a score + itemized findings. Wire the UI badges and a per-version report
 to it. ‖ parallel with 0.3.
 *Exit:* `GET .../lint` (or equivalent) returns deterministic findings + score; UI reflects server truth; CLI `lint` command added.
+*Delivered:* REST `app/schema_lint.py` engine + `GET /v1/versions/{tenant}/{project}/{version}/lint`
+(`app/lint_routes.py`, deterministic score/grade + itemized findings, optional `baseRevisionId` folds
+`compatibility_engine` breaking-change flags); `objectified-cli lint` command (`--base-version`,
+`--min-grade` CI gate); UI server-backed per-version quality badge + lint report dialog
+(`VersionLintBadge`, `/api/projects/[projectId]/versions/[versionId]/lint` proxy).
 
 **0.3 — Auth & secret hardening pass** (#3610) · **M** · *blocks RC* · ‖ parallel
 Token lifetimes/refresh, API-key scope audit, CORS, secret handling in compose/env (`docker-compose.env.example`
@@ -254,7 +259,6 @@ Created in `objectified-project/objectified` (pack label `roadmap-first-rc`, all
 | Issue | Title | Phase |
 |---|---|---|
 | #3603 | Epic: RC1 Phase 0 — Prove the Spine & Stop the Bleeding | 0 |
-| #3609 | RC1-0.2 — Real quality-scoring / linting service | 0 |
 | #3610 | RC1-0.3 — Auth & secret hardening pass | 0 |
 | #3604 | Epic: RC1 Phase 1 — Access & Trust | 1 |
 | #3611 | RC1-1.1 — Granular RBAC + platform-admin plane | 1 |

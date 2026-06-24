@@ -60,6 +60,7 @@ import { LoadingState } from '../../../components/ui/LoadingState';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Textarea } from '../../../components/ui/Textarea';
 import { Badge } from '../../../components/ui/Badge';
+import { VersionLintBadge } from '../../../components/ade/dashboard/VersionLintBadge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/Select';
 import { useDialog } from '../../../components/providers/DialogProvider';
 import {
@@ -3324,6 +3325,13 @@ const Versions = () => {
                           {t.name}
                         </span>
                       ))}
+                      {selectedProjectId && (
+                        <VersionLintBadge
+                          projectId={selectedProjectId}
+                          versionId={version.id}
+                          versionLabel={version.version_id}
+                        />
+                      )}
                     </div>
                     {version.forkedFromRevisionId && (
                       <div className="mt-2 rounded-md border border-violet-200 dark:border-violet-800 bg-violet-50/80 dark:bg-violet-950/30 px-2 py-1.5 text-xs text-violet-900 dark:text-violet-100">
