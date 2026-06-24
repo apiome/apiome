@@ -3322,3 +3322,101 @@ class BrowsePublicVersionsResponse(BaseModel):
     project_name: str
     versions: List[BrowsePublicVersionRow]
     filtered_count: int
+
+
+# ---------------------------------------------------------------------------
+# Mock Server (#3615, RC1-2.2)
+# ---------------------------------------------------------------------------
+
+
+class MockScenarioRule(BaseModel):
+    """One per-operation override inside a scenario: status code, latency, and/or response body.
+
+    A rule targets an operation by ``operation`` ("METHOD /template", or "*" for every operation) or
+    by separate ``method`` / ``path`` fields. Any subset of (``status``, ``latency_ms``, ``body``)
+    may be set; unset axes fall back to the generated success response.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    operation: Optional[str] = Field(
+        default=None,
+        description='Target operation as "METHOD /template" (e.g. "GET /pets/{petId}"), or "*".',
+    )
+    method: Optional[str] = None
+    path: Optional[str] = None
+    status: Optional[int] = Field(default=None, ge=100, le=599)
+    latency_ms: Optional[int] = Field(
+        default=None,
+        ge=0,
+        serialization_alias="latencyMs",
+        validation_alias=AliasChoices("latencyMs", "latency_ms"),
+    )
+    body: Optional[Any] = Field(default=None, description="Verbatim response body override.")
+
+
+class MockScenario(BaseModel):
+    """A named, selectable set of per-operation overrides."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str
+    description: Optional[str] = ""
+    rules: List[MockScenarioRule] = Field(default_factory=list)
+
+
+class MockProvisionRequest(BaseModel):
+    """Request body to provision a mock instance from a published version."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    project_slug: str = Field(validation_alias=AliasChoices("projectSlug", "project_slug"))
+    version_slug: str = Field(validation_alias=AliasChoices("versionSlug", "version_slug"))
+    name: Optional[str] = Field(default=None, description="Display name; defaults to the coordinates.")
+    ttl_hours: Optional[int] = Field(
+        default=None,
+        ge=1,
+        validation_alias=AliasChoices("ttlHours", "ttl_hours"),
+        description="Auto-expiry in hours; clamped to the configured maximum.",
+    )
+    rate_limit_per_minute: Optional[int] = Field(
+        default=None,
+        ge=1,
+        validation_alias=AliasChoices("rateLimitPerMinute", "rate_limit_per_minute"),
+    )
+    seed: Optional[int] = Field(default=None, description="Deterministic data-generation seed.")
+    scenarios: Optional[List[MockScenario]] = None
+    active_scenario: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("activeScenario", "active_scenario"),
+    )
+
+
+class MockScenarioSwitchRequest(BaseModel):
+    """Request body to switch a mock instance's active scenario."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    active_scenario: str = Field(validation_alias=AliasChoices("activeScenario", "active_scenario"))
+
+
+class MockInstanceResponse(BaseModel):
+    """Public view of a provisioned mock instance."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    name: str
+    base_url: str = Field(serialization_alias="baseUrl")
+    tenant_slug: str = Field(serialization_alias="tenantSlug")
+    project_slug: str = Field(serialization_alias="projectSlug")
+    version_slug: str = Field(serialization_alias="versionSlug")
+    status: str
+    active_scenario: str = Field(serialization_alias="activeScenario")
+    scenarios: List[str]
+    operation_count: int = Field(serialization_alias="operationCount")
+    rate_limit_per_minute: int = Field(serialization_alias="rateLimitPerMinute")
+    request_count: int = Field(serialization_alias="requestCount")
+    created_at: Optional[str] = Field(default=None, serialization_alias="createdAt")
+    expires_at: Optional[str] = Field(default=None, serialization_alias="expiresAt")
+    last_activity_at: Optional[str] = Field(default=None, serialization_alias="lastActivityAt")

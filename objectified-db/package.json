@@ -1,6 +1,6 @@
 {
   "name": "objectified-db",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Objectified database migrations and the direct-to-database admin CLI (objectified-db).",
   "author": "Objectified",
   "type": "module",

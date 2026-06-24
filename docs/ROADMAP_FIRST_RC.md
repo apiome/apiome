@@ -169,11 +169,16 @@ browser). A dismissible **Get started** checklist on the dashboard derives compl
 vitest (migration shape), objectified-rest pytest (sample render contract), objectified-ui jest (checklist
 logic + component).
 
-**2.2 — Mock Server** (#3615) · **L** · *high value; gap #4* · ‖ parallel with 2.1
+**2.2 — Mock Server** (#3615) · **L** · *high value; gap #4* · ‖ parallel with 2.1 · ✅ **Done**
 Implement the `mock-server/` mockup: one-click hosted mock from a published version, schema-valid responses
 (examples + faker), per-operation scenarios, optional stateful mode. Generated from existing
 `/v1/swagger/...` output. Free-tier mocks auto-expire.
 *Exit:* provision a mock, hit it, get schema-valid responses; expiry + rate limit enforced.
+*Shipped:* objectified-rest mock plane — management `/v1/mocks/{tenant}` (provision/list/get/active-scenario/destroy)
++ public data plane `/v1/mock/{id}/...`. Frozen OpenAPI spec per instance; deterministic schema-valid response
+synthesis (`mock_data_generator`) validated with jsonschema; selectable per-operation scenarios (status/latency/body,
+4 built-ins + `X-Mock-Scenario` header); free-tier auto-expiry (410) + per-instance rate limit (429). Migration V123
+`odb.mock_instances`. Tests: pytest (generator, engine, routes, migration).
 *Note:* if velocity is tight, 2.2 may slip to Phase 5 — it is the most deferrable RC item. 2.1 may not slip.
 
 ---
@@ -283,7 +288,6 @@ Created in `objectified-project/objectified` (pack label `roadmap-first-rc`, all
 | #3603 | Epic: RC1 Phase 0 — Prove the Spine & Stop the Bleeding | 0 |
 | #3604 | Epic: RC1 Phase 1 — Access & Trust | 1 |
 | #3605 | Epic: RC1 Phase 2 — Developer Value & First-Run | 2 |
-| #3615 | RC1-2.2 — Mock Server | 2 |
 | #3606 | Epic: RC1 Phase 3 — Release Engineering & Operability | 3 |
 | #3616 | RC1-3.1 — Test coverage across the spine | 3 |
 | #3617 | RC1-3.2 — Observability & error handling | 3 |

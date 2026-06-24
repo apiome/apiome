@@ -141,6 +141,43 @@ View interactive API documentation using Swagger UI.
 **Example:**
 Open in browser: `http://localhost:8000/v1/swagger/my-tenant/my-project/1.0.0`
 
+### Mock Server Endpoints (#3615)
+
+Provision a hosted mock from a published version and consume the designed API before a backend
+exists. The mock freezes the version's generated OpenAPI document and replays schema-valid responses.
+
+**Management plane** (authenticated, tenant-scoped):
+```
+POST   /v1/mocks/{tenant-slug}                          # provision -> { baseUrl, ... }
+GET    /v1/mocks/{tenant-slug}                          # list instances
+GET    /v1/mocks/{tenant-slug}/{mock-id}                # inspect
+PUT    /v1/mocks/{tenant-slug}/{mock-id}/active-scenario # switch scenario
+DELETE /v1/mocks/{tenant-slug}/{mock-id}                # destroy
+```
+
+Provision body (camelCase or snake_case): `{ "projectSlug": "...", "versionSlug": "1.0.0",
+"name": "...", "ttlHours": 24, "rateLimitPerMinute": 60, "scenarios": [...], "activeScenario": "..." }`.
+
+**Data plane** (public — the mock itself):
+```
+ANY /v1/mock/{mock-id}/{path}
+```
+Responses are generated from the operation's response schema and validated against it. Select a
+scenario per request with the `X-Mock-Scenario` header (built-ins: `happy-path`, `server-error`,
+`not-found`, `slow`). Free-tier mocks auto-expire (`410 Gone`) and are rate limited per instance
+(`429` with `Retry-After`). Disable the feature with `OBJECTIFIED_MOCK_SERVER_ENABLED=false`.
+
+**Example:**
+```bash
+# Provision (returns a stable baseUrl like http://localhost:8000/v1/mock/<id>)
+curl -X POST http://localhost:8000/v1/mocks/my-tenant \
+  -H "X-API-Key: $KEY" -H "Content-Type: application/json" \
+  -d '{"projectSlug":"my-project","versionSlug":"1.0.0"}'
+
+# Consume the mock
+curl http://localhost:8000/v1/mock/<id>/pets/1
+```
+
 ### Utility Endpoints
 
 #### Root / Discovery
