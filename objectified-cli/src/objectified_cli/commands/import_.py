@@ -14,6 +14,7 @@ from objectified_cli.cli_context import (
     no_progress_from_context,
     settings_from_context,
 )
+from objectified_cli.client import api_paths
 from objectified_cli.client.http import RestClient
 from objectified_cli.client.tenant_scope import require_tenant_slug
 from objectified_cli.import_.spec_import import (
@@ -121,6 +122,56 @@ def _coerce_type_publish_system(
         raise typer.Exit(EXIT_USAGE) from exc
 
 
+def _import_result_id(
+    payload: dict[str, Any],
+    *,
+    top_key: str,
+    nested_key: str,
+) -> str | None:
+    """Extract a UUID string from an import result payload (top-level or nested)."""
+    value = payload.get(top_key)
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    nested = payload.get(nested_key)
+    if isinstance(nested, dict):
+        nested_id = nested.get("id")
+        if isinstance(nested_id, str) and nested_id.strip():
+            return nested_id.strip()
+    return None
+
+
+def _publish_imported_version(
+    client: RestClient,
+    tenant_slug: str,
+    *,
+    payload: dict[str, Any],
+    visibility: str,
+    no_progress: bool,
+) -> None:
+    """Publish the version created by a completed import via the publish endpoint.
+
+    The ``/v1`` spec-import surface carries no visibility field, so ``--publish``
+    is realized as a follow-up ``POST .../{version_record_id}/publish`` once the
+    import has produced a concrete project and version record.
+    """
+    project_id = _import_result_id(payload, top_key="project_id", nested_key="project")
+    version_id = _import_result_id(payload, top_key="version_id", nested_key="version")
+    if project_id is None or version_id is None:
+        typer.echo(
+            "Imported successfully but could not publish: the import result is "
+            "missing the project or version id.",
+            err=True,
+        )
+        raise typer.Exit(EXIT_ERROR)
+    client.post(
+        api_paths.version_publish(tenant_slug, project_id, version_id),
+        json={"visibility": visibility},
+    )
+    if not no_progress:
+        label = "public" if visibility == "public" else "private"
+        typer.echo(f"Published imported version as {label}.", err=True)
+
+
 def _format_openapi_import_target(
     spec: dict[str, Any],
     *,
@@ -193,6 +244,9 @@ def _run_openapi_import(
 ) -> None:
     settings = settings_from_context(ctx)
     require_api_key(settings)
+
+    # Resolve before uploading so invalid --publish/--visibility input fails fast.
+    publish_visibility = _coerce_publish_visibility(publish=publish, visibility=visibility)
 
     import_timeout = import_timeout_from_context(ctx)
     no_progress = no_progress_from_context(ctx)
@@ -321,8 +375,28 @@ def _run_openapi_import(
         )
         if import_result_has_errors(resolution.payload):
             raise typer.Exit(EXIT_ERROR)
+        if publish_visibility is not None:
+            if dry_run:
+                typer.echo(
+                    "Skipping --publish: dry run did not persist a version.",
+                    err=True,
+                )
+            else:
+                _publish_imported_version(
+                    client,
+                    tenant_slug,
+                    payload=resolution.payload,
+                    visibility=publish_visibility,
+                    no_progress=no_progress,
+                )
         return
 
+    if publish_visibility is not None:
+        typer.echo(
+            "Skipping --publish: import has not completed "
+            "(remove --no-wait to publish).",
+            err=True,
+        )
     emit_import_job_accepted(resolution.payload, json_mode=json_mode)
 
 

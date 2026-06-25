@@ -453,14 +453,35 @@ def test_import_openapi_help_lists_flags() -> None:
     assert "--poll-interval" in help_text
 
 
+_PUBLISH_URL = (
+    "http://localhost:8000/v1/versions/acme-corp/"
+    f"{_IMPORT_RESULT['project_id']}/{_IMPORT_RESULT['version_id']}/publish"
+)
+
+
+def _mock_publish(httpx_mock: object, *, visibility: str) -> None:
+    """Register the follow-up publish POST issued after a completed import."""
+    httpx_mock.add_response(  # type: ignore[attr-defined]
+        url=_PUBLISH_URL,
+        method="POST",
+        json={
+            "id": _IMPORT_RESULT["version_id"],
+            "project_id": _IMPORT_RESULT["project_id"],
+            "version": "1.0.0",
+            "publish_visibility": visibility,
+        },
+    )
+
+
 def test_import_openapi_publish_private_maps_to_protected(
     httpx_mock: object,
     tmp_path: Path,
 ) -> None:
-    """``--publish private`` is accepted; the spec-import metadata omits visibility."""
+    """``--publish private`` publishes the imported version as ``protected``."""
     spec_path = tmp_path / "petstore.json"
     _write_spec(spec_path)
     _mock_import_completed(httpx_mock)
+    _mock_publish(httpx_mock, visibility="protected")
 
     result = runner.invoke(
         app,
@@ -468,20 +489,27 @@ def test_import_openapi_publish_private_maps_to_protected(
     )
 
     assert result.exit_code == 0
-    request = httpx_mock.get_requests()[0]
-    body = _import_request_payload(request)
+    requests = httpx_mock.get_requests()
     # The /v1 spec-import surface carries no visibility field in its metadata.
+    body = _import_request_payload(requests[0])
     assert "visibility" not in body["metadata"]
+    # Publishing is realized as a follow-up publish POST (private -> protected).
+    publish_request = requests[-1]
+    assert publish_request.method == "POST"
+    assert str(publish_request.url) == _PUBLISH_URL
+    assert json.loads(publish_request.content) == {"visibility": "protected"}
+    assert "Published imported version as private." in result.stderr
 
 
 def test_import_openapi_publish_public_accepted(
     httpx_mock: object,
     tmp_path: Path,
 ) -> None:
-    """``--publish public`` is accepted; the spec-import metadata omits visibility."""
+    """``--publish public`` publishes the imported version as ``public``."""
     spec_path = tmp_path / "petstore.json"
     _write_spec(spec_path)
     _mock_import_completed(httpx_mock)
+    _mock_publish(httpx_mock, visibility="public")
 
     result = runner.invoke(
         app,
@@ -489,9 +517,14 @@ def test_import_openapi_publish_public_accepted(
     )
 
     assert result.exit_code == 0
-    request = httpx_mock.get_requests()[0]
-    body = _import_request_payload(request)
+    requests = httpx_mock.get_requests()
+    body = _import_request_payload(requests[0])
     assert "visibility" not in body["metadata"]
+    publish_request = requests[-1]
+    assert publish_request.method == "POST"
+    assert str(publish_request.url) == _PUBLISH_URL
+    assert json.loads(publish_request.content) == {"visibility": "public"}
+    assert "Published imported version as public." in result.stderr
 
 
 def test_import_openapi_override_flags_in_request_body(

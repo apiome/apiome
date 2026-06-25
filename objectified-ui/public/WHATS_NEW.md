@@ -11,6 +11,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Import: Import speed improved
 - Import: Special cases with unicode characters are now properly handled
 - Import: Better duplication checks - now compares project and version IDs before rejecting
+- Import: Fixes publish flag when importing via CLI
 
 ---
 
