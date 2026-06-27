@@ -703,7 +703,7 @@ An MCP-specific linter, modeled on the existing deterministic `schema_lint.py`
 | 7.4 | Scoring, grading & fingerprint persistence | 0–100 + A–F + report, stored per version | mcp-catalog,linting,analytics,mvp | N | Y | S | objectified-rest,objectified-db |
 | 7.5 | Lint REST + re-lint endpoint | fetch/compute lint for a version | mcp-catalog,rest,linting,mvp | Y | Y | S | objectified-rest |
 
-### MCAT-7.1 — MCP lint rule engine (pure fn)  ·  **#3682**
+### MCAT-7.1 — MCP lint rule engine (pure fn)  ·  **#3682**  ·  ✅ Done (objectified-rest 1.15.0)
 - **Problem.** Imported MCP services must be graded/linted; the existing linter targets OpenAPI/JSON-Schema, not MCP.
 - **Solution / Scope.** New `mcp_lint.py`: pure function taking a normalized surface → ordered `LintFinding[]` with stable IDs (hash of `path|rule|message`), severity, and rule group. Mirrors `schema_lint.py` structure for consistency.
 - **Acceptance Criteria.** No DB/network in the function; deterministic findings + stable IDs; unit-tested on fixtures.
