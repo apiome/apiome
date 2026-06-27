@@ -39,6 +39,7 @@ from .lint_routes import router as lint_router
 from .draft_lock_routes import router as draft_lock_router
 from .push_webhook_delivery import process_due_push_webhook_deliveries
 from .push_webhook_subscriptions_routes import router as push_webhook_subscriptions_router
+from .mcp_credential_crypto import validate_credential_encryption_keys
 from .push_webhook_crypto import validate_webhook_signing_key
 from .change_report_routes import router as change_report_router
 from .version_change_report_routes import router as version_change_report_router
@@ -258,6 +259,7 @@ async def startup_event():
                 "change report system template seed failed with unexpected error: %s", e
             )
     validate_webhook_signing_key()
+    validate_credential_encryption_keys()
 
     # Log data API routes so we can confirm POST /v1/data/{tenant_slug}/records is registered
     for route in app.routes:

@@ -87,6 +87,28 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Envelope encryption-at-rest for outbound MCP credentials (MCAT-6.2, #3678).
+    # A JSON object mapping an integer key-version to a base64-encoded 32-byte (AES-256) master
+    # key, e.g. {"1": "<base64 key>", "2": "<base64 key>"}. Several versions may be configured at
+    # once so the active key can be rotated while older rows stay decryptable. Generate a key with:
+    #   python -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())"
+    mcp_credential_encryption_keys: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "OBJECTIFIED_MCP_CREDENTIAL_ENCRYPTION_KEYS",
+            "mcp_credential_encryption_keys",
+        ),
+    )
+    # Which key-version new MCP credential secrets are sealed under. Defaults to the highest
+    # version present in mcp_credential_encryption_keys when unset.
+    mcp_credential_active_key_version: Optional[int] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "OBJECTIFIED_MCP_CREDENTIAL_ACTIVE_KEY_VERSION",
+            "mcp_credential_active_key_version",
+        ),
+    )
+
     # Repository auto-refresh cadence (RAR-3.1, #3522). Per-repo cadence is stored
     # in odb.tenant_repositories.refresh_interval_seconds; these set the default
     # applied when a repo has no explicit value and the global minimum floor that

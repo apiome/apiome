@@ -5,6 +5,25 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2026-06-27
+
+### Added
+- **Encryption-at-rest for MCP credentials (#3678, V2-MCP-20.2 / MCAT-6.2)** — outbound MCP
+  credentials are now sealed with AES-256-GCM **envelope encryption** before they reach
+  `odb.mcp_endpoint_credentials.encrypted_payload`, so the database holds ciphertext only:
+  - New `app/mcp_credential_crypto.py`: a per-secret random data-encryption key (DEK) encrypts the
+    JSON payload and is itself wrapped by an environment-supplied master key. `seal_credential_payload`
+    returns `(ciphertext, key_version)`; `unseal_credential_payload` decrypts in-memory at connect
+    time and is fail-safe (returns `None` for a tampered/foreign/wrong-version blob or a missing key).
+  - **Key rotation** via the `key_version` column: several master keys can be configured at once
+    (`OBJECTIFIED_MCP_CREDENTIAL_ENCRYPTION_KEYS`, a JSON version→key map) with a selectable active
+    version (`OBJECTIFIED_MCP_CREDENTIAL_ACTIVE_KEY_VERSION`); old rows stay decryptable while new
+    secrets seal under the active key, and `reseal_credential_payload` migrates a row onto it. The
+    key-version is bound into the GCM AAD so a row cannot be silently re-pointed at another key.
+  - The MCAT-6.1 `decrypt_credential_payload` seam in `app/mcp_credentials.py` is now wired to this
+    module; misconfigured keys fail fast at startup (`validate_credential_encryption_keys`). Secrets
+    never appear in logs or error messages.
+
 ## [1.8.6] - 2026-06-27
 
 ### Added

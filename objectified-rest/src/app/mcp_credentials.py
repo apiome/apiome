@@ -11,11 +11,13 @@ The work splits across two tickets that meet here:
   ``none``/``bearer``/``header`` (and ``oauth2``/``env``). That mapping lives in
   :mod:`app.mcp_auth`; this module wires it to the credential store and to discovery.
 * **MCAT-6.2 (#3678)** — *encryption-at-rest*: sealing/unsealing ``encrypted_payload`` with an
-  app-managed key. Until it lands, :func:`decrypt_credential_payload` is the single seam that
-  returns ``None`` (no plaintext available), so a sealed credential yields no headers and
-  discovery proceeds unauthenticated — surfacing the server's ``AUTH_REQUIRED`` response through
-  the normal error taxonomy rather than guessing at a secret it cannot read. When 6.2 lands,
-  only :func:`decrypt_credential_payload` changes; the model and the call site stay put.
+  app-managed key. :func:`decrypt_credential_payload` is the single seam that unseals a stored
+  row's ciphertext in-memory at connect time, delegating to
+  :func:`app.mcp_credential_crypto.unseal_credential_payload`. When no plaintext can be produced
+  (encryption unconfigured, the row's key removed, or a tampered blob) it returns ``None``, so a
+  sealed credential yields no headers and discovery proceeds unauthenticated — surfacing the
+  server's ``AUTH_REQUIRED`` response through the normal error taxonomy rather than guessing at a
+  secret it cannot read.
 
 The ``none`` auth type (or no credential row at all) is fully supported today: it yields no auth
 headers, which is exactly right for public/anonymous MCP servers.
@@ -28,6 +30,7 @@ from typing import Any, Dict, Optional
 
 from .database import db
 from .mcp_auth import AUTH_TYPE_NONE, CredentialPayloadError, build_auth_headers
+from .mcp_credential_crypto import unseal_credential_payload
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +38,12 @@ logger = logging.getLogger(__name__)
 def decrypt_credential_payload(credential: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """Unseal a credential row's ``encrypted_payload`` into its plaintext dict (MCAT-6.2 seam).
 
-    This is the *only* place credential ciphertext is turned back into plaintext. The
-    encryption-at-rest implementation (MCAT-6.2, #3678) provides the body; until then there is no
-    decrypting key wired into REST, so this returns ``None`` to signal "no plaintext available".
-    A caller that gets ``None`` for a non-``none`` credential runs the request unauthenticated
-    rather than fabricating a header.
+    This is the *only* place credential ciphertext is turned back into plaintext. It delegates the
+    envelope decryption to :func:`app.mcp_credential_crypto.unseal_credential_payload`, passing the
+    row's ciphertext and its ``key_version`` (so the right master key is selected for rotation).
+    A row with no ciphertext, or one that cannot be decrypted (encryption unconfigured, the sealing
+    key removed, or a tampered blob), yields ``None`` — and a caller that gets ``None`` for a
+    non-``none`` credential runs the request unauthenticated rather than fabricating a header.
 
     Args:
         credential: An ``mcp_endpoint_credentials`` row (``auth_type``, ``encrypted_payload``,
@@ -47,9 +51,11 @@ def decrypt_credential_payload(credential: Dict[str, Any]) -> Optional[Dict[str,
 
     Returns:
         The decrypted credential payload as a dict, or ``None`` when no plaintext can be produced
-        (decryption not yet wired, or the row carries no ciphertext).
+        (the row carries no ciphertext, or decryption is not possible).
     """
-    return None
+    return unseal_credential_payload(
+        credential.get("encrypted_payload"), credential.get("key_version")
+    )
 
 
 def _headers_for_credential(credential: Optional[Dict[str, Any]]) -> Dict[str, str]:

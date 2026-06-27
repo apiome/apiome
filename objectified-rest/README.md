@@ -65,6 +65,32 @@ API_HOST=0.0.0.0
 API_PORT=8000
 ```
 
+#### MCP credential encryption-at-rest (MCAT-6.2)
+
+Outbound MCP credentials (bearer tokens, custom-header values, OAuth2 token sets) are stored as
+ciphertext only, sealed with AES-256-GCM envelope encryption. Configure the master key(s) so the
+server can seal new secrets and unseal stored ones at connect time:
+
+```env
+# JSON map of integer key-version -> base64-encoded 32-byte (AES-256) master key.
+OBJECTIFIED_MCP_CREDENTIAL_ENCRYPTION_KEYS={"1": "<base64 key>"}
+# Optional: which version new secrets are sealed under (defaults to the highest version present).
+OBJECTIFIED_MCP_CREDENTIAL_ACTIVE_KEY_VERSION=1
+```
+
+Generate a key with:
+
+```bash
+python -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())"
+```
+
+**Key rotation:** add a new, higher version to the map and point
+`OBJECTIFIED_MCP_CREDENTIAL_ACTIVE_KEY_VERSION` at it. Existing rows stay decryptable under the
+version that sealed them; re-seal them onto the active key with
+`mcp_credential_crypto.reseal_credential_payload`. If no key is configured the server still starts,
+but credentials cannot be sealed (storing a secret fails closed) or unsealed (discovery runs
+unauthenticated).
+
 ### Running the Server
 
 ```bash
