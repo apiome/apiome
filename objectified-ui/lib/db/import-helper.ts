@@ -1064,15 +1064,25 @@ export async function startImport(input: ImportJobInput) {
           parentVersionUuid: parentVersionUuidInc ?? undefined,
         });
 
-        const propertyIdMapInc = await benchPhase(job, 'phase:buildPropertyLibrary', () =>
-          buildPropertyIdMapForImport(
-            client!,
-            projectId,
-            norm,
-            job,
-            reuseLibraryInc
-          )
-        );
+        // The property-library build batches its inserts behind a SAVEPOINT
+        // (createPropertiesBatchTx), which PostgreSQL only permits inside a transaction
+        // block. Incremental mode otherwise runs in autocommit, so wrap this phase in its
+        // own begin/commit — committing the shared library before the per-class loop writes
+        // each class in its own transaction below. Mirrors the class-loop begin/commit, with
+        // rollback on failure.
+        const propertyIdMapInc = await benchPhase(job, 'phase:buildPropertyLibrary', async () => {
+          await beginTransaction(client!);
+          try {
+            const map = await buildPropertyIdMapForImport(client!, projectId, norm, job, reuseLibraryInc);
+            await commitTransaction(client!);
+            return map;
+          } catch (err) {
+            try {
+              await rollbackTransaction(client!);
+            } catch (_) { /* ignore rollback failure; surface the original error */ }
+            throw err;
+          }
+        });
 
         setProgress(job, 'creating-classes', 2 + norm.classes.length, 2);
         let classCountInc = 0;

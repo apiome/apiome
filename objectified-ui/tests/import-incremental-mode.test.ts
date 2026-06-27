@@ -251,11 +251,32 @@ describe('Import Incremental Mode (#730)', () => {
 
     await waitForJobEnd(getImportStatus, jobId);
 
-    // Two classes → begin and commit each (no global begin at start in incremental path)
+    // No global begin at start in incremental path. Begin/commit pairs:
+    //   1× property-library build (its batched insert is SAVEPOINT-protected and so must
+    //      run inside a transaction block) + 1× per class (2 classes) = 3 total.
     expect(mockBeginTransaction).toHaveBeenCalled();
     expect(mockCommitTransaction).toHaveBeenCalled();
-    expect(mockBeginTransaction.mock.calls.length).toBe(2);
-    expect(mockCommitTransaction.mock.calls.length).toBe(2);
+    expect(mockBeginTransaction.mock.calls.length).toBe(3);
+    expect(mockCommitTransaction.mock.calls.length).toBe(3);
+  });
+
+  test('incremental mode builds the property library inside a transaction block', async () => {
+    // Regression (#3682 build fix): createPropertiesBatchTx issues SAVEPOINT, which
+    // PostgreSQL rejects outside a transaction ("SAVEPOINT can only be used in transaction
+    // blocks"). Incremental mode otherwise runs in autocommit, so the property-library build
+    // must be wrapped in begin/commit. Assert a begin precedes the batch insert and a commit
+    // follows it.
+    const { startImport, getImportStatus } = await import('../lib/db/import-helper');
+    const { jobId } = await startImport(incrementalInput);
+
+    await waitForJobEnd(getImportStatus, jobId);
+
+    expect(mockCreatePropertiesBatchTx).toHaveBeenCalled();
+    const batchOrder = mockCreatePropertiesBatchTx.mock.invocationCallOrder[0];
+    const beginBeforeBatch = mockBeginTransaction.mock.invocationCallOrder.some((o) => o < batchOrder);
+    const commitAfterBatch = mockCommitTransaction.mock.invocationCallOrder.some((o) => o > batchOrder);
+    expect(beginBeforeBatch).toBe(true);
+    expect(commitAfterBatch).toBe(true);
   });
 
   test('incremental mode summary has classesCreated and totalTime', async () => {
@@ -296,9 +317,10 @@ describe('Import Incremental Mode (#730)', () => {
 
     await waitForJobEnd(getImportStatus, jobId);
 
-    // First class: begin, commit. Second class: begin, then createClassTx fails → rollback
+    // Property library: begin, commit. First class (User): begin, commit. Second class
+    // (Product): begin, then createClassTx fails → rollback. So 2 commits (library + User).
     expect(mockRollbackTransaction).toHaveBeenCalled();
-    expect(mockCommitTransaction.mock.calls.length).toBe(1); // only User committed
+    expect(mockCommitTransaction.mock.calls.length).toBe(2); // property library + User
   });
 
   test('when one class fails in incremental mode: CLASS_FAILED event emitted', async () => {
