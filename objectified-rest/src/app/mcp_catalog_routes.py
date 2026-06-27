@@ -34,6 +34,7 @@ from .models import (
     McpDiscoveryJobStatusListResponse,
     McpDiscoveryJobStatusResponse,
     McpEndpointCreate,
+    McpEndpointDeleteResponse,
     McpEndpointListResponse,
     McpEndpointResponse,
     McpEndpointUpdate,
@@ -210,6 +211,39 @@ async def update_mcp_endpoint(
     if not updated:
         raise HTTPException(status_code=404, detail="MCP endpoint not found")
     return McpEndpointResponse(success=True, endpoint=mcp_endpoint_out_from_row(updated))
+
+
+@mcp_endpoints_router.delete(
+    "/{tenant_slug}/endpoints/{endpoint_id}",
+    response_model=McpEndpointDeleteResponse,
+)
+async def delete_mcp_endpoint(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpEndpointDeleteResponse:
+    """Retire a catalog endpoint and purge its child data (V2-MCP-17.5 / MCAT-3.5).
+
+    The endpoint is soft-deleted (stamped ``deleted_at``, disabled) so it vanishes
+    from browse/list/get and is skipped by the discovery sweep, while its slug stays
+    reserved. Its children are hard-deleted: the stored credentials (the security-
+    critical purge), every discovery job, and every version snapshot — whose
+    capability items, change logs and scores cascade away with it. Returns a
+    teardown summary, or ``404`` when the endpoint is not the caller's tenant's
+    (or was already deleted).
+    """
+    _ = tenant_slug
+    tenant_id = str(auth_data["tenant_id"])
+    summary = db.soft_delete_mcp_endpoint(tenant_id, str(endpoint_id))
+    if not summary:
+        raise HTTPException(status_code=404, detail="MCP endpoint not found")
+    return McpEndpointDeleteResponse(
+        success=True,
+        endpoint_id=str(endpoint_id),
+        credentials_purged=bool(summary.get("credentials_purged")),
+        versions_deleted=int(summary.get("versions_deleted", 0)),
+        jobs_deleted=int(summary.get("jobs_deleted", 0)),
+    )
 
 
 # ===========================================================================

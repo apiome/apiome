@@ -3698,6 +3698,26 @@ class McpEndpointResponse(BaseModel):
     endpoint: McpEndpointOut
 
 
+class McpEndpointDeleteResponse(BaseModel):
+    """Outcome of soft-deleting a catalog endpoint (V2-MCP-17.5 / MCAT-3.5).
+
+    The endpoint row is retired with a ``deleted_at`` stamp (so it disappears
+    from browse but keeps its slug reserved), while its child data is purged:
+    ``credentials_purged`` reports whether a stored credential row was dropped —
+    the security-critical part of the teardown — and ``versions_deleted`` /
+    ``jobs_deleted`` count the version snapshots (with their cascaded capability
+    items, change logs and scores) and discovery jobs removed.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    credentials_purged: bool = False
+    versions_deleted: int = 0
+    jobs_deleted: int = 0
+
+
 def mcp_endpoint_out_from_row(row: Dict[str, Any]) -> McpEndpointOut:
     """Project an ``odb.mcp_endpoints`` row onto the wire model.
 

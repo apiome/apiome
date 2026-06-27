@@ -5,6 +5,23 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-06-26
+
+### Added
+- **MCP endpoint lifecycle — delete (#3667, V2-MCP-17.5 / MCAT-3.5)** — endpoints can now be retired
+  via `DELETE /v1/mcp/{tenant_slug}/endpoints/{id}`. The endpoint row is *soft* deleted (stamped
+  `deleted_at`, flipped to `enabled = false`, `current_version_id` cleared) so it disappears from
+  browse/list/get and is skipped by the discovery sweep, while its slug stays reserved against the
+  `(tenant_id, slug)` unique constraint. Its child data is *hard* deleted in the same tenant-scoped
+  transaction: the credential vault row (the security-critical purge), every discovery job, and every
+  version snapshot — whose capability items, change logs and scores cascade away via the
+  `ON DELETE CASCADE` chain off `mcp_endpoint_versions`. The route returns a teardown summary
+  (`credentials_purged`, `versions_deleted`, `jobs_deleted`) and `404` when the endpoint is not the
+  caller's tenant's (or was already deleted). New `database.py` method `soft_delete_mcp_endpoint`, new
+  `models.py` response model `McpEndpointDeleteResponse`; covered by route and DB-layer unit tests in
+  `tests/test_mcp_catalog_routes.py`. (Enable/disable already shipped in #3663 via the `enabled` PATCH
+  field, so this completes the enable/disable/delete lifecycle.)
+
 ## [1.6.6] - 2026-06-26
 
 ### Added

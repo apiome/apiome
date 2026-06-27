@@ -484,9 +484,9 @@ Tenant-facing CRUD + the async discovery job lifecycle (mirrors `spec_import` en
 - **Dependencies / Parallelism.** After 1.5, 3.2. Parallel with 3.5.
 - **Technical Stack.** FastAPI.
 
-### MCAT-3.5 — Endpoint lifecycle (enable/disable/delete)  ·  **#3667**
+### MCAT-3.5 — Endpoint lifecycle (enable/disable/delete)  ·  **#3667**  ·  ✅ Done (objectified-rest 1.8.1)
 - **Problem.** Endpoints must be pausable (excluded from sweep) and removable.
-- **Solution / Scope.** `PATCH` `enabled`, soft delete endpoint (`deleted_at`) with FK-cascade cleanup of versions/items/jobs/credentials; disabling excludes from the sweep (Epic-5).
+- **Solution / Scope.** Enable/disable already shipped in 3.1 via the `enabled` PATCH field (skipped by the Epic-5 sweep through the `enabled, last_discovered_at` partial index). This adds `DELETE …/endpoints/{id}`: soft delete the endpoint (`deleted_at`, `enabled=false`, `current_version_id` cleared) so it leaves browse and the sweep while its slug stays reserved, and hard-purge its children in one tenant-scoped transaction — credentials (security purge), discovery jobs, and version snapshots (cascade-reaping capability items/changes/scores via `mcp_endpoint_versions`'s `ON DELETE CASCADE`). New `soft_delete_mcp_endpoint` DB method and `McpEndpointDeleteResponse` model.
 - **Acceptance Criteria.** Disabled endpoints skipped by sweep; deleted endpoints disappear from browse and purge credentials.
 - **Dependencies / Parallelism.** After 3.1. Parallel with 3.4.
 - **Technical Stack.** FastAPI, SQL cascades.

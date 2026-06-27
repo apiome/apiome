@@ -9110,6 +9110,86 @@ class Database:
             conn.rollback()
             raise e
 
+    def soft_delete_mcp_endpoint(
+        self,
+        tenant_id: str,
+        endpoint_id: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Retire a catalog endpoint and purge its child data (MCAT-3.5, #3667).
+
+        The endpoint row is *soft* deleted — stamped with ``deleted_at`` (and
+        flipped to ``enabled = false`` with ``current_version_id`` cleared) so it
+        drops out of browse/list/get and is skipped by the discovery sweep, while
+        its slug stays reserved against the ``(tenant_id, slug)`` unique
+        constraint. Its children, by contrast, are *hard* deleted so no stale or
+        sensitive data survives the endpoint: the credential vault row (the
+        security-critical purge), all discovery jobs, and all version snapshots —
+        which cascade-reap their capability items, change logs and scores via the
+        ``ON DELETE CASCADE`` chain off ``mcp_endpoint_versions`` (V128/V130).
+
+        Everything runs in one transaction scoped to ``tenant_id``: a cross-tenant
+        or already-deleted id matches no live row, so nothing is touched and
+        ``None`` is returned (the route maps that to a 404).
+
+        Args:
+            tenant_id: Owning tenant (scopes the delete for isolation).
+            endpoint_id: The endpoint to retire.
+
+        Returns:
+            A teardown summary — ``{"endpoint_id", "credentials_purged",
+            "versions_deleted", "jobs_deleted"}`` — or ``None`` when no live
+            endpoint matched the tenant + id.
+        """
+        # Retire the endpoint first; the WHERE clause is the existence/ownership
+        # guard, so a no-match short-circuits before any child rows are touched.
+        retire = """
+            UPDATE odb.mcp_endpoints
+            SET deleted_at = CURRENT_TIMESTAMP,
+                enabled = false,
+                current_version_id = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
+            RETURNING id
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(retire, (endpoint_id, tenant_id))
+                if cursor.fetchone() is None:
+                    conn.rollback()
+                    return None
+
+                cursor.execute(
+                    "DELETE FROM odb.mcp_endpoint_credentials WHERE endpoint_id = %s::uuid",
+                    (endpoint_id,),
+                )
+                credentials_purged = (cursor.rowcount or 0) > 0
+
+                cursor.execute(
+                    "DELETE FROM odb.mcp_discovery_jobs WHERE endpoint_id = %s::uuid",
+                    (endpoint_id,),
+                )
+                jobs_deleted = cursor.rowcount or 0
+
+                # Versions cascade-reap capability items, version changes and
+                # scores (V128/V130), so this single delete clears the snapshot tree.
+                cursor.execute(
+                    "DELETE FROM odb.mcp_endpoint_versions WHERE endpoint_id = %s::uuid",
+                    (endpoint_id,),
+                )
+                versions_deleted = cursor.rowcount or 0
+
+                conn.commit()
+                return {
+                    "endpoint_id": endpoint_id,
+                    "credentials_purged": credentials_purged,
+                    "versions_deleted": versions_deleted,
+                    "jobs_deleted": jobs_deleted,
+                }
+        except Exception as e:
+            conn.rollback()
+            raise e
+
     # -----------------------------------------------------------------------
     # MCP Catalog — discovery jobs & version persistence (MCAT-3.2, #3664)
     # -----------------------------------------------------------------------

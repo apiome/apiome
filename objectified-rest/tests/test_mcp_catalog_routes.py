@@ -306,6 +306,68 @@ def test_patch_endpoint_empty_body_is_noop():
 
 
 # ===========================================================================
+# DELETE (lifecycle — soft delete + child purge, V2-MCP-17.5 / MCAT-3.5)
+# ===========================================================================
+
+
+def test_delete_endpoint_ok_returns_teardown_summary():
+    summary = {
+        "endpoint_id": "11111111-1111-1111-1111-111111111111",
+        "credentials_purged": True,
+        "versions_deleted": 2,
+        "jobs_deleted": 3,
+    }
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.soft_delete_mcp_endpoint.return_value = summary
+        r = client.delete("/v1/mcp/acme/endpoints/11111111-1111-1111-1111-111111111111")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["success"] is True
+    assert body["endpoint_id"] == "11111111-1111-1111-1111-111111111111"
+    assert body["credentials_purged"] is True
+    assert body["versions_deleted"] == 2
+    assert body["jobs_deleted"] == 3
+    args = mdb.soft_delete_mcp_endpoint.call_args.args
+    assert args[0] == "t1"  # tenant from token, not URL slug
+    assert args[1] == "11111111-1111-1111-1111-111111111111"
+
+
+def test_delete_endpoint_scoped_to_token_tenant():
+    """The delete is scoped by the token tenant, never the URL slug."""
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.soft_delete_mcp_endpoint.return_value = {
+            "endpoint_id": "11111111-1111-1111-1111-111111111111",
+            "credentials_purged": False,
+            "versions_deleted": 0,
+            "jobs_deleted": 0,
+        }
+        client.delete("/v1/mcp/some-other-slug/endpoints/11111111-1111-1111-1111-111111111111")
+        assert mdb.soft_delete_mcp_endpoint.call_args.args[0] == "t1"
+
+
+def test_delete_endpoint_cross_tenant_or_missing_404():
+    """A row owned by another tenant (or already deleted) matches nothing → 404."""
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.soft_delete_mcp_endpoint.return_value = None
+        r = client.delete("/v1/mcp/acme/endpoints/11111111-1111-1111-1111-111111111111")
+    assert r.status_code == 404
+
+
+def test_delete_endpoint_rejects_non_uuid():
+    """Path is typed ``uuid.UUID`` so a non-UUID id is a 422, not a DB hit."""
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        r = client.delete("/v1/mcp/acme/endpoints/not-a-uuid")
+    assert r.status_code == 422
+    mdb.soft_delete_mcp_endpoint.assert_not_called()
+
+
+def test_delete_endpoint_requires_authentication():
+    app.dependency_overrides.pop(validate_authentication, None)
+    r = client.delete("/v1/mcp/acme/endpoints/11111111-1111-1111-1111-111111111111")
+    assert r.status_code == 401
+
+
+# ===========================================================================
 # Model validation
 # ===========================================================================
 
@@ -570,3 +632,88 @@ def test_update_mcp_endpoint_missing_row_returns_none(monkeypatch):
     db = Database()
     monkeypatch.setattr(db, "connect", lambda: conn)
     assert db.update_mcp_endpoint("t1", "ep-1", {"enabled": True}) is None
+
+
+# ---------------------------------------------------------------------------
+# DB layer: soft delete + child purge (V2-MCP-17.5 / MCAT-3.5)
+# ---------------------------------------------------------------------------
+
+
+class _FakeSeqCursor:
+    """Cursor double for the soft-delete transaction.
+
+    Serves the ``RETURNING id`` row via :meth:`fetchone` and advances ``rowcount``
+    from a per-DELETE sequence so the teardown summary can be asserted.
+    """
+
+    def __init__(self, retire_row, delete_rowcounts=None):
+        self._retire_row = retire_row
+        self._rowcounts = list(delete_rowcounts or [])
+        self.executed = []
+        self.rowcount = 0
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def execute(self, sql, params=None):
+        self.executed.append((sql, params))
+        if sql.strip().upper().startswith("DELETE") and self._rowcounts:
+            self.rowcount = self._rowcounts.pop(0)
+
+    def fetchone(self):
+        return self._retire_row
+
+
+def test_soft_delete_mcp_endpoint_retires_row_and_purges_children(monkeypatch):
+    # rowcounts: credentials, jobs, versions (in deletion order).
+    cur = _FakeSeqCursor(retire_row={"id": "ep-1"}, delete_rowcounts=[1, 3, 2])
+    conn = _FakeConn(cur)
+    db = Database()
+    monkeypatch.setattr(db, "connect", lambda: conn)
+
+    summary = db.soft_delete_mcp_endpoint("t1", "ep-1")
+    assert summary == {
+        "endpoint_id": "ep-1",
+        "credentials_purged": True,
+        "versions_deleted": 2,
+        "jobs_deleted": 3,
+    }
+    assert conn.committed is True
+
+    # The retire UPDATE runs first, soft-deleting only a live, tenant-owned row.
+    retire_sql, retire_params = cur.executed[0]
+    assert "deleted_at = CURRENT_TIMESTAMP" in retire_sql
+    assert "deleted_at IS NULL" in retire_sql
+    assert retire_params == ("ep-1", "t1")
+
+    # All three child tables are purged.
+    joined = " ".join(sql for sql, _ in cur.executed)
+    assert "mcp_endpoint_credentials" in joined
+    assert "mcp_discovery_jobs" in joined
+    assert "mcp_endpoint_versions" in joined
+
+
+def test_soft_delete_mcp_endpoint_reports_no_credentials_when_none(monkeypatch):
+    cur = _FakeSeqCursor(retire_row={"id": "ep-1"}, delete_rowcounts=[0, 0, 0])
+    conn = _FakeConn(cur)
+    db = Database()
+    monkeypatch.setattr(db, "connect", lambda: conn)
+    summary = db.soft_delete_mcp_endpoint("t1", "ep-1")
+    assert summary["credentials_purged"] is False
+    assert summary["versions_deleted"] == 0
+    assert summary["jobs_deleted"] == 0
+
+
+def test_soft_delete_mcp_endpoint_missing_row_returns_none_without_purge(monkeypatch):
+    cur = _FakeSeqCursor(retire_row=None)
+    conn = _FakeConn(cur)
+    db = Database()
+    monkeypatch.setattr(db, "connect", lambda: conn)
+    assert db.soft_delete_mcp_endpoint("t1", "missing") is None
+    assert conn.rolled_back is True
+    # Only the guarded retire UPDATE ran — no child DELETE statements fired.
+    assert len(cur.executed) == 1
+    assert cur.executed[0][0].strip().upper().startswith("UPDATE")
