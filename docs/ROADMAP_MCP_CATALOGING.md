@@ -717,7 +717,7 @@ An MCP-specific linter, modeled on the existing deterministic `schema_lint.py`
 - **Dependencies / Parallelism.** After 7.1. Parallel with 7.3.
 - **Technical Stack.** Python, `jsonschema`.
 
-### MCAT-7.3 — Annotation-consistency & error-design rules  ·  **#3684**
+### MCAT-7.3 — Annotation-consistency & error-design rules  ·  **#3684**  ·  ✅ Done (objectified-rest 1.17.0)
 - **Problem.** The highest-signal MCP-specific checks are annotation consistency and error design.
 - **Solution / Scope.** Rules: contradictory annotations (`readOnlyHint:true` with `destructiveHint:true`/`idempotentHint:false`); missing server `instructions` (info); over-broad scopes / token-passthrough indicators in auth metadata; SSRF-risky resource URIs. Per [security best practices](https://modelcontextprotocol.io/specification/2025-06-18/basic/security_best_practices) and Anthropic [writing tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents).
 - **Acceptance Criteria.** Detects contradictory annotation sets; flags security-posture gaps; documented rationale per rule.

@@ -330,4 +330,5 @@ def finding_dicts(findings: Iterable[LintFinding]) -> List[Dict[str, str]]:
 # Importing them here — after every public symbol is defined, so the import is non-circular —
 # guarantees that any caller of :func:`lint_mcp_surface` gets the full rule set with no extra
 # wiring. New packs (e.g. V2-MCP-21.3) append one import line below.
-from . import mcp_lint_hygiene as _mcp_lint_hygiene  # noqa: E402,F401  (side-effecting: registers rules)
+from . import mcp_lint_annotations as _mcp_lint_annotations  # noqa: E402,F401,I001  (side-effecting: registers rules)
+from . import mcp_lint_hygiene as _mcp_lint_hygiene  # noqa: E402,F401,I001  (side-effecting: registers rules)
