@@ -765,7 +765,7 @@ Invoke a stored MCP tool with stored auth and capture the result.
 - **Dependencies / Parallelism.** After 8.1. Blocks 8.3/8.4.
 - **Technical Stack.** FastAPI, `jsonschema`.
 
-### MCAT-8.3 — Invocation logging & safety guards  ·  **#3689**
+### MCAT-8.3 — Invocation logging & safety guards  ·  **#3689**  ·  ✅ Done (objectified-rest 1.22.0)
 - **Problem.** Test calls hit live external systems and may be destructive.
 - **Solution / Scope.** Log every invocation to `mcp_test_invocations`; warn/confirm when tool annotations indicate `destructiveHint`/`openWorldHint`; rate-limit per endpoint; never log secret args/headers.
 - **Acceptance Criteria.** Invocations recorded with redaction; destructive tools require an explicit confirm flag; rate limit enforced.

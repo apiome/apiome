@@ -222,6 +222,20 @@ class Settings(BaseSettings):
         ),
     )
 
+    # MCP test harness (#3689, V2-MCP-22.3 / MCAT-8.3). Each live test invocation against a
+    # cataloged endpoint hits a real external server, so the test console is rate limited
+    # *per endpoint* (in addition to the global per-tenant middleware) to protect that server
+    # from a flood of test traffic. The fixed window matches the global limiter's
+    # ``rate_limit_window_seconds``, and the per-endpoint limit honours the global
+    # ``rate_limit_enabled`` kill switch.
+    mcp_test_rate_limit_per_minute: int = Field(
+        default=30,
+        validation_alias=AliasChoices(
+            "OBJECTIFIED_MCP_TEST_RATE_LIMIT_PER_MINUTE",
+            "mcp_test_rate_limit_per_minute",
+        ),
+    )
+
     # Global auto-refresh kill switch (RAR-3.3, #3524). When False, the refresh
     # sweep halts entirely (no repository is auto-refreshed) regardless of per-repo
     # auto_refresh_enabled. Intended for incident response. Manual "Refresh Now"

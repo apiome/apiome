@@ -5,6 +5,37 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.0] - 2026-06-27
+
+### Added
+- **Invocation logging & safety guards (#3689, V2-MCP-22.3 / MCAT-8.3)** — wraps the test-harness
+  route (`POST /v1/mcp/{tenant_slug}/endpoints/{id}/test`) with an audit log and two safety gates so
+  a live test call against an external MCP server is recorded, never fired destructively by accident,
+  and cannot flood the target.
+  - **Redacted invocation log** — every *dispatched* call is recorded in `odb.mcp_test_invocations`
+    (endpoint, version, item, outcome, latency, acting user). Secrets never reach the log: the
+    request's auth headers are not part of the row at all, and both the `arguments` and the response
+    payload are passed through a new `redact_sensitive_args` helper that masks any secret-named field
+    (`token`, `password`, `authorization`, `api_key`, …) before storage. The new row id is returned
+    as `invocationId`. Logging is **best-effort** — a DB failure is swallowed (warning logged) and
+    never fails the call, since the live invocation has already happened.
+  - **Destructive/open-world confirm gate** — a tool whose annotations assert `destructiveHint` or
+    `openWorldHint` (as a JSON `true`) is refused with `428` unless the request sets `confirm=true`,
+    so an irreversible or open-world tool is never invoked without explicit acknowledgement. A hint
+    that is absent or not a clean boolean is treated as unset (no spurious gate).
+  - **Per-endpoint rate limit** — accepted, fully-validated calls are throttled per endpoint with an
+    in-process fixed window (`429` with `Retry-After` when exhausted), in addition to the global
+    per-tenant middleware, so the console cannot flood the external server. Honours the global
+    `rate_limit_enabled` kill switch; the ceiling is `OBJECTIFIED_MCP_TEST_RATE_LIMIT_PER_MINUTE`
+    (default 30).
+  - New `confirm` request field and `invocation_id` response field; new
+    `insert_mcp_test_invocation` DB method (reuses the existing `mcp_test_invocations` table from
+    V130 — no schema changes). Tests: 15 route/unit tests over a mocked DB and invocation service
+    (redaction of secret args + secrets echoed in responses, the `is_error`/latency log shaping,
+    best-effort log failure, headers never logged, the confirm gate for both hints + the safe/
+    non-boolean cases, and the rate-limit enforce/disable paths) plus the pure `redact_sensitive_args`
+    helper.
+
 ## [1.21.0] - 2026-06-27
 
 ### Added

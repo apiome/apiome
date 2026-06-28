@@ -9829,6 +9829,72 @@ class Database:
         )
         return bool(rows)
 
+    def insert_mcp_test_invocation(
+        self,
+        *,
+        endpoint_id: str,
+        version_id: Optional[str],
+        item_type: str,
+        item_name: str,
+        arguments: Optional[Dict[str, Any]],
+        response: Optional[Dict[str, Any]],
+        is_error: bool,
+        latency_ms: Optional[int],
+        invoked_by: Optional[str],
+    ) -> Dict[str, Any]:
+        """Record one test-harness invocation in ``mcp_test_invocations`` (V2-MCP-22.3, #3689).
+
+        Appends a single audit row for a capability that was actually dispatched to its live MCP
+        server, so a tenant can see what was tested, when, by whom, and how it turned out. The row
+        is the security-critical test log: callers MUST pass an already-redacted ``arguments`` /
+        ``response`` (see :func:`app.models.redact_sensitive_args`) — this method persists them
+        verbatim and never sees the raw secret-bearing values or the request's auth headers (which
+        are never part of the log at all).
+
+        Tenant scoping is implicit: ``endpoint_id`` is opaque and the caller has already validated
+        the owning endpoint against the token tenant, and the row cascade-deletes with its endpoint.
+
+        Args:
+            endpoint_id: The endpoint the call was made against.
+            version_id: The snapshot the invoked item came from (``current_version_id``); may be
+                ``None`` (the column is SET NULL on version prune).
+            item_type: The capability kind invoked (``tool``/``resource``/``prompt``).
+            item_name: The invoked capability's programmatic name.
+            arguments: The **redacted** call arguments to log (defaults to ``{}`` when ``None``).
+            response: The **redacted** outcome to log (content/error summary), or ``None``.
+            is_error: ``True`` when the call returned a tool-level error or failed in transport.
+            latency_ms: Integer round-trip latency, or ``None`` when the call never completed.
+            invoked_by: The acting user id, or ``None`` when it cannot be resolved.
+
+        Returns:
+            The inserted row (``id`` and ``created_at`` among the persisted columns).
+        """
+        query = """
+            INSERT INTO odb.mcp_test_invocations (
+                endpoint_id, version_id, item_type, item_name,
+                arguments, response, is_error, latency_ms, invoked_by
+            ) VALUES (
+                %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s
+            )
+            RETURNING id, endpoint_id, version_id, item_type, item_name,
+                      is_error, latency_ms, invoked_by, created_at
+        """
+        rows = self.execute_query(
+            query,
+            (
+                endpoint_id,
+                version_id,
+                item_type,
+                item_name,
+                Json(arguments if arguments is not None else {}),
+                Json(response) if response is not None else None,
+                is_error,
+                latency_ms,
+                invoked_by,
+            ),
+        )
+        return rows[0] if rows else {}
+
     def get_mcp_version_score(self, version_id: str) -> Optional[Dict[str, Any]]:
         """Fetch the persisted quality/lint score row for an MCP version snapshot.
 
