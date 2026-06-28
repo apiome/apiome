@@ -1,6 +1,8 @@
 /**
  * Single MCP endpoint — proxies to objectified-rest:
  *   GET    /v1/mcp/{slug}/endpoints/{id}  (V2-MCP-23.1) — resolve an endpoint's version & identity.
+ *   PATCH  /v1/mcp/{slug}/endpoints/{id}  (V2-MCP-24.2) — toggle mutable catalog state from the
+ *          detail view: enable/disable and publish/unpublish.
  *   DELETE /v1/mcp/{slug}/endpoints/{id}  (V2-MCP-24.1) — discard an endpoint (e.g. a failed import
  *          whose auth/scan did not complete and that the user did not keep).
  */
@@ -10,7 +12,11 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../auth/[...nextauth]/route';
 import { getTenantById } from '@lib/db/helper';
 import { createRestAuthHeaders, REST_API_BASE_URL } from '@lib/rest-auth';
-import { getAuthenticatedTenantContext, proxyRestDelete } from '@lib/primitives-api-proxy';
+import {
+  getAuthenticatedTenantContext,
+  proxyRestDelete,
+  proxyRestPatch,
+} from '@lib/primitives-api-proxy';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,6 +82,48 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       { status: 503 },
     );
   }
+}
+
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ endpointId: string }> }) {
+  const { endpointId } = await params;
+  if (!endpointId || !UUID_RE.test(endpointId)) {
+    return NextResponse.json({ success: false, error: 'Invalid endpoint id' }, { status: 400 });
+  }
+
+  let raw: unknown;
+  try {
+    raw = await request.json();
+  } catch {
+    return NextResponse.json({ success: false, error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  // Only the detail view's toggles are forwarded; everything else is ignored so this proxy can
+  // never patch fields it does not intend to (name, URL, transport, …).
+  const body = (raw ?? {}) as Record<string, unknown>;
+  const patch: Record<string, boolean> = {};
+  if (typeof body.enabled === 'boolean') patch.enabled = body.enabled;
+  if (typeof body.published === 'boolean') patch.published = body.published;
+  if (Object.keys(patch).length === 0) {
+    return NextResponse.json(
+      { success: false, error: 'Provide at least one of: enabled, published (boolean).' },
+      { status: 400 },
+    );
+  }
+
+  const ctx = await getAuthenticatedTenantContext();
+  if (!ctx.ok) {
+    return NextResponse.json({ success: false, error: ctx.error }, { status: ctx.status });
+  }
+
+  const { data, error, status } = await proxyRestPatch(
+    ctx.user,
+    `/mcp/${encodeURIComponent(ctx.tenantSlug)}/endpoints/${encodeURIComponent(endpointId)}`,
+    patch,
+  );
+  if (error) {
+    return NextResponse.json({ success: false, error }, { status: status >= 400 ? status : 502 });
+  }
+  return NextResponse.json(data ?? { success: true }, { status: status || 200 });
 }
 
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ endpointId: string }> }) {

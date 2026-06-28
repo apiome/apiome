@@ -68,7 +68,7 @@ export async function proxyRestGet(
  * non-JSON responses and FastAPI ``detail`` error payloads identically.
  */
 async function proxyRestWrite(
-  method: 'POST' | 'PUT',
+  method: 'POST' | 'PUT' | 'PATCH',
   user: SessionUser,
   path: string,
   body?: unknown
@@ -109,6 +109,14 @@ export async function proxyRestPut(
   body?: unknown
 ): Promise<{ data: unknown; error: string | null; status: number }> {
   return proxyRestWrite('PUT', user, path, body);
+}
+
+export async function proxyRestPatch(
+  user: SessionUser,
+  path: string,
+  body?: unknown
+): Promise<{ data: unknown; error: string | null; status: number }> {
+  return proxyRestWrite('PATCH', user, path, body);
 }
 
 export async function proxyRestDelete(

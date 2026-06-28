@@ -52,6 +52,14 @@ export interface McpCapabilityItem {
   description: string | null;
   uri: string | null;
   uri_template: string | null;
+  /** Tool argument schema (JSON Schema), when the item declares one. */
+  input_schema: Record<string, unknown> | null;
+  /** Tool structured-result schema (JSON Schema), when declared. */
+  output_schema: Record<string, unknown> | null;
+  /** Behavioural annotations / hints the server published for the item. */
+  annotations: Record<string, unknown> | null;
+  /** Stable position within its kind, as returned by the catalog. */
+  ordinal: number;
 }
 
 /** A version snapshot's full surface as returned by the version-detail read. */
@@ -61,6 +69,7 @@ export interface McpVersionDetail {
   version_tag: string | null;
   server_name: string | null;
   server_version: string | null;
+  server_title: string | null;
   protocol_version: string | null;
   instructions: string | null;
   score: number | null;
@@ -104,6 +113,13 @@ function asInt(value: unknown): number {
 
 function asScore(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? Math.trunc(value) : null;
+}
+
+/** Coerce a value to a plain JSON object, or NULL for anything that is not one (arrays included). */
+function asObject(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
 }
 
 /** Parse one browse-endpoint object defensively (missing/invalid fields fall back to safe defaults). */
@@ -167,6 +183,10 @@ export function mcpCapabilityItemFromPayload(raw: unknown): McpCapabilityItem {
     description: asString(r.description),
     uri: asString(r.uri),
     uri_template: asString(r.uri_template),
+    input_schema: asObject(r.input_schema),
+    output_schema: asObject(r.output_schema),
+    annotations: asObject(r.annotations),
+    ordinal: asInt(r.ordinal),
   };
 }
 
@@ -181,6 +201,7 @@ export function mcpVersionDetailFromPayload(data: unknown): McpVersionDetail | n
     version_seq: asInt(v.version_seq),
     version_tag: asString(v.version_tag),
     server_name: asString(v.server_name),
+    server_title: asString(v.server_title),
     server_version: asString(v.server_version),
     protocol_version: asString(v.protocol_version),
     instructions: asString(v.instructions),
@@ -211,6 +232,87 @@ export function mcpEndpointDetailFromPayload(data: unknown): McpEndpointDetail |
     current_version_id: asString(e.current_version_id),
     last_discovered_at: asString(e.last_discovered_at),
   };
+}
+
+/** A collapsible JSON block to render under one capability item (a schema or its annotations). */
+export interface McpItemDetailSection {
+  key: 'input_schema' | 'output_schema' | 'annotations';
+  label: string;
+  /** Pretty-printed JSON ready to drop into a <pre>. */
+  json: string;
+}
+
+/** Display order + human labels for an item's JSON detail sections. */
+const MCP_ITEM_DETAIL_LABELS: ReadonlyArray<{ key: McpItemDetailSection['key']; label: string }> = [
+  { key: 'input_schema', label: 'Input schema' },
+  { key: 'output_schema', label: 'Output schema' },
+  { key: 'annotations', label: 'Annotations' },
+];
+
+/** Pretty-print a JSON value for display; returns an empty string if it cannot be serialized. */
+export function mcpFormatJson(value: unknown): string {
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return '';
+  }
+}
+
+/** True when an object is absent or has no own keys (so there is nothing worth rendering). */
+function isEmptyObject(obj: Record<string, unknown> | null): boolean {
+  return !obj || Object.keys(obj).length === 0;
+}
+
+/**
+ * Build the JSON detail sections to render for a capability item — its input schema, output
+ * schema, and annotations — skipping any that are absent or empty. The order is stable
+ * (input → output → annotations) so the UI renders predictably.
+ */
+export function mcpItemDetailSections(item: McpCapabilityItem): McpItemDetailSection[] {
+  const byKey: Record<McpItemDetailSection['key'], Record<string, unknown> | null> = {
+    input_schema: item.input_schema,
+    output_schema: item.output_schema,
+    annotations: item.annotations,
+  };
+  const sections: McpItemDetailSection[] = [];
+  for (const { key, label } of MCP_ITEM_DETAIL_LABELS) {
+    const value = byKey[key];
+    if (!isEmptyObject(value)) {
+      sections.push({ key, label, json: mcpFormatJson(value) });
+    }
+  }
+  return sections;
+}
+
+/** One behavioural hint extracted from an item's `annotations` (a boolean tool hint). */
+export interface McpAnnotationHint {
+  key: string;
+  label: string;
+  value: boolean;
+}
+
+/** The MCP tool-annotation behavioural hints, in display order, with human labels. */
+const MCP_ANNOTATION_HINTS: ReadonlyArray<{ key: string; label: string }> = [
+  { key: 'readOnlyHint', label: 'Read-only' },
+  { key: 'destructiveHint', label: 'Destructive' },
+  { key: 'idempotentHint', label: 'Idempotent' },
+  { key: 'openWorldHint', label: 'Open-world' },
+];
+
+/**
+ * Extract the known boolean behavioural hints from a capability item's `annotations`, in spec
+ * order. Absent or non-boolean hints are skipped, so the result holds only hints the server
+ * actually declared — ready to render as chips/badges.
+ */
+export function mcpAnnotationHints(item: McpCapabilityItem): McpAnnotationHint[] {
+  const annotations = item.annotations;
+  if (!annotations) return [];
+  const hints: McpAnnotationHint[] = [];
+  for (const { key, label } of MCP_ANNOTATION_HINTS) {
+    const value = annotations[key];
+    if (typeof value === 'boolean') hints.push({ key, label, value });
+  }
+  return hints;
 }
 
 /** Group capability items by kind, in the canonical {@link MCP_CAPABILITY_KINDS} order. */

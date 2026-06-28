@@ -8,12 +8,16 @@
 
 import {
   formatLastDiscovered,
+  mcpAnnotationHints,
   mcpBrowseEndpointFromPayload,
   mcpBrowseGroupsFromPayload,
+  mcpCapabilityItemFromPayload,
   mcpEndpointDetailFromPayload,
   mcpEndpointMatchesQuery,
   mcpFilterGroups,
+  mcpFormatJson,
   mcpGroupItemsByType,
+  mcpItemDetailSections,
   mcpScoreLabel,
   mcpScoreVariant,
   mcpVersionDetailFromPayload,
@@ -209,6 +213,120 @@ describe('mcpVersionDetailFromPayload / mcpGroupItemsByType', () => {
   it('returns null when the payload has no version', () => {
     expect(mcpVersionDetailFromPayload({})).toBeNull();
     expect(mcpVersionDetailFromPayload(null)).toBeNull();
+  });
+});
+
+describe('mcpCapabilityItemFromPayload', () => {
+  it('parses schemas, annotations, and ordinal; coerces non-objects to null', () => {
+    const item = mcpCapabilityItemFromPayload({
+      item_type: 'tool',
+      name: 'search',
+      title: 'Search',
+      input_schema: { type: 'object', properties: { q: { type: 'string' } } },
+      output_schema: { type: 'object' },
+      annotations: { readOnlyHint: true, title: 'Search docs' },
+      ordinal: 2,
+    });
+    expect(item.input_schema).toEqual({
+      type: 'object',
+      properties: { q: { type: 'string' } },
+    });
+    expect(item.output_schema).toEqual({ type: 'object' });
+    expect(item.annotations).toEqual({ readOnlyHint: true, title: 'Search docs' });
+    expect(item.ordinal).toBe(2);
+  });
+
+  it('treats arrays and primitives as null objects and defaults ordinal to 0', () => {
+    const item = mcpCapabilityItemFromPayload({
+      item_type: 'resource',
+      name: 'r',
+      input_schema: ['not', 'an', 'object'],
+      output_schema: 'nope',
+      annotations: 42,
+    });
+    expect(item.input_schema).toBeNull();
+    expect(item.output_schema).toBeNull();
+    expect(item.annotations).toBeNull();
+    expect(item.ordinal).toBe(0);
+  });
+});
+
+describe('mcpVersionDetailFromPayload (metadata)', () => {
+  it('parses server_title, protocol_version, and instructions', () => {
+    const version = mcpVersionDetailFromPayload({
+      version: {
+        id: 'v1',
+        version_seq: 1,
+        server_name: 'acme-mcp',
+        server_title: 'Acme MCP',
+        protocol_version: '2025-06-18',
+        instructions: 'Use the search tool first.',
+        items: [],
+      },
+    });
+    expect(version?.server_title).toBe('Acme MCP');
+    expect(version?.protocol_version).toBe('2025-06-18');
+    expect(version?.instructions).toBe('Use the search tool first.');
+  });
+});
+
+describe('mcpFormatJson', () => {
+  it('pretty-prints with two-space indentation', () => {
+    expect(mcpFormatJson({ a: 1 })).toBe('{\n  "a": 1\n}');
+  });
+
+  it('returns an empty string for an unserializable value (cycle)', () => {
+    const cyclic: Record<string, unknown> = {};
+    cyclic.self = cyclic;
+    expect(mcpFormatJson(cyclic)).toBe('');
+  });
+});
+
+describe('mcpItemDetailSections', () => {
+  it('emits present, non-empty sections in input → output → annotations order', () => {
+    const item = mcpCapabilityItemFromPayload({
+      item_type: 'tool',
+      name: 't',
+      input_schema: { type: 'object' },
+      annotations: { readOnlyHint: true },
+    });
+    const sections = mcpItemDetailSections(item);
+    expect(sections.map((s) => s.key)).toEqual(['input_schema', 'annotations']);
+    expect(sections[0].label).toBe('Input schema');
+    expect(sections[0].json).toContain('"type": "object"');
+  });
+
+  it('skips empty objects and absent fields', () => {
+    const item = mcpCapabilityItemFromPayload({
+      item_type: 'resource',
+      name: 'r',
+      input_schema: {},
+    });
+    expect(mcpItemDetailSections(item)).toEqual([]);
+  });
+});
+
+describe('mcpAnnotationHints', () => {
+  it('extracts known boolean hints in spec order, skipping non-booleans and unknowns', () => {
+    const item = mcpCapabilityItemFromPayload({
+      item_type: 'tool',
+      name: 't',
+      annotations: {
+        openWorldHint: false,
+        readOnlyHint: true,
+        destructiveHint: 'yes', // non-boolean → skipped
+        somethingElse: true, // unknown → skipped
+      },
+    });
+    const hints = mcpAnnotationHints(item);
+    expect(hints.map((h) => h.key)).toEqual(['readOnlyHint', 'openWorldHint']);
+    expect(hints[0]).toEqual({ key: 'readOnlyHint', label: 'Read-only', value: true });
+    expect(hints[1].value).toBe(false);
+  });
+
+  it('returns an empty array when there are no annotations', () => {
+    const item = mcpCapabilityItemFromPayload({ item_type: 'tool', name: 't' });
+    expect(mcpAnnotationHints(item)).toEqual([]);
   });
 });
 

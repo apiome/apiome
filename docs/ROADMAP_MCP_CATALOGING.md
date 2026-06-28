@@ -877,7 +877,7 @@ Private browse (MVP) and public browse/search (v2), plus categorization.
 - **Dependencies / Parallelism.** After 3.x and 10.7. Blocks 10.2, 10.8.
 - **Technical Stack.** Next.js, TanStack Query.
 
-### MCAT-10.2 — Endpoint detail: Overview + Capabilities tabs  ·  **#3698**
+### MCAT-10.2 — Endpoint detail: Overview + Capabilities tabs  ·  **#3698**  ·  ✅ Done (objectified-ui 0.18.0)
 - **Problem.** Need to see what an MCP provides, with a scannable summary first and the full surface on demand (the mockup splits this into two tabs).
 - **Solution / Scope.** Build the **endpoint-detail shell** (identity header with name/host/grade glyph/health, the meta strip, and the tab strip from 10.7) and its first two tabs:
   - **Overview tab** — server `instructions`, a meta strip (transport, visibility, auth type, cadence, last-discovered), and an **at-a-glance counts** block (tools/resources/templates/prompts, current version tag, plus the **compact grade summary** rendered by 10.4). Header controls: re-discover, enable/disable, publish.
