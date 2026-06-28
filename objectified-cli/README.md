@@ -507,6 +507,42 @@ objectified repos imports <repository-uuid> --version-id <version-uuid> --format
 objectified repos imports <repository-uuid> --actor <user-uuid> --since 2026-06-01T00:00:00Z
 ```
 
+### MCP catalog
+
+Register, list, and inspect external MCP servers in your tenant's catalog. These commands
+require an API key and a tenant scope (`--tenant` or `OBJECTIFIED_TENANT_ID`); the server
+re-scopes from the token, so you only ever see your own catalog.
+
+Register a server (`POST /v1/mcp/{tenant}/endpoints`). `--name` and `--url` are required;
+`--transport` defaults to `streamable_http` (`sse` and `stdio` are also accepted):
+
+```bash
+objectified mcp register --name "Weather MCP" --url https://mcp.example.com/sse
+objectified mcp register --name "Weather MCP" --url https://mcp.example.com/sse --transport sse
+objectified mcp register --name "Weather MCP" --url https://mcp.example.com/sse \
+  --description "Weather lookups" --category tools --visibility public
+```
+
+Attach an outbound credential while registering — `--bearer` seals a bearer token, `--header`
+seals a custom header secret as `Name:Value` (the two are mutually exclusive). The secret is
+sealed server-side via `PUT …/credentials` and is never echoed back:
+
+```bash
+objectified mcp register --name "Weather MCP" --url https://mcp.example.com/sse --bearer "$MCP_TOKEN"
+objectified mcp register --name "Weather MCP" --url https://mcp.example.com/sse --header "X-Api-Token: $MCP_TOKEN"
+```
+
+List the catalog (`GET /v1/mcp/{tenant}/endpoints`) and show one endpoint by id
+(`GET /v1/mcp/{tenant}/endpoints/{id}`). Both honour the global `--json` flag and a local
+`--output json`:
+
+```bash
+objectified mcp list
+objectified mcp list --output json
+objectified mcp show <endpoint-uuid>
+objectified --json mcp show <endpoint-uuid>
+```
+
 ### Import JSON Schema types
 
 Import system-wide JSON Schema type definitions (typically a `$defs` library) into the platform type table:

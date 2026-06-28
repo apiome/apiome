@@ -51,6 +51,21 @@ def tenant_repository_file_content(
     return f"{tenant_repository_files(tenant_slug, repository_id)}/{file_id}/content"
 
 
+def mcp_endpoints(tenant_slug: str) -> str:
+    """MCP catalog endpoints collection (list / register)."""
+    return f"{V1}/mcp/{tenant_slug}/endpoints"
+
+
+def mcp_endpoint(tenant_slug: str, endpoint_id: str | UUID) -> str:
+    """A single MCP catalog endpoint by id (show)."""
+    return f"{mcp_endpoints(tenant_slug)}/{endpoint_id}"
+
+
+def mcp_endpoint_credentials(tenant_slug: str, endpoint_id: str | UUID) -> str:
+    """Outbound credential resource for one MCP catalog endpoint (set/clear)."""
+    return f"{mcp_endpoint(tenant_slug, endpoint_id)}/credentials"
+
+
 def projects(tenant_slug: str) -> str:
     return f"{V1}/projects/{tenant_slug}"
 

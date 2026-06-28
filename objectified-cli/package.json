@@ -1,6 +1,6 @@
 {
   "name": "@objectified/cli",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "description": "Command-line client for the Objectified REST API",
   "scripts": {
