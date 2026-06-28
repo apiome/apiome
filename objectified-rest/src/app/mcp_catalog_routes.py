@@ -19,14 +19,16 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 import uuid
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import jsonschema
 from fastapi import APIRouter, Depends, HTTPException, Query
 from psycopg2 import errors as pg_errors
 
 from .auth import get_authenticated_user_id, validate_authentication
+from .config import settings
 from .database import db
 from .mcp_auth import (
     CredentialPayloadError,
@@ -78,11 +80,19 @@ from .models import (
     mcp_version_change_out_from_row,
     mcp_version_detail_from_row,
     mcp_version_summary_from_row,
+    redact_sensitive_args,
 )
+from .rate_limit import FixedWindowRateLimiter
 
 _logger = logging.getLogger(__name__)
 
 mcp_endpoints_router = APIRouter(prefix="/v1/mcp", tags=["mcp-catalog"])
+
+# Per-endpoint fixed-window rate limiter for the live test harness (V2-MCP-22.3 / MCAT-8.3, #3689).
+# Each accepted test call hits a real external MCP server, so test traffic is throttled per endpoint
+# — in addition to the global per-tenant middleware — to keep one tenant from flooding a server it
+# is cataloging. In-process (per replica), matching the global limiter's semantics.
+_test_invocation_limiter = FixedWindowRateLimiter()
 
 
 def _slugify(name: str) -> str:
@@ -1024,6 +1034,139 @@ async def _invoke_test_capability(
     return result.as_dict()
 
 
+# --- Safety guards: destructive confirm, per-endpoint rate limit, redacted logging (MCAT-8.3) ---
+#: Tool annotation hints whose presence (as a JSON ``true``) makes a tool dangerous enough to require
+#: an explicit caller confirmation before the test harness will invoke it. ``destructiveHint`` marks a
+#: tool that may perform irreversible updates; ``openWorldHint`` marks one that reaches out to an
+#: open/unbounded external world. Both are advisory hints the server itself published.
+_CONFIRMATION_HINTS = ("destructiveHint", "openWorldHint")
+
+
+def _confirmation_required_hints(item: Dict[str, Any]) -> List[str]:
+    """Return the danger hints (``destructiveHint``/``openWorldHint``) a capability asserts as true.
+
+    Reads the item's normalized ``annotations`` object and collects the safety hints that are present
+    *and* a JSON boolean ``true`` — a missing key, a non-mapping annotations blob, or a non-boolean
+    value (e.g. the string ``"true"``) is treated as unset, so a server never has a confirmation read
+    into a value it did not actually assert. Only tools carry these hints; resources/prompts yield an
+    empty list.
+
+    Args:
+        item: The matched ``mcp_capability_items`` row.
+
+    Returns:
+        The names of the asserted danger hints (empty when the call needs no confirmation).
+    """
+    annotations = item.get("annotations")
+    if not isinstance(annotations, dict):
+        return []
+    return [hint for hint in _CONFIRMATION_HINTS if annotations.get(hint) is True]
+
+
+def _enforce_test_rate_limit(endpoint_id: str) -> None:
+    """Throttle live test invocations per endpoint, raising ``429`` when the window is exhausted.
+
+    A fixed-window counter keyed by endpoint id bounds how many test calls leave the server for one
+    cataloged endpoint per window, so a tenant cannot flood an external MCP server through the test
+    console. Honours the global ``rate_limit_enabled`` kill switch and reuses its window length; the
+    per-endpoint ceiling is ``mcp_test_rate_limit_per_minute``. A no-op when rate limiting is off.
+
+    Args:
+        endpoint_id: The endpoint the call targets (the rate-limit bucket).
+
+    Raises:
+        HTTPException: ``429`` with ``Retry-After`` / ``X-RateLimit-*`` headers when the per-endpoint
+            limit for the current window has been reached.
+    """
+    if not settings.rate_limit_enabled:
+        return
+    limit = max(1, settings.mcp_test_rate_limit_per_minute)
+    window_seconds = max(1, settings.rate_limit_window_seconds)
+    allowed, remaining, reset_after, retry_after = _test_invocation_limiter.check(
+        f"mcptest:{endpoint_id}", limit, window_seconds, time.monotonic()
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="test invocation rate limit exceeded for this endpoint; slow down and retry later",
+            headers={
+                "Retry-After": str(retry_after),
+                "X-RateLimit-Limit": str(limit),
+                "X-RateLimit-Remaining": str(remaining),
+                "X-RateLimit-Reset": str(reset_after),
+            },
+        )
+
+
+def _log_test_invocation(
+    *,
+    endpoint_id: str,
+    version_id: Optional[str],
+    body: McpEndpointTestRequest,
+    result: Dict[str, Any],
+    invoked_by: Optional[str],
+) -> Optional[str]:
+    """Persist a redacted audit row for a dispatched test call; never raises (best-effort).
+
+    Writes one ``mcp_test_invocations`` row recording what was tested and how it turned out. Secrets
+    never reach the log: the request's auth headers are not part of the row at all, and both the
+    ``arguments`` and the response payload are passed through :func:`app.models.redact_sensitive_args`
+    so any secret-named field is masked before storage. ``is_error`` is true for either a tool-level
+    error or a transport/JSON-RPC failure (``completed`` false). Because the live call has already
+    happened by the time this runs, a logging failure must not fail the request — it is swallowed with
+    a warning and a ``None`` id is returned.
+
+    Args:
+        endpoint_id: The endpoint the call was made against.
+        version_id: The current surface version the item came from (may be ``None``).
+        body: The validated test request (source of the arguments to redact + log).
+        result: The ``InvocationResult.as_dict()`` payload that came back.
+        invoked_by: The acting user id, or ``None`` when unresolved.
+
+    Returns:
+        The new log row id, or ``None`` if the best-effort write failed.
+    """
+    completed = bool(result.get("completed"))
+    is_error = bool(result.get("is_error")) or not completed
+    latency = result.get("latency_ms")
+    latency_ms = int(round(latency)) if isinstance(latency, (int, float)) else None
+    # Log the outcome — redacted — so a secret echoed back in content/error is masked too. A failed
+    # call (never returned) logs its classified error rather than a NULL response, which is more
+    # useful for triage and still carries no secret.
+    response_log = redact_sensitive_args(
+        {
+            "completed": completed,
+            "is_error": bool(result.get("is_error")),
+            "content": result.get("content") or [],
+            "structured_content": result.get("structured_content"),
+            "error": result.get("error"),
+        }
+    )
+    try:
+        row = db.insert_mcp_test_invocation(
+            endpoint_id=endpoint_id,
+            version_id=version_id,
+            item_type=body.item_type,
+            item_name=body.item_name,
+            arguments=redact_sensitive_args(body.arguments),
+            response=response_log,
+            is_error=is_error,
+            latency_ms=latency_ms,
+            invoked_by=invoked_by,
+        )
+    except Exception:  # noqa: BLE001 — the call already happened; logging must not fail the response.
+        _logger.warning(
+            "failed to record MCP test invocation for endpoint %s (%s %r)",
+            endpoint_id,
+            body.item_type,
+            body.item_name,
+            exc_info=True,
+        )
+        return None
+    invocation_id = row.get("id") if row else None
+    return str(invocation_id) if invocation_id is not None else None
+
+
 @mcp_endpoints_router.post(
     "/{tenant_slug}/endpoints/{endpoint_id}/test",
     response_model=McpEndpointTestResponse,
@@ -1045,6 +1188,17 @@ async def test_mcp_endpoint_capability(
     (``completed`` + ``is_error``, with the error content), or a transport/JSON-RPC failure
     (``completed=False`` with a classified ``error``) — each with its ``latency_ms``.
 
+    Safety guards (V2-MCP-22.3 / MCAT-8.3):
+
+    * **Confirm gate** — a tool whose annotations assert ``destructiveHint`` or ``openWorldHint``
+      is refused with ``428`` unless the request sets ``confirm=true``, so an irreversible or
+      open-world tool is never fired by accident.
+    * **Per-endpoint rate limit** — accepted calls are throttled per endpoint (``429`` when the
+      window is exhausted) so the console cannot flood the external server.
+    * **Redacted audit log** — every *dispatched* call is recorded in ``mcp_test_invocations`` with
+      secret-named arguments/response fields masked; auth headers are never logged. The new row's id
+      is returned as ``invocation_id``. Logging is best-effort and never fails the call.
+
     Status codes:
 
     * ``404`` — the endpoint is not the caller's tenant's, or the named capability is not on its
@@ -1052,6 +1206,8 @@ async def test_mcp_endpoint_capability(
     * ``409`` — the endpoint has never been discovered (no current surface to test).
     * ``422`` — the arguments fail the stored schema, the override payload is malformed, or a
       resource has no concrete uri.
+    * ``428`` — the tool is flagged destructive/open-world and the request did not set ``confirm``.
+    * ``429`` — the per-endpoint test rate limit for the current window has been reached.
 
     A remote-server failure is **not** an HTTP error here: it is reported in-band as
     ``completed=False`` with the classified ``error``, so "the tool is down" is data, not a 5xx.
@@ -1067,7 +1223,24 @@ async def test_mcp_endpoint_capability(
         )
 
     item = _resolve_test_capability(str(version_id), body.item_type, body.item_name)
+
+    # Safety gate: a destructive / open-world tool must be explicitly confirmed before it fires.
+    danger_hints = _confirmation_required_hints(item)
+    if danger_hints and not body.confirm:
+        raise HTTPException(
+            status_code=428,
+            detail=(
+                f"{body.item_name!r} is flagged {', '.join(danger_hints)}; "
+                "resend with confirm=true to invoke it"
+            ),
+        )
+
     _validate_test_arguments(body.item_type, item, body.arguments)
+
+    # Throttle live traffic to the external server before the call goes out (only accepted,
+    # fully-validated calls count against the per-endpoint budget).
+    _enforce_test_rate_limit(str(endpoint_id))
+
     headers, override_applied = _resolve_test_headers(str(endpoint_id), body)
 
     result = await _invoke_test_capability(
@@ -1079,10 +1252,21 @@ async def test_mcp_endpoint_capability(
         headers=headers,
         timeout=body.timeout_seconds,
     )
+
+    # Record the dispatched call (redacted) — best-effort, so a log failure never fails the response.
+    invocation_id = _log_test_invocation(
+        endpoint_id=str(endpoint_id),
+        version_id=str(version_id),
+        body=body,
+        result=result,
+        invoked_by=get_authenticated_user_id(auth_data),
+    )
+
     return mcp_endpoint_test_response_from_result(
         str(endpoint_id),
         body.item_type,
         body.item_name,
         result,
         auth_override_applied=override_applied,
+        invocation_id=invocation_id,
     )

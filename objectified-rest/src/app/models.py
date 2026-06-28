@@ -1,6 +1,6 @@
 import ipaddress
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Literal, Optional, Union
+from typing import Any, Callable, Dict, List, Literal, Mapping, Optional, Union
 from urllib.parse import urlsplit, urlunsplit
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
@@ -3542,6 +3542,73 @@ def redact_url_credentials(url: Optional[str]) -> Optional[str]:
     )
 
 
+#: Placeholder a redacted value is replaced with in a persisted test-invocation log. Fixed and
+#: content-free so the log never leaks the secret's length or value (cf. ``MCP_CREDENTIAL_SECRET_MASK``).
+MCP_INVOCATION_REDACTION_MASK = "***redacted***"
+
+#: Substrings that, when found in an argument key (case-insensitive), mark its value as secret-bearing
+#: and so redacted before the call's arguments are logged. Deliberately broad — a false positive only
+#: masks a non-secret value in the *log* (the real value is still sent to the server), whereas a miss
+#: would persist a secret. Covers the common credential nouns and their underscore/camel spellings.
+_MCP_SECRET_KEY_FRAGMENTS = (
+    "password",
+    "passwd",
+    "secret",
+    "token",
+    "apikey",
+    "api_key",
+    "authorization",
+    "auth",
+    "credential",
+    "private_key",
+    "privatekey",
+    "access_key",
+    "accesskey",
+    "client_secret",
+    "bearer",
+    "session",
+    "cookie",
+    "passphrase",
+)
+
+
+def _is_secret_key(key: str) -> bool:
+    """Return True when an argument key name looks like it carries a secret value."""
+    folded = key.lower().replace("-", "_")
+    return any(fragment in folded for fragment in _MCP_SECRET_KEY_FRAGMENTS)
+
+
+def redact_sensitive_args(value: Any) -> Any:
+    """Deep-copy ``value`` with secret-bearing values masked, for safe logging.
+
+    Walks an arguments / response object and replaces the value of any mapping key whose name
+    looks like a credential (see :data:`_MCP_SECRET_KEY_FRAGMENTS`) with
+    :data:`MCP_INVOCATION_REDACTION_MASK`, recursing into nested mappings and sequences. The
+    input is never mutated — a fresh structure is returned — so the redaction only affects what
+    is persisted to ``mcp_test_invocations`` (#3689), never what is sent to the MCP server.
+
+    Non-container values pass through unchanged; only a *mapping value under a secret-looking key*
+    is masked, so ordinary scalar arguments (a city, a count) are logged verbatim.
+
+    Args:
+        value: Any JSON-shaped value (mapping, sequence, or scalar) to redact for logging.
+
+    Returns:
+        A redaction-masked deep copy of ``value``.
+    """
+    if isinstance(value, Mapping):
+        redacted: Dict[str, Any] = {}
+        for key, item in value.items():
+            if isinstance(key, str) and _is_secret_key(key):
+                redacted[key] = MCP_INVOCATION_REDACTION_MASK
+            else:
+                redacted[key] = redact_sensitive_args(item)
+        return redacted
+    if isinstance(value, (list, tuple)):
+        return [redact_sensitive_args(item) for item in value]
+    return value
+
+
 class McpEndpointCreate(BaseModel):
     """Register an external MCP server in a tenant's catalog (MCAT-3.1).
 
@@ -4618,6 +4685,13 @@ class McpEndpointTestRequest(BaseModel):
         validation_alias=AliasChoices("timeoutSeconds", "timeout_seconds"),
         description="Per-request timeout in seconds for the test call (1-120).",
     )
+    confirm: bool = Field(
+        default=False,
+        description=(
+            "Explicit acknowledgement required to invoke a tool whose annotations flag it as "
+            "destructive (destructiveHint) or open-world (openWorldHint). Ignored for safe tools."
+        ),
+    )
 
     @model_validator(mode="after")
     def _validate_item_type(self) -> "McpEndpointTestRequest":
@@ -4684,6 +4758,11 @@ class McpEndpointTestResponse(BaseModel):
         serialization_alias="authOverrideApplied",
         description="True when an ephemeral auth override was used instead of stored credentials.",
     )
+    invocation_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="invocationId",
+        description="Id of the persisted mcp_test_invocations log row, or null if logging failed.",
+    )
 
 
 def mcp_endpoint_test_response_from_result(
@@ -4693,6 +4772,7 @@ def mcp_endpoint_test_response_from_result(
     result: Dict[str, Any],
     *,
     auth_override_applied: bool,
+    invocation_id: Optional[str] = None,
 ) -> McpEndpointTestResponse:
     """Shape an :meth:`app.mcp_invoke.InvocationResult.as_dict` payload into the wire response.
 
@@ -4703,6 +4783,8 @@ def mcp_endpoint_test_response_from_result(
         result: The ``InvocationResult.as_dict()`` payload (method/target/completed/is_error/
             content/structured_content/latency_ms/error).
         auth_override_applied: Whether an ephemeral override was used for this call.
+        invocation_id: Id of the persisted ``mcp_test_invocations`` row, or ``None`` if the
+            best-effort log write failed (the call result is still returned).
 
     Returns:
         The fully shaped :class:`McpEndpointTestResponse`.
@@ -4720,4 +4802,5 @@ def mcp_endpoint_test_response_from_result(
         latency_ms=float(result.get("latency_ms") or 0.0),
         error=result.get("error"),
         auth_override_applied=auth_override_applied,
+        invocation_id=str(invocation_id) if invocation_id is not None else None,
     )
