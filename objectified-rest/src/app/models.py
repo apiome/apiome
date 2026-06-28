@@ -4535,3 +4535,189 @@ def mcp_version_change_out_from_row(row: Dict[str, Any]) -> McpVersionChangeOut:
         item_name=str(row["item_name"]),
         detail=detail if isinstance(detail, dict) else {},
     )
+
+
+# ===========================================================================
+# Test harness — invoke one cataloged capability and report the outcome
+# (V2-MCP-22.2 / MCAT-8.2, #3688)
+# ===========================================================================
+
+#: The capability kinds the test harness can invoke. ``resource_template`` is excluded
+#: deliberately: a template needs URI expansion before it is a concrete read target,
+#: which is out of this ticket's scope (it mirrors ``mcp_invoke.INVOCATION_METHODS``).
+MCP_TESTABLE_ITEM_TYPES = ("tool", "resource", "prompt")
+
+
+class McpAuthOverride(BaseModel):
+    """An ephemeral credential to use for a single test call, in place of the stored one.
+
+    Lets a tenant try an endpoint with a *throwaway* secret — a personal token, a not-yet-saved
+    credential — without ever persisting it. The shape mirrors :class:`McpCredentialUpsert`
+    (``auth_type`` + plaintext ``payload``), is validated against the same auth-type model at the
+    route, and is used only to build request headers for this one invocation. It is **never** written
+    to ``mcp_endpoint_credentials`` and never echoed back in any response.
+
+    Unlike the stored-credential model, ``auth_type`` ``none`` is accepted here: it means "test this
+    call anonymously", explicitly overriding any stored credential for this one request.
+
+    Expected ``payload`` shape per ``auth_type`` (same as :class:`McpCredentialUpsert`):
+
+    * ``none``   — payload ignored (anonymous test call)
+    * ``bearer`` — ``{"token": "<secret>"}``
+    * ``header`` — ``{"name": "<Header-Name>", "value": "<secret>"}``
+    * ``oauth2`` — ``{"access_token": "<token>", "token_type": "Bearer"?}``
+    * ``env``    — ``{"vars": {"NAME": "value", ...}}`` (contributes no HTTP headers)
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    auth_type: str = Field(..., validation_alias=AliasChoices("authType", "auth_type"))
+    payload: Dict[str, Any] = Field(default_factory=dict)
+
+
+class McpEndpointTestRequest(BaseModel):
+    """Invoke one cataloged capability against its live MCP server and report the result.
+
+    Names the capability to exercise on the endpoint's *current* discovered surface and the
+    arguments to call it with. ``item_type`` selects the invocation method
+    (``tool`` → ``tools/call``, ``resource`` → ``resources/read``, ``prompt`` → ``prompts/get``);
+    ``item_name`` is the capability's discovered name (for a resource, its name — the route resolves
+    it to the stored concrete ``uri``). ``arguments`` is validated against a tool's stored
+    ``inputSchema`` (and a prompt's required arguments) before the call leaves the server.
+
+    ``auth_override`` supplies an ephemeral credential for this one call only (never persisted);
+    when omitted the endpoint's stored credential is used. ``timeout_seconds`` bounds each request
+    in the connect → handshake → invoke sequence.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    item_type: str = Field(
+        ...,
+        validation_alias=AliasChoices("itemType", "item_type"),
+        description="The capability kind to invoke: 'tool', 'resource', or 'prompt'.",
+    )
+    item_name: str = Field(
+        ...,
+        validation_alias=AliasChoices("itemName", "item_name"),
+        description="The discovered capability name (a resource's name resolves to its uri).",
+    )
+    arguments: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Call arguments; validated against a tool's stored inputSchema.",
+    )
+    auth_override: Optional[McpAuthOverride] = Field(
+        default=None,
+        validation_alias=AliasChoices("authOverride", "auth_override"),
+        description="Ephemeral credential for this call only (never persisted).",
+    )
+    timeout_seconds: float = Field(
+        default=30.0,
+        ge=1.0,
+        le=120.0,
+        validation_alias=AliasChoices("timeoutSeconds", "timeout_seconds"),
+        description="Per-request timeout in seconds for the test call (1-120).",
+    )
+
+    @model_validator(mode="after")
+    def _validate_item_type(self) -> "McpEndpointTestRequest":
+        if self.item_type not in MCP_TESTABLE_ITEM_TYPES:
+            raise ValueError(
+                f"item_type must be one of {list(MCP_TESTABLE_ITEM_TYPES)} "
+                "(resource_template is not directly invocable)"
+            )
+        if not self.item_name.strip():
+            raise ValueError("item_name must be a non-empty string")
+        return self
+
+
+class McpEndpointTestResponse(BaseModel):
+    """The outcome of one test-harness invocation: content, error, and latency.
+
+    A single shape covers the three outcomes the invocation service distinguishes, branchable on two
+    booleans (see :class:`app.mcp_invoke.InvocationResult`):
+
+    * ``completed=True,  is_error=False`` — the call ran and succeeded; ``content`` holds the result.
+    * ``completed=True,  is_error=True``  — the call ran but the tool reported a tool-level error
+      (``tools/call`` only); ``content`` holds the error payload the tool produced.
+    * ``completed=False`` — the call failed (a JSON-RPC protocol error or a transport/handshake
+      failure); ``error`` carries the classified reason and ``content`` is empty.
+
+    ``auth_override_applied`` records whether the call used an ephemeral override (``True``) or the
+    endpoint's stored credential (``False``); the secret itself is never included either way.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str = Field(serialization_alias="endpointId")
+    item_type: str = Field(serialization_alias="itemType")
+    item_name: str = Field(serialization_alias="itemName")
+    method: str = Field(description="The JSON-RPC method invoked (e.g. 'tools/call').")
+    target: str = Field(description="What was invoked: a tool/prompt name, or a resource uri.")
+    completed: bool = Field(
+        description="True when the server returned a JSON-RPC result (success or tool error)."
+    )
+    is_error: bool = Field(
+        serialization_alias="isError",
+        description="True when a tool ran but reported a tool-level error (tools/call only).",
+    )
+    content: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Returned payload items (tool content / resource contents / prompt messages).",
+    )
+    structured_content: Optional[Dict[str, Any]] = Field(
+        default=None,
+        serialization_alias="structuredContent",
+        description="A tool's optional structuredContent object, when present.",
+    )
+    latency_ms: float = Field(
+        serialization_alias="latencyMs",
+        description="Round-trip wall-clock in ms (connect + handshake + invoke).",
+    )
+    error: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="The classified failure when completed is False; null otherwise.",
+    )
+    auth_override_applied: bool = Field(
+        default=False,
+        serialization_alias="authOverrideApplied",
+        description="True when an ephemeral auth override was used instead of stored credentials.",
+    )
+
+
+def mcp_endpoint_test_response_from_result(
+    endpoint_id: str,
+    item_type: str,
+    item_name: str,
+    result: Dict[str, Any],
+    *,
+    auth_override_applied: bool,
+) -> McpEndpointTestResponse:
+    """Shape an :meth:`app.mcp_invoke.InvocationResult.as_dict` payload into the wire response.
+
+    Args:
+        endpoint_id: The owning endpoint id (echoed for the caller's convenience).
+        item_type: The capability kind that was invoked.
+        item_name: The capability name that was invoked (echoes the request).
+        result: The ``InvocationResult.as_dict()`` payload (method/target/completed/is_error/
+            content/structured_content/latency_ms/error).
+        auth_override_applied: Whether an ephemeral override was used for this call.
+
+    Returns:
+        The fully shaped :class:`McpEndpointTestResponse`.
+    """
+    return McpEndpointTestResponse(
+        endpoint_id=str(endpoint_id),
+        item_type=item_type,
+        item_name=item_name,
+        method=str(result.get("method") or ""),
+        target=str(result.get("target") or ""),
+        completed=bool(result.get("completed")),
+        is_error=bool(result.get("is_error")),
+        content=list(result.get("content") or []),
+        structured_content=result.get("structured_content"),
+        latency_ms=float(result.get("latency_ms") or 0.0),
+        error=result.get("error"),
+        auth_override_applied=auth_override_applied,
+    )

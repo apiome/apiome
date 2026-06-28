@@ -758,7 +758,7 @@ Invoke a stored MCP tool with stored auth and capture the result.
 - **Dependencies / Parallelism.** After 2.x, 6.1. Blocks 8.2.
 - **Technical Stack.** Python.
 
-### MCAT-8.2 — Test-harness REST endpoints  ·  **#3688**
+### MCAT-8.2 — Test-harness REST endpoints  ·  **#3688**  ·  ✅ Done (objectified-rest 1.21.0)
 - **Problem.** Expose invocation to UI/CLI.
 - **Solution / Scope.** `POST /mcp/endpoints/{id}/test` `{item_type, item_name, arguments, auth_override?}`; validates arguments against the stored `inputSchema`; returns response + latency + error.
 - **Acceptance Criteria.** Argument validation against schema; per-call timeout; tenant-scoped; optional ephemeral auth override (not persisted).

@@ -5,6 +5,35 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.21.0] - 2026-06-27
+
+### Added
+- **Test-harness REST endpoints (#3688, V2-MCP-22.2 / MCAT-8.2)** — exposes the MCP invocation
+  service (MCAT-8.1) to the UI/CLI as a single tenant-scoped route:
+  `POST /v1/mcp/{tenant_slug}/endpoints/{id}/test` with
+  `{item_type, item_name, arguments?, auth_override?, timeout_seconds?}`.
+  - Names a `tool`/`resource`/`prompt` on the endpoint's **current** discovered surface, looks it
+    up in `mcp_capability_items`, and dispatches to the matching method (`tools/call`,
+    `resources/read` against the resource's stored concrete `uri`, or `prompts/get`).
+  - **Argument validation before the call leaves the server**: a tool's `arguments` are validated
+    against its stored JSON Schema `inputSchema` with `jsonschema` (→ `422` on mismatch); a prompt's
+    against its declared required arguments. A malformed *stored* schema (the server's fault) is not
+    held against the caller — local validation is skipped and the remote server is left to reject.
+  - **Optional ephemeral auth override** (`auth_override: {auth_type, payload}`) used for this one
+    call only — validated through the same auth-type model that gates stored credentials and **never
+    persisted**; when omitted, the endpoint's stored credential is used. `auth_type: none` overrides
+    a stored credential to test anonymously.
+  - **Per-call timeout** (`timeout_seconds`, 1–120s, default 30) bounds each request in the
+    connect → handshake → invoke sequence. The response carries the three outcomes distinctly
+    (success / tool-level `isError` / classified transport failure) with `latency_ms`. A remote-server
+    failure is reported **in-band** (`completed=false` with a classified `error`), not as a 5xx.
+  - Scoped to the caller's token tenant (cross-tenant id → `404`); `409` when the endpoint has no
+    discovered surface yet; `404` when the named capability is not on the current surface.
+  - New `McpEndpointTestRequest` / `McpAuthOverride` / `McpEndpointTestResponse` models. Tests: 23
+    route tests over a mocked DB and invocation service (the three outcomes, schema-invalid args,
+    resource/prompt dispatch, ephemeral override applied + not persisted, timeout pass-through,
+    tenant scoping, and the not-found/not-discovered/bad-input guards). No schema changes.
+
 ## [1.20.0] - 2026-06-27
 
 ### Added

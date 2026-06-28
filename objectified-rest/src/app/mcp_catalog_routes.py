@@ -20,20 +20,32 @@ from __future__ import annotations
 import logging
 import re
 import uuid
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
+import jsonschema
 from fastapi import APIRouter, Depends, HTTPException, Query
 from psycopg2 import errors as pg_errors
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
-from .mcp_auth import CredentialPayloadError, validate_credential_payload
+from .mcp_auth import (
+    CredentialPayloadError,
+    build_auth_headers,
+    validate_credential_payload,
+)
+from .mcp_client.normalize import (
+    ITEM_TYPE_PROMPT,
+    ITEM_TYPE_RESOURCE,
+    ITEM_TYPE_TOOL,
+)
 from .mcp_credential_crypto import CredentialEncryptionError, seal_credential_payload
+from .mcp_credentials import load_endpoint_auth_headers
 from .mcp_discovery_engine import (
     compare_endpoint_versions,
     reconstruct_surface,
     trigger_discovery,
 )
+from .mcp_invoke import get_prompt, invoke_tool, read_resource
 from .mcp_score import score_mcp_surface
 from .models import (
     McpCredentialDeleteResponse,
@@ -47,6 +59,8 @@ from .models import (
     McpEndpointDeleteResponse,
     McpEndpointListResponse,
     McpEndpointResponse,
+    McpEndpointTestRequest,
+    McpEndpointTestResponse,
     McpEndpointUpdate,
     McpEndpointVersionListResponse,
     McpEndpointVersionResponse,
@@ -59,6 +73,7 @@ from .models import (
     mcp_discovery_job_out_from_row,
     mcp_discovery_job_status_from_row,
     mcp_endpoint_out_from_row,
+    mcp_endpoint_test_response_from_result,
     mcp_lint_report_from_report,
     mcp_version_change_out_from_row,
     mcp_version_detail_from_row,
@@ -828,4 +843,246 @@ async def clear_mcp_endpoint_credentials(
     removed = db.delete_mcp_endpoint_credentials(str(endpoint_id))
     return McpCredentialDeleteResponse(
         success=True, endpoint_id=str(endpoint_id), removed=removed
+    )
+
+
+# ===========================================================================
+# Test harness — invoke one cataloged capability live (V2-MCP-22.2 / MCAT-8.2, #3688)
+# ===========================================================================
+#
+# Exposes the in-process invocation service (:mod:`app.mcp_invoke`, MCAT-8.1) to the UI/CLI as a
+# single tenant-scoped route. The route names the capability to exercise on the endpoint's *current*
+# discovered surface, validates the supplied ``arguments`` against the stored schema BEFORE the call
+# leaves the server, attaches the endpoint's stored credentials (or an ephemeral, never-persisted
+# auth override), invokes the one method under a per-call timeout, and returns the content / tool
+# error / classified transport failure with its latency. As everywhere in this module, the endpoint
+# is first re-validated against the caller's token tenant, so a cross-tenant id reads as ``404``.
+
+
+def _resolve_test_capability(
+    version_id: str, item_type: str, item_name: str
+) -> Dict[str, Any]:
+    """Find the capability item to invoke on a version's surface, or raise ``404``.
+
+    Scans the snapshot's ``mcp_capability_items`` for the row whose ``item_type`` and ``name`` match
+    the request, so a tool, resource, or prompt that is not part of the endpoint's current surface is
+    rejected rather than blindly forwarded to the remote server.
+
+    Args:
+        version_id: The endpoint's ``current_version_id`` (the surface to invoke against).
+        item_type: The requested capability kind (``tool``/``resource``/``prompt``).
+        item_name: The requested capability name.
+
+    Returns:
+        The matching ``mcp_capability_items`` row.
+
+    Raises:
+        HTTPException: ``404`` when no capability of that type and name exists on the surface.
+    """
+    for row in db.get_mcp_capability_items(version_id):
+        if str(row.get("item_type")) == item_type and str(row.get("name")) == item_name:
+            return dict(row)
+    raise HTTPException(
+        status_code=404,
+        detail=f"no {item_type} named {item_name!r} on this endpoint's current surface",
+    )
+
+
+def _validate_test_arguments(
+    item_type: str, item: Dict[str, Any], arguments: Dict[str, Any]
+) -> None:
+    """Validate call ``arguments`` against the capability's stored schema before invoking.
+
+    A tool's ``arguments`` are validated against its stored JSON Schema ``inputSchema`` (the ticket's
+    central acceptance criterion); a prompt's against its declared required-argument list. A resource
+    read takes no arguments, so nothing is checked. A *malformed* stored schema (the remote server's
+    fault, not the caller's) is not treated as a client error: local validation is skipped and the
+    remote server is left to reject the call, so a bad schema never turns a test into a spurious 422.
+
+    Args:
+        item_type: The capability kind being invoked.
+        item: The matched ``mcp_capability_items`` row.
+        arguments: The caller-supplied arguments object.
+
+    Raises:
+        HTTPException: ``422`` when the arguments do not satisfy the tool input schema, or a required
+            prompt argument is missing.
+    """
+    if item_type == ITEM_TYPE_TOOL:
+        schema = item.get("input_schema")
+        if isinstance(schema, dict) and schema:
+            try:
+                jsonschema.validate(instance=arguments, schema=schema)
+            except jsonschema.ValidationError as exc:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"arguments do not match the tool's input schema: {exc.message}",
+                ) from exc
+            except jsonschema.SchemaError:
+                # The server published an invalid inputSchema; don't punish the caller for it —
+                # skip local validation and let the remote server reject the call if it must.
+                _logger.warning(
+                    "MCP tool %r has an invalid stored inputSchema; skipping local "
+                    "argument validation",
+                    item.get("name"),
+                )
+    elif item_type == ITEM_TYPE_PROMPT:
+        raw = item.get("raw")
+        declared = (raw or {}).get("arguments") if isinstance(raw, dict) else None
+        for arg in declared or []:
+            if (
+                isinstance(arg, dict)
+                and arg.get("required")
+                and arg.get("name") not in arguments
+            ):
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"missing required prompt argument {arg.get('name')!r}",
+                )
+
+
+def _resolve_test_headers(
+    endpoint_id: str, body: McpEndpointTestRequest
+) -> Tuple[Dict[str, str], bool]:
+    """Resolve the auth headers for a test call — an ephemeral override, or the stored credential.
+
+    When ``body.auth_override`` is present its plaintext payload is validated against the same
+    auth-type model that gates stored credentials and turned into request headers *for this one call
+    only* — it is never written to ``mcp_endpoint_credentials``. When absent, the endpoint's stored
+    credential is loaded and decrypted exactly as a discovery run would.
+
+    Args:
+        endpoint_id: The endpoint whose stored credential to fall back on.
+        body: The validated test request (its optional ``auth_override``).
+
+    Returns:
+        A ``(headers, override_applied)`` pair: the headers to attach, and whether they came from an
+        ephemeral override (``True``) rather than the stored credential (``False``).
+
+    Raises:
+        HTTPException: ``422`` when an override payload does not match its ``auth_type``.
+    """
+    override = body.auth_override
+    if override is None:
+        return load_endpoint_auth_headers(endpoint_id), False
+    try:
+        validate_credential_payload(override.auth_type, override.payload)
+        headers = build_auth_headers(override.auth_type, override.payload)
+    except CredentialPayloadError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return headers, True
+
+
+async def _invoke_test_capability(
+    url: str,
+    item_type: str,
+    item_name: str,
+    item: Dict[str, Any],
+    arguments: Dict[str, Any],
+    headers: Dict[str, str],
+    timeout: float,
+) -> Dict[str, Any]:
+    """Dispatch the matched capability to its invocation method and return the result dict.
+
+    Maps the capability kind onto the right :mod:`app.mcp_invoke` helper — a tool to ``tools/call``,
+    a resource to ``resources/read`` against its stored concrete ``uri``, a prompt to ``prompts/get``
+    — each under the per-call ``timeout``. The invocation service never raises for a remote failure;
+    it returns a latency-bearing result whose ``completed``/``is_error``/``error`` describe the
+    outcome, which is serialized via :meth:`InvocationResult.as_dict`.
+
+    Args:
+        url: The endpoint's MCP URL.
+        item_type: The capability kind to invoke.
+        item_name: The capability name (tool/prompt target).
+        item: The matched capability row (supplies a resource's ``uri``).
+        arguments: The validated call arguments (ignored for a resource read).
+        headers: The resolved auth headers.
+        timeout: Per-request timeout in seconds.
+
+    Returns:
+        The ``InvocationResult.as_dict()`` payload for the call.
+
+    Raises:
+        HTTPException: ``422`` when a resource has no concrete ``uri`` to read.
+    """
+    if item_type == ITEM_TYPE_TOOL:
+        result = await invoke_tool(
+            url, item_name, arguments, headers=headers, timeout=timeout
+        )
+    elif item_type == ITEM_TYPE_RESOURCE:
+        uri = item.get("uri")
+        if not uri:
+            raise HTTPException(
+                status_code=422,
+                detail="resource has no concrete uri to read (a template needs expansion)",
+            )
+        result = await read_resource(url, str(uri), headers=headers, timeout=timeout)
+    else:  # ITEM_TYPE_PROMPT (the request model restricts item_type to the testable set)
+        result = await get_prompt(
+            url, item_name, arguments, headers=headers, timeout=timeout
+        )
+    return result.as_dict()
+
+
+@mcp_endpoints_router.post(
+    "/{tenant_slug}/endpoints/{endpoint_id}/test",
+    response_model=McpEndpointTestResponse,
+)
+async def test_mcp_endpoint_capability(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    body: McpEndpointTestRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpEndpointTestResponse:
+    """Invoke one cataloged capability against its live MCP server and report the outcome.
+
+    The test-harness surface for the UI/CLI: it names a ``tool``/``resource``/``prompt`` on the
+    endpoint's *current* discovered surface, validates the supplied ``arguments`` against the stored
+    schema (a tool's ``inputSchema``; a prompt's required arguments), attaches the endpoint's stored
+    credential — or an ephemeral ``auth_override`` that is **never persisted** — and invokes the one
+    method under ``timeout_seconds``. The response carries the three outcomes the invocation service
+    distinguishes: a successful result (``completed`` / not ``is_error``), a tool-level error
+    (``completed`` + ``is_error``, with the error content), or a transport/JSON-RPC failure
+    (``completed=False`` with a classified ``error``) — each with its ``latency_ms``.
+
+    Status codes:
+
+    * ``404`` — the endpoint is not the caller's tenant's, or the named capability is not on its
+      current surface.
+    * ``409`` — the endpoint has never been discovered (no current surface to test).
+    * ``422`` — the arguments fail the stored schema, the override payload is malformed, or a
+      resource has no concrete uri.
+
+    A remote-server failure is **not** an HTTP error here: it is reported in-band as
+    ``completed=False`` with the classified ``error``, so "the tool is down" is data, not a 5xx.
+    """
+    _ = tenant_slug
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+
+    version_id = endpoint.get("current_version_id")
+    if not version_id:
+        raise HTTPException(
+            status_code=409,
+            detail="endpoint has no discovered surface yet; run discovery before testing",
+        )
+
+    item = _resolve_test_capability(str(version_id), body.item_type, body.item_name)
+    _validate_test_arguments(body.item_type, item, body.arguments)
+    headers, override_applied = _resolve_test_headers(str(endpoint_id), body)
+
+    result = await _invoke_test_capability(
+        url=str(endpoint["endpoint_url"]),
+        item_type=body.item_type,
+        item_name=body.item_name,
+        item=item,
+        arguments=body.arguments,
+        headers=headers,
+        timeout=body.timeout_seconds,
+    )
+    return mcp_endpoint_test_response_from_result(
+        str(endpoint_id),
+        body.item_type,
+        body.item_name,
+        result,
+        auth_override_applied=override_applied,
     )
