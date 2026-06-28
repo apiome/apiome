@@ -4259,8 +4259,10 @@ class McpDiscoveryJobOut(BaseModel):
 
     ``result`` is the job's JSONB payload — on a successful run it carries
     ``version_id`` / ``version_seq`` / ``changed`` so a poller can locate the
-    snapshot the run produced; on failure it carries the classified discovery
-    error. ``error`` is the short human-readable failure summary, if any.
+    snapshot the run produced, plus ``counts`` (per-kind capability tallies:
+    ``tool`` / ``resource`` / ``resource_template`` / ``prompt`` / ``total``) for a
+    completion summary; on failure it carries the classified discovery error.
+    ``error`` is the short human-readable failure summary, if any.
     """
 
     model_config = ConfigDict(populate_by_name=True)

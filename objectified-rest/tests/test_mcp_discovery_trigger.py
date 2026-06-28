@@ -322,6 +322,14 @@ def test_persist_first_run_creates_version_one():
     assert result["version_seq"] == 1
     # The date/time tag from the persisted snapshot is surfaced on the job result (#3671).
     assert result["version_tag"] == "2026-06-26T12:00Z"
+    # Per-kind capability counts ride along so the import UI can summarize the discovery.
+    assert result["counts"] == {
+        "tool": 1,
+        "resource": 0,
+        "resource_template": 0,
+        "prompt": 0,
+        "total": 1,
+    }
     # First run: every item is an "added" change.
     kwargs = mdb.record_mcp_discovery_version.call_args.kwargs
     assert kwargs["change_rows"][0]["change_type"] == "added"
@@ -347,6 +355,9 @@ def test_persist_unchanged_makes_no_new_version():
     assert result["version_id"] == "ver-7"
     # Unchanged: the existing snapshot's tag is echoed (no new version, no new tag).
     assert result["version_tag"] == "2026-06-26T11:07Z"
+    # The summary counts reflect the (unchanged) surface that was re-discovered.
+    assert result["counts"]["tool"] == 1
+    assert result["counts"]["total"] == 1
     mdb.record_mcp_discovery_version.assert_not_called()
     mdb.touch_mcp_endpoint_discovery.assert_called_once()
     assert mdb.touch_mcp_endpoint_discovery.call_args.kwargs["status"] == "unchanged"
@@ -370,6 +381,42 @@ def test_persist_changed_diffs_against_previous_items():
     change_rows = mdb.record_mcp_discovery_version.call_args.kwargs["change_rows"]
     # Only "bravo" is new relative to the previous snapshot (server metadata unchanged).
     assert [c["item_name"] for c in change_rows] == ["bravo"]
+
+
+def test_persist_records_per_kind_counts_for_summary():
+    """A mixed surface tallies each capability kind on the result for the import-summary UI."""
+    init = InitializeResult(
+        protocol_version="2025-06-18",
+        server_info=ServerInfo(name="srv", title="Srv", version="1.0"),
+        capabilities={"tools": {}, "resources": {}, "prompts": {}},
+        instructions="be helpful",
+        raw={},
+    )
+    listings = DiscoveryListings(
+        tools=[_tool("alpha"), _tool("bravo")],
+        resources=[{"uri": "file:///r1"}],
+        resource_templates=[{"uriTemplate": "file:///{path}"}],
+        prompts=[{"name": "p1"}, {"name": "p2"}, {"name": "p3"}],
+    )
+    surface = DiscoverySurface.from_discovery(init, listings)
+    mdb = MagicMock()
+    mdb.get_latest_mcp_endpoint_version.return_value = None
+    mdb.record_mcp_discovery_version.return_value = {
+        "version_id": "ver-1",
+        "version_seq": 1,
+        "version_tag": "2026-06-26T12:00Z",
+    }
+    with patch.object(mcp_discovery_engine, "db", mdb):
+        result = mcp_discovery_engine._persist_outcome(
+            _JOB_UUID, _ENDPOINT_ROW, surface, _NOW
+        )
+    assert result["counts"] == {
+        "tool": 2,
+        "resource": 1,
+        "resource_template": 1,
+        "prompt": 3,
+        "total": 7,
+    }
 
 
 # ===========================================================================

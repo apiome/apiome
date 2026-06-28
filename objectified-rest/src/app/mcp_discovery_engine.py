@@ -250,6 +250,25 @@ def _capture_mcp_version_score(version_id: str, surface: DiscoverySurface) -> No
         )
 
 
+def _surface_counts(surface: DiscoverySurface) -> Dict[str, int]:
+    """Per-kind capability tallies for a discovered surface.
+
+    Recorded on the job ``result`` (``counts``) so the import UI can show a small
+    "what was discovered" summary on completion. ``total`` is the sum across kinds.
+    """
+    tool = len(surface.tools)
+    resource = len(surface.resources)
+    resource_template = len(surface.resource_templates)
+    prompt = len(surface.prompts)
+    return {
+        "tool": tool,
+        "resource": resource,
+        "resource_template": resource_template,
+        "prompt": prompt,
+        "total": tool + resource + resource_template + prompt,
+    }
+
+
 def _persist_outcome(
     job_id: str,
     endpoint: Dict[str, Any],
@@ -263,6 +282,10 @@ def _persist_outcome(
     """
     endpoint_id = str(endpoint["id"])
     fingerprint = surface.fingerprint()
+
+    # Per-kind capability tallies for the job result, so the UI can show a small
+    # "what was discovered" summary on completion (e.g. "3 tools · 2 resources").
+    counts = _surface_counts(surface)
 
     previous = db.get_latest_mcp_endpoint_version(endpoint_id)
     unchanged = previous is not None and previous.get("surface_fingerprint") == fingerprint
@@ -280,6 +303,7 @@ def _persist_outcome(
             "version_tag": previous.get("version_tag"),
             "changed": False,
             "fingerprint": fingerprint,
+            "counts": counts,
         }
         db.finish_mcp_discovery_job(job_id, "completed", result=result)
         return result
@@ -303,6 +327,7 @@ def _persist_outcome(
         "changed": True,
         "change_count": len(change_rows),
         "fingerprint": fingerprint,
+        "counts": counts,
     }
     db.finish_mcp_discovery_job(job_id, "completed", result=result)
     return result

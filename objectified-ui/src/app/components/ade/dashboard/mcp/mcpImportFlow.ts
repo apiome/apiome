@@ -175,6 +175,15 @@ export function buildCredentialBody(form: McpImportForm): McpCredentialBody | nu
   }
 }
 
+/** Per-kind capability tallies a successful discovery records on its result (`counts`). */
+export interface McpDiscoveryCounts {
+  tool?: number;
+  resource?: number;
+  resource_template?: number;
+  prompt?: number;
+  total?: number;
+}
+
 /** Wire shape of a discovery job (subset of objectified-rest `McpDiscoveryJobOut`). */
 export interface McpDiscoveryJob {
   id: string;
@@ -182,7 +191,12 @@ export interface McpDiscoveryJob {
   state: string;
   trigger?: string;
   error?: string | null;
-  result?: { version_id?: string; version_seq?: number; changed?: boolean } & Record<string, unknown>;
+  result?: {
+    version_id?: string;
+    version_seq?: number;
+    changed?: boolean;
+    counts?: McpDiscoveryCounts;
+  } & Record<string, unknown>;
 }
 
 /** Terminal job states (no further polling needed). */
@@ -209,6 +223,34 @@ export function versionIdFromJob(job: McpDiscoveryJob | null | undefined): strin
 export function discoveryFailureMessage(job: McpDiscoveryJob | null | undefined): string {
   const err = job?.error;
   return typeof err === 'string' && err.trim() ? err : 'The MCP server could not be discovered.';
+}
+
+/** Pluralize `count noun`, e.g. (3, 'tool') → "3 tools", (1, 'tool') → "1 tool". */
+function pluralize(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? '' : 's'}`;
+}
+
+/**
+ * A short, human-readable summary of what a successful discovery found — the per-kind
+ * capability tallies the job recorded in `result.counts`. Only non-zero kinds are listed,
+ * joined with a middot, e.g. "3 tools · 2 resources · 1 prompt". Returns:
+ *   - `null` when the job carried no counts (older runs / nothing to summarize), so callers
+ *      can omit the summary line entirely.
+ *   - "No capabilities found" when the server was reached but exposed nothing.
+ * The labels mirror the catalog's capability kinds (tool / resource / template / prompt).
+ */
+export function discoverySummary(job: McpDiscoveryJob | null | undefined): string | null {
+  const counts = job?.result?.counts;
+  if (!counts) return null;
+
+  const parts: string[] = [];
+  if (counts.tool) parts.push(pluralize(counts.tool, 'tool'));
+  if (counts.resource) parts.push(pluralize(counts.resource, 'resource'));
+  if (counts.resource_template) parts.push(pluralize(counts.resource_template, 'resource template'));
+  if (counts.prompt) parts.push(pluralize(counts.prompt, 'prompt'));
+
+  if (parts.length === 0) return 'No capabilities found';
+  return parts.join(' · ');
 }
 
 /** Human-readable label for a discovery job state (for the live status line). */

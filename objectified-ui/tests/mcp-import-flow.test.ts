@@ -11,6 +11,7 @@ import {
   deriveEndpointNameFromUrl,
   discoveryFailureMessage,
   discoveryStatusLabel,
+  discoverySummary,
   emptyMcpImportForm,
   isJobSuccess,
   isTerminalJobState,
@@ -194,5 +195,41 @@ describe('discovery job helpers', () => {
       /could not be discovered/i,
     );
     expect(discoveryFailureMessage(null)).toMatch(/could not be discovered/i);
+  });
+
+  describe('discoverySummary', () => {
+    const completed = (counts: Record<string, number>) => ({
+      id: 'j',
+      endpoint_id: 'e',
+      state: 'completed',
+      result: { version_id: 'v1', counts },
+    });
+
+    it('summarizes non-zero capability kinds, joined with a middot', () => {
+      expect(discoverySummary(completed({ tool: 3, resource: 2, prompt: 1, total: 6 }))).toBe(
+        '3 tools · 2 resources · 1 prompt',
+      );
+    });
+
+    it('pluralizes per kind and labels resource templates', () => {
+      expect(discoverySummary(completed({ tool: 1, resource_template: 2 }))).toBe(
+        '1 tool · 2 resource templates',
+      );
+    });
+
+    it('omits zero-count kinds', () => {
+      expect(discoverySummary(completed({ tool: 2, resource: 0, prompt: 0 }))).toBe('2 tools');
+    });
+
+    it('reports an empty surface when nothing was exposed', () => {
+      expect(discoverySummary(completed({ tool: 0, resource: 0, prompt: 0, total: 0 }))).toMatch(
+        /no capabilities/i,
+      );
+    });
+
+    it('returns null when the job carried no counts (so the line is omitted)', () => {
+      expect(discoverySummary({ id: 'j', endpoint_id: 'e', state: 'completed', result: {} })).toBeNull();
+      expect(discoverySummary(null)).toBeNull();
+    });
   });
 });

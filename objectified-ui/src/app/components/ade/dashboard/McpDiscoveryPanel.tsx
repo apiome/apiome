@@ -13,6 +13,7 @@ import { CheckCircle2, Loader2, Network, XCircle } from 'lucide-react';
 import {
   discoveryFailureMessage,
   discoveryStatusLabel,
+  discoverySummary,
   isJobSuccess,
   isTerminalJobState,
   versionIdFromJob,
@@ -93,6 +94,7 @@ export default function McpDiscoveryPanel({
   const state = job?.state;
   const succeeded = isJobSuccess(job);
   const terminal = isTerminalJobState(state) || !!error;
+  const summary = succeeded ? discoverySummary(job) : null;
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 py-10 text-center">
@@ -129,6 +131,11 @@ export default function McpDiscoveryPanel({
         >
           {error ? error : discoveryStatusLabel(state)}
         </p>
+        {summary && (
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400" aria-live="polite">
+            {summary}
+          </p>
+        )}
       </div>
 
       {!terminal && (

@@ -28,6 +28,7 @@ We continue to improve the platform based on your feedback with improvements and
 - UI: Adds the ability to import MCP servers as an input for API cataloging
 - UI: Adds MCP linting and scoring based on interally set criteria
 - UI: Repositories are no longer in preview
+- UI: MCP entries provide a small summary once imported
 
 ---
 
