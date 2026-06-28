@@ -242,7 +242,6 @@ of its epic.
 
 | ID | Issue | Title | Epic | Module |
 |----|-------|-------|------|--------|
-| 10.8 | #3939 | Catalog grade-led card grid (filter/group/sort + density) | EPIC-10 / V2-MCP-EPIC-24 | objectified-ui |
 | 10.9 | #3940 | Endpoint detail: Settings tab | EPIC-10 / V2-MCP-EPIC-24 | objectified-ui |
 | 10.10 | #3941 | Dark-theme variant + density polish | EPIC-10 / V2-MCP-EPIC-24 | objectified-ui |
 
@@ -920,7 +919,7 @@ Private browse (MVP) and public browse/search (v2), plus categorization.
 - **Dependencies / Parallelism.** After 3.x (so REST shapes are known); foundational — **blocks 10.1, 10.2, 10.4, 10.8** and feeds 10.10. Can start in parallel with late EPIC-3/4 REST work.
 - **Technical Stack.** Next.js, CSS modules/tokens, Storybook.
 
-### MCAT-10.8 — Catalog grade-led card grid (filter / group / sort + density)  ·  **#3939**
+### MCAT-10.8 — Catalog grade-led card grid (filter / group / sort + density)  ·  **#3939**  ·  ✅ **DONE**
 - **Problem.** The catalog landing (Specifications › MCP Servers) is, in the mockup, a **grade-led card grid grouped by site/host** — not a plain table. The original 10.1 only builds the route/shell; the rich grid presentation, grouping, and the open density/"changed since" questions need their own issue.
 - **Solution / Scope.** Render the catalog inside 10.1's shell: **grade-led cards** (grade glyph lead, name/host, transport + visibility + auth **badges**, capability counts, **health** rollup like `11 healthy · 1 failing`, recency), **grouped by site/host** by default with per-group headers; a **Sort** control (default `Grade ▾`) and filters (host, grade, transport, visibility, auth, category); the catalog search box. Adds the resolved-open-question polish: a **grid ↔ dense-list density toggle** and a **"changed since last view"** indicator on cards whose surface versioned since the user last looked. All atoms from 10.7. Backed by private browse (9.1) + search/filter (9.2).
 - **Acceptance Criteria.** Catalog renders grade-led cards grouped by host; sort defaults to grade; filters compose; density toggle switches grid↔dense-list and persists the preference (see 10.10); "changed since last view" appears only on newly-versioned endpoints; empty/loading/error states present.

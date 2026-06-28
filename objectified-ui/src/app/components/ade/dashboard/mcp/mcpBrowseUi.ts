@@ -21,6 +21,12 @@ export interface McpBrowseEndpoint {
   description: string | null;
   category: string | null;
   visibility: string;
+  /**
+   * The endpoint's auth scheme (e.g. `bearer` / `oauth` / `none`) when the catalog surfaces it.
+   * The browse payload does not always include it (auth lives on the credential record), so it is
+   * parsed defensively and the catalog's auth facet/badge only appear when a value is present.
+   */
+  auth_scheme: string | null;
   published: boolean;
   enabled: boolean;
   quarantined: boolean;
@@ -135,6 +141,7 @@ export function mcpBrowseEndpointFromPayload(raw: unknown): McpBrowseEndpoint {
     description: asString(r.description),
     category: asString(r.category),
     visibility: String(r.visibility ?? 'private'),
+    auth_scheme: asString(r.auth_scheme) ?? asString(r.auth_type) ?? asString(r.auth),
     published: r.published === true,
     enabled: r.enabled !== false,
     quarantined: r.quarantined === true,
