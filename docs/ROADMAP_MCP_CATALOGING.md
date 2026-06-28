@@ -240,9 +240,8 @@ These close the gap between the filed issues and the resolved design mockup
 epics (no new epic) and were filed as GitHub issues **#3938–#3942**, each linked as a sub-issue
 of its epic.
 
-| ID | Issue | Title | Epic | Module |
-|----|-------|-------|------|--------|
-| 10.10 | #3941 | Dark-theme variant + density polish | EPIC-10 / V2-MCP-EPIC-24 | objectified-ui |
+All UI-design coverage additions (**#3938–#3942**) are now complete — see the per-ticket
+sections below (each marked ✅ **DONE**).
 
 ---
 
@@ -932,7 +931,7 @@ Private browse (MVP) and public browse/search (v2), plus categorization.
 - **Dependencies / Parallelism.** After 10.2 (detail shell), 3.5. Parallel with 10.3/10.4/10.5/10.6.
 - **Technical Stack.** Next.js.
 
-### MCAT-10.10 — Dark-theme variant + density polish  ·  **#3941**
+### MCAT-10.10 — Dark-theme variant + density polish  ·  **#3941**  ·  ✅ **DONE**
 - **Problem.** objectified-ui ships multiple themes; the mockup is light-only and flags a **dark-theme variant** and a **density** preference as open polish items. Without a token pass the MCP screens would break under the app's dark theme.
 - **Solution / Scope.** Extend the 10.7 tokens with a **dark-theme variant** covering every MCP screen (catalog grid, all detail tabs, import source, diff colors that stay legible on dark), wired to honor the app's existing theme switch (no bespoke toggle unless objectified-ui lacks one). Persist the catalog **density** preference (grid↔dense-list from 10.8) across sessions. Pure token/CSS work — no behavioral change. Verifies contrast/legibility (esp. grade glyph and diff add/remove/modify colors).
 - **Acceptance Criteria.** Switching the app to dark renders all MCP screens correctly (no literal-color leaks); diff/grade colors remain legible; density preference persists; light theme unchanged.
