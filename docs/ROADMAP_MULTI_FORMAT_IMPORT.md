@@ -313,12 +313,13 @@ erDiagram
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 2.1 | Canonical model schema design | paradigm-agnostic entities (service/operation/message/type/field/channel) | multi-protocol,rest,python,mvp | N | Y | L | objectified-rest |
+| 2.1 ✅ | Canonical model schema design | paradigm-agnostic entities (service/operation/message/type/field/channel) | multi-protocol,rest,python,mvp | N | Y | L | objectified-rest |
 | 2.2 | Normalized-model persistence tables | store the canonical model per artifact version | multi-protocol,database,mvp | N | Y | M | objectified-db |
 | 2.3 | Normalizer SPI (format → model) | per-format mapping contract + base utilities | multi-protocol,rest,python,mvp | N | Y | M | objectified-rest |
 | 2.4 | Paradigm coverage & fidelity tests | ensure REST/RPC/event/graph/data map losslessly enough | multi-protocol,testing,mvp | Y | Y | M | objectified-rest |
 
-### MFI-2.1 — Canonical model schema design  ·  **#3738**
+### MFI-2.1 — Canonical model schema design  ·  **#3738**  ·  ✅ **Done**
+- **Status.** Implemented in `objectified-rest/src/app/canonical_model.py`; documented in `objectified-rest/docs/canonical_model.md`; paradigm-coverage + persistence round-trip tests in `objectified-rest/tests/test_canonical_model.py` (REST/RPC/event/graph/data-schema).
 - **Problem.** REST, RPC, event-driven, graph, and data-schema formats have different shapes; we need a common denominator that still supports per-format diff/lint fidelity.
 - **Solution / Scope.** Design a `CanonicalApi`: artifact (format, protocol, identity, version, servers/endpoints), **services** (named groups), **operations** (op kind: request/response, query/mutation/subscription, unary/streaming, pub/sub; input/output message refs; verb/route where applicable), **messages** (payload schema ref, headers), **channels** (event address/binding), **types** (records/structs/enums/unions + fields with type, nullability, defaults, constraints), and a `raw`/`extras` bag for format-specific fidelity. Keys are stable (mirroring GraphQL Schema Coordinates / protobuf field numbers / XSD QNames so diffs are stable).
 - **Acceptance Criteria.** Documented model maps cleanly from at least one REST, one RPC, one event, one graph, and one data-schema sample; round-trips to/from persistence.

@@ -5,6 +5,22 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.25.0] - 2026-06-28
+
+### Added
+- **Canonical API model (#3738, MFI-2.1)** — one paradigm-agnostic internal model
+  (`app.canonical_model.CanonicalApi`) that every importable API description format normalizes into,
+  so versioning/fingerprint/diff/lint/browse are written once across REST, RPC, event-driven, graph,
+  and data-schema paradigms. The model is a tree — artifact → services → operations
+  (`kind` + `streaming` + verb/route) → parameters/messages, plus channels (event addresses/bindings)
+  and types (record/enum/union/scalar/alias/map) with fields carrying nullability-and-list-aware
+  `TypeRef`s, defaults, protobuf field numbers, and JSON-Schema-vocabulary constraints. Every entity
+  carries a deterministic stable `key` (GraphQL coordinates / protobuf field numbers / XSD QNames) so
+  diffs line up by identity, plus an `extras` bag (and a top-level `raw` AST bag) so normalization is
+  lossy-but-never-destructive. Plain Pydantic v2, so it round-trips to/from JSONB losslessly for the
+  MFI-2.2 persistence tables. Documented in `docs/canonical_model.md`; paradigm-coverage and
+  round-trip tests in `tests/test_canonical_model.py`.
+
 ## [1.24.0] - 2026-06-27
 
 ### Added
