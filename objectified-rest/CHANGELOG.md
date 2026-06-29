@@ -5,6 +5,25 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.34.0] - 2026-06-29
+
+### Added
+- **Compare-any-two model diff (#3743, MFI-3.2)** — uniform "what changed between two artifacts?"
+  over the MFI-2.1 canonical model, generalizing the MCP surface diff (V2-MCP-EPIC-18.2/24.3). New
+  `app.diff` provides `diff(base, target) -> ModelDiff` listing every service / operation / message /
+  channel / type / field **added**, **removed**, or **modified**, each with its before/after
+  self-projection and a per-attribute `FieldChange` breakdown for modifications, plus overall and
+  per-category `DiffCounts`. The diff is taken over `app.fingerprint.canonical_payload`, so it is in
+  lock-step with change detection: documentation-only edits and source declaration-order differences
+  are invisible, and identical models produce an empty diff (`ModelDiff.identical`). Entities are
+  paired by their stable canonical `key`, so a rename reads as remove + add and the comparison is
+  exact for *any two* versions (adjacent or arbitrarily distant) and across formats; categories are
+  flattened and globally keyed so parent/child changes are never double-counted (a type with one new
+  field is *not* itself "modified"). A per-format label SPI (`DiffLabeler` +
+  `register_diff_labeler`/`get_diff_labeler`/`available_diff_formats`, mirroring the normalizer and
+  fingerprint-hasher registries) lets format epics enrich `EntityChange.label` purely additively;
+  documented in `docs/diff_spi.md`. 31 new tests in `tests/test_diff.py`.
+
 ## [1.33.0] - 2026-06-29
 
 ### Added
