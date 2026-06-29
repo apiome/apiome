@@ -111,12 +111,14 @@ RUN npm install --prefix ${TOOLS_PREFIX}/lib/node --no-audit --no-fund \
     && chmod +x ${TOOLS_PREFIX}/bin/tsp ${TOOLS_PREFIX}/bin/asyncapi
 
 # drafter — API Blueprint parser; no official static binary, so build the pinned tag from
-# source and install just the resulting CLI.
+# source and install just the resulting CLI. The `drafter` CMake target is the static library
+# (libdrafter.a); the command-line tool is the `drafter-cli` target, whose executable is named
+# `drafter` (OUTPUT_NAME) and lands in the `src/` subdir of the build tree.
 RUN git clone --depth 1 --branch "v${DRAFTER_VERSION}" --recursive \
       https://github.com/apiaryio/drafter.git /tmp/drafter \
     && cmake -S /tmp/drafter -B /tmp/drafter/build -DCMAKE_BUILD_TYPE=Release \
-    && cmake --build /tmp/drafter/build --target drafter -j "$(nproc)" \
-    && cp /tmp/drafter/build/drafter ${TOOLS_PREFIX}/bin/drafter \
+    && cmake --build /tmp/drafter/build --target drafter-cli -j "$(nproc)" \
+    && cp /tmp/drafter/build/src/drafter ${TOOLS_PREFIX}/bin/drafter \
     && chmod +x ${TOOLS_PREFIX}/bin/drafter \
     && rm -rf /tmp/drafter
 
