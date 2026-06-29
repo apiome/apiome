@@ -5,6 +5,32 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.36.0] - 2026-06-29
+
+### Added
+- **Versioning + tagging reuse (#3745, MFI-3.4)** — give every imported artifact a
+  dated version *only when its fingerprint changes*, reusing the proven MCP
+  version-on-change recipe over the canonical model. New `app.versioning` provides a
+  pure `decide_version(model, *, previous, when, existing_tags) -> VersionDecision`
+  that fingerprints the freshly normalized model (MFI-3.1), compares the semantic
+  fingerprint against the artifact's current version, and returns a `VersionDecision`:
+  `VersionAction.CREATE` on the first import (no diff — nothing to compare) or when the
+  fingerprint changed, `VersionAction.SKIP` on an unchanged re-import (mints nothing and
+  leaves `current_version` put). A created version is stamped with a minute-precision
+  UTC date/time tag (`format_version_tag` / `mint_version_tag`, e.g. `2026-06-26T14:03Z`)
+  carrying the same `-N` same-minute collision suffix as the MCP tagger, and — when the
+  previous model is supplied — the before→after `ModelDiff` (MFI-3.2) the new version
+  carries. The decision also reports the `current_version_tag` the artifact should point
+  at afterward (advanced only on a change, mirroring `mcp_endpoints.current_version_id`).
+  The module is pure (no DB/network/clock read): the import time and previously recorded
+  version are inputs, so the persistence wiring (per-format catalog write, MFI-2.2 and
+  the format epics) reuses one audited decision instead of re-deriving it per format. 27
+  tests in `tests/test_versioning.py` (no-change-skips and change-creates-dated-version
+  +diff per paradigm, doc-only-edit skips, diff orientation/removal, fingerprint-only
+  deciding without a previous model, same-minute tag collision suffixing, determinism,
+  JSON round-trip, input-not-mutated); full rest suite green (2072 passed, 2 pre-existing
+  live-DB skips). objectified-rest 1.35.0 → 1.36.0.
+
 ## [1.35.0] - 2026-06-29
 
 ### Added
