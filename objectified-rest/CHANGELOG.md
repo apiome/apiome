@@ -5,6 +5,35 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.35.0] - 2026-06-29
+
+### Added
+- **Breaking-change classifier SPI (#3744, MFI-3.3)** — grade an MFI-3.2 model diff
+  breaking-vs-safe, uniformly for every paradigm. New `app.breaking_change` provides
+  `classify(model_diff, base, target) -> ClassificationResult`, which grades each change
+  in the diff with a three-tier `Severity` (`safe` / `dangerous` / `breaking` — the
+  common ground of GraphQL-Inspector, Buf, and Confluent) and returns a per-change
+  `ChangeClassification` (severity + stable `rule_id` + rationale, carrying the change's
+  category/kind/key so a diff view joins severities back onto rendered changes), the
+  worst `overall_severity`, a `breaking` convenience boolean, and a `counts_by_severity`
+  tally. `classify` dispatches by `target.format`: a registered per-format
+  `BreakingChangeClassifier` (SPI + `register_breaking_change_classifier` /
+  `get_breaking_change_classifier` / `available_breaking_change_formats`, mirroring the
+  normalizer, fingerprint-hasher, and diff-labeler registries) when present, otherwise
+  the format-agnostic `BuiltinBreakingChangeClassifier` baseline — removal is breaking,
+  additive surface is safe, an added mandatory (non-nullable, no-default) field is
+  dangerous, and a modification is graded as the worst over its moved canonical
+  attributes (a type narrowed to non-null / route / verb / kind / status / wire-identity
+  move is breaking; a default, constraint, deprecation, content-type, or folded
+  member-list move is dangerous; a widening is safe). Format packs either wrap the
+  canonical CLI via the EPIC-5 toolchain runner (Buf breaking, GraphQL-Inspector,
+  `@asyncapi/diff`, `smithy diff`, Confluent `/compatibility`) by overriding `classify`,
+  or subclass the builtin to sharpen individual rules. `classify_models(base, target)`
+  is a diff-then-classify convenience. The builtin path is pure (no DB/network), and
+  `ClassificationResult` round-trips losslessly to JSONB for persistence alongside the
+  version diff (MFI-3.4). Documented in `docs/breaking_change_spi.md`; 28 tests in
+  `tests/test_breaking_change.py`.
+
 ## [1.34.0] - 2026-06-29
 
 ### Added
