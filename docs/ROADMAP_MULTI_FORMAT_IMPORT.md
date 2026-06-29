@@ -314,7 +314,7 @@ erDiagram
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 2.1 ✅ | Canonical model schema design | paradigm-agnostic entities (service/operation/message/type/field/channel) | multi-protocol,rest,python,mvp | N | Y | L | objectified-rest |
-| 2.2 | Normalized-model persistence tables | store the canonical model per artifact version | multi-protocol,database,mvp | N | Y | M | objectified-db |
+| 2.2 ✅ | Normalized-model persistence tables | store the canonical model per artifact version | multi-protocol,database,mvp | N | Y | M | objectified-db |
 | 2.3 | Normalizer SPI (format → model) | per-format mapping contract + base utilities | multi-protocol,rest,python,mvp | N | Y | M | objectified-rest |
 | 2.4 | Paradigm coverage & fidelity tests | ensure REST/RPC/event/graph/data map losslessly enough | multi-protocol,testing,mvp | Y | Y | M | objectified-rest |
 
@@ -326,7 +326,8 @@ erDiagram
 - **Dependencies / Parallelism.** After 1.1. Blocks 2.2/2.3 and all normalizers.
 - **Technical Stack.** Python, Pydantic.
 
-### MFI-2.2 — Normalized-model persistence tables  ·  **#3739**
+### MFI-2.2 — Normalized-model persistence tables  ·  **#3739**  ·  ✅ **Done**
+- **Status.** Implemented in `objectified-db/scripts/V135__canonical_api_model_persistence_3739.sql`: seven `odb` tables (`api_artifacts` → `api_services` → `api_operations` → `api_messages`; `api_artifacts` → `api_channels`; `api_artifacts` → `api_types` → `api_fields`) mirroring the MFI-2.1 `CanonicalApi`, each tied to a `versions` row and tenant-scoped, with stable per-parent keys, soft delete, JSONB for `raw`/constraints/irregular sub-structures, and GIN tsvector search indexes. Structural contract tests in `objectified-db/test/canonical-api-model-persistence.test.ts`; migration applied + a full store/reload round-trip verified against the live `objectified` database.
 - **Problem.** The canonical model must be queryable (browse/search/diff), not a blob.
 - **Solution / Scope.** Flyway migration adding `odb.api_artifacts`, `api_services`, `api_operations`, `api_messages`, `api_channels`, `api_types`, `api_fields` (UUID PKs, tenant scoping, soft delete, JSONB for `raw`/constraints, GIN/tsvector for search), each tied to a `version_id`. Reuse `versions`/`version_tags`.
 - **Acceptance Criteria.** Migration applies over the latest version; stores + reloads a canonical model; indexed for search.
