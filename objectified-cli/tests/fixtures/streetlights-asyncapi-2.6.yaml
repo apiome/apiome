@@ -1,0 +1,34 @@
+asyncapi: '2.6.0'
+id: 'urn:com:example:streetlights'
+info:
+  title: Streetlights API
+  version: '1.0.0'
+  description: A sample AsyncAPI 2.6 event API for street lighting telemetry.
+defaultContentType: application/json
+servers:
+  production:
+    url: mqtt://broker.example.com
+    protocol: mqtt
+channels:
+  light/measured:
+    publish:
+      operationId: onLightMeasured
+      message:
+        $ref: '#/components/messages/LightMeasured'
+components:
+  messages:
+    LightMeasured:
+      name: LightMeasured
+      title: Light measured
+      payload:
+        $ref: '#/components/schemas/LightMeasuredPayload'
+  schemas:
+    LightMeasuredPayload:
+      type: object
+      properties:
+        lumens:
+          type: integer
+          minimum: 0
+        sentAt:
+          type: string
+          format: date-time

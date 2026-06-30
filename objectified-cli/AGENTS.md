@@ -169,7 +169,7 @@ update that section and the `repos` row in **Commands** above.
 | Integration (mocked) | `tests/integration/` | Import wait loop and list commands against mocked REST |
 | Scaffold | `tests/test_scaffold.py`, `test/scaffold.test.mjs` | Package layout and tooling |
 | Docs | `tests/test_readme.py`, `tests/test_agents.py` | README and AGENTS.md guard required sections |
-| Fixtures | `tests/fixtures/` | Synthetic OpenAPI/Arazzo samples (no credentials or PII) for import/export tests |
+| Fixtures | `tests/fixtures/` | Synthetic OpenAPI/Arazzo/AsyncAPI (2.6/3.0/3.1) samples (no credentials or PII) for import/export tests |
 
 Run from monorepo root or package:
 

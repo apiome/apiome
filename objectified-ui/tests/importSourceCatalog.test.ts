@@ -6,7 +6,7 @@
  * by a built-in must never produce a duplicate.
  */
 
-import { FileCode, FileJson } from 'lucide-react';
+import { FileCode, FileJson, Radio } from 'lucide-react';
 import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
   baseImportSourceCards,
@@ -15,6 +15,18 @@ import {
   resolveLucideIcon,
   type ImportSourceDescriptor,
 } from '../src/app/components/ade/dashboard/importSourceCatalog';
+
+/** The AsyncAPI source as the REST registry advertises it (MFI-8.5, #3763). */
+const ASYNCAPI_DESCRIPTOR: ImportSourceDescriptor = {
+  key: 'asyncapi',
+  label: 'AsyncAPI',
+  description: 'Import an AsyncAPI 2.x or 3.x event-driven API description.',
+  icon: 'radio',
+  paradigm: 'event',
+  input_kinds: ['file', 'url', 'paste'],
+  supports_live_discovery: false,
+  formats: ['asyncapi-2', 'asyncapi-3'],
+};
 
 const BUILTIN_KEYS = ['file', 'url', 'clipboard', 'git', 'swaggerhub', 'postman', 'mcp'];
 
@@ -119,6 +131,24 @@ describe('mergeImportSourceCards', () => {
       descriptor({ key: 'smithy' }),
     ]);
     expect(cards.map((c) => c.key)).toEqual([...BUILTIN_KEYS, 'smithy']);
+  });
+});
+
+describe('AsyncAPI source card (MFI-8.5)', () => {
+  it('surfaces the registered AsyncAPI adapter as a usable file/url/paste card', () => {
+    const cards = mergeImportSourceCards([ASYNCAPI_DESCRIPTOR]);
+    const asyncapi = cards.find((c) => c.key === 'asyncapi');
+    expect(asyncapi).toBeDefined();
+    expect(asyncapi?.builtin).toBe(false);
+    expect(asyncapi?.label).toBe('AsyncAPI');
+    // file/url/paste inputs route to the generic file intake panel.
+    expect(asyncapi?.panel).toBe('file');
+    // AsyncAPI is its own registry source, not subsumed by a built-in card.
+    expect(REGISTRY_KEYS_COVERED_BY_BUILTINS.has('asyncapi')).toBe(false);
+  });
+
+  it('resolves the descriptor `radio` icon to the Lucide Radio component', () => {
+    expect(resolveLucideIcon(ASYNCAPI_DESCRIPTOR.icon)).toBe(Radio);
   });
 });
 
