@@ -648,7 +648,7 @@ wheels = [
 
 [[package]]
 name = "objectified-rest"
-version = "1.54.0"
+version = "1.55.0"
 source = { editable = "." }
 dependencies = [
     { name = "bcrypt" },

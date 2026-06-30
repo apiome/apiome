@@ -263,6 +263,9 @@ def load_format_rule_packs() -> None:
     # AsyncAPI lint pack (MFI-8.3): registers under ``asyncapi-2`` / ``asyncapi-3``.
     from . import asyncapi_lint as _asyncapi_lint  # noqa: F401
 
+    # GraphQL lint pack (MFI-10.4): registers under ``graphql``.
+    from . import graphql_lint as _graphql_lint  # noqa: F401
+
 
 # ===========================================================================
 # Cross-format hygiene helpers (shared by the common pack's rules)

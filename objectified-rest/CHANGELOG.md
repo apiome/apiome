@@ -5,6 +5,28 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.55.0] - 2026-06-30
+
+### Added
+- **GraphQL lint pack (#3773, MFI-10.4)** — `src/app/graphql_lint.py` (`GraphqlRulePack`), a
+  `RulePack`-SPI implementation registered under the `graphql` format key (the one the MFI-10.2
+  normalizer emits), so a GraphQL artifact is scored by the always-on lint engine
+  (`lint_canonical_model`) through the same 0–100 / A–F / `report_fingerprint` formula as every
+  other format (MFI-4.2). It encodes the SDL-checkable semantics of the three `graphql-eslint`
+  configs the roadmap names: **naming-convention** (`graphql.naming-type-pascal-case`,
+  `graphql.naming-field-camel-case` over object/input/root fields, `graphql.naming-argument-camel-case`,
+  `graphql.naming-enum-value-upper-case`), **require-description** for the GraphQL-specific gaps
+  the cross-format common pack does not cover (`graphql.enum-value-missing-description`,
+  `graphql.argument-missing-description`), and **schema-recommended**
+  (`graphql.require-deprecation-reason`). All rules are pure over the canonical model — no I/O,
+  no Node — mirroring the pure-Python GraphQL toolchain (MFI-10.1/10.2/10.3). The authoritative
+  `graphql-eslint` verdicts are *wrapped* rather than re-implemented: `eslint_findings(...)` maps
+  the linter's standard ESLint JSON output into `LintFinding`s namespaced `graphql.eslint.*`
+  (severity folded `2`→error / `1`→warning / else→info), to be fed by the MFI-4.3 external-linter
+  adapter; `lint_graphql_result(model, eslint_report=None)` merges them with the native + common
+  packs and degrades gracefully when none are supplied, and `lint_graphql(raw, ...)` runs it
+  end-to-end from raw SDL (parse → normalize → lint). Tests in `tests/test_graphql_lint.py`.
+
 ## [1.49.0] - 2026-06-29
 
 ### Added
