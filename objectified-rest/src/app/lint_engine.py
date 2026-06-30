@@ -71,6 +71,8 @@ __all__ = [
     "register_rule_pack",
     "get_rule_pack",
     "available_lint_formats",
+    "is_unstable_name",
+    "load_format_rule_packs",
 ]
 
 
@@ -228,12 +230,38 @@ def register_rule_pack(cls: type[RulePack]) -> type[RulePack]:
 
 def get_rule_pack(format_key: str) -> Optional[type[RulePack]]:
     """Return the rule-pack class registered for ``format_key``, or ``None``."""
+    load_format_rule_packs()
     return _RULE_PACK_REGISTRY.get(format_key)
 
 
 def available_lint_formats() -> List[str]:
     """Return the sorted format keys that have a registered rule pack."""
+    load_format_rule_packs()
     return sorted(_RULE_PACK_REGISTRY)
+
+
+# Have the built-in format packs been imported (and so self-registered) yet?
+_format_packs_loaded = False
+
+
+def load_format_rule_packs() -> None:
+    """Import the built-in format rule-pack modules so they self-register.
+
+    A format pack lives in its own module and registers via the ``register=True`` subclass
+    flag, so it is only in the registry once its module has been imported. This loader pulls
+    those modules in lazily — the import happens **inside** the function to avoid a cycle (a
+    pack module imports :class:`RulePack`/:func:`lint_canonical_model` from here), and is
+    idempotent and cheap after the first call. It runs ahead of every registry read
+    (:func:`get_rule_pack`, :func:`available_lint_formats`) and every lint
+    (:func:`lint_canonical_model`), so a pack resolves no matter which entry point is hit
+    first — mirroring :func:`app.import_source.load_builtin_import_sources`.
+    """
+    global _format_packs_loaded
+    if _format_packs_loaded:
+        return
+    _format_packs_loaded = True
+    # AsyncAPI lint pack (MFI-8.3): registers under ``asyncapi-2`` / ``asyncapi-3``.
+    from . import asyncapi_lint as _asyncapi_lint  # noqa: F401
 
 
 # ===========================================================================
@@ -272,6 +300,23 @@ _UNSTABLE_NAME = re.compile(
 def _is_unstable_name(name: Any) -> bool:
     """Return whether ``name`` matches the documented generated/positional pattern."""
     return isinstance(name, str) and bool(_UNSTABLE_NAME.match(name))
+
+
+def is_unstable_name(name: Any) -> bool:
+    """Public alias of the shared "looks auto-generated/positional" heuristic.
+
+    Exposed so a format pack (e.g. the AsyncAPI pack in :mod:`app.asyncapi_lint`) can apply
+    the exact same import-stability heuristic the common pack uses for type/field names to
+    its own entities (message names), without duplicating the regex or reaching into a
+    private helper.
+
+    Args:
+        name: The candidate identifier (any value; non-strings are never unstable).
+
+    Returns:
+        ``True`` when ``name`` matches the documented generated/positional pattern.
+    """
+    return _is_unstable_name(name)
 
 
 # ===========================================================================
@@ -498,6 +543,7 @@ def lint_canonical_model(
         A deterministic :class:`~app.schema_lint.LintResult` (score, grade, sorted findings,
         rule hits, severity counts, fingerprint).
     """
+    load_format_rule_packs()
     findings: List[LintFinding] = list(extra_findings or [])
     findings.extend(_COMMON.lint(api))
 

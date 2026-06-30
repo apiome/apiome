@@ -146,6 +146,13 @@ result = lint_canonical_model(api, extra_findings=compatibility_findings)
   seams.
 - **MFI-4.3 (external-linter adapter).** Wraps Spectral / Buf lint / smithy-linters / graphql-eslint
   via the [toolchain runner](./toolchain_runner.md) and maps their output into `LintFinding`s
-  that merge with the native packs.
+  that merge with the native packs. The [AsyncAPI lint pack](./asyncapi_lint.md) (MFI-8.3) is
+  the first realization of this: it merges the `spectral:asyncapi` diagnostics that
+  `@asyncapi/parser` already produces (MFI-8.1) into the score alongside its native rules,
+  degrading gracefully to the native packs when no parse result is supplied.
+- **MFI-8.3 (AsyncAPI lint pack) ✅.** The first concrete format pack — see
+  [`asyncapi_lint.md`](./asyncapi_lint.md). `AsyncApiRulePack` registers native event-API rules
+  (message names, missing payload schema, server protocol/security) under `asyncapi-2` /
+  `asyncapi-3`, and `lint_asyncapi_result` folds in the `spectral:asyncapi` findings.
 - **MFI-4.4 (REST/UI/CLI surfacing).** Exposes findings + score per version everywhere, reusing
   the `lint_routes.py` shape for canonical artifacts.
