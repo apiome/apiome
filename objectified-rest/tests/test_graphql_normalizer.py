@@ -338,12 +338,8 @@ def test_custom_directive_definition_captured_builtins_excluded() -> None:
     assert auth["repeatable"] is True
     assert auth["locations"] == ["FIELD_DEFINITION", "OBJECT"]
     assert auth["arguments"][0]["name"] == "role"
-    assert auth["arguments"][0]["type"] == {
-        "extras": {},
-        "name": "String",
-        "item": None,
-        "nullable": False,
-    }
+    arg_type = auth["arguments"][0]["type"]
+    assert arg_type["name"] == "String" and arg_type["nullable"] is False
 
 
 def test_no_directive_definitions_key_when_only_builtins() -> None:

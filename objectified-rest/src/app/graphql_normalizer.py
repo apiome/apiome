@@ -57,7 +57,7 @@ the schema's declaration order. It self-registers under the ``graphql`` format k
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 from graphql import (
     GraphQLArgument,
@@ -111,7 +111,7 @@ _FORMAT_KEY = "graphql"
 # GraphQL's three root operation slots → the canonical operation kind a field of
 # that root resolves to, plus whether it streams. Queries/mutations are a single
 # request/response; a subscription pushes a stream of results (server-streaming).
-_ROOT_OPERATION_KINDS: Dict[str, OperationKind] = {
+_ROOT_OPERATION_KINDS: dict[str, OperationKind] = {
     "query": OperationKind.QUERY,
     "mutation": OperationKind.MUTATION,
     "subscription": OperationKind.SUBSCRIPTION,
@@ -173,7 +173,7 @@ class GraphQlNormalizer(Normalizer, register=True):
         services = self._services(source)
 
         directive_definitions = self._directive_definitions(source)
-        extras: Dict[str, Any] = (
+        extras: dict[str, Any] = (
             {"directive_definitions": directive_definitions}
             if directive_definitions
             else {}
@@ -195,13 +195,13 @@ class GraphQlNormalizer(Normalizer, register=True):
     # --- root operation types ----------------------------------------------
 
     @staticmethod
-    def _root_type_names(schema: GraphQLSchema) -> Dict[str, str]:
+    def _root_type_names(schema: GraphQLSchema) -> dict[str, str]:
         """Map each present root operation slot to its (possibly renamed) type name.
 
         Honours ``schema { query: MyQueryRoot }`` renames; a slot the schema does
         not declare is simply absent from the returned mapping.
         """
-        roots: Dict[str, str] = {}
+        roots: dict[str, str] = {}
         if schema.query_type is not None:
             roots["query"] = schema.query_type.name
         if schema.mutation_type is not None:
@@ -213,7 +213,7 @@ class GraphQlNormalizer(Normalizer, register=True):
     # --- named types --------------------------------------------------------
 
     def _types(
-        self, schema: GraphQLSchema, root_type_names: Dict[str, str]
+        self, schema: GraphQLSchema, root_type_names: dict[str, str]
     ) -> List[Type]:
         """Coerce every user-defined named type into a canonical :class:`Type`.
 
@@ -263,7 +263,7 @@ class GraphQlNormalizer(Normalizer, register=True):
         implements are kept in ``extras`` so the RECORD collapse round-trips.
         """
         key = Keys.type(type_.name)
-        extras: Dict[str, Any] = {"graphql_type": graphql_kind}
+        extras: dict[str, Any] = {"graphql_type": graphql_kind}
         interfaces = [iface.name for iface in type_.interfaces]
         if interfaces:
             extras["interfaces"] = interfaces
@@ -283,7 +283,7 @@ class GraphQlNormalizer(Normalizer, register=True):
     def _input_type(self, type_: GraphQLInputObjectType) -> Type:
         """Coerce an input-object type into a RECORD of its input fields."""
         key = Keys.type(type_.name)
-        extras: Dict[str, Any] = {"graphql_type": "input"}
+        extras: dict[str, Any] = {"graphql_type": "input"}
         extras.update(_applied_directives(type_))
         return Type(
             key=key,
@@ -300,7 +300,7 @@ class GraphQlNormalizer(Normalizer, register=True):
     def _enum_type(self, type_: GraphQLEnumType) -> Type:
         """Coerce an enum type into an ENUM, preserving value deprecation."""
         key = Keys.type(type_.name)
-        extras: Dict[str, Any] = {"graphql_type": "enum"}
+        extras: dict[str, Any] = {"graphql_type": "enum"}
         extras.update(_applied_directives(type_))
         values: List[EnumValue] = []
         for value_name, value in type_.values.items():
@@ -328,7 +328,7 @@ class GraphQlNormalizer(Normalizer, register=True):
     def _union_type(self, type_: GraphQLUnionType) -> Type:
         """Coerce a union type into a UNION of its member type keys."""
         key = Keys.type(type_.name)
-        extras: Dict[str, Any] = {"graphql_type": "union"}
+        extras: dict[str, Any] = {"graphql_type": "union"}
         extras.update(_applied_directives(type_))
         return Type(
             key=key,
@@ -342,7 +342,7 @@ class GraphQlNormalizer(Normalizer, register=True):
     def _scalar_type(self, type_: GraphQLScalarType) -> Type:
         """Coerce a custom scalar into a SCALAR, keeping its ``@specifiedBy`` URL."""
         key = Keys.type(type_.name)
-        extras: Dict[str, Any] = {"graphql_type": "scalar"}
+        extras: dict[str, Any] = {"graphql_type": "scalar"}
         specified_by = type_.specified_by_url
         if specified_by is not None:
             extras["specified_by_url"] = specified_by
@@ -366,7 +366,7 @@ class GraphQlNormalizer(Normalizer, register=True):
         ``extras``; a non-root field is not an operation, so its args have nowhere
         else to live on the canonical field.
         """
-        extras: Dict[str, Any] = {}
+        extras: dict[str, Any] = {}
         if field.args:
             extras["arguments"] = [
                 _argument_descriptor(arg_name, arg)
@@ -392,7 +392,7 @@ class GraphQlNormalizer(Normalizer, register=True):
         An input field carries a default value (when declared) but never
         arguments; its nullability/list wrappers live on the ``TypeRef``.
         """
-        extras: Dict[str, Any] = {}
+        extras: dict[str, Any] = {}
         if field.deprecation_reason is not None:
             extras["deprecation_reason"] = field.deprecation_reason
         extras.update(_applied_directives(field))
@@ -452,7 +452,7 @@ class GraphQlNormalizer(Normalizer, register=True):
             else StreamingMode.NONE
         )
 
-        extras: Dict[str, Any] = {}
+        extras: dict[str, Any] = {}
         if field.deprecation_reason is not None:
             extras["deprecation_reason"] = field.deprecation_reason
         extras.update(_applied_directives(field))
@@ -489,7 +489,7 @@ class GraphQlNormalizer(Normalizer, register=True):
         ``#arg.`` key segment. An argument is *required* when its type is non-null
         **and** it declares no default.
         """
-        extras: Dict[str, Any] = _applied_directives(arg)
+        extras: dict[str, Any] = _applied_directives(arg)
         if arg.deprecation_reason is not None:
             extras["deprecation_reason"] = arg.deprecation_reason
         type_ref = _type_ref(arg.type)
@@ -509,7 +509,7 @@ class GraphQlNormalizer(Normalizer, register=True):
     # --- directives ---------------------------------------------------------
 
     @staticmethod
-    def _directive_definitions(schema: GraphQLSchema) -> List[Dict[str, Any]]:
+    def _directive_definitions(schema: GraphQLSchema) -> List[dict[str, Any]]:
         """Capture the schema's *custom* directive definitions, in name order.
 
         The five built-in directives (``@skip``/``@include``/``@deprecated``/
@@ -517,7 +517,7 @@ class GraphQlNormalizer(Normalizer, register=True):
         and carry no per-artifact identity. Each custom directive is captured as
         its printed SDL plus its locations/repeatability for a structured diff.
         """
-        definitions: List[Dict[str, Any]] = []
+        definitions: List[dict[str, Any]] = []
         for directive in schema.directives:
             if is_specified_directive(directive):
                 continue
@@ -573,7 +573,7 @@ def _type_ref(gql_type: Any) -> TypeRef:
     return TypeRef(name=inner.name, nullable=nullable)
 
 
-def _argument_descriptor(name: str, arg: GraphQLArgument) -> Dict[str, Any]:
+def _argument_descriptor(name: str, arg: GraphQLArgument) -> dict[str, Any]:
     """Describe one argument as a fidelity record for an ``extras`` bag.
 
     Used for arguments that have no first-class canonical home — a non-root
@@ -589,7 +589,7 @@ def _argument_descriptor(name: str, arg: GraphQLArgument) -> Dict[str, Any]:
         A JSON-serializable descriptor ``{"name", "type", ["default"]}`` where
         ``type`` is the dumped :class:`TypeRef`.
     """
-    descriptor: Dict[str, Any] = {
+    descriptor: dict[str, Any] = {
         "name": name,
         "type": _type_ref(arg.type).model_dump(),
     }
@@ -598,7 +598,7 @@ def _argument_descriptor(name: str, arg: GraphQLArgument) -> Dict[str, Any]:
     return descriptor
 
 
-def _applied_directives(node: Any) -> Dict[str, Any]:
+def _applied_directives(node: Any) -> dict[str, Any]:
     """Return ``{"directives": [...]}`` for a node's *applied* directives, or ``{}``.
 
     Reads the directives applied at a use site off the node's ``ast_node`` and
@@ -617,6 +617,9 @@ def _applied_directives(node: Any) -> Dict[str, Any]:
     """
     ast_node = getattr(node, "ast_node", None)
     if ast_node is None:
+        # graphql-core always sets ast_node on SDL-parsed nodes; this guard
+        # covers schema-construction paths (e.g. programmatic schema builders)
+        # that do not retain the AST subtree.
         return {}
     applied = [
         print_ast(directive)
