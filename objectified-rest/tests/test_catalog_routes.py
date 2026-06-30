@@ -352,3 +352,80 @@ def test_get_catalog_item_source_404_when_not_catalog_item():
         assert response.status_code == 404
     finally:
         app.dependency_overrides.pop(validate_authentication, None)
+
+
+# ---------------------------------------------------------------------------
+# /lint — server-computed lint report parity with projects (MFI-23.10)
+# ---------------------------------------------------------------------------
+_LINT_HEAD_SPEC = {
+    "openapi": "3.1.0",
+    "info": {"title": "Acme", "version": "1.0.0"},  # missing description -> a finding
+    "paths": {},
+    "components": {"schemas": {}},
+}
+
+
+def _lint_version_row(vid: str):
+    return {"id": vid, "project_id": "cat-1", "version_id": "1.0.0", "metadata": None}
+
+
+def test_lint_catalog_item_requires_auth():
+    """The catalog lint endpoint requires authentication."""
+    response = client.get("/v1/catalog/test-tenant/cat-1/lint")
+    assert response.status_code == 401
+
+
+def test_lint_catalog_item_returns_report():
+    """The latest revision is resolved and linted, returning the project-shaped report."""
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        with patch("src.app.catalog_routes.db") as mock_db, patch(
+            "src.app.lint_routes.openapi_for_revision", return_value=_LINT_HEAD_SPEC
+        ), patch("src.app.lint_routes.db.get_version_quality_score", return_value={}):
+            mock_db.get_catalog_item_by_id.return_value = _CATALOG_ACTIVE
+            mock_db.get_latest_revision_id_for_project.return_value = "rev-1"
+            mock_db.get_version_by_id.return_value = _lint_version_row("rev-1")
+            response = client.get("/v1/catalog/test-tenant/cat-1/lint")
+        assert response.status_code == 200
+        body = response.json()
+        assert isinstance(body["score"], int)
+        assert body["grade"] in {"A", "B", "C", "D", "F"}
+        assert body["projectId"] == "cat-1"
+        assert body["versionRecordId"] == "rev-1"
+        assert body["versionId"] == "1.0.0"
+        assert "reportFingerprint" in body
+        # Lint runs over the canonical model (reconstructed here), so findings are present.
+        rules = {f["rule"] for f in body["findings"]}
+        assert "documentation.info-missing-description" in rules
+        mock_db.get_latest_revision_id_for_project.assert_called_once_with(
+            "cat-1", "test-tenant-id"
+        )
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+
+
+def test_lint_catalog_item_404_when_not_catalog_item():
+    """A publishable Project's id (or an unknown id) is not a catalog item → 404."""
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        with patch("src.app.catalog_routes.db") as mock_db:
+            mock_db.get_catalog_item_by_id.return_value = None
+            response = client.get("/v1/catalog/test-tenant/proj-publishable/lint")
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"].lower()
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)
+
+
+def test_lint_catalog_item_404_when_no_revision():
+    """A catalog item with no revision to lint yields 404 (nothing to score)."""
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        with patch("src.app.catalog_routes.db") as mock_db:
+            mock_db.get_catalog_item_by_id.return_value = _CATALOG_ACTIVE
+            mock_db.get_latest_revision_id_for_project.return_value = None
+            response = client.get("/v1/catalog/test-tenant/cat-1/lint")
+        assert response.status_code == 404
+        assert "revision" in response.json()["detail"].lower()
+    finally:
+        app.dependency_overrides.pop(validate_authentication, None)

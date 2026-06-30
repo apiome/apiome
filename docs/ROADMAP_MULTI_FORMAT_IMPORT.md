@@ -1043,7 +1043,7 @@ flowchart TB
 | 23.7 | Route OpenAPI-worthy non-OpenAPI imports → catalog | ingestion decides Project vs Catalog by format/paradigm | multi-protocol,import,rest | N | Y | M | objectified-rest |
 | 23.8 ✅ | Non-publishable enforcement (UI + REST) | hide/disable publish on catalog items; reject publish server-side | multi-protocol,rest,ui,validation | Y | Y | M | objectified-rest,objectified-ui |
 | 23.9 ✅ | Catalog item detail + source-material panel | provenance: original file/URL/discovery, tool versions, import job | multi-protocol,ui,rest | Y | Y | M | objectified-ui,objectified-rest |
-| 23.10 | Lint/score + quality-history parity | reuse lint-report + quality dialogs for catalog items | multi-protocol,linting,ui | Y | Y | S | objectified-ui,objectified-rest |
+| 23.10 ✅ | Lint/score + quality-history parity | reuse lint-report + quality dialogs for catalog items | multi-protocol,linting,ui | Y | Y | S | objectified-ui,objectified-rest |
 | 23.11 | Convert-to-Project promotion (EPIC-22 entry) | "Convert to OpenAPI" action → fidelity preview → publishable Project | multi-protocol,export,ui | N | Y | M | objectified-ui,objectified-rest |
 | 23.12 | Read-only Designer/Studio view | open a catalog item in the editor in view-only mode | multi-protocol,ui | Y | N | M | objectified-ui |
 

@@ -37,11 +37,9 @@ import {
   letterGradeFromOverallPercent,
   type NumericScoreTierStyle,
 } from '@/app/utils/numeric-score-tier';
-import {
-  getProjectQualityHistory,
-  type ProjectQualityReportSection,
-} from '@/app/utils/project-quality-score-history';
+import { getProjectQualityHistory } from '@/app/utils/project-quality-score-history';
 import { ProjectQualityHistoryDialog } from '@/app/components/ade/dashboard/ProjectQualityHistoryDialog';
+import { CatalogLintReportDialog } from '@/app/components/ade/dashboard/catalog/CatalogLintReportDialog';
 import { FormatPill } from '@/app/components/ui/catalog/FormatPill';
 import { ProtocolPill } from '@/app/components/ui/catalog/ProtocolPill';
 import { SourceBadge } from '@/app/components/ui/catalog/SourceBadge';
@@ -163,7 +161,8 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [qualityOpen, setQualityOpen] = useState(false);
-  const [qualitySection, setQualitySection] = useState<ProjectQualityReportSection>('quality');
+  // Server-backed lint report (same report Projects use, MFI-23.10).
+  const [lintOpen, setLintOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -204,10 +203,6 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
   const lintLetter =
     qualityValue != null ? letterGradeFromOverallPercent(qualityValue) : item?.qualityGrade ?? null;
 
-  const openQuality = useCallback((section: ProjectQualityReportSection) => {
-    setQualitySection(section);
-    setQualityOpen(true);
-  }, []);
 
   if (loading) {
     return (
@@ -318,7 +313,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
                   <button
                     type="button"
                     data-testid="catalog-detail-quality-orb"
-                    onClick={() => openQuality('quality')}
+                    onClick={() => setQualityOpen(true)}
                     className={cn(
                       'mt-1 inline-flex h-11 w-11 items-center justify-center rounded-full border-2 font-mono text-xs font-semibold tabular-nums hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30',
                       scoreOrbBorderClass(scoreTier!.band),
@@ -342,7 +337,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
                   <button
                     type="button"
                     data-testid="catalog-detail-lint-orb"
-                    onClick={() => openQuality('lint')}
+                    onClick={() => setLintOpen(true)}
                     className={cn(
                       'mt-1 inline-flex h-11 w-11 items-center justify-center rounded-full border-2 font-mono text-xs font-semibold tabular-nums hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30',
                       scoreOrbBorderClass(scoreTier?.band ?? null),
@@ -371,7 +366,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
             </button>
             <button
               type="button"
-              onClick={() => openQuality('lint')}
+              onClick={() => setLintOpen(true)}
               className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
             >
               <FileSearch className="h-4 w-4 text-indigo-500" /> Lint report
@@ -490,13 +485,21 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
       </div>
 
       <ProjectQualityHistoryDialog
-        key={qualityOpen ? `${item.id}:${qualitySection}` : 'catalog-detail-dialog-closed'}
+        key={qualityOpen ? `${item.id}:quality` : 'catalog-detail-dialog-closed'}
         open={qualityOpen}
         onOpenChange={setQualityOpen}
         projectName={item.name}
         projectId={item.id}
         history={qualityHistory}
-        initialSection={qualitySection}
+        initialSection="quality"
+      />
+
+      <CatalogLintReportDialog
+        key={lintOpen ? `${item.id}:lint` : 'catalog-detail-lint-closed'}
+        itemId={lintOpen ? item.id : null}
+        itemName={item.name}
+        open={lintOpen}
+        onOpenChange={setLintOpen}
       />
     </main>
   );

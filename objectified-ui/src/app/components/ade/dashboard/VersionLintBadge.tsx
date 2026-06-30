@@ -9,18 +9,10 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '../../ui/Dialog';
+import { LintReportDialog } from './LintReportDialog';
 import {
   fetchVersionLintReport,
   gradeChipClass,
-  severityBadgeClass,
-  sortLintFindings,
   type VersionLintReport,
 } from '../../../utils/version-lint-report';
 
@@ -101,9 +93,6 @@ export function VersionLintBadge({ projectId, versionId, versionLabel }: Version
     );
   }
 
-  const findings = sortLintFindings(report.findings);
-  const severity = report.severityCounts ?? {};
-
   return (
     <>
       <button
@@ -117,97 +106,13 @@ export function VersionLintBadge({ projectId, versionId, versionLabel }: Version
         {report.grade} · {report.score}
       </button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>
-              Quality &amp; Lint report{versionLabel ? ` — v${versionLabel}` : ''}
-            </DialogTitle>
-            <DialogDescription>
-              Server-computed quality score and itemized findings for this version.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <span
-              className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-lg font-bold ${gradeChipClass(
-                report.grade
-              )}`}
-            >
-              {report.grade}
-            </span>
-            <span className="text-sm text-gray-600 dark:text-gray-300">
-              Score <span className="font-semibold">{report.score}</span>/100
-            </span>
-            <span className="flex items-center gap-2 text-xs">
-              <span className={`rounded px-1.5 py-0.5 ${severityBadgeClass('error')}`}>
-                {severity.error ?? 0} error
-              </span>
-              <span className={`rounded px-1.5 py-0.5 ${severityBadgeClass('warning')}`}>
-                {severity.warning ?? 0} warning
-              </span>
-              <span className={`rounded px-1.5 py-0.5 ${severityBadgeClass('info')}`}>
-                {severity.info ?? 0} info
-              </span>
-            </span>
-            {report.compatibilityOverall && (
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                Compatibility vs base: {report.compatibilityOverall}
-              </span>
-            )}
-          </div>
-
-          {report.scoreIsStale && (
-            <p
-              className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
-              data-testid="version-lint-stale-note"
-            >
-              The stored quality score
-              {report.capturedGrade && report.capturedScore != null
-                ? ` (${report.capturedGrade} · ${report.capturedScore})`
-                : ''}{' '}
-              is out of date — this report was recomputed from the current revision.
-            </p>
-          )}
-
-          <div className="mt-3 max-h-[50vh] overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700">
-            {findings.length === 0 ? (
-              <p className="p-4 text-sm text-gray-600 dark:text-gray-300">
-                No findings — clean bill of health.
-              </p>
-            ) : (
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500 dark:bg-gray-900/40 dark:text-gray-400">
-                  <tr>
-                    <th className="px-3 py-2">Severity</th>
-                    <th className="px-3 py-2">Rule</th>
-                    <th className="px-3 py-2">Path</th>
-                    <th className="px-3 py-2">Message</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {findings.map((f) => (
-                    <tr key={f.id}>
-                      <td className="px-3 py-2 align-top">
-                        <span className={`rounded px-1.5 py-0.5 text-xs ${severityBadgeClass(f.severity)}`}>
-                          {f.severity}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 align-top font-mono text-xs text-gray-700 dark:text-gray-300">
-                        {f.rule}
-                      </td>
-                      <td className="px-3 py-2 align-top font-mono text-xs text-gray-500 dark:text-gray-400">
-                        {f.path}
-                      </td>
-                      <td className="px-3 py-2 align-top text-gray-700 dark:text-gray-200">{f.message}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <LintReportDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={`Quality & Lint report${versionLabel ? ` — v${versionLabel}` : ''}`}
+        description="Server-computed quality score and itemized findings for this version."
+        report={report}
+      />
     </>
   );
 }

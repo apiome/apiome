@@ -98,10 +98,16 @@ describe('CatalogItemCard wiring (MFI-23.4)', () => {
     expect(src).toMatch(/actionsSlot=\{/);
   });
 
-  it('wires the quality and lint orbs to the shared ProjectQualityHistoryDialog', () => {
+  it('wires the quality orb to the shared ProjectQualityHistoryDialog', () => {
     expect(src).toContain('ProjectQualityHistoryDialog');
     expect(src).toContain('onOpenQualityHistory={() => handleOpenQuality(item)}');
+  });
+
+  it('wires the lint orb to the server-backed CatalogLintReportDialog (MFI-23.10)', () => {
+    expect(src).toContain('CatalogLintReportDialog');
     expect(src).toContain('onOpenLintReport={() => handleOpenLint(item)}');
+    // The lint action opens the server report, not the browser-local quality dialog's lint tab.
+    expect(src).toMatch(/handleOpenLint[\s\S]{0,80}?setLintDialogItem\(item\)/);
   });
 
   it('offers View / Lint / Convert to OpenAPI actions but never Publish', () => {

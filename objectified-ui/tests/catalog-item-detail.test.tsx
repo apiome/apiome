@@ -116,6 +116,54 @@ describe('CatalogItemDetailClient', () => {
     await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
   });
 
+  it('opens the server-backed lint report from the lint orb (MFI-23.10)', async () => {
+    const LINT_REPORT = {
+      success: true,
+      projectId: RICH_ITEM.id,
+      versionRecordId: 'rev-1',
+      versionId: '1.0.0',
+      score: 72,
+      grade: 'C',
+      findings: [
+        {
+          id: 'lint-1',
+          path: 'components.schemas.Payment',
+          category: 'documentation',
+          rule: 'documentation.schema-missing-description',
+          severity: 'warning',
+          message: 'Schema is missing a description.',
+        },
+      ],
+      ruleHits: { 'documentation.schema-missing-description': 1 },
+      severityCounts: { error: 0, warning: 1, info: 0 },
+      reportFingerprint: 'fp',
+      baseRevisionId: null,
+      compatibilityOverall: null,
+    };
+    // Resolve the detail payload and the lint report by URL so the lazy lint fetch is honoured.
+    global.fetch = jest.fn((url: string) =>
+      Promise.resolve({
+        ok: true,
+        json: async () =>
+          url.endsWith('/lint') ? LINT_REPORT : { success: true, item: RICH_ITEM },
+      })
+    ) as unknown as typeof fetch;
+
+    render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
+
+    const orb = await screen.findByTestId('catalog-detail-lint-orb');
+    fireEvent.click(orb);
+
+    await waitFor(() =>
+      expect(screen.getByText('documentation.schema-missing-description')).toBeInTheDocument()
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      `/api/catalog/${encodeURIComponent(RICH_ITEM.id)}/lint`,
+      expect.objectContaining({ method: 'GET' })
+    );
+    expect(screen.getByText('Schema is missing a description.')).toBeInTheDocument();
+  });
+
   it('degrades gracefully when nothing was captured at import', async () => {
     mockFetchItem({
       ...RICH_ITEM,

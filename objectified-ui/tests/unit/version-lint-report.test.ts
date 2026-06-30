@@ -2,6 +2,7 @@
  * Unit tests for version lint report helpers (#3609).
  */
 import {
+  fetchCatalogLintReport,
   fetchVersionLintReport,
   gradeChipClass,
   severityBadgeClass,
@@ -68,5 +69,23 @@ describe('version-lint-report helpers', () => {
       .fn()
       .mockResolvedValue({ ok: false, status: 404, json: () => Promise.resolve({ success: false, error: 'nope' }) });
     await expect(fetchVersionLintReport('p1', 'v1')).rejects.toThrow('nope');
+  });
+
+  it('fetches a catalog item report through the catalog proxy (MFI-23.10)', async () => {
+    const body = { success: true, score: 64, grade: 'C', findings: [] };
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(body) });
+    const report = await fetchCatalogLintReport('cat-1');
+    expect(report.score).toBe(64);
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/catalog/cat-1/lint',
+      expect.objectContaining({ method: 'GET' })
+    );
+  });
+
+  it('throws with the server message when the catalog report fails', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: false, status: 404, json: () => Promise.resolve({ success: false, detail: 'No revision to lint' }) });
+    await expect(fetchCatalogLintReport('cat-1')).rejects.toThrow('No revision to lint');
   });
 });

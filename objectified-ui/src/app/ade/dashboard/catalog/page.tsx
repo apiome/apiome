@@ -57,11 +57,11 @@ import { useDialog } from '../../../components/providers/DialogProvider';
 import { getNumericScoreTier } from '../../../utils/numeric-score-tier';
 import {
   getProjectQualityHistory,
-  type ProjectQualityReportSection,
   type ProjectQualitySnapshot,
 } from '../../../utils/project-quality-score-history';
 import { ProjectQualityHistoryDialog } from '../../../components/ade/dashboard/ProjectQualityHistoryDialog';
 import { CatalogItemCard } from '../../../components/ade/dashboard/catalog/CatalogItemCard';
+import { CatalogLintReportDialog } from '../../../components/ade/dashboard/catalog/CatalogLintReportDialog';
 import { FormatPill } from '../../../components/ui/catalog/FormatPill';
 import { ProtocolPill } from '../../../components/ui/catalog/ProtocolPill';
 import { SourceBadge } from '../../../components/ui/catalog/SourceBadge';
@@ -378,9 +378,10 @@ const Catalog = () => {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterChip, setFilterChip] = useState<'all' | 'active' | 'attention' | 'deleted'>('all');
-  // Quality-history dialog (the card orbs open it; a catalog item's id is a project id).
+  // Quality-history dialog (the quality orb opens it; a catalog item's id is a project id).
   const [qualityDialogItem, setQualityDialogItem] = useState<CatalogItem | null>(null);
-  const [qualityDialogSection, setQualityDialogSection] = useState<ProjectQualityReportSection>('quality');
+  // Server-backed lint-report dialog (the lint orb / Lint action open it, MFI-23.10).
+  const [lintDialogItem, setLintDialogItem] = useState<CatalogItem | null>(null);
 
   const currentTenantId = (session?.user as { current_tenant_id?: string } | undefined)?.current_tenant_id;
 
@@ -524,15 +525,13 @@ const Catalog = () => {
     [router]
   );
 
-  /** Open the lint section of the shared quality dialog for an item. */
+  /** Open the server-backed lint report (same report Projects use, MFI-23.10) for an item. */
   const handleOpenLint = useCallback((item: CatalogItem) => {
-    setQualityDialogSection('lint');
-    setQualityDialogItem(item);
+    setLintDialogItem(item);
   }, []);
 
-  /** Open the quality-history section of the shared quality dialog for an item. */
+  /** Open the quality-history dialog for an item. */
   const handleOpenQuality = useCallback((item: CatalogItem) => {
-    setQualityDialogSection('quality');
     setQualityDialogItem(item);
   }, []);
 
@@ -1027,11 +1026,7 @@ const Catalog = () => {
       </main>
 
       <ProjectQualityHistoryDialog
-        key={
-          qualityDialogItem
-            ? `${qualityDialogItem.id}:${qualityDialogSection}`
-            : 'catalog-quality-dialog-closed'
-        }
+        key={qualityDialogItem ? qualityDialogItem.id : 'catalog-quality-dialog-closed'}
         open={qualityDialogItem !== null}
         onOpenChange={(open) => {
           if (!open) setQualityDialogItem(null);
@@ -1039,7 +1034,17 @@ const Catalog = () => {
         projectName={qualityDialogItem?.name ?? ''}
         projectId={qualityDialogItem?.id ?? ''}
         history={qualityDialogItem ? catalogQualityHistoryMap[qualityDialogItem.id] ?? [] : []}
-        initialSection={qualityDialogSection}
+        initialSection="quality"
+      />
+
+      <CatalogLintReportDialog
+        key={lintDialogItem ? lintDialogItem.id : 'catalog-lint-dialog-closed'}
+        itemId={lintDialogItem?.id ?? null}
+        itemName={lintDialogItem?.name ?? ''}
+        open={lintDialogItem !== null}
+        onOpenChange={(open) => {
+          if (!open) setLintDialogItem(null);
+        }}
       />
     </>
   );

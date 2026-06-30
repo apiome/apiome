@@ -25,12 +25,14 @@ from .models import (
     CatalogItemDetailSchema,
     CatalogNormalizedSummary,
     CatalogSourceDescriptor,
+    LintReportResponse,
 )
 from .catalog_detail import (
     derive_catalog_summary,
     derive_catalog_source,
     resolve_source_payload,
 )
+from .lint_routes import build_lint_report
 from .auth import validate_authentication
 
 router = APIRouter(prefix="/v1/catalog", tags=["catalog"])
@@ -112,6 +114,62 @@ async def get_catalog_item(
         summary=CatalogNormalizedSummary(**summary),
         source=CatalogSourceDescriptor(**source),
     )
+
+
+@router.get(
+    "/{tenant_slug}/{item_id}/lint",
+    response_model=LintReportResponse,
+)
+async def lint_catalog_item(
+    tenant_slug: str,
+    item_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> LintReportResponse:
+    """
+    Score a catalog item's latest revision and return itemized lint findings (MFI-23.10).
+
+    The catalog analog of ``GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint``:
+    it lets the Catalog card/detail lint orbs open the *same* server-computed lint report the
+    Projects screens use, populated from the item's own revision rather than browser-local history.
+
+    A catalog item's id *is* a project id (the Catalog is the non-publishable slice of projects,
+    MFI-23.1), so the latest revision is resolved here and fed to the shared
+    :func:`app.lint_routes.build_lint_report`. Like the other catalog reads this is restricted to
+    the non-publishable slice — a Project's id, or an unknown id, yields 404 — and authenticated via
+    JWT token or API key.
+
+    Args:
+        tenant_slug: The tenant slug (used to reconstruct the OpenAPI document).
+        item_id: The catalog item ID (a project id).
+        auth_data: Authentication data (injected by dependency).
+
+    Returns:
+        The server-computed quality score, A-F grade and itemized findings for the latest revision.
+    """
+    tenant_id = auth_data["tenant_id"]
+
+    item = db.get_catalog_item_by_id(item_id, tenant_id)
+    if not item:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Catalog item not found: {item_id}",
+        )
+
+    revision_id = db.get_latest_revision_id_for_project(item_id, tenant_id)
+    if not revision_id:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No revision to lint for catalog item: {item_id}",
+        )
+
+    version = db.get_version_by_id(revision_id, tenant_id)
+    if not version:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Revision not found: {revision_id}",
+        )
+
+    return build_lint_report(version, item_id, tenant_slug, tenant_id)
 
 
 @router.get("/{tenant_slug}/{item_id}/source")

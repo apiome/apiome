@@ -105,3 +105,29 @@ export async function fetchVersionLintReport(
   }
   return data as VersionLintReport;
 }
+
+/**
+ * Fetch the server lint report for a catalog item's latest revision (MFI-23.10).
+ *
+ * The catalog analog of {@link fetchVersionLintReport}: a catalog item's id is a project id, and
+ * the REST endpoint resolves its latest revision server-side, so the catalog lint orbs can open the
+ * same authoritative report the Projects screens use. Returns the identical {@link VersionLintReport}
+ * shape.
+ * @throws Error with the server message when the request fails.
+ */
+export async function fetchCatalogLintReport(
+  itemId: string,
+  options?: { signal?: AbortSignal }
+): Promise<VersionLintReport> {
+  const response = await fetch(`/api/catalog/${encodeURIComponent(itemId)}/lint`, {
+    method: 'GET',
+    signal: options?.signal,
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data || data.success === false) {
+    const message =
+      (data && (data.error || data.detail)) || `Failed to load lint report (HTTP ${response.status})`;
+    throw new Error(typeof message === 'string' ? message : 'Failed to load lint report');
+  }
+  return data as VersionLintReport;
+}
