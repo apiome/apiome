@@ -569,7 +569,7 @@ Sources: https://www.asyncapi.com/docs/reference/specification/v3.1.0 · https:/
 | 8.1 ✅ | AsyncAPI parser + validate | `@asyncapi/parser` via runner; dereference; v2+v3 | multi-protocol,import,mvp | N | Y | M | objectified-rest |
 | 8.2 ✅ | AsyncAPI → canonical model | servers/channels/operations/messages → model | multi-protocol,import,mvp | N | Y | M | objectified-rest |
 | 8.3 ✅ | AsyncAPI lint pack | Spectral `spectral:asyncapi` + native hygiene | multi-protocol,linting | Y | Y | S | objectified-rest |
-| 8.4 | AsyncAPI diff/breaking | wrap `@asyncapi/diff` (breaking/non-breaking) | multi-protocol,version-control | Y | Y | M | objectified-rest |
+| 8.4 ✅ | AsyncAPI diff/breaking | wrap `@asyncapi/diff` (breaking/non-breaking) | multi-protocol,version-control | Y | Y | M | objectified-rest |
 | 8.5 | AsyncAPI source card + CLI + fixtures | UI card, `objectified import asyncapi`, fixtures | multi-protocol,ui,devex,mvp | Y | Y | S | objectified-ui,objectified-cli |
 
 ### MFI-8.1 — AsyncAPI parser + validate  ·  **#3759**  ·  ✅ **Done**
@@ -597,12 +597,13 @@ Sources: https://www.asyncapi.com/docs/reference/specification/v3.1.0 · https:/
 - **Dependencies / Parallelism.** After 4.1/4.3, 8.2. Parallel with 8.4.
 - **Technical Stack.** Python + Spectral.
 
-### MFI-8.4 — AsyncAPI diff/breaking  ·  **#3762**
+### MFI-8.4 — AsyncAPI diff/breaking  ·  **#3762**  ·  ✅ **Done**
 - **Problem.** Classify breaking changes between versions.
 - **Solution / Scope.** Wrap **`@asyncapi/diff`** (pass already-validated/dereferenced docs from 8.1) → breaking/non-breaking/unclassified, mapped into the classifier SPI (3.3).
 - **Acceptance Criteria.** A breaking and a safe change classified correctly; surfaced on diff view.
 - **Dependencies / Parallelism.** After 8.2, 3.3. Parallel with 8.3.
 - **Technical Stack.** Python + `@asyncapi/diff`.
+- **Status.** Implemented as `src/app/asyncapi_diff.py` — the **AsyncAPI provider** on the MFI-3.3 breaking-change classifier SPI (`app.breaking_change`). `AsyncApiBreakingChangeClassifier` subclasses the format-agnostic `BuiltinBreakingChangeClassifier` and registers under both `asyncapi-2` and `asyncapi-3`, so the **synchronous, pure** SPI dispatch (`breaking_change.classify`) already grades an AsyncAPI diff from structure alone (removed channel/operation/message breaking, added safe) even with no Node toolchain present — pulled in lazily via a new `breaking_change.load_format_breaking_change_classifiers()` mirroring the lint engine's loader. The **authoritative** grading is the async `classify_async` (+ convenience `classify_asyncapi(base, target)`): it runs **`@asyncapi/diff`** over the two already-validated/dereferenced documents MFI-8.1 preserved on `CanonicalApi.raw` (fed to a new bundled `asyncapi-diff` Node tool — `toolchain/asyncapi-diff.mjs` wrapping `@asyncapi/diff@0.5.0`, registered in `toolchain_packaging.py` like the MFI-8.1 parser — as `{"old":…,"new":…}` on stdin), then **overlays** the tool's `breaking`→`BREAKING` / `non-breaking`→`SAFE` verdict onto the structural grades wherever a change *joins* a canonical entity (a channel by its **address** — resolving the v3 map-name→address split; an operation by its v3 name or v2 `operationId`/`{action} {address}`). `unclassified` and non-joining changes (deep payload edits, metadata) keep the conservative structural grade, so a removal is never silently downgraded. The path **degrades gracefully** to the structural baseline when the documents or the `asyncapi-diff` tool are unavailable; the result is the standard `ClassificationResult`, 1:1 with the diff's changes (rule ids `asyncapi-diff.breaking`/`asyncapi-diff.non-breaking` for tool verdicts), so severities surface on the diff view. Tests: `tests/test_asyncapi_diff.py` — the tool seam over a fake runner (wrapper contract, malformed changes skipped, infra failures → `AsyncApiDiffError`, both docs on stdin), the join helper for v2 + v3, the overlay (a breaking + a safe change graded correctly, `unclassified`/non-joining keep structural), graceful degradation, SPI registration for both families + sync structural dispatch, determinism + JSON round-trip, and a gated end-to-end suite over the real bundled `@asyncapi/diff`; `test_toolchain_packaging.py` expects the new key. Docs: new `docs/asyncapi_diff.md`; `toolchain_packaging.md` extended; Dockerfile installs `@asyncapi/diff` + copies the wrapper. objectified-rest 1.50.0 → 1.51.0.
 
 ### MFI-8.5 — AsyncAPI source card + CLI + fixtures  ·  **#3763**
 - **Problem.** Users need to import AsyncAPI from UI/CLI.

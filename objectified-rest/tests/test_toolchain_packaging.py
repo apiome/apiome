@@ -40,6 +40,7 @@ _EXPECTED_KEYS = {
     "amf",
     "asyncapi",
     "asyncapi-parser",
+    "asyncapi-diff",
     "rover",
 }
 

@@ -68,6 +68,7 @@ __all__ = [
     "register_breaking_change_classifier",
     "get_breaking_change_classifier",
     "available_breaking_change_formats",
+    "load_format_breaking_change_classifiers",
 ]
 
 
@@ -305,6 +306,30 @@ class BreakingChangeClassifier(ABC):
 # so `classify` can grade per-format without this module importing every format package.
 _CLASSIFIER_REGISTRY: Dict[str, type[BreakingChangeClassifier]] = {}
 
+# Guard so the built-in format classifiers are imported (and self-register) only once.
+_format_classifiers_loaded = False
+
+
+def load_format_breaking_change_classifiers() -> None:
+    """Import the built-in format classifier modules so they self-register.
+
+    A format pack lives in its own module and registers via the ``register=True`` subclass
+    flag, so it is only in the registry once its module has been imported. This loader pulls
+    those modules in lazily — the import happens **inside** the function to avoid a cycle (a
+    pack module imports this module's SPI types), and is idempotent and cheap after the first
+    call. It runs ahead of every registry read (:func:`get_breaking_change_classifier`,
+    :func:`available_breaking_change_formats`) and :func:`classify`, so a pack resolves no
+    matter which entry point is hit first — mirroring
+    :func:`app.lint_engine.load_format_rule_packs`.
+    """
+    global _format_classifiers_loaded
+    if _format_classifiers_loaded:
+        return
+    _format_classifiers_loaded = True
+    # AsyncAPI breaking-change classifier (MFI-8.4): registers under ``asyncapi-2`` /
+    # ``asyncapi-3`` and wraps ``@asyncapi/diff``.
+    from . import asyncapi_diff as _asyncapi_diff  # noqa: F401
+
 
 def register_breaking_change_classifier(
     cls: type[BreakingChangeClassifier],
@@ -340,11 +365,13 @@ def get_breaking_change_classifier(
     format_key: str,
 ) -> Optional[type[BreakingChangeClassifier]]:
     """Return the classifier class registered for ``format_key``, or ``None``."""
+    load_format_breaking_change_classifiers()
     return _CLASSIFIER_REGISTRY.get(format_key)
 
 
 def available_breaking_change_formats() -> List[str]:
     """Return the sorted format keys that have a registered classifier."""
+    load_format_breaking_change_classifiers()
     return sorted(_CLASSIFIER_REGISTRY)
 
 
