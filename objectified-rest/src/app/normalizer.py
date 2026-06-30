@@ -258,6 +258,35 @@ class Keys:
         """GraphQL operation key (a schema coordinate), e.g. ``Query.user``."""
         return f"{root_type}.{field_name}"
 
+    @staticmethod
+    def graphql_argument(operation_key: str, name: str) -> str:
+        """GraphQL field-argument key, e.g. ``Query.user#arg.id``.
+
+        A GraphQL field's arguments have no HTTP-style location; they are
+        carried under an ``#arg.`` segment off the owning operation's coordinate
+        (the grammar in ``docs/canonical_model.md``), keeping them distinct from
+        REST ``#path.``/``#query.`` parameters while still hanging off the same
+        operation key.
+
+        Args:
+            operation_key: The owning operation's key, e.g. ``Query.user``.
+            name: The argument's source name.
+        """
+        return f"{operation_key}#arg.{name}"
+
+    @staticmethod
+    def graphql_response(operation_key: str) -> str:
+        """GraphQL operation response-message key, e.g. ``Query.user#response``.
+
+        A GraphQL field resolves to a single return type; that return type is
+        modeled as the operation's lone response :class:`~app.canonical_model.Message`,
+        keyed off the operation coordinate so a return-type change is diffable.
+
+        Args:
+            operation_key: The owning operation's key, e.g. ``Query.user``.
+        """
+        return f"{operation_key}#response"
+
     # --- Event / AsyncAPI (provided for format epics) -----------------------
 
     @staticmethod
