@@ -1,0 +1,142 @@
+/**
+ * Unit tests for the catalog format / protocol / source registry (MFI-23.5, #4014).
+ *
+ * These pin the data-driven lookups behind the catalog pills: every registered format/protocol
+ * resolves, version/punctuation variants normalise to the right entry, unknown-but-present tokens
+ * resolve to `undefined` (the consumer renders a neutral pill), and the source-material derivation
+ * reads file/url/discovery provenance out of either metadata bag.
+ */
+import { describe, test, expect } from '@jest/globals';
+import {
+  CATALOG_FORMATS,
+  CATALOG_PROTOCOLS,
+  CATALOG_PILL_TONE_CLASS,
+  CATALOG_SOURCE_KIND_META,
+  resolveCatalogFormat,
+  resolveCatalogProtocol,
+  resolveCatalogSource,
+} from '../src/app/utils/catalog-format-registry';
+
+describe('catalog-format-registry — formats', () => {
+  test('format ids are unique', () => {
+    const ids = CATALOG_FORMATS.map((f) => f.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  test('every format has a label, an icon and a known tone', () => {
+    for (const f of CATALOG_FORMATS) {
+      expect(f.label.trim().length).toBeGreaterThan(0);
+      expect(f.icon).toBeDefined();
+      expect(CATALOG_PILL_TONE_CLASS[f.tone]).toBeDefined();
+    }
+  });
+
+  test('resolves the headline formats called out by the ticket', () => {
+    expect(resolveCatalogFormat('openapi')?.label).toBe('OpenAPI');
+    expect(resolveCatalogFormat('grpc')?.label).toBe('gRPC');
+    expect(resolveCatalogFormat('graphql')?.label).toBe('GraphQL');
+    expect(resolveCatalogFormat('asyncapi')?.label).toBe('AsyncAPI');
+    expect(resolveCatalogFormat('odata')?.label).toBe('OData');
+    expect(resolveCatalogFormat('wsdl')?.label).toBe('WSDL');
+    expect(resolveCatalogFormat('smithy')?.label).toBe('Smithy');
+    expect(resolveCatalogFormat('raml')?.label).toBe('RAML');
+    expect(resolveCatalogFormat('apiblueprint')?.label).toBe('API Blueprint');
+    expect(resolveCatalogFormat('avro')?.label).toBe('Avro');
+  });
+
+  test('matching is version- and punctuation-insensitive', () => {
+    expect(resolveCatalogFormat('openapi-3.1')?.id).toBe('openapi');
+    expect(resolveCatalogFormat('OpenAPI 3.0')?.id).toBe('openapi');
+    expect(resolveCatalogFormat('swagger-2.0')?.id).toBe('swagger');
+    expect(resolveCatalogFormat('API Blueprint')?.id).toBe('apiblueprint');
+    expect(resolveCatalogFormat('proto3')?.id).toBe('protobuf');
+  });
+
+  test('unknown / empty formats resolve to undefined (neutral pill)', () => {
+    expect(resolveCatalogFormat('totally-made-up')).toBeUndefined();
+    expect(resolveCatalogFormat('')).toBeUndefined();
+    expect(resolveCatalogFormat('   ')).toBeUndefined();
+    expect(resolveCatalogFormat(null)).toBeUndefined();
+    expect(resolveCatalogFormat(undefined)).toBeUndefined();
+  });
+});
+
+describe('catalog-format-registry — protocols', () => {
+  test('protocol ids are unique', () => {
+    const ids = CATALOG_PROTOCOLS.map((p) => p.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  test('resolves the canonical paradigms plus agent', () => {
+    expect(resolveCatalogProtocol('rest')?.label).toBe('REST');
+    expect(resolveCatalogProtocol('rpc')?.label).toBe('RPC');
+    expect(resolveCatalogProtocol('event')?.label).toBe('Event');
+    expect(resolveCatalogProtocol('graph')?.label).toBe('Graph');
+    expect(resolveCatalogProtocol('agent')?.label).toBe('Agent');
+  });
+
+  test('data-schema resolves across snake/kebab/space spellings', () => {
+    expect(resolveCatalogProtocol('data_schema')?.id).toBe('dataschema');
+    expect(resolveCatalogProtocol('data-schema')?.id).toBe('dataschema');
+    expect(resolveCatalogProtocol('Data Schema')?.id).toBe('dataschema');
+  });
+
+  test('unknown / empty protocols resolve to undefined (neutral pill)', () => {
+    expect(resolveCatalogProtocol('carrier-pigeon')).toBeUndefined();
+    expect(resolveCatalogProtocol('')).toBeUndefined();
+    expect(resolveCatalogProtocol(null)).toBeUndefined();
+    expect(resolveCatalogProtocol(undefined)).toBeUndefined();
+  });
+});
+
+describe('catalog-format-registry — source material', () => {
+  test('every source kind has an icon and a fallback label', () => {
+    for (const meta of Object.values(CATALOG_SOURCE_KIND_META)) {
+      expect(meta.icon).toBeDefined();
+      expect(meta.fallbackLabel.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  test('reads an explicit file source from formatMetadata (snake_case)', () => {
+    const s = resolveCatalogSource({ input_kind: 'file', file_name: 'petstore.proto' }, null);
+    expect(s).toEqual({ kind: 'file', label: 'petstore.proto', title: 'petstore.proto' });
+  });
+
+  test('reads a url source and compacts it to host + path (camelCase)', () => {
+    const s = resolveCatalogSource({ inputKind: 'url', sourceUri: 'https://api.example.com/v1/spec.yaml?x=1' }, null);
+    expect(s?.kind).toBe('url');
+    expect(s?.label).toBe('api.example.com/v1/spec.yaml');
+    expect(s?.title).toBe('https://api.example.com/v1/spec.yaml?x=1');
+  });
+
+  test('infers url kind from an http(s) label when no kind is recorded', () => {
+    const s = resolveCatalogSource({ sourceLabel: 'https://schemas.example.com/user.avsc' }, null);
+    expect(s?.kind).toBe('url');
+  });
+
+  test('infers file kind from a bare label when no kind is recorded', () => {
+    const s = resolveCatalogSource({ sourceLabel: 'orders.graphql' }, null);
+    expect(s?.kind).toBe('file');
+    expect(s?.label).toBe('orders.graphql');
+  });
+
+  test('falls back to the generic metadata bag when formatMetadata lacks provenance', () => {
+    const s = resolveCatalogSource(null, { source_url: 'https://example.com/api' });
+    expect(s?.kind).toBe('url');
+  });
+
+  test('a labelless discovery source still renders with its fallback label', () => {
+    const s = resolveCatalogSource({ inputKind: 'discovery' }, null);
+    expect(s).toEqual({ kind: 'discovery', label: 'Live discovery', title: 'Live discovery' });
+  });
+
+  test('returns undefined when there is no source material', () => {
+    expect(resolveCatalogSource(null, null)).toBeUndefined();
+    expect(resolveCatalogSource({}, {})).toBeUndefined();
+    expect(resolveCatalogSource({ unrelated: 'x' }, null)).toBeUndefined();
+  });
+
+  test('a non-discovery kind with no label is not enough to render', () => {
+    expect(resolveCatalogSource({ inputKind: 'file' }, null)).toBeUndefined();
+  });
+});

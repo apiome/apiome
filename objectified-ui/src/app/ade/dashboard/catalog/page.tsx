@@ -41,7 +41,6 @@ import {
   Search,
   LayoutGrid,
   List,
-  FileCode2,
   Eye,
   ScanLine,
   ArrowLeftRight,
@@ -62,6 +61,10 @@ import {
 } from '../../../utils/project-quality-score-history';
 import { ProjectQualityHistoryDialog } from '../../../components/ade/dashboard/ProjectQualityHistoryDialog';
 import { CatalogItemCard } from '../../../components/ade/dashboard/catalog/CatalogItemCard';
+import { FormatPill } from '../../../components/ui/catalog/FormatPill';
+import { ProtocolPill } from '../../../components/ui/catalog/ProtocolPill';
+import { SourceBadge } from '../../../components/ui/catalog/SourceBadge';
+import { resolveCatalogSource } from '../../../utils/catalog-format-registry';
 import {
   dashboardContentStackClass,
   dashboardMainClass,
@@ -97,7 +100,7 @@ interface CatalogItem {
   updated_at: string;
   creator_name?: string | null;
   creator_email?: string | null;
-  metadata?: { summary?: string } | null;
+  metadata?: { summary?: string } & Record<string, unknown> | null;
   qualityScore?: number | null;
   qualityGrade?: string | null;
   /** Always false for a catalog item (the non-publishable invariant, MFI-23.1). */
@@ -105,6 +108,8 @@ interface CatalogItem {
   /** Imported source format + paradigm/protocol off the latest revision (MFI-7.1/7.2). */
   sourceFormat?: string | null;
   protocol?: string | null;
+  /** Format-specific metadata off the latest revision; carries source-material provenance (MFI-7.x). */
+  formatMetadata?: Record<string, unknown> | null;
 }
 
 const CATALOG_CARD_GRADIENTS = [
@@ -321,24 +326,25 @@ function CatalogItemActions({
   );
 }
 
-/** A compact status/quality/format badge row reused by the card view. */
+/**
+ * The format + protocol + source-material pill row for a catalog item (MFI-23.5).
+ *
+ * Renders the reusable {@link FormatPill}, {@link ProtocolPill} and {@link SourceBadge}: the
+ * imported file format, its paradigm/protocol, and where it came from (file name / URL /
+ * live-discovery, derived from the item's `formatMetadata`/`metadata`). Unknown formats degrade to
+ * a neutral pill inside the pills themselves; when an item carries none of the three, a muted
+ * "Format pending" placeholder is shown instead.
+ */
 function CatalogFormatBadge({ item }: { item: CatalogItem }) {
-  if (!item.sourceFormat && !item.protocol) {
+  const source = resolveCatalogSource(item.formatMetadata, item.metadata);
+  if (!item.sourceFormat && !item.protocol && !source) {
     return <span className="text-xs text-gray-400 dark:text-gray-600">Format pending</span>;
   }
   return (
-    <span className="inline-flex items-center gap-1.5 flex-wrap">
-      {item.sourceFormat ? (
-        <span className="inline-flex items-center gap-1 rounded-md bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">
-          <FileCode2 className="h-3 w-3" aria-hidden />
-          {item.sourceFormat}
-        </span>
-      ) : null}
-      {item.protocol ? (
-        <span className="inline-flex items-center rounded-md bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800 dark:bg-violet-900/40 dark:text-violet-300">
-          {item.protocol}
-        </span>
-      ) : null}
+    <span className="inline-flex flex-wrap items-center gap-1.5">
+      <FormatPill format={item.sourceFormat} />
+      <ProtocolPill protocol={item.protocol} />
+      {source ? <SourceBadge source={source} /> : null}
     </span>
   );
 }
