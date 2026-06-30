@@ -5,6 +5,29 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.44.0] - 2026-06-29
+
+### Added
+- **Route OpenAPI-worthy non-OpenAPI imports → catalog (#4016, MFI-23.7)** — the generalized
+  import job (MFI-1.2) now decides, at the end of every adapter run, whether a finished import
+  becomes a publishable **Project** or a non-publishable **catalog item** (MFI-23.1), and records
+  *why*. New `import_routing.py` exposes `decide_import_routing(adapter, model) → ImportRoutingDecision`,
+  a pure function that branches on the canonical model's **emitted format**: OpenAPI/Swagger
+  (`openapi-3.0`/`openapi-3.1`/`swagger-2.0`, including **TypeSpec-emitted OpenAPI**, which routes by
+  emitted format, not source tool) → publishable Project (`publishable=True`, as today); every other
+  OpenAPI-worthy import (gRPC/GraphQL/AsyncAPI/OData/… — has operations and/or channels) → catalog
+  item (`publishable=False`); a pure data-schema source (Avro/Protobuf-schema/JSON-Schema/XSD — types
+  but no callable surface) → catalog item additionally flagged `schemas_only`. The
+  `ImportRoutingDecision` (target/publishable/schemas_only/reason + paradigm/format/counts) is recorded
+  on the in-process pipeline's completed-job `summary` under `routing` and surfaced as a new
+  `ROUTING_DECIDED` event between normalize and version, so the UI can explain where an import landed
+  and why. The decision is consumed by the canonical→catalog persistence hook (a later format epic):
+  it reads `routing.publishable` to call `db.create_project(..., publishable=...)`. Tests:
+  `objectified-rest/tests/test_import_routing.py` (19 — every paradigm, the OpenAPI/TypeSpec carve-out,
+  schemas-only flagging, edge cases, summary/event recording) + an updated event-sequence assertion in
+  `test_import_source_pipeline.py`. Full rest suite green (2195 passed, 2 pre-existing live-DB skips).
+  objectified-rest 1.43.0 → 1.44.0.
+
 ## [1.43.0] - 2026-06-29
 
 ### Added

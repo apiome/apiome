@@ -26,9 +26,16 @@ a per-format epic (MFI-2.2 / the format epics this ticket *blocks*). It therefor
 honors ``dry_run`` / ``incremental_mode`` by recording the requested mode in the
 event stream and summary; with no writes yet, both modes behave identically while the
 persistence hook is still pending. The result is a completed job whose ``summary``
-carries the fingerprint, paradigm/format, entity counts, and lint score — i.e. an
+carries the fingerprint, paradigm/format, entity counts, lint score, and the
+Project-vs-Catalog **routing decision** (MFI-23.7, :mod:`app.import_routing`) — i.e. an
 adapter "runs end-to-end through the existing job API" (the ticket's acceptance
 criterion) without the worker.
+
+Between normalize and version the pipeline records a routing decision — OpenAPI/Swagger
+imports route to a publishable **Project**, everything else to a non-publishable
+**catalog item** — onto the summary (and a ``ROUTING_DECIDED`` event) so the UI can
+explain where an import landed and why; the actual catalog write awaits the same
+canonical→catalog persistence hook.
 
 The driver is intentionally transport-agnostic: it takes a resolved adapter and the
 worker payload dict, calls an optional ``on_snapshot`` coroutine after every phase so
@@ -54,6 +61,7 @@ import time
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 from .canonical_model import CanonicalApi
+from .import_routing import ImportRoutingDecision, decide_import_routing
 from .import_source import ImportSource, ImportSourceError, LintReport
 from .models import (
     SpecImportEvent,
@@ -77,6 +85,7 @@ ADAPTER_PHASE_EVENT_CODES = frozenset(
         "ADAPTER_INIT",
         "PARSE_OK",
         "NORMALIZE_OK",
+        "ROUTING_DECIDED",
         "VERSION_FINGERPRINT",
         "INCREMENTAL_MODE",
         "DRY_RUN",
@@ -221,14 +230,16 @@ def _build_summary(
     model: CanonicalApi,
     fingerprint: str,
     lint: LintReport,
+    routing: ImportRoutingDecision,
     options: Dict[str, Any],
 ) -> Dict[str, Any]:
     """Assemble the completed-job summary for an adapter import.
 
     Carries the version fingerprint, what was produced (paradigm/format + entity
     counts), the rolled-up lint outcome (score / grade / fingerprint / severity tally),
-    and the dry-run/incremental flags the request asked for — enough for a caller to see
-    the import ran without a catalog write.
+    the **Project-vs-Catalog routing decision** (MFI-23.7) so the UI can explain where
+    the import landed and why, and the dry-run/incremental flags the request asked for —
+    enough for a caller to see the import ran without a catalog write.
     """
     return {
         "source": adapter.key,
@@ -248,6 +259,7 @@ def _build_summary(
             "findings": len(lint.findings),
             "severity_counts": dict(lint.severity_counts),
         },
+        "routing": routing.as_dict(),
         "dry_run": bool(options.get("dry_run")),
         "incremental_mode": bool(options.get("incremental_mode")),
         "persisted": False,
@@ -334,6 +346,18 @@ async def run_adapter_import_job(
     if canceled():
         return state.snapshot(state="canceled", percent=_PCT_NORMALIZED)
 
+    # --- route (Project vs Catalog) — MFI-23.7 --------------------------------
+    # Decide whether this import becomes a publishable Project (OpenAPI/Swagger) or a
+    # non-publishable catalog item (everything else). The decision + its reason are
+    # recorded on the summary so the UI can explain the routing; the persistence hook
+    # (a later format epic) reads ``routing.publishable`` to create the right artifact.
+    routing = decide_import_routing(adapter, model)
+    state.event(
+        "ROUTING_DECIDED",
+        f"Routing → {routing.target.value}: {routing.reason}",
+        context=routing.as_dict(),
+    )
+
     # --- version (fingerprint) ------------------------------------------------
     fingerprint = adapter.fingerprint(model)
     state.event(
@@ -375,7 +399,12 @@ async def run_adapter_import_job(
 
     # --- finalize -------------------------------------------------------------
     summary = _build_summary(
-        adapter=adapter, model=model, fingerprint=fingerprint, lint=lint, options=options
+        adapter=adapter,
+        model=model,
+        fingerprint=fingerprint,
+        lint=lint,
+        routing=routing,
+        options=options,
     )
     if options.get("dry_run"):
         state.event("DRY_RUN", "Dry run: the normalized model was not persisted.")

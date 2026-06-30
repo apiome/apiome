@@ -74,6 +74,7 @@ async def test_sample_adapter_runs_end_to_end() -> None:
         "ADAPTER_INIT",
         "PARSE_OK",
         "NORMALIZE_OK",
+        "ROUTING_DECIDED",
         "VERSION_FINGERPRINT",
         "LINT_COMPLETED",
         "IMPORT_COMPLETED",
