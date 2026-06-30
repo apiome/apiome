@@ -32,7 +32,16 @@ from app.toolchain_runner import available_tools, get_tool
 
 client = TestClient(app)
 
-_EXPECTED_KEYS = {"buf", "tsp", "smithy", "drafter", "amf", "asyncapi", "rover"}
+_EXPECTED_KEYS = {
+    "buf",
+    "tsp",
+    "smithy",
+    "drafter",
+    "amf",
+    "asyncapi",
+    "asyncapi-parser",
+    "rover",
+}
 
 _AUTH = {
     "tenant_id": "11111111-1111-1111-1111-111111111111",
@@ -53,8 +62,11 @@ def test_bundled_set_covers_every_required_tool():
 def test_every_bundled_tool_is_fully_specified():
     for tool in BUNDLED_TOOLS:
         assert tool.key and tool.executable and tool.version
-        # The override env var follows the documented OBJECTIFIED_<KEY>_BIN convention.
-        assert tool.env_override_key == f"OBJECTIFIED_{tool.key.upper()}_BIN"
+        # The override env var follows the documented OBJECTIFIED_<KEY>_BIN convention; a
+        # hyphen in a multi-word key (e.g. ``asyncapi-parser``) maps to ``_`` so the var name
+        # stays a valid shell identifier.
+        env_key = tool.key.upper().replace("-", "_")
+        assert tool.env_override_key == f"OBJECTIFIED_{env_key}_BIN"
         assert tool.runtime in {"native", "node", "jvm"}
         assert tool.version_probe_args  # something to ask the version with
 

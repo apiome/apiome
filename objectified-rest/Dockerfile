@@ -47,6 +47,7 @@ ARG SMITHY_VERSION=1.53.0
 ARG DRAFTER_VERSION=4.0.0
 ARG AMF_VERSION=5.7.1
 ARG ASYNCAPI_VERSION=2.16.0
+ARG ASYNCAPI_PARSER_VERSION=3.6.0
 ARG ROVER_VERSION=0.27.0
 # buildx populates TARGETARCH ("amd64"/"arm64"); fall back to amd64 for a plain `docker build`.
 ARG TARGETARCH=amd64
@@ -102,13 +103,22 @@ RUN curl -fsSL "https://repository-master.mulesoft.org/nexus/content/repositorie
     && printf '#!/bin/sh\nexec java -jar %s/lib/amf.jar "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/amf \
     && chmod +x ${TOOLS_PREFIX}/bin/amf
 
-# tsp (TypeSpec compiler) + asyncapi CLI — Node packages installed into the tools prefix and
-# wrapped so the runtime invokes them with its own node (no global npm needed at runtime).
+# tsp (TypeSpec compiler) + asyncapi CLI + @asyncapi/parser — Node packages installed into the
+# tools prefix and wrapped so the runtime invokes them with its own node (no global npm needed at
+# runtime). `@asyncapi/parser` backs the MFI-8.1 parse/validate/dereference wrapper below.
 RUN npm install --prefix ${TOOLS_PREFIX}/lib/node --no-audit --no-fund \
       "@typespec/compiler@${TSP_VERSION}" "@asyncapi/cli@${ASYNCAPI_VERSION}" \
+      "@asyncapi/parser@${ASYNCAPI_PARSER_VERSION}" \
     && printf '#!/bin/sh\nexec node %s/lib/node/node_modules/@typespec/compiler/cmd/tsp.js "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/tsp \
     && printf '#!/bin/sh\nexec node %s/lib/node/node_modules/@asyncapi/cli/bin/run.js "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/asyncapi \
     && chmod +x ${TOOLS_PREFIX}/bin/tsp ${TOOLS_PREFIX}/bin/asyncapi
+
+# AsyncAPI parse/validate/dereference wrapper (MFI-8.1, #3759). The Node script lives beside the
+# installed node_modules so it resolves `@asyncapi/parser` by bare specifier; a thin `asyncapi-parser`
+# wrapper on PATH lets app.toolchain_runner invoke it by bare name exactly like the other tools.
+COPY objectified-rest/toolchain/asyncapi-parse.mjs ${TOOLS_PREFIX}/lib/node/asyncapi-parse.mjs
+RUN printf '#!/bin/sh\nexec node %s/lib/node/asyncapi-parse.mjs "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/asyncapi-parser \
+    && chmod +x ${TOOLS_PREFIX}/bin/asyncapi-parser ${TOOLS_PREFIX}/lib/node/asyncapi-parse.mjs
 
 # drafter — API Blueprint parser; no official static binary, so build the pinned tag from
 # source and install just the resulting CLI. The `drafter` CMake target is the static library
@@ -157,7 +167,7 @@ COPY --from=uideps --chown=appuser:appuser /repo/node_modules /node_modules
 COPY --from=uideps --chown=appuser:appuser /repo/objectified-ui /objectified-ui
 
 # Polyglot toolchain binaries (MFI-5.2, #3751). Copy the whole bundled-tools tree and put its
-# bin/ on PATH so the toolchain runner resolves buf/tsp/smithy/drafter/amf/asyncapi/rover by
+# bin/ on PATH so the toolchain runner resolves buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/rover by
 # name. The tree is read-only to the app user (owned by root); the runner never writes to it.
 COPY --from=tools /opt/objectified-tools /opt/objectified-tools
 
@@ -170,7 +180,7 @@ ENV PYTHONPATH=/app/src \
     PYTHONUNBUFFERED=1 \
     NODE_ENV=production \
     # Put the bundled toolchain (MFI-5.2) ahead of the system path so the runner resolves
-    # buf/tsp/smithy/drafter/amf/asyncapi/rover by bare name. A deployment can still point any
+    # buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/rover by bare name. A deployment can still point any
     # OBJECTIFIED_<TOOL>_BIN at a custom binary; an absent tool degrades that format to
     # "unavailable" (surfaced by GET /v1/ops/toolchain) rather than failing the service.
     PATH=/opt/objectified-tools/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \

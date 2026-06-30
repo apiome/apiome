@@ -24,10 +24,15 @@ build args (`BUF_VERSION`, `TSP_VERSION`, …) — **bump both together**.
 | `drafter` | API Blueprint → JSON | `4.0.0` | native | built from source (pinned tag) |
 | `amf` | AML Modeling Framework (RAML/OAS) | `5.7.1` | jvm | MuleSoft Nexus assembly jar + `java -jar` wrapper |
 | `asyncapi` | AsyncAPI validate·convert·diff (`@asyncapi/cli`) | `2.16.0` | node | npm into tools prefix + wrapper |
+| `asyncapi-parser` | AsyncAPI parse·validate·dereference → canonical JSON (`@asyncapi/parser`, MFI-8.1) | `3.6.0` | node | npm into tools prefix + Node wrapper (`toolchain/asyncapi-parse.mjs`) |
 | `rover` | Apollo GraphQL schema CLI | `0.27.0` | native | GitHub release tarball |
 
-All seven land under `/opt/objectified-tools/bin` (on `PATH`); the JVM/Node tools are thin
-wrappers so the runner invokes them by bare name exactly like the native binaries.
+All eight land under `/opt/objectified-tools/bin` (on `PATH`); the JVM/Node tools are thin
+wrappers so the runner invokes them by bare name exactly like the native binaries. The
+`asyncapi-parser` tool is a small repo-committed Node script (`objectified-rest/toolchain/
+asyncapi-parse.mjs`) that imports `@asyncapi/parser`: it reads a document on `stdin` and writes
+the validated, `$ref`-dereferenced canonical JSON (plus identity + diagnostics) on `stdout`. It
+is driven by the `app.asyncapi_parser` service.
 
 ## Footprint
 
@@ -39,7 +44,7 @@ plus the JRE the AMF wrapper needs — smithy ships its own runtime, so no extra
 | `default-jre-headless` (for AMF) | ~140 MB |
 | `smithy` CLI (self-contained runtime) | ~80 MB |
 | `amf` assembly jar | ~60 MB |
-| `tsp` + `asyncapi` (node_modules) | ~120 MB |
+| `tsp` + `asyncapi` + `@asyncapi/parser` (node_modules) | ~120 MB |
 | `buf` | ~30 MB |
 | `rover` | ~30 MB |
 | `drafter` | ~5 MB |

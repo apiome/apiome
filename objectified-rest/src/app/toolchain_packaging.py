@@ -16,7 +16,7 @@ What lives here:
   point at a custom binary, default leading args, a version-probe argument, and whether the
   tool's stdout is JSON.
 * :data:`BUNDLED_TOOLS` — the pinned set: ``buf``, ``tsp``, ``smithy``, ``drafter``,
-  ``amf``, ``asyncapi``, ``rover``.
+  ``amf``, ``asyncapi``, ``asyncapi-parser``, ``rover``.
 * :func:`register_bundled_tools` — register every bundled tool into the runner registry
   (idempotent; safe to call repeatedly / on re-import).
 * :func:`probe_tool` / :func:`probe_all` — **cheap, lazy** availability resolution (a
@@ -181,6 +181,15 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         version="2.16.0",
         description="AsyncAPI document validate/convert/diff CLI (@asyncapi/cli).",
         env_override_key="OBJECTIFIED_ASYNCAPI_BIN",
+        runtime="node",
+    ),
+    BundledTool(
+        key="asyncapi-parser",
+        executable="asyncapi-parser",
+        version="3.6.0",
+        description="AsyncAPI parse/validate/dereference → canonical JSON (@asyncapi/parser, "
+        "MFI-8.1).",
+        env_override_key="OBJECTIFIED_ASYNCAPI_PARSER_BIN",
         runtime="node",
     ),
     BundledTool(

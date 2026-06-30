@@ -1,0 +1,37 @@
+asyncapi: '3.1.0'
+id: 'urn:com:example:account-service'
+info:
+  title: Account Service
+  version: '2.0.0'
+  description: A sample AsyncAPI 3.1 event API for account events.
+defaultContentType: application/json
+servers:
+  production:
+    host: broker.example.com
+    protocol: amqp
+channels:
+  accountClosed:
+    address: account/closed
+    messages:
+      AccountClosed:
+        $ref: '#/components/messages/AccountClosed'
+operations:
+  onAccountClosed:
+    action: receive
+    channel:
+      $ref: '#/channels/accountClosed'
+components:
+  messages:
+    AccountClosed:
+      name: AccountClosed
+      payload:
+        $ref: '#/components/schemas/AccountClosedPayload'
+  schemas:
+    AccountClosedPayload:
+      type: object
+      properties:
+        accountId:
+          type: string
+        closedAt:
+          type: string
+          format: date-time

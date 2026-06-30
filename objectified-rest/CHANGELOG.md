@@ -5,6 +5,29 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.48.0] - 2026-06-29
+
+### Added
+- **AsyncAPI parser + validate (#3759, MFI-8.1)** — a Python seam over the official JavaScript
+  `@asyncapi/parser` for parsing, validating and dereferencing AsyncAPI 2.6 / 3.0 / 3.1 (and the
+  wider 2.x/3.x families). A small repo-committed Node wrapper (`toolchain/asyncapi-parse.mjs`)
+  reads a document on `stdin`, validates it, resolves in-document `$ref`s, strips the parser's
+  `x-parser-*` bookkeeping keys, and emits a single canonical-JSON object
+  (`{ok, asyncapiVersion, identity, document, diagnostics}`) on `stdout` — an invalid document is
+  reported in the body, never as a crash. It is bundled as a new `asyncapi-parser` tool
+  (`src/app/toolchain_packaging.py`; pinned `@asyncapi/parser` 3.6.0, installed + wrapped in the
+  `Dockerfile`) so `app.toolchain_runner` runs it by bare name in the same constrained sandbox as
+  the other CLIs. The new `src/app/asyncapi_parser.py` service (`parse_asyncapi(...)`) shells out
+  through the runner and adapts the wrapper contract into typed results
+  (`AsyncApiParseResult` / `AsyncApiIdentity` / `AsyncApiDiagnostic`): it captures
+  `info.title`/`version` + the document `id`, exposes `ok` / `errors` / `supported_version` /
+  `raise_if_invalid()`, and maps tool failures (unavailable / timeout / non-JSON) to
+  `AsyncApiParseError`. This is the parse/validate foundation the AsyncAPI → canonical-model
+  mapping (MFI-8.2) builds on. Tests: `tests/test_asyncapi_parser.py` (a Node-free seam suite
+  replaying the wrapper contract incl. authentic dereferenced payloads, plus a gated end-to-end
+  suite that runs the real wrapper against `tests/fixtures/asyncapi/`), and an extension to
+  `tests/test_toolchain_packaging.py` for the new tool key.
+
 ## [1.46.0] - 2026-06-29
 
 ### Added
