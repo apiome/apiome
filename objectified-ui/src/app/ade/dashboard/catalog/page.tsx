@@ -67,6 +67,7 @@ import { CatalogItemCard } from '../../../components/ade/dashboard/catalog/Catal
 import { CatalogLintReportDialog } from '../../../components/ade/dashboard/catalog/CatalogLintReportDialog';
 import { ConversionPreviewDialog } from '../../../components/ade/dashboard/catalog/ConversionPreviewDialog';
 import { CatalogSupportedFormats } from '../../../components/ade/dashboard/catalog/CatalogSupportedFormats';
+import { CatalogStatsRow } from '../../../components/ade/dashboard/catalog/CatalogStatsRow';
 import {
   CatalogImportDialog,
   type JsonSchemaHandoffPayload,
@@ -470,23 +471,9 @@ const Catalog = () => {
     [items, sortColumn, sortDirection]
   );
 
-  const headerSubtitle = useMemo(() => {
-    const n = items.length;
-    const scored = items
-      .map((i) => i.qualityScore)
-      .filter((x): x is number => typeof x === 'number');
-    const avg =
-      scored.length > 0 ? Math.round(scored.reduce((a, b) => a + b, 0) / scored.length) : null;
-    const active = items.filter((i) => i.enabled && !i.deleted_at).length;
-    const parts: string[] = [`${n} item${n === 1 ? '' : 's'}`];
-    if (avg != null) parts.push(`avg quality ${avg}`);
-    parts.push(`${active} active`);
-    if (showDeleted) {
-      const del = items.filter((i) => i.deleted_at).length;
-      if (del > 0) parts.push(`${del} deleted`);
-    }
-    return parts.join(' · ');
-  }, [items, showDeleted]);
+  // The per-metric counts (items, active, avg quality, formats, converted) now live in the stats
+  // row (MFI-24.1); the header keeps a short, static description of what the Catalog holds.
+  const headerSubtitle = 'OpenAPI-worthy non-OpenAPI imports';
 
   const displayedItems = useMemo(() => {
     let rows = sortedItems;
@@ -835,6 +822,10 @@ const Catalog = () => {
             </div>
           ) : (
             <>
+              {/* Four metric cards summarising the live catalog (MFI-24.1), computed from the
+                  already-fetched list. Renders above the filter/sort toolbar. */}
+              <CatalogStatsRow items={items} />
+
               <section className="flex flex-wrap items-center gap-2">
                 <span className="mr-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Views:

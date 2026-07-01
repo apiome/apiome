@@ -152,6 +152,23 @@ describe('detail navigation (MFI-23.9)', () => {
   });
 });
 
+describe('stats row (MFI-24.1)', () => {
+  it('renders the four-card stats row above the filter/sort toolbar', () => {
+    expect(src).toContain("import { CatalogStatsRow }");
+    expect(src).toMatch(/<CatalogStatsRow items=\{items\}/);
+    // The stats row must precede the "Views:" toolbar section in source order.
+    const rowIdx = src.indexOf('<CatalogStatsRow');
+    const toolbarIdx = src.indexOf('Views:');
+    expect(rowIdx).toBeGreaterThan(-1);
+    expect(toolbarIdx).toBeGreaterThan(rowIdx);
+  });
+
+  it('reduces the header subtitle to a static description (metrics moved to the cards)', () => {
+    expect(src).not.toMatch(/parts\.push\(`\$\{active\} active`\)/);
+    expect(src).toContain("headerSubtitle = 'OpenAPI-worthy non-OpenAPI imports'");
+  });
+});
+
 describe('empty state', () => {
   it('explains what the catalog is and how items get here', () => {
     expect(src).toContain('Your catalog is empty');

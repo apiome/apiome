@@ -223,13 +223,17 @@ and the `CatalogSupportedFormats` gallery — those stay as-is.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 |---|---|---|---|---|---|---|---|
-| MFI-24.1 · #4081 | Catalog stats row (4 metric cards) | Add cataloged-items / avg-quality(letter·score) / formats-represented / converted-count cards | `ui`,`typescript`,`multi-protocol` | Y | **Y** | S | `catalog/page.tsx` |
 | MFI-24.2 · #4082 | Group cards by paradigm | Section cards by graph/rpc/event/rest/data-schema with header+count+divider; add Group control | `ui`,`typescript`,`multi-protocol` | Y | **Y** | M | `catalog/page.tsx` |
 | MFI-24.3 · #4083 | Persistent non-publishable banner | Show the info banner on the populated list, not only the empty state | `ui`,`multi-protocol` | Y | N | XS | `catalog/page.tsx` |
 | MFI-24.4 · #4084 | Table view column parity | Add Protocol, Source, Grade(letter chip) columns + artifact avatar; reconcile extra columns | `ui`,`typescript`,`multi-protocol` | Y | **Y** | S | `catalog/page.tsx`, `ui/catalog/*` |
 | MFI-24.5 · #4085 | Card orb & footer refinements | Add 3rd "Debt" orb (empty), move creator chip to footer, reposition converted badge into orb row | `ui`,`typescript`,`multi-protocol` | Y | N | S | `catalog/CatalogItemCard.tsx` |
 
-### MFI-24.1 — Catalog stats row (4 metric cards) · #4081
+### MFI-24.1 — Catalog stats row (4 metric cards) · #4081 — ✅ Done
+- **Delivered.** `CatalogStatsRow` renders the four cards above the toolbar from a pure
+  `computeCatalogStats(items)` helper (no new API); `headerSubtitle` reduced to a static tagline.
+  Unit tests assert each metric from a fixture list plus a render test; see
+  `objectified-ui/src/app/utils/catalog-dashboard-stats.ts` and
+  `objectified-ui/src/app/components/ade/dashboard/catalog/CatalogStatsRow.tsx`.
 - **Problem.** The mockup opens the list with a 4-card stats grid; the implementation collapses this
   into a single `headerSubtitle` string ("N items · avg quality X · N active"), losing the
   formats-represented and converted-to-OpenAPI metrics and the letter grade on avg quality.
