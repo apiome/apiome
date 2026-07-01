@@ -334,6 +334,10 @@ def load_format_breaking_change_classifiers() -> None:
     # GraphQL-Inspector.
     from . import graphql_diff as _graphql_diff  # noqa: F401
 
+    # Protobuf breaking-change classifier (MFI-9.5): registers under ``protobuf`` and wraps
+    # ``buf breaking`` (WIRE / WIRE_JSON / PACKAGE / FILE strictness).
+    from . import proto_breaking as _proto_breaking  # noqa: F401
+
 
 def register_breaking_change_classifier(
     cls: type[BreakingChangeClassifier],

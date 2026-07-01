@@ -5,6 +5,35 @@ All notable changes to the Objectified REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.62.0] - 2026-06-30
+
+### Added
+- **Protobuf breaking-change classifier (#3768, MFI-9.5)** — `src/app/proto_breaking.py`, the
+  fifth gRPC/Protobuf capability and the Protobuf provider on the MFI-3.3 breaking-change SPI,
+  wrapping `buf breaking`. A registered `ProtobufBreakingChangeClassifier` (format key `protobuf`)
+  subclasses the format-agnostic `BuiltinBreakingChangeClassifier`, so the synchronous SPI already
+  grades a Protobuf diff from structure alone (a reused wire `field_number` and a changed `type`
+  are breaking, an added optional field is safe) even with no `buf` binary — satisfying the
+  acceptance criteria on the always-available path. The authoritative `buf breaking` overlay is the
+  async `classify_async` / convenience `classify_protobuf(base, target, against_files=…,
+  target_files=…, strictness=…)`: `run_buf_breaking(target_files, against_files, strictness=…)`
+  materialises the new and baseline `.proto`s into two scratch `buf` modules (the new one carrying a
+  `buf.yaml` that enables the one breaking category for the strictness — `buf` reads breaking rules
+  from the input module; the baseline one carrying MFI-9.1's build-only config) and runs
+  `buf breaking <new> --against <baseline> --error-format=json` through the MFI-5.1 toolchain runner
+  (breaks on exit 100 are the normal outcome; absent/timeout/non-building protos raise
+  `ProtoBreakingError`), and `breaking_changes()` maps buf's newline-delimited JSON into
+  `ProtoBreakingChange`s namespaced `protobuf.buf-breaking.<type>` at `breaking` severity.
+  Strictness is the configurable `BufBreakingStrictness` (`WIRE` / `WIRE_JSON` / `PACKAGE` /
+  `FILE`), defaulting to `WIRE_JSON` (the default for services). Because `buf breaking`'s output is
+  file-scoped (not a canonical coordinate), the overlay applies buf's verdict at that granularity:
+  it forces the overall verdict to `breaking` when buf finds a break, and caps structural
+  over-approximations to `dangerous` when buf finds the diff wire/JSON-compatible; the per-change
+  attribution stays the structural baseline's, and it degrades gracefully to that baseline when the
+  sources or the tool are unavailable. Registered in `breaking_change.load_format_breaking_change_classifiers`.
+  Docs in `docs/proto_breaking.md`; 26 tests in `tests/test_proto_breaking.py` (+2 gated real-`buf`
+  e2e). objectified-rest 1.61.0 → 1.62.0.
+
 ## [1.61.0] - 2026-06-30
 
 ### Added
