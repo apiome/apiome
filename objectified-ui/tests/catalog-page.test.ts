@@ -116,8 +116,10 @@ describe('CatalogItemCard wiring (MFI-23.4)', () => {
     // The convert action label is derived (Convert vs Re-convert) from the item's conversion state.
     expect(src).toContain('convertActionLabel(item.conversion)');
     // No publish action label, handler or icon — the catalog is the non-publishable slice (MFI-23.1).
+    // Word boundaries keep this targeted at publish *handlers*, so it doesn't false-positive on the
+    // domain term "non-publishable" (e.g. the CatalogNonPublishableBanner identifier, MFI-24.3).
     expect(src).not.toMatch(/>\s*Publish/);
-    expect(src).not.toMatch(/onPublish|handlePublish|publishProject/);
+    expect(src).not.toMatch(/\bonPublish\b|\bhandlePublish\b|\bpublishProject\b/);
   });
 });
 

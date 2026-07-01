@@ -223,7 +223,6 @@ and the `CatalogSupportedFormats` gallery — those stay as-is.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 |---|---|---|---|---|---|---|---|
-| MFI-24.3 · #4083 | Persistent non-publishable banner | Show the info banner on the populated list, not only the empty state | `ui`,`multi-protocol` | Y | N | XS | `catalog/page.tsx` |
 | MFI-24.4 · #4084 | Table view column parity | Add Protocol, Source, Grade(letter chip) columns + artifact avatar; reconcile extra columns | `ui`,`typescript`,`multi-protocol` | Y | **Y** | S | `catalog/page.tsx`, `ui/catalog/*` |
 | MFI-24.5 · #4085 | Card orb & footer refinements | Add 3rd "Debt" orb (empty), move creator chip to footer, reposition converted badge into orb row | `ui`,`typescript`,`multi-protocol` | Y | N | S | `catalog/CatalogItemCard.tsx` |
 
@@ -278,16 +277,15 @@ and the `CatalogSupportedFormats` gallery — those stay as-is.
 [ Event ─ 1 item ─────────────────────────]  ...
 ```
 
-### MFI-24.3 — Persistent non-publishable banner · #4083
-- **Problem.** The mockup keeps a prominent info banner ("Catalog items are non-publishable… only path
-  is Convert to OpenAPI; OpenAPI/Swagger land in Projects") on the populated list. The implementation
-  only carries this messaging in the empty state.
-- **Solution / scope.** Render the `note.info` banner between page head and toolbar on the populated
-  list; dismissible-per-session optional. Source: mockup `index.html:373-380`.
-- **Acceptance criteria.** Banner shows on populated + empty list; copy matches mockup intent; passes
-  a11y (role=note); snapshot/unit test.
-- **Dependencies / parallelism.** Independent; parallel. Non-MVP (informational).
-- **Tech stack.** React/TSX, Tailwind.
+### MFI-24.3 — Persistent non-publishable banner · #4083 — ✅ Done
+- **Delivered.** A self-contained `CatalogNonPublishableBanner` (`role="note"`) renders at the top of
+  the Catalog content stack, above the gallery/stats/toolbar, so the "items are non-publishable →
+  Convert to OpenAPI → OpenAPI/Swagger land in Projects" messaging shows on both the populated and
+  empty list. Copy mirrors `note.info` in
+  `docs/planning/mockups/multi-format-import/index.html:389-396`; the banner is persistent (the
+  optional dismiss-per-session was skipped). Render tests assert the note landmark and each copy
+  point; see `objectified-ui/src/app/components/ade/dashboard/catalog/CatalogNonPublishableBanner.tsx`
+  and `objectified-ui/tests/catalog-nonpublishable-banner.test.tsx`.
 
 ### MFI-24.4 — Table view column parity · #4084
 - **Problem.** The table columns are Name/Description/Format/Quality/Status/Created-By/Created/Updated;

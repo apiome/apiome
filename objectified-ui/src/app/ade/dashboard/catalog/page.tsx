@@ -68,6 +68,7 @@ import { CatalogLintReportDialog } from '../../../components/ade/dashboard/catal
 import { ConversionPreviewDialog } from '../../../components/ade/dashboard/catalog/ConversionPreviewDialog';
 import { CatalogSupportedFormats } from '../../../components/ade/dashboard/catalog/CatalogSupportedFormats';
 import { CatalogStatsRow } from '../../../components/ade/dashboard/catalog/CatalogStatsRow';
+import { CatalogNonPublishableBanner } from '../../../components/ade/dashboard/catalog/CatalogNonPublishableBanner';
 import {
   CatalogImportDialog,
   type JsonSchemaHandoffPayload,
@@ -851,6 +852,9 @@ const Catalog = () => {
 
       <main className={dashboardMainClass} aria-busy={listLoading}>
         <div className={dashboardContentStackClass}>
+          {/* Persistent non-publishable info banner (MFI-24.3). Rendered above the gallery, stats and
+              toolbar so it shows on both the empty and populated list, matching the mockup. */}
+          <CatalogNonPublishableBanner />
           {/* Auto-expand the gallery for an empty catalog (nothing imported yet); collapse it once
               there are items. Keying on that boundary remounts with the right initial state. */}
           <CatalogSupportedFormats
