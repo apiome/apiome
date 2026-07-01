@@ -48,9 +48,18 @@ interface Props {
   onClose: () => void;
   onComplete: () => void;
   onMessage: (type: 'success' | 'error', message: string) => void;
+  initialSource?: PrimitiveImportInitialSource | null;
 }
 
 type WizardStep = 'source' | 'review' | 'result';
+
+export interface PrimitiveImportInitialSource {
+  sourceKind?: SourceKind;
+  sourceMethod?: SourceMethod;
+  text?: string;
+  document?: Record<string, unknown> | null;
+  label?: string | null;
+}
 
 /** Source-kind cards offered in the source step. */
 const SOURCE_KIND_CARDS: Array<{ kind: SourceKind; title: string; description: string; icon: typeof FileJson }> = [
@@ -82,19 +91,21 @@ const STATUS_BADGE: Record<ReviewStatus, { variant: 'success' | 'secondary' | 'w
   invalid: { variant: 'error', label: 'Invalid' },
 };
 
-export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }: Props) {
+export default function PrimitiveImportDialog({ onClose, onComplete, onMessage, initialSource }: Props) {
   const [step, setStep] = useState<WizardStep>('source');
 
   // Source selection + options.
-  const [sourceKind, setSourceKind] = useState<SourceKind>('json-schema');
-  const [sourceMethod, setSourceMethod] = useState<SourceMethod>('file');
+  const [sourceKind, setSourceKind] = useState<SourceKind>(initialSource?.sourceKind ?? 'json-schema');
+  const [sourceMethod, setSourceMethod] = useState<SourceMethod>(initialSource?.sourceMethod ?? 'file');
   const [targetNamespace, setTargetNamespace] = useState('');
   const [mapCoreFormats, setMapCoreFormats] = useState(true);
   const [dedupe, setDedupe] = useState(true);
 
   // Parsed source document + provenance label.
-  const [parsedDoc, setParsedDoc] = useState<Record<string, unknown> | null>(null);
-  const [sourceLabel, setSourceLabel] = useState<string | null>(null);
+  const [parsedDoc, setParsedDoc] = useState<Record<string, unknown> | null>(
+    initialSource?.document ?? (initialSource?.text ? parseSchemaContent(initialSource.text) : null)
+  );
+  const [sourceLabel, setSourceLabel] = useState<string | null>(initialSource?.label ?? null);
   const [parseError, setParseError] = useState<string | null>(null);
 
   // Source intake state (file / url / paste).
@@ -103,7 +114,7 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage }
   const [isLoadingFile, setIsLoadingFile] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
-  const [schemaText, setSchemaText] = useState('');
+  const [schemaText, setSchemaText] = useState(initialSource?.text ?? '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Review + commit state.

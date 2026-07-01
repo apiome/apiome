@@ -3,7 +3,7 @@
 Exercise :func:`app.import_routing.decide_import_routing` directly against small stub
 adapters and hand-built canonical models, covering the ticket's acceptance criteria:
 
-* OpenAPI/Swagger (incl. TypeSpec-emitted OpenAPI) → publishable **Project**;
+* OpenAPI/Swagger/Arazzo (incl. TypeSpec-emitted OpenAPI) → publishable **Project**;
 * a non-OpenAPI OpenAPI-worthy source (gRPC/GraphQL/AsyncAPI/OData/…) → non-publishable
   **catalog item**;
 * a pure data-schema source (Avro/Protobuf-schema/JSON-Schema/XSD) → catalog item flagged
@@ -158,8 +158,8 @@ def test_openapi_31_routes_to_project() -> None:
     assert "publishable Project" in decision.reason
 
 
-def test_openapi_30_and_swagger_route_to_project() -> None:
-    for fmt in ("openapi-3.0", "swagger-2.0"):
+def test_openapi_30_swagger_and_arazzo_route_to_project() -> None:
+    for fmt in ("openapi-3.0", "swagger-2.0", "arazzo"):
         decision = _decide(
             key="openapi", paradigm=ApiParadigm.REST, fmt=fmt, operations=1
         )
@@ -167,8 +167,8 @@ def test_openapi_30_and_swagger_route_to_project() -> None:
         assert decision.publishable is True, fmt
 
 
-def test_publishable_formats_set_is_the_openapi_family() -> None:
-    assert PUBLISHABLE_FORMATS == {"openapi-3.0", "openapi-3.1", "swagger-2.0"}
+def test_publishable_formats_set_is_the_project_family() -> None:
+    assert PUBLISHABLE_FORMATS == {"openapi-3.0", "openapi-3.1", "swagger-2.0", "arazzo"}
 
 
 def test_typespec_emitting_openapi_routes_to_project() -> None:
@@ -257,6 +257,7 @@ def test_json_schema_only_flagged() -> None:
     )
     assert decision.schemas_only is True
     assert decision.target is ImportTarget.CATALOG
+    assert decision.publishable is False
 
 
 def test_types_without_operations_flagged_schemas_only_even_if_paradigm_mislabeled() -> None:

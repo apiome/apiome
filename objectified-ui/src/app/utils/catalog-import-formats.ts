@@ -22,6 +22,35 @@ export interface CatalogAdapterSource {
   label: string;
 }
 
+export type CatalogImportDestination =
+  | 'catalog'
+  | 'project'
+  | 'json-schema-choice'
+  | 'not-importable';
+
+export interface CatalogImportRoutingDecision {
+  destination: CatalogImportDestination;
+  label: string;
+  description: string;
+  adapter: CatalogAdapterSource | null;
+}
+
+const PROJECT_FORMATS = new Set([
+  'openapi',
+  'openapi-3.0',
+  'openapi-3.1',
+  'swagger',
+  'swagger-2.0',
+  'arazzo',
+]);
+
+const JSON_SCHEMA_FORMATS = new Set([
+  'jsonschema',
+  'json-schema',
+  'json-schema-2020-12',
+  'json schema',
+]);
+
 /**
  * Detected-format token → adapter source. Keys are the `AnalysisResult.format` values the client
  * analyzer emits; a Protobuf document (`.proto`) routes to the gRPC adapter (its registry key is
@@ -46,6 +75,47 @@ export function catalogAdapterForFormat(
 ): CatalogAdapterSource | null {
   if (!format) return null;
   return FORMAT_TO_ADAPTER[format.trim().toLowerCase()] ?? null;
+}
+
+export function decideCatalogImportRouting(
+  format: string | null | undefined,
+): CatalogImportRoutingDecision {
+  const key = (format ?? '').trim().toLowerCase();
+  const adapter = catalogAdapterForFormat(key);
+
+  if (adapter) {
+    return {
+      destination: 'catalog',
+      label: 'Catalog',
+      description: `${adapter.label} imports are stored in the catalog and converted only when explicitly requested.`,
+      adapter,
+    };
+  }
+
+  if (PROJECT_FORMATS.has(key)) {
+    return {
+      destination: 'project',
+      label: 'Projects',
+      description: 'OpenAPI, Swagger, and Arazzo create publishable Project versions instead of catalog items.',
+      adapter: null,
+    };
+  }
+
+  if (JSON_SCHEMA_FORMATS.has(key)) {
+    return {
+      destination: 'json-schema-choice',
+      label: 'Choose destination',
+      description: 'JSON Schema can be stored in the catalog for later conversion or imported as current Types/Projects schema.',
+      adapter: null,
+    };
+  }
+
+  return {
+    destination: 'not-importable',
+    label: 'Not importable yet',
+    description: 'This format is recognized but does not have a catalog importer yet.',
+    adapter: null,
+  };
 }
 
 /** Whether a detected format can be stored (unconverted) in the catalog today. */

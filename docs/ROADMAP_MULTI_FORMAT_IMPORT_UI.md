@@ -1,7 +1,7 @@
 # Roadmap — Multi-Format Import: Catalog UI (Mockup Parity)
 
 > **Status:** ✅ **Issues filed on `objectified-project/objectified`** — epics **#4077–#4080**
-> (MFI-EPIC-24…27) and 20 issues **#4081–#4100**, all sub-issues under umbrella **#3715**.
+> (MFI-EPIC-24…27) and 23 issues **#4081–#4103**, all sub-issues under umbrella **#3715**.
 > This roadmap enumerates the UI work needed to
 > bring the shipped Catalog (multi-format import) surfaces up to the reference mockup at
 > `docs/planning/mockups/multi-format-import/index.html`. It is a **reconciliation / parity
@@ -54,7 +54,7 @@ MVP except two enrichment fields** (25.2, 25.6):
 - **Lint** `GET /v1/catalog/{tenant}/{item}/lint` → `{score,grade,findings[],ruleHits,severity_counts}`.
 - **Convert** `POST /v1/catalog/{tenant}/{item}/convert?dryRun=` → `{report(FidelityReport),openapi,…}`.
 - **Import sources** `GET /v1/import/sources` → `ImportSourceDescriptor[]` (key,label,icon,paradigm,
-  `input_kinds[file|url|paste|discovery]`,`live_discovery`).
+  `input_kinds[file|url|paste]`; alternate source kinds may be added later per format capability).
 - **Detect** `POST /v1/import/detect` → candidates `{format,confidence,importable,source_key}`.
 - **Import job** `POST /v1/tenants/{tenant}/imports[/upload]` → `202 {job_id}`; poll `GET …/{job}` →
   `{status,progress,result{routing_decision{target,publishable,reason,paradigm,format,counts}}}`;
@@ -66,6 +66,84 @@ Two data gaps the UI cannot render without backend help (documented as enabler i
 2. The mockup's **per-category lint bars** (e.g. "Schema hygiene 95") need category-rollup scores;
    `/lint` returns findings + `severity_counts` but not per-category 0–100 scores. → **MFI-25.6**
    (bars degrade gracefully to a category-severity breakdown until then).
+
+### 0.2.1 UI gap found during mockup review — import destination guide
+
+The roadmap now has a precise routing policy (§0.3), but the mockup only reveals that policy after a
+sample artifact has been detected. That leaves users guessing whether OpenAPI/Arazzo will leave the
+Catalog flow, whether JSON Schema will prompt, and which formats are currently adapter-backed before
+they choose a source.
+
+**Recommended component.** Fold an **Import destination guide** into **MFI-26.1 / 26.3** rather than
+filing a new issue: a side-by-side import panel where source selection sits beside a compact routing
+reference, with a horizontal divider under each panel heading. The routing side lists (1) implemented
+catalog adapters, (2) project-routed formats, (3) the JSON Schema choice branch, and (4)
+recognized-but-not-yet importable formats. The guide should be driven from the same routing helper and
+`/v1/import/sources` metadata as the source panel, so it does not drift from the enforcement logic.
+
+**Acceptance criteria addendum.** Before upload/fetch/paste, users can see where each major format
+will land; the detected-format routing note highlights the matching guide row; JSON Schema is visibly
+called out as the only prompt; unavailable formats are labeled "recognized, not importable yet" instead
+of appearing as active choices.
+
+### 0.3 Import routing policy (request refinement, verbatim)
+
+> Make sure that the import functionality in Catalog matches the import formats that have been
+> implemented, and are strictly imported into the catalog, and not into a new project with a new
+> version. Imported items into the catalog are intended to stay in the catalog, and only move to the
+> projects when converted. They are never automatically converted when imported into the catalog.
+> Only two types of imports into the catalog are _not_ supported: OpenAPI and Arazzo. These
+> SPECIFICALLY create projects. Everything else does not. JSON schema files still create projects,
+> but when these types are detected (specifically JSON Schema 2020-12 or variants) will ask a user if
+> they want to import into the catalog for later conversion, or if they want to import them into
+> types/projects. If they decide the latter, import will allow them to import the type or schema as
+> current.
+
+This refinement pins the **destination** of every import and closes three gaps against today's
+backend (`objectified-rest/src/app/import_routing.py`), where `PUBLISHABLE_FORMATS =
+{openapi-3.0, openapi-3.1, swagger-2.0}` → Projects and **everything else → catalog**:
+(a) **Arazzo** currently falls through to the catalog but must route to **Projects**; (b) **JSON
+Schema 2020‑12/variants** currently routes to the catalog as *schemas‑only* but must instead **prompt**
+the user; (c) the catalog importer must **guarantee** it never mints a publishable Project/version and
+never auto‑converts.
+
+**Destination decision table**
+
+| Detected format | Destination | Prompt user? | Auto‑convert on import? |
+|---|---|---|---|
+| OpenAPI 3.0 / 3.1, Swagger 2.0 (incl. TypeSpec‑emitted OpenAPI) | **Projects** (publishable) | No | n/a |
+| **Arazzo** | **Projects** (publishable) | No | n/a |
+| **JSON Schema 2020‑12 & variants** | **Prompt →** Catalog *or* Types/Projects | **Yes** | No |
+| gRPC/Protobuf · GraphQL · AsyncAPI (implemented adapters) | **Catalog** (non‑publishable) | No | **No — stays in catalog until explicit Convert** |
+| Other recognized non‑OpenAPI formats without an adapter yet | shown as *recognized, not importable yet* | No | n/a |
+
+**Rules enforced by this roadmap:**
+1. **Only OpenAPI and Arazzo specifically create Projects.** Everything else does not.
+2. **Catalog imports are stored verbatim and stay in the catalog** — never auto‑converted, never given
+   a publishable project/version. They move to Projects **only** via the explicit Convert‑to‑OpenAPI
+   flow (**MFI-EPIC-22**).
+3. **JSON Schema is the only format that asks the user**: *Catalog (for later conversion)* vs
+   *Types/Projects (import the type/schema as current)*. Choosing the latter uses the existing
+   type/schema import path; choosing the former stores a non‑publishable catalog item.
+4. **The import source panel offers only the base source methods**: File Upload, URL Import, and
+   Clipboard paste. Alternate source methods can be added later only when a format supports that intake.
+
+```mermaid
+flowchart TD
+  IN[Import artifact] --> DET{Detect format}
+  DET -->|OpenAPI / Swagger| PRJ[(Projects · publishable)]
+  DET -->|Arazzo| PRJ
+  DET -->|JSON Schema 2020-12<br/>or variant| ASK{Ask user}
+  ASK -->|Catalog · for later conversion| CAT[Catalog · non-publishable]
+  ASK -->|Types / Projects · as current| TYP[(Types / Projects · current)]
+  DET -->|gRPC · GraphQL · AsyncAPI · other adapter-backed| CAT
+  CAT -->|explicit Convert to OpenAPI · MFI-EPIC-22| PRJ
+  CAT -. never auto-converted .-> CAT
+```
+
+This policy is implemented by **MFI-26.6 / 26.7 / 26.8** (below) and constrains **MFI-26.1** (source
+panel = File Upload / URL Import / Clipboard paste) and **MFI-26.3** (the predicted routing note must
+reflect this table).
 
 ---
 
@@ -81,14 +159,16 @@ GraphQL, AsyncAPI), gets the mockup's core experience end-to-end:**
    Source & Code shows the **raw source read-only in Monaco**, and Lint & Score renders **inline**
    (gauge + findings). (MFI-25.1–25.5)
 3. **Import** is a **stepped, multi-source modal** (File / URL / Clipboard) that surfaces the
-   **auto-detected format + confidence** and the **predicted routing** (Catalog vs Projects).
-   (MFI-26.1–26.3)
+   **auto-detected format + confidence** and the **predicted routing** (Catalog vs Projects), and
+   **enforces the §0.3 routing policy**: only OpenAPI + Arazzo create Projects; all implemented
+   non-OpenAPI formats import **strictly into the catalog** (never auto-converted); JSON Schema
+   2020-12/variants **prompts** the user (catalog vs types/projects). (MFI-26.1–26.3, 26.6–26.8)
 4. **Convert** already meets parity; MVP only relabels the CTA and wires it as the detail's primary
    action. (folded into MFI-25.1 / MFI-27.1)
 
-**Explicitly out of MVP** (documented, deferred): live-discovery intake (gRPC reflection / GraphQL
-introspection / Schema Registry — MFI-26.5, gated on backend discovery adapters), inline versions
-timeline + diff-select (MFI-25.7), provenance enrichment (MFI-25.8), dry-run action (MFI-26.4),
+**Explicitly out of MVP** (documented, deferred): alternate import sources beyond File/URL/Clipboard
+(MFI-26.5, gated on per-format source capability), inline versions timeline + diff-select
+(MFI-25.7), provenance enrichment (MFI-25.8), dry-run action (MFI-26.4),
 category-score bars enabler (MFI-25.6), and cosmetic polish (MFI-24.3, 24.5, 27.1, 27.2).
 
 **Non-goals:** read-only Designer/Studio view of catalog items (already tracked as **MFI-23.12
@@ -103,7 +183,7 @@ change to the publishable/non-publishable DB invariant (MFI-23.1/23.8, shipped).
 |---|---|---|---|---|
 | **MFI-EPIC-24** | Catalog List Screen Parity | 24.1–24.5 | Stats, paradigm grouping, table columns, card refinements | ◐ partial |
 | **MFI-EPIC-25** | Catalog Detail View Parity | 25.1–25.8 | Tabbed IA, parsed rendering, Monaco source, inline lint | ● core |
-| **MFI-EPIC-26** | Multi-Source Import Modal | 26.1–26.5 | Stepper, source grid, detect+route, discovery | ◐ partial |
+| **MFI-EPIC-26** | Multi-Source Import Modal | 26.1–26.8 | Stepper, File/URL/Clipboard intake, detect+route, **§0.3 routing policy**, source extensibility | ◐ partial |
 | **MFI-EPIC-27** | Convert Modal & Cross-Surface Polish | 27.1–27.2 | CTA copy, look-and-feel alignment | ○ polish |
 
 ```mermaid
@@ -119,8 +199,9 @@ graph TD
     A256["25.6 (rest) Lint category scores"]; A257["25.7 Versions timeline"]; A258["25.8 Provenance enrich"]
   end
   subgraph I["MFI-EPIC-26 · Import"]
-    A261["26.1 Stepper + source grid"]; A262["26.2 URL + paste intake"]
-    A263["26.3 Detect + routing note"]; A264["26.4 Dry-run"]; A265["26.5 Live discovery"]
+    A261["26.1 Stepper + source panel"]; A262["26.2 URL + paste intake"]
+    A263["26.3 Detect + routing note"]; A264["26.4 Dry-run"]; A265["26.5 Alternate sources"]
+    A266["26.6 Routing policy + guardrails"]; A267["26.7 JSON Schema prompt"]; A268["26.8 (rest) JSON Schema as-current"]
   end
   subgraph P["MFI-EPIC-27 · Polish"]
     A271["27.1 Convert CTA copy"]; A272["27.2 Look-and-feel"]
@@ -128,6 +209,7 @@ graph TD
   A252 --> A253; A251 --> A253; A251 --> A254; A251 --> A255
   A256 -. bars .-> A255; A251 --> A257; A251 --> A258; A251 --> A271
   A261 --> A262; A261 --> A263; A263 --> A264; A261 --> A265
+  A266 --> A261; A266 --> A263; A261 --> A267; A266 --> A267; A268 --> A267
 ```
 
 ---
@@ -364,38 +446,45 @@ graph LR
 ## MFI-EPIC-26 — Multi-Source Import Modal · #4079
 
 `CatalogImportDialog.tsx` is a single-step **file-only** dropzone supporting 3 storable formats. The
-mockup is a 4-step wizard with a 6-tile source grid (File/URL/Clipboard + 3 LIVE discovery), auto-detect
-confidence, and a routing-decision note. This epic rebuilds it to the mockup while binding to the
-existing import job + detect endpoints.
+mockup is a 4-step wizard with side-by-side source/destination panels, using the current base source
+methods — File Upload, URL Import, and Clipboard paste — plus auto-detect confidence and a
+routing-decision note. This epic rebuilds it to the mockup while binding to the
+existing import job + detect endpoints, and it **enforces the §0.3 import routing policy** — only
+OpenAPI + Arazzo create Projects; all implemented non-OpenAPI formats import **strictly into the
+catalog** (never auto-converted); JSON Schema 2020-12/variants **prompts** the user (26.6–26.8).
 
 ```
 Step 1 Source     Step 2 Detect & route     Step 3 Options   Step 4 Import
 ┌─────┬─────┬─────┐  Auto-detected: GraphQL   store_raw,       submit → poll
 │File │URL  │Clip │  SDL (0.98) · paradigm    format hint,     → routing_decision
-├─────┼─────┼─────┤  graph                     defaults         → Catalog / Projects
-│gRPC*│GQL* │Reg* │  Routing → Catalog
-└─────┴─────┴─────┘  (non-publishable)         (* = LIVE, 26.5)
+└─────┴─────┴─────┘  Routing → Catalog         defaults         → Catalog / Projects
+Destination guide: Catalog / Projects / JSON Schema choice / future sources
 ```
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 |---|---|---|---|---|---|---|---|
-| MFI-26.1 · #4094 | Stepped import shell + source grid | 4-step stepper + 6-tile source grid (File/URL/Clipboard + 3 LIVE placeholders) | `ui`,`typescript`,`import` | N | **Y** | L | `CatalogImportDialog.tsx` |
+| MFI-26.1 · #4094 | Stepped import shell + source panel | 4-step stepper + side-by-side source/destination panels for File Upload, URL Import, Clipboard paste | `ui`,`typescript`,`import` | N | **Y** | L | `CatalogImportDialog.tsx` |
 | MFI-26.2 · #4095 | URL + clipboard/paste intake | Wire URL fetch and paste-text intake to the import job engine | `ui`,`typescript`,`import` | N | **Y** | M | `CatalogImportDialog.tsx`, api proxies |
 | MFI-26.3 · #4096 | Auto-detect + routing note | Surface detect confidence/paradigm + predicted Catalog-vs-Projects routing | `ui`,`typescript`,`import` | N | **Y** | S | `CatalogImportDialog.tsx` |
 | MFI-26.4 · #4097 | Dry-run preview action | Add a non-committing dry-run that previews detection/routing without storing | `ui`,`typescript`,`import` | Y | N | S | `CatalogImportDialog.tsx` |
-| MFI-26.5 · #4098 | Live-discovery intake | gRPC reflection / GraphQL introspection / Schema Registry intake tiles | `ui`,`import`,`integrations` | Y | N | L | import dialog + `rest` discovery |
+| MFI-26.5 · #4098 | Alternate import source extensibility | Add future source methods only when a format can be imported through alternate intake | `ui`,`import`,`integrations` | Y | N | M | import dialog + import source registry |
+| MFI-26.6 · #4101 | Import routing policy & catalog-only guardrails | Only OpenAPI+Arazzo → Projects; all else → catalog, never auto-converted/publishable | `ui`,`rest`,`import`,`validation` | N | **Y** | M | `import_routing.py`, `CatalogImportDialog.tsx` |
+| MFI-26.7 · #4102 | JSON Schema 2020-12 disambiguation prompt | On JSON Schema detect, ask Catalog (later conversion) vs Types/Projects (as current) | `ui`,`typescript`,`import` | N | **Y** | M | `CatalogImportDialog.tsx` |
+| MFI-26.8 · #4103 | (rest) JSON Schema "import as current" path | Backend path to import JSON Schema as a current type/schema into types/projects | `rest`,`import`,`validation` | Y | **Y** | M | `import_routing.py`, spec-import job, type registry |
 
-### MFI-26.1 — Stepped import shell + source grid · #4094
-- **Problem.** The import dialog is single-step and file-only; the mockup is a 4-step wizard fronted by a
-  6-tile source grid, three of which are LIVE discovery sources.
-- **Solution / scope.** Rebuild as a stepper (Source → Detect & route → Options → Import). Render the
-  source grid from `GET /v1/import/sources` (`input_kinds`, `live_discovery`) so tiles reflect real
-  capability: File / URL / Clipboard active; gRPC reflection / GraphQL introspection / Schema Registry
-  shown as **LIVE-tagged** tiles (disabled/"coming soon" until 26.5). Preserve today's file dropzone as
-  the File tile's step-2 body. Source: mockup import modal (`index.html:506-555`).
-- **Acceptance criteria.** Stepper advances/back; source grid renders from `/import/sources`; File path
-  reproduces current upload→preview→store; LIVE tiles visibly gated; test covers step navigation +
-  grid render from a mocked sources response.
+### MFI-26.1 — Stepped import shell + source panel · #4094
+- **Problem.** The import dialog is single-step and file-only; the mockup is a 4-step wizard fronted by
+  the current base source methods: **File Upload**, **URL Import**, and **Clipboard paste**.
+- **Solution / scope.** Rebuild as a stepper (Source → Detect & route → Options → Import). Render a
+  side-by-side source/destination panel from `GET /v1/import/sources` (`input_kinds`) so tiles reflect
+  real capability: File / URL / Clipboard only for the current base importer. Preserve today's file
+  dropzone as the File tile's step-2 body. Per §0.3 / **26.6**, the destination guide explains where
+  detected formats land without adding alternate source methods prematurely. Source: mockup import
+  modal (`index.html:506-555`).
+- **Acceptance criteria.** Stepper advances/back; source panel renders exactly File Upload / URL Import /
+  Clipboard paste from `/import/sources`; File path reproduces current upload→preview→store; URL and
+  paste slots are present for 26.2; no reflection/introspection/registry tiles appear; test covers step
+  navigation + panel render from a mocked sources response.
 - **Dependencies / parallelism.** Foundation for 26.2/26.3/26.4/26.5; do **first** in EPIC-26.
 - **Tech stack.** React/TSX, Tailwind, `useImportSources`.
 
@@ -414,12 +503,13 @@ Step 1 Source     Step 2 Detect & route     Step 3 Options   Step 4 Import
 - **Problem.** Detection runs but confidence/paradigm isn't shown, and there's no routing note telling
   the user the artifact will land in Catalog (vs Projects for OpenAPI/Swagger/TypeSpec-emitted).
 - **Solution / scope.** Call `POST /v1/import/detect` in step 2 and show "Auto-detected: <format>
-  (confidence X) · paradigm Y"; compute a **predicted** routing note client-side (native format →
-  Projects; else → Catalog non-publishable), matching the job's eventual `routing_decision`. Sources:
-  mockup notes (`index.html:535-545`); `/import/detect`; `import_routing.decide_import_routing`.
-- **Acceptance criteria.** Confidence + paradigm shown after source input; routing note matches final
-  `routing_decision.target` for the MVP formats and for an OpenAPI control; ambiguous detection handled;
-  test with mocked detect responses.
+  (confidence X) · paradigm Y"; compute a **predicted** routing note client-side that reflects the §0.3
+  table — **OpenAPI/Swagger and Arazzo → Projects**; **JSON Schema 2020-12/variants → prompt** (26.7);
+  **everything else → Catalog non-publishable** — matching the job's eventual `routing_decision`.
+  Sources: §0.3; mockup notes (`index.html:535-545`); `/import/detect`; `import_routing.decide_import_routing`.
+- **Acceptance criteria.** Confidence + paradigm shown after source input; routing note matches the §0.3
+  destination for OpenAPI, Arazzo, JSON Schema (prompt), and an adapter-backed catalog format; ambiguous
+  detection handled; test with mocked detect responses.
 - **Dependencies / parallelism.** Depends on **26.1**. No new backend.
 - **Tech stack.** React/TSX, `/import/detect`.
 
@@ -433,19 +523,79 @@ Step 1 Source     Step 2 Detect & route     Step 3 Options   Step 4 Import
 - **Dependencies / parallelism.** Depends on 26.1; parallel with 26.2/26.3. Non-MVP.
 - **Tech stack.** React/TSX, import proxies.
 
-### MFI-26.5 — Live-discovery intake · #4098
-- **Problem.** The mockup's three LIVE tiles (gRPC reflection, GraphQL introspection, Schema Registry)
-  have no implementation; `/import/sources` advertises `live_discovery` but adapters may be v2.
-- **Solution / scope.** Wire the discovery tiles to `source_kind:'discovery'` import flows (endpoint URL
-  + optional interval) **once** backend discovery adapters exist; until then keep tiles gated with a
-  clear "coming soon". Confirm adapter availability per format before enabling. Sources: `input_kinds`
-  containing `discovery`, `live_discovery:true`; per-format epics (gRPC #3724, GraphQL #3725, Avro/
-  Registry #3727).
-- **Acceptance criteria.** For each format with a live adapter, discovery import produces a catalog item;
-  tiles without an adapter stay gated; test covers gated + enabled states.
-- **Dependencies / parallelism.** Depends on **26.1** and on backend discovery adapters (external).
+### MFI-26.5 — Alternate import source extensibility · #4098
+- **Problem.** The current base importer should not expose reflection, introspection, registry, or other
+  alternate source methods because those artifacts are imported through File Upload, URL Import, or
+  Clipboard paste today. Future formats may later support additional intake methods.
+- **Solution / scope.** Keep the source panel limited to File / URL / Clipboard until a format-specific
+  alternate intake is actually available. When that happens, extend `/v1/import/sources` with a source
+  kind and label that describes the capability, then add the tile behind the same source registry rather
+  than hard-coding format-specific shortcuts into the dialog.
+- **Acceptance criteria.** No alternate source tile appears unless backed by a format capability; current
+  mockup and tests show only File Upload / URL Import / Clipboard paste; adding a future source kind is
+  data-driven through the source registry.
+- **Dependencies / parallelism.** Depends on **26.1** and on future per-format source capability.
   Non-MVP; likely v2.
-- **Tech stack.** React/TSX + `rest` discovery adapters.
+- **Tech stack.** React/TSX + import source registry.
+
+### MFI-26.6 — Import routing policy & catalog-only guardrails · #4101
+- **Problem.** Per §0.3, only **OpenAPI and Arazzo** may create Projects; every other implemented
+  format must import **strictly into the catalog**, is **never auto-converted**, and never mints a
+  publishable project/version. Today the backend routes only the OpenAPI/Swagger family to Projects
+  (so **Arazzo wrongly lands in the catalog**), and the UI has no guardrail asserting the catalog path
+  produces a non-publishable, unconverted item.
+- **Solution / scope.** (Backend) add **Arazzo** to the publishable/Project routing in
+  `import_routing.decide_import_routing` (`PUBLISHABLE_FORMATS` + Arazzo detection), keeping all other
+  formats on the non-publishable catalog branch; assert the catalog branch never triggers conversion.
+  (UI) `CatalogImportDialog` routes OpenAPI/Arazzo to the **Projects** import path and only ever stores
+  other implemented formats as **catalog** items — no auto-convert, no publishable project/version.
+  Encode the §0.3 decision table as the single source of truth. Sources: §0.3; `import_routing.py`;
+  `catalog-import-formats.ts`.
+- **Acceptance criteria.**
+  - [ ] OpenAPI/Swagger **and Arazzo** import as publishable Projects; nothing else does.
+  - [ ] gRPC/Protobuf, GraphQL, AsyncAPI import as **catalog items only** — no project/version, no
+    conversion performed at import time.
+  - [ ] A catalog item has **no** converted OpenAPI project until an explicit Convert (MFI-EPIC-22).
+  - [ ] Routing table covered by unit tests (backend `decide_import_routing` + UI routing helper).
+- **Dependencies / parallelism.** Anchors §0.3; constrains **26.1**/**26.3**; pairs with **26.7/26.8**
+  for the JSON Schema branch. Backend + UI.
+- **Tech stack.** FastAPI/Pydantic (`import_routing.py`), React/TSX (`CatalogImportDialog.tsx`), pytest + Jest.
+
+### MFI-26.7 — JSON Schema 2020-12 disambiguation prompt · #4102
+- **Problem.** JSON Schema serves two purposes — a **catalog** artifact for later conversion, or a
+  **type/schema** imported *as current* into Types/Projects. On detecting **JSON Schema 2020-12 or a
+  variant**, the importer must ask which the user wants; today such files route silently to the catalog.
+- **Solution / scope.** When detection (`/v1/import/detect`) reports JSON Schema 2020-12/variants, show a
+  choice step: **(a) Import into Catalog** (for later conversion) → non-publishable catalog item;
+  **(b) Import into Types/Projects** (as current) → the existing type/schema import path (via **26.8**).
+  Only JSON Schema triggers this prompt — OpenAPI/Arazzo never prompt, other catalog formats never
+  prompt. Source: §0.3; mockup detect note (`index.html:535-539`).
+- **Acceptance criteria.**
+  - [ ] Prompt appears **only** for JSON Schema 2020-12/variants (schema-dialect detection).
+  - [ ] "Catalog" stores a non-publishable catalog item (no conversion); "Types/Projects" imports as
+    current via 26.8.
+  - [ ] OpenAPI/Arazzo/gRPC/GraphQL/AsyncAPI imports are unaffected (no prompt).
+  - [ ] Tests cover both branches + the no-prompt formats.
+- **Dependencies / parallelism.** Depends on **26.1** (import shell) and **26.6** (policy); the
+  Types/Projects branch depends on **26.8**.
+- **Tech stack.** React/TSX, `/import/detect`. Affected: `CatalogImportDialog.tsx`.
+
+### MFI-26.8 — (rest) JSON Schema "import as current" into types/projects · #4103
+- **Problem.** The "Types/Projects (as current)" choice from **26.7** needs a backend path that imports a
+  JSON Schema 2020-12 document as a **current** type/schema — distinct from the catalog store-raw path
+  and from the lossy convert flow.
+- **Solution / scope.** Extend the import job / routing to accept an explicit **target** for JSON Schema
+  (`types`/`project`) and persist the schema as a current type/schema (type registry and/or project
+  version), rather than a catalog item. Default (no user opt-in) still permits the catalog branch.
+  Sources: §0.3; `import_routing.py`; spec-import job; type registry.
+- **Acceptance criteria.**
+  - [ ] A JSON Schema import with `target=types|project` creates a **current** type/schema, not a
+    catalog item.
+  - [ ] The same document with the catalog choice still stores a non-publishable catalog item.
+  - [ ] Contract test for both targets; no regression to OpenAPI/Arazzo routing.
+- **Dependencies / parallelism.** Backend enabler for **26.7**; parallel with UI work. Coordinate with
+  the Type Registry roadmap where relevant.
+- **Tech stack.** FastAPI/Pydantic, spec-import job, type registry, pytest.
 
 ---
 
@@ -486,14 +636,14 @@ losses). Only copy/CTA-wiring and small cross-surface cosmetics remain.
 
 ## 3. Work order (sequenced)
 
-Dependencies drive ordering; within a wave, issues are parallelizable. Backend enablers (25.2, 25.6)
-start early so they never block the UI critical path.
+Dependencies drive ordering; within a wave, issues are parallelizable. Backend enablers (25.2, 25.6,
+26.8) start early so they never block the UI critical path.
 
 ```mermaid
 graph TD
-  W0["Wave 0 — backend enablers (parallel, start first)<br/>25.2 parsed model · 25.6 lint categories"]
-  W1["Wave 1 — foundations (parallel)<br/>25.1 tab shell · 26.1 import shell · 24.1 stats · 24.2 grouping · 24.4 table"]
-  W2["Wave 2 — MVP content (after foundations)<br/>25.3 parsed render (needs 25.2+25.1) · 25.4 Monaco · 25.5 inline lint<br/>26.2 url/paste · 26.3 detect+routing"]
+  W0["Wave 0 — backend enablers (parallel, start first)<br/>25.2 parsed model · 25.6 lint categories · 26.8 JSON Schema as-current"]
+  W1["Wave 1 — foundations (parallel)<br/>25.1 tab shell · 26.1 import shell · 26.6 routing policy · 24.1 stats · 24.2 grouping · 24.4 table"]
+  W2["Wave 2 — MVP content (after foundations)<br/>25.3 parsed render (needs 25.2+25.1) · 25.4 Monaco · 25.5 inline lint<br/>26.2 url/paste · 26.3 detect+routing · 26.7 JSON Schema prompt"]
   W3["Wave 3 — polish & deferred<br/>24.3 · 24.5 · 25.7 · 25.8 · 26.4 · 26.5 · 27.1 · 27.2"]
   W0 --> W2
   W1 --> W2 --> W3
@@ -501,13 +651,16 @@ graph TD
 
 **Recommended execution:**
 1. **Wave 0 (backend, parallel):** MFI-25.2 (parsed model — unblocks the biggest UI feature),
-   MFI-25.6 (lint categories — enhances bars).
+   MFI-25.6 (lint categories — enhances bars), MFI-26.8 (JSON Schema "as current" path — unblocks the
+   26.7 prompt's second branch).
 2. **Wave 1 (UI foundations, parallel):** MFI-25.1 (detail tab shell — unblocks most of EPIC-25),
-   MFI-26.1 (import shell — unblocks EPIC-26), MFI-24.1 / 24.2 / 24.4 (independent list work).
-3. **Wave 2 (MVP content):** MFI-25.3 (needs 25.2 + 25.1), MFI-25.4, MFI-25.5, MFI-26.2, MFI-26.3.
+   MFI-26.1 (import shell — unblocks EPIC-26), **MFI-26.6 (routing policy — the destination contract
+   the whole import flow enforces)**, MFI-24.1 / 24.2 / 24.4 (independent list work).
+3. **Wave 2 (MVP content):** MFI-25.3 (needs 25.2 + 25.1), MFI-25.4, MFI-25.5, MFI-26.2, MFI-26.3,
+   MFI-26.7 (JSON Schema prompt — needs 26.1/26.6, and 26.8 for its Types/Projects branch).
    → **At the end of Wave 2 the MVP is met.**
-4. **Wave 3 (polish & deferred, parallel):** MFI-24.3, 24.5, 25.7, 25.8, 26.4, 26.5 (gated on backend
-   discovery), 27.1, 27.2.
+4. **Wave 3 (polish & deferred, parallel):** MFI-24.3, 24.5, 25.7, 25.8, 26.4, 26.5 (gated on future
+   per-format source capability), 27.1, 27.2.
 
 ---
 
@@ -519,10 +672,14 @@ graph TD
   mount + wrap, inline lint gauge/findings, import stepper navigation + detect/routing notes.
   ⚠️ Heed the known jsdom setState-loop constraint on complex dialogs — test picker/REST boundaries and
   pure helpers rather than deep-rendering problematic modals.
-- **Contract (backend, pytest):** 25.2 parsed-model shape per format; 25.6 category-score rollup.
+- **Contract (backend, pytest):** 25.2 parsed-model shape per format; 25.6 category-score rollup;
+  **26.6 `decide_import_routing` table** (OpenAPI/Swagger + Arazzo → Project; gRPC/GraphQL/AsyncAPI →
+  catalog, no convert); **26.8 JSON Schema `target=types|project` vs catalog**.
 - **E2E (Playwright, `objectified-ui/e2e/`):** catalog list → open detail → switch tabs → view source in
   Monaco → open convert preview; import a fixture GraphQL/gRPC/AsyncAPI doc via File and URL and assert it
-  lands as a catalog item with correct routing.
+  lands as a **catalog item** (never a Project/version, never converted); import an **Arazzo** doc and
+  assert it lands as a **Project**; import a **JSON Schema 2020-12** doc and assert the **prompt** appears,
+  with each choice routing to catalog vs types/projects.
 - **Mockup fidelity:** visually diff each rebuilt surface against
   `docs/planning/mockups/multi-format-import/index.html` (see the repo's mockup-verify workflow).
 

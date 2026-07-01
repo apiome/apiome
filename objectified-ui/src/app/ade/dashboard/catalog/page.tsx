@@ -67,7 +67,13 @@ import { CatalogItemCard } from '../../../components/ade/dashboard/catalog/Catal
 import { CatalogLintReportDialog } from '../../../components/ade/dashboard/catalog/CatalogLintReportDialog';
 import { ConversionPreviewDialog } from '../../../components/ade/dashboard/catalog/ConversionPreviewDialog';
 import { CatalogSupportedFormats } from '../../../components/ade/dashboard/catalog/CatalogSupportedFormats';
-import { CatalogImportDialog } from '../../../components/ade/dashboard/catalog/CatalogImportDialog';
+import {
+  CatalogImportDialog,
+  type JsonSchemaHandoffPayload,
+} from '../../../components/ade/dashboard/catalog/CatalogImportDialog';
+import PrimitiveImportDialog, {
+  type PrimitiveImportInitialSource,
+} from '../primitives/PrimitiveImportDialog';
 import { FormatPill } from '../../../components/ui/catalog/FormatPill';
 import { ProtocolPill } from '../../../components/ui/catalog/ProtocolPill';
 import { SourceBadge } from '../../../components/ui/catalog/SourceBadge';
@@ -438,6 +444,7 @@ const Catalog = () => {
   // Import flow (MFI-23.12): the catalog owns the alternative (non-OpenAPI) format intake. An import
   // that produces a non-publishable item lands right back in this list, so we just reload on success.
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [primitiveImportSource, setPrimitiveImportSource] = useState<PrimitiveImportInitialSource | null>(null);
 
   const currentTenantId = (session?.user as { current_tenant_id?: string } | undefined)?.current_tenant_id;
   const currentUserId = (session?.user as { user_id?: string } | undefined)?.user_id;
@@ -1140,6 +1147,29 @@ const Catalog = () => {
           onClose={() => setShowImportDialog(false)}
           onSuccess={() => {
             void loadCatalog();
+          }}
+          onJsonSchemaAsCurrent={(payload: JsonSchemaHandoffPayload) => {
+            setPrimitiveImportSource({
+              sourceKind: 'json-schema',
+              sourceMethod: 'paste',
+              text: payload.text,
+              document: payload.document,
+              label: payload.label,
+            });
+          }}
+        />
+      ) : null}
+
+      {primitiveImportSource ? (
+        <PrimitiveImportDialog
+          initialSource={primitiveImportSource}
+          onClose={() => setPrimitiveImportSource(null)}
+          onComplete={() => {
+            setPrimitiveImportSource(null);
+          }}
+          onMessage={(type, message) => {
+            if (type === 'success') toast.success(message);
+            else toast.error(message);
           }}
         />
       ) : null}

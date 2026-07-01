@@ -9,7 +9,7 @@ and — crucially for the UI — *why*.
 
 The rule (from the roadmap):
 
-* **OpenAPI / Swagger** (including **TypeSpec-emitted OpenAPI**, which a TypeSpec
+* **OpenAPI / Swagger / Arazzo** (including **TypeSpec-emitted OpenAPI**, which a TypeSpec
   adapter normalizes to an ``openapi-3.x`` format) → **Project** (``publishable``),
   exactly as today.
 * **Everything else that is OpenAPI-worthy** — a non-OpenAPI import that still carries
@@ -50,10 +50,10 @@ __all__ = [
 
 
 #: Emitted canonical format keys whose import becomes a **publishable Project** — the
-#: OpenAPI/Swagger family, as today. A non-OpenAPI source that *emits* one of these
+#: OpenAPI/Swagger/Arazzo family, as today. A non-OpenAPI source that *emits* one of these
 #: (TypeSpec → ``openapi-3.x``) routes here too, because the branch is on the emitted
 #: format, not the source tool. Every other format routes to the catalog.
-PUBLISHABLE_FORMATS = frozenset({"openapi-3.0", "openapi-3.1", "swagger-2.0"})
+PUBLISHABLE_FORMATS = frozenset({"openapi-3.0", "openapi-3.1", "swagger-2.0", "arazzo"})
 
 
 class ImportTarget(str, Enum):
@@ -149,14 +149,14 @@ def decide_import_routing(
     type_count = len(model.types)
     channel_count = len(model.channels)
 
-    # --- OpenAPI/Swagger (incl. TypeSpec-emitted OpenAPI) → publishable Project ---
+    # --- OpenAPI/Swagger/Arazzo (incl. TypeSpec-emitted OpenAPI) → publishable Project ---
     if fmt_key in PUBLISHABLE_FORMATS:
         return ImportRoutingDecision(
             target=ImportTarget.PROJECT,
             publishable=True,
             schemas_only=False,
             reason=(
-                f"{fmt} is an OpenAPI/Swagger description "
+                f"{fmt} is an OpenAPI/Swagger/Arazzo description "
                 "→ publishable Project (as today)."
             ),
             source=source,

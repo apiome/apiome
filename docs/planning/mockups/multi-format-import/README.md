@@ -26,7 +26,7 @@ import wizard; **Convert to OpenAPI** opens the fidelity-preview dialog.
 |--------|---------|---------|
 | **Sidebar** | Adopts `DashboardSideNav`; **Catalog** sits in the *Specifications* section (lucide `Library`, amber **Preview** pill) between Repositories and MCP Servers. | MFI-23.6 |
 | **Catalog** (grid + table) | Cloned wholesale from the Projects dashboard: stat KPIs, filter chips (All / Active / Needs attention / Deleted), **Cards ↔ Table** toggle, group-by-protocol, sort (+ grade/format). Each entry shows **name**, short id `cat_…`, status pill, **FormatPill / ProtocolPill / SourceBadge**, and clickable **Quality + Lint (A–F) + Debt** orbs; converted items carry a **Converted → project** back-link. **No Publish anywhere.** | MFI-23.2/23.3/23.4/23.5/23.11 |
-| **Import wizard** | New source in the existing Import flow — stepper + source-card grid (File / URL / Clipboard / **live** gRPC-reflection, GraphQL-introspection, Schema-Registry). Shows **auto-detect** + the **routing decision** (Catalog vs Projects). | MFI-1.3/1.5/23.7 |
+| **Import wizard** | New source in the existing Import flow — stepper + side-by-side source/destination panels for the current base sources: File Upload, URL Import, and Clipboard paste. The compact guide explains Catalog-only, Projects, JSON Schema choice, and future source-method branches before detection. Shows **auto-detect** + the **routing decision** (Catalog vs Projects). | MFI-1.3/1.5/23.7; UI addendum folded into MFI-26.1/26.3 |
 | **Detail · Overview** | Human-readable parsed model: normalized **counts** (services/operations/types/channels) + **entity blocks** rendered per paradigm (GraphQL types/ops, gRPC services/messages, AsyncAPI channels/messages, OData entity sets, WSDL operations/XSD, Avro records, Smithy shapes, TypeSpec models, API-Blueprint resources, RAML resources). | MFI-23.9 |
 | **· Source & Code** | Read-only **Monaco** viewer over the raw imported artifact, language-highlighted per format; download original. | MFI-23.9 (view/download) → MFI-23.12 (read-only Designer, later) |
 | **· Provenance** | Format/protocol, source material, fingerprint, import-job ref, **tool-version chips**, and the recorded routing decision. `publishable: false`. | MFI-7.2/23.7 |
@@ -69,6 +69,7 @@ for Monaco, and a per-source fidelity report driving the convert dialog.
 - **Debt orb** is a placeholder (`—`) everywhere, matching the real card — surface it or drop it?
 - Group-by default: **protocol** (as drawn) vs **format** vs flat?
 - Should `schemas_only` items (Avro) get a distinct visual treatment beyond the data-schema pill?
+- Should the import destination guide remain expanded by default, or collapse after the first successful import?
 - Convert dialog: inline **raw-OpenAPI preview** of the would-be document (collapsible) — show by
   default or behind a button?
 - Detail tab order — is Overview → Source → Provenance → Lint → Versions right?

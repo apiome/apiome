@@ -299,7 +299,23 @@
   .src .st2{font-weight:600;font-size:12.5px;color:#0f172a}
   .src.on .st2{color:var(--brand-700)}
   .src .sd{font-size:10.5px;color:var(--text-muted);margin-top:2px}
-  .src .tagnew{position:absolute;top:7px;right:7px;font-size:8.5px;font-weight:700;letter-spacing:.04em;padding:1px 6px;border-radius:999px;background:var(--brand);color:#fff}
+  .importsplit{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(260px,.9fr);gap:18px;align-items:start;margin-bottom:18px}
+  .importpanel{border:1px solid var(--border);border-radius:var(--r-lg);background:#fff;padding:14px;box-shadow:var(--sh-sm)}
+  .panelhead{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#0f172a}
+  .panelhead svg{width:14px;height:14px;color:var(--brand)}
+  .panelrule{height:1px;background:var(--border);margin:10px 0 12px}
+  .routeguide{display:grid;gap:8px}
+  .routerow{display:grid;grid-template-columns:18px 1fr;gap:8px;align-items:start;padding:7px 0;border-bottom:1px solid var(--border)}
+  .routerow:last-child{border-bottom:none;padding-bottom:0}
+  .routerow svg{width:16px;height:16px;margin-top:1px}
+  .routerow.catalog svg{color:var(--brand)}
+  .routerow.projects svg{color:#047857}
+  .routerow.choice svg{color:#b45309}
+  .routerow.soon svg{color:var(--text-muted)}
+  .routerow b{display:block;font-size:12px;color:#0f172a;margin-bottom:1px}
+  .routerow p{margin:0;font-size:11.5px;color:var(--text-muted);line-height:1.35}
+  .routerow .minirow{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+  .minipill{font-size:10px;font-weight:600;border:1px solid var(--border);border-radius:999px;padding:1px 7px;background:var(--muted);color:#475569}
 
   /* fidelity (convert) */
   .fwarn{display:flex;gap:12px;padding:14px 16px;border-radius:var(--r-lg);border:1px solid #fde68a;background:var(--warn-bg);color:#92400e;margin-bottom:16px}
@@ -518,14 +534,53 @@
         <div class="st"><span class="num">4</span> Import</div>
       </div>
 
-      <label class="fld">Choose a source</label>
-      <div class="srcgrid" style="margin-bottom:18px">
-        <div class="src" onclick="pickSrc(this)"><div class="si"><i data-lucide="file-up"></i></div><div class="st2">File</div><div class="sd">.proto .graphql .avsc .wsdl …</div></div>
-        <div class="src on" onclick="pickSrc(this)"><div class="si"><i data-lucide="link"></i></div><div class="st2">URL</div><div class="sd">Fetch a remote document</div></div>
-        <div class="src" onclick="pickSrc(this)"><div class="si"><i data-lucide="clipboard"></i></div><div class="st2">Clipboard</div><div class="sd">Paste raw text</div></div>
-        <div class="src" onclick="pickSrc(this)"><span class="tagnew">LIVE</span><div class="si"><i data-lucide="radio"></i></div><div class="st2">gRPC reflection</div><div class="sd">Crawl a running endpoint</div></div>
-        <div class="src" onclick="pickSrc(this)"><span class="tagnew">LIVE</span><div class="si"><i data-lucide="share-2"></i></div><div class="st2">GraphQL introspection</div><div class="sd"><code>__schema</code> query</div></div>
-        <div class="src" onclick="pickSrc(this)"><span class="tagnew">LIVE</span><div class="si"><i data-lucide="database"></i></div><div class="st2">Schema Registry</div><div class="sd">Confluent / Avro subjects</div></div>
+      <div class="importsplit">
+        <div class="importpanel">
+          <div class="panelhead"><i data-lucide="upload"></i> Choose a source</div>
+          <div class="panelrule"></div>
+          <div class="srcgrid">
+            <div class="src" onclick="pickSrc(this)"><div class="si"><i data-lucide="file-up"></i></div><div class="st2">File</div><div class="sd">.proto .graphql .avsc .wsdl …</div></div>
+            <div class="src on" onclick="pickSrc(this)"><div class="si"><i data-lucide="link"></i></div><div class="st2">URL</div><div class="sd">Fetch a remote document</div></div>
+            <div class="src" onclick="pickSrc(this)"><div class="si"><i data-lucide="clipboard"></i></div><div class="st2">Clipboard</div><div class="sd">Paste raw text</div></div>
+          </div>
+        </div>
+
+        <div class="importpanel">
+          <div class="panelhead"><i data-lucide="git-branch"></i> Destination guide</div>
+          <div class="panelrule"></div>
+          <div class="routeguide">
+            <div class="routerow catalog">
+              <i data-lucide="library"></i>
+              <div>
+                <b>Catalog only · no auto-convert</b>
+                <p>Implemented non-OpenAPI adapters stay non-publishable until explicit Convert.</p>
+                <div class="minirow"><span class="minipill">GraphQL</span><span class="minipill">gRPC</span><span class="minipill">AsyncAPI</span></div>
+              </div>
+            </div>
+            <div class="routerow projects">
+              <i data-lucide="folders"></i>
+              <div>
+                <b>Projects · publishable</b>
+                <p>OpenAPI/Swagger and Arazzo create publishable Project versions.</p>
+                <div class="minirow"><span class="minipill">OpenAPI</span><span class="minipill">Arazzo</span></div>
+              </div>
+            </div>
+            <div class="routerow choice">
+              <i data-lucide="split"></i>
+              <div>
+                <b>JSON Schema asks first</b>
+                <p>2020-12 variants prompt for Catalog or current Types/Projects schema.</p>
+              </div>
+            </div>
+            <div class="routerow soon">
+              <i data-lucide="construction"></i>
+              <div>
+                <b>Future source types</b>
+                <p>Additional source methods can appear here once a format supports alternate intake.</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <label class="fld">Document URL</label>
@@ -610,7 +665,7 @@ const PARADIGM = {
   'data-schema':{label:'Data schema',icon:'binary'},
 };
 const SRCKIND = {
-  file:{icon:'file-up'}, url:{icon:'link'}, paste:{icon:'clipboard'}, discovery:{icon:'radio'},
+  file:{icon:'file-up'}, url:{icon:'link'}, paste:{icon:'clipboard'},
 };
 
 /* ---------- helpers ---------- */
@@ -678,15 +733,15 @@ const ITEMS = [
  {
    id:'cat_r4m8b', name:'Fleet Telemetry', slug:'fleet-telemetry', fmt:'grpc', paradigm:'rpc',
    status:'active', quality:81, lintScore:82, updated:'1d ago', imported:'2026-06-20 11:02', creator:'KS',
-   grad:1, desc:'Protocol Buffers service descriptor for vehicle telemetry ingestion and live command streaming, captured via server reflection.',
-   src:{kind:'discovery', label:'grpc://fleet.acme.io:443 (reflection)'},
+   grad:1, desc:'Protocol Buffers service descriptor for vehicle telemetry ingestion and live command streaming, imported from a descriptor set URL.',
+   src:{kind:'url', label:'api.acme.io/fleet/telemetry.desc'},
    summary:{services:2, operations:7, types:11, channels:0},
    summaryNote:'2 services · 7 RPCs (2 server-streaming)',
    tools:[['buf','1.32.0'],['protobuf','25.3'],['@objectified/proto-normalize','1.1.0']],
    job:'imp_7a03d', fp:'sha256:44e1…9a', routing:'gRPC → OpenAPI-worthy, non-publishable → Catalog',
    lang:'protobuf',
    parsed:[
-     {type:'entities', title:'Services & methods', sub:'RPCs discovered via reflection', items:[
+     {type:'entities', title:'Services & methods', sub:'RPCs parsed from uploaded descriptor source', items:[
        {name:'TelemetryService', tag:'SERVICE', tagc:'tone-emerald', meta:'4 methods', fields:[
          {n:'Report', t:'(Reading) → Ack', d:'unary — ingest one reading'},
          {n:'StreamReadings', t:'(Query) → stream Reading', d:'server-streaming'},
@@ -718,7 +773,7 @@ const ITEMS = [
        {c:'streaming', cov:'na', t:'3 streaming RPCs', w:'server/client streaming has no OpenAPI 3.1 equivalent — flagged, not emitted.'},
        {c:'responses[status]', cov:'missing', t:'gRPC status codes', w:'gRPC codes ≠ HTTP; a 200 default is inferred.'},
      ]},
-   versions:[['v2 · 1.0.1','1d ago — CommandService added'],['v1 · 1.0.0','2026-06-20 — initial reflection import']],
+   versions:[['v2 · 1.0.1','1d ago — CommandService added'],['v1 · 1.0.0','2026-06-20 — initial descriptor import']],
    converted:null,
  },
  {
@@ -854,8 +909,8 @@ const ITEMS = [
  {
    id:'cat_v2u7f', name:'User Profile Schema', slug:'user-profile-avro', fmt:'avro', paradigm:'data-schema',
    status:'active', quality:78, lintScore:79, updated:'4d ago', imported:'2026-06-14 10:05', creator:'KS',
-   grad:0, desc:'Avro record schema for the user-profile subject in the Confluent Schema Registry. Data-schema only — no operations.',
-   src:{kind:'discovery', label:'schema-registry/subjects/user-profile-value'},
+   grad:0, desc:'Avro record schema for the user-profile subject exported from a schema registry. Data-schema only — no operations.',
+   src:{kind:'file', label:'user-profile-value.avsc'},
    summary:{services:0, operations:0, types:4, channels:0},
    summaryNote:'schemas_only · 1 record + 3 nested types', schemasOnly:true,
    tools:[['@objectified/avro-normalize','1.0.0'],['fastavro','1.9.4']],
