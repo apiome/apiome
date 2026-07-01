@@ -32,8 +32,6 @@ import {
   ArrowLeftRight,
   CheckCircle2,
   Code,
-  Download,
-  ExternalLink,
   FileSearch,
   GitBranch,
   Info,
@@ -82,6 +80,7 @@ import {
   deriveParsedSummaryNote,
   type CatalogParsedGroup,
 } from '@/app/components/ade/dashboard/catalog/CatalogParsedModel';
+import { CatalogSourceViewer } from '@/app/components/ade/dashboard/catalog/CatalogSourceViewer';
 
 /** The normalized-content counts the import recorded for the item (each null until captured). */
 interface CatalogNormalizedSummary {
@@ -540,53 +539,17 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
           <CatalogParsedGroups parsed={parsed} />
         </TabPanel>
 
-        {/* SOURCE & CODE — the raw imported source material */}
+        {/* SOURCE & CODE — the raw imported source rendered read-only in Monaco (MFI-25.4) */}
         <TabPanel tabId="source" active={activeTab} testId="catalog-detail-pane-source">
-          <section className={`${dashboardPanelClass} p-6`} data-testid="catalog-detail-source">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Source material
-            </h2>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              {resolvedSource ? (
-                <SourceBadge source={resolvedSource} />
-              ) : (
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  Original source provenance was not recorded for this item.
-                </span>
-              )}
-            </div>
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              {source?.downloadable ? (
-                <>
-                  <a
-                    href={sourceHref}
-                    data-testid="catalog-detail-download"
-                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-                    {...(source.hasContent ? { download: '' } : { target: '_blank', rel: 'noopener noreferrer' })}
-                  >
-                    <Download className="h-4 w-4" /> {source.hasContent ? 'Download raw source' : 'View source'}
-                  </a>
-                  {source.uri ? (
-                    <a
-                      href={source.uri}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-                    >
-                      <ExternalLink className="h-4 w-4 text-indigo-500" /> Open source URL
-                    </a>
-                  ) : null}
-                </>
-              ) : (
-                <span
-                  data-testid="catalog-detail-no-source"
-                  className="text-sm text-gray-500 dark:text-gray-400"
-                >
-                  The raw source was not captured at import, so it cannot be downloaded here.
-                </span>
-              )}
-            </div>
-          </section>
+          <CatalogSourceViewer
+            sourceHref={sourceHref}
+            sourceFormat={item.sourceFormat}
+            resolvedSource={resolvedSource}
+            downloadable={Boolean(source?.downloadable)}
+            hasContent={Boolean(source?.hasContent)}
+            sourceUri={source?.uri ?? null}
+            active={activeTab === 'source'}
+          />
         </TabPanel>
 
         {/* PROVENANCE */}

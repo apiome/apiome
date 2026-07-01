@@ -337,7 +337,6 @@ graph LR
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 |---|---|---|---|---|---|---|---|
-| MFI-25.4 · #4089 | Monaco read-only Source & Code | Inline read-only source viewer + lang tag + download/wrap + offline fallback | `ui`,`typescript`,`multi-protocol` | N | **Y** | M | detail client, monaco wrapper |
 | MFI-25.5 · #4090 | Inline Lint & Score panel | Circular grade gauge + category bars + findings rendered inline (not modal-only) | `ui`,`typescript`,`linting` | N | **Y** | M | detail client, `CatalogLintReportDialog` |
 | MFI-25.6 · #4091 | (rest) Lint category-score rollup | Per-category 0–100 scores to drive the bars | `rest`,`linting`,`multi-protocol` | Y | N | S | `objectified-rest/…/lint_*` |
 | MFI-25.7 · #4092 | Inline versions timeline + diff | Version timeline with tick-any-two-to-diff, replacing off-page link | `ui`,`typescript`,`version-control` | N | N | M | detail client |
@@ -383,7 +382,15 @@ graph LR
 - **Dependencies / parallelism.** Depends on **25.2** (data) and **25.1** (tab). Serial after both.
 - **Tech stack.** React/TSX, Tailwind.
 
-### MFI-25.4 — Monaco read-only Source & Code viewer · #4089
+### MFI-25.4 — Monaco read-only Source & Code viewer · #4089 — ✅ Done
+- **Delivered.** New `CatalogSourceViewer` replaces the download-only Source pane: it lazily fetches the
+  raw source from `GET /api/catalog/{id}/source` on first tab activation (the proxy's 307 for URL sources
+  is followed by `fetch`), then renders it read-only in a dynamically-imported (`ssr:false`) Monaco
+  editor with a format pill / source badge / `language: …` tag, Download + Wrap actions, and a `<pre>`
+  offline fallback the dynamic loader resolves to when Monaco can't load. A pure
+  `monacoLanguageForCatalogFormat` helper maps `sourceFormat`→Monaco language (JSON-or-YAML formats
+  refined by sniffing the bytes). The download link + non-publishable/no-source degradations are
+  preserved. Covered by `catalog-source-viewer[-offline].test.tsx` + `catalog-source-language.test.ts`.
 - **Problem.** The Source panel only offers a download/open link; the mockup shows the **raw source
   read-only in Monaco** with a format pill / source badge / language tag, Download + Wrap buttons, and
   an offline fallback `<pre>`.
