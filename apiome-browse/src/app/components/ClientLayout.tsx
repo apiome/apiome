@@ -50,7 +50,7 @@ export function ClientLayout({
                 Sign in
               </a>
               <span className="text-xs text-zinc-400 dark:text-zinc-500">
-                &copy; {new Date().getFullYear()} Apiome
+                &copy; 2021&ndash;2026 NobuData LLC
               </span>
             </div>
           </div>
