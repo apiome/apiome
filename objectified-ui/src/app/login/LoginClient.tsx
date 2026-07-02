@@ -1,31 +1,51 @@
 "use client";
 
 import { useState } from 'react';
-import { Mail, Lock, User, Info } from 'lucide-react';
+import { Mail, Lock, User, Info, ShieldCheck, Zap, CreditCard, ArrowRight } from 'lucide-react';
 import { signIn } from "next-auth/react";
 import { createSignupRequest } from '../../../lib/db/helper';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { SiGithub, SiGitlab } from "react-icons/si";
 import BetaBackground from './BetaBackground';
+import styles from './login.module.css';
+
+const FORMAT_CHIPS = ['OpenAPI', 'AsyncAPI', 'GraphQL', 'gRPC', 'Avro', 'WSDL', 'TypeSpec', 'OData'];
+
+const inputClasses =
+  "block w-full pl-11 pr-4 py-3 rounded-2xl outline-none transition-all duration-200 " +
+  "border border-slate-200/90 bg-white/70 text-slate-800 placeholder-slate-400 " +
+  "hover:bg-white focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 " +
+  "dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500 " +
+  "dark:hover:bg-white/[0.07] dark:focus:bg-white/[0.07] dark:focus:border-indigo-400/60 dark:focus:ring-indigo-400/15";
+
+const labelClasses = "block text-sm font-medium text-slate-700 mb-1.5 dark:text-slate-300";
+
+const iconWrapClasses = "absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none";
+
+const fieldIconClasses =
+  "text-slate-400 group-focus-within:text-indigo-500 transition-colors dark:text-slate-500 dark:group-focus-within:text-indigo-300";
 
 interface SSOButtonProps {
   provider: string;
   icon: React.ReactNode;
   onClick: () => void;
-  color?: string;
   isSignUp?: boolean;
 }
 
-const SSOButton: React.FC<SSOButtonProps> = ({ provider, icon, onClick, color, isSignUp }) => {
-  const label = isSignUp ? `Signup via ${provider}` : `Continue with ${provider}`;
+const SSOButton: React.FC<SSOButtonProps> = ({ provider, icon, onClick, isSignUp }) => {
+  const label = isSignUp ? `Sign up with ${provider}` : `Continue with ${provider}`;
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 hover:shadow-md transition-all duration-200 cursor-pointer group dark:bg-slate-800/80 dark:border-slate-600 dark:hover:border-slate-500 dark:hover:bg-slate-800"
+      className={`${styles.shine} w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-2xl cursor-pointer group
+        border border-slate-200/90 bg-white/70 text-slate-700
+        transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300/80 hover:bg-white hover:shadow-lg hover:shadow-indigo-500/10
+        dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200
+        dark:hover:border-indigo-400/40 dark:hover:bg-white/[0.08] dark:hover:shadow-indigo-950/40`}
     >
       <span className="flex-shrink-0 transition-transform duration-200 group-hover:scale-110">{icon}</span>
-      <span className="text-gray-700 font-semibold dark:text-slate-200">{label}</span>
+      <span className="font-semibold">{label}</span>
     </button>
   );
 };
@@ -36,7 +56,7 @@ interface LoginClientProps {
 
 const LoginClient: React.FC<LoginClientProps> = ({ error }) => {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [payload, setPayload] = useState<any>({
+  const [payload, setPayload] = useState<Record<string, string>>({
     email: '',
     password: '',
   });
@@ -165,7 +185,7 @@ const LoginClient: React.FC<LoginClientProps> = ({ error }) => {
     }
   }
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPayload({
       ...payload,
       [e.target.name]: e.target.value,
@@ -173,263 +193,341 @@ const LoginClient: React.FC<LoginClientProps> = ({ error }) => {
   }
 
   const isBetaMode = process.env.NEXT_PUBLIC_BETA_MODE;
+  const message = signupMessage || getErrorMessage(error);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/40 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-indigo-200/40 to-purple-200/40 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 dark:from-indigo-700/25 dark:to-purple-700/20" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200/40 to-cyan-200/40 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 dark:from-blue-700/25 dark:to-cyan-700/20" />
-      <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-br from-purple-200/30 to-pink-200/30 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 dark:from-fuchsia-700/15 dark:to-pink-700/20" />
+    <div className="min-h-screen relative overflow-hidden bg-slate-50 dark:bg-slate-950">
+      {/* Aurora field */}
+      <div aria-hidden="true" className="absolute inset-0">
+        <div
+          className={`${styles.blob} ${styles.blobA} w-[42rem] h-[42rem] -top-56 -left-40
+            bg-gradient-to-br from-indigo-300/50 to-violet-300/40
+            dark:from-indigo-600/25 dark:to-violet-600/20`}
+        />
+        <div
+          className={`${styles.blob} ${styles.blobB} w-[38rem] h-[38rem] -bottom-48 -right-32
+            bg-gradient-to-br from-sky-300/45 to-cyan-200/40
+            dark:from-blue-700/20 dark:to-cyan-600/15`}
+        />
+        <div
+          className={`${styles.blob} ${styles.blobC} w-[28rem] h-[28rem] top-1/3 left-1/2 -translate-x-1/2
+            bg-gradient-to-br from-fuchsia-300/30 to-pink-200/30
+            dark:from-fuchsia-700/15 dark:to-pink-700/15`}
+        />
+        <div className={`${styles.grid} text-slate-900/[0.05] dark:text-white/[0.05]`} />
+        <div className={styles.grain} />
+      </div>
 
       {/* Beta Background */}
       {isBetaMode && <BetaBackground />}
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl shadow-indigo-500/10 p-8 border border-white/50 dark:bg-slate-900/80 dark:border-slate-700/60 dark:shadow-black/30">
-          {/* Logo */}
-          <div className="flex justify-center mb-8">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 blur-xl opacity-20 rounded-full scale-150" />
-              <img
-                src={isDark ? "/Objectified-05.png" : "/Objectified-02.png"}
-                alt="Objectified Logo"
-                className="relative"
-                style={{ height: "56px", width: "auto", objectFit: "contain" }}
-              />
-            </div>
-          </div>
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center gap-16 px-6 py-12 lg:grid lg:grid-cols-[1.05fr_1fr]">
+        {/* Brand hero (desktop) */}
+        <div className={`${styles.enterSlow} hidden lg:flex flex-col justify-center select-none`}>
+          <img
+            src={isDark ? "/Objectified-05.png" : "/Objectified-02.png"}
+            alt="Objectified Logo"
+            className="mb-10 self-start"
+            style={{ height: "48px", width: "auto", objectFit: "contain" }}
+          />
 
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-indigo-900 to-gray-900 bg-clip-text text-transparent mb-3 dark:from-slate-100 dark:via-indigo-200 dark:to-slate-100">
-              {isSignUp ? 'Create Your Account' : 'Welcome Back'}
-            </h1>
-            <p className="text-gray-500 text-sm dark:text-slate-400">
-              {isSignUp ? 'Join thousands of developers building with Objectified' : 'Sign in to continue to your workspace'}
-            </p>
-            {!isSignUp && (
-              <p className="text-sm text-gray-500 mt-3 dark:text-slate-400">
-                New to Objectified?{' '}
-                <a
-                  href="https://youtu.be/GQBgza8eYoQ"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-indigo-600 hover:text-indigo-500 font-medium hover:underline transition-colors dark:text-indigo-300 dark:hover:text-indigo-200"
-                >
-                  Watch our intro video →
-                </a>
-              </p>
-            )}
-          </div>
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-indigo-600/80 dark:text-indigo-300/80">
+            The API design environment
+          </p>
 
-          {/* Message Display */}
-          {(signupMessage || getErrorMessage(error)) && (
-            <div className={`mb-6 p-4 rounded-xl border backdrop-blur-sm ${
-              (signupMessage || getErrorMessage(error))!.type === 'success' 
-                ? 'bg-emerald-50/80 border-emerald-200 text-emerald-800 dark:bg-emerald-900/30 dark:border-emerald-700/60 dark:text-emerald-200' 
-                : (signupMessage || getErrorMessage(error))!.type === 'info' 
-                  ? 'bg-blue-50/80 border-blue-200 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700/60 dark:text-blue-200' 
-                  : 'bg-red-50/80 border-red-200 text-red-800 dark:bg-red-900/30 dark:border-red-700/60 dark:text-red-200'
-            }`}>
-              <p className="text-sm font-medium">
-                {(signupMessage || getErrorMessage(error))!.text}
-              </p>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {isSignUp && (
-              <div>
-                <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-1.5 dark:text-slate-300">
-                  Full Name
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <User size={18} className="text-gray-400 group-focus-within:text-indigo-500 transition-colors dark:text-slate-500 dark:group-focus-within:text-indigo-300" />
-                  </div>
-                  <input
-                    type="text"
-                    name={'name'}
-                    value={payload['name']}
-                    onChange={handleChange}
-                    required
-                    className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-gray-800 placeholder-gray-400 transition-all duration-200 bg-gray-50/50 hover:bg-white focus:bg-white dark:border-slate-600 dark:bg-slate-800/70 dark:hover:bg-slate-800 dark:focus:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-indigo-400/30"
-                    placeholder="John Doe"
-                  />
-                </div>
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5 dark:text-slate-300">
-                Email Address
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <Mail size={18} className="text-gray-400 group-focus-within:text-indigo-500 transition-colors dark:text-slate-500 dark:group-focus-within:text-indigo-300" />
-                </div>
-                <input
-                  type="email"
-                  name={'email'}
-                  value={payload['email']}
-                  onChange={handleChange}
-                  required
-                  className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-gray-800 placeholder-gray-400 transition-all duration-200 bg-gray-50/50 hover:bg-white focus:bg-white dark:border-slate-600 dark:bg-slate-800/70 dark:hover:bg-slate-800 dark:focus:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-indigo-400/30"
-                  placeholder="you@example.com"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1.5 dark:text-slate-300">
-                Password
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <Lock size={18} className="text-gray-400 group-focus-within:text-indigo-500 transition-colors dark:text-slate-500 dark:group-focus-within:text-indigo-300" />
-                </div>
-                <input
-                  type="password"
-                  name={'password'}
-                  value={payload['password']}
-                  onChange={handleChange}
-                  required
-                  className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-gray-800 placeholder-gray-400 transition-all duration-200 bg-gray-50/50 hover:bg-white focus:bg-white dark:border-slate-600 dark:bg-slate-800/70 dark:hover:bg-slate-800 dark:focus:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-indigo-400/30"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
-
-            {isSignUp && (
-              <div>
-                <label htmlFor="signupSource" className="block text-sm font-semibold text-gray-700 mb-1.5 dark:text-slate-300">
-                  How did you hear about us?
-                  <span className="text-gray-400 font-normal ml-1 dark:text-slate-500">(optional)</span>
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Info size={18} className="text-gray-400 group-focus-within:text-indigo-500 transition-colors dark:text-slate-500 dark:group-focus-within:text-indigo-300" />
-                  </div>
-                  <input
-                    type="text"
-                    name={'signupSource'}
-                    value={payload['signupSource'] || ''}
-                    onChange={handleChange}
-                    className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-gray-800 placeholder-gray-400 transition-all duration-200 bg-gray-50/50 hover:bg-white focus:bg-white dark:border-slate-600 dark:bg-slate-800/70 dark:hover:bg-slate-800 dark:focus:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-indigo-400/30"
-                    placeholder="e.g., Google, Twitter, a friend"
-                  />
-                </div>
-              </div>
-            )}
-
-            {!isSignUp && (
-              <div className="flex items-center justify-end">
-                <a href="#" className="text-sm text-indigo-600 hover:text-indigo-500 font-medium transition-colors dark:text-indigo-300 dark:hover:text-indigo-200">
-                  Forgot your password?
-                </a>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={!signInEnabled}
-              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3.5 rounded-xl font-semibold transition-all duration-200 cursor-pointer shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          <h2 className="text-5xl xl:text-6xl font-bold tracking-tight leading-[1.05] text-slate-900 dark:text-slate-50">
+            Design. Version.
+            <br />
+            <span
+              className={`${styles.shimmer} bg-gradient-to-r from-indigo-600 via-fuchsia-500 to-indigo-600 bg-clip-text text-transparent
+                dark:from-indigo-300 dark:via-fuchsia-300 dark:to-indigo-300`}
             >
-              {isSignUp ? 'Create Account' : 'Sign In'}
-            </button>
-          </form>
+              Publish your APIs.
+            </span>
+          </h2>
 
-          {/* Divider */}
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200 dark:border-slate-700/60"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white/80 text-gray-400 font-medium dark:bg-slate-900/80 dark:text-slate-500">or continue with</span>
-            </div>
-          </div>
+          <p className="mt-6 max-w-md text-base leading-relaxed text-slate-600 dark:text-slate-400">
+            Model your API once, then import, lint, diff, and export across every
+            format your consumers speak — with honest fidelity at each step.
+          </p>
 
-          {/* SSO Loading Message */}
-          {isSSOLoading ? (
-            <div className="text-center py-8">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 mb-4">
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              </div>
-              <p className="text-lg font-semibold text-gray-900 dark:text-slate-100">Connecting...</p>
-              <p className="text-sm text-gray-500 mt-1 dark:text-slate-400">Redirecting to authentication provider</p>
-            </div>
-          ) : (
-            <>
-              {/* SSO Buttons */}
-              <div className="space-y-3">
-                <SSOButton
-                  provider="GitHub"
-                  icon={<SiGithub size={20} className="text-gray-800 dark:text-slate-100" />}
-                  onClick={() => handleSSOLogin('github')}
-                  isSignUp={isSignUp}
-                />
-
-                <SSOButton
-                  provider="GitLab"
-                  icon={<SiGitlab size={20} className="text-orange-600" />}
-                  onClick={() => handleSSOLogin('gitlab')}
-                  isSignUp={isSignUp}
-                />
-              </div>
-            </>
-          )}
-
-          {/* Toggle Sign Up/Sign In */}
-          <div className="mt-8 pt-6 border-t border-gray-100 text-center dark:border-slate-700/60">
-            <p className="text-sm text-gray-600 dark:text-slate-400">
-              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-              <button
-                type="button"
-                disabled={!signInEnabled}
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  setSignupMessage(null);
-                }}
-                className="text-indigo-600 font-semibold hover:text-indigo-500 cursor-pointer transition-colors dark:text-indigo-300 dark:hover:text-indigo-200"
+          <div className="mt-10 flex max-w-md flex-wrap gap-2.5">
+            {FORMAT_CHIPS.map((chip, i) => (
+              <span
+                key={chip}
+                className={`${i % 2 === 0 ? styles.float : styles.floatDelayed} rounded-full px-3.5 py-1.5 text-xs font-semibold
+                  border border-slate-200/90 bg-white/70 text-slate-600 backdrop-blur-sm
+                  dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-300`}
               >
-                {isSignUp ? 'Sign In' : 'Create one'}
-              </button>
-            </p>
+                {chip}
+              </span>
+            ))}
           </div>
-
-          {/* Trust Badges */}
-          {!isSignUp && (
-            <div className="mt-6 flex items-center justify-center gap-6 text-xs text-gray-400 dark:text-slate-500">
-              <div className="flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span>Secure</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span>Free to start</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span>No credit card</span>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Footer */}
-        <p className="text-center text-xs text-gray-400 mt-6 dark:text-slate-500">
-          By signing in, you agree to our{' '}
-          <a href="#" className="text-indigo-500 hover:text-indigo-600 transition-colors dark:text-indigo-300 dark:hover:text-indigo-200">Terms of Service</a>
-          {' '}and{' '}
-          <a href="#" className="text-indigo-500 hover:text-indigo-600 transition-colors dark:text-indigo-300 dark:hover:text-indigo-200">Privacy Policy</a>
-        </p>
+        {/* Auth card */}
+        <div className={`${styles.enter} w-full max-w-md lg:justify-self-end`}>
+          <div
+            className="rounded-[28px] p-px shadow-2xl shadow-indigo-500/10 dark:shadow-black/50
+              bg-gradient-to-b from-white/90 via-slate-200/70 to-slate-200/40
+              dark:from-white/15 dark:via-white/[0.07] dark:to-transparent"
+          >
+            <div className="rounded-[27px] bg-white/80 p-8 backdrop-blur-2xl dark:bg-slate-900/70">
+              {/* Logo (mobile — hero carries it on desktop) */}
+              <div className="mb-8 flex justify-center lg:hidden">
+                <div className="relative">
+                  <div className="absolute inset-0 scale-150 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20 blur-xl" />
+                  <img
+                    src={isDark ? "/Objectified-05.png" : "/Objectified-02.png"}
+                    alt="Objectified Logo"
+                    className="relative"
+                    style={{ height: "52px", width: "auto", objectFit: "contain" }}
+                  />
+                </div>
+              </div>
+
+              {/* Header */}
+              <div className="mb-8 text-center lg:text-left">
+                <h1 className="mb-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+                  {isSignUp ? 'Create your account' : 'Welcome back'}
+                </h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isSignUp
+                    ? 'Join thousands of developers building with Objectified'
+                    : 'Sign in to continue to your workspace'}
+                </p>
+                {!isSignUp && (
+                  <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                    New to Objectified?{' '}
+                    <a
+                      href="https://youtu.be/GQBgza8eYoQ"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-indigo-600 transition-colors hover:text-indigo-500 hover:underline dark:text-indigo-300 dark:hover:text-indigo-200"
+                    >
+                      Watch our intro video →
+                    </a>
+                  </p>
+                )}
+              </div>
+
+              {/* Message Display */}
+              {message && (
+                <div
+                  aria-live="polite"
+                  className={`mb-6 rounded-2xl border p-4 backdrop-blur-sm ${
+                    message.type === 'success'
+                      ? 'border-emerald-200 bg-emerald-50/80 text-emerald-800 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-200'
+                      : message.type === 'info'
+                        ? 'border-blue-200 bg-blue-50/80 text-blue-800 dark:border-blue-700/60 dark:bg-blue-900/30 dark:text-blue-200'
+                        : 'border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200'
+                  }`}
+                >
+                  <p className="text-sm font-medium">{message.text}</p>
+                </div>
+              )}
+
+              {/* SSO first — the primary path */}
+              {isSSOLoading ? (
+                <div className="py-8 text-center">
+                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  </div>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">Connecting…</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Redirecting to authentication provider</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <SSOButton
+                    provider="GitHub"
+                    icon={<SiGithub size={20} className="text-slate-800 dark:text-slate-100" />}
+                    onClick={() => handleSSOLogin('github')}
+                    isSignUp={isSignUp}
+                  />
+                  <SSOButton
+                    provider="GitLab"
+                    icon={<SiGitlab size={20} className="text-orange-600" />}
+                    onClick={() => handleSSOLogin('gitlab')}
+                    isSignUp={isSignUp}
+                  />
+                </div>
+              )}
+
+              {/* Divider */}
+              <div className="relative my-8">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200 dark:border-white/10" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 font-medium text-slate-400 bg-white/80 dark:bg-slate-900/70 dark:text-slate-500 rounded-full">
+                    or use your email
+                  </span>
+                </div>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {isSignUp && (
+                  <div>
+                    <label htmlFor="name" className={labelClasses}>
+                      Full Name
+                    </label>
+                    <div className="group relative">
+                      <div className={iconWrapClasses}>
+                        <User size={18} className={fieldIconClasses} />
+                      </div>
+                      <input
+                        type="text"
+                        name={'name'}
+                        value={payload['name']}
+                        onChange={handleChange}
+                        required
+                        className={inputClasses}
+                        placeholder="John Doe"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="email" className={labelClasses}>
+                    Email Address
+                  </label>
+                  <div className="group relative">
+                    <div className={iconWrapClasses}>
+                      <Mail size={18} className={fieldIconClasses} />
+                    </div>
+                    <input
+                      type="email"
+                      name={'email'}
+                      value={payload['email']}
+                      onChange={handleChange}
+                      required
+                      className={inputClasses}
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="password" className={labelClasses}>
+                    Password
+                  </label>
+                  <div className="group relative">
+                    <div className={iconWrapClasses}>
+                      <Lock size={18} className={fieldIconClasses} />
+                    </div>
+                    <input
+                      type="password"
+                      name={'password'}
+                      value={payload['password']}
+                      onChange={handleChange}
+                      required
+                      className={inputClasses}
+                      placeholder="••••••••"
+                    />
+                  </div>
+                </div>
+
+                {isSignUp && (
+                  <div>
+                    <label htmlFor="signupSource" className={labelClasses}>
+                      How did you hear about us?
+                      <span className="ml-1 font-normal text-slate-400 dark:text-slate-500">(optional)</span>
+                    </label>
+                    <div className="group relative">
+                      <div className={iconWrapClasses}>
+                        <Info size={18} className={fieldIconClasses} />
+                      </div>
+                      <input
+                        type="text"
+                        name={'signupSource'}
+                        value={payload['signupSource'] || ''}
+                        onChange={handleChange}
+                        className={inputClasses}
+                        placeholder="e.g., Google, Twitter, a friend"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {!isSignUp && (
+                  <div className="flex items-center justify-end">
+                    <a
+                      href="#"
+                      className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200"
+                    >
+                      Forgot your password?
+                    </a>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={!signInEnabled}
+                  className={`${styles.shine} group w-full cursor-pointer rounded-2xl py-3.5 font-semibold text-white
+                    bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-[length:150%_auto]
+                    shadow-lg shadow-indigo-500/25 transition-all duration-300
+                    hover:bg-right hover:shadow-xl hover:shadow-indigo-500/40 hover:-translate-y-0.5
+                    disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0`}
+                >
+                  <span className="inline-flex items-center justify-center gap-2">
+                    {isSignUp ? 'Create Account' : 'Sign In'}
+                    <ArrowRight size={17} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+                  </span>
+                </button>
+              </form>
+
+              {/* Toggle Sign Up/Sign In */}
+              <div className="mt-8 border-t border-slate-100 pt-6 text-center dark:border-white/10">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+                  <button
+                    type="button"
+                    disabled={!signInEnabled}
+                    onClick={() => {
+                      setIsSignUp(!isSignUp);
+                      setSignupMessage(null);
+                    }}
+                    className="cursor-pointer font-semibold text-indigo-600 transition-colors hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200"
+                  >
+                    {isSignUp ? 'Sign In' : 'Create one'}
+                  </button>
+                </p>
+              </div>
+
+              {/* Trust Badges */}
+              {!isSignUp && (
+                <div className="mt-6 flex items-center justify-center gap-6 text-xs text-slate-400 dark:text-slate-500">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck size={15} className="text-emerald-500" />
+                    <span>Secure</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Zap size={15} className="text-emerald-500" />
+                    <span>Free to start</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <CreditCard size={15} className="text-emerald-500" />
+                    <span>No credit card</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <p className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">
+            By signing in, you agree to our{' '}
+            <a href="#" className="text-indigo-500 transition-colors hover:text-indigo-600 dark:text-indigo-300 dark:hover:text-indigo-200">
+              Terms of Service
+            </a>{' '}
+            and{' '}
+            <a href="#" className="text-indigo-500 transition-colors hover:text-indigo-600 dark:text-indigo-300 dark:hover:text-indigo-200">
+              Privacy Policy
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
