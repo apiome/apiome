@@ -80,7 +80,11 @@ import { FormatPill } from '../../../components/ui/catalog/FormatPill';
 import { ProtocolPill } from '../../../components/ui/catalog/ProtocolPill';
 import { SourceBadge } from '../../../components/ui/catalog/SourceBadge';
 import { GradeChip } from '../../../components/ui/catalog/GradeChip';
-import { resolveCatalogSource } from '../../../utils/catalog-format-registry';
+import { resolveCatalogSource, resolveCatalogFormat } from '../../../utils/catalog-format-registry';
+import {
+  CatalogFormatFacet,
+  type CatalogFormatOption,
+} from '../../../components/ade/dashboard/catalog/CatalogFormatFacet';
 import {
   convertActionLabel,
   convertedProjectHref,
@@ -110,6 +114,11 @@ import {
   type CatalogDashboardSortColumn,
   type CatalogDashboardSortDirection,
 } from '@/app/utils/catalog-dashboard-sort';
+import {
+  loadCatalogViewPreferences,
+  persistCatalogViewPreferences,
+  type CatalogGroupMode,
+} from '@/app/utils/catalog-view-preferences';
 import { groupCatalogItemsByParadigm } from '@/app/utils/catalog-paradigm-grouping';
 import { cn } from '../../../../../lib/utils';
 
@@ -191,10 +200,8 @@ const CATALOG_SORT_OPTIONS: ReadonlyArray<{ column: CatalogDashboardSortColumn; 
   { column: 'format', label: 'Format' },
 ];
 
-/** How the card view is sectioned (MFI-24.2): by paradigm, or a single flat grid. */
-type CatalogGroupMode = 'protocol' | 'none';
-
-/** The two grouping modes the card view offers (MFI-24.2), mirroring the sort control. */
+/** The two grouping modes the card view offers (MFI-24.2), mirroring the sort control. The
+ * {@link CatalogGroupMode} type now lives with the persisted view preferences (MFI-28.4). */
 const CATALOG_GROUP_OPTIONS: ReadonlyArray<{ mode: CatalogGroupMode; label: string }> = [
   { mode: 'protocol', label: 'Protocol' },
   { mode: 'none', label: 'None' },
@@ -444,15 +451,26 @@ const Catalog = () => {
   const [listLoading, setListLoading] = useState(true);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; right: number } | null>(null);
-  const [showDeleted, setShowDeleted] = useState(false);
-  const [sortColumn, setSortColumn] = useState<CatalogDashboardSortColumn>('name');
-  const [sortDirection, setSortDirection] = useState<CatalogDashboardSortDirection>('asc');
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  // The four persisted toolbar preferences (MFI-28.4): view mode, card grouping, sort column +
+  // direction, and show-deleted are hydrated once from localStorage so a reload restores the last
+  // choices, then written back by the effect below whenever any of them changes. The lazy
+  // initializers run only on the first render and are SSR-safe (they fall back to defaults on the
+  // server).
+  const [viewPrefsHydrated] = useState(() => loadCatalogViewPreferences());
+  const [showDeleted, setShowDeleted] = useState(viewPrefsHydrated.showDeleted);
+  const [sortColumn, setSortColumn] = useState<CatalogDashboardSortColumn>(viewPrefsHydrated.sortColumn);
+  const [sortDirection, setSortDirection] = useState<CatalogDashboardSortDirection>(
+    viewPrefsHydrated.sortDirection
+  );
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>(viewPrefsHydrated.viewMode);
   // How the card view is sectioned (MFI-24.2): Protocol groups cards under paradigm headers; None
   // reproduces the flat grid. The table view is always flat regardless of this.
-  const [groupMode, setGroupMode] = useState<CatalogGroupMode>('protocol');
+  const [groupMode, setGroupMode] = useState<CatalogGroupMode>(viewPrefsHydrated.groupMode);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterChip, setFilterChip] = useState<'all' | 'active' | 'attention' | 'deleted'>('all');
+  // Selected format ids for the format facet (MFI-28.4). An empty set means "all formats". This is
+  // intentionally not persisted: it is scoped to the formats actually present in the current list.
+  const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
   // Quality-history dialog (the quality orb opens it; a catalog item's id is a project id).
   const [qualityDialogItem, setQualityDialogItem] = useState<CatalogItem | null>(null);
   // Server-backed lint-report dialog (the lint orb / Lint action open it, MFI-23.10).
@@ -511,8 +529,31 @@ const Catalog = () => {
     } else if (filterChip === 'deleted') {
       rows = rows.filter((i) => Boolean(i.deleted_at));
     }
+    // Format facet (MFI-28.4): when one or more formats are selected, keep only items whose
+    // registry-resolved source format is in the selection. Items with an unrecognised/absent format
+    // resolve to no id and are excluded while any format filter is active.
+    if (selectedFormats.length > 0) {
+      const wanted = new Set(selectedFormats);
+      rows = rows.filter((i) => {
+        const id = resolveCatalogFormat(i.sourceFormat)?.id;
+        return id !== undefined && wanted.has(id);
+      });
+    }
     return rows;
-  }, [sortedItems, searchQuery, filterChip]);
+  }, [sortedItems, searchQuery, filterChip, selectedFormats]);
+
+  // The distinct formats present in the loaded catalog (MFI-28.4), each resolved to its registry
+  // label, sorted alphabetically. This feeds the format facet so it only ever offers formats that
+  // actually appear in the list. Derived from the full item set (not the filtered view) so toggling
+  // one format never makes the others disappear from the menu.
+  const availableFormats = useMemo<CatalogFormatOption[]>(() => {
+    const byId = new Map<string, CatalogFormatOption>();
+    for (const item of items) {
+      const fmt = resolveCatalogFormat(item.sourceFormat);
+      if (fmt && !byId.has(fmt.id)) byId.set(fmt.id, { id: fmt.id, label: fmt.label });
+    }
+    return [...byId.values()].sort((a, b) => a.label.localeCompare(b.label));
+  }, [items]);
 
   // Card view sectioned by resolved paradigm (MFI-24.2), in fixed graph→rpc→event→rest→data-schema
   // order with a trailing "Other" bucket; built off the already filtered/sorted list so grouping
@@ -583,6 +624,23 @@ const Catalog = () => {
       setFilterChip('all');
     }
   }, [showDeleted, filterChip]);
+
+  // Persist the toolbar preferences whenever any of them changes (MFI-28.4). Writing on every
+  // change (including the initial mount, which just re-writes the hydrated values) keeps
+  // localStorage authoritative without a separate save button.
+  useEffect(() => {
+    persistCatalogViewPreferences({ viewMode, groupMode, sortColumn, sortDirection, showDeleted });
+  }, [viewMode, groupMode, sortColumn, sortDirection, showDeleted]);
+
+  // Drop any selected format that is no longer present in the list (e.g. after the last item of a
+  // format is deleted), so the facet's active count never counts a format the menu can't show.
+  useEffect(() => {
+    setSelectedFormats((prev) => {
+      const present = new Set(availableFormats.map((f) => f.id));
+      const next = prev.filter((id) => present.has(id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [availableFormats]);
 
   /** Open the item's detail view (MFI-23.9): source material, provenance, normalized summary. */
   const handleOpenDetail = useCallback(
@@ -790,65 +848,17 @@ const Catalog = () => {
             </h2>
             <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">{headerSubtitle}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            <div className="flex h-8 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 transition-colors focus-within:border-indigo-400 dark:border-gray-700 dark:bg-gray-900/40 dark:focus-within:border-indigo-500">
-              <Search className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-32 bg-transparent text-xs outline-none placeholder:text-gray-400 sm:w-40 lg:w-52 dark:text-gray-200"
-                placeholder="Filter catalog…"
-                aria-label="Filter catalog"
-              />
-            </div>
-            <div className="flex items-center gap-1 rounded-md border border-gray-200 p-0.5 dark:border-gray-700">
-              <button
-                type="button"
-                onClick={() => setViewMode('cards')}
-                className={cn(
-                  'flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors',
-                  viewMode === 'cards'
-                    ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
-                    : 'text-gray-500 hover:text-indigo-500 dark:text-gray-400'
-                )}
-                aria-pressed={viewMode === 'cards'}
-              >
-                <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
-                Cards
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('table')}
-                className={cn(
-                  'flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors',
-                  viewMode === 'table'
-                    ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
-                    : 'text-gray-500 hover:text-indigo-500 dark:text-gray-400'
-                )}
-                aria-pressed={viewMode === 'table'}
-              >
-                <List className="h-3.5 w-3.5" aria-hidden />
-                Table
-              </button>
-            </div>
-            <div className="flex h-9 items-center gap-2 rounded-md border border-gray-200 px-3 dark:border-gray-700 dark:bg-gray-900/30">
-              <Label htmlFor="catalog-show-deleted" className="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-300">
-                Show deleted
-              </Label>
-              <Switch
-                id="catalog-show-deleted"
-                checked={showDeleted}
-                onCheckedChange={setShowDeleted}
-                aria-label="Show soft-deleted catalog items in the list"
-              />
-            </div>
-            {currentUserId ? (
+          {/* The header keeps only the primary Import action; every list control (search, view
+              toggle, filters, format facet, group, sort, show-deleted) is consolidated into the
+              single sticky toolbar below (MFI-28.4). */}
+          {currentUserId ? (
+            <div className="flex flex-wrap items-center gap-2 lg:justify-end">
               <Button size="sm" onClick={() => setShowImportDialog(true)}>
                 <Upload className="mr-1.5 h-3.5 w-3.5" aria-hidden />
                 Import
               </Button>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
         </div>
       </header>
 
@@ -867,34 +877,87 @@ const Catalog = () => {
             <div className={dashboardTableWrapClass}>
               <LoadingState minHeightClassName="min-h-[220px]" message="Loading catalog…" />
             </div>
-          ) : items.length === 0 ? (
-            <div className={dashboardTableWrapClass}>
-              <div className="p-8">
-                <EmptyState
-                  icon={<BookOpen className="h-10 w-10" />}
-                  title="Your catalog is empty"
-                  description={
-                    <>
-                      The catalog holds <strong>OpenAPI-worthy non-OpenAPI imports</strong> — specs in
-                      formats other than OpenAPI/Swagger that aren&apos;t publishable Projects yet. Use
-                      <strong> Import</strong> above to bring in a supported source (gRPC/Protobuf,
-                      GraphQL, or AsyncAPI); it is stored in its original format and converted to
-                      OpenAPI only when you&apos;re ready.
-                    </>
-                  }
-                  variant="compact"
-                  showOrbs={false}
-                  iconContainerClassName="from-indigo-500 to-purple-600 shadow-indigo-500/30"
-                />
-              </div>
-            </div>
           ) : (
             <>
               {/* Four metric cards summarising the live catalog (MFI-24.1), computed from the
-                  already-fetched list. Renders above the filter/sort toolbar. */}
-              <CatalogStatsRow items={items} />
+                  already-fetched list. Renders above the unified toolbar; suppressed on the empty
+                  catalog so the empty state leads. */}
+              {items.length > 0 ? <CatalogStatsRow items={items} /> : null}
 
-              <section className="flex flex-wrap items-center gap-2">
+              {/* Unified, sticky list toolbar (MFI-28.4): every list control now lives on one panel
+                  with one idiom — search · format facet · view toggle · show-deleted (row one) and
+                  the view filter chips · group · sort (row two). The view/group/sort/show-deleted
+                  choices are persisted (restored on reload). Rendered in both the empty and populated
+                  states so Show deleted stays reachable when the active list is empty but soft-deleted
+                  items exist. */}
+              <section
+                data-testid="catalog-toolbar"
+                aria-label="Catalog list controls"
+                className="sticky top-0 z-20 flex flex-col gap-3 rounded-lg border border-gray-200 bg-white/95 p-3 shadow-sm backdrop-blur dark:border-gray-700 dark:bg-gray-800/95"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex h-8 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 transition-colors focus-within:border-indigo-400 dark:border-gray-700 dark:bg-gray-900/40 dark:focus-within:border-indigo-500">
+                    <Search className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
+                    <input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-32 bg-transparent text-xs outline-none placeholder:text-gray-400 sm:w-40 lg:w-52 dark:text-gray-200"
+                      placeholder="Filter catalog…"
+                      aria-label="Filter catalog"
+                    />
+                  </div>
+                  {/* Format facet (MFI-28.4): filter by the formats actually present in the list. */}
+                  <CatalogFormatFacet
+                    options={availableFormats}
+                    selected={selectedFormats}
+                    onChange={setSelectedFormats}
+                  />
+                  <span className="ml-auto flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-1 rounded-md border border-gray-200 p-0.5 dark:border-gray-700">
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('cards')}
+                        className={cn(
+                          'flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors',
+                          viewMode === 'cards'
+                            ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                            : 'text-gray-500 hover:text-indigo-500 dark:text-gray-400'
+                        )}
+                        aria-pressed={viewMode === 'cards'}
+                      >
+                        <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
+                        Cards
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('table')}
+                        className={cn(
+                          'flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors',
+                          viewMode === 'table'
+                            ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                            : 'text-gray-500 hover:text-indigo-500 dark:text-gray-400'
+                        )}
+                        aria-pressed={viewMode === 'table'}
+                      >
+                        <List className="h-3.5 w-3.5" aria-hidden />
+                        Table
+                      </button>
+                    </div>
+                    <div className="flex h-9 items-center gap-2 rounded-md border border-gray-200 px-3 dark:border-gray-700 dark:bg-gray-900/30">
+                      <Label htmlFor="catalog-show-deleted" className="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-300">
+                        Show deleted
+                      </Label>
+                      <Switch
+                        id="catalog-show-deleted"
+                        checked={showDeleted}
+                        onCheckedChange={setShowDeleted}
+                        aria-label="Show soft-deleted catalog items in the list"
+                      />
+                    </div>
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
                 <span className="mr-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Views:
                 </span>
@@ -1012,9 +1075,31 @@ const Catalog = () => {
                     );
                   })}
                 </span>
+                </div>
               </section>
 
-              {displayedItems.length === 0 ? (
+              {items.length === 0 ? (
+                <div className={dashboardTableWrapClass}>
+                  <div className="p-8">
+                    <EmptyState
+                      icon={<BookOpen className="h-10 w-10" />}
+                      title="Your catalog is empty"
+                      description={
+                        <>
+                          The catalog holds <strong>OpenAPI-worthy non-OpenAPI imports</strong> — specs in
+                          formats other than OpenAPI/Swagger that aren&apos;t publishable Projects yet. Use
+                          <strong> Import</strong> above to bring in a supported source (gRPC/Protobuf,
+                          GraphQL, or AsyncAPI); it is stored in its original format and converted to
+                          OpenAPI only when you&apos;re ready.
+                        </>
+                      }
+                      variant="compact"
+                      showOrbs={false}
+                      iconContainerClassName="from-indigo-500 to-purple-600 shadow-indigo-500/30"
+                    />
+                  </div>
+                </div>
+              ) : displayedItems.length === 0 ? (
                 <div className={`${dashboardPanelClass} p-10 text-center text-sm text-gray-600 dark:text-gray-400`}>
                   No catalog items match your filters or search.
                 </div>
@@ -1195,9 +1280,11 @@ const Catalog = () => {
                 </div>
               )}
 
-              <p className="text-right text-xs text-gray-500 dark:text-gray-400">
-                Sorted by <span className="font-medium text-indigo-600 dark:text-indigo-400">{sortSummaryLabel}</span>
-              </p>
+              {items.length > 0 ? (
+                <p className="text-right text-xs text-gray-500 dark:text-gray-400">
+                  Sorted by <span className="font-medium text-indigo-600 dark:text-indigo-400">{sortSummaryLabel}</span>
+                </p>
+              ) : null}
             </>
           )}
         </div>
