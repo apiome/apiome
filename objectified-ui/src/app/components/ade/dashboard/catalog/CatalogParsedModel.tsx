@@ -16,8 +16,7 @@
  *     deep-link straight to it (MFI-28.2) — a deep-linked entity is force-expanded and never hidden
  *     by an active filter;
  *   - a per-group **raw-model toggle** renders the group's normalized JSON in the shared read-only
- *     Monaco viewer (`McpJsonViewer`, promoted to `ui/code` by MFI-28.7 — consumed from `ui/mcp`
- *     until that move lands).
+ *     Monaco viewer (`JsonViewer` from `ui/code`, promoted out of `ui/mcp` by MFI-28.7).
  *
  * The `parsed` shape is intentionally presentation-agnostic (no colors, ordering hints, or markup);
  * all styling lives here: `parsedTagToneClass` maps each entity tag to a Tailwind tone, and
@@ -31,7 +30,7 @@ import { Box, Braces, ChevronRight, Filter, X } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { dashboardPanelClass } from '@/app/components/ade/dashboard/dashboardScreenClasses';
 import { catalogEntityAnchorId } from '@/app/utils/catalog-lint-panel';
-import { McpJsonViewer } from '@/app/components/ui/mcp/McpJsonViewer';
+import { JsonViewer } from '@/app/components/ui/code';
 
 /** One field row on a parsed entity (mockup `.frow`): name / rendered type / description. */
 export interface CatalogParsedField {
@@ -269,7 +268,7 @@ function ParsedEntityDisclosure({
 }) {
   const hasFields = entity.fields.length > 0;
   const [open, setOpen] = useState(defaultOpen && hasFields);
-  // Track whether the body has ever been shown so field rows mount lazily (like McpDisclosure).
+  // Track whether the body has ever been shown so field rows mount lazily (like ui/code Disclosure).
   const [everOpened, setEverOpened] = useState(defaultOpen && hasFields);
 
   // A deep-link to this entity forces it open (derived, no effect) so its fields are visible when
@@ -444,7 +443,7 @@ function ParsedGroupCard({
 
       {rawOpen ? (
         <div data-testid="catalog-detail-parsed-raw" className="mt-3">
-          <McpJsonViewer
+          <JsonViewer
             value={parsedGroupToJson(group)}
             label={`${group.title} — normalized model`}
             maxLines={32}
