@@ -1184,7 +1184,7 @@ compare read it can reuse from the existing versions dashboard machinery).
 | 28.4 · #4120 ✅ | Unified toolbar + persisted view preferences | One sticky toolbar (search/filter/group/sort), format facet, localStorage persistence | ui | Y | Y | S | objectified-ui |
 | 28.5 · #4121 | Bulk actions | Multi-select cards/rows → bulk convert / soft-delete / restore | ui,rest | N | N | M | objectified-ui,objectified-rest |
 | 28.6 · #4122 | Skeleton loading states | Skeleton cards/rows + per-tab detail skeletons instead of spinners | ui | Y | N | S | objectified-ui |
-| 28.7 · #4123 | Promote shared code-viewer primitives | Move `McpJsonViewer`/`McpJsonDiffViewer`/`McpDisclosure` to a format-neutral `ui/code` module | ui | Y | Y | S | objectified-ui |
+| 28.7 · #4123 ✅ | Promote shared code-viewer primitives | Move `McpJsonViewer`/`McpJsonDiffViewer`/`McpDisclosure` to a format-neutral `ui/code` module | ui | Y | Y | S | objectified-ui |
 | 28.8 · #4124 | URL-synced detail tabs & a11y pass | `?tab=` deep links, keyboard nav on grids/menus, dialog focus management | ui,accessibility | Y | N | M | objectified-ui |
 
 ### MFI-28.1 — Inline version diff on the catalog detail · #4117 · ✅ **Done**
@@ -1232,10 +1232,10 @@ compare read it can reuse from the existing versions dashboard machinery).
 - **Dependencies / Parallelism.** Independent; trivially parallel.
 - **Technical Stack.** Next.js.
 
-### MFI-28.7 — Promote shared code-viewer primitives out of `ui/mcp` · #4123
+### MFI-28.7 — Promote shared code-viewer primitives out of `ui/mcp` · #4123 · ✅ **Done**
 - **Problem.** The Monaco-backed read-only JSON viewer, split/unified diff viewer, and lazy disclosure shipped under `src/app/components/ui/mcp/` for the MCP screens, but they are format-neutral and the Catalog (28.1/28.3), primitives, and future format screens all want them. Importing catalog UI from an `mcp` module is misleading.
 - **Solution / Scope.** Move `McpJsonViewer` → `ui/code/JsonViewer`, `McpJsonDiffViewer` → `ui/code/JsonDiffViewer`, `McpDisclosure` → `ui/code/Disclosure` (neutral names, language prop instead of JSON-only where cheap); re-export from `ui/mcp` for back-compat; update the design-system gallery.
-- **Acceptance Criteria.** New `ui/code` module owns the three primitives; MCP screens keep working via re-exports; the design-system page documents them under their neutral names.
+- **Status.** Implemented in `objectified-ui`. A new **`src/app/components/ui/code`** module owns the three primitives — `JsonViewer`, `JsonDiffViewer` (both now format-neutral via a `language` prop defaulting to `json`, passed through to Monaco), and `Disclosure` — plus a barrel `index.ts`. The old `ui/mcp/{McpJsonViewer,McpJsonDiffViewer,McpDisclosure}.tsx` files became **thin back-compat re-export shims** that alias the neutral components (and the `McpDiffMode`/`Mcp*Props` type names) to their old identifiers, so the MCP screens (`McpEndpointDetailClient`, `McpVersionHistory`) and the `ui/mcp` barrel keep working unchanged. The **catalog** consumers were promoted off the misleading `mcp` path to `@/app/components/ui/code`: `CatalogParsedModel` (`JsonViewer`) and `CatalogVersionsPanel` (`JsonDiffViewer`/`DiffMode`). The design-system gallery (`/design-system/mcp`) documents all three under their neutral names, imported from `ui/code`, adding live `JsonDiffViewer` and `Disclosure` showcases beside the renamed `JsonViewer`. Tests: new `tests/ui-code-primitives.test.tsx` (8 cases — render + `language`-prop forwarding for both viewers, lazy-mount `Disclosure`, and back-compat identity of the `Mcp*` aliases via both the per-file shims and the barrel), plus the existing `catalog-versions-panel` diff-viewer mock repointed to `ui/code/JsonDiffViewer`. Full objectified-ui suite green — 301 suites, 4268 tests; `tsc`/eslint clean; `next build` green. objectified-ui 0.48.0 → 0.49.0.
 - **Dependencies / Parallelism.** Do **first** in this epic — 28.1/28.3 consume it.
 - **Technical Stack.** Next.js, monaco-editor.
 

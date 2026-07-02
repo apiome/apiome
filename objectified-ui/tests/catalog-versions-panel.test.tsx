@@ -27,8 +27,8 @@ jest.mock('../src/app/utils/catalog-revision-diff', () => ({
 
 // Stub the Monaco diff viewer (dynamic monaco import never resolves under jsdom); expose its key props
 // so the layout toggle and expand-all wiring can be asserted.
-jest.mock('../src/app/components/ui/mcp/McpJsonDiffViewer', () => ({
-  McpJsonDiffViewer: (props: {
+jest.mock('../src/app/components/ui/code/JsonDiffViewer', () => ({
+  JsonDiffViewer: (props: {
     original: string;
     modified: string;
     mode: string;

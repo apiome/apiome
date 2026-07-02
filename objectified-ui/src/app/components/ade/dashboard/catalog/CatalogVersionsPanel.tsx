@@ -36,9 +36,9 @@ import { cn } from '@lib/utils';
 import { dashboardPanelClass } from '@/app/components/ade/dashboard/dashboardScreenClasses';
 import { formatVersionWithPrefix, getVersionRevisionNote } from '@/app/utils/version-display';
 import {
-  McpJsonDiffViewer,
-  type McpDiffMode,
-} from '@/app/components/ui/mcp/McpJsonDiffViewer';
+  JsonDiffViewer,
+  type DiffMode,
+} from '@/app/components/ui/code';
 import {
   canDiffRevisions,
   MAX_DIFF_SELECTION,
@@ -111,10 +111,10 @@ function DiffModeToggle({
   mode,
   onChange,
 }: {
-  mode: McpDiffMode;
-  onChange: (mode: McpDiffMode) => void;
+  mode: DiffMode;
+  onChange: (mode: DiffMode) => void;
 }) {
-  const options: Array<{ value: McpDiffMode; label: string; icon: typeof Columns2 }> = [
+  const options: Array<{ value: DiffMode; label: string; icon: typeof Columns2 }> = [
     { value: 'split', label: 'Side-by-side', icon: Columns2 },
     { value: 'unified', label: 'Unified', icon: AlignJustify },
   ];
@@ -175,7 +175,7 @@ export function CatalogVersionsPanel({
   // The inline diff of the ticked pair.
   const [compare, setCompare] = useState<CompareState>(IDLE_COMPARE);
   /** Diff layout (side-by-side vs unified), remembered across visits. */
-  const [diffMode, setDiffMode] = useState<McpDiffMode>('split');
+  const [diffMode, setDiffMode] = useState<DiffMode>('split');
   /** Expand-all reveals every unchanged region; collapse-all (default) folds them to the changes. */
   const [expandAll, setExpandAll] = useState(false);
   // Monotonic token so a superseded compare (older pair) never clobbers a newer one's result.
@@ -190,7 +190,7 @@ export function CatalogVersionsPanel({
     }
   }, []);
 
-  const changeDiffMode = useCallback((mode: McpDiffMode) => {
+  const changeDiffMode = useCallback((mode: DiffMode) => {
     setDiffMode(mode);
     try {
       window.localStorage.setItem(DIFF_MODE_STORAGE_KEY, mode);
@@ -459,7 +459,7 @@ export function CatalogVersionsPanel({
                   {compare.error || 'Failed to build the diff.'}
                 </div>
               ) : compare.status === 'loaded' ? (
-                <McpJsonDiffViewer
+                <JsonDiffViewer
                   original={compare.original}
                   modified={compare.modified}
                   mode={diffMode}

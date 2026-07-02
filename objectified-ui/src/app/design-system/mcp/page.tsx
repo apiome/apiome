@@ -18,8 +18,10 @@ import {
   DetailTabs,
   DetailTabsList,
   DetailTabsContent,
-  McpJsonViewer,
 } from '@/app/components/ui/mcp';
+// The Monaco-backed code-viewer primitives were promoted out of `ui/mcp` to the format-neutral
+// `ui/code` module (MFI-28.7); the gallery documents them under those neutral names.
+import { JsonViewer, JsonDiffViewer, Disclosure } from '@/app/components/ui/code';
 import { EmptyState } from '@/app/components/ui/EmptyState';
 import { LoadingState } from '@/app/components/ui/LoadingState';
 import { ErrorState } from '@/app/components/ui/ErrorState';
@@ -104,12 +106,13 @@ export default function McpPrimitivesShowcase() {
       </Section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">McpJsonViewer</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">JsonViewer</h2>
         <p className="mb-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
-          The read-only, monaco-backed JSON block for capability schemas &amp; annotations —
-          theme-aware, foldable, with one-click copy.
+          The read-only, monaco-backed code block for capability schemas &amp; catalog models —
+          theme-aware, foldable, with one-click copy. Format-neutral via a <code>language</code> prop
+          (defaults to JSON). Lives in <code>ui/code</code> (MFI-28.7).
         </p>
-        <McpJsonViewer
+        <JsonViewer
           label="Input schema"
           value={JSON.stringify(
             {
@@ -124,6 +127,51 @@ export default function McpPrimitivesShowcase() {
             2,
           )}
         />
+      </section>
+
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">JsonDiffViewer</h2>
+        <p className="mb-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
+          The read-only, monaco-backed split/unified diff for two revisions of a document — auto-sizing,
+          theme-aware, collapsing long unchanged regions. Format-neutral via a <code>language</code> prop.
+          Lives in <code>ui/code</code> (MFI-28.7).
+        </p>
+        <div className="w-full">
+          <JsonDiffViewer
+            mode="split"
+            original={JSON.stringify(
+              { name: 'search', limit: 10, sort: 'relevance' },
+              null,
+              2,
+            )}
+            modified={JSON.stringify(
+              { name: 'search', limit: 25, sort: 'recency', highlight: true },
+              null,
+              2,
+            )}
+          />
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Disclosure</h2>
+        <p className="mb-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
+          A lazy-mounting collapsible wrapper for the (heavy) code viewers: its children mount only on
+          first expand, so a long list of sections doesn&apos;t pay the editors&apos; cost up front.
+          Lives in <code>ui/code</code> (MFI-28.7).
+        </p>
+        <div className="w-full space-y-2">
+          <Disclosure label="Output schema" meta="6 lines">
+            <JsonViewer
+              className="rounded-none border-0"
+              value={JSON.stringify(
+                { type: 'array', items: { $ref: '#/components/schemas/Result' } },
+                null,
+                2,
+              )}
+            />
+          </Disclosure>
+        </div>
       </section>
 
       <Section title="FindingSeverity" description="The shared MUST / SHOULD / Advisory chip for the lint tab and inline hints.">
