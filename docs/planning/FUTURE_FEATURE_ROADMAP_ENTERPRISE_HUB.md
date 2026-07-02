@@ -1,6 +1,6 @@
-# Objectified: Enterprise Hub - Feature Roadmap
+# Apiome: Enterprise Hub - Feature Roadmap
 
-> Centralized management console for large enterprises with multiple teams, projects, and Objectified instances. Enterprise Hub consolidates multi-tenant operations, cost governance, federated identity, and service cataloging into a single pane of glass—enabling platform teams to manage Objectified at organizational scale.
+> Centralized management console for large enterprises with multiple teams, projects, and Apiome instances. Enterprise Hub consolidates multi-tenant operations, cost governance, federated identity, and service cataloging into a single pane of glass—enabling platform teams to manage Apiome at organizational scale.
 >
 > **Revenue Model**: Enterprise licensing, per-tenant pricing, professional services
 >
@@ -44,7 +44,7 @@ The Tenant Overview Dashboard is the primary landing page for Enterprise Hub adm
 
 The dashboard uses a Radix UI `Tabs` component to switch between card view and table view. The table view renders via a Radix `Table` with sortable column headers and inline sparkline charts for 7-day trends. A global search bar at the top uses debounced input to filter tenants by name or ID. The page lives at `/app/enterprise/dashboard` in the NextJS app router.
 
-Data is sourced from a new REST endpoint `GET /api/v1/enterprise/tenants/overview` that aggregates metrics from the per-tenant metrics tables. The endpoint accepts query parameters for `region`, `business_unit`, `sort_by`, and `order`. Response payloads conform to the existing Objectified envelope format with pagination cursors.
+Data is sourced from a new REST endpoint `GET /api/v1/enterprise/tenants/overview` that aggregates metrics from the per-tenant metrics tables. The endpoint accepts query parameters for `region`, `business_unit`, `sort_by`, and `order`. Response payloads conform to the existing Apiome envelope format with pagination cursors.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -80,7 +80,7 @@ Data is sourced from a new REST endpoint `GET /api/v1/enterprise/tenants/overvie
 
 #### 1.2 (#1031) — Tenant Provisioning Wizard
 
-The Tenant Provisioning Wizard guides administrators through creating a new Objectified tenant with a multi-step form. Steps include: (1) basic metadata—name, slug, region, business unit; (2) template selection—choose from pre-defined configuration templates that set default quotas, feature flags, and schema sharing policies; (3) identity configuration—SSO provider, default admin user; (4) review and confirm.
+The Tenant Provisioning Wizard guides administrators through creating a new Apiome tenant with a multi-step form. Steps include: (1) basic metadata—name, slug, region, business unit; (2) template selection—choose from pre-defined configuration templates that set default quotas, feature flags, and schema sharing policies; (3) identity configuration—SSO provider, default admin user; (4) review and confirm.
 
 The wizard is implemented as a Radix `Dialog` containing a stepper component. Each step validates before allowing progression. The template selection step renders a Radix `RadioGroup` of template cards with descriptions. The review step shows a read-only summary using Radix `Separator` and label/value pairs.
 

@@ -29,6 +29,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@apiome/cli@workspace:apiome-cli":
+  version: 0.0.0-use.local
+  resolution: "@apiome/cli@workspace:apiome-cli"
+  languageName: unknown
+  linkType: soft
+
 "@asamuzakjp/css-color@npm:^3.2.0":
   version: 3.2.0
   resolution: "@asamuzakjp/css-color@npm:3.2.0"
@@ -1946,12 +1952,6 @@ __metadata:
   checksum: 10c0/34ab85fdc2e0250879518841f74a30c276bca4f6c3e13526d2d1fe515e1adf6d46c25fcd5989d22ea056d76f7c39210945180b4859fc83b050e2da411aa86289
   languageName: node
   linkType: hard
-
-"@objectified/cli@workspace:objectified-cli":
-  version: 0.0.0-use.local
-  resolution: "@objectified/cli@workspace:objectified-cli"
-  languageName: unknown
-  linkType: soft
 
 "@panva/hkdf@npm:^1.0.2":
   version: 1.2.1
@@ -5173,6 +5173,201 @@ __metadata:
   checksum: 10c0/57b06ae984bc32a0d22592c87384cd88fe4511b1dd7581497831c56d41939c8a001b28e7b853e1450f2bf61992dfcaa8ae2d0d161a0a90c4fb631ef07098fbac
   languageName: node
   linkType: hard
+
+"apiome-browse@workspace:apiome-browse":
+  version: 0.0.0-use.local
+  resolution: "apiome-browse@workspace:apiome-browse"
+  dependencies:
+    "@dagrejs/dagre": "npm:^1.0.4"
+    "@monaco-editor/react": "npm:^4.7.0"
+    "@tailwindcss/postcss": "npm:^4.2.2"
+    "@types/node": "npm:^25.6.0"
+    "@types/pg": "npm:^8.20.0"
+    "@types/react": "npm:^19.2.14"
+    "@types/react-dom": "npm:^19.2.3"
+    "@xyflow/react": "npm:^12.10.2"
+    diff: "npm:^9.0.0"
+    eslint: "npm:^9.39.4"
+    eslint-config-next: "npm:^16.2.3"
+    monaco-editor: "npm:^0.55.1"
+    next: "npm:^16.2.3"
+    pg: "npm:^8.20.0"
+    react: "npm:^19.2.5"
+    react-dom: "npm:^19.2.5"
+    tailwindcss: "npm:^4.2.2"
+    typescript: "npm:^5.9.3"
+    vitest: "npm:^3.2.4"
+    yaml: "npm:^2.8.3"
+  languageName: unknown
+  linkType: soft
+
+"apiome-db@workspace:apiome-db":
+  version: 0.0.0-use.local
+  resolution: "apiome-db@workspace:apiome-db"
+  dependencies:
+    "@types/bcrypt": "npm:^6.0.0"
+    "@types/node": "npm:^22.10.0"
+    "@types/pg": "npm:^8.20.0"
+    bcrypt: "npm:^6.0.0"
+    commander: "npm:^13.0.0"
+    pg: "npm:^8.20.0"
+    tsx: "npm:^4.21.0"
+    typescript: "npm:^5.9.3"
+    vitest: "npm:^3.2.4"
+  bin:
+    apiome-db: ./dist/cli.js
+  languageName: unknown
+  linkType: soft
+
+"apiome-mcp@workspace:apiome-mcp":
+  version: 0.0.0-use.local
+  resolution: "apiome-mcp@workspace:apiome-mcp"
+  languageName: unknown
+  linkType: soft
+
+"apiome-rest@workspace:apiome-rest":
+  version: 0.0.0-use.local
+  resolution: "apiome-rest@workspace:apiome-rest"
+  languageName: unknown
+  linkType: soft
+
+"apiome-ui@workspace:apiome-ui":
+  version: 0.0.0-use.local
+  resolution: "apiome-ui@workspace:apiome-ui"
+  dependencies:
+    "@dnd-kit/core": "npm:^6.3.1"
+    "@dnd-kit/sortable": "npm:^10.0.0"
+    "@dnd-kit/utilities": "npm:^3.2.2"
+    "@emotion/react": "npm:^11.14.0"
+    "@emotion/styled": "npm:^11.14.1"
+    "@jest/globals": "npm:^30.3.0"
+    "@monaco-editor/react": "npm:^4.7.0"
+    "@playwright/test": "npm:^1.59.1"
+    "@radix-ui/react-accordion": "npm:^1.2.12"
+    "@radix-ui/react-alert-dialog": "npm:^1.1.15"
+    "@radix-ui/react-checkbox": "npm:^1.3.3"
+    "@radix-ui/react-collapsible": "npm:^1.1.12"
+    "@radix-ui/react-dialog": "npm:^1.1.15"
+    "@radix-ui/react-dropdown-menu": "npm:^2.1.16"
+    "@radix-ui/react-icons": "npm:^1.3.2"
+    "@radix-ui/react-label": "npm:^2.1.8"
+    "@radix-ui/react-popover": "npm:^1.1.15"
+    "@radix-ui/react-progress": "npm:^1.1.8"
+    "@radix-ui/react-select": "npm:^2.2.6"
+    "@radix-ui/react-switch": "npm:^1.2.6"
+    "@radix-ui/react-tabs": "npm:^1.1.13"
+    "@radix-ui/react-toggle-group": "npm:^1.1.11"
+    "@radix-ui/react-tooltip": "npm:^1.2.8"
+    "@radix-ui/themes": "npm:^3.3.0"
+    "@seriousme/openapi-schema-validator": "npm:^2.8.0"
+    "@tailwindcss/postcss": "npm:^4.2.2"
+    "@testing-library/dom": "npm:^10.4.1"
+    "@testing-library/jest-dom": "npm:^6.9.1"
+    "@testing-library/react": "npm:^16.3.2"
+    "@testing-library/user-event": "npm:^14.6.1"
+    "@types/bcrypt": "npm:^6.0.0"
+    "@types/dompurify": "npm:^3.2.0"
+    "@types/handlebars": "npm:^4.1.0"
+    "@types/jest": "npm:^30.0.0"
+    "@types/jsonwebtoken": "npm:^9.0.10"
+    "@types/mustache": "npm:^4.2.6"
+    "@types/node": "npm:^25.6.0"
+    "@types/pg": "npm:^8.20.0"
+    "@types/react": "npm:^19.2.14"
+    "@types/react-dom": "npm:^19.2.3"
+    "@types/uuid": "npm:^11.0.0"
+    "@xyflow/react": "npm:12.10.2"
+    ajv: "npm:^8.18.0"
+    ajv-formats: "npm:^3.0.1"
+    babel-plugin-react-compiler: "npm:^1.0.0"
+    baseline-browser-mapping: "npm:^2.10.19"
+    bcrypt: "npm:^6.0.0"
+    class-variance-authority: "npm:^0.7.1"
+    clsx: "npm:^2.1.1"
+    cmdk: "npm:^1.1.1"
+    diff: "npm:^9.0.0"
+    dompurify: "npm:^3.4.0"
+    eslint: "npm:^9.39.4"
+    eslint-config-next: "npm:^16.2.3"
+    handlebars: "npm:^4.7.9"
+    html-to-image: "npm:^1.11.13"
+    jest: "npm:^30.3.0"
+    jest-environment-jsdom: "npm:^30.3.0"
+    json-schema-faker: "npm:^0.5.9"
+    jsonwebtoken: "npm:^9.0.3"
+    jspdf: "npm:^4.2.1"
+    lucide-react: "npm:^0.577.0"
+    mermaid: "npm:^11.14.0"
+    monaco-editor: "npm:^0.55.1"
+    mustache: "npm:^4.2.0"
+    next: "npm:^16.2.3"
+    next-auth: "npm:^4.24.14"
+    next-themes: "npm:^0.4.6"
+    pg: "npm:^8.20.0"
+    react: "npm:^19.2.5"
+    react-dom: "npm:^19.2.5"
+    react-icons: "npm:5.5.0"
+    react-markdown: "npm:^10.1.0"
+    rehype-raw: "npm:^7.0.0"
+    remark-gfm: "npm:^4.0.1"
+    sonner: "npm:^2.0.7"
+    tailwind-merge: "npm:^3.5.0"
+    tailwindcss: "npm:^4.2.2"
+    tailwindcss-animate: "npm:^1.0.7"
+    ts-jest: "npm:^29.4.9"
+    ts-node: "npm:^10.9.2"
+    tsx: "npm:^4.21.0"
+    typescript: "npm:^5.9.3"
+    uuid: "npm:^13.0.0"
+    yaml: "npm:^2.8.3"
+  languageName: unknown
+  linkType: soft
+
+"apiome-web@workspace:apiome-web":
+  version: 0.0.0-use.local
+  resolution: "apiome-web@workspace:apiome-web"
+  dependencies:
+    "@radix-ui/react-accordion": "npm:^1.2.12"
+    "@radix-ui/react-alert-dialog": "npm:^1.1.15"
+    "@radix-ui/react-dialog": "npm:^1.1.15"
+    "@radix-ui/react-dropdown-menu": "npm:^2.1.16"
+    "@radix-ui/react-icons": "npm:^1.3.2"
+    "@radix-ui/react-scroll-area": "npm:^1.2.10"
+    "@radix-ui/react-separator": "npm:^1.1.8"
+    "@radix-ui/react-tabs": "npm:^1.1.13"
+    "@tailwindcss/postcss": "npm:^4.2.2"
+    "@types/jest": "npm:^30.0.0"
+    "@types/node": "npm:^25.6.0"
+    "@types/react": "npm:^19.2.14"
+    "@types/react-dom": "npm:^19.2.3"
+    "@types/three": "npm:^0.184.0"
+    class-variance-authority: "npm:^0.7.1"
+    clsx: "npm:^2.1.1"
+    eslint: "npm:^9.39.4"
+    eslint-config-next: "npm:^16.2.3"
+    gsap: "npm:^3.15.0"
+    jest: "npm:^30.3.0"
+    lucide-react: "npm:^0.577.0"
+    motion: "npm:^12.38.0"
+    next: "npm:^16.2.3"
+    next-themes: "npm:^0.4.6"
+    react: "npm:^19.2.5"
+    react-dom: "npm:^19.2.5"
+    tailwind-merge: "npm:^3.5.0"
+    tailwindcss: "npm:^4.2.2"
+    tailwindcss-animate: "npm:^1.0.7"
+    three: "npm:^0.184.0"
+    typescript: "npm:^5.9.3"
+  languageName: unknown
+  linkType: soft
+
+"apiome@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "apiome@workspace:."
+  dependencies:
+    turbo: "npm:^2.9.6"
+  languageName: unknown
+  linkType: soft
 
 "arg@npm:^4.1.0":
   version: 4.1.3
@@ -10927,201 +11122,6 @@ __metadata:
   checksum: 10c0/3c47814fdc64842ae3d5a74bc9d06bdd8d21563c04d9939bf6716a9c00596a4ebc342552f8934013d1ec991c74e3671b26710a0c51815f0b603795605ab6b2c9
   languageName: node
   linkType: hard
-
-"objectified-browse@workspace:objectified-browse":
-  version: 0.0.0-use.local
-  resolution: "objectified-browse@workspace:objectified-browse"
-  dependencies:
-    "@dagrejs/dagre": "npm:^1.0.4"
-    "@monaco-editor/react": "npm:^4.7.0"
-    "@tailwindcss/postcss": "npm:^4.2.2"
-    "@types/node": "npm:^25.6.0"
-    "@types/pg": "npm:^8.20.0"
-    "@types/react": "npm:^19.2.14"
-    "@types/react-dom": "npm:^19.2.3"
-    "@xyflow/react": "npm:^12.10.2"
-    diff: "npm:^9.0.0"
-    eslint: "npm:^9.39.4"
-    eslint-config-next: "npm:^16.2.3"
-    monaco-editor: "npm:^0.55.1"
-    next: "npm:^16.2.3"
-    pg: "npm:^8.20.0"
-    react: "npm:^19.2.5"
-    react-dom: "npm:^19.2.5"
-    tailwindcss: "npm:^4.2.2"
-    typescript: "npm:^5.9.3"
-    vitest: "npm:^3.2.4"
-    yaml: "npm:^2.8.3"
-  languageName: unknown
-  linkType: soft
-
-"objectified-db@workspace:objectified-db":
-  version: 0.0.0-use.local
-  resolution: "objectified-db@workspace:objectified-db"
-  dependencies:
-    "@types/bcrypt": "npm:^6.0.0"
-    "@types/node": "npm:^22.10.0"
-    "@types/pg": "npm:^8.20.0"
-    bcrypt: "npm:^6.0.0"
-    commander: "npm:^13.0.0"
-    pg: "npm:^8.20.0"
-    tsx: "npm:^4.21.0"
-    typescript: "npm:^5.9.3"
-    vitest: "npm:^3.2.4"
-  bin:
-    objectified-db: ./dist/cli.js
-  languageName: unknown
-  linkType: soft
-
-"objectified-mcp@workspace:objectified-mcp":
-  version: 0.0.0-use.local
-  resolution: "objectified-mcp@workspace:objectified-mcp"
-  languageName: unknown
-  linkType: soft
-
-"objectified-rest@workspace:objectified-rest":
-  version: 0.0.0-use.local
-  resolution: "objectified-rest@workspace:objectified-rest"
-  languageName: unknown
-  linkType: soft
-
-"objectified-ui@workspace:objectified-ui":
-  version: 0.0.0-use.local
-  resolution: "objectified-ui@workspace:objectified-ui"
-  dependencies:
-    "@dnd-kit/core": "npm:^6.3.1"
-    "@dnd-kit/sortable": "npm:^10.0.0"
-    "@dnd-kit/utilities": "npm:^3.2.2"
-    "@emotion/react": "npm:^11.14.0"
-    "@emotion/styled": "npm:^11.14.1"
-    "@jest/globals": "npm:^30.3.0"
-    "@monaco-editor/react": "npm:^4.7.0"
-    "@playwright/test": "npm:^1.59.1"
-    "@radix-ui/react-accordion": "npm:^1.2.12"
-    "@radix-ui/react-alert-dialog": "npm:^1.1.15"
-    "@radix-ui/react-checkbox": "npm:^1.3.3"
-    "@radix-ui/react-collapsible": "npm:^1.1.12"
-    "@radix-ui/react-dialog": "npm:^1.1.15"
-    "@radix-ui/react-dropdown-menu": "npm:^2.1.16"
-    "@radix-ui/react-icons": "npm:^1.3.2"
-    "@radix-ui/react-label": "npm:^2.1.8"
-    "@radix-ui/react-popover": "npm:^1.1.15"
-    "@radix-ui/react-progress": "npm:^1.1.8"
-    "@radix-ui/react-select": "npm:^2.2.6"
-    "@radix-ui/react-switch": "npm:^1.2.6"
-    "@radix-ui/react-tabs": "npm:^1.1.13"
-    "@radix-ui/react-toggle-group": "npm:^1.1.11"
-    "@radix-ui/react-tooltip": "npm:^1.2.8"
-    "@radix-ui/themes": "npm:^3.3.0"
-    "@seriousme/openapi-schema-validator": "npm:^2.8.0"
-    "@tailwindcss/postcss": "npm:^4.2.2"
-    "@testing-library/dom": "npm:^10.4.1"
-    "@testing-library/jest-dom": "npm:^6.9.1"
-    "@testing-library/react": "npm:^16.3.2"
-    "@testing-library/user-event": "npm:^14.6.1"
-    "@types/bcrypt": "npm:^6.0.0"
-    "@types/dompurify": "npm:^3.2.0"
-    "@types/handlebars": "npm:^4.1.0"
-    "@types/jest": "npm:^30.0.0"
-    "@types/jsonwebtoken": "npm:^9.0.10"
-    "@types/mustache": "npm:^4.2.6"
-    "@types/node": "npm:^25.6.0"
-    "@types/pg": "npm:^8.20.0"
-    "@types/react": "npm:^19.2.14"
-    "@types/react-dom": "npm:^19.2.3"
-    "@types/uuid": "npm:^11.0.0"
-    "@xyflow/react": "npm:12.10.2"
-    ajv: "npm:^8.18.0"
-    ajv-formats: "npm:^3.0.1"
-    babel-plugin-react-compiler: "npm:^1.0.0"
-    baseline-browser-mapping: "npm:^2.10.19"
-    bcrypt: "npm:^6.0.0"
-    class-variance-authority: "npm:^0.7.1"
-    clsx: "npm:^2.1.1"
-    cmdk: "npm:^1.1.1"
-    diff: "npm:^9.0.0"
-    dompurify: "npm:^3.4.0"
-    eslint: "npm:^9.39.4"
-    eslint-config-next: "npm:^16.2.3"
-    handlebars: "npm:^4.7.9"
-    html-to-image: "npm:^1.11.13"
-    jest: "npm:^30.3.0"
-    jest-environment-jsdom: "npm:^30.3.0"
-    json-schema-faker: "npm:^0.5.9"
-    jsonwebtoken: "npm:^9.0.3"
-    jspdf: "npm:^4.2.1"
-    lucide-react: "npm:^0.577.0"
-    mermaid: "npm:^11.14.0"
-    monaco-editor: "npm:^0.55.1"
-    mustache: "npm:^4.2.0"
-    next: "npm:^16.2.3"
-    next-auth: "npm:^4.24.14"
-    next-themes: "npm:^0.4.6"
-    pg: "npm:^8.20.0"
-    react: "npm:^19.2.5"
-    react-dom: "npm:^19.2.5"
-    react-icons: "npm:5.5.0"
-    react-markdown: "npm:^10.1.0"
-    rehype-raw: "npm:^7.0.0"
-    remark-gfm: "npm:^4.0.1"
-    sonner: "npm:^2.0.7"
-    tailwind-merge: "npm:^3.5.0"
-    tailwindcss: "npm:^4.2.2"
-    tailwindcss-animate: "npm:^1.0.7"
-    ts-jest: "npm:^29.4.9"
-    ts-node: "npm:^10.9.2"
-    tsx: "npm:^4.21.0"
-    typescript: "npm:^5.9.3"
-    uuid: "npm:^13.0.0"
-    yaml: "npm:^2.8.3"
-  languageName: unknown
-  linkType: soft
-
-"objectified-web@workspace:objectified-web":
-  version: 0.0.0-use.local
-  resolution: "objectified-web@workspace:objectified-web"
-  dependencies:
-    "@radix-ui/react-accordion": "npm:^1.2.12"
-    "@radix-ui/react-alert-dialog": "npm:^1.1.15"
-    "@radix-ui/react-dialog": "npm:^1.1.15"
-    "@radix-ui/react-dropdown-menu": "npm:^2.1.16"
-    "@radix-ui/react-icons": "npm:^1.3.2"
-    "@radix-ui/react-scroll-area": "npm:^1.2.10"
-    "@radix-ui/react-separator": "npm:^1.1.8"
-    "@radix-ui/react-tabs": "npm:^1.1.13"
-    "@tailwindcss/postcss": "npm:^4.2.2"
-    "@types/jest": "npm:^30.0.0"
-    "@types/node": "npm:^25.6.0"
-    "@types/react": "npm:^19.2.14"
-    "@types/react-dom": "npm:^19.2.3"
-    "@types/three": "npm:^0.184.0"
-    class-variance-authority: "npm:^0.7.1"
-    clsx: "npm:^2.1.1"
-    eslint: "npm:^9.39.4"
-    eslint-config-next: "npm:^16.2.3"
-    gsap: "npm:^3.15.0"
-    jest: "npm:^30.3.0"
-    lucide-react: "npm:^0.577.0"
-    motion: "npm:^12.38.0"
-    next: "npm:^16.2.3"
-    next-themes: "npm:^0.4.6"
-    react: "npm:^19.2.5"
-    react-dom: "npm:^19.2.5"
-    tailwind-merge: "npm:^3.5.0"
-    tailwindcss: "npm:^4.2.2"
-    tailwindcss-animate: "npm:^1.0.7"
-    three: "npm:^0.184.0"
-    typescript: "npm:^5.9.3"
-  languageName: unknown
-  linkType: soft
-
-"objectified@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "objectified@workspace:."
-  dependencies:
-    turbo: "npm:^2.9.6"
-  languageName: unknown
-  linkType: soft
 
 "oidc-token-hash@npm:^5.0.3":
   version: 5.1.1

@@ -13,18 +13,18 @@ Three layers gate a merge:
 | Layer | Where | What it proves | CI workflow |
 |-------|-------|----------------|-------------|
 | **End-to-end** | `scripts/golden_path/smoke.py` | The whole spine works against a real `docker compose` stack (postgres → migrate → seed → rest → mcp). | `golden-path.yml` |
-| **REST suite** | `objectified-rest/tests` (pytest) | Every REST router — including the golden-path endpoints — behaves, with coverage reported. | `objectified-rest-test.yml` |
-| **UI suite** | `objectified-ui/tests` (Jest + RTL) | The editors (designer, paths) and the proxy layer behave, with coverage reported. | `objectified-ui.yml` |
+| **REST suite** | `apiome-rest/tests` (pytest) | Every REST router — including the golden-path endpoints — behaves, with coverage reported. | `apiome-rest-test.yml` |
+| **UI suite** | `apiome-ui/tests` (Jest + RTL) | The editors (designer, paths) and the proxy layer behave, with coverage reported. | `apiome-ui.yml` |
 | **Contract** | both suites, one shared file | The endpoints the UI calls match the endpoints REST exposes. | both of the above |
 
 A red golden path means the spine regressed; a red REST/UI suite means an endpoint or editor regressed.
 
 ---
 
-## REST tests (`objectified-rest`)
+## REST tests (`apiome-rest`)
 
 ```bash
-cd objectified-rest
+cd apiome-rest
 uv sync
 uv run pytest                       # full suite, no database required
 uv run pytest --cov                 # with coverage (term + coverage.xml)
@@ -50,7 +50,7 @@ A small number of tests assert against a real Postgres (e.g. the `mcp_v_public_s
 They follow the repo convention of skipping unless `DATABASE_URL` is set:
 
 ```bash
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/objectified uv run pytest
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/apiome uv run pytest
 ```
 
 The `requires_db` marker is registered for this class of test. In CI the gating job leaves
@@ -58,10 +58,10 @@ The `requires_db` marker is registered for this class of test. In CI the gating 
 
 ---
 
-## UI tests (`objectified-ui`)
+## UI tests (`apiome-ui`)
 
 ```bash
-cd objectified-ui
+cd apiome-ui
 yarn test                 # Jest unit + component (RTL) tests
 yarn test:coverage        # with coverage (text + coverage/coverage-summary.json + lcov/html)
 yarn test:e2e             # Playwright (requires a running dev server)
@@ -71,7 +71,7 @@ Component tests cover the **paths** editor (extensive, pre-existing) and the **c
 toolbar (`tests/EditorToolbar.test.tsx`) — project/version gating, the canvas/code view switch, tag
 management, and the export menu — without the database or the heavy canvas runtime.
 
-CI (`objectified-ui.yml`) runs `yarn test:coverage` against a Postgres service and publishes a coverage
+CI (`apiome-ui.yml`) runs `yarn test:coverage` against a Postgres service and publishes a coverage
 summary to the job summary plus an uploaded artifact.
 
 ---
@@ -81,9 +81,9 @@ summary to the job summary plus an uploaded artifact.
 `scripts/golden_path/contract.json` is the single source of truth for the golden-path REST operations
 and which surface owns each one. Both suites read it:
 
-- `objectified-rest/tests/test_golden_path_contract.py` asserts every operation exists in the REST
+- `apiome-rest/tests/test_golden_path_contract.py` asserts every operation exists in the REST
   OpenAPI surface with its HTTP method.
-- `objectified-ui/tests/contract/rest-golden-path-contract.test.ts` asserts the UI proxy routes
+- `apiome-ui/tests/contract/rest-golden-path-contract.test.ts` asserts the UI proxy routes
   (`src/app/api/**`) still call the operations the UI owns (`"ui": true`).
 
 Matching is structural (per path segment), so the two sides' differing parameter names don't matter. If

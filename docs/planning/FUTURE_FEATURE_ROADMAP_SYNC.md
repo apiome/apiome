@@ -1,4 +1,4 @@
-# Objectified: Sync (Real-time Sync) - Feature Roadmap
+# Apiome: Sync (Real-time Sync) - Feature Roadmap
 
 > Real-time schema synchronization and conflict resolution for distributed teams and multi-region deployments—keeping schemas, instances, and environments consistent across geographies, teams, and toolchains.
 >
@@ -16,7 +16,7 @@
 - Real-time co-editing of schema definitions with presence indicators (cursors, selections)
 - Conflict detection and resolution UI for structural schema conflicts
 - Environment sync between dev, staging, and production with approval gates
-- Git repository bi-directional sync (push schema changes to Git, pull Git changes to Objectified)
+- Git repository bi-directional sync (push schema changes to Git, pull Git changes to Apiome)
 - Sync event log with full history of sync operations and conflict resolutions
 - Offline mode with automatic sync on reconnect for interrupted connections
 - Sync health dashboard showing endpoint status, latency, and conflict rates
@@ -41,7 +41,7 @@
 
 #### 1.1 (#1271) — CRDT Schema Document Model
 
-Traditional last-writer-wins synchronization loses data when two editors change the same schema simultaneously. This issue defines a CRDT (Conflict-free Replicated Data Type) model for Objectified schema documents that guarantees convergence—all replicas eventually reach the same state regardless of operation order.
+Traditional last-writer-wins synchronization loses data when two editors change the same schema simultaneously. This issue defines a CRDT (Conflict-free Replicated Data Type) model for Apiome schema documents that guarantees convergence—all replicas eventually reach the same state regardless of operation order.
 
 The model represents each schema as a Yjs `Y.Doc` containing: a `Y.Map` for schema metadata (name, version, description), a `Y.Array` of class definitions, and within each class a `Y.Map` of properties. Each property contains its type, constraints, and description as CRDT fields. This hierarchical CRDT structure allows concurrent edits to different classes or different properties within the same class to merge automatically without conflict.
 
@@ -78,7 +78,7 @@ Schema Document (Y.Doc)
 - Concurrent edits to different properties within the same class merge automatically
 - Concurrent edits to the same property field are flagged as conflicts, not silently merged
 - CRDT state vectors are persisted to PostgreSQL for durability and point-in-time reconstruction
-- The CRDT model round-trips correctly: Objectified schema → CRDT → Objectified schema
+- The CRDT model round-trips correctly: Apiome schema → CRDT → Apiome schema
 
 **Part of Epic: Core Sync Engine**
 
@@ -88,7 +88,7 @@ Schema Document (Y.Doc)
 
 The sync protocol defines how CRDT updates travel between clients and the server, and between servers in multi-region setups. This issue builds the WebSocket transport with binary delta encoding for efficient real-time synchronization.
 
-Each client connects to the sync server via WebSocket at `wss://sync.objectified.dev/docs/{docId}`. On connection, the client sends its current state vector (a compact representation of which updates it has seen). The server responds with all updates the client is missing, encoded as a Yjs binary delta. Subsequent updates are broadcast in real-time as they arrive from other clients.
+Each client connects to the sync server via WebSocket at `wss://sync.apiome.app/docs/{docId}`. On connection, the client sends its current state vector (a compact representation of which updates it has seen). The server responds with all updates the client is missing, encoded as a Yjs binary delta. Subsequent updates are broadcast in real-time as they arrive from other clients.
 
 The protocol supports three message types: `sync-step-1` (client → server: state vector), `sync-step-2` (server → client: missing updates), and `update` (bidirectional: individual operations). Binary encoding uses Yjs's built-in encoding which produces compact deltas—typically 50-200 bytes per property change vs. kilobytes for a full schema JSON.
 
@@ -241,7 +241,7 @@ Region registration is managed via `POST /api/v1/sync/regions` with fields for r
 
 Connecting to a distant sync server adds unnecessary latency. This issue adds region-aware routing that directs each client to the nearest regional sync server based on geographic proximity and current server health.
 
-The routing layer uses DNS-based geographic routing (Route 53 geolocation / Cloudflare geo-steering) as the primary mechanism. When a client connects to `sync.objectified.dev`, DNS resolves to the nearest regional server. A secondary latency-probing mechanism allows the client to measure RTT to all regional endpoints and override the DNS choice if a closer (by latency, not geography) server is available.
+The routing layer uses DNS-based geographic routing (Route 53 geolocation / Cloudflare geo-steering) as the primary mechanism. When a client connects to `sync.apiome.app`, DNS resolves to the nearest regional server. A secondary latency-probing mechanism allows the client to measure RTT to all regional endpoints and override the DNS choice if a closer (by latency, not geography) server is available.
 
 Health-aware routing ensures that clients are not routed to a degraded region. Each regional server publishes health metrics (CPU, memory, connection count, replication lag) to a shared health store. The routing layer considers a region healthy when: CPU < 80%, replication lag < 5 seconds, and the server is accepting new connections. Unhealthy regions are removed from routing until they recover.
 
@@ -349,7 +349,7 @@ The REST API exposes `POST /api/v1/sync/policies` for creation, `GET /api/v1/syn
 
 Before schemas can be promoted across environments, the environments themselves must be defined. This issue builds the environment registry where tenants configure their deployment environments (dev, staging, production, etc.) with their sync endpoints and access policies.
 
-Each environment record contains: `name` (human-readable), `slug` (unique identifier), `type` (development | staging | production | custom), `sync_endpoint` (URL of the environment's Objectified instance or sync server), `api_key` (encrypted credential for authenticating with the target environment), `promotion_order` (integer defining the promotion pipeline sequence), and `approval_policy` (who must approve promotions to this environment).
+Each environment record contains: `name` (human-readable), `slug` (unique identifier), `type` (development | staging | production | custom), `sync_endpoint` (URL of the environment's Apiome instance or sync server), `api_key` (encrypted credential for authenticating with the target environment), `promotion_order` (integer defining the promotion pipeline sequence), and `approval_policy` (who must approve promotions to this environment).
 
 The environment configuration page is at `/sync/environments` with Radix `Table` for the environment list, `Dialog` for add/edit, and drag-and-drop reordering for the promotion pipeline sequence. The REST API exposes `POST /api/v1/sync/environments` for creation and `GET /api/v1/sync/environments` for listing.
 
@@ -476,8 +476,8 @@ The REST API exposes `GET /api/v1/sync/promotions/history?env={envId}&action={ty
 
 | #   | Title                              | Description                                                                  | Labels                            | Parallel |
 |-----|------------------------------------|------------------------------------------------------------------------------|-----------------------------------|----------|
-| 4.1 (#1289) | Git Repository Sync                | Bi-directional sync between Objectified schemas and Git repository files     | `enhancement`, `sync`, `rest`     | Yes      |
-| 4.2 (#1290) | Database Schema Sync               | Sync Objectified schemas with database DDL (PostgreSQL, MySQL)               | `enhancement`, `sync`, `rest`     | Yes      |
+| 4.1 (#1289) | Git Repository Sync                | Bi-directional sync between Apiome schemas and Git repository files     | `enhancement`, `sync`, `rest`     | Yes      |
+| 4.2 (#1290) | Database Schema Sync               | Sync Apiome schemas with database DDL (PostgreSQL, MySQL)               | `enhancement`, `sync`, `rest`     | Yes      |
 | 4.3 (#1291) | ORM Model Sync                     | Keep ORM models (Prisma, TypeORM, SQLAlchemy) in sync with schemas           | `enhancement`, `sync`             | No       |
 | 4.4 (#1292) | CI/CD Sync Hooks                   | Trigger sync operations from CI/CD pipelines and block deploys on drift      | `enhancement`, `sync`, `rest`     | Yes      |
 | 4.5 (#1293) | Webhook & Event Stream Integration | Publish sync events to external systems via webhooks and event streams       | `enhancement`, `sync`, `rest`     | Yes      |
@@ -488,16 +488,16 @@ The REST API exposes `GET /api/v1/sync/promotions/history?env={envId}&action={ty
 
 #### 4.1 (#1289) — Git Repository Sync
 
-Many teams maintain schema definitions as JSON/YAML files in Git repositories. This issue builds bi-directional sync between Objectified and Git, so changes in either system propagate to the other.
+Many teams maintain schema definitions as JSON/YAML files in Git repositories. This issue builds bi-directional sync between Apiome and Git, so changes in either system propagate to the other.
 
-The Git sync connector is configured per project via `POST /api/v1/sync/connectors/git` with: repository URL, branch, directory path (where schema files live), file format (json | yaml), authentication (SSH key or GitHub App), and sync direction (bidirectional | objectified-to-git | git-to-objectified).
+The Git sync connector is configured per project via `POST /api/v1/sync/connectors/git` with: repository URL, branch, directory path (where schema files live), file format (json | yaml), authentication (SSH key or GitHub App), and sync direction (bidirectional | apiome-to-git | git-to-apiome).
 
-**Objectified → Git**: When a schema is published in Objectified, the connector serializes it to JSON/YAML files, commits them to the configured branch, and pushes. The commit message references the Objectified version and user. **Git → Objectified**: When changes are pushed to the monitored branch (detected via webhook), the connector reads the updated schema files, validates them, and imports changes into Objectified as a new draft version.
+**Apiome → Git**: When a schema is published in Apiome, the connector serializes it to JSON/YAML files, commits them to the configured branch, and pushes. The commit message references the Apiome version and user. **Git → Apiome**: When changes are pushed to the monitored branch (detected via webhook), the connector reads the updated schema files, validates them, and imports changes into Apiome as a new draft version.
 
-Conflict handling for bi-directional sync uses timestamp comparison: if both systems changed since the last sync, the connector creates a merge branch in Git with the Objectified changes and opens a pull request for review rather than force-pushing. The PR includes a diff comparison and a link to the Objectified version.
+Conflict handling for bi-directional sync uses timestamp comparison: if both systems changed since the last sync, the connector creates a merge branch in Git with the Apiome changes and opens a pull request for review rather than force-pushing. The PR includes a diff comparison and a link to the Apiome version.
 
 ```
-Objectified                  Git Repository
+Apiome                  Git Repository
 ┌──────────┐   publish       ┌──────────────┐
 │  Schema  │────────────────▶│  schemas/    │
 │  v2.1    │                 │  user.json   │
@@ -511,8 +511,8 @@ Objectified                  Git Repository
 
 **Acceptance Criteria**
 
-- Schema publish in Objectified commits and pushes JSON/YAML files to the configured Git branch
-- Git webhook detects pushes and imports schema changes as draft versions in Objectified
+- Schema publish in Apiome commits and pushes JSON/YAML files to the configured Git branch
+- Git webhook detects pushes and imports schema changes as draft versions in Apiome
 - Bi-directional conflicts create a merge PR in Git rather than force-pushing
 - SSH key and GitHub App authentication methods are both supported
 - Sync connector is configurable per project with directory path and file format selection
@@ -524,9 +524,9 @@ Objectified                  Git Repository
 
 #### 4.2 (#1290) — Database Schema Sync
 
-Database tables are the runtime manifestation of schema definitions. This issue builds sync between Objectified schemas and database DDL, allowing teams to keep their data model definitions and actual database structures aligned.
+Database tables are the runtime manifestation of schema definitions. This issue builds sync between Apiome schemas and database DDL, allowing teams to keep their data model definitions and actual database structures aligned.
 
-The database sync connector connects to PostgreSQL or MySQL instances via `POST /api/v1/sync/connectors/database` with: connection string (encrypted), target database/schema, and sync direction. **Objectified → Database**: The connector generates DDL (CREATE TABLE, ALTER TABLE) from the schema definition and applies it to the target database (with migration safety: no destructive operations without explicit approval). **Database → Objectified**: The connector introspects the database schema and imports table structures as Objectified class definitions.
+The database sync connector connects to PostgreSQL or MySQL instances via `POST /api/v1/sync/connectors/database` with: connection string (encrypted), target database/schema, and sync direction. **Apiome → Database**: The connector generates DDL (CREATE TABLE, ALTER TABLE) from the schema definition and applies it to the target database (with migration safety: no destructive operations without explicit approval). **Database → Apiome**: The connector introspects the database schema and imports table structures as Apiome class definitions.
 
 The DDL generator maps JSON Schema types to database types: `string` → `TEXT`/`VARCHAR`, `integer` → `INTEGER`/`BIGINT`, `number` → `NUMERIC`/`DOUBLE PRECISION`, `boolean` → `BOOLEAN`, `array` → `JSONB`, `object` → `JSONB` or a related table (based on relationship definitions). Constraints map to: `minLength`/`maxLength` → `CHECK`, `enum` → `CHECK` or referenced enum type, `format: email` → `CHECK` with regex.
 
@@ -535,9 +535,9 @@ Migration safety prevents data loss: column removal requires explicit approval, 
 **Acceptance Criteria**
 
 - JSON Schema types map correctly to PostgreSQL and MySQL column types
-- Objectified → Database sync generates safe DDL with no destructive operations by default
+- Apiome → Database sync generates safe DDL with no destructive operations by default
 - Destructive operations (column removal, type narrowing) require explicit approval
-- Database → Objectified introspection imports table structures as schema class definitions
+- Database → Apiome introspection imports table structures as schema class definitions
 - Connection strings are stored encrypted and never returned in API responses
 - Generated DDL is presented for review before execution on the target database
 
@@ -547,22 +547,22 @@ Migration safety prevents data loss: column removal requires explicit approval, 
 
 #### 4.3 (#1291) — ORM Model Sync
 
-Developers interact with databases through ORMs, not raw DDL. This issue builds sync between Objectified schemas and popular ORM model definitions: Prisma (TypeScript), TypeORM (TypeScript), and SQLAlchemy (Python).
+Developers interact with databases through ORMs, not raw DDL. This issue builds sync between Apiome schemas and popular ORM model definitions: Prisma (TypeScript), TypeORM (TypeScript), and SQLAlchemy (Python).
 
-**Objectified → ORM**: The connector generates model files from schema definitions. For Prisma, it produces a `schema.prisma` file with model blocks, field types, relations, and constraints. For TypeORM, it produces TypeScript entity classes with decorators. For SQLAlchemy, it produces Python model classes with Column definitions and relationship declarations.
+**Apiome → ORM**: The connector generates model files from schema definitions. For Prisma, it produces a `schema.prisma` file with model blocks, field types, relations, and constraints. For TypeORM, it produces TypeScript entity classes with decorators. For SQLAlchemy, it produces Python model classes with Column definitions and relationship declarations.
 
-**ORM → Objectified**: The connector parses existing model files and imports their structure as Objectified schemas. The Prisma parser reads `.prisma` files using the Prisma schema AST. The TypeORM parser extracts decorators from TypeScript files. The SQLAlchemy parser reads model class definitions from Python files.
+**ORM → Apiome**: The connector parses existing model files and imports their structure as Apiome schemas. The Prisma parser reads `.prisma` files using the Prisma schema AST. The TypeORM parser extracts decorators from TypeScript files. The SQLAlchemy parser reads model class definitions from Python files.
 
 ORM sync is configured per project via the settings page at `/sync/connectors/orm` using Radix `Select` for ORM type, `TextField` for model file paths, and `Switch` for enabling bi-directional sync. The REST API endpoint is `POST /api/v1/sync/connectors/orm`.
 
-When ORM models and Objectified schemas diverge, the sync reports a diff showing which fields exist in one but not the other, and which fields have type mismatches.
+When ORM models and Apiome schemas diverge, the sync reports a diff showing which fields exist in one but not the other, and which fields have type mismatches.
 
 **Acceptance Criteria**
 
 - Prisma model generation produces valid `.prisma` files with models, relations, and constraints
 - TypeORM entity generation produces valid TypeScript classes with correct decorators
 - SQLAlchemy model generation produces valid Python classes with Column definitions
-- ORM → Objectified parsing correctly imports model structures from all three ORMs
+- ORM → Apiome parsing correctly imports model structures from all three ORMs
 - Divergence detection reports field-level differences between ORM models and schemas
 - The ORM connector settings page uses Radix `Select`, `TextField`, and `Switch`
 
@@ -576,9 +576,9 @@ Schema sync should be part of the deployment pipeline, not a manual step. This i
 
 The primary hook is a pre-deploy check: before a service deploys, the CI/CD pipeline calls `POST /api/v1/sync/checks` with the service's schema expectations (typically extracted from the codebase). The check verifies that the target environment's schema matches what the code expects. If drift is detected, the check fails and the deployment is blocked.
 
-A GitHub Action (`@objectified/sync-check-action`) wraps this API call. It reads schema expectations from the repository (ORM models, OpenAPI specs, or explicit schema references) and calls the sync check endpoint. The action reports pass/fail as a GitHub check status with detailed drift information in the check output.
+A GitHub Action (`@apiome/sync-check-action`) wraps this API call. It reads schema expectations from the repository (ORM models, OpenAPI specs, or explicit schema references) and calls the sync check endpoint. The action reports pass/fail as a GitHub check status with detailed drift information in the check output.
 
-Post-deploy hooks trigger environment sync: after a successful deployment, the pipeline calls `POST /api/v1/sync/trigger` to initiate a sync from the deployment's schema to the target environment. This ensures the Objectified environment record stays current with what's actually deployed.
+Post-deploy hooks trigger environment sync: after a successful deployment, the pipeline calls `POST /api/v1/sync/trigger` to initiate a sync from the deployment's schema to the target environment. This ensures the Apiome environment record stays current with what's actually deployed.
 
 The hook configuration documentation is published at `/docs/ci-cd-sync`.
 
@@ -587,7 +587,7 @@ The hook configuration documentation is published at `/docs/ci-cd-sync`.
 - Pre-deploy check verifies schema compatibility between code and target environment
 - Schema drift causes the check to fail, blocking deployment with drift details
 - GitHub Action wraps the check API and reports results as GitHub check status
-- Post-deploy hooks trigger environment sync to update Objectified's record
+- Post-deploy hooks trigger environment sync to update Apiome's record
 - Hook endpoints are authenticated with scoped CI/CD tokens
 - Configuration documentation covers GitHub Actions, GitLab CI, and generic webhook setups
 
@@ -599,11 +599,11 @@ The hook configuration documentation is published at `/docs/ci-cd-sync`.
 
 External systems need to react to sync events: a monitoring tool updating when drift is detected, a Slack channel notified on promotion, or a data pipeline triggered by schema changes. This issue builds the event publishing layer for sync operations.
 
-Webhook subscriptions are created via `POST /api/v1/sync/webhooks` with: URL, secret (for HMAC signature verification), and event filter (which event types to receive: `sync.update`, `sync.conflict`, `sync.promotion`, `sync.drift`, `sync.rollback`). Each webhook delivery includes: the event payload, a `X-Objectified-Signature` header (HMAC-SHA256 of the payload using the shared secret), and a `X-Objectified-Event` header with the event type.
+Webhook subscriptions are created via `POST /api/v1/sync/webhooks` with: URL, secret (for HMAC signature verification), and event filter (which event types to receive: `sync.update`, `sync.conflict`, `sync.promotion`, `sync.drift`, `sync.rollback`). Each webhook delivery includes: the event payload, a `X-Apiome-Signature` header (HMAC-SHA256 of the payload using the shared secret), and a `X-Apiome-Event` header with the event type.
 
 Webhook delivery uses retry with exponential backoff: 3 retries at 10s, 60s, 300s intervals. Failed deliveries (non-2xx response or timeout) are logged and visible on the webhook management page. After 10 consecutive failures, the webhook is disabled and the owner is notified.
 
-For high-volume integrations, a NATS/Kafka event stream is available at `nats://events.objectified.dev/sync.>` (or Kafka topic `objectified.sync.events`). Stream consumers can filter by event type and document ID using subject-based routing.
+For high-volume integrations, a NATS/Kafka event stream is available at `nats://events.apiome.app/sync.>` (or Kafka topic `apiome.sync.events`). Stream consumers can filter by event type and document ID using subject-based routing.
 
 The webhook management page at `/sync/webhooks` uses Radix `Table` for subscription listing, `Dialog` for creation/editing, `Badge` for delivery status, and `Switch` for enable/disable toggles.
 

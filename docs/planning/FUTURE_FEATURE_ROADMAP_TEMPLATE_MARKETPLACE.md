@@ -1,6 +1,6 @@
-# Objectified: Template Marketplace - Feature Roadmap
+# Apiome: Template Marketplace - Feature Roadmap
 
-> A community-driven marketplace where users browse, publish, fork, and import property templates and schema patterns across industry domains. Templates lower the time-to-first-schema for new projects and enable reuse of battle-tested data models across the Objectified ecosystem.
+> A community-driven marketplace where users browse, publish, fork, and import property templates and schema patterns across industry domains. Templates lower the time-to-first-schema for new projects and enable reuse of battle-tested data models across the Apiome ecosystem.
 >
 > **Revenue Model**: Free templates for community; premium curated template packs (Enterprise tier); revenue share with template publishers; template import wizard gated at Pro
 >

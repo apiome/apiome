@@ -1,6 +1,6 @@
-# Objectified: Multi-Protocol Support - Feature Roadmap
+# Apiome: Multi-Protocol Support - Feature Roadmap
 
-> Multi-protocol schema design platform extending Objectified beyond REST to support GraphQL, gRPC/Protocol Buffers, and AsyncAPI—with visual editors for each protocol, bidirectional schema translation between formats, and a cross-protocol gateway for unified API access.
+> Multi-protocol schema design platform extending Apiome beyond REST to support GraphQL, gRPC/Protocol Buffers, and AsyncAPI—with visual editors for each protocol, bidirectional schema translation between formats, and a cross-protocol gateway for unified API access.
 >
 > **Revenue Model**: Enterprise tier feature, per-protocol add-ons
 >
@@ -39,11 +39,11 @@
 
 #### 1.1 (#1342) — GraphQL Schema Editor
 
-The GraphQL Schema Editor provides a visual environment for designing GraphQL schemas within Objectified. Instead of writing SDL by hand, developers use a structured form-based editor alongside a live Monaco Editor pane showing the generated SDL. The visual editor covers object types, input types, interfaces, unions, enums, custom scalars, and directives. Each type definition card shows its fields with their types, arguments, nullability, and descriptions.
+The GraphQL Schema Editor provides a visual environment for designing GraphQL schemas within Apiome. Instead of writing SDL by hand, developers use a structured form-based editor alongside a live Monaco Editor pane showing the generated SDL. The visual editor covers object types, input types, interfaces, unions, enums, custom scalars, and directives. Each type definition card shows its fields with their types, arguments, nullability, and descriptions.
 
 The editor page lives at `/app/protocols/graphql/[schemaId]/editor` in the NextJS app. The left panel contains a type explorer using Radix `Accordion` to expand/collapse type categories (Objects, Inputs, Interfaces, Unions, Enums, Scalars). Selecting a type opens its detail view in the center panel where fields are displayed in a Radix `Table` with inline editing. Adding a field opens a Radix `Dialog` with `Select` dropdowns for type selection, `Switch` for nullability, and `TextArea` for description. The right panel shows the live SDL output in a read-only Monaco Editor.
 
-Resolver mapping connects each field to a data source. The editor supports mapping fields to REST endpoints (using existing Objectified schemas), database queries, or custom resolver stubs. Resolver configurations are stored in PostgreSQL alongside the schema definition and are used by the cross-protocol gateway (Epic 4) to execute queries at runtime.
+Resolver mapping connects each field to a data source. The editor supports mapping fields to REST endpoints (using existing Apiome schemas), database queries, or custom resolver stubs. Resolver configurations are stored in PostgreSQL alongside the schema definition and are used by the cross-protocol gateway (Epic 4) to execute queries at runtime.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -321,7 +321,7 @@ The AsyncAPI Visual Editor provides a form-driven interface for designing event-
 
 The editor page at `/app/protocols/asyncapi/[schemaId]/editor` uses a multi-tab layout (Radix `Tabs`) with sections for Channels, Messages, Servers, and Security. The Channels tab displays a Radix `Table` of defined channels with columns for name, protocol, publish/subscribe operations, and message type. Adding a channel opens a Radix `Dialog` with fields for channel name (e.g., `orders/created`), protocol binding selection (Kafka, AMQP, MQTT, WebSocket), and operation type.
 
-Message schemas reuse Objectified's existing schema definition infrastructure. When defining a message, developers select from existing schema classes or create new ones inline. Each message specifies headers, payload schema, correlation ID, and content type. Protocol-specific bindings (Kafka partition key, AMQP routing key, MQTT QoS level) are configurable per channel-message pair. Server definitions specify broker connection details: URL, protocol, description, and security scheme (SASL, TLS, OAuth2).
+Message schemas reuse Apiome's existing schema definition infrastructure. When defining a message, developers select from existing schema classes or create new ones inline. Each message specifies headers, payload schema, correlation ID, and content type. Protocol-specific bindings (Kafka partition key, AMQP routing key, MQTT QoS level) are configurable per channel-message pair. Server definitions specify broker connection details: URL, protocol, description, and security scheme (SASL, TLS, OAuth2).
 
 The REST API provides `POST /api/v1/protocols/asyncapi/schemas` (create), `GET /api/v1/protocols/asyncapi/schemas/{id}` (retrieve with generated YAML), `PUT /api/v1/protocols/asyncapi/schemas/{id}/channels` (manage channels), and `POST /api/v1/protocols/asyncapi/schemas/{id}/validate` (validate against AsyncAPI spec).
 
@@ -329,7 +329,7 @@ The REST API provides `POST /api/v1/protocols/asyncapi/schemas` (create), `GET /
 
 - Visual editor supports channels, messages, servers, and security scheme definitions
 - Protocol bindings are configurable for Kafka, AMQP, MQTT, and WebSocket per channel
-- Message schemas reference existing Objectified schema classes or define new ones inline
+- Message schemas reference existing Apiome schema classes or define new ones inline
 - Server definitions support multiple environments with protocol-specific connection details
 - Generated AsyncAPI 3.0 YAML is valid and downloadable from the editor
 - Channel topology diagram renders a visual map of publishers, channels, and subscribers

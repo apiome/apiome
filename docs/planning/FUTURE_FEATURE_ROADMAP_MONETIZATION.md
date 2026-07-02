@@ -1,4 +1,4 @@
-# Objectified: Monetization & Business - Feature Roadmap
+# Apiome: Monetization & Business - Feature Roadmap
 
 > Platform monetization engine that manages tiered subscriptions, tracks usage-based billing metrics, integrates with Stripe for payment processing, and provides self-service plan management—enabling sustainable SaaS revenue from schema design tooling.
 >
@@ -319,13 +319,13 @@ Alert thresholds are configurable per organization via `PUT /api/v1/usage/{orgId
 
 #### 3.1 (#1455) — Stripe Subscription Integration
 
-Stripe is the payment backbone. This issue integrates the Stripe Subscriptions API to create, update, cancel, and reconcile recurring subscriptions tied to Objectified pricing plans. Each plan (1.1) maps to a Stripe Product and Price. When an organization subscribes or changes plans, the backend creates or updates the Stripe subscription and synchronizes the state locally.
+Stripe is the payment backbone. This issue integrates the Stripe Subscriptions API to create, update, cancel, and reconcile recurring subscriptions tied to Apiome pricing plans. Each plan (1.1) maps to a Stripe Product and Price. When an organization subscribes or changes plans, the backend creates or updates the Stripe subscription and synchronizes the state locally.
 
 The integration layer wraps the Stripe API behind a `StripeService` that handles: customer creation (one Stripe customer per organization), subscription creation with the correct Price ID, subscription updates for plan changes with proration, cancellation (immediate or at period end), and webhook processing. The webhook handler at `POST /api/v1/billing/webhooks/stripe` processes `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`, and `payment_intent.succeeded` events.
 
 ```
 ┌─────────────┐     ┌────────────────┐     ┌─────────────┐
-│  Objectified │     │  Stripe API    │     │  Stripe     │
+│  Apiome │     │  Stripe API    │     │  Stripe     │
 │  Backend     │────▶│  (Customers,   │────▶│  Dashboard  │
 │              │     │   Subscriptions│     │             │
 │              │◀────│   Invoices)    │     │             │
@@ -354,7 +354,7 @@ Idempotency is enforced on all Stripe API calls using `Idempotency-Key` headers 
 
 #### 3.2 (#1466) — Payment Method Management
 
-Organizations need to add, update, and remove payment methods without friction. This issue builds the payment method management UI using Stripe.js and Stripe Elements, ensuring PCI compliance by never sending raw card data through Objectified servers.
+Organizations need to add, update, and remove payment methods without friction. This issue builds the payment method management UI using Stripe.js and Stripe Elements, ensuring PCI compliance by never sending raw card data through Apiome servers.
 
 The payment method page at `/app/settings/billing/payment-methods` embeds a Stripe `PaymentElement` for adding new cards or bank accounts. The flow creates a Stripe SetupIntent on the backend (`POST /api/v1/billing/setup-intent`), passes the client secret to the frontend, and lets Stripe.js handle the sensitive data collection. On successful setup, the payment method is attached to the Stripe customer and the default payment method is updated.
 
@@ -377,7 +377,7 @@ Backend endpoints include `POST /api/v1/billing/setup-intent` (create SetupInten
 
 #### 3.3 (#1474) — Invoice Generation & History
 
-Stripe handles charge creation, but organizations need a complete invoice record within the Objectified platform for accounting, expense reporting, and tax documentation. This issue synchronizes Stripe invoices to local storage and adds overage line items, PDF generation, and downloadable invoice history.
+Stripe handles charge creation, but organizations need a complete invoice record within the Apiome platform for accounting, expense reporting, and tax documentation. This issue synchronizes Stripe invoices to local storage and adds overage line items, PDF generation, and downloadable invoice history.
 
 When Stripe fires an `invoice.paid` webhook, the handler creates a local `invoices` record with `stripe_invoice_id`, `organization_id`, `period_start`, `period_end`, `subtotal`, `tax`, `total`, `status`, `line_items` (JSONB), and `paid_at`. Overage charges from the calculation engine (2.3) are added as supplementary line items on the next Stripe invoice via the Stripe Invoice Items API before the invoice finalizes.
 

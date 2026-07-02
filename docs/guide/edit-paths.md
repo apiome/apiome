@@ -39,17 +39,17 @@ X-API-Key: <your-api-key>
 The CLI inspects paths, operations, and Arazzo workflows for a version (read-only):
 
 ```bash
-objectified paths      list --project <id-or-slug> --version <id-or-label>
-objectified paths      show <path-ref> --project <id-or-slug> --version <id-or-label>
-objectified operations show <op-ref>   --project <id-or-slug> --version <id-or-label>
-objectified workflows  list --project <id-or-slug> --version <id-or-label>
+apiome paths      list --project <id-or-slug> --version <id-or-label>
+apiome paths      show <path-ref> --project <id-or-slug> --version <id-or-label>
+apiome operations show <op-ref>   --project <id-or-slug> --version <id-or-label>
+apiome workflows  list --project <id-or-slug> --version <id-or-label>
 ```
 
 `paths list` accepts `--tag`, `--method`, and `--q` (text search) filters.
 
 ## Verify
 
-- **CLI:** `objectified paths list --project <p> --version <v>` lists the path and its operations.
+- **CLI:** `apiome paths list --project <p> --version <v>` lists the path and its operations.
 - **Export:** the path appears in the reconstructed OpenAPI document — see
   [export-a-spec.md](export-a-spec.md).
 

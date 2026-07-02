@@ -26,7 +26,7 @@
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
         <i data-lucide="bar-chart-3" class="w-4 h-4 text-white"></i>
       </div>
-      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-sm font-semibold">Apiome</span>
       <span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Analytics</span>
       <span class="text-xs text-gray-400">/</span>
@@ -489,7 +489,7 @@
           </div>
           <div class="p-6">
             <pre class="mono text-xs leading-6 bg-gray-900 text-gray-200 dark:bg-black/40 rounded-md p-4 overflow-x-auto"><span class="text-emerald-400"># Kick off an export</span>
-curl -X POST https://api.objectified.dev/api/v1/analytics/export \
+curl -X POST https://api.apiome.app/api/v1/analytics/export \
   -H <span class="text-amber-300">"Authorization: Bearer $OBJ_TOKEN"</span> \
   -H <span class="text-amber-300">"Content-Type: application/json"</span> \
   -d <span class="text-amber-300">'{
@@ -504,7 +504,7 @@ curl -X POST https://api.objectified.dev/api/v1/analytics/export \
 <span class="text-cyan-300">{ "job_id": "job_3f2a91", "status": "queued" }</span>
 
 <span class="text-emerald-400"># Poll until ready, then GET the signed download_url</span>
-curl https://api.objectified.dev/api/v1/analytics/export/job_3f2a91 \
+curl https://api.apiome.app/api/v1/analytics/export/job_3f2a91 \
   -H <span class="text-amber-300">"Authorization: Bearer $OBJ_TOKEN"</span></pre>
           </div>
         </section>

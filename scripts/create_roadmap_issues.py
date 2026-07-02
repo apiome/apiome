@@ -19,7 +19,7 @@ import time
 import json
 
 REPO = 'KenSuenobu/objectified-commercial'
-REPO_DIR = '/home/kenji/Development/objectified'
+REPO_DIR = '/home/kenji/Development/apiome'
 
 
 def run_gh_json(args):

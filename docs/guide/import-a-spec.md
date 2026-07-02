@@ -1,6 +1,6 @@
 # How do I… import a specification?
 
-Importing turns an existing OpenAPI, Swagger 2.0, Arazzo, or JSON Schema document into Objectified
+Importing turns an existing OpenAPI, Swagger 2.0, Arazzo, or JSON Schema document into Apiome
 classes, properties, paths, and operations you can edit. Import is **asynchronous**: you create a
 job, it runs in the background, and you poll it to completion.
 
@@ -20,12 +20,12 @@ Supported inputs: **OpenAPI 3.x**, **Swagger 2.0**, **Arazzo 1.0**, **JSON Schem
 The CLI auto-detects the format, uploads it, and waits for the job by default:
 
 ```bash
-objectified import openapi ./petstore.openapi.yaml      # explicit format
-objectified import swagger ./legacy-swagger.json
-objectified import auto    ./some-spec.yaml             # auto-detect
+apiome import openapi ./petstore.openapi.yaml      # explicit format
+apiome import swagger ./legacy-swagger.json
+apiome import auto    ./some-spec.yaml             # auto-detect
 
 # useful flags
-objectified import openapi ./petstore.openapi.yaml \
+apiome import openapi ./petstore.openapi.yaml \
   --project-name "Pet Store" \
   --dry-run                                             # validate without writing
 ```
@@ -54,7 +54,7 @@ Content-Type: multipart/form-data
 ## Verify
 
 - **UI:** the imported classes are listed in the Designer.
-- **CLI:** `objectified schemas list` shows the new classes; `objectified projects list` shows the
+- **CLI:** `apiome schemas list` shows the new classes; `apiome projects list` shows the
   project the import created.
 
 ## Related

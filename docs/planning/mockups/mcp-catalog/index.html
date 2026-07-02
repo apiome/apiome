@@ -9,7 +9,7 @@
   Purpose: a single browsable artifact to iterate on the final-release UI for the
   "External MCP Catalog" feature (V2-MCP-EPIC-15…27, see docs/ROADMAP_MCP_CATALOGING.md).
   Not production code. Sample data is illustrative. Switch screens via the left rail.
-  Design tokens mirror objectified-ui (brand indigo #6366f1, slate neutrals, Aptos type).
+  Design tokens mirror apiome-ui (brand indigo #6366f1, slate neutrals, Aptos type).
 -->
 <style>
   :root{
@@ -34,7 +34,7 @@
   .muted{color:var(--text-muted)}
   .faint{color:var(--text-faint)}
 
-  /* ---------- App shell · sidebar adopts objectified-ui DashboardSideNav ---------- */
+  /* ---------- App shell · sidebar adopts apiome-ui DashboardSideNav ---------- */
   .app{display:flex;min-height:100vh}
   /* 280px gradient rail, subtle right shadow, no border — per DashboardSideNav.tsx */
   .rail{width:280px;flex:0 0 280px;background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
@@ -197,7 +197,7 @@
   .kv{display:grid;grid-template-columns:130px 1fr;gap:8px 14px;font-size:13px}
   .kv .k{color:var(--text-muted)}
 
-  /* ---------- Import dialog (mirrors objectified-ui ImportDialog) ---------- */
+  /* ---------- Import dialog (mirrors apiome-ui ImportDialog) ---------- */
   .overlay{position:fixed;inset:0;background:rgba(2,6,23,.5);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:50}
   .overlay.on{display:flex}
   .modal{width:760px;max-width:94vw;max-height:90vh;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:var(--sh-lg);overflow:hidden;display:flex;flex-direction:column}
@@ -259,12 +259,12 @@
 <body>
 <div class="app" id="appShell">
 
-  <!-- ===== LEFT RAIL · adopts objectified-ui DashboardSideNav look & feel ===== -->
+  <!-- ===== LEFT RAIL · adopts apiome-ui DashboardSideNav look & feel ===== -->
   <!-- Not the full sidebar — representative sections. MCP lives under "Specifications" as "MCP Servers". -->
   <aside class="rail">
     <div class="brand">
       <div class="logo">O</div>
-      <div><b>Objectified</b><small>ADE</small></div>
+      <div><b>Apiome</b><small>ADE</small></div>
     </div>
     <nav>
       <div class="sect">Dashboard</div>
@@ -608,9 +608,9 @@
     <!-- ---------- SCREEN: PUBLIC BROWSE ---------- -->
     <div class="content screen" id="screen-public">
       <div class="pubhero">
-        <span class="anno" style="background:#4338ca;color:#fff;border-color:#6366f1">objectified-browse · public, no auth</span>
+        <span class="anno" style="background:#4338ca;color:#fff;border-color:#6366f1">apiome-browse · public, no auth</span>
         <h1 style="margin-top:14px">Discover MCP services</h1>
-        <p>Browse Model Context Protocol servers published by teams on Objectified — by provider, capability, or quality grade.</p>
+        <p>Browse Model Context Protocol servers published by teams on Apiome — by provider, capability, or quality grade.</p>
         <div class="pubsearch"><input class="input" placeholder="Search tools across all public MCPs… e.g. “send invoice”"><button class="btn primary">Search</button></div>
       </div>
 
@@ -647,7 +647,7 @@
   </div>
 </div>
 
-<!-- ===== IMPORT DIALOG · MCP is a new ingestion source in objectified-ui's existing import flow ===== -->
+<!-- ===== IMPORT DIALOG · MCP is a new ingestion source in apiome-ui's existing import flow ===== -->
 <div class="overlay" id="regOverlay">
   <div class="modal">
     <div class="mh"><div class="logo" style="width:24px;height:24px;font-size:12px"><i data-lucide="upload" style="width:13px;height:13px"></i></div><h3>Import specification</h3><div style="flex:1"></div><button class="btn ghost sm" onclick="closeReg()">✕</button></div>
@@ -697,7 +697,7 @@
 
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
-  // Render Lucide icons (matches objectified-ui's lucide-react usage)
+  // Render Lucide icons (matches apiome-ui's lucide-react usage)
   function icons(){ try{ lucide.createIcons(); }catch(e){} }
   icons();
   // top-level screen switching — all MCP screens live under Specifications › MCP Servers

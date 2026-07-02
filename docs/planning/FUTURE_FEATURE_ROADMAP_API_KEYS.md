@@ -1,6 +1,6 @@
-# Objectified: API Keys - Feature Roadmap
+# Apiome: API Keys - Feature Roadmap
 
-> Advanced API key management layer providing fine-grained scopes, security hardening, lifecycle controls, and developer experience improvements for all Objectified REST API consumers. Built on top of the existing key management foundation (bcrypt hashing, expiration, enable/disable, last-used tracking).
+> Advanced API key management layer providing fine-grained scopes, security hardening, lifecycle controls, and developer experience improvements for all Apiome REST API consumers. Built on top of the existing key management foundation (bcrypt hashing, expiration, enable/disable, last-used tracking).
 >
 > **Revenue Model**: Basic key management in Free tier; advanced security features (IP whitelisting, anomaly detection, rotation policies, MFA-backed keys) gated at Pro/Enterprise
 >
@@ -245,7 +245,7 @@ Emit a signed webhook payload to the tenant's configured webhook URL when a key 
 ```
 
 **Acceptance Criteria:**
-- Payload signed with HMAC-SHA256 using the tenant's webhook secret; signature in `X-Objectified-Signature` header
+- Payload signed with HMAC-SHA256 using the tenant's webhook secret; signature in `X-Apiome-Signature` header
 - Delivery retried up to 3 times with exponential backoff on non-2xx response
 - Delivery log visible in admin UI (status, timestamp, response code per attempt)
 - Tenant can configure webhook URL in tenant settings

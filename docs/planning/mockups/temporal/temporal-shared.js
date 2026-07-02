@@ -1,5 +1,5 @@
 /**
- * temporal-shared.js — shared utilities for all Objectified Temporal mockup screens.
+ * temporal-shared.js — shared utilities for all Apiome Temporal mockup screens.
  */
 const TemporalShared = (() => {
   const THEME_KEY = 'temporal-theme';

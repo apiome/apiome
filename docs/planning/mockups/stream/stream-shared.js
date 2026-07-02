@@ -1,5 +1,5 @@
 /**
- * stream-shared.js — shared utilities for all Objectified Stream mockup screens.
+ * stream-shared.js — shared utilities for all Apiome Stream mockup screens.
  */
 const StreamShared = (() => {
   const THEME_KEY = 'stream-theme';

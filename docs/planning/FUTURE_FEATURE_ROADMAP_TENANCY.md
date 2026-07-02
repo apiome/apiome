@@ -1,4 +1,4 @@
-# Objectified: Multi-Tenancy & Organizations - Feature Roadmap
+# Apiome: Multi-Tenancy & Organizations - Feature Roadmap
 
 > Full-featured multi-tenancy system providing hierarchical organization structure, industry classification, cross-team schema sharing, compliance recommendations per industry vertical, and enterprise-grade tenant administration — all built on top of the existing tenant CRUD, slug management, and Super Admin portal foundation.
 >

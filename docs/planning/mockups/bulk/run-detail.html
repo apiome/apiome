@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Objectified Bulk — Run Detail</title>
+  <title>Apiome Bulk — Run Detail</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' };</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -26,7 +26,7 @@
         <div class="w-7 h-7 rounded-md bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center">
           <i data-lucide="database-zap" class="w-4 h-4 text-white"></i>
         </div>
-        <span class="text-sm font-semibold">Objectified</span>
+        <span class="text-sm font-semibold">Apiome</span>
       </a>
       <span class="text-xs text-gray-400">/</span>
       <span class="text-sm font-medium text-blue-600 dark:text-blue-400">Bulk</span>
@@ -177,7 +177,7 @@
         <div class="log-line text-emerald-400">2026-05-12 14:15:42.991  INFO  [checkpoint]   CP-43 committed · 1,000,000 rows · +43.0M total</div>
         <div class="log-line text-red-400">2026-05-12 14:17:06.882  ERROR [w-03]         FATAL: java.lang.OutOfMemoryError: Java heap space</div>
         <div class="log-line text-red-400">2026-05-12 14:17:06.883  ERROR [w-03]               at org.apache.arrow.memory.BaseAllocator.allocateNew(BaseAllocator.java:228)</div>
-        <div class="log-line text-red-400">2026-05-12 14:17:06.884  ERROR [w-03]               at io.objectified.bulk.reader.ParquetChunkReader.readBatch(ParquetChunkReader.java:114)</div>
+        <div class="log-line text-red-400">2026-05-12 14:17:06.884  ERROR [w-03]               at io.apiome.bulk.reader.ParquetChunkReader.readBatch(ParquetChunkReader.java:114)</div>
         <div class="log-line text-red-400">2026-05-12 14:17:07.211  ERROR [bulk-runner]  Worker W-03 terminated · last committed CP-43 · partial CP-44 rolled back</div>
         <div class="log-line text-red-400">2026-05-12 14:17:07.310  ERROR [bulk-runner]  Job FAILED · resume available from CP-44 · increase heap or reduce batch size</div>
         <div class="log-line text-gray-500">2026-05-12 14:17:12.001  INFO  [bulk-runner]  Run finalized · 44,031,200 rows persisted · state saved</div>

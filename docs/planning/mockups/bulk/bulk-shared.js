@@ -1,5 +1,5 @@
 /**
- * bulk-shared.js — shared utilities for all Objectified Bulk mockup screens.
+ * bulk-shared.js — shared utilities for all Apiome Bulk mockup screens.
  */
 const BulkShared = (() => {
   const THEME_KEY = 'bulk-theme';

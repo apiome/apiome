@@ -1,6 +1,6 @@
 # Git-like mockups
 
-Visual preview of the Objectified Git-like workflow, drawn from the two
+Visual preview of the Apiome Git-like workflow, drawn from the two
 roadmaps:
 
 - `docs/FUTURE_FEATURE_ROADMAP_GITLIKE.md` (P0 → P2 — commit, push,
@@ -13,7 +13,7 @@ roadmaps:
 
 These are static HTML mockups — no React, no API calls — used to align
 on UI direction before coding production components in
-`objectified-ui/src/app/components/ade/...`.
+`apiome-ui/src/app/components/ade/...`.
 
 ## Stack
 
@@ -30,7 +30,7 @@ scale, gradient sidebars, panel cards, dark-mode-first.
 Open any file directly in a browser, e.g.:
 
 ```bash
-xdg-open objectified-ui/public/mockups/git/index.html
+xdg-open apiome-ui/public/mockups/git/index.html
 ```
 
 …or visit `http://localhost:3000/mockups/git/` once the Next.js dev

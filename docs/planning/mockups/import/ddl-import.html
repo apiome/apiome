@@ -30,7 +30,7 @@
   <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="file-input" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span><span class="text-xs text-gray-400">/</span>
+      <span class="text-sm font-semibold">Apiome</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Import</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">DDL &amp; Database</span>
     </div>
@@ -226,13 +226,13 @@
           </div>
         </section>
 
-        <!-- Inferred Objectified schema -->
+        <!-- Inferred Apiome schema -->
         <section class="bg-white dark:bg-gray-800 rounded-lg border border-emerald-200 dark:border-emerald-700/40 overflow-hidden">
           <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-transparent dark:from-emerald-900/20 dark:to-transparent flex items-center justify-between">
             <div class="flex items-center gap-3">
               <i data-lucide="braces" class="w-5 h-5 text-emerald-500"></i>
               <div>
-                <h3 class="text-base font-semibold">Inferred Objectified schema · Invoice</h3>
+                <h3 class="text-base font-semibold">Inferred Apiome schema · Invoice</h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400">Generated from <span class="mono">public.invoices</span> · enums extracted from CHECK · $ref bridges from FK</p>
               </div>
             </div>
@@ -244,7 +244,7 @@
           <pre class="codeblock p-4 text-[12px] mono leading-relaxed overflow-x-auto"><span class="k">$schema</span>: <span class="s">https://json-schema.org/draft/2020-12/schema</span>
 <span class="k">$id</span>: <span class="s">https://acme.io/schemas/Invoice.v1</span>
 <span class="k">title</span>: <span class="s">Invoice</span>
-<span class="k">x-objectified-source</span>:
+<span class="k">x-apiome-source</span>:
   <span class="k">type</span>: <span class="s">postgres-table</span>
   <span class="k">name</span>: <span class="s">public.invoices</span>
   <span class="k">introspected_at</span>: <span class="s">"2026-04-22T07:14:00Z"</span>
@@ -313,7 +313,7 @@
               <li class="px-5 py-3 flex items-center justify-between"><div><p class="font-medium text-xs">JSONB → object additionalProperties</p><p class="text-[10px] text-gray-500">Falls back to <span class="mono">true</span> when no row sample</p></div><span class="text-[10px] text-emerald-500 font-semibold">ON</span></li>
               <li class="px-5 py-3 flex items-center justify-between"><div><p class="font-medium text-xs">Sample rows → enum candidates</p><p class="text-[10px] text-gray-500">If &lt; 12 distinct values across 10k rows</p></div><span class="text-[10px] text-emerald-500 font-semibold">ON</span></li>
               <li class="px-5 py-3 flex items-center justify-between"><div><p class="font-medium text-xs">COMMENT ON COLUMN → description</p><p class="text-[10px] text-gray-500">Use DB comments for schema docs</p></div><span class="text-[10px] text-emerald-500 font-semibold">ON</span></li>
-              <li class="px-5 py-3 flex items-center justify-between"><div><p class="font-medium text-xs">Unique index → secondary key tag</p><p class="text-[10px] text-gray-500">Adds <span class="mono">x-objectified-key: secondary</span></p></div><span class="text-[10px] text-gray-400 font-semibold">OFF</span></li>
+              <li class="px-5 py-3 flex items-center justify-between"><div><p class="font-medium text-xs">Unique index → secondary key tag</p><p class="text-[10px] text-gray-500">Adds <span class="mono">x-apiome-key: secondary</span></p></div><span class="text-[10px] text-gray-400 font-semibold">OFF</span></li>
             </ul>
           </div>
         </section>

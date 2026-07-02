@@ -1,6 +1,6 @@
-# Objectified: Test Lab - Feature Roadmap
+# Apiome: Test Lab - Feature Roadmap
 
-> Automated API and schema testing platform with synthetic data generation, contract testing, performance benchmarking, and chaos engineering. Test Lab ensures schemas and APIs behave correctly, perform well under load, and degrade gracefully under failure conditions—all driven by Objectified schema definitions.
+> Automated API and schema testing platform with synthetic data generation, contract testing, performance benchmarking, and chaos engineering. Test Lab ensures schemas and APIs behave correctly, perform well under load, and degrade gracefully under failure conditions—all driven by Apiome schema definitions.
 >
 > **Revenue Model**: Per-test-run pricing (free tier: 100 runs/month), monthly active schema limits, enterprise unlimited
 >
@@ -39,19 +39,19 @@
 
 The contract testing data model captures the relationships between API consumers and providers through explicit contracts. A `contract` record defines expectations from a consumer's perspective: which provider API it depends on, expected request format (HTTP method, path pattern, headers, body schema), expected response format (status codes, body schema, headers), and metadata (consumer name, version, owner, creation date).
 
-Contracts reference Objectified schema definitions for request and response bodies, creating a strong link between schema governance and API testing. The `contract_verification` table records each verification run: which contract was tested, against which provider version, the result (pass/fail), failure details, and execution timestamp. A `compatibility_record` table tracks the compatibility matrix between consumer contract versions and provider schema versions.
+Contracts reference Apiome schema definitions for request and response bodies, creating a strong link between schema governance and API testing. The `contract_verification` table records each verification run: which contract was tested, against which provider version, the result (pass/fail), failure details, and execution timestamp. A `compatibility_record` table tracks the compatibility matrix between consumer contract versions and provider schema versions.
 
 The data model supports contract grouping via `contract_suite` for organizing related contracts (e.g., all contracts from "Order Service" consumer). Suites enable batch verification and aggregated reporting.
 
 **Acceptance Criteria:**
 - Database migration creates contract, contract_suite, contract_verification, and compatibility_record tables
 - Contract stores consumer expectations: HTTP method, path, request_schema_ref, response_schema_ref, expected_status_codes
-- Contracts reference Objectified schema IDs for body definitions (foreign key to schema system)
+- Contracts reference Apiome schema IDs for body definitions (foreign key to schema system)
 - Contract suite groups related contracts with metadata: suite_name, consumer_name, description
 - All tables tenant-scoped with proper indexes on (tenant_id, provider_schema_id) and (tenant_id, consumer_name)
 - OpenAPI 3.1 component schemas defined for all contract-related entities
 
-**Tech Stack:** PostgreSQL migrations, foreign keys to Objectified schema tables, OpenAPI 3.1 component definitions
+**Tech Stack:** PostgreSQL migrations, foreign keys to Apiome schema tables, OpenAPI 3.1 component definitions
 
 Part of Epic: Contract Testing Engine
 
@@ -59,7 +59,7 @@ Part of Epic: Contract Testing Engine
 
 #### 1.2 (#1296) — Consumer Contract Authoring
 
-The contract authoring interface enables API consumers to define their expectations in a structured, verifiable format. The authoring flow walks through four steps: (1) Select the provider schema/API being consumed, (2) Define request expectations (method, path template, headers, body shape using Objectified schema subset), (3) Define response expectations (status codes, body shape, required fields), and (4) Provide sample interactions (example request/response pairs for documentation).
+The contract authoring interface enables API consumers to define their expectations in a structured, verifiable format. The authoring flow walks through four steps: (1) Select the provider schema/API being consumed, (2) Define request expectations (method, path template, headers, body shape using Apiome schema subset), (3) Define response expectations (status codes, body shape, required fields), and (4) Provide sample interactions (example request/response pairs for documentation).
 
 The interface presents the provider's full schema in a reference panel so consumers can select the subset of fields they actually depend on—this is the key insight of consumer-driven contracts. Rather than testing the entire schema, contracts test only what the consumer uses, making them resilient to additive changes. The UI lets consumers click fields in the provider schema to include them in their contract, building the expected schema interactively.
 
@@ -85,7 +85,7 @@ Provider verification is the automated process of testing whether a provider's A
 
 The verification process for each contract: (1) Build the HTTP request from the contract's request definition (method, path, headers, body with synthetic data matching the request schema), (2) Send the request to the provider's API endpoint (configurable base URL per environment), (3) Validate the response status code against expected values, (4) Validate the response body against the contract's expected schema using JSON Schema validation, (5) Record the result as a `contract_verification` entry.
 
-For teams not ready to test against live APIs, the engine supports mock-based verification: it validates that the provider's Objectified schema is a superset of each consumer contract's expected schema without making HTTP calls. This structural verification catches breaking changes at the schema level before deployment.
+For teams not ready to test against live APIs, the engine supports mock-based verification: it validates that the provider's Apiome schema is a superset of each consumer contract's expected schema without making HTTP calls. This structural verification catches breaking changes at the schema level before deployment.
 
 **Acceptance Criteria:**
 - Verification endpoint: `POST /api/v1/test-lab/contracts/verify` accepts provider_schema_id and target_base_url
@@ -103,7 +103,7 @@ Part of Epic: Contract Testing Engine
 
 #### 1.4 (#1298) — Breaking Change Detection
 
-Breaking change detection compares two versions of an Objectified schema and identifies backward-incompatible changes that would break existing consumers. The analysis categorizes changes into three severity levels: breaking (field removed, type changed, required field added), warning (field deprecated, enum value removed, constraint tightened), and info (field added, description changed, example updated).
+Breaking change detection compares two versions of an Apiome schema and identifies backward-incompatible changes that would break existing consumers. The analysis categorizes changes into three severity levels: breaking (field removed, type changed, required field added), warning (field deprecated, enum value removed, constraint tightened), and info (field added, description changed, example updated).
 
 The detection engine performs structural diff analysis: it walks both schema trees in parallel, comparing each field's type, constraints, required status, and nested structure. For each difference found, it applies compatibility rules to classify the change. When consumer contracts exist, the engine cross-references breaking changes against actual consumer dependencies—a field removal is only breaking if at least one consumer contract references that field.
 
@@ -177,7 +177,7 @@ Part of Epic: Contract Testing Engine
 
 | #   | Title                                | Description                                                                     | Labels                                      | Parallel |
 |-----|--------------------------------------|---------------------------------------------------------------------------------|---------------------------------------------|----------|
-| 2.1 (#1301) | Schema-Driven Data Generation Engine | Generate realistic data from Objectified schema definitions using AI and rules  | `enhancement`, `mvp`, `test-lab`, `rest`, `ai-generated` | Yes      |
+| 2.1 (#1301) | Schema-Driven Data Generation Engine | Generate realistic data from Apiome schema definitions using AI and rules  | `enhancement`, `mvp`, `test-lab`, `rest`, `ai-generated` | Yes      |
 | 2.2 (#1302) | PII Masking & Safe Data Strategies   | Configurable data anonymization for sensitive field types                        | `enhancement`, `mvp`, `test-lab`, `rest`    | Yes      |
 | 2.3 (#1303) | Edge Case & Boundary Value Generator | Generate adversarial test data targeting schema constraints and boundaries       | `enhancement`, `test-lab`, `rest`           | Yes      |
 | 2.4 (#1304) | Locale-Aware Data Generation         | Generate culturally appropriate data for international testing                  | `enhancement`, `test-lab`, `rest`           | Yes      |
@@ -187,11 +187,11 @@ Part of Epic: Contract Testing Engine
 
 #### 2.1 (#1301) — Schema-Driven Data Generation Engine
 
-The synthetic data generator produces realistic test data by analyzing Objectified schema definitions and generating values that conform to all type constraints, validation rules, and semantic expectations. The engine combines rule-based generation (using schema constraints: type, format, minimum, maximum, pattern, enum) with AI-powered semantic generation (using field names and descriptions to infer realistic content).
+The synthetic data generator produces realistic test data by analyzing Apiome schema definitions and generating values that conform to all type constraints, validation rules, and semantic expectations. The engine combines rule-based generation (using schema constraints: type, format, minimum, maximum, pattern, enum) with AI-powered semantic generation (using field names and descriptions to infer realistic content).
 
 For a field named `email` of type `string` with format `email`, the engine generates realistic email addresses. For a field named `company_name` of type `string`, the AI component generates plausible company names rather than random strings. The generator understands nested structures, generating coherent objects where related fields make sense together (e.g., a `city` field value that matches the `state` field value in an address object).
 
-Generation supports configurable volume: generate 1 record for manual inspection, 100 for functional testing, or 100,000+ for load testing. Batch generation runs asynchronously for large volumes, with progress tracking. The output format matches the Objectified instance data structure, enabling generated data to be directly imported as test instances.
+Generation supports configurable volume: generate 1 record for manual inspection, 100 for functional testing, or 100,000+ for load testing. Batch generation runs asynchronously for large volumes, with progress tracking. The output format matches the Apiome instance data structure, enabling generated data to be directly imported as test instances.
 
 **Acceptance Criteria:**
 - Generation endpoint: `POST /api/v1/test-lab/generate` accepts schema_id, count, and generation_options
@@ -199,7 +199,7 @@ Generation supports configurable volume: generate 1 record for manual inspection
 - AI-powered semantic generation uses field names and descriptions for realistic values (via Ollama)
 - Coherent object generation: related fields within an object produce logically consistent values
 - Batch generation for count > 1000 runs asynchronously with progress polling endpoint
-- Output conforms to Objectified instance data format for direct import into test environments
+- Output conforms to Apiome instance data format for direct import into test environments
 
 **Tech Stack:** NextJS API routes, Ollama for AI-powered generation, Faker.js for common data types, background worker for batch generation, OpenAPI 3.1
 
@@ -311,15 +311,15 @@ Part of Epic: Synthetic Data Generator
 
 #### 3.1 (#1307) — Load Test Configuration & Runner
 
-The load test runner executes configurable load tests against API endpoints using schema-aware payloads generated from Objectified schema definitions. A load test configuration specifies: target endpoint(s), HTTP method(s), authentication, payload schema (from Objectified), virtual user count, ramp-up pattern (linear, step, spike), test duration, and success criteria (max error rate, max p95 latency).
+The load test runner executes configurable load tests against API endpoints using schema-aware payloads generated from Apiome schema definitions. A load test configuration specifies: target endpoint(s), HTTP method(s), authentication, payload schema (from Apiome), virtual user count, ramp-up pattern (linear, step, spike), test duration, and success criteria (max error rate, max p95 latency).
 
-The runner generates unique request payloads for each virtual user request using the synthetic data generator (Epic 2), ensuring realistic and varied test traffic rather than replaying the same payload. Payloads conform to the Objectified schema, testing both the API's functionality and its schema validation under load.
+The runner generates unique request payloads for each virtual user request using the synthetic data generator (Epic 2), ensuring realistic and varied test traffic rather than replaying the same payload. Payloads conform to the Apiome schema, testing both the API's functionality and its schema validation under load.
 
 Test execution runs in isolated Docker containers to prevent interference between concurrent tests. The runner streams real-time metrics (requests/second, error rate, latency percentiles) to the UI via server-sent events. Results are stored for historical comparison. Tests can be triggered via the UI or the REST API for CI/CD integration.
 
 **Acceptance Criteria:**
 - Load test configuration: target URL, method, auth, schema_id, virtual_users, ramp_pattern, duration, success_criteria
-- Schema-aware payload generation: each request uses a unique payload conforming to the Objectified schema
+- Schema-aware payload generation: each request uses a unique payload conforming to the Apiome schema
 - Ramp patterns: linear (gradual increase), step (increase by N every M seconds), spike (sudden burst)
 - Real-time metrics streaming during test execution: RPS, error rate, latency (p50, p95, p99)
 - Execution API: `POST /api/v1/test-lab/load-tests/{id}/run` triggers test, returns run_id for monitoring
@@ -481,7 +481,7 @@ Part of Epic: Test Management & CI/CD Integration
 
 Test Lab integrates into CI/CD pipelines via a REST API and optional CLI tool, enabling automated test execution on every commit, pull request, or deployment. The integration provides three interaction patterns: (1) API trigger with polling (start a test run via API, poll for completion, check results), (2) API trigger with webhook callback (start a run, receive results at a callback URL), and (3) CLI tool that wraps the API with exit codes suitable for pipeline steps.
 
-The CLI tool (`objectified-test`) supports commands: `run-suite --suite-id <id> --wait` (run a suite and wait for results, exit 0 on pass, exit 1 on fail), `run-contract --provider-schema <id>` (verify contracts), `run-load-test --config <id>` (execute load test), and `check-breaking-changes --from <version> --to <version>` (detect breaking changes). The tool outputs results in human-readable format by default, with `--format json` for programmatic parsing.
+The CLI tool (`apiome-test`) supports commands: `run-suite --suite-id <id> --wait` (run a suite and wait for results, exit 0 on pass, exit 1 on fail), `run-contract --provider-schema <id>` (verify contracts), `run-load-test --config <id>` (execute load test), and `check-breaking-changes --from <version> --to <version>` (detect breaking changes). The tool outputs results in human-readable format by default, with `--format json` for programmatic parsing.
 
 Pipeline examples are provided for GitHub Actions, GitLab CI, and Jenkins. Each example demonstrates: installing the CLI, configuring authentication (API key), running tests as a pipeline step, and interpreting results. A GitHub Actions marketplace action wraps the CLI for zero-configuration setup.
 
@@ -489,7 +489,7 @@ Pipeline examples are provided for GitHub Actions, GitLab CI, and Jenkins. Each 
 - Test execution API: `POST /api/v1/test-lab/execute` with test/suite reference, returns run_id
 - Polling endpoint: `GET /api/v1/test-lab/runs/{runId}` returns status (pending/running/completed) and results
 - Webhook callback: optional `callback_url` parameter on execute, receives POST with results on completion
-- CLI tool: `objectified-test` with commands: run-suite, run-contract, run-load-test, check-breaking-changes
+- CLI tool: `apiome-test` with commands: run-suite, run-contract, run-load-test, check-breaking-changes
 - CLI exit codes: 0 (pass), 1 (fail), 2 (error/timeout) with human-readable and JSON output formats
 - Pipeline examples documented for GitHub Actions, GitLab CI, and Jenkins in Test Lab documentation
 
@@ -501,7 +501,7 @@ Part of Epic: Test Management & CI/CD Integration
 
 #### 4.4 (#1316) — Coverage Analysis & Gap Detection
 
-Coverage analysis identifies which parts of the Objectified schema ecosystem have test coverage and which do not. Coverage is measured across multiple dimensions: schema field coverage (which fields in a schema are exercised by tests), endpoint coverage (which API endpoints have contract tests), edge case coverage (which constraint boundaries are tested), and version coverage (which schema versions have been tested).
+Coverage analysis identifies which parts of the Apiome schema ecosystem have test coverage and which do not. Coverage is measured across multiple dimensions: schema field coverage (which fields in a schema are exercised by tests), endpoint coverage (which API endpoints have contract tests), edge case coverage (which constraint boundaries are tested), and version coverage (which schema versions have been tested).
 
 The gap detector scans all schemas and compares against existing tests to produce a coverage report. Gaps are prioritized by risk: a critical field (e.g., `amount` on a payment schema) without tests is higher priority than an optional `notes` field. Risk scoring considers field sensitivity (PII, financial), usage frequency (from API analytics if available), and change frequency (fields that change often need more testing).
 

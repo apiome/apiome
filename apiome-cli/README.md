@@ -1,0 +1,804 @@
+# apiome-cli
+
+Command-line client for the [Apiome](https://github.com/KenSuenobu/apiome) REST API. Import OpenAPI, Arazzo, and JSON Schema documents, list tenant resources, and manage configuration from the terminal.
+
+Follows [clig.dev](https://clig.dev/) guidelines: structured help (`help`, `-h` / `--help`), sensible exit codes, human-readable tables on stdout, and diagnostics on stderr.
+
+## Install
+
+**Requirements:** Python ≥ 3.14, [uv](https://docs.astral.sh/uv/) (recommended).
+
+From the monorepo:
+
+```bash
+cd packages/apiome-cli
+uv sync
+uv run apiome --version
+```
+
+`uv sync` installs the `apiome` console script into `.venv/bin`. Use `uv run apiome …`, `.venv/bin/apiome …`, or activate the virtual environment before calling `apiome` directly.
+
+From the repository root via Turborepo:
+
+```bash
+yarn cli:build
+yarn cli:test
+```
+
+### Run script
+
+`run.sh` loads `.env` from this package, ensures the local `.venv` exists, and runs the CLI:
+
+```bash
+cd packages/apiome-cli
+./run.sh --version
+./run.sh doctor
+./run.sh projects list
+```
+
+With **no arguments**, `run.sh` starts an interactive prompt (`apiome>`) when stdin is a TTY, or reads **one command per line** from stdin (batch mode):
+
+```bash
+./run.sh
+apiome> doctor
+apiome> projects list
+apiome> exit
+
+printf '%s\n' "doctor" "projects list" | ./run.sh
+```
+
+Equivalent via Yarn: `yarn run` from `packages/apiome-cli`.
+
+## Configuration
+
+Settings resolve in this order (highest wins first):
+
+1. CLI flags (`--base-url`, `--tenant`, `--api-key`, `--session-token`, `--env-file`)
+2. Environment variables (`APIOME_*`)
+3. Dotenv files (default: package `.env` then `.env` in the current working directory; `--env-file` replaces both with a single file)
+4. User config file (`$XDG_CONFIG_HOME/apiome/config.toml`, default `~/.config/apiome/config.toml`)
+5. Built-in defaults (`base_url` → `http://localhost:8000`)
+
+### Environment variables
+
+| Variable | Description |
+|----------|-------------|
+| `APIOME_BASE_URL` | REST API base URL (default `http://localhost:8000`) |
+| `APIOME_TENANT_ID` | Tenant UUID (optional; some operations need tenant scope) |
+| `APIOME_API_KEY` | API key sent as `X-API-Key` (required for Tier 2 API-key-authenticated commands/routes, including list/import and `api-keys`) |
+| `APIOME_SESSION_TOKEN` | UI session bearer token from `POST /auth/login` (required for `auth`, `tokens`, and `integrations` commands) |
+
+Copy the package template and edit values:
+
+```bash
+cd packages/apiome-cli
+cp .env.example .env
+# edit APIOME_BASE_URL, APIOME_TENANT_ID, APIOME_API_KEY
+```
+
+Or export variables for a single shell session:
+
+```bash
+export APIOME_BASE_URL=https://api.example.com
+export APIOME_API_KEY=obj_your_key_here
+```
+
+Use an alternate dotenv file for one invocation:
+
+```bash
+apiome --env-file /path/to/staging.env doctor
+```
+
+### User config file
+
+Persist defaults with `apiome config` (writes `~/.config/apiome/config.toml`):
+
+```bash
+apiome config set base-url https://api.example.com
+apiome config set api-key obj_your_key_here
+apiome config show
+apiome config unset tenant
+```
+
+You can also edit the file directly. Top-level keys or an `[apiome]` table are supported:
+
+```toml
+base_url = "https://api.example.com"
+tenant_id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+api_key = "obj_your_key_here"
+```
+
+```toml
+[apiome]
+base_url = "https://api.example.com"
+api_key = "obj_your_key_here"
+```
+
+`config show` masks `api-key` and `session-token` values; commands other than `tokens create` do not print full secret values.
+
+### Identity and personal access tokens
+
+Auth commands use a session bearer token (from dashboard login or `POST /auth/login`), not the workspace API key:
+
+```bash
+export APIOME_SESSION_TOKEN=obj_sess_your_token_here
+
+apiome config set session-token obj_sess_your_token_here
+apiome auth whoami
+apiome auth status
+apiome auth tenants
+apiome tokens list
+apiome tokens create my-cli-token --scope read --scope write --ttl-days 30
+apiome tokens revoke <pat-uuid>
+```
+
+`tokens create` prints the full PAT secret once in human mode; list and revoke never expose it.
+
+### Workspace API keys and integrations
+
+API key lifecycle commands use the workspace API key (`X-API-Key`). Integration status uses a session bearer token like `auth` and `tokens`:
+
+```bash
+export APIOME_API_KEY=obj_your_key_here
+export APIOME_SESSION_TOKEN=obj_sess_your_token_here
+
+apiome api-keys list
+apiome list-api-keys
+apiome api-keys list --type mcp --output json
+apiome api-keys create --type browser --label "CI reader" --scope read,write --yes
+apiome api-keys create --type mcp --label "Agent" --transport streamable_http --tools spec.list --yes
+apiome api-keys show <key-uuid>
+apiome api-keys rotate <key-uuid>
+apiome api-keys revoke <key-uuid>
+apiome integrations list
+apiome integrations show github
+```
+
+`api-keys create` and `api-keys rotate` print the one-time secret once in human mode (`--output json` includes `secret`); list and show only show masked key prefixes. Use `--yes` to skip the create or revoke confirmation prompt in CI. `integrations show` flags re-auth when status is `expired`.
+
+### Repository Store credentials
+
+`repos` commands require a workspace API key (`X-API-Key`) and tenant scope (`APIOME_TENANT_ID` or `--tenant`). Registering via a linked Git account also requires a session bearer token (`APIOME_SESSION_TOKEN` or `--session-token`) to resolve `GET /dashboard/linked-accounts` and `GET /dashboard/linked-accounts/{id}/repositories`.
+
+```bash
+export APIOME_BASE_URL=http://localhost:8000
+export APIOME_API_KEY=obj_dev_key
+export APIOME_TENANT_ID=acme-corp
+export APIOME_SESSION_TOKEN=obj_sess_your_token_here
+```
+
+## Examples
+
+Replace placeholders such as `<uuid>` with values from your tenant. Tier 2 commands (list, import, get) require an API key via flag, env, `.env`, or `config set`.
+
+### Help
+
+```bash
+apiome help
+apiome help projects list
+apiome --help
+```
+
+In interactive mode (`./run.sh`), type `help` or `help <subcommand>` at the `apiome>` prompt.
+
+### Verify connectivity
+
+```bash
+# Anonymous health check (no API key)
+apiome --base-url http://localhost:8000 health
+
+# Probe reachability before configuring credentials
+apiome doctor
+```
+
+### Configure once, reuse everywhere
+
+```bash
+export APIOME_BASE_URL=http://localhost:8000
+export APIOME_API_KEY=obj_dev_key
+
+apiome config set base-url http://localhost:8000
+apiome config set api-key obj_dev_key
+apiome config show
+```
+
+Override saved defaults for one invocation:
+
+```bash
+apiome --base-url http://localhost:8000 --api-key obj_dev_key projects list
+```
+
+### Import sources (registry dispatch)
+
+List every import format the server has registered, then import any of them by
+key — including formats that have no dedicated verb yet — with no new CLI code:
+
+```bash
+# List the registered import sources (formats)
+apiome import --list
+apiome --json import --list        # machine-readable
+
+# Import by registry format key: apiome import <format> <input>
+apiome import sample ./catalog.json
+apiome import graphql ./schema.graphql        # GraphQL SDL (graph paradigm)
+apiome import graphql --url https://example.com/schema.graphql
+apiome import asyncapi ./asyncapi.yaml        # AsyncAPI 2.x/3.x event API
+apiome import asyncapi --url https://example.com/asyncapi.yaml
+apiome import grpc ./echo.proto               # gRPC / Protobuf .proto (rpc paradigm)
+apiome import grpc --url https://example.com/echo.proto
+apiome import sample - < ./payload.json     # read from stdin
+
+# Shared flags: --dry-run previews without persisting; --import-timeout bounds
+# the async job wait (and per-request HTTP timeout while polling).
+apiome import sample ./catalog.json --dry-run --import-timeout 240
+```
+
+`<format>` is resolved against the import-source registry
+(`GET /v1/import/sources`); an unknown key fails with the list of available
+formats. Provide the document as an `INPUT` argument (path, `http(s)` URL, or `-`
+for stdin) **or** via `--file` / `--url` — exactly one. The dedicated verbs below
+(`openapi`, `arazzo`, …) keep their format-specific flags and take precedence
+over this generic seam.
+
+For `grpc`, the `INPUT` / `--file` / `--url` paths import a single `.proto`
+document (the REST service compiles it with `buf`); a proto that `import`s sibling
+files needs those resolved server-side. Importing from a **live gRPC Server
+Reflection endpoint** is a server-side crawl (not an HTTP document fetch), surfaced
+through the `grpc` source card's *discovery* input rather than this document seam.
+
+### Import auto-detect
+
+Detect the document format from top-level headers (``openapi``, ``swagger``, ``arazzo``, ``$schema``) and run the matching importer:
+
+```bash
+apiome import auto ./spec.json
+apiome import auto https://example.com/openapi.json
+apiome import auto ./schema.json --dry-run
+
+# Filename hint: a *.arazzo.{yaml,yml,json} document routes to the Arazzo
+# importer even when its `arazzo:` version line is missing or it would
+# otherwise sniff as generic YAML.
+apiome import auto ./checkout.arazzo.yaml
+```
+
+Content markers always win; the ``*.arazzo.{yaml,yml,json}`` extension hint is a
+last resort applied only when no header matches (mirrors the REST repository
+scanner). Stdin (``-``) has no filename, so pipe Arazzo documents that omit the
+``arazzo:`` line through ``import arazzo`` explicitly.
+
+### Import OpenAPI
+
+```bash
+# Create project + version from info.title / info.version
+apiome import openapi ./openapi.yaml
+
+# Resolve the project name from another OpenAPI field
+apiome import openapi ./openapi.yaml --project-name-field info.summary
+
+# Or embed the field path in the document itself
+# info:
+#   x-apiome-project-name-field: info.summary
+
+# Import from a public HTTP(S) URL
+apiome import openapi https://example.com/openapi.json
+
+# Plan without persisting
+apiome import openapi ./openapi.yaml --dry-run
+
+# Update an existing project
+apiome import openapi ./openapi.yaml --project-id <uuid> --version 2.0.0
+
+# Publish immediately after import (default leaves the version as draft)
+apiome import openapi ./openapi.yaml --publish public
+apiome import openapi ./openapi.yaml --publish private
+```
+
+### Import Arazzo
+
+Import an [Arazzo 1.0](https://spec.openapis.org/arazzo/latest.html) workflow document (validated locally before upload):
+
+```bash
+apiome import arazzo ./checkout.arazzo.yaml
+apiome import arazzo https://example.com/workflows/checkout.json
+apiome import arazzo ./checkout.yaml --dry-run
+apiome import arazzo ./checkout.yaml --project-id <uuid> --version-id <uuid>
+apiome import arazzo ./checkout.yaml --no-wait
+apiome import arazzo ./checkout.yaml --publish public
+apiome --json import arazzo ./checkout.yaml
+```
+
+Use `import openapi` for OpenAPI API descriptions and `import json-schema` for standalone JSON Schema files.
+
+### OpenAPI/Arazzo path workflow (import → inspect → export)
+
+After importing a spec, inspect normalized paths and operations, then export a reconstructed document for CI or review. Replace placeholders with values from your tenant.
+
+```bash
+export APIOME_BASE_URL=http://localhost:8000
+export APIOME_API_KEY=obj_dev_key
+export APIOME_TENANT_ID=acme-corp
+
+# 1. Import (OpenAPI or Arazzo)
+apiome import openapi ./payments-openapi.json
+apiome import arazzo ./checkout.arazzo.yaml
+
+# 2. Inspect stored paths and operations (project slug + version from import output)
+apiome paths list --project payments-api --version 1.0.0
+apiome paths show /payments --project payments-api --version 1.0.0
+apiome operations show createPayment --project payments-api --version 1.0.0
+
+# Score schema quality (server-computed, deterministic) and gate CI.
+# If the score persisted at import time is out of date, the report also prints the
+# stored "Stored score: N/100 (grade X)" line alongside the live recompute.
+apiome lint --project payments-api --version 1.0.0
+apiome lint --project payments-api --version 1.0.0 --base-version 0.9.0
+apiome lint --project payments-api --version 1.0.0 --min-grade B
+
+# Arazzo workflows (after arazzo import)
+apiome workflows list --project checkout-flow --version 1.0.0
+apiome workflows show checkout --project checkout-flow --version 1.0.0
+
+# 3. Export reconstructed spec or download the original upload bytes
+apiome spec export \
+  --project payments-api \
+  --version 1.0.0 \
+  --format openapi \
+  --output ./artifacts/openapi.json
+
+apiome spec download-original \
+  --import-id <version-uuid> \
+  --output ./artifacts/original.yaml
+```
+
+Machine-readable inspection (`--json` on stdout):
+
+```bash
+apiome --json paths list --project <uuid> --version <uuid>
+apiome --json paths show <path-uuid> --project <uuid> --version <uuid>
+apiome --json operations show createPayment --project payments-api --version 1.0.0
+apiome --json workflows list --project <uuid> --version <uuid>
+```
+
+Post-MVP verification commands (`spec fidelity`, `spec diff`, `spec verify-attestation`) are documented when they land in the CLI.
+
+### Inspect paths and operations
+
+List flattened path/operation rows for a project version (filters: `--method`, `--tag`, `--q`):
+
+```bash
+apiome paths list --project payments-api --version 1.0.0
+apiome paths list --project payments-api --version 1.0.0 --method POST --tag payments
+apiome paths show /payments --project payments-api --version 1.0.0
+apiome paths show <path-uuid> --project <uuid> --version <uuid>
+apiome operations show createPayment --project payments-api --version 1.0.0
+apiome --json operations show <operation-uuid> --project <uuid> --version <uuid>
+```
+
+### Inspect Arazzo workflows
+
+```bash
+apiome workflows list --project checkout-flow --version 1.0.0
+apiome workflows show checkout --project checkout-flow --version 1.0.0
+apiome workflows show <workflow-uuid> --project <uuid> --version <uuid>
+apiome --json workflows list --project <uuid> --version <uuid>
+```
+
+### Import JSON Schema
+
+Import a standalone [JSON Schema 2020-12](https://json-schema.org/draft/2020-12/json-schema-core.html) file as a tenant property or schema:
+
+```bash
+apiome import json-schema ./email.json
+apiome import json-schema https://example.com/schemas/email.json
+apiome import json-schema ./user.json --as schema --version-id <uuid>
+apiome import json-schema ./field.json --project-id <uuid> --link-project-property
+```
+
+`--link-project-property` requires `--project-id`. Use `import openapi` for full OpenAPI specifications.
+
+**`$ref` resolution (MVP):** Only the schema document in the given file is imported. External or relative `$ref` targets are not resolved or inlined; bundle multi-file schemas before import if you need a self-contained definition.
+
+### Convert a catalog item to OpenAPI
+
+A *catalog item* is a non-OpenAPI import (gRPC, GraphQL, AsyncAPI, …) held in the catalog rather than
+as a publishable Project. `convert` turns one into a publishable OpenAPI project, or previews how
+faithful that conversion would be:
+
+```bash
+# Preview only — print the server-computed fidelity report + warning, create nothing:
+apiome convert <artifact-id> --to openapi --dry-run
+
+# Preview and save the would-be OpenAPI document (dry-run only; '-' writes to stdout):
+apiome convert <artifact-id> --dry-run --out converted.openapi.json
+
+# Commit — create the OpenAPI project/version from the conversion:
+apiome convert <artifact-id> --to openapi
+
+# Fill cheap gaps the source did not carry (applied only where the source is empty):
+apiome convert <artifact-id> --title "Widgets API" --api-version 1.0.0 --server https://api.example.com
+
+# Machine-readable report/result:
+apiome --json convert <artifact-id> --dry-run
+```
+
+`<artifact-id>` is the catalog item id (its project id). `--to openapi` is the only target today (the
+verb is target-generic for future emitters). The command prints the fidelity **grade + score + tier**,
+the mandatory warning, and the gaps OpenAPI favors but the conversion lacks.
+
+**Exit codes.** A **low** fidelity tier exits non-zero — a CI-friendly hint that the converted spec
+will be substantially incomplete. Pass `--force` to accept a low-fidelity result and exit `0`, or
+supply `--title` / `--api-version` / `--server` to close gaps and lift the tier. `--out` is valid only
+with `--dry-run` (the commit path creates the project instead of writing a file). Requires a workspace
+API key and tenant scope.
+
+### Repository Store
+
+Connect Git repositories, scan branches for spec files, sniff importability, and import into projects or versions. The CLI mirrors the Control Panel Repositories tab (`add` → `scan` → `files` → `inspect` → `import` → `imports`).
+
+End-to-end workflow (replace placeholders with values from your tenant):
+
+```bash
+# 1. Register a repository (public URL or linked account)
+apiome repos add --url https://github.com/acme/public-specs.git
+apiome repos add --url https://github.com/acme/public-specs.git --branch release
+apiome repos add --account "Acme GitHub" --repo acme/api-specs
+
+# 2. Scan the default or selected branch (--wait polls until complete)
+apiome repos scan <repository-uuid>
+apiome repos scan <repository-uuid> --branch release --wait
+
+# 3. List scanned files (filters match the Files tab)
+apiome repos files <repository-uuid>
+apiome repos files <repository-uuid> --glob "**/openapi*.yaml, **/arazzo/*.yaml"
+apiome repos files <repository-uuid> --preset openapi --importable
+
+# 4. Sniff a file before import
+apiome repos inspect <repository-uuid> <file-uuid>
+apiome repos inspect <repository-uuid> <file-uuid> --format json
+apiome repos inspect <repository-uuid> <file-uuid> --closure
+apiome repos inspect <repository-uuid> <file-uuid> --closure --format json
+apiome repos inspect <repository-uuid> <file-uuid> --deep
+apiome repos inspect <repository-uuid> <file-uuid> --deep --format json
+
+# 4b. Verify integrity + signature trust (CI-friendly; exits 1 on failure)
+apiome repos verify <repository-uuid>
+apiome repos verify <repository-uuid> <file-uuid>
+apiome repos verify <repository-uuid> --format json
+
+# 5. Import into a new or existing project/version
+apiome repos import <repository-uuid> <file-uuid> --new-project
+apiome repos import <repository-uuid> --files "**/openapi*.yaml" --new-project
+apiome repos import <repository-uuid> <file-uuid> --project <project-uuid> --version-name 2.0.0
+apiome repos import <repository-uuid> <file-uuid> --project <project-uuid> --version-id <version-uuid>
+apiome repos import <repository-uuid> <file-uuid> --new-project --dry-run
+
+# 6. Review import provenance
+apiome repos imports <repository-uuid>
+apiome repos imports <repository-uuid> --project <project-uuid> --format json
+apiome repos imports <repository-uuid> --since 2026-06-01T00:00:00Z --until 2026-06-30T23:59:59Z
+```
+
+#### `repos list`
+
+List registered repositories for the tenant. Filters: `--provider` (`github`, `gitlab`, `bitbucket`, `public_url`), `--status` (`pending`, `scanning`, `ready`, `error`, `archived`), `--name` (substring). Use `--format json` or global `--json` for machine output.
+
+```bash
+apiome repos list
+apiome repos list --tenant <uuid-or-slug>
+apiome repos list --provider github --status ready
+apiome repos list --name api-specs --all --format json
+```
+
+#### `repos add`
+
+Register a repository via public HTTPS clone URL or a linked account. Public URLs are pre-flighted with `POST /tenants/{id}/repositories/test-public-url`. Linked-account mode requires `--account` (display name from `integrations list`) and `--repo` (`OWNER/NAME` slug).
+
+```bash
+apiome repos add --url https://github.com/acme/public-specs.git
+apiome repos add --url https://github.com/acme/public-specs.git --branch release
+apiome repos add --account "Acme GitHub" --repo acme/api-specs
+apiome repos add --account "Acme GitHub" --repo acme/api-specs --branch develop --format json
+```
+
+#### `repos scan`
+
+Enqueue a branch scan (`POST /tenants/{id}/repositories/{repository_id}/scans`). Omit `--branch` to use the repository default. `--wait` polls `GET …/scans/{scan_id}` until the scan finishes and prints file counts.
+
+```bash
+apiome repos scan <repository-uuid>
+apiome repos scan <repository-uuid> --branch release
+apiome repos scan <repository-uuid> --wait
+apiome repos scan <repository-uuid> --branch main --wait --poll-interval 2
+```
+
+#### `repos files`
+
+List files discovered by the latest scan (`GET …/files`). `--glob` accepts comma-separated patterns; `--regex` is mutually exclusive with `--glob`. `--preset` values: `all_importable`, `openapi`, `arazzo`, `asyncapi`, `json_schema`, `graphql`, `protobuf`, `avro`, `postman`, `sql_ddl`. Use `--importable` or `--not-importable` to filter by sniff verdict; omit both to include unsniffed rows. `--closure` adds a closure indicator column showing resolved and missing `$ref` targets per file.
+
+```bash
+apiome repos files <repository-uuid>
+apiome repos files <repository-uuid> --glob "**/openapi*.yaml"
+apiome repos files <repository-uuid> --regex 'openapi.*\.ya?ml$'
+apiome repos files <repository-uuid> --preset openapi --importable
+apiome repos files <repository-uuid> --detected-kind openapi-candidate --all
+apiome repos files <repository-uuid> --closure
+apiome repos files <repository-uuid> --closure --format json
+```
+
+#### `repos inspect`
+
+Run content sniff on a cached file (`POST …/files/{file_id}/sniff`). Prints importable verdict, detected kind, version, and reasons. Sniff before import when the Files table shows a pending verdict. Use `--closure` to print the resolved `$ref` closure and flag unresolved targets. Use `--deep` to run the deep pre-import verdict (`POST …/files/{file_id}/verify`) and print validation, lint, fidelity, and secrets findings; exits with code `1` when blocking findings are reported.
+
+```bash
+apiome repos inspect <repository-uuid> <file-uuid>
+apiome repos inspect <repository-uuid> <file-uuid> --format json
+apiome repos inspect <repository-uuid> <file-uuid> --closure
+apiome repos inspect <repository-uuid> <file-uuid> --closure --format json
+apiome repos inspect <repository-uuid> <file-uuid> --deep
+apiome repos inspect <repository-uuid> <file-uuid> --deep --format json
+```
+
+#### `repos verify`
+
+Check repository file integrity and commit signature metadata (`GET …/files` or `GET …/files/{file_id}`). Prints per-file integrity and signature status. Exits with code `1` when any file has failed git blob verification or an invalid signature. Omit the file UUID to verify all files (fetches all pages by default).
+
+```bash
+apiome repos verify <repository-uuid>
+apiome repos verify <repository-uuid> <file-uuid>
+apiome repos verify <repository-uuid> --format json
+apiome --json repos verify <repository-uuid>
+```
+
+#### `repos import`
+
+Import a repository file into the catalog (`POST …/files/{file_id}/import`), many files in one batch run (`POST …/imports:batch`), or per a GitOps manifest (`POST …/imports:manifest`). Single-file mode requires a file UUID argument. Batch mode selects files with `--files` (comma-separated globs) or `--regex`, then applies either global target flags or a `--map` YAML/JSON file with per-path mappings. Manifest mode uses `--manifest` to import from the repository's scanned `.apiome.yaml`, or `--manifest-file PATH` to validate and import from a local manifest file (resolved against scanned repository files). Use exactly one target mode per file: `--new-project` (create project + version from document metadata), or `--project` with optional `--version-id` (existing version) or `--version-name` (new version under the project). `--resume-run-id` retries a prior batch or manifest run without re-selecting files. Reuses the same `ImportResult` output as `import openapi` / `import arazzo` for single imports; batch and manifest modes print an aggregate summary. `--dry-run` plans without persisting.
+
+```bash
+apiome repos import <repository-uuid> <file-uuid> --new-project
+apiome repos import <repository-uuid> <file-uuid> --new-project --version-name 1.0.0
+apiome repos import <repository-uuid> <file-uuid> --project <project-uuid> --version-name 2.0.0
+apiome repos import <repository-uuid> <file-uuid> --project <project-uuid> --version-id <version-uuid>
+apiome repos import <repository-uuid> <file-uuid> --new-project --dry-run
+apiome repos import <repository-uuid> --files "**/openapi*.yaml" --new-project
+apiome repos import <repository-uuid> --files "**/*.yaml" --map ./import-map.yaml
+apiome repos import <repository-uuid> --regex 'openapi' --project <project-uuid> --version-id <version-uuid>
+apiome repos import <repository-uuid> --resume-run-id <batch-run-uuid>
+apiome repos import <repository-uuid> --manifest
+apiome repos import <repository-uuid> --manifest-file ./.apiome.yaml
+apiome repos import <repository-uuid> --manifest --dry-run
+apiome --json repos import <repository-uuid> --files "**/*.yaml" --new-project
+```
+
+#### `repos imports`
+
+List import provenance for a repository (`GET …/imports`). Filters: `--project`, `--version-id`, `--actor` (user UUID), `--since` / `--until` (ISO-8601). Table columns: file path, project, version, importer, `imported_at`, blob SHA.
+
+```bash
+apiome repos imports <repository-uuid>
+apiome repos imports <repository-uuid> --project <project-uuid>
+apiome repos imports <repository-uuid> --version-id <version-uuid> --format json
+apiome repos imports <repository-uuid> --actor <user-uuid> --since 2026-06-01T00:00:00Z
+```
+
+### MCP catalog
+
+Register, list, and inspect external MCP servers in your tenant's catalog. These commands
+require an API key and a tenant scope (`--tenant` or `APIOME_TENANT_ID`); the server
+re-scopes from the token, so you only ever see your own catalog.
+
+Register a server (`POST /v1/mcp/{tenant}/endpoints`). `--name` and `--url` are required;
+`--transport` defaults to `streamable_http` (`sse` and `stdio` are also accepted):
+
+```bash
+apiome mcp register --name "Weather MCP" --url https://mcp.example.com/sse
+apiome mcp register --name "Weather MCP" --url https://mcp.example.com/sse --transport sse
+apiome mcp register --name "Weather MCP" --url https://mcp.example.com/sse \
+  --description "Weather lookups" --category tools --visibility public
+```
+
+Attach an outbound credential while registering — `--bearer` seals a bearer token, `--header`
+seals a custom header secret as `Name:Value` (the two are mutually exclusive). The secret is
+sealed server-side via `PUT …/credentials` and is never echoed back:
+
+```bash
+apiome mcp register --name "Weather MCP" --url https://mcp.example.com/sse --bearer "$MCP_TOKEN"
+apiome mcp register --name "Weather MCP" --url https://mcp.example.com/sse --header "X-Api-Token: $MCP_TOKEN"
+```
+
+List the catalog (`GET /v1/mcp/{tenant}/endpoints`) and show one endpoint by id
+(`GET /v1/mcp/{tenant}/endpoints/{id}`). Both honour the global `--json` flag and a local
+`--output json`:
+
+```bash
+apiome mcp list
+apiome mcp list --output json
+apiome mcp show <endpoint-uuid>
+apiome --json mcp show <endpoint-uuid>
+```
+
+Trigger a discovery run and follow it to completion (`POST …/endpoints/{id}/discover`, then
+poll `GET …/endpoints/{id}/jobs/{job_id}`). On a terminal run the CLI prints the new version,
+a change summary, and a best-effort quality score (`GET …/versions/{version_id}/lint`); a
+failed run or a timeout exits non-zero:
+
+```bash
+apiome mcp discover <endpoint-uuid>
+apiome mcp discover <endpoint-uuid> --no-wait
+apiome mcp discover <endpoint-uuid> --import-timeout 300 --poll-interval 2
+apiome mcp discover <endpoint-uuid> --output json
+```
+
+`--wait` (default) polls until the job reaches `completed` or `failed`; `--no-wait` enqueues the
+run and prints the job id without blocking. `--import-timeout` caps the total wait (and the
+per-request HTTP timeout) at the given seconds — like the `import` poll loop, it defaults to
+120s and overrides the global `--timeout`. Concurrent discover requests on the same endpoint are
+de-duplicated server-side: the existing in-flight job is returned with a "deduplicated" note.
+
+Score a discovered surface and list its lint findings (`GET …/versions/{version_id}/lint`). This
+is the MCP-catalog analogue of the project `lint` command: a deterministic 0-100 quality score,
+an A-F grade, and itemized findings for one version snapshot:
+
+```bash
+apiome mcp lint <endpoint-uuid>
+apiome mcp lint <endpoint-uuid> --version <version-uuid>
+apiome mcp lint <endpoint-uuid> --output json
+apiome mcp lint <endpoint-uuid> --min-grade B
+```
+
+`--version` targets a specific snapshot; omitted, the endpoint's current (latest discovered)
+version is scored — the CLI exits with guidance when the endpoint has never been discovered.
+`--min-grade` turns the report into a CI gate, exiting non-zero when the grade is worse than the
+floor (A best, F worst). `--output json` (or the global `--json`) prints the raw report.
+
+### Import JSON Schema types
+
+Import system-wide JSON Schema type definitions (typically a `$defs` library) into the platform type table:
+
+```bash
+apiome import json-schema-type ./common-types.json
+apiome import json-schema-type https://example.com/schemas/common-types.json
+apiome import json-schema-type ./email.json --name contact_email --description "Primary email"
+apiome import json-schema-type ./common-types.json --dry-run
+apiome import json-schema-type ./common-types.json --publish public
+apiome import json-schema-type ./common-types.json --publish private
+```
+
+Use `--publish public` to import into the system-wide type library (master tenant only). Use `--publish private` or omit the flag to import tenant-scoped types. `--visibility` is an alias for `--publish`.
+
+Requires an API key (for `creator_id`) but not a tenant-scoped import target. If you run `import json-schema` on a type library file, the CLI suggests `import json-schema-type` instead.
+
+### List resources
+
+Human-readable tables (default):
+
+```bash
+apiome projects list
+apiome projects list --limit 50 --all
+apiome properties list
+apiome schemas list
+apiome versions list --project-id <uuid>
+apiome types list
+apiome types show email
+apiome types search phone
+```
+
+Machine-readable JSON:
+
+```bash
+apiome --json projects list
+apiome --json schemas get <uuid>
+apiome --json types list
+apiome --json types show email
+```
+
+Fetch a single record:
+
+```bash
+apiome projects get <uuid>
+apiome properties get <uuid>
+```
+
+### Publish and unpublish types
+
+Requires the master tenant API key (Tier 2). Publishing promotes a tenant-owned
+type to the system-wide library (`system: true`). Unpublishing demotes a
+system-wide type to tenant scope under the master tenant.
+
+```bash
+# Publish a tenant-owned type by slug
+apiome types publish email
+
+# Publish by UUID
+apiome types publish <type-uuid>
+
+# Unpublish a system-wide type
+apiome types unpublish email
+
+# Machine-readable result
+apiome --json types publish email
+```
+
+### Publish and unpublish versions
+
+Requires an API key (Tier 2). Publishing records `published_on` and makes the
+version discoverable: `public` adds it to the public catalog, while `private`
+publishes it as tenant-protected (visible only within your tenant).
+
+Pass a version UUID directly, or use `--project` to publish by version slug or
+label. The default visibility is `public`.
+
+```bash
+# Publish a version to the public catalog (by UUID)
+apiome versions publish <version-uuid>
+
+# Publish privately (tenant-protected), resolving by project + label
+apiome versions publish 1.0.0 --project payments-api --visibility private
+
+# Return a published version to draft (removes it from the catalog)
+apiome versions unpublish 1.0.0 --project payments-api
+
+# Machine-readable result
+apiome --json versions publish <version-uuid>
+```
+
+### Export reconstructed specs (CI artifacts)
+
+Requires tenant scope (`APIOME_TENANT_ID` or `--tenant`). Sends `X-API-Key` when configured so protected published versions are visible. Document bytes go to `--output`; diagnostics and metadata go to stderr. With global `--json`, metadata is JSON on stdout when `--output` is a file, and on stderr when `--output -` so stdout stays byte-safe for pipelines.
+
+```bash
+export APIOME_TENANT_ID=acme-corp
+
+# Write OpenAPI JSON to a CI artifact path
+apiome spec export \
+  --project payments-api \
+  --version 1.0.0 \
+  --format openapi \
+  --output ./artifacts/openapi.json
+
+# Stream YAML to stdout (metadata on stderr)
+apiome spec export \
+  --project payments-api \
+  --version 1.0.0 \
+  --format arazzo \
+  --yaml \
+  --output -
+
+# Machine-readable metadata (document still written to --output file)
+apiome --json spec export \
+  --project payments-api \
+  --version 1.0.0 \
+  --format openapi \
+  --output ./artifacts/openapi.json
+```
+
+### Download original import artifact
+
+`--import-id` is the project version UUID that owns the active import provenance row (`GET /versions/{id}/import-source`). Requires an API key.
+
+```bash
+apiome spec download-original \
+  --import-id <version-uuid> \
+  --output ./artifacts/original.yaml
+
+apiome spec download-original \
+  --import-id <version-uuid> \
+  --output -
+```
+
+## Development
+
+```bash
+cd packages/apiome-cli
+uv venv --allow-existing
+uv sync
+uv run pytest tests/ -v
+uv run ruff check src/ tests/
+```
+
+```bash
+yarn cli:lint
+```
+
+See [`AGENTS.md`](AGENTS.md) for contributor conventions, layout, and review checklist.
+
+See the [CLI roadmap](../../docs/ROADMAP_APIOME_CLI.md) for planned commands.

@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  apiome-browse:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apiome-browse
+    ports:
+      - "3000:3000"
+    environment:
+      # REST API Base URL
+      - NEXT_PUBLIC_REST_API_BASE_URL=${NEXT_PUBLIC_REST_API_BASE_URL:-http://localhost:8000/v1}
+      # Database Connection (for PostgreSQL)
+      - PGHOST=${PGHOST:-localhost}
+      - PGPORT=${PGPORT:-5432}
+      - PGDATABASE=${PGDATABASE:-apiome}
+      - PGUSER=${PGUSER:-postgres}
+      - PGPASSWORD=${PGPASSWORD}
+    restart: unless-stopped
+    networks:
+      - apiome-network
+
+networks:
+  apiome-network:
+    driver: bridge
+

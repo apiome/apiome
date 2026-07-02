@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Interactive setup for Objectified development environment files.
+# Interactive setup for Apiome development environment files.
 # Prompts for shared infrastructure values once, then writes .env files for
 # each package based on its .env.example templates.
 #
@@ -153,7 +153,7 @@ write_file() {
 # ---------------------------------------------------------------------------
 
 printf '\n'
-info "Objectified environment setup"
+info "Apiome environment setup"
 info "This script creates .env files for local development."
 printf '\n'
 
@@ -189,7 +189,7 @@ fi
 # Shared infrastructure
 # ---------------------------------------------------------------------------
 
-info "Database (shared by objectified-rest, objectified-ui, objectified-mcp, objectified-browse)"
+info "Database (shared by apiome-rest, apiome-ui, apiome-mcp, apiome-browse)"
 prompt POSTGRES_HOST "PostgreSQL host" "localhost"
 prompt POSTGRES_PORT "PostgreSQL port" "5432"
 prompt POSTGRES_USER "PostgreSQL user" "postgres"
@@ -202,13 +202,13 @@ while true; do
   warn "Password is required."
 done
 
-prompt POSTGRES_DB "PostgreSQL database name" "objectified"
+prompt POSTGRES_DB "PostgreSQL database name" "apiome"
 
 ENCODED_PASSWORD="$(urlencode "$POSTGRES_PASSWORD")"
 DATABASE_URL="postgresql://${POSTGRES_USER}:${ENCODED_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
 
 printf '\n'
-info "Authentication secret (must match across objectified-rest and objectified-ui)"
+info "Authentication secret (must match across apiome-rest and apiome-ui)"
 DEFAULT_NEXTAUTH_SECRET="$(generate_secret 32)"
 prompt_yes_no use_generated_secret "Generate NEXTAUTH_SECRET automatically?" "y"
 if [[ "$use_generated_secret" == true ]]; then
@@ -225,7 +225,7 @@ else
 fi
 
 printf '\n'
-info "REST API (objectified-rest)"
+info "REST API (apiome-rest)"
 prompt REST_HOST "REST API bind host" "0.0.0.0"
 prompt REST_PORT "REST API port" "8000"
 prompt REST_RELOAD "Enable auto-reload (True/False)" "$DEFAULT_REST_RELOAD"
@@ -236,11 +236,11 @@ NEXT_PUBLIC_REST_API_BASE_URL="${NEXT_PUBLIC_REST_API_BASE_URL%/}"
 if [[ "$NEXT_PUBLIC_REST_API_BASE_URL" != */v1 ]]; then
   NEXT_PUBLIC_REST_API_BASE_URL="${NEXT_PUBLIC_REST_API_BASE_URL}/v1"
 fi
-DEFAULT_OBJECTIFIED_BASE_URL="http://localhost:${REST_PORT}"
-prompt OBJECTIFIED_BASE_URL "CLI REST base URL (no /v1 suffix)" "$DEFAULT_OBJECTIFIED_BASE_URL"
+DEFAULT_APIOME_BASE_URL="http://localhost:${REST_PORT}"
+prompt APIOME_BASE_URL "CLI REST base URL (no /v1 suffix)" "$DEFAULT_APIOME_BASE_URL"
 
 printf '\n'
-info "UI (objectified-ui)"
+info "UI (apiome-ui)"
 prompt UI_PORT "UI dev server port" "3000"
 DEFAULT_NEXTAUTH_URL="http://localhost:${UI_PORT}/api/auth"
 prompt NEXTAUTH_URL "NextAuth callback URL" "$DEFAULT_NEXTAUTH_URL"
@@ -254,30 +254,30 @@ while true; do
 done
 
 DEFAULT_BROWSE_URL="http://localhost:3001"
-prompt NEXT_PUBLIC_BROWSE_URL "Public browse app URL (objectified-browse)" "$DEFAULT_BROWSE_URL"
+prompt NEXT_PUBLIC_BROWSE_URL "Public browse app URL (apiome-browse)" "$DEFAULT_BROWSE_URL"
 prompt OLLAMA_BASE_URL "Ollama LLM server URL" "http://localhost:11434"
 prompt NEXT_PUBLIC_BETA_MODE "Enable beta mode indicator (true/false)" "$DEFAULT_BETA_MODE"
 
 printf '\n'
-info "MCP (objectified-mcp)"
+info "MCP (apiome-mcp)"
 DEFAULT_MCP_SECRET="$(generate_secret 24)"
-prompt_yes_no use_generated_mcp_secret "Generate OBJECTIFIED_MCP_INTERNAL_SECRET automatically?" "y"
+prompt_yes_no use_generated_mcp_secret "Generate APIOME_MCP_INTERNAL_SECRET automatically?" "y"
 if [[ "$use_generated_mcp_secret" == true ]]; then
-  OBJECTIFIED_MCP_INTERNAL_SECRET="$DEFAULT_MCP_SECRET"
-  ok "  generated OBJECTIFIED_MCP_INTERNAL_SECRET (min 16 characters)"
+  APIOME_MCP_INTERNAL_SECRET="$DEFAULT_MCP_SECRET"
+  ok "  generated APIOME_MCP_INTERNAL_SECRET (min 16 characters)"
 else
   while true; do
-    prompt_secret OBJECTIFIED_MCP_INTERNAL_SECRET "OBJECTIFIED_MCP_INTERNAL_SECRET (min 16 characters)"
-    if [[ ${#OBJECTIFIED_MCP_INTERNAL_SECRET} -ge 16 ]]; then
+    prompt_secret APIOME_MCP_INTERNAL_SECRET "APIOME_MCP_INTERNAL_SECRET (min 16 characters)"
+    if [[ ${#APIOME_MCP_INTERNAL_SECRET} -ge 16 ]]; then
       break
     fi
     warn "Secret must be at least 16 characters."
   done
 fi
-prompt OBJECTIFIED_MCP_HTTP_PORT "MCP HTTP port (docker compose)" "8765"
+prompt APIOME_MCP_HTTP_PORT "MCP HTTP port (docker compose)" "8765"
 
 printf '\n'
-info "Browse app (objectified-browse)"
+info "Browse app (apiome-browse)"
 prompt NEXT_PUBLIC_BASE_PATH "Base path for sub-path hosting (leave empty for root)" ""
 
 printf '\n'
@@ -301,10 +301,10 @@ else
 fi
 
 printf '\n'
-info "CLI credentials (optional — configure later with \`objectified config set\`)"
-prompt OBJECTIFIED_TENANT_ID "Tenant ID (UUID)" ""
-prompt_secret OBJECTIFIED_API_KEY "API key" ""
-prompt_secret OBJECTIFIED_SESSION_TOKEN "Session bearer token" ""
+info "CLI credentials (optional — configure later with \`apiome config set\`)"
+prompt APIOME_TENANT_ID "Tenant ID (UUID)" ""
+prompt_secret APIOME_API_KEY "API key" ""
+prompt_secret APIOME_SESSION_TOKEN "Session bearer token" ""
 
 # ---------------------------------------------------------------------------
 # Write files
@@ -316,7 +316,7 @@ CREATED=0
 SKIPPED=0
 
 write_rest_env() {
-  local target="$ROOT/objectified-rest/.env"
+  local target="$ROOT/apiome-rest/.env"
   should_write_file "$target" || { ((SKIPPED++)) || true; return; }
 
   write_file "$target" <<EOF
@@ -330,14 +330,14 @@ HOST=$(format_env_value "$REST_HOST")
 PORT=$(format_env_value "$REST_PORT")
 RELOAD=$(format_env_value "$REST_RELOAD")
 
-# JWT Authentication (must match objectified-ui NEXTAUTH_SECRET)
+# JWT Authentication (must match apiome-ui NEXTAUTH_SECRET)
 NEXTAUTH_SECRET=$(format_env_value "$NEXTAUTH_SECRET")
 EOF
   ((CREATED++)) || true
 }
 
 write_ui_env() {
-  local target="$ROOT/objectified-ui/.env"
+  local target="$ROOT/apiome-ui/.env"
   should_write_file "$target" || { ((SKIPPED++)) || true; return; }
 
   {
@@ -350,10 +350,10 @@ NODE_ENV=$(format_env_value "$APP_MODE")
 # REST API Base URL (must start with NEXT_PUBLIC_ for client-side access)
 NEXT_PUBLIC_REST_API_BASE_URL=$(format_env_value "$NEXT_PUBLIC_REST_API_BASE_URL")
 
-# PostgreSQL — same database as objectified-rest
+# PostgreSQL — same database as apiome-rest
 DATABASE_URL=$(format_env_value "$DATABASE_URL")
 
-# Public API browser (objectified-browse)
+# Public API browser (apiome-browse)
 NEXT_PUBLIC_BROWSE_URL=$(format_env_value "$NEXT_PUBLIC_BROWSE_URL")
 NEXTAUTH_URL=$(format_env_value "$NEXTAUTH_URL")
 NEXTAUTH_SECRET=$(format_env_value "$NEXTAUTH_SECRET")
@@ -388,43 +388,43 @@ EOF
 }
 
 write_mcp_env() {
-  local target="$ROOT/objectified-mcp/.env"
+  local target="$ROOT/apiome-mcp/.env"
   should_write_file "$target" || { ((SKIPPED++)) || true; return; }
 
   write_file "$target" <<EOF
 # Generated by setup.sh on $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # Required
-OBJECTIFIED_MCP_DATABASE_URL=$(format_env_value "$DATABASE_URL")
-OBJECTIFIED_MCP_INTERNAL_SECRET=$(format_env_value "$OBJECTIFIED_MCP_INTERNAL_SECRET")
+APIOME_MCP_DATABASE_URL=$(format_env_value "$DATABASE_URL")
+APIOME_MCP_INTERNAL_SECRET=$(format_env_value "$APIOME_MCP_INTERNAL_SECRET")
 
 # Optional HTTP bind (used with --transport http or docker compose)
-OBJECTIFIED_MCP_HTTP_HOST=127.0.0.1
-OBJECTIFIED_MCP_HTTP_PORT=$(format_env_value "$OBJECTIFIED_MCP_HTTP_PORT")
+APIOME_MCP_HTTP_HOST=127.0.0.1
+APIOME_MCP_HTTP_PORT=$(format_env_value "$APIOME_MCP_HTTP_PORT")
 EOF
   ((CREATED++)) || true
 }
 
 write_cli_env() {
-  local target="$ROOT/objectified-cli/.env"
+  local target="$ROOT/apiome-cli/.env"
   should_write_file "$target" || { ((SKIPPED++)) || true; return; }
 
   {
     cat <<EOF
 # Generated by setup.sh on $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-# Base URL for the Objectified REST API
-OBJECTIFIED_BASE_URL=$(format_env_value "$OBJECTIFIED_BASE_URL")
-OBJECTIFIED_TENANT_ID=$(format_env_value "$OBJECTIFIED_TENANT_ID")
-OBJECTIFIED_API_KEY=$(format_env_value "$OBJECTIFIED_API_KEY")
-OBJECTIFIED_SESSION_TOKEN=$(format_env_value "$OBJECTIFIED_SESSION_TOKEN")
+# Base URL for the Apiome REST API
+APIOME_BASE_URL=$(format_env_value "$APIOME_BASE_URL")
+APIOME_TENANT_ID=$(format_env_value "$APIOME_TENANT_ID")
+APIOME_API_KEY=$(format_env_value "$APIOME_API_KEY")
+APIOME_SESSION_TOKEN=$(format_env_value "$APIOME_SESSION_TOKEN")
 EOF
   } | write_file "$target"
   ((CREATED++)) || true
 }
 
 write_browse_env() {
-  local target="$ROOT/objectified-browse/.env.local"
+  local target="$ROOT/apiome-browse/.env.local"
   should_write_file "$target" || { ((SKIPPED++)) || true; return; }
 
   write_file "$target" <<EOF
@@ -460,8 +460,8 @@ POSTGRES_PASSWORD=$(format_env_value "$POSTGRES_PASSWORD")
 POSTGRES_DB=$(format_env_value "$POSTGRES_DB")
 POSTGRES_PUBLISH_PORT=$(format_env_value "$POSTGRES_PORT")
 
-OBJECTIFIED_MCP_HTTP_PORT=$(format_env_value "$OBJECTIFIED_MCP_HTTP_PORT")
-OBJECTIFIED_MCP_INTERNAL_SECRET=$(format_env_value "$OBJECTIFIED_MCP_INTERNAL_SECRET")
+APIOME_MCP_HTTP_PORT=$(format_env_value "$APIOME_MCP_HTTP_PORT")
+APIOME_MCP_INTERNAL_SECRET=$(format_env_value "$APIOME_MCP_INTERNAL_SECRET")
 EOF
   ((CREATED++)) || true
 }
@@ -480,7 +480,7 @@ info "Next steps:"
 printf '  1. Ensure PostgreSQL is running and create the database if needed:\n'
 printf '       psql -U %s -h %s -p %s -c "CREATE DATABASE %s;"\n' \
   "$POSTGRES_USER" "$POSTGRES_HOST" "$POSTGRES_PORT" "$POSTGRES_DB"
-printf '  2. Run migrations: cd objectified-db && objectified-db migrate\n'
+printf '  2. Run migrations: cd apiome-db && apiome-db migrate\n'
 if [[ "$APP_MODE" == "production" ]]; then
   printf '  3. Build and start the stack: yarn install && yarn build && yarn start\n'
 else

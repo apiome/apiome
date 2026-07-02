@@ -1,6 +1,6 @@
 # Publication change reports (OpenAPI diff → human-readable)
 
-**Scope:** When a **specification is published**, Objectified generates a **change report** comparing the new published OpenAPI snapshot to a **baseline** (typically the immediately prior published revision, or a user-selected comparison target where the product allows it). The report is **human-readable**, structured with a **header**, **body** (schemas, properties, references/relationships, documentation), and **footnote**, and appears on the **Version** page for that publication.  
+**Scope:** When a **specification is published**, Apiome generates a **change report** comparing the new published OpenAPI snapshot to a **baseline** (typically the immediately prior published revision, or a user-selected comparison target where the product allows it). The report is **human-readable**, structured with a **header**, **body** (schemas, properties, references/relationships, documentation), and **footnote**, and appears on the **Version** page for that publication.  
 **Repository:** [KenSuenobu/objectified-commercial](https://github.com/KenSuenobu/objectified-commercial).  
 **GitHub epic:** [#2698](https://github.com/KenSuenobu/objectified-commercial/issues/2698) (**CR-R1**). Full ticket index: `docs/CHANGE_REPORTS.md`.
 
@@ -23,7 +23,7 @@
 
 ## Problem
 
-Consumers of published APIs need to understand **what changed** between releases without manually diffing raw OpenAPI YAML/JSON. Today, teams rely on external tools or ad-hoc release notes. Objectified already versions specifications; **publication** is the natural point to produce a **canonical, reviewable change narrative** tied to each published version.
+Consumers of published APIs need to understand **what changed** between releases without manually diffing raw OpenAPI YAML/JSON. Today, teams rely on external tools or ad-hoc release notes. Apiome already versions specifications; **publication** is the natural point to produce a **canonical, reviewable change narrative** tied to each published version.
 
 ---
 

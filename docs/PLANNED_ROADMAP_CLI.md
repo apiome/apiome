@@ -1,8 +1,8 @@
-# Objectified: CLI - Feature Roadmap
+# Apiome: CLI - Feature Roadmap
 
-> A first-party TypeScript command-line interface (`objectified-cli`, binary `objectified`) that wraps the Objectified REST service and provides a complete programmatic interface to the SaaS offering. The CLI mirrors the REST surface — tenants, projects, versions, primitives, properties, classes, paths/operations, browse/schema export, data records, migrations, and version tags — and is designed for both human use (rich tables, color, prompts) and automation (stable JSON, exit codes, NDJSON, SARIF).
+> A first-party TypeScript command-line interface (`apiome-cli`, binary `apiome`) that wraps the Apiome REST service and provides a complete programmatic interface to the SaaS offering. The CLI mirrors the REST surface — tenants, projects, versions, primitives, properties, classes, paths/operations, browse/schema export, data records, migrations, and version tags — and is designed for both human use (rich tables, color, prompts) and automation (stable JSON, exit codes, NDJSON, SARIF).
 >
-> **Revenue Model**: The CLI itself is free and open-source under the same license as the rest of Objectified. Advanced features (telemetry dashboards, plugin marketplace, signed enterprise binaries) are gated at Pro/Enterprise; bulk-import quotas and CI parallelism caps follow tenant plan limits.
+> **Revenue Model**: The CLI itself is free and open-source under the same license as the rest of Apiome. Advanced features (telemetry dashboards, plugin marketplace, signed enterprise binaries) are gated at Pro/Enterprise; bulk-import quotas and CI parallelism caps follow tenant plan limits.
 >
 > **Tech Stack**: Node.js 20 LTS / TypeScript 5.x, [oclif](https://oclif.io) v4 (topic-command framework, lazy loading, plugin system), [openapi-typescript](https://openapi-ts.dev) for the generated REST client, `keytar` for OS keychain credentials, `cli-table3` + `chalk` + `ora` for output rendering, [changesets](https://github.com/changesets/changesets) for semver release flow, Node.js Single Executable Applications (SEA) for cross-platform binaries, and GitHub Actions for CI + NPM publishing.
 >
@@ -16,16 +16,16 @@
 
 ## MVP Definition
 
-The MVP delivers an `npm i -g objectified-cli` install that lets a developer:
-- Authenticate with `objectified auth login` (browser PKCE flow) or `OBJECTIFIED_API_KEY` for CI.
-- Resolve their default tenant with `objectified tenants use <slug>` (per profile).
+The MVP delivers an `npm i -g apiome-cli` install that lets a developer:
+- Authenticate with `apiome auth login` (browser PKCE flow) or `APIOME_API_KEY` for CI.
+- Resolve their default tenant with `apiome tenants use <slug>` (per profile).
 - List, inspect, and create projects + versions (`projects list/show/create`, `versions list/show/create/publish`).
 - Browse the public directory of tenants/projects/versions without authentication (`browse tenants/projects/versions`).
 - Download published specs in OpenAPI / Swagger format with one command (`schema fetch`, `schema swagger`).
 - Override the connection target with `--base-url`, switch profiles with `--profile`, and emit machine-readable output with `--json`.
-- Get help everywhere — `objectified --help`, `objectified <topic> --help`, `objectified docs <topic>` — with at least two examples per command.
+- Get help everywhere — `apiome --help`, `apiome <topic> --help`, `apiome docs <topic>` — with at least two examples per command.
 - Receive helpful error messages with documented exit codes (3 unauth, 4 forbidden, 5 not-found, 6 conflict, 7 validation, 8 server, 9 network, 10 rate-limited, 11 config).
-- Publish to a configurable NPM artifactory (npmjs.com by default) on every tagged release via `objectified-cli-publish.yml`.
+- Publish to a configurable NPM artifactory (npmjs.com by default) on every tagged release via `apiome-cli-publish.yml`.
 
 Everything else (data plane, full paths/classes/properties CRUD, primitives import, **specification file import via REST**, plugins, self-update, telemetry, Homebrew/Scoop) lands in v2.
 
@@ -35,20 +35,20 @@ Everything else (data plane, full paths/classes/properties CRUD, primitives impo
 
 The CLI follows seven non-negotiable rules drawn from the references above:
 
-1. **Topic-command structure** — `objectified TOPIC COMMAND [args] [flags]`. Every multi-step verb hangs off a topic (`objectified projects list`, not `objectified list-projects`).
-2. **`--base-url` is canonical** — every command honors `--base-url`, the `OBJECTIFIED_BASE_URL` env var, and `[profile.*] base_url` in `config.toml`, in that order.
+1. **Topic-command structure** — `apiome TOPIC COMMAND [args] [flags]`. Every multi-step verb hangs off a topic (`apiome projects list`, not `apiome list-projects`).
+2. **`--base-url` is canonical** — every command honors `--base-url`, the `APIOME_BASE_URL` env var, and `[profile.*] base_url` in `config.toml`, in that order.
 3. **Human-first by default, machine-friendly on demand** — TTY → tables + color; `--json` or non-TTY → stable, sorted, parseable JSON. `NO_COLOR` is honored.
 4. **Errors are short, actionable, and on `stderr`** — every error includes a hint, an exit code, and (where available) a `Request-Id`.
 5. **Idempotency where the verb allows** — `GET`/`PUT`/`DELETE` retry safely on 429/5xx; `POST` retries only on 429.
-6. **Progressive disclosure** — `--help` shows essentials, `objectified docs <topic>` shows prose docs, man pages ship for full reference.
-7. **Composable** — every command writes a single concern to `stdout`; `--ndjson` for streamable output; piping works (`objectified … --json | jq …`).
+6. **Progressive disclosure** — `--help` shows essentials, `apiome docs <topic>` shows prose docs, man pages ship for full reference.
+7. **Composable** — every command writes a single concern to `stdout`; `--ndjson` for streamable output; piping works (`apiome … --json | jq …`).
 
 ---
 
 ## Connection Model
 
 ```
-                        objectified CLI (TypeScript)
+                        apiome CLI (TypeScript)
                                   │
                                   │ HTTPS  (X-API-Key  |  Bearer <jwt>)
                                   ▼
@@ -60,9 +60,9 @@ The CLI follows seven non-negotiable rules drawn from the references above:
                                      │
                 ┌────────────────────┼────────────────────┐
                 ▼                    ▼                    ▼
-         objectified-rest      objectified-rest     objectified-rest
+         apiome-rest      apiome-rest     apiome-rest
          (production)          (staging)            (local docker)
-         api.objectified.dev   api.staging.…        localhost:3001
+         api.apiome.app   api.staging.…        localhost:3001
                 │
                 ▼
             PostgreSQL
@@ -109,36 +109,36 @@ No open tickets in this epic’s summary pack (foundation items #3186–#3193 ar
 
 ### Detailed Issue Descriptions
 
-#### 1.1 (#3186) — Scaffold `objectified-cli` (**done**)
+#### 1.1 (#3186) — Scaffold `apiome-cli` (**done**)
 
-Landed as `objectified-cli/` at the repo root (oclif v4, `objectified` binary, `hello` smoke command, Vitest + ESLint + Prettier, Turbo `build`). Remaining foundation tickets below build on this package.
+Landed as `apiome-cli/` at the repo root (oclif v4, `apiome` binary, `hello` smoke command, Vitest + ESLint + Prettier, Turbo `build`). Remaining foundation tickets below build on this package.
 
 ---
 
 #### 1.2 (#3187) — Global flags (**done**)
 
-Landed: `BaseCommand` declares the canonical global flags (`--api-key`, `--base-url`, `--config`, `--json`, `--no-color`, `--profile`, `--quiet`/`-q`, `--verbose`), resolves `baseUrl` / `apiKey` with flag → env → `[profile]` → `[default]` → built-in default, documents resolution order on `objectified --help`, normalizes argv so globals may appear before the subcommand, adds stub `projects list`, and ships unit + integration coverage.
+Landed: `BaseCommand` declares the canonical global flags (`--api-key`, `--base-url`, `--config`, `--json`, `--no-color`, `--profile`, `--quiet`/`-q`, `--verbose`), resolves `baseUrl` / `apiKey` with flag → env → `[profile]` → `[default]` → built-in default, documents resolution order on `apiome --help`, normalizes argv so globals may appear before the subcommand, adds stub `projects list`, and ships unit + integration coverage.
 
 `BaseCommand` exposes the canonical flag set so every concrete command inherits them with consistent semantics.
 
 | Flag           | Env                       | Default                                  |
 |----------------|---------------------------|------------------------------------------|
-| `--api-key`    | `OBJECTIFIED_API_KEY`     | (none)                                   |
-| `--base-url`   | `OBJECTIFIED_BASE_URL`    | `https://api.objectified.dev`            |
-| `--config`     | `OBJECTIFIED_CONFIG`      | `~/.config/objectified/config.toml`      |
-| `--json`       | `OBJECTIFIED_JSON=1`      | off (auto-on if not TTY)                 |
+| `--api-key`    | `APIOME_API_KEY`     | (none)                                   |
+| `--base-url`   | `APIOME_BASE_URL`    | `https://api.apiome.app`            |
+| `--config`     | `APIOME_CONFIG`      | `~/.config/apiome/config.toml`      |
+| `--json`       | `APIOME_JSON=1`      | off (auto-on if not TTY)                 |
 | `--no-color`   | `NO_COLOR=1`              | off (auto-on if not TTY)                 |
-| `--profile`    | `OBJECTIFIED_PROFILE`     | `default`                                |
+| `--profile`    | `APIOME_PROFILE`     | `default`                                |
 | `--quiet`/`-q` | —                         | off                                      |
-| `--verbose`    | `OBJECTIFIED_VERBOSE=1`   | off                                      |
+| `--verbose`    | `APIOME_VERBOSE=1`   | off                                      |
 
 ```
 Resolution order (highest precedence wins):
   1. Command-line flag           (--base-url=https://…)
-  2. Environment variable        (OBJECTIFIED_BASE_URL=…)
+  2. Environment variable        (APIOME_BASE_URL=…)
   3. Config file profile section ([profile.prod] base_url=…)
   4. Config file [default]
-  5. Built-in default            (https://api.objectified.dev)
+  5. Built-in default            (https://api.apiome.app)
 ```
 
 **Acceptance Criteria:** typed `this.flags`, resolution-order matrix unit-tested; `--json` always emits JSON; `--no-color`/non-TTY auto-disables ANSI; errors → stderr.
@@ -151,7 +151,7 @@ Part of Epic: CLI Foundation & DevEx (#3174)
 
 #### 1.3 (#3188) — Configuration system (**done**)
 
-Landed: XDG-style config dir on Linux/macOS (`env-paths` on Linux; `~/.config/objectified` when `XDG_CONFIG_HOME` unset on macOS), `%APPDATA%\\Objectified\\config.toml` on Windows; `default_profile` + `[profile.*]` / `[default]` parsing; auto-created `config.toml` at `0600` on Unix; `objectified config path|get|set|list`; profile validation with friendly errors; API keys never read from file (flag/env only); `OBJECTIFIED_TENANT` + `tenant_slug` in context; Vitest coverage for resolution order and paths.
+Landed: XDG-style config dir on Linux/macOS (`env-paths` on Linux; `~/.config/apiome` when `XDG_CONFIG_HOME` unset on macOS), `%APPDATA%\\Apiome\\config.toml` on Windows; `default_profile` + `[profile.*]` / `[default]` parsing; auto-created `config.toml` at `0600` on Unix; `apiome config path|get|set|list`; profile validation with friendly errors; API keys never read from file (flag/env only); `APIOME_TENANT` + `tenant_slug` in context; Vitest coverage for resolution order and paths.
 
 **Parallelism / Dependencies:** Depended on 1.1, 1.2. Blocks Epic 2.
 
@@ -180,7 +180,7 @@ Part of Epic: CLI Foundation & DevEx (#3174)
 
 #### 1.5 (#3190) — Generated REST client from `openapi.yaml` (**done**)
 
-Landed: `yarn codegen` in `objectified-cli/` runs `@hey-api/openapi-ts` (`@hey-api/client-fetch`) on `objectified-rest/openapi.yaml`, fixes relative imports for `moduleResolution: NodeNext`, and writes stable barrels `src/generated/client.ts`, `models.ts`, and `operations.ts`. `src/lib/client.ts` wraps the SDK with mutable API-key/bearer injection, exponential backoff on 5xx, honoring `Retry-After` on 429, a one-shot optional `onUnauthorized` hook after 401, and verbose `x-request-id` capture. ESLint allows imports from `src/generated/` only from `lib/client.ts`. `yarn test` runs `codegen:check` (regenerate + `git diff src/generated`) so stale generated output fails with instructions. `projects list` uses the generated operation and requires `OBJECTIFIED_TENANT` or profile `tenant_slug`; Vitest covers the wiring with a stubbed global `fetch` (real subprocess integration avoids binding an HTTP listener where sandboxes block listen).
+Landed: `yarn codegen` in `apiome-cli/` runs `@hey-api/openapi-ts` (`@hey-api/client-fetch`) on `apiome-rest/openapi.yaml`, fixes relative imports for `moduleResolution: NodeNext`, and writes stable barrels `src/generated/client.ts`, `models.ts`, and `operations.ts`. `src/lib/client.ts` wraps the SDK with mutable API-key/bearer injection, exponential backoff on 5xx, honoring `Retry-After` on 429, a one-shot optional `onUnauthorized` hook after 401, and verbose `x-request-id` capture. ESLint allows imports from `src/generated/` only from `lib/client.ts`. `yarn test` runs `codegen:check` (regenerate + `git diff src/generated`) so stale generated output fails with instructions. `projects list` uses the generated operation and requires `APIOME_TENANT` or profile `tenant_slug`; Vitest covers the wiring with a stubbed global `fetch` (real subprocess integration avoids binding an HTTP listener where sandboxes block listen).
 
 **Parallelism / Dependencies:** Depended on 1.1, 1.2, 1.3. Blocks all functional commands.
 
@@ -190,7 +190,7 @@ Part of Epic: CLI Foundation & DevEx (#3174)
 
 #### 1.6 (#3191) — Error handling, exit codes, retries (**done**)
 
-Landed: `ObjectifiedCliError` + `httpStatusToCliError` (all 4xx/5xx), `formatAndReportCliFailure` / `handleError` template (Reason, Hint, Request-Id, Exit code), top-level `run`+`handle` replacement in `bin/run.js` / `dev.js` (stacks only with `--verbose` or `OBJECTIFIED_DEBUG=1`), `leven` did-you-mean for unknown commands, network errno hints, client retries (idempotent: 429+5xx with 250/500/1s/2s, max 4 attempts; `POST`/`PATCH`: 429 only), `objectified docs errors`, Vitest HTTP mapping + `handleError` snapshots, integration coverage.
+Landed: `ApiomeCliError` + `httpStatusToCliError` (all 4xx/5xx), `formatAndReportCliFailure` / `handleError` template (Reason, Hint, Request-Id, Exit code), top-level `run`+`handle` replacement in `bin/run.js` / `dev.js` (stacks only with `--verbose` or `APIOME_DEBUG=1`), `leven` did-you-mean for unknown commands, network errno hints, client retries (idempotent: 429+5xx with 250/500/1s/2s, max 4 attempts; `POST`/`PATCH`: 429 only), `apiome docs errors`, Vitest HTTP mapping + `handleError` snapshots, integration coverage.
 
 Documented BSD/sysexits-inspired exit codes:
 
@@ -208,7 +208,7 @@ Every error printed to stderr includes hint + request-id when available:
 ```
 ✖ Failed to publish version 'v2.1.0'.
   Reason: Schema 'Order.amount' is not backwards-compatible.
-  Hint:   Run `objectified versions compatibility payments-api --base v2.0.0 --head v2.1.0`
+  Hint:   Run `apiome versions compatibility payments-api --base v2.0.0 --head v2.1.0`
   Request-Id: 7f2c…a041
   Exit code:  6
 ```
@@ -221,9 +221,9 @@ Part of Epic: CLI Foundation & DevEx (#3174)
 
 ---
 
-#### 1.7 (#3192) — Help system, examples, man pages, `objectified docs` (**done**)
+#### 1.7 (#3192) — Help system, examples, man pages, `apiome docs` (**done**)
 
-Landed: custom `CommandHelp` (grouped **COMMON** / **OUTPUT** / **AUTH** / **OTHER**, **EXAMPLES** before flag groups, **SEE ALSO** from `static seeAlso`), ≥2 `examples` per command enforced in tests, `objectified docs` topic index plus prose topics (`errors`, `output`, `profiles`, `completions`, `plugins`, `telemetry`), `oclif readme` + `scripts/generate-man.mjs` writing `man/man1/*.1` and `package.json` `man`, CI workflow guards `git diff` after `yarn workspace objectified-cli test`, help honors **NO_COLOR**, non-TTY stdout, and `--no-color` via `stripAnsi`.
+Landed: custom `CommandHelp` (grouped **COMMON** / **OUTPUT** / **AUTH** / **OTHER**, **EXAMPLES** before flag groups, **SEE ALSO** from `static seeAlso`), ≥2 `examples` per command enforced in tests, `apiome docs` topic index plus prose topics (`errors`, `output`, `profiles`, `completions`, `plugins`, `telemetry`), `oclif readme` + `scripts/generate-man.mjs` writing `man/man1/*.1` and `package.json` `man`, CI workflow guards `git diff` after `yarn workspace apiome-cli test`, help honors **NO_COLOR**, non-TTY stdout, and `--no-color` via `stripAnsi`.
 
 **Parallelism / Dependencies:** Depended on 1.1, 1.2.
 
@@ -233,10 +233,10 @@ Part of Epic: CLI Foundation & DevEx (#3174)
 
 #### 1.8 (#3193) — Shell completions for bash, zsh, fish, PowerShell (**done**)
 
-Landed: `objectified completion install|show|uninstall`, hidden `completion candidates` driver, bash/zsh/fish/PowerShell wrappers that complete manifest-backed commands/flags offline and merge REST-backed suggestions (projects, versions, classes, primitives; tenant slugs from config for `tenants use`) with a five-minute cache under `~/.cache/objectified/completion/`, degrading to no dynamic hits when offline; managed `# >>> objectified completion >>>` blocks for uninstall; `objectified docs completions` + README coverage.
+Landed: `apiome completion install|show|uninstall`, hidden `completion candidates` driver, bash/zsh/fish/PowerShell wrappers that complete manifest-backed commands/flags offline and merge REST-backed suggestions (projects, versions, classes, primitives; tenant slugs from config for `tenants use`) with a five-minute cache under `~/.cache/apiome/completion/`, degrading to no dynamic hits when offline; managed `# >>> apiome completion >>>` blocks for uninstall; `apiome docs completions` + README coverage.
 
 ```
-$ objectified projects show pay<TAB>
+$ apiome projects show pay<TAB>
 payments-api      payouts-api      payroll-api
 ```
 
@@ -261,18 +261,18 @@ Part of Epic: CLI Foundation & DevEx (#3174)
 
 ### Detailed Issue Descriptions
 
-#### 2.1 (#3194) — `objectified auth login` (PKCE browser flow) + `auth logout` — **COMPLETE**
+#### 2.1 (#3194) — `apiome auth login` (PKCE browser flow) + `auth logout` — **COMPLETE**
 
 Standard PKCE-on-loopback pattern (same as `gh auth login` and `heroku login`):
 
 ```
 1. CLI starts a localhost listener on a random free port.
-2. Opens https://app.objectified.dev/cli/login?code_challenge=…&redirect_uri=http://127.0.0.1:<port>
+2. Opens https://app.apiome.app/cli/login?code_challenge=…&redirect_uri=http://127.0.0.1:<port>
 3. User completes login in the browser.
 4. Browser redirects to http://127.0.0.1:<port>/?code=…
 5. CLI exchanges code+verifier at /v1/auth/cli/token → access + refresh tokens.
 6. Tokens stored in OS keychain (2.4).
-7. CLI prints `✔ Logged in as kenji@objectified.dev`.
+7. CLI prints `✔ Logged in as kenji@apiome.app`.
 ```
 
 Headless fallback: `--no-browser` prints URL + manual code entry. `--profile staging` only logs that profile in. `auth logout` revokes server-side and clears keychain.
@@ -287,7 +287,7 @@ Part of Epic: Authentication & Tenant Context (#3175)
 
 #### 2.2 (#3195) — API-key auth — **COMPLETE**
 
-Landed: global `--api-key` / `OBJECTIFIED_API_KEY` (oclif `env`) / `--api-key-file`; API key wins over bearer when both are available; `objectified auth login --api-key` stores keys in the OS keychain per profile (memory backend in tests); `objectified auth status` reports credential kind; verbose logs redact keys as `sk_***`; HTTP 401 after sending credentials maps to exit **4**, missing credentials to exit **3**; integration tests exercise `X-API-Key` against a loopback stub.
+Landed: global `--api-key` / `APIOME_API_KEY` (oclif `env`) / `--api-key-file`; API key wins over bearer when both are available; `apiome auth login --api-key` stores keys in the OS keychain per profile (memory backend in tests); `apiome auth status` reports credential kind; verbose logs redact keys as `sk_***`; HTTP 401 after sending credentials maps to exit **4**, missing credentials to exit **3**; integration tests exercise `X-API-Key` against a loopback stub.
 
 **Acceptance Criteria:** key never echoed in logs (redacted as `sk_***`); never persisted unless explicit `auth login --api-key`; `auth status` indicates auth type.
 
@@ -297,9 +297,9 @@ Part of Epic: Authentication & Tenant Context (#3175)
 
 ---
 
-#### 2.3 (#3196) — `objectified auth status` / `whoami` — **COMPLETE**
+#### 2.3 (#3196) — `apiome auth status` / `whoami` — **COMPLETE**
 
-Landed: one `GET /v1/auth/cli/whoami` per invocation; `objectified whoami` alias; human columns for profile, base URL, tenant, user, auth type, relative expiry (+ refresh hint for stored OAuth), and plan; `--json` with stable sorted keys (`profile`, `base_url`, `tenant`, `user`, `auth`, `plan`); OAuth access-token rejected with stored refresh → silent `POST /v1/auth/cli/token` (`grant_type: refresh_token`) then retry whoami; exit **3** when unauthenticated or refresh/session is dead.
+Landed: one `GET /v1/auth/cli/whoami` per invocation; `apiome whoami` alias; human columns for profile, base URL, tenant, user, auth type, relative expiry (+ refresh hint for stored OAuth), and plan; `--json` with stable sorted keys (`profile`, `base_url`, `tenant`, `user`, `auth`, `plan`); OAuth access-token rejected with stored refresh → silent `POST /v1/auth/cli/token` (`grant_type: refresh_token`) then retry whoami; exit **3** when unauthenticated or refresh/session is dead.
 
 **Acceptance Criteria:** works for OAuth + API key + env bearer; exit 0 / 3; ISO UTC in JSON for `expires_at`; snapshot tests for human + JSON.
 
@@ -318,7 +318,7 @@ Landed: `keytar` primary (Keychain / libsecret / Windows Credential Vault); AES-
 │  Credential Resolution                                 │
 ├────────────────────────────────────────────────────────┤
 │  1. --api-key flag             (highest)               │
-│  2. OBJECTIFIED_API_KEY env                            │
+│  2. APIOME_API_KEY env                            │
 │  3. OS keychain (per profile)                          │
 │  4. encrypted file fallback                            │
 │  5. (none → exit 3, hint to login)                     │
@@ -335,10 +335,10 @@ Part of Epic: Authentication & Tenant Context (#3175)
 
 #### 2.5 (#3198) — `tenants list` / `tenants info` — **COMPLETE**
 
-Landed: REST `GET /v1/tenants/me` (JWT memberships with admin/member role, API key → single tenant) and `GET /v1/tenants/{slug}` (usage counts; 403 without access); `objectified tenants list` aggregates pages by default, `--limit` / `--offset` for explicit pagination; `objectified tenants info <slug>`; `--json` on both; active default tenant marker from resolved profile; snapshot tests for human + JSON renderers; Vitest integration against loopback stubs.
+Landed: REST `GET /v1/tenants/me` (JWT memberships with admin/member role, API key → single tenant) and `GET /v1/tenants/{slug}` (usage counts; 403 without access); `apiome tenants list` aggregates pages by default, `--limit` / `--offset` for explicit pagination; `apiome tenants info <slug>`; `--json` on both; active default tenant marker from resolved profile; snapshot tests for human + JSON renderers; Vitest integration against loopback stubs.
 
 ```
-$ objectified tenants list
+$ apiome tenants list
   SLUG          NAME                  ROLE      ACTIVE
   acme-corp     Acme Corporation      owner     ★
   acme-staging  Acme (staging)        admin
@@ -355,16 +355,16 @@ Part of Epic: Authentication & Tenant Context (#3175)
 
 #### 2.6 (#3199) — `tenants use <slug>` — **COMPLETE**
 
-Landed: REST `HEAD /v1/tenants/{slug}` (same access rules as GET tenant info); `objectified tenants use <slug>` writes `profile.<name>.tenant_slug`; `tenants use --clear` removes it; global `--tenant` / `OBJECTIFIED_TENANT` > config `tenant_slug` > exit **11** with `tenants use` hint; typo suggestions (Levenshtein) after **404** via `GET /v1/tenants/me`; **403** → exit **4** with request-access hint; integration tests on loopback stubs.
+Landed: REST `HEAD /v1/tenants/{slug}` (same access rules as GET tenant info); `apiome tenants use <slug>` writes `profile.<name>.tenant_slug`; `tenants use --clear` removes it; global `--tenant` / `APIOME_TENANT` > config `tenant_slug` > exit **11** with `tenants use` hint; typo suggestions (Levenshtein) after **404** via `GET /v1/tenants/me`; **403** → exit **4** with request-access hint; integration tests on loopback stubs.
 
-Sets `[profile.<name>] tenant_slug = …` in config. Subsequent commands resolve tenant slug as: `--tenant <slug>` > `OBJECTIFIED_TENANT` > config > error (exit 11, hint to run `tenants use`).
+Sets `[profile.<name>] tenant_slug = …` in config. Subsequent commands resolve tenant slug as: `--tenant <slug>` > `APIOME_TENANT` > config > error (exit 11, hint to run `tenants use`).
 
 ```
        command line
             │
             │   --tenant=… ?  ───── yes ────┐
             │                                 │
-            │   OBJECTIFIED_TENANT?  ── yes ─┤
+            │   APIOME_TENANT?  ── yes ─┤
             │                                 │
             │   profile.tenant_slug? ── yes ─┤
             │                                 │
@@ -430,19 +430,19 @@ See each ticket on GitHub for the full description, acceptance criteria, ASCII d
 
 #### 4.1 (#3208) — `versions list` (**done**)
 
-Shipped `objectified versions list <project>`: table columns for version label, state (draft / published / archived, with frozen marker), tags joined from `version_tags`, publish date, author; `--state`, `--limit` / `--all`, `--sort`, `--reverse`, `--json`; defaults to latest **10** rows in descending semver order (#3208).
+Shipped `apiome versions list <project>`: table columns for version label, state (draft / published / archived, with frozen marker), tags joined from `version_tags`, publish date, author; `--state`, `--limit` / `--all`, `--sort`, `--reverse`, `--json`; defaults to latest **10** rows in descending semver order (#3208).
 
 #### 4.2 (#3209) — `versions show` (**done**)
 
-Shipped `objectified versions show <project> <version>`: resolves a revision via semver (`v` optional), revision UUID, or tag name; human detail view with state, publish metadata, fork/parent line, optional class/path deltas vs the semver predecessor, `POST …/compatibility` summary when a predecessor exists, absolute published-artifact URLs from `--base-url`, and `--json` emitting the version plus `compatibility_summary`, `spec_urls`, and optional `tag_resolution` (#3209).
+Shipped `apiome versions show <project> <version>`: resolves a revision via semver (`v` optional), revision UUID, or tag name; human detail view with state, publish metadata, fork/parent line, optional class/path deltas vs the semver predecessor, `POST …/compatibility` summary when a predecessor exists, absolute published-artifact URLs from `--base-url`, and `--json` emitting the version plus `compatibility_summary`, `spec_urls`, and optional `tag_resolution` (#3209).
 
 #### 4.3 (#3210) — `versions create` (**done**)
 
-Shipped `objectified versions create <project>` for CI: `--version` (semver validated client-side), mutually exclusive `--notes` / `--notes-file` (UTF-8 markdown), optional `--base` (semver / revision UUID / tag → schema source via `source_version_id`; default source is latest **published** revision when present), `--branch` for multi-branch projects, `--from-file` JSON merged under CLI overrides, draft-only (`--no-draft` refused), `--json` returning the created `VersionSchema`, exit **6** on version-line collision (local check + server 409 hint), exit **7** on invalid semver (#3210).
+Shipped `apiome versions create <project>` for CI: `--version` (semver validated client-side), mutually exclusive `--notes` / `--notes-file` (UTF-8 markdown), optional `--base` (semver / revision UUID / tag → schema source via `source_version_id`; default source is latest **published** revision when present), `--branch` for multi-branch projects, `--from-file` JSON merged under CLI overrides, draft-only (`--no-draft` refused), `--json` returning the created `VersionSchema`, exit **6** on version-line collision (local check + server 409 hint), exit **7** on invalid semver (#3210).
 
 #### 4.5 (#3212) — `versions publish` (**done**)
 
-Shipped `objectified versions publish <project> <version>`: resolves a **draft** like `versions show`; client pre-publish uses `POST …/change-report/publish-preview`, class descriptions via `GET …/classes?version_id=…`, and `POST …/compatibility` when a baseline exists; `POST …/publish` sends `allowBreaking` / `skipPublishChecks` matching `--allow-breaking` / `--skip-checks`; `--skip-checks` requires `--yes` and prints a stderr banner; `--update-tag <name>` moves or creates a version tag; `--message` maps to `shortMessage`; exit **6** (`CONFLICT`) when compatibility is breaking without `--allow-breaking`; `--json` returns `version`, `spec_urls`, optional `change_report_url`, `compatibility`, `publish_preview`. REST enforces the same gates unless `skipPublishChecks` (#3212).
+Shipped `apiome versions publish <project> <version>`: resolves a **draft** like `versions show`; client pre-publish uses `POST …/change-report/publish-preview`, class descriptions via `GET …/classes?version_id=…`, and `POST …/compatibility` when a baseline exists; `POST …/publish` sends `allowBreaking` / `skipPublishChecks` matching `--allow-breaking` / `--skip-checks`; `--skip-checks` requires `--yes` and prints a stderr banner; `--update-tag <name>` moves or creates a version tag; `--message` maps to `shortMessage`; exit **6** (`CONFLICT`) when compatibility is breaking without `--allow-breaking`; `--json` returns `version`, `spec_urls`, optional `change_report_url`, `compatibility`, `publish_preview`. REST enforces the same gates unless `skipPublishChecks` (#3212).
 
 ### Notable Detail — 4.8 (#3215) `versions compatibility`
 
@@ -493,7 +493,7 @@ Exit 0 if clean, 6 if unsuppressed breaking change found, 8 on server error fetc
               └────────┘
 ```
 
-Round-trip symmetry: `primitives list --json | objectified primitives import --update --yes` works.
+Round-trip symmetry: `primitives list --json | apiome primitives import --update --yes` works.
 
 ---
 
@@ -546,7 +546,7 @@ Round-trip symmetry: `primitives list --json | objectified primitives import --u
 ### Topic Tree
 
 ```
-objectified paths
+apiome paths
         ├── list
         ├── show <path-id>
         ├── full <path-id>            # composite hydrated view
@@ -564,12 +564,12 @@ objectified paths
 ### Topic Tree
 
 ```
-objectified browse
+apiome browse
         ├── tenants                      # public directory (no auth)
         ├── projects <tenant>            # public projects (optional auth expands to members)
         └── versions <tenant>/<project> # published versions (optional auth expands visibility)
 
-objectified schema
+apiome schema
         ├── fetch <tenant>/<project>/<version>   # published OpenAPI bundle or single class (GET /v1/schema/…)
         └── swagger <tenant>/<project>/<version>  # Swagger UI in browser (default on TTY) or bundle via GET /v1/schema/…
 ```
@@ -643,27 +643,27 @@ Constant-memory streaming; `--report <path>` writes a per-row JSON result file; 
 
 | #         | Title                                                      | Description                                                    | Labels                                                                 | MVP | Parallel |
 |-----------|------------------------------------------------------------|----------------------------------------------------------------|------------------------------------------------------------------------|-----|----------|
-| 12.1 (#3267) | `objectified-cli.yml` GitHub workflow (CI)              | Lint, type-check, tests on every PR (matrix: mac/linux/win × Node 20/22) | `enhancement`, `mvp`, `cli`, `roadmap-cli`, `distribution`, `infrastructure` | Yes | Yes |
-| 12.2 (#3268) | `objectified-cli-publish.yml` (NPM artifactory)         | Publish to configurable NPM registry on `cli-v*` tags          | `enhancement`, `mvp`, `cli`, `roadmap-cli`, `distribution`, `npm-publish`, `infrastructure` | Yes | Yes |
+| 12.1 (#3267) | `apiome-cli.yml` GitHub workflow (CI)              | Lint, type-check, tests on every PR (matrix: mac/linux/win × Node 20/22) | `enhancement`, `mvp`, `cli`, `roadmap-cli`, `distribution`, `infrastructure` | Yes | Yes |
+| 12.2 (#3268) | `apiome-cli-publish.yml` (NPM artifactory)         | Publish to configurable NPM registry on `cli-v*` tags          | `enhancement`, `mvp`, `cli`, `roadmap-cli`, `distribution`, `npm-publish`, `infrastructure` | Yes | Yes |
 | 12.3 (#3269) | Semver release tooling (changesets)                     | Per-PR changesets → bot release PR → `cli-v*` tag               | `enhancement`, `cli`, `roadmap-cli`, `distribution`                    | No  | Yes      |
 | 12.4 (#3270) | Cross-platform single-file binaries                     | Node SEA for mac/linux/win, signed + notarized                 | `enhancement`, `cli`, `roadmap-cli`, `distribution`                    | No  | Yes      |
-| 12.5 (#3271) | `objectified update` (self-update)                      | Detects install mode (npm/binary/brew/CI), upgrades            | `enhancement`, `cli`, `roadmap-cli`, `distribution`                    | No  | Yes      |
+| 12.5 (#3271) | `apiome update` (self-update)                      | Detects install mode (npm/binary/brew/CI), upgrades            | `enhancement`, `cli`, `roadmap-cli`, `distribution`                    | No  | Yes      |
 | 12.6 (#3272) | Opt-in anonymous telemetry                              | `telemetry on/off/status`; default off; transparent            | `enhancement`, `cli`, `roadmap-cli`, `distribution`                    | No  | Yes      |
-| 12.7 (#3273) | Plugin architecture                                     | `objectified-plugin-*` packages via `@oclif/plugin-plugins`    | `enhancement`, `cli`, `roadmap-cli`, `distribution`                    | No  | Yes      |
+| 12.7 (#3273) | Plugin architecture                                     | `apiome-plugin-*` packages via `@oclif/plugin-plugins`    | `enhancement`, `cli`, `roadmap-cli`, `distribution`                    | No  | Yes      |
 | 12.8 (#3274) | Homebrew tap + Scoop manifest                           | Auto-update from release workflow                              | `enhancement`, `cli`, `roadmap-cli`, `distribution`                    | No  | Yes      |
 
-### Detailed Issue Description — 12.2 (#3268) `objectified-cli-publish.yml`
+### Detailed Issue Description — 12.2 (#3268) `apiome-cli-publish.yml`
 
 The workflow that satisfies the user requirement: _"a publish step in the GitHub build rule that allows for publishing to an NPM artifactory server."_
 
 ```yaml
-name: Objectified CLI Publish
+name: Apiome CLI Publish
 
 on:
   push:
     branches: [ main ]
     paths:
-      - 'objectified-cli/package.json'
+      - 'apiome-cli/package.json'
     tags:
       - 'cli-v*'
   workflow_dispatch:
@@ -695,10 +695,10 @@ jobs:
           registry-url: ${{ env.NPM_REGISTRY }}
           cache: npm
 
-      - run: npm ci --workspace=objectified-cli
-      - run: npm run codegen --workspace=objectified-cli
-      - run: npm run build   --workspace=objectified-cli
-      - run: npm test         --workspace=objectified-cli
+      - run: npm ci --workspace=apiome-cli
+      - run: npm run codegen --workspace=apiome-cli
+      - run: npm run build   --workspace=apiome-cli
+      - run: npm test         --workspace=apiome-cli
 
       - name: Determine dist tag
         id: disttag
@@ -710,7 +710,7 @@ jobs:
           fi
 
       - name: Publish
-        working-directory: objectified-cli
+        working-directory: apiome-cli
         run: npm publish --provenance --access public --tag ${{ steps.disttag.outputs.tag }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -749,11 +749,11 @@ End-to-end **specification file import** for authenticated tenants: upload local
 ### Topic tree
 
 ```
-objectified import
+apiome import
         └── spec <path>       # primary entry (stdin '-' if supported by REST contract)
 ```
 
-(Command naming may ship as `objectified import spec` or a flattened variant; oclif topic structure must stay consistent with the Global Design Principles section above.)
+(Command naming may ship as `apiome import spec` or a flattened variant; oclif topic structure must stay consistent with the Global Design Principles section above.)
 
 ### Summary Table
 
@@ -793,7 +793,7 @@ These flags must be **documented as mutually exclusive** where combinations are 
 
 #### 13.1 (#3329) — OpenAPI/codegen alignment (**done**)
 
-Landed: tenant-scoped **`/v1/tenants/{tenant_slug}/imports`** REST contract in FastAPI (`spec_import_routes.py`) drives `scripts/generate_openapi.py` output; documents JSON+base64 (`POST …/imports`) vs multipart (`POST …/imports/upload`), job poll (`GET …/{job_id}`), cancel (`DELETE …/{job_id}`), commit/rollback, and shared Pydantic models in `models.py`. Handlers return **501** until the importer is wired; `python-multipart` added for documented multipart. Regenerated `objectified-cli` SDK via `yarn codegen`; ESLint boundary unchanged (`generated/` imports only from `lib/client.ts`). Dashboard import still runs via Next.js server actions (`objectified-ui/lib/db/import-helper.ts`), not these URLs.
+Landed: tenant-scoped **`/v1/tenants/{tenant_slug}/imports`** REST contract in FastAPI (`spec_import_routes.py`) drives `scripts/generate_openapi.py` output; documents JSON+base64 (`POST …/imports`) vs multipart (`POST …/imports/upload`), job poll (`GET …/{job_id}`), cancel (`DELETE …/{job_id}`), commit/rollback, and shared Pydantic models in `models.py`. Handlers return **501** until the importer is wired; `python-multipart` added for documented multipart. Regenerated `apiome-cli` SDK via `yarn codegen`; ESLint boundary unchanged (`generated/` imports only from `lib/client.ts`). Dashboard import still runs via Next.js server actions (`apiome-ui/lib/db/import-helper.ts`), not these URLs.
 
 **Parallelism / Dependencies:** Depended on Epic 1 (#3174) client scaffold. Unblocked #3330.
 
@@ -801,9 +801,9 @@ Part of Epic: Specification Import via REST (#3328)
 
 ---
 
-#### 13.2 (#3330) — `objectified import spec` (**done**)
+#### 13.2 (#3330) — `apiome import spec` (**done**)
 
-Shipped: `objectified import spec <path>` uses `POST /v1/tenants/{tenant_slug}/imports` (JSON + standard base64), exponential backoff polling on `GET …/{job_id}`, optional `--no-wait` (job id only), `--dry-run` forwarded in metadata options, `--rollback` for `POST …/rollback` after preview (implies no commit), default `POST …/commit` after `pending-approval` unless `--no-commit`. Filename/content sniff and `--format` override; stdin `-` with optional `--filename`. Vitest covers stubbed fetch (start → poll → commit) and format sniffing.
+Shipped: `apiome import spec <path>` uses `POST /v1/tenants/{tenant_slug}/imports` (JSON + standard base64), exponential backoff polling on `GET …/{job_id}`, optional `--no-wait` (job id only), `--dry-run` forwarded in metadata options, `--rollback` for `POST …/rollback` after preview (implies no commit), default `POST …/commit` after `pending-approval` unless `--no-commit`. Filename/content sniff and `--format` override; stdin `-` with optional `--filename`. Vitest covers stubbed fetch (start → poll → commit) and format sniffing.
 
 **Parallelism / Dependencies:** Depended on #3329 (typed operations). Integrates with Epic 2 tenant resolution.
 
@@ -813,7 +813,7 @@ Part of Epic: Specification Import via REST (#3328)
 
 #### 13.3 (#3331) — Project resolution flags (**done**)
 
-Shipped in `objectified-cli`: mutually exclusive `--map-project`, `--create-project`, and `--create-or-map-project` on `objectified import spec`, tenant-scoped slug lookup, optional `POST /v1/projects/{tenant}` create path, metadata collision handling for `--create-or-map-project`, misuse exit **2** on invalid flag mixes, and Vitest coverage for resolution helpers.
+Shipped in `apiome-cli`: mutually exclusive `--map-project`, `--create-project`, and `--create-or-map-project` on `apiome import spec`, tenant-scoped slug lookup, optional `POST /v1/projects/{tenant}` create path, metadata collision handling for `--create-or-map-project`, misuse exit **2** on invalid flag mixes, and Vitest coverage for resolution helpers.
 
 **Parallelism / Dependencies:** Depended on Epic 3 `projects create` patterns (#3176). Coordinated with #3330.
 
@@ -823,7 +823,7 @@ Part of Epic: Specification Import via REST (#3328)
 
 #### 13.4 (#3332) — Tests, man pages, format parity (**done**)
 
-Shipped: Vitest asserts ≥2 examples on every command (explicit guard for `import:spec`), integration test on `import spec --help` (EXAMPLES + parity doc pointer + epic #3328), repo checklist [`docs/CLI_SPEC_IMPORT_FORMAT_PARITY.md`](./CLI_SPEC_IMPORT_FORMAT_PARITY.md) vs Import dialog / `openapi-analyzer`, repository scanner, and CLI `--format`; README + command description cross-link Epic [#3328](https://github.com/KenSuenobu/objectified-commercial/issues/3328); man/readme regenerated via `yarn workspace objectified-cli build`.
+Shipped: Vitest asserts ≥2 examples on every command (explicit guard for `import:spec`), integration test on `import spec --help` (EXAMPLES + parity doc pointer + epic #3328), repo checklist [`docs/CLI_SPEC_IMPORT_FORMAT_PARITY.md`](./CLI_SPEC_IMPORT_FORMAT_PARITY.md) vs Import dialog / `openapi-analyzer`, repository scanner, and CLI `--format`; README + command description cross-link Epic [#3328](https://github.com/KenSuenobu/objectified-commercial/issues/3328); man/readme regenerated via `yarn workspace apiome-cli build`.
 
 **Parallelism / Dependencies:** Depended on #3330–#3331 (both landed).
 
@@ -843,17 +843,17 @@ The MVP delivers an installable, useful CLI focused on _read_ and _publish_ for 
 | 12 (#3185) | #3267, #3268                                                                                               | 2     |
 
 **MVP Demo Story:**
-1. `npm i -g objectified-cli`
-2. `objectified auth login`
-3. `objectified tenants use acme-corp`
-4. `objectified projects list`
-5. `objectified versions list payments-api`
-6. `objectified versions create payments-api --version 2.2.0-rc.1 --notes 'New refund flow'`
-7. `objectified versions publish payments-api 2.2.0-rc.1`
-8. `objectified schema fetch acme-corp/payments-api/2.2.0-rc.1 --format yaml > payments.openapi.yaml`
-9. `objectified schema swagger acme-corp/payments-api/2.2.0-rc.1` opens Swagger UI (TTY default), or `--output ./swagger.json` / pipe-friendly JSON when stdout is not a TTY
-10. (CI) `objectified --json projects list | jq` works in any pipeline
-11. (Public) `objectified browse tenants` and `objectified browse projects <tenant>` work without authentication (credentials optional for private projects)
+1. `npm i -g apiome-cli`
+2. `apiome auth login`
+3. `apiome tenants use acme-corp`
+4. `apiome projects list`
+5. `apiome versions list payments-api`
+6. `apiome versions create payments-api --version 2.2.0-rc.1 --notes 'New refund flow'`
+7. `apiome versions publish payments-api 2.2.0-rc.1`
+8. `apiome schema fetch acme-corp/payments-api/2.2.0-rc.1 --format yaml > payments.openapi.yaml`
+9. `apiome schema swagger acme-corp/payments-api/2.2.0-rc.1` opens Swagger UI (TTY default), or `--output ./swagger.json` / pipe-friendly JSON when stdout is not a TTY
+10. (CI) `apiome --json projects list | jq` works in any pipeline
+11. (Public) `apiome browse tenants` and `apiome browse projects <tenant>` work without authentication (credentials optional for private projects)
 
 ---
 
@@ -879,13 +879,13 @@ v2 fills out the writable surface for primitives, properties, classes, paths, da
 
 **v2 capability deltas vs MVP:**
 - Full read/write CRUD for primitives, properties, classes, paths, operations, parameters, request bodies, and responses — i.e. you can model an entire API surface from the CLI.
-- **Specification file import** (`objectified import spec`): REST-backed uploads for product-supported formats; `--create-project`, `--map-project`, and `--create-or-map-project` for project binding from spec metadata.
+- **Specification file import** (`apiome import spec`): REST-backed uploads for product-supported formats; `--create-project`, `--map-project`, and `--create-or-map-project` for project binding from spec metadata.
 - Data plane (records list/get/create/update/delete/restore + bulk import).
 - Migration plans + version tags as first-class topics.
 - Cross-platform single-file binaries (mac/linux/win, signed/notarized) so install no longer requires Node.
-- `objectified update` self-update.
+- `apiome update` self-update.
 - Opt-in telemetry to drive future prioritization.
-- Plugin architecture (`objectified-plugin-*`) for third-party extensions.
+- Plugin architecture (`apiome-plugin-*`) for third-party extensions.
 - Homebrew tap + Scoop manifest auto-published from the release pipeline.
 - Multi-profile management commands and shell completions (bash/zsh/fish/PowerShell).
 
@@ -895,7 +895,7 @@ v2 fills out the writable surface for primitives, properties, classes, paths, da
 
 | Label              | Meaning                                                                  | Color    |
 |--------------------|--------------------------------------------------------------------------|----------|
-| `cli`              | Command-line interface (objectified-cli)                                 | `1F6FEB` |
+| `cli`              | Command-line interface (apiome-cli)                                 | `1F6FEB` |
 | `roadmap-cli`      | PLANNED_ROADMAP_CLI.md ticket pack                                       | `BFDADC` |
 | `npm-publish`      | NPM artifactory publishing workflow                                      | `CB3837` |
 | `distribution`     | Release engineering and distribution                                     | `0E8A16` |
@@ -910,7 +910,7 @@ v2 fills out the writable surface for primitives, properties, classes, paths, da
 | `export`           | Export functionality *(reused)*                                          | `178C11` |
 | `import`           | Import sources *(reused)*                                                | `547B56` |
 | `database`         | Feature area: database *(reused)*                                        | `FA666B` |
-| `validation`       | Objectified Validation *(reused)*                                        | `D63384` |
+| `validation`       | Apiome Validation *(reused)*                                        | `D63384` |
 | `security`         | Feature area: security *(reused)*                                        | `306360` |
 | `api-keys`         | Feature area: api-keys *(reused)*                                        | `700679` |
 | `documentation`    | Improvements or additions to documentation *(reused)*                    | `0075CA` |
@@ -932,7 +932,7 @@ The tickets were created in the order below — that is also the recommended **e
 4. **Epic 4 — Versions** (#3177 then #3211 → #3216; #3208 `versions list`, #3209 `versions show`, and #3210 `versions create` shipped). The publish flow that makes the CLI valuable in CI.
 5. **Epic 13 — Specification Import** (#3328 then #3329 → #3332). REST-backed file import; depends on stable projects + versions semantics for draft targets. Issue numbers are newer than the original roadmap pack.
 6. **Epic 9 — Browse & Schema Export** (#3182 then #3249 → #3252; #3244 `browse tenants`, #3245 `browse projects`, #3246 `browse versions`, #3247 `schema fetch`, and #3248 `schema swagger` shipped). The most-used consumer surface; lands early because it works without auth.
-7. **Epic 12 — Distribution (CI + NPM publish only)** (#3185 then #3267, #3268). Ship MVP — `npm i -g objectified-cli` works.
+7. **Epic 12 — Distribution (CI + NPM publish only)** (#3185 then #3267, #3268). Ship MVP — `npm i -g apiome-cli` works.
 8. **Epic 5 — Primitives** (#3178 then #3217 → #3222). v2 schema-modeling surface starts here.
 9. **Epic 6 — Properties** (#3179 then #3223 → #3228). Builds on primitives.
 10. **Epic 7 — Classes** (#3180 then #3229 → #3236). Builds on properties.

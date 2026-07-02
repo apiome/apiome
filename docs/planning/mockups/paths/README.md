@@ -1,6 +1,6 @@
 # API Paths Designer mockups
 
-Visual designs for the Objectified **API Paths Designer** — the OpenAPI 3.1
+Visual designs for the Apiome **API Paths Designer** — the OpenAPI 3.1
 surface shipped at `/ade/studio/paths` plus the natural extensions surfaced in
 `docs/FUTURE_FEATURE_ROADMAP_PATHS_SECOND.md`,
 `docs/FUTURE_FEATURE_ROADMAP_CODE_GENERATION.md` and
@@ -8,7 +8,7 @@ surface shipped at `/ade/studio/paths` plus the natural extensions surfaced in
 
 Open `index.html` for the hub.
 
-> **Naming note.** "Paths" in Objectified means **OpenAPI URL paths**
+> **Naming note.** "Paths" in Apiome means **OpenAPI URL paths**
 > (e.g. `/customers/{id}`), not JSONPath and not the per-field provenance
 > tracing you'll find at `/mockups/mdm/lineage.html`. The mockups consistently
 > use "API path" in copy where that distinction matters.

@@ -14,7 +14,7 @@ no auth, no Docker runtime, no real gRPC streams, no build step.
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/connect/index.html
+open apiome-ui/public/mockups/connect/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:
@@ -44,7 +44,7 @@ http://localhost:3000/mockups/connect/index.html
 
 ## Design system
 
-Mockups intentionally mirror the live `objectified-ui` shell and align with the
+Mockups intentionally mirror the live `apiome-ui` shell and align with the
 sibling `mockups/academy`, `mockups/analytics`, `mockups/architect`,
 `mockups/automation`, `mockups/code-gen`, and `mockups/collaboration` sets:
 
@@ -74,8 +74,8 @@ that the production build is expected to honor:
 - **Capability icons**: `book-open` = read-only, `pencil` = write-only,
   `repeat-2` = bi-directional, `radio-tower` = subscribe / streaming.
   These appear on every connector tile and on each sync job row.
-- **Sync direction**: `arrow-down-to-line` = inbound (external → Objectified),
-  `arrow-up-from-line` = outbound (Objectified → external), `repeat-2` =
+- **Sync direction**: `arrow-down-to-line` = inbound (external → Apiome),
+  `arrow-up-from-line` = outbound (Apiome → external), `repeat-2` =
   bi-directional. Always paired with a connector logo on each side.
 - **Mapping lines (mapping editor)**: solid indigo line = direct copy,
   dashed indigo line with `[T]` icon = transformation applied, rose dot on

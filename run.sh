@@ -2,7 +2,7 @@
 #
 # Start script for the suite
 
-cd objectified-db ; objectified-db migrate
+cd apiome-db ; apiome-db migrate
 cd ..
 yarn install
 yarn dev

@@ -13,7 +13,7 @@ Path-to-Code Generation / Server Stubs & CRUD (Epic 3), and Mock Data Generation
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/code-gen/index.html
+open apiome-ui/public/mockups/code-gen/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:
@@ -37,7 +37,7 @@ http://localhost:3000/mockups/code-gen/index.html
 
 ## Design system
 
-Mockups intentionally mirror the live `objectified-ui` shell and align with the
+Mockups intentionally mirror the live `apiome-ui` shell and align with the
 sibling `mockups/academy`, `mockups/analytics`, `mockups/architect`, and
 `mockups/automation` sets:
 

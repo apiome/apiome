@@ -1,4 +1,4 @@
-# Objectified: Automation & Workflows - Feature Roadmap
+# Apiome: Automation & Workflows - Feature Roadmap
 
 > Event-driven automation engine that fires webhooks on schema lifecycle events, executes scheduled maintenance jobs, triggers CI/CD pipelines on publish, and orchestrates configurable approval workflows—eliminating manual steps from the API development lifecycle.
 >
@@ -101,11 +101,11 @@ A `webhook_delivery` table records every dispatch attempt: the event payload, HT
 
 #### 1.2 (#1351) — Event Bus & Dispatch Engine
 
-The event bus is the central nervous system of the automation product. Every schema lifecycle action in Objectified emits a structured event into the bus, which then fans it out to all matching webhook subscriptions. The bus operates as an in-process event emitter backed by a Redis stream for durability and cross-instance coordination. When any API endpoint mutates a schema, version, class, path, user, or API key, it publishes an event to the Redis stream with the event type, tenant ID, actor ID, and a JSON payload containing the before/after state.
+The event bus is the central nervous system of the automation product. Every schema lifecycle action in Apiome emits a structured event into the bus, which then fans it out to all matching webhook subscriptions. The bus operates as an in-process event emitter backed by a Redis stream for durability and cross-instance coordination. When any API endpoint mutates a schema, version, class, path, user, or API key, it publishes an event to the Redis stream with the event type, tenant ID, actor ID, and a JSON payload containing the before/after state.
 
 A dispatcher worker process reads from the Redis stream using a consumer group, ensuring exactly-once processing even across multiple application instances. For each event, the dispatcher queries the `webhook_subscription` table to find all endpoints subscribed to that event type within the tenant. It then enqueues one BullMQ job per endpoint with the delivery payload. This two-stage approach—event capture to Redis stream, then fan-out via BullMQ—decouples event emission from delivery, ensuring that slow or failing webhooks cannot back-pressure the main API.
 
-The delivery payload includes a unique event ID, the event type, a timestamp, and the full event data. The payload is signed with the endpoint's HMAC-SHA256 secret (handled by issue 1.3) and dispatched via HTTP POST with a configurable timeout (default 30 seconds). The `X-Objectified-Event` header carries the event type, and `X-Objectified-Signature` carries the computed signature.
+The delivery payload includes a unique event ID, the event type, a timestamp, and the full event data. The payload is signed with the endpoint's HMAC-SHA256 secret (handled by issue 1.3) and dispatched via HTTP POST with a configurable timeout (default 30 seconds). The `X-Apiome-Event` header carries the event type, and `X-Apiome-Signature` carries the computed signature.
 
 ```
 ┌─────────────┐    ┌──────────────┐    ┌──────────────┐    ┌────────────┐
@@ -139,13 +139,13 @@ The delivery payload includes a unique event ID, the event type, a timestamp, an
 
 Every webhook delivery must be verifiable by the consumer to prevent spoofing. This issue implements HMAC-SHA256 signing of webhook payloads and provides a verification utility that consumers can use server-side. When a webhook endpoint is created, the system generates a cryptographically random 32-byte signing secret. The secret is displayed once to the user and stored encrypted in the database.
 
-At delivery time, the signing module computes `HMAC-SHA256(secret, timestamp + "." + body)` where `timestamp` is the Unix epoch in seconds and `body` is the raw JSON payload. The signature is sent in the `X-Objectified-Signature` header as `t=<timestamp>,v1=<hex-digest>`. Including the timestamp prevents replay attacks; consumers should reject signatures older than a configurable tolerance (recommended: 5 minutes).
+At delivery time, the signing module computes `HMAC-SHA256(secret, timestamp + "." + body)` where `timestamp` is the Unix epoch in seconds and `body` is the raw JSON payload. The signature is sent in the `X-Apiome-Signature` header as `t=<timestamp>,v1=<hex-digest>`. Including the timestamp prevents replay attacks; consumers should reject signatures older than a configurable tolerance (recommended: 5 minutes).
 
 The verification SDK is published as a utility function documented in the API docs. The admin UI at `/automation/webhooks/[endpointId]/security` displays the signing secret (revealable), provides a "Rotate Secret" button that generates a new secret with a configurable grace period during which both old and new secrets are accepted, and shows sample verification code in JavaScript, Python, Go, and Ruby.
 
 **Acceptance Criteria**
 
-- Signing computes `HMAC-SHA256(secret, timestamp + "." + rawBody)` and sends it as `X-Objectified-Signature: t=<ts>,v1=<hex>`
+- Signing computes `HMAC-SHA256(secret, timestamp + "." + rawBody)` and sends it as `X-Apiome-Signature: t=<ts>,v1=<hex>`
 - Signing secrets are 32 bytes, cryptographically random, displayed once on creation
 - Secret rotation supports a grace period (default 24 hours) where both old and new secrets validate
 - `POST /api/v1/automation/webhooks/{id}/rotate-secret` generates a new secret and returns it
@@ -219,7 +219,7 @@ Bulk operations enable manually retrying all dead-lettered deliveries or purging
 
 #### 2.1 (#1390) — Job Scheduler & BullMQ Integration
 
-The scheduled jobs subsystem provides a centralized way to define, manage, and monitor periodic tasks within the Objectified platform. The core abstraction is a `scheduled_job` entity that stores the job name, a cron expression, the handler to invoke, a JSON configuration payload, enabled/disabled status, and the last/next run timestamps. The scheduler evaluates cron expressions using `cron-parser` and enqueues jobs into BullMQ repeatable queues.
+The scheduled jobs subsystem provides a centralized way to define, manage, and monitor periodic tasks within the Apiome platform. The core abstraction is a `scheduled_job` entity that stores the job name, a cron expression, the handler to invoke, a JSON configuration payload, enabled/disabled status, and the last/next run timestamps. The scheduler evaluates cron expressions using `cron-parser` and enqueues jobs into BullMQ repeatable queues.
 
 BullMQ workers process jobs from named queues, one queue per job type. Each worker is stateless and idempotent: if a job fails mid-execution, re-running it with the same input produces the same result. Job execution results (success, failure, duration, output summary) are recorded in a `job_execution` table for audit and debugging. Failed jobs follow a retry policy configurable per job type (default: 3 retries with 60-second linear backoff).
 
@@ -255,7 +255,7 @@ The admin UI at `/automation/jobs` displays all registered jobs in a Radix `Tabl
 
 #### 2.2 (#1395) — Schema Maintenance Jobs
 
-This issue implements the built-in maintenance job handlers that keep Objectified schemas healthy and backed up. Three core jobs ship by default: schema backup, periodic validation, and stale schema detection.
+This issue implements the built-in maintenance job handlers that keep Apiome schemas healthy and backed up. Three core jobs ship by default: schema backup, periodic validation, and stale schema detection.
 
 The **schema backup** job exports all published schema versions for a tenant as a versioned JSON archive and uploads it to a configurable S3-compatible storage bucket. Backups are namespaced by tenant and timestamped (e.g., `backups/{tenantId}/2026-04-02T00:00:00Z.json.gz`). Retention policies auto-delete backups older than a configurable threshold (default: 90 days). The backup job runs daily by default but the cron expression is tenant-configurable.
 
@@ -281,7 +281,7 @@ The **stale schema detection** job identifies schemas that have not been updated
 
 Rather than flooding users with individual notifications for every change, this issue implements batched email digests that summarize platform activity over configurable intervals. Users subscribe to digest frequencies: daily, weekly, or none. Each digest aggregates schema changes, version publications, team member activity, and alerts from the monitoring jobs (stale schemas, validation issues, expiration warnings) into a single cohesive email.
 
-The digest compiler runs as a scheduled BullMQ job (issue 2.1). At each interval, it queries the event stream for all events within the period, groups them by category (schemas, versions, team, alerts), and renders an HTML email using server-side React templates. The email includes deep links back to the relevant Objectified pages. Users manage their digest preferences at `/settings/notifications` using Radix `RadioGroup` for frequency selection and `Checkbox` for category opt-in/opt-out.
+The digest compiler runs as a scheduled BullMQ job (issue 2.1). At each interval, it queries the event stream for all events within the period, groups them by category (schemas, versions, team, alerts), and renders an HTML email using server-side React templates. The email includes deep links back to the relevant Apiome pages. Users manage their digest preferences at `/settings/notifications` using Radix `RadioGroup` for frequency selection and `Checkbox` for category opt-in/opt-out.
 
 Usage analytics reports are a separate scheduled output for workspace administrators. A weekly report summarizes API key usage counts, most-accessed schemas, active users, and storage consumption. Reports are generated as downloadable PDFs and stored in the `analytics_report` table. The admin UI at `/automation/reports` lists generated reports with download links in a Radix `Table`.
 
@@ -289,7 +289,7 @@ Usage analytics reports are a separate scheduled output for workspace administra
 
 - Users can subscribe to daily, weekly, or no email digest via `/settings/notifications`
 - Digests aggregate all events from the period grouped by category (schemas, versions, team, alerts)
-- Digest emails include deep links to relevant Objectified pages
+- Digest emails include deep links to relevant Apiome pages
 - Usage analytics reports are generated weekly for workspace administrators
 - Reports include API key usage, most-accessed schemas, active users, and storage metrics
 - Generated reports are downloadable as PDF from `/automation/reports`
@@ -408,7 +408,7 @@ The admin UI at `/automation/triggers` uses a Radix `Table` for the trigger list
 
 Schema lifecycle events often need to reach team communication and project management tools. This issue builds native integrations for Slack, Microsoft Teams, Jira, and Linear that fire automatically on configured events. Each integration is a specialized trigger action with pre-built payload formatting and OAuth-based authentication.
 
-The **Slack integration** posts formatted messages to a configured channel using the Slack Web API. Messages include the event type, schema name, actor, a summary of changes, and deep links back to Objectified. Message formatting uses Slack Block Kit for rich layout with section blocks, context elements, and action buttons. The **Microsoft Teams integration** posts Adaptive Cards to a configured incoming webhook URL with equivalent content and styling.
+The **Slack integration** posts formatted messages to a configured channel using the Slack Web API. Messages include the event type, schema name, actor, a summary of changes, and deep links back to Apiome. Message formatting uses Slack Block Kit for rich layout with section blocks, context elements, and action buttons. The **Microsoft Teams integration** posts Adaptive Cards to a configured incoming webhook URL with equivalent content and styling.
 
 The **Jira integration** creates issues in a configured project when breaking changes are detected. The issue includes the schema diff, affected consumers, and a link to the approval request. Fields are mapped from the event payload to Jira fields via a configurable template. The **Linear integration** provides equivalent functionality, creating issues with labels, assignees, and linked schema references via Linear's GraphQL API.
 
@@ -430,7 +430,7 @@ Each integration is configured at `/automation/integrations` using a guided setu
 
 #### 3.4 (#1449) — Automated Code Generation on Publish
 
-One of the highest-value automation actions is generating client SDKs and type definitions immediately when a schema version is published. This issue builds a code generation trigger action that invokes Objectified's code generation engine (or a configured external generator) and publishes the output to a configured artifact repository or git branch.
+One of the highest-value automation actions is generating client SDKs and type definitions immediately when a schema version is published. This issue builds a code generation trigger action that invokes Apiome's code generation engine (or a configured external generator) and publishes the output to a configured artifact repository or git branch.
 
 When a version is published and a code generation trigger is active, the system enqueues a BullMQ job that: (1) fetches the published schema version, (2) runs the configured generators (TypeScript types, OpenAPI spec, JSON Schema bundle, or custom templates), (3) commits the generated output to a configured git repository branch or uploads it to an artifact store (npm registry, Maven, PyPI), and (4) records the generation result with links to the published artifacts.
 
@@ -468,7 +468,7 @@ The settings page at `/automation/settings` provides tenant-level defaults: glob
 - Timeline supports infinite scroll and expandable detail entries
 - Settings page at `/automation/settings` manages tenant-level defaults for retry, timeout, retention, and feature flags
 - `PUT /api/v1/automation/settings` persists tenant settings; `GET /api/v1/automation/settings` returns current values
-- Navigation integrates with the existing Objectified sidebar under an "Automation" section
+- Navigation integrates with the existing Apiome sidebar under an "Automation" section
 
 **Part of Epic: Workflow Automation & CI/CD**
 

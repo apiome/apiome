@@ -1,4 +1,4 @@
-# Objectified: Data Detective & Provenance - Feature Roadmap
+# Apiome: Data Detective & Provenance - Feature Roadmap
 
 > Investigative and forensic capabilities that let users trace when, where, who, and how data changed across database-stored instances, ETL and transform pipelines, and related source artifacts. Detective supports detection of corruption, tampering, policy violations, and operational mistakes through a cross-cutting audit layer that connects every material change to a traceable actor, time, and channel.
 >
@@ -36,7 +36,7 @@
 
 #### 1.1 (#2084) — Detective Audit Event Model
 
-Every material change in Objectified — instance mutations, import batches, migration runs, security changes — emits a Detective audit event. This issue defines the canonical event envelope shared by all sources, preventing schema fragmentation between database and ETL teams. The event shape must be stable enough to carry both structured metadata and references to large payloads stored outside the audit table.
+Every material change in Apiome — instance mutations, import batches, migration runs, security changes — emits a Detective audit event. This issue defines the canonical event envelope shared by all sources, preventing schema fragmentation between database and ETL teams. The event shape must be stable enough to carry both structured metadata and references to large payloads stored outside the audit table.
 
 The event envelope includes: `event_id` (UUID v7 for time-ordered sorting), `occurred_at` (UTC timestamp with microsecond precision), `tenant_id`, `project_id` (nullable for tenant-level events), `actor` object (`type`: user | api_key | system | service; `actor_id`: UUID), `correlation_id`, `causation_id` (parent event for chaining), `resource` (`type` enum + `resource_id`), `action` enum (CREATE, UPDATE, DELETE, BULK_IMPORT, MIGRATION_STEP, ROLLBACK, etc.), `payload_summary` (non-PII JSON fingerprint for indexed search), `payload_ref` (pointer to detailed blob in secure store for large payloads), `integrity` (SHA-256 of canonical serialization), and `source_context` (optional: `pipeline_run_id`, `file_fingerprint`, `line_range`).
 
@@ -508,7 +508,7 @@ Part of Epic: Integrity, Anomalies & Policy Signals
 
 Legal and security teams need tamper-evident audit bundles for handoffs to auditors, regulators, or external counsel. A bundle without a checksum cannot prove it has not been modified after export. This issue adds a manifest file to every audit export that lists the event_id range, record count, and SHA-256 of the JSONL body.
 
-Optional organizational signing key integration is deferred to a later phase; the v1 implementation uses HMAC-SHA-256 with a platform-managed key so bundles can be verified by Objectified's verification endpoint without requiring customer key management.
+Optional organizational signing key integration is deferred to a later phase; the v1 implementation uses HMAC-SHA-256 with a platform-managed key so bundles can be verified by Apiome's verification endpoint without requiring customer key management.
 
 **Acceptance Criteria:**
 - Every audit export (from Epic 6.1) includes a `manifest.json` with: `event_id_min`, `event_id_max`, `record_count`, `sha256_of_body`, `exported_at`, `exported_by`, `platform_hmac`

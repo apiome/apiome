@@ -5,7 +5,7 @@ description: Fetches the GitHub Issue for the current repo, implements it on bra
 
 # Implement (`/implement <number>`)
 
-When user invokes **implement** with issue number (for example `/implement 124`), treat number as **GitHub issue** in **current repository** (e.g. `KenSuenobu/objectified` for this workspace). Follow workflow end to end unless user terminates or environment blocks (auth, permissions, missing `gh`, etc.).
+When user invokes **implement** with issue number (for example `/implement 124`), treat number as **GitHub issue** in **current repository** (e.g. `KenSuenobu/apiome` for this workspace). Follow workflow end to end unless user terminates or environment blocks (auth, permissions, missing `gh`, etc.).
 
 ## Guidelines
 
@@ -94,8 +94,8 @@ Also run package-specific tests the issue touches, per READMEs.
 
 - Mark ticket complete in **ROADMAP** and REMOVE ITS ENTRY FROM THE ISSUES TABLE matching the issue number.
 - Add one-line summary of work performed to **public/WHATS_NEW.md**.
-- Bump patch version of application in **objectified-ui/package.json** when change is made in **objectified-ui**.
-- Bump patch version of pyproject.toml in **objectified-rest** when change is made there.
+- Bump patch version of application in **apiome-ui/package.json** when change is made in **apiome-ui**.
+- Bump patch version of pyproject.toml in **apiome-rest** when change is made there.
 
 ## Phase 7: Commit, Push, Pull Request
 

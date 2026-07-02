@@ -1,4 +1,4 @@
-# Objectified: Developer Portal & SDK Platform - Feature Roadmap
+# Apiome: Developer Portal & SDK Platform - Feature Roadmap
 
 > Full-featured developer portal and SDK platform enabling API discovery, interactive documentation, multi-language SDK generation with automated publishing, local mock servers for integration testing, and IDE extensions for VS Code and JetBrains—providing a complete self-service experience for API consumers.
 >
@@ -83,7 +83,7 @@ The backend REST API exposes `GET /api/v1/portal/catalog` with query parameters 
 
 #### 1.2 (#1354) — Auto-Generated API Documentation Hub
 
-The documentation hub generates comprehensive, interactive API reference pages directly from OpenAPI 3.1 specifications and Objectified schema captures. Developers never write documentation manually — it flows from the schema definitions.
+The documentation hub generates comprehensive, interactive API reference pages directly from OpenAPI 3.1 specifications and Apiome schema captures. Developers never write documentation manually — it flows from the schema definitions.
 
 Each API version gets a dedicated documentation page at `app/(portal)/[tenantSlug]/docs/[apiSlug]/page.tsx`. The page renders: endpoint listing grouped by tag, HTTP method and path with color-coded method badges, request/response schema trees rendered as expandable/collapsible nodes (Radix UI `Accordion`), field-level descriptions, types, constraints (min/max/pattern/required), and example values. A right-side panel shows code samples for making requests in TypeScript, Python, Java, Go, cURL, Ruby, PHP, C#, Kotlin, and Swift — language selection persists in local storage.
 
@@ -459,7 +459,7 @@ Mock Server Architecture
                           └────────┘           └─────────┘
 ```
 
-The mock server is distributed as a Docker image (`objectified/mock-server`) and as an npm package (`@objectified/mock-server`). The CLI interface supports `mock-server start --spec ./openapi.yaml --port 4010`. The REST API at `POST /api/v1/portal/mock-servers` generates a downloadable Docker Compose file or npm project for a given spec.
+The mock server is distributed as a Docker image (`apiome/mock-server`) and as an npm package (`@apiome/mock-server`). The CLI interface supports `mock-server start --spec ./openapi.yaml --port 4010`. The REST API at `POST /api/v1/portal/mock-servers` generates a downloadable Docker Compose file or npm project for a given spec.
 
 **Acceptance Criteria**
 
@@ -608,7 +608,7 @@ Quick fixes offer one-click resolutions: add missing `description` fields, gener
 
 #### 5.2 (#1495) — VS Code Extension — Cloud Integration
 
-Schema editing alone doesn't close the loop. This issue connects the VS Code extension to the Objectified portal, enabling developers to sync schemas, generate SDK code, run mock servers, test endpoints, and browse documentation — all without leaving the editor.
+Schema editing alone doesn't close the loop. This issue connects the VS Code extension to the Apiome portal, enabling developers to sync schemas, generate SDK code, run mock servers, test endpoints, and browse documentation — all without leaving the editor.
 
 Cloud sync authenticates with the portal via OAuth2 device flow (the extension opens a browser tab for login and receives a token). Once authenticated, the extension's sidebar (VS Code TreeView) lists all APIs the developer has access to. Pulling an API downloads the OpenAPI spec to the workspace. Pushing local changes uploads the spec to the portal as a draft version, triggering SDK regeneration and documentation preview.
 
@@ -618,7 +618,7 @@ The extension also provides a documentation preview webview panel that renders t
 
 **Acceptance Criteria**
 
-- OAuth2 device flow authenticates the extension with the Objectified portal
+- OAuth2 device flow authenticates the extension with the Apiome portal
 - Sidebar TreeView lists accessible APIs with pull/push actions for syncing specs
 - "Generate Code" command downloads generated SDK client into the workspace for the selected language
 - "Run Mock Server" starts a local mock server in a VS Code terminal with hot-reload
@@ -638,7 +638,7 @@ The plugin provides: OpenAPI/JSON Schema syntax highlighting via a custom `Langu
 
 Cloud integration mirrors the VS Code extension: OAuth2 login, API listing in a tool window (JetBrains `ToolWindowFactory`), pull/push sync, code generation, mock server launch (in the Run/Debug configurations panel), and endpoint testing via intention actions on path definitions.
 
-A project wizard ("New Project → Objectified API") scaffolds a new API project with a starter OpenAPI spec, a pre-configured mock server script, and a generated SDK in the developer's chosen language. The wizard uses JetBrains `ModuleBuilder` with step-by-step panels for API name, base URL, authentication scheme, and target languages.
+A project wizard ("New Project → Apiome API") scaffolds a new API project with a starter OpenAPI spec, a pre-configured mock server script, and a generated SDK in the developer's chosen language. The wizard uses JetBrains `ModuleBuilder` with step-by-step panels for API name, base URL, authentication scheme, and target languages.
 
 **Acceptance Criteria**
 

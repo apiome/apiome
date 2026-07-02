@@ -1,6 +1,6 @@
-# Objectified — User Guide
+# Apiome — User Guide
 
-This is the user-facing documentation set for the Objectified **spine**: the end-to-end path that
+This is the user-facing documentation set for the Apiome **spine**: the end-to-end path that
 takes a specification from import to a published, queryable API surface.
 
 > **Spine in one line:**
@@ -31,7 +31,7 @@ project in ~10 minutes") and the [Golden Path](../GOLDEN_PATH.md) (the executabl
 | Topic | Guide |
 |---|---|
 | **API reference** (interactive Swagger UI for the REST API) | [api-reference.md](api-reference.md) |
-| **CLI** quick-start (`objectified …`) | [cli-quickstart.md](cli-quickstart.md) |
+| **CLI** quick-start (`apiome …`) | [cli-quickstart.md](cli-quickstart.md) |
 | **MCP** setup quick-start (Claude Desktop / IDE hosts) | [mcp-quickstart.md](mcp-quickstart.md) |
 
 ---
@@ -46,7 +46,7 @@ docker compose up --build --wait      # postgres, migrate, seed, rest (:8000), m
 docker compose run --rm seed          # idempotent; ensures the dev tenant + sample exist
 ```
 
-Then sign in to the UI with the dev login `ada@example.com` / `objectified-dev` and open **Control
+Then sign in to the UI with the dev login `ada@example.com` / `apiome-dev` and open **Control
 Panel → Dashboard**. The default service ports are:
 
 | Service | URL |

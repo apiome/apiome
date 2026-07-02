@@ -1,6 +1,6 @@
-# Objectified: Schema Showcase - Feature Roadmap
+# Apiome: Schema Showcase - Feature Roadmap
 
-> A curated public gallery on browse.objectified.dev that recognizes and promotes organizations producing exemplary API schemas. The Showcase drives community engagement, provides marketing value to featured companies, and establishes Objectified as the authority on API schema quality.
+> A curated public gallery on browse.apiome.app that recognizes and promotes organizations producing exemplary API schemas. The Showcase drives community engagement, provides marketing value to featured companies, and establishes Apiome as the authority on API schema quality.
 >
 > **Revenue Model**: Free participation; featured companies receive marketing value (traffic, recognition); Showcase drives Pro/Enterprise upsells via quality improvement motivation; premium placement and marketing asset generation may become paid add-ons
 >
@@ -10,7 +10,7 @@
 
 ## MVP Definition
 
-- Showcase gallery page on browse.objectified.dev with "Schema of the Month" hero and category grid
+- Showcase gallery page on browse.apiome.app with "Schema of the Month" hero and category grid
 - Eligibility engine: automatically scan for schemas with quality score ≥ 90 maintained for 30+ days with no critical violations
 - Schema submission flow for tenants to nominate their own schemas
 - Admin approval workflow: review, approve/reject, schedule future showcases
@@ -119,7 +119,7 @@ Part of Epic: Eligibility & Selection Engine
 
 | #   | Title                                      | Description                                                                       | Labels                                    | MVP | Parallel |
 |-----|--------------------------------------------|-----------------------------------------------------------------------------------|-------------------------------------------|-----|----------|
-| 2.1 (#1841) | Showcase Gallery Page                      | Hero + category grid on browse.objectified.dev/showcase with filter and search    | `enhancement`, `mvp`, `schema-showcase`  | Yes | No       |
+| 2.1 (#1841) | Showcase Gallery Page                      | Hero + category grid on browse.apiome.app/showcase with filter and search    | `enhancement`, `mvp`, `schema-showcase`  | Yes | No       |
 | 2.2 (#1842) | Schema of the Month Hero Section           | Full-width hero card for the monthly feature with company branding                | `enhancement`, `mvp`, `schema-showcase`  | Yes | Yes      |
 | 2.3 (#1843) | Schema Cards Grid                          | Card grid with logo, title, quality badge, category tags, view/clone counts       | `enhancement`, `mvp`, `schema-showcase`  | Yes | Yes      |
 | 2.4 (#1844) | Showcase Categories Display                | Category sections: Industry Leaders, Best Practices, Innovation, Community Choice  | `enhancement`, `mvp`, `schema-showcase`  | Yes | No       |
@@ -134,7 +134,7 @@ Part of Epic: Eligibility & Selection Engine
 
 #### 2.1 (#1841) — Showcase Gallery Page
 
-Build the public Showcase gallery at `browse.objectified.dev/showcase`. The page structure:
+Build the public Showcase gallery at `browse.apiome.app/showcase`. The page structure:
 1. Hero section with the current "Schema of the Month"
 2. Category sections (one row per category) with schema cards
 3. Sidebar filter: industry, category, date range

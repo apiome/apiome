@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Objectified CDC — Schema Handler</title>
+  <title>Apiome CDC — Schema Handler</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' };</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -24,7 +24,7 @@
         <div class="w-7 h-7 rounded-md bg-gradient-to-br from-rose-600 to-fuchsia-500 flex items-center justify-center">
           <i data-lucide="waves" class="w-4 h-4 text-white"></i>
         </div>
-        <span class="text-sm font-semibold">Objectified</span>
+        <span class="text-sm font-semibold">Apiome</span>
       </a>
       <span class="text-xs text-gray-400">/</span>
       <span class="text-sm font-medium text-rose-600 dark:text-rose-400">CDC</span>
@@ -82,7 +82,7 @@
           </div>
         </div>
         <div class="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
-          <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-2">Objectified Class: User</div>
+          <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-2">Apiome Class: User</div>
           <div class="space-y-1 text-xs">
             <div class="flex items-center gap-2 py-0.5 border-b border-gray-100 dark:border-gray-700"><span class="mono w-28 text-gray-600 dark:text-gray-400">id</span><span class="text-gray-500">UUID</span></div>
             <div class="flex items-center gap-2 py-0.5 border-b border-gray-100 dark:border-gray-700"><span class="mono w-28 text-gray-600 dark:text-gray-400">email</span><span class="text-gray-500">String</span></div>
@@ -156,7 +156,7 @@
 
       <div class="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/40 rounded-lg p-3 mb-4 text-xs text-red-700 dark:text-red-300">
         <div class="font-semibold mb-1 flex items-center gap-1.5"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Dropped column: <span class="mono">legacy_token VARCHAR(512)</span></div>
-        Column existed in Class <span class="mono font-semibold">Session</span> as a required property. Dropping it will leave existing objectified-db rows with a null value for this field.
+        Column existed in Class <span class="mono font-semibold">Session</span> as a required property. Dropping it will leave existing apiome-db rows with a null value for this field.
       </div>
 
       <div class="flex items-center gap-3">

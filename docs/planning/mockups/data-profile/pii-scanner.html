@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Objectified Data Profile — PII Scanner</title>
+  <title>Apiome Data Profile — PII Scanner</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' };</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -21,7 +21,7 @@
         <div class="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center">
           <i data-lucide="bar-chart-2" class="w-4 h-4 text-white"></i>
         </div>
-        <span class="text-sm font-semibold">Objectified</span>
+        <span class="text-sm font-semibold">Apiome</span>
       </a>
       <span class="text-xs text-gray-400">/</span>
       <span class="text-sm font-medium text-violet-600 dark:text-violet-400">Data Profile</span>
@@ -82,7 +82,7 @@
         <i data-lucide="alert-triangle" class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5"></i>
         <div class="flex-1">
           <div class="text-sm font-semibold text-red-700 dark:text-red-400">Critical: 2 SSN columns and 1 payment card column are unmasked</div>
-          <div class="text-xs text-red-600 dark:text-red-500 mt-0.5">users.ssn (99%), users.ssn_raw (97%), transactions.card_last4 (88%) — exposure risk if loaded to objectified-db without masking policy</div>
+          <div class="text-xs text-red-600 dark:text-red-500 mt-0.5">users.ssn (99%), users.ssn_raw (97%), transactions.card_last4 (88%) — exposure risk if loaded to apiome-db without masking policy</div>
         </div>
         <a href="#" class="text-xs px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold flex-shrink-0">Apply Masking →</a>
       </div>

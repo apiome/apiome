@@ -1,0 +1,36 @@
+name: apiome-openapi
+
+on:
+  push:
+    paths:
+      - "apiome-rest/openapi.*"
+  pull_request:
+    paths:
+      - "apiome-rest/openapi.*"
+
+jobs:
+  publish:
+    runs-on: self-hosted
+    env:
+      APIOME_API_KEY: ${{ secrets.APIOME_API_KEY }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build CLI and push OpenAPI to catalog
+        run: |
+          cd apiome-cli
+          uv sync
+          ./run.sh --tenant=apiome import openapi ../apiome-rest/openapi.yaml --publish public --poll-interval 1000
+        env:
+          APIOME_LOAD_DOTENV: "0"

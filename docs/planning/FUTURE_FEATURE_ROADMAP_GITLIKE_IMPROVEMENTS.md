@@ -169,7 +169,7 @@ on `version_branches` marks one branch as "the trunk". As a result:
 ### Scope
 
 - Add `is_default BOOLEAN NOT NULL DEFAULT FALSE` to
-  `odb.version_branches`.
+  `apiome.version_branches`.
 - Add a partial unique index guaranteeing at most one `is_default = TRUE`
   per `project_id`.
 - Migration: for every existing project, promote the branch whose
@@ -187,7 +187,7 @@ on `version_branches` marks one branch as "the trunk". As a result:
 ### Technical specifications
 
 ```
-odb.version_branches
+apiome.version_branches
 ┌───────────────────────────────┐
 │ id               UUID PK      │
 │ project_id       UUID FK      │
@@ -202,12 +202,12 @@ odb.version_branches
 
   Invariant (partial unique index):
     CREATE UNIQUE INDEX uq_version_branches_default_per_project
-      ON odb.version_branches(project_id)
+      ON apiome.version_branches(project_id)
       WHERE is_default = TRUE;
 ```
 
 Migration file naming: follow the existing
-`objectified-db/scripts/YYYYMMDD-HHMMSS.sql` convention.
+`apiome-db/scripts/YYYYMMDD-HHMMSS.sql` convention.
 
 Error envelope for promote:
 
@@ -931,7 +931,7 @@ same actions without hunting through menus.
 - Purely client-side orchestration; every action routes to an existing
   dialog or API.
 - Shortcut registration is tracked in
-  `objectified-ui/src/app/utils/studio-keybindings.ts` (new file).
+  `apiome-ui/src/app/utils/studio-keybindings.ts` (new file).
 
 ### Acceptance criteria
 
@@ -960,9 +960,9 @@ same actions without hunting through menus.
 - Add the `roadmap-gitlike` label to every issue for search parity with
   the prior pack.
 - Tests required on every issue:
-  - **DB migration** coverage in `objectified-db` (GLI-01 only).
-  - **REST** tests in `objectified-rest` (GLI-01, GLI-02, GLI-08).
-  - **UI** tests in `objectified-ui` for every user-facing workflow.
+  - **DB migration** coverage in `apiome-db` (GLI-01 only).
+  - **REST** tests in `apiome-rest` (GLI-01, GLI-02, GLI-08).
+  - **UI** tests in `apiome-ui` for every user-facing workflow.
 - After each ticket merges, update the **Delivery order** table above
   by striking through the completed row and linking the GitHub issue
   number next to the ticket id.

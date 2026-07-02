@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Objectified File Gateway — Hub</title>
+  <title>Apiome File Gateway — Hub</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' };</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -25,7 +25,7 @@
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-yellow-500 to-amber-400 flex items-center justify-center">
         <i data-lucide="hard-drive-upload" class="w-4 h-4 text-white"></i>
       </div>
-      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-sm font-semibold">Apiome</span>
       <span class="text-xs text-gray-400">/</span>
       <span class="text-sm font-medium text-yellow-600 dark:text-yellow-400">File Gateway</span>
     </div>
@@ -46,11 +46,11 @@
       </div>
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-3 mb-1">
-          <h1 class="text-2xl font-bold">Objectified File Gateway</h1>
+          <h1 class="text-2xl font-bold">Apiome File Gateway</h1>
           <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700">FILE INGESTION</span>
         </div>
         <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-          Object store and file system bridge for structured file ingestion into objectified-db. Connects to S3, GCS, Azure Blob, SFTP, and NFS. Monitors for new file arrivals via event notifications or polling, infers schema from file headers, deduplicates by content hash, and routes files to the appropriate Forge pipeline or direct loader via a configurable routing rules engine.
+          Object store and file system bridge for structured file ingestion into apiome-db. Connects to S3, GCS, Azure Blob, SFTP, and NFS. Monitors for new file arrivals via event notifications or polling, infers schema from file headers, deduplicates by content hash, and routes files to the appropriate Forge pipeline or direct loader via a configurable routing rules engine.
         </p>
         <div class="flex flex-wrap items-center gap-3 mt-3">
           <span class="text-[10px] font-medium text-gray-500">DB Hooks:</span>
@@ -117,7 +117,7 @@
               <p class="text-[10px] text-gray-400">Header sampling &amp; type detection</p>
             </div>
           </div>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Sample file headers to infer column names, data types, nullable flags, and schema fingerprints. Compare inferred schema against registered objectified Classes to suggest routing targets.</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Sample file headers to infer column names, data types, nullable flags, and schema fingerprints. Compare inferred schema against registered apiome Classes to suggest routing targets.</p>
         </a>
 
       </div>

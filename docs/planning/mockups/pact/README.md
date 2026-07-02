@@ -6,7 +6,7 @@ Static, browser-openable design mockups for the contract testing slice of the
 
 These files visualise what a self-hosted Pact broker, consumer-driven contract
 registration, provider verification, can-I-deploy gating, change webhooks, and
-a publish quality gate would feel like inside the Objectified studio. They are
+a publish quality gate would feel like inside the Apiome studio. They are
 visual references — no API calls, no auth, no build step.
 
 ## Open
@@ -14,7 +14,7 @@ visual references — no API calls, no auth, no build step.
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/pact/index.html
+open apiome-ui/public/mockups/pact/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:
@@ -42,7 +42,7 @@ ships as a reference YAML file rather than an in-product UI.
 
 ## Design system
 
-Mockups intentionally mirror the live `objectified-ui` shell and align with
+Mockups intentionally mirror the live `apiome-ui` shell and align with
 the sibling `mockups/devex`, `mockups/linting`, `mockups/contracts`, and
 `mockups/architect` sets:
 

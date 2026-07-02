@@ -9,7 +9,7 @@ browsable spec — the seeded, published `petstore-sample` project.
 ## In the UI
 
 - Open **Published** at `/ade/dashboard/published` to see your tenant's published versions.
-- The dedicated `objectified-browse` app renders the catalog and each spec's rendered OpenAPI.
+- The dedicated `apiome-browse` app renders the catalog and each spec's rendered OpenAPI.
 
 ## Interactive Swagger UI for a published spec
 
@@ -21,7 +21,7 @@ GET /v1/swagger/{tenant_slug}/{project_slug}/{version_slug}
 
 Open that URL in a browser (e.g. `http://localhost:8000/v1/swagger/acme-corp/petstore-sample/1.0.0`)
 to get a fully interactive API reference for that spec. This is distinct from `/docs`, which
-documents the Objectified REST API itself — see [api-reference.md](api-reference.md).
+documents the Apiome REST API itself — see [api-reference.md](api-reference.md).
 
 ## With the REST API
 
@@ -35,8 +35,8 @@ These browse routes serve public content without authentication.
 ## With the CLI
 
 ```bash
-objectified projects list                    # projects you can see
-objectified versions list --project-id <id>  # versions in a project
+apiome projects list                    # projects you can see
+apiome versions list --project-id <id>  # versions in a project
 ```
 
 ## Verify

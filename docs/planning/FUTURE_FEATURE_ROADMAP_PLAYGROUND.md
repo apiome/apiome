@@ -1,4 +1,4 @@
-# Objectified: Playground - Feature Roadmap
+# Apiome: Playground - Feature Roadmap
 
 > Interactive sandbox environment for experimenting with schemas, APIs, and integrations without affecting production systems. Playground reduces time-to-first-experiment from hours to seconds, driving adoption and enabling safe exploration for developers, learners, and sales teams alike.
 >
@@ -39,9 +39,9 @@
 
 #### 1.1 (#1200) — Environment Provisioning Service
 
-The provisioning service is the backbone of Playground. When a user clicks "New Sandbox," the service creates a fully isolated Objectified environment — complete with its own schema store, API layer, and data namespace — within seconds.
+The provisioning service is the backbone of Playground. When a user clicks "New Sandbox," the service creates a fully isolated Apiome environment — complete with its own schema store, API layer, and data namespace — within seconds.
 
-Each sandbox runs as an isolated namespace in the existing Objectified backend rather than a fully separate deployment. The provisioning service creates a temporary tenant partition with its own `sandbox_` prefixed database schema, seeds it with the platform's core tables, and returns a session token scoped to that namespace. The sandbox exposes the same REST APIs as the main platform, routed through a sandbox-aware proxy that maps the session token to the correct namespace.
+Each sandbox runs as an isolated namespace in the existing Apiome backend rather than a fully separate deployment. The provisioning service creates a temporary tenant partition with its own `sandbox_` prefixed database schema, seeds it with the platform's core tables, and returns a session token scoped to that namespace. The sandbox exposes the same REST APIs as the main platform, routed through a sandbox-aware proxy that maps the session token to the correct namespace.
 
 The provisioning flow is asynchronous: the API returns a `201 Created` with a sandbox ID and a `status: provisioning` field. The client polls a status endpoint (or receives a WebSocket event) until the status transitions to `ready`. Target provisioning time is under 5 seconds for a basic sandbox.
 
@@ -282,7 +282,7 @@ Part of Epic: Interactive Schema Editor & Experimentation
 
 #### 2.2 (#1207) — Try-Before-Commit Workflow
 
-Sandboxes are great for experimentation, but the value multiplies when good experiments can be promoted to real projects. The try-before-commit workflow lets users take a schema design they're happy with and push it to an Objectified project as a new version draft.
+Sandboxes are great for experimentation, but the value multiplies when good experiments can be promoted to real projects. The try-before-commit workflow lets users take a schema design they're happy with and push it to an Apiome project as a new version draft.
 
 The promotion flow starts with a "Promote to Project" button in the sandbox toolbar. This opens a Radix UI `Dialog` that asks the user to select a target project (or create a new one), choose which schema classes to promote, and write a change description. A diff view shows what will change in the target project, highlighting additions and modifications.
 
@@ -406,7 +406,7 @@ Part of Epic: Interactive Schema Editor & Experimentation
 | 3.1 (#1212) | Tutorial Scenario Library          | Curated library of step-by-step learning scenarios covering common schema design patterns      | `enhancement`, `mvp`, `playground`        | Yes      |
 | 3.2 (#1213) | Step-by-Step Guide Engine          | Guided walkthrough engine with progress tracking, hints, and validation at each step           | `enhancement`, `mvp`, `playground`        | No       |
 | 3.3 (#1214) | Challenge Mode                     | Timed challenges where users build schemas to match requirements with scoring                  | `enhancement`, `playground`               | Yes      |
-| 3.4 (#1215) | Certification Exam Prep            | Practice exams simulating Objectified certification with graded questions and explanations      | `enhancement`, `playground`               | Yes      |
+| 3.4 (#1215) | Certification Exam Prep            | Practice exams simulating Apiome certification with graded questions and explanations      | `enhancement`, `playground`               | Yes      |
 | 3.5 (#1216) | Community Scenario Submissions     | Platform for users to create, share, and rate learning scenarios                               | `enhancement`, `playground`               | No       |
 
 ### Detailed Issue Descriptions
@@ -503,7 +503,7 @@ Part of Epic: Learning Labs & Guided Tutorials
 
 #### 3.4 (#1215) — Certification Exam Prep
 
-For users pursuing Objectified platform certification, the exam prep feature provides practice exams that simulate the real certification experience. This drives adoption of the Academy product while using Playground's infrastructure.
+For users pursuing Apiome platform certification, the exam prep feature provides practice exams that simulate the real certification experience. This drives adoption of the Academy product while using Playground's infrastructure.
 
 Practice exams consist of 20–40 questions in three formats: multiple choice, schema building (sandbox-based), and error identification (find the bug in a given schema). Each question has a time limit, and the overall exam has a total time limit. Questions are drawn from a pool and randomized.
 
@@ -608,7 +608,7 @@ Part of Epic: Collaboration & Sharing
 
 Shareable links let users send sandbox access to anyone — teammates for review, stakeholders for demos, or community members for help. Links can be configured as view-only or collaborative (edit access).
 
-Generating a link opens a Radix UI `Dialog` with options: access level (view-only or edit), authentication requirement (public or requires Objectified login), expiry (1 hour, 24 hours, 7 days, or custom), and a maximum concurrent viewers limit (to prevent resource abuse).
+Generating a link opens a Radix UI `Dialog` with options: access level (view-only or edit), authentication requirement (public or requires Apiome login), expiry (1 hour, 24 hours, 7 days, or custom), and a maximum concurrent viewers limit (to prevent resource abuse).
 
 The link resolves to a public page at `app/(public)/playground/shared/[token]/page.tsx` that loads the sandbox in the appropriate mode. View-only mode hides editing controls and disables mutation API calls. Edit mode enables the full editor with collaboration features (4.1).
 
@@ -619,7 +619,7 @@ When the link owner is not online, the shared sandbox still works for the durati
 - "Share" button generates a link with configurable access level, auth requirement, expiry, and viewer limit
 - View-only links render the sandbox without editing controls
 - Edit links enable full editing with collaboration features
-- Public links work without Objectified login; auth-gated links require login
+- Public links work without Apiome login; auth-gated links require login
 - Expired or invalid links show a clear error page
 - Link owners can revoke links at any time from the dashboard
 

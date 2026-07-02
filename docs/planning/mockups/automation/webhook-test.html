@@ -27,7 +27,7 @@
   <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="zap" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-sm font-semibold">Apiome</span>
       <span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Automation</span>
       <span class="text-xs text-gray-400">/</span>
@@ -276,7 +276,7 @@
               <i data-lucide="key-round" class="w-5 h-5 text-amber-500"></i>
               <div>
                 <h3 class="text-base font-semibold">Signing &amp; Verification</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400">HMAC-SHA256 of <code class="mono">timestamp + "." + body</code> sent in <code class="mono">X-Objectified-Signature</code></p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">HMAC-SHA256 of <code class="mono">timestamp + "." + body</code> sent in <code class="mono">X-Apiome-Signature</code></p>
               </div>
             </div>
             <button class="px-3 py-1.5 text-sm rounded-md border border-amber-200 dark:border-amber-700 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2"><i data-lucide="rotate-cw" class="w-4 h-4"></i> Rotate secret</button>
@@ -294,7 +294,7 @@
               </div>
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Sample signature header</p>
-                <code class="mono text-xs block px-3 py-2 rounded-md bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 break-all">X-Objectified-Signature: t=1714076400,v1=8b1a4c3e9f7d5a2b6c8e0d1f3a5b7c9e2d4f6a8b0c1d3e5f7a9b1c3d5e7f9a1b</code>
+                <code class="mono text-xs block px-3 py-2 rounded-md bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 break-all">X-Apiome-Signature: t=1714076400,v1=8b1a4c3e9f7d5a2b6c8e0d1f3a5b7c9e2d4f6a8b0c1d3e5f7a9b1c3d5e7f9a1b</code>
               </div>
               <div class="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 p-3 text-xs flex gap-2">
                 <i data-lucide="shield" class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5"></i>
@@ -318,7 +318,7 @@
 <pre><span class="k">import</span> { createHmac, timingSafeEqual } <span class="k">from</span> <span class="s">'crypto'</span>;
 
 <span class="k">export function</span> verify(req, secret) {
-  <span class="k">const</span> header = req.headers[<span class="s">'x-objectified-signature'</span>];
+  <span class="k">const</span> header = req.headers[<span class="s">'x-apiome-signature'</span>];
   <span class="k">const</span> [t, v1] = header.split(<span class="s">','</span>).map(p =&gt; p.split(<span class="s">'='</span>)[<span class="n">1</span>]);
   <span class="k">const</span> body  = req.rawBody.toString();
   <span class="k">const</span> hmac  = createHmac(<span class="s">'sha256'</span>, secret)
@@ -372,8 +372,8 @@
                       <p class="font-semibold text-[10px] uppercase tracking-wider text-slate-500 mb-1">Request</p>
                       <div class="codeblock rounded p-2 text-[11px]"><pre>POST /hooks HTTP/1.1
 content-type: application/json
-x-objectified-event: version.published
-x-objectified-signature: t=1714076400,v1=8b1a…9a1b
+x-apiome-event: version.published
+x-apiome-signature: t=1714076400,v1=8b1a…9a1b
 content-length: 412</pre></div>
                     </div>
                     <div>

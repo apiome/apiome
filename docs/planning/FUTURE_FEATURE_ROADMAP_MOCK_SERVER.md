@@ -1,6 +1,6 @@
-# Objectified: Mock Server - Feature Roadmap
+# Apiome: Mock Server - Feature Roadmap
 
-> Intelligent mock server that generates realistic API responses from Objectified schemas without requiring backend implementation. Mock Server accelerates frontend, mobile, and integration development by providing schema-driven, stateful, scenario-aware API endpoints that behave like real backends—eliminating the "waiting for the API" bottleneck.
+> Intelligent mock server that generates realistic API responses from Apiome schemas without requiring backend implementation. Mock Server accelerates frontend, mobile, and integration development by providing schema-driven, stateful, scenario-aware API endpoints that behave like real backends—eliminating the "waiting for the API" bottleneck.
 >
 > **Revenue Model**: Hosted mock server hours, enterprise dedicated instances
 >
@@ -12,7 +12,7 @@
 
 ## MVP Definition
 
-- Schema parser that reads Objectified schema captures and generates mock endpoints
+- Schema parser that reads Apiome schema captures and generates mock endpoints
 - Automatic response generation matching JSON Schema constraints (types, enums, ranges, formats)
 - Stateful CRUD mocking (POST creates resources, GET retrieves them, DELETE removes them)
 - Faker.js integration for generating realistic names, emails, addresses, and dates
@@ -29,7 +29,7 @@
 
 | #   | Title | Description | Labels | Parallel |
 |-----|-------|-------------|--------|----------|
-| 1.1 (#1151) | Schema Parser & Endpoint Generator | Parse Objectified schemas and generate mock API routes | `enhancement`, `mock-server`, `mvp`, `rest` | Yes |
+| 1.1 (#1151) | Schema Parser & Endpoint Generator | Parse Apiome schemas and generate mock API routes | `enhancement`, `mock-server`, `mvp`, `rest` | Yes |
 | 1.2 (#1152) | Response Body Generator | Generate JSON responses matching schema constraints | `enhancement`, `mock-server`, `mvp` | Yes |
 | 1.3 (#1153) | Stateful Mock Store | In-memory store enabling CRUD state across requests | `enhancement`, `mock-server`, `mvp` | No |
 | 1.4 (#1154) | Relationship-Aware Responses | Generate linked resources respecting schema relationships | `enhancement`, `mock-server` | No |
@@ -40,7 +40,7 @@
 
 #### 1.1 (#1151) — Schema Parser & Endpoint Generator
 
-The Schema Parser reads Objectified schema captures (frozen schema versions with full JSON Schema definitions) and generates a routing table of mock API endpoints. For each schema class, the parser creates standard RESTful routes: `GET /resource` (list), `GET /resource/:id` (detail), `POST /resource` (create), `PUT /resource/:id` (update), `PATCH /resource/:id` (partial update), and `DELETE /resource/:id` (delete). If the schema includes OpenAPI path definitions, those are used instead of auto-generated routes.
+The Schema Parser reads Apiome schema captures (frozen schema versions with full JSON Schema definitions) and generates a routing table of mock API endpoints. For each schema class, the parser creates standard RESTful routes: `GET /resource` (list), `GET /resource/:id` (detail), `POST /resource` (create), `PUT /resource/:id` (update), `PATCH /resource/:id` (partial update), and `DELETE /resource/:id` (delete). If the schema includes OpenAPI path definitions, those are used instead of auto-generated routes.
 
 The parser extracts property types, required fields, enum values, string formats, numeric ranges, array bounds, and nested object structures from JSON Schema definitions. This metadata is compiled into a "mock blueprint" that the response generator uses to produce valid payloads. The parser handles `$ref` resolution, `allOf`/`anyOf`/`oneOf` composition, and recursive schemas with depth limits.
 
@@ -81,13 +81,13 @@ The Response Body Generator produces JSON response payloads that satisfy the sch
 
 The generator supports multiple strategies: "random" (fully random values within constraints), "realistic" (using Faker.js for semantic types like names and emails), and "deterministic" (seeded random for reproducible responses). The strategy is configurable per mock instance. For object properties without explicit constraints, the generator uses heuristics based on property name—a field named `email` generates an email format, `phone` generates a phone number, `created_at` generates an ISO timestamp.
 
-List endpoints generate arrays of objects with configurable default page sizes (10, 25, 50) and support query parameters for pagination (`?page=1&limit=25`), sorting (`?sort=name&order=asc`), and filtering (`?status=active`). The response envelope matches the Objectified standard: `{ data: [...], pagination: { page, limit, total, pages } }`.
+List endpoints generate arrays of objects with configurable default page sizes (10, 25, 50) and support query parameters for pagination (`?page=1&limit=25`), sorting (`?sort=name&order=asc`), and filtering (`?status=active`). The response envelope matches the Apiome standard: `{ data: [...], pagination: { page, limit, total, pages } }`.
 
 **Acceptance Criteria**:
 - Generated values satisfy all JSON Schema constraints (type, range, pattern, format, enum)
 - Heuristic property name matching generates semantically appropriate values for common field names
 - List endpoints support pagination, sorting, and filtering query parameters
-- Response envelope matches the Objectified standard format
+- Response envelope matches the Apiome standard format
 - Three generation strategies are available: random, realistic (Faker), and deterministic (seeded)
 - Nullable properties randomly include or exclude values based on a configurable probability
 
@@ -139,14 +139,14 @@ Include/expand support follows a query parameter convention: `GET /orders?includ
 
 The Request Validation Layer validates incoming requests to the mock server against schema definitions, returning proper error responses for invalid payloads. POST and PUT requests have their bodies validated against the schema class's JSON Schema definition. Required headers, query parameters, and path parameters defined in OpenAPI paths are also validated.
 
-Validation errors return HTTP 400/422 with structured error responses following the Objectified error format: `{ error: { code, message, details: [{ field, constraint, message }] } }`. The error details array includes field-level information pointing to the exact property that failed validation, the constraint that was violated, and a human-readable message.
+Validation errors return HTTP 400/422 with structured error responses following the Apiome error format: `{ error: { code, message, details: [{ field, constraint, message }] } }`. The error details array includes field-level information pointing to the exact property that failed validation, the constraint that was violated, and a human-readable message.
 
 Validation strictness is configurable per mock instance: "strict" (reject all invalid requests), "warn" (accept but log validation failures), and "permissive" (accept everything, no validation). The strictness setting is managed via the mock configuration API. Validation results are included in the request log for debugging.
 
 **Acceptance Criteria**:
 - Request bodies are validated against JSON Schema definitions for POST, PUT, and PATCH
 - Required headers and query parameters from OpenAPI definitions are validated
-- Error responses follow the Objectified error format with field-level details
+- Error responses follow the Apiome error format with field-level details
 - Three strictness modes are available: strict, warn, and permissive
 - Validation results are logged in the request log regardless of strictness mode
 - Content-Type validation ensures the request body matches expected media types
@@ -336,7 +336,7 @@ Backend endpoints include `POST /api/v1/mock/instances/{id}/generators` (create)
 
 #### 3.1 (#1164) — Hosted Mock Server Provisioning
 
-Hosted Mock Server Provisioning enables users to create cloud-hosted mock server instances with a single click. Each hosted instance gets a unique subdomain (e.g., `acme-payment-api.mock.objectified.dev`), runs in an isolated container, and is accessible over HTTPS. Provisioning takes less than 30 seconds from request to first available endpoint.
+Hosted Mock Server Provisioning enables users to create cloud-hosted mock server instances with a single click. Each hosted instance gets a unique subdomain (e.g., `acme-payment-api.mock.apiome.app`), runs in an isolated container, and is accessible over HTTPS. Provisioning takes less than 30 seconds from request to first available endpoint.
 
 The provisioning flow at `/app/mock-server/new` guides users through selecting a schema capture, configuring the instance name and settings, and clicking "Launch." The backend creates a container, deploys the mock engine with the schema's blueprint, configures TLS via wildcard certificate, and registers the DNS entry. Instance lifecycle management supports stop, start, and destroy operations.
 
@@ -356,9 +356,9 @@ Backend endpoints include `POST /api/v1/mock/instances` (provision), `POST /api/
 
 #### 3.2 (#1165) — Docker Image & Local Development
 
-The Docker Image packages the mock engine into a container that developers can run locally. The image is published to Docker Hub and the Objectified container registry. Running locally requires only `docker run -p 3100:3100 -v ./schema.json:/schema.json objectified/mock-server` to start a mock server from a schema file.
+The Docker Image packages the mock engine into a container that developers can run locally. The image is published to Docker Hub and the Apiome container registry. Running locally requires only `docker run -p 3100:3100 -v ./schema.json:/schema.json apiome/mock-server` to start a mock server from a schema file.
 
-The Docker image supports configuration via environment variables: `MOCK_SCHEMA_URL` (fetch schema from Objectified API), `MOCK_STRATEGY` (random/realistic/deterministic), `MOCK_SEED` (for deterministic mode), `MOCK_LATENCY` (fixed delay in ms), and `MOCK_STRICT` (validation strictness). A `docker-compose.yml` template is provided for running the mock server alongside frontend development containers.
+The Docker image supports configuration via environment variables: `MOCK_SCHEMA_URL` (fetch schema from Apiome API), `MOCK_STRATEGY` (random/realistic/deterministic), `MOCK_SEED` (for deterministic mode), `MOCK_LATENCY` (fixed delay in ms), and `MOCK_STRICT` (validation strictness). A `docker-compose.yml` template is provided for running the mock server alongside frontend development containers.
 
 Documentation at `/docs/mock-server/docker` covers installation, configuration, and integration with common development workflows. The Docker image is tagged with the mock engine version and published on every release. Multi-architecture builds support both `amd64` and `arm64` (Apple Silicon).
 
@@ -380,7 +380,7 @@ The Kubernetes Operator automates deployment and management of mock servers with
 
 CI/CD pipelines apply a `MockServer` YAML manifest at the start of integration tests, wait for the ready condition, run tests against the mock server's service URL, and delete the manifest to clean up. The operator handles lifecycle management, health checking, and resource cleanup. A Helm chart packages the operator for easy installation.
 
-The CRD spec includes `schemaRef` (Objectified schema capture reference or inline schema), `scenario` (active scenario name), `replicas` (for load testing), `resources` (CPU/memory limits), and `ttl` (auto-delete after duration). The operator is published as a Helm chart to the Objectified chart repository and documented at `/docs/mock-server/kubernetes`.
+The CRD spec includes `schemaRef` (Apiome schema capture reference or inline schema), `scenario` (active scenario name), `replicas` (for load testing), `resources` (CPU/memory limits), and `ttl` (auto-delete after duration). The operator is published as a Helm chart to the Apiome chart repository and documented at `/docs/mock-server/kubernetes`.
 
 **Acceptance Criteria**:
 - `MockServer` CRD declares schema source, scenario, replicas, resources, and TTL
@@ -398,7 +398,7 @@ The CRD spec includes `schemaRef` (Objectified schema capture reference or inlin
 
 Edge Deployment distributes mock servers to edge locations worldwide for ultra-low-latency access during mobile and frontend development. Edge instances run on a lightweight runtime (e.g., Cloudflare Workers or Deno Deploy) with the mock blueprint compiled to a self-contained bundle. Edge deployment is triggered from the hosted provisioning flow by selecting "Edge" as the deployment target.
 
-Edge instances support a subset of features: stateless mocking only (no CRUD state), Faker.js data generation (no AI generation), and basic scenario switching. These constraints allow the mock engine to fit within edge runtime size and memory limits. Edge URLs follow the pattern `acme-payment-api.edge.mock.objectified.dev` with automatic geo-routing.
+Edge instances support a subset of features: stateless mocking only (no CRUD state), Faker.js data generation (no AI generation), and basic scenario switching. These constraints allow the mock engine to fit within edge runtime size and memory limits. Edge URLs follow the pattern `acme-payment-api.edge.mock.apiome.app` with automatic geo-routing.
 
 The backend compiles the mock blueprint into an edge-compatible bundle via `POST /api/v1/mock/instances/{id}/deploy-edge`. Deployment status is trackable, and edge metrics (request count, latency by region) are reported back to the dashboard. Edge instances are billed at a separate rate reflecting the edge infrastructure costs.
 
@@ -472,7 +472,7 @@ Backend endpoints include `GET /api/v1/mock/instances/{id}/export/postman` (Post
 
 Collection Import & Sync allows users to import existing Postman or Insomnia collections to create mock servers, bridging the gap for teams that already have API collections but no schema definitions. The import parser extracts endpoint definitions, request/response examples, and infers a JSON Schema from the collection's example payloads.
 
-The import flow at `/app/mock-server/import` accepts a file upload (Postman JSON, Insomnia JSON) or a Postman collection URL. The parser analyzes the collection, infers schemas from example responses using JSON-to-JSON-Schema conversion, and presents the inferred schema for user review and correction before creating the mock server. Users can map imported endpoints to existing Objectified schemas or create new schema captures from the inferred definitions.
+The import flow at `/app/mock-server/import` accepts a file upload (Postman JSON, Insomnia JSON) or a Postman collection URL. The parser analyzes the collection, infers schemas from example responses using JSON-to-JSON-Schema conversion, and presents the inferred schema for user review and correction before creating the mock server. Users can map imported endpoints to existing Apiome schemas or create new schema captures from the inferred definitions.
 
 Backend endpoints include `POST /api/v1/mock/import/analyze` (upload collection and return inferred schema), `POST /api/v1/mock/import/create` (create mock server from analyzed collection), and `POST /api/v1/mock/import/sync` (update an existing mock server from a re-imported collection). Sync tracks changes between the imported collection and the existing mock, presenting a diff for review before applying updates.
 
@@ -480,7 +480,7 @@ Backend endpoints include `POST /api/v1/mock/import/analyze` (upload collection 
 - Import supports Postman Collection v2.1 and Insomnia v4 formats
 - JSON Schema inference derives types, required fields, and enums from example payloads
 - Inferred schema is presented for review and correction before mock creation
-- Import can create new schema captures or map to existing Objectified schemas
+- Import can create new schema captures or map to existing Apiome schemas
 - Sync detects changes between imported collection and existing mock configuration
 - Import handles collections with up to 500 endpoints and 1000 example payloads
 
@@ -532,15 +532,15 @@ Backend endpoints include `POST /api/v1/mock/instances/{id}/fixtures/generate` (
 
 The VS Code Extension brings mock server management directly into the IDE, reducing context-switching between the browser and editor. The extension provides a sidebar panel listing active mock server instances with start/stop controls, a command palette for common actions (create instance, switch scenario, reset state), and inline CodeLens annotations showing which schema properties have mock generators.
 
-The extension authenticates with the Objectified API using the user's API key stored in VS Code settings. It communicates with the mock server configuration API for all operations. The sidebar renders instance status with the mock server URL that can be copied with one click. Scenario switching is available via a status bar item that shows the current active scenario with a dropdown to switch.
+The extension authenticates with the Apiome API using the user's API key stored in VS Code settings. It communicates with the mock server configuration API for all operations. The sidebar renders instance status with the mock server URL that can be copied with one click. Scenario switching is available via a status bar item that shows the current active scenario with a dropdown to switch.
 
-The extension is published to the VS Code Marketplace and supports both VS Code and Cursor. Source code lives in `/packages/vscode-mock-server`. Key features include: (1) activity bar icon with instance list sidebar, (2) command palette commands prefixed with "Objectified Mock:", (3) status bar showing active instance and scenario, (4) CodeLens on schema files showing mock generator annotations.
+The extension is published to the VS Code Marketplace and supports both VS Code and Cursor. Source code lives in `/packages/vscode-mock-server`. Key features include: (1) activity bar icon with instance list sidebar, (2) command palette commands prefixed with "Apiome Mock:", (3) status bar showing active instance and scenario, (4) CodeLens on schema files showing mock generator annotations.
 
 **Acceptance Criteria**:
 - Sidebar panel lists all mock server instances with status and base URL
 - Start, stop, reset, and destroy operations are available from the sidebar
 - Scenario switching is available from the status bar dropdown
-- Command palette provides "Objectified Mock:" prefixed commands for common actions
+- Command palette provides "Apiome Mock:" prefixed commands for common actions
 - API key authentication is configured via VS Code settings
 - Extension works in both VS Code and Cursor editors
 

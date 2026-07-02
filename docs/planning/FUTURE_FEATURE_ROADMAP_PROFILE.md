@@ -1,4 +1,4 @@
-# Objectified: User Profile & Identity - Feature Roadmap
+# Apiome: User Profile & Identity - Feature Roadmap
 
 > Comprehensive user profile, account settings, and identity management system covering personal information, notification preferences, security settings, personalization, and developer access — with enterprise-grade SSO, SCIM provisioning, compliance controls, and delegation capabilities.
 >
@@ -91,7 +91,7 @@ Part of Epic: Profile Information & Account Settings (#2408)
 
 #### 1.8 — GDPR Data Export
 
-Generate a downloadable ZIP archive containing all data Objectified holds for the requesting user. Archive structure: `profile.json`, `schemas/`, `activity_log.jsonl`, `audit_events.jsonl`, `api_keys.json` (metadata only, not secrets). Export generated asynchronously; user notified via email with download link (expires 48 hours).
+Generate a downloadable ZIP archive containing all data Apiome holds for the requesting user. Archive structure: `profile.json`, `schemas/`, `activity_log.jsonl`, `audit_events.jsonl`, `api_keys.json` (metadata only, not secrets). Export generated asynchronously; user notified via email with download link (expires 48 hours).
 
 **OpenAPI Endpoints:**
 ```
@@ -214,7 +214,7 @@ Part of Epic: Security Settings (#2410)
 | #   | Title                                         | Description                                                                      | Labels                                          | MVP | Parallel | Issue  |
 |-----|-----------------------------------------------|----------------------------------------------------------------------------------|-------------------------------------------------|-----|----------|--------|
 | 6.1 | SAML 2.0 SSO Integration                      | IdP-initiated and SP-initiated SAML 2.0 with metadata exchange                  | `enhancement`, `profile`, `security`           | No  | No       | #2444  |
-| 6.2 | OIDC (OpenID Connect) Support                 | OIDC provider integration; map claims to Objectified roles                       | `enhancement`, `profile`, `security`           | No  | Yes      | #2445  |
+| 6.2 | OIDC (OpenID Connect) Support                 | OIDC provider integration; map claims to Apiome roles                       | `enhancement`, `profile`, `security`           | No  | Yes      | #2445  |
 | 6.3 | LDAP / Active Directory Sync                  | Sync users, groups, and role assignments from LDAP/AD on configurable schedule  | `enhancement`, `profile`, `security`           | No  | No       | #2446  |
 | 6.4 | SCIM 2.0 Provisioning                         | Implement SCIM 2.0 API for automated user provisioning/deprovisioning           | `enhancement`, `profile`, `security`, `rest`   | No  | No       | #2447  |
 | 6.5 | Mandatory MFA Enforcement (Tenant Policy)     | Tenant-wide policy requiring all users to enroll 2FA within N days              | `enhancement`, `profile`, `security`           | No  | Yes      | #2448  |
@@ -230,7 +230,7 @@ Part of Epic: Security Settings (#2410)
 
 #### 6.4 — SCIM 2.0 Provisioning
 
-Implement the SCIM 2.0 REST API so enterprise IdPs (Okta, Azure AD, etc.) can automatically provision, update, and deprovision Objectified users without manual admin intervention. Support: User create/read/update/delete, Group create/read/update/delete, and the `/ServiceProviderConfig` discovery endpoint.
+Implement the SCIM 2.0 REST API so enterprise IdPs (Okta, Azure AD, etc.) can automatically provision, update, and deprovision Apiome users without manual admin intervention. Support: User create/read/update/delete, Group create/read/update/delete, and the `/ServiceProviderConfig` discovery endpoint.
 
 **OpenAPI Endpoints (SCIM 2.0 standard paths):**
 ```
@@ -251,7 +251,7 @@ DELETE /scim/v2/Groups/{id}           → 204
 **Acceptance Criteria:**
 - Passes the Okta SCIM 2.0 integration test suite
 - User deprovisioning suspends the user account (does not delete data)
-- Group membership changes map to Objectified team membership
+- Group membership changes map to Apiome team membership
 - SCIM bearer token separate from regular API keys; rotatable independently
 - All SCIM operations logged in the audit trail
 

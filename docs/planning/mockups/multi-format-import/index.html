@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Multi-Format Import Catalog — objectified-ui mockup</title>
+<title>Multi-Format Import Catalog — apiome-ui mockup</title>
 <!--
-  Multi-Format Import Catalog — design mockup for the objectified-ui "Catalog" screen.
+  Multi-Format Import Catalog — design mockup for the apiome-ui "Catalog" screen.
   Purpose: the catalog surface for OpenAPI-worthy, NON-OpenAPI imports (gRPC, GraphQL,
   AsyncAPI, OData, SOAP/WSDL, Avro, RAML, Smithy, TypeSpec, API Blueprint, …). Each catalog
   entry carries the imported artifact name, its A-F lint grade, and a format PILL; clicking an
@@ -14,7 +14,7 @@
   Convert-to-OpenAPI + fidelity-preview flow.
   Roadmap: docs/ROADMAP_MULTI_FORMAT_IMPORT.md — MFI-EPIC-23 (catalog screen) + MFI-EPIC-22
   (convert / fidelity preview). Sample data is illustrative. Not production code.
-  Design tokens mirror objectified-ui (brand indigo #6366f1, slate neutrals, Aptos type,
+  Design tokens mirror apiome-ui (brand indigo #6366f1, slate neutrals, Aptos type,
   6/8/12/16px radii). Pills/orbs/tones mirror the real FormatPill/ProtocolPill/SourceBadge +
   quality-orb components.
 -->
@@ -346,7 +346,7 @@
   <aside class="rail">
     <div class="brand">
       <div class="logo">O</div>
-      <div><b>Objectified</b><small>ADE</small></div>
+      <div><b>Apiome</b><small>ADE</small></div>
     </div>
     <nav>
       <div class="sect">Dashboard</div>
@@ -686,7 +686,7 @@ const ITEMS = [
    src:{kind:'url', label:'api.acme.io/graph/schema.graphql'},
    summary:{services:1, operations:14, types:23, channels:3},
    summaryNote:'operations = 8 queries · 4 mutations · 2 subscriptions',
-   tools:[['graphql','16.9.0'],['@objectified/gql-normalize','1.4.0']],
+   tools:[['graphql','16.9.0'],['@apiome/gql-normalize','1.4.0']],
    job:'imp_9f21c', fp:'sha256:1b9a…c7', routing:'GraphQL → OpenAPI-worthy, non-publishable → Catalog',
    lang:'graphql',
    parsed:[
@@ -737,7 +737,7 @@ const ITEMS = [
    src:{kind:'url', label:'api.acme.io/fleet/telemetry.desc'},
    summary:{services:2, operations:7, types:11, channels:0},
    summaryNote:'2 services · 7 RPCs (2 server-streaming)',
-   tools:[['buf','1.32.0'],['protobuf','25.3'],['@objectified/proto-normalize','1.1.0']],
+   tools:[['buf','1.32.0'],['protobuf','25.3'],['@apiome/proto-normalize','1.1.0']],
    job:'imp_7a03d', fp:'sha256:44e1…9a', routing:'gRPC → OpenAPI-worthy, non-publishable → Catalog',
    lang:'protobuf',
    parsed:[
@@ -783,7 +783,7 @@ const ITEMS = [
    src:{kind:'file', label:'payments-asyncapi.yaml'},
    summary:{services:1, operations:6, types:9, channels:4},
    summaryNote:'4 channels · 6 operations (3 send · 3 receive)',
-   tools:[['@asyncapi/parser','3.1.0'],['@objectified/async-normalize','1.0.0']],
+   tools:[['@asyncapi/parser','3.1.0'],['@apiome/async-normalize','1.0.0']],
    job:'imp_5c88e', fp:'sha256:9dd2…41', routing:'AsyncAPI → OpenAPI-worthy, non-publishable → Catalog',
    lang:'yaml',
    parsed:[
@@ -830,7 +830,7 @@ const ITEMS = [
    src:{kind:'url', label:'services.odata.org/V4/Northwind/$metadata'},
    summary:{services:1, operations:34, types:26, channels:0},
    summaryNote:'11 entity sets · 34 CRUD operations · 3 functions',
-   tools:[['@objectified/odata-normalize','1.2.0']],
+   tools:[['@apiome/odata-normalize','1.2.0']],
    job:'imp_2b77f', fp:'sha256:77aa…0c', routing:'OData → OpenAPI-worthy, non-publishable → Catalog',
    lang:'xml',
    parsed:[
@@ -871,7 +871,7 @@ const ITEMS = [
    src:{kind:'url', label:'billing.internal/BillingService?wsdl'},
    summary:{services:1, operations:9, types:18, channels:0},
    summaryNote:'1 port type · 9 operations · document/literal',
-   tools:[['@objectified/wsdl-normalize','0.9.0'],['libxml2','2.12.6']],
+   tools:[['@apiome/wsdl-normalize','0.9.0'],['libxml2','2.12.6']],
    job:'imp_1e44a', fp:'sha256:c0b3…88', routing:'WSDL → OpenAPI-worthy, non-publishable → Catalog',
    lang:'xml',
    parsed:[
@@ -913,7 +913,7 @@ const ITEMS = [
    src:{kind:'file', label:'user-profile-value.avsc'},
    summary:{services:0, operations:0, types:4, channels:0},
    summaryNote:'schemas_only · 1 record + 3 nested types', schemasOnly:true,
-   tools:[['@objectified/avro-normalize','1.0.0'],['fastavro','1.9.4']],
+   tools:[['@apiome/avro-normalize','1.0.0'],['fastavro','1.9.4']],
    job:'imp_8d12b', fp:'sha256:3f6e…52', routing:'Avro → data-schema (schemas_only), non-publishable → Catalog',
    lang:'json',
    parsed:[
@@ -957,7 +957,7 @@ const ITEMS = [
    src:{kind:'file', label:'coffee.smithy'},
    summary:{services:1, operations:5, types:12, channels:0},
    summaryNote:'1 service · 5 operations · HTTP-bound traits present',
-   tools:[['smithy','1.50.0'],['@objectified/smithy-normalize','0.8.0']],
+   tools:[['smithy','1.50.0'],['@apiome/smithy-normalize','0.8.0']],
    job:'imp_4f90c', fp:'sha256:aa21…3d', routing:'Smithy → OpenAPI-worthy, non-publishable → Catalog',
    lang:'plaintext',
    parsed:[
@@ -1039,7 +1039,7 @@ const ITEMS = [
    src:{kind:'file', label:'polls.apib'},
    summary:{services:1, operations:6, types:5, channels:0},
    summaryNote:'2 resource groups · 6 actions · MSON data structures',
-   tools:[['drafter','5.1.0'],['@objectified/apib-normalize','0.7.0']],
+   tools:[['drafter','5.1.0'],['@apiome/apib-normalize','0.7.0']],
    job:'imp_3a55d', fp:'sha256:e8f0…19', routing:'API Blueprint → OpenAPI-worthy, non-publishable → Catalog',
    lang:'markdown',
    parsed:[
@@ -1078,7 +1078,7 @@ const ITEMS = [
    src:{kind:'file', label:'weather.raml'},
    summary:{services:1, operations:5, types:8, channels:0},
    summaryNote:'3 resources · 5 methods · RAML types + traits',
-   tools:[['amf','5.4.0'],['@objectified/raml-normalize','0.7.0']],
+   tools:[['amf','5.4.0'],['@apiome/raml-normalize','0.7.0']],
    job:'imp_0c19a', fp:'sha256:5b7d…a4', routing:'RAML → OpenAPI-worthy, non-publishable → Catalog',
    lang:'yaml',
    parsed:[

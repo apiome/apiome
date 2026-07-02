@@ -1,4 +1,4 @@
-# Objectified: Diff (Schema Comparison) - Feature Roadmap
+# Apiome: Diff (Schema Comparison) - Feature Roadmap
 
 > Advanced schema comparison and migration planning for complex schema evolution scenarios. Diff provides visual side-by-side comparison, automated breaking change detection, consumer impact analysis, migration script generation, and cross-project schema archaeology—enabling teams to evolve schemas confidently and understand the full history of why changes were made.
 >
@@ -308,7 +308,7 @@ The backend generates the guide via `POST /api/v1/diff/migration-guide` acceptin
 
 #### 3.2 (#1019) — Migration Script Generator
 
-The Migration Script Generator produces executable scripts that transform data from the old schema format to the new one. For database-stored instances (via the Objectified data storage layer), the generator creates SQL migration scripts that update existing records. For API consumers, it generates transformation functions in TypeScript and Python that can be integrated into client code.
+The Migration Script Generator produces executable scripts that transform data from the old schema format to the new one. For database-stored instances (via the Apiome data storage layer), the generator creates SQL migration scripts that update existing records. For API consumers, it generates transformation functions in TypeScript and Python that can be integrated into client code.
 
 The script generator page at `/app/diff/[comparisonId]/scripts` offers script type selection (SQL migration, TypeScript transform, Python transform) via Radix `RadioGroup`. Generated scripts include inline comments explaining each transformation, error handling for edge cases (null values, missing fields), and validation checks ensuring the transformed data matches the target schema. A dry-run option generates the script with a transaction rollback at the end for safe testing.
 
@@ -458,7 +458,7 @@ Backend endpoints include `PUT /api/v1/schemas/{id}/versions/{version}/context` 
 
 #### 4.3 (#1026) — Cross-Project Schema Comparison
 
-Cross-Project Schema Comparison enables comparing schemas from different Objectified projects to identify duplication, inconsistencies, and standardization opportunities. The comparison works across organizational boundaries (for enterprise hub users) and within a single project (comparing different schema classes that might overlap).
+Cross-Project Schema Comparison enables comparing schemas from different Apiome projects to identify duplication, inconsistencies, and standardization opportunities. The comparison works across organizational boundaries (for enterprise hub users) and within a single project (comparing different schema classes that might overlap).
 
 The cross-project comparison page at `/app/diff/cross-project` provides two schema pickers side by side, each allowing selection of a project and schema class. The diff engine produces the same structured result as within-project comparisons but annotates each difference with a "standardization opportunity" flag when the schemas could be unified. A similarity score (0–100%) quantifies how closely the schemas match.
 

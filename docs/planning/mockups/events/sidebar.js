@@ -67,7 +67,7 @@
   if (host) {
     host.innerHTML = `
       <div class="mb-5 px-3">
-        <p class="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">Objectified Suite</p>
+        <p class="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">Apiome Suite</p>
         <p class="text-sm font-bold text-slate-800 dark:text-slate-100 mt-0.5">Auditable Event System</p>
         <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">Rules over imported &amp; live data · catalog + Python · parallel branches · immutable audit</p>
       </div>

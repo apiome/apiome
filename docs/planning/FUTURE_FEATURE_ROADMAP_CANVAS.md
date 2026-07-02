@@ -1,4 +1,4 @@
-# Objectified: Canvas & Visual Editor Enhancements - Feature Roadmap
+# Apiome: Canvas & Visual Editor Enhancements - Feature Roadmap
 
 > Advanced canvas and visual editor enhancements that add reusable group templates, layout snapshot management, and granular node visibility controls—enabling teams to organize complex schemas visually and navigate large models efficiently.
 >

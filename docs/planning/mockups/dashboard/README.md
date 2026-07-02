@@ -1,7 +1,7 @@
 # Dashboard / Control Panel mockups
 
 Static, browser-openable design mockups proposing an enterprise-grade
-redesign of the Objectified **control panel** (the surface mounted at
+redesign of the Apiome **control panel** (the surface mounted at
 [`/ade/dashboard`](../../../src/app/ade/dashboard/page.tsx) in the live
 app).
 
@@ -27,7 +27,7 @@ JS.
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/dashboard/index.html
+open apiome-ui/public/mockups/dashboard/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:

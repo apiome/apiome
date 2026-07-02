@@ -13,7 +13,7 @@ They are visual references — no API calls, no auth, no WebSocket, no build ste
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/collaboration/index.html
+open apiome-ui/public/mockups/collaboration/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:
@@ -40,7 +40,7 @@ http://localhost:3000/mockups/collaboration/index.html
 
 ## Design system
 
-Mockups intentionally mirror the live `objectified-ui` shell and align with the
+Mockups intentionally mirror the live `apiome-ui` shell and align with the
 sibling `mockups/academy`, `mockups/analytics`, `mockups/architect`,
 `mockups/automation`, and `mockups/code-gen` sets:
 

@@ -1,0 +1,536 @@
+"use client";
+
+import { useState } from 'react';
+import { Mail, Lock, User, Info, ShieldCheck, Zap, CreditCard, ArrowRight } from 'lucide-react';
+import { signIn } from "next-auth/react";
+import { createSignupRequest } from '../../../lib/db/helper';
+import { useDarkMode } from '../hooks/useDarkMode';
+import { SiGithub, SiGitlab } from "react-icons/si";
+import BetaBackground from './BetaBackground';
+import styles from './login.module.css';
+
+const FORMAT_CHIPS = ['OpenAPI', 'AsyncAPI', 'GraphQL', 'gRPC', 'Avro', 'WSDL', 'TypeSpec', 'OData'];
+
+const inputClasses =
+  "block w-full pl-11 pr-4 py-3 rounded-2xl outline-none transition-all duration-200 " +
+  "border border-slate-200/90 bg-white/70 text-slate-800 placeholder-slate-400 " +
+  "hover:bg-white focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 " +
+  "dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500 " +
+  "dark:hover:bg-white/[0.07] dark:focus:bg-white/[0.07] dark:focus:border-indigo-400/60 dark:focus:ring-indigo-400/15";
+
+const labelClasses = "block text-sm font-medium text-slate-700 mb-1.5 dark:text-slate-300";
+
+const iconWrapClasses = "absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none";
+
+const fieldIconClasses =
+  "text-slate-400 group-focus-within:text-indigo-500 transition-colors dark:text-slate-500 dark:group-focus-within:text-indigo-300";
+
+interface SSOButtonProps {
+  provider: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  isSignUp?: boolean;
+}
+
+const SSOButton: React.FC<SSOButtonProps> = ({ provider, icon, onClick, isSignUp }) => {
+  const label = isSignUp ? `Sign up with ${provider}` : `Continue with ${provider}`;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`${styles.shine} w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-2xl cursor-pointer group
+        border border-slate-200/90 bg-white/70 text-slate-700
+        transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300/80 hover:bg-white hover:shadow-lg hover:shadow-indigo-500/10
+        dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200
+        dark:hover:border-indigo-400/40 dark:hover:bg-white/[0.08] dark:hover:shadow-indigo-950/40`}
+    >
+      <span className="flex-shrink-0 transition-transform duration-200 group-hover:scale-110">{icon}</span>
+      <span className="font-semibold">{label}</span>
+    </button>
+  );
+};
+
+interface LoginClientProps {
+  error?: string;
+}
+
+const LoginClient: React.FC<LoginClientProps> = ({ error }) => {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [payload, setPayload] = useState<Record<string, string>>({
+    email: '',
+    password: '',
+  });
+  const [signInEnabled, setSignInEnabled] = useState(true);
+  const [signupMessage, setSignupMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+  const [isSSOLoading, setIsSSOLoading] = useState(false);
+  const isDark = useDarkMode();
+
+  // Handle OAuth error from URL
+  const getErrorMessage = (errorCode?: string): { type: 'error' | 'info'; text: string } | null => {
+    if (!errorCode) return null;
+
+    if (errorCode === 'AccessDenied') {
+      return {
+        type: 'error',
+        text: 'An issue occurred with the OAuth provider. Your account may not have been set up properly. Please contact support or try a different sign-in method.'
+      };
+    }
+
+    if (errorCode === 'OAuthAccountExists') {
+      return {
+        type: 'info',
+        text: 'An account with this email already exists. Sign in with your password or use "Continue with GitHub/GitLab" without create-account mode.',
+      };
+    }
+
+    if (errorCode === 'OAuthEmailRequired') {
+      return {
+        type: 'error',
+        text: 'Your Git provider did not share an email address. Set your email to public or add a verified email on GitHub/GitLab, then try again.',
+      };
+    }
+
+    if (errorCode === 'OAuthProfileIncomplete') {
+      return {
+        type: 'error',
+        text: 'We could not read your OAuth profile. Please try again or contact support.',
+      };
+    }
+
+    if (errorCode === 'SignupSessionExpired') {
+      return {
+        type: 'error',
+        text: 'Your signup session expired. Please start again from Create account.',
+      };
+    }
+
+    if (errorCode === 'CredentialsSignin') {
+      return {
+        type: 'error',
+        text: 'Your account could not be found or the credentials provided were incorrect. Please check your email and password, or sign up for a new account.'
+      };
+    }
+
+    // Generic error message for other error codes
+    return {
+      type: 'error',
+      text: `Authentication error: ${errorCode}. Please try again or contact support if the issue persists.`
+    };
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSignInEnabled(false);
+    setSignupMessage(null);
+
+    if (isSignUp) {
+      try {
+        const result = await createSignupRequest(
+          payload.name || '',
+          payload.email || '',
+          payload.password || '',
+          payload.signupSource || ''
+        );
+
+        const response = JSON.parse(result);
+
+        if (response.success) {
+          setSignupMessage({type: 'success', text: response.message});
+          // Clear the form
+          setPayload({
+            email: '',
+            password: '',
+            name: '',
+            signupSource: '',
+          });
+        } else if (response.duplicate) {
+          setSignupMessage({type: 'info', text: response.message});
+        } else {
+          setSignupMessage({type: 'error', text: response.error || 'An error occurred during signup.'});
+        }
+      } catch (error) {
+        console.error('Signup error:', error);
+        setSignupMessage({type: 'error', text: 'An unexpected error occurred. Please try again.'});
+      } finally {
+        setSignInEnabled(true);
+      }
+    } else {
+      signIn('credentials', {
+        payload: JSON.stringify(payload),
+        callbackUrl: '/ade',
+        redirect: true,
+      }).finally(() => setSignInEnabled(true));
+    }
+  };
+
+  const handleSSOLogin = async (provider: string) => {
+    setIsSSOLoading(true);
+    try {
+      if (isSignUp) {
+        const res = await fetch(`/api/auth/signup-intent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider }),
+        });
+        if (!res.ok) {
+          setSignupMessage({ type: 'error', text: 'Could not start sign-up. Please try again.' });
+          setIsSSOLoading(false);
+          return;
+        }
+      }
+      await signIn(provider, { callbackUrl: '/ade' });
+    } catch (error) {
+      console.error('SSO sign-in error:', error);
+      setIsSSOLoading(false);
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPayload({
+      ...payload,
+      [e.target.name]: e.target.value,
+    });
+  }
+
+  const isBetaMode = process.env.NEXT_PUBLIC_BETA_MODE;
+  const message = signupMessage || getErrorMessage(error);
+
+  return (
+    <div className="min-h-screen relative overflow-hidden bg-slate-50 dark:bg-slate-950">
+      {/* Aurora field */}
+      <div aria-hidden="true" className="absolute inset-0">
+        <div
+          className={`${styles.blob} ${styles.blobA} w-[42rem] h-[42rem] -top-56 -left-40
+            bg-gradient-to-br from-indigo-300/50 to-violet-300/40
+            dark:from-indigo-600/25 dark:to-violet-600/20`}
+        />
+        <div
+          className={`${styles.blob} ${styles.blobB} w-[38rem] h-[38rem] -bottom-48 -right-32
+            bg-gradient-to-br from-sky-300/45 to-cyan-200/40
+            dark:from-blue-700/20 dark:to-cyan-600/15`}
+        />
+        <div
+          className={`${styles.blob} ${styles.blobC} w-[28rem] h-[28rem] top-1/3 left-1/2 -translate-x-1/2
+            bg-gradient-to-br from-fuchsia-300/30 to-pink-200/30
+            dark:from-fuchsia-700/15 dark:to-pink-700/15`}
+        />
+        <div className={`${styles.grid} text-slate-900/[0.05] dark:text-white/[0.05]`} />
+        <div className={styles.grain} />
+      </div>
+
+      {/* Beta Background */}
+      {isBetaMode && <BetaBackground />}
+
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center gap-16 px-6 py-12 lg:grid lg:grid-cols-[1.05fr_1fr]">
+        {/* Brand hero (desktop) */}
+        <div className={`${styles.enterSlow} hidden lg:flex flex-col justify-center select-none`}>
+          <img
+            src={isDark ? "/Apiome-05.png" : "/Apiome-02.png"}
+            alt="Apiome Logo"
+            className="mb-10 self-start"
+            style={{ height: "48px", width: "auto", objectFit: "contain" }}
+          />
+
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-indigo-600/80 dark:text-indigo-300/80">
+            The API design environment
+          </p>
+
+          <h2 className="text-5xl xl:text-6xl font-bold tracking-tight leading-[1.05] text-slate-900 dark:text-slate-50">
+            Design. Version.
+            <br />
+            <span
+              className={`${styles.shimmer} bg-gradient-to-r from-indigo-600 via-fuchsia-500 to-indigo-600 bg-clip-text text-transparent
+                dark:from-indigo-300 dark:via-fuchsia-300 dark:to-indigo-300`}
+            >
+              Publish your APIs.
+            </span>
+          </h2>
+
+          <p className="mt-6 max-w-md text-base leading-relaxed text-slate-600 dark:text-slate-400">
+            Model your API once, then import, lint, diff, and export across every
+            format your consumers speak — with honest fidelity at each step.
+          </p>
+
+          <div className="mt-10 flex max-w-md flex-wrap gap-2.5">
+            {FORMAT_CHIPS.map((chip, i) => (
+              <span
+                key={chip}
+                className={`${i % 2 === 0 ? styles.float : styles.floatDelayed} rounded-full px-3.5 py-1.5 text-xs font-semibold
+                  border border-slate-200/90 bg-white/70 text-slate-600 backdrop-blur-sm
+                  dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-300`}
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Auth card */}
+        <div className={`${styles.enter} w-full max-w-md lg:justify-self-end`}>
+          <div
+            className="rounded-[28px] p-px shadow-2xl shadow-indigo-500/10 dark:shadow-black/50
+              bg-gradient-to-b from-white/90 via-slate-200/70 to-slate-200/40
+              dark:from-white/15 dark:via-white/[0.07] dark:to-transparent"
+          >
+            <div className="rounded-[27px] bg-white/80 p-8 backdrop-blur-2xl dark:bg-slate-900/70">
+              {/* Logo (mobile — hero carries it on desktop) */}
+              <div className="mb-8 flex justify-center lg:hidden">
+                <div className="relative">
+                  <div className="absolute inset-0 scale-150 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20 blur-xl" />
+                  <img
+                    src={isDark ? "/Apiome-05.png" : "/Apiome-02.png"}
+                    alt="Apiome Logo"
+                    className="relative"
+                    style={{ height: "52px", width: "auto", objectFit: "contain" }}
+                  />
+                </div>
+              </div>
+
+              {/* Header */}
+              <div className="mb-8 text-center lg:text-left">
+                <h1 className="mb-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+                  {isSignUp ? 'Create your account' : 'Welcome back'}
+                </h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isSignUp
+                    ? 'Join thousands of developers building with Apiome'
+                    : 'Sign in to continue to your workspace'}
+                </p>
+                {!isSignUp && (
+                  <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                    New to Apiome?{' '}
+                    <a
+                      href="https://youtu.be/GQBgza8eYoQ"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-indigo-600 transition-colors hover:text-indigo-500 hover:underline dark:text-indigo-300 dark:hover:text-indigo-200"
+                    >
+                      Watch our intro video →
+                    </a>
+                  </p>
+                )}
+              </div>
+
+              {/* Message Display */}
+              {message && (
+                <div
+                  aria-live="polite"
+                  className={`mb-6 rounded-2xl border p-4 backdrop-blur-sm ${
+                    message.type === 'success'
+                      ? 'border-emerald-200 bg-emerald-50/80 text-emerald-800 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-200'
+                      : message.type === 'info'
+                        ? 'border-blue-200 bg-blue-50/80 text-blue-800 dark:border-blue-700/60 dark:bg-blue-900/30 dark:text-blue-200'
+                        : 'border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200'
+                  }`}
+                >
+                  <p className="text-sm font-medium">{message.text}</p>
+                </div>
+              )}
+
+              {/* SSO first — the primary path */}
+              {isSSOLoading ? (
+                <div className="py-8 text-center">
+                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  </div>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">Connecting…</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Redirecting to authentication provider</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <SSOButton
+                    provider="GitHub"
+                    icon={<SiGithub size={20} className="text-slate-800 dark:text-slate-100" />}
+                    onClick={() => handleSSOLogin('github')}
+                    isSignUp={isSignUp}
+                  />
+                  <SSOButton
+                    provider="GitLab"
+                    icon={<SiGitlab size={20} className="text-orange-600" />}
+                    onClick={() => handleSSOLogin('gitlab')}
+                    isSignUp={isSignUp}
+                  />
+                </div>
+              )}
+
+              {/* Divider */}
+              <div className="relative my-8">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200 dark:border-white/10" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 font-medium text-slate-400 bg-white/80 dark:bg-slate-900/70 dark:text-slate-500 rounded-full">
+                    or use your email
+                  </span>
+                </div>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {isSignUp && (
+                  <div>
+                    <label htmlFor="name" className={labelClasses}>
+                      Full Name
+                    </label>
+                    <div className="group relative">
+                      <div className={iconWrapClasses}>
+                        <User size={18} className={fieldIconClasses} />
+                      </div>
+                      <input
+                        type="text"
+                        name={'name'}
+                        value={payload['name']}
+                        onChange={handleChange}
+                        required
+                        className={inputClasses}
+                        placeholder="John Doe"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="email" className={labelClasses}>
+                    Email Address
+                  </label>
+                  <div className="group relative">
+                    <div className={iconWrapClasses}>
+                      <Mail size={18} className={fieldIconClasses} />
+                    </div>
+                    <input
+                      type="email"
+                      name={'email'}
+                      value={payload['email']}
+                      onChange={handleChange}
+                      required
+                      className={inputClasses}
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="password" className={labelClasses}>
+                    Password
+                  </label>
+                  <div className="group relative">
+                    <div className={iconWrapClasses}>
+                      <Lock size={18} className={fieldIconClasses} />
+                    </div>
+                    <input
+                      type="password"
+                      name={'password'}
+                      value={payload['password']}
+                      onChange={handleChange}
+                      required
+                      className={inputClasses}
+                      placeholder="••••••••"
+                    />
+                  </div>
+                </div>
+
+                {isSignUp && (
+                  <div>
+                    <label htmlFor="signupSource" className={labelClasses}>
+                      How did you hear about us?
+                      <span className="ml-1 font-normal text-slate-400 dark:text-slate-500">(optional)</span>
+                    </label>
+                    <div className="group relative">
+                      <div className={iconWrapClasses}>
+                        <Info size={18} className={fieldIconClasses} />
+                      </div>
+                      <input
+                        type="text"
+                        name={'signupSource'}
+                        value={payload['signupSource'] || ''}
+                        onChange={handleChange}
+                        className={inputClasses}
+                        placeholder="e.g., Google, Twitter, a friend"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {!isSignUp && (
+                  <div className="flex items-center justify-end">
+                    <a
+                      href="#"
+                      className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200"
+                    >
+                      Forgot your password?
+                    </a>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={!signInEnabled}
+                  className={`${styles.shine} group w-full cursor-pointer rounded-2xl py-3.5 font-semibold text-white
+                    bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-[length:150%_auto]
+                    shadow-lg shadow-indigo-500/25 transition-all duration-300
+                    hover:bg-right hover:shadow-xl hover:shadow-indigo-500/40 hover:-translate-y-0.5
+                    disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0`}
+                >
+                  <span className="inline-flex items-center justify-center gap-2">
+                    {isSignUp ? 'Create Account' : 'Sign In'}
+                    <ArrowRight size={17} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+                  </span>
+                </button>
+              </form>
+
+              {/* Toggle Sign Up/Sign In */}
+              <div className="mt-8 border-t border-slate-100 pt-6 text-center dark:border-white/10">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+                  <button
+                    type="button"
+                    disabled={!signInEnabled}
+                    onClick={() => {
+                      setIsSignUp(!isSignUp);
+                      setSignupMessage(null);
+                    }}
+                    className="cursor-pointer font-semibold text-indigo-600 transition-colors hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200"
+                  >
+                    {isSignUp ? 'Sign In' : 'Create one'}
+                  </button>
+                </p>
+              </div>
+
+              {/* Trust Badges */}
+              {!isSignUp && (
+                <div className="mt-6 flex items-center justify-center gap-6 text-xs text-slate-400 dark:text-slate-500">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck size={15} className="text-emerald-500" />
+                    <span>Secure</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Zap size={15} className="text-emerald-500" />
+                    <span>Free to start</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <CreditCard size={15} className="text-emerald-500" />
+                    <span>No credit card</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <p className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">
+            By signing in, you agree to our{' '}
+            <a href="#" className="text-indigo-500 transition-colors hover:text-indigo-600 dark:text-indigo-300 dark:hover:text-indigo-200">
+              Terms of Service
+            </a>{' '}
+            and{' '}
+            <a href="#" className="text-indigo-500 transition-colors hover:text-indigo-600 dark:text-indigo-300 dark:hover:text-indigo-200">
+              Privacy Policy
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LoginClient;

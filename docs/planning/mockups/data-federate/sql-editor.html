@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Objectified Data Federate — SQL Editor ★</title>
+  <title>Apiome Data Federate — SQL Editor ★</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' };</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -60,7 +60,7 @@
         <div class="w-7 h-7 rounded-md bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
           <i data-lucide="layers" class="w-4 h-4 text-white"></i>
         </div>
-        <span class="text-sm font-semibold text-gray-100">Objectified</span>
+        <span class="text-sm font-semibold text-gray-100">Apiome</span>
       </a>
       <span class="text-xs text-gray-600">/</span>
       <span class="text-sm font-medium text-purple-400">Data Federate</span>
@@ -167,8 +167,8 @@
               <span class="text-gray-500">Snowflake</span>
             </div>
             <div class="flex items-center justify-between text-[11px]">
-              <span class="text-emerald-400 mono">objectified</span>
-              <span class="text-gray-500">objectified-db</span>
+              <span class="text-emerald-400 mono">apiome</span>
+              <span class="text-gray-500">apiome-db</span>
             </div>
           </div>
         </div>
@@ -200,7 +200,7 @@
             <div class="flex items-start gap-2">
               <span class="pd-badge pd-partial mt-0.5">PARTIAL</span>
               <div>
-                <div class="text-gray-300 font-medium">LEFT JOIN objectified</div>
+                <div class="text-gray-300 font-medium">LEFT JOIN apiome</div>
                 <div class="text-gray-600 mono">predicate pushed; join local</div>
               </div>
             </div>
@@ -219,7 +219,7 @@
               <div class="w-full h-1 bg-gray-800 rounded-full"><div class="h-1 bg-cyan-500 rounded-full" style="width:16%"></div></div>
             </div>
             <div>
-              <div class="flex justify-between text-[10px] mb-0.5"><span class="text-emerald-400 mono">objectified.User</span><span class="text-gray-500">3,241 rows</span></div>
+              <div class="flex justify-between text-[10px] mb-0.5"><span class="text-emerald-400 mono">apiome.User</span><span class="text-gray-500">3,241 rows</span></div>
               <div class="w-full h-1 bg-gray-800 rounded-full"><div class="h-1 bg-emerald-500 rounded-full" style="width:4%"></div></div>
             </div>
           </div>
@@ -272,7 +272,7 @@
       ]
     },
     {
-      name: 'objectified', color: '#a78bfa', icon: '◎', engine: 'objectified-db',
+      name: 'apiome', color: '#a78bfa', icon: '◎', engine: 'apiome-db',
       schemas: [
         { name: 'default', tables: ['User', 'Order', 'Session', 'Product', 'Contact'] },
       ]
@@ -280,7 +280,7 @@
   ];
 
   const tree = document.getElementById('catalogTree');
-  const expanded = new Set(['pg_prod', 'pg_prod/public', 'snowflake_dw', 'snowflake_dw/sales', 'objectified', 'objectified/default']);
+  const expanded = new Set(['pg_prod', 'pg_prod/public', 'snowflake_dw', 'snowflake_dw/sales', 'apiome', 'apiome/default']);
 
   function buildTree() {
     tree.innerHTML = '';
@@ -352,7 +352,7 @@
     ['kw', '    ON'],
     ['col', '    o.id = t.order_id'],
     ['kw', 'LEFT JOIN'],
-    ['tbl', '    objectified.default.User'],
+    ['tbl', '    apiome.default.User'],
     ['col', '    u'],
     ['kw', '    ON'],
     ['col', '    o.customer_id = u.id'],
@@ -395,7 +395,7 @@
     { text:'    snowflake_dw.sales.transactions    t', parts:[{cls:'tbl',t:'    snowflake_dw.sales.transactions'},{cls:'col',t:'    t'}] },
     { text:'    ON o.id = t.order_id', parts:[{cls:'kw',t:'    ON '},{cls:'col',t:'o.id = t.order_id'}] },
     { cls:'kw',  text:'LEFT JOIN' },
-    { text:'    objectified.default.User    u', parts:[{cls:'tbl',t:'    objectified.default.User'},{cls:'col',t:'    u'}] },
+    { text:'    apiome.default.User    u', parts:[{cls:'tbl',t:'    apiome.default.User'},{cls:'col',t:'    u'}] },
     { text:'    ON o.customer_id = u.id',     parts:[{cls:'kw',t:'    ON '},{cls:'col',t:'o.customer_id = u.id'}] },
     { cls:'kw',  text:'WHERE' },
     { text:"    o.created_at > '2026-01-01'", parts:[{cls:'col',t:'    o.created_at '},{cls:'op',t:'> '},{cls:'str',t:"'2026-01-01'"}] },
@@ -461,7 +461,7 @@
       <span class="pd-badge pd-yes">pg_prod — WHERE + ORDER pushed</span>
       <span class="pd-badge pd-yes">snowflake_dw — SUM aggregate pushed</span>
       <span class="pd-badge pd-no">cross-source JOIN — DataFusion local</span>
-      <span class="pd-badge pd-partial">objectified — predicate pushed, join local</span>`;
+      <span class="pd-badge pd-partial">apiome — predicate pushed, join local</span>`;
 
     document.getElementById('statusBadge').textContent = '✓ 248ms';
     document.getElementById('statusBadge').className = 'px-2 py-0.5 rounded bg-emerald-900/40 text-emerald-400 border border-emerald-700/30';

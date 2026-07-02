@@ -1,6 +1,6 @@
-# Objectified Shield · Mockup pack
+# Apiome Shield · Mockup pack
 
-Static HTML/Tailwind mockups for the **Shield** product — Objectified's API
+Static HTML/Tailwind mockups for the **Shield** product — Apiome's API
 security & runtime protection plane. Driven by the feature definitions in
 [`docs/FUTURE_FEATURE_ROADMAP_SHIELD.md`](../../../../docs/FUTURE_FEATURE_ROADMAP_SHIELD.md).
 
@@ -49,7 +49,7 @@ Open `index.html` for a clickable map of all 16 surfaces.
 
 ## Design language
 
-The Shield surfaces inherit the Objectified shell from the other mockup packs
+The Shield surfaces inherit the Apiome shell from the other mockup packs
 (`/connect`, `/automation`, `/architect`, …) but layer on a few Shield-specific
 conventions so you can tell them apart at a glance:
 
@@ -107,7 +107,7 @@ Severity, status, and decision pills are consistent across all pages:
   directory:
 
   ```bash
-  cd objectified-ui/public/mockups/data-shield
+  cd apiome-ui/public/mockups/data-shield
   python3 -m http.server 8000
   # → http://localhost:8000/index.html
   ```

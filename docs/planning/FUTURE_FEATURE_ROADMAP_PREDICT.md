@@ -1,4 +1,4 @@
-# Objectified: Predict - Feature Roadmap
+# Apiome: Predict - Feature Roadmap
 
 > Predictive analytics and recommendation engine for schema design, leveraging machine learning on anonymized usage patterns across the platform. Predict transforms raw telemetry into actionable intelligence — helping schema designers make better decisions, anticipate problems, and stay ahead of industry trends.
 >
@@ -39,11 +39,11 @@
 
 #### 1.1 (#1224) — Usage Telemetry Collection
 
-The telemetry collector instruments key schema operations across the Objectified platform to emit structured events that feed the ML pipeline. Every schema creation, property addition, relationship definition, validation rule change, and API endpoint configuration generates a telemetry event.
+The telemetry collector instruments key schema operations across the Apiome platform to emit structured events that feed the ML pipeline. Every schema creation, property addition, relationship definition, validation rule change, and API endpoint configuration generates a telemetry event.
 
 Events follow a standardized schema: `event_type`, `timestamp`, `tenant_id` (to be anonymized), `project_id` (to be anonymized), `schema_class_name`, `property_names`, `property_types`, `relationship_types`, `validation_rules_used`, and `session_context` (UI vs API, duration). Events are written to a dedicated telemetry topic (Kafka or PostgreSQL-backed queue) for downstream processing.
 
-The collector is implemented as middleware and service-layer hooks in the existing Objectified backend. It adds minimal latency (< 5ms per event) by writing asynchronously. Events are batched and flushed every 5 seconds or when the batch reaches 100 events. A circuit breaker disables collection if the telemetry backend is unreachable, ensuring zero impact on core platform operations.
+The collector is implemented as middleware and service-layer hooks in the existing Apiome backend. It adds minimal latency (< 5ms per event) by writing asynchronously. Events are batched and flushed every 5 seconds or when the batch reaches 100 events. A circuit breaker disables collection if the telemetry backend is unreachable, ensuring zero impact on core platform operations.
 
 The telemetry schema is versioned. Schema changes to the telemetry format are backward-compatible and handled by the feature extraction pipeline (1.3).
 

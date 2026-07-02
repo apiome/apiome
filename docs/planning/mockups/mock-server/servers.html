@@ -36,9 +36,9 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
           <label class="text-xs font-semibold uppercase tracking-wider text-gray-400">Base URL</label>
-          <div class="flex items-center gap-2 mt-1.5 mb-4"><input readonly value="https://mock.objectified.dev/m/acme-payments-x9k2" class="flex-1 mono text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900" /><button class="px-2.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button></div>
+          <div class="flex items-center gap-2 mt-1.5 mb-4"><input readonly value="https://mock.apiome.app/m/acme-payments-x9k2" class="flex-1 mono text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900" /><button class="px-2.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button></div>
           <label class="text-xs font-semibold uppercase tracking-wider text-gray-400">curl</label>
-          <pre class="mono text-[11px] leading-relaxed mt-1.5 p-3 rounded-lg bg-gray-900 text-gray-100 overflow-x-auto">curl https://mock.objectified.dev/m/\
+          <pre class="mono text-[11px] leading-relaxed mt-1.5 p-3 rounded-lg bg-gray-900 text-gray-100 overflow-x-auto">curl https://mock.apiome.app/m/\
   acme-payments-x9k2/v1/invoices \
   -H "Accept: application/json"</pre>
         </div>
@@ -63,9 +63,9 @@
 
   <script>
     const servers=[
-      {name:'payments@2.3.0',url:'mock.objectified.dev/m/acme-payments-x9k2',status:'running',ops:24,reqs:'18.2k',p95:'42ms',expiry:'persistent'},
-      {name:'billing@1.4.0',url:'mock.objectified.dev/m/acme-billing-q3m1',status:'running',ops:11,reqs:'3.1k',p95:'38ms',expiry:'persistent'},
-      {name:'catalog@0.9.0-draft',url:'mock.objectified.dev/m/acme-catalog-z7p4',status:'expiring',ops:8,reqs:'412',p95:'51ms',expiry:'expires in 5h'},
+      {name:'payments@2.3.0',url:'mock.apiome.app/m/acme-payments-x9k2',status:'running',ops:24,reqs:'18.2k',p95:'42ms',expiry:'persistent'},
+      {name:'billing@1.4.0',url:'mock.apiome.app/m/acme-billing-q3m1',status:'running',ops:11,reqs:'3.1k',p95:'38ms',expiry:'persistent'},
+      {name:'catalog@0.9.0-draft',url:'mock.apiome.app/m/acme-catalog-z7p4',status:'expiring',ops:8,reqs:'412',p95:'51ms',expiry:'expires in 5h'},
     ];
     const dot={running:'bg-emerald-500',expiring:'bg-amber-500'};
     document.getElementById('list').innerHTML=servers.map(s=>`

@@ -1,6 +1,6 @@
-# Objectified: Validation (Violation Detection & Compliance) - Feature Roadmap
+# Apiome: Validation (Violation Detection & Compliance) - Feature Roadmap
 
-> Real-time schema violation detection, auto-remediation, and compliance engine that continuously validates Objectified schemas against configurable rule sets, industry standards, and organizational policies—surfacing issues inline on the canvas and generating auditable compliance reports.
+> Real-time schema violation detection, auto-remediation, and compliance engine that continuously validates Apiome schemas against configurable rule sets, industry standards, and organizational policies—surfacing issues inline on the canvas and generating auditable compliance reports.
 >
 > **Revenue Model**: Compliance tier pricing, enterprise compliance packages
 >
@@ -41,7 +41,7 @@
 
 #### 1.1 (#1322) — Real-Time Violation Scanner
 
-The violation scanner is the core engine of the Validation product. It continuously evaluates all classes, properties, and relationships on the Objectified canvas against a set of active rule definitions, producing a stream of violation records that feed the panel (1.2), inline indicators (1.3), and compliance scoring (3.2). The engine must run efficiently enough to re-evaluate after every canvas edit without introducing perceptible latency.
+The violation scanner is the core engine of the Validation product. It continuously evaluates all classes, properties, and relationships on the Apiome canvas against a set of active rule definitions, producing a stream of violation records that feed the panel (1.2), inline indicators (1.3), and compliance scoring (3.2). The engine must run efficiently enough to re-evaluate after every canvas edit without introducing perceptible latency.
 
 Rules are stored in PostgreSQL in a `validation_rules` table with columns for `id`, `rule_set_id`, `name`, `description`, `severity` (critical, warning, info), `target_type` (class, property, relationship), `condition` (JSONB expression), and `enabled`. The scanner loads active rules into Redis on startup and watches for changes. When a canvas edit occurs, the scanner identifies which rules are affected by the changed nodes and evaluates only those rules—a targeted re-evaluation rather than a full scan. A full scan runs on canvas load and periodically (configurable, default every 5 minutes) to catch drift.
 
@@ -156,7 +156,7 @@ A suppression audit trail records all suppression lifecycle events (created, app
 
 #### 1.5 (#1346) — Violation Export & Notifications
 
-Teams integrating Objectified into their development workflow need violations accessible outside the canvas UI. This issue delivers export and notification capabilities: on-demand export of violations in CSV and JSON formats, and configurable alert notifications when violations exceed severity thresholds.
+Teams integrating Apiome into their development workflow need violations accessible outside the canvas UI. This issue delivers export and notification capabilities: on-demand export of violations in CSV and JSON formats, and configurable alert notifications when violations exceed severity thresholds.
 
 The export function is accessible from the violation panel header via an "Export" button that opens a Radix `Dialog` with format selection (Radix `RadioGroup`: CSV or JSON), scope selection (all violations, current filter, or a specific rule set), and an option to include suppressed violations. The REST endpoint `GET /api/v1/validation/schemas/{schemaId}/violations/export?format={csv|json}` generates the file with a `Content-Disposition` header for browser download. CSV exports include columns for rule name, severity, node type, node name, current value, expected value, and detected timestamp. JSON exports use the same structure as the list API response.
 

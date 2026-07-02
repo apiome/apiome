@@ -1,0 +1,46 @@
+{
+  "name": "apiome-browse",
+  "version": "0.3.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "lint": "eslint",
+    "docker:build": "./build-docker.sh",
+    "docker:build:fast": "./build-docker.sh --no-test",
+    "docker:build:package": "./build-docker.sh --package",
+    "docker:build:push": "./build-docker.sh --push",
+    "docker:run": "docker rm -f apiome-browse 2>/dev/null || true; docker run -d -p 8000:3000 --env-file .env --name apiome-browse --restart unless-stopped apiome-browse:latest",
+    "docker:stop": "docker stop apiome-browse",
+    "docker:start": "docker start apiome-browse",
+    "docker:restart": "docker restart apiome-browse",
+    "docker:logs": "docker logs -f apiome-browse",
+    "docker:remove": "docker stop apiome-browse 2>/dev/null || true && docker rm apiome-browse"
+  },
+  "dependencies": {
+    "@dagrejs/dagre": "^1.0.4",
+    "@monaco-editor/react": "^4.7.0",
+    "@types/pg": "^8.20.0",
+    "@xyflow/react": "^12.10.2",
+    "diff": "^9.0.0",
+    "monaco-editor": "^0.55.1",
+    "next": "^16.2.3",
+    "pg": "^8.20.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "yaml": "^2.8.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.3",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

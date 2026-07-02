@@ -1,4 +1,4 @@
-# Objectified: Schema & Property Templates - Feature Roadmap
+# Apiome: Schema & Property Templates - Feature Roadmap
 
 > A layered template system operating at three levels: Group Templates (pre-defined class clusters), Schema Templates (drag-and-drop schema snippets for the canvas), and Property Templates (shared, reusable property definitions). Together they accelerate schema creation and enforce consistency across projects and teams.
 >

@@ -1,4 +1,4 @@
-# Objectified: Developer Experience (DevEx) - Feature Roadmap
+# Apiome: Developer Experience (DevEx) - Feature Roadmap
 
 > Developer-facing tools and workflows that accelerate schema design—auto-generated documentation beyond Swagger, schema changelogs with breaking-change detection, IDE extensions for VS Code and JetBrains, and advanced Git workflows for branch-per-version and PR-based schema review.
 >
@@ -39,9 +39,9 @@
 
 #### 1.1 (#1323) — ReDoc Documentation Renderer
 
-ReDoc is the most popular open-source alternative to Swagger UI for rendering OpenAPI specifications. This issue integrates ReDoc as a documentation output format, automatically generating interactive three-panel documentation pages from published Objectified schemas. Unlike the existing Swagger UI integration (which lives inside Studio), ReDoc documentation is a standalone, publicly shareable artifact that tenants can embed in their own developer portals.
+ReDoc is the most popular open-source alternative to Swagger UI for rendering OpenAPI specifications. This issue integrates ReDoc as a documentation output format, automatically generating interactive three-panel documentation pages from published Apiome schemas. Unlike the existing Swagger UI integration (which lives inside Studio), ReDoc documentation is a standalone, publicly shareable artifact that tenants can embed in their own developer portals.
 
-The rendering pipeline reads a schema capture via `GET /api/v1/schema-captures/{id}` and transforms it into an OpenAPI 3.1 specification enriched with descriptions, examples, and constraints from the Objectified data model. The generated spec is served at `GET /api/v1/docs/{namespaceId}/redoc-spec?version={v}` and the rendered ReDoc page is a NextJS route at `/app/docs/[namespaceId]/redoc`. The page uses ISR with a 60-second revalidation interval so documentation updates automatically when schemas change.
+The rendering pipeline reads a schema capture via `GET /api/v1/schema-captures/{id}` and transforms it into an OpenAPI 3.1 specification enriched with descriptions, examples, and constraints from the Apiome data model. The generated spec is served at `GET /api/v1/docs/{namespaceId}/redoc-spec?version={v}` and the rendered ReDoc page is a NextJS route at `/app/docs/[namespaceId]/redoc`. The page uses ISR with a 60-second revalidation interval so documentation updates automatically when schemas change.
 
 ```
 ┌──────────────┐     ┌───────────────┐     ┌──────────────┐     ┌──────────┐
@@ -55,7 +55,7 @@ The rendering pipeline reads a schema capture via `GET /api/v1/schema-captures/{
        │  constraints        │  descriptions
        ▼                     ▼
  ┌──────────────┐     ┌───────────────┐
- │  Objectified │     │  Tenant       │
+ │  Apiome │     │  Tenant       │
  │  REST API    │     │  Branding     │
  └──────────────┘     └───────────────┘
 ```
@@ -77,7 +77,7 @@ Version selection is handled by a Radix `Select` dropdown at the top of the page
 
 #### 1.2 (#1348) — Slate Documentation Generator
 
-Slate produces the classic three-panel API documentation layout favored by companies like Stripe and Twilio: navigation on the left, prose documentation in the center, and code examples on the right. This issue builds a Slate-compatible documentation generator that transforms Objectified schemas into Slate markdown source files, which are then compiled into a static HTML bundle.
+Slate produces the classic three-panel API documentation layout favored by companies like Stripe and Twilio: navigation on the left, prose documentation in the center, and code examples on the right. This issue builds a Slate-compatible documentation generator that transforms Apiome schemas into Slate markdown source files, which are then compiled into a static HTML bundle.
 
 The generator reads schema captures and produces markdown files following Slate's format conventions: YAML front matter for navigation ordering, heading-based section structure, and fenced code blocks with language tags for multi-language examples. Each schema class becomes a documentation section with subsections for properties, constraints, relationships, and example payloads. Code examples are generated in multiple languages (cURL, JavaScript, Python, Ruby) using request/response shapes derived from the schema.
 
@@ -187,7 +187,7 @@ Pages are organized into a tree structure via a `parent_page_id` field, rendered
 
 Every schema version publish should produce a human-readable changelog describing what changed, why it matters, and who is affected. This issue builds the changelog generation engine that compares two schema captures and produces a structured diff document with entries categorized by change type: added classes, removed classes, modified properties, changed constraints, and updated descriptions.
 
-The engine fetches two schema captures via the Objectified REST API (`GET /api/v1/schema-captures/{id}`) and performs a deep structural comparison. For each detected change, the engine generates a changelog entry with: the change path (e.g., `User.address.zipCode`), the change type (added/removed/modified), the before and after values, and an auto-generated summary sentence. Changes are grouped by class for readability.
+The engine fetches two schema captures via the Apiome REST API (`GET /api/v1/schema-captures/{id}`) and performs a deep structural comparison. For each detected change, the engine generates a changelog entry with: the change path (e.g., `User.address.zipCode`), the change type (added/removed/modified), the before and after values, and an auto-generated summary sentence. Changes are grouped by class for readability.
 
 ```
 ┌──────────────┐     ┌──────────────┐
@@ -327,7 +327,7 @@ Version selection uses two Radix `Select` dropdowns. The diff computation reuses
 | #   | Title | Description | Labels | Parallel |
 |-----|-------|-------------|--------|----------|
 | 3.1 (#1432) | VS Code Extension: Schema Editing & IntelliSense | LSP-powered editing with syntax highlighting, completion, and diagnostics | `enhancement`, `devex`, `mvp`, `ai-generated` | Yes |
-| 3.2 (#1442) | VS Code Extension: Preview Canvas & Cloud Sync | Visual schema preview panel and bidirectional sync with Objectified cloud | `enhancement`, `devex`, `ai-generated` | No |
+| 3.2 (#1442) | VS Code Extension: Preview Canvas & Cloud Sync | Visual schema preview panel and bidirectional sync with Apiome cloud | `enhancement`, `devex`, `ai-generated` | No |
 | 3.3 (#1451) | JetBrains Plugin | IntelliJ, WebStorm, and PyCharm integration with LSP-based schema tooling | `enhancement`, `devex`, `ai-generated` | Yes |
 | 3.4 (#1460) | Vim/Neovim Plugin | Terminal-first schema editing with LSP integration and syntax support | `enhancement`, `devex`, `ai-generated` | Yes |
 
@@ -337,7 +337,7 @@ Version selection uses two Radix `Select` dropdowns. The diff computation reuses
 
 #### 3.1 (#1432) — VS Code Extension: Schema Editing & IntelliSense
 
-The VS Code extension is the primary IDE integration for Objectified, providing schema editing capabilities comparable to TypeScript's language tooling. At its core is a Language Server Protocol (LSP) server written in TypeScript that understands Objectified schema files (`.objschema.json`) and provides real-time diagnostics, completions, and hover information.
+The VS Code extension is the primary IDE integration for Apiome, providing schema editing capabilities comparable to TypeScript's language tooling. At its core is a Language Server Protocol (LSP) server written in TypeScript that understands Apiome schema files (`.objschema.json`) and provides real-time diagnostics, completions, and hover information.
 
 The LSP server implements four key protocol features: (1) `textDocument/completion` provides IntelliSense for property types, constraint keywords, and schema references—suggesting valid types when the cursor is inside a `type` field, valid constraints when inside a property definition, and existing class names for `$ref` targets. (2) `textDocument/hover` shows documentation for the element under the cursor, including the property's constraints, description, and usage across the schema. (3) `textDocument/diagnostic` validates the schema in real-time, reporting errors for invalid types, constraint violations (e.g., `minLength > maxLength`), and dangling `$ref` pointers. (4) `textDocument/definition` navigates from a `$ref` to its target class definition.
 
@@ -371,7 +371,7 @@ The LSP server implements four key protocol features: (1) `textDocument/completi
          │  RPC         │  completions,
          ▼              │  hover info
 ┌────────────────────────────────────┐
-│      Objectified LSP Server        │
+│      Apiome LSP Server        │
 │  ┌──────────┐  ┌───────────────┐  │
 │  │  Schema   │  │  Validation   │  │
 │  │  Parser   │  │  Engine       │  │
@@ -401,13 +401,13 @@ The extension also ships with a snippet library providing templates for common s
 
 #### 3.2 (#1442) — VS Code Extension: Preview Canvas & Cloud Sync
 
-Schema editing in a text editor benefits from a visual feedback loop. This issue adds a preview canvas panel to the VS Code extension that renders the schema being edited as a visual class diagram in real-time, plus cloud synchronization that lets developers push and pull schemas between their local editor and the Objectified platform.
+Schema editing in a text editor benefits from a visual feedback loop. This issue adds a preview canvas panel to the VS Code extension that renders the schema being edited as a visual class diagram in real-time, plus cloud synchronization that lets developers push and pull schemas between their local editor and the Apiome platform.
 
 The preview canvas opens as a VS Code webview panel beside the editor. It renders the current schema file as a node-and-edge diagram: classes as cards showing their properties, and `$ref` relationships as connecting lines. The canvas updates on every keystroke (debounced to 200ms) so the developer sees the visual impact of their edits immediately. The canvas supports zoom, pan, and click-to-navigate (clicking a class in the canvas scrolls the editor to that class definition).
 
-Cloud sync authenticates via an API token stored in VS Code's secret storage. Once authenticated, the extension adds a "Schemas" view to the VS Code sidebar that lists remote schemas from the tenant's Objectified instance. Developers can pull a remote schema to a local file, edit it, and push changes back. Push operations create a new draft version on the platform. Conflict detection warns when the remote schema has been modified since the last pull, requiring the developer to pull and merge before pushing.
+Cloud sync authenticates via an API token stored in VS Code's secret storage. Once authenticated, the extension adds a "Schemas" view to the VS Code sidebar that lists remote schemas from the tenant's Apiome instance. Developers can pull a remote schema to a local file, edit it, and push changes back. Push operations create a new draft version on the platform. Conflict detection warns when the remote schema has been modified since the last pull, requiring the developer to pull and merge before pushing.
 
-The sync REST endpoints are standard Objectified APIs: `GET /api/v1/schemas` (list), `GET /api/v1/schema-captures/{id}` (pull), and `POST /api/v1/schemas/{id}/versions` (push draft). The extension wraps these with convenience commands in the VS Code command palette: "Objectified: Pull Schema," "Objectified: Push Schema," and "Objectified: Compare with Remote."
+The sync REST endpoints are standard Apiome APIs: `GET /api/v1/schemas` (list), `GET /api/v1/schema-captures/{id}` (pull), and `POST /api/v1/schemas/{id}/versions` (push draft). The extension wraps these with convenience commands in the VS Code command palette: "Apiome: Pull Schema," "Apiome: Push Schema," and "Apiome: Compare with Remote."
 
 **Acceptance Criteria**
 - Preview canvas renders the active schema file as a visual class diagram in real-time
@@ -427,18 +427,18 @@ The sync REST endpoints are standard Objectified APIs: `GET /api/v1/schemas` (li
 
 JetBrains IDEs (IntelliJ IDEA, WebStorm, PyCharm) have significant market share among Java, Kotlin, and Python developers. This issue delivers a JetBrains plugin that provides the same schema editing capabilities as the VS Code extension, powered by the shared LSP server from issue 3.1.
 
-The plugin uses JetBrains' built-in LSP client support (available since IntelliJ 2023.2) to connect to the Objectified LSP server bundled with the plugin. This shared-server architecture means all language features—completions, diagnostics, hover, go-to-definition—work identically across VS Code and JetBrains without maintaining separate implementations. The LSP server binary is packaged within the plugin and launched automatically when a `.objschema.json` file is opened.
+The plugin uses JetBrains' built-in LSP client support (available since IntelliJ 2023.2) to connect to the Apiome LSP server bundled with the plugin. This shared-server architecture means all language features—completions, diagnostics, hover, go-to-definition—work identically across VS Code and JetBrains without maintaining separate implementations. The LSP server binary is packaged within the plugin and launched automatically when a `.objschema.json` file is opened.
 
-File type registration associates `.objschema.json` with the Objectified file type, enabling syntax highlighting via a TextMate grammar (JetBrains supports TextMate bundles). The plugin adds a tool window for schema preview (similar to the VS Code canvas) rendered via JCEF (JetBrains Chromium Embedded Framework). Cloud sync uses the same API token approach as VS Code, stored via JetBrains' credential store API. The plugin is distributed through the JetBrains Marketplace.
+File type registration associates `.objschema.json` with the Apiome file type, enabling syntax highlighting via a TextMate grammar (JetBrains supports TextMate bundles). The plugin adds a tool window for schema preview (similar to the VS Code canvas) rendered via JCEF (JetBrains Chromium Embedded Framework). Cloud sync uses the same API token approach as VS Code, stored via JetBrains' credential store API. The plugin is distributed through the JetBrains Marketplace.
 
-Snippets are implemented as JetBrains Live Templates, providing the same schema scaffolding shortcuts available in the VS Code extension. A settings page under `Preferences > Tools > Objectified` configures the API endpoint URL, authentication token, and LSP server options.
+Snippets are implemented as JetBrains Live Templates, providing the same schema scaffolding shortcuts available in the VS Code extension. A settings page under `Preferences > Tools > Apiome` configures the API endpoint URL, authentication token, and LSP server options.
 
 **Acceptance Criteria**
 - Plugin installs from JetBrains Marketplace and activates on `.objschema.json` files
 - LSP-powered completions, diagnostics, hover, and go-to-definition work identically to VS Code
 - Syntax highlighting differentiates schema keywords, types, and values
 - Schema preview tool window renders a visual class diagram via JCEF
-- Cloud sync supports pull, push, and conflict detection using the Objectified REST API
+- Cloud sync supports pull, push, and conflict detection using the Apiome REST API
 - Live Templates provide schema scaffolding snippets triggered by prefix
 - Settings page configures API endpoint, authentication, and LSP options
 - Plugin is compatible with IntelliJ IDEA, WebStorm, and PyCharm (2023.2+)
@@ -451,18 +451,18 @@ Snippets are implemented as JetBrains Live Templates, providing the same schema 
 
 Terminal-first developers using Vim or Neovim need schema tooling that works within their workflow. This issue delivers a Vim/Neovim plugin that provides LSP integration, syntax highlighting, and schema-aware editing without requiring a GUI.
 
-For Neovim users (0.8+), the plugin provides an LSP client configuration that connects to the Objectified LSP server. This is distributed as a Lua plugin compatible with popular plugin managers (lazy.nvim, packer.nvim). The configuration registers the LSP server for `.objschema.json` files and integrates with nvim-cmp for completion, nvim-lspconfig for diagnostics, and telescope.nvim for schema search. All LSP features from 3.1 (completions, diagnostics, hover, go-to-definition) work through the native Neovim LSP client.
+For Neovim users (0.8+), the plugin provides an LSP client configuration that connects to the Apiome LSP server. This is distributed as a Lua plugin compatible with popular plugin managers (lazy.nvim, packer.nvim). The configuration registers the LSP server for `.objschema.json` files and integrates with nvim-cmp for completion, nvim-lspconfig for diagnostics, and telescope.nvim for schema search. All LSP features from 3.1 (completions, diagnostics, hover, go-to-definition) work through the native Neovim LSP client.
 
 For classic Vim users, the plugin provides a syntax file for `.objschema.json` highlighting and integrates with vim-lsp or coc.nvim for language server features. The syntax file defines highlighting groups for schema keywords (`type`, `properties`, `required`, `$ref`), constraint keywords (`minLength`, `maxLength`, `pattern`, `enum`), and values.
 
-Cloud sync is implemented as a set of Vim commands: `:ObjPull <schema-id>`, `:ObjPush`, and `:ObjDiff`. Authentication uses an environment variable (`OBJECTIFIED_API_TOKEN`) or a `.objectified.json` config file in the project root. The commands call the Objectified REST API via curl and display results in a scratch buffer.
+Cloud sync is implemented as a set of Vim commands: `:ObjPull <schema-id>`, `:ObjPush`, and `:ObjDiff`. Authentication uses an environment variable (`APIOME_API_TOKEN`) or a `.apiome.json` config file in the project root. The commands call the Apiome REST API via curl and display results in a scratch buffer.
 
 **Acceptance Criteria**
-- Neovim LSP client config connects to the Objectified LSP server for `.objschema.json` files
+- Neovim LSP client config connects to the Apiome LSP server for `.objschema.json` files
 - Completions, diagnostics, hover, and go-to-definition work through nvim-cmp and nvim-lspconfig
 - Syntax highlighting covers schema keywords, constraint keywords, types, and values
 - Classic Vim support via vim-lsp or coc.nvim integration
-- Cloud sync commands (`:ObjPull`, `:ObjPush`, `:ObjDiff`) use the Objectified REST API
+- Cloud sync commands (`:ObjPull`, `:ObjPush`, `:ObjDiff`) use the Apiome REST API
 - Authentication supports environment variable and project-level config file
 - Plugin installs via lazy.nvim, packer.nvim, or vim-plug with documented setup steps
 
@@ -489,7 +489,7 @@ Cloud sync is implemented as a set of Vim commands: `:ObjPull <schema-id>`, `:Ob
 
 Schema versioning benefits from the same branch isolation that code repositories use. This issue implements an automatic branch creation strategy where each schema version maps to a dedicated Git branch, enabling parallel version development, hotfixes on older versions, and a clear lineage between schema evolution and code changes.
 
-When a new schema version is published via the Objectified platform, the system automatically creates a Git branch named `schema/{schemaSlug}/v{major}.{minor}.{patch}` in the connected repository. The branch contains the schema definition files at that version, any generated artifacts (documentation, client stubs), and a `CHANGELOG.md` specific to that version. The main branch always reflects the latest published version.
+When a new schema version is published via the Apiome platform, the system automatically creates a Git branch named `schema/{schemaSlug}/v{major}.{minor}.{patch}` in the connected repository. The branch contains the schema definition files at that version, any generated artifacts (documentation, client stubs), and a `CHANGELOG.md` specific to that version. The main branch always reflects the latest published version.
 
 ```
 main ─────●────●────●────●────●──────▶

@@ -1,6 +1,6 @@
 # Comply mockups
 
-Static, browser-openable design mockups for **Objectified Comply** — regulatory compliance
+Static, browser-openable design mockups for **Apiome Comply** — regulatory compliance
 mapping and certification built directly into the schema design layer.
 
 ## Open
@@ -8,7 +8,7 @@ mapping and certification built directly into the schema design layer.
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/comply/index.html
+open apiome-ui/public/mockups/comply/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:
@@ -44,7 +44,7 @@ were in scope — bridging the engineering schema layer directly to risk managem
 
 ## Design system
 
-Mockups follow the Objectified Studio design system, using a **teal** accent
+Mockups follow the Apiome Studio design system, using a **teal** accent
 (distinguishing Comply from indigo-accented Studio features) to signal trust and
 compliance:
 

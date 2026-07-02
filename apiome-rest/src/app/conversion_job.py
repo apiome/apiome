@@ -1,0 +1,704 @@
+"""Convert-to-project/version job + provenance — MFI-22.5 (#4006).
+
+The emitter (:mod:`app.openapi_emitter`, MFI-22.1), paradigm projections
+(:mod:`app.projection`, MFI-22.2) and fidelity analyzer (:mod:`app.fidelity`,
+MFI-22.3) turn a catalog item's canonical model into an OpenAPI 3.1 document *and*
+tell the user how faithful that conversion is. This module is the step after the
+user says **"convert"**: it makes the conversion *real*.
+
+A conversion job:
+
+1. **emits** the OpenAPI 3.1 document from the source :class:`~app.canonical_model.CanonicalApi`
+   (optionally closing cheap gaps with user-supplied ``defaults`` — an info title/version or
+   servers the source lacked);
+2. **analyzes** its fidelity (:func:`app.fidelity.analyze_fidelity`) so the report the user saw in
+   the preview is the report persisted with the result;
+3. **mints or re-versions a publishable OpenAPI Project** from the emitted document by *reusing the
+   spec-import submit→commit engine* (:mod:`app.spec_import_engine`) — a first conversion creates a
+   new Project + ``v1``; a **re-convert of a changed source** appends a *new version* to the Project
+   the source was previously converted into (looked up via the provenance ledger) instead of
+   duplicating the Project;
+4. runs the existing **OpenAPI lint/score** (MFI-EPIC-4) on the converted result; and
+5. **persists provenance** — the source artifact id + source revision + source format/protocol +
+   the fidelity report + the converter tool versions — into ``apiome.conversion_provenance`` (V139), so
+   the converted spec links back to its origin and a later re-import diffs cleanly.
+
+The orchestration (:func:`run_conversion`) is written against small **ports**
+(:class:`SpecCommitter`, :class:`LintScorer`, :class:`ProvenanceStore`) so the
+decision logic — emit, analyze, first-convert-vs-re-convert, persist — is pure and
+unit-testable with fakes, while the production wiring (the spec-import worker, the
+lint engine, the database) lives in swappable default adapters
+(:func:`default_ports`). The REST endpoint + CLI that call this job are MFI-22.6.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import base64
+import json
+import logging
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _pkg_version
+from typing import Any, Dict, List, Optional, Protocol
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from .canonical_model import CanonicalApi, Server
+from .fidelity import FidelityReport, analyze_fidelity
+from .openapi_emitter import OpenApiEmitter
+
+logger = logging.getLogger(__name__)
+
+__all__ = [
+    "ConversionError",
+    "ConversionDefaults",
+    "ConversionSource",
+    "ConversionCommit",
+    "ConversionPreview",
+    "LintScore",
+    "ConversionResult",
+    "SpecCommitter",
+    "LintScorer",
+    "ProvenanceStore",
+    "converter_tool_versions",
+    "preview_conversion",
+    "run_conversion",
+    "default_ports",
+    "SpecImportCommitter",
+    "DbLintScorer",
+    "DbConversionProvenanceStore",
+]
+
+#: Only emit target supported today; the verb is written target-generic for future emitters (22.6).
+DEFAULT_TARGET_FORMAT = "openapi-3.1"
+
+#: Semantic version label a first conversion assigns to the minted Project's ``v1``.
+INITIAL_VERSION_LABEL = "1.0.0"
+
+#: ``source_kind`` handed to the spec-import engine for the emitted OpenAPI document. Matches the
+#: worker-backed OpenAPI importer (:data:`app.spec_import_engine._WORKER_BACKED_ADAPTER_KEYS`) so the
+#: emitted doc is decomposed into a full publishable Project + version exactly like an OpenAPI upload.
+CONVERT_IMPORT_SOURCE_KIND = "openapi"
+
+
+class ConversionError(Exception):
+    """A conversion could not be completed (bad source, commit failure, …).
+
+    Carries an optional ``status_code`` so the MFI-22.6 REST endpoint can map a failure onto an HTTP
+    status without re-classifying it.
+    """
+
+    def __init__(self, message: str, *, status_code: int = 422) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
+# ===========================================================================
+# Value objects
+# ===========================================================================
+
+
+class ConversionDefaults(BaseModel):
+    """User-supplied values that close cheap gaps *before* committing a conversion.
+
+    All optional: each is applied to the emitted document only where the source model left the
+    corresponding construct empty, so a default never overwrites a value the source actually
+    declared. Mirrors the inline defaults the preview screen (MFI-22.4) collects.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    title: Optional[str] = Field(default=None, description="Fallback API title when the source has none.")
+    version: Optional[str] = Field(
+        default=None, description="Fallback API version when the source declares none."
+    )
+    servers: List[str] = Field(
+        default_factory=list,
+        description="Fallback server URLs when the source declares no servers.",
+    )
+
+
+class ConversionSource(BaseModel):
+    """The loaded source artifact a conversion job operates on.
+
+    Bundles the canonical model to emit with the provenance coordinates the converted Project must
+    link back to. Building this from a catalog item (reconstructing the canonical model from the
+    stored/captured source) is the caller's concern — the job takes it ready-made so its logic stays
+    pure and independent of how the source was loaded.
+    """
+
+    model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
+
+    api: CanonicalApi = Field(description="The source canonical model to convert.")
+    source_project_id: str = Field(description="Catalog item id (a project id, MFI-23.1) being converted.")
+    source_version_id: Optional[str] = Field(
+        default=None, description="The source revision (``versions.id``) that was converted."
+    )
+    source_format: Optional[str] = Field(
+        default=None, description="Source format key (e.g. ``grpc``); defaults to the model's format."
+    )
+    source_protocol: Optional[str] = Field(
+        default=None, description="Source protocol; defaults to the model's protocol."
+    )
+    source_version_label: Optional[str] = Field(
+        default=None, description="Source-declared API version; defaults to the model's version."
+    )
+    source_tool_versions: Dict[str, Any] = Field(
+        default_factory=dict, description="Tool provenance the import recorded for the source revision."
+    )
+
+
+class ConversionCommit(BaseModel):
+    """What a :class:`SpecCommitter` produced: the minted / re-versioned Project + revision."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    project_id: str
+    project_slug: str
+    version_id: str = Field(description="Semantic version label of the created revision (e.g. ``1.0.0``).")
+    version_record_id: str = Field(description="Row id (``versions.id``) of the created revision.")
+    created_project: bool = Field(description="True when a new Project was minted (first convert).")
+
+
+class LintScore(BaseModel):
+    """An OpenAPI lint/score (MFI-EPIC-4) captured on a converted revision."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    score: int
+    grade: str
+    report_fingerprint: Optional[str] = None
+
+
+class ConversionPreview(BaseModel):
+    """The side-effect-free outcome of a conversion: the fidelity report + the would-be document.
+
+    Produced by :func:`preview_conversion` — the emit + analyze steps of :func:`run_conversion`
+    *without* committing anything. It powers the MFI-22.6 endpoint's ``dryRun=true`` response (which
+    backs the MFI-22.4 preview screen): the user sees exactly what a commit would produce and how
+    faithful it is, with no Project/version created.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    fidelity: FidelityReport
+    document: Dict[str, Any] = Field(description="The OpenAPI 3.1 document the conversion would emit.")
+    target_format: str = Field(description="Emit target the preview was produced for.")
+
+
+class ConversionResult(BaseModel):
+    """The full outcome of a conversion job, returned to the caller (and the 22.6 endpoint)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    project_id: str
+    project_slug: str
+    version_id: str
+    version_record_id: str
+    created_project: bool = Field(description="True when a new Project was minted; False on re-convert.")
+    reconverted: bool = Field(description="True when this superseded a prior conversion of the source.")
+    fidelity: FidelityReport
+    lint: Optional[LintScore] = Field(
+        default=None, description="Captured lint/score; None if the best-effort capture failed."
+    )
+    provenance_id: str = Field(description="Id of the persisted ``conversion_provenance`` row.")
+    document: Dict[str, Any] = Field(description="The emitted OpenAPI 3.1 document that was committed.")
+
+
+# ===========================================================================
+# Ports (dependency-inversion seams)
+# ===========================================================================
+
+
+class SpecCommitter(Protocol):
+    """Turns an emitted OpenAPI document into a committed Project + revision.
+
+    The production adapter (:class:`SpecImportCommitter`) reuses the spec-import submit→commit engine;
+    tests supply a fake. When ``target_project_id`` is set the commit must add a *new version* to that
+    existing Project (a re-convert) rather than mint a new one.
+    """
+
+    async def commit(
+        self,
+        *,
+        tenant_slug: str,
+        tenant_id: str,
+        user_id: Optional[str],
+        document: Dict[str, Any],
+        source: ConversionSource,
+        target_project_id: Optional[str],
+        version_label: str,
+    ) -> ConversionCommit: ...
+
+
+class LintScorer(Protocol):
+    """Computes and persists the OpenAPI lint/score for a freshly committed revision."""
+
+    async def score(
+        self, *, tenant_slug: str, tenant_id: str, version_record_id: str
+    ) -> Optional[LintScore]: ...
+
+
+class ProvenanceStore(Protocol):
+    """Reads/writes the ``apiome.conversion_provenance`` ledger."""
+
+    def latest_for_source(self, tenant_id: str, source_project_id: str) -> Optional[Dict[str, Any]]:
+        """Most recent conversion of ``source_project_id``, or ``None`` if never converted."""
+        ...
+
+    def record(
+        self,
+        *,
+        tenant_id: str,
+        created_by: Optional[str],
+        source: ConversionSource,
+        commit: ConversionCommit,
+        fidelity: FidelityReport,
+        lint: Optional[LintScore],
+        converter_tool_versions: Dict[str, Any],
+        reconverted: bool,
+    ) -> Dict[str, Any]:
+        """Append one provenance row; return it (must include ``id``)."""
+        ...
+
+
+# ===========================================================================
+# Pure helpers
+# ===========================================================================
+
+
+def converter_tool_versions() -> Dict[str, str]:
+    """Return the conversion tool versions stamped onto each provenance row.
+
+    Records *what produced this conversion* so it is reproducible and a later re-convert can be
+    compared against the tooling that made the prior one: the ``apiome-rest`` package version and
+    the emitter/analyzer contract identifiers (MFI-22.1/22.3).
+    """
+    try:
+        rest_version = _pkg_version("apiome-rest")
+    except PackageNotFoundError:  # pragma: no cover - packaging edge, not worth a DB-free test
+        rest_version = "unknown"
+    return {
+        "apiome-rest": rest_version,
+        "emitter": DEFAULT_TARGET_FORMAT,
+        "fidelity-analyzer": "MFI-22.3",
+    }
+
+
+def _apply_defaults(api: CanonicalApi, defaults: Optional[ConversionDefaults]) -> CanonicalApi:
+    """Return ``api`` with user ``defaults`` filled in *only where the source left a gap*.
+
+    A default never overwrites a value the source declared: a title/version is applied solely when
+    the model has none, and servers are added solely when the model declares none. Returns the model
+    unchanged (a copy) when there is nothing to fill, so the emitter still sees a distinct object.
+    """
+    if defaults is None:
+        return api
+    patch: Dict[str, Any] = {}
+    if defaults.title and not (api.title and api.title.strip()):
+        patch["title"] = defaults.title
+    if defaults.version and not (api.version and api.version.strip()):
+        patch["version"] = defaults.version
+    if defaults.servers and not api.servers:
+        patch["servers"] = [Server(url=url) for url in defaults.servers if url and url.strip()]
+    if not patch:
+        return api
+    return api.model_copy(update=patch)
+
+
+def _next_version_label(prior: Optional[Dict[str, Any]]) -> str:
+    """Semantic version label for the revision this conversion will create.
+
+    A first conversion assigns :data:`INITIAL_VERSION_LABEL`. A re-convert bumps the patch component
+    of the prior conversion's target label (``1.0.0`` → ``1.0.1``); when the prior label is not a
+    dotted numeric triple it falls back to appending a ``.1`` suffix, so the label is always distinct
+    from the one already on the Project (the import engine rejects a duplicate version line).
+    """
+    if not prior:
+        return INITIAL_VERSION_LABEL
+    label = (prior.get("target_version_label") or "").strip()
+    if not label:
+        return INITIAL_VERSION_LABEL
+    parts = label.split(".")
+    if len(parts) == 3 and all(p.isdigit() for p in parts):
+        major, minor, patch = (int(p) for p in parts)
+        return f"{major}.{minor}.{patch + 1}"
+    return f"{label}.1"
+
+
+# ===========================================================================
+# Orchestrator
+# ===========================================================================
+
+
+def preview_conversion(
+    source: ConversionSource,
+    defaults: Optional[ConversionDefaults] = None,
+    target_format: str = DEFAULT_TARGET_FORMAT,
+) -> ConversionPreview:
+    """Emit + analyze a conversion **without committing it** (the dry-run path).
+
+    Runs the pure, deterministic first half of :func:`run_conversion`: fill cheap gaps from
+    ``defaults`` where the source is empty, emit the OpenAPI 3.1 document, and analyze its fidelity.
+    No Project/version is created and nothing is persisted, so this is safe to call for a preview
+    (MFI-22.4) or a CLI ``--dry-run`` (MFI-22.6).
+
+    Args:
+        source: The loaded canonical model + source provenance coordinates.
+        defaults: Optional user-supplied fallbacks (title/version/servers) for cheap gaps.
+        target_format: Emit target; only :data:`DEFAULT_TARGET_FORMAT` is supported today.
+
+    Returns:
+        A :class:`ConversionPreview` with the fidelity report and the would-be OpenAPI document.
+
+    Raises:
+        ConversionError: If ``target_format`` is unsupported.
+    """
+    if target_format != DEFAULT_TARGET_FORMAT:
+        raise ConversionError(
+            f"Unsupported conversion target {target_format!r}; only {DEFAULT_TARGET_FORMAT!r} "
+            "is available today.",
+            status_code=400,
+        )
+    api = _apply_defaults(source.api, defaults)
+    emit_result = OpenApiEmitter().emit(api)
+    report = analyze_fidelity(api, emit_result)
+    return ConversionPreview(
+        fidelity=report, document=emit_result.document, target_format=target_format
+    )
+
+
+async def run_conversion(
+    *,
+    tenant_slug: str,
+    tenant_id: str,
+    user_id: Optional[str],
+    source: ConversionSource,
+    committer: SpecCommitter,
+    scorer: LintScorer,
+    store: ProvenanceStore,
+    defaults: Optional[ConversionDefaults] = None,
+    target_format: str = DEFAULT_TARGET_FORMAT,
+) -> ConversionResult:
+    """Run one convert-to-project/version job and return its :class:`ConversionResult`.
+
+    Emits the OpenAPI document from ``source`` (honouring ``defaults``), analyzes its fidelity, then —
+    minting a new Project on a first conversion or appending a new version to the previously-converted
+    Project on a re-convert (decided by the provenance ledger) — commits it, captures the OpenAPI
+    lint/score, and persists a provenance row linking the result back to its origin.
+
+    Args:
+        tenant_slug: Tenant slug (needed to reconstruct the OpenAPI doc for lint capture).
+        tenant_id: Owning tenant id.
+        user_id: Authenticated user id (creator of the converted Project); ``None`` for service calls.
+        source: The loaded canonical model + source provenance coordinates.
+        committer: Port that turns the emitted document into a committed Project + revision.
+        scorer: Port that computes/persists the converted revision's lint score.
+        store: Port over the ``conversion_provenance`` ledger.
+        defaults: Optional user-supplied fallbacks (title/version/servers) for cheap gaps.
+        target_format: Emit target; only :data:`DEFAULT_TARGET_FORMAT` is supported today.
+
+    Returns:
+        A :class:`ConversionResult` with the created Project/revision ids, the fidelity report, the
+        captured lint score, and the persisted provenance row id.
+
+    Raises:
+        ConversionError: If ``target_format`` is unsupported or the commit yields no Project/revision.
+    """
+    # 1. Emit + 2. analyze fidelity — pure, deterministic, no I/O (shared with the dry-run path).
+    preview = preview_conversion(source, defaults, target_format)
+    report = preview.fidelity
+
+    # 3. First-convert vs re-convert: a prior conversion of this source names the Project a re-convert
+    #    must add a new version to, so we never duplicate a Project on re-convert.
+    prior = store.latest_for_source(tenant_id, source.source_project_id)
+    target_project_id = prior.get("target_project_id") if prior else None
+    reconverted = target_project_id is not None
+    version_label = _next_version_label(prior)
+
+    commit = await committer.commit(
+        tenant_slug=tenant_slug,
+        tenant_id=tenant_id,
+        user_id=user_id,
+        document=preview.document,
+        source=source,
+        target_project_id=target_project_id,
+        version_label=version_label,
+    )
+    if not commit.project_id or not commit.version_record_id:
+        raise ConversionError("Conversion commit did not produce a project/version.", status_code=502)
+
+    # 4. Capture the OpenAPI lint/score on the converted result (best-effort — never fails the job).
+    lint = await scorer.score(
+        tenant_slug=tenant_slug, tenant_id=tenant_id, version_record_id=commit.version_record_id
+    )
+
+    # 5. Persist provenance so the converted spec links back to its origin.
+    prov = store.record(
+        tenant_id=tenant_id,
+        created_by=user_id,
+        source=source,
+        commit=commit,
+        fidelity=report,
+        lint=lint,
+        converter_tool_versions=converter_tool_versions(),
+        reconverted=reconverted,
+    )
+
+    return ConversionResult(
+        project_id=commit.project_id,
+        project_slug=commit.project_slug,
+        version_id=commit.version_id,
+        version_record_id=commit.version_record_id,
+        created_project=commit.created_project,
+        reconverted=reconverted,
+        fidelity=report,
+        lint=lint,
+        provenance_id=str(prov["id"]),
+        document=preview.document,
+    )
+
+
+# ===========================================================================
+# Production adapters (the swappable default wiring)
+# ===========================================================================
+
+#: Terminal spec-import job states (mirrors the engine's state machine).
+_TERMINAL_IMPORT_STATES = frozenset({"completed", "failed", "canceled", "rolled-back"})
+
+
+class SpecImportCommitter:
+    """:class:`SpecCommitter` that reuses the spec-import submit→commit engine.
+
+    Bytes-in: the emitted OpenAPI document is base64-encoded and handed to
+    :func:`app.spec_import_engine.schedule_spec_import` as an ``openapi`` import, which decomposes it
+    into a full publishable Project + version exactly like an OpenAPI upload. The job is then polled to
+    a terminal state. On a re-convert ``target_project_id`` is passed as the import's
+    ``existing_project_id`` so a new version is appended to the existing Project instead of a duplicate
+    being created.
+    """
+
+    def __init__(self, *, poll_interval: float = 0.25, timeout: float = 600.0) -> None:
+        self._poll_interval = poll_interval
+        self._timeout = timeout
+
+    async def commit(
+        self,
+        *,
+        tenant_slug: str,
+        tenant_id: str,
+        user_id: Optional[str],
+        document: Dict[str, Any],
+        source: ConversionSource,
+        target_project_id: Optional[str],
+        version_label: str,
+    ) -> ConversionCommit:
+        # Imported here (not at module load) so the pure orchestrator + its tests never pull in the
+        # import-engine/DB stack.
+        from .models import (
+            SpecImportOptions,
+            SpecImportProjectTarget,
+            SpecImportStartJsonRequest,
+            SpecImportStartMetadata,
+            SpecImportVersionTarget,
+        )
+        from .spec_import_engine import get_spec_import_status, schedule_spec_import
+
+        name, slug = _converted_project_identity(source)
+        metadata = SpecImportStartMetadata(
+            source_kind=CONVERT_IMPORT_SOURCE_KIND,
+            project=SpecImportProjectTarget(
+                name=name,
+                slug=slug,
+                description=f"Converted from {source.source_format or source.api.format} "
+                f"catalog item {source.source_project_id}.",
+            ),
+            version=SpecImportVersionTarget(
+                version_id=version_label,
+                description="Catalog → OpenAPI conversion (MFI-22.5).",
+            ),
+            existing_project_id=target_project_id,
+            options=SpecImportOptions(skip_duplicate_versions=False),
+        )
+        document_b64 = base64.standard_b64encode(
+            json.dumps(document, separators=(",", ":")).encode("utf-8")
+        ).decode("ascii")
+        body = SpecImportStartJsonRequest(
+            metadata=metadata,
+            document_base64=document_b64,
+            filename=f"{slug}.openapi.json",
+            content_type="application/json",
+        )
+
+        accepted = await schedule_spec_import(tenant_slug, tenant_id, user_id or "", body)
+        job_id = accepted.job_id
+
+        waited = 0.0
+        status = get_spec_import_status(tenant_slug, job_id)
+        while status.state not in _TERMINAL_IMPORT_STATES:
+            if waited >= self._timeout:
+                raise ConversionError(
+                    f"Conversion import job {job_id} did not finish within {self._timeout:.0f}s.",
+                    status_code=504,
+                )
+            await asyncio.sleep(self._poll_interval)
+            waited += self._poll_interval
+            status = get_spec_import_status(tenant_slug, job_id)
+
+        if status.state != "completed":
+            detail = _first_error_message(status) or f"import job ended {status.state}"
+            raise ConversionError(f"Conversion import failed: {detail}", status_code=502)
+
+        result = status.result
+        if result is None or not result.project_id or not result.version_record_id:
+            raise ConversionError(
+                "Conversion import completed without a project/version result.", status_code=502
+            )
+        return ConversionCommit(
+            project_id=str(result.project_id),
+            project_slug=str(result.project_slug or slug),
+            version_id=str(result.version_id or version_label),
+            version_record_id=str(result.version_record_id),
+            created_project=target_project_id is None,
+        )
+
+
+class DbLintScorer:
+    """:class:`LintScorer` that reuses the MFI-EPIC-4 OpenAPI lint over the converted revision.
+
+    Reconstructs the OpenAPI document for the committed revision, lints it, and persists the resulting
+    score/grade onto the revision (parity with the import path's quality-score capture). Strictly
+    best-effort: the revision is already committed, so any failure here just leaves the score for an
+    on-demand lint to fill and never fails the conversion.
+    """
+
+    async def score(
+        self, *, tenant_slug: str, tenant_id: str, version_record_id: str
+    ) -> Optional[LintScore]:
+        return await asyncio.to_thread(
+            self._score_sync, tenant_slug, tenant_id, version_record_id
+        )
+
+    @staticmethod
+    def _score_sync(tenant_slug: str, tenant_id: str, version_record_id: str) -> Optional[LintScore]:
+        try:
+            from .compatibility_engine import openapi_for_revision
+            from .database import db
+            from .schema_lint import lint_openapi_spec
+
+            version = db.get_version_by_id(version_record_id, tenant_id)
+            if not version:
+                return None
+            spec = openapi_for_revision(version, tenant_slug, tenant_id)
+            result = lint_openapi_spec(spec)
+            db.set_version_quality_score(
+                version_record_id, tenant_id, result.score, result.grade, result.report_fingerprint
+            )
+            return LintScore(
+                score=result.score, grade=result.grade, report_fingerprint=result.report_fingerprint
+            )
+        except Exception:  # noqa: BLE001 - lint capture is strictly best-effort
+            logger.warning(
+                "Failed to capture lint score for converted revision %s",
+                version_record_id,
+                exc_info=True,
+            )
+            return None
+
+
+class DbConversionProvenanceStore:
+    """:class:`ProvenanceStore` backed by the ``apiome.conversion_provenance`` DAO (V139)."""
+
+    def latest_for_source(self, tenant_id: str, source_project_id: str) -> Optional[Dict[str, Any]]:
+        from .database import db
+
+        return db.get_latest_conversion_for_source(tenant_id, source_project_id)
+
+    def record(
+        self,
+        *,
+        tenant_id: str,
+        created_by: Optional[str],
+        source: ConversionSource,
+        commit: ConversionCommit,
+        fidelity: FidelityReport,
+        lint: Optional[LintScore],
+        converter_tool_versions: Dict[str, Any],
+        reconverted: bool,
+    ) -> Dict[str, Any]:
+        from .database import db
+
+        return db.create_conversion_provenance(
+            tenant_id=tenant_id,
+            created_by=created_by,
+            source_project_id=source.source_project_id,
+            source_version_id=source.source_version_id,
+            source_format=source.source_format or source.api.format,
+            source_protocol=source.source_protocol or source.api.protocol,
+            source_version_label=source.source_version_label or source.api.version,
+            source_tool_versions=source.source_tool_versions,
+            target_project_id=commit.project_id,
+            target_version_id=commit.version_record_id,
+            target_version_label=commit.version_id,
+            fidelity_report=fidelity.model_dump(mode="json"),
+            fidelity_score=fidelity.score,
+            fidelity_grade=fidelity.grade,
+            fidelity_tier=fidelity.tier.value,
+            lint_score=lint.score if lint else None,
+            lint_grade=lint.grade if lint else None,
+            converter_tool_versions=converter_tool_versions,
+            reconverted=reconverted,
+        )
+
+
+def default_ports() -> Dict[str, Any]:
+    """Return the production port wiring for :func:`run_conversion` (spread as keyword args).
+
+    The MFI-22.6 endpoint calls ``run_conversion(..., **default_ports())``; tests pass fakes instead.
+    """
+    return {
+        "committer": SpecImportCommitter(),
+        "scorer": DbLintScorer(),
+        "store": DbConversionProvenanceStore(),
+    }
+
+
+# ===========================================================================
+# Small production helpers
+# ===========================================================================
+
+
+def _converted_project_identity(source: ConversionSource) -> tuple[str, str]:
+    """Derive a stable ``(name, slug)`` for the converted Project from the source identity.
+
+    Deterministic in the source artifact id so a re-convert (which also passes the prior Project via
+    ``existing_project_id``) resolves consistently. The name prefers the model's title/identity name.
+    """
+    ident = source.api.identity
+    base_name = (source.api.title or getattr(ident, "name", None) or "Converted API").strip()
+    name = f"{base_name} (OpenAPI)"
+    slug = _slugify(f"{base_name}-openapi-{source.source_project_id}")
+    return name, slug
+
+
+def _slugify(value: str) -> str:
+    """Lowercase, hyphenate and trim ``value`` into a URL-safe project slug."""
+    out: List[str] = []
+    prev_hyphen = False
+    for ch in value.lower():
+        if ch.isalnum():
+            out.append(ch)
+            prev_hyphen = False
+        elif not prev_hyphen:
+            out.append("-")
+            prev_hyphen = True
+    slug = "".join(out).strip("-")
+    return slug or "converted-api"
+
+
+def _first_error_message(status: Any) -> Optional[str]:
+    """Return the first error-level event message from a spec-import status, if any."""
+    for event in getattr(status, "events", None) or []:
+        if getattr(event, "level", None) == "error":
+            return getattr(event, "message", None)
+    return None

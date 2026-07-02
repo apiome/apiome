@@ -1,11 +1,11 @@
-# Objectified
+# Apiome
 
-Objectified is an OpenAPI 3.2.0 Specification Application that provides a visual editor
+Apiome is an OpenAPI 3.2.0 Specification Application that provides a visual editor
 for creating and editing Schema Objects and Properties.
 
 ## Goals
 
-The Objectified application is a work in progress.
+The Apiome application is a work in progress.
 
 The goals of the project are:
 
@@ -57,7 +57,7 @@ on day one.
    docker compose run --rm seed
    ```
 
-2. **Sign in** to the UI (dev login: `ada@example.com` / `objectified-dev`) and open **Control
+2. **Sign in** to the UI (dev login: `ada@example.com` / `apiome-dev`) and open **Control
    Panel → Dashboard**. The **Get started** checklist tracks your progress and links each step.
 
 3. **Designer** (`/ade/studio`): create a project, then **Add a class → Browse templates** to drop
@@ -68,9 +68,9 @@ on day one.
 5. **View in Browse**: open your published version to see its OpenAPI spec render — or open the
    seeded **petstore-sample** project first to see the finished shape end to end.
 
-Every newly created tenant (self-signup, admin panel, or `objectified-db tenants create
---sample-creator <user>`) gets the same sample via the shared `odb.provision_sample_project()`
-routine. See [`objectified-db/README.md`](objectified-db/README.md) and
+Every newly created tenant (self-signup, admin panel, or `apiome-db tenants create
+--sample-creator <user>`) gets the same sample via the shared `apiome.provision_sample_project()`
+routine. See [`apiome-db/README.md`](apiome-db/README.md) and
 [`docs/runbooks/BACKUP_AND_DR.md`](docs/runbooks/BACKUP_AND_DR.md) for operational details.
 
 ### Production deployment

@@ -1,4 +1,4 @@
-# Objectified: Contracts (SLA/API Agreements) - Feature Roadmap
+# Apiome: Contracts (SLA/API Agreements) - Feature Roadmap
 
 > Smart contract generation and management for API agreements, SLAs, and data sharing between organizations. Contracts turns informal API partnerships into machine-readable, enforceable agreements with integrated billing, consent management, and an immutable audit trail—eliminating spreadsheet-based SLA tracking and manual invoice reconciliation.
 >
@@ -14,7 +14,7 @@
 
 - Contract builder with form-based SLA definition (uptime %, latency targets, rate limits)
 - Template library with pre-built contract templates (API agreement, data sharing, DPA)
-- Schema-based data sharing contract linking Objectified schemas to usage terms
+- Schema-based data sharing contract linking Apiome schemas to usage terms
 - Basic consent tracking with expiration dates and renewal reminders
 - Usage metering pipeline feeding contract compliance checks
 - Invoice generation from metered usage with PDF export
@@ -194,7 +194,7 @@ The lifecycle engine runs hourly, checking active contracts for expiration (tran
 
 | #   | Title | Description | Labels | Parallel |
 |-----|-------|-------------|--------|----------|
-| 2.1 (#964) | Schema-Based Data Sharing Contracts | Link Objectified schemas to data sharing agreements | `enhancement`, `contracts`, `mvp`, `rest` | Yes |
+| 2.1 (#964) | Schema-Based Data Sharing Contracts | Link Apiome schemas to data sharing agreements | `enhancement`, `contracts`, `mvp`, `rest` | Yes |
 | 2.2 (#965) | Consent Tracking Engine | Track and manage consent for data sharing with audit trail | `enhancement`, `contracts`, `mvp`, `rest` | Yes |
 | 2.3 (#966) | Expiration & Renewal Management | Automated expiration handling and renewal workflows | `enhancement`, `contracts`, `mvp` | No |
 | 2.4 (#967) | Data Usage Monitoring | Track actual data usage against sharing agreement terms | `enhancement`, `contracts`, `rest` | No |
@@ -204,14 +204,14 @@ The lifecycle engine runs hourly, checking active contracts for expiration (tran
 
 #### 2.1 (#964) — Schema-Based Data Sharing Contracts
 
-Schema-Based Data Sharing Contracts bind Objectified schema definitions to legal data sharing agreements. Instead of describing shared data in prose, the contract directly references specific schema classes and properties, creating a machine-readable specification of exactly what data is shared, in what format, and with what constraints.
+Schema-Based Data Sharing Contracts bind Apiome schema definitions to legal data sharing agreements. Instead of describing shared data in prose, the contract directly references specific schema classes and properties, creating a machine-readable specification of exactly what data is shared, in what format, and with what constraints.
 
-The data sharing editor at `/app/contracts/[id]/data-sharing` renders a schema picker that lets users browse their Objectified schemas and select specific classes and properties to include in the sharing agreement. Selected schema elements are displayed in a tree view with checkboxes for individual properties. For each included element, users can set access restrictions (read, write, aggregate-only) and data handling requirements (encryption-at-rest, no-export, retention-limit).
+The data sharing editor at `/app/contracts/[id]/data-sharing` renders a schema picker that lets users browse their Apiome schemas and select specific classes and properties to include in the sharing agreement. Selected schema elements are displayed in a tree view with checkboxes for individual properties. For each included element, users can set access restrictions (read, write, aggregate-only) and data handling requirements (encryption-at-rest, no-export, retention-limit).
 
 Backend endpoints include `POST /api/v1/contracts/{id}/data-sharing` (define shared schemas), `GET /api/v1/contracts/{id}/data-sharing` (retrieve shared schema definitions), and `PUT /api/v1/contracts/{id}/data-sharing` (update). The `contract_data_sharing` table links `contract_id` to `schema_capture_class_id` with JSONB columns for `included_properties`, `access_level`, and `handling_requirements`. Validation ensures referenced schemas exist and are in a published state.
 
 **Acceptance Criteria**:
-- Schema picker browses Objectified schemas and allows property-level selection
+- Schema picker browses Apiome schemas and allows property-level selection
 - Access restrictions (read, write, aggregate-only) are configurable per schema element
 - Data handling requirements (encryption, no-export, retention) are captured per element
 - Referenced schemas must be in a published/captured state
@@ -378,7 +378,7 @@ Backend endpoints include `GET /api/v1/contracts/{id}/invoices` (list), `GET /ap
 
 #### 3.3 (#972) — Payment Gateway Integration
 
-Payment Gateway Integration connects the invoicing system to external payment processors for automated payment collection. The initial integration targets Stripe, with the architecture designed to support additional gateways (PayPal, wire transfer) via a payment provider abstraction layer. Payment methods are stored securely with the gateway—only tokenized references are kept in Objectified.
+Payment Gateway Integration connects the invoicing system to external payment processors for automated payment collection. The initial integration targets Stripe, with the architecture designed to support additional gateways (PayPal, wire transfer) via a payment provider abstraction layer. Payment methods are stored securely with the gateway—only tokenized references are kept in Apiome.
 
 The payment configuration page at `/app/contracts/[id]/billing/payment` allows the consumer party to add payment methods via Stripe's embedded payment element (Stripe.js). The provider party configures their Stripe connect account for receiving payments. Automatic payment collection attempts to charge the consumer's payment method when an invoice is issued, with configurable retry logic for failed payments.
 
@@ -386,7 +386,7 @@ Backend endpoints include `POST /api/v1/billing/payment-methods` (add via Stripe
 
 **Acceptance Criteria**:
 - Stripe integration supports card and ACH payment methods via Stripe.js
-- Payment methods are stored as tokenized references—no raw card data in Objectified
+- Payment methods are stored as tokenized references—no raw card data in Apiome
 - Automatic payment collection fires when invoices are issued with configurable retry (3 attempts)
 - Failed payments trigger notifications to both parties with a manual payment fallback
 - Webhook handler processes Stripe events for payment confirmation and failure
@@ -398,7 +398,7 @@ Backend endpoints include `POST /api/v1/billing/payment-methods` (add via Stripe
 
 #### 3.4 (#973) — Revenue Sharing Calculator
 
-The Revenue Sharing Calculator computes revenue splits for contracts involving multiple parties. Revenue sharing rules are defined per contract, specifying percentage or fixed-amount splits between provider, platform (Objectified), and optional intermediaries. The calculator applies these rules to each invoice, generating a distribution breakdown that shows how invoice proceeds are allocated.
+The Revenue Sharing Calculator computes revenue splits for contracts involving multiple parties. Revenue sharing rules are defined per contract, specifying percentage or fixed-amount splits between provider, platform (Apiome), and optional intermediaries. The calculator applies these rules to each invoice, generating a distribution breakdown that shows how invoice proceeds are allocated.
 
 Revenue sharing configuration at `/app/contracts/[id]/revenue-sharing` uses a form with Radix `Slider` components for percentage allocation, ensuring splits total 100%. The distribution breakdown is displayed alongside each invoice, showing the amount allocated to each party. Monthly settlement reports aggregate distributions across all contracts for each party.
 

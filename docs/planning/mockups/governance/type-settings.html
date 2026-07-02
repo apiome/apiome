@@ -18,11 +18,11 @@
   </style>
 </head>
 <body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-  <!-- ░░ App top bar (objectified-ui TopHeader) ░░ -->
+  <!-- ░░ App top bar (apiome-ui TopHeader) ░░ -->
   <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
     <div class="flex items-center gap-2">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="layout-dashboard" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span><span class="text-xs text-gray-400">/</span>
+      <span class="text-sm font-semibold">Apiome</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Control Panel</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Governance</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Type Registry · Settings</span>
@@ -84,7 +84,7 @@
         <div class="px-6 pt-4 flex items-end justify-between">
           <div>
             <h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="library" class="w-6 h-6 text-indigo-500"></i> Type Registry</h2>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">JSON Schema <span class="mono">2020-12</span> types · core system &amp; per-tenant scopes · relative <span class="mono">$ref</span> resolution · stored in <span class="mono">objectified-types-db</span></p>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">JSON Schema <span class="mono">2020-12</span> types · core system &amp; per-tenant scopes · relative <span class="mono">$ref</span> resolution · stored in <span class="mono">apiome-types-db</span></p>
           </div>
           <div class="flex items-center gap-2">
             <a href="type-import.html" class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Import schema</a>
@@ -110,7 +110,7 @@
               <h3 class="text-sm font-semibold flex items-center gap-2"><i data-lucide="database" class="w-4 h-4 text-indigo-500"></i> Registry database</h3>
               <span class="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"><span class="text-emerald-500">●</span> Connected</span>
             </div>
-            <p class="text-[11px] text-gray-500 mb-4">Atlas stores all types in a dedicated database, separate from <span class="mono">objectified-db</span> (application data).</p>
+            <p class="text-[11px] text-gray-500 mb-4">Atlas stores all types in a dedicated database, separate from <span class="mono">apiome-db</span> (application data).</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Host</label>
@@ -122,7 +122,7 @@
               </div>
               <div>
                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Database</label>
-                <input type="text" value="objectified-types-db" class="w-full px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 mono" />
+                <input type="text" value="apiome-types-db" class="w-full px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 mono" />
               </div>
               <div>
                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Pool size</label>
@@ -170,7 +170,7 @@
             <h3 class="text-sm font-semibold flex items-center gap-2 mb-4"><i data-lucide="waypoints" class="w-4 h-4 text-indigo-500"></i> Reference resolution</h3>
             <div class="mb-4">
               <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Resolution base URL</label>
-              <input type="text" value="https://api.objectified.dev/types/" class="w-full px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 mono" />
+              <input type="text" value="https://api.apiome.app/types/" class="w-full px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 mono" />
               <p class="text-[11px] text-gray-500 mt-1">Relative <span class="mono">$ref</span> resolve against this base.</p>
             </div>
             <div class="mb-4">

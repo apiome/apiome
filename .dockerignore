@@ -1,4 +1,4 @@
-# Keeps `docker build -f objectified-mcp/Dockerfile .` contexts small and avoids copying local venvs.
+# Keeps `docker build -f apiome-mcp/Dockerfile .` contexts small and avoids copying local venvs.
 **/.venv
 .git
 **/node_modules

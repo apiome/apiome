@@ -1,6 +1,6 @@
 # AI Planned Feature Roadmap
 
-This outlines the planned features for integrating AI capabilities into Objectified.
+This outlines the planned features for integrating AI capabilities into Apiome.
 
 
 ### Preparation
@@ -9,7 +9,7 @@ This outlines the planned features for integrating AI capabilities into Objectif
 - Set up Mac Mini cluster using EXO
 - Deploy Ollama with Qwen 2.5 and Llama 3.2 models
 - Configure network access and security
-- Test Ollama API connectivity from Objectified backend
+- Test Ollama API connectivity from Apiome backend
 - Benchmark response times and resource usage
 - Establish monitoring and alerting for Ollama cluster health
 - Document Ollama setup and maintenance procedures

@@ -18,7 +18,7 @@
         <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center"><i data-lucide="database-backup" class="w-5 h-5 text-white"></i></div>
         <div>
           <h1 class="text-lg font-bold flex items-center gap-2">Backup &amp; DR <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">Draft</span></h1>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Backups, point-in-time recovery, and disaster-recovery drills for objectified-db · 3 screens</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Backups, point-in-time recovery, and disaster-recovery drills for apiome-db · 3 screens</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -32,7 +32,7 @@
 
     <section class="rounded-xl border border-sky-200 dark:border-sky-800/50 bg-sky-50/50 dark:bg-sky-900/10 p-5">
       <h2 class="text-sm font-semibold mb-2 flex items-center gap-2"><i data-lucide="target" class="w-4 h-4 text-sky-500"></i> Why this exists</h2>
-      <p class="text-sm text-gray-600 dark:text-gray-300">Objectified positions itself as the <strong>source of truth</strong> for an organization's schemas, API contracts, and (increasingly) data. The <code class="mono text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">db</code> mockup covers time-travel (event replay) and storage tiers, but there is <strong>no operational backup, restore, or DR story</strong>. "Source of truth without recoverability" is a credibility blocker for any public release. This adds scheduled backups, point-in-time recovery, and tested restore drills with explicit RPO/RTO.</p>
+      <p class="text-sm text-gray-600 dark:text-gray-300">Apiome positions itself as the <strong>source of truth</strong> for an organization's schemas, API contracts, and (increasingly) data. The <code class="mono text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">db</code> mockup covers time-travel (event replay) and storage tiers, but there is <strong>no operational backup, restore, or DR story</strong>. "Source of truth without recoverability" is a credibility blocker for any public release. This adds scheduled backups, point-in-time recovery, and tested restore drills with explicit RPO/RTO.</p>
     </section>
 
     <section>
@@ -102,7 +102,7 @@
     <section class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
       <h2 class="text-sm font-semibold mb-3 flex items-center gap-2"><i data-lucide="info" class="w-4 h-4 text-sky-500"></i> Design notes</h2>
       <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-        <li class="flex items-start gap-2"><span class="mt-1 w-1.5 h-1.5 rounded-full bg-sky-500 flex-shrink-0"></span>PITR leans on the existing event/snapshot model (<code class="mono text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">odb.data_record</code> + <code class="mono text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">odb.data_snapshot</code> and the Flyway-migrated schema history): a base snapshot plus forward event replay to the chosen timestamp.</li>
+        <li class="flex items-start gap-2"><span class="mt-1 w-1.5 h-1.5 rounded-full bg-sky-500 flex-shrink-0"></span>PITR leans on the existing event/snapshot model (<code class="mono text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">apiome.data_record</code> + <code class="mono text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">apiome.data_snapshot</code> and the Flyway-migrated schema history): a base snapshot plus forward event replay to the chosen timestamp.</li>
         <li class="flex items-start gap-2"><span class="mt-1 w-1.5 h-1.5 rounded-full bg-sky-500 flex-shrink-0"></span>Backups capture both <strong>metadata</strong> (schemas, versions, paths, primitives) and <strong>data instances</strong>; scope can be a whole tenant or a single project for selective restore.</li>
         <li class="flex items-start gap-2"><span class="mt-1 w-1.5 h-1.5 rounded-full bg-sky-500 flex-shrink-0"></span>"Restore to sandbox" reuses the Data Playground provisioning flow so a recovery can be inspected before promoting over live data.</li>
         <li class="flex items-start gap-2"><span class="mt-1 w-1.5 h-1.5 rounded-full bg-sky-500 flex-shrink-0"></span>Backup artifacts are encrypted at rest; key handling aligns with the proposed BYOK / key-management workstream.</li>

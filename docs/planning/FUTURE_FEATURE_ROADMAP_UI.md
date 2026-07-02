@@ -1,6 +1,6 @@
-# Objectified: UI Enhancements - Feature Roadmap
+# Apiome: UI Enhancements - Feature Roadmap
 
-> User interface enhancements delivering full workspace customization, WCAG 2.1 AA accessibility compliance, and guided onboarding—ensuring Objectified is usable by everyone and approachable for newcomers.
+> User interface enhancements delivering full workspace customization, WCAG 2.1 AA accessibility compliance, and guided onboarding—ensuring Apiome is usable by everyone and approachable for newcomers.
 >
 > **Revenue Model**: Core platform feature, accessibility compliance in all tiers
 >
@@ -43,7 +43,7 @@
 
 #### 1.1 (#1332) — Theme Engine & CSS Custom Properties
 
-The theme engine provides a design-token architecture for Objectified's entire component library. Every color, spacing value, border radius, shadow, and typographic scale is exposed as a CSS custom property under the `--obj-*` namespace. A `ThemeProvider` React context wraps the application root, reading the user's stored preference and injecting the corresponding token set into `:root`. Switching themes applies instantly without a full-page reload because the browser re-cascades custom properties in real time.
+The theme engine provides a design-token architecture for Apiome's entire component library. Every color, spacing value, border radius, shadow, and typographic scale is exposed as a CSS custom property under the `--obj-*` namespace. A `ThemeProvider` React context wraps the application root, reading the user's stored preference and injecting the corresponding token set into `:root`. Switching themes applies instantly without a full-page reload because the browser re-cascades custom properties in real time.
 
 Three built-in themes ship at launch: Light, Dark, and System (follows `prefers-color-scheme`). The settings page at `/app/(platform)/settings/appearance` renders a Radix `RadioGroup` for theme selection with live preview thumbnails. Below the selector, a "Custom Palette" section surfaces six primary token overrides (primary, secondary, accent, background, surface, text) using Radix `Popover` color pickers, giving users fine-grained control over their workspace look.
 
@@ -85,7 +85,7 @@ Token values are persisted via `PUT /api/v1/preferences/theme` with a JSON body 
 
 #### 1.2 (#1338) — Customizable Toolbar & Panel Layout
 
-The workspace layout system turns Objectified's fixed chrome into a user-arrangeable surface. The top toolbar, left sidebar, right inspector panel, and bottom console are each rendered as discrete layout slots. Users drag slot handles to reorder toolbar items, resize panels by dragging their dividers, and toggle panel visibility via a Radix `DropdownMenu` accessible from a "Layout" button in the toolbar.
+The workspace layout system turns Apiome's fixed chrome into a user-arrangeable surface. The top toolbar, left sidebar, right inspector panel, and bottom console are each rendered as discrete layout slots. Users drag slot handles to reorder toolbar items, resize panels by dragging their dividers, and toggle panel visibility via a Radix `DropdownMenu` accessible from a "Layout" button in the toolbar.
 
 Panel state is captured as a `LayoutDescriptor` JSON object: an ordered array of panel IDs, each with `visible` (boolean), `width` or `height` (number), and `collapsed` (boolean). Dragging a panel handle updates the descriptor in React state and persists it on drop via `PATCH /api/v1/preferences/layout`. Minimum panel sizes are enforced (sidebar: 200px, inspector: 250px) to prevent panels from being resized to invisibility.
 
@@ -122,7 +122,7 @@ The toolbar itself supports item reordering through drag-and-drop. Each toolbar 
 
 #### 1.3 (#1343) — Keyboard Shortcut Manager
 
-The Keyboard Shortcut Manager lets users rebind any action in Objectified to their preferred key combination. A `ShortcutRegistry` singleton collects every registered shortcut with its action ID, default binding, context (global, editor, modal), and human-readable description. The settings page at `/app/(platform)/settings/shortcuts` renders a searchable, grouped list of shortcuts using a Radix `Accordion` per context group.
+The Keyboard Shortcut Manager lets users rebind any action in Apiome to their preferred key combination. A `ShortcutRegistry` singleton collects every registered shortcut with its action ID, default binding, context (global, editor, modal), and human-readable description. The settings page at `/app/(platform)/settings/shortcuts` renders a searchable, grouped list of shortcuts using a Radix `Accordion` per context group.
 
 Each shortcut row displays the action name, current binding rendered as `<kbd>` elements, and an "Edit" button. Clicking Edit enters a capture mode: the next key combination pressed is recorded and displayed. The system validates against conflicts—if the new binding collides with an existing shortcut in the same context, a Radix `AlertDialog` warns the user and offers to unbind the conflicting action. Users can also clear a binding entirely, removing the keyboard trigger for that action.
 
@@ -200,7 +200,7 @@ Team-level settings allow organization admins to define default preferences appl
 
 #### 2.1 (#1375) — Keyboard Navigation & Focus Management
 
-Every interactive element in Objectified must be operable via keyboard alone. This issue establishes a focus management layer that handles tab ordering, focus trapping in modals and drawers, skip links for bypassing navigation, and visible focus indicators that meet the WCAG 2.1 AA 2.4.7 "Focus Visible" criterion. The focus ring uses a 2px solid outline with a 2px offset in the current theme's accent color, ensuring 3:1 contrast against adjacent colors.
+Every interactive element in Apiome must be operable via keyboard alone. This issue establishes a focus management layer that handles tab ordering, focus trapping in modals and drawers, skip links for bypassing navigation, and visible focus indicators that meet the WCAG 2.1 AA 2.4.7 "Focus Visible" criterion. The focus ring uses a 2px solid outline with a 2px offset in the current theme's accent color, ensuring 3:1 contrast against adjacent colors.
 
 Skip links are rendered at the top of every page as visually hidden anchors that become visible on focus. The standard skip link set includes "Skip to main content," "Skip to navigation," and "Skip to search." On complex pages with multiple landmark regions, additional skip links are generated dynamically based on the page's `<section>` elements with `aria-label` attributes.
 
@@ -404,7 +404,7 @@ Quick Start Templates provide pre-built sample projects that give new users a po
 
 The Quick Start page at `/app/(platform)/onboarding/quick-start` renders template cards with a preview of included schemas and an "Apply Template" button. Applying a template creates a new project populated with the template's schemas, sample records, and configuration. Templates are stored in a `project_templates` table with `schema_snapshot` (JSONB), `sample_data` (JSONB), and `config` (JSONB) columns. REST endpoints: `GET /api/v1/onboarding/templates` (list) and `POST /api/v1/onboarding/templates/{id}/apply` (create project from template).
 
-The Import Wizard at `/app/(platform)/onboarding/import` guides users through importing existing data into Objectified. A four-step flow uses Radix `Tabs` for navigation: (1) Select Source—file upload (JSON, CSV, SQL dump) or connect to an external database, (2) Schema Detection—auto-infer schemas from the imported data with a preview table, (3) Mapping—adjust detected field names and types using editable Radix `Table` rows, (4) Confirm & Import—review summary and execute the import with a progress bar.
+The Import Wizard at `/app/(platform)/onboarding/import` guides users through importing existing data into Apiome. A four-step flow uses Radix `Tabs` for navigation: (1) Select Source—file upload (JSON, CSV, SQL dump) or connect to an external database, (2) Schema Detection—auto-infer schemas from the imported data with a preview table, (3) Mapping—adjust detected field names and types using editable Radix `Table` rows, (4) Confirm & Import—review summary and execute the import with a progress bar.
 
 **Acceptance Criteria**
 - At least 3 sample project templates are available (E-commerce, Blog, SaaS Starter)

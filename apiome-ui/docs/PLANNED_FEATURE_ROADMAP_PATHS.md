@@ -1,0 +1,663 @@
+# Apiome - API Paths Designer: Feature Roadmap
+
+> **Enterprise-grade Visual API Design Platform**  
+> React Flow-based path definition, operation design, and OpenAPI 3.1 specification management for software engineers
+> 
+> **Last Updated**: December 30, 2025  
+> **Version**: 2.0 - Visual OpenAPI Path Definition, Testing & Enterprise Integration  
+> **Target Audience**: Software Engineers, API Architects, Platform Engineers
+
+---
+
+## Visual Node System
+
+### 2. Node Types & Visual Design
+
+Each OpenAPI concept is represented as a distinct node type with color-coded visual identity, making API 
+structure immediately recognizable.
+
+#### 2.5 Request Body Nodes 📋 PLANNED
+
+**Visual Design**: Input port icon with blue accent, shows content types
+
+**Advanced Features**:
+- Multiple content types per operation (JSON vs XML vs form-data)
+- Polymorphic schemas with oneOf/anyOf/allOf visualization
+- Discriminator configuration for union types
+- File upload configuration with encoding options
+- Example value editor with JSON/YAML/XML toggle
+
+#### 3.4 OpenAPI Export & Import 📋 PLANNED
+
+**Import Support**:
+- ✅ OpenAPI 3.0/3.1 JSON/YAML
+- ✅ Swagger 2.0 JSON/YAML
+- Postman Collection v2.1
+- Insomnia Collection v4
+- HAR (HTTP Archive) files
+- cURL commands (converts to operation)
+
+---
+
+## 9. Visual Design Specification
+
+This section describes the visual appearance and layout of the Paths Designer within the Studio interface, including the React Flow canvas structure, node designs, and interaction patterns.
+
+### 9.3 Node Visual Designs
+
+Each node type has a distinct visual appearance to enable quick identification on the canvas.
+
+#### PathNode (Primary Container)
+
+The PathNode serves as the top-level container for an API endpoint:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ○ PATH                                           ⋮ ≡        │  ← Header with drag handle
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   /api/v1/users/{userId}/orders                             │  ← Path pattern (editable)
+│                    ├────┘                                   │
+│                    └─ {userId} detected as path variable    │
+│                                                             │
+│   Summary: Manage user orders                               │  ← Optional summary
+│                                                             │
+│   ┌─ METHODS ─────────────────────────────────────────────┐ │
+│   │                                                       │ │
+│   │  (Drop zone for MethodNodes)                          │ │  ← Methods attach here
+│   │                                                       │ │
+│   └───────────────────────────────────────────────────────┘ │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│  Tags: orders, users          │  ⚠️ deprecated              │  ← Footer metadata
+└─────────────────────────────────────────────────────────────┘
+     │
+     ○ ← Output handle for edge connections
+```
+
+#### 9.3.2 SchemaRefNode (Draggable from Library)
+
+When a schema is dragged from the library panel onto the canvas or into a request/response zone:
+
+```
+┌─────────────────────────────────┐
+│ { } User                    ↗️  │  ← Click to jump to Schema Designer
+├─────────────────────────────────┤
+│                                 │
+│  id: string (uuid)              │  ← Preview of top-level properties
+│  email: string (email)          │
+│  name: string                   │
+│  createdAt: string (date-time)  │
+│  ... +3 more properties         │
+│                                 │
+├─────────────────────────────────┤
+│  ○ ref    ○ array    ○ partial  │  ← Modifier toggles
+└─────────────────────────────────┘
+  │
+  ○ ← Handle for connecting to Request/Response
+```
+
+### 9.4 Complete Canvas Example
+
+Here's how a complete API endpoint design might appear on the canvas:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    REACT FLOW CANVAS                                    │
+│  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐ │
+│                                                                                         │
+│  │ ┌───────────────────────────────────────────────────────────────────────────────┐ │  │
+│    │ ○ PATH                                                                    ⋮ ≡ │    │
+│  │ ├───────────────────────────────────────────────────────────────────────────────┤ │  │
+│    │                                                                               │    │
+│  │ │   /api/v1/users/{userId}                                                      │ │  │
+│    │                                                                               │    │
+│  │ │   ┌─────────────────────────────────────────────────────────────────────────┐ │ │  │
+│    │   │                                                                         │ │    │
+│  │ │   │  ┌────────────────────────┐    ┌────────────────────────┐               │ │ │  │
+│    │   │  │ ●━━ GET ━━━━━━━━━━━━━  │    │ ●━━ PUT ━━━━━━━━━━━━━━ │               │ │    │
+│  │ │   │  ├────────────────────────┤    ├────────────────────────┤               │ │ │  │
+│    │   │  │ operationId: getUser   │    │ operationId: updateUser│               │ │    │
+│  │ │   │  │                        │    │                        │               │ │ │  │
+│    │   │  │ ┌─ Responses ────────┐ │    │ ┌─ Request ──────────┐ │               │ │    │
+│  │ │   │  │ │ 200 ────────────┐  │ │    │ │                    │ │               │ │ │  │
+│    │   │  │ │     ┌───────────┴──┴─┴────┴─┤ { } UpdateUserReq  │ │               │ │    │
+│  │ │   │  │ │     │ { } User         │◀───│     app/json       │ │               │ │ │  │
+│    │   │  │ │     │                  │    │ └────────────────────┘               │ │    │
+│  │ │   │  │ │     │  id: string      │    │                        │             │ │ │  │
+│    │   │  │ │     │  email: string   │    │ ┌─ Responses ────────┐ │             │ │    │
+│  │ │   │  │ │     │  name: string    │    │ │ 200 ○──────────────┼─┘             │ │ │  │
+│    │   │  │ │     │  role: enum      │    │ │ 400 ○ ValidationErr│               │ │    │
+│  │ │   │  │ │     └──────────────────┘    │ │ 404 ○ NotFoundError│               │ │ │  │
+│    │   │  │ │ 401 ○ ErrorResponse    │    │ └────────────────────┘               │ │    │
+│  │ │   │  │ │ 404 ○ ErrorResponse    │    │                        │             │ │ │  │
+│    │   │  │ └────────────────────────┘    │ 🔐 bearerAuth          │             │ │    │
+│  │ │   │  │                        │    └────────────────────────┘               │ │ │  │
+│    │   │  │ 🔐 bearerAuth          │                                             │ │    │
+│  │ │   │  └────────────────────────┘    ┌────────────────────────┐               │ │ │  │
+│    │   │                                │ ●━━ DELETE ━━━━━━━━━━━ │               │ │    │
+│  │ │   │                                ├────────────────────────┤               │ │ │  │
+│    │   │                                │ operationId: deleteUser│               │ │    │
+│  │ │   │                                │                        │               │ │ │  │
+│    │   │                                │ ┌─ Responses ────────┐ │               │ │    │
+│  │ │   │                                │ │ 204 (No Content)   │ │               │ │ │  │
+│    │   │                                │ │ 401 ○ ErrorResponse│ │               │ │    │
+│  │ │   │                                │ │ 404 ○ ErrorResponse│ │               │ │ │  │
+│    │   │                                │ └────────────────────┘ │               │ │    │
+│  │ │   │                                │                        │               │ │ │  │
+│    │   │                                │ 🔐 bearerAuth          │               │ │    │
+│  │ │   │                                └────────────────────────┘               │ │ │  │
+│    │   │                                                                         │ │    │
+│  │ │   └─────────────────────────────────────────────────────────────────────────┘ │ │  │
+│    │                                                                               │    │
+│  │ ├───────────────────────────────────────────────────────────────────────────────┤ │  │
+│    │  Tags: users                    │  Path Params: userId (uuid)                 │    │
+│  │ └───────────────────────────────────────────────────────────────────────────────┘ │  │
+│                                                                                          │
+│  │                                                                                   │  │
+│     ┌─ FLOATING SCHEMA REFERENCES ─────────────────────────────────────────────────┐    │
+│  │  │                                                                              │ │  │
+│     │  ┌─────────────────────┐   ┌─────────────────────┐   ┌─────────────────────┐ │    │
+│  │  │  │ { } User        ↗️  │   │ { } UpdateUserReq↗️  │   │ { } ErrorResponse↗️ │ │ │  │
+│     │  ├─────────────────────┤   ├─────────────────────┤   ├─────────────────────┤ │    │
+│  │  │  │ id: string (uuid)  │   │ email?: string      │   │ code: string        │ │ │  │
+│     │  │ email: string      │   │ name?: string       │   │ message: string     │ │    │
+│  │  │  │ name: string       │   │ role?: enum         │   │ details?: object    │ │ │  │
+│     │  │ role: enum         │   │                     │   │                     │ │    │
+│  │  │  │ createdAt: date    │   │                     │   │                     │ │ │  │
+│     │  └──────────○─────────┘   └──────────○─────────┘   └──────────○─────────┘ │    │
+│  │  │             │                        │                        │            │ │  │
+│     │             │     ┌──────────────────┘                        │            │    │
+│  │  │             │     │     ┌─────────────────────────────────────┘            │ │  │
+│     │             ▼     ▼     ▼                                                  │    │
+│  │  │        (Edges connect to response/request schema slots above)              │ │  │
+│     │                                                                              │    │
+│  │  └──────────────────────────────────────────────────────────────────────────────┘ │  │
+│                                                                                          │
+│  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘  │
+│                                                                                          │
+│  ┌──────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ ✓ Valid  │  Zoom: 100%  │  ⊞ Grid  │  🗺️ Mini-map  │  Nodes: 8  │  Export ▼    │   │
+│  └──────────────────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 9.5 Properties Panel (Right Side)
+
+When a node is selected, the properties panel shows contextual configuration:
+
+```
+┌─────────────────────────────┐
+│ ✕  PATH PROPERTIES          │
+├─────────────────────────────┤
+│                             │
+│ Path Pattern                │
+│ ┌─────────────────────────┐ │
+│ │ /api/v1/users/{userId}  │ │
+│ └─────────────────────────┘ │
+│                             │
+│ ─────────────────────────── │
+│ PATH VARIABLES              │
+│                             │
+│ ┌─────────────────────────┐ │
+│ │ userId                  │ │
+│ │ ┌─────────────────────┐ │ │
+│ │ │ Type: string      ▼ │ │ │
+│ │ └─────────────────────┘ │ │
+│ │ ┌─────────────────────┐ │ │
+│ │ │ Format: uuid      ▼ │ │ │
+│ │ └─────────────────────┘ │ │
+│ │ ☑ Required              │ │
+│ └─────────────────────────┘ │
+│                             │
+│ ─────────────────────────── │
+│ METADATA                    │
+│                             │
+│ Summary                     │
+│ ┌─────────────────────────┐ │
+│ │ User management         │ │
+│ └─────────────────────────┘ │
+│                             │
+│ Description                 │
+│ ┌─────────────────────────┐ │
+│ │ Endpoints for managing  │ │
+│ │ individual user         │ │
+│ │ accounts...             │ │
+│ └─────────────────────────┘ │
+│                             │
+│ Tags                        │
+│ ┌─────────────────────────┐ │
+│ │ users ✕ │ accounts ✕    │ │
+│ │ + Add tag               │ │
+│ └─────────────────────────┘ │
+│                             │
+│ ─────────────────────────── │
+│ OPTIONS                     │
+│                             │
+│ ☐ Deprecated                │
+│ ☐ Override servers          │
+│                             │
+│ ─────────────────────────── │
+│                             │
+│ ┌─────────────────────────┐ │
+│ │     🗑️ Delete Path      │ │
+│ └─────────────────────────┘ │
+│                             │
+└─────────────────────────────┘
+```
+
+When a MethodNode is selected:
+
+```
+┌─────────────────────────────┐
+│ ✕  GET OPERATION            │
+├─────────────────────────────┤
+│                             │
+│ Operation ID                │
+│ ┌─────────────────────────┐ │
+│ │ getUserById             │ │
+│ └─────────────────────────┘ │
+│ 💡 Auto-generate            │
+│                             │
+│ ─────────────────────────── │
+│ REQUEST                     │
+│                             │
+│ Parameters                  │
+│ ┌─────────────────────────┐ │
+│ │ + Add Query Param       │ │
+│ │ + Add Header Param      │ │
+│ └─────────────────────────┘ │
+│                             │
+│ ─────────────────────────── │
+│ RESPONSES                   │
+│                             │
+│ ┌─────────────────────────┐ │
+│ │ 200 OK              ✕   │ │
+│ │   → User schema         │ │
+│ ├─────────────────────────┤ │
+│ │ 401 Unauthorized    ✕   │ │
+│ │   → ErrorResponse       │ │
+│ ├─────────────────────────┤ │
+│ │ 404 Not Found       ✕   │ │
+│ │   → ErrorResponse       │ │
+│ ├─────────────────────────┤ │
+│ │ + Add Response          │ │
+│ └─────────────────────────┘ │
+│                             │
+│ ─────────────────────────── │
+│ SECURITY                    │
+│                             │
+│ ┌─────────────────────────┐ │
+│ │ 🔐 bearerAuth       ✕   │ │
+│ │ + Add Security          │ │
+│ └─────────────────────────┘ │
+│                             │
+│ ─────────────────────────── │
+│ DOCUMENTATION               │
+│                             │
+│ Summary                     │
+│ ┌─────────────────────────┐ │
+│ │ Get user by ID          │ │
+│ └─────────────────────────┘ │
+│                             │
+│ Description (Markdown)      │
+│ ┌─────────────────────────┐ │
+│ │ Returns a single user   │ │
+│ │ object by their unique  │ │
+│ │ identifier.             │ │
+│ │                         │ │
+│ │ ## Notes                │ │
+│ │ - Requires auth         │ │
+│ └─────────────────────────┘ │
+│ 👁️ Preview                  │
+│                             │
+└─────────────────────────────┘
+```
+
+### 9.6 Schema Drag-and-Drop Interaction
+
+The key interaction for binding schemas to requests and responses:
+
+```
+STEP 1: Locate schema in Library Panel
+┌─────────────────────────┐
+│ ▼ SCHEMAS (from lib)    │
+│   ┌───────────────────┐ │
+│   │ { } User      ⬚⬚  │ │ ← Drag handle appears on hover
+│   └───────────────────┘ │
+
+STEP 2: Drag schema onto canvas or directly into drop zone
+                                    ┌─────────────────────────┐
+         ╭─ ─ ─ ─ ─ ─ ─ ─ ╮         │ ●━━ POST ━━━━━━━━━━━━━  │
+         ┆  { } User      ┆ ───▶    ├─────────────────────────┤
+         ╰─ ─ ─ ─ ─ ─ ─ ─ ╯         │ ┌─ Request ───────────┐ │
+               dragging             │ │ ┌─────────────────┐ │ │
+                                    │ │ │  DROP SCHEMA    │ │ │ ← Drop zone highlights
+                                    │ │ │  HERE           │ │ │   when schema hovers
+                                    │ │ └─────────────────┘ │ │
+                                    │ └─────────────────────┘ │
+
+STEP 3: Schema reference created with edge connection
+┌─────────────────────────┐         ┌─────────────────────────┐
+│ { } User            ↗️  │         │ ●━━ POST ━━━━━━━━━━━━━  │
+├─────────────────────────┤         ├─────────────────────────┤
+│ id: string              │         │ ┌─ Request ───────────┐ │
+│ email: string           │────────▶│ │ ○ User              │ │
+│ name: string            │  edge   │ │   application/json  │ │
+│ ...                     │         │ └─────────────────────┘ │
+└─────────────────────────┘         └─────────────────────────┘
+```
+
+### 9.7 Edge Connection Types
+
+Different edge styles represent different relationship types:
+
+```
+Schema Reference (solid line with arrow):
+┌───────────┐                    ┌─────────────┐
+│ { } User  │───────────────────▶│ 200 Response│
+└───────────┘                    └─────────────┘
+
+Request Body Binding (solid blue line):
+┌───────────────┐                ┌─────────────┐
+│ { } CreateReq │━━━━━━━━━━━━━━━▶│ POST /users │
+└───────────────┘   (required)   └─────────────┘
+
+Optional Reference (dashed line):
+┌───────────┐                    ┌─────────────┐
+│ { } Opts  │┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄▶ │ Query Param │
+└───────────┘   (optional)       └─────────────┘
+
+Array Wrapper (line with brackets):
+┌───────────┐                    ┌─────────────┐
+│ { } User  │──────[  ]─────────▶│ 200 Response│
+└───────────┘   (returns array)  └─────────────┘
+
+Polymorphic (branching lines):
+┌───────────┐
+│ { } Cat   │──────┐
+└───────────┘      │  oneOf      ┌─────────────┐
+                   ├────────────▶│ 200 Response│
+┌───────────┐      │             └─────────────┘
+│ { } Dog   │──────┘
+└───────────┘
+```
+
+### 9.8 Canvas Controls and Navigation
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                 │
+│  ┌─────────┐                                              ┌─────────────────┐  │
+│  │ ◀ ▶ ▲ ▼ │  Pan controls                                │   MINI-MAP      │  │
+│  └─────────┘                                              │  ┌───────────┐  │  │
+│                                                           │  │  ▪   ▪    │  │  │
+│  ┌─────────────────────────────┐                          │  │    ▪      │  │  │
+│  │  ➖  100%  ➕  │ Fit │ 1:1  │  Zoom controls           │  │  ▪    ▪   │  │  │
+│  └─────────────────────────────┘                          │  └───────────┘  │  │
+│                                                           └─────────────────┘  │
+│  KEYBOARD SHORTCUTS:                                                           │
+│  ─────────────────────────────────────────────────                             │
+│  Space + Drag     Pan canvas                                                   │
+│  Cmd/Ctrl + Scroll    Zoom in/out                                              │
+│  Cmd/Ctrl + 0     Fit to view                                                  │
+│  Cmd/Ctrl + 1     Zoom to 100%                                                 │
+│  Delete/Backspace Delete selected                                              │
+│  Cmd/Ctrl + D     Duplicate selected                                           │
+│  Cmd/Ctrl + Z     Undo                                                         │
+│  Cmd/Ctrl + Shift + Z Redo                                                     │
+│  Cmd/Ctrl + G     Group selected                                               │
+│  Cmd/Ctrl + A     Select all                                                   │
+│  Escape           Deselect all                                                 │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 9.9 Context Menus
+
+Right-click context menus provide quick actions:
+
+```
+On PathNode:                        On MethodNode:
+┌─────────────────────────┐        ┌─────────────────────────┐
+│ ✏️  Edit Path           │        │ ✏️  Edit Operation      │
+│ 📋 Duplicate            │        │ 📋 Duplicate            │
+├─────────────────────────┤        ├─────────────────────────┤
+│ ➕ Add GET              │        │ ➕ Add Response         │
+│ ➕ Add POST             │        │ ➕ Add Parameter        │
+│ ➕ Add PUT              │        │ 🔐 Add Security         │
+│ ➕ Add DELETE           │        ├─────────────────────────┤
+├─────────────────────────┤        │ 🧪 Test in Swagger      │
+│ 📦 Generate All CRUD    │        │ 📄 Copy as cURL         │
+├─────────────────────────┤        ├─────────────────────────┤
+│ ⚠️  Mark Deprecated     │        │ ⚠️  Mark Deprecated     │
+│ 🗑️  Delete              │        │ 🗑️  Delete              │
+└─────────────────────────┘        └─────────────────────────┘
+
+On SchemaRefNode:                   On Canvas (empty area):
+┌─────────────────────────┐        ┌─────────────────────────┐
+│ ↗️  Open in Schema Editor│       │ ➕ Add Path             │
+│ 📋 Duplicate Reference   │       │ 📋 Paste                │
+├─────────────────────────┤        ├─────────────────────────┤
+│ [ ] Wrap as Array       │        │ ⊞  Toggle Grid          │
+│ { } Use as Partial      │        │ 🔄 Auto-arrange         │
+├─────────────────────────┤        │ 🎯 Fit to View          │
+│ 🔗 Disconnect           │        ├─────────────────────────┤
+│ 🗑️  Remove from Canvas  │        │ 📥 Import from OpenAPI  │
+└─────────────────────────┘        │ 📤 Export Selection     │
+                                   └─────────────────────────┘
+```
+
+### 9.10 Visual States
+
+Nodes display different visual states for user feedback:
+
+```
+DEFAULT STATE:                      SELECTED STATE:
+┌─────────────────────────┐        ┌─────────────────────────┐
+│ ○ PATH                  │        │ ○ PATH              ⬚⬚  │ ← Resize handles
+├─────────────────────────┤        ╔═════════════════════════╗ ← Blue border
+│ /api/v1/users           │        ║ /api/v1/users           ║
+└─────────────────────────┘        ╚═════════════════════════╝
+
+HOVER STATE:                        ERROR STATE:
+┌─────────────────────────┐        ┌─────────────────────────┐
+│ ○ PATH              ═══ │ ← Drag │ ○ PATH              ⚠️  │ ← Error indicator
+├─────────────────────────┤   grab ╔═════════════════════════╗ ← Red border
+│ /api/v1/users           │ handle ║ /api/v1/users/{         ║ ← Invalid syntax
+└─────────────────────────┘        ║ Missing closing brace   ║ ← Error tooltip
+                                   ╚═════════════════════════╝
+
+CONNECTING STATE:                   DEPRECATED STATE:
+┌─────────────────────────┐        ┌─────────────────────────┐
+│ { } User                │        │ ○ PATH              ⚠️  │
+├─────────────────────────┤        ├─────────────────────────┤
+│ id: string              │        │ /api/v1/legacy/users    │ ← Strikethrough
+│ email: string       ◉───┼───▶    │ ░░░░░░░░░░░░░░░░░░░░░░░ │ ← Dimmed/grayed
+└─────────────────────────┘        └─────────────────────────┘
+        Active connection handle
+
+DROP TARGET STATE:
+┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+  ┌─────────────────────┐   ← Dashed highlight
+│ │   DROP SCHEMA HERE  │ │   appears when dragging
+  │   { } ───────────▶  │     compatible node type
+│ └─────────────────────┘ │
+└ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+```
+
+---
+
+# Completed
+
+## 🗄️ Data Model & Persistence
+
+### 7. Database Schema ✅ FINISHED
+
+### 9.1 Studio Layout Structure ✅ FINISHED
+
+### 9.2 Library Panel Structure ✅ FINISHED
+
+**Configurable Properties**:
+- ✅ Operation ID (auto-generated from method + path)
+- ✅ Tags for API grouping
+- ✅ Summary and description
+- ✅ Request body schema binding
+- ✅ Response definitions (status codes + schemas)
+- ✅ Parameters (query, header, cookie)
+- ✅ Security requirements
+- ✅ Deprecated flag
+- ✅ Private flag (unexposed endpoints)
+- ✅ External docs
+- ✅ Custom `x-*` extensions
+
+**Supported Security Schemes**:
+- ✅ **API Key**: Header, query, or cookie-based keys (#410)
+- ✅ **HTTP**: Basic, Bearer, or custom HTTP auth
+- ✅ **OAuth 2.0**: Authorization Code, Implicit, Client Credentials, Password flows
+- ✅ **OpenID Connect**: Discovery URL with scopes
+- ✅ **Mutual TLS**: Certificate-based authentication
+- ✅ **Custom security schemes**
+
+**Configurable Properties**:
+- ✅ Parameter name (with auto-suggest from common patterns)
+- ✅ Location: query, path, header, cookie (fixed from dragged node)
+- ✅ Schema type (string, number, boolean, array, object)
+- ✅ Required flag
+- ✅ Default value
+- ✅ Description
+- ✅ Validation rules (min/max, pattern, enum)
+- ✅ Serialization style (form, spaceDelimited, pipeDelimited, deepObject)
+- ✅ Explode flag for arrays/objects
+- ✅ Deprecated flag
+
+#### 2.1
+
+**Features**: ✅ IMPLEMENTED
+- ✅ Click on `{variable}` to open inline schema editor
+- ✅ Drag schema property onto variable for type binding
+- ✅ Visual validation: invalid paths show red border
+- ✅ Path template preview with sample values
+
+#### 2.2.1 Color Representations
+
+| Method   | Color  | Common Use Cases              |
+|----------|--------|-------------------------------|
+| GET      | Green  | Read, list, search operations |
+| POST     | Blue   | Create, submit, trigger       |
+| PUT      | Orange | Full resource replacement     |
+| PATCH    | Purple | Partial updates               |
+| DELETE   | Red    | Resource deletion             |
+| HEAD     | Gray   | Metadata retrieval            |
+| OPTIONS  | Gray   | CORS preflight                |
+
+#### 2.4 Parameter Nodes ✅ IMPLEMENTED
+
+**Visual Design**: Small chips/tags color-coded by parameter location
+
+| Location | Color  | Icon       |
+|----------|--------|------------|
+| Query    | Blue   | ? icon     |
+| Path     | Green  | {} icon (Braces) |
+| Header   | Purple | H icon     |
+| Cookie   | Orange | 🍪 icon    |
+
+Implemented in `PathParameterNode.tsx`: compact chip layout with location-based background/border colors, Lucide Braces for path, tooltip for type/required/default/description.
+
+#### 2.5 Request Body Nodes ✅ IMPLEMENTED
+
+**Visual Design**: Input port icon with blue accent, shows content types
+
+**Configurable Properties**:
+- ✅ Content type map (application/json, multipart/form-data, etc.)
+- ✅ Schema binding per content type (#387)
+- ✅ Required flag
+- ✅ Description
+- ✅ Example values
+- ✅ Encoding options (for multipart)
+
+#### 2.6 Response Nodes ✅ IMPLEMENTED
+
+**Visual Design**: Output port icon, color-coded by status code family
+
+**Configurable Properties**:
+- ✅ Status code (100-599)
+- ✅ Description (auto-populated from status code, configurable)
+- ✅ Response headers (name, schema, description)
+- ✅ Content type map with schema bindings
+- ✅ Links (HATEOAS navigation)
+- ✅ Examples per content type
+
+**Visual Design**: Output port icon, color-coded by status code family
+
+**Advanced Features**:
+- ✅ Response range patterns: 2XX, 4XX, 5XX wildcards
+- ✅ Default response for catch-all error handling
+- ✅ Link objects for response-driven navigation (#400)
+- ✅ Header templates (pagination, rate limiting, CORS) (#401)
+
+#### 2.6.1 Color designations
+
+| Status Range | Color  | Common Codes                        |
+|--------------|--------|-------------------------------------|
+| 2XX Success  | Green  | 200 OK, 201 Created, 204 No Content |
+| 3XX Redirect | Blue   | 301, 302, 304 Not Modified          |
+| 4XX Client   | Yellow | 400, 401, 403, 404, 422             |
+| 5XX Server   | Red    | 500, 502, 503, 504                  |
+
+### 3.5 OpenAPI Specification Output ✅ IMPLEMENTED
+
+**Full Spec Generation** ✅ IMPLEMENTED
+- **Specification Components**:
+    - ✅ `info` (title, version, description, contact, license, termsOfService)
+    - ✅ `servers` (multiple environments with variables)
+    - ✅ `paths` (all operations with full configuration)
+    - ✅ `components/schemas` (from classes)
+    - ✅ `components/parameters` (optional; included when passed via options.components)
+    - ✅ `components/requestBodies` (optional; included when passed via options.components)
+    - ✅ `components/responses` (optional; included when passed via options.components)
+    - ✅ `components/headers` (optional; included when passed via options.components)
+    - ✅ `components/securitySchemes` (from version security schemes)
+    - ✅ `components/links` (optional; included when passed via options.components)
+    - ✅ `components/callbacks` (optional; included when passed via options.components)
+    - ✅ `components/examples` (optional; included when passed via options.components)
+    - ✅ `components/pathItems` (optional; included when passed via options.components)
+    - ✅ `security` (global security requirements; Code tab passes when schemes exist)
+    - ✅ `tags` (optional; structure supported; Code tab can pass when available)
+    - ✅ `externalDocs` (optional; structure supported; Code tab can pass when available)
+
+## Security & Authentication
+
+### 4. Security Scheme Integration ✅ IMPLEMENTED
+
+#### 4.1 Global Security Schemes
+
+Define security schemes once, apply to multiple operations:
+
+**Visual Design**:
+- ✅ Security scheme library panel
+- ✅ Drag scheme onto method node to apply
+- ✅ Visual badge showing active schemes on operations
+- ✅ Scope selector for OAuth2/OIDC
+
+#### 4.2 Operation-Level Security ✅ IMPLEMENTED
+
+Each operation can override global defaults:
+
+- ✅ Apply multiple security schemes (AND/OR logic)
+- ✅ Configure required scopes per operation
+- ✅ Mark operation as unsecured (public endpoint)
+- ✅ Add security descriptions for documentation
+
+#### 4.3 Server Definitions ✅ IMPLEMENTED
+
+**Server Configuration** ✅ IMPLEMENTED
+- ✅ Multiple server definitions
+- ✅ Server variables with enum values (OpenAPI Server.variables: default, enum, description)
+- ✅ Environment-specific servers (dev, staging, prod) — optional environment label per server
+- ✅ Server descriptions (per-server description in UI and OpenAPI)
+- ✅ Relative server paths (URL field accepts absolute or relative paths, e.g. /api/v1)
+
+*This roadmap positions Apiome UI as a comprehensive visual API design platform,
+bridging the gap between schema definition and full OpenAPI specification authoring while
+maintaining the visual, developer-centric design philosophy established in the schema designer.*

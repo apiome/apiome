@@ -67,7 +67,7 @@ Review every changed file against these criteria:
 - Semver versioning obeyed
 - OpenAPI 3.2.0, JSON 2020-12 compliance where applicable
 - Marketing pages updated when product-facing changes are introduced
-- Round-trip fidelity rules for `objectified-rest` changes
+- Round-trip fidelity rules for `apiome-rest` changes
 
 ### Code quality
 - DRY violations — repeated logic that should be extracted

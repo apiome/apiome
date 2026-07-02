@@ -12,7 +12,7 @@ no auth, no build step.
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/academy/index.html
+open apiome-ui/public/mockups/academy/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:
@@ -36,7 +36,7 @@ http://localhost:3000/mockups/academy/index.html
 
 ## Design system
 
-Mockups intentionally mirror the live `objectified-ui` shell:
+Mockups intentionally mirror the live `apiome-ui` shell:
 
 - **Typography**: Inter (400/500/600/700), JetBrains Mono for code
 - **Accent**: indigo-500 / 600 (Radix `accentColor="indigo"`)

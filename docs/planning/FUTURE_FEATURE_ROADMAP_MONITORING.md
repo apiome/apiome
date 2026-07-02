@@ -1,6 +1,6 @@
-# Objectified: Monitoring & Observability - Feature Roadmap
+# Apiome: Monitoring & Observability - Feature Roadmap
 
-> Full-stack observability layer providing centralized logging, audit trails, API key analytics, alerting, incident management, and SLO tracking for the Objectified platform. Enables operations teams to detect, diagnose, and resolve issues proactively.
+> Full-stack observability layer providing centralized logging, audit trails, API key analytics, alerting, incident management, and SLO tracking for the Apiome platform. Enables operations teams to detect, diagnose, and resolve issues proactively.
 >
 > **Revenue Model**: Basic application metrics in all tiers; centralized log search, audit export, alerting integrations, and SLO management gated at Pro/Enterprise; SLA reporting and SIEM export are Enterprise-only
 >
@@ -33,7 +33,7 @@
 | 1.6 (#1569) | Canvas Rendering Performance               | Track time-to-interactive for canvas renders; alert on p99 > 3s                    | `enhancement`, `monitoring`                 | No  | Yes      |
 | 1.7 (#1574) | Active Users / Sessions Widget             | Real-time count of active sessions; DAU/MAU trend over 30 days                    | `enhancement`, `mvp`, `monitoring`          | Yes | Yes      |
 | 1.8 (#1580) | Downdetector Integration                   | Push status updates to Downdetector API on detected outages                        | `enhancement`, `monitoring`                 | No  | Yes      |
-| 1.9 (#1586) | Public Status Page                         | Customer-facing status page at status.objectified.dev showing service health       | `enhancement`, `monitoring`                 | No  | No       |
+| 1.9 (#1586) | Public Status Page                         | Customer-facing status page at status.apiome.app showing service health       | `enhancement`, `monitoring`                 | No  | No       |
 
 ### Detailed Issue Descriptions
 

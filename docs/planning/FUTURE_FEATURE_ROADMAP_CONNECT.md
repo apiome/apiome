@@ -1,6 +1,6 @@
-# Objectified: Connect - Feature Roadmap
+# Apiome: Connect - Feature Roadmap
 
-> Universal integration hub connecting Objectified schemas to external systems, enabling real-time data synchronization, schema propagation, and event-driven architectures across the enterprise technology landscape. Connect turns Objectified into the central nervous system for data flowing between SaaS platforms, databases, messaging systems, and internal services.
+> Universal integration hub connecting Apiome schemas to external systems, enabling real-time data synchronization, schema propagation, and event-driven architectures across the enterprise technology landscape. Connect turns Apiome into the central nervous system for data flowing between SaaS platforms, databases, messaging systems, and internal services.
 >
 > **Revenue Model**: Per-connector pricing (free tier: 3 connectors), usage-based data volume fees, enterprise unlimited packages
 >
@@ -168,14 +168,14 @@ Part of Epic: Connector Framework & Registry
 
 #### 1.6 (#937) — Community Connector SDK
 
-To accelerate the connector ecosystem, a public SDK enables third-party developers to build, test, and publish connectors for the Connect marketplace. The SDK ships as an npm package (`@objectified/connector-sdk`) providing TypeScript base classes, a CLI for scaffolding new connector projects, and a local testing harness that simulates the Connect runtime.
+To accelerate the connector ecosystem, a public SDK enables third-party developers to build, test, and publish connectors for the Connect marketplace. The SDK ships as an npm package (`@apiome/connector-sdk`) providing TypeScript base classes, a CLI for scaffolding new connector projects, and a local testing harness that simulates the Connect runtime.
 
 The CLI provides commands: `connector init` (scaffolds project structure with manifest, Dockerfile, and implementation stubs), `connector test` (runs the testing harness against the implementation), `connector validate` (checks manifest compliance and Docker image build), and `connector publish` (submits to the Connect registry pending review). The testing harness simulates all runtime interactions without requiring a full Connect deployment.
 
 Documentation includes a "Build Your First Connector" tutorial walking through creating a simple REST API connector, the full interface reference with JSDoc comments, best practices for error handling and rate limiting, and example connectors for common patterns (REST API, database, message queue). A connector review process ensures published connectors meet quality and security standards.
 
 **Acceptance Criteria:**
-- npm package `@objectified/connector-sdk` with TypeScript base classes and utility functions
+- npm package `@apiome/connector-sdk` with TypeScript base classes and utility functions
 - CLI commands: `init`, `test`, `validate`, `publish` with documented usage
 - `connector init` scaffolds: `src/index.ts`, `connector.manifest.json`, `Dockerfile`, `tests/`, and `README.md`
 - Testing harness simulates all ConnectorInterface methods with configurable mock data
@@ -195,7 +195,7 @@ Part of Epic: Connector Framework & Registry
 | #   | Title                              | Description                                                                    | Labels                                   | Parallel |
 |-----|------------------------------------|--------------------------------------------------------------------------------|------------------------------------------|----------|
 | 2.1 (#939) | Schema Discovery & Introspection   | Auto-discover remote system schemas and present as mappable structures          | `enhancement`, `mvp`, `connect`, `rest`  | Yes      |
-| 2.2 (#940) | Visual Field Mapping Interface     | Drag-and-drop UI for mapping source fields to target Objectified schema fields | `enhancement`, `mvp`, `connect`          | No       |
+| 2.2 (#940) | Visual Field Mapping Interface     | Drag-and-drop UI for mapping source fields to target Apiome schema fields | `enhancement`, `mvp`, `connect`          | No       |
 | 2.3 (#941) | Transformation Rules Engine        | Configurable transformation functions for type coercion, formatting, and logic | `enhancement`, `mvp`, `connect`, `rest`  | Yes      |
 | 2.4 (#942) | Mapping Templates & Presets        | Reusable mapping configurations for common source/target combinations          | `enhancement`, `connect`, `rest`         | Yes      |
 | 2.5 (#943) | Mapping Validation & Preview       | Validate mappings against sample data with preview of transformation results   | `enhancement`, `connect`                 | No       |
@@ -206,7 +206,7 @@ Part of Epic: Connector Framework & Registry
 
 When a connection is established to an external system, Connect needs to understand the remote data structure to enable mapping. Schema discovery calls the connector's `discover()` method, which returns a normalized representation of the remote system's schema: tables/objects, their fields, field types, relationships, and constraints. For databases, this means introspecting table schemas. For REST APIs, this means parsing OpenAPI specs or sampling response shapes. For SaaS platforms, this uses the platform's metadata APIs.
 
-The discovered schema is cached locally with a refresh mechanism. When a user initiates mapping, the discovery results are presented alongside the Objectified schema in a side-by-side view. Users can trigger a re-discovery to pick up remote schema changes. The system tracks schema drift: if a previously mapped remote field changes type or is removed, a warning is surfaced on the mapping configuration.
+The discovered schema is cached locally with a refresh mechanism. When a user initiates mapping, the discovery results are presented alongside the Apiome schema in a side-by-side view. Users can trigger a re-discovery to pick up remote schema changes. The system tracks schema drift: if a previously mapped remote field changes type or is removed, a warning is surfaced on the mapping configuration.
 
 Discovery results are stored in a normalized `discovered_schema` table with the connection ID, discovery timestamp, and the schema structure as JSON. Historical discovery snapshots enable diffing to detect changes over time.
 
@@ -226,7 +226,7 @@ Part of Epic: Schema Mapping & Transformation
 
 #### 2.2 (#940) — Visual Field Mapping Interface
 
-The field mapping UI is the core user experience of Connect, enabling users to visually define how data flows between external systems and Objectified schemas. The interface uses a two-panel layout: the left panel shows the source schema (discovered from the external system) as an expandable tree, and the right panel shows the target Objectified schema. Users create mappings by drawing lines between source and target fields via click-to-connect or drag-and-drop.
+The field mapping UI is the core user experience of Connect, enabling users to visually define how data flows between external systems and Apiome schemas. The interface uses a two-panel layout: the left panel shows the source schema (discovered from the external system) as an expandable tree, and the right panel shows the target Apiome schema. Users create mappings by drawing lines between source and target fields via click-to-connect or drag-and-drop.
 
 Each mapping line can have an optional transformation applied (configured via the transformation rules engine in issue 2.3). The mapping canvas shows connection lines between mapped fields with visual indicators for: direct mapping (solid line), transformed mapping (dashed line with transform icon), and unmapped required fields (red highlight on the target side). An auto-map feature suggests mappings based on field name similarity and type compatibility.
 
@@ -236,7 +236,7 @@ The mapping configuration is saved as a `schema_mapping` record containing an ar
 ┌────────────────────────────────────────────────────────────┐
 │                  Schema Mapping Editor                      │
 ├──────────────────────┬─────────────────────────────────────┤
-│  Source: Salesforce   │  Target: Objectified Schema         │
+│  Source: Salesforce   │  Target: Apiome Schema         │
 │                      │                                     │
 │  ▼ Contact           │  ▼ Customer                         │
 │    FirstName ────────┼────▶ first_name                     │
@@ -255,7 +255,7 @@ The mapping configuration is saved as a `schema_mapping` record containing an ar
 ```
 
 **Acceptance Criteria:**
-- Two-panel layout with source schema tree (left) and target Objectified schema tree (right)
+- Two-panel layout with source schema tree (left) and target Apiome schema tree (right)
 - Click-to-connect mapping: click source field, then click target field to create mapping line
 - Auto-map button suggests mappings using field name similarity (Levenshtein distance ≤ 2) and type compatibility
 - Visual indicators: solid lines (direct), dashed lines with icon (transformed), red highlight (unmapped required)
@@ -294,7 +294,7 @@ Part of Epic: Schema Mapping & Transformation
 
 Common integration patterns (e.g., Salesforce Contact → CRM Customer, Stripe Charge → Payment Record) benefit from pre-built mapping templates that users can apply as a starting point and customize. Templates capture the complete mapping configuration: field mappings, transformations, and sync settings for a specific source connector type and target schema pattern.
 
-The template system supports three tiers: platform templates (maintained by Objectified, available to all tenants), community templates (contributed by users, reviewed before publishing), and tenant templates (private, created by and shared within a tenant). Templates are versioned and include metadata: description, applicable connector types, target schema requirements, and author.
+The template system supports three tiers: platform templates (maintained by Apiome, available to all tenants), community templates (contributed by users, reviewed before publishing), and tenant templates (private, created by and shared within a tenant). Templates are versioned and include metadata: description, applicable connector types, target schema requirements, and author.
 
 When applying a template, the system matches the template's expected source schema against the actual discovered source schema, maps matching fields automatically, and highlights any template fields that don't match the actual schema for manual resolution. This handles variations between different Salesforce orgs that have custom fields, for example.
 
@@ -316,14 +316,14 @@ Part of Epic: Schema Mapping & Transformation
 
 Before activating a schema mapping for live data sync, users need confidence that the mapping produces correct results. The validation and preview system runs the complete mapping pipeline against sample data and presents a detailed preview of the transformation results, highlighting any validation errors, type mismatches, or data loss.
 
-The preview workflow: (1) User clicks "Test with Sample Data" on the mapping editor, (2) the system fetches a configurable number of sample records from the source via the connector's `read()` method (default: 10 records), (3) applies the mapping and transformation pipeline to each record, (4) validates each transformed record against the target Objectified schema, and (5) displays results in a table showing source record, transformed result, validation status (pass/fail), and any error details.
+The preview workflow: (1) User clicks "Test with Sample Data" on the mapping editor, (2) the system fetches a configurable number of sample records from the source via the connector's `read()` method (default: 10 records), (3) applies the mapping and transformation pipeline to each record, (4) validates each transformed record against the target Apiome schema, and (5) displays results in a table showing source record, transformed result, validation status (pass/fail), and any error details.
 
 Validation checks include: required target fields mapped, data types compatible after transformation, string length constraints met, enum values valid, and nested object structures complete. A summary banner shows overall success rate and categorized error counts. Users can fix mapping issues in the editor and re-run the preview without re-fetching source data (cached for the session).
 
 **Acceptance Criteria:**
 - "Test with Sample Data" fetches configurable number of source records (default 10, max 100)
 - Full mapping and transformation pipeline applied to each sample record
-- Validation against target Objectified JSON Schema with field-level error reporting
+- Validation against target Apiome JSON Schema with field-level error reporting
 - Results table showing: source record, transformed output, pass/fail status, error details per field
 - Summary banner with success rate percentage and categorized error counts (type mismatch, missing required, constraint violation)
 - Cached source data for session: re-run preview after mapping edits without re-fetching
@@ -350,7 +350,7 @@ Part of Epic: Schema Mapping & Transformation
 
 #### 3.1 (#945) — Sync Job Configuration & Scheduling
 
-A sync job defines the what, when, and how of data movement between an external system and Objectified. Each job specifies: the connection (source or target), the schema mapping to apply, sync direction (inbound, outbound, or bi-directional), sync mode (full or incremental), schedule (cron expression or manual trigger), and conflict resolution strategy (for bi-directional).
+A sync job defines the what, when, and how of data movement between an external system and Apiome. Each job specifies: the connection (source or target), the schema mapping to apply, sync direction (inbound, outbound, or bi-directional), sync mode (full or incremental), schedule (cron expression or manual trigger), and conflict resolution strategy (for bi-directional).
 
 The configuration UI presents these options in a logical flow: select connection → select mapping → configure direction and mode → set schedule → configure error handling (retry count, dead letter behavior). Advanced settings include batch size (records per sync chunk), concurrency limits, and timeout thresholds. The job is saved as a `sync_job` record with all configuration and can be enabled/disabled without losing configuration.
 
@@ -360,7 +360,7 @@ Sync jobs support dependency chaining: Job B can be configured to start only aft
 - Sync job CRUD API at `/api/v1/connect/sync-jobs` with full configuration options
 - Schedule supports cron expressions and manual trigger mode
 - Sync modes: full (all records every run) and incremental (cursor-based, only changes since last sync)
-- Direction options: inbound (external→Objectified), outbound (Objectified→external), bi-directional
+- Direction options: inbound (external→Apiome), outbound (Apiome→external), bi-directional
 - Job dependency chaining: configure "run after" relationships between sync jobs
 - Enable/disable toggle without losing configuration; disabled jobs skip scheduled runs
 
@@ -372,15 +372,15 @@ Part of Epic: Real-Time Data Sync & CDC
 
 #### 3.2 (#946) — Batch Sync Engine
 
-The batch sync engine executes scheduled sync jobs by pulling or pushing data in chunks. For inbound sync, the engine calls the connector's `read()` method with the appropriate cursor (for incremental mode) or no cursor (for full mode), applies the schema mapping and transformations, validates each record against the target schema, and writes valid records to Objectified via the instance API. Invalid records are routed to a dead letter queue for review.
+The batch sync engine executes scheduled sync jobs by pulling or pushing data in chunks. For inbound sync, the engine calls the connector's `read()` method with the appropriate cursor (for incremental mode) or no cursor (for full mode), applies the schema mapping and transformations, validates each record against the target schema, and writes valid records to Apiome via the instance API. Invalid records are routed to a dead letter queue for review.
 
 Incremental sync maintains a cursor (e.g., last modified timestamp, database sequence number, API pagination token) stored in the `sync_job_state` table. Each run picks up from the last cursor position, processing only new or changed records. Full sync compares every record and applies upsert logic based on a configurable identity key.
 
 The engine processes records in configurable batch sizes (default: 500) with parallelism control (default: 4 concurrent batches). Backpressure handling pauses reads when the write pipeline falls behind. Progress is reported in real-time via a polling endpoint, showing records processed, records succeeded, records failed, and estimated time remaining.
 
 **Acceptance Criteria:**
-- Inbound sync: read from connector → apply mapping → validate → write to Objectified instances
-- Outbound sync: read from Objectified instances → apply reverse mapping → write to connector
+- Inbound sync: read from connector → apply mapping → validate → write to Apiome instances
+- Outbound sync: read from Apiome instances → apply reverse mapping → write to connector
 - Incremental sync with cursor persistence: only process records changed since last successful run
 - Configurable batch size (default 500, max 5000) and parallelism (default 4, max 16 concurrent batches)
 - Progress endpoint: `GET /api/v1/connect/sync-jobs/{id}/runs/{runId}/progress` returns real-time stats
@@ -416,7 +416,7 @@ Part of Epic: Real-Time Data Sync & CDC
 
 #### 3.4 (#948) — Conflict Resolution Engine
 
-Bi-directional sync introduces the possibility of conflicts: the same record modified in both systems between sync cycles. The conflict resolution engine detects conflicts by comparing record versions (timestamps, sequence numbers, or hashes) and applies the configured resolution strategy. Supported strategies include: last-write-wins (most recent timestamp), source-wins (external system takes priority), target-wins (Objectified takes priority), and manual (queue for human review).
+Bi-directional sync introduces the possibility of conflicts: the same record modified in both systems between sync cycles. The conflict resolution engine detects conflicts by comparing record versions (timestamps, sequence numbers, or hashes) and applies the configured resolution strategy. Supported strategies include: last-write-wins (most recent timestamp), source-wins (external system takes priority), target-wins (Apiome takes priority), and manual (queue for human review).
 
 Conflict detection works by storing the last-synced version of each record from both sides. When a sync run encounters a record that has been modified in both systems since the last sync, it flags the record as conflicted. For automatic strategies, the engine applies the strategy and logs the resolution. For manual strategy, the record is added to a conflict queue with both versions displayed side-by-side.
 
@@ -474,9 +474,9 @@ Part of Epic: Real-Time Data Sync & CDC
 
 #### 4.1 (#951) — Webhook Orchestration Engine
 
-Webhooks are the simplest form of event-driven integration, and the orchestration engine provides comprehensive management for both inbound (receiving webhooks from external systems) and outbound (sending webhooks to external systems on Objectified events). Inbound webhooks are received at tenant-specific endpoints (`/api/v1/connect/webhooks/{tenantId}/{hookId}`), verified using the configured method (HMAC signature, shared secret header, IP allowlist), and routed to the appropriate processing pipeline.
+Webhooks are the simplest form of event-driven integration, and the orchestration engine provides comprehensive management for both inbound (receiving webhooks from external systems) and outbound (sending webhooks to external systems on Apiome events). Inbound webhooks are received at tenant-specific endpoints (`/api/v1/connect/webhooks/{tenantId}/{hookId}`), verified using the configured method (HMAC signature, shared secret header, IP allowlist), and routed to the appropriate processing pipeline.
 
-Outbound webhooks are triggered by Objectified events (instance created, updated, deleted; schema published; sync completed) and delivered to configured target URLs. The delivery system implements reliability patterns: exponential backoff retry (1s, 2s, 4s, 8s, 16s up to configurable max), delivery receipt tracking, and dead letter queue for permanently failed deliveries. Each delivery attempt is logged with timestamp, HTTP status code, response body (truncated), and latency.
+Outbound webhooks are triggered by Apiome events (instance created, updated, deleted; schema published; sync completed) and delivered to configured target URLs. The delivery system implements reliability patterns: exponential backoff retry (1s, 2s, 4s, 8s, 16s up to configurable max), delivery receipt tracking, and dead letter queue for permanently failed deliveries. Each delivery attempt is logged with timestamp, HTTP status code, response body (truncated), and latency.
 
 The webhook management UI enables creating, editing, and testing webhooks. A "Send Test" feature delivers a sample payload to the configured URL and displays the response. Webhook activity shows recent deliveries with success/failure indicators, and a replay feature allows re-sending a specific delivery for debugging.
 
@@ -496,14 +496,14 @@ Part of Epic: Event-Driven & Messaging Integration
 
 #### 4.2 (#952) — Kafka Connector
 
-The Kafka connector enables bidirectional data flow between Objectified and Apache Kafka clusters. As a producer, it publishes Objectified events (schema changes, instance mutations, sync completions) to configurable Kafka topics with schema-validated payloads. As a consumer, it subscribes to Kafka topics and feeds incoming messages through the Connect mapping and transformation pipeline into Objectified.
+The Kafka connector enables bidirectional data flow between Apiome and Apache Kafka clusters. As a producer, it publishes Apiome events (schema changes, instance mutations, sync completions) to configurable Kafka topics with schema-validated payloads. As a consumer, it subscribes to Kafka topics and feeds incoming messages through the Connect mapping and transformation pipeline into Apiome.
 
-Producer configuration includes: Kafka broker list, authentication (SASL/PLAIN, SASL/SCRAM, mTLS), topic naming pattern (e.g., `objectified.{tenant}.{schema}.{event_type}`), message serialization (JSON, Avro with Schema Registry integration), partitioning strategy (round-robin, key-based using record ID), and which Objectified events to publish. Consumer configuration adds: consumer group ID, offset management (earliest, latest, specific), concurrency (number of partitions to consume in parallel), and backpressure settings.
+Producer configuration includes: Kafka broker list, authentication (SASL/PLAIN, SASL/SCRAM, mTLS), topic naming pattern (e.g., `apiome.{tenant}.{schema}.{event_type}`), message serialization (JSON, Avro with Schema Registry integration), partitioning strategy (round-robin, key-based using record ID), and which Apiome events to publish. Consumer configuration adds: consumer group ID, offset management (earliest, latest, specific), concurrency (number of partitions to consume in parallel), and backpressure settings.
 
-Schema Registry integration enables publishing Avro schemas derived from Objectified schemas to Confluent Schema Registry, ensuring downstream consumers have type-safe contracts. When Objectified schemas evolve, the connector automatically registers new Avro schema versions with compatibility checks.
+Schema Registry integration enables publishing Avro schemas derived from Apiome schemas to Confluent Schema Registry, ensuring downstream consumers have type-safe contracts. When Apiome schemas evolve, the connector automatically registers new Avro schema versions with compatibility checks.
 
 **Acceptance Criteria:**
-- Kafka producer publishes Objectified events to configurable topics with JSON or Avro serialization
+- Kafka producer publishes Apiome events to configurable topics with JSON or Avro serialization
 - Kafka consumer subscribes to topics with configurable consumer group, offset management, and concurrency
 - Authentication support: SASL/PLAIN, SASL/SCRAM-SHA-256, mTLS with certificate upload
 - Confluent Schema Registry integration for Avro schema registration and compatibility checking
@@ -540,9 +540,9 @@ Part of Epic: Event-Driven & Messaging Integration
 
 #### 4.4 (#954) — Event Router & Fan-Out
 
-The event router sits at the center of Connect's event-driven architecture, receiving events from any source (webhooks, CDC listeners, message queue consumers, Objectified internal events) and routing them to one or more destinations based on configurable rules. This enables fan-out patterns where a single event triggers actions in multiple systems simultaneously.
+The event router sits at the center of Connect's event-driven architecture, receiving events from any source (webhooks, CDC listeners, message queue consumers, Apiome internal events) and routing them to one or more destinations based on configurable rules. This enables fan-out patterns where a single event triggers actions in multiple systems simultaneously.
 
-Routing rules are defined as condition-action pairs: a condition evaluates event properties (type, source, payload fields) using a simple expression language, and the action specifies the destination (another connector, a webhook, a Kafka topic, or an Objectified schema mapping). Rules are evaluated in priority order, and multiple rules can match a single event (fan-out). A "catch-all" rule handles unmatched events.
+Routing rules are defined as condition-action pairs: a condition evaluates event properties (type, source, payload fields) using a simple expression language, and the action specifies the destination (another connector, a webhook, a Kafka topic, or an Apiome schema mapping). Rules are evaluated in priority order, and multiple rules can match a single event (fan-out). A "catch-all" rule handles unmatched events.
 
 The router supports transformation at the routing level: each rule can apply a lightweight transform to the event payload before forwarding. This enables adapting event shapes to different consumer expectations without creating separate mapping configurations. Router throughput is critical—the implementation must handle at least 10,000 events per second per tenant with sub-100ms routing latency.
 
@@ -564,7 +564,7 @@ Part of Epic: Event-Driven & Messaging Integration
 
 Every event flowing through the Connect event-driven pipeline should be validated against the expected schema to catch malformed data before it reaches downstream systems. The validation layer sits between event sources and the router, applying JSON Schema validation to incoming events. Events that fail validation are routed to a dead-letter queue (DLQ) rather than silently dropped or propagated with bad data.
 
-Schema validation rules are configured per event source: each inbound webhook, CDC listener, or message queue consumer can be assigned a JSON Schema that incoming events must conform to. The schema can be an Objectified schema reference (reusing existing schema definitions) or a custom schema defined inline. Validation is optional and defaults to off for backward compatibility.
+Schema validation rules are configured per event source: each inbound webhook, CDC listener, or message queue consumer can be assigned a JSON Schema that incoming events must conform to. The schema can be an Apiome schema reference (reusing existing schema definitions) or a custom schema defined inline. Validation is optional and defaults to off for backward compatibility.
 
 The DLQ management UI shows failed events with their validation errors, source information, and timestamp. Users can inspect the raw event payload, view the validation errors, fix the event manually, and resubmit it to the pipeline. Bulk operations support resubmitting all events that failed due to a specific error pattern (useful after fixing a schema mismatch). DLQ metrics (queue depth, failure rate, top error categories) are surfaced on the Connect dashboard.
 

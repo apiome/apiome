@@ -14,7 +14,7 @@ candidate. Each item lists the control and the evidence in the codebase.
 - [x] **No plaintext secrets in repo or built images**
   → see "Secret handling" below.
 - [x] **Login rate-limit / lockout in place**
-  → `objectified-ui/lib/auth/login-rate-limit.ts` wired into credential and
+  → `apiome-ui/lib/auth/login-rate-limit.ts` wired into credential and
   admin login; tests in `tests/lib/login-rate-limit.test.ts`.
 - [x] **Hardening checklist passed** → this document.
 
@@ -22,10 +22,10 @@ candidate. Each item lists the control and the evidence in the codebase.
 
 | # | Control | Status | Evidence |
 |---|---------|--------|----------|
-| 1 | Session JWT signed with shared `NEXTAUTH_SECRET` (HS256) | ✅ | `objectified-rest/src/app/auth.py` `decode_jwt`; `config.py` `effective_jwt_secret` |
+| 1 | Session JWT signed with shared `NEXTAUTH_SECRET` (HS256) | ✅ | `apiome-rest/src/app/auth.py` `decode_jwt`; `config.py` `effective_jwt_secret` |
 | 2 | Expired/invalid JWTs rejected | ✅ | `decode_jwt` handles `ExpiredSignatureError` / `InvalidTokenError` |
 | 3 | JWT alone grants no tenant access (membership re-checked per request) | ✅ | `validate_user_tenant_access` against `tenant_users` / `tenant_administrators` |
-| 4 | API keys stored hashed, never in plaintext | ✅ | `odb.api_keys.key_hash`; raw key shown once |
+| 4 | API keys stored hashed, never in plaintext | ✅ | `apiome.api_keys.key_hash`; raw key shown once |
 | 5 | API keys tenant-scoped; cross-tenant use rejected (403) | ✅ | `validate_authentication` tenant-slug check |
 | 6 | API key expiry + disable honoured at validation | ✅ | `database.validate_api_key` (`expires_at`, `enabled`) |
 | 7 | API key rotation & revocation available | ✅ | `/api-keys/{id}/rotate`, `DELETE /api-keys/{id}` |
@@ -36,9 +36,9 @@ candidate. Each item lists the control and the evidence in the codebase.
 
 | # | Control | Status | Evidence |
 |---|---------|--------|----------|
-| 10 | CORS origins configuration-driven (not hard-coded) | ✅ | `OBJECTIFIED_CORS_ALLOWED_ORIGINS` / `_ORIGIN_REGEX` in `config.py`, applied in `main.py` |
-| 11 | Safe defaults preserved (localhost + `*.objectified.dev`) | ✅ | `DEFAULT_CORS_ORIGINS`, `DEFAULT_CORS_ORIGIN_REGEX` |
-| 12 | Subdomain matching can be disabled in locked-down deployments | ✅ | empty `OBJECTIFIED_CORS_ALLOWED_ORIGIN_REGEX` → no regex applied |
+| 10 | CORS origins configuration-driven (not hard-coded) | ✅ | `APIOME_CORS_ALLOWED_ORIGINS` / `_ORIGIN_REGEX` in `config.py`, applied in `main.py` |
+| 11 | Safe defaults preserved (localhost + `*.apiome.app`) | ✅ | `DEFAULT_CORS_ORIGINS`, `DEFAULT_CORS_ORIGIN_REGEX` |
+| 12 | Subdomain matching can be disabled in locked-down deployments | ✅ | empty `APIOME_CORS_ALLOWED_ORIGIN_REGEX` → no regex applied |
 
 ## Secret handling
 
@@ -46,9 +46,9 @@ candidate. Each item lists the control and the evidence in the codebase.
 |---|---------|--------|----------|
 | 13 | No plaintext secrets in tracked files | ✅ | repo scan (AWS keys / private keys / GH tokens / hardcoded secret-key assignments) returns nothing |
 | 14 | Real `.env` files git-ignored; only templates committed | ✅ | root + package `.gitignore`; tracked files are `.example` / `.docker` / `.test` placeholders |
-| 15 | JWT secret fails closed in production (no insecure fallback) | ✅ | `Settings.effective_jwt_secret` raises when `OBJECTIFIED_ENV=production` and no secret set; startup probe in `main.py` |
+| 15 | JWT secret fails closed in production (no insecure fallback) | ✅ | `Settings.effective_jwt_secret` raises when `APIOME_ENV=production` and no secret set; startup probe in `main.py` |
 | 16 | Passwords (bcrypt), API keys, PATs hashed at rest | ✅ | `lib/auth/credentials.ts` bcrypt; `api_keys.key_hash` |
-| 17 | Webhook signing secrets encrypted at rest (Fernet) | ✅ | `OBJECTIFIED_WEBHOOK_SIGNING_SECRET_ENCRYPTION_KEY`, `push_webhook_crypto.py` |
+| 17 | Webhook signing secrets encrypted at rest (Fernet) | ✅ | `APIOME_WEBHOOK_SIGNING_SECRET_ENCRYPTION_KEY`, `push_webhook_crypto.py` |
 | 18 | Docker dev credentials are clearly dev-only and overridable | ✅ | `docker-compose.env.example` documents overrides |
 
 ## Login-abuse protection

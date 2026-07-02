@@ -1,0 +1,38 @@
+{
+  "name": "apiome-db",
+  "version": "0.21.0",
+  "description": "Apiome database migrations and the direct-to-database admin CLI (apiome-db).",
+  "author": "Apiome",
+  "type": "module",
+  "private": true,
+  "bin": "./dist/cli.js",
+  "files": [
+    "/bin",
+    "/dist",
+    "/scripts",
+    "/seed"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --import tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "commander": "^13.0.0",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.20.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

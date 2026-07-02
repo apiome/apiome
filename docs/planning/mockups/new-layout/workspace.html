@@ -117,7 +117,7 @@
   <div id="workspaceTopBar" class="h-12 border-b border-amber-200 dark:border-stone-700 bg-white/90 dark:bg-stone-900/90 backdrop-blur flex items-center justify-between px-4 relative z-10">
     <div class="flex items-center gap-3">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-amber-500 to-rose-500 flex items-center justify-center"><i data-lucide="sparkles" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span><span class="text-xs text-gray-400">/</span>
+      <span class="text-sm font-semibold">Apiome</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">acme-platform</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">customers</span>
       <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">Concept · proposed layout</span>
@@ -706,7 +706,7 @@
                       <i data-lucide="x" class="w-3 h-3 text-slate-500 hover:text-white"></i>
                     </div>
                     <div class="ed-tab px-3 py-1.5 flex items-center gap-2 mono text-[11px] border-l border-black/40 flex-shrink-0 opacity-80">
-                      <i data-lucide="file-cog" class="w-3.5 h-3.5 text-emerald-400"></i> objectified.config.ts
+                      <i data-lucide="file-cog" class="w-3.5 h-3.5 text-emerald-400"></i> apiome.config.ts
                       <i data-lucide="x" class="w-3 h-3 text-slate-500 hover:text-white"></i>
                     </div>
                     <div class="ml-auto hidden lg:flex items-center gap-2 px-3 text-slate-500 text-[10px] flex-shrink-0">
@@ -746,7 +746,7 @@
                     </aside>
                     <div class="flex-1 min-w-0 relative overflow-auto mono text-[11px] leading-6 px-2 py-2 text-slate-200 bg-[#0f172a] micro-scroll">
 <pre class="m-0"><span class="ed-gutter">1</span><span class="text-slate-500">{</span>
-<span class="ed-gutter">2</span>  <span class="text-cyan-300">"$schema"</span>: <span class="text-amber-300">"https://objectified.dev/schema/v1.json"</span>,
+<span class="ed-gutter">2</span>  <span class="text-cyan-300">"$schema"</span>: <span class="text-amber-300">"https://apiome.app/schema/v1.json"</span>,
 <span class="ed-gutter">3</span>  <span class="text-cyan-300">"name"</span>: <span class="text-amber-300">"Customer"</span>,
 <span class="ed-gutter">4</span>  <span class="text-cyan-300">"namespace"</span>: <span class="text-amber-300">"customer"</span>,
 <span class="ed-gutter">5</span>  <span class="text-cyan-300">"description"</span>: <span class="text-amber-300">"A registered tenant customer."</span>,
@@ -986,7 +986,7 @@
                     <span class="mono">rename-tenant.ts</span>
                     <span class="text-amber-400">●</span>
                     <span class="text-slate-600">·</span>
-                    <span class="mono text-slate-400">@objectified/sdk@4.12</span>
+                    <span class="mono text-slate-400">@apiome/sdk@4.12</span>
                     <span class="text-emerald-300/90 inline-flex items-center gap-1 ml-auto"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> sandbox · dry-run</span>
                   </div>
                   <div class="flex-1 overflow-y-auto micro-scroll min-h-0">
@@ -996,8 +996,8 @@
                         <span>imports &amp; connect</span>
                         <span class="ml-auto text-emerald-300 mono">42ms</span>
                       </div>
-                      <pre class="mono text-[10px] leading-5 px-2 py-2 m-0 text-slate-200"><span class="ed-gutter">1</span><span class="text-violet-300">import</span> { <span class="text-cyan-300">objectified</span>, <span class="text-cyan-300">tx</span> } <span class="text-violet-300">from</span> <span class="text-amber-300">"@objectified/sdk"</span>;
-<span class="ed-gutter">2</span><span class="text-violet-300">const</span> <span class="text-cyan-300">obj</span> = <span class="text-violet-300">await</span> <span class="text-cyan-300">objectified</span>.<span class="text-emerald-300">connect</span>({ <span class="text-cyan-300">project</span>: <span class="text-amber-300">"acme-platform"</span> });</pre>
+                      <pre class="mono text-[10px] leading-5 px-2 py-2 m-0 text-slate-200"><span class="ed-gutter">1</span><span class="text-violet-300">import</span> { <span class="text-cyan-300">apiome</span>, <span class="text-cyan-300">tx</span> } <span class="text-violet-300">from</span> <span class="text-amber-300">"@apiome/sdk"</span>;
+<span class="ed-gutter">2</span><span class="text-violet-300">const</span> <span class="text-cyan-300">obj</span> = <span class="text-violet-300">await</span> <span class="text-cyan-300">apiome</span>.<span class="text-emerald-300">connect</span>({ <span class="text-cyan-300">project</span>: <span class="text-amber-300">"acme-platform"</span> });</pre>
                     </div>
                     <div class="cell-out px-3 py-1 mono text-[10px] text-slate-300 border-b border-black/40">
                       <span class="text-cyan-300">→</span> connected · 42 classes · 28 paths · LSP ready

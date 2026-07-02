@@ -1,4 +1,4 @@
-# Objectified: Security & Access Control - Feature Roadmap
+# Apiome: Security & Access Control - Feature Roadmap
 
 > Comprehensive security layer covering role-based access control (RBAC), fine-grained permission categories, SSO expansion, user and team management, and compliance-grade audit/permission tooling. Builds on the existing foundation of GitHub/GitLab OAuth, JWT token management, and API key encryption.
 >
@@ -167,7 +167,7 @@ Part of Epic: Permission Categories
 | 3.4 (#1695) | User Status Management                   | Active / Inactive / Pending / Suspended states; suspend with reason; last login   | `enhancement`, `mvp`, `security`   | Yes | No       |
 | 3.5 (#1697) | User Profile View (Admin)                | Admin view of user: linked accounts, permission summary, activity, status history | `enhancement`, `mvp`, `security`   | Yes | Yes      |
 | 3.6 (#1699) | Session Management (Admin)               | Admin can view and revoke any user's active sessions                             | `enhancement`, `security`          | No  | Yes      |
-| 3.7 (#1701) | SSO: Okta Integration                    | SAML 2.0 / OIDC integration with Okta; attribute mapping to Objectified roles    | `enhancement`, `security`          | No  | No       |
+| 3.7 (#1701) | SSO: Okta Integration                    | SAML 2.0 / OIDC integration with Okta; attribute mapping to Apiome roles    | `enhancement`, `security`          | No  | No       |
 | 3.8 (#1703) | SSO: Azure AD Integration                | Azure AD OAuth 2.0 / OIDC login; group-to-role mapping                           | `enhancement`, `security`          | No  | Yes      |
 | 3.9 (#1705) | SSO: AWS Cognito Integration             | AWS Cognito OIDC/SAML login integration                                          | `enhancement`, `security`          | No  | Yes      |
 

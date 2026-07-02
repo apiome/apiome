@@ -37,8 +37,8 @@ python scripts/golden_path/smoke.py     # run the golden path; exits non-zero on
 ```
 
 The harness (`scripts/golden_path/smoke.py`) requires `httpx` and `openapi-spec-validator`, both of
-which ship with `objectified-cli`'s dependencies — run it under that environment, e.g.
-`uv run --project objectified-cli python scripts/golden_path/smoke.py` (this is what `run.sh` does).
+which ship with `apiome-cli`'s dependencies — run it under that environment, e.g.
+`uv run --project apiome-cli python scripts/golden_path/smoke.py` (this is what `run.sh` does).
 
 ### What each step asserts
 
@@ -52,12 +52,12 @@ which ship with `objectified-cli`'s dependencies — run it under that environme
 | 6 | Publish | `POST /v1/versions/.../{version}/publish` with `visibility: public` (and a revision note). The server enforces publish gates: valid OpenAPI, every class documented, no un-acknowledged breaking changes. |
 | 7 | Lint | Fetches the reconstructed OpenAPI for the published version and validates it with `openapi-spec-validator`; asserts the edited class and the paths are present. |
 | 8 | View in browse | `GET /v1/browse/tenants/{tenant}/projects/{project}/versions` lists the published version. |
-| 9 | Export + download via CLI | Runs the real `objectified spec export` CLI, then re-validates the downloaded document. |
+| 9 | Export + download via CLI | Runs the real `apiome spec export` CLI, then re-validates the downloaded document. |
 | 10 | Query via MCP | Speaks the MCP streamable-HTTP protocol (`initialize` → `tools/call`): `ping`, `spec.list`, and `project.list` all surface the published project. |
 
 The harness imports into a uniquely-named project per run (`golden-path-petstore-<run-id>`), so it is
 safe to run repeatedly and in parallel against a persistent database. Configuration is via
-`OBJECTIFIED_*` env vars (see the docstring at the top of `smoke.py`).
+`APIOME_*` env vars (see the docstring at the top of `smoke.py`).
 
 ### Notes / known limitations surfaced by this path
 
@@ -81,8 +81,8 @@ Run the same path by hand against a running stack + UI. Tick each box; the run i
 pass start to finish.
 
 1. **Start the stack:** `docker compose up --build --wait` and load seed data
-   (`docker compose run --rm seed`). Bring up the UI (`yarn workspace objectified-ui dev`). Sign in
-   with the seeded dev user (**ada@example.com** / **objectified-dev**, tenant **acme-corp**).
+   (`docker compose run --rm seed`). Bring up the UI (`yarn workspace apiome-ui dev`). Sign in
+   with the seeded dev user (**ada@example.com** / **apiome-dev**, tenant **acme-corp**).
 2. **Import:** in the dashboard, **open the Import dialog**, choose **OpenAPI**, upload
    `scripts/golden_path/fixtures/petstore.openapi.yaml`, and **run the import**. Confirm a project
    ("Golden Path Petstore") and version **1.0.0** are created with the **Pet** and **Error** classes
@@ -94,11 +94,11 @@ pass start to finish.
 6. **Cut a version:** use **Create/Cut version** to push a new revision (e.g. **1.1.0**).
 7. **Publish:** **publish** a version as **public** and provide a revision note. Confirm it shows as
    published.
-8. **View in browse:** open **objectified-browse**, find the project, and confirm the **published
+8. **View in browse:** open **apiome-browse**, find the project, and confirm the **published
    version is listed** and the reconstructed OpenAPI renders.
 9. **Export + download via CLI:**
    ```bash
-   objectified --base-url http://localhost:8000 spec export \
+   apiome --base-url http://localhost:8000 spec export \
      --tenant acme-corp --project golden-path-petstore --version 1.0.0 --output petstore.json
    ```
    Confirm a valid OpenAPI document is written.

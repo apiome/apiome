@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Objectified CDC — Slot Health</title>
+  <title>Apiome CDC — Slot Health</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' };</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -25,7 +25,7 @@
         <div class="w-7 h-7 rounded-md bg-gradient-to-br from-rose-600 to-fuchsia-500 flex items-center justify-center">
           <i data-lucide="waves" class="w-4 h-4 text-white"></i>
         </div>
-        <span class="text-sm font-semibold">Objectified</span>
+        <span class="text-sm font-semibold">Apiome</span>
       </a>
       <span class="text-xs text-gray-400">/</span>
       <span class="text-sm font-medium text-rose-600 dark:text-rose-400">CDC</span>
@@ -136,7 +136,7 @@
           <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
 
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-              <td class="px-4 py-2.5 mono font-medium text-gray-800 dark:text-gray-200">objectified_main_slot</td>
+              <td class="px-4 py-2.5 mono font-medium text-gray-800 dark:text-gray-200">apiome_main_slot</td>
               <td class="px-4 py-2.5 text-gray-500">prod-postgres-main</td>
               <td class="px-4 py-2.5 text-right">220 MB</td>
               <td class="px-4 py-2.5 text-right text-gray-400">50 GB</td>
@@ -149,7 +149,7 @@
             </tr>
 
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-              <td class="px-4 py-2.5 mono font-medium text-gray-800 dark:text-gray-200">objectified_main_slot_2</td>
+              <td class="px-4 py-2.5 mono font-medium text-gray-800 dark:text-gray-200">apiome_main_slot_2</td>
               <td class="px-4 py-2.5 text-gray-500">prod-postgres-main</td>
               <td class="px-4 py-2.5 text-right">250 MB</td>
               <td class="px-4 py-2.5 text-right text-gray-400">50 GB</td>
@@ -216,7 +216,7 @@
         <div class="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/40 rounded-lg">
           <span class="w-5 h-5 rounded-full bg-gray-400 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
           <div class="text-xs">
-            <div class="font-semibold">Consolidate objectified_main_slot_2 if unused</div>
+            <div class="font-semibold">Consolidate apiome_main_slot_2 if unused</div>
             <div class="text-gray-500 mt-0.5">Two slots exist for prod-postgres-main. If both are serving the same consumer, consider consolidating to reduce WAL retention overhead and simplify slot management.</div>
           </div>
         </div>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Objectified Reverse — Destinations</title>
+  <title>Apiome Reverse — Destinations</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' };</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -51,7 +51,7 @@
     const destinations = [
       { name:'Salesforce', emoji:'☁️', type:'CRM', status:'healthy', lastSync:'2 min ago', rowsDay:'48,200', segments:4, syncMode:'Real-time', description:'Push Customer segments to Contact/Lead objects. Upsert on email.' },
       { name:'HubSpot', emoji:'🟠', type:'CRM', status:'healthy', lastSync:'8 min ago', rowsDay:'12,400', segments:3, syncMode:'Hourly', description:'Sync Customer and Order data to Contacts and Deals.' },
-      { name:'Snowflake', emoji:'❄️', type:'Data Warehouse', status:'healthy', lastSync:'1h ago', rowsDay:'840,000', segments:6, syncMode:'Hourly', description:'Full objectified-db table replication to external Snowflake tenant.' },
+      { name:'Snowflake', emoji:'❄️', type:'Data Warehouse', status:'healthy', lastSync:'1h ago', rowsDay:'840,000', segments:6, syncMode:'Hourly', description:'Full apiome-db table replication to external Snowflake tenant.' },
       { name:'BigQuery', emoji:'🔵', type:'Data Warehouse', status:'healthy', lastSync:'1h ago', rowsDay:'620,000', segments:5, syncMode:'Hourly', description:'Push curated views to BigQuery for BI consumption.' },
       { name:'Redshift', emoji:'🔴', type:'Data Warehouse', status:'degraded', lastSync:'3h ago', rowsDay:'0', segments:2, syncMode:'Daily', description:'Rate limited — sync paused. Last error: connection timeout.' },
       { name:'Marketo', emoji:'💜', type:'Marketing Automation', status:'healthy', lastSync:'4h ago', rowsDay:'8,800', segments:2, syncMode:'Daily', description:'Sync lead lists and activity scores to Marketo programs.' },

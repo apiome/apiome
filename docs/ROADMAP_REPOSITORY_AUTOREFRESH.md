@@ -23,7 +23,7 @@ A code + issue walk confirms most of the *plumbing* is shipped. The roadmap buil
 | Capability | Where | Status |
 |------------|-------|--------|
 | Repository registration / providers (GitHub, GitLab, Bitbucket) | `REPO-EPIC-1` | shipped |
-| Repository scanner + file index (`odb.tenant_repository_files`, `blob_sha`) | `REPO-EPIC-2`, `repository_file_scan.py` | shipped |
+| Repository scanner + file index (`apiome.tenant_repository_files`, `blob_sha`) | `REPO-EPIC-2`, `repository_file_scan.py` | shipped |
 | Poll scheduler (cron-like) + commit-SHA change detection | `REPO-4.1` #2779, `REPO-4.2` #2780 | shipped |
 | Failure backoff + auto-pause | `REPO-4.5` #2783 | shipped |
 | Checksum-keyed idempotent re-import (`content_checksum`) | `REPO-8.3` #2933 | shipped |
@@ -31,15 +31,15 @@ A code + issue walk confirms most of the *plumbing* is shipped. The roadmap buil
 | Auto-import worker + 3-filter dispatch (selection → mode → checksum) | `REPO-12.1` #2935 | shipped |
 | Auto version creation with provenance, scan-report artifact, notifications, audit linking | `REPO-12.3–12.6` | shipped |
 | "Import Now" one-shot, Specs tab, bulk apply | `REPO-9.4/9.5/9.7` | shipped |
-| Import audit trail (`odb.tenant_repository_imports`) | `repository-import-metrics.ts` | shipped |
+| Import audit trail (`apiome.tenant_repository_imports`) | `repository-import-metrics.ts` | shipped |
 
 ### The four concrete gaps this roadmap closes
 
 1. **Import options are not persisted.** `SpecImportOptions` (naming convention, prefix/suffix,
    `type_mapping`, `required_overrides`, `description_overrides`, `generate_examples`,
    project/version mapping, conflict/skip flags) is accepted at import time
-   (`objectified-rest/src/app/models.py`, `rest-spec-import-worker.ts:63-93`) but **no column stores
-   it**. `odb.tenant_repository_imports` has `(repository_id, branch, path, blob_sha, project_id,
+   (`apiome-rest/src/app/models.py`, `rest-spec-import-worker.ts:63-93`) but **no column stores
+   it**. `apiome.tenant_repository_imports` has `(repository_id, branch, path, blob_sha, project_id,
    version_id, imported_by, created_at)` — no options. So an auto-import re-runs with **defaults**,
    not the user's original spec. *(This is the heart of the request.)*
 2. **Change detection is checksum-only, not "newer-than".** Re-import fires on
@@ -47,10 +47,10 @@ A code + issue walk confirms most of the *plumbing* is shipped. The roadmap buil
    a revert to older content (different checksum) would re-import a *stale* file. The request
    explicitly asks to "re-import files that are **newer** than the imported files in the system."
 3. **Refresh cadence is hardcoded.** The scan sweep is `await asyncio.sleep(5)`
-   (`objectified-rest/src/app/main.py:179`) and not configurable per-repo; the "every few minutes"
+   (`apiome-rest/src/app/main.py:179`) and not configurable per-repo; the "every few minutes"
    refresh tier is unconfigured.
 4. **No manual-edit safety on the auto path.** Nothing checks whether a version was hand-edited in
-   Objectified after the original import before an auto-refresh overwrites it.
+   Apiome after the original import before an auto-refresh overwrites it.
 
 ```mermaid
 flowchart LR
@@ -138,26 +138,26 @@ Persist exactly what the user asked for at import time so it can be replayed.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Cmplx | Modules |
 |----|-------|---------|--------|----------|-----|-------|---------|
-| ~~RAR-1.1~~ ✅ **Done** (#3512) | `repository_import_spec` data model | New table storing the full import spec keyed to an imported file | `enhancement`,`mvp`,`import`,`repository`,`data-model` | N | Y | M | objectified-db, objectified-rest |
-| ~~RAR-1.2~~ ✅ **Done** (#3513) | Persist `SpecImportOptions` at import time | Write the options blob on every successful import (manual + auto) | `enhancement`,`mvp`,`import`,`repository`,`rest` | N | Y | M | objectified-rest, objectified-ui |
-| ~~RAR-1.3~~ ✅ **Done** (#3514) | Capture source descriptor | Store kind, filename, `--format` override, content-type used | `enhancement`,`mvp`,`import`,`repository` | Y | Y | S | objectified-ui |
-| ~~RAR-1.4~~ ✅ **Done** (#3515) | Versioned spec envelope (`spec_schema_version`) | Forward-compatible envelope so stored specs survive option changes | `enhancement`,`mvp`,`import`,`data-model` | Y | Y | S | objectified-rest |
-| ~~RAR-1.5~~ ✅ **Done** (#3516) | REST: read stored import spec | `GET …/repository-imports/{id}/spec` returns the captured spec | `enhancement`,`mvp`,`import`,`rest` | Y | Y | S | objectified-rest |
-| RAR-1.6 | Backfill best-effort specs for historical imports | Migration seeds a default spec for pre-existing imports | `enhancement`,`import`,`repository`,`data-model` | Y | N | M | objectified-db, objectified-rest |
+| ~~RAR-1.1~~ ✅ **Done** (#3512) | `repository_import_spec` data model | New table storing the full import spec keyed to an imported file | `enhancement`,`mvp`,`import`,`repository`,`data-model` | N | Y | M | apiome-db, apiome-rest |
+| ~~RAR-1.2~~ ✅ **Done** (#3513) | Persist `SpecImportOptions` at import time | Write the options blob on every successful import (manual + auto) | `enhancement`,`mvp`,`import`,`repository`,`rest` | N | Y | M | apiome-rest, apiome-ui |
+| ~~RAR-1.3~~ ✅ **Done** (#3514) | Capture source descriptor | Store kind, filename, `--format` override, content-type used | `enhancement`,`mvp`,`import`,`repository` | Y | Y | S | apiome-ui |
+| ~~RAR-1.4~~ ✅ **Done** (#3515) | Versioned spec envelope (`spec_schema_version`) | Forward-compatible envelope so stored specs survive option changes | `enhancement`,`mvp`,`import`,`data-model` | Y | Y | S | apiome-rest |
+| ~~RAR-1.5~~ ✅ **Done** (#3516) | REST: read stored import spec | `GET …/repository-imports/{id}/spec` returns the captured spec | `enhancement`,`mvp`,`import`,`rest` | Y | Y | S | apiome-rest |
+| RAR-1.6 | Backfill best-effort specs for historical imports | Migration seeds a default spec for pre-existing imports | `enhancement`,`import`,`repository`,`data-model` | Y | N | M | apiome-db, apiome-rest |
 
 ### RAR-1.1 — `repository_import_spec` data model
 
 **Problem.** `SpecImportOptions` is accepted and applied but never stored
-(`odb.tenant_repository_imports` has no options column), so re-imports cannot honor the original
+(`apiome.tenant_repository_imports` has no options column), so re-imports cannot honor the original
 request.
 
 **Solution / scope.** Add a table keyed to the imported file lineage capturing the full spec. Source:
-the `SpecImportOptions` model in `objectified-rest/src/app/models.py` and the worker mapping in
-`objectified-ui/scripts/rest-spec-import-worker.ts:63-93`.
+the `SpecImportOptions` model in `apiome-rest/src/app/models.py` and the worker mapping in
+`apiome-ui/scripts/rest-spec-import-worker.ts:63-93`.
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│ odb.repository_import_spec                                 │
+│ apiome.repository_import_spec                                 │
 ├────────────────────────────────────────────────────────────┤
 │ id                 UUID PK                                  │
 │ tenant_id          UUID FK                                  │
@@ -185,9 +185,9 @@ the `SpecImportOptions` model in `objectified-rest/src/app/models.py` and the wo
 **Parallelism / dependencies.** Blocks RAR-1.2, RAR-4.1. Depends on existing
 `tenant_repository_imports`. **Parallel = N.**
 
-**Status: ✅ Done (#3512).** Migration `objectified-db/scripts/20260621-120000.sql` creates
-`odb.repository_import_spec` with `UNIQUE (repository_id, branch, path)`, the
-`(tenant_id, repository_id)` sweep index, and `options_json JSONB`. objectified-rest adds the
+**Status: ✅ Done (#3512).** Migration `apiome-db/scripts/20260621-120000.sql` creates
+`apiome.repository_import_spec` with `UNIQUE (repository_id, branch, path)`, the
+`(tenant_id, repository_id)` sweep index, and `options_json JSONB`. apiome-rest adds the
 `RepositoryImportSpec` model and `upsert_repository_import_spec` / `get_repository_import_spec`
 DAO methods; tests assert the options payload round-trips losslessly. Wiring the write site is
 RAR-1.2.
@@ -246,10 +246,10 @@ Re-import only files genuinely newer than what's already in the system.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Cmplx | Modules |
 |----|-------|---------|--------|----------|-----|-------|---------|
-| ~~RAR-2.1~~ ✅ **Done** (#3518) | Capture freshness signal at import | Store source commit SHA + committed-at + blob_sha as `last_imported_*` | `enhancement`,`mvp`,`import`,`repository`,`data-model` | Y | Y | M | objectified-db, objectified-rest |
-| ~~RAR-2.2~~ ✅ **Done** (#3519) | "Newer-than" comparator | Re-import only when remote commit is newer than last imported | `enhancement`,`mvp`,`import`,`repository` | N | Y | M | objectified-rest |
-| ~~RAR-2.3~~ ✅ **Done** (#3520) | Per-file refresh state machine | up-to-date / stale / refreshing / failed / diverged | `enhancement`,`mvp`,`import`,`repository` | Y | Y | M | objectified-rest, objectified-ui |
-| ~~RAR-2.4~~ ✅ **Done** (#3521) | Checksum idempotency guard | Suppress no-op refreshes when content unchanged despite newer commit | `enhancement`,`mvp`,`import` | Y | Y | S | objectified-rest |
+| ~~RAR-2.1~~ ✅ **Done** (#3518) | Capture freshness signal at import | Store source commit SHA + committed-at + blob_sha as `last_imported_*` | `enhancement`,`mvp`,`import`,`repository`,`data-model` | Y | Y | M | apiome-db, apiome-rest |
+| ~~RAR-2.2~~ ✅ **Done** (#3519) | "Newer-than" comparator | Re-import only when remote commit is newer than last imported | `enhancement`,`mvp`,`import`,`repository` | N | Y | M | apiome-rest |
+| ~~RAR-2.3~~ ✅ **Done** (#3520) | Per-file refresh state machine | up-to-date / stale / refreshing / failed / diverged | `enhancement`,`mvp`,`import`,`repository` | Y | Y | M | apiome-rest, apiome-ui |
+| ~~RAR-2.4~~ ✅ **Done** (#3521) | Checksum idempotency guard | Suppress no-op refreshes when content unchanged despite newer commit | `enhancement`,`mvp`,`import` | Y | Y | S | apiome-rest |
 
 ### RAR-2.1 — Capture freshness signal at import
 
@@ -261,10 +261,10 @@ provider tree/commit API already used in `repository_file_scan.py`.
 **Acceptance criteria.** Every import records the three signals; exposed via RAR-1.5.
 **Dependencies.** Parallel with EPIC-1. **Parallel = Y.**
 
-**Status: ✅ Done (#3518).** Migration `objectified-db/scripts/20260621-130000.sql` adds the branch
-tip recency columns `commit_sha` / `committed_at` to `odb.tenant_repository_files` and the import
+**Status: ✅ Done (#3518).** Migration `apiome-db/scripts/20260621-130000.sql` adds the branch
+tip recency columns `commit_sha` / `committed_at` to `apiome.tenant_repository_files` and the import
 anchor columns `last_imported_commit_sha` / `last_imported_committed_at` / `last_imported_blob_sha`
-to `odb.repository_import_spec`. The scan (`repository_file_scan.py`) captures the branch tip commit
+to `apiome.repository_import_spec`. The scan (`repository_file_scan.py`) captures the branch tip commit
 SHA + committed-at already returned by the provider branch API and stamps every indexed file row.
 Both spec-write sites — `database.py upsert_repository_import_spec` (Python) and
 `repository-import-metrics.ts upsertRepositoryImportSpec` (the live dashboard path) — copy the
@@ -293,7 +293,7 @@ edits do; deterministic fixtures cover all four rows.
 **Dependencies.** Depends RAR-2.1. Blocks RAR-3.2, RAR-4.1. **Parallel = N.**
 
 **Status: ✅ Done (#3519).** New pure module
-`objectified-rest/src/app/repository_refresh_comparator.py` exposes `evaluate_refresh(...)`, a
+`apiome-rest/src/app/repository_refresh_comparator.py` exposes `evaluate_refresh(...)`, a
 side-effect-free decision function that gates dispatch on commit recency rather than raw checksum
 drift. It takes the remote file's `committed_at` + content identity and the stored RAR-2.1
 `last_imported_committed_at` / `last_imported_blob_sha` anchors and returns a `RefreshDecision`
@@ -314,7 +314,7 @@ worker is RAR-4.1.
   avoid empty version churn.
 
 **Status (2.3): ✅ Done (#3520).** New pure module
-`objectified-rest/src/app/repository_refresh_status.py` exposes the `RefreshStatus` enum
+`apiome-rest/src/app/repository_refresh_status.py` exposes the `RefreshStatus` enum
 (`up-to-date` / `stale` / `refreshing` / `failed` / `diverged`) and `compute_refresh_status(...)`,
 which materializes a file's state from two axes: the **recency** axis (delegated to the RAR-2.2
 `evaluate_refresh` comparator so the two modules cannot disagree about "newer" — `stale` exactly when
@@ -322,11 +322,11 @@ the comparator would re-import, else `up-to-date`) and the **operational** axis 
 divergence bookkeeping (`is_refreshing` → `refreshing`, `diverged` → `diverged` safety hold,
 `last_refresh_failed` → `failed`), with operational signals taking documented precedence over recency.
 The status is **derived on read** — the RAR-1.5 read DAOs (`get_repository_import_spec_by_id` /
-`_by_path`) now LEFT JOIN the current `odb.tenant_repository_files` row for `remote_committed_at` /
+`_by_path`) now LEFT JOIN the current `apiome.tenant_repository_files` row for `remote_committed_at` /
 `remote_blob_sha`, and `RepositoryImportSpecRead.refresh_status` computes from those vs the
 `last_imported_*` anchors — so it is recomputed automatically whenever a scan updates the remote
 recency columns or a finished refresh updates the anchors (no separate stored column to drift).
-objectified-ui adds the presentational chip helper
+apiome-ui adds the presentational chip helper
 `repository-refresh-status-chip-copy.ts` (label + tooltip + tone classes per state, mirroring the
 branch-divergence chip) for the status surface. Tests:
 `tests/test_repository_refresh_status.py` (recency axis, operational axis, precedence, reachability of
@@ -336,7 +336,7 @@ and the UI unit test `tests/unit/repository-refresh-status-chip-copy.test.ts`. T
 check (RAR-4.4).
 
 **Status (2.4): ✅ Done (#3521).** New pure module
-`objectified-rest/src/app/repository_checksum_idempotency.py` adds the second, finer gate that runs
+`apiome-rest/src/app/repository_checksum_idempotency.py` adds the second, finer gate that runs
 after the RAR-2.2 recency comparator. The comparator gates on `blob_sha`, but a newer commit can
 change the blob without changing the **spec content** (reformat, comment, header bump, no-op
 re-commit), which would churn empty versions. `evaluate_checksum_idempotency(...)` takes the RAR-2.2
@@ -362,29 +362,29 @@ Refresh "after a few minutes," configurable, safe under load.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Cmplx | Modules |
 |----|-------|---------|--------|----------|-----|-------|---------|
-| ~~RAR-3.1~~ ✅ **Done** (#3522) | Configurable refresh cadence | Replace hardcoded 5s; per-repo interval (default ~5 min, min bound) | `enhancement`,`mvp`,`import`,`repository`,`automation` | N | Y | M | objectified-rest, objectified-db |
-| ~~RAR-3.2~~ ✅ **Done** (#3523) | Refresh sweep → enqueue stale files | Periodic worker enqueues re-import jobs for stale, newer files | `enhancement`,`mvp`,`import`,`repository`,`automation` | N | Y | L | objectified-rest |
-| ~~RAR-3.3~~ ✅ **Done** (#3524) | Enable/disable auto-refresh (per-repo + global kill switch) | Toggle, with global env override | `enhancement`,`mvp`,`import`,`repository` | Y | Y | S | objectified-rest, objectified-ui |
-| RAR-3.4 | Refresh backoff + auto-pause (extend REPO-4.5) | Pause a repo's refresh after N consecutive failures | `enhancement`,`import`,`repository`,`automation` | Y | N | M | objectified-rest |
-| RAR-3.5 | Per-tenant refresh quotas / fairness (extend REPO-4.6) | Bound refresh jobs per tenant per window | `enhancement`,`import`,`repository` | Y | N | M | objectified-rest |
+| ~~RAR-3.1~~ ✅ **Done** (#3522) | Configurable refresh cadence | Replace hardcoded 5s; per-repo interval (default ~5 min, min bound) | `enhancement`,`mvp`,`import`,`repository`,`automation` | N | Y | M | apiome-rest, apiome-db |
+| ~~RAR-3.2~~ ✅ **Done** (#3523) | Refresh sweep → enqueue stale files | Periodic worker enqueues re-import jobs for stale, newer files | `enhancement`,`mvp`,`import`,`repository`,`automation` | N | Y | L | apiome-rest |
+| ~~RAR-3.3~~ ✅ **Done** (#3524) | Enable/disable auto-refresh (per-repo + global kill switch) | Toggle, with global env override | `enhancement`,`mvp`,`import`,`repository` | Y | Y | S | apiome-rest, apiome-ui |
+| RAR-3.4 | Refresh backoff + auto-pause (extend REPO-4.5) | Pause a repo's refresh after N consecutive failures | `enhancement`,`import`,`repository`,`automation` | Y | N | M | apiome-rest |
+| RAR-3.5 | Per-tenant refresh quotas / fairness (extend REPO-4.6) | Bound refresh jobs per tenant per window | `enhancement`,`import`,`repository` | Y | N | M | apiome-rest |
 
 ### RAR-3.1 — Configurable refresh cadence
 
 **Problem.** `await asyncio.sleep(5)` (`main.py:179`) is hardcoded and global; "a few minutes" is not
 expressible per repo.
 **Solution / scope.** Add `refresh_interval_seconds` (per-repo, default 300, enforced minimum e.g. 60)
-plus a global `OBJECTIFIED_REFRESH_MIN_INTERVAL` env floor. The sweep reads due repos
+plus a global `APIOME_REFRESH_MIN_INTERVAL` env floor. The sweep reads due repos
 (`now - last_refreshed_at >= interval`).
 **Acceptance criteria.** Interval configurable per repo and globally; values below the floor are
 clamped with a warning; default behaves as ~5-minute refresh.
 **Dependencies.** Blocks RAR-3.2. **Parallel = N.**
 
-**Status: ✅ Done (#3522).** Migration `objectified-db/scripts/20260621-140000.sql` adds
+**Status: ✅ Done (#3522).** Migration `apiome-db/scripts/20260621-140000.sql` adds
 `refresh_interval_seconds` (`INTEGER NOT NULL DEFAULT 300`, with a named
 `ck_tenant_repositories_refresh_interval_positive` CHECK > 0) and the `last_refreshed_at` anchor to
-`odb.tenant_repositories`. `config.py` adds the global knobs `OBJECTIFIED_REFRESH_DEFAULT_INTERVAL`
-(300) and `OBJECTIFIED_REFRESH_MIN_INTERVAL` (60s floor). New pure module
-`objectified-rest/src/app/repository_refresh_cadence.py` holds the policy: `resolve_refresh_interval`
+`apiome.tenant_repositories`. `config.py` adds the global knobs `APIOME_REFRESH_DEFAULT_INTERVAL`
+(300) and `APIOME_REFRESH_MIN_INTERVAL` (60s floor). New pure module
+`apiome-rest/src/app/repository_refresh_cadence.py` holds the policy: `resolve_refresh_interval`
 applies the default and clamps sub-floor values up to the floor (logging a WARNING when it clamps;
 the floor itself can never drop below 1s), and `is_repository_due` decides whether a repo is due from
 its `last_refreshed_at` + effective interval (`now - last_refreshed_at >= interval`; never-refreshed →
@@ -421,14 +421,14 @@ flowchart TD
 single-flight; `last_refreshed_at` advanced each tick.
 **Dependencies.** Depends RAR-2.2, RAR-3.1, RAR-1.5; blocks EPIC-4. **Parallel = N.**
 
-**Status: ✅ Done (#3523).** Migration `objectified-db/scripts/20260621-150000.sql` adds the
-Postgres-backed hand-off queue `odb.tenant_repository_refresh_jobs`: each row snapshots the stored
+**Status: ✅ Done (#3523).** Migration `apiome-db/scripts/20260621-150000.sql` adds the
+Postgres-backed hand-off queue `apiome.tenant_repository_refresh_jobs`: each row snapshots the stored
 import spec (project, source descriptor, full `options_json`) plus the remote freshness signals
 (`remote_commit_sha` / `remote_committed_at` / `remote_blob_sha`) and the `refresh_reason`, so the
 EPIC-4 executor can replay the original request even if the spec row later changes. A partial unique
 index `uq_tenant_repo_refresh_jobs_active_lineage` enforces file-level single-flight (one active
 job per `(repository_id, branch, path)`). New module
-`objectified-rest/src/app/repository_refresh_sweep.py` is the sweep:
+`apiome-rest/src/app/repository_refresh_sweep.py` is the sweep:
 `process_repository_refresh_sweep` iterates `list_due_repositories` (RAR-3.1), serializes each repo
 behind a Postgres **session advisory lock**
 (`try_acquire_repository_refresh_lock` / `release_repository_refresh_lock`,
@@ -439,7 +439,7 @@ comparator, and enqueues a spec-faithful re-import for every **stale + newer** f
 `enqueue_repository_refresh_job` (idempotent on the lineage index). `last_refreshed_at` advances for
 every locked repo each tick — even on a rescan failure — so a broken repo cannot monopolize the
 sweep. The worker is wired into `main.py` as `_repository_refresh_sweep`, ticking on the
-`OBJECTIFIED_REFRESH_MIN_INTERVAL` floor and deferring the actual per-repo cadence to the DB-side due
+`APIOME_REFRESH_MIN_INTERVAL` floor and deferring the actual per-repo cadence to the DB-side due
 selection. Content-checksum idempotency (RAR-2.4) is deferred to the EPIC-4 executor, which downloads
 the file content the sweep does not. Tests: `tests/test_repository_refresh_sweep.py` (stale-only
 enqueue, spec snapshot carried, lock-held skip, anchor advanced on success/empty/failure, idempotent
@@ -451,14 +451,14 @@ no-double-count, multi-branch) and the static migration guard
 **Problem.** Auto-refresh must be controllable: a repo owner may want it off, and operators need a
 global kill switch for incident response.
 **Solution / scope.** Add `auto_refresh_enabled` per repo (default on) and a global
-`OBJECTIFIED_REFRESH_ENABLED` env override. The sweep skips repos where either is disabled.
+`APIOME_REFRESH_ENABLED` env override. The sweep skips repos where either is disabled.
 **Acceptance criteria.** Per-repo toggle persisted and surfaced in the UI; global kill switch halts all
 refresh sweeps; disabling does not affect manual "Refresh Now" (RAR-5.2).
 **Dependencies.** Parallel with RAR-3.1/3.2. **Parallel = Y.**
 
-**Status: ✅ Done (#3524).** Migration `objectified-db/scripts/20260622-120000.sql` adds
-`auto_refresh_enabled` (`BOOLEAN NOT NULL DEFAULT TRUE`) to `odb.tenant_repositories`, so existing
-repositories keep auto-refreshing. `config.py` adds the global kill switch `OBJECTIFIED_REFRESH_ENABLED`
+**Status: ✅ Done (#3524).** Migration `apiome-db/scripts/20260622-120000.sql` adds
+`auto_refresh_enabled` (`BOOLEAN NOT NULL DEFAULT TRUE`) to `apiome.tenant_repositories`, so existing
+repositories keep auto-refreshing. `config.py` adds the global kill switch `APIOME_REFRESH_ENABLED`
 (`refresh_enabled`, default True). The **per-repo opt-out** is enforced in `database.py`
 `list_due_repositories`, which now filters `auto_refresh_enabled = TRUE` (so a disabled repo is never
 selected as due) and surfaces the column on the repo read queries; a new setter
@@ -487,11 +487,11 @@ Replay the original spec; version + protect.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Cmplx | Modules |
 |----|-------|---------|--------|----------|-----|-------|---------|
-| ~~RAR-4.1~~ ✅ **Done** (#3527) | Re-import worker applies stored spec | Worker re-runs import with stored options, not defaults | `enhancement`,`mvp`,`import`,`repository`,`rest` | N | Y | L | objectified-ui (worker), objectified-rest |
-| ~~RAR-4.2~~ ✅ **Done** (#3528) | Version creation on refresh with provenance | New version links prior version + source commit | `enhancement`,`mvp`,`import`,`repository`,`versions` | N | Y | M | objectified-rest, objectified-db |
-| ~~RAR-4.3~~ ✅ **Done** (#3529) | Change report on refresh (dry-run reuse) | Produce diff/change report for each refresh | `enhancement`,`mvp`,`import` | Y | Y | M | objectified-ui, objectified-rest |
-| ~~RAR-4.4~~ ✅ **Done** (#3530) | Manual-edit divergence guard | Hold (don't clobber) if version edited since import | `enhancement`,`mvp`,`import`,`repository` | N | Y | L | objectified-rest |
-| RAR-4.5 | Per-repo/file conflict policy | overwrite / hold-for-review / new-branch on divergence | `enhancement`,`import`,`repository` | Y | N | M | objectified-rest, objectified-ui |
+| ~~RAR-4.1~~ ✅ **Done** (#3527) | Re-import worker applies stored spec | Worker re-runs import with stored options, not defaults | `enhancement`,`mvp`,`import`,`repository`,`rest` | N | Y | L | apiome-ui (worker), apiome-rest |
+| ~~RAR-4.2~~ ✅ **Done** (#3528) | Version creation on refresh with provenance | New version links prior version + source commit | `enhancement`,`mvp`,`import`,`repository`,`versions` | N | Y | M | apiome-rest, apiome-db |
+| ~~RAR-4.3~~ ✅ **Done** (#3529) | Change report on refresh (dry-run reuse) | Produce diff/change report for each refresh | `enhancement`,`mvp`,`import` | Y | Y | M | apiome-ui, apiome-rest |
+| ~~RAR-4.4~~ ✅ **Done** (#3530) | Manual-edit divergence guard | Hold (don't clobber) if version edited since import | `enhancement`,`mvp`,`import`,`repository` | N | Y | L | apiome-rest |
+| RAR-4.5 | Per-repo/file conflict policy | overwrite / hold-for-review / new-branch on divergence | `enhancement`,`import`,`repository` | Y | N | M | apiome-rest, apiome-ui |
 
 ### RAR-4.1 — Re-import worker applies stored spec
 
@@ -506,7 +506,7 @@ option application vs the original run.
 **Dependencies.** Depends RAR-1.2, RAR-3.2. **Parallel = N.**
 
 **Status: ✅ Done (#3527).** The spec-import worker now resolves its importer input through the pure,
-reusable `objectified-ui/lib/repository-auto-refresh-import.ts`. When `source_kind ==
+reusable `apiome-ui/lib/repository-auto-refresh-import.ts`. When `source_kind ==
 'repository_auto_import'` it hydrates the importer kind, options, and document parsing from the stored
 import spec carried in the metadata instead of importer defaults: options come from the verbatim
 captured blob (RAR-1.2), and the source descriptor (RAR-1.3) drives routing (`format_override` →
@@ -557,10 +557,10 @@ decision table, the policy override, the fail-open/missing-current edges, and th
 - **4.3** reuse the publication change-report pipeline for a per-refresh diff.
 - **4.5** (v2) configurable divergence policy (overwrite / hold / branch).
 
-**Status of 4.2: ✅ Done (#3528).** Migration `objectified-db/scripts/20260622-130000.sql` extends the
-REPO-12.3 provenance on `odb.versions` with the refresh lineage tuple `source_commit_sha VARCHAR(64)`
+**Status of 4.2: ✅ Done (#3528).** Migration `apiome-db/scripts/20260622-130000.sql` extends the
+REPO-12.3 provenance on `apiome.versions` with the refresh lineage tuple `source_commit_sha VARCHAR(64)`
 + `source_committed_at TIMESTAMPTZ` (the prior-version link `parent_version_id` already exists from
-20260409-140000.sql), plus a partial index on `source_commit_sha` for refresh audit/dedup. objectified-rest
+20260409-140000.sql), plus a partial index on `source_commit_sha` for refresh audit/dedup. apiome-rest
 surfaces the tuple on the version API: `VersionSchema` gains `sourceCommitSha` / `sourceCommittedAt`
 (camelCase on the wire), the three full version read queries and the two version-update `RETURNING`
 clauses in `database.py` select the columns, and the `version_pull_payload` section filter folds them
@@ -579,7 +579,7 @@ normalization, metadata carriage). The OpenAPI contract is regenerated. Consumin
 invoking the worker (which then carries this provenance onto the new version) is the EPIC-4 dispatcher's
 job, mirroring how RAR-2.2/2.4 deferred their wiring.
 
-**Status of 4.3: ✅ Done (#3529).** New objectified-rest module
+**Status of 4.3: ✅ Done (#3529).** New apiome-rest module
 `app/repository_refresh_change_report.py` exposes the best-effort
 `generate_change_report_on_refresh(...)`, which reuses the publication change-report pipeline
 (`build_publication_change_report_render`) to diff the RAR-4.2 prior (parent) version against the new
@@ -607,12 +607,12 @@ wiring.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Cmplx | Modules |
 |----|-------|---------|--------|----------|-----|-------|---------|
-| ~~RAR-5.1~~ ✅ **Done** (#3532) | Per-file refresh status UI | Specs tab shows status, last-refreshed, next-due, divergence | `enhancement`,`mvp`,`import`,`repository`,`ui` | Y | Y | M | objectified-ui |
-| ~~RAR-5.2~~ ✅ **Done** (#3533) | "Refresh Now" one-shot (extend REPO-9.5) | Manual spec-faithful refresh per file/repo | `enhancement`,`mvp`,`import`,`repository`,`ui` | Y | Y | S | objectified-ui, objectified-rest |
-| ~~RAR-5.3~~ ✅ **Done** (#3534) | Refresh history + change-report linking (extend REPO-12.6) | Audit each refresh cycle with diff link | `enhancement`,`mvp`,`import`,`repository` | Y | Y | M | objectified-rest |
-| ~~RAR-5.4~~ ✅ **Done** (#3535) | Refresh notifications (extend REPO-12.5) | Notify on new version / divergence / failure | `enhancement`,`mvp`,`import`,`repository` | Y | Y | S | objectified-rest |
-| RAR-5.5 | Dashboard widget: stale specs / refresh activity (extend REPO-11) | At-a-glance refresh health | `enhancement`,`import`,`repository`,`dashboard` | Y | N | M | objectified-ui |
-| RAR-5.6 | CLI `objectified repository refresh` + status | Trigger / inspect refresh from CLI | `enhancement`,`import`,`cli` | Y | N | M | objectified-cli |
+| ~~RAR-5.1~~ ✅ **Done** (#3532) | Per-file refresh status UI | Specs tab shows status, last-refreshed, next-due, divergence | `enhancement`,`mvp`,`import`,`repository`,`ui` | Y | Y | M | apiome-ui |
+| ~~RAR-5.2~~ ✅ **Done** (#3533) | "Refresh Now" one-shot (extend REPO-9.5) | Manual spec-faithful refresh per file/repo | `enhancement`,`mvp`,`import`,`repository`,`ui` | Y | Y | S | apiome-ui, apiome-rest |
+| ~~RAR-5.3~~ ✅ **Done** (#3534) | Refresh history + change-report linking (extend REPO-12.6) | Audit each refresh cycle with diff link | `enhancement`,`mvp`,`import`,`repository` | Y | Y | M | apiome-rest |
+| ~~RAR-5.4~~ ✅ **Done** (#3535) | Refresh notifications (extend REPO-12.5) | Notify on new version / divergence / failure | `enhancement`,`mvp`,`import`,`repository` | Y | Y | S | apiome-rest |
+| RAR-5.5 | Dashboard widget: stale specs / refresh activity (extend REPO-11) | At-a-glance refresh health | `enhancement`,`import`,`repository`,`dashboard` | Y | N | M | apiome-ui |
+| RAR-5.6 | CLI `apiome repository refresh` + status | Trigger / inspect refresh from CLI | `enhancement`,`import`,`cli` | Y | N | M | apiome-cli |
 
 (Detailed descriptions follow the same Problem / Solution / Acceptance / Dependencies pattern; 5.1–5.4
 are MVP, 5.5–5.6 are v2. Each reuses an existing surface — Specs tab, Import Now, REPO-12 audit,
@@ -620,7 +620,7 @@ REPO-12.5 notifications, REPO-11 widgets — so scope is "extend," not "build ne
 
 **Status (5.1): ✅ Done (#3532).** The repository detail page gains a **Specs** tab listing one row
 per imported-file lineage with its materialized refresh state, last-refreshed, and next-due. New UI
-pure module `objectified-ui/src/app/components/ade/dashboard/repositories/repository-refresh-status.ts`
+pure module `apiome-ui/src/app/components/ade/dashboard/repositories/repository-refresh-status.ts`
 is a faithful TypeScript port of the REST `compute_refresh_status` (RAR-2.3) + `evaluate_refresh`
 (RAR-2.2): the UI sources the per-file signals directly from Postgres rather than proxying the Python
 read endpoint, so the port keeps the chip in lock-step with the server's state machine (recency axis +
@@ -653,7 +653,7 @@ replayed by the RAR-4.1 executor, not defaults), **freshness-gated** (only files
 import enqueue, RAR-2.2; an up-to-date file is a reported no-op), and **divergence-safe** (the job runs
 through the same EPIC-4 executor that applies the RAR-4.4 guard). Crucially it **bypasses the cadence and
 the auto-refresh opt-outs**: the manual path never consults due-selection, the per-repo
-`auto_refresh_enabled` flag (RAR-3.3), or the `OBJECTIFIED_REFRESH_ENABLED` kill switch, so it works even
+`auto_refresh_enabled` flag (RAR-3.3), or the `APIOME_REFRESH_ENABLED` kill switch, so it works even
 when scheduled auto-refresh is disabled. Per-file passes `path`+`branch`; per-repo (empty body) sweeps
 every branch with a stored spec. The OpenAPI contract is regenerated. Tests:
 `tests/test_repository_manual_refresh.py` (per-file/per-repo enqueue, stored-spec snapshot, freshness
@@ -661,14 +661,14 @@ no-op, branch scoping, cadence/opt-out bypass, unknown-repo 404, per-branch faul
 additions to `tests/RepositorySpecsTab.test.tsx` (button wiring, busy-disable, hidden-when-empty,
 success/no-op notices, POST payload).
 
-**Status (5.3): ✅ Done (#3534).** New objectified-rest module `app/repository_refresh_audit.py`
-records one audit row per refresh **cycle** into the REPO-12.6 (#2944) `odb.workflow_audit` ledger
+**Status (5.3): ✅ Done (#3534).** New apiome-rest module `app/repository_refresh_audit.py`
+records one audit row per refresh **cycle** into the REPO-12.6 (#2944) `apiome.workflow_audit` ledger
 under the dedicated action `repository.refresh.cycle`, carrying the refresh facets — `trigger`
 (`scheduled` / `manual` / `webhook`), the file lineage (`repositoryId` / `branch` / `path`), the
 RAR-2.2 freshness `decision`, the four-valued `outcome` (`new-version` / `unchanged` / `diverged` /
 `failed`, derived by `derive_outcome(...)`), and the version + change-report links (`versionId` /
 `parentVersionId` / `changeReportId`, RAR-4.2/4.3) — in the row's `detail` JSONB, so the existing
-ledger schema is reused unchanged (**no migration; objectified-rest only**). The `workflow_audit.outcome`
+ledger schema is reused unchanged (**no migration; apiome-rest only**). The `workflow_audit.outcome`
 *column* keeps its `success` / `failure` semantics (only a `failed` cycle is a `failure`; a held
 divergence or a no-op is a successful cycle), while the rich outcome lives in `detail.outcome`. Recording
 is best-effort (never raises) and guards that `trigger` / `outcome` are the proper enums so a free-form
@@ -685,9 +685,9 @@ lineage capture, enum guarding, and the DAO SQL contract for per-repo/per-file q
 `tests/test_repository_refresh_history_api.py` (per-repo + per-file query, filter forwarding, 404,
 detail→field projection, pagination).
 
-**Status (5.4): ✅ Done (#3535).** New objectified-rest module
+**Status (5.4): ✅ Done (#3535).** New apiome-rest module
 `app/repository_refresh_notifications.py` turns the three *interesting* refresh outcomes into
-notifications delivered over the **existing** push-webhook channels (`odb.push_webhook_subscriptions` /
+notifications delivered over the **existing** push-webhook channels (`apiome.push_webhook_subscriptions` /
 `push_webhook_delivery_events`, #2587/#2588) — extending REPO-12.5 (#2954) failure notifications to the
 auto-refresh loop. Only `new-version` (RAR-4.2), `diverged` (RAR-4.4 hold), and `failed` outcomes fire,
 each under a namespaced event type (`repository.refresh.new_version` / `.diverged` / `.failed`); an
@@ -703,7 +703,7 @@ outcome enqueues nothing. **Links** are carried in every payload: a deep-link to
 `changeReportId` (RAR-4.2/4.3) that resolve the change report. Fan-out enqueues one delivery per active
 tenant subscription (new DAO `list_active_push_webhook_subscription_ids`) and is **best-effort** — a
 per-subscription enqueue failure is logged and skipped and the function never raises, so a notification
-problem cannot break the refresh it describes (**no migration; objectified-rest only**). Invoking
+problem cannot break the refresh it describes (**no migration; apiome-rest only**). Invoking
 `notify_refresh_outcome(...)` from the EPIC-4 refresh dispatcher (after the version + change report land)
 is the dispatcher's job, mirroring how RAR-4.x and RAR-5.3 deferred their wiring. Tests:
 `tests/test_repository_refresh_notifications.py` (notifiability rule, per-outcome + per-toggle gating,
@@ -716,11 +716,11 @@ subscriptions, silent/muted/no-subscription short-circuits, best-effort skip-on-
 
 | ID | Title | Summary | Labels | Parallel | MVP | Cmplx | Modules |
 |----|-------|---------|--------|----------|-----|-------|---------|
-| RAR-6.1 | Refresh URL-sourced imports | Re-fetch remote spec on cadence + ETag/Last-Modified gate | `enhancement`,`import`,`v2` | Y | N | L | objectified-rest |
-| RAR-6.2 | Reconcile one-shot file uploads | Detect stale uploaded specs; prompt re-upload/refresh | `enhancement`,`import`,`v2` | Y | N | M | objectified-ui |
-| RAR-6.3 | Webhook-instant refresh (extend REPO-4.3) | Refresh immediately on push/PR instead of waiting for tick | `enhancement`,`import`,`repository`,`v2` | Y | N | M | objectified-rest |
-| RAR-6.4 | Multi-branch refresh policy | Per-branch refresh + target version mapping | `enhancement`,`import`,`repository`,`v2` | Y | N | M | objectified-rest |
-| RAR-6.5 | Refresh presets / org defaults | Org-level default cadence + conflict policy | `enhancement`,`import`,`v2` | Y | N | S | objectified-rest, objectified-ui |
+| RAR-6.1 | Refresh URL-sourced imports | Re-fetch remote spec on cadence + ETag/Last-Modified gate | `enhancement`,`import`,`v2` | Y | N | L | apiome-rest |
+| RAR-6.2 | Reconcile one-shot file uploads | Detect stale uploaded specs; prompt re-upload/refresh | `enhancement`,`import`,`v2` | Y | N | M | apiome-ui |
+| RAR-6.3 | Webhook-instant refresh (extend REPO-4.3) | Refresh immediately on push/PR instead of waiting for tick | `enhancement`,`import`,`repository`,`v2` | Y | N | M | apiome-rest |
+| RAR-6.4 | Multi-branch refresh policy | Per-branch refresh + target version mapping | `enhancement`,`import`,`repository`,`v2` | Y | N | M | apiome-rest |
+| RAR-6.5 | Refresh presets / org defaults | Org-level default cadence + conflict policy | `enhancement`,`import`,`v2` | Y | N | S | apiome-rest, apiome-ui |
 
 ---
 
@@ -787,13 +787,13 @@ flowchart TD
 
 ## 6. Technical stack
 
-- **objectified-db** — migration for `repository_import_spec`, freshness columns, refresh-interval +
+- **apiome-db** — migration for `repository_import_spec`, freshness columns, refresh-interval +
   `last_refreshed_at`, refresh-state columns (PostgreSQL).
-- **objectified-rest** — refresh scheduler/sweep, newer-than comparator, spec read/write endpoints,
+- **apiome-rest** — refresh scheduler/sweep, newer-than comparator, spec read/write endpoints,
   divergence guard, quotas/backoff (Python; Node import worker dispatch).
-- **objectified-ui** — `rest-spec-import-worker.ts` spec hydration; Repository Detail "Specs" tab
+- **apiome-ui** — `rest-spec-import-worker.ts` spec hydration; Repository Detail "Specs" tab
   status/Refresh-Now; dashboard widget; change-report rendering (TypeScript/Next.js).
-- **objectified-cli** — `repository refresh` / status subcommands (TypeScript/oclif) — v2.
+- **apiome-cli** — `repository refresh` / status subcommands (TypeScript/oclif) — v2.
 - **Reference inputs:** `SpecImportOptions` (`models.py`), `rest-spec-import-worker.ts:63-93`,
   `repository_file_scan.py`, `main.py:179`, `repository-import-metrics.ts`.
 

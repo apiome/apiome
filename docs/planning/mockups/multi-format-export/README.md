@@ -1,7 +1,7 @@
 # Multi-Format Export — design mockup
 
 Static, browser-openable mockup of the **Multi-Format API Export & Cross-Protocol Transcoding**
-experience in objectified-ui (and objectified-browse). The mirror of the import flow.
+experience in apiome-ui (and apiome-browse). The mirror of the import flow.
 Roadmap: [`ROADMAP_MULTI_FORMAT_EXPORT.md`](../../../ROADMAP_MULTI_FORMAT_EXPORT.md) (MFX).
 
 For design iteration only — not production code; sample data is illustrative.
@@ -23,7 +23,7 @@ fidelity warning + preserved-% update. Use the left rail / buttons to switch scr
 | **ExportDialog** | Mirror of `ImportDialog`: numbered stepper + **target-card grid** (12 formats, each with a per-source fidelity badge) + options. | MFX-EPIC-1/6 |
 | **Fidelity panel (headline)** | "Exporting to {format} may lose some fidelity" advisory + **preserved-% ring** + per-construct report (DROP / APPROX / SYNTH / OK) + counts. | **MFX-EPIC-2** |
 | **Result** | Download (single file / zip bundle), fidelity report, emitted-artifact preview, round-trip diff. | MFX-EPIC-4/5/6.3/6.4 |
-| **Public browse export** | Same fidelity advisory in objectified-browse (dark public chrome), no auth. | MFX-EPIC-7.2 |
+| **Public browse export** | Same fidelity advisory in apiome-browse (dark public chrome), no auth. | MFX-EPIC-7.2 |
 
 ## The fidelity model (the point of this feature)
 
@@ -34,7 +34,7 @@ Each lost construct is classified and color-coded:
 - **SYNTH** (violet) — invented to satisfy the target (e.g. Protobuf field numbers).
 - **OK** (green) — clean.
 
-The **same advisory copy + report** renders in **objectified-ui, objectified-browse, the REST
+The **same advisory copy + report** renders in **apiome-ui, apiome-browse, the REST
 preview, and the CLI** — per the directive that users be told *"the exported target format may lose
 some fidelity from the originally imported data, due to the API not allowing for as much detail as
 was provided."*

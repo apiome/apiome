@@ -1,6 +1,6 @@
-# Objectified: AI Assistant & Intelligence - Feature Roadmap
+# Apiome: AI Assistant & Intelligence - Feature Roadmap
 
-> A self-hosted AI layer built on Ollama (Qwen 2.5, Llama 3.2) that powers natural language schema generation, automated schema review, documentation generation, and AI-assisted personalization — with no data leaving the Objectified infrastructure.
+> A self-hosted AI layer built on Ollama (Qwen 2.5, Llama 3.2) that powers natural language schema generation, automated schema review, documentation generation, and AI-assisted personalization — with no data leaving the Apiome infrastructure.
 >
 > **Revenue Model**: AI features gated at Pro/Enterprise tiers; token budget and usage limits enforced per subscription tier; enterprise customers get dedicated Ollama cluster nodes
 >

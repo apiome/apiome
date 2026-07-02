@@ -1,0 +1,85 @@
+name: Apiome DB
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apiome-db/**'
+      - '.github/workflows/apiome-db.yml'
+      - 'yarn.lock'
+      - 'package.json'
+  pull_request:
+    paths:
+      - 'apiome-db/**'
+      - '.github/workflows/apiome-db.yml'
+      - 'yarn.lock'
+      - 'package.json'
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: apiome-db
+
+jobs:
+  cli:
+    name: Build and test apiome-db CLI
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack and set Yarn to 4.12.0
+        run: corepack enable && corepack prepare yarn@4.12.0 --activate
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build apiome-db CLI
+        run: yarn workspace apiome-db build
+
+      - name: Run apiome-db tests
+        run: yarn workspace apiome-db test
+
+  build-and-push:
+    name: Build and push apiome-db image
+    # Image build/push only on direct pushes to main (never on PRs).
+    if: github.event_name == 'push'
+    runs-on: self-hosted
+    env:
+      DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Read image version
+        id: meta
+        working-directory: apiome-db
+        run: |
+          set -euo pipefail
+          version=$(ls scripts/*.sql | sed 's|.*/||;s/.sql//' | sort | tail -1)
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker registry
+        run: echo "$DOCKER_PASSWORD" | docker login "$DOCKER_REGISTRY" -u "$DOCKER_USERNAME" --password-stdin
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./apiome-db
+          push: true
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

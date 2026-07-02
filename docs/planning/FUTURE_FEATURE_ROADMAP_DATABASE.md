@@ -1,6 +1,6 @@
-# Objectified: Database Data Storage - Feature Roadmap
+# Apiome: Database Data Storage - Feature Roadmap
 
-> Enterprise-level data storage for Objectified using an event-sourced architecture. Every stored data instance is tied to a frozen schema capture, mutated through an append-only event log (CREATE/UPDATE/DELETE), and materialized into a high-speed snapshot for O(1) reads. The database offering extends from core instance lifecycle management through relational linking, batch processing, time-travel queries, AI-powered semantic search, and optional Redis/MongoDB enterprise offloading.
+> Enterprise-level data storage for Apiome using an event-sourced architecture. Every stored data instance is tied to a frozen schema capture, mutated through an append-only event log (CREATE/UPDATE/DELETE), and materialized into a high-speed snapshot for O(1) reads. The database offering extends from core instance lifecycle management through relational linking, batch processing, time-travel queries, AI-powered semantic search, and optional Redis/MongoDB enterprise offloading.
 >
 > **Revenue Model**: Core instance storage and REST API included in all tiers; batch job workers, vector search, natural language queries, advanced audit exports, and enterprise offloading (Redis/MongoDB) are Pro/Enterprise-gated; time-series reconstruction and Spark-accelerated pipelines are Enterprise-only.
 >
@@ -523,7 +523,7 @@ Part of Epic: History, Integrity & Performance
 
 #### 3.4 (#2198) — Referential Integrity
 
-While PostgreSQL foreign keys enforce basic referential integrity within a table, Objectified's data model links instances across schema classes stored in JSONB. Application-level referential integrity ensures: link records reference only existing active instances, linked instances cannot be deleted without addressing their links (configurable per `link_def.cascade_behavior`), and orphaned link records (links whose instance has been deleted) are detected and cleaned up.
+While PostgreSQL foreign keys enforce basic referential integrity within a table, Apiome's data model links instances across schema classes stored in JSONB. Application-level referential integrity ensures: link records reference only existing active instances, linked instances cannot be deleted without addressing their links (configurable per `link_def.cascade_behavior`), and orphaned link records (links whose instance has been deleted) are detected and cleaned up.
 
 Scheduled integrity check jobs run off-peak and emit reports listing: orphaned links (link references a deleted instance), violated cardinality constraints (more links than allowed by `link_def.cardinality`), and dangling `$ref` values in instance data (a `$ref` field pointing to a non-existent instance ID). Repair tools expose APIs to clean up detected violations.
 
@@ -664,7 +664,7 @@ Auto-generated OpenAPI 3.1 specification covering all database API endpoints, up
 **Acceptance Criteria:**
 - OpenAPI 3.1 spec is auto-generated from FastAPI route definitions; CI fails if spec is outdated
 - Spec includes all request/response schemas, error schemas, authentication requirements, and examples
-- Python SDK: `pip install objectified-db` installs the client; `from objectified_db import Instance` imports the base class
+- Python SDK: `pip install apiome-db` installs the client; `from apiome_db import Instance` imports the base class
 - ORM interface: `Order.filter(data__total__gte=100).sort("-created_at").execute()` returns a list of `Order` instances
 - Async: all SDK methods have both sync and async variants (`instance.save()` and `await instance.save_async()`)
 - SDK ships with Jupyter notebook examples demonstrating common workflows

@@ -1,0 +1,126 @@
+{
+  "$id": "https://apiome.app/schemas/repository-import-manifest/1.0/schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Apiome repository import manifest",
+  "description": "GitOps manifest (``.apiome.yaml``) declaring which repository files import into which catalog projects and versions.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "const": "https://apiome.app/schemas/repository-import-manifest/1.0/schema"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1,
+      "description": "Manifest document format version. Only ``1`` is supported in MVP."
+    },
+    "imports": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Import targets resolved relative to the repository root.",
+      "items": {
+        "$ref": "#/$defs/importEntry"
+      }
+    }
+  },
+  "required": ["version", "imports"],
+  "$defs": {
+    "projectSlug": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
+      "description": "Existing tenant project slug reference."
+    },
+    "versionName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "description": "Target project version label (for example ``1.0.0``)."
+    },
+    "repositoryPathPattern": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "description": "Repository-relative file path or glob pattern (for example ``specs/petstore.yaml`` or ``**/openapi/*.yaml``)."
+    },
+    "newProjectMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "Human-readable project title used when seeding a new project."
+        },
+        "slug": {
+          "$ref": "#/$defs/projectSlug",
+          "description": "Optional project slug override. When omitted, the title is slugified at import time."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 4096,
+          "description": "Optional project description stored on the new project."
+        },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "description": "Optional project tags."
+        }
+      }
+    },
+    "existingProjectImportEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "project", "version"],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/repositoryPathPattern"
+        },
+        "project": {
+          "$ref": "#/$defs/projectSlug"
+        },
+        "version": {
+          "$ref": "#/$defs/versionName"
+        }
+      }
+    },
+    "newProjectImportEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "newProject", "version"],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/repositoryPathPattern"
+        },
+        "newProject": {
+          "$ref": "#/$defs/newProjectMetadata"
+        },
+        "version": {
+          "$ref": "#/$defs/versionName"
+        }
+      }
+    },
+    "importEntry": {
+      "description": "One repository file or glob pattern mapped to an existing project reference or new-project metadata plus a version name.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/existingProjectImportEntry"
+        },
+        {
+          "$ref": "#/$defs/newProjectImportEntry"
+        }
+      ]
+    }
+  }
+}

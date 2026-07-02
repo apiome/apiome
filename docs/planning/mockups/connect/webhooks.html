@@ -23,7 +23,7 @@
   <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="cable" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span><span class="text-xs text-gray-400">/</span>
+      <span class="text-sm font-semibold">Apiome</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Connect</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm font-semibold">Webhooks</span>
     </div>
@@ -113,7 +113,7 @@
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 bg-indigo-50/40 dark:bg-indigo-900/20">
-                  <td class="px-5 py-3"><div class="font-medium mono text-xs">https://hooks.acme.io/objectified</div><div class="text-[11px] text-gray-500">whk_a9f3 · created 2026-01-14</div></td>
+                  <td class="px-5 py-3"><div class="font-medium mono text-xs">https://hooks.acme.io/apiome</div><div class="text-[11px] text-gray-500">whk_a9f3 · created 2026-01-14</div></td>
                   <td class="px-3 py-3"><div class="flex flex-wrap gap-1"><span class="text-[10px] mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700">org.created</span><span class="text-[10px] mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700">org.updated</span><span class="text-[10px] mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700">+3</span></div></td>
                   <td class="px-3 py-3"><span class="text-xs mono">JSON · CloudEvents 1.0</span></td>
                   <td class="px-3 py-3"><span class="text-[10px] mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">HMAC SHA256</span></td>
@@ -175,7 +175,7 @@
           <!-- Subscription detail -->
           <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden xl:col-span-2">
             <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
-              <div class="flex items-center gap-3"><i data-lucide="webhook" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold mono">whk_a9f3</h3><p class="text-[11px] text-gray-500">https://hooks.acme.io/objectified</p></div></div>
+              <div class="flex items-center gap-3"><i data-lucide="webhook" class="w-5 h-5 text-indigo-500"></i><div><h3 class="text-base font-semibold mono">whk_a9f3</h3><p class="text-[11px] text-gray-500">https://hooks.acme.io/apiome</p></div></div>
               <div class="flex items-center gap-2"><button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"><i data-lucide="send" class="w-3.5 h-3.5"></i> Send test event</button><button class="px-2.5 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1.5"><i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit</button></div>
             </div>
             <div class="grid grid-cols-2 divide-x divide-gray-200 dark:divide-gray-700">
@@ -212,7 +212,7 @@
                   <div class="text-[10px] uppercase tracking-wider text-gray-500 mb-2">Signing</div>
                   <div class="bg-gray-50 dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-700 p-3 text-[11px] mono space-y-1">
                     <div><span class="text-gray-400">algo  </span>HMAC-SHA256</div>
-                    <div><span class="text-gray-400">header</span>X-Objectified-Signature</div>
+                    <div><span class="text-gray-400">header</span>X-Apiome-Signature</div>
                     <div><span class="text-gray-400">key   </span>whsec_•••••••••••• <button class="text-indigo-500 ml-1">show</button></div>
                     <div><span class="text-gray-400">rotated</span>2026-03-04 (49 d ago)</div>
                   </div>
@@ -221,7 +221,7 @@
                   <div class="text-[10px] uppercase tracking-wider text-gray-500 mb-2">Sample payload</div>
                   <pre class="bg-gray-900 text-gray-100 p-3 rounded-md text-[11px] mono leading-relaxed whitespace-pre">{
   "specversion": "1.0",
-  "type": "io.objectified.organization.updated",
+  "type": "io.apiome.organization.updated",
   "source": "/tenants/acme",
   "id": "evt_2x9f3a",
   "time": "2026-04-22T14:08:31Z",
@@ -263,12 +263,12 @@
           <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"><h3 class="text-base font-semibold flex items-center gap-2"><i data-lucide="shield-check" class="w-5 h-5 text-emerald-500"></i> Verify on your endpoint</h3><p class="text-xs text-gray-500">Reject any request whose computed signature does not match the header.</p></div>
           <div class="grid grid-cols-3 divide-x divide-gray-200 dark:divide-gray-700">
             <div class="p-5"><div class="text-[10px] uppercase tracking-wider text-gray-500 mb-2 flex items-center justify-between"><span>Node.js</span><button class="text-indigo-500 mono text-[10px]">copy</button></div><pre class="bg-gray-900 text-gray-100 p-3 rounded-md text-[11px] mono leading-relaxed whitespace-pre">import crypto from 'crypto';
-const sig = req.headers['x-objectified-signature'];
+const sig = req.headers['x-apiome-signature'];
 const want = crypto.createHmac('sha256', SECRET)
   .update(req.rawBody).digest('hex');
 if (sig !== want) return res.status(401).end();</pre></div>
             <div class="p-5"><div class="text-[10px] uppercase tracking-wider text-gray-500 mb-2 flex items-center justify-between"><span>Python</span><button class="text-indigo-500 mono text-[10px]">copy</button></div><pre class="bg-gray-900 text-gray-100 p-3 rounded-md text-[11px] mono leading-relaxed whitespace-pre">import hmac, hashlib
-sig = request.headers["X-Objectified-Signature"]
+sig = request.headers["X-Apiome-Signature"]
 want = hmac.new(SECRET, request.body,
                 hashlib.sha256).hexdigest()
 if not hmac.compare_digest(sig, want):

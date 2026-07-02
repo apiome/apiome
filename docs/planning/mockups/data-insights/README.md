@@ -12,7 +12,7 @@ They are visual references — no API calls, no auth, no build step.
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/data-insights/index.html
+open apiome-ui/public/mockups/data-insights/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:
@@ -40,7 +40,7 @@ http://localhost:3000/mockups/data-insights/index.html
 
 ## Design system
 
-Mockups intentionally mirror the live `objectified-ui` shell and the sibling
+Mockups intentionally mirror the live `apiome-ui` shell and the sibling
 `mockups/analytics/` folder (Insights is the spiritual successor to the
 Analytics roadmap):
 

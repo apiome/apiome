@@ -1,6 +1,6 @@
-# Objectified: Analytics - Feature Roadmap
+# Apiome: Analytics - Feature Roadmap
 
-> Enterprise analytics layer that surfaces schema quality trends, API usage patterns, team productivity metrics, and executive KPIs across the Objectified platform. Integrates with external BI tools and provides a custom report builder for data-driven decision making.
+> Enterprise analytics layer that surfaces schema quality trends, API usage patterns, team productivity metrics, and executive KPIs across the Apiome platform. Integrates with external BI tools and provides a custom report builder for data-driven decision making.
 >
 > **Revenue Model**: Analytics features gated behind Pro/Enterprise subscription tiers; custom BI connectors and scheduled report delivery are Enterprise-only upsells
 >
@@ -106,7 +106,7 @@ Part of Epic: Usage Analytics
 
 #### 1.12 (#1771) — API Endpoint Popularity
 
-Instrument the platform's own API call layer to emit `api_call` analytics events when Objectified's REST endpoints are invoked. Aggregate by `resource_id` (endpoint path pattern) to produce a ranked popularity list. Surface as a sortable table in the analytics dashboard.
+Instrument the platform's own API call layer to emit `api_call` analytics events when Apiome's REST endpoints are invoked. Aggregate by `resource_id` (endpoint path pattern) to produce a ranked popularity list. Surface as a sortable table in the analytics dashboard.
 
 **OpenAPI Endpoints:**
 ```
@@ -211,9 +211,9 @@ Part of Epic: Executive Reporting & Custom Reports
 | #   | Title                                | Description                                                                      | Labels                                | MVP | Parallel |
 |-----|--------------------------------------|----------------------------------------------------------------------------------|---------------------------------------|-----|----------|
 | 3.1 (#1792) | Snowflake Data Export Connector      | Periodic export of analytics events to a customer-owned Snowflake account        | `enhancement`, `analytics`           | No  | Yes      |
-| 3.2 (#1793) | Tableau Connector                    | Web Data Connector (WDC) exposing Objectified analytics API for Tableau Desktop  | `enhancement`, `analytics`           | No  | Yes      |
+| 3.2 (#1793) | Tableau Connector                    | Web Data Connector (WDC) exposing Apiome analytics API for Tableau Desktop  | `enhancement`, `analytics`           | No  | Yes      |
 | 3.3 (#1794) | Power BI Connector                   | Custom Power BI connector using the analytics REST API as a data source           | `enhancement`, `analytics`           | No  | Yes      |
-| 3.4 (#1795) | Looker Integration                   | LookML model definition for Objectified analytics data exposed via API           | `enhancement`, `analytics`           | No  | Yes      |
+| 3.4 (#1795) | Looker Integration                   | LookML model definition for Apiome analytics data exposed via API           | `enhancement`, `analytics`           | No  | Yes      |
 | 3.5 (#1796) | Custom Data Warehouse Export         | Generic webhook/S3 push export for customers using non-standard BI tools         | `enhancement`, `analytics`           | No  | Yes      |
 | 3.6 (#1797) | Embed Reports in External Dashboards | `<iframe>`-embeddable signed report URLs for embedding charts in external tools  | `enhancement`, `analytics`           | No  | Yes      |
 
@@ -221,7 +221,7 @@ Part of Epic: Executive Reporting & Custom Reports
 
 #### 3.1 (#1792) — Snowflake Data Export Connector
 
-Provide an Enterprise-tier feature that streams `analytics_event` data into a customer-provided Snowflake account using Snowflake's data loading API. Customers configure their Snowflake account credentials and target database in the tenant settings. Objectified schedules hourly incremental exports using the `occurred_at` watermark.
+Provide an Enterprise-tier feature that streams `analytics_event` data into a customer-provided Snowflake account using Snowflake's data loading API. Customers configure their Snowflake account credentials and target database in the tenant settings. Apiome schedules hourly incremental exports using the `occurred_at` watermark.
 
 **OpenAPI Endpoints:**
 ```

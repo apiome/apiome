@@ -9,7 +9,7 @@
 > net-new functionality — the backend REST contract and a first-pass UI already exist.
 > **Issue ID prefix:** `MFI` (consistent with `docs/ROADMAP_MULTI_FORMAT_IMPORT.md`). New epics
 > continue the sequence as `MFI-EPIC-24…27`; issues `MFI-n.m`.
-> **GitHub title format:** `objectified: [<epic>.<issue>] <title>`.
+> **GitHub title format:** `apiome: [<epic>.<issue>] <title>`.
 > **Recommended labels:** `roadmap-multi-format`, `multi-protocol`, `ui`, `typescript`, `rest`,
 > `linting`, `import`, `export`, `mvp` (+ `validation` where relevant).
 
@@ -29,7 +29,7 @@ mostly closed on GitHub:
 
 | Already shipped (do **not** rebuild) | Where |
 |---|---|
-| Catalog list page (card/table, filter/sort/search, soft-delete) | `objectified-ui/src/app/ade/dashboard/catalog/page.tsx` (MFI-23.3 #4012) |
+| Catalog list page (card/table, filter/sort/search, soft-delete) | `apiome-ui/src/app/ade/dashboard/catalog/page.tsx` (MFI-23.3 #4012) |
 | CatalogItemCard | `…/components/ade/dashboard/catalog/CatalogItemCard.tsx` (MFI-23.4 #4013) |
 | Format/Protocol/Source pills + registry | `…/components/ui/catalog/{FormatPill,ProtocolPill,SourceBadge}.tsx`, `…/utils/catalog-format-registry.ts` (MFI-23.5 #4014) |
 | Catalog side-nav entry | `…/components/ade/dashboard/DashboardSideNav.tsx` (MFI-23.6 #4015) |
@@ -100,7 +100,7 @@ of appearing as active choices.
 > current.
 
 This refinement pins the **destination** of every import and closes three gaps against today's
-backend (`objectified-rest/src/app/import_routing.py`), where `PUBLISHABLE_FORMATS =
+backend (`apiome-rest/src/app/import_routing.py`), where `PUBLISHABLE_FORMATS =
 {openapi-3.0, openapi-3.1, swagger-2.0}` → Projects and **everything else → catalog**:
 (a) **Arazzo** currently falls through to the catalog but must route to **Projects**; (b) **JSON
 Schema 2020‑12/variants** currently routes to the catalog as *schemas‑only* but must instead **prompt**
@@ -227,8 +227,8 @@ _All MFI-EPIC-24 tickets are delivered — see the per-ticket notes below._
 - **Delivered.** `CatalogStatsRow` renders the four cards above the toolbar from a pure
   `computeCatalogStats(items)` helper (no new API); `headerSubtitle` reduced to a static tagline.
   Unit tests assert each metric from a fixture list plus a render test; see
-  `objectified-ui/src/app/utils/catalog-dashboard-stats.ts` and
-  `objectified-ui/src/app/components/ade/dashboard/catalog/CatalogStatsRow.tsx`.
+  `apiome-ui/src/app/utils/catalog-dashboard-stats.ts` and
+  `apiome-ui/src/app/components/ade/dashboard/catalog/CatalogStatsRow.tsx`.
 - **Problem.** The mockup opens the list with a 4-card stats grid; the implementation collapses this
   into a single `headerSubtitle` string ("N items · avg quality X · N active"), losing the
   formats-represented and converted-to-OpenAPI metrics and the letter grade on avg quality.
@@ -250,8 +250,8 @@ _All MFI-EPIC-24 tickets are delivered — see the per-ticket notes below._
   input order preserved so sections stay sorted. A toolbar Group control (Protocol / None) mirrors the
   sort control and defaults to Protocol; None reproduces the flat grid and the table view stays flat.
   Unit tests cover grouping + ordering; source-contract tests cover the wiring. See
-  `objectified-ui/src/app/utils/catalog-paradigm-grouping.ts` and
-  `objectified-ui/src/app/ade/dashboard/catalog/page.tsx`.
+  `apiome-ui/src/app/utils/catalog-paradigm-grouping.ts` and
+  `apiome-ui/src/app/ade/dashboard/catalog/page.tsx`.
 - **Problem.** Cards render as a single flat grid; the mockup groups them into paradigm sections with
   a header (label + item count + divider), iterating paradigms in fixed order. The mockup's
   "Group: Protocol ▾" toolbar control has no counterpart.
@@ -281,8 +281,8 @@ _All MFI-EPIC-24 tickets are delivered — see the per-ticket notes below._
   empty list. Copy mirrors `note.info` in
   `docs/planning/mockups/multi-format-import/index.html:389-396`; the banner is persistent (the
   optional dismiss-per-session was skipped). Render tests assert the note landmark and each copy
-  point; see `objectified-ui/src/app/components/ade/dashboard/catalog/CatalogNonPublishableBanner.tsx`
-  and `objectified-ui/tests/catalog-nonpublishable-banner.test.tsx`.
+  point; see `apiome-ui/src/app/components/ade/dashboard/catalog/CatalogNonPublishableBanner.tsx`
+  and `apiome-ui/tests/catalog-nonpublishable-banner.test.tsx`.
 
 ### MFI-24.4 — Table view column parity · #4084 — ✅ Done
 - **Delivered.** The catalog table now renders the mockup's 8 columns in order — **Artifact / Format /
@@ -293,9 +293,9 @@ _All MFI-EPIC-24 tickets are delivered — see the per-ticket notes below._
   F red) and derived through `catalogItemGrade` (captured `qualityGrade`, else score-derived). The
   artifact cell gains the `.av.sm` gradient avatar (initials); Description/Created-By/Created are
   dropped to match the set (search still spans description). Sort keys (Quality/Grade/Status/Updated)
-  are unchanged. Covered by `objectified-ui/tests/catalog-grade-chip.test.tsx`,
-  `objectified-ui/tests/catalog-card-presentation.test.ts` and the header/row contracts in
-  `objectified-ui/tests/catalog-page.test.ts`.
+  are unchanged. Covered by `apiome-ui/tests/catalog-grade-chip.test.tsx`,
+  `apiome-ui/tests/catalog-card-presentation.test.ts` and the header/row contracts in
+  `apiome-ui/tests/catalog-page.test.ts`.
 
 ### MFI-24.5 — Card orb & footer refinements · #4085 — ✅ Done
 - **Delivered.** `CatalogItemCard` now renders three orbs (Quality, Lint, and an always-inert **Debt**
@@ -303,7 +303,7 @@ _All MFI-EPIC-24 tickets are delivered — see the per-ticket notes below._
   dashed divider, with the format/source pills moved above them. `ConvertedBadge` (`conversionSlot`) is
   right-aligned in the orb row, and the footer carries the creator chip ("imported by …") + updated-relative
   time in place of the old "enabled · active" text. Existing quality/lint dialog wiring is unchanged; the
-  card test contract (`objectified-ui/tests/catalog-item-card.test.tsx`) is updated with Debt-orb/footer cases.
+  card test contract (`apiome-ui/tests/catalog-item-card.test.tsx`) is updated with Debt-orb/footer cases.
 - **Problem.** The card shows two orbs (Quality, Lint); the mockup shows **three** — adding a **Debt**
   orb (empty `—`, "not yet computed") — in a 3-across row with a dashed divider. The mockup footer is
   "[avatar] imported by X … updated Y"; the implementation puts creator in the body and shows
@@ -712,7 +712,7 @@ graph TD
 
 ## 4. Verification & testing
 
-- **Unit/component (Jest + RTL, `objectified-ui/tests/`):** follow existing patterns
+- **Unit/component (Jest + RTL, `apiome-ui/tests/`):** follow existing patterns
   (`catalog-pills.test.tsx`, `catalog-item-detail.test.tsx`). New tests: stats metrics, paradigm
   grouping/order, table columns, tab switching, parsed-entity rendering (per MVP format fixture), Monaco
   mount + wrap, inline lint gauge/findings, import stepper navigation + detect/routing notes.
@@ -721,7 +721,7 @@ graph TD
 - **Contract (backend, pytest):** 25.2 parsed-model shape per format; 25.6 category-score rollup;
   **26.6 `decide_import_routing` table** (OpenAPI/Swagger + Arazzo → Project; gRPC/GraphQL/AsyncAPI →
   catalog, no convert); **26.8 JSON Schema `target=types|project` vs catalog**.
-- **E2E (Playwright, `objectified-ui/e2e/`):** catalog list → open detail → switch tabs → view source in
+- **E2E (Playwright, `apiome-ui/e2e/`):** catalog list → open detail → switch tabs → view source in
   Monaco → open convert preview; import a fixture GraphQL/gRPC/AsyncAPI doc via File and URL and assert it
   lands as a **catalog item** (never a Project/version, never converted); import an **Arazzo** doc and
   assert it lands as a **Project**; import a **JSON Schema 2020-12** doc and assert the **prompt** appears,
@@ -743,4 +743,4 @@ graph TD
 - Deferred and tracked elsewhere: read-only Designer/Studio catalog view — **MFI-23.12 #4021**.
 - This roadmap does **not** create issues (per skill guidance); it is documented for validation before
   filing. When approved, file under the MFI umbrella using the title format
-  `objectified: [<epic>.<issue>] <title>`.
+  `apiome: [<epic>.<issue>] <title>`.

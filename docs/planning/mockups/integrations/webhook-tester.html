@@ -22,7 +22,7 @@
   <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="plug-zap" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-sm font-semibold">Apiome</span>
       <span class="text-xs text-gray-400">/</span><span class="text-sm text-gray-600 dark:text-gray-300">Integrations</span>
       <span class="text-xs text-gray-400">/</span><span class="text-sm text-gray-600 dark:text-gray-300">Webhooks</span>
       <span class="text-xs text-gray-400">/</span><span class="text-sm text-gray-600 dark:text-gray-300">Slack · Schema notifications</span>
@@ -115,12 +115,12 @@
             <div class="px-5 py-3 mono text-[12px] leading-6 bg-gray-900/95 text-gray-200">
               <p><span class="text-gray-500"># Headers</span></p>
               <p><span class="text-cyan-400">Content-Type</span>: application/json</p>
-              <p><span class="text-cyan-400">User-Agent</span>: Objectified-Webhooks/1.0</p>
-              <p><span class="text-cyan-400">X-Objectified-Event</span>: schema.published</p>
-              <p><span class="text-cyan-400">X-Objectified-Delivery</span>: 4f7e2d91-c5b3-4a82-9f6e-1d3c5a8b2e1f</p>
-              <p><span class="text-cyan-400">X-Objectified-Signature</span>: <span class="text-emerald-400">sha256=8c2f1ad0e9b34a72c5d6f3e1a98b4c7d…</span></p>
-              <p><span class="text-cyan-400">X-Objectified-Timestamp</span>: 1745423328</p>
-              <p><span class="text-cyan-400">X-Objectified-Test</span>: <span class="text-yellow-300">true</span></p>
+              <p><span class="text-cyan-400">User-Agent</span>: Apiome-Webhooks/1.0</p>
+              <p><span class="text-cyan-400">X-Apiome-Event</span>: schema.published</p>
+              <p><span class="text-cyan-400">X-Apiome-Delivery</span>: 4f7e2d91-c5b3-4a82-9f6e-1d3c5a8b2e1f</p>
+              <p><span class="text-cyan-400">X-Apiome-Signature</span>: <span class="text-emerald-400">sha256=8c2f1ad0e9b34a72c5d6f3e1a98b4c7d…</span></p>
+              <p><span class="text-cyan-400">X-Apiome-Timestamp</span>: 1745423328</p>
+              <p><span class="text-cyan-400">X-Apiome-Test</span>: <span class="text-yellow-300">true</span></p>
             </div>
             <div class="px-5 py-3 mono text-[12px] leading-6 bg-gray-900/95 text-gray-200 border-t border-gray-700/50">
               <p><span class="text-gray-500"># Body (editable)</span></p>
@@ -198,12 +198,12 @@
         <!-- Signature verification helper -->
         <section class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5">
           <div class="flex items-center gap-2 mb-3"><i data-lucide="shield-check" class="w-4 h-4 text-emerald-500"></i><h3 class="font-semibold text-sm">Verify the signature on your end</h3></div>
-          <p class="text-[12px] text-gray-500 mb-3">Compute <span class="mono">HMAC-SHA256(secret, timestamp + "." + raw_body)</span> and compare to the <span class="mono">X-Objectified-Signature</span> header (constant-time).</p>
+          <p class="text-[12px] text-gray-500 mb-3">Compute <span class="mono">HMAC-SHA256(secret, timestamp + "." + raw_body)</span> and compare to the <span class="mono">X-Apiome-Signature</span> header (constant-time).</p>
           <div class="rounded-md bg-gray-900/95 text-gray-200 mono text-[12px] leading-6 p-3 overflow-x-auto">
 <pre class="whitespace-pre"><span class="text-gray-500">// Node.js</span>
 <span class="text-purple-400">const</span> crypto = <span class="text-purple-400">require</span>(<span class="text-emerald-400">'crypto'</span>);
-<span class="text-purple-400">const</span> sig = req.headers[<span class="text-emerald-400">'x-objectified-signature'</span>];
-<span class="text-purple-400">const</span> ts  = req.headers[<span class="text-emerald-400">'x-objectified-timestamp'</span>];
+<span class="text-purple-400">const</span> sig = req.headers[<span class="text-emerald-400">'x-apiome-signature'</span>];
+<span class="text-purple-400">const</span> ts  = req.headers[<span class="text-emerald-400">'x-apiome-timestamp'</span>];
 <span class="text-purple-400">const</span> expected = <span class="text-emerald-400">'sha256='</span> +
   crypto.createHmac(<span class="text-emerald-400">'sha256'</span>, secret)
         .update(`${ts}.${rawBody}`).digest(<span class="text-emerald-400">'hex'</span>);

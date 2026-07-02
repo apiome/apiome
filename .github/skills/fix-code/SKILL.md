@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 # Fix Code (`/fix-code <number>`)
 
-When user invokes **fix-code** with a PR number, treat it as a **GitHub pull request** in the **current repository** (`KenSuenobu/objectified`). Follow the workflow end to end unless the user terminates or the environment blocks (auth, permissions, missing `gh`, etc.).
+When user invokes **fix-code** with a PR number, treat it as a **GitHub pull request** in the **current repository** (`KenSuenobu/apiome`). Follow the workflow end to end unless the user terminates or the environment blocks (auth, permissions, missing `gh`, etc.).
 
 ## Guidelines
 
@@ -25,7 +25,7 @@ When user invokes **fix-code** with a PR number, treat it as a **GitHub pull req
 Fetch the pull request details:
 
 ```bash
-gh pr view <number> --repo KenSuenobu/objectified --json title,body,headRefName,baseRefName,author,state,reviewComments,comments
+gh pr view <number> --repo KenSuenobu/apiome --json title,body,headRefName,baseRefName,author,state,reviewComments,comments
 ```
 
 Extract:
@@ -101,7 +101,7 @@ git push origin <branch-name>
 Post a comment on the pull request confirming the fixes:
 
 ```bash
-gh pr comment <number> --repo KenSuenobu/objectified --body "Pull request fixes applied as per notes by <editor-name, like Copilot or Cursor> using <model-name> model."
+gh pr comment <number> --repo KenSuenobu/apiome --body "Pull request fixes applied as per notes by <editor-name, like Copilot or Cursor> using <model-name> model."
 ```
 
 Replace `<model-name>` with the actual model name you are running as (e.g. `claude-sonnet-4-20250514`).

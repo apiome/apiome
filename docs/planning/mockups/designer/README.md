@@ -1,6 +1,6 @@
 # Data Designer mockups
 
-Visual designs for the Objectified **schema designer** — the React Flow canvas
+Visual designs for the Apiome **schema designer** — the React Flow canvas
 shipped at `/ade/studio/editor` plus the natural extensions surfaced in the
 roadmap docs (`FUTURE_FEATURE_ROADMAP_OFFLINE.md`, `PLANNED_FEATURE_ROADMAP_AI.md`,
 `FUTURE_FEATURE_ROADMAP_LINTING.md`, `FUTURE_FEATURE_ROADMAP_DIFF.md`).

@@ -1,6 +1,6 @@
 # How do I… export / download a spec?
 
-Objectified reconstructs the full OpenAPI 3.1 document (or Arazzo workflow document, or JSON Schema)
+Apiome reconstructs the full OpenAPI 3.1 document (or Arazzo workflow document, or JSON Schema)
 for a **published** version on demand. You can download it from the CLI or fetch it directly over
 REST in JSON or YAML.
 
@@ -10,13 +10,13 @@ REST in JSON or YAML.
 
 ```bash
 # OpenAPI (default), JSON, to a file
-objectified spec export --project <id-or-slug> --version <id-or-label> --output petstore.json
+apiome spec export --project <id-or-slug> --version <id-or-label> --output petstore.json
 
 # YAML
-objectified spec export --project <id-or-slug> --version <id-or-label> --yaml -o petstore.yaml
+apiome spec export --project <id-or-slug> --version <id-or-label> --yaml -o petstore.yaml
 
 # Arazzo workflow document instead of OpenAPI
-objectified spec export --project <id-or-slug> --version <id-or-label> --format arazzo -o flows.json
+apiome spec export --project <id-or-slug> --version <id-or-label> --format arazzo -o flows.json
 ```
 
 Use `-o -` to stream to stdout. `--format` accepts `openapi` (default) or `arazzo`.
