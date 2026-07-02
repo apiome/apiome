@@ -1,6 +1,6 @@
-# Objectified — First Release Candidate (RC1) Roadmap
+# Apiome — First Release Candidate (RC1) Roadmap
 
-> **Goal:** Ship the first complete, public-quality version of Objectified — the **MVP spine** that lets a
+> **Goal:** Ship the first complete, public-quality version of Apiome — the **MVP spine** that lets a
 > team design schemas and APIs, validate them, version them, store them as the source of truth, and publish
 > them — hardened to a standard we are comfortable putting in front of strangers.
 >
@@ -16,11 +16,11 @@
 
 ## 1. The MVP Spine
 
-The minimal end-to-end value loop Objectified must deliver on its own:
+The minimal end-to-end value loop Apiome must deliver on its own:
 
 ```
    Import / Author  →  Design  →  Validate  →  Version  →  Store (source of truth)  →  Publish
-   (CLI · UI · MCP)    (Atlas    (linting/    (git-like   (objectified-db)            (browse ·
+   (CLI · UI · MCP)    (Atlas    (linting/    (git-like   (apiome-db)            (browse ·
                         types →   quality      branches,                               static docs ·
                         Designer  scoring)     diff,                                   OpenAPI/SDK
                         → Paths)               publish)                                export · mocks)
@@ -37,21 +37,21 @@ Verified against the codebase (not the mockups). The spine is substantially impl
 
 | Spine capability | Status | Where it lives |
 |---|---|---|
-| **Type registry (Atlas) / Primitives** | ✅ Built | `objectified-rest` `/v1/primitives` (12 ep), `/v1/types` namespaces (7 ep); JSON Schema 2020-12 validation; `$ref` resolution |
-| **Designer — Classes & Properties** | ✅ Built | REST `/v1/classes` (11 ep), `/v1/properties` (5 ep); UI visual canvas `objectified-ui /ade/studio/editor` (React Flow, drag-drop, groups, export wizard) |
+| **Type registry (Atlas) / Primitives** | ✅ Built | `apiome-rest` `/v1/primitives` (12 ep), `/v1/types` namespaces (7 ep); JSON Schema 2020-12 validation; `$ref` resolution |
+| **Designer — Classes & Properties** | ✅ Built | REST `/v1/classes` (11 ep), `/v1/properties` (5 ep); UI visual canvas `apiome-ui /ade/studio/editor` (React Flow, drag-drop, groups, export wizard) |
 | **Paths — OpenAPI 3.x operations** | ✅ Built | REST `/v1/paths` (33 ep: operations, params, bodies, responses, canvas persistence); UI `/ade/studio/paths` |
 | **Versioning — git-like** | ✅ Built | REST branches/merge/push/pull/tags/commit metadata (`version_merge_routes`, `versions_routes`); UI `/ade/dashboard/versions` with diff viewer & lineage |
 | **Compatibility / breaking-change** | ✅ Built | `compatibility_engine.py`, `/v1/versions/.../compatibility`; change reports |
 | **Import** | ✅ Built | Async jobs `/v1/tenants/{t}/imports` (OpenAPI/JSON Schema/Arazzo); UI import (file/URL/clipboard/Git/SwaggerHub/Postman/AI); CLI `import auto/openapi/arazzo/json-schema` |
-| **Storage (objectified-db)** | ✅ Built (snapshot model) | 117 Flyway migrations; `/v1/data` records + snapshots; admin CLI (tenants/users/apikeys/migrate) |
-| **Publish — interactive browse** | ✅ Built | `objectified-browse` public app: discovery, search, spec viewer, version compare; REST `/v1/browse/*` |
+| **Storage (apiome-db)** | ✅ Built (snapshot model) | 117 Flyway migrations; `/v1/data` records + snapshots; admin CLI (tenants/users/apikeys/migrate) |
+| **Publish — interactive browse** | ✅ Built | `apiome-browse` public app: discovery, search, spec viewer, version compare; REST `/v1/browse/*` |
 | **Publish — spec generation/export** | ✅ Built | REST `/v1/schema`, `/v1/swagger`, `/v1/json`, `/v1/arazzo` (JSON/YAML); UI export wizard (OpenAPI, Mermaid, PlantUML, PNG/SVG/PDF) |
 | **Auth (baseline)** | ✅ Built | JWT (NextAuth) + API key (`X-API-Key`); tenant membership checks; `/login`, OAuth |
 | **Tenancy / Projects** | ✅ Built | REST `/v1/projects`, `/v1/tenants`; UI management pages |
 | **API Keys** | ✅ Built | UI `/ade/dashboard/api-keys`; CLI `api-keys`, `tokens`; admin CLI |
-| **MCP server** | ✅ Built | `objectified-mcp` — 16 tools (spec list/describe/search/semantic/operations/components), stdio + HTTP, scoped keys |
-| **CLI** | ✅ Built | `objectified-cli` — 15+ command groups (auth, repos, import, spec export, paths, types, tokens, api-keys, integrations) |
-| **Marketing site** | ✅ Built | `objectified-web` (features, pricing, screenshots, MCP docs) |
+| **MCP server** | ✅ Built | `apiome-mcp` — 16 tools (spec list/describe/search/semantic/operations/components), stdio + HTTP, scoped keys |
+| **CLI** | ✅ Built | `apiome-cli` — 15+ command groups (auth, repos, import, spec export, paths, types, tokens, api-keys, integrations) |
+| **Marketing site** | ✅ Built | `apiome-web` (features, pricing, screenshots, MCP docs) |
 | **Local run / compose** | ✅ Built | `docker-compose.yml` (Postgres + migrate + mcp), `run.sh`, `setup.sh`, Turborepo |
 
 **Takeaway:** there is no missing spine *feature*. RC1 risk is concentrated in the gaps and hardening below.
@@ -106,7 +106,7 @@ to it. ‖ parallel with 0.3.
 *Exit:* `GET .../lint` (or equivalent) returns deterministic findings + score; UI reflects server truth; CLI `lint` command added.
 *Delivered:* REST `app/schema_lint.py` engine + `GET /v1/versions/{tenant}/{project}/{version}/lint`
 (`app/lint_routes.py`, deterministic score/grade + itemized findings, optional `baseRevisionId` folds
-`compatibility_engine` breaking-change flags); `objectified-cli lint` command (`--base-version`,
+`compatibility_engine` breaking-change flags); `apiome-cli lint` command (`--base-version`,
 `--min-grade` CI gate); UI server-backed per-version quality badge + lint report dialog
 (`VersionLintBadge`, `/api/projects/[projectId]/versions/[versionId]/lint` proxy).
 
@@ -116,8 +116,8 @@ reviewed), brute-force/lockout on login. No new authz model yet — that's 1.1.
 *Exit:* documented auth model; no plaintext secrets in repo/images; pen-test-style checklist passed.
 *Delivered:* [`docs/security/AUTH_MODEL.md`](security/AUTH_MODEL.md) (tokens/keys/scopes/expiry, CORS, secrets)
 and [`docs/security/RC1_HARDENING_CHECKLIST.md`](security/RC1_HARDENING_CHECKLIST.md); in-memory login
-brute-force limiter (`objectified-ui/lib/auth/login-rate-limit.ts`) wired into credential + super-admin login;
-configuration-driven REST CORS allow-list and a fail-closed production JWT secret (`objectified-rest/src/app/config.py`,
+brute-force limiter (`apiome-ui/lib/auth/login-rate-limit.ts`) wired into credential + super-admin login;
+configuration-driven REST CORS allow-list and a fail-closed production JWT secret (`apiome-rest/src/app/config.py`,
 `main.py`); secret audit (only placeholder `.env` templates tracked, real `.env` git-ignored).
 
 ---
@@ -144,7 +144,7 @@ Implement the `backup/` mockup at MVP depth: scheduled logical backups (tenant +
 off-site copy, a **documented and tested** restore runbook, and at least a manual PITR using the existing
 snapshot+event model. Full DR-drill automation can trail into Phase 5.
 *Exit:* a backup can be taken and **restored to a sandbox** successfully in a drill; RPO/RTO documented.
-*Shipped:* `objectified-db backup` command group (`create`/`list`/`restore`/`prune`/`drill`) — AES-256-GCM
+*Shipped:* `apiome-db backup` command group (`create`/`list`/`restore`/`prune`/`drill`) — AES-256-GCM
 encrypted, off-site-mirrored logical (tenant/project) + full `pg_dump` backups with manifests + SHA-256
 integrity; event-log PITR (`--as-of`) restored into an isolated sandbox schema; retention policy + cron
 wrapper (`scripts/backup/scheduled-backup.sh`); RPO/RTO targets, restore runbook, and a verified DR drill in
@@ -159,14 +159,14 @@ wrapper (`scripts/backup/scheduled-backup.sh`); RPO/RTO targets, restore runbook
 Fill `README.md` Getting Started (compose quick-start + first-project walkthrough). Add a seeded **sample
 project** and 2–3 **starter templates/blueprints** so a new tenant isn't empty. Guided first-run in the UI.
 *Exit:* a brand-new user reaches a published, browsable spec in < 10 minutes without docs spelunking.
-*Shipped:* shared idempotent `odb.provision_sample_project()` (objectified-db V122) auto-seeds a curated,
+*Shipped:* shared idempotent `apiome.provision_sample_project()` (apiome-db V122) auto-seeds a curated,
 published+public "Pet Store" sample on **every** tenant-creation path — OAuth self-signup, admin tenant
-create, the `objectified-db tenants provision-sample` / `tenants create --sample-creator` CLI, and the dev
+create, the `apiome-db tenants provision-sample` / `tenants create --sample-creator` CLI, and the dev
 seed; the sample renders end-to-end in Browse (verified live via `GET /v1/schema/.../petstore-sample/1.0.0`).
 Starter templates reuse the existing 50 system `class_templates` (surfaced via the Designer template
 browser). A dismissible **Get started** checklist on the dashboard derives completion from real stats
-(localStorage-persisted). README "Your first project in ~10 minutes" walkthrough added. Tests: objectified-db
-vitest (migration shape), objectified-rest pytest (sample render contract), objectified-ui jest (checklist
+(localStorage-persisted). README "Your first project in ~10 minutes" walkthrough added. Tests: apiome-db
+vitest (migration shape), apiome-rest pytest (sample render contract), apiome-ui jest (checklist
 logic + component).
 
 **2.2 — Mock Server** (#3615) · **L** · *high value; gap #4* · ‖ parallel with 2.1 · ✅ **Done**
@@ -174,11 +174,11 @@ Implement the `mock-server/` mockup: one-click hosted mock from a published vers
 (examples + faker), per-operation scenarios, optional stateful mode. Generated from existing
 `/v1/swagger/...` output. Free-tier mocks auto-expire.
 *Exit:* provision a mock, hit it, get schema-valid responses; expiry + rate limit enforced.
-*Shipped:* objectified-rest mock plane — management `/v1/mocks/{tenant}` (provision/list/get/active-scenario/destroy)
+*Shipped:* apiome-rest mock plane — management `/v1/mocks/{tenant}` (provision/list/get/active-scenario/destroy)
 + public data plane `/v1/mock/{id}/...`. Frozen OpenAPI spec per instance; deterministic schema-valid response
 synthesis (`mock_data_generator`) validated with jsonschema; selectable per-operation scenarios (status/latency/body,
 4 built-ins + `X-Mock-Scenario` header); free-tier auto-expiry (410) + per-instance rate limit (429). Migration V123
-`odb.mock_instances`. Tests: pytest (generator, engine, routes, migration).
+`apiome.mock_instances`. Tests: pytest (generator, engine, routes, migration).
 *Note:* if velocity is tight, 2.2 may slip to Phase 5 — it is the most deferrable RC item. 2.1 may not slip.
 
 ---
@@ -190,9 +190,9 @@ synthesis (`mock_data_generator`) validated with jsonschema; selectable per-oper
 Integration tests on the REST routers touched by the golden path; component tests on the UI editors;
 contract tests between UI ↔ REST. CI gates merges on them.
 *Exit:* spine endpoints + editors covered; CI red on regression of the golden path.
-*Delivered:* the objectified-rest pytest suite was repaired (collection errors fixed, suite made
-deterministic and DB-free) and is now gated in CI with coverage (`objectified-rest-test.yml`);
-objectified-ui CI now reports coverage; a shared UI↔REST golden-path contract
+*Delivered:* the apiome-rest pytest suite was repaired (collection errors fixed, suite made
+deterministic and DB-free) and is now gated in CI with coverage (`apiome-rest-test.yml`);
+apiome-ui CI now reports coverage; a shared UI↔REST golden-path contract
 (`scripts/golden_path/contract.json`) is verified from both sides; and the class-designer editor
 toolbar gained component tests. See `docs/TESTING.md`.
 
@@ -200,7 +200,7 @@ toolbar gained component tests. See `docs/TESTING.md`.
 Structured logs (MCP already uses structlog — extend to REST), health/readiness endpoints, error tracking,
 and a minimal ops dashboard (request rate, error rate, latency, backup status). Graceful API error envelopes.
 *Exit:* a failing request is diagnosable from logs/metrics alone; health checks wired into compose/deploy.
-*Delivered:* objectified-rest now emits structured JSON logs via structlog (`app/logging_config.py`)
+*Delivered:* apiome-rest now emits structured JSON logs via structlog (`app/logging_config.py`)
 with a per-request `request_id` bound for the request's lifetime; an `ObservabilityMiddleware`
 (`app/observability.py`) propagates the id (`X-Request-ID`), records an in-process metrics registry
 (request rate, error rate, latency p50/p95/p99), and logs one access line per request. A consistent
@@ -217,13 +217,13 @@ backups from 1.3 wired in, migration step gated). Reproducible from a clean host
 *Exit:* documented deploy runbook produces a working stack on a fresh environment; rollback documented.
 *Delivered:* a [`docker-compose.prod.yml`](../docker-compose.prod.yml) overlay (Caddy TLS terminator with
 automatic Let's Encrypt, host-exposed ports reduced to 80/443, fail-closed secrets via compose
-required-variable syntax + `OBJECTIFIED_ENV=production`, the dev seed parked behind a `dev-only` profile,
+required-variable syntax + `APIOME_ENV=production`, the dev seed parked behind a `dev-only` profile,
 RC1-1.3 encrypted backups wired into an `ops`-profile service whose volume REST reads for the RC1-3.2 ops
 dashboard, and `restart: unless-stopped`); a **gated** migration step (the `migrate` profile + app services no
 longer depend on it, so schema is previewed/backed-up/applied deliberately);
 [`docker-compose.prod.env.example`](../docker-compose.prod.env.example) and [`deploy/Caddyfile`](../deploy/Caddyfile);
 and a fresh-host runbook with rollback and a managed-Postgres variant in
-[`docs/runbooks/PRODUCTION_DEPLOY.md`](runbooks/PRODUCTION_DEPLOY.md). `objectified-db`'s runtime image now
+[`docs/runbooks/PRODUCTION_DEPLOY.md`](runbooks/PRODUCTION_DEPLOY.md). `apiome-db`'s runtime image now
 bundles `postgresql-client` so its `backup`/`restore` (pg_dump/pg_restore) commands work in-container.
 
 **3.4 — Documentation set** (#3619) · **M** · ‖ parallel · ✅ **done**

@@ -1,5 +1,5 @@
 /**
- * gateway-shared.js — shared utilities for all Objectified File Gateway mockup screens.
+ * gateway-shared.js — shared utilities for all Apiome File Gateway mockup screens.
  */
 const GatewayShared = (() => {
   const THEME_KEY = 'file-gateway-theme';

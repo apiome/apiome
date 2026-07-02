@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Objectified Data Federate</title>
+  <title>Apiome Data Federate</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' };</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -25,7 +25,7 @@
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
         <i data-lucide="layers" class="w-4 h-4 text-white"></i>
       </div>
-      <span class="text-sm font-bold">Objectified Data Federate</span>
+      <span class="text-sm font-bold">Apiome Data Federate</span>
       <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-semibold">Virtual Query Federation</span>
     </div>
     <div class="flex items-center gap-2">
@@ -52,7 +52,7 @@
           </div>
         </div>
         <p class="text-purple-100 text-sm max-w-2xl leading-relaxed">
-          Run SQL queries joining PostgreSQL, MySQL, Snowflake, BigQuery, S3 Parquet, and objectified-db simultaneously — without physically moving data. Queries are rewritten and pushed down to each source's native dialect; DataFusion handles cross-source joins locally. Materialize results directly into objectified-db Classes.
+          Run SQL queries joining PostgreSQL, MySQL, Snowflake, BigQuery, S3 Parquet, and apiome-db simultaneously — without physically moving data. Queries are rewritten and pushed down to each source's native dialect; DataFusion handles cross-source joins locally. Materialize results directly into apiome-db Classes.
         </p>
         <div class="mt-5 flex flex-wrap gap-3">
           <a href="sql-editor.html" class="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
@@ -106,14 +106,14 @@
             <i data-lucide="database" class="w-5 h-5 text-purple-500"></i>
             <span class="text-sm font-semibold">Source Catalog</span>
           </div>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Register and manage external data source connections. Each source becomes a virtual catalog in the SQL editor — PostgreSQL, MySQL, Snowflake, BigQuery, S3 Parquet, and objectified-db.</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Register and manage external data source connections. Each source becomes a virtual catalog in the SQL editor — PostgreSQL, MySQL, Snowflake, BigQuery, S3 Parquet, and apiome-db.</p>
         </a>
         <a href="virtual-schemas.html" class="card-hover bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <div class="flex items-center gap-3 mb-2">
             <i data-lucide="layers" class="w-5 h-5 text-violet-500"></i>
             <span class="text-sm font-semibold">Virtual Schemas</span>
           </div>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Browse the unified virtual catalog tree. View all source schemas and tables in one place, compare column definitions, and see which external tables are mapped to objectified Classes.</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Browse the unified virtual catalog tree. View all source schemas and tables in one place, compare column definitions, and see which external tables are mapped to apiome Classes.</p>
         </a>
       </div>
     </section>
@@ -166,7 +166,7 @@
             <i data-lucide="arrow-left-right" class="w-5 h-5 text-blue-500"></i>
             <span class="text-sm font-semibold">Schema Mapper</span>
           </div>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Link external table columns to objectified Class properties column-by-column. Define type coercions, rename rules, and null-handling policies so query results materialize cleanly into Classes.</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Link external table columns to apiome Class properties column-by-column. Define type coercions, rename rules, and null-handling policies so query results materialize cleanly into Classes.</p>
         </a>
         <a href="saved-queries.html" class="card-hover bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <div class="flex items-center gap-3 mb-2">
@@ -199,7 +199,7 @@
             <i data-lucide="database-zap" class="w-5 h-5 text-amber-500"></i>
             <span class="text-sm font-semibold">Materialization</span>
           </div>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Materialize federation query results directly into objectified-db Classes on a schedule or on-demand. Configure append vs. replace semantics, incremental watermarks, and Temporal workflow integration.</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Materialize federation query results directly into apiome-db Classes on a schedule or on-demand. Configure append vs. replace semantics, incremental watermarks, and Temporal workflow integration.</p>
         </a>
       </div>
     </section>

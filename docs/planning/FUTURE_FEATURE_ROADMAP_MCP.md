@@ -1,7 +1,7 @@
 # Planned Roadmap — MCP Server (FastMCP + Postgres)
 
 This roadmap describes a Model Context Protocol (MCP) service that lets
-external clients browse the OpenAPI specifications stored in the Objectified
+external clients browse the OpenAPI specifications stored in the Apiome
 platform database. The service is implemented with **FastMCP** (Python) and
 uses **Postgres** as its only datastore. It can be hosted either as a local
 process or via Docker.
@@ -32,7 +32,7 @@ process or via Docker.
 
 ```
 ┌────────────┐   stdio / streamable HTTP   ┌─────────────────────────┐
-│  MCP host  │ ──────────────────────────▶ │   objectified-mcp       │
+│  MCP host  │ ──────────────────────────▶ │   apiome-mcp       │
 │ (Claude,   │                             │   FastMCP service       │
 │  IDE, …)   │ ◀────────────────────────── │   (Python, async)       │
 └────────────┘                             └────────────┬────────────┘
@@ -40,7 +40,7 @@ process or via Docker.
                                                         ▼
                                             ┌─────────────────────────┐
                                             │       Postgres          │
-                                            │  (Objectified schema +  │
+                                            │  (Apiome schema +  │
                                             │   mcp_api_keys,         │
                                             │   mcp_access_audit,     │
                                             │   mcp_v_public_specs)   │
@@ -194,7 +194,7 @@ approves otherwise.
 | 7.6 | [#3042](../../issues/3042) | Tool `spec.publish_version` | 7.5 |
 | 7.7 | [#3043](../../issues/3043) | Audit row per write op | 7.3–7.6 |
 
-#### V8 — Activity Log & Audit UI (#3030) — `objectified-ui`
+#### V8 — Activity Log & Audit UI (#3030) — `apiome-ui`
 
 | # | Issue | Title | Depends on |
 |---|-------|-------|------------|

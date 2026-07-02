@@ -1,21 +1,21 @@
-# Objectified Authoring Platform — Roadmap (Scribe + Slate)
+# Apiome Authoring Platform — Roadmap (Scribe + Slate)
 
 ## 1. Source Description
 
-> Application that will work as a suite of applications on the Objectified platform. The
-> objectified-ui project right now just has a main control panel dashboard, but it should
+> Application that will work as a suite of applications on the Apiome platform. The
+> apiome-ui project right now just has a main control panel dashboard, but it should
 > have an additional tab at the top of the navigation section for **"Authoring"**. Under
 > Authoring will be a new project called **"Slate"**, which provides a documentation site
 > generator for Projects and Versions — a *"Clean Slate"* for documentation. Authoring will
 > contain two projects: **Scribe** and **Slate**. Combine designs from
 > `docs/planning/mockups/slate` and `docs/planning/mockups/scribe`, and create an authoring
-> platform for Objectified. Identify features that will be there for the MVP, and those that
-> are viable options for a V2 release. Include roadmap items to improve the objectified-web
+> platform for Apiome. Identify features that will be there for the MVP, and those that
+> are viable options for a V2 release. Include roadmap items to improve the apiome-web
 > communication to show the authoring functionality as well, which should be a part of this
 > roadmap.
 
 This roadmap turns that brief into a buildable plan. It introduces a new **Authoring**
-navigation surface in `objectified-ui` that hosts two products:
+navigation surface in `apiome-ui` that hosts two products:
 
 - **Scribe** — *AI-powered documentation writer*. Generates and maintains human-readable docs
   for every API path, schema class, and property; fills missing descriptions, writes example
@@ -23,12 +23,12 @@ navigation surface in `objectified-ui` that hosts two products:
   (Source: `docs/planning/mockups/scribe/*.html`.)
 - **Slate** — *Branded static documentation site generator* (a "Clean Slate"). Publishes
   versioned, searchable, theme-branded developer portals as deploy-ready static assets
-  (HTML/CSS/JS) for CDN, GitHub Pages, S3, or offline distribution, directly from Objectified
+  (HTML/CSS/JS) for CDN, GitHub Pages, S3, or offline distribution, directly from Apiome
   Projects/Versions. (Source: `docs/planning/mockups/slate/*.html`.)
 
 Both products operate on the existing core entities — **Tenants → Projects → Versions →
-Classes/Properties → Paths/Operations/Responses** — already modeled in `objectified-db` and
-served by `objectified-rest`.
+Classes/Properties → Paths/Operations/Responses** — already modeled in `apiome-db` and
+served by `apiome-rest`.
 
 ---
 
@@ -68,11 +68,11 @@ The MVP/V2 flag for every issue is in each epic table (**MVP** column) and summa
 
 ```mermaid
 flowchart TB
-  subgraph Web["objectified-web (marketing)"]
+  subgraph Web["apiome-web (marketing)"]
     suite["/suite/scribe + /suite/slate<br/>Authoring category"]
   end
 
-  subgraph UI["objectified-ui (Next.js App Router)"]
+  subgraph UI["apiome-ui (Next.js App Router)"]
     nav["TopHeader → Authoring tab"]
     hub["/ade/authoring (hub)"]
     scribeUI["/ade/authoring/scribe/*"]
@@ -82,7 +82,7 @@ flowchart TB
     scribeUI & slateUI --> proxy
   end
 
-  subgraph REST["objectified-rest (FastAPI)"]
+  subgraph REST["apiome-rest (FastAPI)"]
     docs["/v1/docs/* (content + coverage)"]
     llm["LLM proxy service"]
     stale["stale-detection engine"]
@@ -90,7 +90,7 @@ flowchart TB
     worker["Slate build worker (static SSG)"]
   end
 
-  subgraph DB["objectified-db (PostgreSQL)"]
+  subgraph DB["apiome-db (PostgreSQL)"]
     core[("Projects/Versions/<br/>Classes/Properties/Paths")]
     docTbls[("doc_* tables")]
     siteTbls[("slate_site / slate_build")]
@@ -111,15 +111,15 @@ flowchart TB
 
 - UI: Next.js 16 App Router, React 19, Tailwind 4, Radix UI, Lucide, NextAuth (JWT),
   next-themes. Top nav defined in
-  `objectified-ui/src/app/components/ade/TopHeader.tsx` (`NAV_ITEMS`). Routes live under
-  `objectified-ui/src/app/ade/*`; client → Next.js `/api/*` proxy → `objectified-rest` with
-  `createRestAuthHeaders()` (`objectified-ui/lib/rest-auth.ts`).
+  `apiome-ui/src/app/components/ade/TopHeader.tsx` (`NAV_ITEMS`). Routes live under
+  `apiome-ui/src/app/ade/*`; client → Next.js `/api/*` proxy → `apiome-rest` with
+  `createRestAuthHeaders()` (`apiome-ui/lib/rest-auth.ts`).
 - REST: FastAPI, JWT/API-key auth via `validate_authentication()`, tenant-scoped
   `/v1/{feature}/{tenant_slug}/...` route convention.
-- DB: PostgreSQL `odb` schema, UUID PKs, soft deletes (`deleted_at`), JSONB payloads;
-  migration scripts in `objectified-db/scripts/<timestamp>.sql`.
+- DB: PostgreSQL `apiome` schema, UUID PKs, soft deletes (`deleted_at`), JSONB payloads;
+  migration scripts in `apiome-db/scripts/<timestamp>.sql`.
 - Web: Next.js 16 marketing site; product catalog is data-driven in
-  `objectified-web/src/app/suite/data.ts`; `/suite/[slug]` auto-renders detail pages; glass/
+  `apiome-web/src/app/suite/data.ts`; `/suite/[slug]` auto-renders detail pages; glass/
   gradient + gsap/three motion components already exist.
 - Brand tones (from mockups): **Scribe = violet/indigo**, **Slate = cyan**.
 
@@ -129,17 +129,17 @@ flowchart TB
 
 | # | Epic | Theme | Primary module(s) |
 |---|---|---|---|
-| 1 (#3379) | Authoring Platform Foundations | Nav shell, shared layout/context, LLM proxy, gating | objectified-ui, objectified-rest |
-| 2 (#3380) | Scribe: Documentation Data & Coverage | DB entities, REST API, coverage + stale engines | objectified-db, objectified-rest, objectified-ui |
-| 3 (#3381) | Scribe: Coverage Overview (UI) | Dashboard, Project Overview, quick actions | objectified-ui |
-| 4 (#3382) | Scribe: AI Authoring (UI) | Path / Schema / Property editors, suggestion engine | objectified-ui, objectified-rest |
-| 5 (#3383) | Scribe: Content Generation | Style guide, terminology, SDK guide, README | objectified-ui, objectified-rest |
-| 6 (#3384) | Scribe: Quality & Configuration | Stale alerts, settings, triggers, thresholds | objectified-ui, objectified-rest |
-| 7 (#3385) | Slate: Site Generation Core | Site/build DB+REST, SSG worker, dashboard, history | objectified-db, objectified-rest, objectified-ui |
-| 8 (#3386) | Slate: Content & Theme (UI) | Theme editor, navigation, content blocks | objectified-ui |
-| 9 (#3387) | Slate: Preview, Export & Versioning | Preview, export targets, version switcher, search | objectified-ui, objectified-rest |
-| 10 (#3388) | Slate: Deployment & Settings | Custom domain/TLS, CDN, SEO/analytics, access control | objectified-rest, objectified-ui |
-| 11 (#3389) | objectified-web Marketing | Scribe/Slate suite entries, Authoring category | objectified-web |
+| 1 (#3379) | Authoring Platform Foundations | Nav shell, shared layout/context, LLM proxy, gating | apiome-ui, apiome-rest |
+| 2 (#3380) | Scribe: Documentation Data & Coverage | DB entities, REST API, coverage + stale engines | apiome-db, apiome-rest, apiome-ui |
+| 3 (#3381) | Scribe: Coverage Overview (UI) | Dashboard, Project Overview, quick actions | apiome-ui |
+| 4 (#3382) | Scribe: AI Authoring (UI) | Path / Schema / Property editors, suggestion engine | apiome-ui, apiome-rest |
+| 5 (#3383) | Scribe: Content Generation | Style guide, terminology, SDK guide, README | apiome-ui, apiome-rest |
+| 6 (#3384) | Scribe: Quality & Configuration | Stale alerts, settings, triggers, thresholds | apiome-ui, apiome-rest |
+| 7 (#3385) | Slate: Site Generation Core | Site/build DB+REST, SSG worker, dashboard, history | apiome-db, apiome-rest, apiome-ui |
+| 8 (#3386) | Slate: Content & Theme (UI) | Theme editor, navigation, content blocks | apiome-ui |
+| 9 (#3387) | Slate: Preview, Export & Versioning | Preview, export targets, version switcher, search | apiome-ui, apiome-rest |
+| 10 (#3388) | Slate: Deployment & Settings | Custom domain/TLS, CDN, SEO/analytics, access control | apiome-rest, apiome-ui |
+| 11 (#3389) | apiome-web Marketing | Scribe/Slate suite entries, Authoring category | apiome-web |
 
 **Labels used across the roadmap.** Reused existing labels: `epic`, `mvp`, `enhancement`,
 `documentation`, `ai-llm`, `ui`, `rest`, `versions`, `dashboard`, `export`, `portal`.
@@ -147,9 +147,9 @@ flowchart TB
 
 | Label | Color | Description |
 |---|---|---|
-| `authoring` | `#7C3AED` | Objectified Authoring platform (shell + shared services) |
-| `scribe` | `#8B5CF6` | Objectified Scribe (AI documentation writer) |
-| `slate` | `#06B6D4` | Objectified Slate (documentation site generator) |
+| `authoring` | `#7C3AED` | Apiome Authoring platform (shell + shared services) |
+| `scribe` | `#8B5CF6` | Apiome Scribe (AI documentation writer) |
+| `slate` | `#06B6D4` | Apiome Slate (documentation site generator) |
 | `slate-build` | `#0E7490` | Slate static-site build pipeline / worker |
 | `roadmap-authoring` | `#BFDADC` | ROADMAP_AUTHORING_PLATFORM.md ticket pack |
 
@@ -175,19 +175,19 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 1.1 #3390 | Authoring top-nav tab & route group | Add "Authoring" to `NAV_ITEMS`; create `/ade/authoring` route group + layout | `authoring`,`ui`,`mvp`,`roadmap-authoring` | N | Y | M | objectified-ui |
-| 1.2 #3391 | Authoring landing hub | Hub page with Scribe & Slate product tiles, status, deep links | `authoring`,`ui`,`mvp`,`roadmap-authoring` | Y | Y | S | objectified-ui |
-| 1.3 #3392 | Shared layout + Project/Version context | Sidebar shell + project/version selector shared by both products | `authoring`,`ui`,`mvp`,`roadmap-authoring` | N | Y | M | objectified-ui |
-| 1.4 #3393 | LLM provider abstraction service | REST service wrapping provider/model/temperature; OpenAI in MVP | `authoring`,`ai-llm`,`rest`,`mvp`,`roadmap-authoring` | Y | Y | L | objectified-rest |
-| 1.5 #3394 | Authoring entitlements & feature gating | Gate Authoring/Scribe/Slate behind tenant entitlements | `authoring`,`rest`,`ui`,`roadmap-authoring` | Y | Y | S | objectified-rest, objectified-ui |
-| 1.6 #3395 | Authoring design system tokens & shared components | Violet (Scribe) / cyan (Slate) tokens; shared cards, badges, generate-button, suggestion-card | `authoring`,`ui`,`mvp`,`roadmap-authoring` | Y | Y | M | objectified-ui |
+| 1.1 #3390 | Authoring top-nav tab & route group | Add "Authoring" to `NAV_ITEMS`; create `/ade/authoring` route group + layout | `authoring`,`ui`,`mvp`,`roadmap-authoring` | N | Y | M | apiome-ui |
+| 1.2 #3391 | Authoring landing hub | Hub page with Scribe & Slate product tiles, status, deep links | `authoring`,`ui`,`mvp`,`roadmap-authoring` | Y | Y | S | apiome-ui |
+| 1.3 #3392 | Shared layout + Project/Version context | Sidebar shell + project/version selector shared by both products | `authoring`,`ui`,`mvp`,`roadmap-authoring` | N | Y | M | apiome-ui |
+| 1.4 #3393 | LLM provider abstraction service | REST service wrapping provider/model/temperature; OpenAI in MVP | `authoring`,`ai-llm`,`rest`,`mvp`,`roadmap-authoring` | Y | Y | L | apiome-rest |
+| 1.5 #3394 | Authoring entitlements & feature gating | Gate Authoring/Scribe/Slate behind tenant entitlements | `authoring`,`rest`,`ui`,`roadmap-authoring` | Y | Y | S | apiome-rest, apiome-ui |
+| 1.6 #3395 | Authoring design system tokens & shared components | Violet (Scribe) / cyan (Slate) tokens; shared cards, badges, generate-button, suggestion-card | `authoring`,`ui`,`mvp`,`roadmap-authoring` | Y | Y | M | apiome-ui |
 
 ### Issue 1.1 — Authoring top-nav tab & route group
-- **Problem.** `objectified-ui` exposes only flat nav items (Home, Control Panel, Designer,
+- **Problem.** `apiome-ui` exposes only flat nav items (Home, Control Panel, Designer,
   Paths) in `TopHeader.tsx`; there is no Authoring surface.
 - **Solution/Scope.** Add an `Authoring` entry to `NAV_ITEMS` in
-  `objectified-ui/src/app/components/ade/TopHeader.tsx` with `isActive` matching
-  `/ade/authoring`. Create the route group `objectified-ui/src/app/ade/authoring/` with a
+  `apiome-ui/src/app/components/ade/TopHeader.tsx` with `isActive` matching
+  `/ade/authoring`. Create the route group `apiome-ui/src/app/ade/authoring/` with a
   `layout.tsx` (auth-guarded like the other `ade` layouts) and an index `page.tsx`. Decide
   tab-with-sub-nav vs. dropdown (recommend a tab that routes to the hub, with Scribe/Slate as
   in-page sub-nav). Source: UI architecture report; mockup hubs
@@ -218,7 +218,7 @@ flowchart LR
   / Quality & Config; Slate = Site Overview / Content & Theme / Preview & Export / Settings).
   Provide a Project/Version selector that reads from existing `/api/projects` and
   `/api/versions` and persists selection, reusing patterns from
-  `objectified-ui/src/app/ade/studio/StudioContext.tsx` and `StudioHeader`.
+  `apiome-ui/src/app/ade/studio/StudioContext.tsx` and `StudioHeader`.
 - **Acceptance Criteria.** Selecting a Project/Version updates all child screens; read-only
   state honored for published versions; selection survives navigation between Scribe/Slate.
 - **Parallelism/Dependencies.** Depends on 1.1; blocks Epics 3–10 UI.
@@ -228,7 +228,7 @@ flowchart LR
 - **Problem.** Scribe generation (and later Slate niceties) need a server-side LLM gateway;
   there is no shared abstraction. The repo standardizes on the latest Claude models for AI
   features.
-- **Solution/Scope.** Add a provider-agnostic service in `objectified-rest` exposing an
+- **Solution/Scope.** Add a provider-agnostic service in `apiome-rest` exposing an
   internal `generate(prompt, system, params)` plus a thin authenticated endpoint
   (`POST /v1/llm/{tenant_slug}/generate`) used by Scribe proxy routes. MVP ships **Anthropic
   (Claude) and OpenAI** adapters; the interface must allow Azure OpenAI and Ollama later
@@ -240,7 +240,7 @@ flowchart LR
   gracefully with a typed error. Default model is the latest Claude when Anthropic is selected.
 - **Parallelism/Dependencies.** Parallel with most of Epic 1; blocks Epic 4 (suggestion
   engine) and Epic 5 generation.
-- **Technical Stack.** FastAPI, async LLM SDKs, encrypted secret storage in `odb`.
+- **Technical Stack.** FastAPI, async LLM SDKs, encrypted secret storage in `apiome`.
 
 ### Issue 1.5 — Authoring entitlements & feature gating
 - **Problem.** Authoring should respect tenant entitlements (existing `entitlements_routes.py`).
@@ -255,7 +255,7 @@ flowchart LR
 - **Problem.** The mockups share recurring UI primitives (generate buttons with sparkles,
   AI-suggestion cards with Accept/Regenerate/Dismiss, status badges, coverage bars, toggles).
 - **Solution/Scope.** Build a small shared component kit + brand tokens (Scribe violet/indigo,
-  Slate cyan) under `objectified-ui/src/app/components/ade/authoring/`. Components:
+  Slate cyan) under `apiome-ui/src/app/components/ade/authoring/`. Components:
   `GenerateButton`, `AiSuggestionCard`, `CoverageBar`, `StatusBadge` (Documented/Missing/Stale/
   AI-ready), `Toggle`, `SectionTree`. Source: shared patterns across all Scribe/Slate mockups.
 - **Acceptance Criteria.** Components render in both light/dark; used by ≥3 downstream screens;
@@ -287,32 +287,32 @@ flowchart TB
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 2.1 #3396 | Documentation content schema (DB) | Tables for path/schema/property docs, example payloads, style config | `scribe`,`documentation`,`mvp`,`roadmap-authoring` | N | Y | M | objectified-db |
-| 2.2 #3397 | Documentation content REST API | CRUD for doc content scoped to tenant/version | `scribe`,`rest`,`mvp`,`roadmap-authoring` | N | Y | M | objectified-rest |
-| 2.3 #3398 | Coverage computation & scoring engine | Compute documented/missing/stale per type + project score | `scribe`,`rest`,`mvp`,`roadmap-authoring` | N | Y | L | objectified-rest |
-| 2.4 #3399 | Stale detection engine | Flag descriptions outdated by spec changes; suggest update | `scribe`,`rest`,`ai-llm`,`roadmap-authoring` | Y | Y | L | objectified-rest |
-| 2.5 #3400 | Scribe UI API client + proxy routes | Next.js `/api/docs/*` proxies + typed client | `scribe`,`ui`,`mvp`,`roadmap-authoring` | N | Y | S | objectified-ui |
+| 2.1 #3396 | Documentation content schema (DB) | Tables for path/schema/property docs, example payloads, style config | `scribe`,`documentation`,`mvp`,`roadmap-authoring` | N | Y | M | apiome-db |
+| 2.2 #3397 | Documentation content REST API | CRUD for doc content scoped to tenant/version | `scribe`,`rest`,`mvp`,`roadmap-authoring` | N | Y | M | apiome-rest |
+| 2.3 #3398 | Coverage computation & scoring engine | Compute documented/missing/stale per type + project score | `scribe`,`rest`,`mvp`,`roadmap-authoring` | N | Y | L | apiome-rest |
+| 2.4 #3399 | Stale detection engine | Flag descriptions outdated by spec changes; suggest update | `scribe`,`rest`,`ai-llm`,`roadmap-authoring` | Y | Y | L | apiome-rest |
+| 2.5 #3400 | Scribe UI API client + proxy routes | Next.js `/api/docs/*` proxies + typed client | `scribe`,`ui`,`mvp`,`roadmap-authoring` | N | Y | S | apiome-ui |
 
 ### Issue 2.1 — Documentation content schema (DB)
 - **Problem.** No durable store exists for human-authored/AI-generated documentation content
   separate from the structural spec.
-- **Solution/Scope.** Add `odb` tables (UUID PK, soft delete, tenant/version scoping):
+- **Solution/Scope.** Add `apiome` tables (UUID PK, soft delete, tenant/version scoping):
   `doc_content` (polymorphic: `target_type` ∈ {path_operation, path_response, class,
   class_property}, `target_id`, fields `summary`, `description`, `request_narrative`,
   `response_narrative`, `example_payload` JSONB, `source` ∈ {human, ai, ai-edited},
   `status` ∈ {documented, missing, stale}, `model_used`, `updated_by`, `updated_at`);
   `doc_style_guide` (per project/tenant: `tone_preset`, `terminology` JSONB, `custom`);
-  `doc_coverage_snapshot` (cached scores). Migration script in `objectified-db/scripts/`.
+  `doc_coverage_snapshot` (cached scores). Migration script in `apiome-db/scripts/`.
   Source: entity tags in `scribe/index.html` (path_operation, path_response, classes,
   class_properties, properties, versions, tags) and field sets in path/schema/property editors.
 - **Acceptance Criteria.** Migration applies cleanly; FK integrity to versions/classes/etc.;
   soft delete + uniqueness `(target_type, target_id, field)` enforced.
 - **Parallelism/Dependencies.** Blocks 2.2/2.3/2.4.
-- **Technical Stack.** PostgreSQL, `odb` schema, SQL migration convention.
+- **Technical Stack.** PostgreSQL, `apiome` schema, SQL migration convention.
 
 ### Issue 2.2 — Documentation content REST API
 - **Problem.** UI needs CRUD over doc content.
-- **Solution/Scope.** Add `docs_routes.py` to `objectified-rest`:
+- **Solution/Scope.** Add `docs_routes.py` to `apiome-rest`:
   `GET/PUT /v1/docs/{tenant_slug}/{version_id}/content` (filter by target type/id),
   per-target upserts, and bulk upsert (for "Generate all"). Pydantic DTOs in `models.py`.
 - **Acceptance Criteria.** Endpoints enforce `validate_authentication`/tenant scoping; round-
@@ -355,9 +355,9 @@ flowchart TB
 
 ### Issue 2.5 — Scribe UI API client + proxy routes
 - **Problem.** Following the existing pattern, the browser must call Next.js `/api/*` routes
-  that inject JWT auth and proxy to `objectified-rest`.
+  that inject JWT auth and proxy to `apiome-rest`.
 - **Solution/Scope.** Add `/api/docs/*` route handlers + a typed client in
-  `objectified-ui/lib/api/` mirroring `rest-client.ts`, using `createRestAuthHeaders()`.
+  `apiome-ui/lib/api/` mirroring `rest-client.ts`, using `createRestAuthHeaders()`.
 - **Acceptance Criteria.** Client functions cover content CRUD, bulk upsert, coverage, and
   stale alerts; errors surfaced as typed results.
 - **Parallelism/Dependencies.** Depends on 2.2/2.3/2.4; blocks Epics 3–6 UI.
@@ -380,9 +380,9 @@ The analytics surface: org-wide dashboard, per-project drill-down, and batch qui
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 3.1 #3401 | Scribe Dashboard | Coverage stat cards, per-project table, AI activity feed | `scribe`,`ui`,`dashboard`,`mvp`,`roadmap-authoring` | N | Y | M | objectified-ui |
-| 3.2 #3402 | Project Overview / coverage detail | Per-type coverage bars; paths & schemas gap tables | `scribe`,`ui`,`mvp`,`roadmap-authoring` | Y | Y | M | objectified-ui |
-| 3.3 #3403 | Quick actions (batch auto-fill) | "Auto-fill missing summaries / document schemas / review stale" | `scribe`,`ui`,`ai-llm`,`mvp`,`roadmap-authoring` | Y | Y | M | objectified-ui |
+| 3.1 #3401 | Scribe Dashboard | Coverage stat cards, per-project table, AI activity feed | `scribe`,`ui`,`dashboard`,`mvp`,`roadmap-authoring` | N | Y | M | apiome-ui |
+| 3.2 #3402 | Project Overview / coverage detail | Per-type coverage bars; paths & schemas gap tables | `scribe`,`ui`,`mvp`,`roadmap-authoring` | Y | Y | M | apiome-ui |
+| 3.3 #3403 | Quick actions (batch auto-fill) | "Auto-fill missing summaries / document schemas / review stale" | `scribe`,`ui`,`ai-llm`,`mvp`,`roadmap-authoring` | Y | Y | M | apiome-ui |
 
 ### Issue 3.1 — Scribe Dashboard
 - **Problem.** Users need an at-a-glance health view.
@@ -443,11 +443,11 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 4.1 #3405 | Path Editor with AI suggestions | Summary/description/request+response narratives + AI panel | `scribe`,`ui`,`ai-llm`,`mvp`,`roadmap-authoring` | N | Y | L | objectified-ui |
-| 4.2 #3406 | Schema Editor + example payload | Class overview, property docs, AI example JSON | `scribe`,`ui`,`ai-llm`,`mvp`,`roadmap-authoring` | Y | Y | L | objectified-ui |
-| 4.3 #3407 | Property Editor inline completion | Bulk inline property description completion | `scribe`,`ui`,`ai-llm`,`mvp`,`roadmap-authoring` | Y | Y | M | objectified-ui |
-| 4.4 #3404 | AI suggestion engine + spec-context assembly | Build prompts from spec+style; generate/accept/regenerate/dismiss | `scribe`,`ai-llm`,`rest`,`mvp`,`roadmap-authoring` | N | Y | L | objectified-rest, objectified-ui |
-| 4.5 #3408 | Bulk generation jobs | "Generate All" / "Fill All Gaps" batch over a version | `scribe`,`ai-llm`,`rest`,`mvp`,`roadmap-authoring` | Y | Y | M | objectified-rest, objectified-ui |
+| 4.1 #3405 | Path Editor with AI suggestions | Summary/description/request+response narratives + AI panel | `scribe`,`ui`,`ai-llm`,`mvp`,`roadmap-authoring` | N | Y | L | apiome-ui |
+| 4.2 #3406 | Schema Editor + example payload | Class overview, property docs, AI example JSON | `scribe`,`ui`,`ai-llm`,`mvp`,`roadmap-authoring` | Y | Y | L | apiome-ui |
+| 4.3 #3407 | Property Editor inline completion | Bulk inline property description completion | `scribe`,`ui`,`ai-llm`,`mvp`,`roadmap-authoring` | Y | Y | M | apiome-ui |
+| 4.4 #3404 | AI suggestion engine + spec-context assembly | Build prompts from spec+style; generate/accept/regenerate/dismiss | `scribe`,`ai-llm`,`rest`,`mvp`,`roadmap-authoring` | N | Y | L | apiome-rest, apiome-ui |
+| 4.5 #3408 | Bulk generation jobs | "Generate All" / "Fill All Gaps" batch over a version | `scribe`,`ai-llm`,`rest`,`mvp`,`roadmap-authoring` | Y | Y | M | apiome-rest, apiome-ui |
 
 ### Issue 4.4 — AI suggestion engine + spec-context assembly
 - **Problem.** All three editors share one behavior: assemble spec context + style guide into a
@@ -520,10 +520,10 @@ the suggestion engine); terminology rules, SDK guide, and README are V2.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 5.1 #3409 | Style Guide — tone presets | Technical/Friendly/Concise/Enterprise tone feeding generation | `scribe`,`ui`,`ai-llm`,`mvp`,`roadmap-authoring` | Y | Y | S | objectified-ui, objectified-rest |
-| 5.2 #3410 | Terminology rules + preview effect | Preferred/avoid term table; before/after rewrite preview | `scribe`,`ui`,`ai-llm`,`roadmap-authoring` | Y | N | M | objectified-ui, objectified-rest |
-| 5.3 #3411 | SDK Guide Generator | Multi-language code samples (curl/Python/JS/Go/Java) + export | `scribe`,`ui`,`ai-llm`,`export`,`roadmap-authoring` | Y | N | L | objectified-ui, objectified-rest |
-| 5.4 #3412 | README Generator | Sections tree + drag reorder + live preview + .md export | `scribe`,`ui`,`ai-llm`,`export`,`roadmap-authoring` | Y | N | L | objectified-ui, objectified-rest |
+| 5.1 #3409 | Style Guide — tone presets | Technical/Friendly/Concise/Enterprise tone feeding generation | `scribe`,`ui`,`ai-llm`,`mvp`,`roadmap-authoring` | Y | Y | S | apiome-ui, apiome-rest |
+| 5.2 #3410 | Terminology rules + preview effect | Preferred/avoid term table; before/after rewrite preview | `scribe`,`ui`,`ai-llm`,`roadmap-authoring` | Y | N | M | apiome-ui, apiome-rest |
+| 5.3 #3411 | SDK Guide Generator | Multi-language code samples (curl/Python/JS/Go/Java) + export | `scribe`,`ui`,`ai-llm`,`export`,`roadmap-authoring` | Y | N | L | apiome-ui, apiome-rest |
+| 5.4 #3412 | README Generator | Sections tree + drag reorder + live preview + .md export | `scribe`,`ui`,`ai-llm`,`export`,`roadmap-authoring` | Y | N | L | apiome-ui, apiome-rest |
 
 ### Issue 5.1 — Style Guide (tone presets) — MVP
 - **Problem.** Generation must follow an org tone; the suggestion engine (4.4) reads it.
@@ -572,10 +572,10 @@ and publish-blocking thresholds are V2.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 6.1 #3413 | Stale Alerts review queue | Queue with diff before/after, Update/Dismiss, bulk + summary tiles | `scribe`,`ui`,`ai-llm`,`mvp`,`roadmap-authoring` | Y | Y | M | objectified-ui |
-| 6.2 #3414 | Scribe Settings — LLM provider | Provider/model/API key/temperature config | `scribe`,`ui`,`ai-llm`,`mvp`,`roadmap-authoring` | Y | Y | S | objectified-ui, objectified-rest |
-| 6.3 #3415 | Auto-generation triggers | On spec save / on version publish / manual only | `scribe`,`rest`,`ai-llm`,`roadmap-authoring` | Y | N | M | objectified-rest |
-| 6.4 #3416 | Coverage thresholds + publish blocking | Min path/schema/property %; block publish below | `scribe`,`rest`,`versions`,`roadmap-authoring` | Y | N | M | objectified-rest, objectified-ui |
+| 6.1 #3413 | Stale Alerts review queue | Queue with diff before/after, Update/Dismiss, bulk + summary tiles | `scribe`,`ui`,`ai-llm`,`mvp`,`roadmap-authoring` | Y | Y | M | apiome-ui |
+| 6.2 #3414 | Scribe Settings — LLM provider | Provider/model/API key/temperature config | `scribe`,`ui`,`ai-llm`,`mvp`,`roadmap-authoring` | Y | Y | S | apiome-ui, apiome-rest |
+| 6.3 #3415 | Auto-generation triggers | On spec save / on version publish / manual only | `scribe`,`rest`,`ai-llm`,`roadmap-authoring` | Y | N | M | apiome-rest |
+| 6.4 #3416 | Coverage thresholds + publish blocking | Min path/schema/property %; block publish below | `scribe`,`rest`,`versions`,`roadmap-authoring` | Y | N | M | apiome-rest, apiome-ui |
 
 ### Issue 6.1 — Stale Alerts review queue — MVP
 - **Problem.** Flagged-stale content (2.4) needs a review workflow.
@@ -635,11 +635,11 @@ flowchart TB
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 7.1 #3417 | Slate site & build schema (DB) | `slate_site`, `slate_build` (+ config JSONB) tables | `slate`,`slate-build`,`mvp`,`roadmap-authoring` | N | Y | M | objectified-db |
-| 7.2 #3418 | Slate site/build REST API | CRUD sites; trigger/list builds; fetch logs/artifacts | `slate`,`rest`,`mvp`,`roadmap-authoring` | N | Y | M | objectified-rest |
-| 7.3 #3419 | Static site generator build worker | Render Version→branded static site + search index | `slate`,`slate-build`,`rest`,`mvp`,`roadmap-authoring` | N | Y | XL | objectified-rest |
-| 7.4 #3420 | Slate Dashboard | Sites table + build metrics + recent build activity | `slate`,`ui`,`dashboard`,`mvp`,`roadmap-authoring` | Y | Y | M | objectified-ui |
-| 7.5 #3421 | Build History + logs/artifacts | Filterable builds, expandable logs, ZIP artifact download | `slate`,`ui`,`slate-build`,`mvp`,`roadmap-authoring` | Y | Y | M | objectified-ui |
+| 7.1 #3417 | Slate site & build schema (DB) | `slate_site`, `slate_build` (+ config JSONB) tables | `slate`,`slate-build`,`mvp`,`roadmap-authoring` | N | Y | M | apiome-db |
+| 7.2 #3418 | Slate site/build REST API | CRUD sites; trigger/list builds; fetch logs/artifacts | `slate`,`rest`,`mvp`,`roadmap-authoring` | N | Y | M | apiome-rest |
+| 7.3 #3419 | Static site generator build worker | Render Version→branded static site + search index | `slate`,`slate-build`,`rest`,`mvp`,`roadmap-authoring` | N | Y | XL | apiome-rest |
+| 7.4 #3420 | Slate Dashboard | Sites table + build metrics + recent build activity | `slate`,`ui`,`dashboard`,`mvp`,`roadmap-authoring` | Y | Y | M | apiome-ui |
+| 7.5 #3421 | Build History + logs/artifacts | Filterable builds, expandable logs, ZIP artifact download | `slate`,`ui`,`slate-build`,`mvp`,`roadmap-authoring` | Y | Y | M | apiome-ui |
 
 ### Issue 7.1 — Slate site & build schema (DB)
 - **Problem.** No store for site config or build records.
@@ -650,7 +650,7 @@ flowchart TB
   `artifact_ref`, timestamps). Source: `slate/dashboard.html`, `slate/build-history.html`.
 - **Acceptance Criteria.** Migration applies; FK to versions; build log/artifact persisted.
 - **Parallelism/Dependencies.** Blocks 7.2/7.3.
-- **Technical Stack.** PostgreSQL `odb`.
+- **Technical Stack.** PostgreSQL `apiome`.
 
 ### Issue 7.2 — Slate site/build REST API
 - **Problem.** UI needs site CRUD + build orchestration.
@@ -710,9 +710,9 @@ content blocks are V2.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 8.1 #3422 | Theme Editor | Logo, primary/accent colors, fonts, dark mode default, custom CSS + live preview | `slate`,`ui`,`mvp`,`roadmap-authoring` | Y | Y | M | objectified-ui |
-| 8.2 #3423 | Navigation config | Global toggles + sidebar sections (auto/custom) with reorder | `slate`,`ui`,`mvp`,`roadmap-authoring` | Y | Y | M | objectified-ui |
-| 8.3 #3424 | Content Blocks | Hero/badges/feature cards/footer editor + live landing preview | `slate`,`ui`,`roadmap-authoring` | Y | N | M | objectified-ui |
+| 8.1 #3422 | Theme Editor | Logo, primary/accent colors, fonts, dark mode default, custom CSS + live preview | `slate`,`ui`,`mvp`,`roadmap-authoring` | Y | Y | M | apiome-ui |
+| 8.2 #3423 | Navigation config | Global toggles + sidebar sections (auto/custom) with reorder | `slate`,`ui`,`mvp`,`roadmap-authoring` | Y | Y | M | apiome-ui |
+| 8.3 #3424 | Content Blocks | Hero/badges/feature cards/footer editor + live landing preview | `slate`,`ui`,`roadmap-authoring` | Y | N | M | apiome-ui |
 
 ### Issue 8.1 — Theme Editor — MVP
 - **Problem.** Sites must be brandable.
@@ -752,11 +752,11 @@ publishing, and the in-site search.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 9.1 #3425 | Preview (responsive) | Browser-chrome preview with desktop/tablet/mobile frames | `slate`,`ui`,`mvp`,`roadmap-authoring` | Y | Y | M | objectified-ui |
-| 9.2 #3426 | Export — ZIP bundle | Build & download self-contained ZIP + export options | `slate`,`ui`,`export`,`mvp`,`roadmap-authoring` | Y | Y | S | objectified-ui, objectified-rest |
-| 9.3 #3427 | Export targets — GitHub Pages / S3 / CDN | Push to GitHub Pages, S3+CloudFront, CDN origin | `slate`,`export`,`rest`,`roadmap-authoring` | Y | N | L | objectified-rest, objectified-ui |
-| 9.4 #3428 | Version Switcher | Multi-version URL structure + latest alias + dropdown | `slate`,`ui`,`versions`,`roadmap-authoring` | Y | N | M | objectified-ui, objectified-rest |
-| 9.5 #3429 | In-site full-text search + try-it-live | lunr search index UX; embedded API console | `slate`,`slate-build`,`portal`,`roadmap-authoring` | Y | N | M | objectified-rest |
+| 9.1 #3425 | Preview (responsive) | Browser-chrome preview with desktop/tablet/mobile frames | `slate`,`ui`,`mvp`,`roadmap-authoring` | Y | Y | M | apiome-ui |
+| 9.2 #3426 | Export — ZIP bundle | Build & download self-contained ZIP + export options | `slate`,`ui`,`export`,`mvp`,`roadmap-authoring` | Y | Y | S | apiome-ui, apiome-rest |
+| 9.3 #3427 | Export targets — GitHub Pages / S3 / CDN | Push to GitHub Pages, S3+CloudFront, CDN origin | `slate`,`export`,`rest`,`roadmap-authoring` | Y | N | L | apiome-rest, apiome-ui |
+| 9.4 #3428 | Version Switcher | Multi-version URL structure + latest alias + dropdown | `slate`,`ui`,`versions`,`roadmap-authoring` | Y | N | M | apiome-ui, apiome-rest |
+| 9.5 #3429 | In-site full-text search + try-it-live | lunr search index UX; embedded API console | `slate`,`slate-build`,`portal`,`roadmap-authoring` | Y | N | M | apiome-rest |
 
 ### Issue 9.1 — Preview (responsive) — MVP
 - **Problem.** Users must verify the generated site before export.
@@ -815,13 +815,13 @@ Custom domains/TLS, CDN/edge config, SEO/analytics, and access control. All V2.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 10.1 #3430 | Custom Domain + DNS/TLS | Domain verify, CNAME guidance, Let's Encrypt TLS auto-renew | `slate`,`rest`,`nginx`,`roadmap-authoring` | Y | N | L | objectified-rest, objectified-ui |
-| 10.2 #3431 | CDN / edge provider config | Cloudflare/Fastly/custom origin credentials + purge | `slate`,`rest`,`roadmap-authoring` | Y | N | M | objectified-rest, objectified-ui |
-| 10.3 #3432 | Slate Settings — SEO & analytics | Meta/OG templates; GA4 + Segment injection; code-sample defaults | `slate`,`ui`,`roadmap-authoring` | Y | N | M | objectified-ui, objectified-rest |
-| 10.4 #3433 | Access control + robots.txt | Public/password/SSO gate; index vs noindex | `slate`,`rest`,`roadmap-authoring` | Y | N | L | objectified-rest, objectified-ui |
+| 10.1 #3430 | Custom Domain + DNS/TLS | Domain verify, CNAME guidance, Let's Encrypt TLS auto-renew | `slate`,`rest`,`nginx`,`roadmap-authoring` | Y | N | L | apiome-rest, apiome-ui |
+| 10.2 #3431 | CDN / edge provider config | Cloudflare/Fastly/custom origin credentials + purge | `slate`,`rest`,`roadmap-authoring` | Y | N | M | apiome-rest, apiome-ui |
+| 10.3 #3432 | Slate Settings — SEO & analytics | Meta/OG templates; GA4 + Segment injection; code-sample defaults | `slate`,`ui`,`roadmap-authoring` | Y | N | M | apiome-ui, apiome-rest |
+| 10.4 #3433 | Access control + robots.txt | Public/password/SSO gate; index vs noindex | `slate`,`rest`,`roadmap-authoring` | Y | N | L | apiome-rest, apiome-ui |
 
 ### Issue 10.1 — Custom Domain + DNS/TLS — V2
-- **Solution/Scope.** Domain input + verify, CNAME record guidance (`sites.objectified.io`),
+- **Solution/Scope.** Domain input + verify, CNAME record guidance (`sites.apiome.app`),
   Let's Encrypt issuance/renewal status (TLS 1.3, HSTS), checklist. Source:
   `slate/custom-domain.html`.
 - **Acceptance Criteria.** Verified domain serves the site over auto-renewing TLS.
@@ -853,7 +853,7 @@ Custom domains/TLS, CDN/edge config, SEO/analytics, and access control. All V2.
 
 ---
 
-## 15. Epic 11 — objectified-web Marketing
+## 15. Epic 11 — apiome-web Marketing
 
 Advertise the Authoring platform on the public site, data-driven via `suite/data.ts`.
 
@@ -867,14 +867,14 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 11.1 #3434 | Scribe suite entry | Add Scribe to `suite/data.ts` (violet, AI doc writer) | `scribe`,`documentation`,`mvp`,`roadmap-authoring` | Y | Y | S | objectified-web |
-| 11.2 #3435 | Slate suite entry | Add Slate to `suite/data.ts` (cyan, site generator) | `slate`,`documentation`,`mvp`,`roadmap-authoring` | Y | Y | S | objectified-web |
-| 11.3 #3436 | Authoring category on suite index + home | Group Scribe/Slate as "Authoring"; surface on home | `authoring`,`documentation`,`mvp`,`roadmap-authoring` | Y | Y | M | objectified-web |
-| 11.4 #3437 | Cover/hub screenshots & assets | Produce `/suite/scribe-*`, `/suite/slate-*` imagery | `authoring`,`documentation`,`roadmap-authoring` | Y | N | S | objectified-web |
-| 11.5 #3438 | Cross-link & motion landing polish | Hero/features cross-links; gsap/three long-form polish | `authoring`,`documentation`,`roadmap-authoring` | Y | N | M | objectified-web |
+| 11.1 #3434 | Scribe suite entry | Add Scribe to `suite/data.ts` (violet, AI doc writer) | `scribe`,`documentation`,`mvp`,`roadmap-authoring` | Y | Y | S | apiome-web |
+| 11.2 #3435 | Slate suite entry | Add Slate to `suite/data.ts` (cyan, site generator) | `slate`,`documentation`,`mvp`,`roadmap-authoring` | Y | Y | S | apiome-web |
+| 11.3 #3436 | Authoring category on suite index + home | Group Scribe/Slate as "Authoring"; surface on home | `authoring`,`documentation`,`mvp`,`roadmap-authoring` | Y | Y | M | apiome-web |
+| 11.4 #3437 | Cover/hub screenshots & assets | Produce `/suite/scribe-*`, `/suite/slate-*` imagery | `authoring`,`documentation`,`roadmap-authoring` | Y | N | S | apiome-web |
+| 11.5 #3438 | Cross-link & motion landing polish | Hero/features cross-links; gsap/three long-form polish | `authoring`,`documentation`,`roadmap-authoring` | Y | N | M | apiome-web |
 
 ### Issue 11.1 — Scribe suite entry — MVP
-- **Solution/Scope.** Append a `Suite` object to `objectified-web/src/app/suite/data.ts`
+- **Solution/Scope.** Append a `Suite` object to `apiome-web/src/app/suite/data.ts`
   (slug `scribe`, tone violet/indigo, icon e.g. `PenLine`, status, summary, features, AI story,
   `modules` referencing the scribe mockup html names, highlights). `/suite/scribe` auto-renders.
   Source: `scribe/index.html`.
@@ -891,7 +891,7 @@ flowchart LR
 
 ### Issue 11.3 — Authoring category on suite index + home — MVP
 - **Solution/Scope.** Group Scribe + Slate under an "Authoring" category on the suite index and
-  add an Authoring highlight to `HOME_FEATURES` in `objectified-web/src/app/page.tsx`.
+  add an Authoring highlight to `HOME_FEATURES` in `apiome-web/src/app/page.tsx`.
 - **Acceptance Criteria.** Visitors discover Authoring from the home page and suite index.
 - **Dependencies.** Depends on 11.1/11.2.
 - **Technical Stack.** Next.js, Tailwind.

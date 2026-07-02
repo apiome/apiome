@@ -25,7 +25,7 @@
   <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center"><i data-lucide="activity" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span><span class="text-xs text-gray-400">/</span>
+      <span class="text-sm font-semibold">Apiome</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Monitoring</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Alerts</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-indigo-600 dark:text-indigo-400">Channels</span>
@@ -115,7 +115,7 @@
                 <label class="text-[11px] uppercase tracking-wider text-gray-500">Message template preview</label>
                 <pre class="code-block mt-1 p-3 rounded-md bg-slate-900 text-slate-100 overflow-x-auto whitespace-pre-wrap">:rotating_light: *{{severity}}* — {{rule.name}}
 {{mentions}}  service: `{{rule.service}}`  value: `{{value}}` (threshold: `{{threshold}}`)
-fired_at: `{{fired_at}}` · &lt;{{link}}|open in Objectified&gt;{{#runbook_url}} · &lt;{{runbook_url}}|runbook&gt;{{/runbook_url}}</pre>
+fired_at: `{{fired_at}}` · &lt;{{link}}|open in Apiome&gt;{{#runbook_url}} · &lt;{{runbook_url}}|runbook&gt;{{/runbook_url}}</pre>
               </div>
               <div class="flex items-center justify-end gap-2">
                 <button class="px-3 py-1.5 text-xs rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-1"><i data-lucide="play" class="w-3.5 h-3.5"></i> Send test message</button>
@@ -201,7 +201,7 @@ fired_at: `{{fired_at}}` · &lt;{{link}}|open in Objectified&gt;{{#runbook_url}}
   "threshold":      0.05,
   "window_minutes": 5,
   "fired_at":       "2026-04-23T14:02:11Z",
-  "link":           "https://acme.objectified.dev/monitoring/incidents/inc_42",
+  "link":           "https://acme.apiome.app/monitoring/incidents/inc_42",
   "runbook_url":    "https://wiki.acme-corp.com/runbooks/api-error-spike",
   "tenant":         "acme-corp",
   "tags":           ["env:prod", "team:platform"]
@@ -240,7 +240,7 @@ fired_at: `{{fired_at}}` · &lt;{{link}}|open in Objectified&gt;{{#runbook_url}}
       { name: 'platform-leads',       type: 'Email',     target: 'platform@acme-corp.com', sev: 'Critical only',test: '2d ago ✓',   last: 'alrt_3a7b04', enabled: true },
       { name: 'PD: API on-call',      type: 'PagerDuty', target: 'PR9F2KS · Sev1 urgency', sev: 'Critical only',test: '6m ago ✓',   last: 'alrt_8f3c2e', enabled: true },
       { name: 'OpsGenie · Platform',  type: 'OpsGenie',  target: 'team:platform · P2',     sev: 'Warning+',     test: '24h ago ✓',  last: 'alrt_71a920', enabled: true },
-      { name: 'Webhook → ops-bridge', type: 'Webhook',   target: 'https://ops.acme.com/hooks/objectified', sev: 'Info+',  test: '14m ago ✓', last: 'alrt_5c0e11', enabled: true },
+      { name: 'Webhook → ops-bridge', type: 'Webhook',   target: 'https://ops.acme.com/hooks/apiome', sev: 'Info+',  test: '14m ago ✓', last: 'alrt_5c0e11', enabled: true },
       { name: 'Webhook → siem',       type: 'Webhook',   target: 'https://siem.acme.com/ingest',          sev: 'Critical only', test: '1d ago ✓',  last: 'alrt_8f3c2e', enabled: false },
       { name: 'SMS · primary oncall', type: 'SMS',       target: '+1-555-0142 · alice',    sev: 'Critical only',test: '6m ago ✓',   last: 'alrt_8f3c2e', enabled: true },
     ];

@@ -1,12 +1,12 @@
-# Objectified Policy — Mockups
+# Apiome Policy — Mockups
 
-Static, browser-openable design mockups for the Objectified Policy feature —
+Static, browser-openable design mockups for the Apiome Policy feature —
 an API governance policy-as-code engine analogous to ESLint for enterprise API design.
 
 ## Open
 
 ```bash
-open objectified-ui/public/mockups/policy/index.html
+open apiome-ui/public/mockups/policy/index.html
 ```
 
 Or, with the Next.js dev server running:

@@ -1,4 +1,4 @@
-# Objectified: Collaboration - Feature Roadmap
+# Apiome: Collaboration - Feature Roadmap
 
 > Real-time collaboration suite that enables teams to co-edit schemas simultaneously with live cursors, inline comments and discussions, PR-style review and approval workflows, and comprehensive team management—turning schema design from a solo activity into a multiplayer experience.
 >
@@ -77,7 +77,7 @@ Authentication piggybacks on the existing session token. The WS handshake valida
 
 The CRDT document model enables multiple users to edit the same schema simultaneously without conflicts. Yjs is used as the CRDT implementation — each schema project is represented as a Yjs `Y.Doc` containing shared types for the schema tree (classes, properties, relationships) and canvas layout (node positions, zoom level).
 
-The Yjs document structure mirrors the Objectified schema model: a `Y.Map` at the root holds `classes` (a `Y.Array` of `Y.Map` entries), `properties` (nested under each class), and `relationships` (a `Y.Array` of edge definitions). When a user adds a property or moves a node, the corresponding Yjs operation is applied locally and synced to remote peers via the WebSocket room. Yjs's CRDT guarantees that all peers converge to the same state regardless of operation ordering.
+The Yjs document structure mirrors the Apiome schema model: a `Y.Map` at the root holds `classes` (a `Y.Array` of `Y.Map` entries), `properties` (nested under each class), and `relationships` (a `Y.Array` of edge definitions). When a user adds a property or moves a node, the corresponding Yjs operation is applied locally and synced to remote peers via the WebSocket room. Yjs's CRDT guarantees that all peers converge to the same state regardless of operation ordering.
 
 Server-side persistence stores the Yjs document state as a binary blob in PostgreSQL (`collaboration_documents` table with a `yjs_state` BYTEA column). The server acts as a Yjs persistence provider — on room creation it loads the latest state from the database, and periodically snapshots the merged state back. This ensures that a user joining a room receives the full current state even if no other peers are connected.
 
@@ -558,7 +558,7 @@ External integrations push collaboration activity to Slack and Microsoft Teams c
 
 The integration setup page at `app/(dashboard)/projects/[projectId]/settings/integrations/page.tsx` guides users through the OAuth flow for Slack or Teams. After authorizing, users select the target channel from a Radix UI `Select` dropdown populated by the respective API. Event type filters (Radix UI `Checkbox` group) control which events are forwarded. A "Test" button sends a sample message to verify the integration.
 
-Messages are formatted with the platform's rich message syntax: Slack Block Kit for Slack, Adaptive Cards for Teams. Each message includes the actor, action summary, a link back to Objectified, and contextual details (e.g., for a CR merge, the number of changed elements and the list of reviewers who approved).
+Messages are formatted with the platform's rich message syntax: Slack Block Kit for Slack, Adaptive Cards for Teams. Each message includes the actor, action summary, a link back to Apiome, and contextual details (e.g., for a CR merge, the number of changed elements and the list of reviewers who approved).
 
 REST endpoints: `POST /api/v1/collaboration/integrations/slack/connect` (initiate OAuth), `POST /api/v1/collaboration/integrations/teams/connect` (initiate OAuth), `GET /api/v1/collaboration/projects/{projectId}/integrations` (list active integrations), `PUT /api/v1/collaboration/projects/{projectId}/integrations/{integrationId}` (update event filters), `DELETE /api/v1/collaboration/projects/{projectId}/integrations/{integrationId}` (disconnect), `POST /api/v1/collaboration/projects/{projectId}/integrations/{integrationId}/test` (send test message).
 

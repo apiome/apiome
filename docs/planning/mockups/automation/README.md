@@ -13,7 +13,7 @@ auth, no build step.
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/automation/index.html
+open apiome-ui/public/mockups/automation/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:
@@ -39,7 +39,7 @@ http://localhost:3000/mockups/automation/index.html
 
 ## Design system
 
-Mockups intentionally mirror the live `objectified-ui` shell and the sibling
+Mockups intentionally mirror the live `apiome-ui` shell and the sibling
 `mockups/analytics/` and `mockups/academy/` folders:
 
 - **Typography**: Inter (400/500/600/700), JetBrains Mono for code, IDs, payloads, and metric values

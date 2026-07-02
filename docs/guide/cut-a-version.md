@@ -28,14 +28,14 @@ Returns the newly created version record (unpublished).
 The CLI inspects versions (authoring/cutting happens in the UI/REST):
 
 ```bash
-objectified versions list --project-id <id>
-objectified versions get <version_id> --project-id <id>
+apiome versions list --project-id <id>
+apiome versions get <version_id> --project-id <id>
 ```
 
 ## Verify
 
 - **UI:** the new revision appears in the Versions list as unpublished.
-- **CLI:** `objectified versions list --project-id <id>` shows it.
+- **CLI:** `apiome versions list --project-id <id>` shows it.
 
 ## Related
 

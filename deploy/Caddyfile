@@ -1,4 +1,4 @@
-# Caddyfile — TLS terminator / reverse proxy for the Objectified production spine.
+# Caddyfile — TLS terminator / reverse proxy for the Apiome production spine.
 #
 # Used by docker-compose.prod.yml. Caddy obtains and renews Let's Encrypt certificates
 # automatically (HTTP-01 / TLS-ALPN-01), so the only inbound ports the host must expose are

@@ -1,5 +1,5 @@
 /**
- * cdc-shared.js — shared utilities for all Objectified CDC mockup screens.
+ * cdc-shared.js — shared utilities for all Apiome CDC mockup screens.
  */
 const CDCShared = (() => {
   const THEME_KEY = 'cdc-theme';

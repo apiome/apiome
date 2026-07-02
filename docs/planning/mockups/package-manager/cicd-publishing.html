@@ -27,7 +27,7 @@
   <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-amber-500 flex items-center justify-center"><i data-lucide="package" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-sm font-semibold">Apiome</span>
       <span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Package Manager</span>
       <span class="text-xs text-gray-400">/</span>
@@ -120,7 +120,7 @@
     <span class="text-purple-500">steps</span>:
       - <span class="text-purple-500">uses</span>: actions/checkout@v4
 
-      - <span class="text-purple-500">uses</span>: <span class="text-indigo-500">objectified/publish-action@v1</span>
+      - <span class="text-purple-500">uses</span>: <span class="text-indigo-500">apiome/publish-action@v1</span>
         <span class="text-purple-500">with</span>:
           <span class="text-purple-500">token</span>: <span class="text-emerald-500">${{ secrets.OBJ_PUBLISH_TOKEN }}</span>
           <span class="text-purple-500">access</span>: public
@@ -163,7 +163,7 @@
             <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2"><i data-lucide="message-square" class="w-4 h-4 text-indigo-500"></i><h3 class="font-semibold text-sm">PR comment preview</h3></div>
             <div class="p-5">
               <div class="border border-gray-200 dark:border-gray-700 rounded p-3 text-xs space-y-2">
-                <p class="font-semibold flex items-center gap-2"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i> objectified-publish · dry-run passed</p>
+                <p class="font-semibold flex items-center gap-2"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i> apiome-publish · dry-run passed</p>
                 <p class="text-gray-500">Would publish <code class="mono">@stripe/payment-schemas@2.1.4</code> as <code class="mono">latest</code></p>
                 <ul class="text-gray-500 space-y-0.5 ml-4 list-disc">
                   <li>4 schemas · 12 <code class="mono">$ref</code>s resolve</li>

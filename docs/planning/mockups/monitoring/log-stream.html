@@ -38,7 +38,7 @@
   <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center"><i data-lucide="activity" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span><span class="text-xs text-gray-400">/</span>
+      <span class="text-sm font-semibold">Apiome</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Monitoring</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Logs</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-cyan-600 dark:text-cyan-400">Live Stream</span>
@@ -66,7 +66,7 @@
             <p class="text-gray-600 dark:text-gray-400 text-sm mt-1 flex items-center gap-3 flex-wrap">
               <span>WebSocket tail</span><span class="text-gray-400">·</span>
               <span class="mono text-emerald-500">412 lines/sec</span><span class="text-gray-400">·</span>
-              <span class="mono">ws://logs.objectified.dev/tail</span><span class="text-gray-400">·</span>
+              <span class="mono">ws://logs.apiome.app/tail</span><span class="text-gray-400">·</span>
               <span>live since <span class="mono">14:02:18</span></span>
             </p>
           </div>
@@ -121,7 +121,7 @@
                   <span class="w-3 h-3 rounded-full bg-rose-400"></span>
                   <span class="w-3 h-3 rounded-full bg-amber-400"></span>
                   <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
-                  <span class="ml-2 mono text-gray-500">tail -f wss://logs.objectified.dev/tail</span>
+                  <span class="ml-2 mono text-gray-500">tail -f wss://logs.apiome.app/tail</span>
                 </div>
                 <div class="flex items-center gap-3 text-gray-500">
                   <span class="mono">buffer 4,218 / 10,000 lines</span>
@@ -140,7 +140,7 @@
                 <div><span class="ts">15:02:19.182Z</span> <span class="lvl-info">INFO</span>  <span class="svc">[auth]</span>     <span class="req">req_W7gJ2bL4</span>  <span class="msg">login ok user=alice@acme.example mfa=totp</span></div>
                 <div><span class="ts">15:02:19.244Z</span> <span class="lvl-warn">WARN</span>  <span class="svc">[api]</span>      <span class="req">req_H4mB1nC7</span>  <span class="msg">slow query: SELECT * FROM events WHERE … took 1842ms</span></div>
                 <div><span class="ts">15:02:19.318Z</span> <span class="lvl-info">INFO</span>  <span class="svc">[worker]</span>   <span class="req">job_P5xR8cV1</span>  <span class="msg">processed 412 webhook deliveries in 2.1s</span></div>
-                <div><span class="ts">15:02:19.402Z</span> <span class="lvl-error">ERROR</span> <span class="svc">[worker]</span>   <span class="req">job_M6cV4qE0</span>  <span class="msg">webhook delivery failed after 5 attempts: 502 Bad Gateway</span> <span class="json">{"url":"https://hooks.stark.example/objectified"}</span></div>
+                <div><span class="ts">15:02:19.402Z</span> <span class="lvl-error">ERROR</span> <span class="svc">[worker]</span>   <span class="req">job_M6cV4qE0</span>  <span class="msg">webhook delivery failed after 5 attempts: 502 Bad Gateway</span> <span class="json">{"url":"https://hooks.stark.example/apiome"}</span></div>
                 <div><span class="ts">15:02:19.501Z</span> <span class="lvl-info">INFO</span>  <span class="svc">[api]</span>      <span class="req">req_Q1zD6yK5</span>  <span class="msg">PUT /api/v1/projects/prj_J7n4Hq2/settings 200 in 22ms</span></div>
                 <div><span class="ts">15:02:19.611Z</span> <span class="lvl-info">INFO</span>  <span class="svc">[canvas]</span>   <span class="req">req_X9pL5rT3</span>  <span class="msg">canvas.render dirty=true nodes=412 edges=617 duration_ms=38</span></div>
                 <div><span class="ts">15:02:19.702Z</span> <span class="lvl-warn">WARN</span>  <span class="svc">[auth]</span>     <span class="req">req_C2nB4vH8</span>  <span class="msg">jwt expired by 142s; client should refresh</span></div>
@@ -151,7 +151,7 @@
                 <div><span class="ts">15:02:20.211Z</span> <span class="lvl-info">INFO</span>  <span class="svc">[api]</span>      <span class="req">req_M2pO5qR4</span>  <span class="msg">GET /api/v1/objects?cursor=eyJpZCI6Mzh9 200 in 41ms returned=20</span></div>
                 <div><span class="ts">15:02:20.302Z</span> <span class="lvl-info">INFO</span>  <span class="svc">[canvas]</span>   <span class="req">req_N1vC3xZ7</span>  <span class="msg">canvas.layout dagre 412 nodes in 18ms</span></div>
                 <div><span class="ts">15:02:20.418Z</span> <span class="lvl-warn">WARN</span>  <span class="svc">[api]</span>      <span class="req">req_Y4uI6oP9</span>  <span class="msg">rate limit approaching: 412/500 req/min for tenant=globex</span></div>
-                <div><span class="ts">15:02:20.502Z</span> <span class="lvl-info">INFO</span>  <span class="svc">[worker]</span>   <span class="req">job_B3xV5cN2</span>  <span class="msg">webhook ok 200 from https://hooks.acme.example/objectified in 218ms</span></div>
+                <div><span class="ts">15:02:20.502Z</span> <span class="lvl-info">INFO</span>  <span class="svc">[worker]</span>   <span class="req">job_B3xV5cN2</span>  <span class="msg">webhook ok 200 from https://hooks.acme.example/apiome in 218ms</span></div>
                 <div><span class="ts">15:02:20.611Z</span> <span class="lvl-info">INFO</span>  <span class="svc">[api]</span>      <span class="req">req_S9aD2fG6</span>  <span class="msg">POST /api/v1/schemas 201 in 92ms</span></div>
                 <div><span class="ts">15:02:20.711Z</span> <span class="lvl-debug">DEBUG</span> <span class="svc">[auth]</span>     <span class="req">req_U7iL4mB1</span>  <span class="msg">session refreshed sid=sess_K2nH7p ttl_h=24</span></div>
                 <div class="new-row"><span class="ts">15:02:20.802Z</span> <span class="lvl-error">ERROR</span> <span class="svc">[api]</span>      <span class="req">req_X1zQ8wA5</span>  <span class="msg">circuit breaker OPEN for upstream=postgres-primary failure_rate=42%</span> <span class="json">{"trip_count":3,"cooldown_s":30}</span></div>
@@ -264,7 +264,7 @@
                 <td class="px-3 py-3"><select class="px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 mono text-xs"><option>debug</option><option selected>info</option><option>warn</option><option>error</option></select></td>
                 <td class="px-3 py-3 mono text-gray-500">info</td>
                 <td class="px-3 py-3 mono text-gray-500">14:48:22Z</td>
-                <td class="px-3 py-3"><span class="mono">kenji@objectified.dev</span></td>
+                <td class="px-3 py-3"><span class="mono">kenji@apiome.app</span></td>
                 <td class="px-5 py-3 text-right"><button class="text-indigo-500 hover:underline">Apply</button></td>
               </tr>
               <tr>
@@ -282,7 +282,7 @@
                 <td class="px-3 py-3"><select class="px-2 py-1 rounded border border-amber-300/40 bg-white dark:bg-gray-900 mono text-xs"><option selected>debug</option><option>info</option><option>warn</option><option>error</option></select> <span class="ml-2 text-[10px] mono text-amber-600 dark:text-amber-400">↑ verbose · investigation</span></td>
                 <td class="px-3 py-3 mono text-gray-500">info</td>
                 <td class="px-3 py-3 mono text-gray-500">14:55:08Z</td>
-                <td class="px-3 py-3"><span class="mono">kenji@objectified.dev</span></td>
+                <td class="px-3 py-3"><span class="mono">kenji@apiome.app</span></td>
                 <td class="px-5 py-3 text-right"><button class="text-indigo-500 hover:underline">Revert</button></td>
               </tr>
               <tr>

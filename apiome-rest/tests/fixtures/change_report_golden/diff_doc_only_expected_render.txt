@@ -1,0 +1,45 @@
+---HEADER---
+# API
+
+**From:** — → **To:** —
+
+_Published:_ — · _Diff schema:_ 1.0
+---BODY---
+## Summary
+
+| | Count |
+|--|--:|
+| Schemas added | 0 |
+| Schemas removed | 0 |
+| Schemas modified | 0 |
+| Property changes | 0 |
+| Reference changes | 0 |
+| Relationship changes | 0 |
+| Documentation changes | 1 |
+| Warnings | 0 |
+| Skipped areas | 0 |
+
+## Schemas
+
+### Added
+
+### Removed
+
+### Modified
+
+## Properties
+
+## References
+
+## Relationships
+
+## Documentation
+- _info_ / `description` — modified
+
+## Warnings
+
+## Not diffed (MVP)
+---FOOTNOTE---
+_Apiome change report._
+
+Generator: **apiome-rest/1.0.44**

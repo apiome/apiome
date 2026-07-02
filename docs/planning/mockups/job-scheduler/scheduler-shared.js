@@ -1,5 +1,5 @@
 /**
- * scheduler-shared.js — shared utilities for all Objectified Scheduler mockup screens.
+ * scheduler-shared.js — shared utilities for all Apiome Scheduler mockup screens.
  */
 const SchedulerShared = (() => {
   const THEME_KEY = 'scheduler-theme';

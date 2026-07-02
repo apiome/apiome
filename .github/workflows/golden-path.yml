@@ -14,10 +14,10 @@ on:
       - 'scripts/golden_path/**'
       - 'docker-compose.yml'
       - 'docker-compose.env.example'
-      - 'objectified-rest/**'
-      - 'objectified-mcp/**'
-      - 'objectified-db/**'
-      - 'objectified-cli/**'
+      - 'apiome-rest/**'
+      - 'apiome-mcp/**'
+      - 'apiome-db/**'
+      - 'apiome-cli/**'
   pull_request:
     branches: [ main, develop ]
     paths:
@@ -25,10 +25,10 @@ on:
       - 'scripts/golden_path/**'
       - 'docker-compose.yml'
       - 'docker-compose.env.example'
-      - 'objectified-rest/**'
-      - 'objectified-mcp/**'
-      - 'objectified-db/**'
-      - 'objectified-cli/**'
+      - 'apiome-rest/**'
+      - 'apiome-mcp/**'
+      - 'apiome-db/**'
+      - 'apiome-cli/**'
   workflow_dispatch:
 
 jobs:
@@ -52,9 +52,9 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install objectified-cli (harness + CLI deps)
+      - name: Install apiome-cli (harness + CLI deps)
         run: uv sync
-        working-directory: objectified-cli
+        working-directory: apiome-cli
 
       - name: Bring up the spine
         run: docker compose up --build --wait
@@ -64,10 +64,10 @@ jobs:
 
       - name: Run the golden-path smoke test
         env:
-          OBJECTIFIED_REST_URL: http://localhost:8000
-          OBJECTIFIED_MCP_URL: http://localhost:8765/mcp
-          OBJECTIFIED_CLI_CMD: uv run --project objectified-cli objectified
-        run: uv run --project objectified-cli python scripts/golden_path/smoke.py
+          APIOME_REST_URL: http://localhost:8000
+          APIOME_MCP_URL: http://localhost:8765/mcp
+          APIOME_CLI_CMD: uv run --project apiome-cli apiome
+        run: uv run --project apiome-cli python scripts/golden_path/smoke.py
 
       - name: Dump stack logs on failure
         if: failure()

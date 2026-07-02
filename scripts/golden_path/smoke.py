@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""End-to-end golden-path smoke test for the objectified spine (RC1-0.1, #3608).
+"""End-to-end golden-path smoke test for the apiome spine (RC1-0.1, #3608).
 
 Drives one runnable "golden path" across the whole product, exiting non-zero on the
 first failed step so it works as a CI regression net and an executable definition of
@@ -9,17 +9,17 @@ first failed step so it works as a CI regression net and an executable definitio
                   -> view in browse -> export OpenAPI + download via CLI -> query via MCP
 
 The steps hit the same REST endpoints the UI calls (so the "edit in the UI" step is
-exercised through the API), invoke the real ``objectified`` CLI for the export/download
+exercised through the API), invoke the real ``apiome`` CLI for the export/download
 step, and speak the MCP streamable-HTTP protocol for the final query. See
 ``docs/GOLDEN_PATH.md`` for the matching manual checklist.
 
 Configuration (all optional; defaults match ``docker compose up`` + dev seed):
 
-    OBJECTIFIED_REST_URL   REST base URL                (default http://localhost:8000)
-    OBJECTIFIED_MCP_URL    MCP streamable-HTTP endpoint (default http://localhost:8765/mcp)
-    OBJECTIFIED_TENANT     Seeded tenant slug           (default acme-corp)
-    OBJECTIFIED_API_KEY    Seeded dev API key           (default sk_devseed0000...0000)
-    OBJECTIFIED_CLI_CMD    Command to run the CLI       (default "objectified"; shlex-split)
+    APIOME_REST_URL   REST base URL                (default http://localhost:8000)
+    APIOME_MCP_URL    MCP streamable-HTTP endpoint (default http://localhost:8765/mcp)
+    APIOME_TENANT     Seeded tenant slug           (default acme-corp)
+    APIOME_API_KEY    Seeded dev API key           (default sk_devseed0000...0000)
+    APIOME_CLI_CMD    Command to run the CLI       (default "apiome"; shlex-split)
     GOLDEN_PATH_FIXTURE    OpenAPI document to import    (default fixtures/petstore.openapi.yaml)
     GOLDEN_PATH_TIMEOUT    Per-request timeout seconds   (default 60)
 
@@ -41,17 +41,17 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
-# openapi-spec-validator backs the "lint" step; it ships with objectified-cli's deps.
+# openapi-spec-validator backs the "lint" step; it ships with apiome-cli's deps.
 from openapi_spec_validator import validate as validate_openapi  # type: ignore
 
-REST_URL = os.environ.get("OBJECTIFIED_REST_URL", "http://localhost:8000").rstrip("/")
-MCP_URL = os.environ.get("OBJECTIFIED_MCP_URL", "http://localhost:8765/mcp").rstrip("/")
-TENANT = os.environ.get("OBJECTIFIED_TENANT", "acme-corp")
+REST_URL = os.environ.get("APIOME_REST_URL", "http://localhost:8000").rstrip("/")
+MCP_URL = os.environ.get("APIOME_MCP_URL", "http://localhost:8765/mcp").rstrip("/")
+TENANT = os.environ.get("APIOME_TENANT", "acme-corp")
 API_KEY = os.environ.get(
-    "OBJECTIFIED_API_KEY",
+    "APIOME_API_KEY",
     "sk_devseed00000000000000000000000000000000000000000000000000000000",
 )
-CLI_CMD = shlex.split(os.environ.get("OBJECTIFIED_CLI_CMD", "objectified"))
+CLI_CMD = shlex.split(os.environ.get("APIOME_CLI_CMD", "apiome"))
 FIXTURE = Path(
     os.environ.get(
         "GOLDEN_PATH_FIXTURE",
@@ -378,7 +378,7 @@ def export_via_cli(project_slug: str, version_id: str, edited_class: str) -> Non
             "--output",
             str(out),
         ]
-        env = {**os.environ, "OBJECTIFIED_API_KEY": API_KEY, "OBJECTIFIED_LOAD_DOTENV": "0"}
+        env = {**os.environ, "APIOME_API_KEY": API_KEY, "APIOME_LOAD_DOTENV": "0"}
         proc = subprocess.run(cmd, capture_output=True, text=True, env=env)
         if proc.returncode != 0:
             raise SmokeError(
@@ -417,7 +417,7 @@ def query_via_mcp(client: httpx.Client, project_id: str) -> None:
 
 
 def main() -> int:
-    print("=== objectified golden-path smoke test (#3608) ===")
+    print("=== apiome golden-path smoke test (#3608) ===")
     print(f"REST: {REST_URL}   MCP: {MCP_URL}   tenant: {TENANT}")
     mcp_base = MCP_URL[: -len("/mcp")] if MCP_URL.endswith("/mcp") else MCP_URL
     try:

@@ -1,6 +1,6 @@
-# Objectified: Localization (i18n) - Feature Roadmap
+# Apiome: Localization (i18n) - Feature Roadmap
 
-> Internationalization and localization management for schemas, APIs, and generated documentation. Localization enables Objectified users to serve global audiences by managing multi-language schema metadata, translating API documentation, formatting responses for locale conventions, and validating internationalization compliance—all integrated into the existing schema-driven workflow.
+> Internationalization and localization management for schemas, APIs, and generated documentation. Localization enables Apiome users to serve global audiences by managing multi-language schema metadata, translating API documentation, formatting responses for locale conventions, and validating internationalization compliance—all integrated into the existing schema-driven workflow.
 >
 > **Revenue Model**: Per-locale pricing, translation credits
 >
@@ -39,7 +39,7 @@
 
 #### 1.1 (#1103) — Multi-Language Schema Metadata
 
-Multi-Language Schema Metadata extends the Objectified schema model to support localized descriptions, titles, and examples on every schema property. Each property can have a `localizations` map keyed by BCP 47 locale code (e.g., `en-US`, `ja-JP`, `de-DE`) containing translated `title`, `description`, and `examples`. The default locale's content is stored in the standard JSON Schema fields; additional locales are stored in an extension namespace.
+Multi-Language Schema Metadata extends the Apiome schema model to support localized descriptions, titles, and examples on every schema property. Each property can have a `localizations` map keyed by BCP 47 locale code (e.g., `en-US`, `ja-JP`, `de-DE`) containing translated `title`, `description`, and `examples`. The default locale's content is stored in the standard JSON Schema fields; additional locales are stored in an extension namespace.
 
 The localization editor at `/app/schemas/[id]/localize` renders a split-pane view with the schema tree on the left and a locale editor on the right. The locale editor uses Radix `Tabs` for each active locale with text inputs for title, description, and example fields. A locale selector in the header (Radix `Select`) switches the entire schema view to display content in the selected language—previewing how the schema documentation will appear for that locale.
 

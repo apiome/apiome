@@ -1,7 +1,7 @@
 # Production Deployment Runbook
 
 **Status:** RC1 baseline (ticket RC1-3.3 / #3618) · **Owner:** Platform / on-call · **Scope:** the
-Objectified spine (Postgres · migrations · `objectified-rest` · `objectified-mcp`) behind TLS.
+Apiome spine (Postgres · migrations · `apiome-rest` · `apiome-mcp`) behind TLS.
 
 This runbook promotes the local `docker-compose` stack to a **documented, reproducible production
 deploy**: TLS via Let's Encrypt, fail-closed secrets, a **gated** migration step, the RC1-1.3
@@ -58,8 +58,8 @@ enumerates every change versus the dev base.
 
 ```bash
 # 1. Get the code on the host.
-git clone https://github.com/objectified-project/objectified.git /opt/objectified
-cd /opt/objectified
+git clone https://github.com/objectified-project/objectified.git /opt/apiome
+cd /opt/apiome
 
 # 2. Create the production .env (next to docker-compose.yml) from the template and fill it in.
 cp docker-compose.prod.env.example .env
@@ -70,9 +70,9 @@ Generate each secret with the commands documented inline in
 [`docker-compose.prod.env.example`](../../docker-compose.prod.env.example):
 
 ```bash
-openssl rand -base64 24   # POSTGRES_PASSWORD, OBJECTIFIED_MCP_INTERNAL_SECRET
+openssl rand -base64 24   # POSTGRES_PASSWORD, APIOME_MCP_INTERNAL_SECRET
 openssl rand -base64 32   # NEXTAUTH_SECRET  (must match the UI's NextAuth secret)
-openssl rand -hex 32      # OBJECTIFIED_BACKUP_KEY → store in the secret manager, NOT on this host
+openssl rand -hex 32      # APIOME_BACKUP_KEY → store in the secret manager, NOT on this host
 ```
 
 > The `.env` file holds live secrets and is git-ignored — never commit it. Only the
@@ -139,7 +139,7 @@ have not been applied (re-check §4.4). The deploy is "working" when all three r
 
 ## 5. Bootstrap the first tenant & admin
 
-Production never loads the dev seed, so create real accounts with the `objectified-db` admin CLI
+Production never loads the dev seed, so create real accounts with the `apiome-db` admin CLI
 (run through the `migrate` service image, which carries the full CLI):
 
 ```bash
@@ -156,7 +156,7 @@ dc --profile migrate run --rm migrate api-keys create \
   --tenant acme-corp --name "ci" --created-by ada@example.com
 ```
 
-See [`../../objectified-db/README.md`](../../objectified-db/README.md) for the full admin command
+See [`../../apiome-db/README.md`](../../apiome-db/README.md) for the full admin command
 reference (users / tenants / members / api-keys / tokens).
 
 ---
@@ -166,17 +166,17 @@ reference (users / tenants / members / api-keys / tokens).
 The overlay ships a profile-gated `backup` service (the RC1-1.3 tooling) that writes
 AES-256-GCM-encrypted, off-site-mirrored backups to a volume REST reads, so the ops dashboard
 (`/v1/ops/backups`, RC1-3.2) reports their freshness. Schedule it from the host — e.g. in
-`/etc/cron.d/objectified`:
+`/etc/cron.d/apiome`:
 
 ```cron
 # Hourly tenant logical backup (low RPO) + retention prune.
-0 * * * *  root  cd /opt/objectified && OBJECTIFIED_BACKUP_KEEP_DAYS=7  docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile ops run --rm backup tenant acme-corp >> /var/log/objectified-backup.log 2>&1
+0 * * * *  root  cd /opt/apiome && APIOME_BACKUP_KEEP_DAYS=7  docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile ops run --rm backup tenant acme-corp >> /var/log/apiome-backup.log 2>&1
 
 # Daily full pg_dump at 02:00 (whole-cluster DR), retained 30 days.
-0 2 * * *  root  cd /opt/objectified && OBJECTIFIED_BACKUP_KEEP_DAYS=30 docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile ops run --rm backup full       >> /var/log/objectified-backup.log 2>&1
+0 2 * * *  root  cd /opt/apiome && APIOME_BACKUP_KEEP_DAYS=30 docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile ops run --rm backup full       >> /var/log/apiome-backup.log 2>&1
 ```
 
-`OBJECTIFIED_BACKUP_KEY` (from `.env`) is mandatory — the wrapper refuses to run, and never writes
+`APIOME_BACKUP_KEY` (from `.env`) is mandatory — the wrapper refuses to run, and never writes
 plaintext, without it. Validate restores monthly with the DR drill and confirm RPO/RTO, exactly as
 in [`BACKUP_AND_DR.md`](BACKUP_AND_DR.md) §5:
 
@@ -184,7 +184,7 @@ in [`BACKUP_AND_DR.md`](BACKUP_AND_DR.md) §5:
 dc --profile ops run --rm --entrypoint node backup dist/cli.js backup drill --rto-target-minutes 30 --rpo-target-minutes 60
 ```
 
-> Replace the `objectified_backups_offsite` named volume with a bind mount to genuine off-host
+> Replace the `apiome_backups_offsite` named volume with a bind mount to genuine off-host
 > storage (NFS / object-store gateway) so losing the host does not lose the off-site copy.
 
 ---
@@ -192,7 +192,7 @@ dc --profile ops run --rm --entrypoint node backup dist/cli.js backup drill --rt
 ## 7. Upgrades (redeploy a new version)
 
 ```bash
-cd /opt/objectified
+cd /opt/apiome
 git pull                      # or check out the target release tag
 
 dc build                      # rebuild images at the new code
@@ -255,7 +255,7 @@ services:
     depends_on: !override []      # no local DB to wait on
   mcp:
     environment:
-      OBJECTIFIED_MCP_DATABASE_URL: postgresql://USER:PASS@your-db.example.com:5432/objectified
+      APIOME_MCP_DATABASE_URL: postgresql://USER:PASS@your-db.example.com:5432/apiome
     depends_on: !override []
 ```
 

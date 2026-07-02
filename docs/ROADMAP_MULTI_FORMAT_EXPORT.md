@@ -3,7 +3,7 @@
 > **Status:** ✅ **Issues filed on `objectified-project/objectified`** — umbrella **#3813**, epics **#3814–#3833** (MFX-EPIC-1…20), and 84 issues **#3834–#3917** (105 total). Headings below carry their `#number`; epics track children as sub-issues under umbrella #3813 (linked beneath export umbrella #3494).
 > **Gap-coverage extension (2026-07-01):** ✅ epics **MFX-EPIC-21…30** (+ add-ons **MFX-14.5**, **MFX-19.6**) filed as **#4125–#4183** (59 more — 164 total) to cover modern data-schema, mainframe, EDI, and XML-schema targets. See *Gap-coverage epics* below.
 > **Issue ID prefix:** `MFX` (Multi-Format eXport). Epics `MFX-EPIC-n`, issues `MFX-n.m`.
-> **GitHub title format:** `objectified: [<epic>.<issue>] <title>`.
+> **GitHub title format:** `apiome: [<epic>.<issue>] <title>`.
 > **Recommended labels:** new `roadmap-multi-format-export` + reuse `export`, `multi-protocol`,
 > `integrations`, `rest`, `ui`, `browser`, `database`, `python`, `typescript`, `linting`,
 > `version-control`, `validation`, `registry`, `devex`.
@@ -19,8 +19,8 @@
 > - **Version-level fidelity pre-summary** (best-fidelity vs lossy targets) + a **recent-exports** list
 >   render on the version view before the dialog opens. *(MFX-6.5)*
 > - The fidelity panel shows a **preserved-% ring**, **count chips** (DROP/APPROX/SYNTH/OK), the
->   per-construct report, and an explicit **"Export anyway"** for lossy conversions — in objectified-ui
->   **and** objectified-browse. *(MFX-2, 6.2, 7.2)*
+>   per-construct report, and an explicit **"Export anyway"** for lossy conversions — in apiome-ui
+>   **and** apiome-browse. *(MFX-2, 6.2, 7.2)*
 
 ---
 
@@ -36,7 +36,7 @@
 >
 > **Headline requirement — fidelity/lossiness.** When an API is exported to a different format,
 > accuracy may be lost because the destination format cannot represent some source constructs.
-> **Include a message in objectified-ui and the browser that the exported target format may lose some
+> **Include a message in apiome-ui and the browser that the exported target format may lose some
 > fidelity from the originally imported data, due to the destination API not allowing for as much
 > detail as was provided** — plus a structured, per-construct lossiness report (REST + CLI too). Build
 > a first-class Fidelity/Lossiness engine + per-target fidelity rule packs. Reuse the import roadmap's
@@ -47,7 +47,7 @@
 
 ## 1. Goal & strategy
 
-Import (MFI, #3715) made objectified **read** 12 formats into one **Normalized API Model**
+Import (MFI, #3715) made apiome **read** 12 formats into one **Normalized API Model**
 (`CanonicalApi`). Export is the mirror: **emit `CanonicalApi` → any target format.** The composition
 is the prize:
 
@@ -70,8 +70,8 @@ is the prize:
 (say a GraphQL schema with unions + non-null wrappers, or an OpenAPI doc with `oneOf`/`discriminator`
 + `pattern`/`min`/`max` constraints) into a less-expressive target (Protobuf has no unions/constraints
 and needs field numbers; Avro is *types-only* with no operations; RAML/API Blueprint are REST-only)
-**drops or approximates** information. Objectified must (a) **compute** exactly what is lost per
-export, (b) **warn the user** in objectified-ui and objectified-browse, and (c) expose the detail via
+**drops or approximates** information. Apiome must (a) **compute** exactly what is lost per
+export, (b) **warn the user** in apiome-ui and apiome-browse, and (c) expose the detail via
 REST + CLI.
 
 ### What already exists that we REUSE (do not rebuild)
@@ -84,9 +84,9 @@ REST + CLI.
 | Generalized versioning + compare/diff | MFI-EPIC-3 / MCP EPIC-18 | Round-trip fidelity diff |
 | Async import job engine | `spec_import_engine.py` | **Inverted** into an export job |
 | Import wizard (source-card grid) | `ImportDialog.tsx` | Symmetric **ExportDialog** |
-| Public browse + read views | `browse_public_routes.py`, `objectified-browse` | Public export |
-| Typer CLI + jobs | `objectified-cli` | `objectified export <format>` |
-| Flyway migrations | `objectified-db` | Export audit/job tables |
+| Public browse + read views | `browse_public_routes.py`, `apiome-browse` | Public export |
+| Typer CLI + jobs | `apiome-cli` | `apiome export <format>` |
+| Flyway migrations | `apiome-db` | Export audit/job tables |
 
 ### Existing GitHub issues to RECONCILE / cross-link (avoid duplication)
 
@@ -110,7 +110,7 @@ REST + CLI.
 3. **No fidelity/lossiness model** — users get no warning when a conversion silently drops detail. *(headline)*
 4. No **multi-file packaging** for targets that need it (protobuf packages, WSDL+XSD, Smithy multi-file, Avro subject sets).
 5. No **emitted-output validation** (is the produced artifact actually valid in the target format?).
-6. No **export surface in objectified-browse**, and no symmetric **ExportDialog**.
+6. No **export surface in apiome-browse**, and no symmetric **ExportDialog**.
 
 ---
 
@@ -146,8 +146,8 @@ competitor offers: **COBOL copybook** (23) and **EDI X12/EDIFACT** (24), plus **
 | MFX-EPIC-3 | Transcoding Pipeline & Export Job | 3.1–3.4 | ●●● |
 | MFX-EPIC-4 | Output Delivery & Packaging | 4.1–4.4 | ●●● |
 | MFX-EPIC-5 | Emitted-Output Validation (round-trip) | 5.1–5.3 | ●● |
-| MFX-EPIC-6 | Export UI — objectified-ui (ExportDialog) | 6.1–6.5 | ●●● |
-| MFX-EPIC-7 | Public Export — objectified-browse | 7.1–7.3 | ●● |
+| MFX-EPIC-6 | Export UI — apiome-ui (ExportDialog) | 6.1–6.5 | ●●● |
+| MFX-EPIC-7 | Public Export — apiome-browse | 7.1–7.3 | ●● |
 | MFX-EPIC-8 | CLI Export + Toolchain reuse | 8.1–8.3 | ●● |
 | MFX-EPIC-9 | **OpenAPI / Swagger** emitter | 9.1–9.4 | ●● MVP |
 | MFX-EPIC-10 | Arazzo emitter | 10.1–10.4 | ○ v2 |
@@ -174,7 +174,7 @@ competitor offers: **COBOL copybook** (23) and **EDI X12/EDIFACT** (24), plus **
 
 **Total: 30 epics, ~133 issues** (gap-coverage epics 21–30 + add-ons 14.5/19.6 filed 2026-07-01 as #4125–#4183).
 
-### Fidelity-warning UX (objectified-ui **and** objectified-browse)
+### Fidelity-warning UX (apiome-ui **and** apiome-browse)
 
 ```
 ┌─ Export “Pet Store v1.2” ───────────────────────────────────────────┐
@@ -194,7 +194,7 @@ competitor offers: **COBOL copybook** (23) and **EDI X12/EDIFACT** (24), plus **
 ```
 
 The same advisory + report (preserved-% ring + count chips + per-construct list) renders in
-**objectified-browse** for public artifacts (MFX-EPIC-7). Export itself is **invoked from the version
+**apiome-browse** for public artifacts (MFX-EPIC-7). Export itself is **invoked from the version
 being viewed**, not a global nav item. See the rendered design in
 [`docs/planning/mockups/multi-format-export/`](planning/mockups/multi-format-export/).
 
@@ -207,7 +207,7 @@ flowchart LR
   subgraph src[Source — already imported]
     ART[(CanonicalApi\nartifact + version)]
   end
-  subgraph rest[objectified-rest]
+  subgraph rest[apiome-rest]
     REGE[Emitter Registry SPI]
     JOB[Export Job\nspec_import engine inverted]
     FID[Fidelity / Lossiness Engine\n+ per-target rule packs]
@@ -215,9 +215,9 @@ flowchart LR
     VAL[Emitted-output Validation\nround-trip via import parsers]
     RUN[Polyglot Toolchain Runner\nreused MFI-EPIC-5]
   end
-  UID[objectified-ui ExportDialog\n+ fidelity warning]
-  BRW[objectified-browse export\n+ fidelity warning]
-  CLI[objectified-cli export]
+  UID[apiome-ui ExportDialog\n+ fidelity warning]
+  BRW[apiome-browse export\n+ fidelity warning]
+  CLI[apiome-cli export]
 
   ART --> JOB --> REGE -->|emitter| OUT[target artifact]
   JOB --> FID --> REPORT[lossiness report + advisory]
@@ -253,14 +253,14 @@ flowchart LR
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 1.1 | Emitter SPI + capability/fidelity profile | interface: emit(model)→files, declare capabilities | export,multi-protocol,rest,python,mvp | N | Y | L | objectified-rest |
-| 1.2 | Emitter registry + REST target list | enumerate emitters for UI/CLI (`GET /export/targets`) | export,multi-protocol,rest,mvp | N | Y | M | objectified-rest |
-| 1.3 | Refactor existing exports behind SPI | move current OpenAPI/MCP export under the SPI | export,multi-protocol,rest | Y | Y | M | objectified-rest |
-| 1.4 | Target selection & defaults | choose target + options; sensible per-format defaults | export,multi-protocol,rest,mvp | Y | Y | S | objectified-rest |
+| 1.1 | Emitter SPI + capability/fidelity profile | interface: emit(model)→files, declare capabilities | export,multi-protocol,rest,python,mvp | N | Y | L | apiome-rest |
+| 1.2 | Emitter registry + REST target list | enumerate emitters for UI/CLI (`GET /export/targets`) | export,multi-protocol,rest,mvp | N | Y | M | apiome-rest |
+| 1.3 | Refactor existing exports behind SPI | move current OpenAPI/MCP export under the SPI | export,multi-protocol,rest | Y | Y | M | apiome-rest |
+| 1.4 | Target selection & defaults | choose target + options; sensible per-format defaults | export,multi-protocol,rest,mvp | Y | Y | S | apiome-rest |
 
 ### MFX-1.1 — Emitter SPI + capability/fidelity profile  ·  **#3834**
 - **Problem.** Export is ad-hoc per format; there's no seam to add targets or to reason about what a target can represent.
-- **Solution / Scope.** Define an `Emitter` interface in `objectified-rest`: `emit(model: CanonicalApi, opts) → EmitResult{files[], mediaType}`; plus a static **capability/fidelity profile** declaring which canonical constructs the target supports (operations? events? unions? nullability? constraints? field-identity?), consumed by the fidelity engine (EPIC-2). Inverse of the import `ImportSource` SPI (MFI-1.1). Descriptor: key, label, icon, paradigm, single/multi-file, needs-toolchain.
+- **Solution / Scope.** Define an `Emitter` interface in `apiome-rest`: `emit(model: CanonicalApi, opts) → EmitResult{files[], mediaType}`; plus a static **capability/fidelity profile** declaring which canonical constructs the target supports (operations? events? unions? nullability? constraints? field-identity?), consumed by the fidelity engine (EPIC-2). Inverse of the import `ImportSource` SPI (MFI-1.1). Descriptor: key, label, icon, paradigm, single/multi-file, needs-toolchain.
 - **Acceptance Criteria.** A no-op emitter registers and appears in the target list; profile schema documented; OpenAPI emitter (9.x) implements it.
 - **Dependencies / Parallelism.** Root. Blocks all emitter epics. Depends on MFI-EPIC-2 (model).
 - **Technical Stack.** Python, FastAPI.
@@ -304,12 +304,12 @@ flowchart TB
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 2.1 | Lossiness report model + severities | DROP/APPROX/SYNTH/OK per construct + severity | export,multi-protocol,version-control,mvp | N | Y | M | objectified-rest |
-| 2.2 | Fidelity computation engine | diff source constructs vs target capability profile | export,multi-protocol,python,mvp | N | Y | L | objectified-rest |
-| 2.3 | Fidelity rule-pack SPI | per-target degradation rules (how a construct degrades) | export,multi-protocol,python,mvp | N | Y | M | objectified-rest |
-| 2.4 | User-facing advisory message | the "may lose fidelity" copy + i18n string + thresholds | export,ui,browser,mvp | Y | Y | S | objectified-rest,objectified-ui |
-| 2.5 | Fidelity report REST surfacing | return report from export + a dry-run preview endpoint | export,rest,mvp | Y | Y | S | objectified-rest |
-| 2.6 | Round-trip fidelity measurement | export→re-import→diff to quantify actual loss | export,version-control,validation | Y | N | M | objectified-rest |
+| 2.1 | Lossiness report model + severities | DROP/APPROX/SYNTH/OK per construct + severity | export,multi-protocol,version-control,mvp | N | Y | M | apiome-rest |
+| 2.2 | Fidelity computation engine | diff source constructs vs target capability profile | export,multi-protocol,python,mvp | N | Y | L | apiome-rest |
+| 2.3 | Fidelity rule-pack SPI | per-target degradation rules (how a construct degrades) | export,multi-protocol,python,mvp | N | Y | M | apiome-rest |
+| 2.4 | User-facing advisory message | the "may lose fidelity" copy + i18n string + thresholds | export,ui,browser,mvp | Y | Y | S | apiome-rest,apiome-ui |
+| 2.5 | Fidelity report REST surfacing | return report from export + a dry-run preview endpoint | export,rest,mvp | Y | Y | S | apiome-rest |
+| 2.6 | Round-trip fidelity measurement | export→re-import→diff to quantify actual loss | export,version-control,validation | Y | N | M | apiome-rest |
 
 ### MFX-2.1 — Lossiness report model + severities  ·  **#3838**
 - **Problem.** "Fidelity loss" must be structured, not prose, so UI/CLI/REST can render and gate on it.
@@ -333,7 +333,7 @@ flowchart TB
 - **Technical Stack.** Python.
 
 ### MFX-2.4 — User-facing advisory message  ·  **#3841**
-- **Problem.** The user explicitly wants a clear "you may lose fidelity" message in objectified-ui **and** the browser.
+- **Problem.** The user explicitly wants a clear "you may lose fidelity" message in apiome-ui **and** the browser.
 - **Solution / Scope.** A canonical advisory string + severity thresholds returned with every cross-format (and lossy same-format) export: e.g. *"Exporting to **{format}** may lose some fidelity. The destination format can't represent everything in this API, so **{n}** construct(s) will be dropped or approximated — review the fidelity report before downloading."* Shared by UI (6.2), browse (7.2), CLI (8.2). Suppressed/relaxed when the report is all-OK (same-format high-fidelity round-trips).
 - **Acceptance Criteria.** Message reflects real counts; shown when loss > threshold; hidden when lossless; identical wording across UI/browse/CLI.
 - **Dependencies / Parallelism.** After 2.2. Blocks 6.2/7.2/8.2.
@@ -362,10 +362,10 @@ validate → deliver. Enables any-to-any.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 3.1 | Export job engine | inverse of `spec_import_engine`: emit→validate→package | export,multi-protocol,rest,python,mvp | N | Y | L | objectified-rest |
-| 3.2 | CanonicalApi → emitter dispatch | resolve emitter, run, attach fidelity report | export,multi-protocol,rest,mvp | N | Y | M | objectified-rest |
-| 3.3 | Any-to-any transcoding guards | source-paradigm ↔ target-paradigm sanity + warnings | export,multi-protocol,validation,mvp | Y | Y | M | objectified-rest |
-| 3.4 | Export job status/polling | job lifecycle + result (artifact ref + report) | export,rest,mvp | Y | Y | S | objectified-rest |
+| 3.1 | Export job engine | inverse of `spec_import_engine`: emit→validate→package | export,multi-protocol,rest,python,mvp | N | Y | L | apiome-rest |
+| 3.2 | CanonicalApi → emitter dispatch | resolve emitter, run, attach fidelity report | export,multi-protocol,rest,mvp | N | Y | M | apiome-rest |
+| 3.3 | Any-to-any transcoding guards | source-paradigm ↔ target-paradigm sanity + warnings | export,multi-protocol,validation,mvp | Y | Y | M | apiome-rest |
+| 3.4 | Export job status/polling | job lifecycle + result (artifact ref + report) | export,rest,mvp | Y | Y | S | apiome-rest |
 
 ### MFX-3.1 — Export job engine  ·  **#3844**
 - **Problem.** Export of large artifacts (multi-file, toolchain-backed) needs the same async job lifecycle as import.
@@ -399,10 +399,10 @@ validate → deliver. Enables any-to-any.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 4.1 | Single-file emit & download | one document; content-type + filename | export,rest,mvp | N | Y | S | objectified-rest |
-| 4.2 | Multi-file bundle (zip) | protobuf packages, WSDL+XSD, Smithy, Avro subjects | export,rest,mvp | N | Y | M | objectified-rest |
-| 4.3 | Streaming/download & retention | stream large bundles; temp artifact retention | export,rest | Y | Y | S | objectified-rest |
-| 4.4 | Push-to-registry delivery | push Avro→Schema Registry, proto→BSR (opt) | export,registry,integrations | Y | N | M | objectified-rest |
+| 4.1 | Single-file emit & download | one document; content-type + filename | export,rest,mvp | N | Y | S | apiome-rest |
+| 4.2 | Multi-file bundle (zip) | protobuf packages, WSDL+XSD, Smithy, Avro subjects | export,rest,mvp | N | Y | M | apiome-rest |
+| 4.3 | Streaming/download & retention | stream large bundles; temp artifact retention | export,rest | Y | Y | S | apiome-rest |
+| 4.4 | Push-to-registry delivery | push Avro→Schema Registry, proto→BSR (opt) | export,registry,integrations | Y | N | M | apiome-rest |
 
 *(4.1–4.4 follow the delivery template. Multi-file is mandatory for protobuf (per-package files + imports), WSDL (+ separate XSDs), Smithy (multi-namespace), and Avro (per-subject `.avsc`); deliver as a zip with a manifest. 4.4 (v2) reuses the import discovery clients in reverse to **register** schemas into a live Confluent Schema Registry / Buf Schema Registry.)*
 
@@ -412,9 +412,9 @@ validate → deliver. Enables any-to-any.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 5.1 | Validate emitted artifact | parse the output with the matching MFI parser | export,validation,mvp | N | Y | M | objectified-rest |
-| 5.2 | Lint emitted artifact | run the target's linter on the output | export,linting | Y | N | S | objectified-rest |
-| 5.3 | Validation gating & report | block/warn on invalid output; surface results | export,validation,mvp | Y | Y | S | objectified-rest |
+| 5.1 | Validate emitted artifact | parse the output with the matching MFI parser | export,validation,mvp | N | Y | M | apiome-rest |
+| 5.2 | Lint emitted artifact | run the target's linter on the output | export,linting | Y | N | S | apiome-rest |
+| 5.3 | Validation gating & report | block/warn on invalid output; surface results | export,validation,mvp | Y | Y | S | apiome-rest |
 
 ### MFX-5.1 — Validate emitted artifact  ·  **#3852**
 - **Problem.** A buggy emitter could produce invalid output; we must guarantee the artifact is legal in its target format.
@@ -427,7 +427,7 @@ validate → deliver. Enables any-to-any.
 
 ---
 
-## MFX-EPIC-6 — Export UI — objectified-ui (ExportDialog)  ·  **#3819**
+## MFX-EPIC-6 — Export UI — apiome-ui (ExportDialog)  ·  **#3819**
 
 Symmetric to `ImportDialog`. **Carries the fidelity warning (user directive).**
 
@@ -441,11 +441,11 @@ flowchart LR
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 6.1 | ExportDialog + target-card grid | mirror ImportDialog; pick target + options | export,ui,typescript,mvp | N | Y | M | objectified-ui |
-| 6.2 | Fidelity warning panel + report | advisory message + per-construct DROP/APPROX/SYNTH list | export,ui,mvp | N | Y | M | objectified-ui |
-| 6.3 | Preview + download | preview emitted artifact; download single/zip | export,ui,mvp | Y | Y | S | objectified-ui |
-| 6.4 | Round-trip diff view | show what changed if re-imported (uses 2.6) | export,ui,version-control | Y | N | M | objectified-ui |
-| 6.5 | Version-scoped entry points | Export is an action on the viewed version (NOT a global nav item) | export,ui | Y | Y | S | objectified-ui |
+| 6.1 | ExportDialog + target-card grid | mirror ImportDialog; pick target + options | export,ui,typescript,mvp | N | Y | M | apiome-ui |
+| 6.2 | Fidelity warning panel + report | advisory message + per-construct DROP/APPROX/SYNTH list | export,ui,mvp | N | Y | M | apiome-ui |
+| 6.3 | Preview + download | preview emitted artifact; download single/zip | export,ui,mvp | Y | Y | S | apiome-ui |
+| 6.4 | Round-trip diff view | show what changed if re-imported (uses 2.6) | export,ui,version-control | Y | N | M | apiome-ui |
+| 6.5 | Version-scoped entry points | Export is an action on the viewed version (NOT a global nav item) | export,ui | Y | Y | S | apiome-ui |
 
 ### MFX-6.1 — ExportDialog + target-card grid  ·  **#3855**
 - **Solution / Scope.** A symmetric `ExportDialog` (reuse `ImportDialog` patterns/tokens): a **12-target card grid** from `GET /export/targets` where **each card shows a per-source fidelity badge** (`lossless`/`lossy`/`types-only`, from 1.2/2.5) so the user sees the trade-off before selecting; numbered stepper (Source → Target → Fidelity → Export); per-target options per 1.4 (e.g. proto3 vs editions, single-file vs multi-file zip). Selecting a target updates the fidelity headline (6.2). Follow `frontend-design` guidance. See the mockup.
@@ -464,24 +464,24 @@ flowchart LR
 
 ---
 
-## MFX-EPIC-7 — Public Export — objectified-browse  ·  **#3820**
+## MFX-EPIC-7 — Public Export — apiome-browse  ·  **#3820**
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 7.1 | Public export of published artifacts | export published versions; no auth | export,browser,mvp | N | Y | M | objectified-browse,objectified-rest |
-| 7.2 | Fidelity advisory in browse | same "may lose fidelity" message + report publicly | export,browser,mvp | N | Y | S | objectified-browse |
-| 7.3 | Public download + guards | rate-limit, size caps, published/public only | export,browser,security | Y | Y | S | objectified-browse,objectified-rest |
+| 7.1 | Public export of published artifacts | export published versions; no auth | export,browser,mvp | N | Y | M | apiome-browse,apiome-rest |
+| 7.2 | Fidelity advisory in browse | same "may lose fidelity" message + report publicly | export,browser,mvp | N | Y | S | apiome-browse |
+| 7.3 | Public download + guards | rate-limit, size caps, published/public only | export,browser,security | Y | Y | S | apiome-browse,apiome-rest |
 
 ### MFX-7.1 — Public export of published artifacts  ·  **#3860**
-- **Solution / Scope.** Allow exporting **published/public** artifacts from `objectified-browse` to any target, reusing the export job + emitters via a public, no-auth, read-only path (reuse `mcp_v_public`/browse read models). Never expose private artifacts.
+- **Solution / Scope.** Allow exporting **published/public** artifacts from `apiome-browse` to any target, reusing the export job + emitters via a public, no-auth, read-only path (reuse `mcp_v_public`/browse read models). Never expose private artifacts.
 - **Acceptance Criteria.** Public user exports a published API to a chosen format with the fidelity warning; private artifacts unavailable.
 - **Dependencies / Parallelism.** After 3.x, 6.2. Blocks 7.2/7.3.
-- **Technical Stack.** Next.js (objectified-browse), FastAPI.
+- **Technical Stack.** Next.js (apiome-browse), FastAPI.
 
 ### MFX-7.2 — Fidelity advisory in browse  ·  **#3861**
 - **Problem.** **(headline)** The browser must carry the same fidelity message as the ADE.
 - **Solution / Scope.** Render the identical advisory (2.4) + report in the public export flow.
-- **Acceptance Criteria.** Same wording/severity as objectified-ui; report visible publicly.
+- **Acceptance Criteria.** Same wording/severity as apiome-ui; report visible publicly.
 - **Dependencies / Parallelism.** After 7.1. Parallel with 7.3.
 - **Technical Stack.** Next.js.
 
@@ -493,12 +493,12 @@ flowchart LR
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 8.1 | `objectified export <format>` | export an artifact/version to a target; poll | export,devex,python,mvp | N | Y | M | objectified-cli |
-| 8.2 | Fidelity report in CLI | print advisory + report; `--force` for lossy | export,devex,mvp | Y | Y | S | objectified-cli |
-| 8.3 | Toolchain runner reuse | wire emitters needing tsp/buf/smithy/AMF | export,multi-protocol,infrastructure | Y | N | S | objectified-rest |
+| 8.1 | `apiome export <format>` | export an artifact/version to a target; poll | export,devex,python,mvp | N | Y | M | apiome-cli |
+| 8.2 | Fidelity report in CLI | print advisory + report; `--force` for lossy | export,devex,mvp | Y | Y | S | apiome-cli |
+| 8.3 | Toolchain runner reuse | wire emitters needing tsp/buf/smithy/AMF | export,multi-protocol,infrastructure | Y | N | S | apiome-rest |
 
-### MFX-8.1 — `objectified export <format>`  ·  **#3863**
-- **Solution / Scope.** `objectified export <format> <artifact> [--version] [--out file|dir] [--option ...]`; resolves the emitter, polls the export job, writes single file or unzips a bundle.
+### MFX-8.1 — `apiome export <format>`  ·  **#3863**
+- **Solution / Scope.** `apiome export <format> <artifact> [--version] [--out file|dir] [--option ...]`; resolves the emitter, polls the export job, writes single file or unzips a bundle.
 - **Acceptance Criteria.** Exports from CLI to a chosen format; bundle unpacked; `--json` mode.
 - **Dependencies / Parallelism.** After 1.2, 3.4. Blocks 8.2.
 - **Technical Stack.** Python, Typer.
@@ -521,10 +521,10 @@ RPC streaming, event channels, gRPC field numbers; can express oneOf/anyOf/discr
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 9.1 | OpenAPI emitter | CanonicalApi → OpenAPI 3.1 (+ 3.0/Swagger opt) | export,multi-protocol,rest,mvp | N | Y | M | objectified-rest |
-| 9.2 | OpenAPI fidelity pack | what OpenAPI can't represent (events/RPC streaming) | export,multi-protocol,mvp | N | Y | S | objectified-rest |
-| 9.3 | Validate + round-trip | re-import via MFI OpenAPI parser; diff | export,validation,mvp | Y | Y | S | objectified-rest |
-| 9.4 | OpenAPI target card + CLI + fixtures | UI/CLI target + round-trip fixtures | export,ui,devex,mvp | Y | Y | S | objectified-ui,objectified-cli |
+| 9.1 | OpenAPI emitter | CanonicalApi → OpenAPI 3.1 (+ 3.0/Swagger opt) | export,multi-protocol,rest,mvp | N | Y | M | apiome-rest |
+| 9.2 | OpenAPI fidelity pack | what OpenAPI can't represent (events/RPC streaming) | export,multi-protocol,mvp | N | Y | S | apiome-rest |
+| 9.3 | Validate + round-trip | re-import via MFI OpenAPI parser; diff | export,validation,mvp | Y | Y | S | apiome-rest |
+| 9.4 | OpenAPI target card + CLI + fixtures | UI/CLI target + round-trip fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 
 ### MFX-9.1 — OpenAPI emitter  ·  **#3866**
 - **Problem.** Need the canonical REST emitter (and the reference implementation of the SPI).
@@ -540,7 +540,7 @@ RPC streaming, event channels, gRPC field numbers; can express oneOf/anyOf/discr
 - **Dependencies / Parallelism.** After 9.1, 2.3. Parallel with 9.3.
 - **Technical Stack.** Python.
 
-*(9.3 validates via the MFI OpenAPI parser + round-trip diff; 9.4 adds the target card + `objectified export openapi` + fixtures. Coordinate with #2249.)*
+*(9.3 validates via the MFI OpenAPI parser + round-trip diff; 9.4 adds the target card + `apiome export openapi` + fixtures. Coordinate with #2249.)*
 
 ---
 
@@ -551,10 +551,10 @@ non-workflow source is **near-empty** unless the model carries workflow info.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 10.1 | Arazzo emitter | model workflows → Arazzo description | export,multi-protocol | N | N | M | objectified-rest |
-| 10.2 | Arazzo fidelity pack | non-workflow sources → near-empty/DROP | export,multi-protocol | N | N | S | objectified-rest |
-| 10.3 | Validate + round-trip | re-import via Arazzo path | export,validation | Y | N | S | objectified-rest |
-| 10.4 | Arazzo target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex | Y | N | S | objectified-ui,objectified-cli |
+| 10.1 | Arazzo emitter | model workflows → Arazzo description | export,multi-protocol | N | N | M | apiome-rest |
+| 10.2 | Arazzo fidelity pack | non-workflow sources → near-empty/DROP | export,multi-protocol | N | N | S | apiome-rest |
+| 10.3 | Validate + round-trip | re-import via Arazzo path | export,validation | Y | N | S | apiome-rest |
+| 10.4 | Arazzo target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
 
 *(Adapter template. Key fidelity note: Arazzo is workflow-only — exporting a plain REST/RPC/event API yields only whatever sequencing exists; the engine should warn "this target captures workflows, not the full API surface".)*
 
@@ -568,11 +568,11 @@ Source: https://www.asyncapi.com/docs/reference/specification/v3.1.0
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 11.1 | AsyncAPI emitter | model channels/operations/messages → AsyncAPI 3 (+2 opt) | export,multi-protocol,mvp | N | Y | M | objectified-rest |
-| 11.2 | AsyncAPI fidelity pack | REST/RPC→message reframing; HTTP semantics DROP | export,multi-protocol,mvp | N | Y | S | objectified-rest |
-| 11.3 | Multi-version (2.6/3.0/3.1) | emit per requested version; 3→2 downgrade losses | export,multi-protocol | Y | N | S | objectified-rest |
-| 11.4 | Validate + round-trip | re-import via MFI AsyncAPI parser; diff | export,validation,mvp | Y | Y | S | objectified-rest |
-| 11.5 | AsyncAPI target card + CLI + fixtures | UI/CLI + fixtures; supersede #222/#2866 | export,ui,devex,mvp | Y | Y | S | objectified-ui,objectified-cli |
+| 11.1 | AsyncAPI emitter | model channels/operations/messages → AsyncAPI 3 (+2 opt) | export,multi-protocol,mvp | N | Y | M | apiome-rest |
+| 11.2 | AsyncAPI fidelity pack | REST/RPC→message reframing; HTTP semantics DROP | export,multi-protocol,mvp | N | Y | S | apiome-rest |
+| 11.3 | Multi-version (2.6/3.0/3.1) | emit per requested version; 3→2 downgrade losses | export,multi-protocol | Y | N | S | apiome-rest |
+| 11.4 | Validate + round-trip | re-import via MFI AsyncAPI parser; diff | export,validation,mvp | Y | Y | S | apiome-rest |
+| 11.5 | AsyncAPI target card + CLI + fixtures | UI/CLI + fixtures; supersede #222/#2866 | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 
 ### MFX-11.1 — AsyncAPI emitter  ·  **#3874**
 - **Solution / Scope.** Map canonical channels/operations/messages → AsyncAPI 3.1 (servers, channels, operations action send/receive, messages with payload schema). For REST/RPC sources, reframe operations as request/reply messages (flagged APPROX by 11.2). Reuse `@asyncapi/parser` (via toolchain runner) to validate output.
@@ -586,7 +586,7 @@ Source: https://www.asyncapi.com/docs/reference/specification/v3.1.0
 - **Dependencies / Parallelism.** After 11.1, 2.3. Parallel with 11.4.
 - **Technical Stack.** Python.
 
-*(11.3 multi-version downgrade losses; 11.4 round-trip validation; 11.5 target card + `objectified export asyncapi` + fixtures, **superseding the closed #222 and MCP #2866**.)*
+*(11.3 multi-version downgrade losses; 11.4 round-trip validation; 11.5 target card + `apiome export asyncapi` + fixtures, **superseding the closed #222 and MCP #2866**.)*
 
 ---
 
@@ -599,11 +599,11 @@ Sources: https://protobuf.dev/ · https://buf.build/docs/
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 12.1 | Protobuf emitter | model services/methods/types → `.proto` (+ descriptor) | export,multi-protocol,mvp | N | Y | L | objectified-rest |
-| 12.2 | Stable field-number assignment | deterministic, persisted field numbers (SYNTH) | export,multi-protocol,version-control,mvp | N | Y | M | objectified-rest |
-| 12.3 | Protobuf fidelity pack | unions/nullability/constraints/inheritance loss | export,multi-protocol,mvp | N | Y | M | objectified-rest |
-| 12.4 | Multi-file packaging + validate | per-package files + imports; `buf build` validate | export,rest,validation,mvp | Y | Y | M | objectified-rest |
-| 12.5 | gRPC target card + CLI + fixtures | UI/CLI + round-trip fixtures | export,ui,devex,mvp | Y | Y | S | objectified-ui,objectified-cli |
+| 12.1 | Protobuf emitter | model services/methods/types → `.proto` (+ descriptor) | export,multi-protocol,mvp | N | Y | L | apiome-rest |
+| 12.2 | Stable field-number assignment | deterministic, persisted field numbers (SYNTH) | export,multi-protocol,version-control,mvp | N | Y | M | apiome-rest |
+| 12.3 | Protobuf fidelity pack | unions/nullability/constraints/inheritance loss | export,multi-protocol,mvp | N | Y | M | apiome-rest |
+| 12.4 | Multi-file packaging + validate | per-package files + imports; `buf build` validate | export,rest,validation,mvp | Y | Y | M | apiome-rest |
+| 12.5 | gRPC target card + CLI + fixtures | UI/CLI + round-trip fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 
 ### MFX-12.1 — Protobuf emitter  ·  **#3879**
 - **Solution / Scope.** Map services→`service`, operations→`rpc` (streaming flags), types→`message`/`enum`, fields→typed fields. Emit `.proto` (and optionally a `FileDescriptorSet`). Map canonical types → proto scalar/message types; arrays→`repeated`; maps→`map`; optionals→proto3 `optional`.
@@ -625,7 +625,7 @@ Sources: https://protobuf.dev/ · https://buf.build/docs/
 - **Dependencies / Parallelism.** After 12.1, 2.3. Parallel with 12.4.
 - **Technical Stack.** Python.
 
-*(12.4 multi-file packaging (per-package + imports) + `buf build` validation; 12.5 target card + `objectified export grpc` + round-trip fixtures. Coordinate with #1384/#1427.)*
+*(12.4 multi-file packaging (per-package + imports) + `buf build` validation; 12.5 target card + `apiome export grpc` + round-trip fixtures. Coordinate with #1384/#1427.)*
 
 ---
 
@@ -637,11 +637,11 @@ Sources: https://spec.graphql.org/September2025/ · `graphql-core` `print_schema
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 13.1 | GraphQL SDL emitter | model → SDL (Query/Mutation/types) via graphql-core | export,multi-protocol,python,mvp | N | Y | M | objectified-rest |
-| 13.2 | Input/output type splitting | derive input types; map operations→fields | export,multi-protocol,mvp | N | Y | M | objectified-rest |
-| 13.3 | GraphQL fidelity pack | HTTP semantics DROP; constraints→custom scalars | export,multi-protocol,mvp | N | Y | S | objectified-rest |
-| 13.4 | Validate + round-trip | `build_schema` validate; re-import diff | export,validation,mvp | Y | Y | S | objectified-rest |
-| 13.5 | GraphQL target card + CLI + fixtures | UI/CLI + fixtures; supersede #221/#2214 | export,ui,devex,mvp | Y | Y | S | objectified-ui,objectified-cli |
+| 13.1 | GraphQL SDL emitter | model → SDL (Query/Mutation/types) via graphql-core | export,multi-protocol,python,mvp | N | Y | M | apiome-rest |
+| 13.2 | Input/output type splitting | derive input types; map operations→fields | export,multi-protocol,mvp | N | Y | M | apiome-rest |
+| 13.3 | GraphQL fidelity pack | HTTP semantics DROP; constraints→custom scalars | export,multi-protocol,mvp | N | Y | S | apiome-rest |
+| 13.4 | Validate + round-trip | `build_schema` validate; re-import diff | export,validation,mvp | Y | Y | S | apiome-rest |
+| 13.5 | GraphQL target card + CLI + fixtures | UI/CLI + fixtures; supersede #221/#2214 | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 
 ### MFX-13.1 — GraphQL SDL emitter  ·  **#3884**
 - **Solution / Scope.** Map canonical types→GraphQL types (object/interface/union/enum/scalar), operations→`Query`/`Mutation` fields (read vs write heuristic), preserving nullability/list wrappers. Serialize via `graphql-core` `print_schema` (guarantees validity).
@@ -657,7 +657,7 @@ Sources: https://spec.graphql.org/September2025/ · `graphql-core` `print_schema
 - **Dependencies / Parallelism.** After 13.1. Blocks 13.4.
 - **Technical Stack.** Python.
 
-*(13.3 fidelity (HTTP method/path/status/headers DROP; pattern/min/max → custom scalar APPROX; oneOf→union if shape allows); 13.4 round-trip validate; 13.5 target card + `objectified export graphql` + fixtures, **superseding closed #221** and feeding #2214.)*
+*(13.3 fidelity (HTTP method/path/status/headers DROP; pattern/min/max → custom scalar APPROX; oneOf→union if shape allows); 13.4 round-trip validate; 13.5 target card + `apiome export graphql` + fixtures, **superseding closed #221** and feeding #2214.)*
 
 ---
 
@@ -668,11 +668,11 @@ loses examples; very verbose; needs WSDL+XSD multi-file.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 14.1 | WSDL+XSD emitter | model → WSDL 1.1 + XSD types (doc/literal) | export,multi-protocol | N | N | L | objectified-rest |
-| 14.2 | WSDL fidelity pack | JSON→XSD mapping losses; example/constraint DROP | export,multi-protocol | N | N | M | objectified-rest |
-| 14.3 | Multi-file packaging + validate | WSDL + XSDs zip; WS-I check | export,rest,validation | Y | N | M | objectified-rest |
-| 14.4 | WSDL target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex | Y | N | S | objectified-ui,objectified-cli |
-| 14.5 · #4182 | WSDL 2.0 output option | 2.0 mode (interface/binding/service); reuses shared XSD mapping (22.1) | export,multi-protocol,rest | Y | N | S | objectified-rest |
+| 14.1 | WSDL+XSD emitter | model → WSDL 1.1 + XSD types (doc/literal) | export,multi-protocol | N | N | L | apiome-rest |
+| 14.2 | WSDL fidelity pack | JSON→XSD mapping losses; example/constraint DROP | export,multi-protocol | N | N | M | apiome-rest |
+| 14.3 | Multi-file packaging + validate | WSDL + XSDs zip; WS-I check | export,rest,validation | Y | N | M | apiome-rest |
+| 14.4 | WSDL target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
+| 14.5 · #4182 | WSDL 2.0 output option | 2.0 mode (interface/binding/service); reuses shared XSD mapping (22.1) | export,multi-protocol,rest | Y | N | S | apiome-rest |
 
 *(Adapter template. Fidelity: prefer document/literal (WS-I); map types→XSD (`xs:choice`/`nillable`/facets); arrays→`maxOccurs`; loses JSON-only constructs + examples. Multi-file WSDL+XSD bundle.)*
 
@@ -685,10 +685,10 @@ TypeSpec is normally a **source** IDL, not a target. Emit `.tsp` by reverse-mapp
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 15.1 | TypeSpec emitter | model → `.tsp` (models/operations/interfaces) | export,multi-protocol,typescript | N | N | M | objectified-rest |
-| 15.2 | TypeSpec fidelity pack | non-REST losses; decorator coverage | export,multi-protocol | N | N | S | objectified-rest |
-| 15.3 | Validate (tsp compile) | compile emitted `.tsp` → OpenAPI to validate | export,validation | Y | N | S | objectified-rest |
-| 15.4 | TypeSpec target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex | Y | N | S | objectified-ui,objectified-cli |
+| 15.1 | TypeSpec emitter | model → `.tsp` (models/operations/interfaces) | export,multi-protocol,typescript | N | N | M | apiome-rest |
+| 15.2 | TypeSpec fidelity pack | non-REST losses; decorator coverage | export,multi-protocol | N | N | S | apiome-rest |
+| 15.3 | Validate (tsp compile) | compile emitted `.tsp` → OpenAPI to validate | export,validation | Y | N | S | apiome-rest |
+| 15.4 | TypeSpec target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
 
 *(Adapter template. Validate by compiling the emitted `.tsp` via the toolchain runner and round-tripping the OpenAPI. Note: TypeSpec→back is unusual; consider reusing `@typespec/openapi3` inverse / community openapi3-to-typespec.)*
 
@@ -701,10 +701,10 @@ system is constrained.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 16.1 | CSDL emitter | model → CSDL JSON (+XML) 4.01 | export,multi-protocol | N | N | M | objectified-rest |
-| 16.2 | OData fidelity pack | keyless types, RPC/event DROP, type coercion | export,multi-protocol | N | N | M | objectified-rest |
-| 16.3 | Validate (OASIS schema) | validate emitted CSDL; round-trip | export,validation | Y | N | S | objectified-rest |
-| 16.4 | OData target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex | Y | N | S | objectified-ui,objectified-cli |
+| 16.1 | CSDL emitter | model → CSDL JSON (+XML) 4.01 | export,multi-protocol | N | N | M | apiome-rest |
+| 16.2 | OData fidelity pack | keyless types, RPC/event DROP, type coercion | export,multi-protocol | N | N | M | apiome-rest |
+| 16.3 | Validate (OASIS schema) | validate emitted CSDL; round-trip | export,validation | Y | N | S | apiome-rest |
+| 16.4 | OData target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
 
 *(Adapter template. Fidelity: entities need a `$Key` — synthesize/flag where absent; non-CRUD operations → Functions/Actions or DROP; CSDL primitive coercion; emit CSDL JSON canonical + optional XML.)*
 
@@ -716,10 +716,10 @@ RAML 1.0 REST-only target (dormant). Loses RPC/event/graph entirely; YAML; resol
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 17.1 | RAML emitter | model (REST) → RAML 1.0 (via AMF or direct) | export,multi-protocol | N | N | M | objectified-rest |
-| 17.2 | RAML fidelity pack | non-REST DROP; type/trait coverage | export,multi-protocol | N | N | S | objectified-rest |
-| 17.3 | Validate (AMF) | validate emitted RAML via AMF | export,validation | Y | N | S | objectified-rest |
-| 17.4 | RAML target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex | Y | N | S | objectified-ui,objectified-cli |
+| 17.1 | RAML emitter | model (REST) → RAML 1.0 (via AMF or direct) | export,multi-protocol | N | N | M | apiome-rest |
+| 17.2 | RAML fidelity pack | non-REST DROP; type/trait coverage | export,multi-protocol | N | N | S | apiome-rest |
+| 17.3 | Validate (AMF) | validate emitted RAML via AMF | export,validation | Y | N | S | apiome-rest |
+| 17.4 | RAML target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
 
 *(Adapter template, legacy. Non-REST sources warn "RAML captures REST only". Prefer AMF for emit+validate.)*
 
@@ -731,10 +731,10 @@ Markdown + MSON, REST-only, archived. Highly lossy; primarily a documentation ex
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 18.1 | API Blueprint emitter | model (REST) → `.apib` (Markdown + MSON) | export,multi-protocol | N | N | M | objectified-rest |
-| 18.2 | API Blueprint fidelity pack | MSON type limits; non-REST + constraint DROP | export,multi-protocol | N | N | S | objectified-rest |
-| 18.3 | Validate (drafter) | parse emitted `.apib` via drafter (0 warnings) | export,validation | Y | N | S | objectified-rest |
-| 18.4 | API Blueprint target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex | Y | N | S | objectified-ui,objectified-cli |
+| 18.1 | API Blueprint emitter | model (REST) → `.apib` (Markdown + MSON) | export,multi-protocol | N | N | M | apiome-rest |
+| 18.2 | API Blueprint fidelity pack | MSON type limits; non-REST + constraint DROP | export,multi-protocol | N | N | S | apiome-rest |
+| 18.3 | Validate (drafter) | parse emitted `.apib` via drafter (0 warnings) | export,validation | Y | N | S | apiome-rest |
+| 18.4 | API Blueprint target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
 
 *(Adapter template, legacy. Position as a human-readable doc export; MSON can't express rich constraints (DROP); validate via drafter.)*
 
@@ -749,12 +749,12 @@ Sources: https://avro.apache.org/docs/1.12.0/specification/ · https://docs.conf
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 19.1 | Avro emitter | model types → `.avsc` (records/enums/unions/logical) | export,multi-protocol,mvp | N | Y | M | objectified-rest |
-| 19.2 | Avro fidelity pack | operations DROP (types-only); constraints DROP | export,multi-protocol,mvp | N | Y | M | objectified-rest |
-| 19.3 | Subjects & defaults | per-type subjects; defaults for evolution; naming | export,multi-protocol,registry,mvp | N | Y | M | objectified-rest |
-| 19.4 | Validate + (push) | validate `.avsc`; optional register to Schema Registry | export,validation,registry | Y | N | M | objectified-rest |
-| 19.5 | Avro target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex,mvp | Y | Y | S | objectified-ui,objectified-cli |
-| 19.6 · #4183 | Multi-format Schema Registry subjects | publish JSON Schema (21.1) + Protobuf (12.1) subjects, not just Avro | export,registry,integrations | Y | N | M | objectified-rest |
+| 19.1 | Avro emitter | model types → `.avsc` (records/enums/unions/logical) | export,multi-protocol,mvp | N | Y | M | apiome-rest |
+| 19.2 | Avro fidelity pack | operations DROP (types-only); constraints DROP | export,multi-protocol,mvp | N | Y | M | apiome-rest |
+| 19.3 | Subjects & defaults | per-type subjects; defaults for evolution; naming | export,multi-protocol,registry,mvp | N | Y | M | apiome-rest |
+| 19.4 | Validate + (push) | validate `.avsc`; optional register to Schema Registry | export,validation,registry | Y | N | M | apiome-rest |
+| 19.5 | Avro target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
+| 19.6 · #4183 | Multi-format Schema Registry subjects | publish JSON Schema (21.1) + Protobuf (12.1) subjects, not just Avro | export,registry,integrations | Y | N | M | apiome-rest |
 
 ### MFX-19.1 — Avro emitter  ·  **#3909**
 - **Solution / Scope.** Map canonical types → Avro records/enums/arrays/maps/unions/fixed; nullability → `["null", T]` unions; dates/decimals → logical types; names sanitized to Avro rules. **Operations/endpoints have no Avro representation** → excluded (reported by 19.2).
@@ -769,7 +769,7 @@ Sources: https://avro.apache.org/docs/1.12.0/specification/ · https://docs.conf
 - **Dependencies / Parallelism.** After 19.1, 2.3. Parallel with 19.3.
 - **Technical Stack.** Python.
 
-*(19.3 per-type subjects + evolution defaults + naming strategy; 19.4 validate + optional **push to a live Confluent Schema Registry** (reuse import registry client in reverse, v2 for push); 19.5 target card + `objectified export avro` + fixtures. Coordinate with #239/#2776/#3489.)*
+*(19.3 per-type subjects + evolution defaults + naming strategy; 19.4 validate + optional **push to a live Confluent Schema Registry** (reuse import registry client in reverse, v2 for push); 19.5 target card + `apiome export avro` + fixtures. Coordinate with #239/#2776/#3489.)*
 
 ---
 
@@ -780,10 +780,10 @@ emit JSON AST (canonical) and/or `.smithy` IDL.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 20.1 | Smithy emitter | model → JSON AST + `.smithy` (services/ops/shapes/traits) | export,multi-protocol | N | N | M | objectified-rest |
-| 20.2 | Smithy fidelity pack | trait coverage; protocol-binding gaps | export,multi-protocol | N | N | S | objectified-rest |
-| 20.3 | Validate (smithy build) | validate emitted model via Smithy CLI | export,validation | Y | N | S | objectified-rest |
-| 20.4 | Smithy target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex | Y | N | S | objectified-ui,objectified-cli |
+| 20.1 | Smithy emitter | model → JSON AST + `.smithy` (services/ops/shapes/traits) | export,multi-protocol | N | N | M | apiome-rest |
+| 20.2 | Smithy fidelity pack | trait coverage; protocol-binding gaps | export,multi-protocol | N | N | S | apiome-rest |
+| 20.3 | Validate (smithy build) | validate emitted model via Smithy CLI | export,validation | Y | N | S | apiome-rest |
+| 20.4 | Smithy target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
 
 *(Adapter template. Smithy is high-fidelity: constraints→constraint traits, nullability→`@default`/`@required`; map paradigm bindings via protocol traits where possible; validate via `smithy build` (toolchain runner).)*
 
@@ -810,11 +810,11 @@ type model is JSON-Schema-based), so it is also the cheapest high-value emitter.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 21.1 · #4126 | JSON Schema emitter | types → 2020-12 bundle ($defs) or per-type files; draft-07/-04 downgrades | export,multi-protocol,rest,python | N | N | M | objectified-rest |
-| 21.2 · #4127 | JSON Schema fidelity pack | operations DROP (types-only); draft-downgrade keyword losses | export,multi-protocol,python | N | N | S | objectified-rest |
-| 21.3 · #4128 | JTD (RFC 8927) output mode | strict codegen-friendly sibling; heavy APPROX | export,multi-protocol,python | Y | N | S | objectified-rest |
-| 21.4 · #4129 | Validate + round-trip | metaschema check + re-import via MFI JSON Schema path | export,validation | Y | N | S | objectified-rest |
-| 21.5 · #4130 | Target card + CLI + fixtures | UI/CLI/browse + fixtures; feeds 19.6 | export,ui,devex | Y | N | S | objectified-ui,objectified-cli |
+| 21.1 · #4126 | JSON Schema emitter | types → 2020-12 bundle ($defs) or per-type files; draft-07/-04 downgrades | export,multi-protocol,rest,python | N | N | M | apiome-rest |
+| 21.2 · #4127 | JSON Schema fidelity pack | operations DROP (types-only); draft-downgrade keyword losses | export,multi-protocol,python | N | N | S | apiome-rest |
+| 21.3 · #4128 | JTD (RFC 8927) output mode | strict codegen-friendly sibling; heavy APPROX | export,multi-protocol,python | Y | N | S | apiome-rest |
+| 21.4 · #4129 | Validate + round-trip | metaschema check + re-import via MFI JSON Schema path | export,validation | Y | N | S | apiome-rest |
+| 21.5 · #4130 | Target card + CLI + fixtures | UI/CLI/browse + fixtures; feeds 19.6 | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
 
 ## MFX-EPIC-22 — XML Schema (XSD) emitter (standalone) · v2-front  ·  **#4131**
 
@@ -824,12 +824,12 @@ standards bodies want standalone XSDs. Promotes the type→XSD mapping to a shar
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 22.1 · #4132 | Standalone XSD emitter | types → XSD 1.0/1.1 (choice/nillable/facets); shared with WSDL emitter | export,multi-protocol,rest,python | N | N | M | objectified-rest |
-| 22.2 · #4133 | XSD fidelity pack | untyped maps→xs:any APPROX; operations DROP (standalone) | export,multi-protocol,python | N | N | S | objectified-rest |
-| 22.3 · #4134 | RELAX NG + DTD output modes | lossier XML-schema dialects for older toolchains | export,multi-protocol,python | Y | N | S | objectified-rest |
-| 22.4 · #4135 | ISO 20022 message profile | payments/banking message-schema conventions atop XSD | export,multi-protocol,integrations | Y | N | M | objectified-rest |
-| 22.5 · #4136 | Validate + round-trip | xmlschema full check (no MFI standalone-XSD importer) | export,validation | Y | N | S | objectified-rest |
-| 22.6 · #4137 | Target card + CLI + fixtures | UI/CLI/browse + fixtures | export,ui,devex | Y | N | S | objectified-ui,objectified-cli |
+| 22.1 · #4132 | Standalone XSD emitter | types → XSD 1.0/1.1 (choice/nillable/facets); shared with WSDL emitter | export,multi-protocol,rest,python | N | N | M | apiome-rest |
+| 22.2 · #4133 | XSD fidelity pack | untyped maps→xs:any APPROX; operations DROP (standalone) | export,multi-protocol,python | N | N | S | apiome-rest |
+| 22.3 · #4134 | RELAX NG + DTD output modes | lossier XML-schema dialects for older toolchains | export,multi-protocol,python | Y | N | S | apiome-rest |
+| 22.4 · #4135 | ISO 20022 message profile | payments/banking message-schema conventions atop XSD | export,multi-protocol,integrations | Y | N | M | apiome-rest |
+| 22.5 · #4136 | Validate + round-trip | xmlschema full check (no MFI standalone-XSD importer) | export,validation | Y | N | S | apiome-rest |
+| 22.6 · #4137 | Target card + CLI + fixtures | UI/CLI/browse + fixtures | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
 
 ## MFX-EPIC-23 — COBOL Copybook emitter (mainframe) · v2  ·  **#4138**
 
@@ -839,11 +839,11 @@ No mainstream catalog competitor offers this.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 23.1 · #4139 | COBOL copybook emitter | types → 01-level layouts; PIC synthesis; OCCURS; name mangling | export,multi-protocol,mainframe,rest,python | N | N | L | objectified-rest |
-| 23.2 · #4140 | Copybook fidelity pack | SYNTH lengths/counters/renames; unions→REDEFINES; ops DROP | export,multi-protocol,mainframe,python | N | N | M | objectified-rest |
-| 23.3 · #4141 | PL/I include output mode | DCL structures for PL/I shops; shares layout model | export,multi-protocol,mainframe,python | Y | N | S | objectified-rest |
-| 23.4 · #4142 | Validate (cb2xml) | parse-validate every emitted copybook via toolchain runner | export,validation,mainframe | Y | N | S | objectified-rest |
-| 23.5 · #4143 | Target card + CLI + fixtures | UI/CLI/browse + fixtures (--pli mode) | export,ui,devex,mainframe | Y | N | S | objectified-ui,objectified-cli |
+| 23.1 · #4139 | COBOL copybook emitter | types → 01-level layouts; PIC synthesis; OCCURS; name mangling | export,multi-protocol,mainframe,rest,python | N | N | L | apiome-rest |
+| 23.2 · #4140 | Copybook fidelity pack | SYNTH lengths/counters/renames; unions→REDEFINES; ops DROP | export,multi-protocol,mainframe,python | N | N | M | apiome-rest |
+| 23.3 · #4141 | PL/I include output mode | DCL structures for PL/I shops; shares layout model | export,multi-protocol,mainframe,python | Y | N | S | apiome-rest |
+| 23.4 · #4142 | Validate (cb2xml) | parse-validate every emitted copybook via toolchain runner | export,validation,mainframe | Y | N | S | apiome-rest |
+| 23.5 · #4143 | Target card + CLI + fixtures | UI/CLI/browse + fixtures (--pli mode) | export,ui,devex,mainframe | Y | N | S | apiome-ui,apiome-cli |
 
 ## MFX-EPIC-24 — EDI emitters (ANSI X12 & UN/EDIFACT) · v2  ·  **#4144**
 
@@ -853,11 +853,11 @@ reuses the critical-advisory tier proven on Avro.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 24.1 · #4145 | X12 implementation-guide emitter | types → transaction-set guide (segments/elements/codes) | export,multi-protocol,edi,rest,python | N | N | L | objectified-rest |
-| 24.2 · #4146 | UN/EDIFACT message-guide emitter | shared guide core; ORDERS/INVOIC etc. | export,multi-protocol,edi,python | N | N | M | objectified-rest |
-| 24.3 · #4147 | EDI fidelity pack | ops DROP; deep nesting flatten; lengths/codes SYNTH | export,multi-protocol,edi,python | N | N | M | objectified-rest |
-| 24.4 · #4148 | Validate emitted guides | structural + pyx12/bots spot-checks | export,validation,edi | Y | N | S | objectified-rest |
-| 24.5 · #4149 | Target cards + CLI + fixtures | X12 + EDIFACT cards, CLI, fixtures | export,ui,devex,edi | Y | N | S | objectified-ui,objectified-cli |
+| 24.1 · #4145 | X12 implementation-guide emitter | types → transaction-set guide (segments/elements/codes) | export,multi-protocol,edi,rest,python | N | N | L | apiome-rest |
+| 24.2 · #4146 | UN/EDIFACT message-guide emitter | shared guide core; ORDERS/INVOIC etc. | export,multi-protocol,edi,python | N | N | M | apiome-rest |
+| 24.3 · #4147 | EDI fidelity pack | ops DROP; deep nesting flatten; lengths/codes SYNTH | export,multi-protocol,edi,python | N | N | M | apiome-rest |
+| 24.4 · #4148 | Validate emitted guides | structural + pyx12/bots spot-checks | export,validation,edi | Y | N | S | apiome-rest |
+| 24.5 · #4149 | Target cards + CLI + fixtures | X12 + EDIFACT cards, CLI, fixtures | export,ui,devex,edi | Y | N | S | apiome-ui,apiome-cli |
 
 ## MFX-EPIC-25 — Apache Thrift emitter · v2  ·  **#4150**
 
@@ -866,11 +866,11 @@ Still heavily used (Meta-lineage stacks, Hive/Impala metastores). Same shape as 
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 25.1 · #4151 | Thrift IDL emitter | struct/enum/typedef/union/service → .thrift | export,multi-protocol,rest,python | N | N | M | objectified-rest |
-| 25.2 · #4152 | Stable field-id assignment | generalize/reuse 12.2 persisted id store | export,multi-protocol,version-control,python | N | N | S | objectified-rest |
-| 25.3 · #4153 | Thrift fidelity pack | constraints→comments; HTTP/event DROP; ids SYNTH | export,multi-protocol,python | N | N | S | objectified-rest |
-| 25.4 · #4154 | Validate + round-trip | thrift compile + thriftpy2 parse (no MFI importer) | export,validation | Y | N | S | objectified-rest |
-| 25.5 · #4155 | Target card + CLI + fixtures | UI/CLI/browse + id-stability fixture | export,ui,devex | Y | N | S | objectified-ui,objectified-cli |
+| 25.1 · #4151 | Thrift IDL emitter | struct/enum/typedef/union/service → .thrift | export,multi-protocol,rest,python | N | N | M | apiome-rest |
+| 25.2 · #4152 | Stable field-id assignment | generalize/reuse 12.2 persisted id store | export,multi-protocol,version-control,python | N | N | S | apiome-rest |
+| 25.3 · #4153 | Thrift fidelity pack | constraints→comments; HTTP/event DROP; ids SYNTH | export,multi-protocol,python | N | N | S | apiome-rest |
+| 25.4 · #4154 | Validate + round-trip | thrift compile + thriftpy2 parse (no MFI importer) | export,validation | Y | N | S | apiome-rest |
+| 25.5 · #4155 | Target card + CLI + fixtures | UI/CLI/browse + id-stability fixture | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
 
 ## MFX-EPIC-26 — Healthcare emitters (FHIR StructureDefinition & HL7 v2) · v2  ·  **#4156**
 
@@ -880,11 +880,11 @@ integration engines.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 26.1 · #4157 | FHIR StructureDefinition emitter | logical models R4/R5; enums→ValueSet/CodeSystem; opt. CapabilityStatement | export,multi-protocol,healthcare,rest,python | N | N | L | objectified-rest |
-| 26.2 · #4158 | FHIR fidelity pack | ops DROP/CapabilityStatement APPROX; oneOf→value[x] | export,multi-protocol,healthcare,python | N | N | M | objectified-rest |
-| 26.3 · #4159 | HL7 v2 segment-definition emitter | segment/field guides (shares 24.x guide infra) | export,multi-protocol,healthcare,python | Y | N | M | objectified-rest |
-| 26.4 · #4160 | Validate (official FHIR validator) | gate delivery via toolchain runner | export,validation,healthcare | Y | N | S | objectified-rest |
-| 26.5 · #4161 | Target cards + CLI + fixtures | FHIR + HL7 v2 cards, CLI, fixtures | export,ui,devex,healthcare | Y | N | S | objectified-ui,objectified-cli |
+| 26.1 · #4157 | FHIR StructureDefinition emitter | logical models R4/R5; enums→ValueSet/CodeSystem; opt. CapabilityStatement | export,multi-protocol,healthcare,rest,python | N | N | L | apiome-rest |
+| 26.2 · #4158 | FHIR fidelity pack | ops DROP/CapabilityStatement APPROX; oneOf→value[x] | export,multi-protocol,healthcare,python | N | N | M | apiome-rest |
+| 26.3 · #4159 | HL7 v2 segment-definition emitter | segment/field guides (shares 24.x guide infra) | export,multi-protocol,healthcare,python | Y | N | M | apiome-rest |
+| 26.4 · #4160 | Validate (official FHIR validator) | gate delivery via toolchain runner | export,validation,healthcare | Y | N | S | apiome-rest |
+| 26.5 · #4161 | Target cards + CLI + fixtures | FHIR + HL7 v2 cards, CLI, fixtures | export,ui,devex,healthcare | Y | N | S | apiome-ui,apiome-cli |
 
 ## MFX-EPIC-27 — ASN.1 module emitter · v2  ·  **#4162**
 
@@ -893,10 +893,10 @@ subtype notation) — one of the few targets where pattern/min/max survive. Type
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 27.1 · #4163 | ASN.1 emitter | SEQUENCE/CHOICE/ENUMERATED + subtype constraints | export,multi-protocol,mainframe,rest,python | N | N | M | objectified-rest |
-| 27.2 · #4164 | ASN.1 fidelity pack | ops DROP; maps DROP/APPROX; constraints largely OK | export,multi-protocol,mainframe,python | N | N | S | objectified-rest |
-| 27.3 · #4165 | Validate (asn1tools) | compile every emitted module | export,validation,mainframe | Y | N | S | objectified-rest |
-| 27.4 · #4166 | Target card + CLI + fixtures | UI/CLI/browse + fixtures | export,ui,devex,mainframe | Y | N | S | objectified-ui,objectified-cli |
+| 27.1 · #4163 | ASN.1 emitter | SEQUENCE/CHOICE/ENUMERATED + subtype constraints | export,multi-protocol,mainframe,rest,python | N | N | M | apiome-rest |
+| 27.2 · #4164 | ASN.1 fidelity pack | ops DROP; maps DROP/APPROX; constraints largely OK | export,multi-protocol,mainframe,python | N | N | S | apiome-rest |
+| 27.3 · #4165 | Validate (asn1tools) | compile every emitted module | export,validation,mainframe | Y | N | S | apiome-rest |
+| 27.4 · #4166 | Target card + CLI + fixtures | UI/CLI/browse + fixtures | export,ui,devex,mainframe | Y | N | S | apiome-ui,apiome-cli |
 
 ## MFX-EPIC-28 — OMG IDL emitter (CORBA / DDS) · v3  ·  **#4167**
 
@@ -905,10 +905,10 @@ IDL 4.2 with a DDS profile option (@key/@optional annotations).
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 28.1 · #4168 | OMG IDL emitter | struct/union/enum/interface; DDS profile | export,multi-protocol,mainframe,rest,python | N | N | M | objectified-rest |
-| 28.2 · #4169 | OMG IDL fidelity pack | constraints→comments; events→topics (DDS) or DROP | export,multi-protocol,mainframe,python | N | N | S | objectified-rest |
-| 28.3 · #4170 | Validate (idlc) | parse via cyclonedds idlc / omniidl | export,validation,mainframe | Y | N | S | objectified-rest |
-| 28.4 · #4171 | Target card + CLI + fixtures | UI/CLI/browse + fixtures | export,ui,devex,mainframe | Y | N | S | objectified-ui,objectified-cli |
+| 28.1 · #4168 | OMG IDL emitter | struct/union/enum/interface; DDS profile | export,multi-protocol,mainframe,rest,python | N | N | M | apiome-rest |
+| 28.2 · #4169 | OMG IDL fidelity pack | constraints→comments; events→topics (DDS) or DROP | export,multi-protocol,mainframe,python | N | N | S | apiome-rest |
+| 28.3 · #4170 | Validate (idlc) | parse via cyclonedds idlc / omniidl | export,validation,mainframe | Y | N | S | apiome-rest |
+| 28.4 · #4171 | Target card + CLI + fixtures | UI/CLI/browse + fixtures | export,ui,devex,mainframe | Y | N | S | apiome-ui,apiome-cli |
 
 ## MFX-EPIC-29 — Legacy REST descriptors (WADL & Google Discovery) · v3  ·  **#4172**
 
@@ -917,10 +917,10 @@ Google API Discovery document (generated-client tooling; draft-04 subset via 21.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 29.1 · #4173 | WADL emitter | resources/methods + XSD grammars (from 22.1) | export,multi-protocol,python | N | N | M | objectified-rest |
-| 29.2 · #4174 | Google Discovery emitter | resources/methods/schemas (draft-04 subset from 21.1) | export,multi-protocol,python | Y | N | M | objectified-rest |
-| 29.3 · #4175 | Fidelity packs + validation | non-REST DROP ("REST only"); schema/metaschema checks | export,multi-protocol,validation,python | N | N | S | objectified-rest |
-| 29.4 · #4176 | Target cards + CLI + fixtures | UI/CLI/browse + fixtures | export,ui,devex | Y | N | S | objectified-ui,objectified-cli |
+| 29.1 · #4173 | WADL emitter | resources/methods + XSD grammars (from 22.1) | export,multi-protocol,python | N | N | M | apiome-rest |
+| 29.2 · #4174 | Google Discovery emitter | resources/methods/schemas (draft-04 subset from 21.1) | export,multi-protocol,python | Y | N | M | apiome-rest |
+| 29.3 · #4175 | Fidelity packs + validation | non-REST DROP ("REST only"); schema/metaschema checks | export,multi-protocol,validation,python | N | N | S | apiome-rest |
+| 29.4 · #4176 | Target cards + CLI + fixtures | UI/CLI/browse + fixtures | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
 
 ## MFX-EPIC-30 — Serialization IDL emitters (FlatBuffers & Cap'n Proto) · v3  ·  **#4177**
 
@@ -929,10 +929,10 @@ field-identity store (12.2/25.2); Cap'n Proto also needs a stable @0x file id (S
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 30.1 · #4178 | FlatBuffers schema emitter | table/struct/enum/union → .fbs; persisted ids | export,multi-protocol,python | N | N | M | objectified-rest |
-| 30.2 · #4179 | Cap'n Proto schema emitter | struct @N ordinals + stable file id → .capnp | export,multi-protocol,python | Y | N | M | objectified-rest |
-| 30.3 · #4180 | Fidelity packs + compile validation | constraints/ops losses; flatc/capnp compile | export,multi-protocol,validation,python | N | N | S | objectified-rest |
-| 30.4 · #4181 | Target cards + CLI + fixtures | UI/CLI/browse + id-stability fixtures | export,ui,devex | Y | N | S | objectified-ui,objectified-cli |
+| 30.1 · #4178 | FlatBuffers schema emitter | table/struct/enum/union → .fbs; persisted ids | export,multi-protocol,python | N | N | M | apiome-rest |
+| 30.2 · #4179 | Cap'n Proto schema emitter | struct @N ordinals + stable file id → .capnp | export,multi-protocol,python | Y | N | M | apiome-rest |
+| 30.3 · #4180 | Fidelity packs + compile validation | constraints/ops losses; flatc/capnp compile | export,multi-protocol,validation,python | N | N | S | apiome-rest |
+| 30.4 · #4181 | Target cards + CLI + fixtures | UI/CLI/browse + id-stability fixtures | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
 
 ---
 
@@ -971,7 +971,7 @@ flowchart LR
 
 1. **Fidelity is the product.** The lossiness engine (EPIC-2) + per-target packs are the novel,
    highest-risk, highest-value work. Treat the advisory message as a hard requirement in **both**
-   objectified-ui and objectified-browse (and CLI/REST) — not an afterthought.
+   apiome-ui and apiome-browse (and CLI/REST) — not an afterthought.
 2. **Targets are wildly unequal.** Protobuf/Avro/RAML/API-Blueprint lose a lot; OpenAPI/Smithy/TypeSpec
    lose little. The MVP target set deliberately spans that range so the engine is proven on the worst cases.
 3. **Avro is types-only** and **Arazzo is workflow-only** — exporting an operation-bearing API to Avro,
@@ -1015,7 +1015,7 @@ flowchart LR
 - OMG IDL 4.2 — https://www.omg.org/spec/IDL/4.2 · ISO 20022 — https://www.iso20022.org/
 - WADL — https://www.w3.org/submissions/wadl/ · Google Discovery — https://developers.google.com/discovery/v1/reference/apis
 - FlatBuffers — https://flatbuffers.dev/ · Cap'n Proto — https://capnproto.org/language.html
-- Reused in-repo / sibling roadmap: `ROADMAP_MULTI_FORMAT_IMPORT.md` (MFI umbrella **#3715**, EPIC-2 model, EPIC-5 runner, per-format parsers/linters), `spec_import_engine.py`, `versions`/`quality_*`, `ImportDialog.tsx`/`DashboardSideNav.tsx`, `objectified-browse`, `objectified-cli`, `objectified-db` Flyway.
+- Reused in-repo / sibling roadmap: `ROADMAP_MULTI_FORMAT_IMPORT.md` (MFI umbrella **#3715**, EPIC-2 model, EPIC-5 runner, per-format parsers/linters), `spec_import_engine.py`, `versions`/`quality_*`, `ImportDialog.tsx`/`DashboardSideNav.tsx`, `apiome-browse`, `apiome-cli`, `apiome-db` Flyway.
 
 ---
 

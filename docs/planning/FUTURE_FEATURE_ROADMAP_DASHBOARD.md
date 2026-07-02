@@ -1,4 +1,4 @@
-# Objectified: Dashboard - Feature Roadmap
+# Apiome: Dashboard - Feature Roadmap
 
 > A comprehensive, role-adaptive dashboard system providing personal productivity views, team collaboration overviews, and enterprise-grade executive/compliance dashboards. Every user tier gets a customizable home experience that surfaces the data most relevant to their role.
 >

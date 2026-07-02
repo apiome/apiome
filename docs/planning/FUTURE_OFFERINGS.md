@@ -1,23 +1,23 @@
-# Objectified - Future Product Offerings
+# Apiome - Future Product Offerings
 
 > Comprehensive list of potential future products and enhancements that extend beyond the current roadmap
 > 
-> These offerings leverage Objectified's core capabilities in schema design, API management, data storage, and governance to create new revenue streams and value propositions.
+> These offerings leverage Apiome's core capabilities in schema design, API management, data storage, and governance to create new revenue streams and value propositions.
 >
 > **Created**: January 21, 2026
 
 ---
 
-## 🎓 Objectified: Academy
+## 🎓 Apiome: Academy
 
 **Description**: A comprehensive learning management system (LMS) built around schema design, API development, and data architecture best practices.
 
 **Features**:
 - Interactive courses on schema design fundamentals
-- Certification programs for Objectified platform expertise
+- Certification programs for Apiome platform expertise
 - API design masterclasses with real-world scenarios
 - Gamified learning paths with badges and achievements
-- Hands-on labs with sandboxed Objectified environments
+- Hands-on labs with sandboxed Apiome environments
 - Community-contributed tutorials and walkthroughs
 - Enterprise training programs with custom curricula
 - Integration with HR systems for compliance tracking
@@ -28,9 +28,9 @@
 
 ---
 
-## 🔌 Objectified: Connect
+## 🔌 Apiome: Connect
 
-**Description**: A universal integration hub that connects Objectified schemas to external systems, enabling real-time data synchronization and schema propagation.
+**Description**: A universal integration hub that connects Apiome schemas to external systems, enabling real-time data synchronization and schema propagation.
 
 **Features**:
 - Pre-built connectors for popular platforms:
@@ -52,7 +52,7 @@
 
 ---
 
-## 🧪 Objectified: Test Lab
+## 🧪 Apiome: Test Lab
 
 **Description**: Automated API and schema testing platform with synthetic data generation, contract testing, and performance benchmarking.
 
@@ -87,7 +87,7 @@
 
 ---
 
-## 📊 Objectified: Insights
+## 📊 Apiome: Insights
 
 **Description**: Business intelligence and analytics platform specifically designed for API and schema ecosystems, providing actionable insights for technical and business stakeholders.
 
@@ -121,7 +121,7 @@
 
 ---
 
-## 🛡️ Objectified: Shield
+## 🛡️ Apiome: Shield
 
 **Description**: Advanced security and threat protection platform for APIs and data schemas, providing runtime protection and vulnerability management.
 
@@ -156,15 +156,15 @@
 
 ---
 
-## 🌐 Objectified: Gateway
+## 🌐 Apiome: Gateway
 
-**Description**: A fully managed API gateway that uses Objectified schemas for automatic validation, transformation, and routing.
+**Description**: A fully managed API gateway that uses Apiome schemas for automatic validation, transformation, and routing.
 
 **Features**:
 - **Schema-Driven Validation**:
   - Automatic request/response validation against schemas
   - Type coercion and normalization
-  - Custom validation rules from Objectified
+  - Custom validation rules from Apiome
 - **Traffic Management**:
   - Load balancing with health checks
   - Circuit breaker patterns
@@ -176,7 +176,7 @@
   - Field mapping and filtering
   - Response aggregation from multiple backends
 - **Developer Portal**:
-  - Auto-generated from Objectified schemas
+  - Auto-generated from Apiome schemas
   - Try-it-out functionality
   - API key self-service
   - Usage dashboards for consumers
@@ -190,7 +190,7 @@
 
 ---
 
-## 🤖 Objectified: Copilot
+## 🤖 Apiome: Copilot
 
 **Description**: An AI-powered assistant that goes beyond schema generation to become a full development partner, integrated across the entire software development lifecycle.
 
@@ -223,7 +223,7 @@
 
 ---
 
-## 📦 Objectified: Package Manager
+## 📦 Apiome: Package Manager
 
 **Description**: A package manager and registry specifically for schemas, similar to npm/pip but for data definitions.
 
@@ -241,7 +241,7 @@
 - **Installation Tools**:
   - CLI tool: `obj install @stripe/payment-schemas`
   - IDE integration for schema installation
-  - Automatic import into Objectified projects
+  - Automatic import into Apiome projects
   - Local caching and offline support
 - **Publishing Workflow**:
   - npm-style publishing commands
@@ -258,7 +258,7 @@
 
 ---
 
-## 🔄 Objectified: Sync
+## 🔄 Apiome: Sync
 
 **Description**: Real-time schema synchronization and conflict resolution for distributed teams and multi-region deployments.
 
@@ -281,16 +281,16 @@
 - **External System Sync**:
   - Sync schemas to/from Git repositories
   - Bi-directional sync with database schemas
-  - Keep ORM models in sync with Objectified
+  - Keep ORM models in sync with Apiome
   - CI/CD-triggered synchronization
 
 **Revenue Model**: Per-sync-endpoint pricing, enterprise multi-region packages
 
 ---
 
-## 📱 Objectified: Mobile SDK
+## 📱 Apiome: Mobile SDK
 
-**Description**: Native mobile SDKs that provide type-safe API clients generated directly from Objectified schemas.
+**Description**: Native mobile SDKs that provide type-safe API clients generated directly from Apiome schemas.
 
 **Features**:
 - **Platform Support**:
@@ -321,9 +321,9 @@
 
 ---
 
-## 🏢 Objectified: Enterprise Hub
+## 🏢 Apiome: Enterprise Hub
 
-**Description**: A centralized management console for large enterprises with multiple teams, projects, and Objectified instances.
+**Description**: A centralized management console for large enterprises with multiple teams, projects, and Apiome instances.
 
 **Features**:
 - **Multi-Tenant Management**:
@@ -356,7 +356,7 @@
 
 ---
 
-## 📜 Objectified: Contracts
+## 📜 Apiome: Contracts
 
 **Description**: Smart contract generation and management for API agreements, SLAs, and data sharing between organizations.
 
@@ -390,9 +390,9 @@
 
 ---
 
-## 🎭 Objectified: Mock Server
+## 🎭 Apiome: Mock Server
 
-**Description**: Intelligent mock server that generates realistic API responses based on Objectified schemas without requiring backend implementation.
+**Description**: Intelligent mock server that generates realistic API responses based on Apiome schemas without requiring backend implementation.
 
 **Features**:
 - **Schema-Driven Mocking**:
@@ -425,7 +425,7 @@
 
 ---
 
-## 🔍 Objectified: Diff
+## 🔍 Apiome: Diff
 
 **Description**: Advanced schema comparison and migration planning tool for complex schema evolution scenarios.
 
@@ -460,7 +460,7 @@
 
 ---
 
-## 🌍 Objectified: Localization
+## 🌍 Apiome: Localization
 
 **Description**: Internationalization and localization management for schemas, APIs, and generated documentation.
 
@@ -490,7 +490,7 @@
 
 ---
 
-## 🏗️ Objectified: Architect
+## 🏗️ Apiome: Architect
 
 **Description**: Enterprise architecture tool that provides high-level visualization of system landscapes, service dependencies, and data flow across the organization.
 
@@ -525,7 +525,7 @@
 
 ---
 
-## 🎪 Objectified: Playground
+## 🎪 Apiome: Playground
 
 **Description**: An interactive sandbox environment for experimenting with schemas, APIs, and integrations without affecting production systems.
 
@@ -560,7 +560,7 @@
 
 ---
 
-## 🔮 Objectified: Predict
+## 🔮 Apiome: Predict
 
 **Description**: Predictive analytics and recommendation engine for schema design, leveraging machine learning on anonymized usage patterns across the platform.
 

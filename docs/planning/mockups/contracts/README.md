@@ -14,7 +14,7 @@ no auth, no Docker runtime, no real Stripe charges, no on-chain anchoring.
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/contracts/index.html
+open apiome-ui/public/mockups/contracts/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:
@@ -44,7 +44,7 @@ http://localhost:3000/mockups/contracts/index.html
 
 ## Design system
 
-Mockups intentionally mirror the live `objectified-ui` shell and align with
+Mockups intentionally mirror the live `apiome-ui` shell and align with
 the sibling `mockups/academy`, `mockups/analytics`, `mockups/architect`,
 `mockups/automation`, `mockups/browser`, `mockups/code-gen`,
 `mockups/collaboration`, and `mockups/connect` sets:

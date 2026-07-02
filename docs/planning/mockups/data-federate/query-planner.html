@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Objectified Data Federate — Query Planner</title>
+  <title>Apiome Data Federate — Query Planner</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' };</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -25,7 +25,7 @@
         <div class="w-7 h-7 rounded-md bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
           <i data-lucide="layers" class="w-4 h-4 text-white"></i>
         </div>
-        <span class="text-sm font-semibold">Objectified</span>
+        <span class="text-sm font-semibold">Apiome</span>
       </a>
       <span class="text-xs text-gray-400">/</span>
       <span class="text-sm font-medium text-purple-600 dark:text-purple-400">Data Federate</span>
@@ -46,7 +46,7 @@
     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
       <div>
         <span class="text-xs font-semibold">cross-source-join-v2</span>
-        <span class="text-xs text-gray-400 ml-3 mono">pg_prod × snowflake_dw × objectified · 248ms · 8 rows out</span>
+        <span class="text-xs text-gray-400 ml-3 mono">pg_prod × snowflake_dw × apiome · 248ms · 8 rows out</span>
       </div>
       <div class="flex items-center gap-2">
         <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">74% pushed down</span>
@@ -153,19 +153,19 @@
                 </div>
               </div>
 
-              <!-- LEFT JOIN objectified -->
+              <!-- LEFT JOIN apiome -->
               <div class="ml-4 space-y-1">
                 <div class="plan-node border-violet-400 bg-violet-50 dark:bg-violet-900/15 px-3 py-2 rounded-r-md">
                   <div class="flex items-center justify-between">
                     <span class="font-bold text-violet-700 dark:text-violet-300">HashJoin (LEFT)</span>
                     <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-500 mono">PARTIAL — pred pushed, join local</span>
                   </div>
-                  <div class="text-[10px] text-gray-500 mt-1">customer_id = u.id · objectified filter pushed</div>
+                  <div class="text-[10px] text-gray-500 mt-1">customer_id = u.id · apiome filter pushed</div>
                 </div>
                 <div class="ml-4">
                   <div class="plan-node border-purple-400 bg-purple-50 dark:bg-purple-900/15 px-3 py-2 rounded-r-md">
                     <div class="flex items-center justify-between">
-                      <span class="font-bold text-purple-700 dark:text-purple-300">RemoteScan: objectified.default.User</span>
+                      <span class="font-bold text-purple-700 dark:text-purple-300">RemoteScan: apiome.default.User</span>
                       <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">PUSHED</span>
                     </div>
                     <div class="text-[10px] text-gray-500 mt-1">→ 3,241 rows · 0.8 MB · 8ms</div>
@@ -192,7 +192,7 @@
           <div class="h-2 bg-gray-100 dark:bg-gray-700 rounded-full"><div class="h-2 bg-cyan-400 rounded-full" style="width:34%"></div></div>
         </div>
         <div>
-          <div class="flex justify-between text-xs mb-1"><span class="text-purple-500 mono">objectified scan</span><span class="text-gray-400">8ms (3%)</span></div>
+          <div class="flex justify-between text-xs mb-1"><span class="text-purple-500 mono">apiome scan</span><span class="text-gray-400">8ms (3%)</span></div>
           <div class="h-2 bg-gray-100 dark:bg-gray-700 rounded-full"><div class="h-2 bg-purple-400 rounded-full" style="width:3%"></div></div>
         </div>
         <div>

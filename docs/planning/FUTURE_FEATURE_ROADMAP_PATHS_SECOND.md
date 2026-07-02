@@ -1,6 +1,6 @@
-# Objectified: Paths Designer - Feature Roadmap
+# Apiome: Paths Designer - Feature Roadmap
 
-> A visual canvas for designing, testing, and exporting OpenAPI 3.1 path definitions. The Paths Designer provides a React Flow-based canvas where engineers drag HTTP operation nodes, bind parameters and request bodies, link response schemas to classes, and export production-ready OpenAPI specs — without leaving Objectified.
+> A visual canvas for designing, testing, and exporting OpenAPI 3.1 path definitions. The Paths Designer provides a React Flow-based canvas where engineers drag HTTP operation nodes, bind parameters and request bodies, link response schemas to classes, and export production-ready OpenAPI specs — without leaving Apiome.
 >
 > **Revenue Model**: Core paths designer is included in all tiers; enterprise features (real-time collaboration, audit trail, mock server, multi-spec coordination, advanced export) are Pro/Enterprise-gated; code generation and API gateway integration are Enterprise-only.
 >
@@ -946,7 +946,7 @@ Part of Epic: Enterprise Improvements
 
 Frontend developers need to work against the API design before the backend is built. A one-click mock server starts a local mock service that serves responses based on the current path definitions. Features: example-based responses (from spec examples; fallback to auto-generated data), configurable latency slider (0–5000ms), error simulation (configurable % chance of 4xx/5xx), request validation (validate incoming requests against defined schemas; return 400 on mismatch), mock server URL display in toolbar, live request/response log, dynamic mock rules ("If `userId` is 999, return 404").
 
-The mock server runs as a Docker container managed by the Objectified backend. The container is started/stopped via a WebSocket control API and assigned an ephemeral URL with TLS termination.
+The mock server runs as a Docker container managed by the Apiome backend. The container is started/stopped via a WebSocket control API and assigned an ephemeral URL with TLS termination.
 
 **Acceptance Criteria:**
 - "Start Mock Server" button in toolbar spins up a container within 10 seconds; URL displayed in toolbar
@@ -1056,12 +1056,12 @@ Part of Epic: Enterprise Improvements
 
 (See Epic 2.8 for baseline; this issue extends it with enterprise integration features.)
 
-An embedded preview tab connected to the integrated mock server (P10/5.10). When the mock server is running, "Try It Out" in the embedded Swagger UI automatically routes requests to the mock server URL. Toggle between Swagger UI and ReDoc renderers. Standalone preview URL generates a public or access-controlled read-only documentation page for sharing with stakeholders without requiring an Objectified account.
+An embedded preview tab connected to the integrated mock server (P10/5.10). When the mock server is running, "Try It Out" in the embedded Swagger UI automatically routes requests to the mock server URL. Toggle between Swagger UI and ReDoc renderers. Standalone preview URL generates a public or access-controlled read-only documentation page for sharing with stakeholders without requiring an Apiome account.
 
 **Acceptance Criteria:**
 - When mock server is running (P10 active), "Try It Out" base URL is auto-set to the mock server URL
 - "Try It Out" responses from the mock server show request/response details including artificial latency
-- ReDoc rendering supports all OpenAPI 3.1 features used in Objectified path definitions
+- ReDoc rendering supports all OpenAPI 3.1 features used in Apiome path definitions
 - Standalone preview URL: `GET /projects/{id}/versions/{v}/paths/preview-url` generates a shareable URL
 - Preview URL: accessible without login for public projects; requires `browse:read` token for private projects
 - Preview URL reflects the current spec state (not a snapshot); updates when the spec changes

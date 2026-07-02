@@ -1,7 +1,7 @@
 # Repository Store mockups
 
 Static, browser-openable design mockups for the **Repository Store** feature —
-a Postgres-backed registry of source-code repositories that Objectified users
+a Postgres-backed registry of source-code repositories that Apiome users
 can browse, scan, and selectively import specifications from.
 
 These files are visual references only — no API calls, no auth, no Docker
@@ -12,7 +12,7 @@ runtime, no real Git/GitHub/GitLab traffic, no build step.
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/repositories/index.html
+open apiome-ui/public/mockups/repositories/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:
@@ -48,7 +48,7 @@ Imports / Settings), mirroring the projects-mockup `project.html` pattern.
 ## Feature concept (read this before implementing)
 
 The **Repository Store** is a long-lived, Postgres-backed registry of source
-code repositories that the tenant has connected to Objectified. It is _not_ a
+code repositories that the tenant has connected to Apiome. It is _not_ a
 clone of the source code, and it is _not_ an in-memory cache. Every artifact
 described below MUST be persisted to Postgres — no in-memory stores, no
 per-process caches that would survive a restart silently. Background
@@ -56,12 +56,12 @@ refresh/scan workers update the same Postgres tables.
 
 ### Why does it exist?
 
-Today, Objectified can import a single file (OpenAPI, Arazzo, JSON Schema,
+Today, Apiome can import a single file (OpenAPI, Arazzo, JSON Schema,
 etc.) one upload at a time. The Repository Store inverts that flow:
 
 1. **Connect once.** A user connects a repository — either through one of their
    Linked Accounts (GitHub, GitLab, Bitbucket) or by pasting a public Git URL.
-2. **Scan & catalogue.** Objectified walks the repository tree and stores a
+2. **Scan & catalogue.** Apiome walks the repository tree and stores a
    row per file (path, size, sha, ext, last-modified, branch, commit) in
    Postgres. A lightweight ancillary scan classifies each file _by filename
    only_ (ext + basename heuristics) into a candidate importer kind.
@@ -79,7 +79,7 @@ etc.) one upload at a time. The Repository Store inverts that flow:
    creates a brand-new project seeded from the spec's metadata
    (`info.title`, `info.description`, tags, contact, license, …).
 7. **Import.** Importing creates a new project _version_ named after the
-   `info.version` in the spec — the same flow Objectified uses today when a
+   `info.version` in the spec — the same flow Apiome uses today when a
    user imports a file directly into a version. The file/path/sha is recorded
    in `repository_imports` so we never re-import the same sha twice
    accidentally, and we can show a project's "imported from" provenance.
@@ -111,7 +111,7 @@ state, no Redis, no JSON-on-disk:
   `total_bytes`, `created_at`, `updated_at`.
 - `repository_branch` — one row per tracked branch. `id`, `repository_id`,
   `branch`, `head_sha`, `last_scanned_at`. (Already partially present in
-  the existing `odb.repository_branch` table — extend, do not duplicate.)
+  the existing `apiome.repository_branch` table — extend, do not duplicate.)
 - `repository_file` — one row per `(branch, path)` discovered during scan.
   `id`, `repository_id`, `branch_id`, `path`, `name`, `ext`,
   `size_bytes`, `blob_sha`, `last_commit_sha`, `last_commit_at`,
@@ -136,7 +136,7 @@ state, no Redis, no JSON-on-disk:
   `succeeded` / `failed`), `files_seen`, `files_added`,
   `files_changed`, `files_removed`, `error_message`.
 
-All write paths go through `objectified-rest`. All reads in the UI go
+All write paths go through `apiome-rest`. All reads in the UI go
 through the same REST API; there is no client-side state that persists
 beyond a single page session.
 
@@ -203,7 +203,7 @@ Reuse the platform pill styles. The repository-specific values:
 
 ## Design system
 
-Mockups intentionally mirror the live `objectified-ui` shell and align with
+Mockups intentionally mirror the live `apiome-ui` shell and align with
 the sibling mockup sets (`mockups/import`, `mockups/git`, `mockups/browser`,
 `mockups/connect`):
 
@@ -239,7 +239,7 @@ the sibling mockup sets (`mockups/import`, `mockups/git`, `mockups/browser`,
 - The **Visualize** tab on `file-detail.html` is a static SVG + absolutely-
   positioned div facsimile of a React Flow canvas (no real layout engine,
   no zoom/pan, no draggable nodes). When implemented for real it should use
-  `@xyflow/react` (already a dependency of `objectified-ui` for the editor),
+  `@xyflow/react` (already a dependency of `apiome-ui` for the editor),
   hydrate nodes/edges from the parsed spec server-side via the existing
   importer pipeline, and reuse the shared node theme tokens (emerald = reuse,
   indigo = update, purple = nested type, amber = new) so the preview matches
@@ -250,10 +250,10 @@ the sibling mockup sets (`mockups/import`, `mockups/git`, `mockups/browser`,
 ## Implementation guardrails (for the LLM that picks this up next)
 
 1. **Postgres only.** No `Map`, no `Set`, no module-scoped caches in
-   `objectified-rest` for repository file listings, scan queues, or import
+   `apiome-rest` for repository file listings, scan queues, or import
    verdicts. If you find yourself reaching for one, write a Postgres table
    instead.
-2. **Reuse existing tables.** `odb.repository`, `odb.repository_branch`,
+2. **Reuse existing tables.** `apiome.repository`, `apiome.repository_branch`,
    and the existing import-audit tables already exist. Extend them,
    don't shadow them.
 3. **Reuse the existing importer.** The "Import" action on

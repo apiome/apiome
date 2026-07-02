@@ -1,0 +1,45 @@
+---HEADER---
+# API
+
+**From:** — → **To:** —
+
+_Published:_ — · _Diff schema:_ 1.0
+---BODY---
+## Summary
+
+| | Count |
+|--|--:|
+| Schemas added | 1 |
+| Schemas removed | 0 |
+| Schemas modified | 0 |
+| Property changes | 0 |
+| Reference changes | 0 |
+| Relationship changes | 0 |
+| Documentation changes | 0 |
+| Warnings | 0 |
+| Skipped areas | 0 |
+
+## Schemas
+
+### Added
+- `Pet`
+
+### Removed
+
+### Modified
+
+## Properties
+
+## References
+
+## Relationships
+
+## Documentation
+
+## Warnings
+
+## Not diffed (MVP)
+---FOOTNOTE---
+_Apiome change report._
+
+Generator: **apiome-rest/1.0.44**

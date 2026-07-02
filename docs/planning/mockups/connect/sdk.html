@@ -30,7 +30,7 @@
   <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="cable" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span><span class="text-xs text-gray-400">/</span>
+      <span class="text-sm font-semibold">Apiome</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Connect</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Connector SDK</span>
     </div>
@@ -93,7 +93,7 @@
         <div class="px-6 py-4 flex items-end justify-between">
           <div>
             <h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="terminal" class="w-6 h-6 text-indigo-500"></i> Community Connector SDK</h2>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Build &amp; publish your own connector — <code class="mono">@objectified/connector-sdk</code> v1.4.0</p>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Build &amp; publish your own connector — <code class="mono">@apiome/connector-sdk</code> v1.4.0</p>
           </div>
           <div class="flex items-center gap-2">
             <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i data-lucide="github" class="w-4 h-4"></i> View on GitHub</button>
@@ -143,7 +143,7 @@
               </div>
             </div>
             <div class="code-pane">
-              <pre class="text-[12.5px] leading-[1.55] mono p-4 overflow-x-auto whitespace-pre"><code><span class="ln"> 1</span><span class="tok-kw">import</span> { <span class="tok-typ">ConnectorBase</span>, <span class="tok-typ">DiscoverResult</span>, <span class="tok-typ">RecordBatch</span> } <span class="tok-kw">from</span> <span class="tok-str">'@objectified/connector-sdk'</span>;
+              <pre class="text-[12.5px] leading-[1.55] mono p-4 overflow-x-auto whitespace-pre"><code><span class="ln"> 1</span><span class="tok-kw">import</span> { <span class="tok-typ">ConnectorBase</span>, <span class="tok-typ">DiscoverResult</span>, <span class="tok-typ">RecordBatch</span> } <span class="tok-kw">from</span> <span class="tok-str">'@apiome/connector-sdk'</span>;
 <span class="ln"> 2</span>
 <span class="ln"> 3</span><span class="tok-com">/** Mailgun email events &amp; mailing lists. */</span>
 <span class="ln"> 4</span><span class="tok-kw">export default class</span> <span class="tok-typ">MailgunConnector</span> <span class="tok-kw">extends</span> <span class="tok-typ">ConnectorBase</span> {
@@ -220,9 +220,9 @@ Press <span class="text-amber-500">[r]</span> to re-run, <span class="text-amber
             <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"><h3 class="text-base font-semibold flex items-center gap-2"><i data-lucide="upload" class="w-5 h-5 text-indigo-500"></i> Publish workflow</h3><p class="text-xs text-gray-500 dark:text-gray-400">Submission moves through automated &amp; manual review</p></div>
             <ol class="p-5 space-y-3 text-sm relative">
               <li class="flex items-start gap-3"><span class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0"><i data-lucide="check" class="w-4 h-4"></i></span><div><p class="font-medium">Local validation passed</p><p class="text-xs text-gray-500 mt-0.5">Manifest schema · Docker build · interface compliance</p></div></li>
-              <li class="flex items-start gap-3"><span class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0"><i data-lucide="check" class="w-4 h-4"></i></span><div><p class="font-medium">Image pushed to staging registry</p><p class="text-xs mono text-gray-500 mt-0.5">registry.objectified.dev/community/mailgun:0.1.0</p></div></li>
+              <li class="flex items-start gap-3"><span class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0"><i data-lucide="check" class="w-4 h-4"></i></span><div><p class="font-medium">Image pushed to staging registry</p><p class="text-xs mono text-gray-500 mt-0.5">registry.apiome.app/community/mailgun:0.1.0</p></div></li>
               <li class="flex items-start gap-3"><span class="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 ring-4 ring-indigo-100 dark:ring-indigo-900/40">3</span><div><p class="font-semibold text-indigo-700 dark:text-indigo-300">Automated security &amp; quality scans</p><p class="text-xs text-gray-500 mt-0.5">Trivy CVE scan · ESLint · type-check · audit (in progress · ETA 2 min)</p></div></li>
-              <li class="flex items-start gap-3 opacity-60"><span class="w-7 h-7 rounded-full border-2 border-gray-300 dark:border-gray-600 text-gray-400 flex items-center justify-center text-xs font-bold flex-shrink-0">4</span><div><p>Human review by Objectified team</p><p class="text-xs text-gray-500 mt-0.5">Typical SLA: 2 business days</p></div></li>
+              <li class="flex items-start gap-3 opacity-60"><span class="w-7 h-7 rounded-full border-2 border-gray-300 dark:border-gray-600 text-gray-400 flex items-center justify-center text-xs font-bold flex-shrink-0">4</span><div><p>Human review by Apiome team</p><p class="text-xs text-gray-500 mt-0.5">Typical SLA: 2 business days</p></div></li>
               <li class="flex items-start gap-3 opacity-60"><span class="w-7 h-7 rounded-full border-2 border-gray-300 dark:border-gray-600 text-gray-400 flex items-center justify-center text-xs font-bold flex-shrink-0">5</span><div><p>Published to marketplace · Beta channel</p><p class="text-xs text-gray-500 mt-0.5">Promote to GA after 50+ installs &amp; ≥ 4.0★</p></div></li>
             </ol>
           </section>

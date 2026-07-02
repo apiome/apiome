@@ -1,6 +1,6 @@
-# Objectified: Mobile SDK - Feature Roadmap
+# Apiome: Mobile SDK - Feature Roadmap
 
-> Native mobile SDKs that provide type-safe API clients generated directly from Objectified schemas—giving mobile teams production-ready networking, serialization, authentication, and offline caching without writing boilerplate.
+> Native mobile SDKs that provide type-safe API clients generated directly from Apiome schemas—giving mobile teams production-ready networking, serialization, authentication, and offline caching without writing boilerplate.
 >
 > **Revenue Model**: Per-SDK generation, enterprise SDK customization
 >
@@ -12,12 +12,12 @@
 
 ## MVP Definition
 
-- Code generation engine that converts Objectified schemas to type-safe models in Swift, Kotlin, and TypeScript
+- Code generation engine that converts Apiome schemas to type-safe models in Swift, Kotlin, and TypeScript
 - iOS SDK template with Swift models, URLSession networking, Codable serialization, and error handling
 - Android SDK template with Kotlin data classes, Retrofit networking, and kotlinx.serialization
 - Authentication handling for OAuth 2.0, JWT, and API key authentication patterns
 - Offline caching with local persistence and background sync on connectivity restore
-- One-click SDK generation from the Objectified web UI with downloadable ZIP output
+- One-click SDK generation from the Apiome web UI with downloadable ZIP output
 - Automatic SDK regeneration when schemas are updated with diff-based changelog
 - SDK versioning aligned with schema versions using semver
 
@@ -29,7 +29,7 @@
 
 | #   | Title                                | Description                                                                  | Labels                                   | Parallel |
 |-----|--------------------------------------|------------------------------------------------------------------------------|------------------------------------------|----------|
-| 1.1 (#1127) | Schema-to-AST Parser                 | Parse Objectified schemas into a language-agnostic abstract syntax tree      | `enhancement`, `mvp`, `mobile-sdk`       | Yes      |
+| 1.1 (#1127) | Schema-to-AST Parser                 | Parse Apiome schemas into a language-agnostic abstract syntax tree      | `enhancement`, `mvp`, `mobile-sdk`       | Yes      |
 | 1.2 (#1128) | Template System & Handlebars Engine  | Pluggable template engine for rendering AST nodes into language-specific code | `enhancement`, `mvp`, `mobile-sdk`       | Yes      |
 | 1.3 (#1129) | Multi-Language Output Pipeline       | Pipeline that routes AST through language-specific templates and formatters  | `enhancement`, `mvp`, `mobile-sdk`, `rest` | No    |
 | 1.4 (#1130) | Type Mapping Registry                | Configurable mapping from JSON Schema types to native language types          | `enhancement`, `mvp`, `mobile-sdk`       | Yes      |
@@ -41,7 +41,7 @@
 
 #### 1.1 (#1127) — Schema-to-AST Parser
 
-The code generation engine needs a language-agnostic intermediate representation. This issue builds the parser that converts Objectified JSON Schema definitions into an Abstract Syntax Tree (AST) that captures all the information needed for code generation without being tied to any specific output language.
+The code generation engine needs a language-agnostic intermediate representation. This issue builds the parser that converts Apiome JSON Schema definitions into an Abstract Syntax Tree (AST) that captures all the information needed for code generation without being tied to any specific output language.
 
 The AST represents schema structures as typed nodes: `ClassNode` (name, properties, relationships, description), `PropertyNode` (name, type, nullable, constraints, description, default), `EnumNode` (name, values, descriptions), `RelationshipNode` (type: one-to-one | one-to-many | many-to-many, target class, cascade behavior). The parser resolves `$ref` pointers within the schema, flattens `allOf`/`anyOf`/`oneOf` compositions into concrete types, and normalizes naming conventions (the AST stores names in a canonical form; language-specific casing is applied at template time).
 
@@ -120,7 +120,7 @@ iOS SDK Output                    Android SDK Output
 │   │   ├── Order.swift           │   │   ├── Order.kt
 │   │   └── Customer.swift        │   │   └── Customer.kt
 │   ├── API/                      │   ├── api/
-│   │   └── ObjectifiedClient.swift│   │   └── ObjectifiedClient.kt
+│   │   └── ApiomeClient.swift│   │   └── ApiomeClient.kt
 │   └── Auth/                     │   └── auth/
 │       └── AuthManager.swift     │       └── AuthManager.kt
 └── Tests/                        └── src/test/kotlin/
@@ -185,7 +185,7 @@ The generation endpoint `POST /api/v1/mobile-sdk/generate` accepts: `schemaId`, 
 
 The job queue (backed by Redis + BullMQ) processes generation requests sequentially per tenant to prevent resource contention. Job status is queryable via `GET /api/v1/mobile-sdk/jobs/{jobId}` returning: `status` (queued | processing | completed | failed), `progress` (0–100), `stage` (parsing | mapping | rendering | formatting | packaging), and `output_url` (presigned S3 URL for the ZIP download, available when completed).
 
-A WebSocket endpoint `wss://api.objectified.dev/mobile-sdk/jobs/{jobId}/progress` streams real-time progress updates to the UI. The generation page at `/mobile-sdk/generate` shows a progress bar (Radix `Progress`) with stage indicators and auto-downloads the ZIP on completion.
+A WebSocket endpoint `wss://api.apiome.app/mobile-sdk/jobs/{jobId}/progress` streams real-time progress updates to the UI. The generation page at `/mobile-sdk/generate` shows a progress bar (Radix `Progress`) with stage indicators and auto-downloads the ZIP on completion.
 
 **Acceptance Criteria**
 
@@ -243,7 +243,7 @@ Generated models include documentation comments derived from schema property des
 
 Models are useless without a way to call the API. This issue generates the iOS networking client using URLSession with Swift concurrency (async/await), providing type-safe methods for every CRUD operation.
 
-The generated `ObjectifiedClient` class exposes methods matching the schema's endpoints: `func getOrders() async throws -> [Order]`, `func getOrder(id: UUID) async throws -> Order`, `func createOrder(_ order: Order) async throws -> Order`, etc. Each method constructs the URL, serializes the request body, sends the request via URLSession, deserializes the response, and returns the typed result. Errors are decoded into a typed `APIError` enum with cases for validation errors (422), authentication failures (401), not found (404), and server errors (5xx).
+The generated `ApiomeClient` class exposes methods matching the schema's endpoints: `func getOrders() async throws -> [Order]`, `func getOrder(id: UUID) async throws -> Order`, `func createOrder(_ order: Order) async throws -> Order`, etc. Each method constructs the URL, serializes the request body, sends the request via URLSession, deserializes the response, and returns the typed result. Errors are decoded into a typed `APIError` enum with cases for validation errors (422), authentication failures (401), not found (404), and server errors (5xx).
 
 The client supports request/response interceptors for cross-cutting concerns: authentication header injection, request logging, retry logic, and analytics. Interceptors conform to a `RequestInterceptor` protocol and are registered during client initialization.
 
@@ -289,7 +289,7 @@ Generated classes are organized in a Kotlin library module with `build.gradle.kt
 
 This issue generates the Android networking client using Retrofit and OkHttp with Kotlin coroutines, providing type-safe API methods with proper error handling.
 
-The generated SDK produces a Retrofit `interface` with annotated methods: `@GET("orders") suspend fun getOrders(): List<Order>`, `@POST("orders") suspend fun createOrder(@Body order: Order): Order`, etc. A companion `ObjectifiedClient` class configures the Retrofit instance with: OkHttp client, kotlinx.serialization converter factory, base URL, and interceptors.
+The generated SDK produces a Retrofit `interface` with annotated methods: `@GET("orders") suspend fun getOrders(): List<Order>`, `@POST("orders") suspend fun createOrder(@Body order: Order): Order`, etc. A companion `ApiomeClient` class configures the Retrofit instance with: OkHttp client, kotlinx.serialization converter factory, base URL, and interceptors.
 
 OkHttp interceptors handle cross-cutting concerns: `AuthInterceptor` injects authentication tokens, `LoggingInterceptor` logs requests and responses, `RetryInterceptor` retries failed requests with exponential backoff. The generated `ApiException` sealed class covers: `ValidationError` (422 with field-level errors), `AuthenticationError` (401), `NotFoundError` (404), `ServerError` (5xx), and `NetworkError` (connectivity failures).
 
@@ -372,7 +372,7 @@ The generated package includes: `package.json` with dependencies (Zod, TanStack 
 
 **Acceptance Criteria**
 
-- TypeScript interfaces match the Objectified schema with correct optional/required typing
+- TypeScript interfaces match the Apiome schema with correct optional/required typing
 - Zod schemas validate API responses at runtime with type-safe error reporting
 - React hooks use TanStack Query for caching, loading states, and error handling
 - `useCreateOrder()` / `useUpdateOrder()` hooks support optimistic updates
@@ -435,7 +435,7 @@ Mobile platforms have unique capabilities. This issue adds optional platform-spe
 
 Biometric auth wraps the platform's biometric API (Face ID/Touch ID on iOS via LocalAuthentication, BiometricPrompt on Android, react-native-biometrics for React Native) and integrates with the SDK's auth manager. When enabled, the SDK can require biometric verification before sending authenticated API calls—useful for sensitive operations.
 
-Push notification integration generates the boilerplate for registering device tokens with the Objectified backend. When the server sends a push notification (e.g., "schema updated"), the SDK receives it and triggers a cache refresh for the affected resources.
+Push notification integration generates the boilerplate for registering device tokens with the Apiome backend. When the server sends a push notification (e.g., "schema updated"), the SDK receives it and triggers a cache refresh for the affected resources.
 
 Secure storage uses the platform's keychain (iOS Keychain, Android EncryptedSharedPreferences, Expo SecureStore for React Native, flutter_secure_storage for Flutter) instead of plain-text storage for tokens and sensitive configuration.
 
@@ -495,7 +495,7 @@ Shared JSON fixtures are generated from the schema's `example` and `default` val
 
 #### 4.1 (#1145) — Generation UI & Configuration
 
-Developers should be able to generate SDKs from the Objectified web interface without touching the CLI. This issue builds the generation configuration page where users select a schema, target platform, features, and trigger generation with a single click.
+Developers should be able to generate SDKs from the Apiome web interface without touching the CLI. This issue builds the generation configuration page where users select a schema, target platform, features, and trigger generation with a single click.
 
 The generation page lives at `/mobile-sdk/generate` in the NextJS app. The workflow is a multi-step form: (1) **Select Schema** — choose from published schema versions using a Radix `Select` dropdown, (2) **Choose Platform** — pick the target language/framework from a card grid (iOS, Android, React Native, Flutter, Xamarin), (3) **Configure Features** — toggle optional features using Radix `Switch` components (authentication mode, offline caching, pagination, biometric auth), (4) **Review & Generate** — summary of selections with a "Generate SDK" button.
 

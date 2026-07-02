@@ -31,7 +31,7 @@
   <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="file-input" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span><span class="text-xs text-gray-400">/</span>
+      <span class="text-sm font-semibold">Apiome</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Import</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">API &amp; CI/CD</span>
     </div>
@@ -87,7 +87,7 @@
         <div class="px-6 py-4 flex items-end justify-between">
           <div>
             <h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="terminal" class="w-6 h-6 text-indigo-500"></i> Headless Import API &amp; CI/CD</h2>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">REST endpoints · objectified-cli · GitHub Actions · GitLab CI · webhook triggers</p>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">REST endpoints · apiome-cli · GitHub Actions · GitLab CI · webhook triggers</p>
           </div>
           <div class="flex items-center gap-2">
             <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i data-lucide="key" class="w-4 h-4"></i> API keys</button>
@@ -145,7 +145,7 @@
   <span class="s">"job_id"</span>: <span class="s">"job_K91x"</span>,
   <span class="s">"status"</span>: <span class="s">"analyzing"</span>,
   <span class="s">"status_url"</span>: <span class="s">"/api/v1/imports/job_K91x"</span>,
-  <span class="s">"stream_url"</span>: <span class="s">"wss://api.objectified.dev/v1/imports/job_K91x/stream"</span>
+  <span class="s">"stream_url"</span>: <span class="s">"wss://api.apiome.app/v1/imports/job_K91x/stream"</span>
 }</pre>
             </div>
           </div>
@@ -158,7 +158,7 @@
               <div class="flex items-center gap-3">
                 <i data-lucide="terminal" class="w-5 h-5 text-indigo-500"></i>
                 <div>
-                  <h3 class="text-base font-semibold">objectified-cli</h3>
+                  <h3 class="text-base font-semibold">apiome-cli</h3>
                   <p class="text-xs text-gray-500 dark:text-gray-400">Local + CI · npm / brew / scoop</p>
                 </div>
               </div>
@@ -166,13 +166,13 @@
             </div>
             <div class="p-4 space-y-3">
               <pre class="codeblock rounded-md p-3 text-[11px] mono overflow-x-auto"><span class="c"># install</span>
-$ <span class="k">npm install -g</span> @objectified/cli
+$ <span class="k">npm install -g</span> @apiome/cli
 
-<span class="c"># auth (writes ~/.objectified/config)</span>
-$ <span class="k">objectified login</span> <span class="s">--api-key=$OBJ_KEY</span>
+<span class="c"># auth (writes ~/.apiome/config)</span>
+$ <span class="k">apiome login</span> <span class="s">--api-key=$OBJ_KEY</span>
 
 <span class="c"># import</span>
-$ <span class="k">objectified import</span> \
+$ <span class="k">apiome import</span> \
   <span class="s">--file</span> openapi.yaml \
   <span class="s">--project</span> acme-platform \
   <span class="s">--version</span> v3.3-rc1 \
@@ -180,7 +180,7 @@ $ <span class="k">objectified import</span> \
   <span class="s">--wait --json</span>
 
 <span class="c"># dry-run + diff vs latest</span>
-$ <span class="k">objectified import</span> <span class="s">--file</span> openapi.yaml <span class="s">--dry-run --diff</span></pre>
+$ <span class="k">apiome import</span> <span class="s">--file</span> openapi.yaml <span class="s">--dry-run --diff</span></pre>
             </div>
           </div>
 
@@ -193,11 +193,11 @@ $ <span class="k">objectified import</span> <span class="s">--file</span> openap
                   <p class="text-xs text-gray-500 dark:text-gray-400">Auto-import on push to main</p>
                 </div>
               </div>
-              <span class="mono text-[10px] text-gray-400">objectified/import-action@v1</span>
+              <span class="mono text-[10px] text-gray-400">apiome/import-action@v1</span>
             </div>
             <div class="p-4 space-y-3">
               <pre class="codeblock rounded-md p-3 text-[11px] mono overflow-x-auto"><span class="c"># .github/workflows/import.yml</span>
-<span class="k">name:</span> Import OpenAPI to Objectified
+<span class="k">name:</span> Import OpenAPI to Apiome
 <span class="k">on:</span>
   push:
     branches: [<span class="s">main</span>]
@@ -208,7 +208,7 @@ $ <span class="k">objectified import</span> <span class="s">--file</span> openap
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: <span class="s">objectified/import-action@v1</span>
+      - uses: <span class="s">apiome/import-action@v1</span>
         with:
           api-key:    <span class="h">${{ secrets.OBJ_API_KEY }}</span>
           project:    acme-platform
@@ -230,15 +230,15 @@ $ <span class="k">objectified import</span> <span class="s">--file</span> openap
                   <p class="text-xs text-gray-500 dark:text-gray-400">Pipeline-triggered import</p>
                 </div>
               </div>
-              <span class="mono text-[10px] text-gray-400">includes/objectified.yml</span>
+              <span class="mono text-[10px] text-gray-400">includes/apiome.yml</span>
             </div>
             <div class="p-4 space-y-3">
               <pre class="codeblock rounded-md p-3 text-[11px] mono overflow-x-auto"><span class="c"># .gitlab-ci.yml</span>
 include:
-  - remote: <span class="s">"https://templates.objectified.dev/gitlab/import.yml"</span>
+  - remote: <span class="s">"https://templates.apiome.app/gitlab/import.yml"</span>
 
-import_to_objectified:
-  extends: .objectified-import
+import_to_apiome:
+  extends: .apiome-import
   rules:
     - if: <span class="h">$CI_COMMIT_BRANCH == "main"</span>
   variables:

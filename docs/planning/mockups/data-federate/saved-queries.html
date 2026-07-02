@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Objectified Data Federate — Saved Queries</title>
+  <title>Apiome Data Federate — Saved Queries</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' };</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -24,7 +24,7 @@
         <div class="w-7 h-7 rounded-md bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
           <i data-lucide="layers" class="w-4 h-4 text-white"></i>
         </div>
-        <span class="text-sm font-semibold">Objectified</span>
+        <span class="text-sm font-semibold">Apiome</span>
       </a>
       <span class="text-xs text-gray-400">/</span>
       <span class="text-sm font-medium text-purple-600 dark:text-purple-400">Data Federate</span>
@@ -64,7 +64,7 @@
               <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">cross-source</span>
               <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">revenue</span>
             </div>
-            <p class="text-xs text-gray-500 mb-2">JOIN pg_prod orders × snowflake_dw transactions × objectified User — user-level revenue rollup</p>
+            <p class="text-xs text-gray-500 mb-2">JOIN pg_prod orders × snowflake_dw transactions × apiome User — user-level revenue rollup</p>
             <div class="bg-gray-900 rounded-md px-3 py-2 text-[10px] mono text-purple-300 truncate">SELECT u.id, COUNT(o.id), SUM(t.amount) FROM pg_prod.public.orders o INNER JOIN snowflake_dw...</div>
           </div>
           <div class="flex flex-col items-end gap-1 ml-4 flex-shrink-0 text-[10px]">
@@ -90,7 +90,7 @@
               <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">single-source</span>
             </div>
             <p class="text-xs text-gray-500 mb-2">Daily revenue breakdown by plan tier from pg_prod — used by finance dashboard</p>
-            <div class="bg-gray-900 rounded-md px-3 py-2 text-[10px] mono text-purple-300 truncate">SELECT date_trunc('day', created_at), plan_tier, SUM(amount) FROM pg_prod.public.orders JOIN objectified...</div>
+            <div class="bg-gray-900 rounded-md px-3 py-2 text-[10px] mono text-purple-300 truncate">SELECT date_trunc('day', created_at), plan_tier, SUM(amount) FROM pg_prod.public.orders JOIN apiome...</div>
           </div>
           <div class="flex flex-col items-end gap-1 ml-4 flex-shrink-0 text-[10px]">
             <span class="text-gray-400">Last run: 1h ago</span>

@@ -23,7 +23,7 @@
   <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="handshake" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span><span class="text-xs text-gray-400">/</span>
+      <span class="text-sm font-semibold">Apiome</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Pact</span><span class="text-xs text-gray-400">/</span>
       <a href="broker.html" class="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500">acme.platform</a><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-700 dark:text-gray-200">Can-I-Deploy</span>
@@ -266,14 +266,14 @@
     --pacticipant user-api \
     --version v3.0.0-rc.2 \
     --to-environment production \
-    --broker-base-url https://acme.pact.objectified.io \
+    --broker-base-url https://acme.pact.apiome.app \
     --broker-token $PACT_TOKEN
 
 Computer says no ──────────────────────────────────────────
 The verification between the latest version of mobile-ios deployed
 in production (v6.12.0) and version v3.0.0-rc.2 of user-api FAILED.
 
-See https://acme.pact.objectified.io/runs/1247 for details.
+See https://acme.pact.apiome.app/runs/1247 for details.
 exit 1</pre>
         </section>
 

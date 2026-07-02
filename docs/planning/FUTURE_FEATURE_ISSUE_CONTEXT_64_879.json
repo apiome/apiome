@@ -1561,7 +1561,7 @@
       "cross_refs": []
     },
     "800": {
-      "description": "Import from another Objectified project schema registry",
+      "description": "Import from another Apiome project schema registry",
       "roadmap_file": "docs/planning/FUTURE_FEATURE_ROADMAP_IMPORT.md",
       "section": "MVP Definition",
       "mvp": true,

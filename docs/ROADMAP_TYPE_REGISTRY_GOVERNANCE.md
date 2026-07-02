@@ -1,4 +1,4 @@
-# Objectified Primitives — JSON Schema 2020-12 Governance Roadmap
+# Apiome Primitives — JSON Schema 2020-12 Governance Roadmap
 
 ## 1. Source Description
 
@@ -7,7 +7,7 @@
 > conversation.
 
 This roadmap extends the **Primitives** capability under **Control Panel → Governance** in
-`objectified-ui`. It is scoped *strictly* to JSON Schema **types and schemas** — reusable type
+`apiome-ui`. It is scoped *strictly* to JSON Schema **types and schemas** — reusable type
 definitions, namespace/`$ref` resolution, import surfaces, and property bindings. It does **not**
 cover the broader Authoring platform (Scribe/Slate), documentation, or marketing — those are
 tracked separately in `docs/ROADMAP_AUTHORING_PLATFORM.md`.
@@ -22,16 +22,16 @@ tracked separately in `docs/ROADMAP_AUTHORING_PLATFORM.md`.
 
 ---
 
-## 1a. Design change (2026-06): single database — extend `odb.primitives`
+## 1a. Design change (2026-06): single database — extend `apiome.primitives`
 
 > **The type registry is NOT a separate database.** An earlier iteration provisioned a separate
-> `objectified-types-db` (its own `otr` schema, `registry` CLI, dedicated REST connection). That
-> is the wrong design and has been reversed. The registry lives in the **existing `objectified-db`
-> database (`odb` schema) by extending the `odb.primitives` table in place**. Primitives are
+> `apiome-types-db` (its own `otr` schema, `registry` CLI, dedicated REST connection). That
+> is the wrong design and has been reversed. The registry lives in the **existing `apiome-db`
+> database (`apiome` schema) by extending the `apiome.primitives` table in place**. Primitives are
 > tenant-associated (a tenant has its own primitives via `tenant_id`) **and** system-wide (via
 > `is_system`/`is_public`), so they must compose with the tenant's other data through ordinary
 > same-database foreign keys. Epic 1 reflects this: 1.1 removes the separate DB, 1.2 extends
-> `odb.primitives`, 1.3 adds same-DB import/binding links, 1.4 seeds system primitives.
+> `apiome.primitives`, 1.3 adds same-DB import/binding links, 1.4 seeds system primitives.
 
 ## 1b. Existing Primitives Baseline (shipped)
 
@@ -39,7 +39,7 @@ Before implementing net-new registry mechanics, account for what is **already li
 
 | Layer | Implementation | Gap vs this roadmap |
 |---|---|---|
-| Storage | `odb.primitives` in **objectified-db** (tenant-scoped via `tenant_id`; system-wide via `is_system`/`is_public`) | No `namespace` / `base_uri` / `$id` / `draft` / `$ref` columns on `odb.primitives` — **extend the existing table in place** (same database, `odb` schema; no separate database, no new schema, no new tables) |
+| Storage | `apiome.primitives` in **apiome-db** (tenant-scoped via `tenant_id`; system-wide via `is_system`/`is_public`) | No `namespace` / `base_uri` / `$id` / `draft` / `$ref` columns on `apiome.primitives` — **extend the existing table in place** (same database, `apiome` schema; no separate database, no new schema, no new tables) |
 | System seed | 36 ISO-aligned system primitives (`20260124-140000.sql`) | Flat schemas; no `std/v0` namespace or composite `$ref` chains (`money` → `decimal`) |
 | REST | `/v1/primitives/{tenant_slug}` CRUD + `/import` from `$defs` | No namespaces, resolver, stats, or server-side draft 2020-12 gate |
 | UI proxy | `/api/primitives/*` | ✅ **Done** — closed as duplicate (#3455) |
@@ -52,18 +52,18 @@ Before implementing net-new registry mechanics, account for what is **already li
 issues remain open with scopes adjusted to **extend** Primitives toward full JSON Schema 2020-12 support.
 
 **What the registry must do (from the mockups & conversation):**
-- Store JSON Schema **draft 2020-12** types **in the existing `objectified-db` database (`odb`
-  schema), by extending the `odb.primitives` table** — *not* in a separate database. Primitives
+- Store JSON Schema **draft 2020-12** types **in the existing `apiome-db` database (`apiome`
+  schema), by extending the `apiome.primitives` table** — *not* in a separate database. Primitives
   are the type registry: a tenant owns its own primitives (via `tenant_id`) and also sees
   system-wide primitives (via `is_system`/`is_public`), all in one table so they compose across
   the tenant's projects with ordinary same-database foreign keys.
 - Address types by **relative `$ref`** rooted at each type's **import-source base URL** in the
   API server. Canonical example: `std/v0/types/date` → `"$ref": "../primitives/string"`, base
-  `api.objectified.dev/types/std/v0/types/` → resolves to `std/v0/primitives/string`.
+  `api.apiome.app/types/std/v0/types/` → resolves to `std/v0/primitives/string`.
 - Provide **system-wide types** (`std/v0/*`, `is_system`) visible to **all tenants**, and
   **per-tenant** private types (`tenant/<slug>/*`, owned by `tenant_id`). A tenant type may
   `$ref` a system type; a system type may not `$ref` a tenant type.
-- **Import** both raw **JSON Schema** documents (single or `$defs`-bundled) *and* **Objectified
+- **Import** both raw **JSON Schema** documents (single or `$defs`-bundled) *and* **Apiome
   type-definition bundles** (`.zip`/`.json`). (OpenAPI 3.1 components is a V2 extension.)
 - Let the **visual editor** (Designer) bind a property to a **standard** (primitive) or
   **custom** (imported/tenant/core) type, on a per-tenant and per-system basis, storing a `$ref`.
@@ -72,7 +72,7 @@ issues remain open with scopes adjusted to **extend** Primitives toward full JSO
 
 ## 2. MVP Definition
 
-The MVP delivers a **working type registry loop**: an extended `odb.primitives` table seeded with
+The MVP delivers a **working type registry loop**: an extended `apiome.primitives` table seeded with
 core system types; a service+API to manage namespaces and draft-2020-12 types with scope rules;
 a relative-`$ref` resolver that flags unresolved references; an import surface that ingests JSON
 Schemas **and** type-definition bundles; a Governance → Type Registry UI (overview, type detail,
@@ -83,7 +83,7 @@ import, resolver, namespaces, settings); and the Designer property→type bindin
 
 | Area | MVP capability |
 |---|---|
-| Database | Extend `odb.primitives` in **objectified-db** (`odb` schema) with namespace / `$id` / `base_uri` / draft / source / `$ref` columns + import & property-binding links; seeded `std/v0` core system primitives. **No separate database.** |
+| Database | Extend `apiome.primitives` in **apiome-db** (`apiome` schema) with namespace / `$id` / `base_uri` / draft / source / `$ref` columns + import & property-binding links; seeded `std/v0` core system primitives. **No separate database.** |
 | Service/API | Namespace CRUD; type CRUD with draft-2020-12 validation; system-core vs tenant scope enforcement; coverage stats; UI proxy + client |
 | Resolution | Relative `$ref` resolution against import-source base; unresolved-reference detection; resolver API + basic dependency listing |
 | Import | Pipeline + ingestion (file/paste/URL/git); JSON Schema doc parser (single + `$defs`); type-definition bundle importer; `$ref` rewrite + namespace/scope mapping; conflict/dedupe + validation report |
@@ -108,7 +108,7 @@ The MVP/V2 flag for every issue is in each epic table (**MVP** column) and summa
 
 ```mermaid
 flowchart TB
-  subgraph UI["objectified-ui (Control Panel → Governance)"]
+  subgraph UI["apiome-ui (Control Panel → Governance)"]
     nav["DashboardSideNav → Governance → Type Registry"]
     pages["/ade/dashboard/governance/types/* (overview·detail·import·resolver·namespaces·settings)"]
     picker["Designer property editor → Type picker"]
@@ -117,16 +117,16 @@ flowchart TB
     picker --> proxy
   end
 
-  subgraph REST["objectified-rest — Type Registry service"]
+  subgraph REST["apiome-rest — Type Registry service"]
     api["Namespace + Type CRUD\n(draft 2020-12 validation, scope rules)"]
     resolver["Relative $ref resolver\n(unresolved / circular)"]
     import["Import: JSON Schema + type-def bundle (+ OpenAPI 3.1 v2)"]
     bind["Property↔type binding read model"]
   end
 
-  subgraph ODB[("objectified-db — odb schema (single database)")]
-    prim[("odb.primitives (extended)\nschema JSONB · namespace · base_uri · $id · draft · source · refs JSONB")]
-    cls[("odb.class_property\n(property → primitive $ref binding)")]
+  subgraph ODB[("apiome-db — apiome schema (single database)")]
+    prim[("apiome.primitives (extended)\nschema JSONB · namespace · base_uri · $id · draft · source · refs JSONB")]
+    cls[("apiome.class_property\n(property → primitive $ref binding)")]
     imp[("import provenance (existing infra, reused)")]
   end
 
@@ -142,11 +142,11 @@ flowchart TB
 **Conventions inherited from the codebase (verified):**
 - UI: Next.js 16 App Router; nav in `DashboardSideNav.tsx` (already has a **Governance**
   section containing *Primitives*); routes under `/ade/dashboard/*`; client → `/api/*` proxy →
-  `objectified-rest` with `createRestAuthHeaders()`.
+  `apiome-rest` with `createRestAuthHeaders()`.
 - REST: FastAPI; tenant-scoped `/v1/...` with `validate_authentication()`.
-- DB: PostgreSQL `odb` schema, UUID PKs, soft deletes, JSONB; migrations in
-  `objectified-db/scripts/<timestamp>.sql`. The registry **extends the existing `odb.primitives`
-  table in the same `objectified-db` database** — no separate database, no new schema; bindings
+- DB: PostgreSQL `apiome` schema, UUID PKs, soft deletes, JSONB; migrations in
+  `apiome-db/scripts/<timestamp>.sql`. The registry **extends the existing `apiome.primitives`
+  table in the same `apiome-db` database** — no separate database, no new schema; bindings
   reference primitives with ordinary same-database foreign keys.
 - Brand: in-app the feature uses the Control Panel **indigo** accent; the standalone Atlas
   mockups use teal.
@@ -164,7 +164,7 @@ These open issues are *adjacent* and must be cross-linked, **not duplicated**:
 | #2299 Import History Data Model · #2305 User Attribution on Import · #2316 REST API for Import (`import`) | The Type Registry import (Epic 4) should **reuse** the existing import history/attribution infrastructure rather than re-implement it; this roadmap adds the type-specific source parsers + `$ref` rewrite. |
 | #1130 Type Mapping Registry (mobile-sdk) | Different concern (code-gen type mapping). No overlap beyond the word "type". |
 
-No existing issue implements a JSON Schema 2020-12 **type registry (an extended `odb.primitives`
+No existing issue implements a JSON Schema 2020-12 **type registry (an extended `apiome.primitives`
 table) with relative `$ref` resolution**, so the core of this roadmap is net-new.
 
 ---
@@ -173,32 +173,32 @@ table) with relative `$ref` resolution**, so the core of this roadmap is net-new
 
 | # | Epic | Theme | Primary module(s) |
 |---|---|---|---|
-| 1 (#3439) | Primitives Registry Schema | Extend `odb.primitives` (namespace/`$ref`/draft columns), bindings, core-type seed | objectified-db (`odb` schema) |
-| 2 (#3440) | Registry Service & API | Namespace/type CRUD, scope rules, validation, proxy | objectified-rest, objectified-ui |
-| 3 (#3441) | Reference Resolution Engine | Relative `$ref` resolve, unresolved/circular, graph | objectified-rest |
-| 4 (#3442) | Import System | JSON Schema + type-def bundle (+ OpenAPI 3.1 v2) | objectified-rest |
-| 5 (#3443) | Governance UI: Type Registry | Nav + overview/detail/import/resolver/namespaces/settings | objectified-ui |
-| 6 (#3444) | Designer Property Binding | Type picker, property→`$ref` binding, resolved display | objectified-ui, objectified-rest |
-| 7 (#3445) | Scopes, Governance & Publishing | Entitlements, publish gate, promote-to-core, audit | objectified-rest, objectified-ui |
+| 1 (#3439) | Primitives Registry Schema | Extend `apiome.primitives` (namespace/`$ref`/draft columns), bindings, core-type seed | apiome-db (`apiome` schema) |
+| 2 (#3440) | Registry Service & API | Namespace/type CRUD, scope rules, validation, proxy | apiome-rest, apiome-ui |
+| 3 (#3441) | Reference Resolution Engine | Relative `$ref` resolve, unresolved/circular, graph | apiome-rest |
+| 4 (#3442) | Import System | JSON Schema + type-def bundle (+ OpenAPI 3.1 v2) | apiome-rest |
+| 5 (#3443) | Governance UI: Type Registry | Nav + overview/detail/import/resolver/namespaces/settings | apiome-ui |
+| 6 (#3444) | Designer Property Binding | Type picker, property→`$ref` binding, resolved display | apiome-ui, apiome-rest |
+| 7 (#3445) | Scopes, Governance & Publishing | Entitlements, publish gate, promote-to-core, audit | apiome-rest, apiome-ui |
 
 **Labels.** Reuse: `epic`, `mvp`, `enhancement`, `governance`, `registry`, `rest`, `ui`,
 `import`, `versions`, `schema-designer`. **New labels to create:**
 
 | Label | Color | Description |
 |---|---|---|
-| `type-registry` | `#0E7490` | Objectified Primitives — JSON Schema 2020-12 types (extends `/ade/dashboard/primitives`) |
-| `types-db` | `#0B5563` | Primitives registry storage — extends `odb.primitives` in `objectified-db` (single database) |
+| `type-registry` | `#0E7490` | Apiome Primitives — JSON Schema 2020-12 types (extends `/ade/dashboard/primitives`) |
+| `types-db` | `#0B5563` | Primitives registry storage — extends `apiome.primitives` in `apiome-db` (single database) |
 | `roadmap-type-registry` | `#BFDADC` | ROADMAP_TYPE_REGISTRY_GOVERNANCE.md ticket pack |
 
 Issue naming: `Primitives: [<epic#.issue#>] <title>`.
 
 ---
 
-## 6. Epic 1 — Primitives Registry Schema (extend `odb.primitives`)
+## 6. Epic 1 — Primitives Registry Schema (extend `apiome.primitives`)
 
-The registry's data model is the **existing `odb.primitives` table, extended in place** — *not*
+The registry's data model is the **existing `apiome.primitives` table, extended in place** — *not*
 a separate database. A tenant owns its own primitives (`tenant_id`) and also sees system-wide
-primitives (`is_system`/`is_public`), all in one table in the `objectified-db` `odb` schema, so
+primitives (`is_system`/`is_public`), all in one table in the `apiome-db` `apiome` schema, so
 they compose across the tenant's projects with ordinary same-database foreign keys. This epic
 adds the namespace / `$id` / `$ref` / draft-2020-12 columns, the import + property-binding links,
 and the core system-primitive seed.
@@ -232,81 +232,81 @@ erDiagram
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 1.1 #3446 | Consolidate registry into `objectified-db` (remove separate DB) | Rip out the `objectified-types-db` provisioning shipped earlier; registry lives in `odb` | `type-registry`,`types-db`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-db, objectified-rest |
-| 1.2 #3447 | Extend `odb.primitives` (namespace, `$id`, `$ref`, draft 2020-12) | Migration adding namespace/`base_uri`/`schema_id`/`draft`/`source`/`refs` columns to `odb.primitives` | `type-registry`,`types-db`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-db |
-| 1.3 #3448 | ~~Import provenance & property binding~~ **DONE** | `odb.primitive_imports` provenance table + `report` JSON; `class_properties.primitive_id`/`primitive_ref` binding read by the Designer | `type-registry`,`types-db`,`import`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-db |
-| 1.4 #3449 | ~~Seed core system primitives (`std/v0`)~~ **DONE** | Seed primitives + std types (date, uuid, money, …) as system-wide `is_system` rows | `type-registry`,`registry`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-db, objectified-rest |
+| 1.1 #3446 | Consolidate registry into `apiome-db` (remove separate DB) | Rip out the `apiome-types-db` provisioning shipped earlier; registry lives in `apiome` | `type-registry`,`types-db`,`mvp`,`roadmap-type-registry` | N | Y | M | apiome-db, apiome-rest |
+| 1.2 #3447 | Extend `apiome.primitives` (namespace, `$id`, `$ref`, draft 2020-12) | Migration adding namespace/`base_uri`/`schema_id`/`draft`/`source`/`refs` columns to `apiome.primitives` | `type-registry`,`types-db`,`mvp`,`roadmap-type-registry` | N | Y | M | apiome-db |
+| 1.3 #3448 | ~~Import provenance & property binding~~ **DONE** | `apiome.primitive_imports` provenance table + `report` JSON; `class_properties.primitive_id`/`primitive_ref` binding read by the Designer | `type-registry`,`types-db`,`import`,`mvp`,`roadmap-type-registry` | Y | Y | M | apiome-db |
+| 1.4 #3449 | ~~Seed core system primitives (`std/v0`)~~ **DONE** | Seed primitives + std types (date, uuid, money, …) as system-wide `is_system` rows | `type-registry`,`registry`,`mvp`,`roadmap-type-registry` | Y | Y | M | apiome-db, apiome-rest |
 
-### Issue 1.1 — Consolidate registry into `objectified-db` (remove separate DB)
-- **Problem.** An earlier iteration provisioned a **separate** `objectified-types-db` database
+### Issue 1.1 — Consolidate registry into `apiome-db` (remove separate DB)
+- **Problem.** An earlier iteration provisioned a **separate** `apiome-types-db` database
   (its own `otr` schema, a `registry` CLI command group, `registry-scripts/`, a dedicated
-  `objectified-rest` connection, a docker-compose `types-migrate` service). This is the wrong
+  `apiome-rest` connection, a docker-compose `types-migrate` service). This is the wrong
   design: primitives are tenant-associated **and** system-wide and must live with the rest of the
-  tenant's data in `objectified-db` so they compose with ordinary foreign keys. A separate
+  tenant's data in `apiome-db` so they compose with ordinary foreign keys. A separate
   database forces cross-database references and duplicate connection/migration machinery.
-- **Solution/Scope.** Reverse the separate-database work: remove the `objectified-types-db`
+- **Solution/Scope.** Reverse the separate-database work: remove the `apiome-types-db`
   provisioning and `otr` schema, the `registry` command group + `registry-scripts/` +
-  `registry.ts` in `objectified-db`, the `RegistryDatabase` connection / `OBJECTIFIED_TYPES_DB*`
-  config / health reporting in `objectified-rest`, and the `types-migrate` docker-compose service
-  and env. The registry's storage is the existing `odb.primitives` table (extended in 1.2).
-- **Acceptance Criteria.** No `objectified-types-db`, `otr` schema, `registry` command, or
+  `registry.ts` in `apiome-db`, the `RegistryDatabase` connection / `APIOME_TYPES_DB*`
+  config / health reporting in `apiome-rest`, and the `types-migrate` docker-compose service
+  and env. The registry's storage is the existing `apiome.primitives` table (extended in 1.2).
+- **Acceptance Criteria.** No `apiome-types-db`, `otr` schema, `registry` command, or
   `RegistryDatabase` connection remains; the stack builds and migrates with a single database;
   `GET /health` no longer reports a separate registry database; existing `/v1/primitives` works.
 - **Parallelism/Dependencies.** Foundational — precedes 1.2.
 - **Technical Stack.** PostgreSQL, docker-compose, FastAPI.
 
-### Issue 1.2 — Extend `odb.primitives` (namespace, `$id`, `$ref`, draft 2020-12)
-- **Problem.** `odb.primitives` stores flat JSON Schemas with no namespace, no `$id`/base-uri,
+### Issue 1.2 — Extend `apiome.primitives` (namespace, `$id`, `$ref`, draft 2020-12)
+- **Problem.** `apiome.primitives` stores flat JSON Schemas with no namespace, no `$id`/base-uri,
   no draft marker, and no record of a type's relative `$ref` edges.
-- **Solution/Scope.** A single `objectified-db/scripts/<timestamp>.sql` migration that **adds
-  columns to the existing `odb.primitives` table** (no new tables, no new schema): `namespace`
+- **Solution/Scope.** A single `apiome-db/scripts/<timestamp>.sql` migration that **adds
+  columns to the existing `apiome.primitives` table** (no new tables, no new schema): `namespace`
   (e.g. `std/v0/types`, `tenant/<slug>/types`), `base_uri` (import-source base URL for relative
   `$ref` resolution), `schema_id` (`$id`), `draft` (default `2020-12`), `source` ∈ {human,
   imported}, and `refs` JSONB (array of `{relative_ref, resolved_target, status ∈
   {resolved, unresolved, circular}}`). Tenant scoping reuses the existing `tenant_id` FK to
-  `odb.tenants`; system-wide reuses `is_system`/`is_public`; immutability reuses `is_system`.
+  `apiome.tenants`; system-wide reuses `is_system`/`is_public`; immutability reuses `is_system`.
   Add indices (`namespace`, `schema_id`, `source`, GIN on `refs`). Source:
   `governance/type-namespaces.html`, `types/*` entity tags.
-- **Acceptance Criteria.** Migration applies to `objectified-db`; the new columns + indices exist
-  on `odb.primitives`; a primitive with an internal `$ref` round-trips its `refs` JSONB; the
+- **Acceptance Criteria.** Migration applies to `apiome-db`; the new columns + indices exist
+  on `apiome.primitives`; a primitive with an internal `$ref` round-trips its `refs` JSONB; the
   existing `(tenant_id, category, name)` uniqueness and all current `/v1/primitives` behaviour
   are preserved (no data loss).
 - **Parallelism/Dependencies.** Depends on 1.1; blocks Epic 2/3/4.
 - **Technical Stack.** PostgreSQL, JSONB.
 
 ### Issue 1.3 — Import provenance & property binding ✅ DONE (#3448)
-- **Delivered.** `odb.primitive_imports` provenance table (source_kind, options/report JSONB,
+- **Delivered.** `apiome.primitive_imports` provenance table (source_kind, options/report JSONB,
   attribution, tallies) written on every `/v1/primitives/{tenant}/import`, with read endpoints
   `GET /v1/primitives/{tenant}/imports[/{id}]`; imported primitives marked `source='imported'`.
-  `odb.class_properties` extended with `primitive_id` (FK to `odb.primitives`) + `primitive_ref`,
+  `apiome.class_properties` extended with `primitive_id` (FK to `apiome.primitives`) + `primitive_ref`,
   surfaced on the Designer read path and carried through class/version copies.
 - **Problem.** Imports and property bindings need durable records — in the same database.
 - **Solution/Scope.** Reuse the existing import-history/attribution infrastructure (#2299/#2305)
   to record primitive imports (source_kind ∈ {json-schema, type-def-bundle, openapi}, target
   namespace/scope, options/report JSONB, attribution); and add a **property→primitive binding**
-  by extending `odb.class_property` with a same-database foreign key to `odb.primitives` plus the
+  by extending `apiome.class_property` with a same-database foreign key to `apiome.primitives` plus the
   stored `$ref` (and resolved target), read by the Designer. No separate database, no cross-DB
   id references. Source: `governance/type-import.html`, `governance/property-binding.html`.
 - **Acceptance Criteria.** An import persists a provenance record with its report; a property
-  binding persists with a real FK to `odb.primitives` and is queryable from the Designer read path.
+  binding persists with a real FK to `apiome.primitives` and is queryable from the Designer read path.
 - **Parallelism/Dependencies.** Depends on 1.2; parallel with 1.4.
 - **Technical Stack.** PostgreSQL, JSONB; ordinary same-database foreign keys.
 
 ### Issue 1.4 — Seed core system primitives (`std/v0`) ✅ DONE (#3449)
-- **Delivered.** Migration `objectified-db/scripts/20260622-240000.sql` seeds the `std/v0/primitives`
+- **Delivered.** Migration `apiome-db/scripts/20260622-240000.sql` seeds the `std/v0/primitives`
   (string, number, integer, boolean, null, array, object) and `std/v0/types` (date, date-time,
   time, uuid, email, uri, decimal, currency-code, money) namespaces as system-wide
-  `is_system`/`is_public` rows in `odb.primitives`, with the #3447 registry columns populated
+  `is_system`/`is_public` rows in `apiome.primitives`, with the #3447 registry columns populated
   (`namespace`, `base_uri`, `schema_id` = `$id`, `draft` = 2020-12, `source` = human) and relative
   `$ref` chains recorded in `refs` (`date` → `../primitives/string` + `format: date`; `money` →
   `./decimal`, `./currency-code`). Verified end-to-end against Postgres: 0 unresolved refs, `money`/
   `date` match the canonical schemas, and re-running the seed is idempotent
   (`ON CONFLICT (tenant_id, category, name) DO NOTHING`). DB-free structural tests in
-  `objectified-db/test/primitives-std-seed.test.ts`.
+  `apiome-db/test/primitives-std-seed.test.ts`.
 - **Problem.** Tenants need a baseline of core types available to all.
 - **Solution/Scope.** Seed `std/v0/primitives` (string, number, integer, boolean, null, array,
   object) and `std/v0/types` (date, date-time, uuid, email, uri, decimal, currency-code, money,
-  …) as **system-wide `is_system` primitives** in `odb.primitives`, with correct relative `$ref`s
+  …) as **system-wide `is_system` primitives** in `apiome.primitives`, with correct relative `$ref`s
   recorded in `refs` (e.g. `date` → `../primitives/string` + `format: date`; `money` →
   `./decimal`, `./currency-code`). Idempotent seeding migration/script. Source:
   `types/browser.html`, `types/type-detail.html` (money), `governance/type-detail.html`.
@@ -320,25 +320,25 @@ erDiagram
 ## 7. Epic 2 — Registry Service & API
 
 The FastAPI service exposing namespace/type CRUD with draft-2020-12 validation and scope
-enforcement, plus the `objectified-ui` proxy + typed client.
+enforcement, plus the `apiome-ui` proxy + typed client.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 2.1 #3450 ✅ | Registry service skeleton + auth/scoping | **DONE** — registry health/ping (`GET /v1/primitives/health`) over the `objectified-db` connection; existing tenant/scope auth confirmed, clients unaffected | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-rest |
-| 2.2 #3451 ✅ | Namespace CRUD API | **DONE** — `GET/POST/PUT /v1/types/{tenant_slug}/namespaces` over `odb.type_namespaces`; tenant-admin writes, system-core read-only, type counts joined from `odb.primitives` | `type-registry`,`registry`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-rest |
-| 2.3 #3452 ✅ | Type definition CRUD + draft 2020-12 validation | **DONE** — strict JSON Schema draft 2020-12 meta-validation on primitive create/update/import (`app/schema_validation.py`), field-level 422 errors, stable derived `$id` (`schema_id`) + stamped `draft` persisted to `odb.primitives` | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | L | objectified-rest |
-| 2.4 #3453 ✅ | Scope & visibility enforcement | **DONE** — read scope `is_system ∪ tenant` on `odb.primitives` reads (cross-tenant isolation, all tenants see `std/*`); centralized `$ref`-direction rules (`app/primitives_scope.py`) reject core→tenant and tenant→other-tenant refs on create/update/import with structured 422 violations | `type-registry`,`governance`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-rest |
-| 2.5 #3454 ✅ | Registry coverage/stats endpoint | **DONE** — `GET /v1/types/{tenant_slug}/stats` returns a single server-side aggregate (core/tenant/imported type counts, properties bound, bound classes, unresolved `$ref` count, namespace count) via `Database.get_registry_coverage_stats` over `odb.primitives` + `odb.class_properties`; entitlement-gated and tenant-scoped, replacing the dashboard's client-side stat computation (feeds #3467 KPIs) | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | S | objectified-rest |
-| 2.6 #3455 | ~~UI proxy routes + typed client~~ | **CLOSED — duplicate** (`/api/primitives/*` shipped) | `type-registry`,`ui`,`mvp`,`roadmap-type-registry` | N | Y | S | objectified-ui |
+| 2.1 #3450 ✅ | Registry service skeleton + auth/scoping | **DONE** — registry health/ping (`GET /v1/primitives/health`) over the `apiome-db` connection; existing tenant/scope auth confirmed, clients unaffected | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | M | apiome-rest |
+| 2.2 #3451 ✅ | Namespace CRUD API | **DONE** — `GET/POST/PUT /v1/types/{tenant_slug}/namespaces` over `apiome.type_namespaces`; tenant-admin writes, system-core read-only, type counts joined from `apiome.primitives` | `type-registry`,`registry`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | M | apiome-rest |
+| 2.3 #3452 ✅ | Type definition CRUD + draft 2020-12 validation | **DONE** — strict JSON Schema draft 2020-12 meta-validation on primitive create/update/import (`app/schema_validation.py`), field-level 422 errors, stable derived `$id` (`schema_id`) + stamped `draft` persisted to `apiome.primitives` | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | L | apiome-rest |
+| 2.4 #3453 ✅ | Scope & visibility enforcement | **DONE** — read scope `is_system ∪ tenant` on `apiome.primitives` reads (cross-tenant isolation, all tenants see `std/*`); centralized `$ref`-direction rules (`app/primitives_scope.py`) reject core→tenant and tenant→other-tenant refs on create/update/import with structured 422 violations | `type-registry`,`governance`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | M | apiome-rest |
+| 2.5 #3454 ✅ | Registry coverage/stats endpoint | **DONE** — `GET /v1/types/{tenant_slug}/stats` returns a single server-side aggregate (core/tenant/imported type counts, properties bound, bound classes, unresolved `$ref` count, namespace count) via `Database.get_registry_coverage_stats` over `apiome.primitives` + `apiome.class_properties`; entitlement-gated and tenant-scoped, replacing the dashboard's client-side stat computation (feeds #3467 KPIs) | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | S | apiome-rest |
+| 2.6 #3455 | ~~UI proxy routes + typed client~~ | **CLOSED — duplicate** (`/api/primitives/*` shipped) | `type-registry`,`ui`,`mvp`,`roadmap-type-registry` | N | Y | S | apiome-ui |
 
 ### Issue 2.1 — Registry service skeleton + auth/scoping
-- **Problem.** The registry service must read/write the **extended `odb.primitives`** table over
-  the existing `objectified-db` connection — there is no separate database to wire to.
+- **Problem.** The registry service must read/write the **extended `apiome.primitives`** table over
+  the existing `apiome-db` connection — there is no separate database to wire to.
 - **Solution/Scope.** Extend the existing primitives service (`/v1/primitives/{tenant_slug}/...`)
-  / add registry routes that operate on the extended `odb.primitives` columns (1.2), using the
-  existing `objectified-db` connection and `validate_authentication()`. Pydantic DTOs in
+  / add registry routes that operate on the extended `apiome.primitives` columns (1.2), using the
+  existing `apiome-db` connection and `validate_authentication()`. Pydantic DTOs in
   `models.py`. No separate DB connection or pool.
-- **Acceptance Criteria.** Authenticated, tenant-scoped requests read/write `odb.primitives`
+- **Acceptance Criteria.** Authenticated, tenant-scoped requests read/write `apiome.primitives`
   (tenant rows + system rows); no separate registry connection is introduced.
 - **Parallelism/Dependencies.** Depends on 1.1/1.2; blocks 2.2–2.6.
 - **Technical Stack.** FastAPI, asyncpg/pg, Pydantic.
@@ -352,9 +352,9 @@ enforcement, plus the `objectified-ui` proxy + typed client.
   namespaces are read-only to non-platform-admins.
 - **Parallelism/Dependencies.** Depends on 2.1; blocks 4.x, 5.6.
 - **Technical Stack.** FastAPI, Pydantic.
-- **Delivered.** Migration `objectified-db/scripts/20260622-250000.sql` adds `odb.type_namespaces`
+- **Delivered.** Migration `apiome-db/scripts/20260622-250000.sql` adds `apiome.type_namespaces`
   (scope/base-uri/version-root/visibility/default), seeded with the `std/v0` system-core
-  namespaces; its `namespace`/`base_uri` mirror `odb.primitives`, which supplies each namespace's
+  namespaces; its `namespace`/`base_uri` mirror `apiome.primitives`, which supplies each namespace's
   type count. REST routes `GET/POST/PUT /v1/types/{tenant_slug}/namespaces`
   (`type_namespaces_routes.py`) list system-core ∪ tenant namespaces, and create/update
   tenant-owned namespaces (tenant-admin only; path immutable; base URI / version root derived from
@@ -391,12 +391,12 @@ enforcement, plus the `objectified-ui` proxy + typed client.
 - **Acceptance Criteria.** Numbers match fixtures and the resolver/binding state.
 - **Parallelism/Dependencies.** Depends on 2.3, 3.2, 6.2; parallel otherwise.
 - **Technical Stack.** FastAPI, SQL aggregation.
-- **Status (#3454).** Shipped in `objectified-rest`. `GET /v1/types/{tenant_slug}/stats`
+- **Status (#3454).** Shipped in `apiome-rest`. `GET /v1/types/{tenant_slug}/stats`
   (`app/type_namespaces_routes.py`) returns `RegistryCoverageStatsResponse`
   (`core_type_count`, `tenant_type_count`, `imported_count`, `properties_bound_count`,
   `bound_class_count`, `unresolved_ref_count`, `namespace_count`) from a single
-  `Database.get_registry_coverage_stats` SQL aggregate over `odb.primitives` (type/namespace/
-  import counts + unresolved `refs` edges) and `odb.class_properties` (bindings), tenant-scoped
+  `Database.get_registry_coverage_stats` SQL aggregate over `apiome.primitives` (type/namespace/
+  import counts + unresolved `refs` edges) and `apiome.class_properties` (bindings), tenant-scoped
   and entitlement-gated (`require_primitives_registry`). Consumed by the Primitives overview
   dashboard (#3467), replacing client-side stat computation. Covered by
   `tests/test_primitives_registry_stats.py` (API: 200 + auth) and
@@ -404,7 +404,7 @@ enforcement, plus the `objectified-ui` proxy + typed client.
 
 ### Issue 2.6 — UI proxy routes + typed client
 - **Problem.** Browser calls must proxy through Next.js with JWT injection.
-- **Solution/Scope.** `/api/types/*` route handlers + a typed client in `objectified-ui/lib/api/`
+- **Solution/Scope.** `/api/types/*` route handlers + a typed client in `apiome-ui/lib/api/`
   using `createRestAuthHeaders()`.
 - **Acceptance Criteria.** Client covers namespaces, types, stats, resolver, import; typed errors.
 - **Parallelism/Dependencies.** Depends on 2.2–2.5; blocks Epic 5/6 UI.
@@ -418,17 +418,17 @@ The defining mechanic: resolve relative `$ref` against each type's import-source
 report unresolved/circular references.
 
 ```
-base      = api.objectified.dev/types/std/v0/types/      (source: date)
+base      = api.apiome.app/types/std/v0/types/      (source: date)
 $ref      = ../primitives/string
-resolved  = api.objectified.dev/types/std/v0/primitives/string   ✓
+resolved  = api.apiome.app/types/std/v0/primitives/string   ✓
 ```
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 3.1 #3456 ✅ | Relative `$ref` resolution against base | **DONE** — `app/primitives_resolver.py` resolves each relative `$ref` against the source `base_uri` (`./`, `../`, cross-scope `../../std/...`) to an absolute registry URI, maps it to a primitive by `schema_id` within read scope (#3453), and persists `{relative_ref, resolved_target, status}` edges to `odb.primitives.refs` on create/update/import | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | L | objectified-rest |
-| 3.2 #3457 ✅ | Unresolved-reference detection & flags | **DONE** — edges are flagged `resolved`/`unresolved` on save/import (#3456); `GET /v1/primitives/{tenant_slug}/unresolved` exposes the tenant's unresolved-edge count, affected-primitive count, and per-primitive breakdown (feeds 2.5/#3454 KPIs and the 5.5/#3470 resolver UI). DB aggregates `count_unresolved_refs` / `get_primitives_with_unresolved_refs` over `odb.primitives.refs`; creating/importing/repinning a type runs `mark_refs_resolved_to_target` so fixing the target clears dependents on re-resolve | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-rest |
-| 3.3 #3458 | Circular-reference detection | Detect cycles (A→B→A) and flag | `type-registry`,`rest`,`roadmap-type-registry` | Y | N | M | objectified-rest |
-| 3.4 #3459 ✅ | Resolver API + dependency listing | **DONE** — `POST /v1/types/{tenant_slug}/resolve` re-resolves every `$ref` edge across the tenant's primitives against the current registry (same existence test as save-time #3456), persists any status that changed for the tenant's own rows ("re-resolve updates statuses"), and returns the per-primitive dependency listing (each resolved edge enriched with its target id/name) for the 5.5/#3470 resolver UI; counts mirror 3.2/#3457 plus `reresolved_primitive_count`. Pure re-evaluation in `app/type_resolver.py` | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-rest |
+| 3.1 #3456 ✅ | Relative `$ref` resolution against base | **DONE** — `app/primitives_resolver.py` resolves each relative `$ref` against the source `base_uri` (`./`, `../`, cross-scope `../../std/...`) to an absolute registry URI, maps it to a primitive by `schema_id` within read scope (#3453), and persists `{relative_ref, resolved_target, status}` edges to `apiome.primitives.refs` on create/update/import | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | L | apiome-rest |
+| 3.2 #3457 ✅ | Unresolved-reference detection & flags | **DONE** — edges are flagged `resolved`/`unresolved` on save/import (#3456); `GET /v1/primitives/{tenant_slug}/unresolved` exposes the tenant's unresolved-edge count, affected-primitive count, and per-primitive breakdown (feeds 2.5/#3454 KPIs and the 5.5/#3470 resolver UI). DB aggregates `count_unresolved_refs` / `get_primitives_with_unresolved_refs` over `apiome.primitives.refs`; creating/importing/repinning a type runs `mark_refs_resolved_to_target` so fixing the target clears dependents on re-resolve | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | M | apiome-rest |
+| 3.3 #3458 | Circular-reference detection | Detect cycles (A→B→A) and flag | `type-registry`,`rest`,`roadmap-type-registry` | Y | N | M | apiome-rest |
+| 3.4 #3459 ✅ | Resolver API + dependency listing | **DONE** — `POST /v1/types/{tenant_slug}/resolve` re-resolves every `$ref` edge across the tenant's primitives against the current registry (same existence test as save-time #3456), persists any status that changed for the tenant's own rows ("re-resolve updates statuses"), and returns the per-primitive dependency listing (each resolved edge enriched with its target id/name) for the 5.5/#3470 resolver UI; counts mirror 3.2/#3457 plus `reresolved_primitive_count`. Pure re-evaluation in `app/type_resolver.py` | `type-registry`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | M | apiome-rest |
 
 ### Issue 3.1 — Relative `$ref` resolution against base
 - **Problem.** Types reference each other by relative URL rooted at their import source.
@@ -490,12 +490,12 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 4.1 #3460 ✅ | ~~Import pipeline core + ingestion~~ | **DONE** — `POST /v1/primitives/{tenant_slug}/import/stage` orchestrator: ingests paste/file/url/git, parses JSON/YAML, stages candidate types per kind (json-schema/type-def-bundle/openapi), records a `staged` `odb.primitive_imports` row; legacy paste `/import` retained | `type-registry`,`import`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-rest |
-| 4.2 #3461 ✅ | ~~JSON Schema 2020-12 parser~~ | **DONE** — `primitives_parser.parse_json_schema_document`: each `$defs`/`definitions` entry → a discrete type (single-root doc → one type), captures intra-doc `#/$defs` refs as `internal` `refs` edges for rewrite (#3463), per-type draft 2020-12 validation report; wired through the `/import/stage` pipeline and the legacy `/import` commit path | `type-registry`,`import`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | L | objectified-rest |
-| 4.3 #3462 ✅ | ~~Type-definition bundle importer~~ | **DONE** — `primitives_bundle.parse_type_def_bundle` expands a `.json`/`.yaml` bundle's `types` (or `$defs`/`definitions`) container into discrete types, capturing inter-type `#/types`/`#/$defs` refs as `internal` `refs` edges for rewrite (#3463) with per-type draft 2020-12 validation; `expand_zip_bundle` merges a `.zip` of per-type files into a bundle document. Wired through `/import/stage` (deep candidates) and the `/import` commit path (`source_kind='type-def-bundle'` → N types commit N `odb.primitives` rows with refs intact); malformed bundle → clear 400 | `type-registry`,`import`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | L | objectified-rest |
-| 4.4 #3463 ✅ | ~~`$ref` rewrite + namespace/scope mapping~~ | **DONE** — `primitives_rewrite.rewrite_import_schema` rewrites each imported definition's intra-source pointers (`#/$defs/Money`, `#/definitions/Money`, `#/types/Money`) to relative registry refs at the sibling's committed `$id` (`./money`, preserving any deeper pointer as `./money#/...`), and maps recognized string formats (email, uuid, uri, date, date-time, time) to the seeded `std/v0/types` core types by injecting a relative `$ref` (author refs never overridden). Both rewrites yield ordinary registry-relative refs, so the existing resolver (#3456) persists them as `refs` edges — imported refs are stored relative and resolve via Epic 3; no `internal` edges remain on committed rows. Applied on commit (`POST /import`) for the JSON Schema and bundle paths; `map_core_formats` flag (default on) toggles format mapping; import report gains a per-type `rewrites` map | `type-registry`,`import`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | L | objectified-rest |
-| 4.5 #3464 ✅ | ~~Import review: conflicts, dedupe, report~~ | **DONE** — `primitives_review.py` classifies each imported definition New/Identical/Conflict against the registry (by derived `$id`), and `decide()` turns a per-type resolution (keep/overwrite/rename) into a commit action. New `POST /import/review` dry-run returns the classification + draft 2020-12 validation report + `$ref` rewrites + unresolved-ref mapping + allowed resolutions (writes nothing); the same classification drives `POST /import` so the committed outcome matches the review. `/import` gains `dedupe` (default on → Identical skipped) and `resolutions` request fields; conflicts resolved `overwrite` update the existing row, `rename` creates a slugified copy, default `keep` surfaces the conflict instead of dropping it silently. Report gains `overwritten`/`renamed`/`identical` buckets + per-type `reviews` | `type-registry`,`import`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-rest |
-| 4.6 #3465 | OpenAPI 3.1 components importer | Extract `components/schemas` as types | `type-registry`,`import`,`rest`,`roadmap-type-registry` | Y | N | M | objectified-rest |
+| 4.1 #3460 ✅ | ~~Import pipeline core + ingestion~~ | **DONE** — `POST /v1/primitives/{tenant_slug}/import/stage` orchestrator: ingests paste/file/url/git, parses JSON/YAML, stages candidate types per kind (json-schema/type-def-bundle/openapi), records a `staged` `apiome.primitive_imports` row; legacy paste `/import` retained | `type-registry`,`import`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | M | apiome-rest |
+| 4.2 #3461 ✅ | ~~JSON Schema 2020-12 parser~~ | **DONE** — `primitives_parser.parse_json_schema_document`: each `$defs`/`definitions` entry → a discrete type (single-root doc → one type), captures intra-doc `#/$defs` refs as `internal` `refs` edges for rewrite (#3463), per-type draft 2020-12 validation report; wired through the `/import/stage` pipeline and the legacy `/import` commit path | `type-registry`,`import`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | L | apiome-rest |
+| 4.3 #3462 ✅ | ~~Type-definition bundle importer~~ | **DONE** — `primitives_bundle.parse_type_def_bundle` expands a `.json`/`.yaml` bundle's `types` (or `$defs`/`definitions`) container into discrete types, capturing inter-type `#/types`/`#/$defs` refs as `internal` `refs` edges for rewrite (#3463) with per-type draft 2020-12 validation; `expand_zip_bundle` merges a `.zip` of per-type files into a bundle document. Wired through `/import/stage` (deep candidates) and the `/import` commit path (`source_kind='type-def-bundle'` → N types commit N `apiome.primitives` rows with refs intact); malformed bundle → clear 400 | `type-registry`,`import`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | L | apiome-rest |
+| 4.4 #3463 ✅ | ~~`$ref` rewrite + namespace/scope mapping~~ | **DONE** — `primitives_rewrite.rewrite_import_schema` rewrites each imported definition's intra-source pointers (`#/$defs/Money`, `#/definitions/Money`, `#/types/Money`) to relative registry refs at the sibling's committed `$id` (`./money`, preserving any deeper pointer as `./money#/...`), and maps recognized string formats (email, uuid, uri, date, date-time, time) to the seeded `std/v0/types` core types by injecting a relative `$ref` (author refs never overridden). Both rewrites yield ordinary registry-relative refs, so the existing resolver (#3456) persists them as `refs` edges — imported refs are stored relative and resolve via Epic 3; no `internal` edges remain on committed rows. Applied on commit (`POST /import`) for the JSON Schema and bundle paths; `map_core_formats` flag (default on) toggles format mapping; import report gains a per-type `rewrites` map | `type-registry`,`import`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | L | apiome-rest |
+| 4.5 #3464 ✅ | ~~Import review: conflicts, dedupe, report~~ | **DONE** — `primitives_review.py` classifies each imported definition New/Identical/Conflict against the registry (by derived `$id`), and `decide()` turns a per-type resolution (keep/overwrite/rename) into a commit action. New `POST /import/review` dry-run returns the classification + draft 2020-12 validation report + `$ref` rewrites + unresolved-ref mapping + allowed resolutions (writes nothing); the same classification drives `POST /import` so the committed outcome matches the review. `/import` gains `dedupe` (default on → Identical skipped) and `resolutions` request fields; conflicts resolved `overwrite` update the existing row, `rename` creates a slugified copy, default `keep` surfaces the conflict instead of dropping it silently. Report gains `overwritten`/`renamed`/`identical` buckets + per-type `reviews` | `type-registry`,`import`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | M | apiome-rest |
+| 4.6 #3465 | OpenAPI 3.1 components importer | Extract `components/schemas` as types | `type-registry`,`import`,`rest`,`roadmap-type-registry` | Y | N | M | apiome-rest |
 
 ### Issue 4.1 — Import pipeline core + ingestion
 - **Problem.** A single orchestration path is needed for all source kinds.
@@ -516,7 +516,7 @@ flowchart LR
 - **Technical Stack.** FastAPI, JSON Schema parsing.
 
 ### Issue 4.3 — Type-definition bundle importer
-- **Problem.** Must ingest Objectified type-definition bundles containing many types.
+- **Problem.** Must ingest Apiome type-definition bundles containing many types.
 - **Solution/Scope.** Expand `.zip`/`.json` bundles into multiple interlinked `type_definition`s,
   preserving inter-type refs for rewrite. Source: `governance/type-import.html` (Type Definition
   Bundle card), conversation requirement ("import them as well").
@@ -526,7 +526,7 @@ flowchart LR
 - **Technical Stack.** FastAPI, zip/json.
 
 ### Issue 4.4 — `$ref` rewrite + namespace/scope mapping ✅ DONE (#3463)
-- **Delivered.** `objectified-rest/src/app/primitives_rewrite.py` (`rewrite_import_schema`) rewrites
+- **Delivered.** `apiome-rest/src/app/primitives_rewrite.py` (`rewrite_import_schema`) rewrites
   each imported definition's intra-source pointers — `#/$defs/Money` / `#/definitions/Money` /
   `#/types/Money` → `./money` (the sibling's committed `$id` leaf-slug, deeper pointers preserved as
   `./money#/properties/c`) — and maps recognized string formats (email, uuid, uri, date, date-time,
@@ -551,7 +551,7 @@ flowchart LR
 - **Technical Stack.** FastAPI.
 
 ### Issue 4.5 — Import review: conflicts, dedupe, report ✅ DONE (#3464)
-- **Delivered.** `objectified-rest/src/app/primitives_review.py` holds the pure review logic:
+- **Delivered.** `apiome-rest/src/app/primitives_review.py` holds the pure review logic:
   `classify_status()` labels each imported definition **New** (no visible type holds its derived
   `$id`), **Identical** (an existing type has the same `$id` and a deep-equal schema), or
   **Conflict** (same `$id`, different schema), and `decide()` turns a per-type resolution
@@ -593,14 +593,14 @@ The in-app surface under **Control Panel → Governance**, matching the `governa
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 5.1 #3466 | ~~Governance nav entry + route group~~ | **CLOSED — duplicate** (`/ade/dashboard/primitives` in nav) | `type-registry`,`ui`,`governance`,`mvp`,`roadmap-type-registry` | N | Y | S | objectified-ui |
-| 5.2 #3467 ✅ | Enhance Primitives overview (registry KPIs) | **DONE** — KPI strip from stats API, namespace collections, recent import activity, row click → type detail | `type-registry`,`ui`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-ui |
-| 5.3 #3468 ✅ | Type detail page | **DONE** — read-only detail at `/ade/dashboard/primitives/[id]`: JSON Schema, reference-resolution table (#3456), generated example instance, dependents (graceful empty-state until #3477 reverse index), metadata (scope/namespace/version-root/owner/mutability), base chain, used-in mini-stats, Export-schema download + gated Deprecate (lifecycle #3482) | `type-registry`,`ui`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-ui |
-| 5.4 #3469 ✅ | Import UI (wizard) | **DONE** — 3-step wizard (`PrimitiveImportDialog`): source-kind cards (JSON Schema / type-def bundle / OpenAPI) + file/URL/paste tabs + options (target namespace, `$ref` rewrite, dedupe); review step wired to `POST /import/review` showing New/Identical/Conflict/Invalid classification with per-conflict keep/overwrite/rename resolution; commit via `POST /import` with `resolutions`; result step with per-bucket outcome. New `/api/primitives/import/review` proxy; pure model in `primitiveImportModel.ts` | `type-registry`,`ui`,`import`,`mvp`,`roadmap-type-registry` | Y | Y | L | objectified-ui |
-| 5.5 #3470 ✅ | Reference Resolver UI | **DONE** — Resolver tab under Primitives (`/ade/dashboard/primitives`): read-only resolution-base control, namespace filter, Re-resolve action wired to `POST /api/types/resolve` → REST `POST /v1/types/{slug}/resolve` (3.4/#3459), summary chips (resolved/unresolved/circular), reference graph (cross-scope tenant→core highlighted), and the per-edge resolution table with status filter. First load and Re-resolve hit the same endpoint so statuses persist/update; `circular` already wired for #3458. New `/api/types/resolve` proxy + `proxyRestPost`; pure model in `primitivesResolverModel.ts` | `type-registry`,`ui`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-ui |
-| 5.6 #3471 ✅ | Namespaces & Scopes UI | **DONE** — Namespaces & Scopes tab under Primitives (`/ade/dashboard/primitives`): scope-model explainer cards (system `std/*` vs tenant), namespaces table (scope, base URI, version root, types, visibility, default) with create/edit for tenant rows (system-core read-only), scope precedence/resolution-order card, and a governed promote-to-core card (gated on platform admin, 7.3). Create/edit wired to new `POST /api/types/namespaces` + `PUT /api/types/namespaces/[id]` proxies → REST `/v1/types/{slug}/namespaces` (#3451); new `proxyRestPut`; pure model in `namespaceModel.ts` | `type-registry`,`ui`,`registry`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-ui |
-| 5.7 #3472 ✅ | Type Registry Settings UI | **DONE** — Settings tab under Primitives (`/ade/dashboard/primitives`): live registry storage status (from `GET /api/primitives/health` → REST `/v1/primitives/health`, #3450 — shared `objectified-db`, no separate DB), JSON Schema dialect (default draft + strict/annotation/coerce toggles), `$ref` resolution policy (base URL, ref style, remote allowlist, max depth 1–64, circular policy), import defaults (scope, target namespace, rewrite, accepted formats, dedupe), and validation/publishing governance (validate-on-save, block-publish-on-errors, core publish role — read by #3479). Settings persist server-side: new `odb.type_registry_settings` table (per-tenant, defaults when unsaved), REST `GET`/`PUT /v1/types/{slug}/settings` (tenant-admin write, enum/range validated), `/api/types/settings` proxy, pure model in `primitivesSettingsModel.ts` (minimal-diff PUT) | `type-registry`,`ui`,`mvp`,`roadmap-type-registry` | Y | Y | S | objectified-ui, objectified-rest, objectified-db |
-| 5.8 #3473 | Governance area overview page | Governance landing positioning Type Registry + tools | `type-registry`,`ui`,`governance`,`roadmap-type-registry` | Y | N | S | objectified-ui |
+| 5.1 #3466 | ~~Governance nav entry + route group~~ | **CLOSED — duplicate** (`/ade/dashboard/primitives` in nav) | `type-registry`,`ui`,`governance`,`mvp`,`roadmap-type-registry` | N | Y | S | apiome-ui |
+| 5.2 #3467 ✅ | Enhance Primitives overview (registry KPIs) | **DONE** — KPI strip from stats API, namespace collections, recent import activity, row click → type detail | `type-registry`,`ui`,`mvp`,`roadmap-type-registry` | Y | Y | M | apiome-ui |
+| 5.3 #3468 ✅ | Type detail page | **DONE** — read-only detail at `/ade/dashboard/primitives/[id]`: JSON Schema, reference-resolution table (#3456), generated example instance, dependents (graceful empty-state until #3477 reverse index), metadata (scope/namespace/version-root/owner/mutability), base chain, used-in mini-stats, Export-schema download + gated Deprecate (lifecycle #3482) | `type-registry`,`ui`,`mvp`,`roadmap-type-registry` | Y | Y | M | apiome-ui |
+| 5.4 #3469 ✅ | Import UI (wizard) | **DONE** — 3-step wizard (`PrimitiveImportDialog`): source-kind cards (JSON Schema / type-def bundle / OpenAPI) + file/URL/paste tabs + options (target namespace, `$ref` rewrite, dedupe); review step wired to `POST /import/review` showing New/Identical/Conflict/Invalid classification with per-conflict keep/overwrite/rename resolution; commit via `POST /import` with `resolutions`; result step with per-bucket outcome. New `/api/primitives/import/review` proxy; pure model in `primitiveImportModel.ts` | `type-registry`,`ui`,`import`,`mvp`,`roadmap-type-registry` | Y | Y | L | apiome-ui |
+| 5.5 #3470 ✅ | Reference Resolver UI | **DONE** — Resolver tab under Primitives (`/ade/dashboard/primitives`): read-only resolution-base control, namespace filter, Re-resolve action wired to `POST /api/types/resolve` → REST `POST /v1/types/{slug}/resolve` (3.4/#3459), summary chips (resolved/unresolved/circular), reference graph (cross-scope tenant→core highlighted), and the per-edge resolution table with status filter. First load and Re-resolve hit the same endpoint so statuses persist/update; `circular` already wired for #3458. New `/api/types/resolve` proxy + `proxyRestPost`; pure model in `primitivesResolverModel.ts` | `type-registry`,`ui`,`mvp`,`roadmap-type-registry` | Y | Y | M | apiome-ui |
+| 5.6 #3471 ✅ | Namespaces & Scopes UI | **DONE** — Namespaces & Scopes tab under Primitives (`/ade/dashboard/primitives`): scope-model explainer cards (system `std/*` vs tenant), namespaces table (scope, base URI, version root, types, visibility, default) with create/edit for tenant rows (system-core read-only), scope precedence/resolution-order card, and a governed promote-to-core card (gated on platform admin, 7.3). Create/edit wired to new `POST /api/types/namespaces` + `PUT /api/types/namespaces/[id]` proxies → REST `/v1/types/{slug}/namespaces` (#3451); new `proxyRestPut`; pure model in `namespaceModel.ts` | `type-registry`,`ui`,`registry`,`mvp`,`roadmap-type-registry` | Y | Y | M | apiome-ui |
+| 5.7 #3472 ✅ | Type Registry Settings UI | **DONE** — Settings tab under Primitives (`/ade/dashboard/primitives`): live registry storage status (from `GET /api/primitives/health` → REST `/v1/primitives/health`, #3450 — shared `apiome-db`, no separate DB), JSON Schema dialect (default draft + strict/annotation/coerce toggles), `$ref` resolution policy (base URL, ref style, remote allowlist, max depth 1–64, circular policy), import defaults (scope, target namespace, rewrite, accepted formats, dedupe), and validation/publishing governance (validate-on-save, block-publish-on-errors, core publish role — read by #3479). Settings persist server-side: new `apiome.type_registry_settings` table (per-tenant, defaults when unsaved), REST `GET`/`PUT /v1/types/{slug}/settings` (tenant-admin write, enum/range validated), `/api/types/settings` proxy, pure model in `primitivesSettingsModel.ts` (minimal-diff PUT) | `type-registry`,`ui`,`mvp`,`roadmap-type-registry` | Y | Y | S | apiome-ui, apiome-rest, apiome-db |
+| 5.8 #3473 | Governance area overview page | Governance landing positioning Type Registry + tools | `type-registry`,`ui`,`governance`,`roadmap-type-registry` | Y | N | S | apiome-ui |
 
 ### Issue 5.1 — Governance nav entry + route group
 - **Problem.** No Type Registry surface exists in the app nav.
@@ -704,10 +704,10 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 6.1 #3474 ✅ | Type picker component | **DONE** — `PrimitiveSelector` evolved into the full type picker (`Select Type`): Standard / Core / Tenant / Custom tabs that classify `odb.primitives` by `is_system` / `tenant_id` / `source` (`classifyPrimitive`), per-tab counts, scope chips + per-row scope badges, search across name/namespace/`$ref`/tags, and a per-row resolved `$ref` preview. Selecting a registry type emits a stable `$ref` (`buildTypeRef`, e.g. `std/v0/types/date`) onto `PropertyFormData.$ref` and fires `onTypeBound`; legacy namespace-less primitives still bind by inline schema (no `$ref`). A bound-type chip on the trigger shows/clears the current binding. Persisting the binding is #3475 | `type-registry`,`ui`,`schema-designer`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-ui |
-| 6.2 #3475 ✅ | Property→type `$ref` binding storage | **DONE** — the Designer persists a bound property's type reference to dedicated `odb.class_properties` columns (`primitive_id` FK to `odb.primitives` + the stored `primitive_ref` `$ref`, #3448 model), sent top-level on class-property create/update and rehydrated into the bound-type chip on reload. Binding a primitive increments its `usage_count` (create always; update only on a changed binding, so re-saves don't inflate it). Clearing the chip writes NULL/NULL — distinct from the legacy inline-primitive merge (the migration path for namespace-less primitives) | `type-registry`,`ui`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | M | objectified-ui, objectified-rest |
-| 6.3 #3476 ✅ | Resolved-type display in Designer/Paths | **DONE** — a bound property's persisted binding (`$ref` + resolved `primitive_id`, #3475) resolves to the primitive's *effective* JSON Schema for display in the Designer's class-property editor: `ResolvedTypePreview` fetches the primitive by its FK (`/api/primitives/{id}`, or accepts a pre-resolved schema for reuse in Paths), `summarizeEffectiveSchema` renders the resolved type/format/constraint pills, and a live example-value field coerces free text to the schema's JSON type and validates it with AJV (2020-12) via `validateExampleAgainstSchema`. Pure resolver/summary/coercion helpers live in `resolvedTypeModel.ts` | `type-registry`,`ui`,`schema-designer`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-ui |
-| 6.4 #3477 | "Used by properties" dependents/impact | Reverse index: which properties use a type | `type-registry`,`rest`,`roadmap-type-registry` | Y | N | M | objectified-rest, objectified-ui |
+| 6.1 #3474 ✅ | Type picker component | **DONE** — `PrimitiveSelector` evolved into the full type picker (`Select Type`): Standard / Core / Tenant / Custom tabs that classify `apiome.primitives` by `is_system` / `tenant_id` / `source` (`classifyPrimitive`), per-tab counts, scope chips + per-row scope badges, search across name/namespace/`$ref`/tags, and a per-row resolved `$ref` preview. Selecting a registry type emits a stable `$ref` (`buildTypeRef`, e.g. `std/v0/types/date`) onto `PropertyFormData.$ref` and fires `onTypeBound`; legacy namespace-less primitives still bind by inline schema (no `$ref`). A bound-type chip on the trigger shows/clears the current binding. Persisting the binding is #3475 | `type-registry`,`ui`,`schema-designer`,`mvp`,`roadmap-type-registry` | Y | Y | M | apiome-ui |
+| 6.2 #3475 ✅ | Property→type `$ref` binding storage | **DONE** — the Designer persists a bound property's type reference to dedicated `apiome.class_properties` columns (`primitive_id` FK to `apiome.primitives` + the stored `primitive_ref` `$ref`, #3448 model), sent top-level on class-property create/update and rehydrated into the bound-type chip on reload. Binding a primitive increments its `usage_count` (create always; update only on a changed binding, so re-saves don't inflate it). Clearing the chip writes NULL/NULL — distinct from the legacy inline-primitive merge (the migration path for namespace-less primitives) | `type-registry`,`ui`,`rest`,`mvp`,`roadmap-type-registry` | N | Y | M | apiome-ui, apiome-rest |
+| 6.3 #3476 ✅ | Resolved-type display in Designer/Paths | **DONE** — a bound property's persisted binding (`$ref` + resolved `primitive_id`, #3475) resolves to the primitive's *effective* JSON Schema for display in the Designer's class-property editor: `ResolvedTypePreview` fetches the primitive by its FK (`/api/primitives/{id}`, or accepts a pre-resolved schema for reuse in Paths), `summarizeEffectiveSchema` renders the resolved type/format/constraint pills, and a live example-value field coerces free text to the schema's JSON type and validates it with AJV (2020-12) via `validateExampleAgainstSchema`. Pure resolver/summary/coercion helpers live in `resolvedTypeModel.ts` | `type-registry`,`ui`,`schema-designer`,`mvp`,`roadmap-type-registry` | Y | Y | M | apiome-ui |
+| 6.4 #3477 | "Used by properties" dependents/impact | Reverse index: which properties use a type | `type-registry`,`rest`,`roadmap-type-registry` | Y | N | M | apiome-rest, apiome-ui |
 
 ### Issue 6.1 — Type picker component
 - **Problem.** The property editor needs to pick a registry type.
@@ -725,17 +725,17 @@ flowchart LR
   primitive id onto the property form; the class-property editor sends them top-level
   (`primitive_id`, `primitive_ref`) on save and reads them back into the bound-type chip on
   reload. The REST class-property create/update/read path already carried these dedicated
-  `odb.class_properties` columns (the #3448 model — a real FK to `odb.primitives` plus the stored
+  `apiome.class_properties` columns (the #3448 model — a real FK to `apiome.primitives` plus the stored
   `$ref`); this ticket wires the Designer write/read ends and the `PropertySchema` contract, and
   increments the bound primitive's `usage_count` (on create, and on update only when the binding
   target changes — repeated saves of an unchanged binding don't inflate it). Clearing the chip
   persists NULL/NULL, keeping a registry binding distinct from the legacy inline-primitive merge
-  (the migration path for namespace-less primitives). Tests: `objectified-rest`
+  (the migration path for namespace-less primitives). Tests: `apiome-rest`
   `tests/test_class_property_binding.py` (route passthrough/clear/read + model contract) and the
-  `objectified-ui` `PrimitiveSelector` binding-persistence cases.
+  `apiome-ui` `PrimitiveSelector` binding-persistence cases.
 - **Problem.** A bound property must persist its type reference.
 - **Solution/Scope.** Write/read the property↔type binding (1.3), storing the `$ref` + resolved
-  target on the `objectified-db` `class_property` (or the binding link). Source:
+  target on the `apiome-db` `class_property` (or the binding link). Source:
   `governance/property-binding.html` (binding preview).
 - **Acceptance Criteria.** Binding persists and reloads; resolves via Epic 3.
 - **Parallelism/Dependencies.** Depends on 1.3, 3.1, 6.1; blocks 6.3.
@@ -751,7 +751,7 @@ flowchart LR
   (`coerceExampleValue`) and validates it against the resolved schema with AJV 2020-12
   (`validateExampleAgainstSchema`, reusing `lib/database/validateSchema`). The pure
   resolver/summary/coercion/validation helpers live in `resolvedTypeModel.ts`. Tests:
-  `objectified-ui` `tests/resolvedTypeModel.test.ts` (resolve/summarize/coerce/validate) and
+  `apiome-ui` `tests/resolvedTypeModel.test.ts` (resolve/summarize/coerce/validate) and
   `tests/ResolvedTypePreview.test.tsx` (fetch-by-FK render + valid/invalid example validation).
 - **Problem.** The Designer must render the resolved type and validate values against it.
 - **Solution/Scope.** Resolve a property's `$ref` to its effective schema and display it (type,
@@ -777,11 +777,11 @@ Governance controls around the registry: entitlements, publish gates, promotion,
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |---|---|---|---|:---:|:---:|---|---|
-| 7.1 #3478 ✅ | Entitlement & feature gating | **DONE** — optional `primitives-registry` entitlement gates the advanced Type Registry surface (resolver, namespaces, settings, stats, import) in `objectified-rest`; baseline primitives CRUD + `/health` stay always-on | `type-registry`,`governance`,`rest`,`ui`,`mvp`,`roadmap-type-registry` | Y | Y | S | objectified-rest, objectified-ui |
-| 7.2 #3479 ✅ | Type publishing & validation gate | **DONE** — Primitive create/update now consult the tenant's type-registry settings (#3472) before persisting: `load_publish_gate()` reads `validate_on_save` / `block_publish_on_errors` and threads them through `resolve_primitive_identity` (#3452). With the gate on (the default, and the behavior when a tenant has no saved settings) an invalid draft 2020-12 schema is rejected with field-level 422 errors; relaxing `block_publish_on_errors` lets it persist (advisory), and `validate_on_save=false` skips the meta-schema check entirely. Structural reachability (schema must be a JSON object) and cross-tenant `$ref` scope enforcement (#3453) stay always-on regardless of the gate. Covered by `test_primitives_publish_gate.py` | `type-registry`,`governance`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | M | objectified-rest |
-| 7.3 #3480 | Promote tenant type → core (CAB) | Governed promotion of a vetted tenant type to `std/*` | `type-registry`,`governance`,`rest`,`ui`,`roadmap-type-registry` | Y | N | M | objectified-rest, objectified-ui |
-| 7.4 #3481 ✅ | Registry audit log | **DONE** — append-only `odb.registry_audit` ledger (migration `20260623-140000.sql`) records each governed primitive action (`primitive.create` / `update` / `delete` / `import`) with the acting user, the affected type's `$id`/namespace, and structured detail. Writes are best-effort (a failed audit insert never fails the action) and wired into the create/update/delete/import routes via `record_registry_audit`. Queryable per tenant, newest first, with offset + cursor pagination and action/actor/outcome/date filters at `GET /v1/primitives/{tenant_slug}/audit` (behind the same `primitives-registry` entitlement as the rest of the advanced surface). Covered by `test_registry_audit_api.py`, `test_registry_audit_db.py`, `test_primitives_audit_writes.py` | `type-registry`,`governance`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | S | objectified-rest |
-| 7.5 #3482 | Version roots & deprecation lifecycle | Manage `v0`/`v1` roots; deprecate/sunset types | `type-registry`,`versions`,`governance`,`roadmap-type-registry` | Y | N | M | objectified-rest, objectified-ui |
+| 7.1 #3478 ✅ | Entitlement & feature gating | **DONE** — optional `primitives-registry` entitlement gates the advanced Type Registry surface (resolver, namespaces, settings, stats, import) in `apiome-rest`; baseline primitives CRUD + `/health` stay always-on | `type-registry`,`governance`,`rest`,`ui`,`mvp`,`roadmap-type-registry` | Y | Y | S | apiome-rest, apiome-ui |
+| 7.2 #3479 ✅ | Type publishing & validation gate | **DONE** — Primitive create/update now consult the tenant's type-registry settings (#3472) before persisting: `load_publish_gate()` reads `validate_on_save` / `block_publish_on_errors` and threads them through `resolve_primitive_identity` (#3452). With the gate on (the default, and the behavior when a tenant has no saved settings) an invalid draft 2020-12 schema is rejected with field-level 422 errors; relaxing `block_publish_on_errors` lets it persist (advisory), and `validate_on_save=false` skips the meta-schema check entirely. Structural reachability (schema must be a JSON object) and cross-tenant `$ref` scope enforcement (#3453) stay always-on regardless of the gate. Covered by `test_primitives_publish_gate.py` | `type-registry`,`governance`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | M | apiome-rest |
+| 7.3 #3480 | Promote tenant type → core (CAB) | Governed promotion of a vetted tenant type to `std/*` | `type-registry`,`governance`,`rest`,`ui`,`roadmap-type-registry` | Y | N | M | apiome-rest, apiome-ui |
+| 7.4 #3481 ✅ | Registry audit log | **DONE** — append-only `apiome.registry_audit` ledger (migration `20260623-140000.sql`) records each governed primitive action (`primitive.create` / `update` / `delete` / `import`) with the acting user, the affected type's `$id`/namespace, and structured detail. Writes are best-effort (a failed audit insert never fails the action) and wired into the create/update/delete/import routes via `record_registry_audit`. Queryable per tenant, newest first, with offset + cursor pagination and action/actor/outcome/date filters at `GET /v1/primitives/{tenant_slug}/audit` (behind the same `primitives-registry` entitlement as the rest of the advanced surface). Covered by `test_registry_audit_api.py`, `test_registry_audit_db.py`, `test_primitives_audit_writes.py` | `type-registry`,`governance`,`rest`,`mvp`,`roadmap-type-registry` | Y | Y | S | apiome-rest |
+| 7.5 #3482 | Version roots & deprecation lifecycle | Manage `v0`/`v1` roots; deprecate/sunset types | `type-registry`,`versions`,`governance`,`roadmap-type-registry` | Y | N | M | apiome-rest, apiome-ui |
 
 ### Issue 7.1 — Entitlement & feature gating ✅ DONE (#3478)
 - **Solution/Scope.** Add a `type-registry` entitlement; gate nav, routes, and API. Source:
@@ -789,15 +789,15 @@ Governance controls around the registry: entitlements, publish gates, promotion,
 - **Acceptance Criteria.** Non-entitled tenants cannot see/reach the feature; entitled can.
 - **Parallelism/Dependencies.** Parallel; soft-blocks 5.1 visibility.
 - **Technical Stack.** FastAPI entitlements, Next.js checks.
-- **DONE.** The `primitives-registry` feature flag (seeded by objectified-db migration
+- **DONE.** The `primitives-registry` feature flag (seeded by apiome-db migration
   `20260623-130000.sql`; bundled into the Paid and Sponsor plans, not Free) is the entitlement,
   managed through the existing admin Feature-Flag panel (per-user / per-tenant overrides on top of
-  the license default). Enforcement is authoritative in `objectified-rest`: a reusable
+  the license default). Enforcement is authoritative in `apiome-rest`: a reusable
   `require_primitives_registry` dependency (`app/feature_gating.py`) gates the **advanced** surface —
   every `/v1/types/*` route (resolver, namespaces, settings, stats) plus the `/v1/primitives/*`
   import pipeline and `/unresolved` resolver — while baseline primitives CRUD and `/health` remain
   always-on. The gate is itself behind an operator switch
-  (`OBJECTIFIED_PRIMITIVES_REGISTRY_GATING`, default **off**): when off, behavior is unchanged and
+  (`APIOME_PRIMITIVES_REGISTRY_GATING`, default **off**): when off, behavior is unchanged and
   every authenticated tenant reaches the advanced routes; when on, non-entitled tenants get `403`.
   Entitlement resolves with precedence per-user override → per-tenant override → license default
   (`Database.tenant_has_feature_flag`), honoring the flag's global master switch.
@@ -824,7 +824,7 @@ Governance controls around the registry: entitlements, publish gates, promotion,
 - **Acceptance Criteria.** Each governed action writes an audit record; queryable per tenant.
 - **Parallelism/Dependencies.** Parallel; consumed by 7.3.
 - **Technical Stack.** FastAPI, PostgreSQL.
-- **DONE.** New append-only table `odb.registry_audit` (migration `20260623-140000.sql`),
+- **DONE.** New append-only table `apiome.registry_audit` (migration `20260623-140000.sql`),
   modeled on the `workflow_audit` ledger (#2577): `tenant_id`, optional `primitive_id`, the
   affected type's `schema_id`/`namespace`, `action`, `outcome`, `actor_id`, JSONB `detail`, and
   `created_at`. A shared `record_registry_audit` helper (`app/registry_audit.py`) resolves the
@@ -887,8 +887,8 @@ flowchart TB
   classDef v fill:#eee,stroke:#999,stroke-dasharray:4;
 ```
 
-1. **Wave 1 — Foundation (Epic 1).** Consolidate the registry into `objectified-db` / remove the
-   separate DB (1.1) → extend `odb.primitives` (1.2) → import provenance + property binding (1.3)
+1. **Wave 1 — Foundation (Epic 1).** Consolidate the registry into `apiome-db` / remove the
+   separate DB (1.1) → extend `apiome.primitives` (1.2) → import provenance + property binding (1.3)
    + seed `std/v0` core system primitives (1.4).
 2. **Wave 2 — Service + Resolver (Epics 2 & 3).** Service (2.1) → namespaces (2.2) → types +
    validation (2.3) → scope (2.4) → stats (2.5) → proxy/client (2.6); resolver
@@ -906,7 +906,7 @@ flowchart TB
 This roadmap defines **37 issues** across **7 epics** (29 MVP open + 2 closed duplicates + 6 V2). Issues follow
 `Primitives: [<epic#.issue#>] <title>`, e.g.:
 
-- `Primitives: [1.1] Consolidate registry into objectified-db (remove separate DB)`
+- `Primitives: [1.1] Consolidate registry into apiome-db (remove separate DB)`
 - `Primitives: [3.1] Relative $ref resolution against import-source base`
 - `Primitives: [4.3] Type-definition bundle importer`
 - `Primitives: [6.1] Type picker component (Standard/Core/Tenant/Custom)`

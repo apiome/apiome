@@ -1,6 +1,6 @@
-# Objectified: Testing & Quality Assurance - Feature Roadmap
+# Apiome: Testing & Quality Assurance - Feature Roadmap
 
-> A comprehensive in-product testing platform that transforms Objectified from a schema design tool into a complete API quality assurance environment. Covers interactive API testing, mock server infrastructure, request collections, CRUD test flows, contract testing (Pact), load testing (k6), chaos engineering, and an automated CI/CD pipeline.
+> A comprehensive in-product testing platform that transforms Apiome from a schema design tool into a complete API quality assurance environment. Covers interactive API testing, mock server infrastructure, request collections, CRUD test flows, contract testing (Pact), load testing (k6), chaos engineering, and an automated CI/CD pipeline.
 >
 > **Revenue Model**: Swagger UI integration and basic interactive testing in all tiers; mock server, request collections, CRUD test runner, and Postman collection generation gated at Pro; contract testing (Pact broker), load testing, chaos engineering, and quality gates for publishing are Enterprise-only
 >

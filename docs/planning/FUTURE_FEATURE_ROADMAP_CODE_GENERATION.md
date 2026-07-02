@@ -1,6 +1,6 @@
-# Objectified: Code Generation - Feature Roadmap
+# Apiome: Code Generation - Feature Roadmap
 
-> Multi-language code generation engine that transforms Objectified schemas and paths into production-ready model definitions, server stubs, client SDKs, CRUD operations, and mock data — covering the full spectrum from schema-to-types through path-to-server-framework.
+> Multi-language code generation engine that transforms Apiome schemas and paths into production-ready model definitions, server stubs, client SDKs, CRUD operations, and mock data — covering the full spectrum from schema-to-types through path-to-server-framework.
 >
 > **Revenue Model**: TypeScript, Python, and GraphQL generation in all tiers; Java, C#, Go, Rust, Scala, ORM models, and OpenAPI client SDK generation gated at Pro; server stub generation, CI/CD-integrated code export, and custom template engine are Enterprise-only
 >
@@ -54,7 +54,7 @@
 
 > **Epic:** [#2363](https://github.com/KenSuenobu/objectified-commercial/issues/2363) — Schema-to-Code Generation
 
-Generate TypeScript interface and type definitions from Objectified schema classes. Support full OpenAPI composition (`allOf` → interface extension, `oneOf` → union type, `anyOf` → intersection). Include JSDoc comments sourced from class/property descriptions. Apply configurable naming conventions.
+Generate TypeScript interface and type definitions from Apiome schema classes. Support full OpenAPI composition (`allOf` → interface extension, `oneOf` → union type, `anyOf` → intersection). Include JSDoc comments sourced from class/property descriptions. Apply configurable naming conventions.
 
 **Output example:**
 ```typescript

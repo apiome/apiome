@@ -14,7 +14,7 @@ import json
 import os
 
 REPO = 'KenSuenobu/objectified-commercial'
-REPO_DIR = '/home/kenji/Development/objectified'
+REPO_DIR = '/home/kenji/Development/apiome'
 
 BODY_FOOTER_MARKER = '---\n\n**Part of Epic:**'
 

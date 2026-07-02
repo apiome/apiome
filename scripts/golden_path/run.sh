@@ -11,7 +11,7 @@
 #   scripts/golden_path/run.sh --keep     # leave the stack running afterwards
 #   scripts/golden_path/run.sh --no-build # skip the image build (reuse existing images)
 #
-# Override endpoints/credentials via the OBJECTIFIED_* env vars documented in smoke.py.
+# Override endpoints/credentials via the APIOME_* env vars documented in smoke.py.
 set -euo pipefail
 
 KEEP=0
@@ -29,13 +29,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$REPO_ROOT"
 
-# Resolve a command to run the objectified CLI. Prefer the package's uv environment so the
-# export/download step exercises the real CLI; fall back to an `objectified` on PATH.
-if command -v uv >/dev/null 2>&1 && [ -d "$REPO_ROOT/objectified-cli" ]; then
-  CLI_RUN=(uv run --project "$REPO_ROOT/objectified-cli" objectified)
-  PY_RUN=(uv run --project "$REPO_ROOT/objectified-cli" python)
+# Resolve a command to run the apiome CLI. Prefer the package's uv environment so the
+# export/download step exercises the real CLI; fall back to an `apiome` on PATH.
+if command -v uv >/dev/null 2>&1 && [ -d "$REPO_ROOT/apiome-cli" ]; then
+  CLI_RUN=(uv run --project "$REPO_ROOT/apiome-cli" apiome)
+  PY_RUN=(uv run --project "$REPO_ROOT/apiome-cli" python)
 else
-  CLI_RUN=(objectified)
+  CLI_RUN=(apiome)
   PY_RUN=(python3)
 fi
 
@@ -57,7 +57,7 @@ echo "==> Loading dev seed data (idempotent)"
 docker compose run --rm seed
 
 echo "==> Running the golden-path smoke test"
-export OBJECTIFIED_REST_URL="${OBJECTIFIED_REST_URL:-http://localhost:8000}"
-export OBJECTIFIED_MCP_URL="${OBJECTIFIED_MCP_URL:-http://localhost:8765/mcp}"
-export OBJECTIFIED_CLI_CMD="${OBJECTIFIED_CLI_CMD:-${CLI_RUN[*]}}"
+export APIOME_REST_URL="${APIOME_REST_URL:-http://localhost:8000}"
+export APIOME_MCP_URL="${APIOME_MCP_URL:-http://localhost:8765/mcp}"
+export APIOME_CLI_CMD="${APIOME_CLI_CMD:-${CLI_RUN[*]}}"
 "${PY_RUN[@]}" "$SCRIPT_DIR/smoke.py"

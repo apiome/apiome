@@ -1,6 +1,6 @@
-# Objectified: Insights - Feature Roadmap
+# Apiome: Insights - Feature Roadmap
 
-> Business intelligence and analytics platform specifically designed for API and schema ecosystems, providing actionable insights for technical and business stakeholders. Insights transforms raw telemetry from Objectified's platform operations into dashboards, scores, predictions, and reports that drive both engineering decisions and executive strategy.
+> Business intelligence and analytics platform specifically designed for API and schema ecosystems, providing actionable insights for technical and business stakeholders. Insights transforms raw telemetry from Apiome's platform operations into dashboards, scores, predictions, and reports that drive both engineering decisions and executive strategy.
 >
 > **Revenue Model**: Tiered analytics packages (Starter/Professional/Enterprise), enterprise custom dashboards, data export fees
 >
@@ -74,7 +74,7 @@ Part of Epic: Data Collection & Pipeline
 
 #### 1.2 (#1081) — Event Ingestion API & SDK
 
-The ingestion API receives telemetry events from all Objectified platform components and external sources. The primary endpoint `POST /api/v1/insights/events` accepts single events or batches (up to 1000 events per request). Events are validated against the taxonomy schema, enriched with server-side metadata (received_at, ingestion_id), and forwarded to the streaming pipeline.
+The ingestion API receives telemetry events from all Apiome platform components and external sources. The primary endpoint `POST /api/v1/insights/events` accepts single events or batches (up to 1000 events per request). Events are validated against the taxonomy schema, enriched with server-side metadata (received_at, ingestion_id), and forwarded to the streaming pipeline.
 
 A client-side JavaScript SDK simplifies event capture from the NextJS frontend. The SDK provides methods like `insights.track('schema.published', { schema_id, version })` with automatic envelope population (tenant_id, actor_id, session_id from the current auth context). The SDK includes batching (aggregate events for 5 seconds before sending), retry logic (exponential backoff on failure), and offline queueing (store events in localStorage when offline, flush on reconnect).
 
@@ -366,7 +366,7 @@ Part of Epic: API Economy & Business Analytics
 
 #### 3.4 (#1095) — Developer Experience Metrics
 
-Developer experience (DX) metrics quantify how easy it is for developers to work with Objectified-managed APIs and schemas. The core metrics are: Time-to-First-API-Call (TTFAC—median time from API key creation to first successful request), documentation engagement (page views, time on page, search queries, and "was this helpful" ratings), SDK adoption (which SDKs are used, version distribution, upgrade rates), and developer satisfaction (periodic in-app survey with NPS-style scoring).
+Developer experience (DX) metrics quantify how easy it is for developers to work with Apiome-managed APIs and schemas. The core metrics are: Time-to-First-API-Call (TTFAC—median time from API key creation to first successful request), documentation engagement (page views, time on page, search queries, and "was this helpful" ratings), SDK adoption (which SDKs are used, version distribution, upgrade rates), and developer satisfaction (periodic in-app survey with NPS-style scoring).
 
 TTFAC is the most important DX metric: a long TTFAC indicates onboarding friction. The system measures TTFAC automatically by correlating API key creation events with first successful request events for the same consumer. A TTFAC distribution chart shows the spread, and a trend line tracks whether onboarding is getting faster over time.
 

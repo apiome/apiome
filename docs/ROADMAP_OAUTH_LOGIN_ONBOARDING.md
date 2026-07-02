@@ -5,7 +5,7 @@
 > **#4186–#4226** (43 total). Headings and tables below carry their `#number`; children are
 > sub-issues of their epic, epics are sub-issues of umbrella #4184.
 > **Issue ID prefix:** `OLO` (OAuth Login & Onboarding). Epics `OLO-EPIC-n`, issues `OLO-n.m`.
-> **GitHub title format:** `objectified: [OLO-<epic>.<issue>] <title>`.
+> **GitHub title format:** `apiome: [OLO-<epic>.<issue>] <title>`.
 > **Labels:** `roadmap-oauth-login` (created) + reused `auth`, `tenancy`, `monetization`,
 > `security`, `ui`, `rest`, `database`, `python`, `typescript`, `a11y`, `testing`, `devex`, `mvp`, `epic`.
 > **Builds on existing code** — this is a *harden-and-complete* roadmap, not greenfield (see §2).
@@ -17,7 +17,7 @@
 > Main login page for users to sign up using third party systems like GitHub, GitLab, and Azure.
 > The first installment will get users the ability to login with their account information, set up
 > a first tenant (it will prompt them), and set up a lightweight license for them to use
-> Objectified. It will also prevent users from logging in with multiple accounts under the same
+> Apiome. It will also prevent users from logging in with multiple accounts under the same
 > e-mail address: one email address controls their access, but they can be members of multiple
 > tenants, each of which have their own licensing structure.
 
@@ -26,7 +26,7 @@
 ## 1. Goal & strategy
 
 One front door. A user arrives at the **main login page**, authenticates with **GitHub, GitLab, or
-Azure (Microsoft Entra ID)**, and Objectified guarantees that **one verified email address maps to
+Azure (Microsoft Entra ID)**, and Apiome guarantees that **one verified email address maps to
 exactly one user account** — regardless of which provider they used. On first login with no tenant
 membership, the app **prompts a first-tenant onboarding wizard** (org name → slug → done), attaches
 a **lightweight free-tier license to that tenant**, and lands the user in the dashboard. The same
@@ -51,13 +51,13 @@ flowchart LR
 
 **One email address controls access.** Concretely:
 
-1. `odb.users.email` is **unique** (case-insensitively) and is the identity anchor.
+1. `apiome.users.email` is **unique** (case-insensitively) and is the identity anchor.
 2. Signing in with *any* provider whose **verified** email matches an existing account **links** the
-   provider to that account (`odb.external_auth_providers`) — it never creates a second account.
+   provider to that account (`apiome.external_auth_providers`) — it never creates a second account.
 3. Providers that cannot prove the email is verified are **rejected with guidance** (this is the
    industry-standard mitigation; auto-linking on *unverified* email is an account-takeover vector —
    see Auth.js `allowDangerousEmailAccountLinking` guidance and the Entra **nOAuth** advisory, §8).
-4. Membership is many-to-many: one user ↔ many tenants (`odb.tenant_users` + RBAC roles), and each
+4. Membership is many-to-many: one user ↔ many tenants (`apiome.tenant_users` + RBAC roles), and each
    tenant has **its own license** (new in this roadmap: tenant-scoped license attachment).
 
 ---
@@ -66,18 +66,18 @@ flowchart LR
 
 | Capability | Where | State |
 |---|---|---|
-| NextAuth with **GitHub + GitLab + credentials** | `objectified-ui/src/app/api/auth/[...nextauth]/route.ts` | ✅ working; Azure missing |
-| Login page | `objectified-ui/src/app/login/{page,LoginClient}.tsx` | ✅ exists; needs redesign + error states |
-| OAuth signup flow (user→link→tenant→member→sample project) | `objectified-ui/lib/auth/oauth-signup-actions.ts`, `src/app/signup/oauth/` | ✅ exists; refactor into prompted wizard + REST |
-| Provider linking | `objectified-ui/src/app/api/auth/link/[provider]/route.ts` | ✅ GitHub/GitLab; add Azure |
-| Users / tenants / membership | `odb.users`, `odb.tenants`, `odb.tenant_users`, `odb.tenant_administrators` (V001) | ✅ |
-| External identities | `odb.external_auth_providers` (V010) | ✅; needs uniqueness + verified-email hardening |
+| NextAuth with **GitHub + GitLab + credentials** | `apiome-ui/src/app/api/auth/[...nextauth]/route.ts` | ✅ working; Azure missing |
+| Login page | `apiome-ui/src/app/login/{page,LoginClient}.tsx` | ✅ exists; needs redesign + error states |
+| OAuth signup flow (user→link→tenant→member→sample project) | `apiome-ui/lib/auth/oauth-signup-actions.ts`, `src/app/signup/oauth/` | ✅ exists; refactor into prompted wizard + REST |
+| Provider linking | `apiome-ui/src/app/api/auth/link/[provider]/route.ts` | ✅ GitHub/GitLab; add Azure |
+| Users / tenants / membership | `apiome.users`, `apiome.tenants`, `apiome.tenant_users`, `apiome.tenant_administrators` (V001) | ✅ |
+| External identities | `apiome.external_auth_providers` (V010) | ✅; needs uniqueness + verified-email hardening |
 | Pending signup + one-time codes + user entitlements | V071 (`oauth_signup_pending`, `auth_one_time_codes`, `user_entitlements`) | ✅ |
 | **License catalog + feature flags** | V097 (`licenses` free/paid/sponsor with seats JSONB, `feature_flags`, `license_feature_flags`, user/tenant overrides) | ✅ catalog exists; **no tenant-level license attachment** |
 | RBAC (owner/admin/editor/viewer + permission grid) | V118–V121, `permissions.py`, `auth.py` | ✅ |
 | Session discovery | `GET /v1/tenants/me` (`tenants_session_routes.py`) | ✅ |
-| JWT + API-key auth to REST | `objectified-rest/src/app/auth.py` | ✅ |
-| Feature gating dependency | `objectified-rest/src/app/feature_gating.py` | ✅ pattern to reuse for license guards |
+| JWT + API-key auth to REST | `apiome-rest/src/app/auth.py` | ✅ |
+| Feature gating dependency | `apiome-rest/src/app/feature_gating.py` | ✅ pattern to reuse for license guards |
 
 **The gaps this roadmap closes:**
 
@@ -165,15 +165,15 @@ erDiagram
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 1.1 · #4186 | Email canonicalization + case-insensitive uniqueness | lower/trim emails; unique index; dedupe audit migration | auth,database,security,mvp | N | Y | M | objectified-db,objectified-rest |
-| 1.2 · #4187 | Provider-identity uniqueness + verified-email columns | unique (provider, provider_user_id); store email + email_verified per identity | auth,database,mvp | N | Y | S | objectified-db,objectified-rest |
-| 1.3 · #4188 | Account-resolution & auto-link engine | verified email match → link to existing user; never a second account; unverified → structured rejection | auth,rest,security,mvp | N | Y | L | objectified-rest,objectified-ui |
-| 1.4 · #4189 | Entra ID nOAuth hardening | require verified-email evidence (xms_edov / email_verified / UPN-domain rules) before trusting Azure email claims | auth,security,mvp | Y | Y | M | objectified-ui,objectified-rest |
-| 1.5 · #4190 | Structured auth error contract | stable error codes (unverified-email, account-disabled, membership-suspended, link-required) consumed by the login page | auth,rest,ui,mvp | Y | Y | S | objectified-rest,objectified-ui |
-| 1.6 · #4191 | Sign-in/sign-up/link audit events | append identity events; feeds #1607 login/logout events + #534/#2418 login history | auth,database,monitoring | Y | N | M | objectified-rest,objectified-db |
+| 1.1 · #4186 | Email canonicalization + case-insensitive uniqueness | lower/trim emails; unique index; dedupe audit migration | auth,database,security,mvp | N | Y | M | apiome-db,apiome-rest |
+| 1.2 · #4187 | Provider-identity uniqueness + verified-email columns | unique (provider, provider_user_id); store email + email_verified per identity | auth,database,mvp | N | Y | S | apiome-db,apiome-rest |
+| 1.3 · #4188 | Account-resolution & auto-link engine | verified email match → link to existing user; never a second account; unverified → structured rejection | auth,rest,security,mvp | N | Y | L | apiome-rest,apiome-ui |
+| 1.4 · #4189 | Entra ID nOAuth hardening | require verified-email evidence (xms_edov / email_verified / UPN-domain rules) before trusting Azure email claims | auth,security,mvp | Y | Y | M | apiome-ui,apiome-rest |
+| 1.5 · #4190 | Structured auth error contract | stable error codes (unverified-email, account-disabled, membership-suspended, link-required) consumed by the login page | auth,rest,ui,mvp | Y | Y | S | apiome-rest,apiome-ui |
+| 1.6 · #4191 | Sign-in/sign-up/link audit events | append identity events; feeds #1607 login/logout events + #534/#2418 login history | auth,database,monitoring | Y | N | M | apiome-rest,apiome-db |
 
 ### OLO-1.1 — Email canonicalization + case-insensitive uniqueness · #4186
-- **Problem Statement.** `odb.users.email` (V001) has no case-insensitive uniqueness guarantee, so
+- **Problem Statement.** `apiome.users.email` (V001) has no case-insensitive uniqueness guarantee, so
   `Ada@Example.com` and `ada@example.com` can become two accounts — the exact failure the request
   forbids ("one email address controls their access").
 - **Solution / Scope.** Migration (**V140+**): normalize existing rows (lower/trim), detect
@@ -183,10 +183,10 @@ erDiagram
 - **Acceptance Criteria.** Duplicate-cased signups are impossible at the DB level; existing dupes
   are surfaced, not silently merged; all lookups are case-insensitive.
 - **Parallelism / Dependencies.** Root of EPIC-1. Blocks 1.3.
-- **Technical Stack.** PostgreSQL/Flyway (objectified-db), Python (objectified-rest).
+- **Technical Stack.** PostgreSQL/Flyway (apiome-db), Python (apiome-rest).
 
 ### OLO-1.2 — Provider-identity uniqueness + verified-email columns · #4187
-- **Problem Statement.** `odb.external_auth_providers` (V010) lacks uniqueness constraints, so the
+- **Problem Statement.** `apiome.external_auth_providers` (V010) lacks uniqueness constraints, so the
   same GitHub identity could be linked to two users (or twice to one), and it doesn't record
   whether the provider's email claim was verified.
 - **Solution / Scope.** Migration: unique `(provider, provider_user_id)`; unique
@@ -246,7 +246,7 @@ erDiagram
 - **Problem Statement.** No durable record of who signed in/up, with which provider, or which
   identities were linked — needed for support, security review, and the existing asks (#1607,
   #534, #2418 login history).
-- **Solution / Scope.** Append-only `odb.auth_events` (event type, user, provider, ip/user-agent
+- **Solution / Scope.** Append-only `apiome.auth_events` (event type, user, provider, ip/user-agent
   hash, outcome, error code) written best-effort from 1.3 outcomes; retention policy; feeds the
   Profile roadmap's login-history surface later. Reuse the `access_audit` (V121) pattern.
 - **Acceptance Criteria.** Events written for success/failure/link paths; queryable per user;
@@ -263,11 +263,11 @@ up to the same verified-email standard.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 2.1 · #4193 | Entra ID provider in NextAuth | microsoft-entra-id provider (OIDC, PKCE), env config, profile→identity mapping | auth,ui,typescript,mvp | N | Y | M | objectified-ui |
-| 2.2 · #4194 | Azure identity persistence | extend V010 storage + link route for azure; token/claims storage | auth,database,rest,mvp | N | Y | S | objectified-db,objectified-rest,objectified-ui |
-| 2.3 · #4195 | Provider registry & deploy config | single config surface listing enabled providers; login page + link UI read it | auth,devex,infrastructure,mvp | Y | Y | S | objectified-ui |
-| 2.4 · #4196 | Link/unlink Azure in profile settings | extend existing link flow + a manage-identities panel (unlink guarded: never remove last sign-in method) | auth,ui,profile | Y | N | M | objectified-ui,objectified-rest |
-| 2.5 · #4197 | GitHub/GitLab verified-email parity pass | request user:email / read_user scopes; use provider verified-email endpoints; wire into 1.3 | auth,ui,security,mvp | Y | Y | S | objectified-ui |
+| 2.1 · #4193 | Entra ID provider in NextAuth | microsoft-entra-id provider (OIDC, PKCE), env config, profile→identity mapping | auth,ui,typescript,mvp | N | Y | M | apiome-ui |
+| 2.2 · #4194 | Azure identity persistence | extend V010 storage + link route for azure; token/claims storage | auth,database,rest,mvp | N | Y | S | apiome-db,apiome-rest,apiome-ui |
+| 2.3 · #4195 | Provider registry & deploy config | single config surface listing enabled providers; login page + link UI read it | auth,devex,infrastructure,mvp | Y | Y | S | apiome-ui |
+| 2.4 · #4196 | Link/unlink Azure in profile settings | extend existing link flow + a manage-identities panel (unlink guarded: never remove last sign-in method) | auth,ui,profile | Y | N | M | apiome-ui,apiome-rest |
+| 2.5 · #4197 | GitHub/GitLab verified-email parity pass | request user:email / read_user scopes; use provider verified-email endpoints; wire into 1.3 | auth,ui,security,mvp | Y | Y | S | apiome-ui |
 
 ### OLO-2.1 — Entra ID provider in NextAuth · #4193
 - **Problem Statement.** Azure login (#69) is a first-installment requirement and absent today.
@@ -293,7 +293,7 @@ null) and GitLab (`read_user`) reliably yield a verified email for 1.3.)*
 
 ```
 ┌──────────────────────────────────────────────┐
-│                Objectified                   │
+│                Apiome                   │
 │        Design. Version. Publish APIs.        │
 │                                              │
 │   ┌──────────────────────────────────────┐   │
@@ -310,11 +310,11 @@ null) and GitLab (`read_user`) reliably yield a verified email for 1.3.)*
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 3.1 · #4199 | Login page redesign (3 providers + credentials) | provider buttons from registry (2.3), brand treatment per design language | auth,ui,typescript,mvp | N | Y | M | objectified-ui |
-| 3.2 · #4200 | Error & edge-state rendering | code-driven copy for every 1.5 error; retry/help affordances | auth,ui,mvp | N | Y | S | objectified-ui |
-| 3.3 · #4201 | Post-login routing rules | zero tenants → onboarding wizard; else last-active/default tenant dashboard (ties #541/#2436) | auth,ui,mvp | Y | Y | S | objectified-ui |
-| 3.4 · #4202 | Session lifecycle hygiene | logout everywhere the header offers it, expiry handling, callbackUrl allowlist (no open redirect) | auth,security,ui,mvp | Y | Y | S | objectified-ui |
-| 3.5 · #4203 | Login a11y + visual tests | keyboard/screen-reader pass, axe checks, visual snapshots | auth,ui,a11y,testing | Y | N | S | objectified-ui |
+| 3.1 · #4199 | Login page redesign (3 providers + credentials) | provider buttons from registry (2.3), brand treatment per design language | auth,ui,typescript,mvp | N | Y | M | apiome-ui |
+| 3.2 · #4200 | Error & edge-state rendering | code-driven copy for every 1.5 error; retry/help affordances | auth,ui,mvp | N | Y | S | apiome-ui |
+| 3.3 · #4201 | Post-login routing rules | zero tenants → onboarding wizard; else last-active/default tenant dashboard (ties #541/#2436) | auth,ui,mvp | Y | Y | S | apiome-ui |
+| 3.4 · #4202 | Session lifecycle hygiene | logout everywhere the header offers it, expiry handling, callbackUrl allowlist (no open redirect) | auth,security,ui,mvp | Y | Y | S | apiome-ui |
+| 3.5 · #4203 | Login a11y + visual tests | keyboard/screen-reader pass, axe checks, visual snapshots | auth,ui,a11y,testing | Y | N | S | apiome-ui |
 
 ### OLO-3.1 — Login page redesign · #4199
 - **Problem Statement.** The existing `login/LoginClient.tsx` predates the provider set and the
@@ -344,8 +344,8 @@ whether they arrived via fresh OAuth signup, credentials, or an old orphaned acc
 ```mermaid
 sequenceDiagram
   participant U as User
-  participant UI as objectified-ui
-  participant R as objectified-rest
+  participant UI as apiome-ui
+  participant R as apiome-rest
   U->>UI: first login (session established)
   UI->>R: GET /v1/tenants/me
   R-->>UI: memberships: []
@@ -359,11 +359,11 @@ sequenceDiagram
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 4.1 · #4205 | Onboarding wizard UI shell | zero-tenant prompt; steps welcome → tenant → summary; skip-not-allowed for zero-tenant users | auth,tenancy,ui,typescript,mvp | N | Y | M | objectified-ui |
-| 4.2 · #4206 | Tenant-create step (name, slug, availability) | live slug check (reuse HEAD /v1/tenants/{slug}), validation, suggested slug from org name | tenancy,ui,mvp | N | Y | S | objectified-ui |
-| 4.3 · #4207 | REST: atomic first-tenant provisioning endpoint | one transaction: tenant + owner role assignment + free-license attach + optional sample project | tenancy,rest,python,mvp | N | Y | M | objectified-rest,objectified-db |
-| 4.4 · #4208 | Invited-user path | pending/active membership exists → skip wizard, land in that tenant (V121 status-aware) | tenancy,ui,rest,mvp | Y | Y | S | objectified-ui,objectified-rest |
-| 4.5 · #4209 | Onboarding resumability + telemetry | persist wizard state (reuse oauth_signup_pending pattern), abandon/resume, funnel metrics | tenancy,ui,monitoring | Y | N | M | objectified-ui,objectified-rest |
+| 4.1 · #4205 | Onboarding wizard UI shell | zero-tenant prompt; steps welcome → tenant → summary; skip-not-allowed for zero-tenant users | auth,tenancy,ui,typescript,mvp | N | Y | M | apiome-ui |
+| 4.2 · #4206 | Tenant-create step (name, slug, availability) | live slug check (reuse HEAD /v1/tenants/{slug}), validation, suggested slug from org name | tenancy,ui,mvp | N | Y | S | apiome-ui |
+| 4.3 · #4207 | REST: atomic first-tenant provisioning endpoint | one transaction: tenant + owner role assignment + free-license attach + optional sample project | tenancy,rest,python,mvp | N | Y | M | apiome-rest,apiome-db |
+| 4.4 · #4208 | Invited-user path | pending/active membership exists → skip wizard, land in that tenant (V121 status-aware) | tenancy,ui,rest,mvp | Y | Y | S | apiome-ui,apiome-rest |
+| 4.5 · #4209 | Onboarding resumability + telemetry | persist wizard state (reuse oauth_signup_pending pattern), abandon/resume, funnel metrics | tenancy,ui,monitoring | Y | N | M | apiome-ui,apiome-rest |
 
 ### OLO-4.3 — REST: atomic first-tenant provisioning endpoint · #4207
 - **Problem Statement.** Tenant provisioning currently lives in UI server actions
@@ -396,18 +396,18 @@ licensing structure." User-level `user_entitlements` (max_tenants) stays for use
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 5.1 · #4211 | Tenant→license attachment model | `odb.tenant_licenses` (tenant_id unique, license_id, issued_at, issued_by, notes); V140+ | monetization,tenancy,database,mvp | N | Y | S | objectified-db |
-| 5.2 · #4212 | Auto-issue Free license on tenant creation | provisioning (4.3) + any tenant-create path attach Free by default; backfill existing tenants | monetization,rest,python,mvp | N | Y | S | objectified-rest,objectified-db |
-| 5.3 · #4213 | License enforcement guards | member-add/invite blocked over max_users_per_tenant; tenant-create over max_tenants; structured 403s | monetization,tenancy,rest,security,mvp | N | Y | M | objectified-rest |
-| 5.4 · #4214 | License REST surface | `GET /v1/tenants/{slug}/license` (plan, seats used/max, features via V097 composition) | monetization,rest,mvp | Y | Y | S | objectified-rest |
-| 5.5 · #4215 | License panel in tenant settings | plan card, seat usage meter, feature list, upgrade CTA stub (no billing) | monetization,ui,typescript,mvp | Y | Y | M | objectified-ui |
+| 5.1 · #4211 | Tenant→license attachment model | `apiome.tenant_licenses` (tenant_id unique, license_id, issued_at, issued_by, notes); V140+ | monetization,tenancy,database,mvp | N | Y | S | apiome-db |
+| 5.2 · #4212 | Auto-issue Free license on tenant creation | provisioning (4.3) + any tenant-create path attach Free by default; backfill existing tenants | monetization,rest,python,mvp | N | Y | S | apiome-rest,apiome-db |
+| 5.3 · #4213 | License enforcement guards | member-add/invite blocked over max_users_per_tenant; tenant-create over max_tenants; structured 403s | monetization,tenancy,rest,security,mvp | N | Y | M | apiome-rest |
+| 5.4 · #4214 | License REST surface | `GET /v1/tenants/{slug}/license` (plan, seats used/max, features via V097 composition) | monetization,rest,mvp | Y | Y | S | apiome-rest |
+| 5.5 · #4215 | License panel in tenant settings | plan card, seat usage meter, feature list, upgrade CTA stub (no billing) | monetization,ui,typescript,mvp | Y | Y | M | apiome-ui |
 | 5.6 · #4216 | Reconcile with #3484 / #64 | align this model with the Platform Foundations & Licensing epic; close/absorb #64 (table exists since V097) | monetization,documentation | Y | N | S | docs |
 
 ### OLO-5.1 — Tenant→license attachment model · #4211
-- **Problem Statement.** `odb.licenses` (V097) is a catalog with per-license seat shapes
+- **Problem Statement.** `apiome.licenses` (V097) is a catalog with per-license seat shapes
   (`max_tenants`, `max_users_per_tenant`) but no row says *which tenant holds which license*;
   `user_entitlements.license_id` binds licenses to users, which cannot express per-tenant licensing.
-- **Solution / Scope.** Migration V140+: `odb.tenant_licenses` (unique tenant_id → one active
+- **Solution / Scope.** Migration V140+: `apiome.tenant_licenses` (unique tenant_id → one active
   license per tenant; license_id FK to V097 catalog; issued_at/issued_by/notes for provenance).
   Keep `user_entitlements` for user caps (max_tenants); document the split: **user entitlement =
   how many tenants you may create; tenant license = what each tenant may do**. Composition with
@@ -443,10 +443,10 @@ One account, many tenants — now make it navigable.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 6.1 · #4218 | Tenant switcher | dashboard header menu listing memberships (/v1/tenants/me), active-tenant switch, per-tenant role badge | tenancy,ui,typescript,mvp | N | Y | M | objectified-ui |
-| 6.2 · #4219 | Session tenant context enrichment | memberships include role + license tier + status in one round-trip | tenancy,rest,mvp | N | Y | S | objectified-rest |
-| 6.3 · #4220 | Member management ↔ license alignment | member/invite screens surface seat usage + 5.3 errors gracefully | tenancy,monetization,ui | Y | N | S | objectified-ui |
-| 6.4 · #4221 | Multi-tenant e2e fixtures & tests | seeded user in 3 tenants with distinct roles/licenses; switcher + guard coverage | tenancy,testing | Y | N | S | objectified-ui,objectified-rest |
+| 6.1 · #4218 | Tenant switcher | dashboard header menu listing memberships (/v1/tenants/me), active-tenant switch, per-tenant role badge | tenancy,ui,typescript,mvp | N | Y | M | apiome-ui |
+| 6.2 · #4219 | Session tenant context enrichment | memberships include role + license tier + status in one round-trip | tenancy,rest,mvp | N | Y | S | apiome-rest |
+| 6.3 · #4220 | Member management ↔ license alignment | member/invite screens surface seat usage + 5.3 errors gracefully | tenancy,monetization,ui | Y | N | S | apiome-ui |
+| 6.4 · #4221 | Multi-tenant e2e fixtures & tests | seeded user in 3 tenants with distinct roles/licenses; switcher + guard coverage | tenancy,testing | Y | N | S | apiome-ui,apiome-rest |
 
 *(6.1/6.2 are MVP because "members of multiple tenants" is in the first installment; 6.3/6.4
 harden it. 6.2 extends `tenants_session_routes.py` to join role (V119) + license (5.1) so the
@@ -458,10 +458,10 @@ switcher renders without N+1 calls.)*
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 7.1 · #4223 | Auth endpoint rate limiting | throttle credentials sign-in, signup completion, link routes (reuse existing rate-limit middleware) | auth,security,rest,mvp | Y | Y | S | objectified-rest,objectified-ui |
-| 7.2 · #4224 | Provider setup & secrets docs + config validation | GitHub/GitLab/Entra app-registration guides (incl. xms_edov claim); boot-time env validation with actionable errors | auth,devex,documentation,mvp | Y | Y | S | docs,objectified-ui |
-| 7.3 · #4225 | Auth threat-model checklist review | state/PKCE, redirect allowlist, session fixation, token storage in V010, CSRF on link routes | auth,security | Y | N | M | objectified-ui,objectified-rest |
-| 7.4 · #4226 | End-to-end journey test | Playwright: login (each provider mocked) → invariant checks → wizard → license → switcher; pytest for REST paths | auth,testing,mvp | N | Y | M | objectified-ui,objectified-rest |
+| 7.1 · #4223 | Auth endpoint rate limiting | throttle credentials sign-in, signup completion, link routes (reuse existing rate-limit middleware) | auth,security,rest,mvp | Y | Y | S | apiome-rest,apiome-ui |
+| 7.2 · #4224 | Provider setup & secrets docs + config validation | GitHub/GitLab/Entra app-registration guides (incl. xms_edov claim); boot-time env validation with actionable errors | auth,devex,documentation,mvp | Y | Y | S | docs,apiome-ui |
+| 7.3 · #4225 | Auth threat-model checklist review | state/PKCE, redirect allowlist, session fixation, token storage in V010, CSRF on link routes | auth,security | Y | N | M | apiome-ui,apiome-rest |
+| 7.4 · #4226 | End-to-end journey test | Playwright: login (each provider mocked) → invariant checks → wizard → license → switcher; pytest for REST paths | auth,testing,mvp | N | Y | M | apiome-ui,apiome-rest |
 
 ---
 
@@ -551,7 +551,7 @@ flowchart LR
 - GitHub OAuth scopes (`user:email`, verified emails API) —
   https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps
 - GitLab OAuth (`read_user`) — https://docs.gitlab.com/ee/api/oauth2.html
-- In-repo: `objectified-ui/src/app/api/auth/[...nextauth]/route.ts`,
-  `objectified-ui/lib/auth/oauth-signup-actions.ts`, `objectified-rest/src/app/auth.py`,
-  `objectified-rest/src/app/permissions.py`, `objectified-rest/src/app/feature_gating.py`,
-  `objectified-db` V001/V010/V071/V097/V118–V121 (latest migration V139 → new work starts **V140**).
+- In-repo: `apiome-ui/src/app/api/auth/[...nextauth]/route.ts`,
+  `apiome-ui/lib/auth/oauth-signup-actions.ts`, `apiome-rest/src/app/auth.py`,
+  `apiome-rest/src/app/permissions.py`, `apiome-rest/src/app/feature_gating.py`,
+  `apiome-db` V001/V010/V071/V097/V118–V121 (latest migration V139 → new work starts **V140**).

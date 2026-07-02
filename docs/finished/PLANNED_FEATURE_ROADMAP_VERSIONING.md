@@ -1,6 +1,6 @@
 # Versioning Roadmap
 
-This represents the different versions of the Objectified specification and their current status.
+This represents the different versions of the Apiome specification and their current status.
 
 ## Schema Versioning
 
@@ -19,7 +19,7 @@ This represents the different versions of the Objectified specification and thei
 - ✅ Generate migration guides (#747) — **ADE → Versions → Compare → Migration guide** tab: ordered steps for breaking deltas, revision-pair metadata, links to **#746** / **#506**; copy, append to compare-to changelog, **Markdown** + **PDF** export; ties to **#502** changelog `breaking:` hints
 - 📋 Data migration scripts
 - ✅ Backward compatibility checker (#506) — REST `POST /v1/versions/{tenant}/{projectId}/compatibility`; merge dialog runs target-tip vs source-tip check; optional `compatGateOnMerge` in project metadata
-- ✅ Deprecation warnings (#507) — `versions.metadata` (`deprecated`, `deprecationMessage`, `successorRevisionId`, `sunsetDate`); compat API `deprecationWarnings` + optional `policy.http409WhenDeprecatedRevision`; project `failCiOnDeprecatedRevision`; OpenAPI `info.x-objectified-revision-deprecation`; Studio & migration banners
+- ✅ Deprecation warnings (#507) — `versions.metadata` (`deprecated`, `deprecationMessage`, `successorRevisionId`, `sunsetDate`); compat API `deprecationWarnings` + optional `policy.http409WhenDeprecatedRevision`; project `failCiOnDeprecatedRevision`; OpenAPI `info.x-apiome-revision-deprecation`; Studio & migration banners
 - ✅ Sunset timeline (#508) — REST `GET /v1/versions/{tenant}/sunset-timeline` (optional `projectId`); ADE **Sunset timeline** page + nav; rows include **timelineStatus** (announced / imminent / past), **lifecyclePhase** (deprecated vs sunset reached), and **#507**-shaped **deprecationWarnings**; optional CSV export
 
 ### Version Management 📋 PLANNED
@@ -49,7 +49,7 @@ This represents the different versions of the Objectified specification and thei
 - **Version Deprecation**:
   - ✅ Mark versions as deprecated
   - ✅ Set sunset dates (#748) — `versions.metadata.sunsetAt` (UTC ISO), validation vs `deprecatedAt`, `successorRevisionId` required when sunset is set; ADE Edit Version + tenant-admin metadata on published
-  - ✅ Redirect to newer versions (#749) — `GET /v1/versions/{tenant}/{project}/{revisionId}` and `.../by-version/{version}` with `successorResolution=none|resolve|redirect`; optional `auditSuccessorResolution`; protected branch/tag tips block following (#504); portal proxy forwards query + `X-Objectified-*` headers
+  - ✅ Redirect to newer versions (#749) — `GET /v1/versions/{tenant}/{project}/{revisionId}` and `.../by-version/{version}` with `successorResolution=none|resolve|redirect`; optional `auditSuccessorResolution`; protected branch/tag tips block following (#504); portal proxy forwards query + `X-Apiome-*` headers
   - ✅ Deprecation warnings in API
 - **Version Copy**: ✅ IMPLEMENTED
   - ✅ Copy classes and properties from existing version
@@ -59,7 +59,7 @@ This represents the different versions of the Objectified specification and thei
 
 # Completed
 
-- **#749** — **Successor resolution / redirect:** REST **GET** revision (by id or `by-version`) supports **`successorResolution`** (`none` default, `resolve` returns final revision + **`X-Objectified-*`** headers, `redirect` → **307**); optional **`auditSuccessorResolution`** → **`version.successor_resolution`** audit; **#504** protected branch tips / protected tags block chaining off that anchor; cycles **409** `SUCCESSOR_CYCLE`. Portal **`/api/versions/[id]`** forwards query params, maps REST **307** to app URL, passes through **`X-Objectified-*`**
+- **#749** — **Successor resolution / redirect:** REST **GET** revision (by id or `by-version`) supports **`successorResolution`** (`none` default, `resolve` returns final revision + **`X-Apiome-*`** headers, `redirect` → **307**); optional **`auditSuccessorResolution`** → **`version.successor_resolution`** audit; **#504** protected branch tips / protected tags block chaining off that anchor; cycles **409** `SUCCESSOR_CYCLE`. Portal **`/api/versions/[id]`** forwards query params, maps REST **307** to app URL, passes through **`X-Apiome-*`**
 - **#747** — **Migration guide from compare:** deterministic Markdown (**Migration guide** tab) with **ordered steps** per breaking change, **revision pair** ids + template version, **#746** / **#506** cross-links, optional **#502** changelog `breaking:` notes; **Copy**, **append to compare-to changelog**, **Download Markdown**, **Download PDF**; deprecation warnings (#507) point at the **#747** tracker URL
 - **#746** — **Breaking changes doc from diff:** deterministic Markdown (**Breaking** / **Additions** / **Other**) from schema-aware `compareSchemas` output, stable `components.schemas…` identifiers, template version in header; **ADE → Versions → Compare → Breaking doc** tab with copy and **append to compare-to changelog** (opens Edit Version)
 - **#745** — **Version rollback (revert-style):** **REST** `POST .../version-branches/rollback-preview` and `POST .../rollback` — new head revision with **content** from a **prior ancestor** revision, **`parent_version_id`** = prior tip, **`metadata.rollback`** lineage; **#506**-style OpenAPI compare (tip → target) + optional **`compatGateOnRollback`**; **version.rollback** audit; **ADE → Versions** row action with preview / confirm / diff summary

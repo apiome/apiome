@@ -1,8 +1,8 @@
-# Objectified: Browse - Feature Roadmap
+# Apiome: Browse - Feature Roadmap
 
 > A public-facing viewer for published OpenAPI, Arazzo, and JSON Schema specifications. Browse enables teams to share, compare, and consume API contracts without a login — supporting tenant → project → version navigation, side-by-side diff, Monaco-based spec viewing, and embedded widgets for external documentation portals.
 >
-> **Revenue Model**: Browse is included in all Objectified tiers; advanced features (embed widget, private spec auth, white-label domain, analytics dashboard) are gated at Pro/Enterprise; API contract hosting fees apply at scale.
+> **Revenue Model**: Browse is included in all Apiome tiers; advanced features (embed widget, private spec auth, white-label domain, analytics dashboard) are gated at Pro/Enterprise; API contract hosting fees apply at scale.
 >
 > **Tech Stack**: NextJS App Router, Monaco Editor, Radix UI, PostgreSQL (read-replica), OpenAPI 3.1, Playwright (E2E), Prometheus, Docker multi-stage builds
 
@@ -521,7 +521,7 @@ The embed widget is a lightweight JavaScript snippet (`<script src="/embed.js">`
      data-theme="dark"
      data-height="800px">
 </div>
-<script src="https://app.objectified.io/embed.js" async></script>
+<script src="https://app.apiome.app/embed.js" async></script>
 ```
 
 **OpenAPI Endpoints:**
@@ -972,7 +972,7 @@ GET /api/v1/health
 - Health check does not expose internal IP addresses or connection strings
 - Feature flags stored in PostgreSQL `feature_flag` table with `(flag_name, tenant_id, enabled)` rows
 - Feature flag reads are cached in memory for 60 seconds to avoid per-request DB queries
-- Admin UI for toggling flags is in the main `objectified-ui` admin panel (out of browse scope)
+- Admin UI for toggling flags is in the main `apiome-ui` admin panel (out of browse scope)
 
 **Tech Stack:** NextJS API route, PostgreSQL health query, in-memory LRU cache for feature flags
 
@@ -1052,7 +1052,7 @@ Tenant admins upload a logo (PNG/SVG, max 256KB) and optionally set a primary ac
 ```
 GET /api/v1/tenants/:slug/branding
 {
-  "logo_url": "https://cdn.objectified.io/tenants/acme/logo.svg",
+  "logo_url": "https://cdn.apiome.app/tenants/acme/logo.svg",
   "accent_color": "#1a56db",
   "custom_domain": "api-docs.acme.com",
   "footer_links": [
@@ -1062,7 +1062,7 @@ GET /api/v1/tenants/:slug/branding
 ```
 
 **Acceptance Criteria:**
-- Logo replaces the default Objectified wordmark in navbar and footer
+- Logo replaces the default Apiome wordmark in navbar and footer
 - Accent color applied as `--color-brand` CSS variable; affects buttons, links, active states
 - Custom domain resolves to the browse app with the correct tenant context (via HOST header)
 - Logo upload validates file type (PNG/SVG) and size (≤256KB) before storing
@@ -1220,7 +1220,7 @@ Part of Epic: Testing & Quality
 
 #### 12.3 (#2169) — API Contract Tests
 
-Using the objectified-rest OpenAPI spec, `@schemathesis/schemathesis` or a custom assertion layer validates that the actual REST API responses received by browse match the declared response schemas. Tested against a staging environment or Docker Compose setup.
+Using the apiome-rest OpenAPI spec, `@schemathesis/schemathesis` or a custom assertion layer validates that the actual REST API responses received by browse match the declared response schemas. Tested against a staging environment or Docker Compose setup.
 
 **Acceptance Criteria:**
 - Contract tests cover all REST endpoints used by browse (list versions, get spec content, search, branding, health)
@@ -1233,7 +1233,7 @@ Part of Epic: Testing & Quality
 
 #### 12.4 (#2170) — Storybook, Contributing Guide & API Docs
 
-Storybook stories for: `Navbar`, `SpecViewer`, `DataTable`, `CompareViewer`, `OutlinePanel`, `SkeletonLoader`, and all theme variants. A `CONTRIBUTING.md` in `objectified-browse/` documents: local setup, environment variables, how to run tests, and PR conventions. TypeDoc generates documentation for all exported TypeScript utilities.
+Storybook stories for: `Navbar`, `SpecViewer`, `DataTable`, `CompareViewer`, `OutlinePanel`, `SkeletonLoader`, and all theme variants. A `CONTRIBUTING.md` in `apiome-browse/` documents: local setup, environment variables, how to run tests, and PR conventions. TypeDoc generates documentation for all exported TypeScript utilities.
 
 **Acceptance Criteria:**
 - Storybook builds without errors in CI
@@ -1261,7 +1261,7 @@ Part of Epic: Testing & Quality
 
 #### 13.1 (#2175) — Kubernetes Manifests & Helm Chart
 
-A `deploy/kubernetes/` directory contains sample manifests: `Deployment` (browse app, 2 replicas, resource limits), `Service` (ClusterIP), `Ingress` (nginx, with TLS annotation), and `ConfigMap` (env var template). A `deploy/helm/objectified-browse/` chart parameterizes: `image.tag`, `replicaCount`, `ingress.host`, `env.DATABASE_URL`, `env.REST_API_URL`, `env.NEXT_PUBLIC_APP_URL`.
+A `deploy/kubernetes/` directory contains sample manifests: `Deployment` (browse app, 2 replicas, resource limits), `Service` (ClusterIP), `Ingress` (nginx, with TLS annotation), and `ConfigMap` (env var template). A `deploy/helm/apiome-browse/` chart parameterizes: `image.tag`, `replicaCount`, `ingress.host`, `env.DATABASE_URL`, `env.REST_API_URL`, `env.NEXT_PUBLIC_APP_URL`.
 
 **Acceptance Criteria:**
 - Helm chart passes `helm lint` with zero errors

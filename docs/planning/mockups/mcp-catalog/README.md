@@ -26,7 +26,7 @@ tab strip (Overview / Capabilities / Versions / Lint & Score / Test / Credential
 Settings). The **+ Register MCP endpoint** button opens the registration wizard.
 
 To propose a change, edit the HTML directly (the design tokens live in the `:root`
-block at the top and mirror objectified-ui: brand indigo `#6366f1`, slate neutrals,
+block at the top and mirror apiome-ui: brand indigo `#6366f1`, slate neutrals,
 Aptos/Segoe type, 8/12px radii). Each screen ends with a **Design notes** callout
 listing open questions to iterate on.
 
@@ -34,9 +34,9 @@ listing open questions to iterate on.
 
 | Screen | Purpose | Roadmap epic |
 |--------|---------|--------------|
-| **Sidebar** | Adopts objectified-ui's `DashboardSideNav` look (gradient rail, section headers + indigo dot, Lucide icons). **MCP lives under the "Specifications" catalog as "MCP Servers."** | — (UI shell) |
+| **Sidebar** | Adopts apiome-ui's `DashboardSideNav` look (gradient rail, section headers + indigo dot, Lucide icons). **MCP lives under the "Specifications" catalog as "MCP Servers."** | — (UI shell) |
 | **Catalog** (endpoint grid) | Reached via *Specifications › MCP Servers*. Grade-led cards, transport/visibility/auth badges, capability counts, health, recency; filter/group/sort. | EPIC-23 (Browse/Search), EPIC-24.1 |
-| **Import dialog (MCP source)** | MCP is a **new source in objectified-ui's existing Import flow** (alongside File/URL/Clipboard/Git/SwaggerHub/Postman) — the source-card grid + numbered stepper, then MCP endpoint URL + transport + auth. On import it runs discovery and commits as catalog version 1 via the spec-import job pipeline. **Not** a standalone "register" action. | EPIC-17 (import-source plug-in / jobs), EPIC-24.1 |
+| **Import dialog (MCP source)** | MCP is a **new source in apiome-ui's existing Import flow** (alongside File/URL/Clipboard/Git/SwaggerHub/Postman) — the source-card grid + numbered stepper, then MCP endpoint URL + transport + auth. On import it runs discovery and commits as catalog version 1 via the spec-import job pipeline. **Not** a standalone "register" action. | EPIC-17 (import-source plug-in / jobs), EPIC-24.1 |
 | **Endpoint detail · Overview** | Identity header (name/host/grade/health), meta strip, server `instructions`, at-a-glance counts. | EPIC-24.2 |
 | **· Capabilities** | Tools/resources/templates/prompts with descriptions, `inputSchema`, annotations; inline lint hints. | EPIC-16.4, EPIC-24.2 |
 | **· Versions** | Date/time-tagged version timeline **+ a compare bar to diff any two versions** (base → target selectors, or tick two in the list). The diff panel re-renders per pair (added/removed/modified); non-adjacent pairs aggregate every change between them. | EPIC-18 (fingerprint/diff/tag), EPIC-24.3 |
@@ -44,7 +44,7 @@ listing open questions to iterate on.
 | **· Test** | Tool picker + schema-driven argument form + result/latency/`isError`, auth-aware, destructive-confirm. | EPIC-22, EPIC-24.5 |
 | **· Credentials** | Auth type (None/Bearer/Header/OAuth 2.1), masked secrets, encryption note. | EPIC-20, EPIC-24.6 |
 | **· Settings** | Name/URL/cadence/visibility, disable/delete. | EPIC-17.5, EPIC-24 |
-| **Public browse** | Distinct public chrome (objectified-browse): search across public tools, browse-by-site, grade-ranked. | EPIC-23.6 |
+| **Public browse** | Distinct public chrome (apiome-browse): search across public tools, browse-by-site, grade-ranked. | EPIC-23.6 |
 
 ## Design principles encoded here
 
@@ -61,7 +61,7 @@ listing open questions to iterate on.
    dry-run that OpenAPI/Swagger/Postman imports already use.
 6. **Lives in the Specifications catalog.** Entry point is the sidebar's
    *Specifications › MCP Servers* item — MCP servers are catalogued specs, not a separate app.
-7. **Consistent with objectified-ui** — sidebar chrome, import source-card grid, stepper,
+7. **Consistent with apiome-ui** — sidebar chrome, import source-card grid, stepper,
    and tokens mirror `DashboardSideNav` / `ImportDialog` so it can graft onto ADE directly.
 
 ## Resolved design decisions
@@ -79,7 +79,7 @@ listing open questions to iterate on.
 
 - Catalog: add a grid ↔ dense-list **density toggle**, and surface "changed since last view"?
 - Public browse: when searching, switch to **relevance → grade** ordering (vs grade-led when idle)?
-- **Dark-theme variant** (objectified-ui ships multiple themes) — add a toggle?
+- **Dark-theme variant** (apiome-ui ships multiple themes) — add a toggle?
 - Detail **tab order** — is Overview → Capabilities → Versions → Lint → Test → Credentials → Settings right?
 
 > Next fidelity step (optional): a second mockup for the **periodic sweep / admin**

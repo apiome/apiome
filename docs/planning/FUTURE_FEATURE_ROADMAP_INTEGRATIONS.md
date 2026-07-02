@@ -1,6 +1,6 @@
-# Objectified: Integrations & APIs - Feature Roadmap
+# Apiome: Integrations & APIs - Feature Roadmap
 
-> Core platform integration layer providing advanced Git workflows (branch-per-version, PR-based schema review, bidirectional sync), configurable webhooks for event-driven automation, and third-party API tool connectors (Postman, Insomnia, SwaggerHub, API gateways)—making Objectified the hub of the API development workflow.
+> Core platform integration layer providing advanced Git workflows (branch-per-version, PR-based schema review, bidirectional sync), configurable webhooks for event-driven automation, and third-party API tool connectors (Postman, Insomnia, SwaggerHub, API gateways)—making Apiome the hub of the API development workflow.
 >
 > **Revenue Model**: Pro tier for webhooks, Team tier for third-party connectors
 >
@@ -31,7 +31,7 @@
 |-----|------------------------------------|------------------------------------------------------------------------------|---------------------------------------------------|----------|
 | 1.1 (#1336) | Branch-Per-Version Strategy        | Auto-create Git branches when schema versions are published                  | `enhancement`, `mvp`, `integrations`, `rest`, `ai-generated`      | Yes      |
 | 1.2 (#1350) | Pull Request Schema Review         | Open PRs for schema changes with rendered diffs and approval gates           | `enhancement`, `mvp`, `integrations`, `rest`, `ai-generated`      | Yes      |
-| 1.3 (#1359) | Bidirectional Git Sync Engine      | Two-way sync between Objectified schemas and Git repository files            | `enhancement`, `integrations`, `rest`, `ai-generated`             | No       |
+| 1.3 (#1359) | Bidirectional Git Sync Engine      | Two-way sync between Apiome schemas and Git repository files            | `enhancement`, `integrations`, `rest`, `ai-generated`             | No       |
 | 1.4 (#1367) | Git Conflict Resolution UI         | Visual conflict resolution when bidirectional sync detects divergence         | `enhancement`, `integrations`, `ai-generated`                     | No       |
 
 ### Detailed Issue Descriptions
@@ -85,7 +85,7 @@ REST endpoints include `POST /api/v1/integrations/git/branches` (manually trigge
 
 Schema changes in a team environment benefit from the same review discipline as code changes. This issue builds a pull request workflow where modifying a schema opens a PR on the connected Git provider (GitHub, GitLab, Bitbucket) with a rendered schema diff, reviewer assignment, and approval gates that block version publication until the PR is approved.
 
-When a user saves a schema draft, the system creates a feature branch (`schema-review/{schemaName}/{draftId}`), commits the updated schema files, and opens a PR against the schema's trunk branch. The PR body includes a markdown-rendered diff showing added, removed, and modified fields with type information. Reviewer assignment follows the schema's configured ownership rules stored in a `schema_reviewers` table. The PR status is polled (or received via webhook from the Git provider) and reflected in the Objectified UI.
+When a user saves a schema draft, the system creates a feature branch (`schema-review/{schemaName}/{draftId}`), commits the updated schema files, and opens a PR against the schema's trunk branch. The PR body includes a markdown-rendered diff showing added, removed, and modified fields with type information. Reviewer assignment follows the schema's configured ownership rules stored in a `schema_reviewers` table. The PR status is polled (or received via webhook from the Git provider) and reflected in the Apiome UI.
 
 The review page at `/app/integrations/git/reviews` lists open PRs with status badges using Radix `Badge` components. Clicking a review opens a detail view at `/app/integrations/git/reviews/[reviewId]` with the schema diff rendered inline, reviewer status, and action buttons (approve, request changes, merge). A Radix `AlertDialog` confirms merge actions. The page also shows a timeline of review comments pulled from the Git provider.
 
@@ -96,7 +96,7 @@ REST endpoints include `POST /api/v1/integrations/git/reviews` (create review PR
 - PR body includes a rendered diff showing field additions, removals, and type changes
 - Reviewer assignment follows configured schema ownership rules
 - Schema version publication is blocked until the PR is approved and merged
-- Review status syncs bidirectionally between the Git provider and Objectified UI
+- Review status syncs bidirectionally between the Git provider and Apiome UI
 - Merge action triggers schema version publication and branch-per-version creation (if enabled)
 
 **Part of Epic: Git Workflow Extensions**
@@ -105,13 +105,13 @@ REST endpoints include `POST /api/v1/integrations/git/reviews` (create review PR
 
 #### 1.3 (#1359) — Bidirectional Git Sync Engine
 
-The current Git integration is push-only: Objectified writes schemas to Git but does not read changes back. This issue builds a bidirectional sync engine that detects changes made directly in the Git repository (via external editors, CI pipelines, or other tools) and reconciles them with the Objectified schema store. This enables teams where some members prefer editing schema YAML/JSON in their IDE while others use the Objectified UI.
+The current Git integration is push-only: Apiome writes schemas to Git but does not read changes back. This issue builds a bidirectional sync engine that detects changes made directly in the Git repository (via external editors, CI pipelines, or other tools) and reconciles them with the Apiome schema store. This enables teams where some members prefer editing schema YAML/JSON in their IDE while others use the Apiome UI.
 
-The sync engine runs on a configurable schedule (default: every 5 minutes) or can be triggered manually. It compares the HEAD commit of each tracked branch against the last-synced commit SHA stored in the `sync_state` table. When new commits are detected, the engine parses the changed schema files, validates them against Objectified's schema rules, and applies the changes as a new draft or version. Conflicts (where both Objectified and Git have diverged since the last sync) are flagged for manual resolution (see 1.4).
+The sync engine runs on a configurable schedule (default: every 5 minutes) or can be triggered manually. It compares the HEAD commit of each tracked branch against the last-synced commit SHA stored in the `sync_state` table. When new commits are detected, the engine parses the changed schema files, validates them against Apiome's schema rules, and applies the changes as a new draft or version. Conflicts (where both Apiome and Git have diverged since the last sync) are flagged for manual resolution (see 1.4).
 
 ```
 ┌──────────────┐                    ┌──────────────┐
-│  Objectified │◄──── Sync ────────▶│  Git Repo    │
+│  Apiome │◄──── Sync ────────▶│  Git Repo    │
 │  Schema DB   │     Engine         │  (remote)    │
 └──────┬───────┘                    └──────┬───────┘
        │                                   │
@@ -130,10 +130,10 @@ Configuration lives at `/app/integrations/git/sync` with Radix `Switch` for enab
 REST endpoints include `POST /api/v1/integrations/git/sync/trigger` (manual sync), `GET /api/v1/integrations/git/sync/status` (current sync state per schema), `GET /api/v1/integrations/git/sync/history` (sync operation log), and `PUT /api/v1/integrations/git/sync/config` (update sync settings).
 
 **Acceptance Criteria**
-- External Git commits containing schema changes are detected and imported into Objectified
+- External Git commits containing schema changes are detected and imported into Apiome
 - Imported schemas pass validation before being applied as drafts
 - Sync state table tracks last-synced commit SHA per schema to enable incremental sync
-- Conflicts between Objectified edits and Git edits are detected and flagged (not silently overwritten)
+- Conflicts between Apiome edits and Git edits are detected and flagged (not silently overwritten)
 - Sync interval is configurable from 1 minute to 60 minutes via the UI
 - Manual sync trigger is available via both the UI button and REST API
 
@@ -143,18 +143,18 @@ REST endpoints include `POST /api/v1/integrations/git/sync/trigger` (manual sync
 
 #### 1.4 (#1367) — Git Conflict Resolution UI
 
-When bidirectional sync (1.3) detects that both Objectified and the Git repository have diverged, the changes cannot be auto-merged. This issue builds a visual conflict resolution interface that presents both versions side-by-side, highlights conflicting fields, and lets the user choose which version to keep—or manually edit a merged result.
+When bidirectional sync (1.3) detects that both Apiome and the Git repository have diverged, the changes cannot be auto-merged. This issue builds a visual conflict resolution interface that presents both versions side-by-side, highlights conflicting fields, and lets the user choose which version to keep—or manually edit a merged result.
 
-The conflict resolution page at `/app/integrations/git/conflicts/[conflictId]` displays a three-pane layout: the Objectified version (left), the Git version (right), and the merged result (center). Conflicting fields are highlighted with Radix-styled diff markers. Each conflict region offers three buttons: "Use Ours" (Objectified), "Use Theirs" (Git), or "Edit" (opens inline editor). A Radix `Progress` bar tracks the number of resolved vs. unresolved conflicts.
+The conflict resolution page at `/app/integrations/git/conflicts/[conflictId]` displays a three-pane layout: the Apiome version (left), the Git version (right), and the merged result (center). Conflicting fields are highlighted with Radix-styled diff markers. Each conflict region offers three buttons: "Use Ours" (Apiome), "Use Theirs" (Git), or "Edit" (opens inline editor). A Radix `Progress` bar tracks the number of resolved vs. unresolved conflicts.
 
-The conflict list page at `/app/integrations/git/conflicts` uses Radix `Table` to display all unresolved conflicts with schema name, conflict date, and field count. Conflicts older than a configurable threshold (default: 7 days) trigger an email notification to schema owners. Resolving all conflicts and clicking "Apply Resolution" commits the merged schema to both Objectified and Git, advancing the sync state.
+The conflict list page at `/app/integrations/git/conflicts` uses Radix `Table` to display all unresolved conflicts with schema name, conflict date, and field count. Conflicts older than a configurable threshold (default: 7 days) trigger an email notification to schema owners. Resolving all conflicts and clicking "Apply Resolution" commits the merged schema to both Apiome and Git, advancing the sync state.
 
-REST endpoints include `GET /api/v1/integrations/git/conflicts` (list unresolved conflicts), `GET /api/v1/integrations/git/conflicts/{id}` (conflict detail with both versions and field-level diffs), `PUT /api/v1/integrations/git/conflicts/{id}/resolve` (submit resolution), and `POST /api/v1/integrations/git/conflicts/{id}/dismiss` (dismiss conflict, keeping current Objectified version).
+REST endpoints include `GET /api/v1/integrations/git/conflicts` (list unresolved conflicts), `GET /api/v1/integrations/git/conflicts/{id}` (conflict detail with both versions and field-level diffs), `PUT /api/v1/integrations/git/conflicts/{id}/resolve` (submit resolution), and `POST /api/v1/integrations/git/conflicts/{id}/dismiss` (dismiss conflict, keeping current Apiome version).
 
 **Acceptance Criteria**
 - Conflicts display both versions side-by-side with field-level diff highlighting
 - Users can resolve each conflict region individually (ours, theirs, or manual edit)
-- Applying a resolution commits the merged schema to both Objectified DB and Git repository
+- Applying a resolution commits the merged schema to both Apiome DB and Git repository
 - Unresolved conflicts older than the configured threshold trigger owner notifications
 - Conflict list page shows count, schema name, and age for all pending conflicts
 - Dismissed conflicts are recorded in the audit log with the dismissing user
@@ -180,7 +180,7 @@ REST endpoints include `GET /api/v1/integrations/git/conflicts` (list unresolved
 
 #### 2.1 (#1383) — Webhook Configuration & CRUD API
 
-Webhooks allow external systems to react to Objectified platform events without polling. This issue builds the webhook configuration system where users create webhook endpoints, subscribe them to specific event types, and manage their lifecycle. Each webhook has a target URL, a secret for HMAC-SHA256 signature verification, a set of subscribed event types, and an active/paused status.
+Webhooks allow external systems to react to Apiome platform events without polling. This issue builds the webhook configuration system where users create webhook endpoints, subscribe them to specific event types, and manage their lifecycle. Each webhook has a target URL, a secret for HMAC-SHA256 signature verification, a set of subscribed event types, and an active/paused status.
 
 The `webhooks` table stores `id`, `tenant_id`, `name`, `url`, `secret_hash`, `events` (text array), `status` (active, paused, failed), `created_by`, `created_at`, and `updated_at`. The `webhook_events` enum includes: `schema.published`, `version.created`, `class.added`, `class.modified`, `class.deleted`, `user.invited`, `user.removed`, `apikey.used`, `apikey.created`, and `apikey.revoked`. Secrets are stored hashed; the raw secret is shown only once at creation time.
 
@@ -204,7 +204,7 @@ REST endpoints include `POST /api/v1/integrations/webhooks` (create), `GET /api/
 
 The dispatch pipeline is the backbone that captures platform events, enqueues them to Redis, and delivers them to subscribed webhook endpoints. Reliability is critical: events must not be lost even if a webhook endpoint is temporarily unreachable. This issue builds the producer (event capture), broker (Redis queue), and consumer (HTTP delivery) components.
 
-When a platform event occurs (e.g., a schema is published), the originating service publishes a message to a Redis Stream keyed by event type. Each message contains a standardized envelope: `event_id` (UUID), `event_type`, `timestamp`, `tenant_id`, `actor_id`, `payload` (event-specific JSON). A consumer group reads from the stream, fans out to all webhooks subscribed to that event type, and delivers via HTTP POST with the payload in the body and an `X-Objectified-Signature` header containing the HMAC-SHA256 digest.
+When a platform event occurs (e.g., a schema is published), the originating service publishes a message to a Redis Stream keyed by event type. Each message contains a standardized envelope: `event_id` (UUID), `event_type`, `timestamp`, `tenant_id`, `actor_id`, `payload` (event-specific JSON). A consumer group reads from the stream, fans out to all webhooks subscribed to that event type, and delivers via HTTP POST with the payload in the body and an `X-Apiome-Signature` header containing the HMAC-SHA256 digest.
 
 ```
 ┌────────────┐     ┌──────────────┐     ┌───────────────┐     ┌──────────────┐
@@ -223,7 +223,7 @@ Delivery attempts are logged in the `webhook_delivery_log` table with `webhook_i
 **Acceptance Criteria**
 - Platform events are published to Redis Streams within 100ms of occurrence
 - Each subscribed webhook receives an HTTP POST with the event payload and HMAC signature
-- The `X-Objectified-Signature` header contains a valid HMAC-SHA256 computed with the webhook's secret
+- The `X-Apiome-Signature` header contains a valid HMAC-SHA256 computed with the webhook's secret
 - Delivery attempts are logged with status code, latency, and truncated response body
 - Events are delivered in order per webhook endpoint (no parallel delivery to the same URL)
 - Consumer group ensures each event is processed exactly once under normal operation
@@ -284,9 +284,9 @@ REST endpoints include `GET /api/v1/integrations/webhooks/{id}/deliveries` (pagi
 |-----|------------------------------------|------------------------------------------------------------------------------|---------------------------------------------------|----------|
 | 3.1 (#1430) | Connector Framework & OAuth2 Manager| Generic connector interface with OAuth2 token lifecycle management           | `enhancement`, `mvp`, `integrations`, `rest`, `ai-generated`      | Yes      |
 | 3.2 (#1440) | Postman & Insomnia Export/Sync     | Export schemas as Postman/Insomnia collections with optional live sync       | `enhancement`, `mvp`, `integrations`, `rest`, `ai-generated`      | Yes      |
-| 3.3 (#1448) | SwaggerHub Integration             | Publish and sync Objectified schemas to/from SwaggerHub organizations        | `enhancement`, `integrations`, `rest`, `ai-generated`             | Yes      |
+| 3.3 (#1448) | SwaggerHub Integration             | Publish and sync Apiome schemas to/from SwaggerHub organizations        | `enhancement`, `integrations`, `rest`, `ai-generated`             | Yes      |
 | 3.4 (#1457) | API Gateway Connectors             | Push schema-derived configurations to AWS API Gateway, Kong, and Apigee     | `enhancement`, `integrations`, `rest`, `ai-generated`             | No       |
-| 3.5 (#1462) | GraphQL Gateway Bridge             | Generate GraphQL schema and resolvers from Objectified REST schemas          | `enhancement`, `integrations`, `rest`, `ai-generated`             | No       |
+| 3.5 (#1462) | GraphQL Gateway Bridge             | Generate GraphQL schema and resolvers from Apiome REST schemas          | `enhancement`, `integrations`, `rest`, `ai-generated`             | No       |
 
 ### Detailed Issue Descriptions
 
@@ -338,9 +338,9 @@ REST endpoints include `GET /api/v1/integrations/connectors` (list connectors wi
 
 #### 3.2 (#1440) — Postman & Insomnia Export/Sync
 
-Postman and Insomnia are the most popular API testing tools. This issue builds export functionality that converts published Objectified schemas into Postman Collection v2.1 and Insomnia v4 export formats, along with optional live sync that automatically pushes collection updates when schemas change.
+Postman and Insomnia are the most popular API testing tools. This issue builds export functionality that converts published Apiome schemas into Postman Collection v2.1 and Insomnia v4 export formats, along with optional live sync that automatically pushes collection updates when schemas change.
 
-The export engine transforms an Objectified schema into the target format: each class becomes a folder, each field with REST annotations becomes a request, and example values populate request bodies and query parameters. The generated collection includes authentication templates (Bearer token, API key) derived from the schema's security definitions. Export is available as a one-time download or as continuous sync to the user's Postman workspace or Insomnia cloud via their respective APIs.
+The export engine transforms an Apiome schema into the target format: each class becomes a folder, each field with REST annotations becomes a request, and example values populate request bodies and query parameters. The generated collection includes authentication templates (Bearer token, API key) derived from the schema's security definitions. Export is available as a one-time download or as continuous sync to the user's Postman workspace or Insomnia cloud via their respective APIs.
 
 The export page at `/app/integrations/connectors/postman/export` (and equivalent for Insomnia) uses a Radix `Select` to choose the schema, a Radix `Checkbox` group for selecting which classes to include, and Radix `RadioGroup` for export mode (download vs. live sync). A preview pane shows the generated collection structure before export. For live sync, a Radix `Select` picks the target Postman workspace and collection (fetched via the Postman API using stored OAuth2 credentials from 3.1).
 
@@ -360,17 +360,17 @@ REST endpoints include `POST /api/v1/integrations/postman/export` (generate and 
 
 #### 3.3 (#1448) — SwaggerHub Integration
 
-SwaggerHub is a common hub for sharing OpenAPI specs across teams. This issue builds bidirectional sync between Objectified schemas and SwaggerHub APIs, allowing teams to publish Objectified schemas to SwaggerHub for external sharing and import SwaggerHub specs into Objectified for schema management.
+SwaggerHub is a common hub for sharing OpenAPI specs across teams. This issue builds bidirectional sync between Apiome schemas and SwaggerHub APIs, allowing teams to publish Apiome schemas to SwaggerHub for external sharing and import SwaggerHub specs into Apiome for schema management.
 
-The sync engine translates Objectified's internal schema representation into a complete OpenAPI 3.1 document and pushes it to SwaggerHub via their API (`POST /apis/{owner}/{api}/{version}`). In the reverse direction, importing from SwaggerHub fetches the OpenAPI spec, extracts schema components, and creates corresponding Objectified classes and fields. Version mapping tracks which Objectified schema version corresponds to which SwaggerHub API version.
+The sync engine translates Apiome's internal schema representation into a complete OpenAPI 3.1 document and pushes it to SwaggerHub via their API (`POST /apis/{owner}/{api}/{version}`). In the reverse direction, importing from SwaggerHub fetches the OpenAPI spec, extracts schema components, and creates corresponding Apiome classes and fields. Version mapping tracks which Apiome schema version corresponds to which SwaggerHub API version.
 
-The SwaggerHub integration page at `/app/integrations/connectors/swaggerhub` displays connected SwaggerHub organizations (fetched via the SwaggerHub API). A Radix `Table` shows the mapping between Objectified schemas and SwaggerHub APIs with sync status. The "Publish to SwaggerHub" action uses a Radix `Dialog` to select target organization, API name, and version. The "Import from SwaggerHub" action lists available APIs for selection.
+The SwaggerHub integration page at `/app/integrations/connectors/swaggerhub` displays connected SwaggerHub organizations (fetched via the SwaggerHub API). A Radix `Table` shows the mapping between Apiome schemas and SwaggerHub APIs with sync status. The "Publish to SwaggerHub" action uses a Radix `Dialog` to select target organization, API name, and version. The "Import from SwaggerHub" action lists available APIs for selection.
 
-REST endpoints include `POST /api/v1/integrations/swaggerhub/publish` (push schema to SwaggerHub), `POST /api/v1/integrations/swaggerhub/import` (pull SwaggerHub API into Objectified), `GET /api/v1/integrations/swaggerhub/mappings` (list schema-to-API mappings), and `PUT /api/v1/integrations/swaggerhub/mappings/{id}` (update mapping configuration).
+REST endpoints include `POST /api/v1/integrations/swaggerhub/publish` (push schema to SwaggerHub), `POST /api/v1/integrations/swaggerhub/import` (pull SwaggerHub API into Apiome), `GET /api/v1/integrations/swaggerhub/mappings` (list schema-to-API mappings), and `PUT /api/v1/integrations/swaggerhub/mappings/{id}` (update mapping configuration).
 
 **Acceptance Criteria**
 - Published OpenAPI documents are valid OpenAPI 3.1 and render correctly in SwaggerHub
-- Importing a SwaggerHub API creates Objectified classes with correct field types and constraints
+- Importing a SwaggerHub API creates Apiome classes with correct field types and constraints
 - Version mappings are maintained so re-publishing updates the correct SwaggerHub API version
 - Sync conflicts (both sides changed) are flagged for manual resolution
 - The integration respects SwaggerHub organization permissions and visibility settings
@@ -382,16 +382,16 @@ REST endpoints include `POST /api/v1/integrations/swaggerhub/publish` (push sche
 
 #### 3.4 (#1457) — API Gateway Connectors
 
-API gateways enforce schemas at runtime, but configuring them manually is error-prone and drifts from the source of truth. This issue builds connectors that push schema-derived configurations to AWS API Gateway, Kong, and Apigee—automatically creating or updating routes, request validators, and response models when schemas change in Objectified.
+API gateways enforce schemas at runtime, but configuring them manually is error-prone and drifts from the source of truth. This issue builds connectors that push schema-derived configurations to AWS API Gateway, Kong, and Apigee—automatically creating or updating routes, request validators, and response models when schemas change in Apiome.
 
-Each gateway connector translates Objectified schemas into the provider's configuration format: AWS API Gateway uses OpenAPI import with request validators and usage plans; Kong uses declarative config with request-validator and rate-limiting plugins; Apigee uses API proxy bundles with JSON-to-JSON policies. The translation layer is provider-specific but shares a common interface from the connector framework (3.1). A dry-run mode generates the configuration without applying it, allowing review before deployment.
+Each gateway connector translates Apiome schemas into the provider's configuration format: AWS API Gateway uses OpenAPI import with request validators and usage plans; Kong uses declarative config with request-validator and rate-limiting plugins; Apigee uses API proxy bundles with JSON-to-JSON policies. The translation layer is provider-specific but shares a common interface from the connector framework (3.1). A dry-run mode generates the configuration without applying it, allowing review before deployment.
 
-The gateway connector page at `/app/integrations/connectors/[provider]/gateway` displays a mapping table (Radix `Table`) linking Objectified schemas to gateway routes. A "Deploy" button triggers configuration push with a Radix `AlertDialog` confirmation showing the changes that will be applied. A "Dry Run" button generates the configuration and displays it in a code viewer using Radix `ScrollArea`. Deployment history shows past pushes with status, timestamp, and diff.
+The gateway connector page at `/app/integrations/connectors/[provider]/gateway` displays a mapping table (Radix `Table`) linking Apiome schemas to gateway routes. A "Deploy" button triggers configuration push with a Radix `AlertDialog` confirmation showing the changes that will be applied. A "Dry Run" button generates the configuration and displays it in a code viewer using Radix `ScrollArea`. Deployment history shows past pushes with status, timestamp, and diff.
 
 REST endpoints include `POST /api/v1/integrations/gateways/{provider}/deploy` (push config to gateway), `POST /api/v1/integrations/gateways/{provider}/dry-run` (generate config without applying), `GET /api/v1/integrations/gateways/{provider}/mappings` (list schema-to-route mappings), `PUT /api/v1/integrations/gateways/{provider}/mappings/{id}` (update mapping), and `GET /api/v1/integrations/gateways/{provider}/deployments` (deployment history).
 
 **Acceptance Criteria**
-- AWS API Gateway connector creates/updates REST APIs with request validators from Objectified schemas
+- AWS API Gateway connector creates/updates REST APIs with request validators from Apiome schemas
 - Kong connector generates declarative config with request-validator plugin for each mapped route
 - Apigee connector generates API proxy bundles with schema-based validation policies
 - Dry-run mode generates provider-specific config without applying it to the target gateway
@@ -404,17 +404,17 @@ REST endpoints include `POST /api/v1/integrations/gateways/{provider}/deploy` (p
 
 #### 3.5 (#1462) — GraphQL Gateway Bridge
 
-Many teams operate both REST and GraphQL APIs. This issue builds a bridge that generates a GraphQL schema and resolver stubs from Objectified REST schemas, enabling teams to serve their schema-defined data via a GraphQL endpoint without maintaining a separate schema definition.
+Many teams operate both REST and GraphQL APIs. This issue builds a bridge that generates a GraphQL schema and resolver stubs from Apiome REST schemas, enabling teams to serve their schema-defined data via a GraphQL endpoint without maintaining a separate schema definition.
 
-The bridge translates Objectified classes into GraphQL types, fields into GraphQL fields with appropriate scalar types, and REST endpoints into Query and Mutation definitions. Relationships between classes (via foreign key fields or explicit relations) become GraphQL connections with pagination. The generated schema includes input types for mutations and filter types for query arguments. Resolver stubs are generated as TypeScript files that proxy to the underlying REST endpoints.
+The bridge translates Apiome classes into GraphQL types, fields into GraphQL fields with appropriate scalar types, and REST endpoints into Query and Mutation definitions. Relationships between classes (via foreign key fields or explicit relations) become GraphQL connections with pagination. The generated schema includes input types for mutations and filter types for query arguments. Resolver stubs are generated as TypeScript files that proxy to the underlying REST endpoints.
 
-The GraphQL bridge page at `/app/integrations/connectors/graphql` shows the generated GraphQL schema in a read-only code viewer with syntax highlighting. A Radix `Tabs` component switches between the schema view, resolver preview, and a live playground (embedding GraphiQL). A "Regenerate" button re-derives the GraphQL schema from the current Objectified schemas. A Radix `Switch` enables automatic regeneration on schema publish events.
+The GraphQL bridge page at `/app/integrations/connectors/graphql` shows the generated GraphQL schema in a read-only code viewer with syntax highlighting. A Radix `Tabs` component switches between the schema view, resolver preview, and a live playground (embedding GraphiQL). A "Regenerate" button re-derives the GraphQL schema from the current Apiome schemas. A Radix `Switch` enables automatic regeneration on schema publish events.
 
 REST endpoints include `POST /api/v1/integrations/graphql/generate` (generate GraphQL schema and resolvers), `GET /api/v1/integrations/graphql/schema` (retrieve current generated schema), `GET /api/v1/integrations/graphql/resolvers` (download resolver stubs as a zip), and `PUT /api/v1/integrations/graphql/config` (configure type mapping overrides and connection pagination style).
 
 **Acceptance Criteria**
 - Generated GraphQL schema compiles without errors and passes schema validation
-- Objectified classes map to GraphQL types with correct scalar type translations
+- Apiome classes map to GraphQL types with correct scalar type translations
 - Foreign key relationships generate GraphQL connections with cursor-based pagination
 - Resolver stubs compile as TypeScript and correctly proxy to REST endpoints
 - The embedded GraphiQL playground executes queries against the generated schema

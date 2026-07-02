@@ -1,4 +1,4 @@
-# Objectified: Copilot (AI Assistant) - Feature Roadmap
+# Apiome: Copilot (AI Assistant) - Feature Roadmap
 
 > An AI-powered assistant that goes beyond schema generation to become a full development partner, integrated across the entire software development lifecycle—from natural language design through code review and documentation.
 >
@@ -31,7 +31,7 @@
 |-----|----------------------------------------|---------------------------------------------------------------------------------|------------------------------------------|----------|
 | 1.1 (#982) | Conversational Design Interface        | Chat-based UI for describing schemas in plain English with streaming responses   | `enhancement`, `mvp`, `copilot`, `ai-generated` | Yes      |
 | 1.2 (#983) | Domain-Specific Language Understanding | Pre-trained domain recognizers for e-commerce, SaaS, healthcare, fintech        | `enhancement`, `mvp`, `copilot`, `ai-generated` | Yes      |
-| 1.3 (#984) | Schema Generation Pipeline             | LLM output → JSON Schema → Objectified schema import pipeline                   | `enhancement`, `mvp`, `copilot`, `rest`  | No       |
+| 1.3 (#984) | Schema Generation Pipeline             | LLM output → JSON Schema → Apiome schema import pipeline                   | `enhancement`, `mvp`, `copilot`, `rest`  | No       |
 | 1.4 (#985) | Iterative Refinement & Constraints     | Multi-turn conversation for adding validations, relationships, and constraints   | `enhancement`, `mvp`, `copilot`, `ai-generated` | No       |
 | 1.5 (#986) | Schema Preview & Accept Workflow       | Visual diff and one-click import of AI-generated schemas into a project          | `enhancement`, `mvp`, `copilot`          | Yes      |
 
@@ -45,7 +45,7 @@ The entry point for Copilot is a conversational interface where developers descr
 
 The chat interface is a NextJS page at `/copilot/designer` with a persistent sidebar showing conversation history and a main panel for the active conversation. Messages stream in real-time over a WebSocket connection to the backend, which proxies to the Ollama cluster. The UI renders AI responses progressively as tokens arrive, using a markdown renderer for explanatory text and a syntax-highlighted code block for generated schema fragments.
 
-The prompt engineering layer wraps user input in a system prompt that instructs the LLM to output valid JSON Schema with Objectified-compatible extensions (`x-objectified-class`, `x-objectified-relationships`). The system prompt includes few-shot examples of high-quality schema output and instructions to ask clarifying questions when the input is ambiguous rather than guessing.
+The prompt engineering layer wraps user input in a system prompt that instructs the LLM to output valid JSON Schema with Apiome-compatible extensions (`x-apiome-class`, `x-apiome-relationships`). The system prompt includes few-shot examples of high-quality schema output and instructions to ask clarifying questions when the input is ambiguous rather than guessing.
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -112,20 +112,20 @@ The domain recognizer and knowledge packs are versioned independently of the LLM
 
 #### 1.3 (#984) — Schema Generation Pipeline
 
-The LLM produces text that looks like JSON Schema, but it may contain hallucinated fields, invalid references, or non-standard extensions. This issue builds the pipeline that validates, normalizes, and converts raw LLM output into proper Objectified schemas ready for import.
+The LLM produces text that looks like JSON Schema, but it may contain hallucinated fields, invalid references, or non-standard extensions. This issue builds the pipeline that validates, normalizes, and converts raw LLM output into proper Apiome schemas ready for import.
 
-The pipeline runs in three stages: (1) **Parse** — extract JSON from the LLM's markdown-formatted response, handling partial outputs and common formatting errors. (2) **Validate** — run the extracted JSON through a JSON Schema meta-validator to ensure it is itself valid JSON Schema, checking for required fields like `type`, `properties`, and valid `$ref` pointers. (3) **Normalize** — map the schema to Objectified's internal format, creating class definitions, adding missing descriptions with LLM-generated defaults, and resolving relationships into Objectified's link model.
+The pipeline runs in three stages: (1) **Parse** — extract JSON from the LLM's markdown-formatted response, handling partial outputs and common formatting errors. (2) **Validate** — run the extracted JSON through a JSON Schema meta-validator to ensure it is itself valid JSON Schema, checking for required fields like `type`, `properties`, and valid `$ref` pointers. (3) **Normalize** — map the schema to Apiome's internal format, creating class definitions, adding missing descriptions with LLM-generated defaults, and resolving relationships into Apiome's link model.
 
 When validation fails, the pipeline feeds the errors back to the LLM as a follow-up prompt ("The schema you generated has these issues: ... Please fix them.") and retries up to 3 times before surfacing the errors to the user. This self-healing loop means most generation errors are invisible to the user.
 
-The pipeline is exposed as a REST endpoint `POST /api/v1/copilot/generate` that accepts a conversation context and returns the normalized Objectified schema. It also powers the inline generation within the chat interface (1.1).
+The pipeline is exposed as a REST endpoint `POST /api/v1/copilot/generate` that accepts a conversation context and returns the normalized Apiome schema. It also powers the inline generation within the chat interface (1.1).
 
 **Acceptance Criteria**
 
 - Raw LLM output is parsed even when wrapped in markdown code fences or contains trailing text
 - Generated schemas pass JSON Schema draft 2020-12 meta-validation
 - Invalid schemas trigger an automatic self-healing retry loop (up to 3 retries)
-- Normalized output maps to Objectified's class definition format with proper `$ref` resolution
+- Normalized output maps to Apiome's class definition format with proper `$ref` resolution
 - The pipeline endpoint returns structured errors when all retries are exhausted
 - Generated schemas include `description` fields for all properties (LLM-generated if not explicitly stated)
 
@@ -158,11 +158,11 @@ Constraint expressions are translated to JSON Schema keywords: "name must be at 
 
 #### 1.5 (#986) — Schema Preview & Accept Workflow
 
-Before a generated schema enters the Objectified project, users need to see exactly what will be created and have the chance to make final adjustments. This issue builds the preview and accept workflow that bridges AI generation and project import.
+Before a generated schema enters the Apiome project, users need to see exactly what will be created and have the chance to make final adjustments. This issue builds the preview and accept workflow that bridges AI generation and project import.
 
-The preview panel renders the generated schema as a visual card layout matching Objectified's schema canvas style. Each class is displayed as a card with its properties, types, constraints, and relationships. A diff view highlights what is new vs. what already exists in the project (for refinements to existing schemas). The preview uses Radix `Tabs` to switch between "Visual" (card layout), "JSON Schema" (raw JSON), and "Diff" (before/after) views.
+The preview panel renders the generated schema as a visual card layout matching Apiome's schema canvas style. Each class is displayed as a card with its properties, types, constraints, and relationships. A diff view highlights what is new vs. what already exists in the project (for refinements to existing schemas). The preview uses Radix `Tabs` to switch between "Visual" (card layout), "JSON Schema" (raw JSON), and "Diff" (before/after) views.
 
-The "Accept" action calls `POST /api/v1/copilot/import` which creates the schema classes, properties, and relationships in the active Objectified project as a draft version. The "Refine" action returns to the chat with the current schema as context. The "Discard" action clears the working schema and conversation (with a Radix `AlertDialog` confirmation).
+The "Accept" action calls `POST /api/v1/copilot/import` which creates the schema classes, properties, and relationships in the active Apiome project as a draft version. The "Refine" action returns to the chat with the current schema as context. The "Discard" action clears the working schema and conversation (with a Radix `AlertDialog` confirmation).
 
 Import conflict resolution handles cases where the generated schema overlaps with existing classes in the project. The preview highlights conflicts (same class name, incompatible property types) and offers merge strategies: overwrite, rename, or skip.
 
@@ -197,7 +197,7 @@ Import conflict resolution handles cases where the generated schema overlaps wit
 
 #### 2.1 (#988) — CRUD Application Generator
 
-Schemas define the data model; the next step is a working application. This issue builds the CRUD generator that takes a published Objectified schema and produces a complete, runnable application with create, read, update, delete, and list operations for every schema class.
+Schemas define the data model; the next step is a working application. This issue builds the CRUD generator that takes a published Apiome schema and produces a complete, runnable application with create, read, update, delete, and list operations for every schema class.
 
 The generator supports two target frameworks: NextJS (app router with server actions) and Express + TypeScript. For NextJS, it produces: page routes for list and detail views, server actions for mutations, Prisma schema for database access, and Zod validation schemas derived from the JSON Schema. For Express, it produces: route handlers, controller classes, Prisma models, and request validation middleware.
 
@@ -222,7 +222,7 @@ The generation endpoint is `POST /api/v1/copilot/scaffold/crud` accepting `schem
 
 Modern architectures decompose into services. This issue builds a microservice scaffolder that generates a standalone, production-ready service from a schema definition, complete with API routes, database models, Docker configuration, health checks, and OpenAPI documentation.
 
-Each generated microservice includes: a Dockerfile with multi-stage build, docker-compose for local development with a database, environment configuration (.env template with validation), health check endpoint (`/health`), readiness endpoint (`/ready`), graceful shutdown handling, structured JSON logging, and an auto-generated OpenAPI 3.1 spec that matches the Objectified schema.
+Each generated microservice includes: a Dockerfile with multi-stage build, docker-compose for local development with a database, environment configuration (.env template with validation), health check endpoint (`/health`), readiness endpoint (`/ready`), graceful shutdown handling, structured JSON logging, and an auto-generated OpenAPI 3.1 spec that matches the Apiome schema.
 
 The scaffolder supports three architectures: (1) **monolith-ready** — a single service with all schema classes, (2) **domain-split** — one service per bounded context (grouping related classes), (3) **class-per-service** — one microservice per schema class (for maximum decomposition). The architecture choice is specified via `POST /api/v1/copilot/scaffold/microservice` with a `strategy` parameter.
 
@@ -243,7 +243,7 @@ Inter-service communication stubs are generated for the domain-split and class-p
 
 #### 2.3 (#990) — Admin Panel Generator
 
-Every application needs an admin interface for data management. This issue generates full-featured admin panels from Objectified schemas with list views (searchable, sortable, paginated tables), detail views, create/edit forms with schema-driven validation, and delete confirmation dialogs.
+Every application needs an admin interface for data management. This issue generates full-featured admin panels from Apiome schemas with list views (searchable, sortable, paginated tables), detail views, create/edit forms with schema-driven validation, and delete confirmation dialogs.
 
 The admin panel is generated as a NextJS application using Radix UI components throughout. List views use Radix `Table` with sortable column headers and a search input. Detail views render each field with the appropriate Radix input component based on the schema type: `TextField` for strings, `Select` for enums, `Checkbox` for booleans, `TextArea` for long text, and a date picker for date-time fields. Required fields are marked and validated before submission.
 
@@ -266,7 +266,7 @@ The admin panel includes authentication (NextAuth.js with configurable providers
 
 #### 2.4 (#991) — Mobile App Skeleton Generator
 
-Mobile teams need a head start too. This issue generates mobile app skeletons from Objectified schemas for React Native and Flutter, including type-safe models, API client code, navigation structure, and basic list/detail screens.
+Mobile teams need a head start too. This issue generates mobile app skeletons from Apiome schemas for React Native and Flutter, including type-safe models, API client code, navigation structure, and basic list/detail screens.
 
 For React Native, the generator produces: TypeScript models matching the schema, an API client with fetch-based HTTP calls, React Navigation setup with stack and tab navigators, list screens with FlatList and pull-to-refresh, and detail screens with form inputs. For Flutter, it produces: Dart model classes with JSON serialization, a Dio-based API client, GoRouter navigation, ListView screens, and form screens with TextFormField widgets.
 
@@ -281,7 +281,7 @@ Generation is triggered via `POST /api/v1/copilot/scaffold/mobile` with `schemaI
 - Generated models correctly handle nullable fields, enums, and nested objects
 - API client code targets the configured `apiBaseUrl` with proper error handling
 - Generated apps compile and run on their respective platforms without modification
-- Models serialize/deserialize to JSON matching the Objectified schema's type definitions
+- Models serialize/deserialize to JSON matching the Apiome schema's type definitions
 
 **Part of Epic: Application Scaffolding Engine**
 
@@ -478,21 +478,21 @@ The score is computed via `GET /api/v1/copilot/quality/{schemaId}` and displayed
 
 #### 4.1 (#1000) — PR Schema Compatibility Review
 
-Schema changes often happen in code (model definitions, API handlers, validation logic) without updating the Objectified schema, or vice versa. This issue builds a GitHub integration that reviews pull requests for schema compatibility issues.
+Schema changes often happen in code (model definitions, API handlers, validation logic) without updating the Apiome schema, or vice versa. This issue builds a GitHub integration that reviews pull requests for schema compatibility issues.
 
-The integration registers as a GitHub App that receives webhook events on PR creation and update. When a PR is opened, the reviewer fetches the changed files and analyzes: (1) model definition changes (Prisma, TypeORM, Mongoose) — do they match the current Objectified schema? (2) API handler changes — do request/response shapes align with the schema? (3) Validation changes — are constraints consistent with the schema's JSON Schema rules? (4) Test changes — do mock data shapes match the schema?
+The integration registers as a GitHub App that receives webhook events on PR creation and update. When a PR is opened, the reviewer fetches the changed files and analyzes: (1) model definition changes (Prisma, TypeORM, Mongoose) — do they match the current Apiome schema? (2) API handler changes — do request/response shapes align with the schema? (3) Validation changes — are constraints consistent with the schema's JSON Schema rules? (4) Test changes — do mock data shapes match the schema?
 
 The review posts comments directly on the PR as a GitHub check, with inline annotations on specific lines where incompatibilities are detected. Each annotation includes the expected schema shape, the actual code shape, and a suggested fix. The overall check passes/fails based on whether any blocking incompatibilities were found.
 
-Configuration is per-repository via a `.objectified.yml` file that specifies the Objectified project ID, schema version to check against, and file patterns to scan. The GitHub App is registered via `POST /api/v1/copilot/integrations/github` with repository and installation details.
+Configuration is per-repository via a `.apiome.yml` file that specifies the Apiome project ID, schema version to check against, and file patterns to scan. The GitHub App is registered via `POST /api/v1/copilot/integrations/github` with repository and installation details.
 
 **Acceptance Criteria**
 
 - PR review triggers automatically on PR creation and push events via GitHub webhook
-- Model definition changes (Prisma/TypeORM) are compared against the Objectified schema
+- Model definition changes (Prisma/TypeORM) are compared against the Apiome schema
 - Incompatibilities produce inline PR comments with expected vs. actual shapes
 - A GitHub check status (pass/fail) is reported on the PR
-- Configuration is managed via `.objectified.yml` in the repository root
+- Configuration is managed via `.apiome.yml` in the repository root
 - The integration is installable as a GitHub App via the Copilot settings page
 
 **Part of Epic: Code Review & Documentation Automation**
@@ -503,7 +503,7 @@ Configuration is per-repository via a `.objectified.yml` file that specifies the
 
 Over time, the deployed application's data shapes may drift from the schema definitions—new fields added in code but not in the schema, or schema changes that were never reflected in the codebase. This issue builds a continuous drift detector that compares live application behavior against the published schema.
 
-The drift detector runs in two modes: (1) **static analysis** — scan the codebase for model definitions and compare their structure against the Objectified schema, and (2) **runtime analysis** — sample live API traffic (via the gateway) and compare actual request/response payloads against the schema. Runtime analysis is opt-in and only runs in staging/development environments by default.
+The drift detector runs in two modes: (1) **static analysis** — scan the codebase for model definitions and compare their structure against the Apiome schema, and (2) **runtime analysis** — sample live API traffic (via the gateway) and compare actual request/response payloads against the schema. Runtime analysis is opt-in and only runs in staging/development environments by default.
 
 Detected drift is categorized as: **schema-only** (field exists in schema but not in code/traffic), **code-only** (field exists in code/traffic but not in schema), or **type mismatch** (field exists in both but with incompatible types). Each drift finding includes the source evidence (file path and line, or sample request ID) and a recommended action (update schema, update code, or investigate).
 
@@ -524,7 +524,7 @@ Drift reports are accessible at `/copilot/drift/[projectId]` and via `GET /api/v
 
 #### 4.3 (#1002) — API Documentation Generator
 
-Good documentation is essential but tedious to maintain manually. This issue builds a documentation generator that produces comprehensive API guides from Objectified schemas, including getting-started tutorials, authentication guides, endpoint references, and code examples in multiple languages.
+Good documentation is essential but tedious to maintain manually. This issue builds a documentation generator that produces comprehensive API guides from Apiome schemas, including getting-started tutorials, authentication guides, endpoint references, and code examples in multiple languages.
 
 The generator uses the Ollama LLM to produce human-quality prose from schema definitions. For each schema class, it generates: a conceptual overview explaining the entity's purpose, field-by-field documentation with examples, relationship explanations with navigation examples, and code snippets in JavaScript, Python, Go, and Java showing how to create, read, update, and delete instances.
 

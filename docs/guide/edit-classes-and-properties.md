@@ -41,9 +41,9 @@ The CLI is **read-only** for classes and properties (authoring happens in the UI
 with:
 
 ```bash
-objectified schemas list                       # all classes in the tenant
-objectified schemas get <class_id>             # one class
-objectified properties list --project-id <id>  # properties in a project
+apiome schemas list                       # all classes in the tenant
+apiome schemas get <class_id>             # one class
+apiome properties list --project-id <id>  # properties in a project
 ```
 
 ## Verify

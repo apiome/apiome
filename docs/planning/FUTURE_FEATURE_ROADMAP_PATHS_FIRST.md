@@ -1,4 +1,4 @@
-# Objectified: Paths OpenAPI 3.2 Designer — Planned Feature Roadmap
+# Apiome: Paths OpenAPI 3.2 Designer — Planned Feature Roadmap
 
 This document defines **epics and ordered, single-scope issues** to deliver a **Paths** UI/UX for authoring **OpenAPI 3.2.0** `paths` (and nested operation objects) against **schema versions** created in the **Designer** canvas. Work is scoped to the **Paths experience** only: **no unrelated refactors or cross-app changes** are listed here. Integration points (shared header, settings entry, design tokens) are described as **reuse of existing Studio chrome**, not as separate issues elsewhere.
 
@@ -61,7 +61,7 @@ This document defines **epics and ordered, single-scope issues** to deliver a **
 
 **Tech alignment:** Next.js App Router, **React Flow**, **Radix UI** (dialogs, dropdowns, tabs, toggle group, scroll area, tooltips, etc.), Tailwind, TypeScript, Monaco where a **Code** view is required.
 
-**Existing persistence (already in the database):** paths design is backed by tables such as `odb.version_path`, `odb.path_operation`, `odb.path_operation_description`, `odb.shared_path_parameter`, `odb.path_operation_parameter_link`, `odb.shared_path_request_body`, `odb.shared_path_request_body_content`, `odb.path_operation_request_body_link`, `odb.shared_path_response`, `odb.path_operation_response_link`, and related content/header linkage. Issues below **prefer mapping UI state to these tables** before proposing new columns.
+**Existing persistence (already in the database):** paths design is backed by tables such as `apiome.version_path`, `apiome.path_operation`, `apiome.path_operation_description`, `apiome.shared_path_parameter`, `apiome.path_operation_parameter_link`, `apiome.shared_path_request_body`, `apiome.shared_path_request_body_content`, `apiome.path_operation_request_body_link`, `apiome.shared_path_response`, `apiome.path_operation_response_link`, and related content/header linkage. Issues below **prefer mapping UI state to these tables** before proposing new columns.
 
 ---
 
@@ -225,7 +225,7 @@ Wire Paths canvas behavior to the **same controls** the Designer uses: grid, sna
 **Title:** Save and restore Paths canvas graph state for the active API version
 
 **Description:**  
-Operation definitions already live in **`odb.version_path`** / **`odb.path_operation`** and related tables; **React Flow** layout (node positions, edge list, viewport) is not automatically derived. Persist a **canonical JSON blob** of `{ nodes, edges, viewport }` for the **Paths** editor **scoped to `version_id`**.
+Operation definitions already live in **`apiome.version_path`** / **`apiome.path_operation`** and related tables; **React Flow** layout (node positions, edge list, viewport) is not automatically derived. Persist a **canonical JSON blob** of `{ nodes, edges, viewport }` for the **Paths** editor **scoped to `version_id`**.
 
 **Why this database work matters:**  
 Without persisted graph state, users lose drag-and-drop layout on refresh and cannot iterate on API design visually. Storing layout **separately** from OpenAPI semantic tables keeps **source-of-truth** operations in normalized tables while allowing **free-form** canvas metadata.
@@ -237,8 +237,8 @@ Without persisted graph state, users lose drag-and-drop layout on refresh and ca
 
 **Technical details:**
 - **Proposed schema (choose one in implementation; document in migration):**
-  - **Option A:** `ALTER TABLE odb.versions ADD COLUMN paths_canvas_metadata JSONB DEFAULT '{}'::jsonb;` with GIN optional.
-  - **Option B:** New table `odb.version_paths_canvas(version_id PK/FK, canvas JSONB, updated_at)`.
+  - **Option A:** `ALTER TABLE apiome.versions ADD COLUMN paths_canvas_metadata JSONB DEFAULT '{}'::jsonb;` with GIN optional.
+  - **Option B:** New table `apiome.version_paths_canvas(version_id PK/FK, canvas JSONB, updated_at)`.
 - REST: `GET/PUT .../versions/{id}/paths-canvas` (paths-scoped), tenant-safe.
 
 **Database/API:** **Yes** — new column or table as above; **reason:** persist React Flow state per version without overloading `version_path.metadata` (which is path-row scoped).
@@ -274,7 +274,7 @@ Provide a **palette** listing operation methods **GET, PUT, PATCH, DELETE, OPTIO
 **Title:** Path template nodes and persistence to `version_path` + `path_operation`
 
 **Description:**  
-Add a **Path** node representing the OpenAPI **path template** (e.g. `/users/{id}`). Associate palette-created operations with a Path node. On save, create/update rows in **`odb.version_path`** and **`odb.path_operation`** via existing REST patterns. Enforce **unique (`version_path_id`, `operation`)** at the API layer with a clear error.
+Add a **Path** node representing the OpenAPI **path template** (e.g. `/users/{id}`). Associate palette-created operations with a Path node. On save, create/update rows in **`apiome.version_path`** and **`apiome.path_operation`** via existing REST patterns. Enforce **unique (`version_path_id`, `operation`)** at the API layer with a clear error.
 
 **Acceptance criteria:**
 - User can create a path, set **pathname**, attach **at most one of each** HTTP method operation per path (OpenAPI constraint).
@@ -340,7 +340,7 @@ Introduce **edges** from **Path → Operation**, and from **Operation → Parame
 **Title:** Parameter nodes with `in: path|query`, required, schema from property or inline
 
 **Description:**  
-For **path** and **query** parameters, implement editors that bind to **`odb.shared_path_parameter`** and **`path_operation_parameter_link`**. **Type** selection prefers **existing version properties** (reuse Designer property catalog) and supports **custom** JSON Schema fragments for parameters when needed.
+For **path** and **query** parameters, implement editors that bind to **`apiome.shared_path_parameter`** and **`path_operation_parameter_link`**. **Type** selection prefers **existing version properties** (reuse Designer property catalog) and supports **custom** JSON Schema fragments for parameters when needed.
 
 **MVP OpenAPI coverage:** `name`, `in`, `required`, `schema`, `description`, `style`, `explode` where applicable for query; path params must match **template segments**.
 

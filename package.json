@@ -1,22 +1,22 @@
 {
-  "name": "objectified",
+  "name": "apiome",
   "private": true,
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "test": "yarn workspace objectified-cli test && yarn workspace objectified-db test && yarn workspace objectified-mcp test && yarn workspace objectified-ui test && yarn workspace objectified-web test && yarn workspace objectified-browse test",
+    "test": "yarn workspace apiome-cli test && yarn workspace apiome-db test && yarn workspace apiome-mcp test && yarn workspace apiome-ui test && yarn workspace apiome-web test && yarn workspace apiome-browse test",
     "cli:build": "turbo run cli:build",
     "cli:test": "turbo run cli:test",
     "cli:lint": "turbo run cli:lint"
   },
   "workspaces": [
-    "objectified-cli",
-    "objectified-db",
-    "objectified-mcp",
-    "objectified-ui",
-    "objectified-browse",
-    "objectified-web",
-    "objectified-rest"
+    "apiome-cli",
+    "apiome-db",
+    "apiome-mcp",
+    "apiome-ui",
+    "apiome-browse",
+    "apiome-web",
+    "apiome-rest"
   ],
   "packageManager": "yarn@4.12.0",
   "resolutions": {

@@ -28,7 +28,7 @@
   <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><i data-lucide="layout-dashboard" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span><span class="text-xs text-gray-400">/</span>
+      <span class="text-sm font-semibold">Apiome</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Control Panel</span><span class="text-xs text-gray-400">/</span>
       <a href="api-keys-list.html" class="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500">API Keys</a><span class="text-xs text-gray-400">/</span>
       <span class="text-sm mono text-purple-600 dark:text-purple-400">MCP Setup</span>
@@ -93,7 +93,7 @@
         <div class="px-6 py-4 flex items-center justify-between">
           <div>
             <h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="plug-zap" class="w-6 h-6 text-purple-500"></i> MCP Server Setup</h2>
-            <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Connect your AI agent or IDE extension to the Objectified MCP server using key <span class="mono text-purple-600 dark:text-purple-400">odb_mcp_e1b8…2F6</span>.</p>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Connect your AI agent or IDE extension to the Apiome MCP server using key <span class="mono text-purple-600 dark:text-purple-400">odb_mcp_e1b8…2F6</span>.</p>
           </div>
           <div class="flex items-center gap-2">
             <span class="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Server online</span>
@@ -136,14 +136,14 @@
                 <div>
                   <p class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">MCP endpoint URL</p>
                   <div class="flex items-center gap-2 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 px-2.5 py-1.5">
-                    <code class="mono text-xs flex-1 text-purple-600 dark:text-purple-400">https://mcp.objectified.io/mcp</code>
+                    <code class="mono text-xs flex-1 text-purple-600 dark:text-purple-400">https://mcp.apiome.app/mcp</code>
                     <button class="text-gray-400 hover:text-purple-500 flex-shrink-0"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
                   </div>
                 </div>
                 <div>
                   <p class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">SSE fallback URL</p>
                   <div class="flex items-center gap-2 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 px-2.5 py-1.5">
-                    <code class="mono text-xs flex-1 text-gray-500">https://mcp.objectified.io/sse</code>
+                    <code class="mono text-xs flex-1 text-gray-500">https://mcp.apiome.app/sse</code>
                     <button class="text-gray-400 hover:text-purple-500 flex-shrink-0"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
                   </div>
                 </div>
@@ -158,13 +158,13 @@
                 <div>
                   <p class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Command</p>
                   <div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 px-2.5 py-1.5">
-                    <code class="mono text-xs flex-1 text-gray-600 dark:text-gray-300">npx objectified-mcp</code>
+                    <code class="mono text-xs flex-1 text-gray-600 dark:text-gray-300">npx apiome-mcp</code>
                     <button class="text-gray-400 hover:text-purple-500 flex-shrink-0"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
                   </div>
                 </div>
                 <div>
                   <p class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Required env var</p>
-                  <code class="mono text-xs block bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded px-2.5 py-1.5 text-gray-600 dark:text-gray-300">OBJECTIFIED_MCP_INTERNAL_SECRET=&lt;key&gt;</code>
+                  <code class="mono text-xs block bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded px-2.5 py-1.5 text-gray-600 dark:text-gray-300">APIOME_MCP_INTERNAL_SECRET=&lt;key&gt;</code>
                 </div>
                 <p class="text-[11px] text-gray-400">Available to self-hosted enterprise customers only. Use stdio for local CLI-based agents running on-premises. For all other deployments, use Streamable HTTP.</p>
               </div>
@@ -198,8 +198,8 @@
                 </div>
                 <pre class="mono text-xs text-gray-100 p-4 leading-relaxed">{
   <span class="text-sky-400">"mcpServers"</span>: {
-    <span class="text-sky-400">"objectified"</span>: {
-      <span class="text-sky-400">"url"</span>: <span class="text-emerald-400">"https://mcp.objectified.io/mcp"</span>,
+    <span class="text-sky-400">"apiome"</span>: {
+      <span class="text-sky-400">"url"</span>: <span class="text-emerald-400">"https://mcp.apiome.app/mcp"</span>,
       <span class="text-sky-400">"headers"</span>: {
         <span class="text-sky-400">"Authorization"</span>: <span class="text-emerald-400">"Bearer odb_mcp_e1b8d9f2c4a7b3e6f1d8c9a0b5e2f3a4c7b8d9e0f1a2b3"</span>
       }
@@ -209,7 +209,7 @@
               </div>
               <div class="mt-3 rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50/60 dark:bg-amber-900/10 px-4 py-2.5 flex items-start gap-2">
                 <i data-lucide="info" class="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0"></i>
-                <p class="text-xs text-amber-700 dark:text-amber-300">Store the key in <code class="mono text-[11px]">~/.cursor/.env</code> and reference it as <code class="mono text-[11px]">${OBJECTIFIED_MCP_KEY}</code> to avoid committing secrets to source control.</p>
+                <p class="text-xs text-amber-700 dark:text-amber-300">Store the key in <code class="mono text-[11px]">~/.cursor/.env</code> and reference it as <code class="mono text-[11px]">${APIOME_MCP_KEY}</code> to avoid committing secrets to source control.</p>
               </div>
             </div>
 
@@ -223,18 +223,18 @@
                 </div>
                 <pre class="mono text-xs text-gray-100 p-4 leading-relaxed">{
   <span class="text-sky-400">"mcpServers"</span>: {
-    <span class="text-sky-400">"objectified"</span>: {
+    <span class="text-sky-400">"apiome"</span>: {
       <span class="text-sky-400">"command"</span>: <span class="text-emerald-400">"npx"</span>,
-      <span class="text-sky-400">"args"</span>: [<span class="text-emerald-400">"-y"</span>, <span class="text-emerald-400">"objectified-mcp"</span>],
+      <span class="text-sky-400">"args"</span>: [<span class="text-emerald-400">"-y"</span>, <span class="text-emerald-400">"apiome-mcp"</span>],
       <span class="text-sky-400">"env"</span>: {
-        <span class="text-sky-400">"OBJECTIFIED_MCP_INTERNAL_SECRET"</span>: <span class="text-emerald-400">"odb_mcp_e1b8d9…"</span>,
-        <span class="text-sky-400">"OBJECTIFIED_MCP_URL"</span>: <span class="text-emerald-400">"https://mcp.objectified.io"</span>
+        <span class="text-sky-400">"APIOME_MCP_INTERNAL_SECRET"</span>: <span class="text-emerald-400">"odb_mcp_e1b8d9…"</span>,
+        <span class="text-sky-400">"APIOME_MCP_URL"</span>: <span class="text-emerald-400">"https://mcp.apiome.app"</span>
       }
     }
   }
 }</pre>
               </div>
-              <p class="text-xs text-gray-400 mt-2">After saving, restart Claude Desktop. The Objectified tools will appear in the tool selector.</p>
+              <p class="text-xs text-gray-400 mt-2">After saving, restart Claude Desktop. The Apiome tools will appear in the tool selector.</p>
             </div>
 
             <!-- VS Code tab -->
@@ -247,17 +247,17 @@
                 </div>
                 <pre class="mono text-xs text-gray-100 p-4 leading-relaxed">{
   <span class="text-sky-400">"mcp.servers"</span>: {
-    <span class="text-sky-400">"objectified"</span>: {
+    <span class="text-sky-400">"apiome"</span>: {
       <span class="text-sky-400">"type"</span>: <span class="text-emerald-400">"http"</span>,
-      <span class="text-sky-400">"url"</span>: <span class="text-emerald-400">"https://mcp.objectified.io/mcp"</span>,
+      <span class="text-sky-400">"url"</span>: <span class="text-emerald-400">"https://mcp.apiome.app/mcp"</span>,
       <span class="text-sky-400">"headers"</span>: {
-        <span class="text-sky-400">"Authorization"</span>: <span class="text-emerald-400">"Bearer ${env:OBJECTIFIED_MCP_KEY}"</span>
+        <span class="text-sky-400">"Authorization"</span>: <span class="text-emerald-400">"Bearer ${env:APIOME_MCP_KEY}"</span>
       }
     }
   }
 }</pre>
               </div>
-              <p class="text-xs text-gray-400 mt-2">Set <code class="mono text-[11px] bg-gray-100 dark:bg-gray-700 px-1 rounded">OBJECTIFIED_MCP_KEY</code> in your shell environment or in a <code class="mono text-[11px] bg-gray-100 dark:bg-gray-700 px-1 rounded">.env</code> file excluded from version control.</p>
+              <p class="text-xs text-gray-400 mt-2">Set <code class="mono text-[11px] bg-gray-100 dark:bg-gray-700 px-1 rounded">APIOME_MCP_KEY</code> in your shell environment or in a <code class="mono text-[11px] bg-gray-100 dark:bg-gray-700 px-1 rounded">.env</code> file excluded from version control.</p>
             </div>
 
             <!-- Python SDK tab -->
@@ -272,9 +272,9 @@
 <span class="text-purple-400">from</span> fastmcp <span class="text-purple-400">import</span> Client
 
 client = Client(
-    <span class="text-emerald-400">"https://mcp.objectified.io/mcp"</span>,
+    <span class="text-emerald-400">"https://mcp.apiome.app/mcp"</span>,
     headers={
-        <span class="text-emerald-400">"Authorization"</span>: <span class="text-sky-400">f"Bearer {os.environ['OBJECTIFIED_MCP_KEY']}"</span>
+        <span class="text-emerald-400">"Authorization"</span>: <span class="text-sky-400">f"Bearer {os.environ['APIOME_MCP_KEY']}"</span>
     },
 )
 
@@ -371,7 +371,7 @@ client = Client(
             <div class="space-y-2 hidden" id="test-success">
               <div class="flex items-center gap-3 text-sm">
                 <span class="w-7 h-7 rounded-md bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500"></i></span>
-                <div class="flex-1"><p class="font-medium">TCP connection established</p><p class="text-[11px] mono text-gray-400">mcp.objectified.io:443 · TLS 1.3</p></div>
+                <div class="flex-1"><p class="font-medium">TCP connection established</p><p class="text-[11px] mono text-gray-400">mcp.apiome.app:443 · TLS 1.3</p></div>
                 <span class="text-[11px] mono text-gray-400 flex-shrink-0">12 ms</span>
               </div>
               <div class="flex items-center gap-3 text-sm">
@@ -386,7 +386,7 @@ client = Client(
               </div>
               <div class="rounded-lg bg-emerald-50 dark:bg-emerald-900/15 border border-emerald-200 dark:border-emerald-800/50 px-4 py-2.5 flex items-center gap-3">
                 <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 flex-shrink-0"></i>
-                <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Connection successful — your MCP client is ready to use Objectified tools</p>
+                <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Connection successful — your MCP client is ready to use Apiome tools</p>
               </div>
             </div>
             <!-- Idle state -->

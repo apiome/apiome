@@ -15,7 +15,7 @@ no Spark cluster, no real MongoDB, no schema diffing engine, no build step.
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/data-transform/index.html
+open apiome-ui/public/mockups/data-transform/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:
@@ -43,7 +43,7 @@ http://localhost:3000/mockups/data-transform/index.html
 
 ## Design system
 
-Mockups intentionally mirror the live `objectified-ui` shell and align with
+Mockups intentionally mirror the live `apiome-ui` shell and align with
 the sibling `mockups/academy`, `mockups/analytics`, `mockups/architect`,
 `mockups/automation`, `mockups/code-gen`, `mockups/collaboration`, and
 `mockups/connect` sets:

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Objectified Data Federate — Query History</title>
+  <title>Apiome Data Federate — Query History</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' };</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -24,7 +24,7 @@
         <div class="w-7 h-7 rounded-md bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
           <i data-lucide="layers" class="w-4 h-4 text-white"></i>
         </div>
-        <span class="text-sm font-semibold">Objectified</span>
+        <span class="text-sm font-semibold">Apiome</span>
       </a>
       <span class="text-xs text-gray-400">/</span>
       <span class="text-sm font-medium text-purple-600 dark:text-purple-400">Data Federate</span>
@@ -107,15 +107,15 @@
 
     const queries = [
       { ts:'21:18:44', sql:'SELECT u.id, u.email, COUNT(o.id)... FROM pg_prod.public.orders o INNER JOIN snowflake_dw...', sources:'pg,sf,obj', dur:'248ms', rows:8,    data:'16.3 MB', pd:'74%', status:'Success' },
-      { ts:'21:12:31', sql:'SELECT * FROM objectified.default.User WHERE plan_tier = \'enterprise\'',                   sources:'obj',       dur:'12ms',  rows:142,   data:'0.3 MB',  pd:'100%',status:'Success' },
+      { ts:'21:12:31', sql:'SELECT * FROM apiome.default.User WHERE plan_tier = \'enterprise\'',                   sources:'obj',       dur:'12ms',  rows:142,   data:'0.3 MB',  pd:'100%',status:'Success' },
       { ts:'21:09:02', sql:'SELECT date_trunc(\'day\', created_at) AS day, SUM(amount)... FROM pg_prod.public.orders...',sources:'pg',        dur:'91ms',  rows:30,    data:'8.1 MB',  pd:'100%',status:'Success' },
       { ts:'20:55:18', sql:'SELECT e.* FROM s3_lake.parquet.events_2026 e WHERE e.event_date > \'2026-05-01\'...',       sources:'s3',        dur:'1.84s', rows:14200, data:'210 MB',  pd:'40%', status:'Success' },
       { ts:'20:44:33', sql:'SELECT c.id, c.full_name, COUNT(o.id)... FROM mysql_app.app_db.users u JOIN pg_prod...',    sources:'my,pg',     dur:'3.2s',  rows:520,   data:'42.0 MB', pd:'62%', status:'Success' },
       { ts:'20:31:07', sql:'SELECT AVG(t.amount) FROM snowflake_dw.sales.transactions WHERE currency = \'USD\'',        sources:'sf',        dur:'112ms', rows:1,     data:'1.2 MB',  pd:'100%',status:'Success' },
       { ts:'20:18:52', sql:'SELECT * FROM s3_lake.parquet.clickstream LIMIT 1000000',                                   sources:'s3',        dur:'4.1s',  rows:1000000,data:'1.8 GB', pd:'20%', status:'Success' },
       { ts:'19:44:11', sql:'SELECT u.email, t.amount FROM mysql_app.app_db.users u JOIN snowflake_dw.sales.transac...', sources:'my,sf',     dur:'—',     rows:0,     data:'—',       pd:'—',   status:'Failed' },
-      { ts:'19:30:02', sql:'SELECT COUNT(*) FROM objectified.default.Order WHERE status = \'paid\'',                    sources:'obj',       dur:'8ms',   rows:1,     data:'0.1 MB',  pd:'100%',status:'Success' },
-      { ts:'18:55:44', sql:'SELECT p.sku, SUM(oi.quantity)... FROM pg_prod.public.order_items oi JOIN objectified...', sources:'pg,obj',    dur:'340ms', rows:88,    data:'22.1 MB', pd:'81%', status:'Success' },
+      { ts:'19:30:02', sql:'SELECT COUNT(*) FROM apiome.default.Order WHERE status = \'paid\'',                    sources:'obj',       dur:'8ms',   rows:1,     data:'0.1 MB',  pd:'100%',status:'Success' },
+      { ts:'18:55:44', sql:'SELECT p.sku, SUM(oi.quantity)... FROM pg_prod.public.order_items oi JOIN apiome...', sources:'pg,obj',    dur:'340ms', rows:88,    data:'22.1 MB', pd:'81%', status:'Success' },
     ];
 
     const srcIconMap = { pg:'🐘', sf:'❄', obj:'◎', my:'🐬', s3:'☁' };

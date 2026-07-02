@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  apiome-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apiome-ui
+    ports:
+      - "3000:3000"
+    environment:
+      # REST API Base URL
+      - NEXT_PUBLIC_REST_API_BASE_URL=${NEXT_PUBLIC_REST_API_BASE_URL:-http://localhost:8000/v1}
+      # Public API browser (apiome-browse)
+      - NEXT_PUBLIC_BROWSE_URL=${NEXT_PUBLIC_BROWSE_URL:-https://browse.apiome.app}
+      # NextAuth Configuration
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000/api/auth}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      # GitHub OAuth (if using)
+      - GITHUB_ID=${GITHUB_ID}
+      - GITHUB_SECRET=${GITHUB_SECRET}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      # Beta Mode
+      - NEXT_PUBLIC_BETA_MODE=${NEXT_PUBLIC_BETA_MODE:-true}
+      # Admin Password
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      # Database Connection (for PostgreSQL)
+      - PGHOST=${PGHOST:-localhost}
+      - PGPORT=${PGPORT:-5432}
+      - PGDATABASE=${PGDATABASE:-apiome}
+      - PGUSER=${PGUSER:-postgres}
+      - PGPASSWORD=${PGPASSWORD}
+    restart: unless-stopped
+    networks:
+      - apiome-network
+
+networks:
+  apiome-network:
+    driver: bridge
+

@@ -15,7 +15,7 @@ API calls, no auth, no build step.
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/detective/index.html
+open apiome-ui/public/mockups/detective/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:
@@ -40,7 +40,7 @@ http://localhost:3000/mockups/detective/index.html
 
 ## Design system
 
-Mockups intentionally mirror the live `objectified-ui` shell and align with the
+Mockups intentionally mirror the live `apiome-ui` shell and align with the
 sibling `mockups/architect`, `mockups/academy`, and `mockups/analytics` sets:
 
 - **Typography**: Inter (400/500/600/700), JetBrains Mono for code, IDs, hashes,

@@ -1,6 +1,6 @@
-# Objectified: Academy - Feature Roadmap
+# Apiome: Academy - Feature Roadmap
 
-> A comprehensive learning management system (LMS) built around schema design, API development, and data architecture best practices. Academy transforms Objectified's domain expertise into structured, gamified learning experiences with certification programs and enterprise training packages.
+> A comprehensive learning management system (LMS) built around schema design, API development, and data architecture best practices. Academy transforms Apiome's domain expertise into structured, gamified learning experiences with certification programs and enterprise training packages.
 >
 > **Revenue Model**: Subscription tiers (Free/Pro/Enterprise), certification exam fees, enterprise training packages with custom curricula
 >
@@ -83,7 +83,7 @@ Part of Epic: Course Management Platform
 
 Implement the full set of REST endpoints for managing courses, modules, and lessons. The API follows RESTful conventions with nested resource paths: `/api/v1/academy/courses`, `/api/v1/academy/courses/{courseId}/modules`, and `/api/v1/academy/courses/{courseId}/modules/{moduleId}/lessons`. All endpoints require authentication and enforce tenant isolation through middleware.
 
-Bulk operations are essential for course authoring efficiency. The API must support bulk reordering of modules within a course (PATCH to `/courses/{id}/modules/reorder` with an ordered array of module IDs) and bulk reordering of lessons within a module. Pagination follows cursor-based patterns consistent with the rest of the Objectified API, returning `next_cursor` and `has_more` fields.
+Bulk operations are essential for course authoring efficiency. The API must support bulk reordering of modules within a course (PATCH to `/courses/{id}/modules/reorder` with an ordered array of module IDs) and bulk reordering of lessons within a module. Pagination follows cursor-based patterns consistent with the rest of the Apiome API, returning `next_cursor` and `has_more` fields.
 
 The API must validate all inputs against OpenAPI 3.1 schemas before persisting. Error responses follow RFC 7807 Problem Details format with field-level validation errors. Rate limiting applies per tenant with configurable limits.
 

@@ -1,4 +1,4 @@
-# Objectified: Package Manager - Feature Roadmap
+# Apiome: Package Manager - Feature Roadmap
 
 > A package manager and registry specifically for schemas—like npm/pip for data definitions—enabling teams to publish, discover, install, and share versioned schema packages across organizations and the community.
 >
@@ -187,9 +187,9 @@ The integrity system also tracks a provenance record: who published the package 
 
 The CLI is the primary interface for schema package management. This issue builds the `obj` command-line tool with the command framework, authentication flow, and configuration management that all other CLI features build upon.
 
-The CLI is distributed as an npm package (`npm install -g @objectified/cli`) and also as standalone binaries for macOS, Linux, and Windows. The command framework supports subcommands (`obj install`, `obj publish`, `obj search`, `obj login`), global flags (`--registry`, `--verbose`, `--json`), and per-command flags.
+The CLI is distributed as an npm package (`npm install -g @apiome/cli`) and also as standalone binaries for macOS, Linux, and Windows. The command framework supports subcommands (`obj install`, `obj publish`, `obj search`, `obj login`), global flags (`--registry`, `--verbose`, `--json`), and per-command flags.
 
-Authentication uses `obj login` which opens a browser to the Objectified OAuth flow and receives a token via localhost callback. The token is stored in `~/.objrc` (user-level config) or `$OBJ_TOKEN` environment variable for CI/CD. Token refresh is handled automatically. For CI/CD environments, `obj login --token <token>` accepts a pre-generated API token.
+Authentication uses `obj login` which opens a browser to the Apiome OAuth flow and receives a token via localhost callback. The token is stored in `~/.objrc` (user-level config) or `$OBJ_TOKEN` environment variable for CI/CD. Token refresh is handled automatically. For CI/CD environments, `obj login --token <token>` accepts a pre-generated API token.
 
 Configuration cascades from: defaults → `~/.objrc` (user) → `.objrc` (project) → command flags → environment variables. The project-level `.objrc` specifies the registry URL, default scope, and package manager preferences.
 
@@ -199,7 +199,7 @@ Configuration cascades from: defaults → `~/.objrc` (user) → `.objrc` (projec
 - `obj login` opens browser OAuth flow and stores token in `~/.objrc`
 - `obj login --token <token>` supports headless CI/CD authentication
 - Configuration cascades correctly: defaults → user → project → flags → env vars
-- The CLI is installable via `npm install -g @objectified/cli`
+- The CLI is installable via `npm install -g @apiome/cli`
 - `--json` flag outputs machine-readable JSON for all commands (for scripting)
 
 **Part of Epic: CLI & Installation Tooling**
@@ -208,7 +208,7 @@ Configuration cascades from: defaults → `~/.objrc` (user) → `.objrc` (projec
 
 #### 2.2 (#1183) — `obj install` & Dependency Resolver
 
-Installing a package means downloading it, resolving its dependencies, and importing its schemas into the current Objectified project. This issue builds the `obj install` command and the dependency resolution algorithm.
+Installing a package means downloading it, resolving its dependencies, and importing its schemas into the current Apiome project. This issue builds the `obj install` command and the dependency resolution algorithm.
 
 `obj install @stripe/payment-schemas` adds the package to `obj-package.json` dependencies, resolves the full dependency tree, downloads all packages, and extracts schemas into an `obj_modules/` directory. The resolver uses a SAT-solver-inspired algorithm that finds the maximal satisfying set of package versions given all version constraints. When conflicts are irreconcilable (package A requires `foo@^1.0` and package B requires `foo@^2.0`), the resolver reports the conflict chain and suggests resolution strategies.
 
@@ -217,10 +217,10 @@ obj install @stripe/payment-schemas@^2.0
 
 Resolving dependencies...
   @stripe/payment-schemas@2.1.3
-  ├── @objectified/core-types@1.5.0
-  ├── @objectified/currency-schemas@1.2.1
-  │   └── @objectified/core-types@1.5.0 (deduped)
-  └── @objectified/address-schemas@1.0.4
+  ├── @apiome/core-types@1.5.0
+  ├── @apiome/currency-schemas@1.2.1
+  │   └── @apiome/core-types@1.5.0 (deduped)
+  └── @apiome/address-schemas@1.0.4
 
 Downloaded 4 packages in 1.2s
 Extracted schemas to obj_modules/
@@ -295,7 +295,7 @@ The lock file is human-readable JSON with comments explaining why each version w
 
 Downloading the same packages repeatedly wastes bandwidth and slows CI/CD pipelines. This issue adds a local cache, parallel downloads, and offline installation support to make the CLI fast in all environments.
 
-The local cache stores downloaded tarballs in `~/.obj-cache/` keyed by `{name}/{version}/{hash}.tgz`. Before downloading from the registry, the CLI checks the cache. Cache entries are validated by their SHA-512 hash (from the lock file or registry metadata). The cache is shared across all projects on the machine, so installing a common dependency like `@objectified/core-types` only downloads it once.
+The local cache stores downloaded tarballs in `~/.obj-cache/` keyed by `{name}/{version}/{hash}.tgz`. Before downloading from the registry, the CLI checks the cache. Cache entries are validated by their SHA-512 hash (from the lock file or registry metadata). The cache is shared across all projects on the machine, so installing a common dependency like `@apiome/core-types` only downloads it once.
 
 Parallel downloads fetch up to 8 packages simultaneously (configurable via `--concurrency`). A progress bar shows overall download progress with per-package status. Download failures retry 3 times with exponential backoff before reporting an error.
 
@@ -421,7 +421,7 @@ Scores are displayed on the package detail page as Radix `Progress` bars and on 
 
 Schema packages can contain security issues: overly permissive types that allow injection, `$ref` patterns that enable denial-of-service through recursive expansion, or deprecated encryption schemas. This issue adds automated vulnerability scanning to the registry.
 
-The scanner runs on every newly published package and periodically re-scans existing packages. It checks for: (1) recursive `$ref` loops that could cause infinite expansion, (2) schemas without maximum constraints on arrays/strings (potential memory exhaustion), (3) use of deprecated or insecure patterns (e.g., MD5 hash format), (4) known vulnerability advisories published by the Objectified security team.
+The scanner runs on every newly published package and periodically re-scans existing packages. It checks for: (1) recursive `$ref` loops that could cause infinite expansion, (2) schemas without maximum constraints on arrays/strings (potential memory exhaustion), (3) use of deprecated or insecure patterns (e.g., MD5 hash format), (4) known vulnerability advisories published by the Apiome security team.
 
 Vulnerabilities are assigned severity levels (critical, high, medium, low) and stored as advisories in the registry database. The package detail page displays vulnerability badges. The CLI checks for vulnerabilities during `obj install` and reports them as warnings (medium/low) or errors (critical/high, with `--force` override).
 
@@ -483,7 +483,7 @@ The checker supports `.objrc` configuration for: `allowedLicenses` (whitelist), 
 
 Manual publishing is error-prone and doesn't scale. This issue builds CI/CD integrations that automatically publish schema packages when tagged releases are pushed, with pre-publish validation and conditional publishing based on branch rules.
 
-The primary integration is a GitHub Action (`@objectified/publish-action`) that: (1) checks out the repository, (2) validates the package manifest and schemas, (3) runs tests if configured, (4) publishes to the registry using a stored `OBJ_TOKEN` secret, and (5) posts a comment on the release with the published version and install command. The action supports configuration for: registry URL, dist-tag (stable releases get `latest`, pre-releases get `next`), and access level.
+The primary integration is a GitHub Action (`@apiome/publish-action`) that: (1) checks out the repository, (2) validates the package manifest and schemas, (3) runs tests if configured, (4) publishes to the registry using a stored `OBJ_TOKEN` secret, and (5) posts a comment on the release with the published version and install command. The action supports configuration for: registry URL, dist-tag (stable releases get `latest`, pre-releases get `next`), and access level.
 
 A GitLab CI template and Jenkins plugin provide equivalent functionality. All integrations support dry-run mode for PR/MR pipelines—validating the package without publishing—so issues are caught before merge.
 
@@ -529,7 +529,7 @@ Consumer notifications are sent via email and in-app notification to all users w
 
 Enterprises need private schema registries that are invisible to the public and isolated from other tenants. This issue builds multi-tenant private registries with dedicated storage, access control, and optional proxy-through to the public registry.
 
-Each enterprise tenant gets a private registry at a unique URL (`registry.objectified.dev/{tenant}`). Private packages are stored in isolated S3 prefixes and PostgreSQL schemas. Access requires authentication with a token that has `read` permission on the tenant's scope. Unauthenticated requests receive 404 (not 401/403) to prevent registry enumeration.
+Each enterprise tenant gets a private registry at a unique URL (`registry.apiome.app/{tenant}`). Private packages are stored in isolated S3 prefixes and PostgreSQL schemas. Access requires authentication with a token that has `read` permission on the tenant's scope. Unauthenticated requests receive 404 (not 401/403) to prevent registry enumeration.
 
 The proxy feature allows private registries to fall through to the public registry for non-private packages. When `obj install @stripe/payment-schemas` is requested from a private registry that doesn't have it, the registry proxies the request to the public registry, downloads the package, caches it locally, and serves it to the client. This means enterprises can use a single registry URL for both private and public packages.
 

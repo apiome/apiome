@@ -17,7 +17,7 @@ auth, no Docker runtime, no real file uploads, no build step.
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/import/index.html
+open apiome-ui/public/mockups/import/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:
@@ -37,7 +37,7 @@ http://localhost:3000/mockups/import/index.html
 | `approvals.html`       | 2.3 Approval Workflow + 2.4 Multi-Approver + 2.5 Notifications + 2.6 SLA &amp; Auto-Rollback |
 | `governance.html`      | 2.1 RBAC + 2.2 Project Lock + 2.7 Quotas + 2.8 IP Allowlist                                 |
 | `api.html`             | 3.1 REST API + 3.2 Status API + 3.3 Commit/Rollback + 3.5 CLI + 3.6 GHA + 3.7 GitLab + 3.8  |
-| `multi-source.html`    | 3.9 Multi-File Upload + #350 AWS API Gateway + #800 Cross-Tenant Objectified Registry       |
+| `multi-source.html`    | 3.9 Multi-File Upload + #350 AWS API Gateway + #800 Cross-Tenant Apiome Registry       |
 | `presets.html`         | 4.1 Built-In Templates + 4.2 Custom + 4.3 Org Sharing + 4.5 Variables + 4.6 Import/Export   |
 | `schedules.html`       | 5.1 Schedule Configuration + 5.2 Change Detection + 5.3 Differential + 5.5 Pause + 5.6 Git  |
 | `conflicts.html`       | 6.1 Conflict Panel + 6.2 Strategies + 6.3 Property Diff + 6.5 AI Suggestion + 6.7 3-Way     |
@@ -47,7 +47,7 @@ http://localhost:3000/mockups/import/index.html
 
 ## Design system
 
-Mockups intentionally mirror the live `objectified-ui` shell and align with
+Mockups intentionally mirror the live `apiome-ui` shell and align with
 the sibling `mockups/academy`, `mockups/analytics`, `mockups/architect`,
 `mockups/automation`, `mockups/code-gen`, `mockups/collaboration`, and
 `mockups/connect` sets:
@@ -75,7 +75,7 @@ the production build is expected to honor:
   coloured dot.
 - **Source-type icons**: `link` = URL, `file-up` = file upload, `git-branch`
   = Git repository, `cloud` = AWS API Gateway / cloud provider,
-  `package` = cross-tenant Objectified registry, `database` = live database,
+  `package` = cross-tenant Apiome registry, `database` = live database,
   `file-code-2` = SQL DDL, `boxes` = Postman collection.
 - **Format chips**: `OpenAPI 3.1`, `Swagger 2.0`, `JSON Schema`,
   `GraphQL`, `Postman v2.1`, `DBML`, `Prisma`, `SQL DDL`, `Avro`, `Protobuf`

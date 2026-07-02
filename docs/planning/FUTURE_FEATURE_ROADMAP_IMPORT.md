@@ -1,4 +1,4 @@
-# Objectified: Import System - Feature Roadmap
+# Apiome: Import System - Feature Roadmap
 
 > Enterprise-grade import system extending the existing OpenAPI importer with audit trails, approval workflows, headless CI/CD integration, scheduled sync, intelligent conflict resolution, multi-source batch import, data transformation pipelines, large-scale performance optimization, and a plugin extension system.
 >
@@ -12,7 +12,7 @@
 
 - Multi-file upload (batch import multiple specification files) — #498
 - AWS API Gateway import integration — #350
-- Import from another Objectified project schema registry — #800
+- Import from another Apiome project schema registry — #800
 - One-click support ticket creation from import error panel — #737
 - Post-import auto-actions: auto-layout, auto-connect from `$ref`, auto-tag, auto-validate
 - Import review mode: highlight newly imported items; before/after comparison report
@@ -51,7 +51,7 @@ Create an `import_job` table that serves as the central record for every import 
 │ project_id      UUID FK                              │
 │ version_id      UUID FK                              │
 │ initiated_by    UUID FK (users)                      │
-│ source_type     ENUM url|file|git|gateway|objectified│
+│ source_type     ENUM url|file|git|gateway|apiome│
 │ source_uri      VARCHAR (URL, filename, or ref)      │
 │ format          VARCHAR (openapi3|swagger2|json_schema│
 │                          postman|graphql|...)        │
@@ -108,7 +108,7 @@ Part of Epic: Import History & Audit — #2291
 | 3.2 | Import Status & Results API                 | `GET /api/v1/imports/{jobId}` — poll status, progress, schema count, errors        | `enhancement`, `mvp`, `import`, `rest`         | Yes | No       | #2317 |
 | 3.3 | Import Commit / Rollback API                | `POST /api/v1/imports/{jobId}/commit` and `.../rollback` for programmatic control  | `enhancement`, `import`, `rest`                | No  | Yes      | #2318 |
 | 3.4 | Dry Run via API                             | `?dryRun=true` validates and returns analysis/conflict report without committing   | `enhancement`, `import`, `rest`                | No  | Yes      | #2319 |
-| 3.5 | CLI Tool (objectified-cli)                  | `objectified import --file openapi.yaml --project my-api --version v2`            | `enhancement`, `import`                        | No  | No       | #2320 |
+| 3.5 | CLI Tool (apiome-cli)                  | `apiome import --file openapi.yaml --project my-api --version v2`            | `enhancement`, `import`                        | No  | No       | #2320 |
 | 3.6 | GitHub Actions Template                     | Pre-built GHA workflow that imports the latest spec on push to main                | `enhancement`, `import`                        | No  | Yes      | #2321 |
 | 3.7 | GitLab CI Template                          | Pre-built GitLab CI job template for automated spec import on pipeline trigger    | `enhancement`, `import`                        | No  | Yes      | #2322 |
 | 3.8 | Webhook-Triggered Import                    | Register a URL; on call, auto-triggers import from configured repository/branch   | `enhancement`, `import`, `rest`                | No  | Yes      | #2323 |
@@ -156,7 +156,7 @@ POST /api/v1/imports/{jobId}/rollback → 200: ImportJob
 - Large file uploads (> 10MB) use chunked multipart with S3 staging
 - `dry_run=true` returns full analysis including conflict report without persisting any data
 - Job status updates every 2 seconds during processing; WebSocket endpoint available as alternative to polling
-- `#800` (Objectified schema import) addressed when `source_type = objectified`
+- `#800` (Apiome schema import) addressed when `source_type = apiome`
 
 Part of Epic: Headless Import API & CI/CD Integration — #2293
 
@@ -247,7 +247,7 @@ Part of Epic: Headless Import API & CI/CD Integration — #2293
 
 #### 8.5 — SQL DDL Reverse-Engineering Import — #2355
 
-Parse SQL `CREATE TABLE` statements and generate Objectified schema classes. Map column types to JSON Schema types, extract `NOT NULL` as required fields, `UNIQUE` as uniqueItems, `DEFAULT` as default values, and `FOREIGN KEY` constraints as schema `$ref` relationships.
+Parse SQL `CREATE TABLE` statements and generate Apiome schema classes. Map column types to JSON Schema types, extract `NOT NULL` as required fields, `UNIQUE` as uniqueItems, `DEFAULT` as default values, and `FOREIGN KEY` constraints as schema `$ref` relationships.
 
 **Column Type Mapping:**
 ```

@@ -1,4 +1,4 @@
-# Objectified: Schema Linting & Quality Scoring - Feature Roadmap
+# Apiome: Schema Linting & Quality Scoring - Feature Roadmap
 
 > A real-time schema linting engine and quality scoring system that continuously evaluates schema design, documentation coverage, API best practices, security posture, and performance patterns. Surfaces actionable feedback inline in the studio editor and provides a quantitative quality score for tracking improvement over time.
 >

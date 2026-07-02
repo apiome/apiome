@@ -6,8 +6,8 @@
 <title>Multi-Format Export — design mockup</title>
 <!--
   Multi-Format API Export & Cross-Protocol Transcoding — design mockup (static, self-contained).
-  Mirrors objectified-ui's ImportDialog look & feel for the EXPORT direction.
-  Headline: the fidelity / lossiness warning surfaced in BOTH objectified-ui and objectified-browse.
+  Mirrors apiome-ui's ImportDialog look & feel for the EXPORT direction.
+  Headline: the fidelity / lossiness warning surfaced in BOTH apiome-ui and apiome-browse.
   Roadmap: docs/ROADMAP_MULTI_FORMAT_EXPORT.md (MFX). Sample data illustrative. Not production code.
 -->
 <style>
@@ -117,7 +117,7 @@
 
   <!-- ===== rail (DashboardSideNav look) ===== -->
   <aside class="rail">
-    <div class="brand"><div class="logo">O</div><div><b>Objectified</b><small>ADE</small></div></div>
+    <div class="brand"><div class="logo">O</div><div><b>Apiome</b><small>ADE</small></div></div>
     <nav>
       <div class="sect">Specifications</div>
       <div class="navitem"><span class="ic"><i data-lucide="folders"></i></span><span class="lbl">Projects</span><span class="cnt">248</span></div>
@@ -199,7 +199,7 @@
     <!-- ===== SCREEN: public browse export ===== -->
     <div class="content screen" id="screen-public">
       <div class="pubhero">
-        <span class="anno" style="background:#4338ca;color:#fff;border-color:#6366f1">objectified-browse · public, no auth</span>
+        <span class="anno" style="background:#4338ca;color:#fff;border-color:#6366f1">apiome-browse · public, no auth</span>
         <h1 style="margin-top:12px">Export “Pet Store API”</h1>
         <p>Download this published API in the format you need. Some formats can’t represent every detail — you’ll see exactly what changes before you download.</p>
       </div>
@@ -212,7 +212,7 @@
         </div>
         <button class="btn warn"><i data-lucide="download" style="width:15px;height:15px"></i> Download anyway (Protobuf bundle .zip)</button>
       </div></div>
-      <div class="legend"><b>Design notes (public browse):</b> the <b>identical fidelity advisory</b> renders in objectified-browse (dark public chrome) — the user directive: “the exported target format may lose some fidelity from the originally imported data.” Same copy/severity as the ADE. Maps to <b>MFX-EPIC-7.2</b>.</div>
+      <div class="legend"><b>Design notes (public browse):</b> the <b>identical fidelity advisory</b> renders in apiome-browse (dark public chrome) — the user directive: “the exported target format may lose some fidelity from the originally imported data.” Same copy/severity as the ADE. Maps to <b>MFX-EPIC-7.2</b>.</div>
     </div>
   </div>
 </div>

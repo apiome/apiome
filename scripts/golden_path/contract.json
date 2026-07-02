@@ -1,5 +1,5 @@
 {
-  "description": "UI <-> REST contract for the golden-path spine (RC1-3.1, #3616). Single source of truth shared by objectified-rest/tests/test_golden_path_contract.py (asserts each operation exists in the REST OpenAPI surface) and objectified-ui/tests/contract/rest-golden-path-contract.test.ts (asserts the UI proxy routes still call the operations the UI owns). A rename/removal on either side turns the contract red. Path templates use the REST parameter names; matching is structural (per-segment), so the UI's differing parameter identifiers are irrelevant.",
+  "description": "UI <-> REST contract for the golden-path spine (RC1-3.1, #3616). Single source of truth shared by apiome-rest/tests/test_golden_path_contract.py (asserts each operation exists in the REST OpenAPI surface) and apiome-ui/tests/contract/rest-golden-path-contract.test.ts (asserts the UI proxy routes still call the operations the UI owns). A rename/removal on either side turns the contract red. Path templates use the REST parameter names; matching is structural (per-segment), so the UI's differing parameter identifiers are irrelevant.",
   "source": "docs/GOLDEN_PATH.md",
   "operations": [
     {
@@ -44,7 +44,7 @@
       "method": "GET",
       "path": "/v1/browse/tenants/{tenant_slug}/projects/{project_slug}/versions",
       "ui": false,
-      "notes": "Served by objectified-browse, not objectified-ui."
+      "notes": "Served by apiome-browse, not apiome-ui."
     }
   ]
 }

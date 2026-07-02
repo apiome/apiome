@@ -1,0 +1,575 @@
+import logging
+from typing import Optional
+
+from pydantic import AliasChoices, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
+
+# Insecure development-only JWT secret. Used (with a warning) when no secret is configured
+# outside production; production fails closed instead — see Settings.effective_jwt_secret.
+INSECURE_JWT_SECRET_FALLBACK = "your-secret-key-here"
+
+# Default CORS allow-list applied when APIOME_CORS_ALLOWED_ORIGINS is unset.
+DEFAULT_CORS_ORIGINS = [
+    "http://localhost:3000",  # Next.js default port
+    "http://localhost:3001",  # Next.js when 3000 is taken
+]
+
+# Default CORS origin regex applied when APIOME_CORS_ALLOWED_ORIGIN_REGEX is unset.
+DEFAULT_CORS_ORIGIN_REGEX = r"https://.*\.apiome\.dev"
+
+
+class Settings(BaseSettings):
+    """Application settings loaded from environment variables."""
+
+    # Database settings - can use DATABASE_URL directly or build from components
+    database_url: Optional[str] = None
+    postgres_user: str = "postgres"
+    postgres_password: str = "password"
+    postgres_host: str = "localhost"
+    postgres_port: int = 5432
+    postgres_db: str = "apiome"
+
+    host: str = "0.0.0.0"
+    port: int = 8000
+    reload: bool = True
+
+    # Deployment environment. "production"/"prod" enables fail-closed checks (e.g. the JWT
+    # secret must be configured — no insecure built-in fallback). Defaults to development.
+    app_env: str = Field(
+        default="development",
+        validation_alias=AliasChoices(
+            "APIOME_ENV",
+            "APP_ENV",
+            "ENVIRONMENT",
+            "app_env",
+        ),
+    )
+
+    # JWT settings (should match NextAuth secret)
+    # Can be set via JWT_SECRET or NEXTAUTH_SECRET env var
+    jwt_secret: Optional[str] = None
+    nextauth_secret: Optional[str] = None
+    jwt_algorithm: str = "HS256"
+
+    # CORS allow-list. Comma-separated exact origins via APIOME_CORS_ALLOWED_ORIGINS
+    # (defaults to the local Next.js dev ports). A regex for trusted subdomains is supplied
+    # via APIOME_CORS_ALLOWED_ORIGIN_REGEX (defaults to *.apiome.app); set it to an
+    # empty string to disable subdomain matching entirely.
+    cors_allowed_origins: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_CORS_ALLOWED_ORIGINS",
+            "cors_allowed_origins",
+        ),
+    )
+    cors_allowed_origin_regex: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_CORS_ALLOWED_ORIGIN_REGEX",
+            "cors_allowed_origin_regex",
+        ),
+    )
+
+    # Embedding (Ollama) for data_snapshot vectorization
+    ollama_base_url: str = "http://localhost:11434"
+
+    # Pre-commit policy default when project metadata omits maxCommitPayloadBytes (#2565)
+    commit_policy_max_payload_bytes_default: int = 5_242_880
+
+    # Fernet key (url-safe base64) from `Fernet.generate_key()` — encrypts webhook signing secrets at rest (#2588)
+    webhook_signing_secret_encryption_key: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_WEBHOOK_SIGNING_SECRET_ENCRYPTION_KEY",
+            "webhook_signing_secret_encryption_key",
+        ),
+    )
+
+    # Envelope encryption-at-rest for outbound MCP credentials (MCAT-6.2, #3678).
+    # A JSON object mapping an integer key-version to a base64-encoded 32-byte (AES-256) master
+    # key, e.g. {"1": "<base64 key>", "2": "<base64 key>"}. Several versions may be configured at
+    # once so the active key can be rotated while older rows stay decryptable. Generate a key with:
+    #   python -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())"
+    mcp_credential_encryption_keys: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS",
+            "mcp_credential_encryption_keys",
+        ),
+    )
+    # Which key-version new MCP credential secrets are sealed under. Defaults to the highest
+    # version present in mcp_credential_encryption_keys when unset.
+    mcp_credential_active_key_version: Optional[int] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_CREDENTIAL_ACTIVE_KEY_VERSION",
+            "mcp_credential_active_key_version",
+        ),
+    )
+
+    # Repository auto-refresh cadence (RAR-3.1, #3522). Per-repo cadence is stored
+    # in apiome.tenant_repositories.refresh_interval_seconds; these set the default
+    # applied when a repo has no explicit value and the global minimum floor that
+    # clamps sub-floor per-repo values at read time.
+    refresh_default_interval_seconds: int = Field(
+        default=300,
+        validation_alias=AliasChoices(
+            "APIOME_REFRESH_DEFAULT_INTERVAL",
+            "refresh_default_interval_seconds",
+        ),
+    )
+    refresh_min_interval_seconds: int = Field(
+        default=60,
+        validation_alias=AliasChoices(
+            "APIOME_REFRESH_MIN_INTERVAL",
+            "refresh_min_interval_seconds",
+        ),
+    )
+
+    # Primitives type-registry entitlement gating (#3478). When False (default), the
+    # advanced Type Registry surface (resolver, namespaces, settings, stats, import) is
+    # open to every authenticated tenant — current behavior, unchanged. When True, those
+    # routes require the calling tenant/user to hold the ``primitives-registry`` feature
+    # flag (per-user override > per-tenant override > license default); non-entitled
+    # callers get 403. Baseline primitives CRUD and /health are never gated.
+    primitives_registry_gating_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "APIOME_PRIMITIVES_REGISTRY_GATING",
+            "primitives_registry_gating_enabled",
+        ),
+    )
+
+    # SSRF guard (#3612). When False (default), user-supplied URLs fetched by the
+    # import-from-URL and public repository-registration paths are resolved and
+    # rejected if they point at non-public addresses (loopback, RFC1918,
+    # link-local incl. the 169.254.169.254 metadata IP, etc.). Set to True only
+    # for local development where importing from localhost is intentional; the
+    # http/https-only and no-credentials-in-URL checks always apply.
+    ssrf_allow_private: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "APIOME_SSRF_ALLOW_PRIVATE",
+            "ssrf_allow_private",
+        ),
+    )
+
+    # Per-tenant rate limiting (#3612). The limiter buckets requests per API key
+    # / tenant slug / client IP and enforces a fixed window. Authenticated
+    # traffic (API key or Authorization header) uses the higher limit; public
+    # traffic uses the lower one. Set ``APIOME_RATE_LIMIT_ENABLED=false`` to
+    # disable entirely. Limits are per replica (in-process counter).
+    rate_limit_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "APIOME_RATE_LIMIT_ENABLED",
+            "rate_limit_enabled",
+        ),
+    )
+    rate_limit_authenticated_per_minute: int = Field(
+        default=600,
+        validation_alias=AliasChoices(
+            "APIOME_RATE_LIMIT_AUTHENTICATED_PER_MINUTE",
+            "rate_limit_authenticated_per_minute",
+        ),
+    )
+    rate_limit_public_per_minute: int = Field(
+        default=120,
+        validation_alias=AliasChoices(
+            "APIOME_RATE_LIMIT_PUBLIC_PER_MINUTE",
+            "rate_limit_public_per_minute",
+        ),
+    )
+    rate_limit_window_seconds: int = Field(
+        default=60,
+        validation_alias=AliasChoices(
+            "APIOME_RATE_LIMIT_WINDOW_SECONDS",
+            "rate_limit_window_seconds",
+        ),
+    )
+
+    # Mock Server (#3615, RC1-2.2). Free-tier mocks auto-expire after a default TTL (capped at a
+    # maximum) and are rate limited per instance on the data plane. Set
+    # APIOME_MOCK_SERVER_ENABLED=false to disable provisioning + serving entirely.
+    mock_server_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "APIOME_MOCK_SERVER_ENABLED",
+            "mock_server_enabled",
+        ),
+    )
+    mock_default_ttl_hours: int = Field(
+        default=24,
+        validation_alias=AliasChoices(
+            "APIOME_MOCK_DEFAULT_TTL_HOURS",
+            "mock_default_ttl_hours",
+        ),
+    )
+    mock_max_ttl_hours: int = Field(
+        default=168,  # 7 days
+        validation_alias=AliasChoices(
+            "APIOME_MOCK_MAX_TTL_HOURS",
+            "mock_max_ttl_hours",
+        ),
+    )
+    mock_rate_limit_per_minute: int = Field(
+        default=60,
+        validation_alias=AliasChoices(
+            "APIOME_MOCK_RATE_LIMIT_PER_MINUTE",
+            "mock_rate_limit_per_minute",
+        ),
+    )
+
+    # MCP test harness (#3689, V2-MCP-22.3 / MCAT-8.3). Each live test invocation against a
+    # cataloged endpoint hits a real external server, so the test console is rate limited
+    # *per endpoint* (in addition to the global per-tenant middleware) to protect that server
+    # from a flood of test traffic. The fixed window matches the global limiter's
+    # ``rate_limit_window_seconds``, and the per-endpoint limit honours the global
+    # ``rate_limit_enabled`` kill switch.
+    mcp_test_rate_limit_per_minute: int = Field(
+        default=30,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_TEST_RATE_LIMIT_PER_MINUTE",
+            "mcp_test_rate_limit_per_minute",
+        ),
+    )
+
+    # Global auto-refresh kill switch (RAR-3.3, #3524). When False, the refresh
+    # sweep halts entirely (no repository is auto-refreshed) regardless of per-repo
+    # auto_refresh_enabled. Intended for incident response. Manual "Refresh Now"
+    # (RAR-5.2) is unaffected. Per-repo opt-out is the auto_refresh_enabled column.
+    refresh_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "APIOME_REFRESH_ENABLED",
+            "refresh_enabled",
+        ),
+    )
+
+    # MCP catalog periodic re-discovery sweep (V2-MCP-19.1 / MCAT-5.1, #3673). A background
+    # async loop re-handshakes enabled endpoints whose discovery cadence has elapsed, mirroring
+    # the repository auto-refresh sweep above.
+    #
+    # mcp_discovery_enabled              Global kill switch. When False the sweep halts entirely
+    #                                    (no endpoint is auto-discovered) regardless of per-endpoint
+    #                                    `enabled`. Intended for incident response. Manual discovery
+    #                                    (POST .../discover) is unaffected.
+    # mcp_discovery_default_cadence_seconds  Cadence applied to an endpoint that has no explicit
+    #                                    `discovery_cadence_seconds` override. Defaults to ~hourly,
+    #                                    the registry-recommended aggregator cadence
+    #                                    (https://modelcontextprotocol.io/registry/about).
+    # mcp_discovery_min_interval_seconds The sweep's tick floor: how often the loop wakes to look
+    #                                    for due endpoints. The per-endpoint cadence (not this floor)
+    #                                    decides which endpoints are actually due each tick, so a
+    #                                    small floor never re-discovers an endpoint faster than its
+    #                                    own cadence allows.
+    # mcp_discovery_max_concurrency      Per-tick concurrency cap (MCAT-5.2): the most discovery runs
+    #                                    the sweep drives at once. The remaining due endpoints wait on
+    #                                    a semaphore so a large backlog never floods the event loop,
+    #                                    the network, or the DB with simultaneous handshakes.
+    # mcp_discovery_endpoint_timeout_seconds  Per-endpoint wall-clock ceiling (MCAT-5.2) for one
+    #                                    sweep discovery run end-to-end (handshake + pagination +
+    #                                    persist). A run that exceeds it is cancelled and recorded as a
+    #                                    `budget_exceeded` failure so a single slow/hung endpoint can
+    #                                    never pin a sweep slot indefinitely. Keep it above the
+    #                                    discovery client's own network budget (~120s) so the timeout
+    #                                    is a backstop, not the primary bound.
+    mcp_discovery_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_DISCOVERY_ENABLED",
+            "mcp_discovery_enabled",
+        ),
+    )
+    mcp_discovery_default_cadence_seconds: int = Field(
+        default=3600,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_DISCOVERY_DEFAULT_CADENCE",
+            "mcp_discovery_default_cadence_seconds",
+        ),
+    )
+    mcp_discovery_min_interval_seconds: int = Field(
+        default=60,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_DISCOVERY_MIN_INTERVAL",
+            "mcp_discovery_min_interval_seconds",
+        ),
+    )
+    mcp_discovery_max_concurrency: int = Field(
+        default=4,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_DISCOVERY_MAX_CONCURRENCY",
+            "mcp_discovery_max_concurrency",
+        ),
+    )
+    mcp_discovery_endpoint_timeout_seconds: int = Field(
+        default=150,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_DISCOVERY_ENDPOINT_TIMEOUT",
+            "mcp_discovery_endpoint_timeout_seconds",
+        ),
+    )
+
+    # Polyglot toolchain runner (MFI-5.1, #3750). The shared service that runs external
+    # parser/linter/diff CLIs (buf, tsp, smithy, …) in a constrained subprocess.
+    # toolchain_max_concurrency   Global cap on simultaneously-running tool subprocesses, so a
+    #                             burst of imports cannot fork-bomb the host. Excess calls queue.
+    # toolchain_default_timeout_seconds  Per-call wall-clock ceiling when a caller passes none; the
+    #                             process is killed and a structured timeout error is raised.
+    toolchain_max_concurrency: int = Field(
+        default=4,
+        validation_alias=AliasChoices(
+            "APIOME_TOOLCHAIN_MAX_CONCURRENCY",
+            "toolchain_max_concurrency",
+        ),
+    )
+    toolchain_default_timeout_seconds: float = Field(
+        default=30.0,
+        validation_alias=AliasChoices(
+            "APIOME_TOOLCHAIN_DEFAULT_TIMEOUT",
+            "toolchain_default_timeout_seconds",
+        ),
+    )
+
+    # Toolchain sandbox security & resource limits (MFI-5.3, #3752). Third-party CLIs run on
+    # user-supplied input (a security surface: SSRF, code exec, zip bombs), so every tool
+    # subprocess is constrained. These tune the constraints; see app.toolchain_sandbox.
+    #
+    # toolchain_no_network            Isolate the child in a fresh network namespace so it cannot
+    #                                 reach any network (the no-network default). A tool that needs
+    #                                 live discovery opts out per-call; its fetches must then go
+    #                                 through the SSRF guard (#3612).
+    # toolchain_network_enforcement   How hard to insist on isolation: "best_effort" (isolate when
+    #                                 the kernel allows it, else log + continue) or "strict" (refuse
+    #                                 to run the tool if the network cannot be isolated — fail closed).
+    # toolchain_max_input_bytes       Reject a stdin payload larger than this *before* spawning.
+    # toolchain_max_output_bytes      Kill the tool if its combined stdout+stderr exceeds this
+    #                                 (a zip-bomb / runaway-output guard) and raise.
+    # toolchain_file_size_bytes       RLIMIT_FSIZE: max size of any single file the tool writes.
+    # toolchain_open_files            RLIMIT_NOFILE: max open file descriptors.
+    # toolchain_cpu_seconds           RLIMIT_CPU (CPU-seconds, not wall-clock). None → rely on the
+    #                                 per-call wall-clock timeout as the time bound.
+    # toolchain_memory_bytes          RLIMIT_AS (address space). None by default: an address-space
+    #                                 cap can break JVM tools (smithy/amf reserve large virtual
+    #                                 space), so memory limiting is opt-in.
+    # toolchain_max_processes         RLIMIT_NPROC fork-bomb guard. None by default: NPROC is
+    #                                 per-UID, so a low value can disturb co-tenant processes; opt
+    #                                 in where the runtime is isolated.
+    toolchain_no_network: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "APIOME_TOOLCHAIN_NO_NETWORK",
+            "toolchain_no_network",
+        ),
+    )
+    toolchain_network_enforcement: str = Field(
+        default="best_effort",
+        validation_alias=AliasChoices(
+            "APIOME_TOOLCHAIN_NETWORK_ENFORCEMENT",
+            "toolchain_network_enforcement",
+        ),
+    )
+    toolchain_max_input_bytes: int = Field(
+        default=33_554_432,  # 32 MiB
+        validation_alias=AliasChoices(
+            "APIOME_TOOLCHAIN_MAX_INPUT_BYTES",
+            "toolchain_max_input_bytes",
+        ),
+    )
+    toolchain_max_output_bytes: int = Field(
+        default=67_108_864,  # 64 MiB
+        validation_alias=AliasChoices(
+            "APIOME_TOOLCHAIN_MAX_OUTPUT_BYTES",
+            "toolchain_max_output_bytes",
+        ),
+    )
+    toolchain_file_size_bytes: int = Field(
+        default=536_870_912,  # 512 MiB
+        validation_alias=AliasChoices(
+            "APIOME_TOOLCHAIN_FILE_SIZE_BYTES",
+            "toolchain_file_size_bytes",
+        ),
+    )
+    toolchain_open_files: int = Field(
+        default=1024,
+        validation_alias=AliasChoices(
+            "APIOME_TOOLCHAIN_OPEN_FILES",
+            "toolchain_open_files",
+        ),
+    )
+    toolchain_cpu_seconds: Optional[float] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_TOOLCHAIN_CPU_SECONDS",
+            "toolchain_cpu_seconds",
+        ),
+    )
+    toolchain_memory_bytes: Optional[int] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_TOOLCHAIN_MEMORY_BYTES",
+            "toolchain_memory_bytes",
+        ),
+    )
+    toolchain_max_processes: Optional[int] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_TOOLCHAIN_MAX_PROCESSES",
+            "toolchain_max_processes",
+        ),
+    )
+
+    # MCP discovery failure handling, backoff & quarantine (V2-MCP-19.3 / MCAT-5.3, #3675). A
+    # flaky/dead endpoint must not wedge the sweep or spam failures: each failed discovery defers
+    # the endpoint by an exponential backoff, and after enough consecutive failures it is
+    # quarantined (auto-excluded from the sweep) until it recovers.
+    #
+    # mcp_discovery_quarantine_threshold  Consecutive failures after which an endpoint is
+    #                                    quarantined and an event emitted. <= 0 disables quarantine
+    #                                    (endpoints keep backing off but are never auto-disabled).
+    # mcp_discovery_backoff_base_seconds The first-failure backoff delay and the exponential's unit:
+    #                                    the Nth consecutive failure defers by base * 2**(N-1).
+    # mcp_discovery_backoff_max_seconds  Ceiling on the exponential backoff so a long-dead endpoint
+    #                                    is still re-checked periodically (and can recover). A
+    #                                    server-supplied 429 Retry-After is honoured as a floor and
+    #                                    may exceed this ceiling.
+    mcp_discovery_quarantine_threshold: int = Field(
+        default=5,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_DISCOVERY_QUARANTINE_THRESHOLD",
+            "mcp_discovery_quarantine_threshold",
+        ),
+    )
+    mcp_discovery_backoff_base_seconds: int = Field(
+        default=60,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_DISCOVERY_BACKOFF_BASE",
+            "mcp_discovery_backoff_base_seconds",
+        ),
+    )
+    mcp_discovery_backoff_max_seconds: int = Field(
+        default=21600,  # 6 hours
+        validation_alias=AliasChoices(
+            "APIOME_MCP_DISCOVERY_BACKOFF_MAX",
+            "mcp_discovery_backoff_max_seconds",
+        ),
+    )
+
+    # Observability & error handling (RC1-3.2, #3617). Structured JSON logs, request-id
+    # propagation, in-process request metrics, and an ops dashboard that surfaces backup status.
+    #
+    # log_level     standard logging level name (DEBUG/INFO/WARNING/ERROR/CRITICAL).
+    # log_json      emit one JSON object per log line (production default). Set false for
+    #               human-friendly console output in local development.
+    # request_id_header  inbound/outbound header carrying the per-request correlation id. When a
+    #               client (or upstream proxy) supplies it we reuse the value; otherwise we mint one.
+    log_level: str = Field(
+        default="INFO",
+        validation_alias=AliasChoices("APIOME_LOG_LEVEL", "LOG_LEVEL", "log_level"),
+    )
+    log_json: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("APIOME_LOG_JSON", "LOG_JSON", "log_json"),
+    )
+    request_id_header: str = Field(
+        default="X-Request-ID",
+        validation_alias=AliasChoices("APIOME_REQUEST_ID_HEADER", "request_id_header"),
+    )
+
+    # Backup status surfacing (RC1-3.2 reads RC1-1.3 manifests, #3617/#3613). The ops dashboard
+    # scans this directory for ``*.manifest.json`` sidecars to report the latest backup per scope.
+    # When unset, backup status is reported as "unconfigured" rather than failing.
+    backup_dir: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("APIOME_BACKUP_DIR", "backup_dir"),
+    )
+    # A backup older than this many hours is flagged "stale" on the ops dashboard (RPO guard).
+    backup_stale_after_hours: int = Field(
+        default=24,
+        validation_alias=AliasChoices(
+            "APIOME_BACKUP_STALE_AFTER_HOURS",
+            "backup_stale_after_hours",
+        ),
+    )
+
+    @property
+    def effective_log_level(self) -> int:
+        """Resolve the configured ``log_level`` name to a stdlib logging integer (INFO fallback)."""
+        return getattr(logging, str(self.log_level).strip().upper(), logging.INFO)
+
+    @property
+    def effective_database_url(self) -> str:
+        """Get the database URL, preferring DATABASE_URL over building from components."""
+        if self.database_url:
+            return self.database_url
+        return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+
+    @property
+    def is_production(self) -> bool:
+        """True when running in a production-like environment (fail-closed checks on)."""
+        return self.app_env.strip().lower() in {"production", "prod"}
+
+    @property
+    def effective_jwt_secret(self) -> str:
+        """
+        Get the JWT secret, preferring NEXTAUTH_SECRET over JWT_SECRET.
+
+        Fail-closed in production: if neither secret is configured we refuse to fall back
+        to the insecure built-in default (which would let anyone forge JWTs). In
+        development the well-known default is returned with a warning so local setups
+        keep working.
+
+        Raises:
+            RuntimeError: in production when no JWT secret is configured.
+        """
+        secret = self.nextauth_secret or self.jwt_secret
+        if secret:
+            return secret
+        if self.is_production:
+            raise RuntimeError(
+                "JWT secret is not configured. Set NEXTAUTH_SECRET (or JWT_SECRET) before "
+                "starting apiome-rest in production; refusing to use the insecure default."
+            )
+        logger.warning(
+            "Using the insecure built-in JWT secret. Set NEXTAUTH_SECRET (or JWT_SECRET) "
+            "for any non-local deployment."
+        )
+        return INSECURE_JWT_SECRET_FALLBACK
+
+    @property
+    def cors_allowed_origins_list(self) -> list[str]:
+        """Exact CORS origins: configured comma-separated list, or the local dev defaults."""
+        if self.cors_allowed_origins:
+            return [o.strip() for o in self.cors_allowed_origins.split(",") if o.strip()]
+        return list(DEFAULT_CORS_ORIGINS)
+
+    @property
+    def effective_cors_origin_regex(self) -> Optional[str]:
+        """
+        CORS origin regex: the configured value, or the *.apiome.app default.
+
+        An explicitly-empty string disables subdomain matching (returns None so the regex
+        is not applied at all).
+        """
+        if self.cors_allowed_origin_regex is None:
+            return DEFAULT_CORS_ORIGIN_REGEX
+        stripped = self.cors_allowed_origin_regex.strip()
+        return stripped or None
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore",
+        populate_by_name=True,
+    )
+
+
+settings = Settings()
+
+# Maximum number of HTTP delivery attempts before an event is moved to dead-letter.
+# Shared by the delivery worker (push_webhook_delivery.py) and the DB query in database.py
+# to ensure the retry policy is defined in exactly one place (#2588).
+WEBHOOK_MAX_DELIVERY_ATTEMPTS: int = 4
+

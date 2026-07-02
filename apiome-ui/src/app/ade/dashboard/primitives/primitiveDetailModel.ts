@@ -1,0 +1,253 @@
+/**
+ * Pure, view-model helpers for the Primitives type-detail page (#3468).
+ *
+ * The detail page renders a single registry type "beyond the edit dialog": its
+ * resolved `$ref` table, base chain, dependents, metadata and a generated example
+ * instance. The presentation-free derivations live here so they can be unit-tested
+ * without rendering React, and reused by the client component.
+ */
+
+/** A single outgoing relative-`$ref` edge as persisted on `apiome.primitives.refs`. */
+export interface RefEdge {
+  relative_ref?: string;
+  resolved_target?: string;
+  status?: string;
+}
+
+/**
+ * A type that references this primitive. Populated by the reverse-index endpoint
+ * once #3477 ("Used by properties" dependents/impact) lands; until then the detail
+ * page renders an empty-state and these helpers degrade to zero/empty results.
+ */
+export interface DependentRef {
+  schema_id?: string | null;
+  namespace?: string | null;
+  name?: string | null;
+  property?: string | null;
+  scope?: 'system' | 'tenant';
+  tenant_label?: string | null;
+}
+
+/** One node in the base chain: the type itself, then each of its ref edges. */
+export interface BaseChainNode {
+  /** The display label — the type name for the head node, else the relative `$ref`. */
+  label: string;
+  /** The absolute/registry target a ref edge resolves to (undefined for the head). */
+  target?: string;
+  /** `self` for the head node, `ref` for each edge. */
+  kind: 'self' | 'ref';
+  /** Resolution status carried from the edge (`resolved` / `unresolved`). */
+  status?: string;
+}
+
+/** Aggregate "used in" counters shown in the right-rail mini-stats. */
+export interface UsageSummary {
+  /** Number of distinct types that reference this primitive. */
+  dependentTypes: number;
+  /** Number of property bindings (the primitive's `usage_count`). */
+  properties: number;
+  /** Number of distinct tenants among the dependents. */
+  tenants: number;
+}
+
+/**
+ * Build the base chain for a type: the type itself followed by one node per
+ * outgoing `$ref` edge, in declaration order.
+ *
+ * @param typeName - The primitive's display name (head node).
+ * @param refs - The primitive's resolved `$ref` edges (may be undefined/empty).
+ * @returns Ordered chain nodes, always beginning with the type's own `self` node.
+ */
+export function buildBaseChain(typeName: string, refs?: RefEdge[]): BaseChainNode[] {
+  const head: BaseChainNode = { label: typeName, kind: 'self' };
+  const edges = (refs ?? [])
+    .filter((edge) => Boolean(edge.relative_ref))
+    .map<BaseChainNode>((edge) => ({
+      label: edge.relative_ref as string,
+      target: edge.resolved_target ?? undefined,
+      status: edge.status ?? undefined,
+      kind: 'ref',
+    }));
+  return [head, ...edges];
+}
+
+/**
+ * Derive the version-root segment (e.g. `v0`, `v1`) from a namespace path or base
+ * URI. The registry organizes types under a version root; this reads the first
+ * `v<digits>` path segment it finds.
+ *
+ * @param namespace - The namespace path (e.g. `std/v0/types`), if known.
+ * @param baseUri - The absolute base URI, used as a fallback source.
+ * @returns The version-root segment, or `null` when none is present.
+ */
+export function deriveVersionRoot(
+  namespace?: string | null,
+  baseUri?: string | null
+): string | null {
+  const source = namespace || baseUri || '';
+  const match = source.match(/(?:^|[/])(v\d+)(?:[/]|$)/);
+  return match ? match[1] : null;
+}
+
+/**
+ * The human label for a type's storage scope.
+ *
+ * @param isSystem - Whether the primitive is a system-core type.
+ * @returns `System · core` for system types, otherwise `Tenant`.
+ */
+export function scopeLabel(isSystem: boolean): string {
+  return isSystem ? 'System · core' : 'Tenant';
+}
+
+/**
+ * Derive the owning principal of a type for the metadata panel.
+ *
+ * @param isSystem - Whether the primitive is system-core (owned by `system`).
+ * @param namespace - The namespace path; a `tenant/<slug>/…` path yields the slug.
+ * @returns `system` for core types, the tenant slug when derivable, else `tenant`.
+ */
+export function deriveOwner(isSystem: boolean, namespace?: string | null): string {
+  if (isSystem) {
+    return 'system';
+  }
+  const match = (namespace ?? '').match(/^tenant\/([^/]+)/);
+  return match ? match[1] : 'tenant';
+}
+
+/**
+ * Aggregate the "used in" counters from the dependents list and binding count.
+ *
+ * Dependents come from the reverse-index endpoint (#3477); until it lands the list
+ * is empty and only `properties` (from `usage_count`) is non-zero.
+ *
+ * @param dependents - Types referencing this primitive (may be undefined/empty).
+ * @param usageCount - The primitive's property-binding `usage_count`.
+ * @returns Counts of dependent types, bound properties, and distinct tenants.
+ */
+export function summarizeUsage(
+  dependents: DependentRef[] | undefined,
+  usageCount: number
+): UsageSummary {
+  const list = dependents ?? [];
+  const tenants = new Set(
+    list
+      .filter((dep) => dep.scope !== 'system')
+      .map((dep) => dep.tenant_label || dep.namespace || '')
+      .filter((label) => label.length > 0)
+  );
+  return {
+    dependentTypes: list.length,
+    properties: Math.max(0, usageCount),
+    tenants: tenants.size,
+  };
+}
+
+/**
+ * The filename used when exporting a type's JSON Schema. The name is slugified so
+ * the download is filesystem-safe regardless of the primitive's display name.
+ *
+ * @param name - The primitive's display name.
+ * @returns A `<slug>.schema.json` filename (falls back to `primitive.schema.json`).
+ */
+export function exportFileName(name: string): string {
+  const slug = (name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return `${slug || 'primitive'}.schema.json`;
+}
+
+/**
+ * Serialize a type's JSON Schema document for export as pretty-printed JSON.
+ *
+ * @param schema - The primitive's JSON Schema document.
+ * @returns A 2-space-indented JSON string (empty object when schema is absent).
+ */
+export function serializeSchemaExport(schema: Record<string, unknown> | undefined): string {
+  return JSON.stringify(schema ?? {}, null, 2);
+}
+
+/** Internal: depth-bounded example generation guard to avoid runaway recursion. */
+const MAX_EXAMPLE_DEPTH = 6;
+
+/**
+ * Best-effort generation of an example instance from a JSON Schema document.
+ *
+ * Resolution order at each node: an explicit `examples[0]`, then `default`, then
+ * `const`, then `enum[0]`, then a value derived from `type`. Object properties are
+ * walked recursively (depth-bounded); a property whose schema is only a `$ref` is
+ * omitted because the target cannot be resolved client-side. Returns `null` when no
+ * meaningful example can be produced, so the caller can hide the section.
+ *
+ * @param schema - The JSON Schema document (or sub-schema) to derive an example for.
+ * @returns A representative instance value, or `null` when none can be produced.
+ */
+export function buildExampleInstance(schema: unknown): unknown {
+  return generateExample(schema, 0);
+}
+
+function generateExample(schema: unknown, depth: number): unknown {
+  if (depth > MAX_EXAMPLE_DEPTH || schema === null || typeof schema !== 'object') {
+    return null;
+  }
+  const node = schema as Record<string, unknown>;
+
+  if (Array.isArray(node.examples) && node.examples.length > 0) {
+    return node.examples[0];
+  }
+  if ('default' in node) {
+    return node.default;
+  }
+  if ('const' in node) {
+    return node.const;
+  }
+  if (Array.isArray(node.enum) && node.enum.length > 0) {
+    return node.enum[0];
+  }
+
+  // A property that is purely a `$ref` cannot be resolved here — signal "no example".
+  if (typeof node.$ref === 'string' && node.type === undefined && node.properties === undefined) {
+    return null;
+  }
+
+  const type = Array.isArray(node.type) ? node.type[0] : node.type;
+  switch (type) {
+    case 'string':
+      return typeof node.format === 'string' ? node.format : 'string';
+    case 'integer':
+    case 'number':
+      return 0;
+    case 'boolean':
+      return true;
+    case 'null':
+      return null;
+    case 'array':
+      return [];
+    case 'object':
+    default: {
+      const properties = node.properties;
+      if (properties === null || typeof properties !== 'object') {
+        return null;
+      }
+      const result: Record<string, unknown> = {};
+      for (const [key, propSchema] of Object.entries(properties as Record<string, unknown>)) {
+        const value = generateExample(propSchema, depth + 1);
+        if (value !== null || isExplicitNull(propSchema)) {
+          result[key] = value;
+        }
+      }
+      return Object.keys(result).length > 0 ? result : null;
+    }
+  }
+}
+
+/** Whether a sub-schema legitimately produces a `null` example (vs. "unknown"). */
+function isExplicitNull(schema: unknown): boolean {
+  if (schema === null || typeof schema !== 'object') {
+    return false;
+  }
+  const node = schema as Record<string, unknown>;
+  const type = Array.isArray(node.type) ? node.type[0] : node.type;
+  return type === 'null' || node.default === null || node.const === null;
+}

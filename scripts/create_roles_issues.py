@@ -7,7 +7,7 @@ import time
 import json
 
 REPO = 'KenSuenobu/objectified-commercial'
-REPO_DIR = '/home/kenji/Development/objectified'
+REPO_DIR = '/home/kenji/Development/apiome'
 FEATURE_LABEL = 'roles'
 
 ROLES_FILE = f'{REPO_DIR}/FUTURE_FEATURE_ROADMAP_ROLES.md'

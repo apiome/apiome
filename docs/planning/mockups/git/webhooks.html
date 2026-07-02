@@ -22,7 +22,7 @@
   <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-emerald-500 flex items-center justify-center"><i data-lucide="git-branch" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span><span class="text-xs text-gray-400">/</span>
+      <span class="text-sm font-semibold">Apiome</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Studio</span><span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300 mono">acme.platform</span>
     </div>
@@ -111,7 +111,7 @@
                     <p class="text-sm font-semibold">CI · gateway-pipeline</p>
                     <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-semibold">active</span>
                   </div>
-                  <p class="mono text-[11px] text-slate-500 dark:text-slate-400 truncate">https://ci.acme.io/hooks/objectified-push</p>
+                  <p class="mono text-[11px] text-slate-500 dark:text-slate-400 truncate">https://ci.acme.io/hooks/apiome-push</p>
                   <p class="text-[10px] text-slate-500 mt-1">events: <span class="mono">version.push, version.publish</span> · 412 delivered (24h)</p>
                 </div>
                 <div class="text-right text-[11px]">
@@ -128,7 +128,7 @@
                     <p class="text-sm font-semibold">Catalog · service-registry</p>
                     <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-semibold">active</span>
                   </div>
-                  <p class="mono text-[11px] text-slate-500 dark:text-slate-400 truncate">https://catalog.internal.acme/api/objectified/push</p>
+                  <p class="mono text-[11px] text-slate-500 dark:text-slate-400 truncate">https://catalog.internal.acme/api/apiome/push</p>
                   <p class="text-[10px] text-slate-500 mt-1">events: <span class="mono">version.publish</span> · 18 delivered (24h)</p>
                 </div>
                 <div class="text-right text-[11px]">
@@ -162,7 +162,7 @@
                     <p class="text-sm font-semibold">Legacy · gateway-v1</p>
                     <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold">disabled</span>
                   </div>
-                  <p class="mono text-[11px] text-slate-500 dark:text-slate-400 truncate">https://gw-v1.acme.io/internal/objectified</p>
+                  <p class="mono text-[11px] text-slate-500 dark:text-slate-400 truncate">https://gw-v1.acme.io/internal/apiome</p>
                   <p class="text-[10px] text-slate-500 mt-1">disabled by ksmith · 3d ago</p>
                 </div>
               </li>
@@ -214,7 +214,7 @@
                   <li class="flex items-center gap-2"><span class="w-5 h-5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 flex items-center justify-center text-[10px] font-semibold">4</span> +300s</li>
                   <li class="flex items-center gap-2"><span class="w-5 h-5 rounded bg-rose-500/15 text-rose-700 dark:text-rose-300 flex items-center justify-center text-[10px] font-semibold">✕</span> dead-letter</li>
                 </ol>
-                <p class="text-[10px] text-slate-400 mono pt-2 border-t border-gray-100 dark:border-gray-700">Background sweep · objectified-rest worker · 5s tick</p>
+                <p class="text-[10px] text-slate-400 mono pt-2 border-t border-gray-100 dark:border-gray-700">Background sweep · apiome-rest worker · 5s tick</p>
               </div>
             </div>
           </section>
@@ -251,13 +251,13 @@
             <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-t-lg flex items-center gap-2">
               <i data-lucide="braces" class="w-4 h-4 text-indigo-500"></i>
               <h3 class="text-sm font-semibold">Webhook payload (signed)</h3>
-              <span class="ml-auto mono text-[10px] text-gray-400">X-Objectified-Signature: sha256=…</span>
+              <span class="ml-auto mono text-[10px] text-gray-400">X-Apiome-Signature: sha256=…</span>
             </div>
-            <pre class="mono text-[11px] p-4 bg-slate-900 text-slate-100 rounded-b-lg overflow-x-auto"><code>POST /hooks/objectified-push HTTP/1.1
+            <pre class="mono text-[11px] p-4 bg-slate-900 text-slate-100 rounded-b-lg overflow-x-auto"><code>POST /hooks/apiome-push HTTP/1.1
 Content-Type:                application/json
-X-Objectified-Event:         version.push
-X-Objectified-Delivery-Id:   evt_01HYJB78N4M2GQ9R3F5P0X7T2A
-X-Objectified-Signature:     sha256=4f1a4cd9b3c1e7…   <span class="text-slate-500"># Fernet-at-rest signing secret</span>
+X-Apiome-Event:         version.push
+X-Apiome-Delivery-Id:   evt_01HYJB78N4M2GQ9R3F5P0X7T2A
+X-Apiome-Signature:     sha256=4f1a4cd9b3c1e7…   <span class="text-slate-500"># Fernet-at-rest signing secret</span>
 
 {
   "schemaVersion": "webhook/v1",

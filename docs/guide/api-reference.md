@@ -1,6 +1,6 @@
 # API reference
 
-The Objectified REST API is a **FastAPI** application, so it publishes its own interactive API
+The Apiome REST API is a **FastAPI** application, so it publishes its own interactive API
 reference automatically — there is nothing to generate or host separately. Point a browser at the
 running REST service.
 
@@ -29,12 +29,12 @@ Create an API key in the UI under **Dashboard → API keys** (`/ade/dashboard/ap
 
 ## Swagger UI for a *published spec* vs. the API reference
 
-There are two different Swagger UIs in Objectified — don't confuse them:
+There are two different Swagger UIs in Apiome — don't confuse them:
 
 | You want… | Use |
 |---|---|
-| To explore the **Objectified REST API** (import, classes, versions, …) | `/docs` (this page) |
-| To explore a **published OpenAPI spec** authored in Objectified | `/v1/swagger/{tenant}/{project}/{version}` — see [browse-published-specs.md](browse-published-specs.md) |
+| To explore the **Apiome REST API** (import, classes, versions, …) | `/docs` (this page) |
+| To explore a **published OpenAPI spec** authored in Apiome | `/v1/swagger/{tenant}/{project}/{version}` — see [browse-published-specs.md](browse-published-specs.md) |
 
 ## Related
 

@@ -22,7 +22,7 @@
   <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
     <div class="flex items-center gap-3">
       <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-rose-500 flex items-center justify-center"><i data-lucide="shuffle" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Objectified</span>
+      <span class="text-sm font-semibold">Apiome</span>
       <span class="text-xs text-gray-400">/</span>
       <span class="text-sm text-gray-600 dark:text-gray-300">Multi-Protocol</span>
       <span class="text-xs text-gray-400">/</span>
@@ -111,7 +111,7 @@
                 <!-- Gateway -->
                 <rect x="220" y="40" width="240" height="220" rx="14" fill="url(#gw)" stroke="#a78bfa" stroke-dasharray="4 4" />
                 <linearGradient id="gw" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#a78bfa" stop-opacity="0.10" /><stop offset="100%" stop-color="#f472b6" stop-opacity="0.08" /></linearGradient>
-                <text x="340" y="65" text-anchor="middle" font-size="13" font-weight="700" fill="#7c3aed">Objectified Gateway</text>
+                <text x="340" y="65" text-anchor="middle" font-size="13" font-weight="700" fill="#7c3aed">Apiome Gateway</text>
                 <text x="340" y="82" text-anchor="middle" font-size="10" fill="#94a3b8">Envoy + xDS · WASM filters</text>
                 <g font-size="10" fill="#475569">
                   <rect x="240" y="100" width="200" height="22" rx="6" fill="#fff" stroke="#e5e7eb" /><text x="250" y="115">listener · :443 (h2/h3)</text>
@@ -231,7 +231,7 @@
       typed_config:
         codec_type: AUTO
         http_filters:
-        - name: objectified.protocol_router  # WASM
+        - name: apiome.protocol_router  # WASM
         - name: envoy.filters.http.grpc_json_transcoder
           typed_config:
             proto_descriptor: orders.pb

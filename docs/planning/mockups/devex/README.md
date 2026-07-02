@@ -13,7 +13,7 @@ references — no API calls, no auth, no build step.
 Either open the files directly:
 
 ```
-open objectified-ui/public/mockups/devex/index.html
+open apiome-ui/public/mockups/devex/index.html
 ```
 
 Or, with the Next.js dev server running, browse to:
@@ -39,7 +39,7 @@ http://localhost:3000/mockups/devex/index.html
 
 ## Design system
 
-Mockups intentionally mirror the live `objectified-ui` shell and align with
+Mockups intentionally mirror the live `apiome-ui` shell and align with
 the sibling `mockups/architect`, `mockups/academy`, and `mockups/analytics`
 sets:
 

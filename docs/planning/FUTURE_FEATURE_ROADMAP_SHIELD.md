@@ -1,4 +1,4 @@
-# Objectified: Shield - Feature Roadmap
+# Apiome: Shield - Feature Roadmap
 
 > Advanced security and threat protection platform for APIs and data schemas, providing runtime protection, vulnerability management, threat intelligence, and compliance automation. Shield safeguards the entire API lifecycle—from schema design through production traffic—ensuring APIs are secure by design and protected at runtime.
 >
@@ -10,7 +10,7 @@
 
 ## MVP Definition
 
-- OWASP API Top 10 vulnerability scanning for Objectified schemas
+- OWASP API Top 10 vulnerability scanning for Apiome schemas
 - Injection vulnerability detection (SQL, NoSQL, XSS, command injection patterns)
 - Sensitive data exposure analysis with PII field detection
 - API firewall with schema-aware request validation and blocking
@@ -37,7 +37,7 @@
 
 #### 1.1 (#1247) — OWASP API Top 10 Scan Engine
 
-The OWASP API Security Top 10 scan engine analyzes Objectified schemas and API definitions against the OWASP API Security Top 10 vulnerability categories. For each category, the engine applies a set of detection rules that examine schema structure, endpoint definitions, authentication configuration, and data flow patterns. The categories covered are: Broken Object Level Authorization (BOLA), Broken Authentication, Broken Object Property Level Authorization, Unrestricted Resource Consumption, Broken Function Level Authorization, Unrestricted Access to Sensitive Business Flows, Server-Side Request Forgery, Security Misconfiguration, Improper Inventory Management, and Unsafe Consumption of APIs.
+The OWASP API Security Top 10 scan engine analyzes Apiome schemas and API definitions against the OWASP API Security Top 10 vulnerability categories. For each category, the engine applies a set of detection rules that examine schema structure, endpoint definitions, authentication configuration, and data flow patterns. The categories covered are: Broken Object Level Authorization (BOLA), Broken Authentication, Broken Object Property Level Authorization, Unrestricted Resource Consumption, Broken Function Level Authorization, Unrestricted Access to Sensitive Business Flows, Server-Side Request Forgery, Security Misconfiguration, Improper Inventory Management, and Unsafe Consumption of APIs.
 
 Each detection rule produces findings with: vulnerability category (OWASP reference), severity (critical, high, medium, low, info), affected resource (schema, endpoint, field), detailed description of the vulnerability, evidence (what triggered the finding), remediation guidance (step-by-step fix), and references (OWASP documentation links). Findings are deduplicated across scans—a previously detected vulnerability maintains a stable finding ID for tracking.
 
@@ -187,7 +187,7 @@ Part of Epic: Vulnerability Scanner
 
 #### 2.1 (#1253) — API Firewall with Schema-Aware Rules
 
-The API firewall sits in the request path and validates all incoming requests against the Objectified schema definitions before they reach the application logic. Unlike generic WAFs that use signature-based detection, Shield's firewall understands the API's data model: it validates request bodies against the exact JSON Schema, ensures query parameters match defined types and constraints, validates path parameters against patterns, and checks Content-Type headers. Requests that fail validation are blocked with a 400 response and detailed error messages.
+The API firewall sits in the request path and validates all incoming requests against the Apiome schema definitions before they reach the application logic. Unlike generic WAFs that use signature-based detection, Shield's firewall understands the API's data model: it validates request bodies against the exact JSON Schema, ensures query parameters match defined types and constraints, validates path parameters against patterns, and checks Content-Type headers. Requests that fail validation are blocked with a 400 response and detailed error messages.
 
 The firewall operates in three modes: monitor (log violations but allow traffic), block (reject violating requests), and strict (block and additionally reject requests with unexpected extra fields not defined in the schema). Mode is configurable per endpoint, enabling gradual rollout—start in monitor mode to baseline the violation rate, then switch to block mode. A bypass allowlist supports specific IP addresses or API keys for debugging.
 
@@ -226,7 +226,7 @@ Custom firewall rules extend beyond schema validation: block requests with speci
 ```
 
 **Acceptance Criteria:**
-- Request body validation against Objectified JSON Schema with detailed error response on violation
+- Request body validation against Apiome JSON Schema with detailed error response on violation
 - Query parameter and path parameter type validation against schema definitions
 - Three operating modes: monitor (log only), block (reject violations), strict (reject unexpected fields)
 - Mode configurable per endpoint via `PUT /api/v1/shield/firewall/endpoints/{id}/mode`
@@ -467,7 +467,7 @@ Part of Epic: Threat Intelligence & Anomaly Detection
 
 #### 4.1 (#1265) — API Key Vault & Management
 
-The API key vault provides secure, centralized management for all API keys, tokens, and credentials used within the Objectified platform. Keys are stored encrypted at rest (AES-256-GCM) with envelope encryption: each key is encrypted with a data encryption key (DEK), and each DEK is encrypted with a master key stored in a hardware security module (HSM) or cloud KMS. Key material is never logged, displayed in full (only last 4 characters shown), or included in API responses after creation.
+The API key vault provides secure, centralized management for all API keys, tokens, and credentials used within the Apiome platform. Keys are stored encrypted at rest (AES-256-GCM) with envelope encryption: each key is encrypted with a data encryption key (DEK), and each DEK is encrypted with a master key stored in a hardware security module (HSM) or cloud KMS. Key material is never logged, displayed in full (only last 4 characters shown), or included in API responses after creation.
 
 The vault supports key lifecycle management: creation (generate or import), activation (enable for use), rotation (issue new key, deprecate old), revocation (immediately disable), and deletion (permanent removal after retention period). Each key has metadata: name, description, owner, creation date, expiry date, associated permissions (which APIs/endpoints the key can access), and usage constraints (IP allowlist, rate limits, time-of-day restrictions).
 

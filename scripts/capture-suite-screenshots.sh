@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 # Capture screenshots of the /mockups/* design surfaces for use on the
-# objectified-web /suite landing pages. Uses the system Chrome in
+# apiome-web /suite landing pages. Uses the system Chrome in
 # headless mode — no Playwright/Puppeteer browsers required.
 #
 # Output:
-#   objectified-web/public/suite/<slug>-cover.png    (main spotlight image)
-#   objectified-web/public/suite/<slug>-hub.png      (mockup hub / index)
-#   objectified-web/public/suite/<slug>-detail-1..N  (extra feature shots)
+#   apiome-web/public/suite/<slug>-cover.png    (main spotlight image)
+#   apiome-web/public/suite/<slug>-hub.png      (mockup hub / index)
+#   apiome-web/public/suite/<slug>-detail-1..N  (extra feature shots)
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-MOCKUPS="$ROOT/objectified-ui/public/mockups"
-OUT="$ROOT/objectified-web/public/suite"
+MOCKUPS="$ROOT/apiome-ui/public/mockups"
+OUT="$ROOT/apiome-web/public/suite"
 
 mkdir -p "$OUT"
 

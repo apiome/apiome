@@ -1,6 +1,6 @@
 # How do I… lint & check quality?
 
-Objectified computes a **server-side quality score** (an A–F grade out of 100) plus itemized lint
+Apiome computes a **server-side quality score** (an A–F grade out of 100) plus itemized lint
 findings for a version. The score is computed on the server so the UI and the CLI always agree —
 there is no client-side scoring to drift. Use it before cutting and publishing a version.
 
@@ -14,13 +14,13 @@ are editing. Fix the findings (most are missing descriptions) and the grade upda
 ## With the CLI
 
 ```bash
-objectified lint --project <id-or-slug> --version <id-or-label>
+apiome lint --project <id-or-slug> --version <id-or-label>
 
 # gate on a minimum grade (exit non-zero if below)
-objectified lint --project <id-or-slug> --version <id-or-label> --min-grade B
+apiome lint --project <id-or-slug> --version <id-or-label> --min-grade B
 
 # compare against a base version to surface breaking changes
-objectified lint --project <id-or-slug> --version <id-or-label> --base-version <id-or-label>
+apiome lint --project <id-or-slug> --version <id-or-label> --base-version <id-or-label>
 ```
 
 `--min-grade` (A–F) makes the command suitable for CI gates; `--base-version` adds breaking-change

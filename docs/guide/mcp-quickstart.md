@@ -1,12 +1,12 @@
 # MCP setup quick-start
 
-The Objectified **MCP server** exposes your **published OpenAPI specs** to MCP hosts (Claude Desktop,
+The Apiome **MCP server** exposes your **published OpenAPI specs** to MCP hosts (Claude Desktop,
 IDEs, automation). It is **read-only**: it lists, searches, and returns published documents and
 fragments. Anonymous callers see **public** specs; a valid **MCP API key** additionally unlocks
 **in-scope private** specs for its tenant.
 
-Full reference: [`objectified-mcp/README.md`](../../objectified-mcp/README.md) and
-[`objectified-mcp/docs/CONFIGURATION.md`](../../objectified-mcp/docs/CONFIGURATION.md).
+Full reference: [`apiome-mcp/README.md`](../../apiome-mcp/README.md) and
+[`apiome-mcp/docs/CONFIGURATION.md`](../../apiome-mcp/docs/CONFIGURATION.md).
 
 ---
 
@@ -18,7 +18,7 @@ public specs.
 
 ## 2. Connect a host
 
-The server speaks two transports. For connecting to an already-running Objectified, **streamable
+The server speaks two transports. For connecting to an already-running Apiome, **streamable
 HTTP** is the simplest.
 
 ### Streamable HTTP (recommended)
@@ -42,12 +42,12 @@ it needs the database URL and an internal secret:
 // Claude Desktop — claude_desktop_config.json
 {
   "mcpServers": {
-    "objectified": {
+    "apiome": {
       "command": "uv",
-      "args": ["run", "objectified-mcp", "serve", "--transport", "stdio"],
+      "args": ["run", "apiome-mcp", "serve", "--transport", "stdio"],
       "env": {
-        "OBJECTIFIED_MCP_DATABASE_URL": "postgresql://user:pass@localhost:5432/objectified",
-        "OBJECTIFIED_MCP_INTERNAL_SECRET": "<16+ character secret>"
+        "APIOME_MCP_DATABASE_URL": "postgresql://user:pass@localhost:5432/apiome",
+        "APIOME_MCP_INTERNAL_SECRET": "<16+ character secret>"
       }
     }
   }
@@ -60,14 +60,14 @@ an HTTP header.
 ## 3. Run the server yourself (for HTTP transport)
 
 ```bash
-cd objectified-mcp
+cd apiome-mcp
 uv sync
-uv run objectified-mcp serve --transport http --host 0.0.0.0 --port 8765
+uv run apiome-mcp serve --transport http --host 0.0.0.0 --port 8765
 ```
 
-Required env (see `objectified-mcp/.env.example`): `OBJECTIFIED_MCP_DATABASE_URL`,
-`OBJECTIFIED_MCP_INTERNAL_SECRET` (≥16 chars). Host/port default to `127.0.0.1:8765` and can be set
-with `OBJECTIFIED_MCP_HTTP_HOST` / `OBJECTIFIED_MCP_HTTP_PORT`. The local `docker compose up` already
+Required env (see `apiome-mcp/.env.example`): `APIOME_MCP_DATABASE_URL`,
+`APIOME_MCP_INTERNAL_SECRET` (≥16 chars). Host/port default to `127.0.0.1:8765` and can be set
+with `APIOME_MCP_HTTP_HOST` / `APIOME_MCP_HTTP_PORT`. The local `docker compose up` already
 brings the MCP server up on `:8765`.
 
 ## Tools available to the host
@@ -84,7 +84,7 @@ brings the MCP server up on `:8765`.
 | `spec.list_operations` / `spec.describe_operation` | Operation index / one operation's fragments |
 | `spec.list_components` / `spec.describe_component` | Component index / one component definition |
 | `spec.search` | Full-text search over public specs |
-| `spec.search_semantic` | Semantic search (needs `OBJECTIFIED_MCP_OPENAI_API_KEY`) |
+| `spec.search_semantic` | Semantic search (needs `APIOME_MCP_OPENAI_API_KEY`) |
 | `spec.list_tags` | Distinct public tags with counts |
 
 ## Verify

@@ -1,6 +1,6 @@
-# Objectified: Architect - Feature Roadmap
+# Apiome: Architect - Feature Roadmap
 
-> Enterprise architecture tool that provides high-level visualization of system landscapes, service dependencies, and data flow across the organization. Architect enables teams to reason about bounded contexts, enforce architecture patterns, and record decisions — all grounded in Objectified's schema and API metadata.
+> Enterprise architecture tool that provides high-level visualization of system landscapes, service dependencies, and data flow across the organization. Architect enables teams to reason about bounded contexts, enforce architecture patterns, and record decisions — all grounded in Apiome's schema and API metadata.
 >
 > **Revenue Model**: Enterprise architecture tier, consulting services
 >
@@ -11,7 +11,7 @@
 ## MVP Definition
 
 - Interactive system landscape canvas with pan, zoom, and drag-and-drop service nodes
-- Automatic service dependency graph generation from Objectified schema relationships and API references
+- Automatic service dependency graph generation from Apiome schema relationships and API references
 - Domain grouping with visual bounded context boundaries
 - Data flow diagram view showing how data moves between services
 - Impact analysis: select a service or schema and see upstream/downstream dependents highlighted
@@ -89,7 +89,7 @@ Part of Epic: System Landscape Canvas
 
 #### 1.2 (#908) — Service Node CRUD
 
-Service nodes are the fundamental building blocks of the landscape. Each node represents a service, application, database, queue, or external system and carries metadata such as name, type, owner team, health status, and a link to its Objectified schema project.
+Service nodes are the fundamental building blocks of the landscape. Each node represents a service, application, database, queue, or external system and carries metadata such as name, type, owner team, health status, and a link to its Apiome schema project.
 
 Users add nodes via a Radix UI `Dialog` triggered from the toolbar or by right-clicking the canvas (Radix UI `ContextMenu`). The dialog collects required fields (name, type from a Radix UI `Select` dropdown) and optional fields (description, owner, schema project link). Editing an existing node opens the same dialog pre-filled. Deleting a node prompts a Radix UI `AlertDialog` confirming the action, since it may break edges.
 
@@ -151,7 +151,7 @@ All landscape state — nodes, edges, groups, viewport position — must be pers
 
 Each tenant can have multiple landscapes. The API supports listing landscapes, creating a new landscape, fetching a landscape with its full graph, and updating the graph payload. The frontend auto-saves after a debounce period (2 seconds of inactivity) by PATCHing the graph payload. A manual save button and a "last saved" timestamp are shown in the toolbar.
 
-The API route handlers live under `app/api/v1/architect/landscapes/` in the NextJS app router. Authentication and tenant scoping follow the existing middleware patterns from the Objectified platform.
+The API route handlers live under `app/api/v1/architect/landscapes/` in the NextJS app router. Authentication and tenant scoping follow the existing middleware patterns from the Apiome platform.
 
 Optimistic concurrency control uses an `etag` header derived from a version counter to prevent lost updates when two users edit simultaneously (before real-time sync is available).
 
@@ -203,7 +203,7 @@ Part of Epic: System Landscape Canvas
 
 #### 1.6 (#912) — Canvas Export & Sharing
 
-Architects need to share their landscape visualizations with stakeholders who may not have Objectified access. This issue covers exporting the current viewport (or the entire canvas) as high-resolution SVG or PNG, and generating time-limited shareable links that render a read-only view.
+Architects need to share their landscape visualizations with stakeholders who may not have Apiome access. This issue covers exporting the current viewport (or the entire canvas) as high-resolution SVG or PNG, and generating time-limited shareable links that render a read-only view.
 
 Export uses the browser's built-in SVG serialization for vector output, and `html2canvas` or a server-side renderer for raster PNG. A Radix UI `DropdownMenu` in the toolbar provides the export options: "Export as SVG," "Export as PNG," "Copy shareable link." Shareable links create a token-authenticated read-only page at `app/(public)/architect/shared/[token]/page.tsx` with a 7-day default expiry configurable by the user.
 
@@ -247,7 +247,7 @@ Part of Epic: System Landscape Canvas
 
 #### 2.1 (#914) — Service Dependency Graph Generation
 
-Manually drawing edges between services is tedious and error-prone. This feature auto-generates a dependency graph by analyzing Objectified schema `$ref` relationships, API endpoint consumer/provider declarations, and explicit dependency annotations.
+Manually drawing edges between services is tedious and error-prone. This feature auto-generates a dependency graph by analyzing Apiome schema `$ref` relationships, API endpoint consumer/provider declarations, and explicit dependency annotations.
 
 The generation algorithm runs server-side. It scans all schema projects within the tenant, resolves cross-project `$ref` references, and extracts dependency edges. Each edge carries metadata: dependency type (data, API call, event, shared database), strength (required vs. optional), and the schema paths that establish the relationship.
 
@@ -590,7 +590,7 @@ Part of Epic: Pattern Library & Compliance
 
 #### 4.1 (#926) — ADR CRUD & Markdown Editor
 
-Architecture Decision Records (ADRs) capture the context, decision, and consequences of significant architecture choices. Objectified Architect provides first-class ADR management with a structured markdown editor.
+Architecture Decision Records (ADRs) capture the context, decision, and consequences of significant architecture choices. Apiome Architect provides first-class ADR management with a structured markdown editor.
 
 Each ADR follows a standard template: Title, Status (Proposed → Accepted → Deprecated → Superseded), Context (why the decision is needed), Decision (what was decided), Consequences (positive, negative, and neutral outcomes), and optional Alternatives Considered. The editor uses a markdown textarea with live preview (split pane) and supports the standard ADR status lifecycle.
 

@@ -1,6 +1,6 @@
-# Objectified-Commercial Git-Like Ticket Pack
+# Apiome-Commercial Git-Like Ticket Pack
 
-## Source issue set from `NobuData/objectified`
+## Source issue set from `NobuData/apiome`
 
 The following issues were used as direct source material for git-like behavior, including both closed and still-open work.
 
@@ -44,7 +44,7 @@ The following issues were used as direct source material for git-like behavior, 
 These ticket drafts are designed to match the current product direction:
 
 - UI uses `Next.js + TypeScript + Tailwind + Radix UI` with modern, compact workflows.
-- Existing git-like patterns already exist in Objectified and are extended here for enterprise-grade controls.
+- Existing git-like patterns already exist in Apiome and are extended here for enterprise-grade controls.
 - Behavior is centered on version-first workflows, not file-based Git primitives.
 - Multi-tenant compliance, auditability, and safe collaboration are first-class requirements.
 
@@ -389,7 +389,7 @@ Create workflow audit table and write an event on every workflow action outcome.
 - Failures write events with structured error details.
 - Query by version and date range is indexed and performant.
 
-**Status:** Shipped — `odb.workflow_audit` migration (`objectified-db/scripts/20260412-120000.sql`); `Database.insert_workflow_audit` / `list_workflow_audit_for_version`; writes from push (`version.push`), pull (`version.pull` on revision GET), merge (`version.merge`), rollback (`version.rollback`).
+**Status:** Shipped — `apiome.workflow_audit` migration (`apiome-db/scripts/20260412-120000.sql`); `Database.insert_workflow_audit` / `list_workflow_audit_for_version`; writes from push (`version.push`), pull (`version.pull` on revision GET), merge (`version.merge`), rollback (`version.rollback`).
 
 ---
 
@@ -408,7 +408,7 @@ Expose paginated REST endpoint for audit ledger with common filters.
 - Supports cursor/offset pagination and total/next metadata.
 - Response shape is stable and documented.
 
-**Status:** Shipped — `GET /v1/versions/{tenant}/workflow-audit` (filters, offset + cursor pages, `schemaVersion` envelope); see `objectified-rest/docs/WORKFLOW_AUDIT_API.md`.
+**Status:** Shipped — `GET /v1/versions/{tenant}/workflow-audit` (filters, offset + cursor pages, `schemaVersion` envelope); see `apiome-rest/docs/WORKFLOW_AUDIT_API.md`.
 
 ---
 
@@ -522,7 +522,7 @@ Add lock endpoints for acquire, renew, release, and force release (authorized ro
 - Second editor receives lock conflict with owner and expiry metadata.
 - Lock release and renew update lock state correctly.
 
-**Status:** Shipped — table **`odb.version_draft_lock`** (migration **`20260412-150000.sql`**); **`POST .../{versionId}/draft-lock/acquire|renew|release|force-release`** (JWT required for holder identity; **409** `DRAFT_LOCK_CONFLICT` with **`ownerUserId`** / **`expiresAt`**; tenant-admin **force-release**) (**#2584**).
+**Status:** Shipped — table **`apiome.version_draft_lock`** (migration **`20260412-150000.sql`**); **`POST .../{versionId}/draft-lock/acquire|renew|release|force-release`** (JWT required for holder identity; **409** `DRAFT_LOCK_CONFLICT` with **`ownerUserId`** / **`expiresAt`**; tenant-admin **force-release**) (**#2584**).
 
 ---
 
@@ -579,7 +579,7 @@ Create subscription CRUD for push webhook endpoints with active/inactive control
 - URL validation and duplicate safeguards are enforced.
 - Secrets are stored via reference (not plaintext response).
 
-**Status:** Shipped — table **`odb.push_webhook_subscriptions`** (migration **`20260412-170000.sql`**); **GET/POST** **`/v1/push-webhook-subscriptions/{tenant_slug}`**, **GET/PATCH** **`/v1/push-webhook-subscriptions/{tenant_slug}/{subscription_id}`**; **signingSecret** on create/update only; responses include **signingSecretRef**; normalized HTTPS URLs; **409** **`WEBHOOK_URL_DUPLICATE`** on conflict (**#2587**).
+**Status:** Shipped — table **`apiome.push_webhook_subscriptions`** (migration **`20260412-170000.sql`**); **GET/POST** **`/v1/push-webhook-subscriptions/{tenant_slug}`**, **GET/PATCH** **`/v1/push-webhook-subscriptions/{tenant_slug}/{subscription_id}`**; **signingSecret** on create/update only; responses include **signingSecretRef**; normalized HTTPS URLs; **409** **`WEBHOOK_URL_DUPLICATE`** on conflict (**#2587**).
 
 ---
 
@@ -598,7 +598,7 @@ Implement retry scheduling, attempt tracking, and dead-letter terminal state.
 - Delivery attempt history is persisted per event.
 - Terminal failures are marked dead-letter and queryable.
 
-**Status:** Shipped — tables **`odb.push_webhook_delivery_events`**, **`odb.push_webhook_delivery_attempts`**; column **`signing_secret_encrypted`** (Fernet at rest when **`OBJECTIFIED_WEBHOOK_SIGNING_SECRET_ENCRYPTION_KEY`** is set); bounded backoff **10s / 60s / 300s** after failures (up to **4** attempts); background sweep in **objectified-rest**; **GET** **`/v1/push-webhook-subscriptions/{tenant_slug}/deliveries/dead-letter`**, **GET** **`.../deliveries/{event_id}`** (attempt history); migration **`20260412-180000.sql`** (**#2588**).
+**Status:** Shipped — tables **`apiome.push_webhook_delivery_events`**, **`apiome.push_webhook_delivery_attempts`**; column **`signing_secret_encrypted`** (Fernet at rest when **`APIOME_WEBHOOK_SIGNING_SECRET_ENCRYPTION_KEY`** is set); bounded backoff **10s / 60s / 300s** after failures (up to **4** attempts); background sweep in **apiome-rest**; **GET** **`/v1/push-webhook-subscriptions/{tenant_slug}/deliveries/dead-letter`**, **GET** **`.../deliveries/{event_id}`** (attempt history); migration **`20260412-180000.sql`** (**#2588**).
 
 ---
 
@@ -617,7 +617,7 @@ Add compatibility check pass that classifies candidate changes as breaking or no
 - Commit/merge pipelines can call compatibility checks synchronously.
 - Results are persisted for later audit/display.
 
-**Status:** Shipped — **`CompatibilityCheckEngine`** (`objectified-rest/src/app/compatibility_engine.py`) wraps **`analyze_schema_compatibility`** with **`ruleHits`** (per-rule counts) and stable fingerprints; **`POST .../compatibility`** includes **`ruleHits`**; successful **push** (with parent) and **merge** append **`workflow_audit`** rows with **`action`** **`schema.compatibility`** and **`detail.pipeline`** **`version.push`** / **`version.merge`** (**#2589**).
+**Status:** Shipped — **`CompatibilityCheckEngine`** (`apiome-rest/src/app/compatibility_engine.py`) wraps **`analyze_schema_compatibility`** with **`ruleHits`** (per-rule counts) and stable fingerprints; **`POST .../compatibility`** includes **`ruleHits`**; successful **push** (with parent) and **merge** append **`workflow_audit`** rows with **`action`** **`schema.compatibility`** and **`detail.pipeline`** **`version.push`** / **`version.merge`** (**#2589**).
 
 ---
 
@@ -683,6 +683,6 @@ Implement delta pull using `sinceRevisionId` input.
 - **Pack labels:** `roadmap-gitlike`, `git-behavior` (plus `epic` on epic issues). Area labels include `rest`, `database`, `ui`, `typescript`, `python`, `mvp` where applicable.
 - One GitHub issue per roadmap row (see **GitHub tracking** above); do not merge adjacent tickets into one issue.
 - Require tests per issue:
-  - DB migration coverage in `objectified-db`
-  - API tests in `objectified-rest`
-  - UI tests in `objectified-ui` for all user-facing workflows.
+  - DB migration coverage in `apiome-db`
+  - API tests in `apiome-rest`
+  - UI tests in `apiome-ui` for all user-facing workflows.

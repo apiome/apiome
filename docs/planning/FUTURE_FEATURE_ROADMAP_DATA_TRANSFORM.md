@@ -1,4 +1,4 @@
-# Objectified: Data Transform & Schema Migration - Feature Roadmap
+# Apiome: Data Transform & Schema Migration - Feature Roadmap
 
 > A dedicated migration and transformation layer that sits between stored instance data and evolving schema versions. When schemas are versioned or published, existing instance data must be migrated safely — with no silent data loss, full auditability, and support for multi-step pipelines using MongoDB as an interim store and Apache Spark for parallel execution.
 >
@@ -441,7 +441,7 @@ Part of Epic: MongoDB as Interim Database
 | #   | Title                           | Description                                                                              | Labels                                         | MVP | Parallel |
 |-----|---------------------------------|------------------------------------------------------------------------------------------|------------------------------------------------|-----|----------|
 | 6.1 (#2080) | Spark Job Design                | Partition-based data processing; MongoDB Spark Connector reads; per-partition transforms | `enhancement`, `data-transform`                | No  | No       |
-| 6.2 (#2081) | Error Handling & Observability  | Failed records to error dataset; progress reported to Objectified; resource controls     | `enhancement`, `data-transform`, `rest`        | No  | Yes      |
+| 6.2 (#2081) | Error Handling & Observability  | Failed records to error dataset; progress reported to Apiome; resource controls     | `enhancement`, `data-transform`, `rest`        | No  | Yes      |
 | 6.3 (#2082) | Spark as Single Transform Engine| Unify transform and load into one Spark job; shared rule format between in-process/Spark | `enhancement`, `data-transform`                | No  | Yes      |
 
 ### Detailed Issue Descriptions
@@ -477,7 +477,7 @@ Part of Epic: Spark for Parallel Migration
 
 #### 6.2 (#2081) — Error Handling & Observability
 
-Records that fail validation or transform are written to a separate error collection (e.g., `migration_run_xyz_errors`) rather than failing the entire job. The migration run report lists error count, error categories, and sample failing records. Spark job progress (partitions complete, ETA) is reported back to Objectified via polling or callback, and surfaces on the visual migration plan diagram (Epic 4.2).
+Records that fail validation or transform are written to a separate error collection (e.g., `migration_run_xyz_errors`) rather than failing the entire job. The migration run report lists error count, error categories, and sample failing records. Spark job progress (partitions complete, ETA) is reported back to Apiome via polling or callback, and surfaces on the visual migration plan diagram (Epic 4.2).
 
 Resource controls prevent Spark jobs from overwhelming shared clusters: configurable executor count, memory per executor, and a maximum concurrent Spark jobs per tenant setting.
 

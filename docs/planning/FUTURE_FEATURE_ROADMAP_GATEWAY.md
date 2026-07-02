@@ -1,6 +1,6 @@
-# Objectified: Gateway (API Gateway) - Feature Roadmap
+# Apiome: Gateway (API Gateway) - Feature Roadmap
 
-> A fully managed API gateway that uses Objectified schemas for automatic request/response validation, traffic management, protocol transformation, and developer self-service—turning schema definitions into enforceable runtime contracts.
+> A fully managed API gateway that uses Apiome schemas for automatic request/response validation, traffic management, protocol transformation, and developer self-service—turning schema definitions into enforceable runtime contracts.
 >
 > **Revenue Model**: Request volume pricing, enterprise dedicated gateways
 >
@@ -12,12 +12,12 @@
 
 ## MVP Definition
 
-- Schema-driven request and response validation against published Objectified schemas with detailed error reporting
+- Schema-driven request and response validation against published Apiome schemas with detailed error reporting
 - Type coercion and normalization engine that auto-converts compatible types before validation
 - Load balancing with weighted round-robin and passive health checks across upstream targets
 - Circuit breaker with configurable failure thresholds and half-open recovery
 - Basic request/response caching with TTL and cache-key derivation from schema + path
-- Developer portal with auto-generated endpoint documentation from Objectified schemas
+- Developer portal with auto-generated endpoint documentation from Apiome schemas
 - API key self-service: create, rotate, revoke keys tied to usage plans
 - Usage dashboard showing request counts, latency percentiles, and error rates per consumer
 
@@ -41,9 +41,9 @@
 
 #### 1.1 (#1055) — Validation Engine Core
 
-The gateway's primary value proposition is that every request hitting an upstream service has already been validated against the published Objectified schema. This issue delivers the core validation engine that loads frozen schema captures and compiles them into fast, reusable validators.
+The gateway's primary value proposition is that every request hitting an upstream service has already been validated against the published Apiome schema. This issue delivers the core validation engine that loads frozen schema captures and compiles them into fast, reusable validators.
 
-The engine must resolve `$ref` pointers within captured schemas, support JSON Schema draft 2020-12, and cache compiled validators keyed by `(schema_capture_id, class_name)`. On a cache miss the engine fetches the schema from the Objectified REST API (`GET /api/v1/schema-captures/{id}/classes/{className}`) and compiles it. Validation runs synchronously in the request hot-path, so compilation must happen at deploy/warm-up time, not per-request.
+The engine must resolve `$ref` pointers within captured schemas, support JSON Schema draft 2020-12, and cache compiled validators keyed by `(schema_capture_id, class_name)`. On a cache miss the engine fetches the schema from the Apiome REST API (`GET /api/v1/schema-captures/{id}/classes/{className}`) and compiles it. Validation runs synchronously in the request hot-path, so compilation must happen at deploy/warm-up time, not per-request.
 
 A configuration layer lets gateway admins bind a route (method + path pattern) to a specific schema class and version. This binding is stored in PostgreSQL and cached in Redis. When a request arrives, the gateway resolves the binding, selects the compiled validator, and runs it against the parsed body. On failure, the engine collects all errors (not just the first) and hands them to the error formatter (1.5).
 
@@ -372,7 +372,7 @@ Consumer (v1)           Gateway                    Upstream (v2)
 
 Not all API consumers speak JSON. Legacy systems may require XML, and high-performance internal services may use Protobuf. This issue builds a format conversion engine that translates between JSON, XML, and Protobuf based on `Content-Type` and `Accept` headers.
 
-The engine uses the Objectified schema as the canonical format definition. JSON is the native format. For XML conversion, the engine maps JSON object properties to XML elements, arrays to repeated elements, and uses schema annotations (`x-xml-name`, `x-xml-attribute`, `x-xml-wrapped`) to control XML-specific formatting. For Protobuf, the engine generates `.proto` definitions from the schema at publish time and uses compiled serializers for fast conversion.
+The engine uses the Apiome schema as the canonical format definition. JSON is the native format. For XML conversion, the engine maps JSON object properties to XML elements, arrays to repeated elements, and uses schema annotations (`x-xml-name`, `x-xml-attribute`, `x-xml-wrapped`) to control XML-specific formatting. For Protobuf, the engine generates `.proto` definitions from the schema at publish time and uses compiled serializers for fast conversion.
 
 Format conversion sits in the transformation pipeline after type coercion and before validation. Incoming non-JSON requests are converted to JSON for validation, then the response is converted back to the requested format on the way out. This means the validation engine always operates on JSON regardless of the wire format.
 
@@ -466,7 +466,7 @@ The page also displays warnings for misconfigured pipelines: coercion after vali
 
 | #   | Title                            | Description                                                                  | Labels                                  | Parallel |
 |-----|----------------------------------|------------------------------------------------------------------------------|-----------------------------------------|----------|
-| 4.1 (#1073) | Auto-Generated Developer Portal  | Public-facing portal auto-generated from Objectified schemas                 | `enhancement`, `mvp`, `gateway`         | Yes      |
+| 4.1 (#1073) | Auto-Generated Developer Portal  | Public-facing portal auto-generated from Apiome schemas                 | `enhancement`, `mvp`, `gateway`         | Yes      |
 | 4.2 (#1074) | Try-It-Out Console               | Interactive API explorer embedded in the portal for live request testing     | `enhancement`, `mvp`, `gateway`         | Yes      |
 | 4.3 (#1075) | API Key Self-Service             | Consumer-facing key management: create, rotate, revoke, view usage          | `enhancement`, `mvp`, `gateway`, `rest` | Yes      |
 | 4.4 (#1076) | Usage Dashboards                 | Per-consumer dashboards showing request volume, latency, errors, and quotas | `enhancement`, `mvp`, `gateway`         | No       |
@@ -479,11 +479,11 @@ The page also displays warnings for misconfigured pipelines: coercion after vali
 
 #### 4.1 (#1073) — Auto-Generated Developer Portal
 
-The developer portal is the public face of every API published through the gateway. This issue builds the portal generation engine that reads published Objectified schemas and produces a polished, navigable documentation site—automatically, with zero manual authoring required.
+The developer portal is the public face of every API published through the gateway. This issue builds the portal generation engine that reads published Apiome schemas and produces a polished, navigable documentation site—automatically, with zero manual authoring required.
 
 The portal is a NextJS application served at `/portal/[tenantSlug]`. It renders each schema class as a documentation page with: endpoint URL, HTTP method, request/response schemas rendered as interactive expandable trees, field descriptions, types, constraints, and examples. The navigation sidebar groups endpoints by tag (from the OpenAPI spec) and supports search.
 
-The portal pulls content from the gateway's route bindings and the underlying Objectified schema captures. When a new schema version is published or a route binding changes, the portal re-generates within seconds. There is no separate build step—content is rendered on-demand with ISR (Incremental Static Regeneration) for performance.
+The portal pulls content from the gateway's route bindings and the underlying Apiome schema captures. When a new schema version is published or a route binding changes, the portal re-generates within seconds. There is no separate build step—content is rendered on-demand with ISR (Incremental Static Regeneration) for performance.
 
 Branding is customizable per tenant: logo, accent color, favicon, and introductory markdown content. Configuration is managed via `PUT /api/v1/gateway/portal/{tenantId}/branding`. The portal uses Radix `NavigationMenu` for the sidebar, `Accordion` for expandable schema trees, and `Tabs` for switching between request/response/example views.
 

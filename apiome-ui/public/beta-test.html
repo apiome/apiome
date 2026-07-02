@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BETA Background Test</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background-color: #f3f4f6;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .beta-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .beta-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-45deg);
+      font-size: 120px;
+      line-height: 180px;
+      font-weight: bold;
+      color: #D1D5DB;
+      opacity: 0.25;
+      white-space: nowrap;
+      user-select: none;
+      width: 300%;
+      height: 300%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+    }
+
+    .beta-row {
+      display: flex;
+      gap: 150px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .login-card {
+      position: relative;
+      z-index: 10;
+      background: white;
+      padding: 2rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .logo h1 {
+      font-size: 2rem;
+      margin: 0;
+      color: #111827;
+    }
+
+    .description {
+      text-align: center;
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- BETA Background -->
+  <div class="beta-background">
+    <div class="beta-content" id="betaContent"></div>
+  </div>
+
+  <!-- Login Card -->
+  <div class="login-card">
+    <div class="logo">
+      <h1>Apiome</h1>
+    </div>
+    <div class="description">
+      <p>This is a test page to visualize the BETA background.</p>
+      <p>You should see "BETA" text repeated diagonally behind this card.</p>
+    </div>
+  </div>
+
+  <script>
+    // Generate BETA text grid
+    const betaContent = document.getElementById('betaContent');
+    for (let row = 0; row < 20; row++) {
+      const rowDiv = document.createElement('div');
+      rowDiv.className = 'beta-row';
+      for (let col = 0; col < 10; col++) {
+        const span = document.createElement('span');
+        span.textContent = 'BETA';
+        rowDiv.appendChild(span);
+      }
+      betaContent.appendChild(rowDiv);
+    }
+  </script>
+</body>
+</html>
+

@@ -1,6 +1,6 @@
-# Objectified: NGINX Infrastructure - Feature Roadmap
+# Apiome: NGINX Infrastructure - Feature Roadmap
 
-> Hardened NGINX configuration layer providing security, performance, and reliability guarantees for the Objectified platform. Covers SSL/TLS tuning, security headers, rate limiting, DDoS mitigation, access control, logging, and fail2ban integration.
+> Hardened NGINX configuration layer providing security, performance, and reliability guarantees for the Apiome platform. Covers SSL/TLS tuning, security headers, rate limiting, DDoS mitigation, access control, logging, and fail2ban integration.
 >
 > **Revenue Model**: Infrastructure cost reduction through better caching and connection pooling; reduced security incident costs; compliance enablement for enterprise tiers
 >

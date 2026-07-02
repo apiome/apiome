@@ -1,6 +1,6 @@
 # Schema Governance Roadmap
 
-This document outlines the roadmap for governance of the Objectified schema. It details the processes, roles,
+This document outlines the roadmap for governance of the Apiome schema. It details the processes, roles,
 and timelines for managing changes to the schema to ensure its integrity, consistency, and alignment with
 community needs.
 

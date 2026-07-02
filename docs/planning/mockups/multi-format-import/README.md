@@ -1,6 +1,6 @@
 # Multi-Format Import Catalog — design mockup
 
-Static, browser-openable mockup of the **Catalog** screen in objectified-ui — the home for
+Static, browser-openable mockup of the **Catalog** screen in apiome-ui — the home for
 imports that are **OpenAPI-worthy but not OpenAPI** (gRPC, GraphQL, AsyncAPI, OData, SOAP/WSDL,
 Avro, RAML, Smithy, TypeSpec, API Blueprint…). It is the UI surface for the multi-format import
 pipeline. Roadmap: [`ROADMAP_MULTI_FORMAT_IMPORT.md`](../../../ROADMAP_MULTI_FORMAT_IMPORT.md)
@@ -61,7 +61,7 @@ for Monaco, and a per-source fidelity report driving the convert dialog.
 4. **Raw source is always viewable.** A read-only Monaco viewer over the original bytes; download too.
 5. **Conversion is honest.** The only way out is Convert-to-OpenAPI, always fronted by the fidelity
    preview and (for low-fidelity sources) an explicit acknowledgement — never a silent lossy emit.
-6. **Consistent with objectified-ui** — sidebar chrome, tokens (indigo `#6366f1`, slate, Aptos,
+6. **Consistent with apiome-ui** — sidebar chrome, tokens (indigo `#6366f1`, slate, Aptos,
    6/8/12/16px radii), pill tones, quality orbs, and the import stepper mirror the real components.
 
 ## Open questions for iteration
@@ -73,4 +73,4 @@ for Monaco, and a per-source fidelity report driving the convert dialog.
 - Convert dialog: inline **raw-OpenAPI preview** of the would-be document (collapsible) — show by
   default or behind a button?
 - Detail tab order — is Overview → Source → Provenance → Lint → Versions right?
-- Dark-theme variant (objectified-ui ships multiple themes)?
+- Dark-theme variant (apiome-ui ships multiple themes)?

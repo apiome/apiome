@@ -1,10 +1,10 @@
-# Objectified: Roles & Permissions (RBAC) - Feature Roadmap
+# Apiome: Roles & Permissions (RBAC) - Feature Roadmap
 
-> Production-grade Role-Based Access Control implementation for the Objectified commercial platform. Provides a layered authorization model from core tenant membership roles through fine-grained path and schema permissions, covering UI gating, REST enforcement, API key scopes, session governance, MFA policy, and compliance auditability.
+> Production-grade Role-Based Access Control implementation for the Apiome commercial platform. Provides a layered authorization model from core tenant membership roles through fine-grained path and schema permissions, covering UI gating, REST enforcement, API key scopes, session governance, MFA policy, and compliance auditability.
 >
 > **Revenue Model**: Built-in RBAC (roles RP-01 through RP-10) included in all commercial tiers; advanced session governance (RP-11), MFA policy by role (RP-12), network access restrictions (RP-13), and audit ledger export (RP-14) gated at Pro/Enterprise; ownership transfer and version workflow controls are Enterprise-only
 >
-> **Tech Stack**: Next.js + TypeScript + Radix UI (frontend), `objectified-rest` (REST enforcement), PostgreSQL + Drizzle ORM (`objectified-db`), Redis (permission cache), JWT + API key dual authentication, TOTP (otplib)
+> **Tech Stack**: Next.js + TypeScript + Radix UI (frontend), `apiome-rest` (REST enforcement), PostgreSQL + Drizzle ORM (`apiome-db`), Redis (permission cache), JWT + API key dual authentication, TOTP (otplib)
 
 ---
 
@@ -66,7 +66,7 @@ Indexes:
 - Index on `(tenant_id, role)` supports "list all schema-editors in tenant" queries
 - Seed script creates at least one `super_admin` membership for development
 
-**Tech Stack:** PostgreSQL enum, Drizzle ORM migration, objectified-db
+**Tech Stack:** PostgreSQL enum, Drizzle ORM migration, apiome-db
 
 Part of Epic: Foundation — Membership Model & Auth Context
 
