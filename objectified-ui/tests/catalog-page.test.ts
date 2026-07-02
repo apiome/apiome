@@ -178,7 +178,9 @@ describe('paradigm grouping (MFI-24.2)', () => {
   });
 
   it('offers a Group control with Protocol and None options, defaulting to Protocol', () => {
-    expect(src).toContain("useState<CatalogGroupMode>('protocol')");
+    // Group mode is now hydrated from the persisted view preferences (MFI-28.4); its default is
+    // Protocol, defined in DEFAULT_CATALOG_VIEW_PREFERENCES (asserted in catalog-view-preferences).
+    expect(src).toContain('useState<CatalogGroupMode>(viewPrefsHydrated.groupMode)');
     expect(src).toMatch(/mode: 'protocol', label: 'Protocol'/);
     expect(src).toMatch(/mode: 'none', label: 'None'/);
     expect(src).toContain("data-testid={`catalog-group-${opt.mode}`}");
@@ -236,5 +238,57 @@ describe('empty state', () => {
   it('explains what the catalog is and how items get here', () => {
     expect(src).toContain('Your catalog is empty');
     expect(src).toMatch(/non-OpenAPI/);
+  });
+});
+
+describe('unified toolbar + persisted view preferences (MFI-28.4)', () => {
+  it('consolidates every list control into a single sticky toolbar', () => {
+    // One toolbar element, sticky, tagged for tests.
+    expect(src).toContain('data-testid="catalog-toolbar"');
+    expect(src).toMatch(/data-testid="catalog-toolbar"[\s\S]{0,200}?sticky top-0/);
+    // The header no longer carries the search / view / show-deleted cluster — those now live in the
+    // toolbar. The header keeps only the Import action.
+    expect(src).toMatch(/header keeps only the primary Import action/);
+  });
+
+  it('hosts search, view toggle and show-deleted inside the toolbar (not the header)', () => {
+    // All three controls appear after the toolbar marker in source order.
+    const toolbarIdx = src.indexOf('data-testid="catalog-toolbar"');
+    expect(toolbarIdx).toBeGreaterThan(-1);
+    // Markers that occur only where the control is rendered (not at the state declaration).
+    for (const needle of ['placeholder="Filter catalog…"', "setViewMode('cards')", 'id="catalog-show-deleted"']) {
+      expect(src.indexOf(needle)).toBeGreaterThan(toolbarIdx);
+    }
+  });
+
+  it('hydrates view/group/sort/show-deleted from persisted preferences', () => {
+    expect(src).toContain("import {\n  loadCatalogViewPreferences,");
+    expect(src).toContain('useState(() => loadCatalogViewPreferences())');
+    expect(src).toContain('useState(viewPrefsHydrated.showDeleted)');
+    expect(src).toContain('useState<CatalogDashboardSortColumn>(viewPrefsHydrated.sortColumn)');
+    expect(src).toContain('viewPrefsHydrated.sortDirection');
+    expect(src).toContain("useState<'cards' | 'table'>(viewPrefsHydrated.viewMode)");
+    expect(src).toContain('useState<CatalogGroupMode>(viewPrefsHydrated.groupMode)');
+  });
+
+  it('persists the four preferences whenever any of them changes', () => {
+    expect(src).toContain('persistCatalogViewPreferences({ viewMode, groupMode, sortColumn, sortDirection, showDeleted })');
+    expect(src).toMatch(/persistCatalogViewPreferences[\s\S]{0,160}?\[viewMode, groupMode, sortColumn, sortDirection, showDeleted\]/);
+  });
+
+  it('adds a format facet that filters items by the selected format(s)', () => {
+    expect(src).toContain('import {\n  CatalogFormatFacet,');
+    expect(src).toMatch(/<CatalogFormatFacet\b/);
+    expect(src).toContain('options={availableFormats}');
+    expect(src).toContain('selected={selectedFormats}');
+    expect(src).toContain('onChange={setSelectedFormats}');
+    // The filter keeps only items whose resolved format id is in the selection.
+    expect(src).toContain('resolveCatalogFormat(i.sourceFormat)?.id');
+    expect(src).toMatch(/selectedFormats\.length > 0/);
+  });
+
+  it('derives the available formats from the loaded list via the registry', () => {
+    expect(src).toContain('const availableFormats = useMemo<CatalogFormatOption[]>');
+    expect(src).toContain('resolveCatalogFormat(item.sourceFormat)');
   });
 });
