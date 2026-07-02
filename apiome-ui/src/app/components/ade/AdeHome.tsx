@@ -445,7 +445,7 @@ export default function AdeHome() {
       <footer className="mt-auto shrink-0 border-t border-zinc-200/70 bg-white/60 py-4 backdrop-blur dark:border-zinc-800/70 dark:bg-zinc-950/60">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 text-xs text-zinc-500 sm:flex-row sm:px-6 lg:px-8 dark:text-zinc-500">
           <span>{APP_VERSION_BADGE}</span>
-          <span>© 2018 – 2026 NobuData LLC</span>
+          <span>© 2021 – 2026 NobuData LLC</span>
         </div>
       </footer>
 

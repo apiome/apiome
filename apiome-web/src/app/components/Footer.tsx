@@ -6,7 +6,6 @@ import { Youtube } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 
 export function Footer() {
-  const currentYear = new Date().getFullYear();
   const reduce = useReducedMotion();
 
   return (
@@ -90,7 +89,7 @@ export function Footer() {
 
         <div className="mt-12 border-t border-zinc-200/70 pt-8 dark:border-zinc-800/70">
           <p className="text-center text-sm text-zinc-500 dark:text-zinc-500">
-            © 2018 - {currentYear} NobuData, LLC. All rights reserved.
+            © 2021 – 2026 NobuData LLC
           </p>
         </div>
       </div>
