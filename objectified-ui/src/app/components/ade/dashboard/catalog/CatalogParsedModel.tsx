@@ -1,10 +1,23 @@
+'use client';
+
 /**
- * CatalogParsedModel (MFI-25.3, #4088).
+ * CatalogParsedModel (MFI-25.3 #4088; parsed-model explorer MFI-28.3 #4119).
  *
  * Presentational rendering of the catalog detail's normalized `parsed` model (MFI-25.2, #4087) — a
  * paradigm-tagged entity list projected from the item's canonical model. The Overview pane renders
  * these blocks under the aggregate count boxes so a catalog item shows its *actual* parsed entities
  * (operations / types / services / messages / channels with their fields), not just the counts.
+ *
+ * MFI-28.3 turns each group into a scannable explorer rather than a wall of expanded entities:
+ *   - every entity is a **lazy-mounting disclosure** — its field rows mount only on first expand
+ *     (small entities in small groups default open), so a 200-entity model renders fast and collapsed;
+ *   - each group carries a live **filter box** that narrows its entities by name or tag;
+ *   - each entity keeps its **stable anchor id** (`catalogEntityAnchorId`) so a lint finding can
+ *     deep-link straight to it (MFI-28.2) — a deep-linked entity is force-expanded and never hidden
+ *     by an active filter;
+ *   - a per-group **raw-model toggle** renders the group's normalized JSON in the shared read-only
+ *     Monaco viewer (`McpJsonViewer`, promoted to `ui/code` by MFI-28.7 — consumed from `ui/mcp`
+ *     until that move lands).
  *
  * The `parsed` shape is intentionally presentation-agnostic (no colors, ordering hints, or markup);
  * all styling lives here: `parsedTagToneClass` maps each entity tag to a Tailwind tone, and
@@ -13,10 +26,12 @@
  * (`docs/planning/mockups/multi-format-import/index.html:1415-1453`).
  */
 
-import { Box } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Box, Braces, ChevronRight, Filter, X } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { dashboardPanelClass } from '@/app/components/ade/dashboard/dashboardScreenClasses';
 import { catalogEntityAnchorId } from '@/app/utils/catalog-lint-panel';
+import { McpJsonViewer } from '@/app/components/ui/mcp/McpJsonViewer';
 
 /** One field row on a parsed entity (mockup `.frow`): name / rendered type / description. */
 export interface CatalogParsedField {
@@ -122,6 +137,61 @@ export function deriveParsedSummaryNote(
   return segments.length > 0 ? segments.join(' · ') : null;
 }
 
+// --- Explorer helpers (MFI-28.3) ------------------------------------------------------------
+// Pure, unit-testable pieces the disclosure/filter/raw-JSON UI is built from, so the default-open
+// heuristic, the live filter, and the normalized-JSON serialization can be pinned without a DOM.
+
+/** An entity with this many fields (or fewer) may default open — its field rows are cheap to mount. */
+export const PARSED_SMALL_ENTITY_MAX_FIELDS = 4;
+/** Above this entity count a group is "large": every entity defaults collapsed so it renders fast. */
+export const PARSED_LARGE_GROUP_ENTITY_COUNT = 20;
+
+/**
+ * Whether an entity's disclosure should default open. A field-less entity never opens (there is
+ * nothing to mount); in a large group everything stays collapsed so a 200-entity model renders fast;
+ * otherwise a *small* entity opens for convenience while big ones stay collapsed until asked for.
+ *
+ * @param fieldCount        The entity's field count.
+ * @param groupEntityCount  The number of entities in the entity's group.
+ * @returns True when the entity should render expanded on first paint.
+ */
+export function parsedEntityDefaultOpen(fieldCount: number, groupEntityCount: number): boolean {
+  if (fieldCount <= 0) return false;
+  if (groupEntityCount > PARSED_LARGE_GROUP_ENTITY_COUNT) return false;
+  return fieldCount <= PARSED_SMALL_ENTITY_MAX_FIELDS;
+}
+
+/** Whether an entity matches a filter query (case-insensitive substring on name or tag). */
+export function parsedEntityMatchesFilter(entity: CatalogParsedEntity, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    entity.name.toLowerCase().includes(q) || (entity.tag ?? '').toLowerCase().includes(q)
+  );
+}
+
+/** Narrow a group's entities to those matching the filter query (all of them when it is blank). */
+export function filterParsedEntities(
+  entities: CatalogParsedEntity[],
+  query: string,
+): CatalogParsedEntity[] {
+  if (!query.trim()) return entities;
+  return entities.filter((entity) => parsedEntityMatchesFilter(entity, query));
+}
+
+/**
+ * Serialize a group to its normalized-model JSON for the raw-model viewer: the group's `title`,
+ * `subtitle`, and its entities (each with tag/meta/fields), pretty-printed. This is the same shape
+ * the read carries (MFI-25.2), so the raw view is the model verbatim rather than a re-projection.
+ */
+export function parsedGroupToJson(group: CatalogParsedGroup): string {
+  return JSON.stringify(
+    { title: group.title, subtitle: group.subtitle ?? null, entities: group.entities },
+    null,
+    2,
+  );
+}
+
 /** A single field row (mockup `.frow`): name / type (+ required marker) / description. */
 function ParsedFieldRow({ field }: { field: CatalogParsedField }) {
   return (
@@ -153,47 +223,110 @@ function ParsedFieldRow({ field }: { field: CatalogParsedField }) {
   );
 }
 
-/** A single parsed entity: a colored tag + name + meta header, then its field rows. */
-function ParsedEntityBlock({
+/** The colored tag chip + monospace name + optional meta hint shared by both entity header shapes. */
+function ParsedEntityHeading({ entity }: { entity: CatalogParsedEntity }) {
+  return (
+    <>
+      <span
+        data-testid="catalog-detail-parsed-tag"
+        className={cn(
+          'inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+          parsedTagToneClass(entity.tag),
+        )}
+      >
+        {entity.tag}
+      </span>
+      <span className="truncate font-mono text-sm font-semibold text-gray-900 dark:text-white">
+        {entity.name}
+      </span>
+      {entity.meta ? (
+        <span className="truncate text-xs text-gray-400 dark:text-gray-500">{entity.meta}</span>
+      ) : null}
+    </>
+  );
+}
+
+/**
+ * A single parsed entity rendered as a lazy-mounting disclosure. The header (tag + name + meta) is
+ * always present so the entity is scannable and addressable by its anchor even while collapsed; the
+ * field rows mount only after the first expand (and stay mounted, hidden, afterwards) so a large
+ * model never pays every entity's field cost up front. A field-less entity has no toggle. A
+ * deep-linked (`highlighted`) entity is force-expanded so its fields are visible when scrolled to.
+ */
+function ParsedEntityDisclosure({
   entity,
   anchorId,
   highlighted,
+  defaultOpen,
 }: {
   entity: CatalogParsedEntity;
   /** Stable DOM id so a lint finding can deep-link to this entity (MFI-28.2). */
   anchorId: string;
   /** True while this entity is the target of a just-followed lint deep-link (transient ring). */
   highlighted: boolean;
+  /** Whether the disclosure starts expanded (small entities in small groups do). */
+  defaultOpen: boolean;
 }) {
+  const hasFields = entity.fields.length > 0;
+  const [open, setOpen] = useState(defaultOpen && hasFields);
+  // Track whether the body has ever been shown so field rows mount lazily (like McpDisclosure).
+  const [everOpened, setEverOpened] = useState(defaultOpen && hasFields);
+
+  // A deep-link to this entity forces it open (derived, no effect) so its fields are visible when
+  // scrolled into view; once the transient highlight clears it falls back to the user's own toggle.
+  const forcedOpen = highlighted && hasFields;
+  const effectiveOpen = open || forcedOpen;
+  // Field rows mount lazily: on first expand, or immediately when a deep-link forces this entity open.
+  const mountFields = hasFields && (everOpened || forcedOpen);
+
   return (
     <div
       id={anchorId}
       data-testid="catalog-detail-parsed-entity"
       className={cn(
         // `scroll-mt-24` keeps the entity clear of the sticky header when scrolled into view.
-        'scroll-mt-24 rounded-lg border p-3 transition-colors',
+        'scroll-mt-24 overflow-hidden rounded-lg border transition-colors',
         highlighted
           ? 'border-indigo-400 bg-indigo-50 ring-2 ring-indigo-400 dark:border-indigo-500 dark:bg-indigo-900/20 dark:ring-indigo-500'
           : 'border-gray-200 bg-white hover:border-indigo-200 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-indigo-800',
       )}
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span
-          data-testid="catalog-detail-parsed-tag"
-          className={cn(
-            'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
-            parsedTagToneClass(entity.tag),
-          )}
+      {hasFields ? (
+        <button
+          type="button"
+          data-testid="catalog-detail-parsed-entity-toggle"
+          aria-expanded={effectiveOpen}
+          onClick={() => {
+            setOpen((prev) => !prev);
+            setEverOpened(true);
+          }}
+          className="flex w-full items-center gap-2 p-3 text-left"
         >
-          {entity.tag}
-        </span>
-        <span className="font-mono text-sm font-semibold text-gray-900 dark:text-white">{entity.name}</span>
-        {entity.meta ? (
-          <span className="text-xs text-gray-400 dark:text-gray-500">{entity.meta}</span>
-        ) : null}
-      </div>
-      {entity.fields.length > 0 ? (
-        <div className="mt-2 space-y-1">
+          <ChevronRight
+            className={cn(
+              'h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform',
+              effectiveOpen && 'rotate-90',
+            )}
+            aria-hidden
+          />
+          <ParsedEntityHeading entity={entity} />
+          <span className="ml-auto shrink-0 whitespace-nowrap font-mono text-[10px] tabular-nums text-gray-400 dark:text-gray-500">
+            {entity.fields.length} {entity.fields.length === 1 ? 'field' : 'fields'}
+          </span>
+        </button>
+      ) : (
+        <div className="flex items-center gap-2 p-3">
+          <ParsedEntityHeading entity={entity} />
+        </div>
+      )}
+      {mountFields ? (
+        <div
+          className={
+            effectiveOpen
+              ? 'space-y-1 border-t border-gray-100 px-3 pb-3 pt-2 dark:border-gray-700'
+              : 'hidden'
+          }
+        >
           {entity.fields.map((field, i) => (
             <ParsedFieldRow key={`${field.name}-${i}`} field={field} />
           ))}
@@ -204,9 +337,153 @@ function ParsedEntityBlock({
 }
 
 /**
- * Render the parsed entity groups as a stack of cards (one per group). When there is no parsed model
- * (URL-only source, unknown format, or nothing captured) a graceful "no parsed model" note stands in
- * — a read never errors on a missing model (MFI-25.2), so the Overview degrades rather than breaking.
+ * One group card (mockup `entHTML`): a titled block with a live name/tag filter, a raw-model toggle,
+ * and its entities rendered as lazy disclosures. The filter and raw-view are per-group local state;
+ * a deep-linked entity is always shown (the filter never hides it) so cross-tab lint links land.
+ */
+function ParsedGroupCard({
+  group,
+  highlightedAnchor,
+}: {
+  group: CatalogParsedGroup;
+  highlightedAnchor: string | null;
+}) {
+  const [query, setQuery] = useState('');
+  const [rawOpen, setRawOpen] = useState(false);
+  const total = group.entities.length;
+
+  // The entities to render: filter matches, plus the deep-linked entity even when the filter would
+  // hide it, so a lint finding always resolves to a visible, highlightable anchor.
+  const visible = useMemo(() => {
+    const matched = filterParsedEntities(group.entities, query);
+    if (!highlightedAnchor) return matched;
+    const alreadyShown = matched.some(
+      (entity) => catalogEntityAnchorId(entity.name) === highlightedAnchor,
+    );
+    if (alreadyShown) return matched;
+    const pinned = group.entities.find(
+      (entity) => catalogEntityAnchorId(entity.name) === highlightedAnchor,
+    );
+    return pinned ? [...matched, pinned] : matched;
+  }, [group.entities, query, highlightedAnchor]);
+
+  const filtering = query.trim() !== '';
+
+  return (
+    <section data-testid="catalog-detail-parsed-group" className={`${dashboardPanelClass} p-6`}>
+      <div className="flex items-center gap-2">
+        <Box className="h-4 w-4 shrink-0 text-indigo-500" aria-hidden />
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+          {group.title}
+        </h2>
+        <span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums text-gray-500 dark:bg-gray-700/60 dark:text-gray-300">
+          {total}
+        </span>
+        {group.subtitle ? (
+          <span className="ml-auto min-w-0 truncate text-xs text-gray-400 dark:text-gray-500">
+            {group.subtitle}
+          </span>
+        ) : null}
+      </div>
+
+      {total > 0 ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {/* Live filter (name/tag). Disabled while the raw model is shown — it has no entity rows. */}
+          <div className="relative min-w-0 flex-1 sm:max-w-xs">
+            <Filter
+              className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
+              aria-hidden
+            />
+            <input
+              type="text"
+              data-testid="catalog-detail-parsed-filter"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              disabled={rawOpen}
+              placeholder="Filter by name or tag…"
+              aria-label={`Filter ${group.title} by name or tag`}
+              className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-8 text-xs text-gray-700 placeholder:text-gray-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+            />
+            {filtering ? (
+              <button
+                type="button"
+                data-testid="catalog-detail-parsed-filter-clear"
+                onClick={() => setQuery('')}
+                aria-label="Clear filter"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-gray-400 transition-colors hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            ) : null}
+          </div>
+          {filtering && !rawOpen ? (
+            <span
+              data-testid="catalog-detail-parsed-filter-count"
+              className="shrink-0 font-mono text-[10px] tabular-nums text-gray-400 dark:text-gray-500"
+            >
+              {visible.length} of {total}
+            </span>
+          ) : null}
+          <button
+            type="button"
+            data-testid="catalog-detail-parsed-raw-toggle"
+            aria-pressed={rawOpen}
+            onClick={() => setRawOpen((prev) => !prev)}
+            className={cn(
+              'ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors',
+              rawOpen
+                ? 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300'
+                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
+            )}
+          >
+            <Braces className="h-3.5 w-3.5" aria-hidden />
+            {rawOpen ? 'Hide raw model' : 'Raw model'}
+          </button>
+        </div>
+      ) : null}
+
+      {rawOpen ? (
+        <div data-testid="catalog-detail-parsed-raw" className="mt-3">
+          <McpJsonViewer
+            value={parsedGroupToJson(group)}
+            label={`${group.title} — normalized model`}
+            maxLines={32}
+          />
+        </div>
+      ) : (
+        <div className="mt-3 space-y-3">
+          {visible.length > 0 ? (
+            visible.map((entity, ei) => {
+              const anchorId = catalogEntityAnchorId(entity.name);
+              return (
+                <ParsedEntityDisclosure
+                  key={`${entity.name}-${ei}`}
+                  entity={entity}
+                  anchorId={anchorId}
+                  highlighted={highlightedAnchor === anchorId}
+                  defaultOpen={parsedEntityDefaultOpen(entity.fields.length, total)}
+                />
+              );
+            })
+          ) : (
+            <p
+              data-testid="catalog-detail-parsed-no-matches"
+              className="rounded-lg border border-dashed border-gray-200 px-3 py-6 text-center text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500"
+            >
+              No entities match “{query.trim()}”.
+            </p>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Render the parsed entity groups as a stack of explorer cards (one per group). When there is no
+ * parsed model (URL-only source, unknown format, or nothing captured) a graceful "no parsed model"
+ * note stands in — a read never errors on a missing model (MFI-25.2), so the Overview degrades
+ * rather than breaking.
  */
 export function CatalogParsedGroups({
   parsed,
@@ -233,39 +510,11 @@ export function CatalogParsedGroups({
   return (
     <>
       {parsed.map((group, gi) => (
-        <section
+        <ParsedGroupCard
           key={`${group.title}-${gi}`}
-          data-testid="catalog-detail-parsed-group"
-          className={`${dashboardPanelClass} p-6`}
-        >
-          <div className="flex items-center gap-2">
-            <Box className="h-4 w-4 shrink-0 text-indigo-500" aria-hidden />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              {group.title}
-            </h2>
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums text-gray-500 dark:bg-gray-700/60 dark:text-gray-300">
-              {group.entities.length}
-            </span>
-            {group.subtitle ? (
-              <span className="ml-auto min-w-0 truncate text-xs text-gray-400 dark:text-gray-500">
-                {group.subtitle}
-              </span>
-            ) : null}
-          </div>
-          <div className="mt-3 space-y-3">
-            {group.entities.map((entity, ei) => {
-              const anchorId = catalogEntityAnchorId(entity.name);
-              return (
-                <ParsedEntityBlock
-                  key={`${entity.name}-${ei}`}
-                  entity={entity}
-                  anchorId={anchorId}
-                  highlighted={highlightedAnchor === anchorId}
-                />
-              );
-            })}
-          </div>
-        </section>
+          group={group}
+          highlightedAnchor={highlightedAnchor}
+        />
       ))}
     </>
   );
