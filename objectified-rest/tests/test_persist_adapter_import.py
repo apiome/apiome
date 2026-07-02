@@ -113,6 +113,52 @@ def test_persists_a_non_publishable_catalog_item_with_raw_source(monkeypatch) ->
     assert call["format_metadata"]["inputKind"] == "file"
 
 
+def test_records_url_intake_kind_and_source_uri(monkeypatch) -> None:
+    """A URL import records inputKind='url' and the URL as the source URI (MFI-26.2)."""
+    fake = _FakeDb()
+    monkeypatch.setattr("app.database.db", fake)
+    payload = _payload()
+    payload["filename"] = "https://api.example.com/orders.proto"
+    payload["metadata"]["options"] = {"input_kind": "url"}
+
+    result = persist_adapter_import(payload, _model(), "syntax = \"proto3\";", _catalog_routing())
+
+    assert result is not None
+    fmd = fake.source_format_call["format_metadata"]
+    # The intake method drives the catalog source-material badge, and the URL is recorded as the
+    # retrievable source URI so the detail panel can link/redirect back to it.
+    assert fmd["inputKind"] == "url"
+    assert fmd["sourceUri"] == "https://api.example.com/orders.proto"
+
+
+def test_records_paste_intake_kind_without_source_uri(monkeypatch) -> None:
+    """A paste import records inputKind='paste' and does not synthesize a source URI (MFI-26.2)."""
+    fake = _FakeDb()
+    monkeypatch.setattr("app.database.db", fake)
+    payload = _payload()
+    payload["filename"] = "Pasted source"
+    payload["metadata"]["options"] = {"input_kind": "paste"}
+
+    result = persist_adapter_import(payload, _model(), "syntax = \"proto3\";", _catalog_routing())
+
+    assert result is not None
+    fmd = fake.source_format_call["format_metadata"]
+    assert fmd["inputKind"] == "paste"
+    assert "sourceUri" not in fmd
+
+
+def test_defaults_input_kind_to_file_when_omitted(monkeypatch) -> None:
+    """With no options.input_kind, the recorded intake kind defaults to 'file' (back-compat)."""
+    fake = _FakeDb()
+    monkeypatch.setattr("app.database.db", fake)
+    payload = _payload()
+    payload["metadata"]["options"] = {}
+
+    persist_adapter_import(payload, _model(), "x", _catalog_routing())
+
+    assert fake.source_format_call["format_metadata"]["inputKind"] == "file"
+
+
 def test_returns_none_without_a_tenant(monkeypatch) -> None:
     fake = _FakeDb()
     monkeypatch.setattr("app.database.db", fake)

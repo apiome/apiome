@@ -293,13 +293,17 @@ def persist_adapter_import(
     version_record_id = str(version["id"])
 
     # Store the original source verbatim so the convert flow can re-parse it later. The input kind
-    # (file/url/paste) is recorded for the catalog's source-material badge when the client sends it.
+    # (file/url/paste) is recorded for the catalog's source-material badge when the client sends it
+    # (MFI-26.2); for a URL intake the label is also recorded as the source URI so the detail panel
+    # can link/redirect back to it.
     input_kind = options.get("input_kind") if isinstance(options, dict) else None
     format_metadata: Dict[str, Any] = {
         "sourceContent": raw_text,
         "sourceLabel": source_label,
         "inputKind": input_kind or "file",
     }
+    if input_kind == "url" and source_label:
+        format_metadata["sourceUri"] = source_label
     db.set_version_source_format(
         version_record_id,
         tenant_id,

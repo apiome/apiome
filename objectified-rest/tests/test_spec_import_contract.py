@@ -319,6 +319,22 @@ def test_spec_import_options_accepts_skip_duplicate_versions():
     assert SpecImportOptions(skip_duplicate_versions=True).skip_duplicate_versions is True
 
 
+def test_spec_import_options_accepts_input_kind():
+    """The intake method (file/url/paste) is accepted and validated (MFI-26.2)."""
+    import pytest
+    from pydantic import ValidationError
+
+    from app.models import SpecImportOptions
+
+    # Omitted → None (the pipeline defaults the recorded inputKind to 'file').
+    assert SpecImportOptions().input_kind is None
+    for kind in ("file", "url", "paste", "discovery"):
+        assert SpecImportOptions(input_kind=kind).input_kind == kind
+    # An unrecognized intake token is rejected rather than silently stored.
+    with pytest.raises(ValidationError):
+        SpecImportOptions(input_kind="carrier-pigeon")
+
+
 def test_resolve_spec_import_worker_argv_env_json(monkeypatch):
     monkeypatch.setenv("SPEC_IMPORT_WORKER_ARGV", '["/bin/true"]')
     from app.spec_import_engine import resolve_spec_import_worker_argv

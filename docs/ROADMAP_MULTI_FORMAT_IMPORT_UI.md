@@ -497,7 +497,6 @@ Destination guide: Catalog / Projects / JSON Schema choice / future sources
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 |---|---|---|---|---|---|---|---|
-| MFI-26.2 · #4095 | URL + clipboard/paste intake | Wire URL fetch and paste-text intake to the import job engine | `ui`,`typescript`,`import` | N | **Y** | M | `CatalogImportDialog.tsx`, api proxies |
 | MFI-26.3 · #4096 | Auto-detect + routing note | Surface detect confidence/paradigm + predicted Catalog-vs-Projects routing | `ui`,`typescript`,`import` | N | **Y** | S | `CatalogImportDialog.tsx` |
 | MFI-26.4 · #4097 | Dry-run preview action | Add a non-committing dry-run that previews detection/routing without storing | `ui`,`typescript`,`import` | Y | N | S | `CatalogImportDialog.tsx` |
 | MFI-26.5 · #4098 | Alternate import source extensibility | Add future source methods only when a format can be imported through alternate intake | `ui`,`import`,`integrations` | Y | N | M | import dialog + import source registry |
@@ -521,7 +520,7 @@ Destination guide: Catalog / Projects / JSON Schema choice / future sources
 - **Dependencies / parallelism.** Foundation for 26.2/26.3/26.4/26.5; do **first** in EPIC-26.
 - **Tech stack.** React/TSX, Tailwind, `useImportSources`.
 
-### MFI-26.2 — URL + clipboard/paste intake · #4095
+### MFI-26.2 — URL + clipboard/paste intake · #4095 — ✅ Done
 - **Problem.** Only file upload is supported; the registry and `SourceBadge` already model `url`/`paste`
   kinds, but the importer offers neither.
 - **Solution / scope.** Add URL-fetch and paste-text bodies to step 2; submit via the import job engine

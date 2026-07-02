@@ -3,7 +3,7 @@
   "info": {
     "title": "Objectified REST API",
     "description": "REST API for serving OpenAPI specifications from the Objectified database",
-    "version": "1.0.64"
+    "version": "1.0.65"
   },
   "paths": {
     "/v1/browse/tenants": {
@@ -30449,6 +30449,24 @@
             "title": "Skip Duplicate Versions",
             "description": "When true, if the target catalog version line already exists in the project, complete successfully without re-importing (idempotent no-op).",
             "default": false
+          },
+          "input_kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "file",
+                  "url",
+                  "paste",
+                  "discovery"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Kind",
+            "description": "How the source document reached the importer \u2014 file upload, a fetched URL, or pasted text (MFI-26.2). Recorded verbatim on the catalog revision's format metadata as 'inputKind' so the source-material badge reflects the intake method; defaults to 'file' when omitted."
           }
         },
         "additionalProperties": false,

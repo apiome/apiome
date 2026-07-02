@@ -659,6 +659,15 @@ class SpecImportOptions(BaseModel):
             "complete successfully without re-importing (idempotent no-op)."
         ),
     )
+    input_kind: Optional[Literal["file", "url", "paste", "discovery"]] = Field(
+        None,
+        description=(
+            "How the source document reached the importer — file upload, a fetched URL, or "
+            "pasted text (MFI-26.2). Recorded verbatim on the catalog revision's format metadata "
+            "as 'inputKind' so the source-material badge reflects the intake method; defaults to "
+            "'file' when omitted."
+        ),
+    )
 
 
 # Current envelope version for a persisted repository import spec. Bumped by

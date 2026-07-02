@@ -254,7 +254,9 @@ export function CatalogImportDialog({
             source_kind: adapter.sourceKind,
             project: { name, slug, description: metadata?.description ?? null },
             version: { version_id: metadata?.specVersion || '1.0.0' },
-            options: {},
+            // Record how the source was supplied (file / URL / paste) so the catalog
+            // source-material badge reflects the intake method (MFI-26.2).
+            options: { input_kind: sourceMethod },
           },
           document_base64: toBase64(content),
           filename: fileName || 'source',
@@ -294,7 +296,7 @@ export function CatalogImportDialog({
       setState('idle');
       setStep('options');
     }
-  }, [adapter, adapterUnavailable, content, fileName, metadata, onSuccess]);
+  }, [adapter, adapterUnavailable, content, fileName, metadata, onSuccess, sourceMethod]);
 
   const handleJsonSchemaChoice = useCallback(() => {
     if (jsonSchemaChoice === 'catalog') {

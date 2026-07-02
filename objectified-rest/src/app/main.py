@@ -62,7 +62,7 @@ configure_logging(log_level=settings.effective_log_level, json_output=settings.l
 app = FastAPI(
     title="Objectified REST API",
     description="REST API for serving OpenAPI specifications from the Objectified database",
-    version="1.0.64"
+    version="1.0.65"
 )
 
 
