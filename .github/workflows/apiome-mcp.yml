@@ -108,6 +108,8 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          version: latest
 
       - name: Log in to Docker registry
         run: echo "$DOCKER_PASSWORD" | docker login "$DOCKER_REGISTRY" -u "$DOCKER_USERNAME" --password-stdin
@@ -118,6 +120,8 @@ jobs:
           context: .
           file: apiome-mcp/Dockerfile
           push: true
+          provenance: false
+          sbom: false
           tags: |
             ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
             ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest

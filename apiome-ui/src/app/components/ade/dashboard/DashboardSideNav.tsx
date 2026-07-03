@@ -110,11 +110,15 @@ const DashboardSideNav: React.FC = () => {
   ];
 
   const isActive = (href: string) => {
+    if (href === '/ade/dashboard/versions/sunset-timeline') {
+      return pathname === '/ade/dashboard/versions/sunset-timeline';
+    }
     if (href === '/ade/dashboard/projects') {
       return (
         pathname === '/ade/dashboard/projects' ||
         pathname === '/ade/dashboard/versions' ||
-        pathname.startsWith('/ade/dashboard/versions/')
+        (pathname.startsWith('/ade/dashboard/versions/') &&
+          pathname !== '/ade/dashboard/versions/sunset-timeline')
       );
     }
     if (href === '/ade/dashboard/repositories') {

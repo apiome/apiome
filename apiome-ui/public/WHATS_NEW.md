@@ -36,6 +36,8 @@ We continue to improve the platform based on your feedback with improvements and
 - UI: MCP entries provide a small summary once imported
 - UI: Updated MCP registries to be published either public or private
 - UI: Applied Fable 5 to improve overall UI additions
+- UI: Improved Profile layout
+- UI: Fixed sidebar so that "Sunset Timeline" doesn't also highlight Projects at the same time
 - Naming: Renamed the project to Apiome
 
 ---
