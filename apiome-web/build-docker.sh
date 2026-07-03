@@ -299,7 +299,7 @@ services:
       - APP_URL=\${APP_URL:-}
       - BROWSE_URL=\${BROWSE_URL:-}
       - DEMO_URL=\${DEMO_URL:-}
-      - NEXT_PUBLIC_APP_URL=\${NEXT_PUBLIC_APP_URL:-https://app.apiome.app}
+      - NEXT_PUBLIC_APP_URL=\${NEXT_PUBLIC_APP_URL:-https://main.apiome.app}
       - NEXT_PUBLIC_BROWSE_URL=\${NEXT_PUBLIC_BROWSE_URL:-https://browse.apiome.app}
       - NEXT_PUBLIC_DEMO_URL=\${NEXT_PUBLIC_DEMO_URL:-https://www.youtube.com/@objectifieddev}
     networks:
@@ -334,7 +334,7 @@ create_deployment_package() {
 # Apiome Web environment template — copy to .env and adjust as needed.
 # APP_URL / BROWSE_URL / DEMO_URL are read at runtime (no rebuild).
 NEXT_PUBLIC_BASE_PATH=
-APP_URL=https://app.apiome.app
+APP_URL=https://main.apiome.app
 BROWSE_URL=https://browse.apiome.app
 DEMO_URL=https://www.youtube.com/@objectifieddev
 EOF
