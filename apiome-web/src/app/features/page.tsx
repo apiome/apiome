@@ -1,4 +1,4 @@
-import { links } from "@/lib/links";
+import { getLinks } from "@/lib/links";
 import type { Metadata } from "next";
 import Image from "next/image";
 import {
@@ -201,6 +201,7 @@ const IMPORT_PARADIGMS: ImportSourceDef[] = [
 ];
 
 export default function FeaturesPage() {
+  const links = getLinks();
   return (
     <div className="flex flex-col">
       {/* Hero */}

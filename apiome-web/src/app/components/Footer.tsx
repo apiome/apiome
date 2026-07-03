@@ -1,6 +1,6 @@
 'use client';
 
-import { links } from "@/lib/links";
+import { useLinks } from "@/lib/links-context";
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,6 +8,7 @@ import { Youtube } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 
 export function Footer() {
+  const links = useLinks();
   const reduce = useReducedMotion();
 
   return (

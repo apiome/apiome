@@ -1,6 +1,6 @@
 "use client";
 
-import { links } from "@/lib/links";
+import { useLinks } from "@/lib/links-context";
 
 import { useMemo, useState } from "react";
 import {
@@ -359,6 +359,8 @@ const TONE_ACCENT: Record<Tone, string> = {
 };
 
 export default function ForTeamsPage() {
+  const links = useLinks();
+
   return (
     <div className="flex flex-col">
       {/* Hero */}

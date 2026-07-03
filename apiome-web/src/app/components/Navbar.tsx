@@ -1,6 +1,6 @@
 'use client';
 
-import { links } from "@/lib/links";
+import { useLinks } from "@/lib/links-context";
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
@@ -45,6 +45,7 @@ function useScrolled(threshold = 8): boolean {
 }
 
 export function Navbar() {
+  const links = useLinks();
   const { resolvedTheme, setTheme } = useTheme();
   const pathname = usePathname();
   const isClient = useIsClient();

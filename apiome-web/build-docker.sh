@@ -296,9 +296,12 @@ services:
       - "3002:3002"
     environment:
       - NEXT_PUBLIC_BASE_PATH=\${NEXT_PUBLIC_BASE_PATH:-}
+      - APP_URL=\${APP_URL:-}
+      - BROWSE_URL=\${BROWSE_URL:-}
+      - DEMO_URL=\${DEMO_URL:-}
       - NEXT_PUBLIC_APP_URL=\${NEXT_PUBLIC_APP_URL:-https://app.apiome.app}
       - NEXT_PUBLIC_BROWSE_URL=\${NEXT_PUBLIC_BROWSE_URL:-https://browse.apiome.app}
-      - NEXT_PUBLIC_DOCS_URL=\${NEXT_PUBLIC_DOCS_URL:-https://docs.apiome.app}
+      - NEXT_PUBLIC_DEMO_URL=\${NEXT_PUBLIC_DEMO_URL:-https://www.youtube.com/@objectifieddev}
     networks:
       - apiome-network
     healthcheck:
@@ -329,10 +332,11 @@ create_deployment_package() {
     # Generate an environment template (apiome-web ships no committed .env)
     cat > "${package_dir}/.env.template" << 'EOF'
 # Apiome Web environment template — copy to .env and adjust as needed.
+# APP_URL / BROWSE_URL / DEMO_URL are read at runtime (no rebuild).
 NEXT_PUBLIC_BASE_PATH=
-NEXT_PUBLIC_APP_URL=https://app.apiome.app
-NEXT_PUBLIC_BROWSE_URL=https://browse.apiome.app
-NEXT_PUBLIC_DOCS_URL=https://docs.apiome.app
+APP_URL=https://app.apiome.app
+BROWSE_URL=https://browse.apiome.app
+DEMO_URL=https://www.youtube.com/@objectifieddev
 EOF
     cp "docker-compose.deploy-${VERSION}.yml" "${package_dir}/docker-compose.yml"
     cp "deploy-${VERSION}.sh" "${package_dir}/deploy.sh"

@@ -1,4 +1,4 @@
-import { links } from "@/lib/links";
+import { getLinks } from "@/lib/links";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MessageSquare, BookOpen, Video, Users, Github, ArrowRight, Heart } from "lucide-react";
@@ -10,6 +10,8 @@ export const metadata: Metadata = {
 };
 
 export default function CommunityPage() {
+  const links = getLinks();
+
   return (
     <div className="flex flex-col">
       {/* Hero */}

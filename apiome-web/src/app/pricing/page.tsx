@@ -1,4 +1,4 @@
-import { links } from "@/lib/links";
+import { getLinks } from "@/lib/links";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Tag } from "lucide-react";
@@ -106,6 +106,7 @@ function PricingCard({
 }
 
 export default function PricingPage() {
+  const links = getLinks();
   return (
     <div className="flex flex-col">
       <section className="relative overflow-hidden border-b border-zinc-200/70 px-6 py-24 dark:border-zinc-800/70 sm:py-36">

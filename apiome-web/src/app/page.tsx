@@ -1,4 +1,4 @@
-import { links } from "@/lib/links";
+import { getLinks } from "@/lib/links";
 import {
   ArrowRight,
   ChevronDown,
@@ -139,6 +139,7 @@ const MARQUEE_ITEMS = [
 ];
 
 export default function Home() {
+  const links = getLinks();
   return (
     <div className="flex flex-col">
       {/* Brand splash */}

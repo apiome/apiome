@@ -9,12 +9,16 @@ services:
     ports:
       - "3002:3002"
     environment:
-      # Base path configuration (if needed)
+      # Base path configuration (if needed; requires rebuild)
       - NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH:-}
-      # External URLs
+      # External URLs (runtime — no rebuild required). Prefer APP_URL /
+      # BROWSE_URL / DEMO_URL; NEXT_PUBLIC_* is accepted as a fallback.
+      - APP_URL=${APP_URL:-}
+      - BROWSE_URL=${BROWSE_URL:-}
+      - DEMO_URL=${DEMO_URL:-}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://app.apiome.app}
       - NEXT_PUBLIC_BROWSE_URL=${NEXT_PUBLIC_BROWSE_URL:-https://browse.apiome.app}
-      - NEXT_PUBLIC_DOCS_URL=${NEXT_PUBLIC_DOCS_URL:-https://docs.apiome.app}
+      - NEXT_PUBLIC_DEMO_URL=${NEXT_PUBLIC_DEMO_URL:-https://www.youtube.com/@objectifieddev}
     restart: unless-stopped
     networks:
       - apiome-network

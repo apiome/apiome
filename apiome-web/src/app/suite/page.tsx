@@ -1,4 +1,4 @@
-import { links } from "@/lib/links";
+import { getLinks } from "@/lib/links";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
@@ -34,6 +34,7 @@ const TONE_CHIP_BG: Record<Tone, string> = {
 };
 
 export default function SuitePage() {
+  const links = getLinks();
   return (
     <div className="flex flex-col">
       {/* Hero */}

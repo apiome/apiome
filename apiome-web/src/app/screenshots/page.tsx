@@ -1,4 +1,4 @@
-import { links } from "@/lib/links";
+import { getLinks } from "@/lib/links";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -58,6 +58,7 @@ const PRODUCT_SHOTS: Shot[] = [
 ];
 
 export default function ScreenshotsPage() {
+  const links = getLinks();
   return (
     <div className="flex flex-col">
       <section className="relative overflow-hidden border-b border-zinc-200/70 px-6 py-24 dark:border-zinc-800/70 sm:py-32">

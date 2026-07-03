@@ -1,6 +1,6 @@
 'use client';
 
-import { links } from "@/lib/links";
+import { useLinks } from "@/lib/links-context";
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -9,6 +9,7 @@ import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export default function SignUpPage() {
+  const links = useLinks();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
