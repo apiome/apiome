@@ -1,3 +1,4 @@
+import { links } from "@/lib/links";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -178,7 +179,7 @@ export default function McpPage() {
           </Reveal>
           <Reveal delay={0.2}>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a href="https://browse.apiome.app/mcp" target="_blank" rel="noopener noreferrer">
+              <a href={`${links.browse}/mcp`} target="_blank" rel="noopener noreferrer">
                 <Button size="lg" className="group">
                   Browse the MCP catalog
                   <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -435,7 +436,7 @@ export default function McpPage() {
                     </div>
                   ))}
                 </div>
-                <a href="https://browse.apiome.app/mcp" target="_blank" rel="noopener noreferrer" className="mt-8 inline-block">
+                <a href={`${links.browse}/mcp`} target="_blank" rel="noopener noreferrer" className="mt-8 inline-block">
                   <Button size="lg" className="group">
                     Open the MCP catalog
                     <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -535,7 +536,7 @@ export default function McpPage() {
               private published revisions.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a href="https://app.apiome.app" target="_blank" rel="noopener noreferrer">
+              <a href={links.app} target="_blank" rel="noopener noreferrer">
                 <Button size="lg" className="group">
                   Open Apiome
                   <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />

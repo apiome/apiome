@@ -1,3 +1,4 @@
+import { links } from "@/lib/links";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -84,7 +85,7 @@ export default function ScreenshotsPage() {
           </Reveal>
           <Reveal delay={0.2}>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a href="https://app.apiome.app" target="_blank" rel="noopener noreferrer">
+              <a href={links.app} target="_blank" rel="noopener noreferrer">
                 <Button size="lg" className="group">
                   Open the live app
                   <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />

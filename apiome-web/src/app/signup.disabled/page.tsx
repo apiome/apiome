@@ -1,5 +1,7 @@
 'use client';
 
+import { links } from "@/lib/links";
+
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -16,7 +18,7 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Redirect to actual app signup
-    window.location.href = 'https://app.apiome.app/signup';
+    window.location.href = `${links.app}/signup`;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

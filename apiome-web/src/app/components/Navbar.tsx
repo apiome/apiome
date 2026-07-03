@@ -1,5 +1,7 @@
 'use client';
 
+import { links } from "@/lib/links";
+
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -69,12 +71,17 @@ export function Navbar() {
     <>
       <nav
         className={cn(
-          'sticky top-0 z-50 w-full transition-all duration-300',
+          'sticky top-0 z-50 w-full border-b backdrop-blur-xl backdrop-saturate-150 transition-all duration-300',
           scrolled
-            ? 'border-b border-zinc-200/70 bg-white/75 backdrop-blur-xl shadow-[0_4px_20px_-10px_rgba(0,0,0,0.08)] dark:border-zinc-800/70 dark:bg-zinc-950/70 dark:shadow-[0_4px_20px_-10px_rgba(0,0,0,0.6)]'
-            : 'border-b border-transparent bg-white/40 backdrop-blur-md dark:bg-zinc-950/40',
+            ? 'border-zinc-200/60 bg-white/70 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] dark:border-zinc-800/60 dark:bg-zinc-950/60 dark:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.7)]'
+            : 'border-white/40 bg-white/55 dark:border-white/10 dark:bg-zinc-950/45',
         )}
       >
+        {/* Glass sheen: a bright hairline along the bottom edge */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent dark:via-white/15"
+        />
         <div className="container mx-auto px-4">
           <div
             className={cn(
@@ -164,7 +171,7 @@ export function Navbar() {
               </button>
 
               <a
-                href="https://app.apiome.app"
+                href={links.app}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hidden sm:inline-flex"
@@ -223,7 +230,7 @@ export function Navbar() {
                 ))}
                 <div className="mt-2 border-t border-zinc-200 pt-2 dark:border-zinc-800">
                   <a
-                    href="https://app.apiome.app"
+                    href={links.app}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block"

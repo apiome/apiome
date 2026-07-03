@@ -42,7 +42,8 @@ export function SplitReveal({
     if (!el || prefersReducedMotion()) return;
 
     const targets = el.querySelectorAll<HTMLElement>("[data-word-inner]");
-    gsap.set(targets, { yPercent: 115 });
+    // 140 (not 115) so words start fully below the deepened mask window.
+    gsap.set(targets, { yPercent: 140 });
 
     const animate = () =>
       gsap.to(targets, {
@@ -94,7 +95,10 @@ export function SplitReveal({
           <span
             aria-hidden
             className="inline-block overflow-hidden align-top"
-            style={{ paddingBottom: "0.12em" }}
+            // Deep mask window so italic/serif descenders (e.g. the "y" in
+            // "Visually") aren't clipped; the negative margin cancels the
+            // extra padding so line spacing stays unchanged.
+            style={{ paddingBottom: "0.32em", marginBottom: "-0.2em" }}
           >
             <span
               data-word-inner

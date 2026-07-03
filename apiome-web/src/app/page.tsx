@@ -1,5 +1,7 @@
+import { links } from "@/lib/links";
 import {
   ArrowRight,
+  ChevronDown,
   Database,
   Zap,
   Star,
@@ -16,13 +18,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "./components/ui/Button";
 import { GlassCard, ToneChip, type Tone } from "./components/ui/GlassCard";
-import { FeatureCarousel } from "./components/ui/FeatureCarousel";
 import { Reveal, StaggerGroup, StaggerItem, CountUp } from "./components/motion/Reveal";
-import { SplitReveal } from "./components/motion/SplitReveal";
 import { Magnetic } from "./components/motion/Magnetic";
 import { Parallax } from "./components/motion/Parallax";
 import { Marquee } from "./components/motion/Marquee";
-import { HeroConstellation } from "./components/three/HeroConstellation";
+import { HeroHive } from "./components/hive/HeroHive";
 
 type HomeFeature = {
   icon: React.ReactNode;
@@ -141,13 +141,9 @@ const MARQUEE_ITEMS = [
 export default function Home() {
   return (
     <div className="flex flex-col">
-      {/* Hero */}
-      <section className="grain relative isolate flex min-h-[92vh] items-center overflow-hidden border-b border-zinc-200/70 px-6 pb-24 pt-28 dark:border-zinc-800/70">
-        <HeroConstellation />
-        <div
-          aria-hidden
-          className="bg-grid absolute inset-0 -z-20 opacity-70 [mask-image:radial-gradient(ellipse_at_center,#000_30%,transparent_75%)]"
-        />
+      {/* Brand splash */}
+      <section className="grain relative isolate flex min-h-[100svh] items-center overflow-hidden px-6 py-24">
+        <HeroHive />
         <div aria-hidden className="hero-halo absolute inset-0 -z-20" />
         <div
           aria-hidden
@@ -156,59 +152,55 @@ export default function Home() {
 
         <div className="container relative mx-auto max-w-6xl">
           <div className="mx-auto max-w-4xl text-center">
+            <h1 className="sr-only">Apiome &mdash; Platform for APIs &amp; Schemas</h1>
             <Reveal>
-              <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-blue-200/60 bg-blue-50/70 px-4 py-2 text-sm font-medium text-blue-700 backdrop-blur animate-pulse-ring dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
-                <Star className="h-4 w-4" />
-                <span className="text-shimmer">Now in Release Candidate &middot; RC1</span>
+              <div className="mb-10 flex flex-col items-center gap-5">
+                <Image
+                  src="/Apiome-02.png"
+                  alt="Apiome logo"
+                  width={1174}
+                  height={398}
+                  priority
+                  className="h-28 w-auto object-contain drop-shadow-[0_10px_30px_rgba(37,99,235,0.25)] dark:hidden sm:h-36"
+                />
+                <Image
+                  src="/Apiome-05.png"
+                  alt="Apiome logo"
+                  width={1174}
+                  height={398}
+                  priority
+                  className="hidden h-28 w-auto object-contain drop-shadow-[0_10px_30px_rgba(37,99,235,0.25)] dark:block sm:h-36"
+                />
+                <p className="text-xs font-semibold uppercase tracking-[0.32em] text-zinc-500 dark:text-zinc-400 sm:text-sm">
+                  Platform for APIs &amp; Schemas
+                </p>
               </div>
             </Reveal>
 
-            <h1
-              className="mb-6 font-bold leading-[1.0] tracking-tight text-zinc-900 dark:text-zinc-50"
-              style={{ fontSize: "clamp(1.85rem, 6.6vw, 4.75rem)" }}
-            >
-              <SplitReveal
-                as="span"
-                text="Design APIs &amp; Databases"
-                className="block whitespace-nowrap"
-                immediate
-                duration={1}
-                stagger={0.07}
-              />
-              <SplitReveal
-                as="span"
-                text="Visually"
-                className="mt-1 block pb-2"
-                wordClassName="display-accent"
-                immediate
-                delay={0.55}
-                duration={1}
-              />
-            </h1>
+            <Reveal delay={0.08}>
+              <div className="mb-10 inline-flex items-center gap-2 rounded-full border border-blue-200/60 bg-blue-50/70 px-4 py-2 text-sm font-medium text-blue-700 backdrop-blur animate-pulse-ring dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
+                <Star className="h-4 w-4" />
+                <span className="text-shimmer">Now in Release Candidate &middot; RC2</span>
+              </div>
+            </Reveal>
 
-            <Reveal delay={0.12}>
-              <p className="mb-6 font-display text-2xl italic tracking-tight text-zinc-700 dark:text-zinc-200 sm:text-3xl">
-                Your data: Designed, Defined, Discovered.
+            <Reveal delay={0.14}>
+              <p className="mx-auto mb-10 max-w-3xl font-display text-xl leading-relaxed text-zinc-700 dark:text-zinc-200 sm:text-2xl">
+                <span className="block">
+                  Every organization has an <span className="italic">apiome</span> &mdash; the
+                  complete set of APIs it runs on.
+                </span>
+                <span className="block">
+                  <span className="font-semibold text-zinc-900 dark:text-zinc-50">Apiome by NobuData</span>{" "}
+                  is its <span className="display-accent">system of record</span>.
+                </span>
               </p>
             </Reveal>
-            <Reveal delay={0.18}>
-              <p className="mx-auto mb-8 max-w-3xl text-balance text-lg leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-xl">
-                The modern platform for creating OpenAPI specifications and database schemas.
-                Design schemas on an interactive canvas, author API paths visually, import from anywhere,
-                and export production-ready specs.
-              </p>
-            </Reveal>
-            <Reveal delay={0.21}>
-              <p className="mx-auto mb-12 max-w-3xl text-balance font-display text-xl leading-relaxed text-zinc-700 dark:text-zinc-200 sm:text-2xl">
-                Every organization has an <span className="italic">apiome</span> &mdash; the complete
-                set of APIs it runs on. <span className="font-semibold text-zinc-900 dark:text-zinc-50">Apiome
-                by NobuData</span> is its <span className="display-accent">system of record</span>.
-              </p>
-            </Reveal>
-            <Reveal delay={0.24}>
+
+            <Reveal delay={0.2}>
               <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Magnetic>
-                  <a href="https://app.apiome.app" target="_blank" rel="noopener noreferrer">
+                  <a href={links.app} target="_blank" rel="noopener noreferrer">
                     <Button size="lg" className="group">
                       Launch App
                       <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -216,14 +208,14 @@ export default function Home() {
                   </a>
                 </Magnetic>
                 <Magnetic strength={0.3}>
-                  <a href="https://browse.apiome.app" target="_blank" rel="noopener noreferrer">
+                  <a href={links.browse} target="_blank" rel="noopener noreferrer">
                     <Button size="lg" variant="outline">
                       Browse APIs
                     </Button>
                   </a>
                 </Magnetic>
                 <Magnetic strength={0.3}>
-                  <a href="https://www.youtube.com/@objectifieddev" target="_blank" rel="noopener noreferrer">
+                  <a href={links.demo} target="_blank" rel="noopener noreferrer">
                     <Button size="lg" variant="outline">
                       Watch Demo
                     </Button>
@@ -231,20 +223,23 @@ export default function Home() {
                 </Magnetic>
               </div>
             </Reveal>
-            <Reveal delay={0.32}>
-              <FeatureCarousel />
-            </Reveal>
-            <Reveal delay={0.4}>
-              <p className="mt-6 text-sm text-zinc-500 dark:text-zinc-500">
-                No credit card required &middot; Free forever for personal use
-              </p>
-            </Reveal>
           </div>
         </div>
+
+        <a
+          href="#capabilities"
+          aria-label="Scroll to learn more"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 text-zinc-400 transition-colors hover:text-zinc-600 dark:text-zinc-600 dark:hover:text-zinc-300"
+        >
+          <ChevronDown className="h-7 w-7 animate-bounce motion-reduce:animate-none" />
+        </a>
       </section>
 
       {/* Capability marquee */}
-      <section className="border-b border-zinc-200/70 py-8 dark:border-zinc-800/70">
+      <section
+        id="capabilities"
+        className="scroll-mt-16 border-b border-zinc-200/70 py-8 dark:border-zinc-800/70"
+      >
         <Marquee duration={36}>
           {MARQUEE_ITEMS.map((item) => (
             <span
@@ -395,7 +390,7 @@ export default function Home() {
                   ))}
                 </ul>
                 <Magnetic>
-                  <a href="https://browse.apiome.app" target="_blank" rel="noopener noreferrer">
+                  <a href={links.browse} target="_blank" rel="noopener noreferrer">
                     <Button size="lg" className="group">
                       Browse Public APIs
                       <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -477,7 +472,7 @@ export default function Home() {
                 </p>
                 <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <Magnetic>
-                    <a href="https://app.apiome.app" target="_blank" rel="noopener noreferrer">
+                    <a href={links.app} target="_blank" rel="noopener noreferrer">
                       <Button size="lg" variant="secondary" className="bg-white text-blue-600 hover:bg-zinc-100">
                         Launch App
                         <ArrowRight className="ml-1 h-4 w-4" />
@@ -485,7 +480,7 @@ export default function Home() {
                     </a>
                   </Magnetic>
                   <Magnetic strength={0.3}>
-                    <a href="https://browse.apiome.app" target="_blank" rel="noopener noreferrer">
+                    <a href={links.browse} target="_blank" rel="noopener noreferrer">
                       <Button size="lg" variant="ghost-glass" className="text-white">
                         Browse Public APIs
                       </Button>

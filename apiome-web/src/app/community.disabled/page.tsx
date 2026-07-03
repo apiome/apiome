@@ -1,3 +1,4 @@
+import { links } from "@/lib/links";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MessageSquare, BookOpen, Video, Users, Github, ArrowRight, Heart } from "lucide-react";
@@ -120,7 +121,7 @@ export default function CommunityPage() {
                 Watch step-by-step tutorials, feature demos, and best practices on our YouTube channel.
               </p>
               <a
-                href="https://www.youtube.com/@objectifieddev"
+                href={links.demo}
                 target="_blank"
                 rel="noopener noreferrer"
               >

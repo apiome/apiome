@@ -1,3 +1,4 @@
+import { links } from "@/lib/links";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
@@ -246,7 +247,7 @@ export default function SuitePage() {
                       <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
                   </a>
-                  <a href="https://app.apiome.app" target="_blank" rel="noopener noreferrer">
+                  <a href={links.app} target="_blank" rel="noopener noreferrer">
                     <Button size="lg" variant="ghost-glass" className="text-white">
                       Launch the App
                     </Button>

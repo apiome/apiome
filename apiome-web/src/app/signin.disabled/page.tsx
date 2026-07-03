@@ -1,5 +1,7 @@
 'use client';
 
+import { links } from "@/lib/links";
+
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -15,7 +17,7 @@ export default function SignInPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Redirect to actual app signin
-    window.location.href = 'https://app.apiome.app/login';
+    window.location.href = `${links.app}/login`;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,7 +84,7 @@ export default function SignInPage() {
                   Password
                 </label>
                 <a
-                  href="https://app.apiome.app/reset-password"
+                  href={`${links.app}/reset-password`}
                   className="text-sm text-blue-600 hover:underline dark:text-blue-400"
                 >
                   Forgot password?

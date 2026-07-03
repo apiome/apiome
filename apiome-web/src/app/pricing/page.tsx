@@ -1,3 +1,4 @@
+import { links } from "@/lib/links";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Tag } from "lucide-react";
@@ -155,7 +156,7 @@ export default function PricingPage() {
                 features={["1 tenant", "3 projects", "No AI assistance", "Public-only publishing"]}
                 cta={{
                   text: "Get Started",
-                  href: "https://app.apiome.app",
+                  href: links.app,
                   variant: "outline",
                   external: true,
                 }}
@@ -177,7 +178,7 @@ export default function PricingPage() {
                 ]}
                 cta={{
                   text: "Get Pro",
-                  href: "https://app.apiome.app",
+                  href: links.app,
                   variant: "default",
                   external: true,
                 }}
@@ -194,7 +195,7 @@ export default function PricingPage() {
                 features={["5 tenants", "20 projects per tenant"]}
                 cta={{
                   text: "Get Startup",
-                  href: "https://app.apiome.app",
+                  href: links.app,
                   variant: "outline",
                   external: true,
                 }}

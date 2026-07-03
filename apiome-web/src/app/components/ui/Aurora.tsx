@@ -44,8 +44,28 @@ export function Aurora({ className, variant = 'default' }: AuroraProps) {
         />
       </div>
 
-      {/* Crisp grid overlay on top of the blobs */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808014_1px,transparent_1px),linear-gradient(to_bottom,#80808014_1px,transparent_1px)] bg-[size:28px_28px]" />
+      {/* Faint honeycomb overlay on top of the blobs */}
+      <svg
+        className="absolute inset-0 h-full w-full text-zinc-600/[0.05] dark:text-zinc-400/[0.04]"
+        aria-hidden
+      >
+        <defs>
+          <pattern
+            id="aurora-hex"
+            width="28"
+            height="49"
+            patternUnits="userSpaceOnUse"
+            patternTransform="scale(2.6)"
+          >
+            <path
+              d="M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z"
+              fill="currentColor"
+              fillRule="evenodd"
+            />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#aurora-hex)" />
+      </svg>
 
       {/* Radial vignette fade so content reads clearly */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,var(--background)_85%)]" />

@@ -1,3 +1,4 @@
+import { links } from "@/lib/links";
 import type { Metadata } from "next";
 import Image from "next/image";
 import {
@@ -209,7 +210,7 @@ export default function FeaturesPage() {
           <Reveal>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-200/60 bg-blue-50/80 px-4 py-2 text-sm font-medium text-blue-700 backdrop-blur dark:border-blue-900/60 dark:bg-blue-950/50 dark:text-blue-300">
               <Sparkles className="h-4 w-4" />
-              Now in Release Candidate &middot; RC1
+              Now in Release Candidate &middot; RC2
             </div>
           </Reveal>
           <Reveal delay={0.06}>
@@ -227,13 +228,13 @@ export default function FeaturesPage() {
           </Reveal>
           <Reveal delay={0.22}>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a href="https://app.apiome.app" target="_blank" rel="noopener noreferrer">
+              <a href={links.app} target="_blank" rel="noopener noreferrer">
                 <Button size="lg" className="group">
                   Launch App
                   <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               </a>
-              <a href="https://www.youtube.com/@objectifieddev" target="_blank" rel="noopener noreferrer">
+              <a href={links.demo} target="_blank" rel="noopener noreferrer">
                 <Button size="lg" variant="outline">
                   Watch Demo
                 </Button>
@@ -534,13 +535,13 @@ export default function FeaturesPage() {
                   validate, and ship their API specifications.
                 </p>
                 <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-                  <a href="https://app.apiome.app" target="_blank" rel="noopener noreferrer">
+                  <a href={links.app} target="_blank" rel="noopener noreferrer">
                     <Button size="lg" variant="secondary" className="bg-white text-blue-600 hover:bg-zinc-100">
                       Launch App
                       <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
                   </a>
-                  <a href="https://browse.apiome.app" target="_blank" rel="noopener noreferrer">
+                  <a href={links.browse} target="_blank" rel="noopener noreferrer">
                     <Button size="lg" variant="ghost-glass" className="text-white">
                       Browse Public APIs
                     </Button>

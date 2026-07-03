@@ -294,14 +294,6 @@ html.dark ::-webkit-scrollbar-thumb:hover { background: #52525b; }
   );
 }
 
-/* ─── Dotted / grid hero scaffolding ─── */
-.bg-grid {
-  background-image:
-    linear-gradient(to right, color-mix(in srgb, var(--foreground) 7%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in srgb, var(--foreground) 7%, transparent) 1px, transparent 1px);
-  background-size: 56px 56px;
-}
-
 /* ─── Film grain overlay ─── */
 .grain::before {
   content: "";

@@ -1,5 +1,7 @@
 "use client";
 
+import { links } from "@/lib/links";
+
 import { useMemo, useState } from "react";
 import {
   ArrowRight,
@@ -384,7 +386,7 @@ export default function ForTeamsPage() {
             </Reveal>
             <Reveal delay={0.2}>
               <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <a href="https://app.apiome.app" target="_blank" rel="noopener noreferrer">
+                <a href={links.app} target="_blank" rel="noopener noreferrer">
                   <Button size="lg" className="group">
                     Start Free Trial
                     <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -553,7 +555,7 @@ export default function ForTeamsPage() {
               <p className="mb-6 text-zinc-600 dark:text-zinc-400">
                 Every question answered instantly means less time in meetings and more time shipping features.
               </p>
-              <a href="https://app.apiome.app" target="_blank" rel="noopener noreferrer">
+              <a href={links.app} target="_blank" rel="noopener noreferrer">
                 <Button size="lg" className="group">
                   Get Started Free
                   <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -602,13 +604,13 @@ export default function ForTeamsPage() {
                   in technical debt.
                 </p>
                 <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-                  <a href="https://app.apiome.app" target="_blank" rel="noopener noreferrer">
+                  <a href={links.app} target="_blank" rel="noopener noreferrer">
                     <Button size="lg" variant="secondary" className="bg-white text-blue-600 hover:bg-zinc-100">
                       Start Free Trial
                       <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
                   </a>
-                  <a href="https://www.youtube.com/@objectifieddev" target="_blank" rel="noopener noreferrer">
+                  <a href={links.demo} target="_blank" rel="noopener noreferrer">
                     <Button size="lg" variant="ghost-glass" className="text-white">
                       Watch Demo
                     </Button>

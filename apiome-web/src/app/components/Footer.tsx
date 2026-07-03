@@ -1,5 +1,7 @@
 'use client';
 
+import { links } from "@/lib/links";
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Youtube } from 'lucide-react';
@@ -35,15 +37,12 @@ export function Footer() {
                 />
               </div>
             </div>
-            <p className="mb-2 font-display text-lg italic text-zinc-700 dark:text-zinc-200">
-              Your data: Designed, Defined, Discovered.
-            </p>
             <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
               Visual API & Database Design Platform. Build better APIs faster with intuitive, visual tools.
             </p>
             <div className="mt-5 flex gap-3">
               <motion.a
-                href="https://www.youtube.com/@objectifieddev"
+                href={links.demo}
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={reduce ? undefined : { y: -2, scale: 1.05 }}
@@ -61,7 +60,7 @@ export function Footer() {
               Product
             </h3>
             <ul className="space-y-2.5 text-sm">
-              <FooterLink href="https://app.apiome.app" external>
+              <FooterLink href={links.app} external>
                 Launch App
               </FooterLink>
               <FooterLink href="/features">Features</FooterLink>
@@ -69,7 +68,7 @@ export function Footer() {
               <FooterLink href="/mcp">MCP</FooterLink>
               <FooterLink href="/for-teams">For Teams</FooterLink>
               <FooterLink href="/pricing">Pricing</FooterLink>
-              <FooterLink href="https://browse.apiome.app" external>
+              <FooterLink href={links.browse} external>
                 Browse APIs
               </FooterLink>
             </ul>
@@ -80,7 +79,7 @@ export function Footer() {
               Resources
             </h3>
             <ul className="space-y-2.5 text-sm">
-              <FooterLink href="https://www.youtube.com/@objectifieddev" external>
+              <FooterLink href={links.demo} external>
                 Tutorials
               </FooterLink>
             </ul>
