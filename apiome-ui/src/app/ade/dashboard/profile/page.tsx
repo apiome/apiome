@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { User, Mail, Hash, Clock, Building2, Edit2, Key, Shield, LogIn } from 'lucide-react';
+import { User, Mail, Hash, Clock, Building2, Edit2, Key, Shield, LogIn, Copy, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -15,6 +15,7 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Label } from '../../../components/ui/Label';
 import { Alert } from '../../../components/ui/Alert';
+import { Badge } from '../../../components/ui/Badge';
 import { LoadingState } from '../../../components/ui/LoadingState';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../../components/ui/Card';
 import { updateUserName, updateUserPassword, getCurrentUserLastLoginAt } from '../../../../../lib/db/helper';
@@ -39,6 +40,7 @@ const Profile = () => {
   const [passwordError, setPasswordError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [lastLoginAt, setLastLoginAt] = useState<string | null | undefined>(undefined);
+  const [copiedField, setCopiedField] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -136,6 +138,16 @@ const Profile = () => {
     }
   };
 
+  const handleCopy = async (field: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(''), 2000);
+    } catch {
+      // clipboard unavailable — ignore
+    }
+  };
+
   if (!session) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
@@ -146,6 +158,16 @@ const Profile = () => {
 
   const { user, expires } = session;
   const expiryDate = new Date(expires);
+  const tenantId = (user as any)?.current_tenant_id as string | undefined;
+  const userId = (user as any)?.user_id as string | undefined;
+
+  const initials = (user?.name || user?.email || '?')
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
 
   const formatLoginDate = (dateString: string) => {
     const d = new Date(dateString);
@@ -154,33 +176,53 @@ const Profile = () => {
     return `${datePart} ${timePart}`;
   };
 
-  const InfoRow = ({
+  const CopyButton = ({ field, value }: { field: string; value: string }) => (
+    <button
+      onClick={() => handleCopy(field, value)}
+      className="p-1 rounded-md text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors flex-shrink-0"
+      title={`Copy ${field}`}
+    >
+      {copiedField === field ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+    </button>
+  );
+
+  const InfoTile = ({
     icon: Icon,
-    iconClassName,
     label,
     value,
     mono,
     action,
+    className,
   }: {
     icon: React.ElementType;
-    iconClassName: string;
     label: string;
     value: React.ReactNode;
     mono?: boolean;
     action?: React.ReactNode;
+    className?: string;
   }) => (
-    <div className="flex items-start gap-4 py-4 first:pt-0 last:pb-0 border-b border-gray-100 dark:border-gray-700/50 last:border-0">
-      <div className={`rounded-lg p-2.5 flex-shrink-0 ${iconClassName}`}>
-        <Icon className="h-5 w-5" />
+    <div
+      className={cn(
+        'rounded-lg border border-gray-100 dark:border-gray-700/60 bg-gray-50/70 dark:bg-gray-900/40 p-4',
+        className
+      )}
+    >
+      <div className="flex items-center gap-1.5 mb-1.5 text-gray-400 dark:text-gray-500">
+        <Icon className="h-3.5 w-3.5 text-indigo-400 dark:text-indigo-500" />
+        <span className="text-xs font-medium uppercase tracking-wider">{label}</span>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">{label}</p>
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className={mono ? 'text-sm font-mono text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 px-2.5 py-1.5 rounded-md break-all' : 'text-base font-medium text-gray-900 dark:text-white'}>
-            {value}
-          </p>
-          {action}
+      <div className="flex items-center gap-1.5 min-w-0">
+        <div
+          className={
+            mono
+              ? 'text-sm font-mono text-gray-700 dark:text-gray-300 truncate'
+              : 'text-sm font-medium text-gray-900 dark:text-white min-w-0'
+          }
+          title={mono && typeof value === 'string' ? value : undefined}
+        >
+          {value}
         </div>
+        {action}
       </div>
     </div>
   );
@@ -204,224 +246,267 @@ const Profile = () => {
       </header>
 
       <main className={dashboardMainClass}>
-        <div className={dashboardContentStackClass}>
-
-      {successMessage && (
-        <Alert variant="success" className="mb-6" onClose={() => setSuccessMessage('')}>
-          {successMessage}
-        </Alert>
-      )}
-
-      <div className="space-y-6">
-        {/* Account card */}
-        <Card className={cn(dashboardPanelClass, 'shadow-none overflow-hidden')}>
-          <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-indigo-500" />
-              Account
-            </CardTitle>
-            <CardDescription>Your identity and session information</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-0">
-            <InfoRow
-              icon={User}
-              iconClassName="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-              label="Full name"
-              value={user?.name || 'Not set'}
-              action={
-                <button
-                  onClick={handleEditClick}
-                  className="p-1.5 rounded-md hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                  title="Edit name"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </button>
-              }
-            />
-            <InfoRow
-              icon={Mail}
-              iconClassName="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-              label="Email"
-              value={user?.email || 'Not set'}
-            />
-            <InfoRow
-              icon={Hash}
-              iconClassName="bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400"
-              label="User ID"
-              value={(user as any)?.user_id ?? '—'}
-              mono
-            />
-            {(user as any)?.current_tenant_id && (
-              <InfoRow
-                icon={Building2}
-                iconClassName="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-                label="Current tenant"
-                value={(user as any).current_tenant_id}
-                mono
-              />
-            )}
-            <InfoRow
-              icon={LogIn}
-              iconClassName="bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400"
-              label="Last login"
-              value={
-                lastLoginAt === undefined
-                  ? '…'
-                  : lastLoginAt
-                    ? formatLoginDate(lastLoginAt)
-                    : '—'
-              }
-            />
-            <InfoRow
-              icon={Clock}
-              iconClassName="bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
-              label="Session expires"
-              value={
-                <>
-                  {expiryDate.toLocaleString()}
-                  <span className="block text-sm font-normal text-gray-500 dark:text-gray-400 mt-0.5">
-                    {expiryDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                  </span>
-                </>
-              }
-            />
-          </CardContent>
-          <CardFooter className="flex flex-wrap gap-2 border-t border-gray-100 dark:border-gray-700/50 pt-6">
-            <Button variant="outline" size="sm" onClick={handleEditClick}>
-              <Edit2 className="h-4 w-4 mr-2" />
-              Edit name
-            </Button>
-          </CardFooter>
-        </Card>
-
-        {/* Security card */}
-        <Card className={cn(dashboardPanelClass, 'shadow-none overflow-hidden')}>
-          <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-emerald-500" />
-              Security
-            </CardTitle>
-            <CardDescription>Password and account security</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Use a strong, unique password. Change it periodically or if you suspect it has been compromised.
-            </p>
-          </CardContent>
-          <CardFooter className="border-t border-gray-100 dark:border-gray-700/50 pt-6">
-            <Button size="sm" onClick={handlePasswordChangeClick}>
-              <Key className="h-4 w-4 mr-2" />
-              Change password
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-
-      {/* Edit name dialog */}
-      <Dialog open={showEditDialog} onOpenChange={(open) => !isLoading && setShowEditDialog(open)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-900/40">
-                <Edit2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              </div>
-              Edit name
-            </DialogTitle>
-            <DialogDescription>Update your display name.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
-            <div className="space-y-2">
-              <Label htmlFor="name">Full name</Label>
-              <Input
-                id="name"
-                value={editedName}
-                onChange={(e) => setEditedName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSaveName()}
-                disabled={isLoading}
-                placeholder="Your name"
-                autoFocus
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)} disabled={isLoading}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveName} disabled={isLoading}>
-              {isLoading ? 'Saving…' : 'Save'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Change password dialog */}
-      <Dialog open={showPasswordDialog} onOpenChange={(open) => !isLoading && setShowPasswordDialog(open)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
-                <Key className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              Change password
-            </DialogTitle>
-            <DialogDescription>Enter your current password and choose a new one.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            {passwordError && <Alert variant="error">{passwordError}</Alert>}
-            <Alert variant="info">
-              <div>
-                <p className="font-medium mb-2">Password requirements</p>
-                <ul className="list-disc list-inside text-sm space-y-1 text-gray-600 dark:text-gray-400">
-                  <li>At least 8 characters</li>
-                  <li>One uppercase and one lowercase letter</li>
-                  <li>One number or special character</li>
-                </ul>
-              </div>
+        <div className={cn(dashboardContentStackClass, 'max-w-5xl mx-auto')}>
+          {successMessage && (
+            <Alert variant="success" onClose={() => setSuccessMessage('')}>
+              {successMessage}
             </Alert>
-            <div className="space-y-2">
-              <Label htmlFor="currentPassword">Current password</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                disabled={isLoading}
-                autoFocus
-              />
+          )}
+
+          {/* Identity hero */}
+          <Card className={cn(dashboardPanelClass, 'shadow-none overflow-hidden')}>
+            <div className="h-24 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500" />
+            <div className="px-6 pb-6">
+              <div className="flex items-end justify-between gap-4 -mt-10">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 ring-4 ring-white dark:ring-gray-800 shadow-lg shadow-indigo-500/25 flex items-center justify-center text-white text-2xl font-bold flex-shrink-0 select-none">
+                  {initials}
+                </div>
+                <Button variant="outline" size="sm" onClick={handleEditClick}>
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Edit name
+                </Button>
+              </div>
+              <div className="mt-4">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                    {user?.name || 'Unnamed user'}
+                  </h3>
+                  {tenantId && (
+                    <Badge variant="secondary" className="gap-1.5">
+                      <Building2 className="h-3 w-3" />
+                      Tenant active
+                    </Badge>
+                  )}
+                </div>
+                {user?.email && (
+                  <p className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <Mail className="h-3.5 w-3.5" />
+                    {user.email}
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">New password</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm new password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSavePassword()}
-                disabled={isLoading}
-              />
+          </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Account details */}
+            <Card className={cn(dashboardPanelClass, 'shadow-none lg:col-span-2 self-start')}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-indigo-500" />
+                  Account details
+                </CardTitle>
+                <CardDescription>Your identity and workspace information</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <InfoTile
+                    icon={User}
+                    label="Full name"
+                    value={user?.name || 'Not set'}
+                    action={
+                      <button
+                        onClick={handleEditClick}
+                        className="p-1 rounded-md text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors flex-shrink-0"
+                        title="Edit name"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </button>
+                    }
+                  />
+                  <InfoTile icon={Mail} label="Email" value={user?.email || 'Not set'} />
+                  <InfoTile
+                    icon={Hash}
+                    label="User ID"
+                    value={userId ?? '—'}
+                    mono
+                    action={userId ? <CopyButton field="User ID" value={userId} /> : undefined}
+                  />
+                  {tenantId ? (
+                    <InfoTile
+                      icon={Building2}
+                      label="Current tenant"
+                      value={tenantId}
+                      mono
+                      action={<CopyButton field="Tenant ID" value={tenantId} />}
+                    />
+                  ) : (
+                    <InfoTile icon={Building2} label="Current tenant" value="None selected" />
+                  )}
+                  <InfoTile
+                    icon={LogIn}
+                    label="Last login"
+                    value={
+                      lastLoginAt === undefined
+                        ? '…'
+                        : lastLoginAt
+                          ? formatLoginDate(lastLoginAt)
+                          : '—'
+                    }
+                    className="sm:col-span-2"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-6">
+              {/* Security */}
+              <Card className={cn(dashboardPanelClass, 'shadow-none')}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-emerald-500" />
+                    Security
+                  </CardTitle>
+                  <CardDescription>Password and account security</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Use a strong, unique password. Change it periodically or if you suspect it has
+                    been compromised.
+                  </p>
+                </CardContent>
+                <CardFooter>
+                  <Button size="sm" className="w-full" onClick={handlePasswordChangeClick}>
+                    <Key className="h-4 w-4 mr-2" />
+                    Change password
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              {/* Session */}
+              <Card className={cn(dashboardPanelClass, 'shadow-none')}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-amber-500" />
+                    Session
+                  </CardTitle>
+                  <CardDescription>Your current sign-in session</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">
+                    Expires
+                  </p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {expiryDate.toLocaleString()}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                    {expiryDate.toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPasswordDialog(false)} disabled={isLoading}>
-              Cancel
-            </Button>
-            <Button onClick={handleSavePassword} disabled={isLoading}>
-              {isLoading ? 'Updating…' : 'Change password'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+          {/* Edit name dialog */}
+          <Dialog open={showEditDialog} onOpenChange={(open) => !isLoading && setShowEditDialog(open)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-900/40">
+                    <Edit2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  Edit name
+                </DialogTitle>
+                <DialogDescription>Update your display name.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full name</Label>
+                  <Input
+                    id="name"
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSaveName()}
+                    disabled={isLoading}
+                    placeholder="Your name"
+                    autoFocus
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowEditDialog(false)} disabled={isLoading}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveName} disabled={isLoading}>
+                  {isLoading ? 'Saving…' : 'Save'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Change password dialog */}
+          <Dialog open={showPasswordDialog} onOpenChange={(open) => !isLoading && setShowPasswordDialog(open)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
+                    <Key className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  Change password
+                </DialogTitle>
+                <DialogDescription>Enter your current password and choose a new one.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                {passwordError && <Alert variant="error">{passwordError}</Alert>}
+                <Alert variant="info">
+                  <div>
+                    <p className="font-medium mb-2">Password requirements</p>
+                    <ul className="list-disc list-inside text-sm space-y-1 text-gray-600 dark:text-gray-400">
+                      <li>At least 8 characters</li>
+                      <li>One uppercase and one lowercase letter</li>
+                      <li>One number or special character</li>
+                    </ul>
+                  </div>
+                </Alert>
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword">Current password</Label>
+                  <Input
+                    id="currentPassword"
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    disabled={isLoading}
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New password</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm new password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSavePassword()}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowPasswordDialog(false)} disabled={isLoading}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSavePassword} disabled={isLoading}>
+                  {isLoading ? 'Updating…' : 'Change password'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </main>
     </>

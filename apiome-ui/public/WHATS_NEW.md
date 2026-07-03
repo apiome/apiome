@@ -36,10 +36,11 @@ We continue to improve the platform based on your feedback with improvements and
 - UI: MCP entries provide a small summary once imported
 - UI: Updated MCP registries to be published either public or private
 - UI: Applied Fable 5 to improve overall UI additions
+- Naming: Renamed the project to Apiome
 
 ---
 
-View our YouTube channel [here](https://www.youtube.com/@objectifieddev) for detailed tutorials and walkthroughs!
+View our YouTube channel [here](https://www.youtube.com/) for detailed tutorials and walkthroughs!
 
 ---
 
