@@ -242,8 +242,8 @@ prompt APIOME_BASE_URL "CLI REST base URL (no /v1 suffix)" "$DEFAULT_APIOME_BASE
 printf '\n'
 info "UI (apiome-ui)"
 prompt UI_PORT "UI dev server port" "3000"
-DEFAULT_NEXTAUTH_URL="http://localhost:${UI_PORT}/api/auth"
-prompt NEXTAUTH_URL "NextAuth callback URL" "$DEFAULT_NEXTAUTH_URL"
+DEFAULT_NEXTAUTH_URL="http://localhost:${UI_PORT}"
+prompt NEXTAUTH_URL "NextAuth site URL (OAuth redirect base)" "$DEFAULT_NEXTAUTH_URL"
 
 while true; do
   prompt_secret ADMIN_PASSWORD "Super admin password (ADMIN_PASSWORD)"

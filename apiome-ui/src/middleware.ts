@@ -17,14 +17,22 @@
  * To re-enable git-like APIs, flip `FEATURE_GITLIKE` in `lib/feature-flags.ts`.
  */
 import { NextResponse, type NextRequest } from 'next/server';
+import { clearStaleSessionCookieIfNeeded } from '@lib/auth/stale-session-cookie';
 import { FEATURE_GITLIKE } from '@lib/feature-flags';
 import { isGitlikePath } from '@lib/gitlike-route-guard';
 
-export function middleware(request: NextRequest): NextResponse {
-  if (FEATURE_GITLIKE) return NextResponse.next();
+export async function middleware(request: NextRequest): Promise<NextResponse> {
+  const response = NextResponse.next();
+  await clearStaleSessionCookieIfNeeded(request, response);
+
+  if (FEATURE_GITLIKE) {
+    return response;
+  }
 
   const { pathname } = request.nextUrl;
-  if (!pathname.startsWith('/api/')) return NextResponse.next();
+  if (!pathname.startsWith('/api/')) {
+    return response;
+  }
 
   if (isGitlikePath(pathname, request.method.toUpperCase())) {
     return NextResponse.json(
@@ -37,14 +45,14 @@ export function middleware(request: NextRequest): NextResponse {
     );
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 /**
- * Limit middleware execution to API routes; static assets, pages, and
- * `_next` internals don't need this guard. (Next.js requires `matcher` to
- * be statically analyzable — keep it as a top-level array literal.)
+ * Run on pages and API routes so stale NextAuth cookies are cleared before
+ * server components call getServerSession. Static assets are excluded.
+ * (Next.js requires `matcher` to be statically analyzable.)
  */
 export const config = {
-  matcher: ['/api/:path*'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

@@ -14,7 +14,7 @@ services:
       # Public API browser (apiome-browse)
       - NEXT_PUBLIC_BROWSE_URL=${NEXT_PUBLIC_BROWSE_URL:-https://browse.apiome.app}
       # NextAuth Configuration
-      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000/api/auth}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       # GitHub OAuth (if using)
       - GITHUB_ID=${GITHUB_ID}
