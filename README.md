@@ -96,12 +96,13 @@ engineering tasks.
 
 This is a list of the LLMs used, and their purposes.
 
-| Model | Purpose |
-|-------|---------|
-| qwen3.6 | Pull request code reviews |
-| opus4.8 | UI/UX component improvements, issue completeness |
-| Cursor Auto | Most trivial development tasks |
-| gpt-5.5 | Planning, Roadmaps, Ticket Implementation |
+| Model       | Purpose                                          |
+|-------------|--------------------------------------------------|
+| qwen3.6     | Pull request code reviews                        |
+| opus4.8     | UI/UX component improvements, issue completeness |
+| Cursor Auto | Most trivial development tasks                   |
+| gpt-5.5     | Planning, Roadmaps, Ticket Implementation        |
+| fable5      | UI/UX improvements, gap analysis                 |
 
 ## Development Tools Used
 

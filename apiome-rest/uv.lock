@@ -35,6 +35,94 @@ wheels = [
 ]
 
 [[package]]
+name = "apiome-rest"
+version = "1.75.0"
+source = { editable = "." }
+dependencies = [
+    { name = "bcrypt" },
+    { name = "chevron" },
+    { name = "cryptography" },
+    { name = "email-validator" },
+    { name = "fastapi" },
+    { name = "graphql-core" },
+    { name = "grpcio" },
+    { name = "grpcio-reflection" },
+    { name = "httpx" },
+    { name = "jsonschema" },
+    { name = "numpy" },
+    { name = "pgvector" },
+    { name = "protobuf" },
+    { name = "psycopg2-binary" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "pyjwt" },
+    { name = "python-dotenv" },
+    { name = "python-multipart" },
+    { name = "pyyaml" },
+    { name = "structlog" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "httpx" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "requests" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "httpx" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "requests" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bcrypt", specifier = "==4.2.0" },
+    { name = "chevron", specifier = ">=0.14.0" },
+    { name = "cryptography", specifier = ">=42.0.0" },
+    { name = "email-validator", specifier = "==2.2.0" },
+    { name = "fastapi", specifier = ">=0.115.0" },
+    { name = "graphql-core", specifier = ">=3.2.3" },
+    { name = "grpcio", specifier = ">=1.66.0" },
+    { name = "grpcio-reflection", specifier = ">=1.66.0" },
+    { name = "httpx", specifier = ">=0.27.0" },
+    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27.0" },
+    { name = "jsonschema", specifier = ">=4.21.0" },
+    { name = "numpy", specifier = ">=2.4.2" },
+    { name = "pgvector", specifier = ">=0.4.2" },
+    { name = "protobuf", specifier = ">=5.28.0" },
+    { name = "psycopg2-binary", specifier = ">=2.9.9" },
+    { name = "pydantic", specifier = ">=2.9.2" },
+    { name = "pydantic-settings", specifier = ">=2.5.2" },
+    { name = "pyjwt", specifier = ">=2.8.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0.0" },
+    { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "python-multipart", specifier = ">=0.0.9" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "requests", marker = "extra == 'dev'", specifier = ">=2.31.0" },
+    { name = "structlog", specifier = ">=24.4.0" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.31.0" },
+]
+provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "httpx", specifier = ">=0.27.0" },
+    { name = "pytest", specifier = ">=8.0.0" },
+    { name = "pytest-asyncio", specifier = ">=0.23.0" },
+    { name = "pytest-cov", specifier = ">=5.0.0" },
+    { name = "requests", specifier = ">=2.31.0" },
+]
+
+[[package]]
 name = "attrs"
 version = "26.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -708,94 +796,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/91/da/643aad274e29ccbdf42ecd94dafe524b81c87bcb56b83872d54827f10543/numpy-2.4.2-pp311-pypy311_pp73-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:e04ae107ac591763a47398bb45b568fc38f02dbc4aa44c063f67a131f99346cb", size = 15797142, upload-time = "2026-01-31T23:13:02.219Z" },
     { url = "https://files.pythonhosted.org/packages/66/27/965b8525e9cb5dc16481b30a1b3c21e50c7ebf6e9dbd48d0c4d0d5089c7e/numpy-2.4.2-pp311-pypy311_pp73-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:602f65afdef699cda27ec0b9224ae5dc43e328f4c24c689deaf77133dbee74d0", size = 16727979, upload-time = "2026-01-31T23:13:04.62Z" },
     { url = "https://files.pythonhosted.org/packages/de/e5/b7d20451657664b07986c2f6e3be564433f5dcaf3482d68eaecd79afaf03/numpy-2.4.2-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:be71bf1edb48ebbbf7f6337b5bfd2f895d1902f6335a5830b20141fc126ffba0", size = 12502577, upload-time = "2026-01-31T23:13:07.08Z" },
-]
-
-[[package]]
-name = "objectified-rest"
-version = "1.75.0"
-source = { editable = "." }
-dependencies = [
-    { name = "bcrypt" },
-    { name = "chevron" },
-    { name = "cryptography" },
-    { name = "email-validator" },
-    { name = "fastapi" },
-    { name = "graphql-core" },
-    { name = "grpcio" },
-    { name = "grpcio-reflection" },
-    { name = "httpx" },
-    { name = "jsonschema" },
-    { name = "numpy" },
-    { name = "pgvector" },
-    { name = "protobuf" },
-    { name = "psycopg2-binary" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "pyjwt" },
-    { name = "python-dotenv" },
-    { name = "python-multipart" },
-    { name = "pyyaml" },
-    { name = "structlog" },
-    { name = "uvicorn", extra = ["standard"] },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "httpx" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "requests" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "httpx" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "requests" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "bcrypt", specifier = "==4.2.0" },
-    { name = "chevron", specifier = ">=0.14.0" },
-    { name = "cryptography", specifier = ">=42.0.0" },
-    { name = "email-validator", specifier = "==2.2.0" },
-    { name = "fastapi", specifier = ">=0.115.0" },
-    { name = "graphql-core", specifier = ">=3.2.3" },
-    { name = "grpcio", specifier = ">=1.66.0" },
-    { name = "grpcio-reflection", specifier = ">=1.66.0" },
-    { name = "httpx", specifier = ">=0.27.0" },
-    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27.0" },
-    { name = "jsonschema", specifier = ">=4.21.0" },
-    { name = "numpy", specifier = ">=2.4.2" },
-    { name = "pgvector", specifier = ">=0.4.2" },
-    { name = "protobuf", specifier = ">=5.28.0" },
-    { name = "psycopg2-binary", specifier = ">=2.9.9" },
-    { name = "pydantic", specifier = ">=2.9.2" },
-    { name = "pydantic-settings", specifier = ">=2.5.2" },
-    { name = "pyjwt", specifier = ">=2.8.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0.0" },
-    { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "python-multipart", specifier = ">=0.0.9" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "requests", marker = "extra == 'dev'", specifier = ">=2.31.0" },
-    { name = "structlog", specifier = ">=24.4.0" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.31.0" },
-]
-provides-extras = ["dev"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "httpx", specifier = ">=0.27.0" },
-    { name = "pytest", specifier = ">=8.0.0" },
-    { name = "pytest-asyncio", specifier = ">=0.23.0" },
-    { name = "pytest-cov", specifier = ">=5.0.0" },
-    { name = "requests", specifier = ">=2.31.0" },
 ]
 
 [[package]]
