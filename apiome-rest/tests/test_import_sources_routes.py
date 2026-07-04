@@ -179,6 +179,52 @@ def test_detect_format_flags_ambiguous_input():
     assert formats == {"smithy", "typespec"}
 
 
+def test_detect_format_rejects_traversal_in_archive() -> None:
+    import base64
+    import io
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as archive:
+        archive.writestr("../escape.proto", 'syntax = "proto3";\n')
+    r = client.post(
+        "/v1/import/detect",
+        json={
+            "document_base64": base64.standard_b64encode(buf.getvalue()).decode("ascii"),
+            "filename": "bad.zip",
+        },
+    )
+    assert r.status_code == 422
+
+
+def test_detect_format_unpacks_proto_archive() -> None:
+    import base64
+    from pathlib import Path
+
+    fixtures = Path(__file__).parent / "fixtures" / "proto"
+    common = (fixtures / "common" / "types.proto").read_text(encoding="utf-8")
+    user = (fixtures / "user" / "user_service.proto").read_text(encoding="utf-8")
+    import io
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as archive:
+        archive.writestr("common/types.proto", common)
+        archive.writestr("user/user_service.proto", user)
+    r = client.post(
+        "/v1/import/detect",
+        json={
+            "document_base64": base64.standard_b64encode(buf.getvalue()).decode("ascii"),
+            "filename": "protos.zip",
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["matched"] is True
+    assert body["archive_root"] == "user/user_service.proto"
+    assert "common/types.proto" in body["archive_members"]
+
+
 def test_detect_format_no_match():
     r = client.post("/v1/import/detect", json={"text": "no markers here"})
     assert r.status_code == 200

@@ -217,7 +217,7 @@ secret scrubbing (29.6, mandatory before EPIC-32 ships), and cross-format API id
 | **MFI-EPIC-22** | **Catalog → OpenAPI Conversion & Fidelity Preview** | 22.1–22.8 | ◐ conv-MVP |
 | **MFI-EPIC-23** | **Catalog Screen & Non-Publishable Cataloged Items** | 23.1–23.12 | ◐ catalog-MVP |
 | MFI-EPIC-28 | Catalog UX & Look-and-Feel Improvements | 28.1–28.8 | ○ polish |
-| **MFI-EPIC-29** | **Ingestion Intake Hardening** (archives/git/remote $refs/bulk/scrub) | 29.1–29.6 | ◐ 29.1–29.2 MVP |
+| **MFI-EPIC-29** | **Ingestion Intake Hardening** (archives/git/remote $refs/bulk/scrub) | 29.1–29.6 | ◐ 29.2 MVP |
 | **MFI-EPIC-30** | **OpenAPI-Family Adapter Completeness** (Swagger 2.0 · Arazzo · OAS 3.2) | 30.1–30.4 | ●●● MVP-cleanup |
 | MFI-EPIC-31 | Live-Source Re-Discovery & Drift Alerts | 31.1–31.5 | ○ v2 |
 | MFI-EPIC-32 | Collections & Captured Traffic (HAR · Insomnia · Bruno · Postman-SPI) | 32.1–32.7 | ○ v2 |
@@ -1345,14 +1345,15 @@ flowchart LR
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 29.1 | Archive (zip/tar) upload intake | accept `.zip`/`.tgz` across UI/REST/CLI; unpack sandboxed; route to adapter | multi-protocol,import,rest,ui,mvp | N | Y | M | apiome-rest,apiome-ui,apiome-cli |
+| 29.1 | Archive (zip/tar) upload intake | accept `.zip`/`.tgz` across UI/REST/CLI; unpack sandboxed; route to adapter | multi-protocol,import,rest,ui,mvp | N | Y | M | apiome-rest,apiome-ui,apiome-cli | ✅ **Done** |
 | 29.2 | Adapter multi-document (fileset) inputs | new SPI input kind `fileset`: proto tree, split SDL, AsyncAPI suite, WSDL+XSD | multi-protocol,rest,python,mvp | N | Y | M | apiome-rest |
 | 29.3 | Git-repo intake for adapter formats | extend the git source card to registry adapters (repo + ref + path/glob) | import,integrations,version-control | Y | N | M | apiome-rest,apiome-ui |
 | 29.4 | SSRF-guarded remote $ref resolver | shared resolver for external `$ref`s (AsyncAPI/JSON-Schema) with cache + budgets | rest,validation,security | Y | N | M | apiome-rest |
 | 29.5 | Bulk import of independent specs | one archive/repo containing N unrelated specs → N catalog items + per-item results | import,rest,ui | Y | N | M | apiome-rest,apiome-ui,apiome-cli |
 | 29.6 | Secret scrubbing on intake | detect/redact credentials in uploaded payloads before persistence | security,validation,import | Y | N | M | apiome-rest |
 
-### MFI-29.1 — Archive (zip/tar) upload intake  ·  **#4388**
+### MFI-29.1 — Archive (zip/tar) upload intake  ·  **#4388**  ·  ✅ **Done**
+- **Status.** Implemented in `apiome-rest/src/app/archive_intake.py` (+ `intake_paths.py`, `fileset.py`): `.zip`/`.tar.gz`/`.tgz` uploads are unpacked under configurable sandbox caps (entry count, total/per-file uncompressed size, depth) with MFI-9.1 path rules (no `..`, absolute paths, or symlink/hard-link tar entries). Root document auto-detection runs `detect_format` over archive members (service/import-aware tie-break for proto trees); explicit `archive_root` / CLI `--root` resolves ambiguity. Unpacked trees are handed to adapters via `ImportSource.parse_fileset` — gRPC wired today. REST `POST /v1/import/detect` accepts `document_base64` for archive sniffing; the catalog import dialog and `apiome import <format> --file` accept archives. Zip-bombs and path-traversal archives fail pre-parse with clear errors; single-file intake unchanged.
 - **Problem.** Real-world protobuf (an MVP format!) is never one file; today a `.proto` with
   imports cannot be imported through the UI at all. Every v2 format has the same shape.
 - **Solution / Scope.** Accept `.zip`/`.tar.gz` in the file intake (UI drop zone, REST import

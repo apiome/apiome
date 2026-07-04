@@ -63,6 +63,24 @@ interface DetectionResult {
   ambiguous?: boolean;
   candidates?: DetectionCandidate[];
   ambiguous_candidates?: DetectionCandidate[];
+  archive_root?: string | null;
+  archive_members?: string[];
+}
+
+const ARCHIVE_EXTENSIONS = ['.zip', '.tar.gz', '.tgz', '.tar'];
+
+function isArchiveFileName(name: string): boolean {
+  const lower = name.toLowerCase();
+  return ARCHIVE_EXTENSIONS.some((ext) => lower.endsWith(ext));
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
 }
 
 const PREVIEW_LIMIT = 4000;
@@ -118,6 +136,8 @@ export function CatalogImportDialog({
   const [content, setContent] = useState('');
   const [urlInput, setUrlInput] = useState('');
   const [pasteText, setPasteText] = useState('');
+  const [documentBase64, setDocumentBase64] = useState<string | null>(null);
+  const [archiveRoot, setArchiveRoot] = useState<string | null>(null);
   const [metadata, setMetadata] = useState<FileMetadataPreview | null>(null);
   const [detection, setDetection] = useState<DetectionResult | null>(null);
   const [jsonSchemaChoice, setJsonSchemaChoice] = useState<JsonSchemaChoice>('catalog');
@@ -168,6 +188,8 @@ export function CatalogImportDialog({
     setContent('');
     setUrlInput('');
     setPasteText('');
+    setDocumentBase64(null);
+    setArchiveRoot(null);
     setMetadata(null);
     setDetection(null);
     setJsonSchemaChoice('catalog');
@@ -183,6 +205,8 @@ export function CatalogImportDialog({
   const detectContent = useCallback(async (text: string, label: string, method: SourceMethod) => {
     setState('detecting');
     setError(null);
+    setDocumentBase64(null);
+    setArchiveRoot(null);
     const preview = extractFileMetadata(text);
     setMetadata(preview);
     setContent(text);
@@ -208,16 +232,52 @@ export function CatalogImportDialog({
     }
   }, []);
 
+  const detectArchive = useCallback(async (base64: string, label: string) => {
+    setState('detecting');
+    setError(null);
+    setContent('');
+    setMetadata(null);
+    setFileName(label);
+    setSourceMethod('file');
+    setDocumentBase64(base64);
+    try {
+      const res = await fetch('/api/import/detect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ document_base64: base64, filename: label }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.success === false) {
+        throw new Error(data?.error || 'Could not detect that archive.');
+      }
+      const result = data as DetectionResult;
+      setDetection(result);
+      setArchiveRoot(result.archive_root ?? null);
+    } catch (e) {
+      setDetection(null);
+      setDocumentBase64(null);
+      setError(e instanceof Error ? e.message : 'Could not detect that archive.');
+    } finally {
+      setState('idle');
+      setStep('detect');
+    }
+  }, []);
+
   const handleFile = useCallback(
     async (file: File) => {
       try {
+        if (isArchiveFileName(file.name)) {
+          const buffer = await file.arrayBuffer();
+          await detectArchive(bytesToBase64(new Uint8Array(buffer)), file.name);
+          return;
+        }
         const text = await file.text();
         await detectContent(text, file.name, 'file');
       } catch {
         setError('Could not read that file. Try another file.');
       }
     },
-    [detectContent],
+    [detectArchive, detectContent],
   );
 
   const handleUrlFetch = useCallback(async () => {
@@ -260,13 +320,17 @@ export function CatalogImportDialog({
   // which both run the same `/api/catalog/import` job — the source is kept verbatim and never
   // converted at import time; only the `source_kind` differs.
   const storeCatalog = useCallback(async (sourceKind: string) => {
-    if (!content) return;
+    if (!content && !documentBase64) return;
     setStep('import');
     setState('storing');
     setError(null);
     try {
       const name = (metadata?.title || baseName(fileName) || 'Imported source').trim();
       const slug = generateSlug(name) || 'imported-source';
+      const options: Record<string, string> = { input_kind: sourceMethod };
+      if (archiveRoot) {
+        options.archive_root = archiveRoot;
+      }
       const startRes = await fetch('/api/catalog/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -275,11 +339,9 @@ export function CatalogImportDialog({
             source_kind: sourceKind,
             project: { name, slug, description: metadata?.description ?? null },
             version: { version_id: metadata?.specVersion || '1.0.0' },
-            // Record how the source was supplied (file / URL / paste) so the catalog
-            // source-material badge reflects the intake method (MFI-26.2).
-            options: { input_kind: sourceMethod },
+            options,
           },
-          document_base64: toBase64(content),
+          document_base64: documentBase64 ?? toBase64(content),
           filename: fileName || 'source',
         }),
       });
@@ -317,7 +379,7 @@ export function CatalogImportDialog({
       setState('idle');
       setStep('options');
     }
-  }, [content, fileName, metadata, onSuccess, sourceMethod]);
+  }, [archiveRoot, content, documentBase64, fileName, metadata, onSuccess, sourceMethod]);
 
   const handleStoreCatalog = useCallback(() => {
     if (!adapter || adapterUnavailable) return;
@@ -440,7 +502,7 @@ export function CatalogImportDialog({
                       ref={fileInputRef}
                       type="file"
                       className="hidden"
-                      accept=".proto,.graphql,.gql,.yaml,.yml,.json"
+                      accept=".proto,.graphql,.gql,.yaml,.yml,.json,.zip,.tar,.tar.gz,.tgz"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) void handleFile(file);

@@ -12,7 +12,12 @@ from typing import Any, Dict, Optional
 
 from app.canonical_model import ApiIdentity, ApiParadigm, CanonicalApi
 from app.import_routing import ImportRoutingDecision, ImportTarget
-from app.import_source_pipeline import persist_adapter_import
+from app.import_source_pipeline import _ResolvedIntake, persist_adapter_import
+
+
+def _text_intake(text: str) -> _ResolvedIntake:
+    data = text.encode("utf-8")
+    return _ResolvedIntake(raw_bytes=data, text=text, fileset=None, archive_root=None)
 
 
 class _FakeDb:
@@ -97,7 +102,7 @@ def test_persists_a_non_publishable_catalog_item_with_raw_source(monkeypatch) ->
     fake = _FakeDb()
     monkeypatch.setattr("app.database.db", fake)
 
-    result = persist_adapter_import(_payload(), _model(), "syntax = \"proto3\";", _catalog_routing())
+    result = persist_adapter_import(_payload(), _model(), _text_intake('syntax = "proto3";'), _catalog_routing())
 
     assert result is not None
     assert (result.project_id, result.version_record_id) == ("proj-1", "ver-1")
@@ -121,7 +126,7 @@ def test_records_url_intake_kind_and_source_uri(monkeypatch) -> None:
     payload["filename"] = "https://api.example.com/orders.proto"
     payload["metadata"]["options"] = {"input_kind": "url"}
 
-    result = persist_adapter_import(payload, _model(), "syntax = \"proto3\";", _catalog_routing())
+    result = persist_adapter_import(payload, _model(), _text_intake('syntax = "proto3";'), _catalog_routing())
 
     assert result is not None
     fmd = fake.source_format_call["format_metadata"]
@@ -139,7 +144,7 @@ def test_records_paste_intake_kind_without_source_uri(monkeypatch) -> None:
     payload["filename"] = "Pasted source"
     payload["metadata"]["options"] = {"input_kind": "paste"}
 
-    result = persist_adapter_import(payload, _model(), "syntax = \"proto3\";", _catalog_routing())
+    result = persist_adapter_import(payload, _model(), _text_intake('syntax = "proto3";'), _catalog_routing())
 
     assert result is not None
     fmd = fake.source_format_call["format_metadata"]
@@ -154,7 +159,7 @@ def test_defaults_input_kind_to_file_when_omitted(monkeypatch) -> None:
     payload = _payload()
     payload["metadata"]["options"] = {}
 
-    persist_adapter_import(payload, _model(), "x", _catalog_routing())
+    persist_adapter_import(payload, _model(), _text_intake("x"), _catalog_routing())
 
     assert fake.source_format_call["format_metadata"]["inputKind"] == "file"
 
@@ -165,7 +170,7 @@ def test_returns_none_without_a_tenant(monkeypatch) -> None:
     payload = _payload()
     payload["tenant_id"] = ""
 
-    result = persist_adapter_import(payload, _model(), "x", _catalog_routing())
+    result = persist_adapter_import(payload, _model(), _text_intake("x"), _catalog_routing())
 
     assert result is None
     assert fake.created_project is None
@@ -179,7 +184,7 @@ def test_reuses_an_existing_project_when_targeted(monkeypatch) -> None:
     payload = _payload()
     payload["metadata"]["existing_project_id"] = "proj-existing"
 
-    result = persist_adapter_import(payload, _model(), "x", _catalog_routing())
+    result = persist_adapter_import(payload, _model(), _text_intake("x"), _catalog_routing())
 
     assert result is not None
     assert result.project_id == "proj-existing"

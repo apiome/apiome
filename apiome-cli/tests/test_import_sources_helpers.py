@@ -76,6 +76,17 @@ def test_build_adapter_import_body_sends_bytes_verbatim() -> None:
     assert base64.b64decode(body["document_base64"]) == raw
 
 
+def test_build_adapter_import_body_forwards_archive_root() -> None:
+    body = build_adapter_import_body(
+        b"PK",
+        source_format="grpc",
+        source_label="protos.zip",
+        dry_run=False,
+        archive_root="user/user_service.proto",
+    )
+    assert body["metadata"]["options"]["archive_root"] == "user/user_service.proto"
+
+
 def test_build_adapter_import_body_defaults_name_to_format_for_stdin() -> None:
     body = build_adapter_import_body(
         b"{}",

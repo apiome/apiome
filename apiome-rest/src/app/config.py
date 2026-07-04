@@ -420,6 +420,36 @@ class Settings(BaseSettings):
             "toolchain_max_processes",
         ),
     )
+    # Archive upload intake (MFI-29.1, #4388). Applied while unpacking .zip / .tar.gz uploads
+    # before any adapter parse runs — aligned with toolchain input caps where sensible.
+    archive_max_entries: int = Field(
+        default=500,
+        validation_alias=AliasChoices(
+            "APIOME_ARCHIVE_MAX_ENTRIES",
+            "archive_max_entries",
+        ),
+    )
+    archive_max_total_bytes: int = Field(
+        default=33_554_432,  # 32 MiB uncompressed total
+        validation_alias=AliasChoices(
+            "APIOME_ARCHIVE_MAX_TOTAL_BYTES",
+            "archive_max_total_bytes",
+        ),
+    )
+    archive_max_file_bytes: int = Field(
+        default=8_388_608,  # 8 MiB per member
+        validation_alias=AliasChoices(
+            "APIOME_ARCHIVE_MAX_FILE_BYTES",
+            "archive_max_file_bytes",
+        ),
+    )
+    archive_max_depth: int = Field(
+        default=32,
+        validation_alias=AliasChoices(
+            "APIOME_ARCHIVE_MAX_DEPTH",
+            "archive_max_depth",
+        ),
+    )
 
     # MCP discovery failure handling, backoff & quarantine (V2-MCP-19.3 / MCAT-5.3, #3675). A
     # flaky/dead endpoint must not wedge the sweep or spam failures: each failed discovery defers

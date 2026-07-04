@@ -54,6 +54,7 @@ from .canonical_model import ApiParadigm, CanonicalApi
 from .normalizer import get_normalizer
 
 if TYPE_CHECKING:  # pragma: no cover - import for type checkers only (avoids a runtime cycle)
+    from .fileset import IntakeFileset
     from .schema_lint import LintResult
 
 __all__ = [
@@ -426,6 +427,26 @@ class ImportSource(ABC):
             ImportSourceError: If the text cannot be parsed as this format.
         """
         raise NotImplementedError
+
+    def parse_fileset(
+        self,
+        fileset: "IntakeFileset",
+        *,
+        source_label: Optional[str] = None,
+    ) -> Any:
+        """Parse a multi-document fileset (archive/git intake) into the native AST.
+
+        Adapters that accept directory-shaped sources (gRPC proto trees, multi-file SDL,
+        AsyncAPI suites) override this. The default rejects filesets so single-file adapters
+        fail fast with a clear message.
+
+        Raises:
+            ImportSourceError: When this adapter does not accept fileset input.
+        """
+        _ = fileset, source_label
+        raise ImportSourceError(
+            f"The {self.label!r} source does not accept multi-file archive uploads."
+        )
 
     @abstractmethod
     def normalize(self, native_ast: Any, *, include_raw: bool = True) -> CanonicalApi:

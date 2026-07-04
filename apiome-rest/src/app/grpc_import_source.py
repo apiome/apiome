@@ -55,6 +55,7 @@ from typing import Any, Mapping, Optional, Sequence, Tuple
 # :meth:`GrpcImportSource.normalize` resolves through the normalizer registry.
 from . import proto_normalizer  # noqa: F401
 from .canonical_model import ApiParadigm, CanonicalApi
+from .fileset import IntakeFileset
 from .import_source import (
     NO_MATCH,
     DetectionInput,
@@ -219,6 +220,35 @@ class GrpcImportSource(ImportSource, register=True):
         from .proto_descriptor import ProtoCompileError, ProtoDescriptorError
 
         files = (ProtoFile(path=_proto_path_for(source_label), content=raw),)
+        try:
+            return _compile_on_worker_loop(files)
+        except ProtoCompileError as exc:
+            detail = f"{exc}"
+            if exc.diagnostics:
+                detail = f"{detail}\n{exc.diagnostics}"
+            raise ImportSourceError(detail) from exc
+        except ProtoDescriptorError as exc:
+            raise ImportSourceError(str(exc)) from exc
+
+    def parse_fileset(
+        self,
+        fileset: IntakeFileset,
+        *,
+        source_label: Optional[str] = None,
+    ) -> CompiledDescriptorSet:
+        """Compile every ``.proto`` member of *fileset* via ``buf build`` (MFI-29.1)."""
+        from .proto_descriptor import ProtoCompileError, ProtoDescriptorError
+
+        proto_members = [
+            (path, content)
+            for path, content in fileset.members.items()
+            if path.lower().endswith(".proto")
+        ]
+        if not proto_members:
+            raise ImportSourceError(
+                "Archive fileset contains no .proto files for gRPC / Protobuf import."
+            )
+        files = tuple(ProtoFile(path=path, content=content) for path, content in proto_members)
         try:
             return _compile_on_worker_loop(files)
         except ProtoCompileError as exc:

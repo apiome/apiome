@@ -38,8 +38,9 @@ from __future__ import annotations
 import os
 import tempfile
 from dataclasses import dataclass
-from pathlib import PurePosixPath
 from typing import List, Optional, Sequence, Tuple
+
+from .intake_paths import IntakePathError, validated_intake_path
 
 from google.protobuf import descriptor_pb2
 from google.protobuf.message import DecodeError
@@ -387,26 +388,21 @@ def _buf_build_spec() -> ToolSpec:
 BUF_MODULE_YAML = "version: v2\nmodules:\n  - path: .\n"
 
 
-def _validated_relative_path(path: str) -> PurePosixPath:
+def _validated_relative_path(path: str):
     """Validate and normalise a :class:`ProtoFile` path to a safe module-relative POSIX path.
 
     Raises:
         ProtoCompileError: If the path is empty, absolute, escapes the module root via ``..``,
             or does not end in ``.proto``.
     """
-    raw = (path or "").strip()
-    if not raw:
-        raise ProtoCompileError("A .proto file path must be non-empty")
-    # Normalise Windows separators a caller might send, then treat as POSIX.
-    pure = PurePosixPath(raw.replace("\\", "/"))
-    if pure.is_absolute():
-        raise ProtoCompileError(f"Proto path must be relative, got absolute {path!r}")
-    parts = pure.parts
-    if any(part == ".." for part in parts) or not parts:
-        raise ProtoCompileError(f"Proto path must not escape the module root: {path!r}")
-    if pure.suffix != ".proto":
-        raise ProtoCompileError(f"Proto path must end in .proto: {path!r}")
-    return pure
+    try:
+        return validated_intake_path(
+            path,
+            required_suffix=".proto",
+            label="Proto path",
+        )
+    except IntakePathError as exc:
+        raise ProtoCompileError(str(exc)) from exc
 
 
 def materialize_proto_module(

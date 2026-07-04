@@ -227,7 +227,9 @@ async def test_non_dry_run_persists_and_carries_result() -> None:
     # The pipeline hands the decoded source + normalized model + routing to the hook.
     args = m_persist.call_args.args
     assert args[0] is payload  # payload
-    assert args[2] == "x"  # decoded raw source text kept verbatim
+    intake = args[2]
+    assert intake.text == "x"
+    assert intake.fileset is None
     assert final.result == _FAKE_RESULT
     assert final.summary["persisted"] is True
     assert any(e.code == "PERSISTED" for e in final.events)
