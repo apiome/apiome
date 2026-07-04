@@ -327,14 +327,14 @@ flowchart TB
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 2.1 | Lossiness report model + severities | DROP/APPROX/SYNTH/OK per construct + severity | export,multi-protocol,version-control,mvp | N | Y | M | apiome-rest |
+| 2.1 ✅ | Lossiness report model + severities | DROP/APPROX/SYNTH/OK per construct + severity | export,multi-protocol,version-control,mvp | N | Y | M | apiome-rest |
 | 2.2 | Fidelity computation engine | diff source constructs vs target capability profile | export,multi-protocol,python,mvp | N | Y | L | apiome-rest |
 | 2.3 | Fidelity rule-pack SPI | per-target degradation rules (how a construct degrades) | export,multi-protocol,python,mvp | N | Y | M | apiome-rest |
 | 2.4 | User-facing advisory message | the "may lose fidelity" copy + i18n string + thresholds | export,ui,browser,mvp | Y | Y | S | apiome-rest,apiome-ui |
 | 2.5 | Fidelity report REST surfacing | return report from export + a dry-run preview endpoint | export,rest,mvp | Y | Y | S | apiome-rest |
 | 2.6 | Round-trip fidelity measurement | export→re-import→diff to quantify actual loss | export,version-control,validation | Y | N | M | apiome-rest |
 
-### MFX-2.1 — Lossiness report model + severities  ·  **#3838**
+### MFX-2.1 — Lossiness report model + severities  ·  **#3838**  ·  ✅ **Done**
 - **Problem.** "Fidelity loss" must be structured, not prose, so UI/CLI/REST can render and gate on it.
 - **Solution / Scope.** A `LossinessReport` = ordered `LossItem{ construct (canonical path), kind: DROP|APPROX|SYNTH|OK, severity: info|warn|critical, message, targetMapping }` + summary counts. `DROP` = unrepresentable (removed); `APPROX` = represented imperfectly (e.g. constraint→comment); `SYNTH` = invented to satisfy target (e.g. protobuf field numbers); `OK` = clean. Stable construct keys reuse the canonical model's keys.
 - **Acceptance Criteria.** Report serializes to JSON; counts per kind/severity; stable ordering.
