@@ -28,6 +28,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Import: Corrects base ref and $ref external dereferencing
 - Import: Updating class creation step to increase speed using transactions and commits in groups
 - Import: Catalog import dialog accepts `.zip`/`.tar.gz` archives for multi-file gRPC/GraphQL/AsyncAPI sources (MFI-29.1)
+- Import: gRPC, GraphQL, and AsyncAPI adapters accept multi-document fileset input — split SDL, proto trees, and AsyncAPI suites resolve cross-file refs with identical fingerprints to pre-flattened imports (MFI-29.2)
 - Projects: Now displays quality and linting information in each project
 - UI: Fixes Published Versions viewing of OpenAPI and Arazzo URLs
 - UI: Fixes Published Versions list so versions starting with a "v" don't duplicate and show "vv"

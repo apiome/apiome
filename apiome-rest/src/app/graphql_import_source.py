@@ -47,6 +47,7 @@ from graphql import GraphQLSchema
 # :meth:`GraphQlImportSource.normalize` resolves through the normalizer registry.
 from . import graphql_normalizer  # noqa: F401
 from .canonical_model import ApiParadigm, CanonicalApi
+from .fileset import IntakeFileset
 from .import_source import (
     NO_MATCH,
     DetectionInput,
@@ -99,7 +100,13 @@ class GraphQlImportSource(ImportSource, register=True):
     description = "Import a GraphQL schema from SDL or live endpoint introspection."
     icon = "waypoints"
     paradigm = ApiParadigm.GRAPH
-    input_kinds = (InputKind.FILE, InputKind.URL, InputKind.PASTE, InputKind.DISCOVERY)
+    input_kinds = (
+        InputKind.FILE,
+        InputKind.URL,
+        InputKind.PASTE,
+        InputKind.DISCOVERY,
+        InputKind.FILESET,
+    )
     supports_live_discovery = True
     formats = ("graphql",)
 
@@ -165,6 +172,24 @@ class GraphQlImportSource(ImportSource, register=True):
         sdl = self._sdl_from_raw(raw, source_label=source_label)
         try:
             return build_graphql_schema(sdl, source_label=source_label)
+        except GraphQlParseError as exc:
+            raise ImportSourceError(str(exc)) from exc
+
+    def parse_fileset(
+        self,
+        fileset: IntakeFileset,
+        *,
+        source_label: Optional[str] = None,
+    ) -> GraphQLSchema:
+        """Merge and build a schema from every SDL member of *fileset* (MFI-29.2)."""
+        from .graphql_parser import GraphQlParseError, GraphQlSource, build_schema_from_sources
+
+        ordered = sorted(fileset.members.keys(), key=lambda path: (path != fileset.root, path))
+        sources = [
+            GraphQlSource(label=path, text=fileset.members[path]) for path in ordered
+        ]
+        try:
+            return build_schema_from_sources(sources)
         except GraphQlParseError as exc:
             raise ImportSourceError(str(exc)) from exc
 

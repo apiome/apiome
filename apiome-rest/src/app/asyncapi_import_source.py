@@ -49,7 +49,9 @@ from typing import Any, Optional
 # Importing the AsyncAPI normalizer self-registers the ``asyncapi-2`` / ``asyncapi-3`` format
 # keys, which :meth:`AsyncApiImportSource.normalize` resolves through the normalizer registry.
 from . import asyncapi_normalizer  # noqa: F401
+from .asyncapi_fileset import bundle_asyncapi_fileset
 from .canonical_model import ApiParadigm, CanonicalApi
+from .fileset import IntakeFileset
 from .import_ingestion import IngestionError, parse_document
 from .import_source import (
     NO_MATCH,
@@ -130,7 +132,7 @@ class AsyncApiImportSource(ImportSource, register=True):
     description = "Import an AsyncAPI 2.x or 3.x event-driven API description."
     icon = "radio"
     paradigm = ApiParadigm.EVENT
-    input_kinds = (InputKind.FILE, InputKind.URL, InputKind.PASTE)
+    input_kinds = (InputKind.FILE, InputKind.URL, InputKind.PASTE, InputKind.FILESET)
     supports_live_discovery = False
     formats = ("asyncapi-2", "asyncapi-3")
     # parse() runs the authoritative Node `@asyncapi/parser` to validate + dereference; with no
@@ -195,6 +197,21 @@ class AsyncApiImportSource(ImportSource, register=True):
             raise ImportSourceError(str(exc)) from exc
         self._parse_result = result
         return result
+
+    def parse_fileset(
+        self,
+        fileset: IntakeFileset,
+        *,
+        source_label: Optional[str] = None,
+    ) -> Any:
+        """Bundle cross-file ``$ref``\\s among *fileset* members, then parse (MFI-29.2)."""
+        try:
+            bundled = bundle_asyncapi_fileset(fileset)
+        except ImportSourceError:
+            raise
+        except IngestionError as exc:
+            raise ImportSourceError(str(exc)) from exc
+        return self.parse(bundled, source_label=source_label or fileset.root)
 
     def normalize(self, native_ast: Any, *, include_raw: bool = True) -> CanonicalApi:
         """Normalize a parsed AsyncAPI document into a :class:`CanonicalApi`.

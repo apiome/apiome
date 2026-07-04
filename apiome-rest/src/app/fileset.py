@@ -1,7 +1,8 @@
-"""Multi-document intake payload — MFI-29.1 / MFI-29.2 foundation.
+"""Multi-document intake payload — MFI-29.1 / MFI-29.2.
 
-An :class:`IntakeFileset` is a root document plus its sibling members — the shape
-archive intake produces and format adapters (gRPC, GraphQL, AsyncAPI) consume.
+An :class:`IntakeFileset` (alias :data:`Fileset`) is a root document plus its sibling
+members — the shape archive intake produces and format adapters (gRPC, GraphQL, AsyncAPI)
+consume via :meth:`~app.import_source.ImportSource.parse_fileset`.
 """
 
 from __future__ import annotations
@@ -9,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, Mapping, Optional
 
-__all__ = ["IntakeFileset"]
+__all__ = ["IntakeFileset", "Fileset"]
 
 
 @dataclass(frozen=True)
@@ -44,3 +45,7 @@ class IntakeFileset:
     def root_content(self) -> str:
         """Return the root member's text."""
         return self.members[self.root]
+
+
+#: Alias for :class:`IntakeFileset` used in SPI/issue docs (MFI-29.2).
+Fileset = IntakeFileset

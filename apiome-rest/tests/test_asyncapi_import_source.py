@@ -118,7 +118,7 @@ def test_descriptor_metadata(adapter: AsyncApiImportSource) -> None:
     assert d.label == "AsyncAPI"
     assert d.icon == "radio"
     assert d.paradigm is ApiParadigm.EVENT
-    assert set(d.input_kinds) == {InputKind.FILE, InputKind.URL, InputKind.PASTE}
+    assert set(d.input_kinds) == {InputKind.FILE, InputKind.URL, InputKind.PASTE, InputKind.FILESET}
     assert d.formats == ["asyncapi-2", "asyncapi-3"]
     assert d.supports_live_discovery is False
 

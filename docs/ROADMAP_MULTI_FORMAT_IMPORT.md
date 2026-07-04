@@ -217,7 +217,7 @@ secret scrubbing (29.6, mandatory before EPIC-32 ships), and cross-format API id
 | **MFI-EPIC-22** | **Catalog → OpenAPI Conversion & Fidelity Preview** | 22.1–22.8 | ◐ conv-MVP |
 | **MFI-EPIC-23** | **Catalog Screen & Non-Publishable Cataloged Items** | 23.1–23.12 | ◐ catalog-MVP |
 | MFI-EPIC-28 | Catalog UX & Look-and-Feel Improvements | 28.1–28.8 | ○ polish |
-| **MFI-EPIC-29** | **Ingestion Intake Hardening** (archives/git/remote $refs/bulk/scrub) | 29.1–29.6 | ◐ 29.2 MVP |
+| **MFI-EPIC-29** | **Ingestion Intake Hardening** (archives/git/remote $refs/bulk/scrub) | 29.1–29.6 | ◐ 29.3 MVP |
 | **MFI-EPIC-30** | **OpenAPI-Family Adapter Completeness** (Swagger 2.0 · Arazzo · OAS 3.2) | 30.1–30.4 | ●●● MVP-cleanup |
 | MFI-EPIC-31 | Live-Source Re-Discovery & Drift Alerts | 31.1–31.5 | ○ v2 |
 | MFI-EPIC-32 | Collections & Captured Traffic (HAR · Insomnia · Bruno · Postman-SPI) | 32.1–32.7 | ○ v2 |
@@ -1346,7 +1346,7 @@ flowchart LR
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 29.1 | Archive (zip/tar) upload intake | accept `.zip`/`.tgz` across UI/REST/CLI; unpack sandboxed; route to adapter | multi-protocol,import,rest,ui,mvp | N | Y | M | apiome-rest,apiome-ui,apiome-cli | ✅ **Done** |
-| 29.2 | Adapter multi-document (fileset) inputs | new SPI input kind `fileset`: proto tree, split SDL, AsyncAPI suite, WSDL+XSD | multi-protocol,rest,python,mvp | N | Y | M | apiome-rest |
+| 29.2 | Adapter multi-document (fileset) inputs | new SPI input kind `fileset`: proto tree, split SDL, AsyncAPI suite, WSDL+XSD | multi-protocol,rest,python,mvp | N | Y | M | apiome-rest | ✅ **Done** |
 | 29.3 | Git-repo intake for adapter formats | extend the git source card to registry adapters (repo + ref + path/glob) | import,integrations,version-control | Y | N | M | apiome-rest,apiome-ui |
 | 29.4 | SSRF-guarded remote $ref resolver | shared resolver for external `$ref`s (AsyncAPI/JSON-Schema) with cache + budgets | rest,validation,security | Y | N | M | apiome-rest |
 | 29.5 | Bulk import of independent specs | one archive/repo containing N unrelated specs → N catalog items + per-item results | import,rest,ui | Y | N | M | apiome-rest,apiome-ui,apiome-cli |
@@ -1368,7 +1368,8 @@ flowchart LR
 - **Dependencies / Parallelism.** After 1.2, 5.3. Blocks 29.2 UI surfacing; parallel with 29.3.
 - **Technical Stack.** Python (zipfile/tarfile hardened), FastAPI, Next.js, Typer.
 
-### MFI-29.2 — Adapter multi-document (fileset) inputs  ·  **#4389**
+### MFI-29.2 — Adapter multi-document (fileset) inputs  ·  **#4389**  ·  ✅ **Done**
+- **Status.** Implemented in `apiome-rest/src/app/import_source.py` (`InputKind.FILESET`), `fileset.py` (`IntakeFileset` / `Fileset`), `asyncapi_fileset.py` (cross-file `$ref` bundling among members), and `parse_fileset` on the gRPC, GraphQL, and AsyncAPI adapters. Archive/git intake hands unpacked trees to `ImportSource.parse_fileset`; member names are recorded on the revision's `format_metadata` as `filesetMembers` / `filesetRoot` (alongside `intakeKind`). Fingerprints are computed on the normalized model as always (§6.2).
 - **Problem.** The `ImportSource` SPI models file/url/paste/discovery — there is no input kind for
   "a root document plus its siblings," so adapters that *can* compile trees never receive them.
 - **Solution / Scope.** Add a `fileset` input kind to the SPI descriptor + a `Fileset` payload

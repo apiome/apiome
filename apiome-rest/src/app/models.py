@@ -659,7 +659,7 @@ class SpecImportOptions(BaseModel):
             "complete successfully without re-importing (idempotent no-op)."
         ),
     )
-    input_kind: Optional[Literal["file", "url", "paste", "discovery"]] = Field(
+    input_kind: Optional[Literal["file", "url", "paste", "discovery", "fileset"]] = Field(
         None,
         description=(
             "How the source document reached the importer — file upload, a fetched URL, or "

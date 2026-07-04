@@ -328,7 +328,7 @@ def test_spec_import_options_accepts_input_kind():
 
     # Omitted → None (the pipeline defaults the recorded inputKind to 'file').
     assert SpecImportOptions().input_kind is None
-    for kind in ("file", "url", "paste", "discovery"):
+    for kind in ("file", "url", "paste", "discovery", "fileset"):
         assert SpecImportOptions(input_kind=kind).input_kind == kind
     # An unrecognized intake token is rejected rather than silently stored.
     with pytest.raises(ValidationError):
