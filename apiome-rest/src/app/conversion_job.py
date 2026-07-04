@@ -44,8 +44,8 @@ from typing import Any, Dict, List, Optional, Protocol
 from pydantic import BaseModel, ConfigDict, Field
 
 from .canonical_model import CanonicalApi, Server
+from .export_service import ExportError, emit_canonical, resolve_emit_format
 from .fidelity import FidelityReport, analyze_fidelity
-from .openapi_emitter import OpenApiEmitter
 
 logger = logging.getLogger(__name__)
 
@@ -354,17 +354,15 @@ def preview_conversion(
     Raises:
         ConversionError: If ``target_format`` is unsupported.
     """
-    if target_format != DEFAULT_TARGET_FORMAT:
-        raise ConversionError(
-            f"Unsupported conversion target {target_format!r}; only {DEFAULT_TARGET_FORMAT!r} "
-            "is available today.",
-            status_code=400,
-        )
     api = _apply_defaults(source.api, defaults)
-    emit_result = OpenApiEmitter().emit(api)
+    try:
+        resolved_format = resolve_emit_format(target_format)
+        emit_result = emit_canonical(api, target_format)
+    except ExportError as exc:
+        raise ConversionError(str(exc), status_code=exc.status_code) from exc
     report = analyze_fidelity(api, emit_result)
     return ConversionPreview(
-        fidelity=report, document=emit_result.document, target_format=target_format
+        fidelity=report, document=emit_result.document, target_format=resolved_format
     )
 
 

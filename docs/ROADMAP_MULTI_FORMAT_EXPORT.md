@@ -275,7 +275,7 @@ flowchart LR
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 1.1 ✅ | Emitter SPI + capability/fidelity profile | interface: emit(model)→files, declare capabilities | export,multi-protocol,rest,python,mvp | N | Y | L | apiome-rest |
 | 1.2 | Emitter registry + REST target list | enumerate emitters for UI/CLI (`GET /export/targets`) | export,multi-protocol,rest,mvp | N | Y | M | apiome-rest |
-| 1.3 | Refactor existing exports behind SPI | move current OpenAPI/MCP export under the SPI | export,multi-protocol,rest | Y | Y | M | apiome-rest |
+| 1.3 ✅ | Refactor existing exports behind SPI | move current OpenAPI/MCP export under the SPI | export,multi-protocol,rest | Y | Y | M | apiome-rest |
 | 1.4 | Target selection & defaults | choose target + options; sensible per-format defaults | export,multi-protocol,rest,mvp | Y | Y | S | apiome-rest |
 
 ### MFX-1.1 — Emitter SPI + capability/fidelity profile  ·  **#3834**  ·  ✅ **Done**
@@ -293,7 +293,8 @@ flowchart LR
 - **Dependencies / Parallelism.** After 1.1. Blocks 6.x/8.x.
 - **Technical Stack.** FastAPI.
 
-### MFX-1.3 — Refactor existing exports behind SPI  ·  **#3836**
+### MFX-1.3 — Refactor existing exports behind SPI  ·  **#3836**  ·  ✅ **Done**
+- **Status.** Implemented in `apiome-rest/src/app/export_service.py` (`resolve_emit_format`/`resolve_emitter`/`emit_canonical` routing canonical export through the emitter registry; accepts emitter `key` or `format`), with `app.conversion_job.preview_conversion` refactored off the direct `OpenApiEmitter` import. Regression tests in `tests/test_export_service.py`. Documented in `apiome-rest/docs/emitter_spi.md`. apiome-rest 1.75.8 → 1.75.9.
 - **Problem.** Current OpenAPI export + MCP `export_asyncapi` (#2866) are bespoke.
 - **Solution / Scope.** Move existing export paths behind the Emitter SPI without behavior change; supersede closed #221/#222.
 - **Acceptance Criteria.** Existing OpenAPI export still works, now via an emitter; one regression suite green.
