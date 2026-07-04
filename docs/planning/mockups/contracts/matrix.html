@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Contracts · Billing Hub</title>
+  <title>Contracts · Compatibility Matrix</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' };</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -15,6 +15,8 @@
     .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
     .sidebar-light { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 4px 0 18px rgba(15, 23, 42, 0.06); }
     .sidebar-dark  { background: linear-gradient(180deg, #172033 0%, #0f172a 100%); box-shadow: 4px 0 18px rgba(2, 6, 23, 0.32); }
+    .cell { width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; transition: transform .12s ease; cursor: pointer; }
+    .cell:hover { transform: scale(1.12); }
   </style>
 </head>
 <body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -117,7 +119,7 @@
           <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Contract Testing</div>
           <ul class="m-0 list-none space-y-1 p-0 mt-1">
             <li class="mb-1"><a href="verification.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="badge-check" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Verification</span><span class="inline-flex shrink-0 items-center rounded-md border border-amber-200/90 bg-amber-50 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-amber-900 dark:border-amber-700/80 dark:bg-amber-950/60 dark:text-amber-100">Pact</span></span></a></li>
-            <li class="mb-1"><a href="matrix.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="grid-3x3" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Matrix</span><span class="inline-flex shrink-0 items-center rounded-md border border-amber-200/90 bg-amber-50 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-amber-900 dark:border-amber-700/80 dark:bg-amber-950/60 dark:text-amber-100">Pact</span></span></a></li>
+            <li class="mb-1"><a href="matrix.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10 border border-indigo-200 bg-indigo-500/10 dark:border-indigo-700/70"><i data-lucide="grid-3x3" class="w-5 h-5 flex-shrink-0 text-indigo-500"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-semibold text-indigo-500"><span class="min-w-0 flex-1 truncate pr-1">Matrix</span><span class="inline-flex shrink-0 items-center rounded-md border border-amber-200/90 bg-amber-50 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-amber-900 dark:border-amber-700/80 dark:bg-amber-950/60 dark:text-amber-100">Pact</span></span><span class="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-500"></span></a></li>
             <li class="mb-1"><a href="can-i-deploy.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="rocket" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Can I Deploy</span><span class="inline-flex shrink-0 items-center rounded-md border border-amber-200/90 bg-amber-50 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-amber-900 dark:border-amber-700/80 dark:bg-amber-950/60 dark:text-amber-100">Pact</span></span></a></li>
           </ul>
         </div>
@@ -125,7 +127,7 @@
         <div>
           <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Billing & Audit</div>
           <ul class="m-0 list-none space-y-1 p-0 mt-1">
-            <li class="mb-1"><a href="billing.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10 border border-indigo-200 bg-indigo-500/10 dark:border-indigo-700/70"><i data-lucide="credit-card" class="w-5 h-5 flex-shrink-0 text-indigo-500"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-semibold text-indigo-500"><span class="min-w-0 flex-1 truncate pr-1">Billing</span></span><span class="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-500"></span></a></li>
+            <li class="mb-1"><a href="billing.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="credit-card" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Billing</span></span></a></li>
             <li class="mb-1"><a href="history.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="history" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Audit Log</span></span></a></li>
             <li class="mb-1"><a href="compliance.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="shield-check" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Compliance</span></span></a></li>
             <li class="mb-1"><a href="disputes.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="gavel" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Disputes</span></span></a></li>
@@ -136,200 +138,189 @@
 
     <div class="flex-1 flex flex-col min-w-0">
       <header class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div class="px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div class="px-6 py-4 flex items-end justify-between">
           <div>
-            <h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="credit-card" class="w-6 h-6 text-emerald-500"></i> Billing Hub</h2>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Pricing models · revenue share splits · Stripe ↔ NetSuite reconciliation</p>
+            <h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="grid-3x3" class="w-6 h-6 text-indigo-500"></i> Contract Compatibility Matrix</h2>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Consumer systems × contracted providers · every cell is the latest verification verdict for that pair</p>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-[10px] mono px-2 py-1 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Stripe connected · live</span>
-            <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i data-lucide="cable" class="w-4 h-4"></i> Manage payment rails</button>
-            <button class="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2"><i data-lucide="play" class="w-4 h-4"></i> Run billing cycle</button>
+            <div class="relative">
+              <i data-lucide="search" class="w-4 h-4 absolute left-2.5 top-2 text-gray-400"></i>
+              <input type="text" placeholder="Filter pairs…" class="pl-8 pr-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 w-52" />
+            </div>
+            <button class="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i data-lucide="filter" class="w-4 h-4"></i> Contract</button>
+            <button class="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2"><i data-lucide="rotate-cw" class="w-4 h-4"></i> Verify all stale</button>
           </div>
+        </div>
+        <div class="px-6 pb-3 flex items-center gap-4 text-xs flex-wrap">
+          <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span class="w-3 h-3 rounded bg-emerald-500/80 border border-emerald-600"></span> Verified</span>
+          <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span class="w-3 h-3 rounded bg-rose-500/80 border border-rose-600"></span> Failing</span>
+          <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span class="w-3 h-3 rounded bg-amber-400/80 border border-amber-500"></span> Stale (&gt; 72 h)</span>
+          <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span class="w-3 h-3 rounded bg-cyan-400/80 border border-cyan-500"></span> New pact, unverified</span>
+          <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span class="w-3 h-3 rounded bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span> No contract between pair</span>
         </div>
       </header>
 
       <main class="flex-1 overflow-y-auto p-6 space-y-6">
-        <!-- KPI strip -->
-        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
-            <p class="text-xs text-gray-500 uppercase tracking-wider">MRR</p>
-            <p class="text-3xl font-bold mt-2 mono">$248,430</p>
-            <p class="text-xs text-emerald-500 mt-1 flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> +9.4 % vs prev. month</p>
-          </div>
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
-            <p class="text-xs text-gray-500 uppercase tracking-wider">Pending invoices</p>
-            <p class="text-3xl font-bold mt-2 mono">12</p>
-            <p class="text-xs text-amber-500 mt-1">$84,210 awaiting review</p>
-          </div>
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
-            <p class="text-xs text-gray-500 uppercase tracking-wider">Revenue share owed</p>
-            <p class="text-3xl font-bold mt-2 mono">$31,820</p>
-            <p class="text-xs text-gray-500 mt-1">5 partners · payouts T+7</p>
-          </div>
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
-            <p class="text-xs text-gray-500 uppercase tracking-wider">Failed charges</p>
-            <p class="text-3xl font-bold mt-2 mono text-rose-500">2</p>
-            <p class="text-xs text-rose-500 mt-1">card_declined · review</p>
-          </div>
-        </section>
 
-        <!-- Pricing model + revenue share -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-              <h3 class="text-base font-semibold flex items-center gap-2"><i data-lucide="dollar-sign" class="w-5 h-5 text-emerald-500"></i> Pricing model · CTR-2138</h3>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hooli — Search API · usage-based with seat platform fee</p>
-            </div>
-            <div class="p-5 space-y-4 text-sm">
-              <div class="grid grid-cols-3 gap-2">
-                <button class="px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 text-xs hover:bg-gray-50 dark:hover:bg-gray-700">Flat fee</button>
-                <button class="px-3 py-2 rounded-md border-2 border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">Usage tiered</button>
-                <button class="px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 text-xs hover:bg-gray-50 dark:hover:bg-gray-700">Per-seat</button>
-              </div>
-              <div class="rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div class="px-3 py-2 bg-gray-50 dark:bg-gray-900 text-[10px] uppercase tracking-wider text-gray-500 grid grid-cols-3 gap-2"><span>Tier</span><span>Range</span><span class="text-right">Unit price</span></div>
-                <div class="px-3 py-2 grid grid-cols-3 gap-2 mono text-xs border-t border-gray-100 dark:border-gray-700/60"><span>1</span><span>0 – 100k</span><span class="text-right">$0.0010 / call</span></div>
-                <div class="px-3 py-2 grid grid-cols-3 gap-2 mono text-xs border-t border-gray-100 dark:border-gray-700/60"><span>2</span><span>100k – 1M</span><span class="text-right">$0.0007 / call</span></div>
-                <div class="px-3 py-2 grid grid-cols-3 gap-2 mono text-xs border-t border-gray-100 dark:border-gray-700/60"><span>3</span><span>1M – 5M</span><span class="text-right">$0.0004 / call</span></div>
-                <div class="px-3 py-2 grid grid-cols-3 gap-2 mono text-xs border-t border-gray-100 dark:border-gray-700/60"><span>4</span><span>5M+</span><span class="text-right">$0.0002 / call</span></div>
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="text-[10px] uppercase tracking-wider text-gray-500">Platform fee</label>
-                  <div class="mt-1 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 mono text-sm">$1,500.00 / month</div>
-                </div>
-                <div>
-                  <label class="text-[10px] uppercase tracking-wider text-gray-500">Currency</label>
-                  <div class="mt-1 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 mono text-sm">USD</div>
-                </div>
-              </div>
-              <div class="rounded-md border border-emerald-200 dark:border-emerald-700/40 bg-emerald-50/50 dark:bg-emerald-900/20 p-3 text-xs">
-                <p class="text-emerald-700 dark:text-emerald-300 font-semibold mb-1">Calculated this period</p>
-                <div class="grid grid-cols-3 gap-2 mono">
-                  <div><p class="text-emerald-500 text-[10px]">Tier 1</p><p>$100.00</p></div>
-                  <div><p class="text-emerald-500 text-[10px]">Tier 2</p><p>$630.00</p></div>
-                  <div><p class="text-emerald-500 text-[10px]">Tier 3</p><p>$1,280.00</p></div>
-                </div>
-                <p class="mt-2 text-emerald-700 dark:text-emerald-300">Subtotal: <span class="mono font-semibold">$3,510.00</span> + platform fee = <span class="mono font-semibold">$5,010.00</span></p>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-              <h3 class="text-base font-semibold flex items-center gap-2"><i data-lucide="pie-chart" class="w-5 h-5 text-indigo-500"></i> Revenue share · CTR-2138</h3>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Splits must total 100 % · validated on save</p>
-            </div>
-            <div class="p-5 space-y-4 text-sm">
-              <div class="flex items-center gap-3">
-                <div class="flex-1 h-3 rounded-full overflow-hidden flex bg-gray-100 dark:bg-gray-700">
-                  <div class="bg-indigo-500" style="width: 70%"></div>
-                  <div class="bg-emerald-500" style="width: 20%"></div>
-                  <div class="bg-amber-500" style="width: 10%"></div>
-                </div>
-                <span class="mono text-xs font-semibold">100 %</span>
-              </div>
-              <div class="space-y-3">
-                <div class="flex items-center gap-3 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700">
-                  <span class="w-3 h-3 rounded-sm bg-indigo-500"></span>
-                  <div class="flex-1">
-                    <p class="font-medium">Pied Piper · primary</p>
-                    <p class="text-[10px] text-gray-500 mono">acct_1H2…7Q · Stripe Connect</p>
-                  </div>
-                  <input type="text" value="70" class="w-14 text-right mono font-semibold bg-transparent outline-none border-b border-gray-200 dark:border-gray-700"/>
-                  <span class="text-xs text-gray-400">%</span>
-                </div>
-                <div class="flex items-center gap-3 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700">
-                  <span class="w-3 h-3 rounded-sm bg-emerald-500"></span>
-                  <div class="flex-1">
-                    <p class="font-medium">Massive Dynamic · partner</p>
-                    <p class="text-[10px] text-gray-500 mono">acct_1H4…2L · Stripe Connect</p>
-                  </div>
-                  <input type="text" value="20" class="w-14 text-right mono font-semibold bg-transparent outline-none border-b border-gray-200 dark:border-gray-700"/>
-                  <span class="text-xs text-gray-400">%</span>
-                </div>
-                <div class="flex items-center gap-3 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700">
-                  <span class="w-3 h-3 rounded-sm bg-amber-500"></span>
-                  <div class="flex-1">
-                    <p class="font-medium">Initech · referral</p>
-                    <p class="text-[10px] text-gray-500 mono">acct_1H6…9Z · NetSuite vendor</p>
-                  </div>
-                  <input type="text" value="10" class="w-14 text-right mono font-semibold bg-transparent outline-none border-b border-gray-200 dark:border-gray-700"/>
-                  <span class="text-xs text-gray-400">%</span>
-                </div>
-              </div>
-              <button class="w-full px-3 py-2 rounded-md border border-dashed border-gray-300 dark:border-gray-600 text-xs text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-2"><i data-lucide="plus" class="w-3.5 h-3.5"></i> Add party to split</button>
-              <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-3">
-                <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-2">Projected payouts · this cycle</p>
-                <div class="grid grid-cols-3 gap-2 text-xs mono">
-                  <div><span class="text-indigo-500">PP</span> $3,507.00</div>
-                  <div><span class="text-emerald-500">MD</span> $1,002.00</div>
-                  <div><span class="text-amber-500">Init.</span> $501.00</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Billing run + reconciliation -->
-        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+        <!-- Matrix -->
+        <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <i data-lucide="grid-3x3" class="w-5 h-5 text-indigo-500"></i>
               <div>
-                <h3 class="text-base font-semibold">Last billing run · 2026-04-21 03:00 UTC</h3>
-                <p class="text-xs text-gray-500 mt-1">Closed · 88 invoices generated · 2 retries pending</p>
+                <h3 class="text-base font-semibold">Latest verdict per pair</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Rows: consumer systems (by counterparty) · Columns: contracted provider APIs</p>
               </div>
-              <button class="text-xs text-indigo-500 hover:underline mono">view full log →</button>
             </div>
-            <table class="w-full text-sm">
-              <thead class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-50/60 dark:bg-gray-900/40">
+            <span class="text-xs text-gray-500">18 pacts · 14 verified · 2 failing · 1 stale · 1 new</span>
+          </div>
+          <div class="p-5 overflow-x-auto">
+            <table class="text-xs">
+              <thead>
                 <tr>
-                  <th class="text-left px-5 py-2">Step</th>
-                  <th class="text-left px-3 py-2">Result</th>
-                  <th class="text-left px-3 py-2">Records</th>
-                  <th class="text-right px-5 py-2">Duration</th>
+                  <th class="text-left pr-4 pb-3 font-semibold text-gray-500 dark:text-gray-400">Consumer ↓ · Provider →</th>
+                  <th class="px-1.5 pb-3 font-medium text-gray-600 dark:text-gray-300 mono whitespace-nowrap" style="writing-mode: initial;">data-api</th>
+                  <th class="px-1.5 pb-3 font-medium text-gray-600 dark:text-gray-300 mono whitespace-nowrap">inventory-api</th>
+                  <th class="px-1.5 pb-3 font-medium text-gray-600 dark:text-gray-300 mono whitespace-nowrap">telemetry-api</th>
+                  <th class="px-1.5 pb-3 font-medium text-gray-600 dark:text-gray-300 mono whitespace-nowrap">catalog-api</th>
+                  <th class="px-1.5 pb-3 font-medium text-gray-600 dark:text-gray-300 mono whitespace-nowrap">health-api</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60 mono text-xs">
-                <tr><td class="px-5 py-2.5 font-sans">1. Aggregate usage</td><td class="px-3 py-2.5 text-emerald-500">✓ ok</td><td class="px-3 py-2.5">88 contracts · 5.4M events</td><td class="px-5 py-2.5 text-right text-gray-500">42.3 s</td></tr>
-                <tr><td class="px-5 py-2.5 font-sans">2. Apply tier pricing</td><td class="px-3 py-2.5 text-emerald-500">✓ ok</td><td class="px-3 py-2.5">88 invoices drafted</td><td class="px-5 py-2.5 text-right text-gray-500">8.1 s</td></tr>
-                <tr><td class="px-5 py-2.5 font-sans">3. Compute splits</td><td class="px-3 py-2.5 text-emerald-500">✓ ok</td><td class="px-3 py-2.5">142 transfer rows</td><td class="px-5 py-2.5 text-right text-gray-500">4.6 s</td></tr>
-                <tr><td class="px-5 py-2.5 font-sans">4. Push to Stripe</td><td class="px-3 py-2.5 text-emerald-500">✓ ok</td><td class="px-3 py-2.5">86 / 88 sent</td><td class="px-5 py-2.5 text-right text-gray-500">1m 12s</td></tr>
-                <tr><td class="px-5 py-2.5 font-sans">5. Charge customers</td><td class="px-3 py-2.5 text-amber-500">⚠ partial</td><td class="px-3 py-2.5">86 ok · 2 declined · auto-retry</td><td class="px-5 py-2.5 text-right text-gray-500">2m 04s</td></tr>
-                <tr><td class="px-5 py-2.5 font-sans">6. Reconcile NetSuite</td><td class="px-3 py-2.5 text-emerald-500">✓ ok</td><td class="px-3 py-2.5">88 GL entries posted</td><td class="px-5 py-2.5 text-right text-gray-500">31.7 s</td></tr>
+              <tbody>
+                <tr>
+                  <td class="pr-4 py-1"><span class="inline-flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-[9px] font-bold flex items-center justify-center">G</span><span class="mono">globex-order-sync</span></span></td>
+                  <td class="px-1.5 py-1 text-center"><a href="verification.html" class="cell bg-rose-500/80 border border-rose-600 text-white" title="data-api · run #412 · 2 failing"><i data-lucide="x" class="w-3.5 h-3.5"></i></a></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><a href="verification.html" class="cell bg-emerald-500/80 border border-emerald-600 text-white" title="catalog-api · verified 3 h ago"><i data-lucide="check" class="w-3.5 h-3.5"></i></a></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                </tr>
+                <tr>
+                  <td class="pr-4 py-1"><span class="inline-flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-[9px] font-bold flex items-center justify-center">G</span><span class="mono">globex-analytics</span></span></td>
+                  <td class="px-1.5 py-1 text-center"><a href="verification.html" class="cell bg-emerald-500/80 border border-emerald-600 text-white" title="data-api · verified 38 m ago"><i data-lucide="check" class="w-3.5 h-3.5"></i></a></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><a href="verification.html" class="cell bg-emerald-500/80 border border-emerald-600 text-white" title="telemetry-api · verified 1 h ago"><i data-lucide="check" class="w-3.5 h-3.5"></i></a></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                </tr>
+                <tr>
+                  <td class="pr-4 py-1"><span class="inline-flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-[9px] font-bold flex items-center justify-center">G</span><span class="mono">globex-mobile</span></span></td>
+                  <td class="px-1.5 py-1 text-center"><a href="verification.html" class="cell bg-cyan-400/80 border border-cyan-500 text-white" title="data-api · new pact awaiting first verification"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i></a></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                </tr>
+                <tr>
+                  <td class="pr-4 py-1"><span class="inline-flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-purple-500 text-white text-[9px] font-bold flex items-center justify-center">I</span><span class="mono">initech-replenish</span></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><a href="verification.html" class="cell bg-emerald-500/80 border border-emerald-600 text-white" title="inventory-api · verified 2 h ago"><i data-lucide="check" class="w-3.5 h-3.5"></i></a></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><a href="verification.html" class="cell bg-amber-400/80 border border-amber-500 text-white" title="catalog-api · stale — last verified 5 d ago"><i data-lucide="clock" class="w-3.5 h-3.5"></i></a></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                </tr>
+                <tr>
+                  <td class="pr-4 py-1"><span class="inline-flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-cyan-500 text-white text-[9px] font-bold flex items-center justify-center">C</span><span class="mono">cyberdyne-ingest</span></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><a href="verification.html" class="cell bg-rose-500/80 border border-rose-600 text-white" title="telemetry-api · failing since 04-19 (linked to SLA breach)"><i data-lucide="x" class="w-3.5 h-3.5"></i></a></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                </tr>
+                <tr>
+                  <td class="pr-4 py-1"><span class="inline-flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-orange-500 text-white text-[9px] font-bold flex items-center justify-center">S</span><span class="mono">soylent-etl</span></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><a href="verification.html" class="cell bg-emerald-500/80 border border-emerald-600 text-white" title="health-api · verified 6 h ago"><i data-lucide="check" class="w-3.5 h-3.5"></i></a></td>
+                </tr>
+                <tr>
+                  <td class="pr-4 py-1"><span class="inline-flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-fuchsia-500 text-white text-[9px] font-bold flex items-center justify-center">T</span><span class="mono">tyrell-sensor-hub</span></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                  <td class="px-1.5 py-1 text-center"><a href="verification.html" class="cell bg-emerald-500/80 border border-emerald-600 text-white" title="telemetry-api · verified 4 h ago"><i data-lucide="check" class="w-3.5 h-3.5"></i></a></td>
+                  <td class="px-1.5 py-1 text-center"><a href="verification.html" class="cell bg-emerald-500/80 border border-emerald-600 text-white" title="catalog-api · verified 4 h ago"><i data-lucide="check" class="w-3.5 h-3.5"></i></a></td>
+                  <td class="px-1.5 py-1 text-center"><span class="cell bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></span></td>
+                </tr>
               </tbody>
             </table>
           </div>
-
-          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-              <h3 class="text-base font-semibold flex items-center gap-2"><i data-lucide="cable" class="w-5 h-5 text-indigo-500"></i> Payment rails</h3>
-              <p class="text-xs text-gray-500 mt-1">Adapters &amp; reconciliation status</p>
-            </div>
-            <ul class="divide-y divide-gray-100 dark:divide-gray-700/60 text-sm">
-              <li class="px-5 py-3 flex items-center gap-3">
-                <div class="w-9 h-9 rounded-md bg-indigo-500/10 flex items-center justify-center"><span class="text-indigo-500 font-bold text-sm">S</span></div>
-                <div class="flex-1"><p class="font-medium">Stripe</p><p class="text-[10px] text-gray-500 mono">acct_HQ · primary</p></div>
-                <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">live</span>
-              </li>
-              <li class="px-5 py-3 flex items-center gap-3">
-                <div class="w-9 h-9 rounded-md bg-orange-500/10 flex items-center justify-center"><span class="text-orange-500 font-bold text-sm">N</span></div>
-                <div class="flex-1"><p class="font-medium">NetSuite</p><p class="text-[10px] text-gray-500 mono">GL sync · 5 min</p></div>
-                <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">synced</span>
-              </li>
-              <li class="px-5 py-3 flex items-center gap-3">
-                <div class="w-9 h-9 rounded-md bg-purple-500/10 flex items-center justify-center"><span class="text-purple-500 font-bold text-sm">Q</span></div>
-                <div class="flex-1"><p class="font-medium">QuickBooks</p><p class="text-[10px] text-gray-500 mono">paused · scoped to EU</p></div>
-                <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">paused</span>
-              </li>
-              <li class="px-5 py-3 flex items-center gap-3">
-                <div class="w-9 h-9 rounded-md bg-gray-200 dark:bg-gray-700 flex items-center justify-center"><i data-lucide="plus" class="w-4 h-4 text-gray-500"></i></div>
-                <div class="flex-1"><p class="font-medium text-gray-500">Add adapter</p><p class="text-[10px] text-gray-400">Adyen, Coinbase, Wise…</p></div>
-              </li>
-            </ul>
+          <div class="px-5 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/40 text-xs flex items-center justify-between">
+            <span class="text-gray-500">Every cell links to the underlying verification run · slate cells have no data-sharing contract between the pair</span>
+            <a href="can-i-deploy.html" class="text-indigo-500 hover:underline">Check a deployment →</a>
           </div>
         </section>
+
+        <!-- Bottom row: failing pairs + contract coverage -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-500"></i>
+                <div>
+                  <h3 class="text-base font-semibold">Failing pairs</h3>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">Blocking deploys and accruing SLA strikes</p>
+                </div>
+              </div>
+            </div>
+            <ul class="divide-y divide-gray-100 dark:divide-gray-700/60 text-sm">
+              <li class="px-5 py-3">
+                <div class="flex items-center justify-between">
+                  <span class="mono font-medium">globex-order-sync → data-api</span>
+                  <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">2 ✗</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1"><span class="mono">line_items[].sku</span> removed · <span class="mono">tracking_ref</span> missing · contract <span class="mono">C7_a4f9</span> clause DS-2.1 at 2/3 strikes</p>
+              </li>
+              <li class="px-5 py-3">
+                <div class="flex items-center justify-between">
+                  <span class="mono font-medium">cyberdyne-ingest → telemetry-api</span>
+                  <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">5 ✗</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Failing since 04-19 · linked to the active uptime breach on <span class="mono">C7_c08d</span> · dispute evidence attached</p>
+              </li>
+            </ul>
+            <div class="px-5 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/40 text-xs flex items-center justify-between">
+              <span class="text-gray-500">Failures emit <span class="mono">verification.failed</span> events</span>
+              <a href="disputes.html" class="text-indigo-500 hover:underline">Open disputes →</a>
+            </div>
+          </section>
+
+          <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-500"></i>
+                <div>
+                  <h3 class="text-base font-semibold">Contract coverage</h3>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">Active data-sharing contracts with a machine-readable pact attached</p>
+                </div>
+              </div>
+            </div>
+            <ul class="divide-y divide-gray-100 dark:divide-gray-700/60 text-sm">
+              <li class="px-5 py-3">
+                <div class="flex items-center justify-between mb-1.5"><span class="font-medium">Acme ↔ Globex Data API</span><span class="mono text-xs text-emerald-500">3 / 3 consumers</span></div>
+                <div class="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden"><div class="h-1.5 bg-emerald-500" style="width: 100%"></div></div>
+              </li>
+              <li class="px-5 py-3">
+                <div class="flex items-center justify-between mb-1.5"><span class="font-medium">Initech ↔ Wonka Realtime Inventory</span><span class="mono text-xs text-emerald-500">2 / 2 consumers</span></div>
+                <div class="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden"><div class="h-1.5 bg-emerald-500" style="width: 100%"></div></div>
+              </li>
+              <li class="px-5 py-3">
+                <div class="flex items-center justify-between mb-1.5"><span class="font-medium">Stark ↔ Cyberdyne Telemetry Feed</span><span class="mono text-xs text-amber-500">1 / 2 consumers</span></div>
+                <div class="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden"><div class="h-1.5 bg-amber-500" style="width: 50%"></div></div>
+              </li>
+              <li class="px-5 py-3">
+                <div class="flex items-center justify-between mb-1.5"><span class="font-medium">Globex ↔ Soylent Health DPA</span><span class="mono text-xs text-emerald-500">1 / 1 consumers</span></div>
+                <div class="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden"><div class="h-1.5 bg-emerald-500" style="width: 100%"></div></div>
+              </li>
+            </ul>
+            <div class="px-5 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/40 text-xs flex items-center justify-between">
+              <span class="text-gray-500">Contracts without pacts fall back to prose-only enforcement</span>
+              <a href="data-sharing.html" class="text-indigo-500 hover:underline">Attach a pact →</a>
+            </div>
+          </section>
+        </div>
       </main>
     </div>
   </div>

@@ -31,6 +31,9 @@ export interface ProjectsDashboardProjectCardProps {
     creator_name: string;
     creator_email: string;
     metadata?: { domainCategory?: string; summary?: string };
+    /** Server-captured quality score of the latest revision (#3609); orb fallback when history is empty. */
+    qualityScore?: number | null;
+    qualityGrade?: string | null;
   };
   qualityHistory: ProjectQualitySnapshot[];
   avatarGradientClass: string;
@@ -58,10 +61,22 @@ export function ProjectsDashboardProjectCard({
   const domainCategoryLabel = getProjectDomainCategoryLabel(project.metadata?.domainCategory);
   const isDeleted = Boolean(project.deleted_at);
   const attentionVisual = !project.enabled || isDeleted;
+
+  // Prefer browser-local trend history; fall back to server-captured score/grade so imports that
+  // never wrote localStorage still light up the orbs (same fallback as the projects table).
   const latest = qualityHistory.length > 0 ? qualityHistory[qualityHistory.length - 1] : null;
-  const tier = latest ? getNumericScoreTier(latest.overall) : null;
-  const lintLetter = latest ? letterGradeFromOverallPercent(latest.overall) : null;
-  const lintTier = latest ? getNumericScoreTier(latest.overall) : null;
+  const qualityValue =
+    latest != null
+      ? latest.overall
+      : typeof project.qualityScore === 'number'
+        ? project.qualityScore
+        : null;
+  const scoreTier = qualityValue != null ? getNumericScoreTier(qualityValue) : null;
+  const lintLetter =
+    latest != null
+      ? latest.grade ?? letterGradeFromOverallPercent(latest.overall)
+      : project.qualityGrade?.trim() ||
+        (qualityValue != null ? letterGradeFromOverallPercent(qualityValue) : null);
 
   const summaryLine =
     project.metadata?.summary?.trim() ||
@@ -70,6 +85,7 @@ export function ProjectsDashboardProjectCard({
 
   const orbBase =
     'mt-1 inline-flex h-10 w-10 items-center justify-center rounded-full border-2 font-mono text-xs font-semibold tabular-nums';
+  const orbNeutral = 'border-gray-300 text-gray-400 dark:border-gray-600';
 
   return (
     <article
@@ -154,24 +170,25 @@ export function ProjectsDashboardProjectCard({
               <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 Quality
               </p>
-              {latest ? (
+              {qualityValue != null ? (
                 <button
                   type="button"
                   className={cn(
                     orbBase,
-                    scoreOrbBorderClass(tier!.band),
-                    tier!.textClass,
+                    scoreOrbBorderClass(scoreTier!.band),
+                    scoreTier!.textClass,
                     'hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30'
                   )}
                   onClick={(e) => {
                     e.stopPropagation();
                     onOpenQualityHistory();
                   }}
+                  title="Open quality score history"
                 >
-                  {latest.overall}
+                  {qualityValue}
                 </button>
               ) : (
-                <span className={cn(orbBase, 'border-gray-300 text-gray-400 dark:border-gray-600')}>—</span>
+                <span className={cn(orbBase, orbNeutral)}>—</span>
               )}
             </div>
             <div>
@@ -183,26 +200,33 @@ export function ProjectsDashboardProjectCard({
                   type="button"
                   className={cn(
                     orbBase,
-                    scoreOrbBorderClass(lintTier!.band),
-                    lintTier!.textClass,
+                    scoreOrbBorderClass(scoreTier?.band ?? null),
+                    scoreTier?.textClass ?? 'text-gray-500 dark:text-gray-400',
                     'hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30'
                   )}
                   onClick={(e) => {
                     e.stopPropagation();
                     onOpenLintReport();
                   }}
+                  title="Open lint report"
                 >
                   {lintLetter}
                 </button>
               ) : (
-                <span className={cn(orbBase, 'border-gray-300 text-gray-400 dark:border-gray-600')}>—</span>
+                <span className={cn(orbBase, orbNeutral)}>—</span>
               )}
             </div>
             <div>
               <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 Debt
               </p>
-              <span className={cn(orbBase, 'border-gray-300 text-gray-400 dark:border-gray-600')}>—</span>
+              <span
+                className={cn(orbBase, orbNeutral)}
+                title="Technical debt (not yet computed)"
+                aria-label="Technical debt not yet computed"
+              >
+                —
+              </span>
             </div>
           </div>
 

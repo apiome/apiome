@@ -19,65 +19,116 @@
 </head>
 <body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 
-  <div class="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between px-4">
-    <div class="flex items-center gap-3">
-      <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-emerald-500 flex items-center justify-center"><i data-lucide="file-signature" class="w-4 h-4 text-white"></i></div>
-      <span class="text-sm font-semibold">Apiome</span>
-      <span class="text-xs text-gray-400">/</span>
-      <span class="text-sm text-gray-600 dark:text-gray-300">Contracts</span>
-      <span class="text-xs text-gray-400">/</span>
-      <span class="text-sm text-gray-600 dark:text-gray-300">Consent</span>
+  <header class="relative z-40 flex h-12 items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-3 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/95">
+    <div class="flex h-10 items-center gap-2">
+      <div class="flex items-center gap-1.5">
+        <div class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-emerald-500 flex items-center justify-center"><i data-lucide="file-signature" class="w-4 h-4 text-white"></i></div>
+        <span class="text-sm font-semibold tracking-tight">Apiome</span>
+      </div>
+      <button class="cursor-pointer rounded-md border border-slate-300 px-2 py-1 text-[11px] font-medium tracking-[0.02em] text-slate-500 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400" title="View What's New">v0.6.4 RC</button>
     </div>
-    <div class="flex items-center gap-3">
-      <a href="index.html" class="text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-500">← Mockup hub</a>
-      <button id="themeBtn" class="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
-      <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold">KS</div>
+    <nav aria-label="Main navigation" class="flex-1 text-center">
+      <ul class="m-0 inline-flex list-none items-center gap-2 p-0 text-[13px]">
+        <li><a href="#" class="rounded-md px-2 py-1 text-slate-700 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-indigo-400">Home</a></li>
+        <li><a href="index.html" class="rounded-md px-2 py-1 bg-slate-200/80 font-medium text-slate-900 dark:bg-slate-700 dark:text-white">Control Panel</a></li>
+        <li><a href="#" class="rounded-md px-2 py-1 text-slate-700 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-indigo-400">Designer</a></li>
+        <li><a href="#" class="rounded-md px-2 py-1 text-slate-700 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-indigo-400">Paths</a></li>
+      </ul>
+    </nav>
+    <div class="hidden md:block">
+      <button class="flex cursor-pointer items-center gap-2 rounded-lg border border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50 px-3 py-1.5 transition-colors hover:from-indigo-100 hover:to-purple-100 dark:border-indigo-800/50 dark:from-indigo-900/20 dark:to-purple-900/20 dark:hover:from-indigo-900/35 dark:hover:to-purple-900/35">
+        <span class="h-2 w-2 shrink-0 animate-pulse rounded-full bg-gradient-to-r from-indigo-500 to-purple-500"></span>
+        <span class="max-w-[200px] truncate text-sm font-medium text-indigo-700 dark:text-indigo-300">Acme Corp</span>
+        <i data-lucide="chevron-down" class="h-4 w-4 shrink-0 text-indigo-600 dark:text-indigo-400"></i>
+      </button>
     </div>
-  </div>
+    <div class="flex items-center gap-2">
+      <a href="index.html" class="text-xs text-slate-500 dark:text-slate-400 hover:text-indigo-500" title="Back to the mockup hub">← Hub</a>
+      <button id="themeBtn" class="w-8 h-8 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center" title="Toggle theme"><i data-lucide="sun-moon" class="w-4 h-4"></i></button>
+      <button class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-transparent px-2 py-1 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"><span class="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-medium">K</span></button>
+    </div>
+  </header>
 
-  <div class="flex" style="height: calc(100vh - 48px);">
+  <div class="flex bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800" style="height: calc(100vh - 48px);">
     <aside class="flex-shrink-0 sidebar-light dark:sidebar-dark" style="width: 280px;">
       <div class="overflow-auto p-4 h-full">
-        <div class="mb-5">
+        <div class="mb-6">
+          <ul class="m-0 list-none space-y-1 p-0">
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="layout-dashboard" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Dashboard</span></span></a></li>
+          </ul>
+        </div>
+        <hr class="my-4 border-indigo-500/10" />
+        <div class="mb-6">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Account</div>
+          <ul class="m-0 list-none space-y-1 p-0 mt-1">
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="user" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Profile</span></span></a></li>
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="link" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Linked Accounts</span></span></a></li>
+          </ul>
+        </div>
+        <hr class="my-4 border-indigo-500/10" />
+        <div class="mb-6">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Administration</div>
+          <ul class="m-0 list-none space-y-1 p-0 mt-1">
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="building-2" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Tenants</span></span></a></li>
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="key" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">API Keys</span></span></a></li>
+          </ul>
+        </div>
+        <hr class="my-4 border-indigo-500/10" />
+        <div class="mb-6">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Data Management</div>
+          <ul class="m-0 list-none space-y-1 p-0 mt-1">
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="database" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Primitives</span></span></a></li>
+          </ul>
+        </div>
+        <hr class="my-4 border-indigo-500/10" />
+        <div class="mb-6">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Access & IAM</div>
+          <ul class="m-0 list-none space-y-1 p-0 mt-1">
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="shield" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Roles</span></span></a></li>
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="users" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Members</span></span></a></li>
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="scroll-text" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Access Audit</span></span></a></li>
+          </ul>
+        </div>
+        <hr class="my-4 border-indigo-500/10" />
+        <div class="mb-6">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Specifications</div>
+          <ul class="m-0 list-none space-y-1 p-0 mt-1">
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="folders" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Projects</span></span></a></li>
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="folder-git-2" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Repositories</span></span></a></li>
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="library" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Catalog</span><span class="inline-flex shrink-0 items-center rounded-md border border-amber-200/90 bg-amber-50 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-amber-900 dark:border-amber-700/80 dark:bg-amber-950/60 dark:text-amber-100">Preview</span></span></a></li>
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="network" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">MCP Servers</span><span class="inline-flex shrink-0 items-center rounded-md border border-amber-200/90 bg-amber-50 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-amber-900 dark:border-amber-700/80 dark:bg-amber-950/60 dark:text-amber-100">Preview</span></span></a></li>
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="sun" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Sunset timeline</span></span></a></li>
+            <li class="mb-1"><a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="eye" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Published</span></span></a></li>
+          </ul>
+        </div>
+        <hr class="my-4 border-indigo-500/10" />
+        <div class="mb-6">
           <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Contracts</div>
-          <ul class="m-0 mt-1 list-none space-y-1 p-0">
-            <li><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Dashboard</span></a></li>
-            <li><a href="templates.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="library" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Templates</span></a></li>
+          <ul class="m-0 list-none space-y-1 p-0 mt-1">
+            <li class="mb-1"><a href="dashboard.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="file-signature" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Contracts</span></span></a></li>
+            <li class="mb-1"><a href="templates.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="library-big" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Templates</span></span></a></li>
+            <li class="mb-1"><a href="data-sharing.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="share-2" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Data Sharing</span></span></a></li>
+            <li class="mb-1"><a href="consent.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10 border border-indigo-200 bg-indigo-500/10 dark:border-indigo-700/70"><i data-lucide="hand" class="w-5 h-5 flex-shrink-0 text-indigo-500"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-semibold text-indigo-500"><span class="min-w-0 flex-1 truncate pr-1">Consent</span></span><span class="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-500"></span></a></li>
+            <li class="mb-1"><a href="usage.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="gauge" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Usage & Renewal</span></span></a></li>
           </ul>
         </div>
-        <hr class="my-3 border-indigo-500/10" />
-        <div class="mb-5">
-          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Builder</div>
-          <ul class="m-0 mt-1 list-none space-y-1 p-0">
-            <li><a href="terms-editor.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="sliders-horizontal" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">SLA Editor</span></a></li>
-            <li><a href="negotiate.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="messages-square" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Negotiate</span><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">3</span></a></li>
-            <li><a href="sign.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="signature" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Sign &amp; Activate</span></a></li>
+        <hr class="my-4 border-indigo-500/10" />
+        <div class="mb-6">
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Contract Testing</div>
+          <ul class="m-0 list-none space-y-1 p-0 mt-1">
+            <li class="mb-1"><a href="verification.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="badge-check" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Verification</span><span class="inline-flex shrink-0 items-center rounded-md border border-amber-200/90 bg-amber-50 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-amber-900 dark:border-amber-700/80 dark:bg-amber-950/60 dark:text-amber-100">Pact</span></span></a></li>
+            <li class="mb-1"><a href="matrix.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="grid-3x3" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Matrix</span><span class="inline-flex shrink-0 items-center rounded-md border border-amber-200/90 bg-amber-50 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-amber-900 dark:border-amber-700/80 dark:bg-amber-950/60 dark:text-amber-100">Pact</span></span></a></li>
+            <li class="mb-1"><a href="can-i-deploy.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="rocket" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Can I Deploy</span><span class="inline-flex shrink-0 items-center rounded-md border border-amber-200/90 bg-amber-50 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-amber-900 dark:border-amber-700/80 dark:bg-amber-950/60 dark:text-amber-100">Pact</span></span></a></li>
           </ul>
         </div>
-        <hr class="my-3 border-indigo-500/10" />
-        <div class="mb-5">
-          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Data Sharing</div>
-          <ul class="m-0 mt-1 list-none space-y-1 p-0">
-            <li><a href="data-sharing.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="share-2" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Schema Sharing</span></a></li>
-            <li><a href="consent.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 border border-indigo-200 dark:border-indigo-700/70 bg-indigo-500/10"><i data-lucide="hand" class="w-5 h-5 text-indigo-500"></i><span class="text-sm font-semibold flex-1 text-indigo-600 dark:text-indigo-400">Consent</span><span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span></a></li>
-            <li><a href="usage.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="gauge" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Usage &amp; Renewal</span></a></li>
-          </ul>
-        </div>
-        <hr class="my-3 border-indigo-500/10" />
-        <div class="mb-5">
-          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Billing</div>
-          <ul class="m-0 mt-1 list-none space-y-1 p-0">
-            <li><a href="billing.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="credit-card" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Billing Hub</span></a></li>
-            <li><a href="invoice.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="receipt" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Invoice</span></a></li>
-          </ul>
-        </div>
-        <hr class="my-3 border-indigo-500/10" />
+        <hr class="my-4 border-indigo-500/10" />
         <div>
-          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Audit</div>
-          <ul class="m-0 mt-1 list-none space-y-1 p-0">
-            <li><a href="history.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="history" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">History</span></a></li>
-            <li><a href="compliance.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="shield-check" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Compliance</span></a></li>
-            <li><a href="disputes.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-indigo-500/10 transition-colors"><i data-lucide="gavel" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i><span class="text-sm font-medium flex-1 text-slate-700 dark:text-slate-200">Disputes</span><span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">2</span></a></li>
+          <div class="flex items-center gap-2 px-3 py-2 font-semibold text-[0.65rem] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400"><span class="w-1 h-1 rounded-full bg-indigo-500 opacity-60"></span> Billing & Audit</div>
+          <ul class="m-0 list-none space-y-1 p-0 mt-1">
+            <li class="mb-1"><a href="billing.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="credit-card" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Billing</span></span></a></li>
+            <li class="mb-1"><a href="history.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="history" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Audit Log</span></span></a></li>
+            <li class="mb-1"><a href="compliance.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="shield-check" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Compliance</span></span></a></li>
+            <li class="mb-1"><a href="disputes.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-indigo-500/10"><i data-lucide="gavel" class="w-5 h-5 flex-shrink-0 text-slate-500 dark:text-slate-400"></i><span class="flex min-w-0 flex-1 items-center justify-between gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><span class="min-w-0 flex-1 truncate pr-1">Disputes</span></span></a></li>
           </ul>
         </div>
       </div>

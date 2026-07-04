@@ -3,11 +3,13 @@
 Static, browser-openable design mockups for the
 [Contracts feature roadmap](../../../../docs/FUTURE_FEATURE_ROADMAP_CONTRACTS.md).
 
-These files cover the full roadmap surface area across all four epics:
+These files cover the full roadmap surface area across all five epics:
 Contract Builder &amp; Templates (Epic 1), Data Sharing &amp; Consent
-Management (Epic 2), Billing &amp; Revenue Integration (Epic 3), and Audit
-Trail &amp; Compliance (Epic 4). They are visual references — no API calls,
-no auth, no Docker runtime, no real Stripe charges, no on-chain anchoring.
+Management (Epic 2), Billing &amp; Revenue Integration (Epic 3), Audit
+Trail &amp; Compliance (Epic 4), and Contract Testing &amp; Deploy Gating —
+Pact (Epic 5). They are visual references — no API calls, no auth, no
+Docker runtime, no real Stripe charges, no on-chain anchoring, no real
+pact broker.
 
 ## Open
 
@@ -41,26 +43,53 @@ http://localhost:3000/mockups/contracts/index.html
 | `history.html`        | 4.1 Append-Only Event Log — chained events, anchor batches, integrity verifier                    |
 | `compliance.html`     | 4.3 Compliance Reporting + 4.4 Public Anchoring + 4.5 Data Export &amp; Portability                 |
 | `disputes.html`       | 4.2 Dispute Resolution Workflow — claim &amp; evidence pack pulled from chain, mediator console   |
+| `verification.html`   | 5.2 + 5.3 Provider Verification — replay contracted interactions, terminal log, clause binding    |
+| `matrix.html`         | 5.4 Compatibility Matrix — consumer × provider verdict grid, failing pairs, pact coverage         |
+| `can-i-deploy.html`   | 5.5 + 5.6 Can-I-Deploy Gate — verdict banner, per-consumer gate checks, CI exit-code parity       |
 
 ## Design system
 
-Mockups intentionally mirror the live `apiome-ui` shell and align with
-the sibling `mockups/academy`, `mockups/analytics`, `mockups/architect`,
-`mockups/automation`, `mockups/browser`, `mockups/code-gen`,
-`mockups/collaboration`, and `mockups/connect` sets:
+Every screen renders inside a **replica of the live `apiome-ui`
+(objectified-ui) shell**, not a feature-specific chrome:
 
+- **Top platform bar**: faithful copy of `app/components/ade/TopHeader.tsx` —
+  Apiome wordmark + version badge (`v0.6.4 RC`), centered
+  `Home · Control Panel · Designer · Paths` navigation with "Control Panel"
+  active, the indigo-to-purple gradient tenant-switcher pill (pulsing dot +
+  "Acme Corp" + chevron), and the avatar button. A `← Hub` link and the
+  theme toggle are the only mockup-specific additions.
+- **Side menu**: faithful copy of
+  `app/components/ade/dashboard/DashboardSideNav.tsx` — the real sections
+  (Dashboard; Account; Administration; Data Management; Access &amp; IAM;
+  Specifications, including the amber `Preview` pills on Catalog and MCP
+  Servers) rendered verbatim, followed by the three new sections this
+  feature adds to the menu: **Contracts** (Contracts, Templates, Data
+  Sharing, Consent, Usage &amp; Renewal), **Contract Testing** (Verification,
+  Matrix, Can I Deploy — each carrying a `Pact` pill in the same style as
+  the live `Preview` pill), and **Billing &amp; Audit** (Billing, Audit Log,
+  Compliance, Disputes). Item, active-state, section-header, and divider
+  markup match the production component exactly (10 % indigo fill + 1 px
+  indigo border + right-side dot for the active item; `hr` dividers at
+  `border-indigo-500/10`).
 - **Typography**: Inter (400/500/600/700), JetBrains Mono for table IDs,
   contract numbers, hashes, clause references, currency amounts, timestamps,
-  and audit-chain hashes
+  audit-chain hashes, pact run numbers, and CLI output
 - **Accent**: indigo-500 / 600 (Radix `accentColor="indigo"`); the platform
   bar logo and the index-page hero use an indigo-to-emerald gradient to
   signal "contracts live at the intersection of governance &amp; revenue"
 - **Gray scale**: slate (Radix `grayColor="slate"`)
-- **Layout**: 280 px gradient sidebar, 48 px top platform bar, panel cards
+- **Layout**: 280 px gradient sidebar, 48 px top platform bar, the dashboard
+  layout's `bg-gradient-to-br from-slate-50 via-white to-slate-50` content
+  backdrop, panel cards
   (`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700`)
 - **Icons**: Lucide (CDN), matching the live `lucide-react` icon set
 - **Theme**: class-based dark mode toggle, persisted to `localStorage` under
   `contracts-mockup-theme`. Honors `prefers-color-scheme` on first load.
+
+Per-contract working screens (`terms-editor.html`, `negotiate.html`,
+`sign.html`) highlight **Contracts** in the menu; `invoice.html` highlights
+**Billing** — mirroring the prefix-based `isActive` matching in the live
+side nav.
 
 ## Contracts-specific visual language
 
@@ -97,6 +126,25 @@ that the production build is expected to honor:
 - **Revenue split bar**: single horizontal stacked bar showing percentage
   splits between revenue-share parties; party order matches the row order
   in the splits table.
+- **Pact verification colours** (Epic 5): emerald = verified / passing,
+  rose = failing, amber = stale (&gt; 72 h since last verification),
+  cyan = new pact awaiting first verification, slate = no contract between
+  the pair. Matches the convention established by `mockups/pact`.
+- **Compatibility matrix cells**: 28 px rounded squares with tinted
+  background + matching 1 px border, scaling slightly on hover; every cell
+  links to the underlying verification run.
+- **Verification log**: terminal-styled near-black panel with per-line
+  tinted left borders — emerald for ✓, rose for ✗ — mirroring local
+  `pact-verifier` output. Failing lines carry the violated contract clause
+  reference (e.g. `DS-2.1`).
+- **Verdict banner (can-i-deploy)**: full-width gradient hero — rose/orange
+  for blocked, emerald for safe — so the verdict is readable at a glance;
+  blockers and passed-check counts render as translucent chips inside the
+  banner.
+- **Clause binding**: pact signals map onto SLA clauses (strike counters,
+  notice periods, deploy gates); gate verdicts and failed runs are recorded
+  as immutable contract events (`verification.failed`,
+  `deploy.gate.blocked`) in the same audit chain as Epic 4.
 - **Currency**: always rendered in mono font, right-aligned in tables,
   with the contract's currency symbol prefixed. Negative amounts (credits)
   render rose; positive totals render bold; tax / fees render with a

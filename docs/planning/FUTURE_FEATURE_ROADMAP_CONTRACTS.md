@@ -2,11 +2,15 @@
 
 > Smart contract generation and management for API agreements, SLAs, and data sharing between organizations. Contracts turns informal API partnerships into machine-readable, enforceable agreements with integrated billing, consent management, and an immutable audit trail—eliminating spreadsheet-based SLA tracking and manual invoice reconciliation.
 >
+> **Update (July 3, 2026)**: Epic 5 — Contract Testing & Deploy Gating (Pact) — extends the machine-readable half of a contract with consumer-driven contract testing. Every data-sharing contract can carry a Pact: consumers publish the interactions they depend on, provider builds are verified against them, and verification outcomes bind directly to SLA clauses (strike counters, breaking-change notice periods, deploy gates). A can-i-deploy gate blocks production releases that would break a contracted counterparty, with the same verdict available as a CI exit code. The [contracts mockups](mockups/contracts/README.md) were redesigned at the same time: every screen now renders inside a replica of the live `apiome-ui` shell — the real top platform bar (Home · Control Panel · Designer · Paths, tenant switcher) and the real Control Panel side menu (`DashboardSideNav.tsx`) with the new **Contracts**, **Contract Testing** (Pact), and **Billing & Audit** sections added to it — plus three new screens: `verification.html`, `matrix.html`, and `can-i-deploy.html`.
+>
 > **Revenue Model**: Per-contract pricing, enterprise legal package
 >
-> **Tech Stack**: NextJS App Router, Radix UI primitives, REST/OpenAPI 3.1, PostgreSQL with JSONB contract storage, Stripe/payment gateway integration, optional blockchain anchoring
+> **Tech Stack**: NextJS App Router, Radix UI primitives, REST/OpenAPI 3.1, PostgreSQL with JSONB contract storage, Stripe/payment gateway integration, optional blockchain anchoring, Pact-compatible broker storage for consumer-driven contract testing
 >
-> **Last Updated**: April 2, 2026
+> **Design Mockups**: [docs/planning/mockups/contracts/](mockups/contracts/) (Epics 1–5, live-shell chrome)
+>
+> **Last Updated**: July 3, 2026
 
 ---
 
@@ -20,6 +24,8 @@
 - Invoice generation from metered usage with PDF export
 - Immutable contract event log with timestamped state transitions
 - Contract status dashboard showing active, expiring, and violated contracts
+- Pact storage bound to data-sharing contracts with consumer pact capture
+- Provider verification workflow replaying contracted interactions, with results recorded as contract events
 
 ---
 
@@ -550,6 +556,166 @@ Backend endpoints include `POST /api/v1/contracts/audit/export` (one-time export
 
 ---
 
+## Epic 5: Contract Testing & Deploy Gating (Pact)
+
+Consumer-driven contract testing bound to legal contracts. Where Epics 1–4 make the *terms* of an agreement machine-readable, Epic 5 makes the *interface* machine-verifiable: each data-sharing contract can carry a Pact describing exactly which interactions the consumer depends on, providers are verified against those interactions on every build, and the outcomes feed the same SLA clauses, event log, and dispute machinery the rest of the product uses. This epic shares broker infrastructure with the Testing & QA roadmap's Epic 6 (#1914, `FUTURE_FEATURE_ROADMAP_TESTING.md`); the issues below cover the contract-binding layer, not a second broker.
+
+### Summary Table
+
+| #   | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|-----|-------|---------|--------|----------|-----|------------|------------------|
+| 5.1 (TBD) | Pact Data Model & Contract Binding | Store pacts/pacticipants and bind each pact to a data-sharing contract clause | `enhancement`, `contracts`, `pact`, `mvp`, `rest` | Yes | Y | M | apiome-rest, apiome-db |
+| 5.2 (TBD) | Consumer Pact Capture & Publication | CLI/CI publication of consumer pacts scoped to a contract | `enhancement`, `contracts`, `pact`, `mvp`, `rest` | Yes | Y | M | apiome-cli, apiome-rest |
+| 5.3 (TBD) | Provider Verification & SLA Clause Binding | Replay contracted interactions against provider builds; failures accrue SLA strikes | `enhancement`, `contracts`, `pact`, `mvp` | No | Y | L | apiome-rest, apiome-ui |
+| 5.4 (TBD) | Contract Compatibility Matrix | Consumer × provider verdict grid across all contracted pairs | `enhancement`, `contracts`, `pact` | Yes | N | M | apiome-ui, apiome-rest |
+| 5.5 (TBD) | Can-I-Deploy Contract Gate | Release verdict combining pact verdicts, contract clauses, and consent status | `enhancement`, `contracts`, `pact` | No | N | L | apiome-rest, apiome-ui |
+| 5.6 (TBD) | CI Integration & Gate Events | CLI exit-code parity, GitHub Actions reference workflow, gate webhooks | `enhancement`, `contracts`, `pact`, `rest` | Yes | N | S | apiome-cli, apiome-rest |
+
+### Detailed Issue Descriptions
+
+#### 5.1 (TBD) — Pact Data Model & Contract Binding
+
+**Problem Statement**: Data-sharing contracts (2.1) describe *what* data is shared as schema references, but nothing verifies that the provider's running API actually honours the shape consumers depend on. Prose clauses can't catch a removed field.
+
+**Solution/Scope**: Introduce pact storage bound to contracts. Tables: `pacticipants` (consumer/provider systems, keyed to contract parties), `pact_versions` (immutable pact documents as JSONB, content-addressed), and `contract_pacts` linking `pact_version_id` to `contract_id` and the specific data-sharing clause it enforces (source: Pact Broker's pacticipant/version model, adapted to tenant + contract scoping). REST endpoints: `PUT /api/v1/contracts/{id}/pacts/{consumer}/{version}` (publish), `GET /api/v1/contracts/{id}/pacts` (list), `GET /api/v1/contracts/{id}/pacts/{consumer}/latest` (fetch for verification). Pacts are immutable — republishing identical content is a no-op; changed content creates a new version and emits a `pact.published` contract event.
+
+**Acceptance Criteria**:
+- Pacticipants map to contract parties; a pact cannot be attached to a contract its consumer is not party to
+- Pact versions are content-addressed and immutable; identical republish is idempotent
+- Each pact binds to a specific data-sharing clause (e.g. DS-2.1) for enforcement attribution
+- `pact.published` events are recorded in the immutable contract event log (4.1)
+- Contracts without pacts continue to work (prose-only enforcement fallback)
+
+**Parallelism/Dependencies**: Depends on 1.1 (contract model) and 2.1 (data-sharing clauses). Parallel with 5.2.
+
+**Technical Stack**: PostgreSQL JSONB, REST/OpenAPI 3.1, Pact Specification v3/v4 document format.
+
+**Part of Epic: Contract Testing & Deploy Gating (Pact)**
+
+---
+
+#### 5.2 (TBD) — Consumer Pact Capture & Publication
+
+**Problem Statement**: Consumers already generate pacts in their test suites (pact-js, pact-jvm, etc.), but there is no path from a consumer's CI to the counterparty's contract in Apiome.
+
+**Solution/Scope**: `apiome contracts publish-pact --contract <id> --consumer <name> --version <ver> ./pacts/*.json` uploads pact files against the contract, authenticating with a tenant API key scoped to the consumer party. Publication validates that every interaction in the pact touches only schema elements the data-sharing clause grants (access-level check: a pact asserting a `write` interaction against a `read`-only clause is rejected). The UI surfaces published pacts on the data-sharing screen (`data-sharing.html` mockup) with per-consumer coverage.
+
+**Acceptance Criteria**:
+- CLI publishes pact files against a contract with consumer-party API key auth
+- Interactions are validated against the clause's access level and included properties; violations reject the publish with a clause reference
+- Branch/tag metadata (e.g. `main`, environment tags) is recorded per pact version
+- Publication triggers provider verification (5.3) via event
+- Per-contract pact coverage is visible in the UI (consumers with/without pacts)
+
+**Parallelism/Dependencies**: Depends on 5.1 for storage. Parallel with 5.3 UI work.
+
+**Technical Stack**: apiome-cli (Node), REST, Pact Specification formats.
+
+**Part of Epic: Contract Testing & Deploy Gating (Pact)**
+
+---
+
+#### 5.3 (TBD) — Provider Verification & SLA Clause Binding
+
+**Problem Statement**: A pact is only useful if the provider is verified against it — and in a *contracted* relationship, a failed verification is not just a red build, it is a potential breach of terms with financial consequences.
+
+**Solution/Scope**: Verification runs replay every contracted consumer's interactions against a provider build (staging URL or CI-launched instance), triggered by schema publish, pact publication, or nightly schedule. The verification screen (`verification.html` mockup) shows per-consumer pass/fail, a terminal-styled replay log with per-interaction verdicts referencing the violated clause, recent runs, and the pact ↔ clause binding table. Failed runs emit `verification.failed` events (4.1) and increment clause strike counters — e.g. a schema-fidelity clause breaching at 3 failed runs per 7-day window triggers its configured consequence (service credit, notification) through the existing SLA machinery (1.2).
+
+```
+  consumer pact ──▶ verification run ──▶ pass ──▶ matrix cell green
+                        │
+                        └─▶ fail ──▶ verification.failed event (4.1)
+                                        │
+                                        ├─▶ clause strike counter (1.2)
+                                        │      └─▶ threshold ──▶ breach ──▶ credit / notify
+                                        └─▶ dispute evidence pack (4.2)
+```
+
+**Acceptance Criteria**:
+- Verification replays all contracted consumers' interactions against a provider build
+- Runs are triggered by schema publish, pact publish, and a nightly schedule
+- Per-interaction failures reference the violated contract clause in the log output
+- Failed runs emit immutable `verification.failed` events and increment clause strike counters
+- Strike thresholds trigger the clause's configured breach consequence via existing SLA machinery
+- Verification evidence is automatically attachable to dispute cases (4.2)
+
+**Parallelism/Dependencies**: Depends on 5.1 and 5.2; integrates with 1.2 (SLA clauses), 4.1 (event log), 4.2 (disputes).
+
+**Technical Stack**: pact-verifier-compatible replay engine, worker queue, NextJS UI, REST.
+
+**Part of Epic: Contract Testing & Deploy Gating (Pact)**
+
+---
+
+#### 5.4 (TBD) — Contract Compatibility Matrix
+
+**Problem Statement**: With many counterparties and many consumer systems per contract, "is everything verified?" has no single answer surface.
+
+**Solution/Scope**: A consumer × provider grid (`matrix.html` mockup) where every cell is the latest verification verdict for that contracted pair: emerald (verified), rose (failing), amber (stale &gt; 72 h), cyan (new pact, unverified), slate (no contract between the pair). Cells link to the underlying verification run. Companion panels list failing pairs (with clause strike status) and per-contract pact coverage. Backend: `GET /api/v1/contracts/matrix?consumer=&provider=&contract=` returning the verdict grid with cursor pagination for large tenants.
+
+**Acceptance Criteria**:
+- Matrix renders latest verdict per contracted consumer × provider pair with the five-state colour convention
+- Cells link to the underlying verification run detail
+- Failing-pairs panel shows clause strike status and links to disputes where attached
+- Coverage panel shows consumers with/without pacts per active data-sharing contract
+- Stale threshold (default 72 h) is configurable per tenant
+
+**Parallelism/Dependencies**: Depends on 5.3 for verdict data. Parallel with 5.5.
+
+**Technical Stack**: NextJS UI, REST aggregate endpoint.
+
+**Part of Epic: Contract Testing & Deploy Gating (Pact)**
+
+---
+
+#### 5.5 (TBD) — Can-I-Deploy Contract Gate
+
+**Problem Statement**: A provider can pass its own tests and still break a *contracted* counterparty in production — or violate a breaking-change notice clause — with billing and legal consequences the deploy pipeline knows nothing about.
+
+**Solution/Scope**: A release gate (`can-i-deploy.html` mockup) answering "can `provider@version` deploy to `environment`?" by combining: (1) latest verification verdicts for every contracted consumer in that environment, (2) contract-level gates — breaking-change notice periods (removed fields require a notice event N days prior), and (3) consent status (a data-sharing clause with revoked consent blocks deploys that would continue serving that data). Verdicts render as a gradient banner (rose = blocked, emerald = safe) with a per-check table, unblock guidance, and are recorded as immutable `deploy.gate.blocked` / `deploy.gate.passed` events visible to all contract parties. Endpoint: `GET /api/v1/contracts/can-i-deploy?pacticipant=&version=&environment=`.
+
+```
+  candidate build ──▶ gate ──▶ pact verdicts (all contracted consumers)
+                        ├────▶ clause gates (notice period, deploy-gate clause)
+                        ├────▶ consent status (2.2 / 2.5)
+                        └────▶ verdict ──▶ event log ──▶ CI exit code (5.6)
+```
+
+**Acceptance Criteria**:
+- Gate combines pact verdicts, breaking-change notice clauses, and consent status into one verdict
+- Blocked verdicts enumerate each blocker with contract, clause, and evidence links
+- Verdicts are recorded as immutable contract events visible to all parties
+- Unblock guidance covers: fix the change, negotiate an amendment (1.4), or wait for consumer release
+- Environment model tracks which consumer versions are deployed where
+
+**Parallelism/Dependencies**: Depends on 5.3 verdicts and 5.4's environment/version data; consumes 2.2/2.5 consent state.
+
+**Technical Stack**: REST, NextJS UI, environment/version tracking tables.
+
+**Part of Epic: Contract Testing & Deploy Gating (Pact)**
+
+---
+
+#### 5.6 (TBD) — CI Integration & Gate Events
+
+**Problem Statement**: The gate only prevents incidents if pipelines consult it; parties also need to *hear about* verification failures and gate verdicts without polling.
+
+**Solution/Scope**: `apiome contracts can-i-deploy --pacticipant <name> --version <ver> --to-environment <env>` returns the same verdict as the UI with exit code 0/1 for pipeline gating, plus a reference GitHub Actions workflow (publish pacts on consumer CI, verify + gate on provider CI). Gate and verification events fan out through webhooks (HMAC-signed, reusing the audit export delivery layer from 4.5) so counterparties' systems are notified of `verification.failed`, `deploy.gate.blocked`, and `pact.published` events.
+
+**Acceptance Criteria**:
+- CLI verdict matches the UI verdict exactly, with exit code 0 (safe) / 1 (blocked)
+- Reference GitHub Actions workflow covers consumer publish and provider verify + gate
+- Webhooks deliver verification and gate events with HMAC signatures and retry
+- Webhook payloads include contract ID, clause references, and evidence URLs
+
+**Parallelism/Dependencies**: Depends on 5.5 for the verdict; webhook delivery parallel with 5.4. Reuses 4.5 delivery infrastructure.
+
+**Technical Stack**: apiome-cli, GitHub Actions YAML, webhook workers.
+
+**Part of Epic: Contract Testing & Deploy Gating (Pact)**
+
+---
+
 ## Parallel Work Guide
 
 **Epic 1 — Contract Builder & Templates**:
@@ -564,4 +730,22 @@ Issues 3.1 (Usage Metering) and 3.3 (Payment Gateway) can be developed in parall
 **Epic 4 — Audit Trail & Compliance**:
 Issues 4.1 (Event Log), 4.3 (Compliance Reporting), 4.4 (Blockchain Anchoring), and 4.5 (Audit Export) can be developed in parallel as they address independent capabilities. Issue 4.2 (Dispute Resolution) depends on 4.1 for event data assembly.
 
-**Cross-Epic Parallelism**: Epic 1 (Contract Builder) and Epic 4 (Audit Trail) can begin simultaneously—the event log (4.1) should be integrated early as other epics emit events. Epic 2 (Data Sharing) depends on Epic 1 for the contract data model. Epic 3 (Billing) depends on Epic 2 for usage data from data sharing contracts. Within those constraints, UI work across all epics can proceed in parallel.
+**Epic 5 — Contract Testing & Deploy Gating (Pact)**:
+Issues 5.1 (Pact Data Model) and 5.2 (Consumer Capture) can be developed in parallel once 2.1 lands. Issue 5.3 (Provider Verification) depends on both and on 1.2 for clause binding. Issues 5.4 (Matrix) and 5.5 (Can-I-Deploy) depend on 5.3 for verdict data and can proceed in parallel with each other. Issue 5.6 (CI Integration) depends on 5.5 and reuses 4.5's webhook delivery.
+
+**Cross-Epic Parallelism**: Epic 1 (Contract Builder) and Epic 4 (Audit Trail) can begin simultaneously—the event log (4.1) should be integrated early as other epics emit events. Epic 2 (Data Sharing) depends on Epic 1 for the contract data model. Epic 3 (Billing) depends on Epic 2 for usage data from data sharing contracts. Epic 5 (Contract Testing) depends on Epic 2 for data-sharing clauses and on 1.2 for SLA clause binding, but shares broker infrastructure with the Testing & QA roadmap's Epic 6 (#1914) — coordinate to avoid duplicating pact storage. Within those constraints, UI work across all epics can proceed in parallel.
+
+---
+
+## Work To Be Done (Ordered)
+
+1. **Foundation (parallel)**: 1.1 Contract Data Model · 4.1 Immutable Event Log — everything else emits events
+2. **Builder MVP (parallel)**: 1.2 SLA Editor · 1.3 Template Library · 1.6 Dashboard
+3. **Agreement flow**: 1.4 Negotiation → 1.5 Signing & Activation
+4. **Data sharing (parallel)**: 2.1 Schema-Based Contracts · 2.2 Consent Tracking
+5. **Lifecycle**: 2.3 Expiration & Renewal → 2.4 Usage Monitoring → 2.5 Revocation & Recall
+6. **Pact MVP (parallel)**: 5.1 Pact Data Model & Contract Binding · 5.2 Consumer Pact Capture
+7. **Verification**: 5.3 Provider Verification & SLA Clause Binding
+8. **Billing (parallel)**: 3.1 Usage Metering · 3.3 Payment Gateway, then 3.2 Invoices → 3.4 Revenue Sharing → 3.5 Billing Dashboard
+9. **Gating (parallel)**: 5.4 Compatibility Matrix · 5.5 Can-I-Deploy Gate, then 5.6 CI Integration & Gate Events
+10. **Compliance (parallel)**: 4.2 Disputes · 4.3 Compliance Reporting · 4.4 Blockchain Anchoring · 4.5 Audit Export
