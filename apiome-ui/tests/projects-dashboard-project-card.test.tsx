@@ -1,8 +1,9 @@
 /**
  * Score-orb coverage for ProjectsDashboardProjectCard.
  *
- * Cards must surface the same quality / lint values the projects table shows, including the
+ * Cards surface quality / lint from the version summary (mean across versions), including the
  * server-captured qualityScore / qualityGrade fallback when browser-local history is empty.
+ * Empty projects (versionsCount === 0) show "Empty project" instead of score orbs.
  */
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -29,6 +30,7 @@ function makeProject(
     creator_email: 'kenji@example.com',
     qualityScore: 94,
     qualityGrade: 'A',
+    versionsCount: 3,
     ...overrides,
   };
 }
@@ -56,7 +58,7 @@ function renderCard(props: Partial<ProjectsDashboardProjectCardProps> = {}) {
 }
 
 describe('ProjectsDashboardProjectCard — quality / lint / debt orbs', () => {
-  it('renders quality and lint from server-captured scores when history is empty', () => {
+  it('renders quality and lint from the version-summary scores when history is empty', () => {
     const { onOpenQualityHistory, onOpenLintReport } = renderCard();
 
     const quality = screen.getByTitle('Open quality score history');
@@ -107,5 +109,37 @@ describe('ProjectsDashboardProjectCard — quality / lint / debt orbs', () => {
     expect(debt).toHaveTextContent('—');
     expect(debt.tagName).toBe('SPAN');
     expect(screen.getByText('Debt')).toBeInTheDocument();
+  });
+
+  it('shows the version count from the project summary', () => {
+    renderCard({ project: makeProject({ versionsCount: 8 }) });
+    expect(screen.getByTestId('project-card-versions-count')).toHaveTextContent('8 versions');
+  });
+
+  it('uses singular "version" when the count is one', () => {
+    renderCard({ project: makeProject({ versionsCount: 1 }) });
+    expect(screen.getByTestId('project-card-versions-count')).toHaveTextContent('1 version');
+  });
+
+  it('shows Empty project and hides score orbs when there are no versions', () => {
+    const history: ProjectQualitySnapshot[] = [
+      { recordedAt: '2026-06-01T00:00:00.000Z', overall: 72, grade: 'B' },
+    ];
+    renderCard({
+      project: makeProject({
+        versionsCount: 0,
+        qualityScore: 94,
+        qualityGrade: 'A',
+      }),
+      qualityHistory: history,
+    });
+    expect(screen.getByTestId('project-card-empty')).toHaveTextContent('Empty project');
+    expect(screen.queryByTitle('Open quality score history')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Open lint report')).not.toBeInTheDocument();
+    expect(screen.queryByText('Quality')).not.toBeInTheDocument();
+    expect(screen.queryByText('Debt')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('project-card-versions-count')).not.toBeInTheDocument();
+    expect(screen.getByText('0')).toBeInTheDocument();
+    expect(screen.getByText('versions')).toBeInTheDocument();
   });
 });

@@ -52,13 +52,20 @@ def test_capture_skips_when_revision_missing():
 
 
 def test_project_schema_serializes_captured_quality_score():
-    """The projects API exposes the captured score as camelCase qualityScore/qualityGrade."""
+    """The projects API exposes the version-summary score as camelCase qualityScore/qualityGrade."""
     project = ProjectSchema(
-        id="p1", tenant_id="t1", name="n", slug="s", quality_score=87, quality_grade="B"
+        id="p1",
+        tenant_id="t1",
+        name="n",
+        slug="s",
+        quality_score=87,
+        quality_grade="B",
+        versions_count=3,
     )
     dumped = project.model_dump(by_alias=True)
     assert dumped["qualityScore"] == 87
     assert dumped["qualityGrade"] == "B"
+    assert dumped["versionsCount"] == 3
 
 
 def test_project_schema_quality_score_defaults_to_none():
@@ -66,3 +73,4 @@ def test_project_schema_quality_score_defaults_to_none():
     dumped = project.model_dump(by_alias=True)
     assert dumped["qualityScore"] is None
     assert dumped["qualityGrade"] is None
+    assert dumped["versionsCount"] == 0

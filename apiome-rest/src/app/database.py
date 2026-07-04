@@ -2062,6 +2062,31 @@ class Database:
     # NOTE: queries below select `change_report_template_version_id`, which requires
     # migration 20260414-150000.sql. Ensure that migration is applied before deploying.
 
+    #: Version rollup for the projects list: live version count plus the mean captured quality
+    #: score (AVG ignores NULL scores). Grade is derived from the mean via the same A–F bands as
+    #: ``schema_lint.GRADE_THRESHOLDS`` so list cards summarize every version, not only the tip.
+    _PROJECT_VERSIONS_SUMMARY_LATERAL = """
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*)::int AS versions_count,
+                       ROUND(AVG(v.quality_score))::int AS quality_score
+                FROM apiome.versions v
+                WHERE v.project_id = p.id AND v.deleted_at IS NULL
+            ) qs ON TRUE
+    """
+
+    _PROJECT_VERSIONS_SUMMARY_COLUMNS = """
+                   COALESCE(qs.versions_count, 0) AS versions_count,
+                   qs.quality_score,
+                   CASE
+                     WHEN qs.quality_score IS NULL THEN NULL
+                     WHEN qs.quality_score >= 90 THEN 'A'
+                     WHEN qs.quality_score >= 80 THEN 'B'
+                     WHEN qs.quality_score >= 70 THEN 'C'
+                     WHEN qs.quality_score >= 60 THEN 'D'
+                     ELSE 'F'
+                   END AS quality_grade
+    """
+
     def get_projects_for_tenant(
         self, tenant_id: str, *, include_deleted: bool = False
     ) -> List[Dict[str, Any]]:
@@ -2069,6 +2094,10 @@ class Database:
 
         By default only non-deleted rows are returned. When include_deleted is True,
         soft-deleted projects are included too (active rows first, then deleted).
+
+        Each row carries a versions summary: ``versions_count`` (live revisions) and the mean
+        captured ``quality_score`` / derived ``quality_grade`` across those revisions (NULL when
+        no revision has been scored yet). Empty projects (``versions_count = 0``) have no scores.
         """
         deleted_filter = "" if include_deleted else "AND p.deleted_at IS NULL"
         order_clause = (
@@ -2082,16 +2111,10 @@ class Database:
                    p.created_at, p.updated_at,
                    p.deleted_at,
                    u.name as creator_name, u.email as creator_email,
-                   qs.quality_score, qs.quality_grade
+                   {self._PROJECT_VERSIONS_SUMMARY_COLUMNS}
             FROM apiome.projects p
             LEFT JOIN apiome.users u ON p.creator_id = u.id
-            LEFT JOIN LATERAL (
-                SELECT v.quality_score, v.quality_grade
-                FROM apiome.versions v
-                WHERE v.project_id = p.id AND v.deleted_at IS NULL
-                ORDER BY v.created_at DESC NULLS LAST, v.id DESC
-                LIMIT 1
-            ) qs ON TRUE
+            {self._PROJECT_VERSIONS_SUMMARY_LATERAL}
             WHERE p.tenant_id = %s {deleted_filter}
             {order_clause}
         """
@@ -2331,16 +2354,22 @@ class Database:
     def get_project_by_id(
         self, project_id: str, tenant_id: str, *, include_deleted: bool = False
     ) -> Optional[Dict[str, Any]]:
-        """Get a specific project by ID, ensuring it belongs to the tenant."""
+        """Get a specific project by ID, ensuring it belongs to the tenant.
+
+        Includes the same versions summary (``versions_count``, mean quality score/grade) as
+        :meth:`get_projects_for_tenant` so single-project reads match the list shape.
+        """
         deleted_clause = "" if include_deleted else "AND p.deleted_at IS NULL"
         query = f"""
             SELECT p.id, p.tenant_id, p.creator_id, p.name, p.description, p.slug,
                    p.enabled, p.metadata, p.change_report_template_version_id, p.publishable,
                    p.created_at, p.updated_at,
                    p.deleted_at,
-                   u.name as creator_name, u.email as creator_email
+                   u.name as creator_name, u.email as creator_email,
+                   {self._PROJECT_VERSIONS_SUMMARY_COLUMNS}
             FROM apiome.projects p
             LEFT JOIN apiome.users u ON p.creator_id = u.id
+            {self._PROJECT_VERSIONS_SUMMARY_LATERAL}
             WHERE p.id = %s AND p.tenant_id = %s {deleted_clause}
         """
         results = self.execute_query(query, (project_id, tenant_id))

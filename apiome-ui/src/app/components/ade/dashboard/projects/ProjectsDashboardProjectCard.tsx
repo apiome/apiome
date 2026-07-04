@@ -31,9 +31,11 @@ export interface ProjectsDashboardProjectCardProps {
     creator_name: string;
     creator_email: string;
     metadata?: { domainCategory?: string; summary?: string };
-    /** Server-captured quality score of the latest revision (#3609); orb fallback when history is empty. */
+    /** Mean quality score across the project's versions; orb fallback when history is empty. */
     qualityScore?: number | null;
     qualityGrade?: string | null;
+    /** Live version count from the server summary (0 = empty project). */
+    versionsCount?: number;
   };
   qualityHistory: ProjectQualitySnapshot[];
   avatarGradientClass: string;
@@ -61,19 +63,27 @@ export function ProjectsDashboardProjectCard({
   const domainCategoryLabel = getProjectDomainCategoryLabel(project.metadata?.domainCategory);
   const isDeleted = Boolean(project.deleted_at);
   const attentionVisual = !project.enabled || isDeleted;
+  const versionsCount = typeof project.versionsCount === 'number' ? project.versionsCount : 0;
+  const isEmptyProject = versionsCount === 0;
 
-  // Prefer browser-local trend history; fall back to server-captured score/grade so imports that
-  // never wrote localStorage still light up the orbs (same fallback as the projects table).
-  const latest = qualityHistory.length > 0 ? qualityHistory[qualityHistory.length - 1] : null;
-  const qualityValue =
-    latest != null
+  // Prefer browser-local trend history; fall back to the server version-summary score/grade so
+  // imports that never wrote localStorage still light up the orbs (same fallback as the table).
+  // Empty projects never show scores — even if stale local history exists.
+  const latest =
+    !isEmptyProject && qualityHistory.length > 0
+      ? qualityHistory[qualityHistory.length - 1]
+      : null;
+  const qualityValue = isEmptyProject
+    ? null
+    : latest != null
       ? latest.overall
       : typeof project.qualityScore === 'number'
         ? project.qualityScore
         : null;
   const scoreTier = qualityValue != null ? getNumericScoreTier(qualityValue) : null;
-  const lintLetter =
-    latest != null
+  const lintLetter = isEmptyProject
+    ? null
+    : latest != null
       ? latest.grade ?? letterGradeFromOverallPercent(latest.overall)
       : project.qualityGrade?.trim() ||
         (qualityValue != null ? letterGradeFromOverallPercent(qualityValue) : null);
@@ -86,6 +96,7 @@ export function ProjectsDashboardProjectCard({
   const orbBase =
     'mt-1 inline-flex h-10 w-10 items-center justify-center rounded-full border-2 font-mono text-xs font-semibold tabular-nums';
   const orbNeutral = 'border-gray-300 text-gray-400 dark:border-gray-600';
+  const versionsLabel = `${versionsCount} version${versionsCount === 1 ? '' : 's'}`;
 
   return (
     <article
@@ -165,70 +176,99 @@ export function ProjectsDashboardProjectCard({
 
           <p className="mt-3 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">{summaryLine}</p>
 
-          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Quality
-              </p>
-              {qualityValue != null ? (
-                <button
-                  type="button"
-                  className={cn(
-                    orbBase,
-                    scoreOrbBorderClass(scoreTier!.band),
-                    scoreTier!.textClass,
-                    'hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30'
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenQualityHistory();
-                  }}
-                  title="Open quality score history"
-                >
-                  {qualityValue}
-                </button>
-              ) : (
-                <span className={cn(orbBase, orbNeutral)}>—</span>
-              )}
-            </div>
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Lint
-              </p>
-              {lintLetter ? (
-                <button
-                  type="button"
-                  className={cn(
-                    orbBase,
-                    scoreOrbBorderClass(scoreTier?.band ?? null),
-                    scoreTier?.textClass ?? 'text-gray-500 dark:text-gray-400',
-                    'hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30'
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenLintReport();
-                  }}
-                  title="Open lint report"
-                >
-                  {lintLetter}
-                </button>
-              ) : (
-                <span className={cn(orbBase, orbNeutral)}>—</span>
-              )}
-            </div>
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Debt
-              </p>
-              <span
-                className={cn(orbBase, orbNeutral)}
-                title="Technical debt (not yet computed)"
-                aria-label="Technical debt not yet computed"
+          {isEmptyProject ? (
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <p
+                className="text-xs font-medium text-gray-500 dark:text-gray-400"
+                data-testid="project-card-empty"
               >
-                —
-              </span>
+                Empty project
+              </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                <span className="font-semibold font-mono tabular-nums text-gray-700 dark:text-gray-200">
+                  0
+                </span>{' '}
+                versions
+              </p>
             </div>
-          </div>
+          ) : (
+            <div className="mt-4 flex items-end gap-3">
+              <div className="grid flex-1 grid-cols-3 gap-2 text-center">
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Quality
+                  </p>
+                  {qualityValue != null ? (
+                    <button
+                      type="button"
+                      className={cn(
+                        orbBase,
+                        scoreOrbBorderClass(scoreTier!.band),
+                        scoreTier!.textClass,
+                        'hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30'
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenQualityHistory();
+                      }}
+                      title="Open quality score history"
+                    >
+                      {qualityValue}
+                    </button>
+                  ) : (
+                    <span className={cn(orbBase, orbNeutral)}>—</span>
+                  )}
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Lint
+                  </p>
+                  {lintLetter ? (
+                    <button
+                      type="button"
+                      className={cn(
+                        orbBase,
+                        scoreOrbBorderClass(scoreTier?.band ?? null),
+                        scoreTier?.textClass ?? 'text-gray-500 dark:text-gray-400',
+                        'hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30'
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenLintReport();
+                      }}
+                      title="Open lint report"
+                    >
+                      {lintLetter}
+                    </button>
+                  ) : (
+                    <span className={cn(orbBase, orbNeutral)}>—</span>
+                  )}
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Debt
+                  </p>
+                  <span
+                    className={cn(orbBase, orbNeutral)}
+                    title="Technical debt (not yet computed)"
+                    aria-label="Technical debt not yet computed"
+                  >
+                    —
+                  </span>
+                </div>
+              </div>
+              <p
+                className="shrink-0 pb-1 text-right text-xs text-gray-400 dark:text-gray-500"
+                data-testid="project-card-versions-count"
+                title={versionsLabel}
+              >
+                <span className="font-semibold font-mono tabular-nums text-gray-700 dark:text-gray-200">
+                  {versionsCount}
+                </span>{' '}
+                {versionsCount === 1 ? 'version' : 'versions'}
+              </p>
+            </div>
+          )}
 
           <div className="mt-4 flex items-center gap-2">
             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-500 text-[10px] font-semibold text-white ring-2 ring-white dark:ring-gray-800">

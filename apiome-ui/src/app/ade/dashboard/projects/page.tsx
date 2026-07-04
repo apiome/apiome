@@ -144,9 +144,11 @@ interface Project {
   creator_name: string;
   creator_email: string;
   metadata?: ProjectMetadata;
-  /** Server-captured quality score of the project's latest revision (#3609), camelCase from REST. */
+  /** Mean quality score across the project's versions (#3609), camelCase from REST. */
   qualityScore?: number | null;
   qualityGrade?: string | null;
+  /** Live version count from the server summary (0 = empty project). */
+  versionsCount?: number;
 }
 
 function ProjectsSortTh({
@@ -419,10 +421,15 @@ const Projects = () => {
   const latestQualityByProjectId = useMemo(() => {
     const out: Record<string, number | null> = {};
     for (const p of projects) {
+      // Empty projects have no version summary — never surface a score for sorting/averages.
+      if ((p.versionsCount ?? 0) === 0) {
+        out[p.id] = null;
+        continue;
+      }
       const qh = projectQualityHistoryMap[p.id] ?? [];
       const last = qh.length > 0 ? qh[qh.length - 1] : null;
-      // Prefer the browser-local trend's latest score; fall back to the server-captured score so
-      // imports made outside this browser (e.g. the CLI) still sort/score/average correctly (#3609).
+      // Prefer the browser-local trend's latest score; fall back to the server version-summary
+      // score so imports made outside this browser (e.g. the CLI) still sort/score correctly.
       out[p.id] =
         last != null
           ? last.overall
@@ -1105,10 +1112,21 @@ const Projects = () => {
                     onSortClick={handleProjectsSortHeaderClick}
                     className={`${dashboardThClass} w-[11rem]`}
                     testId="projects-sort-quality"
-                    ariaLabel="Sort by latest quality score"
+                    ariaLabel="Sort by version-summary quality score"
                   >
                     <TrendingUp className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
                     Quality trend
+                  </ProjectsSortTh>
+                  <ProjectsSortTh
+                    column="versions"
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                    onSortClick={handleProjectsSortHeaderClick}
+                    className={`${dashboardThClass} w-28`}
+                    testId="projects-sort-versions"
+                    ariaLabel="Sort by version count"
+                  >
+                    Versions
                   </ProjectsSortTh>
                   <ProjectsSortTh
                     column="status"
@@ -1213,6 +1231,18 @@ const Projects = () => {
                     </td>
                     <td className="w-[11rem] max-w-[11rem] px-6 py-4 align-middle whitespace-nowrap">
                       {(() => {
+                        const versionsCount = project.versionsCount ?? 0;
+                        if (versionsCount === 0) {
+                          return (
+                            <span
+                              className="text-xs font-medium text-gray-500 dark:text-gray-400"
+                              title="This project has no versions yet"
+                              data-testid="projects-table-empty"
+                            >
+                              Empty project
+                            </span>
+                          );
+                        }
                         const qh = projectQualityHistoryMap[project.id] ?? [];
                         const latest = qh.length > 0 ? qh[qh.length - 1] : null;
                         const tier = latest ? getNumericScoreTier(latest.overall) : null;
@@ -1226,13 +1256,13 @@ const Projects = () => {
                               </span>
                             );
                           }
-                          // Server-captured score (e.g. a CLI/server import) with no browser-local
+                          // Version-summary score (mean across revisions) with no browser-local
                           // trend history — show a static badge instead of a sparkline.
                           const serverTier = getNumericScoreTier(serverScore);
                           return (
                             <span
                               className={`inline-flex items-center gap-1 text-sm font-semibold tabular-nums leading-none ${serverTier?.textClass ?? ''}`}
-                              title="Quality score captured at import"
+                              title="Mean quality score across project versions"
                             >
                               {serverScore}
                               {project.qualityGrade ? (
@@ -1263,6 +1293,15 @@ const Projects = () => {
                           </button>
                         );
                       })()}
+                    </td>
+                    <td className="w-28 px-6 py-4 align-middle whitespace-nowrap">
+                      <span
+                        className="font-mono text-sm font-semibold tabular-nums text-gray-900 dark:text-white"
+                        data-testid="projects-table-versions-count"
+                        title={`${project.versionsCount ?? 0} version${(project.versionsCount ?? 0) === 1 ? '' : 's'}`}
+                      >
+                        {project.versionsCount ?? 0}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col gap-2">

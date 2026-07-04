@@ -6,6 +6,7 @@ export type ProjectsDashboardSortColumn =
   | 'name'
   | 'description'
   | 'quality'
+  | 'versions'
   | 'status'
   | 'creator'
   | 'created'
@@ -26,6 +27,7 @@ export type ProjectSortRow = {
   creator_email: string;
   metadata?: { summary?: string };
   slug?: string;
+  versionsCount?: number;
 };
 
 function statusTier(p: ProjectSortRow): number {
@@ -73,6 +75,12 @@ export function compareProjectsDashboardRows(
       if (bNull) return -1;
       if (latestQualityA === latestQualityB) return 0;
       return latestQualityA < latestQualityB ? -dir : dir;
+    }
+    case 'versions': {
+      const va = a.versionsCount ?? 0;
+      const vb = b.versionsCount ?? 0;
+      if (va === vb) return 0;
+      return va < vb ? -dir : dir;
     }
     case 'status': {
       const ta = statusTier(a);

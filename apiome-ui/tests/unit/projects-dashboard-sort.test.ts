@@ -16,6 +16,7 @@ const base = (over: Partial<ProjectSortRow>): ProjectSortRow => ({
   creator_email: over.creator_email ?? 'a@x.com',
   metadata: over.metadata,
   slug: over.slug,
+  versionsCount: over.versionsCount,
 });
 
 describe('compareProjectsDashboardRows', () => {
@@ -42,6 +43,15 @@ describe('compareProjectsDashboardRows', () => {
     expect(compareProjectsDashboardRows(a, b, 'quality', 'desc', null, 50)).toBeGreaterThan(0);
     expect(compareProjectsDashboardRows(a, b, 'quality', 'asc', 10, 50)).toBeLessThan(0);
     expect(compareProjectsDashboardRows(b, a, 'quality', 'desc', 50, 10)).toBeLessThan(0);
+  });
+
+  it('sorts by versionsCount', () => {
+    const few = base({ id: 'a', versionsCount: 2 });
+    const many = base({ id: 'b', versionsCount: 11 });
+    const empty = base({ id: 'c', versionsCount: 0 });
+    expect(compareProjectsDashboardRows(few, many, 'versions', 'asc', null, null)).toBeLessThan(0);
+    expect(compareProjectsDashboardRows(few, many, 'versions', 'desc', null, null)).toBeGreaterThan(0);
+    expect(compareProjectsDashboardRows(empty, few, 'versions', 'asc', null, null)).toBeLessThan(0);
   });
 
   it('sorts by status tier then name', () => {

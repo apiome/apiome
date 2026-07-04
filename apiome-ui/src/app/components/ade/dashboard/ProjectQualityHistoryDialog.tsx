@@ -89,9 +89,11 @@ function QualityIssueList({ issues }: { issues: StoredQualityIssue[] }) {
               )}
               aria-hidden
             />
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 overflow-hidden">
               <div className="mb-1 flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-gray-900 dark:text-white">{issue.message}</span>
+                <span className="break-words text-sm font-medium text-gray-900 dark:text-white">
+                  {issue.message}
+                </span>
                 <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', severityBadgeClass(issue.severity))}>
                   {issue.severity}
                 </span>
@@ -100,10 +102,12 @@ function QualityIssueList({ issues }: { issues: StoredQualityIssue[] }) {
                 </span>
               </div>
               {issue.suggestion ? (
-                <p className="text-sm text-gray-600 dark:text-gray-400">{issue.suggestion}</p>
+                <p className="break-words text-sm text-gray-600 dark:text-gray-400">{issue.suggestion}</p>
               ) : null}
               {issue.path ? (
-                <p className="mt-2 font-mono text-xs text-gray-500 dark:text-gray-400">{issue.path}</p>
+                <p className="mt-2 break-all font-mono text-xs text-gray-500 dark:text-gray-400">
+                  {issue.path}
+                </p>
               ) : null}
             </div>
           </div>
@@ -146,11 +150,11 @@ function LintFindingList({ findings }: { findings: StoredLintFinding[] }) {
             ) : (
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
             )}
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 overflow-hidden">
               <div className="mb-1 flex flex-wrap items-center gap-2">
                 <span
                   className={cn(
-                    'text-sm font-medium',
+                    'break-words text-sm font-medium',
                     finding.type === 'error'
                       ? 'text-red-900 dark:text-red-200'
                       : 'text-amber-900 dark:text-amber-200'
@@ -173,7 +177,9 @@ function LintFindingList({ findings }: { findings: StoredLintFinding[] }) {
                 </span>
               </div>
               {finding.path ? (
-                <p className="font-mono text-xs text-gray-600 dark:text-gray-400">{finding.path}</p>
+                <p className="break-all font-mono text-xs text-gray-600 dark:text-gray-400">
+                  {finding.path}
+                </p>
               ) : null}
             </div>
           </div>
@@ -241,236 +247,243 @@ export function ProjectQualityHistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto" aria-describedby={undefined}>
-        <DialogHeader>
-          <DialogTitle>Project scores — {projectName}</DialogTitle>
-        </DialogHeader>
+      <DialogContent
+        className="flex h-[90vh] max-h-[90vh] w-full min-w-0 max-w-2xl flex-col gap-0 overflow-hidden p-0"
+        aria-describedby={undefined}
+      >
+        <div className="shrink-0 space-y-4 border-b border-gray-200 px-6 pb-4 pt-6 dark:border-gray-700">
+          <DialogHeader className="pr-8">
+            <DialogTitle className="truncate">Project scores — {projectName}</DialogTitle>
+          </DialogHeader>
 
-        <div
-          className="flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-700"
-          role="tablist"
-          aria-label="Project score views"
-        >
-          {SECTIONS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              aria-selected={section === item.id}
-              className={cn(
-                'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                section === item.id
-                  ? 'bg-white text-indigo-600 shadow-sm dark:bg-gray-600 dark:text-indigo-400'
-                  : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-              )}
-              onClick={() => setSection(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
+          <div
+            className="flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-700"
+            role="tablist"
+            aria-label="Project score views"
+          >
+            {SECTIONS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={section === item.id}
+                className={cn(
+                  'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                  section === item.id
+                    ? 'bg-white text-indigo-600 shadow-sm dark:bg-gray-600 dark:text-indigo-400'
+                    : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                )}
+                onClick={() => setSection(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {section === 'trend' ? (
-          <>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              OpenAPI quality scores (0–100) recorded in this browser when an import finishes successfully. History is
-              stored locally and is not synced across devices.
-            </p>
-
-            {history.length === 0 ? (
-              <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-500">
-                No snapshots yet. Import a specification to record the first score.
+        <div className="min-h-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto px-6 py-4">
+          {section === 'trend' ? (
+            <>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                OpenAPI quality scores (0–100) recorded in this browser when an import finishes successfully. History is
+                stored locally and is not synced across devices.
               </p>
-            ) : (
-              <>
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/40">
-                  <svg
-                    viewBox={`0 0 ${w} ${h}`}
-                    className="h-40 w-full text-indigo-500 dark:text-indigo-400"
-                    role="img"
-                    aria-label={`Quality trend from ${first ? formatShortDate(first.recordedAt) : ''} to ${last ? formatShortDate(last.recordedAt) : ''}`}
-                  >
-                    <title>Overall quality {overalls.join(', ')}</title>
-                    {[0, 25, 50, 75, 100].map((tick) => {
-                      const y = pad + ((100 - tick) / 100) * innerH;
-                      return (
-                        <g key={tick}>
-                          <line
-                            x1={pad}
-                            y1={y}
-                            x2={pad + innerW}
-                            y2={y}
-                            className="stroke-gray-200 dark:stroke-gray-700"
-                            strokeWidth={1}
-                          />
-                          <text x={4} y={y + 4} className="fill-gray-500 text-[10px] font-medium">
-                            {tick}
-                          </text>
-                        </g>
-                      );
-                    })}
-                    <defs>
-                      <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="currentColor" stopOpacity={0.2} />
-                        <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    {areaD ? <path d={areaD} fill={`url(#${gradId})`} /> : null}
-                    {lineD ? (
-                      <path
-                        d={lineD}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                        vectorEffect="non-scaling-stroke"
-                      />
-                    ) : null}
-                    {pts.map((p, i) => {
-                      const cx = pad + (p.x / 100) * innerW;
-                      const cy = pad + (p.y / 100) * innerH;
-                      return (
-                        <circle
-                          key={`${p.x}-${p.y}-${i}`}
-                          cx={cx}
-                          cy={cy}
-                          r={4}
-                          className="fill-white stroke-current dark:fill-gray-900"
-                          strokeWidth={2}
+
+              {history.length === 0 ? (
+                <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-500">
+                  No snapshots yet. Import a specification to record the first score.
+                </p>
+              ) : (
+                <>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+                    <svg
+                      viewBox={`0 0 ${w} ${h}`}
+                      className="h-40 w-full max-w-full text-indigo-500 dark:text-indigo-400"
+                      role="img"
+                      aria-label={`Quality trend from ${first ? formatShortDate(first.recordedAt) : ''} to ${last ? formatShortDate(last.recordedAt) : ''}`}
+                    >
+                      <title>Overall quality {overalls.join(', ')}</title>
+                      {[0, 25, 50, 75, 100].map((tick) => {
+                        const y = pad + ((100 - tick) / 100) * innerH;
+                        return (
+                          <g key={tick}>
+                            <line
+                              x1={pad}
+                              y1={y}
+                              x2={pad + innerW}
+                              y2={y}
+                              className="stroke-gray-200 dark:stroke-gray-700"
+                              strokeWidth={1}
+                            />
+                            <text x={4} y={y + 4} className="fill-gray-500 text-[10px] font-medium">
+                              {tick}
+                            </text>
+                          </g>
+                        );
+                      })}
+                      <defs>
+                        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="currentColor" stopOpacity={0.2} />
+                          <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      {areaD ? <path d={areaD} fill={`url(#${gradId})`} /> : null}
+                      {lineD ? (
+                        <path
+                          d={lineD}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2.5}
+                          vectorEffect="non-scaling-stroke"
                         />
-                      );
-                    })}
-                  </svg>
-                  <div className="mt-2 flex justify-between px-1 text-xs text-gray-500 dark:text-gray-400">
-                    <span>{first ? formatShortDate(first.recordedAt) : ''}</span>
-                    <span>{last ? formatShortDate(last.recordedAt) : ''}</span>
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-900/50 dark:text-gray-400">
-                      <tr>
-                        <th className="px-3 py-2 font-semibold">Recorded</th>
-                        <th className="px-3 py-2 font-semibold">Overall</th>
-                        <th className="px-3 py-2 font-semibold">Grade</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                      {[...history].reverse().map((row, idx) => {
-                        const tier = getNumericScoreTier(row.overall);
+                      ) : null}
+                      {pts.map((p, i) => {
+                        const cx = pad + (p.x / 100) * innerW;
+                        const cy = pad + (p.y / 100) * innerH;
                         return (
-                          <tr key={`${row.recordedAt}-${row.overall}-${idx}`}>
-                            <td className="whitespace-nowrap px-3 py-2 text-gray-700 dark:text-gray-300">
-                              {formatShortDate(row.recordedAt)}
-                            </td>
-                            <td className="px-3 py-2">
-                              <span className={`font-semibold tabular-nums ${tier.textClass}`}>{row.overall}</span>
-                            </td>
-                            <td className="px-3 py-2 text-gray-800 dark:text-gray-200">{row.grade}</td>
-                          </tr>
+                          <circle
+                            key={`${p.x}-${p.y}-${i}`}
+                            cx={cx}
+                            cy={cy}
+                            r={4}
+                            className="fill-white stroke-current dark:fill-gray-900"
+                            strokeWidth={2}
+                          />
                         );
                       })}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-          </>
-        ) : null}
-
-        {section === 'quality' ? (
-          <>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Weighted quality breakdown and improvement suggestions from the most recent import that stored a detailed
-              report.
-            </p>
-            {!reportSnapshot ? (
-              <p className="py-8 text-center text-sm text-gray-500">No import scores recorded yet.</p>
-            ) : !snapshotHasQualityReport(reportSnapshot) ? (
-              <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                This snapshot only records the overall score ({reportSnapshot.overall}). Import again to capture category
-                breakdown and quality reasons.
-              </p>
-            ) : (
-              <>
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/40">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        From import on {formatShortDate(reportSnapshot.recordedAt)}
-                      </p>
-                      <p className={`mt-1 text-2xl font-bold tabular-nums ${reportTier?.textClass ?? ''}`}>
-                        {reportSnapshot.overall}
-                        <span className="ml-2 text-base font-semibold text-gray-600 dark:text-gray-300">
-                          grade {reportSnapshot.grade}
-                        </span>
-                      </p>
+                    </svg>
+                    <div className="mt-2 flex justify-between px-1 text-xs text-gray-500 dark:text-gray-400">
+                      <span>{first ? formatShortDate(first.recordedAt) : ''}</span>
+                      <span>{last ? formatShortDate(last.recordedAt) : ''}</span>
                     </div>
                   </div>
-                  {(reportSnapshot.categories?.length ?? 0) > 0 ? (
-                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      {reportSnapshot.categories!.map((cat) => {
-                        const tier = getNumericScoreTier(cat.percent);
-                        return (
-                          <div
-                            key={cat.id}
-                            className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <span className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                {cat.label}
-                              </span>
-                              <span className={`text-sm font-bold tabular-nums ${tier.textClass}`}>
-                                {cat.points}/{cat.maxPoints}
-                              </span>
+
+                  <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                    <table className="w-full table-fixed text-sm">
+                      <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-900/50 dark:text-gray-400">
+                        <tr>
+                          <th className="w-[45%] px-3 py-2 font-semibold">Recorded</th>
+                          <th className="w-[30%] px-3 py-2 font-semibold">Overall</th>
+                          <th className="w-[25%] px-3 py-2 font-semibold">Grade</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {[...history].reverse().map((row, idx) => {
+                          const tier = getNumericScoreTier(row.overall);
+                          return (
+                            <tr key={`${row.recordedAt}-${row.overall}-${idx}`}>
+                              <td className="truncate px-3 py-2 text-gray-700 dark:text-gray-300">
+                                {formatShortDate(row.recordedAt)}
+                              </td>
+                              <td className="px-3 py-2">
+                                <span className={`font-semibold tabular-nums ${tier.textClass}`}>{row.overall}</span>
+                              </td>
+                              <td className="px-3 py-2 text-gray-800 dark:text-gray-200">{row.grade}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </>
+          ) : null}
+
+          {section === 'quality' ? (
+            <>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Weighted quality breakdown and improvement suggestions from the most recent import that stored a detailed
+                report.
+              </p>
+              {!reportSnapshot ? (
+                <p className="py-8 text-center text-sm text-gray-500">No import scores recorded yet.</p>
+              ) : !snapshotHasQualityReport(reportSnapshot) ? (
+                <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                  This snapshot only records the overall score ({reportSnapshot.overall}). Import again to capture category
+                  breakdown and quality reasons.
+                </p>
+              ) : (
+                <>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          From import on {formatShortDate(reportSnapshot.recordedAt)}
+                        </p>
+                        <p className={`mt-1 text-2xl font-bold tabular-nums ${reportTier?.textClass ?? ''}`}>
+                          {reportSnapshot.overall}
+                          <span className="ml-2 text-base font-semibold text-gray-600 dark:text-gray-300">
+                            grade {reportSnapshot.grade}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                    {(reportSnapshot.categories?.length ?? 0) > 0 ? (
+                      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {reportSnapshot.categories!.map((cat) => {
+                          const tier = getNumericScoreTier(cat.percent);
+                          return (
+                            <div
+                              key={cat.id}
+                              className="min-w-0 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <span className="min-w-0 break-words text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                  {cat.label}
+                                </span>
+                                <span className={`shrink-0 text-sm font-bold tabular-nums ${tier.textClass}`}>
+                                  {cat.points}/{cat.maxPoints}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{cat.percent}% of category</p>
                             </div>
-                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{cat.percent}% of category</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-                </div>
-                <QualityIssueList issues={reportSnapshot.issues ?? []} />
-              </>
-            )}
-          </>
-        ) : null}
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
+                  <QualityIssueList issues={reportSnapshot.issues ?? []} />
+                </>
+              )}
+            </>
+          ) : null}
 
-        {section === 'lint' ? (
-          <>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Structural validation errors and warnings from the most recent import that stored lint findings. The lint
-              letter grade on the project card is derived from the overall quality score.
-            </p>
-            {!reportSnapshot ? (
-              <p className="py-8 text-center text-sm text-gray-500">No import scores recorded yet.</p>
-            ) : !snapshotHasLintReport(reportSnapshot) ? (
-              <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                This snapshot only records the overall score ({reportSnapshot.overall}). Import again to capture lint
-                findings.
+          {section === 'lint' ? (
+            <>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Structural validation errors and warnings from the most recent import that stored lint findings. The lint
+                letter grade on the project card is derived from the overall quality score.
               </p>
-            ) : (
-              <>
-                <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm dark:border-gray-700 dark:bg-gray-900/40">
-                  <span className="text-gray-600 dark:text-gray-400">From import on </span>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {formatShortDate(reportSnapshot.recordedAt)}
-                  </span>
-                  <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {(reportSnapshot.lintFindings ?? []).filter((f) => f.type === 'error').length} errors
-                  </span>
-                  <span className="text-gray-500 dark:text-gray-400">, </span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {(reportSnapshot.lintFindings ?? []).filter((f) => f.type === 'warning').length} warnings
-                  </span>
-                </div>
-                <LintFindingList findings={reportSnapshot.lintFindings ?? []} />
-              </>
-            )}
-          </>
-        ) : null}
+              {!reportSnapshot ? (
+                <p className="py-8 text-center text-sm text-gray-500">No import scores recorded yet.</p>
+              ) : !snapshotHasLintReport(reportSnapshot) ? (
+                <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                  This snapshot only records the overall score ({reportSnapshot.overall}). Import again to capture lint
+                  findings.
+                </p>
+              ) : (
+                <>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm dark:border-gray-700 dark:bg-gray-900/40">
+                    <span className="text-gray-600 dark:text-gray-400">From import on </span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {formatShortDate(reportSnapshot.recordedAt)}
+                    </span>
+                    <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {(reportSnapshot.lintFindings ?? []).filter((f) => f.type === 'error').length} errors
+                    </span>
+                    <span className="text-gray-500 dark:text-gray-400">, </span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {(reportSnapshot.lintFindings ?? []).filter((f) => f.type === 'warning').length} warnings
+                    </span>
+                  </div>
+                  <LintFindingList findings={reportSnapshot.lintFindings ?? []} />
+                </>
+              )}
+            </>
+          ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );

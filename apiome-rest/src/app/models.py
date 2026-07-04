@@ -1246,10 +1246,12 @@ class ProjectSchema(BaseModel):
         None,
         serialization_alias="changeReportTemplateVersionId",
     )
-    # Captured quality score of the project's latest revision (#3609 follow-up). Populated from the
-    # score persisted onto a revision at import; NULL until a revision has been scored.
+    # Mean quality score across the project's non-deleted versions (#3609 follow-up). Populated from
+    # scores persisted onto revisions at import; NULL when the project has no scored versions.
     quality_score: Optional[int] = Field(None, serialization_alias="qualityScore")
     quality_grade: Optional[str] = Field(None, serialization_alias="qualityGrade")
+    # Count of non-deleted versions in the project (0 = empty project — no score orbs in the UI).
+    versions_count: int = Field(0, serialization_alias="versionsCount")
     # Project-vs-Catalog boundary (MFI-23.1): true for publishable OpenAPI/Swagger Projects,
     # false for non-publishable catalog items. Existing projects default to publishable.
     publishable: bool = True
