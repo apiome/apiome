@@ -2,6 +2,8 @@
 
 > **Status:** ✅ **Issues filed on `objectified-project/objectified`** — umbrella **#3813**, epics **#3814–#3833** (MFX-EPIC-1…20), and 84 issues **#3834–#3917** (105 total). Headings below carry their `#number`; epics track children as sub-issues under umbrella #3813 (linked beneath export umbrella #3494).
 > **Gap-coverage extension (2026-07-01):** ✅ epics **MFX-EPIC-21…30** (+ add-ons **MFX-14.5**, **MFX-19.6**) filed as **#4125–#4183** (59 more — 164 total) to cover modern data-schema, mainframe, EDI, and XML-schema targets. See *Gap-coverage epics* below.
+> **Gap-coverage extension, second pass (2026-07-03):** ✅ epics **MFX-EPIC-31…40** (+ add-ons **MFX-9.5**, **MFX-12.6**, **MFX-13.6**, **MFX-21.6**, **MFX-24.6**) filed as **#4288–#4346** (59 more — 223 total) to mirror the rest of the import catalog (Postman collections, MCP/A2A/agentic-web interfaces, OpenRPC, CloudEvents/xRegistry, FIX Orchestra), add the database & data-lake schema families (SQL DDL/DBML/Prisma/Liquibase; Parquet/BigQuery/Spark/Iceberg), and close functional gaps (git/webhook/object-storage delivery, batch/presets/scheduled export, the MCP export surface). See *Gap-coverage epics — second pass* below.
+> **Export Studio UI (2026-07-03):** ✅ epics **MFX-EPIC-41…46** filed as **#4347–#4383** (37 more — 260 total) in `docs/ROADMAP_MULTI_FORMAT_EXPORT_UI.md` — Export Studio shell, Verify workbench, Monaco viewer, test-drive tooling, visualizations, and enterprise operations UX (sub-issues under umbrella **#3813**).
 > **Issue ID prefix:** `MFX` (Multi-Format eXport). Epics `MFX-EPIC-n`, issues `MFX-n.m`.
 > **GitHub title format:** `apiome: [<epic>.<issue>] <title>`.
 > **Recommended labels:** new `roadmap-multi-format-export` + reuse `export`, `multi-protocol`,
@@ -135,6 +137,13 @@ competitor offers: **COBOL copybook** (23) and **EDI X12/EDIFACT** (24), plus **
 **FHIR/HL7 v2** (26), **ASN.1** (27). v3 tail: **OMG IDL** (28), **WADL/Google Discovery** (29),
 **FlatBuffers/Cap'n Proto** (30).
 
+**Second-pass gap targets (epics 31–40, filed 2026-07-03):** **Postman/Insomnia collections** (31),
+**agent interfaces** (32 — MCP tool definitions / A2A Agent Card / agents.json, the MFI-EPIC-18
+mirror and the product's stated differentiator), and the **MCP export surface** (40) lead; then
+**OpenRPC** (33), **CloudEvents/xRegistry** (34), the **SQL DDL family** (35), and the functional
+pair **delivery channels** (38) + **batch/presets/scheduled export** (39). v3: data-lake schemas
+(36), FIX Orchestra (37).
+
 ---
 
 ## 3. Epics overview
@@ -171,8 +180,19 @@ competitor offers: **COBOL copybook** (23) and **EDI X12/EDIFACT** (24), plus **
 | MFX-EPIC-28 | OMG IDL emitter (CORBA/DDS) · #4167 | 28.1–28.4 | ○ v3 |
 | MFX-EPIC-29 | Legacy REST descriptors (WADL & Discovery) · #4172 | 29.1–29.4 | ○ v3 |
 | MFX-EPIC-30 | Serialization IDLs (FlatBuffers & Cap'n Proto) · #4177 | 30.1–30.4 | ○ v3 |
+| MFX-EPIC-31 | **Postman / Insomnia** collection emitter · #4288 | 31.1–31.5 | ○ v2 (front) |
+| MFX-EPIC-32 | **Agent interfaces** (MCP / A2A / agentic-web) · #4294 | 32.1–32.5 | ○ v2 (front) |
+| MFX-EPIC-33 | OpenRPC emitter (JSON-RPC 2.0) · #4300 | 33.1–33.4 | ○ v2 |
+| MFX-EPIC-34 | CloudEvents + xRegistry export · #4305 | 34.1–34.4 | ○ v2 |
+| MFX-EPIC-35 | **SQL DDL & database schemas** (DDL/DBML/Prisma/Liquibase) · #4310 | 35.1–35.5 | ○ v2 |
+| MFX-EPIC-36 | Data-lake schemas (Parquet/BigQuery/Spark/Iceberg) · #4316 | 36.1–36.5 | ○ v3 |
+| MFX-EPIC-37 | FIX Orchestra emitter · #4322 | 37.1–37.4 | ○ v3 |
+| MFX-EPIC-38 | **Export delivery channels** (git/webhook/S3) · #4327 | 38.1–38.4 | ○ v2 |
+| MFX-EPIC-39 | **Batch, multi-target, presets & scheduled** · #4332 | 39.1–39.5 | ○ v2 |
+| MFX-EPIC-40 | **MCP export surface** · #4338 | 40.1–40.3 | ○ v2 (front) |
 
-**Total: 30 epics, ~133 issues** (gap-coverage epics 21–30 + add-ons 14.5/19.6 filed 2026-07-01 as #4125–#4183).
+**Total: 40 epics, ~192 issues** (gap-coverage epics 21–30 + add-ons 14.5/19.6 filed 2026-07-01 as
+#4125–#4183; second-pass epics 31–40 + add-ons 9.5/12.6/13.6/21.6/24.6 filed 2026-07-03 as #4288–#4346).
 
 ### Fidelity-warning UX (apiome-ui **and** apiome-browse)
 
@@ -525,6 +545,7 @@ RPC streaming, event channels, gRPC field numbers; can express oneOf/anyOf/discr
 | 9.2 | OpenAPI fidelity pack | what OpenAPI can't represent (events/RPC streaming) | export,multi-protocol,mvp | N | Y | S | apiome-rest |
 | 9.3 | Validate + round-trip | re-import via MFI OpenAPI parser; diff | export,validation,mvp | Y | Y | S | apiome-rest |
 | 9.4 | OpenAPI target card + CLI + fixtures | UI/CLI target + round-trip fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
+| 9.5 · #4342 | OpenAPI 3.2 output option | emit OAS 3.2 (webhooks/security); 3.2→3.1 downgrade rules; coordinate #2662 | export,multi-protocol,rest,openapi | Y | N | M | apiome-rest |
 
 ### MFX-9.1 — OpenAPI emitter  ·  **#3866**
 - **Problem.** Need the canonical REST emitter (and the reference implementation of the SPI).
@@ -604,6 +625,7 @@ Sources: https://protobuf.dev/ · https://buf.build/docs/
 | 12.3 | Protobuf fidelity pack | unions/nullability/constraints/inheritance loss | export,multi-protocol,mvp | N | Y | M | apiome-rest |
 | 12.4 | Multi-file packaging + validate | per-package files + imports; `buf build` validate | export,rest,validation,mvp | Y | Y | M | apiome-rest |
 | 12.5 | gRPC target card + CLI + fixtures | UI/CLI + round-trip fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
+| 12.6 · #4343 | Connect-RPC / gRPC-Gateway flavor options | `google.api.http` annotations from REST bindings (mirror MFI-19.5) | export,multi-protocol | Y | N | S | apiome-rest |
 
 ### MFX-12.1 — Protobuf emitter  ·  **#3879**
 - **Solution / Scope.** Map services→`service`, operations→`rpc` (streaming flags), types→`message`/`enum`, fields→typed fields. Emit `.proto` (and optionally a `FileDescriptorSet`). Map canonical types → proto scalar/message types; arrays→`repeated`; maps→`map`; optionals→proto3 `optional`.
@@ -642,6 +664,7 @@ Sources: https://spec.graphql.org/September2025/ · `graphql-core` `print_schema
 | 13.3 | GraphQL fidelity pack | HTTP semantics DROP; constraints→custom scalars | export,multi-protocol,mvp | N | Y | S | apiome-rest |
 | 13.4 | Validate + round-trip | `build_schema` validate; re-import diff | export,validation,mvp | Y | Y | S | apiome-rest |
 | 13.5 | GraphQL target card + CLI + fixtures | UI/CLI + fixtures; supersede #221/#2214 | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
+| 13.6 · #4344 | Federation subgraph output mode | subgraph SDL w/ synthesized `@key` (SYNTH); rover composition check | export,multi-protocol | Y | N | M | apiome-rest |
 
 ### MFX-13.1 — GraphQL SDL emitter  ·  **#3884**
 - **Solution / Scope.** Map canonical types→GraphQL types (object/interface/union/enum/scalar), operations→`Query`/`Mutation` fields (read vs write heuristic), preserving nullability/list wrappers. Serialize via `graphql-core` `print_schema` (guarantees validity).
@@ -815,6 +838,7 @@ type model is JSON-Schema-based), so it is also the cheapest high-value emitter.
 | 21.3 · #4128 | JTD (RFC 8927) output mode | strict codegen-friendly sibling; heavy APPROX | export,multi-protocol,python | Y | N | S | apiome-rest |
 | 21.4 · #4129 | Validate + round-trip | metaschema check + re-import via MFI JSON Schema path | export,validation | Y | N | S | apiome-rest |
 | 21.5 · #4130 | Target card + CLI + fixtures | UI/CLI/browse + fixtures; feeds 19.6 | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
+| 21.6 · #4345 | Kubernetes CRD structural-schema output mode | $ref inline-expansion; CRD manifest wrap; kubeconform validate | export,multi-protocol,python,infrastructure | Y | N | M | apiome-rest |
 
 ## MFX-EPIC-22 — XML Schema (XSD) emitter (standalone) · v2-front  ·  **#4131**
 
@@ -858,6 +882,7 @@ reuses the critical-advisory tier proven on Avro.
 | 24.3 · #4147 | EDI fidelity pack | ops DROP; deep nesting flatten; lengths/codes SYNTH | export,multi-protocol,edi,python | N | N | M | apiome-rest |
 | 24.4 · #4148 | Validate emitted guides | structural + pyx12/bots spot-checks | export,validation,edi | Y | N | S | apiome-rest |
 | 24.5 · #4149 | Target cards + CLI + fixtures | X12 + EDIFACT cards, CLI, fixtures | export,ui,devex,edi | Y | N | S | apiome-ui,apiome-cli |
+| 24.6 · #4346 | UBL / Peppol BIS guide mode | UBL message guides atop 22.1 XSD mapping (mirror MFI-20.5) | export,multi-protocol,edi | Y | N | M | apiome-rest |
 
 ## MFX-EPIC-25 — Apache Thrift emitter · v2  ·  **#4150**
 
@@ -936,6 +961,168 @@ field-identity store (12.2/25.2); Cap'n Proto also needs a stable @0x file id (S
 
 ---
 
+# Gap-coverage epics — second pass (filed 2026-07-03) — import-mirror, collections, database & delivery
+
+> A second coverage review walked the roadmap against (a) the **import side's actual catalog** —
+> built-in sources (Postman) plus MFI-EPIC-18…21 candidates (#3970–#3996) — and (b) the loose
+> pre-MFX export issues never reconciled behind the Emitter SPI. It found the "targets mirror the
+> import set" promise broken for **Postman collections**, **agent interfaces** (MCP / A2A /
+> agentic-web — the product's own stated differentiator), **OpenRPC**, **CloudEvents/xRegistry**
+> (whose MFI twin explicitly promises "expose **as** xRegistry"), **FIX Orchestra**, and the entire
+> **database/data-lake schema family** (SQL DDL / DBML / Prisma / Liquibase; Parquet / BigQuery /
+> Spark / Iceberg) — plus three **functional** gaps: delivery stops at download/registry-push (no
+> git/webhook/object-storage), the reconcile table promises #2185 (batch) and #2330 (presets) with
+> no implementing issue, and the MCP server surface lost its export tools when #2866/#2867 were
+> superseded. Epics **31–40** (+ add-ons **MFX-9.5**, **12.6**, **13.6**, **21.6**, **24.6**) close
+> these. All emitter epics follow the standard template (emit → fidelity pack → validate → target
+> card/CLI/fixtures); types-only targets reuse the MFX-19.2 critical-advisory tier; targets without
+> an MFI importer validate via the MFX-5.1 alternate-validator seam.
+
+## MFX-EPIC-31 — Postman / Insomnia collection emitter · v2-front  ·  **#4288**
+
+Apiome imports Postman collections (built-in source; #2357) but can't export one — the
+most-requested consumer format, with five unreconciled pre-MFX asks (#1602, #1440, #1170, #1920,
+#1608). Schema→example synthesis is the fidelity story (APPROX/SYNTH, not lossless).
+
+| ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|---------|--------|----------|-----|-----------|------------------|
+| 31.1 · #4289 | Postman Collection v2.1 emitter | operations→requests/folders; schemas→example bodies (SYNTH) | export,multi-protocol,rest,python,integrations | N | N | M | apiome-rest |
+| 31.2 · #4290 | Collection fidelity pack | schemas→examples APPROX; events/streaming DROP | export,multi-protocol,python | N | N | S | apiome-rest |
+| 31.3 · #4291 | Insomnia / Bruno output modes | Insomnia v4 export + Bruno `.bru` zip (reconciles #1608) | export,multi-protocol,python,integrations | Y | N | S | apiome-rest |
+| 31.4 · #4292 | Validate + round-trip | collection-schema check + re-import via Postman source | export,validation | Y | N | S | apiome-rest |
+| 31.5 · #4293 | Target card + CLI + fixtures | cards + `apiome export postman`; supersede #1602/#1440/#1170/#1920 | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
+
+## MFX-EPIC-32 — Agent-interface emitters (MCP / A2A / agentic-web) · v2-front  ·  **#4294**
+
+The mirror of MFI-EPIC-18 (#3970): the import side catalogs MCP servers and A2A/ACP descriptors,
+but a cataloged API can't be handed *to* an agent as MCP tool definitions, an `agent-card.json`,
+or site manifests. The fastest path from "in the catalog" to "usable by an agent".
+
+| ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|---------|--------|----------|-----|-----------|------------------|
+| 32.1 · #4295 | MCP tool-definition emitter | operations→MCP tools (inputSchema via 21.1); server descriptor JSON | export,multi-protocol,mcp,agent-protocol,python | N | N | L | apiome-rest |
+| 32.2 · #4296 | A2A Agent Card emitter | model→`agent-card.json` (skills/capabilities/auth) | export,multi-protocol,agent-protocol,python | Y | N | M | apiome-rest |
+| 32.3 · #4297 | Agentic-web site manifests | agents.json / llms.txt over the published artifact set | export,multi-protocol,agent-protocol,browser,python | Y | N | M | apiome-rest,apiome-browse |
+| 32.4 · #4298 | Agent-interface fidelity packs | HTTP→tool-text APPROX; names SYNTH; tool-explosion guard | export,multi-protocol,agent-protocol,python | N | N | M | apiome-rest |
+| 32.5 · #4299 | Target cards + CLI + fixtures | `apiome export mcp|a2a`; round-trip via MFI-18 importers | export,ui,devex,mcp,agent-protocol | Y | N | S | apiome-ui,apiome-cli |
+
+## MFX-EPIC-33 — OpenRPC emitter (JSON-RPC 2.0) · v2  ·  **#4300**
+
+Mirrors MFI-19.1 (#3979): the de-facto blockchain/web3 API description. Pure JSON; cheap emitter
+reusing the 21.1 schema mapping.
+
+| ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|---------|--------|----------|-----|-----------|------------------|
+| 33.1 · #4301 | OpenRPC emitter | services/methods→openrpc.json; one-way→notifications | export,multi-protocol,rest,python | N | N | M | apiome-rest |
+| 33.2 · #4302 | OpenRPC fidelity pack | HTTP semantics DROP; streaming DROP; events→notification APPROX | export,multi-protocol,python | N | N | S | apiome-rest |
+| 33.3 · #4303 | Validate + round-trip | metaschema + re-import via MFI-19.1 | export,validation | Y | N | S | apiome-rest |
+| 33.4 · #4304 | Target card + CLI + fixtures | card + `apiome export openrpc` | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
+
+## MFX-EPIC-34 — CloudEvents + xRegistry export · v2  ·  **#4305**
+
+MFI-19.2 (#3980) explicitly promises apiome can "import from **and expose as** xRegistry"; the
+expose-as half had no owner. Emit registry documents *and* serve a read-only compliant endpoint.
+
+| ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|---------|--------|----------|-----|-----------|------------------|
+| 34.1 · #4306 | xRegistry document emitter | channels/messages/types→schema + message-definition registries | export,multi-protocol,registry,python | N | N | M | apiome-rest |
+| 34.2 · #4307 | Expose-as-xRegistry API façade | read-only xRegistry REST surface over published artifacts | export,registry,rest,browser,integrations | Y | N | L | apiome-rest,apiome-browse |
+| 34.3 · #4308 | Fidelity pack + validation | REST/RPC ops DROP (critical); validate vs xRegistry schemas | export,multi-protocol,validation,python | N | N | S | apiome-rest |
+| 34.4 · #4309 | Target card + CLI + fixtures | card + `apiome export xregistry` | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
+
+## MFX-EPIC-35 — SQL DDL & database-schema emitters · v2  ·  **#4310**
+
+The import side reverse-engineers SQL/live DBs/DBML/Prisma (#2355/#2356/#2358); nothing exports
+back. Supersedes closed #228/#108, reconciles #795 (Liquibase). Types-only target family; one
+relational projection, four serializations.
+
+| ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|---------|--------|----------|-----|-----------|------------------|
+| 35.1 · #4311 | SQL DDL emitter (ANSI + PG/MySQL) | types→CREATE TABLE; constraints→CHECK; nested→JSONB/child tables | export,multi-protocol,database,python | N | N | L | apiome-rest |
+| 35.2 · #4312 | DBML + Prisma output modes | same projection → dbml / schema.prisma (mirror of #2358) | export,multi-protocol,database,python | Y | N | M | apiome-rest |
+| 35.3 · #4313 | Liquibase / Flyway changelog mode | diff-based incremental changesets (reconciles #795) | export,multi-protocol,database,version-control,python | Y | N | M | apiome-rest |
+| 35.4 · #4314 | SQL fidelity pack | ops DROP (critical); projection SYNTH; constraints→CHECK mostly OK | export,multi-protocol,database,python | N | N | M | apiome-rest |
+| 35.5 · #4315 | Validate + card + CLI + fixtures | sqlglot per-dialect parse; `apiome export sql --dialect …` | export,validation,ui,devex | Y | N | S | apiome-rest,apiome-ui,apiome-cli |
+
+## MFX-EPIC-36 — Data-lake / analytics schema emitters · v3  ·  **#4316**
+
+Where API payloads land: Parquet/Arrow, BigQuery, Spark StructType, Iceberg. Iceberg reuses the
+MFX-12.2 persisted field-identity store for stable field IDs.
+
+| ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|---------|--------|----------|-----|-----------|------------------|
+| 36.1 · #4317 | Parquet / Arrow schema emitter | types→Arrow schemas (pyarrow); logical types | export,multi-protocol,database,analytics,python | N | N | M | apiome-rest |
+| 36.2 · #4318 | BigQuery + Spark schema modes | table-schema JSON + StructType DDL | export,multi-protocol,database,analytics,python | Y | N | M | apiome-rest |
+| 36.3 · #4319 | Iceberg schema emitter | schema JSON w/ persisted stable field IDs (reuses 12.2) | export,multi-protocol,database,analytics,python | Y | N | M | apiome-rest |
+| 36.4 · #4320 | Fidelity packs + validation | ops/constraints DROP; unions APPROX; pyarrow/pyiceberg checks | export,multi-protocol,validation,python | N | N | S | apiome-rest |
+| 36.5 · #4321 | Target cards + CLI + fixtures | `apiome export parquet|bigquery|spark|iceberg` | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
+
+## MFX-EPIC-37 — FIX Orchestra emitter (capital markets) · v3  ·  **#4322**
+
+Mirrors MFI-20.4 (#3988) and completes the finance vertical beside ISO 20022 (22.4): emit a
+venue's machine-readable FIX dialect. Tag numbers persist via the 12.2 identity store.
+
+| ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|---------|--------|----------|-----|-----------|------------------|
+| 37.1 · #4323 | FIX Orchestra emitter | messages/fields/code sets → Orchestra repository XML | export,multi-protocol,integrations,python | N | N | M | apiome-rest |
+| 37.2 · #4324 | Orchestra fidelity pack | ops DROP/scenario APPROX; tag numbers SYNTH (persisted) | export,multi-protocol,python | N | N | S | apiome-rest |
+| 37.3 · #4325 | Validate (Orchestra XSD) | official XSD gate via alternate-validator seam | export,validation | Y | N | S | apiome-rest |
+| 37.4 · #4326 | Target card + CLI + fixtures | card + `apiome export fix-orchestra` | export,ui,devex | Y | N | S | apiome-ui,apiome-cli |
+
+## MFX-EPIC-38 — Export delivery channels (git / webhook / object storage) · v2  ·  **#4327**
+
+EPIC-4 stops at download/zip + registry push; real spec workflows are git-native and
+pipeline-driven. Reuses the repository-provider connectors and the #980 webhook/S3 patterns.
+
+| ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|---------|--------|----------|-----|-----------|------------------|
+| 38.1 · #4328 | Git repository delivery | bundle → branch + commit + PR w/ fidelity summary | export,integrations,repository,version-control,rest | N | N | L | apiome-rest |
+| 38.2 · #4329 | Webhook delivery | HMAC-signed POST w/ retries + SSRF guards | export,integrations,webhook,rest | Y | N | M | apiome-rest |
+| 38.3 · #4330 | Object-storage delivery | S3-compatible upload w/ prefix/partitioning + manifest | export,integrations,infrastructure,rest | Y | N | M | apiome-rest |
+| 38.4 · #4331 | Delivery profiles + audit | tenant-scoped saved destinations; audited outcomes; feeds 39.4 | export,rest,database,devex | N | N | M | apiome-rest,apiome-db |
+
+## MFX-EPIC-39 — Batch, multi-target, presets & scheduled export · v2  ·  **#4332**
+
+Implements what the reconcile table only promised: #2185 (batch) and #2330 (presets) fold in here,
+plus publish-triggered auto-export with a fidelity gate.
+
+| ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|---------|--------|----------|-----|-----------|------------------|
+| 39.1 · #4333 | Multi-target export | one version → N targets; combined bundle + fidelity rollup | export,multi-protocol,rest | N | N | M | apiome-rest |
+| 39.2 · #4334 | Project / batch export | version-set × targets; partial-failure semantics (folds #2185) | export,rest | Y | N | M | apiome-rest |
+| 39.3 · #4335 | Export presets | saved target+options+delivery configs (folds #2330) | export,rest,devex | Y | N | M | apiome-rest,apiome-db |
+| 39.4 · #4336 | Auto-export on version publish | preset subscriptions; loss-threshold gate blocks auto-delivery | export,automation,rest,integrations | Y | N | M | apiome-rest |
+| 39.5 · #4337 | Batch / preset / schedule UI | multi-select ExportDialog; preset apply; subscription mgmt | export,ui,typescript | Y | N | M | apiome-ui |
+
+## MFX-EPIC-40 — MCP export surface · v2-front  ·  **#4338**
+
+Every surface got an epic except the MCP server: #2866/#2867 (per-format export tools) were
+superseded with no generic replacement, so agents can't export — or see fidelity warnings — over MCP.
+
+| ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|---------|--------|----------|-----|-----------|------------------|
+| 40.1 · #4339 | Generic export MCP tools | `export.targets` + `version.export` for any registered emitter | export,mcp,rest,python | N | N | M | apiome-rest |
+| 40.2 · #4340 | Fidelity advisory + lossy confirm over MCP | advisory in tool results; `allow_lossy` mirrors CLI `--force` | export,mcp,python | N | N | S | apiome-rest |
+| 40.3 · #4341 | Surface-parity tests + fixtures + docs | UI/browse/CLI/MCP parity suite; drift fails CI | export,mcp,devex,validation | Y | N | S | apiome-rest |
+
+### Second-pass add-ons to existing epics
+
+| ID | Title | Epic | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|------|---------|--------|----------|-----|-----------|------------------|
+| 9.5 · #4342 | OpenAPI 3.2 output option | EPIC-9 #3822 | emit OAS 3.2 (webhooks/security); 3.2→3.1 downgrade rules; coordinate #2662 | export,multi-protocol,rest,openapi,python | Y | N | M | apiome-rest |
+| 12.6 · #4343 | Connect-RPC / gRPC-Gateway flavor | EPIC-12 #3825 | `google.api.http` annotations from REST bindings (mirror MFI-19.5) | export,multi-protocol,python | Y | N | S | apiome-rest |
+| 13.6 · #4344 | Federation subgraph output mode | EPIC-13 #3826 | subgraph SDL w/ synthesized `@key` (SYNTH); rover composition check | export,multi-protocol,python | Y | N | M | apiome-rest |
+| 21.6 · #4345 | Kubernetes CRD structural-schema mode | EPIC-21 #4125 | $ref inline-expansion; CRD manifest wrap; kubeconform validate | export,multi-protocol,python,infrastructure | Y | N | M | apiome-rest |
+| 24.6 · #4346 | UBL / Peppol BIS guide mode | EPIC-24 #4144 | UBL message guides atop 22.1 XSD mapping (mirror MFI-20.5) | export,multi-protocol,edi,python | Y | N | M | apiome-rest |
+
+**Considered and deliberately not filed:** ISO 8583, XML-RPC/ONC-RPC XDR, JSON:API/HAL/Hydra
+(convention-level tagging, not emitters), W3C WoT/DTDL (no import twin, no demand signal), API
+gateway configs (Kong/APIM/AWS — belongs to the connector epics #1457/#2258), HAR (traffic
+capture is inherently import-only), Pact (owned by the contracts roadmap, Epic 5 #4239), and all
+code-generation targets (#223–#229 — explicitly a different feature).
+
+---
+
 ## 5. Work order (dependency-driven)
 
 ```mermaid
@@ -964,6 +1151,13 @@ flowchart LR
    Thrift (25) ‖ FHIR/HL7 v2 (26) ‖ ASN.1 (27) — 25.2/30.x reuse the 12.2 field-id store; 26.3 reuses
    the 24.x guide infrastructure. v3 tail: OMG IDL (28) → WADL/Discovery (29) → FlatBuffers/Cap'n
    Proto (30).
+7. **Second-pass gap epics (31–40, filed 2026-07-03):** front of queue — **Postman/Insomnia** (31),
+   **agent interfaces** (32, the MFI-EPIC-18 mirror), and the **MCP export surface** (40, small).
+   Then **OpenRPC** (33, reuses 21.1) ‖ **xRegistry** (34) ‖ **SQL DDL family** (35), and the
+   functional pair **delivery channels** (38) → **batch/presets/scheduled** (39, needs 38.4).
+   v3 tail: data-lake schemas (36, Iceberg reuses 12.2) → FIX Orchestra (37, tags via 12.2).
+   Add-ons ride their host epics: 9.5 (OAS 3.2), 12.6 (Connect-RPC), 13.6 (federation),
+   21.6 (K8s CRD), 24.6 (UBL/Peppol).
 
 ---
 
@@ -990,6 +1184,14 @@ flowchart LR
    thrift) through the alternate-validator seam. Adding matching MFI importers later (a symmetric
    import-gap roadmap) upgrades them to full round-trip — and grows the import catalog, which
    the "major contender" positioning wants anyway.
+9. **Example-based and tool-based targets (31/32) synthesize, not just drop.** Postman bodies and
+   MCP tool names are *invented* from schemas — the SYNTH channel must be as loud as DROP, or the
+   export looks more faithful than it is. Determinism matters (same source → same examples/names)
+   for diffable re-exports.
+10. **Push delivery changes the risk profile (38/39).** Auto-export on publish turns a fidelity
+   regression into an automatically-propagated artifact: the loss-threshold gate (39.4) is a hard
+   requirement, delivery credentials live in the credential vault, and webhook targets go through
+   the SSRF guard. Every delivery attempt is audited.
 
 ---
 
@@ -1015,6 +1217,13 @@ flowchart LR
 - OMG IDL 4.2 — https://www.omg.org/spec/IDL/4.2 · ISO 20022 — https://www.iso20022.org/
 - WADL — https://www.w3.org/submissions/wadl/ · Google Discovery — https://developers.google.com/discovery/v1/reference/apis
 - FlatBuffers — https://flatbuffers.dev/ · Cap'n Proto — https://capnproto.org/language.html
+- Postman Collection v2.1 schema — https://schema.postman.com/collection/json/v2.1.0/draft-07/collection.json · Insomnia export — https://docs.insomnia.rest/insomnia/import-export-data · Bruno — https://docs.usebruno.com/
+- MCP specification — https://modelcontextprotocol.io/specification · A2A — https://a2a-protocol.org/latest/specification/
+- OpenRPC — https://spec.open-rpc.org/ · xRegistry — https://xregistry.io/ · CloudEvents — https://cloudevents.io/
+- DBML — https://dbml.dbdiagram.io/docs/ · Prisma schema — https://www.prisma.io/docs/orm/prisma-schema · Liquibase — https://docs.liquibase.com/ · sqlglot — https://github.com/tobymao/sqlglot
+- Apache Arrow/Parquet — https://arrow.apache.org/docs/ · BigQuery schemas — https://cloud.google.com/bigquery/docs/schemas · Iceberg — https://iceberg.apache.org/spec/
+- FIX Orchestra — https://www.fixtrading.org/standards/fix-orchestra/
+- GraphQL federation subgraph spec — https://www.apollographql.com/docs/federation/subgraph-spec · Kubernetes CRD structural schemas — https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#specifying-a-structural-schema · UBL 2.x — https://docs.oasis-open.org/ubl/UBL-2.1.html · Peppol BIS — https://docs.peppol.eu/poacc/billing/3.0/
 - Reused in-repo / sibling roadmap: `ROADMAP_MULTI_FORMAT_IMPORT.md` (MFI umbrella **#3715**, EPIC-2 model, EPIC-5 runner, per-format parsers/linters), `spec_import_engine.py`, `versions`/`quality_*`, `ImportDialog.tsx`/`DashboardSideNav.tsx`, `apiome-browse`, `apiome-cli`, `apiome-db` Flyway.
 
 ---
@@ -1028,4 +1237,10 @@ flowchart LR
 - #221 Export to GraphQL (closed) · #222 Export to AsyncAPI (closed) · #2866 MCP `version.export_asyncapi` — supersede behind the Emitter SPI.
 - #3489 Schema Registry & Discovery · #3496 Community & Schema Browser — align push-to-registry + public export.
 - **Import twin: MFI umbrella #3715** (this is its inverse).
+- *Second pass (2026-07-03):* #1602 · #1440 · #1170 · #1920 · #1608 (Postman/Insomnia export asks) — superseded by MFX-EPIC-31;
+  #228/#108 (closed SQL export) + #795 (Liquibase) — superseded/reconciled by MFX-EPIC-35;
+  #2185 (batch) + #2330 (presets) — implemented by MFX-EPIC-39; #2866/#2867 (closed per-format MCP
+  export tools) — generalized by MFX-EPIC-40; #2662 (OpenAPI 3.2 model+export) — coordinate with MFX-9.5;
+  #2298/#2355/#2356/#2358 (DB reverse-engineering import) — import twin of MFX-EPIC-35;
+  MFI-EPIC-18/19/20 candidates (#3974–#3989) — import twins of MFX-EPIC-32/33/34/37.
 - *Out of scope (different feature):* code generation — #223–#227 (TS/Python/Java/C#/Go), #229 (Markdown docs).

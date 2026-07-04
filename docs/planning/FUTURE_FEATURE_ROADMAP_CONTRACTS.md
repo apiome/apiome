@@ -4,6 +4,8 @@
 >
 > **Update (July 3, 2026)**: Epic 5 — Contract Testing & Deploy Gating (Pact) — extends the machine-readable half of a contract with consumer-driven contract testing. Every data-sharing contract can carry a Pact: consumers publish the interactions they depend on, provider builds are verified against them, and verification outcomes bind directly to SLA clauses (strike counters, breaking-change notice periods, deploy gates). A can-i-deploy gate blocks production releases that would break a contracted counterparty, with the same verdict available as a CI exit code. The [contracts mockups](mockups/contracts/README.md) were redesigned at the same time: every screen now renders inside a replica of the live `apiome-ui` shell — the real top platform bar (Home · Control Panel · Designer · Paths, tenant switcher) and the real Control Panel side menu (`DashboardSideNav.tsx`) with the new **Contracts**, **Contract Testing** (Pact), and **Billing & Audit** sections added to it — plus three new screens: `verification.html`, `matrix.html`, and `can-i-deploy.html`.
 >
+> **Update (July 3, 2026, gap analysis)**: A screen-by-screen walkthrough of the [contracts mockups](mockups/contracts/README.md) against Epics 1–5 surfaced features the mockups render that no issue covers (pricing-model authoring, billing-run orchestration, per-event hash chaining, mediation/settlement, GRC control mapping, runtime gateway enforcement of data-sharing specs, PII classification, stale-pact remediation, environment topology) plus everything the mockup README explicitly parks as "out of scope" (counterparty CRM, tenant policy administration, contract-event webhooks, e-signature providers, smart-contract execution). These are captured as **Epics 6–11** below. Where a gap strengthens an already-filed issue (#957–#980), the improvement is documented as a new issue that *extends* the original rather than mutating the filed issue text.
+>
 > **Revenue Model**: Per-contract pricing, enterprise legal package
 >
 > **Tech Stack**: NextJS App Router, Radix UI primitives, REST/OpenAPI 3.1, PostgreSQL with JSONB contract storage, Stripe/payment gateway integration, optional blockchain anchoring, Pact-compatible broker storage for consumer-driven contract testing
@@ -26,6 +28,7 @@
 - Contract status dashboard showing active, expiring, and violated contracts
 - Pact storage bound to data-sharing contracts with consumer pact capture
 - Provider verification workflow replaying contracted interactions, with results recorded as contract events
+- Pricing model definition (flat fee, usage-tiered, per-seat) per contract — invoice generation (3.2) cannot produce line items without authored tier rates
 
 ---
 
@@ -556,7 +559,7 @@ Backend endpoints include `POST /api/v1/contracts/audit/export` (one-time export
 
 ---
 
-## Epic 5: Contract Testing & Deploy Gating (Pact)
+## Epic 5 (#4239): Contract Testing & Deploy Gating (Pact)
 
 Consumer-driven contract testing bound to legal contracts. Where Epics 1–4 make the *terms* of an agreement machine-readable, Epic 5 makes the *interface* machine-verifiable: each data-sharing contract can carry a Pact describing exactly which interactions the consumer depends on, providers are verified against those interactions on every build, and the outcomes feed the same SLA clauses, event log, and dispute machinery the rest of the product uses. This epic shares broker infrastructure with the Testing & QA roadmap's Epic 6 (#1914, `FUTURE_FEATURE_ROADMAP_TESTING.md`); the issues below cover the contract-binding layer, not a second broker.
 
@@ -564,16 +567,16 @@ Consumer-driven contract testing bound to legal contracts. Where Epics 1–4 mak
 
 | #   | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |-----|-------|---------|--------|----------|-----|------------|------------------|
-| 5.1 (TBD) | Pact Data Model & Contract Binding | Store pacts/pacticipants and bind each pact to a data-sharing contract clause | `enhancement`, `contracts`, `pact`, `mvp`, `rest` | Yes | Y | M | apiome-rest, apiome-db |
-| 5.2 (TBD) | Consumer Pact Capture & Publication | CLI/CI publication of consumer pacts scoped to a contract | `enhancement`, `contracts`, `pact`, `mvp`, `rest` | Yes | Y | M | apiome-cli, apiome-rest |
-| 5.3 (TBD) | Provider Verification & SLA Clause Binding | Replay contracted interactions against provider builds; failures accrue SLA strikes | `enhancement`, `contracts`, `pact`, `mvp` | No | Y | L | apiome-rest, apiome-ui |
-| 5.4 (TBD) | Contract Compatibility Matrix | Consumer × provider verdict grid across all contracted pairs | `enhancement`, `contracts`, `pact` | Yes | N | M | apiome-ui, apiome-rest |
-| 5.5 (TBD) | Can-I-Deploy Contract Gate | Release verdict combining pact verdicts, contract clauses, and consent status | `enhancement`, `contracts`, `pact` | No | N | L | apiome-rest, apiome-ui |
-| 5.6 (TBD) | CI Integration & Gate Events | CLI exit-code parity, GitHub Actions reference workflow, gate webhooks | `enhancement`, `contracts`, `pact`, `rest` | Yes | N | S | apiome-cli, apiome-rest |
+| 5.1 (#4240) | Pact Data Model & Contract Binding | Store pacts/pacticipants and bind each pact to a data-sharing contract clause | `enhancement`, `contracts`, `pact`, `mvp`, `rest` | Yes | Y | M | apiome-rest, apiome-db |
+| 5.2 (#4241) | Consumer Pact Capture & Publication | CLI/CI publication of consumer pacts scoped to a contract | `enhancement`, `contracts`, `pact`, `mvp`, `rest` | Yes | Y | M | apiome-cli, apiome-rest |
+| 5.3 (#4242) | Provider Verification & SLA Clause Binding | Replay contracted interactions against provider builds; failures accrue SLA strikes | `enhancement`, `contracts`, `pact`, `mvp` | No | Y | L | apiome-rest, apiome-ui |
+| 5.4 (#4243) | Contract Compatibility Matrix | Consumer × provider verdict grid across all contracted pairs | `enhancement`, `contracts`, `pact` | Yes | N | M | apiome-ui, apiome-rest |
+| 5.5 (#4244) | Can-I-Deploy Contract Gate | Release verdict combining pact verdicts, contract clauses, and consent status | `enhancement`, `contracts`, `pact` | No | N | L | apiome-rest, apiome-ui |
+| 5.6 (#4245) | CI Integration & Gate Events | CLI exit-code parity, GitHub Actions reference workflow, gate webhooks | `enhancement`, `contracts`, `pact`, `rest` | Yes | N | S | apiome-cli, apiome-rest |
 
 ### Detailed Issue Descriptions
 
-#### 5.1 (TBD) — Pact Data Model & Contract Binding
+#### 5.1 (#4240) — Pact Data Model & Contract Binding
 
 **Problem Statement**: Data-sharing contracts (2.1) describe *what* data is shared as schema references, but nothing verifies that the provider's running API actually honours the shape consumers depend on. Prose clauses can't catch a removed field.
 
@@ -594,7 +597,7 @@ Consumer-driven contract testing bound to legal contracts. Where Epics 1–4 mak
 
 ---
 
-#### 5.2 (TBD) — Consumer Pact Capture & Publication
+#### 5.2 (#4241) — Consumer Pact Capture & Publication
 
 **Problem Statement**: Consumers already generate pacts in their test suites (pact-js, pact-jvm, etc.), but there is no path from a consumer's CI to the counterparty's contract in Apiome.
 
@@ -615,7 +618,7 @@ Consumer-driven contract testing bound to legal contracts. Where Epics 1–4 mak
 
 ---
 
-#### 5.3 (TBD) — Provider Verification & SLA Clause Binding
+#### 5.3 (#4242) — Provider Verification & SLA Clause Binding
 
 **Problem Statement**: A pact is only useful if the provider is verified against it — and in a *contracted* relationship, a failed verification is not just a red build, it is a potential breach of terms with financial consequences.
 
@@ -647,7 +650,7 @@ Consumer-driven contract testing bound to legal contracts. Where Epics 1–4 mak
 
 ---
 
-#### 5.4 (TBD) — Contract Compatibility Matrix
+#### 5.4 (#4243) — Contract Compatibility Matrix
 
 **Problem Statement**: With many counterparties and many consumer systems per contract, "is everything verified?" has no single answer surface.
 
@@ -668,7 +671,7 @@ Consumer-driven contract testing bound to legal contracts. Where Epics 1–4 mak
 
 ---
 
-#### 5.5 (TBD) — Can-I-Deploy Contract Gate
+#### 5.5 (#4244) — Can-I-Deploy Contract Gate
 
 **Problem Statement**: A provider can pass its own tests and still break a *contracted* counterparty in production — or violate a breaking-change notice clause — with billing and legal consequences the deploy pipeline knows nothing about.
 
@@ -696,7 +699,7 @@ Consumer-driven contract testing bound to legal contracts. Where Epics 1–4 mak
 
 ---
 
-#### 5.6 (TBD) — CI Integration & Gate Events
+#### 5.6 (#4245) — CI Integration & Gate Events
 
 **Problem Statement**: The gate only prevents incidents if pipelines consult it; parties also need to *hear about* verification failures and gate verdicts without polling.
 
@@ -713,6 +716,903 @@ Consumer-driven contract testing bound to legal contracts. Where Epics 1–4 mak
 **Technical Stack**: apiome-cli, GitHub Actions YAML, webhook workers.
 
 **Part of Epic: Contract Testing & Deploy Gating (Pact)**
+
+---
+
+## Epic 6 (#4246): Contract Authoring & Lifecycle Enhancements
+
+Improvements to the Epic 1 surfaces identified by the mockup gap analysis: the `terms-editor.html`, `dashboard.html`, `templates.html`, `negotiate.html`, and `sign.html` mockups all render richer scope than issues 1.2–1.6 specify. Each issue below extends a filed issue without changing its text.
+
+### Summary Table
+
+| #   | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|-----|-------|---------|--------|----------|-----|------------|------------------|
+| 6.1 (#4247) | Expanded Clause Catalog & Tiered Breach Consequences | Maintenance-window, support-response, and custom clause types; graduated credit tiers; structured sub-fields | `enhancement`, `contracts`, `rest` | Yes | N | M | apiome-ui, apiome-rest, apiome-db |
+| 6.2 (#4248) | Dashboard Analytics, Search & Activity Feed | Drafts view, compliance-score definition, MRR column, lifecycle chart, renewals queue, events feed, search/sort/bulk actions | `enhancement`, `contracts` | Yes | N | M | apiome-ui, apiome-rest |
+| 6.3 (#4249) | Template Governance & Analytics | Import/authoring, facets & search, usage analytics, template versioning, compliance-tag governance | `enhancement`, `contracts` | Yes | N | M | apiome-ui, apiome-rest, apiome-db |
+| 6.4 (#4250) | Negotiation Counter-Proposals & Thread Resolution | Counter-propose path, comment resolve/archive lifecycle, revisions inbox, compare-versions view | `enhancement`, `contracts` | Yes | N | M | apiome-ui, apiome-rest |
+| 6.5 (#4251) | Signing Integrity & Activation Tracker | SHA-256 document-hash binding, activation stepper, draft PDF, signer title capture | `enhancement`, `contracts`, `rest` | Yes | N | S | apiome-ui, apiome-rest |
+| 6.6 (#4252) | Internal (Team-to-Team) Contract Mode | First-class internal SLA contracts: no billing, rolling term, same-tenant parties | `enhancement`, `contracts` | Yes | N | M | apiome-rest, apiome-ui, apiome-db |
+
+### Detailed Issue Descriptions
+
+#### 6.1 (#4247) — Expanded Clause Catalog & Tiered Breach Consequences
+
+**Problem Statement**: Issue 1.2 (#958) enumerates five clause types with a scalar `breach_consequence`, but the `terms-editor.html` mockup ships seven clause types plus a custom escape hatch, graduated credit tiers, and structured sub-fields the schema cannot express — a removed field the editor renders is a clause the API cannot store.
+
+**Solution/Scope**: Extend the `ContractTerm` discriminated union with **Maintenance Windows** (calendar schedule, notice period, counted against the uptime exclusion budget), **Support Response** (per-priority response targets, e.g. P0 < 30 min 24×7), and a **Custom term** type (free-form metric with optional structured target). Replace the scalar `breach_consequence` with a shape supporting `tiers[]` (magnitude-scaled consequences: Tier 1/2/3 breach ranges → 5% / 15% / 25% credit, as the mockup's live JSONB panel shows). Add per-clause structured sub-fields: `exclusions` (e.g. scheduled maintenance ≤ 4 h/month), rate-limit `burst` (sustained + burst-within-window), `measurement_scope` (e.g. "GET endpoints only"), and a `required` flag distinguishing mandatory from optional clauses. Ship the editor's **raw `terms[]` JSONB inspector** (read-only, with Copy) and the **validation side panel** that mixes logical-consistency checks with negotiation state (e.g. "1 unresolved comment on §2" cross-referenced from 1.4).
+
+**Acceptance Criteria**:
+- Maintenance-window, support-response, and custom clause types round-trip through the editor, API, and legal-prose preview
+- `breach_consequence` supports an ordered `tiers[]` array; tier boundaries are validated as non-overlapping and credits feed 3.2's breach-credit line items
+- `exclusions`, `burst`, `measurement_scope`, and `required` persist per clause and render in the human-readable summary
+- The JSONB inspector always reflects the saved terms and updates live as clauses are edited
+- The validation panel surfaces range violations, missing dates, and unresolved negotiation comments with links to the offending clause
+
+**Parallelism/Dependencies**: Extends 1.2 (#958); tier credits integrate with 3.2 (#971). Parallel with all other Epic 6 issues.
+
+**Technical Stack**: NextJS/Radix editor components, OpenAPI discriminated unions, PostgreSQL JSONB.
+
+**Part of Epic: Contract Authoring & Lifecycle Enhancements**
+
+---
+
+#### 6.2 (#4248) — Dashboard Analytics, Search & Activity Feed
+
+**Problem Statement**: Issue 1.6 (#962) specifies three tab views and a static count summary, but `dashboard.html` renders a Drafts tab, an MRR KPI with month-over-month deltas, a per-row `Value · MRR` column, a 30-day lifecycle-activity area chart, a renewals queue with day-countdown chips, an SLA-violations drill-down with credit math, and a cross-contract recent-events feed — none of which any issue owns.
+
+**Solution/Scope**: Add a fourth **Drafts** tab; define the **compliance score** derivation (0–100% per contract, computed from clause breach counts weighted by severity over the current window — the number the row bar renders); add the **`Value · MRR` column** and MRR KPI card fed by Epic 3 metering (with `internal` / `tbd` fallbacks for unbilled contracts); add the **lifecycle activity chart** (activated / in-review / violations series, 30 d); embed the **renewals queue** (per-contract countdown, auto-renew vs. manual badges, sourced from 2.3) and the **active-violations panel** (target vs. actual, breach consequence, credit amounts, `disputed` state from 4.2); stream the **recent contract events feed** from 4.1. Add free-text search, sort controls (default "sorted by activity"), saved filters, numbered pagination, and bulk row actions (bulk export, bulk renewal decision).
+
+**Acceptance Criteria**:
+- Drafts tab lists draft contracts with counts in the tab strip; KPI cards show trend deltas (e.g. "+4 this quarter", "+6.2% vs. prior month")
+- Compliance score derivation is documented and deterministic; identical inputs produce identical scores via a shared scoring service
+- MRR KPI and per-row value column reconcile with Epic 3 metering within the current billing period
+- Renewals queue, violations panel, and events feed link through to their owning screens (renewal config, violation detail, event log)
+- Search, sort, saved filters, and pagination compose; bulk actions operate on the filtered selection
+- Row micro-data renders: contract version tag, expiry countdown, `∞ rolling` for internal contracts, multi-party and regulation annotations, and a `Warning` status distinct from `Active`/`Violated`
+
+**Parallelism/Dependencies**: Extends 1.6 (#962); consumes 4.1 events, 2.3 renewal state, 2.4 violation data, and 8.6 revenue figures (degrades gracefully before 8.6 lands). Parallel within Epic 6.
+
+**Technical Stack**: NextJS, Radix Tabs/Table, REST aggregate endpoints, shared scoring service.
+
+**Part of Epic: Contract Authoring & Lifecycle Enhancements**
+
+---
+
+#### 6.3 (#4249) — Template Governance & Analytics
+
+**Problem Statement**: Issue 1.3 (#959) covers pre-built templates and "Save as Template" only, while `templates.html` shows Import and New-template entry points, category/scope facets, search, per-template instance counts with a "Most used" badge, template version identifiers (`tpl_dpa_gdpr_v4`), edit attribution, and compliance tags (`SCC v2021`, `GDPR Art. 28`) — template lifecycle is unspecified.
+
+**Solution/Scope**: Add **template import** (upload JSON/markdown template files) and **blank authoring**; **category chips** (API agreement, Data sharing, DPA/GDPR, Internal SLA, Partner) with **Platform vs. Organization scope toggles** and free-text search; **usage analytics** (instance counts per template, "Most used" popularity badge); **template versioning** with edit attribution (author, last-edit timestamp) and extended metadata chips (placeholder count, word count, consent-required, billing mode, party count). Add a **governance flow**: when a template gains a new version (e.g. updated SCC revision), contracts instantiated from the outdated version are flagged and their owners notified with a diff of the template change.
+
+**Acceptance Criteria**:
+- Templates can be imported from file and authored from scratch, in addition to save-as-template
+- Gallery supports category facets, platform/organization scope filtering, and search
+- Instance counts are tracked per template version; the most-instantiated template carries the popularity badge
+- Template versions are immutable with author and timestamp attribution; instantiation records the exact template version used
+- Outdated-template notifications list affected contracts and link to the template version diff
+- Compliance tags (regulation, SCC revision) are structured metadata, filterable in the gallery
+
+**Parallelism/Dependencies**: Extends 1.3 (#959). Notification delivery reuses 11.3 when available. Parallel within Epic 6.
+
+**Technical Stack**: NextJS, PostgreSQL (`contract_templates` versioning columns), REST.
+
+**Part of Epic: Contract Authoring & Lifecycle Enhancements**
+
+---
+
+#### 6.4 (#4250) — Negotiation Counter-Proposals & Thread Resolution
+
+**Problem Statement**: Issue 1.4 (#960) defines comment / propose / approve, but `negotiate.html` renders a **Counter-propose** action on revisions, comment threads with a resolve/archive lifecycle ("resolved by m.lee", "Discussion archived · 4 messages"), a Comments-vs-Revisions right-rail with per-revision Accept, and a header Compare-versions entry point — the negotiation state machine is thinner than the screen.
+
+**Solution/Scope**: Add a **counter-proposal** path: a party responding to a proposed revision submits an alternative revision linked to the original, superseding it in the revisions inbox; approvals reset per the existing 1.4 rules. Add a **thread lifecycle** (open → resolved → archived) with resolver attribution; unresolved-thread counts surface in the header and in 6.1's validation panel. Ship the **revisions inbox** (right-rail tab listing pending revisions with per-item Accept / Counter-propose) and a **compare-versions** view for any two contract versions.
+
+**Acceptance Criteria**:
+- Counter-proposals link to and supersede the revision they answer; the negotiation history renders the proposal chain
+- Threads support resolve (with attribution) and archive; unresolved counts appear in the header ("4 open comments · 2 proposed revisions")
+- Revisions inbox lists pending revisions with accept and counter-propose actions per item
+- Compare-versions renders a term-level diff between any two versions using the negotiation diff colour convention
+- All counter-proposal and resolution actions emit 4.1 events
+
+**Parallelism/Dependencies**: Extends 1.4 (#960); feeds unresolved-comment state to 6.1. Parallel within Epic 6.
+
+**Technical Stack**: NextJS, Radix Popover/Tabs, REST, contract version diffing.
+
+**Part of Epic: Contract Authoring & Lifecycle Enhancements**
+
+---
+
+#### 6.5 (#4251) — Signing Integrity & Activation Tracker
+
+**Problem Statement**: Issue 1.5 (#961) is deliberately non-cryptographic click-to-sign, yet `sign.html` surfaces a SHA-256 document hash in the read-only header, the acknowledgment text, and a Document-hash column in the signature trail — plus an activation-progress stepper, a pre-signing draft-PDF download, and signer title/role capture that 1.5 omits.
+
+**Solution/Scope**: Bind each signature to the **SHA-256 hash of the exact contract version signed**: the hash renders on the signing page, is embedded in the acknowledgment text, and is stored per signature (`contract_signatures.document_hash`), making "which version did they sign" cryptographically answerable without full PKI. Add the **activation-progress tracker** (Approved → counterparty signed → your turn → auto-activate), **Download draft PDF** before signing, **signer title/role** capture, and the rendered **signature preview** glyph.
+
+**Acceptance Criteria**:
+- Document hash is computed over the canonical serialized contract version and recorded immutably per signature
+- A signature whose stored hash does not match the recomputed version hash is flagged in the signature trail
+- Activation tracker reflects live party state and shows the auto-activation step
+- Draft PDF is downloadable pre-signing; signed PDF (existing 1.5) embeds the document hash
+- Signature trail table includes Party, Signer, Role/Title, Captured at, IP, and Document hash columns, with an "awaiting" row state for unsigned parties
+
+**Parallelism/Dependencies**: Extends 1.5 (#961); hash chaining aligns with 9.1's conventions. Provider hand-off (DocuSign et al.) is 11.4, not this issue. Parallel within Epic 6.
+
+**Technical Stack**: SHA-256 canonical hashing, PDF generation, NextJS.
+
+**Part of Epic: Contract Authoring & Lifecycle Enhancements**
+
+---
+
+#### 6.6 (#4252) — Internal (Team-to-Team) Contract Mode
+
+**Problem Statement**: The dashboard mockup shows `Acme Internal SLA · Customer 360` with an `∞ rolling` term and `internal` in the value column, and the template gallery has an "Internal SLA · no billing" template — but the roadmap models every contract as a cross-organization provider↔consumer agreement with billing.
+
+**Solution/Scope**: Make internal contracts a first-class mode: both parties resolve to teams within the same tenant, billing is disabled (metering optional, for chargeback visibility only), the term supports **rolling/indefinite** (`∞`) with review checkpoints instead of hard expiry, signing collapses to team-lead acknowledgment, and SLA breaches route to internal notification/escalation rather than credits. Internal contracts share the same clause model (1.2/6.1), event log (4.1), and verification (Epic 5) so platform teams get deploy gating between internal services.
+
+**Acceptance Criteria**:
+- Contract creation offers internal mode; parties are teams of the current tenant with no counterparty organization required
+- Rolling terms render as `∞ rolling` with configurable review-checkpoint reminders in place of expiration notifications
+- Billing surfaces (invoices, payment, revenue share) are hidden/disabled for internal contracts; optional chargeback metering is view-only
+- Breach consequences are restricted to notification/escalation types; credit consequences are rejected at validation
+- Internal contracts participate fully in the event log, dashboard, and pact verification/deploy gating
+
+**Parallelism/Dependencies**: Depends on 1.1 (#957) party model. Parallel within Epic 6.
+
+**Technical Stack**: PostgreSQL party-role extension, NextJS, REST.
+
+**Part of Epic: Contract Authoring & Lifecycle Enhancements**
+
+---
+
+## Epic 7 (#4253): Data Sharing Enforcement & Intelligence
+
+Extensions to Epic 2 surfaced by `data-sharing.html`, `consent.html`, and `usage.html`: the mockups claim gateway-enforced sharing specs, PII-aware handling, aggregate-expression grants, lineage-backed recalls, quota economics, and renewal intelligence that issues 2.1–2.5 do not cover.
+
+### Summary Table
+
+| #   | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|-----|-------|---------|--------|----------|-----|------------|------------------|
+| 7.1 (#4254) | PII Classification & Pseudonymisation | Auto-tag PII properties; pseudonymise and purge-on-end handling requirements | `enhancement`, `contracts`, `rest` | Yes | N | M | apiome-rest, apiome-ui, apiome-db |
+| 7.2 (#4255) | Aggregate Query Definition Builder | Define permitted aggregate expressions under aggregate-only access | `enhancement`, `contracts` | Yes | N | M | apiome-ui, apiome-rest |
+| 7.3 (#4256) | Runtime Gateway Enforcement of Sharing Specs | Block non-conforming access at request time, not just monitor after the fact | `enhancement`, `contracts`, `rest` | No | N | L | apiome-rest, apiome-db |
+| 7.4 (#4257) | Data Lineage & Verifiable Recall | Affected-record counts, cached-extract tracking, recall packages, re-send notices | `enhancement`, `contracts` | No | N | L | apiome-rest, apiome-ui, apiome-db |
+| 7.5 (#4258) | Sharing Clause Refinements: Sync Cadence, Version Pinning & Bulk Configure | Refresh window & pull/push mode, pinned schema versions, picker search, bulk-apply | `enhancement`, `contracts` | Yes | N | S | apiome-ui, apiome-rest |
+| 7.6 (#4259) | Usage Quotas, Overage Pricing & Cross-Contract Analytics | Quota windows with reset countdowns, configurable thresholds, overage rates, top-consumers view, CSV export | `enhancement`, `contracts`, `rest` | Yes | N | M | apiome-rest, apiome-ui, apiome-db |
+| 7.7 (#4260) | Usage-Based Renewal Recommendations & Work Queue | Tier upsell/downgrade recommendations, quota-gated auto-renew, actionable renewal queue | `enhancement`, `contracts` | No | N | M | apiome-rest, apiome-ui |
+| 7.8 (#4261) | Consent Operations Dashboard & Log Integrity | Consent KPI strip, filters, DSAR collection method, hash-chained consent log | `enhancement`, `contracts` | Yes | N | S | apiome-ui, apiome-rest |
+
+### Detailed Issue Descriptions
+
+#### 7.1 (#4254) — PII Classification & Pseudonymisation
+
+**Problem Statement**: The schema picker in `data-sharing.html` auto-tags `email`, `name`, `phone`, and `address` with amber `PII` chips and offers "Pseudonymise PII fields" and "Mandatory purge on contract end" handling requirements — but 2.1 (#964) enumerates only encryption, no-export, and retention, with no classification capability behind the tags.
+
+**Solution/Scope**: A classification service tags schema properties as PII (name/pattern heuristics with manual override, persisted per schema version). Extend the handling-requirements vocabulary with `pseudonymise` (PII fields hashed/tokenised before delivery) and `purge_on_end` (data-destruction obligation on contract termination, generating a recall-style confirmation workflow via 2.5). Classification feeds GDPR reporting (4.3) and DSAR fulfilment (9.4).
+
+**Acceptance Criteria**:
+- Properties are auto-classified with confidence and manually overridable; overrides are audited
+- `pseudonymise` and `purge_on_end` are storable handling requirements exported in the machine-readable spec
+- Selecting a PII-tagged property without any protective handling requirement raises a validation warning
+- Purge-on-end generates a deletion-confirmation obligation at contract termination, tracked like a 2.5 recall
+- Classification is queryable per schema version for compliance reports
+
+**Parallelism/Dependencies**: Extends 2.1 (#964); feeds 4.3, 9.4, and 2.5. Parallel with 7.2/7.5.
+
+**Technical Stack**: Classification heuristics service, PostgreSQL, REST.
+
+**Part of Epic: Data Sharing Enforcement & Intelligence**
+
+---
+
+#### 7.2 (#4255) — Aggregate Query Definition Builder
+
+**Problem Statement**: 2.1 grants an "aggregate-only" access level, but the EventLog card in `data-sharing.html` defines the actual permitted expressions — `count(*) by event_type`, `avg(latency_ms) by hour`, `p95(latency_ms) by endpoint` — and no issue describes authoring, validating, or enforcing an aggregate-expression grant.
+
+**Solution/Scope**: A builder for aggregate grants attached to aggregate-only clauses: each grant specifies an aggregation function (`count`, `sum`, `avg`, `min`, `max`, percentiles), the measure property, permitted group-by dimensions, and a minimum group size (k-anonymity floor) so aggregates cannot be narrowed to individuals. Grants export in the machine-readable spec and are the enforcement basis for 7.3 at the gateway.
+
+**Acceptance Criteria**:
+- Grants capture function, measure, group-by dimensions, and minimum group size
+- Only properties included in the sharing clause are referenceable in grants
+- Grants serialize into the machine-readable spec consumed by runtime enforcement
+- A validation preview shows a sample of what the counterparty may compute
+- Editing grants creates a new contract version per 2.1's versioning rule
+
+**Parallelism/Dependencies**: Extends 2.1 (#964); enforcement lands in 7.3. Parallel with 7.1/7.5.
+
+**Technical Stack**: NextJS builder UI, JSON grant schema, REST.
+
+**Part of Epic: Data Sharing Enforcement & Intelligence**
+
+---
+
+#### 7.3 (#4256) — Runtime Gateway Enforcement of Sharing Specs
+
+**Problem Statement**: The machine-readable spec panel in `data-sharing.html` is headed "enforced at the gateway", but the roadmap only monitors after the fact (2.4) and checks pacts at publish time (5.2) — nothing actually blocks a request that exceeds a clause's access level, properties, or quotas.
+
+**Solution/Scope**: An enforcement layer in the API request path that resolves the caller's contract + clause, then allows, filters, or rejects: access-level checks (a write against a read-only clause is rejected with a clause reference), property filtering (fields outside `included_properties` are stripped from responses), aggregate-grant checks (7.2), and hard-quota rejection when 7.6 quotas are marked blocking. Enforcement decisions emit 4.1 events; enforcement is fail-closed for contracts that opt in, with a monitor-only rollout mode.
+
+```
+  request ──▶ resolve contract/clause ──▶ access-level check ──▶ reject (403 + clause ref)
+                                            │ pass
+                                            ├──▶ property filter ──▶ response minus excluded fields
+                                            ├──▶ aggregate grant check (7.2)
+                                            └──▶ quota check (7.6, blocking mode) ──▶ 429 + retry-after
+```
+
+**Acceptance Criteria**:
+- Requests violating access level are rejected with the violated clause reference in the error body
+- Response payloads are filtered to the clause's included properties
+- Blocking quotas return 429 with the quota window reset time; monitor-only mode logs without blocking
+- Enforcement decisions (allow-filtered, reject) are recorded as 4.1 events and feed 2.4 dashboards
+- Enforcement adds < 5 ms p95 overhead to the request path
+
+**Parallelism/Dependencies**: Depends on 2.1 spec export, 7.2 grants, 7.6 quota model; feeds 2.4 monitoring. Sequenced after 7.2.
+
+**Technical Stack**: Request middleware in apiome-rest, spec cache, REST error contracts.
+
+**Part of Epic: Data Sharing Enforcement & Intelligence**
+
+---
+
+#### 7.4 (#4257) — Data Lineage & Verifiable Recall
+
+**Problem Statement**: The recall banner in `consent.html` quantifies "~3 412 records · 2 cached extracts" and offers "View recall package" and "Re-send notice" — but 2.5 (#968) has no record counting, no tracking of downstream copies/extracts, and no recall artifact; recall compliance is currently take-their-word-for-it.
+
+**Solution/Scope**: Track delivery lineage per sharing clause: each export/bulk delivery records a **extract manifest** (record count, filter, timestamp, destination) so a recall can enumerate affected records and outstanding cached extracts. Generate a downloadable **recall package** (recall notice, affected-scope manifest, consent history, deletion-confirmation checklist) and add an operator **re-send notice** action with delivery history. Deletion confirmations check off individual extracts rather than the recall as a whole.
+
+**Acceptance Criteria**:
+- Every bulk export/delivery under a sharing clause records an extract manifest
+- Recall notices enumerate affected record counts and outstanding extracts from lineage data
+- Recall package is downloadable and archived as dispute-grade evidence (4.2)
+- Re-send notice is available on active recalls with full delivery history
+- Deletion confirmation tracks per-extract acknowledgment; a recall closes only when all extracts are confirmed
+
+**Parallelism/Dependencies**: Extends 2.5 (#968); consumes 2.4 usage events; evidence integrates with 4.2. Sequenced after 2.4.
+
+**Technical Stack**: Extract-manifest tables, ZIP package generation, REST.
+
+**Part of Epic: Data Sharing Enforcement & Intelligence**
+
+---
+
+#### 7.5 (#4258) — Sharing Clause Refinements: Sync Cadence, Version Pinning & Bulk Configure
+
+**Problem Statement**: `data-sharing.html` shows a "Refresh window · 15 min · pull" control, a "Published v4.2" schema version on each card, a "Filter classes…" picker search, and a "Configure all →" bulk action — none of which exist in 2.1's picker or clause model.
+
+**Solution/Scope**: Add per-shared-schema **sync cadence** (refresh interval + pull/push delivery mode); **pin the exact published schema version** a clause references (today 2.1 only requires "a published state"), so verification (5.x) and disputes attribute against the version actually agreed; add picker **search/filtering** and **bulk-apply** of access levels and handling requirements across selected elements.
+
+**Acceptance Criteria**:
+- Sync cadence (interval, pull/push) persists per shared schema and exports in the machine-readable spec
+- Clauses record the pinned schema version; counterparty schema publishes do not silently change the agreed shape
+- A newer published version surfaces as an "update available" prompt that requires a contract amendment to adopt
+- Picker supports free-text class filtering; bulk configure applies settings to all selected elements in one action
+
+**Parallelism/Dependencies**: Extends 2.1 (#964). Version pinning strengthens 5.3 attribution. Parallel with 7.1/7.2.
+
+**Technical Stack**: NextJS picker, PostgreSQL clause columns, REST.
+
+**Part of Epic: Data Sharing Enforcement & Intelligence**
+
+---
+
+#### 7.6 (#4259) — Usage Quotas, Overage Pricing & Cross-Contract Analytics
+
+**Problem Statement**: `usage.html` renders quota meters with "of 6.0M / month quota · 8 d remaining in window", an "alert threshold @ 90%" (2.4's AC hard-codes 80%), an overage line "+2 over · overage @ $50 / export", a cross-contract "Top consumers" leaderboard, an "Export usage CSV" button, and 7d/30d/90d/YTD range toggles — quota-period semantics, overage economics, and portfolio views that 2.4 (#967) lacks.
+
+**Solution/Scope**: Define **quota windows** (period, reset schedule, remaining-days countdown) on usage limits; make alert thresholds **configurable per clause** (default 90%, reconciling the 2.4/mockup discrepancy); add **overage pricing** (per-unit rate applied to usage beyond quota, with blocking vs. billable modes) that emits billable events into the 3.1 metering pipeline; add a **cross-contract usage view** (top-consumers leaderboard, portfolio meters); and add **usage CSV export** plus time-range toggles and SLA-metric context tiles (p95 latency, error rate from 1.2 clause data) on the telemetry page.
+
+**Acceptance Criteria**:
+- Quota meters show window, reset countdown, and configurable warning threshold; threshold changes are versioned per clause
+- Overage units are priced per the clause's overage rate and appear as 3.2 invoice line items (or are blocked by 7.3 when the quota is blocking)
+- Top-consumers view ranks contracts by consumption with over-quota flags
+- Usage CSV export respects the active filters and range toggle
+- The 2.4 detailed access-log table remains available alongside the aggregate meters
+
+**Parallelism/Dependencies**: Extends 2.4 (#967); overage events feed 3.1/3.2; blocking mode depends on 7.3. Parallel with 7.5.
+
+**Technical Stack**: Metering aggregation, PostgreSQL, NextJS charts, CSV streaming.
+
+**Part of Epic: Data Sharing Enforcement & Intelligence**
+
+---
+
+#### 7.7 (#4260) — Usage-Based Renewal Recommendations & Work Queue
+
+**Problem Statement**: The renewal queue in `usage.html` recommends "Renew @ tier 2 (+15% usage trend)", "Upsell to Enterprise (avg 7 exports / mo)", and "consider downgrade tier", gates auto-renew with a "review · over quota" state, and offers Approve / Negotiate / Schedule actions — while 2.3 (#966) only auto-renews identical terms and sends notifications.
+
+**Solution/Scope**: A recommendation engine that analyses usage trends against the contract's tier and produces a renewal recommendation (renew as-is, upsell tier, downgrade tier) with the supporting trend figures; **quota-compliance gating** that flips over-quota contracts from auto-renew to review-required; and an operator **renewal work queue** with per-row actions — Approve (renew with recommended terms), Negotiate (open a 1.4 negotiation seeded with the recommended amendment), Schedule (defer the decision).
+
+**Acceptance Criteria**:
+- Recommendations cite the usage evidence (trend %, per-period averages) that produced them
+- Over-quota contracts cannot silently auto-renew; they enter review-required with both parties notified
+- Approve renews with the selected terms; Negotiate opens a pre-seeded 1.4 revision; Schedule sets a follow-up date
+- Queue rows show the countdown, auto-renew mode, recommendation, and quota state in one line
+- All recommendation-driven renewals are recorded as 4.1 events with the recommendation attached
+
+**Parallelism/Dependencies**: Extends 2.3 (#966); consumes 7.6 usage data and 1.4 negotiation. Sequenced after 7.6. Tenant-wide renewal policies live in 11.2.
+
+**Technical Stack**: Trend analysis job, REST, NextJS queue UI.
+
+**Part of Epic: Data Sharing Enforcement & Intelligence**
+
+---
+
+#### 7.8 (#4261) — Consent Operations Dashboard & Log Integrity
+
+**Problem Statement**: `consent.html` opens with four KPI cards (aggregate status "3 of 4 clauses", active grants +2 this month, expiring · 30 d, active recalls), filters the table by status and date, records a "data subject request" collection method, and footers the table with "SHA-256 · 9b3f…71ac · log immutable since 2024-09-01" — a KPI surface, filter set, method value, and integrity proof absent from 2.2 (#965).
+
+**Solution/Scope**: Add the consent **KPI strip** (aggregate clause coverage, active-grant count with monthly delta, expiring-within-30d, active recalls with per-notice countdown bars and an active/acknowledged rollup); **status and date-range filters** on the consent table; **`data_subject_request`** as a collection-method value; and **hash-chain the consent log** (each entry hashes its predecessor; the current head renders in the footer and verifies through the 9.1 integrity verifier).
+
+**Acceptance Criteria**:
+- KPI strip reflects live consent state; recall cards show deadline progress and remaining days
+- Consent table filters by status and date range
+- `data_subject_request` is accepted and reported as a collection method
+- Consent-log entries are hash-chained; the verifier detects any gap or mutation
+- Consent KPIs and integrity status are exportable for 4.3 compliance reports
+
+**Parallelism/Dependencies**: Extends 2.2 (#965)/2.5 (#968); chain verification shares 9.1 infrastructure. Parallel within Epic 7.
+
+**Technical Stack**: SHA-256 chaining, NextJS KPI components, REST.
+
+**Part of Epic: Data Sharing Enforcement & Intelligence**
+
+---
+
+## Epic 8 (#4262): Billing Operations & Financial Integrations
+
+The `billing.html` and `invoice.html` mockups expose the largest single gap in the roadmap: Epic 3 meters usage and generates invoices, but nothing authors the pricing those systems consume, runs the billing cycle as an observable job, reconciles to accounting systems, or handles line-item-level disputes and tax metadata.
+
+### Summary Table
+
+| #   | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|-----|-------|---------|--------|----------|-----|------------|------------------|
+| 8.1 (#4263) | Pricing Model Builder | Author flat-fee, usage-tiered, and per-seat pricing with tier tables, platform fees, currency | `enhancement`, `contracts`, `mvp`, `rest` | Yes | Y | M | apiome-ui, apiome-rest, apiome-db |
+| 8.2 (#4264) | Billing Run Orchestration & Observability | Tenant-wide billing cycle runner with step-level results, retries, durations, and logs | `enhancement`, `contracts`, `rest` | No | N | L | apiome-rest, apiome-db, apiome-ui |
+| 8.3 (#4265) | ERP & Accounting Reconciliation | NetSuite/QuickBooks GL posting and reconciliation with per-adapter sync status | `enhancement`, `contracts` | Yes | N | L | apiome-rest, apiome-db |
+| 8.4 (#4266) | Expanded Payment & Payout Rails | Adyen, Coinbase, Wise adapters; non-Stripe payout targets; projected payouts per cycle | `enhancement`, `contracts` | Yes | N | M | apiome-rest |
+| 8.5 (#4267) | Invoice Line-Item Disputes, Evidence & Tax Metadata | Per-line dispute flags, line→evidence drill-down, VAT/EIN/PO fields, tax jurisdiction, activity feed | `enhancement`, `contracts`, `rest` | No | N | M | apiome-ui, apiome-rest, apiome-db |
+| 8.6 (#4268) | Billing KPIs & Revenue Analytics | MRR with MoM trend, revenue-share owed, failed-charge tracking on the billing dashboard | `enhancement`, `contracts` | Yes | N | S | apiome-ui, apiome-rest |
+
+### Detailed Issue Descriptions
+
+#### 8.1 (#4263) — Pricing Model Builder
+
+**Problem Statement**: 3.1 (#970) and 3.2 (#971) both *consume* "contract pricing tiers", but no issue defines where pricing is authored — `billing.html` mocks the missing editor: a Flat fee / Usage tiered / Per-seat toggle, an editable tier table (`0–100k · $0.0010/call`), a platform fee field, and a currency selector. Invoices cannot be generated without this.
+
+**Solution/Scope**: A per-contract pricing model editor supporting **flat fee** (fixed recurring amount), **usage-tiered** (ordered tier table of usage ranges × unit prices per metered metric), and **per-seat** (seat count × seat price) models, each optionally combined with a recurring **platform fee** and a contract **currency**. Includes a live "calculated this period" preview against current 3.1 metering. Pricing versions are effective-dated: changes apply to future billing periods only and require counterparty approval like any term change (1.4).
+
+**Acceptance Criteria**:
+- All three model types round-trip: editor → API → invoice line-item calculation
+- Tier tables validate contiguous, non-overlapping ranges; unit prices support 4-decimal precision
+- Platform fee and currency persist per contract; currency drives all downstream invoice rendering
+- Live preview computes the current period's charge from actual metering within 5% of the eventual invoice (matching 3.1's estimate AC)
+- Pricing changes are effective-dated, versioned, and gated on counterparty approval
+
+**Parallelism/Dependencies**: Feeds 3.2 (#971) invoice generation; preview consumes 3.1 (#970). MVP — invoicing is blocked without it. Parallel with 8.3/8.4.
+
+**Technical Stack**: NextJS editor, PostgreSQL JSONB pricing schema, REST.
+
+**Part of Epic: Billing Operations & Financial Integrations**
+
+---
+
+#### 8.2 (#4264) — Billing Run Orchestration & Observability
+
+**Problem Statement**: 3.2 says invoices are "generated automatically at period end", but `billing.html` shows what that actually requires: a "Run billing cycle" action and a "Last billing run" table with six steps — Aggregate usage → Apply tier pricing → Compute splits → Push to Stripe → Charge customers → Reconcile NetSuite — each with result, record count, duration, and pending retries. No issue owns this orchestration.
+
+**Solution/Scope**: A tenant-wide billing-run job with explicit, observable steps and per-step results, record counts, durations, retry state, and a full run log. Runs trigger on schedule (period end) or manually; steps are idempotent and independently retryable so a Stripe outage doesn't re-aggregate usage. The run surface lives on the billing hub with drill-down to the full log.
+
+```
+  billing run ──▶ 1 aggregate usage ──▶ 2 apply pricing ──▶ 3 compute splits
+                     │                       │                   │
+                     ▼                       ▼                   ▼
+                4 push invoices ──▶ 5 charge customers ──▶ 6 reconcile ERP
+                (each step: result · records · duration · retries · log)
+```
+
+**Acceptance Criteria**:
+- Billing runs execute the step pipeline with per-step status, record counts, and durations persisted
+- Failed steps retry with backoff; a step can be manually re-run without repeating completed steps
+- "Run billing cycle" triggers an ad-hoc run guarded against overlapping executions
+- Full run log is viewable and exportable; run completion/failure emits 4.1 events
+- Partial failures leave the run in a resumable state with pending-retry counts surfaced
+
+**Parallelism/Dependencies**: Orchestrates 3.1/3.2/3.3/3.4 and 8.3. Sequenced after 8.1 and 3.2.
+
+**Technical Stack**: Job queue with step checkpoints, PostgreSQL run tables, NextJS run viewer.
+
+**Part of Epic: Billing Operations & Financial Integrations**
+
+---
+
+#### 8.3 (#4265) — ERP & Accounting Reconciliation
+
+**Problem Statement**: The billing hub is titled "Stripe ↔ NetSuite reconciliation" and lists `NetSuite · GL sync · 5 min · synced` and `QuickBooks · paused · scoped to EU` as rails, with billing-run step 6 posting "88 GL entries" — but 3.3 (#972) covers payment gateways only; accounting-system integration has no issue.
+
+**Solution/Scope**: An accounting-adapter layer, parallel to 3.3's payment abstraction, that posts invoices, payments, credits, and revenue-share distributions to external ledgers (NetSuite first, QuickBooks second) and reconciles: per-adapter sync status (`live / synced / paused / scoped`), sync cadence, posted-entry counts, and a discrepancy report when Apiome totals and GL totals diverge. Adapters are region-scopeable (e.g. QuickBooks for EU entities only).
+
+**Acceptance Criteria**:
+- Invoices, payments, credits, and distributions post to NetSuite as GL entries with idempotent external IDs
+- Adapter status (live/synced/paused), cadence, and last-sync render on the billing hub rails panel
+- Reconciliation compares Apiome and GL balances per period and surfaces discrepancies with drill-down
+- Adapters are scopeable by region/entity; paused adapters queue entries for later posting
+- QuickBooks adapter reuses the abstraction without core-logic changes (mirrors 3.3's gateway AC)
+
+**Parallelism/Dependencies**: Consumes 3.2 invoices and 3.4 distributions; runs as 8.2's reconcile step. Parallel with 8.1/8.4.
+
+**Technical Stack**: NetSuite/QuickBooks APIs, adapter abstraction, reconciliation job.
+
+**Part of Epic: Billing Operations & Financial Integrations**
+
+---
+
+#### 8.4 (#4266) — Expanded Payment & Payout Rails
+
+**Problem Statement**: The rails panel offers an "Add adapter" row listing Adyen, Coinbase, and Wise, and the revenue-share table pays Initech via "NetSuite vendor" while others use Stripe Connect — rails and payout channels beyond 3.3's Stripe/PayPal/wire scope, and a non-Stripe payout target 3.4 (#973) doesn't model.
+
+**Solution/Scope**: Implement additional adapters on 3.3's abstraction — **Adyen** (cards/local methods), **Wise** (cross-border/FX payouts), **Coinbase** (crypto settlement, feature-flagged) — and extend 3.4's settlement model with **per-party payout channels** (Stripe Connect, NetSuite vendor payment, Wise transfer) plus **projected payouts for the current cycle** shown alongside actuals.
+
+**Acceptance Criteria**:
+- Each new adapter implements the 3.3 abstraction with no core billing changes
+- Revenue-share parties configure a payout channel; settlements route per channel with per-channel status
+- Projected current-cycle payouts render next to settled amounts in the revenue-share panel
+- Crypto settlement is feature-flagged per tenant and disabled by default
+- Failed payouts surface with retry and manual-settlement fallback
+
+**Parallelism/Dependencies**: Depends on 3.3 (#972) abstraction and 3.4 (#973) distributions; NetSuite vendor payouts depend on 8.3. Parallel with 8.3.
+
+**Technical Stack**: Adyen/Wise/Coinbase SDKs, payout-channel model, REST.
+
+**Part of Epic: Billing Operations & Financial Integrations**
+
+---
+
+#### 8.5 (#4267) — Invoice Line-Item Disputes, Evidence & Tax Metadata
+
+**Problem Statement**: `invoice.html` flags line 004 as `disputed by Hooli` ("counter-party claims 2.8M") with click-to-expand evidence per row, renders VAT/EIN, PO number, and remit-to blocks, computes `Tax (CA 8.625%)`, bills an overage line (`2 over · $50/each`), and shows a per-invoice activity feed — none of which 3.2 (#971) or 4.2 (#977) specify.
+
+**Solution/Scope**: **Line-item dispute flagging** (a party disputes a specific line with their claimed figure; the flag renders inline and can escalate to a full 4.2/9.6 dispute scoped to that line); **line→evidence drill-down** (each usage-derived line expands to its metering records and clause reference); **party tax/PO metadata** on invoices (VAT/EIN, PO number, remit-to — sourced from 11.1 counterparty records); a **tax jurisdiction resolver** (rate by seller/buyer jurisdiction with an override table); **overage line items** (from 7.6); an explicit **credits subtotal row**; a **Re-issue & send** action; a `Disputed` invoice status; and a **per-invoice activity feed** (generated → sent to AP → dispute opened → …) derived from 4.1 events.
+
+**Acceptance Criteria**:
+- A line item can be disputed with the counterparty's claimed quantity/amount; disputed lines render inline and link to the dispute case
+- Every usage-derived line expands to its metering evidence and clause reference
+- Invoices carry VAT/EIN, PO, and remit-to blocks populated from counterparty records
+- Tax lines resolve jurisdiction and rate, itemised on the invoice and PDF
+- Invoice status set includes `Disputed`; re-issue creates a corrected revision linked to the original
+- Per-invoice activity feed renders the invoice's 4.1 event slice chronologically
+
+**Parallelism/Dependencies**: Extends 3.2 (#971); dispute escalation integrates 4.2/9.6; metadata depends on 11.1; overage lines depend on 7.6. Sequenced after 3.2.
+
+**Technical Stack**: PostgreSQL invoice-line extensions, tax-rate resolver, NextJS, PDF rendering.
+
+**Part of Epic: Billing Operations & Financial Integrations**
+
+---
+
+#### 8.6 (#4268) — Billing KPIs & Revenue Analytics
+
+**Problem Statement**: 3.5 (#974) specifies outstanding / collected-this-month / overdue cards only, while the billing hub renders MRR with a month-over-month trend, "Revenue share owed", and a failed-charges KPI (`card_declined`), and the contract dashboard needs per-contract MRR (6.2) — revenue analytics has no owner.
+
+**Solution/Scope**: A revenue-analytics service computing **MRR per contract and per tenant** (with MoM deltas), **revenue-share owed** (unsettled distribution balances from 3.4), and **failed-charge tracking** (count, reasons, retry state from 3.3). Exposes the KPI cards on the billing dashboard and the per-contract value column consumed by 6.2.
+
+**Acceptance Criteria**:
+- MRR is computed per contract (normalising non-monthly billing periods) and aggregates per tenant with MoM trend
+- Revenue-share owed reflects unsettled 3.4 distributions in real time
+- Failed charges surface with gateway reason codes and link to retry/manual-payment flows
+- A per-contract financial summary endpoint serves the 6.2 dashboard value column
+- KPI figures reconcile with invoice/settlement totals for the same period
+
+**Parallelism/Dependencies**: Extends 3.5 (#974); consumes 3.3/3.4; feeds 6.2. Parallel with 8.5.
+
+**Technical Stack**: Aggregation queries, REST summary endpoints, NextJS KPI cards.
+
+**Part of Epic: Billing Operations & Financial Integrations**
+
+---
+
+## Epic 9 (#4269): Compliance, Audit & Dispute Operations
+
+`history.html`, `compliance.html`, and `disputes.html` render trust machinery well beyond Epic 4's text: a per-event hash chain with a gap-detecting verifier, multi-backend anchoring, a GRC control-mapping engine with findings and a posture score, DSAR fulfilment, an auditor vault, a full mediation/settlement console, and tenant-wide encrypted data portability.
+
+### Summary Table
+
+| #   | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|-----|-------|---------|--------|----------|-----|------------|------------------|
+| 9.1 (#4270) | Per-Event Hash Chaining & Integrity Verifier | Chain every event to its predecessor; windowed verifier UI with gap detection, facets, full-text search | `enhancement`, `contracts`, `rest` | Yes | N | L | apiome-rest, apiome-db, apiome-ui |
+| 9.2 (#4271) | Multi-Adapter Tamper-Evidence Anchoring | OpenTimestamps and S3 Object-Lock WORM backends beside Ethereum; schedule presets; cost surfacing | `enhancement`, `contracts` | Yes | N | M | apiome-rest |
+| 9.3 (#4272) | GRC Framework Control Mapping & Posture Score | SOC 2 / GDPR / CCPA / ISO 27001 / HIPAA control coverage, findings management, posture score | `enhancement`, `contracts` | Yes | N | L | apiome-rest, apiome-db, apiome-ui |
+| 9.4 (#4273) | DSAR Fulfilment Workflow | Intake, track, and register GDPR Art. 15/17/20 data-subject requests | `enhancement`, `contracts`, `rest` | Yes | N | M | apiome-rest, apiome-ui, apiome-db |
+| 9.5 (#4274) | Auditor Evidence Vault & Signed Reports | Cryptographically signed reports, expanded report types, time-boxed auditor access packages | `enhancement`, `contracts` | No | N | M | apiome-rest, apiome-ui |
+| 9.6 (#4275) | Mediation & Settlement Workflow | Mediator role and console, response SLAs, 5-stage lifecycle, settlement offers with credit issuance | `enhancement`, `contracts` | No | N | L | apiome-rest, apiome-ui, apiome-db |
+| 9.7 (#4276) | Tenant Data Portability Export | Whole-tenant multi-entity export in Parquet with tenant-KMS encryption and scheduling | `enhancement`, `contracts`, `rest` | Yes | N | M | apiome-rest |
+
+### Detailed Issue Descriptions
+
+#### 9.1 (#4270) — Per-Event Hash Chaining & Integrity Verifier
+
+**Problem Statement**: 4.1 (#976) guarantees append-only + sequence numbers and 4.4 (#979) anchors periodic Merkle roots, but `history.html` shows a per-event `Hash` column, a `chain head: 3a8e…f102`, "chain integrity verified · 0 gaps", a windowed Chain-integrity-verifier panel with a raw-Merkle-tree viewer, and CI-driven verification (`gh-actions/integrity`) — a continuous tamper-evidence mechanism neither issue provides.
+
+**Solution/Scope**: Hash-chain the event log: each event stores `hash = H(prev_hash ‖ canonical_payload)`; the chain head is surfaced on the history screen. Ship the **verifier UI** (From/To window → events/anchors/gaps counts, verification duration, re-verify, raw Merkle tree view), **gap detection** (sequence continuity + hash-link validation), a **CI verification hook** (external job recomputes the chain and reports, recorded with actor attribution), plus **event-type facet chips with live counts** and **full-text timeline search** on the history screen. The consent log (7.8) and signature hashes (6.5) use the same primitives.
+
+```
+  e₁ ──H──▶ e₂ ──H──▶ e₃ ──H──▶ … ──▶ chain head 3a8e…f102
+   │          │          │
+   └──────────┴──────────┴──▶ Merkle root ──▶ anchor batch (4.4 / 9.2)
+  verifier: recompute window ──▶ events · anchors · gaps ──▶ valid / tampered
+```
+
+**Acceptance Criteria**:
+- Every event records the hash of its predecessor; the chain head is queryable and rendered
+- Verifier validates any window, reporting event count, anchor coverage, and gaps; tampering or gaps fail loudly
+- Raw Merkle tree for any anchor batch is viewable; verification runs are themselves logged with actor
+- External/CI verification is supported via a documented endpoint and reference workflow
+- History screen adds full-text search and event-type facet chips with counts alongside 4.1's structured filters
+
+**Parallelism/Dependencies**: Extends 4.1 (#976); anchoring batches feed 4.4/9.2; shared with 7.8 and 6.5. Parallel with 9.3/9.4.
+
+**Technical Stack**: SHA-256 chaining, Merkle trees, PostgreSQL, NextJS verifier panel.
+
+**Part of Epic: Compliance, Audit & Dispute Operations**
+
+---
+
+#### 9.2 (#4271) — Multi-Adapter Tamper-Evidence Anchoring
+
+**Problem Statement**: 4.4 (#979) anchors to "Ethereum (or a configurable chain)", but `compliance.html` lists **OpenTimestamps** and **S3 WORM** as sibling anchoring targets with independent enable/pause states and schedule presets (`Hourly / Every 8h / Daily / Manual`) — tenants that can't touch a public chain have no roadmap path to tamper evidence.
+
+**Solution/Scope**: Generalize anchoring behind an adapter interface with three backends: **Ethereum L1** (existing 4.4), **OpenTimestamps** (free, Bitcoin-attested), and **S3 Object-Lock WORM** (compliance-mode immutable objects). Each adapter enables/pauses independently with its own schedule preset; anchor records show backend, cost, block height / OTS proof / object version, and an explorer/proof link. Verification (9.1) accepts proofs from any enabled backend.
+
+**Acceptance Criteria**:
+- The same Merkle root can anchor to multiple backends concurrently, each with independent schedules
+- OTS proofs and S3 WORM object versions verify through the 9.1 verifier like Ethereum anchors
+- Anchor records show per-backend cost (gas estimate for Ethereum, storage for S3, zero for OTS)
+- Pausing a backend queues batches without blocking the others
+- Adapter addition requires no changes to event-log or verifier core
+
+**Parallelism/Dependencies**: Extends 4.4 (#979); verification via 9.1. Parallel with 9.1.
+
+**Technical Stack**: OpenTimestamps client, S3 Object Lock, Ethereum RPC, adapter abstraction.
+
+**Part of Epic: Compliance, Audit & Dispute Operations**
+
+---
+
+#### 9.3 (#4272) — GRC Framework Control Mapping & Posture Score
+
+**Problem Statement**: 4.3 (#978) generates reports, but `compliance.html` runs a GRC program: a `96/100` posture score trending "+3 pts this month", an open-findings tracker (`1 medium · 1 low`, `ISO 27001 · A.8.16 monitoring`), and a frameworks panel scoring **SOC 2 Type II 98% (142/145 controls automated)**, **GDPR 96%**, **CCPA 94%**, **ISO 27001 88%**, and **HIPAA scoped · BAA template ready** — control mapping, findings, and scoring have no issue.
+
+**Solution/Scope**: A control-mapping engine: a catalog of platform controls (event-log immutability, consent tracking, encryption handling, access restrictions, verification gates) mapped to framework requirements (SOC 2 trust criteria, GDPR articles, CCPA sections, ISO 27001 annex controls, HIPAA safeguards). Each mapping has an automated evidence check where possible; coverage percentages roll up per framework and into a tenant **posture score** with trend. **Findings** (failed or unmapped controls) carry severity, owner, and remediation state. Framework packs are versioned data, addable without code changes.
+
+**Acceptance Criteria**:
+- Control catalog maps to at least SOC 2, GDPR, CCPA, and ISO 27001 requirement sets, with HIPAA scoped
+- Automated checks evaluate mapped controls on schedule; coverage % = passing automated + attested manual controls
+- Posture score aggregates framework coverage with severity weighting and renders trend over time
+- Findings track severity, owner, remediation state, and link to the failing control and its evidence
+- 4.3 reports can embed framework coverage and findings sections
+
+**Parallelism/Dependencies**: Extends 4.3 (#978); consumes signals from 4.1/9.1, 2.2, 7.1, and Epic 5 gates. Parallel with 9.1/9.4.
+
+**Technical Stack**: Framework requirement packs (versioned data), check scheduler, NextJS GRC dashboard.
+
+**Part of Epic: Compliance, Audit & Dispute Operations**
+
+---
+
+#### 9.4 (#4273) — DSAR Fulfilment Workflow
+
+**Problem Statement**: `compliance.html` lists a "DSAR fulfilment register · GDPR Art. 15" report and `consent.html` records a "data subject request" method, but no issue implements receiving, tracking, or fulfilling data-subject requests — consent tracking (2.2) manages grants, not subject rights.
+
+**Solution/Scope**: A DSAR workflow covering **access** (Art. 15 — compile the subject's data across shared schemas using 7.1 PII classification), **erasure** (Art. 17 — trigger deletion obligations across contracts holding the subject's data, reusing 2.5 recall machinery), and **portability** (Art. 20 — machine-readable subject export). Requests have intake (form/API), identity verification, a statutory-deadline clock (30 days with extension tracking), per-contract fulfilment subtasks, and a **register** feeding the 4.3 report.
+
+**Acceptance Criteria**:
+- DSAR intake captures request type, subject identity, and verification evidence
+- Deadline clock tracks the statutory window with escalation before expiry
+- Access/portability requests compile subject data across contracts using PII classification
+- Erasure requests generate per-contract deletion obligations tracked to confirmation
+- The DSAR register lists all requests with status and timing, exportable via 4.3
+
+**Parallelism/Dependencies**: Depends on 7.1 (classification) and 2.5 (recall machinery); feeds 4.3/9.3. Parallel with 9.3.
+
+**Technical Stack**: Workflow tables, deadline scheduler, REST intake API, NextJS register.
+
+**Part of Epic: Compliance, Audit & Dispute Operations**
+
+---
+
+#### 9.5 (#4274) — Auditor Evidence Vault & Signed Reports
+
+**Problem Statement**: `compliance.html` shows reports with a `Signed` status ("cryptographically signed"), an "Annual SOC 2 evidence pack · Auditor pkg · Open vault" row, and report types (SOC 2 CC7/CC8, CCPA data-sharing inventory, DSAR register, contract-integrity) beyond 4.3's four — report signing, auditor access, and the expanded catalog have no issue.
+
+**Solution/Scope**: **Sign generated reports** (detached signature over the artifact, verifiable offline; status set `Generating / Signed / Auditor pkg`); expand the 4.3 report catalog with SOC 2 evidence packs, CCPA data-sharing inventory, DSAR register (9.4), and contract-integrity (9.1 verification results); add **JSON output** beside PDF/CSV; and ship an **auditor vault** — a time-boxed, read-only external portal where an auditor receives a scoped evidence package (reports, anchor proofs, control evidence from 9.3) with access logging.
+
+**Acceptance Criteria**:
+- Reports are signed at generation; signatures verify offline against a published tenant key
+- Report catalog includes SOC 2 evidence pack, CCPA inventory, DSAR register, and contract-integrity types
+- JSON is available as an output format for all report types
+- Auditor vault grants are time-boxed, read-only, scoped to named packages, and fully access-logged
+- Vault access events are recorded in the 4.1/9.1 chain
+
+**Parallelism/Dependencies**: Extends 4.3 (#978); consumes 9.1/9.3/9.4 outputs. Sequenced after 9.3.
+
+**Technical Stack**: Artifact signing (Ed25519/KMS), scoped-access portal, REST.
+
+**Part of Epic: Compliance, Audit & Dispute Operations**
+
+---
+
+#### 9.6 (#4275) — Mediation & Settlement Workflow
+
+**Problem Statement**: The README calls `disputes.html` a "mediator console", and the screen shows a `Mediator · unassigned · auto-assign T+5d` party row, "day 4 of 14" mediation clocks, response SLAs ("respond by 2026-04-25 12:00 UTC"), a five-stage stepper (filed → acknowledged → evidence → resolved → closed), a compose-response panel with evidence/clause/hash insertion, settlement options (full credit −$160 / partial −$80 / uphold $0), a quantified disputed amount (`400k calls × $0.0004`), and cross-source metering reconciliation ("within 0.006% across 3 independent sources") — 4.2 (#977) models none of this beyond open→resolve.
+
+**Solution/Scope**: Extend disputes with: the **five-stage lifecycle** and richer statuses (`awaiting evidence`, `in mediation`, `awaiting counterparty`, `resolved-credit`, `resolved-upheld`); a **mediator role** (neutral third party, assignable manually or auto-assigned after a configurable window, with a scoped console view); **response SLAs and mediation clocks** with escalation on expiry; **in-dispute messaging** (threaded responses with insertable evidence packs, clause references, and chain hashes; drafts + "submit & advance"); a **quantified disputed amount** derived from the disputed line/clause; **automatic metering reconciliation** in the evidence pack (compare Apiome metering, gateway logs, and the counterparty's claimed figure, reporting the discrepancy %); and **settlement offers** whose accepted credits flow to 3.2 as invoice credit line items.
+
+```
+  filed ──▶ acknowledged ──▶ evidence ──▶ resolved ──▶ closed
+              │ SLA clock      │ mediator auto-assign T+5d
+              ▼                ▼
+        respond-by deadline   settlement offer ──▶ accepted ──▶ credit → invoice (3.2)
+                                             └──▶ declined ──▶ continue mediation / uphold
+```
+
+**Acceptance Criteria**:
+- Disputes progress through the five stages with per-stage timestamps and the richer status vocabulary
+- Mediator can be assigned manually or auto-assigned after the configured window; mediator sees a scoped console
+- Response SLAs render countdowns and escalate on expiry
+- Messages support inserting evidence packs, clause references, and chain hashes; submissions advance the stage
+- Evidence packs include cross-source metering reconciliation with discrepancy percentage
+- Accepted settlements issue credits that appear on the next (or a corrected) invoice with links back to the dispute
+
+**Parallelism/Dependencies**: Extends 4.2 (#977); credits integrate with 3.2 (#971); line-item disputes arrive via 8.5; evidence uses 9.1 hashes. Sequenced after 4.2.
+
+**Technical Stack**: Dispute state machine, mediation scheduler, NextJS console, REST.
+
+**Part of Epic: Compliance, Audit & Dispute Operations**
+
+---
+
+#### 9.7 (#4276) — Tenant Data Portability Export
+
+**Problem Statement**: 4.5 (#980) exports the *audit trail* in JSON Lines/CSV/SARIF, but the compliance screen's "Data export & portability" panel exports **contracts, consent log, invoices, audit chain, disputes, and templates** in **Parquet**, encrypted with a tenant **KMS key** (`arn:aws:kms…`) — whole-tenant portability is a different, unspecified capability.
+
+**Solution/Scope**: A multi-entity export job covering all contract-domain entities (contracts + versions, consent log, invoices + payments, audit chain, disputes, templates), with per-entity selection, **Parquet** (and JSON Lines) output, **envelope encryption with a tenant-supplied KMS key**, one-time and scheduled runs, and delivery via download or S3 (reusing 4.5's delivery layer). Exports include chain-head hashes so recipients can verify integrity offline via 9.1 semantics.
+
+**Acceptance Criteria**:
+- Export selects any subset of the six entity groups and completes as an async job with progress
+- Parquet output preserves typed columns; JSON Lines remains available for all entities
+- Artifacts are envelope-encrypted with the configured tenant KMS key; unencrypted export requires explicit opt-in
+- Scheduled exports run recurringly with delivery to S3 or download links
+- Export manifests embed chain-head hashes enabling offline integrity verification
+
+**Parallelism/Dependencies**: Extends 4.5 (#980); KMS configuration lives in 11.2; integrity hashes from 9.1. Parallel with 9.5.
+
+**Technical Stack**: Parquet writers, KMS envelope encryption, job queue, S3 delivery.
+
+**Part of Epic: Compliance, Audit & Dispute Operations**
+
+---
+
+## Epic 10 (#4277): Pact Operations & Release Intelligence
+
+Operational depth for Epic 5 surfaced by `verification.html`, `matrix.html`, and `can-i-deploy.html`: on-demand and bulk verification, stale-pact remediation, an environment/deployed-version model with predictive gating, and cross-signal contract health.
+
+### Summary Table
+
+| #   | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|-----|-------|---------|--------|----------|-----|------------|------------------|
+| 10.1 (#4278) | On-Demand & Bulk Verification Operations | Manual re-run, verify-all-stale, raw/downloadable logs with expected-vs-actual diffs, build+commit capture, run history, matrix search & rollups | `enhancement`, `contracts`, `pact`, `rest` | Yes | N | M | apiome-rest, apiome-ui, apiome-cli |
+| 10.2 (#4279) | Stale-Pact Remediation & Verification Scheduling | Re-publish request workflow for stale pacts; per-tenant/contract cadence and threshold settings | `enhancement`, `contracts`, `pact` | Yes | N | M | apiome-rest, apiome-ui |
+| 10.3 (#4280) | Environment Topology & Deploy Simulator | Deployed-versions dashboard, staging look-ahead with predicted-clear, named gate policies, gate history, CLI snippet | `enhancement`, `contracts`, `pact` | No | N | L | apiome-rest, apiome-ui, apiome-cli |
+| 10.4 (#4281) | Contract Health Rollup & Verification Analytics | Fuse pact, SLA, and consent signals per contract; cross-signal dispute evidence; pass-rate and duration trends | `enhancement`, `contracts`, `pact` | No | N | M | apiome-rest, apiome-ui |
+
+### Detailed Issue Descriptions
+
+#### 10.1 (#4278) — On-Demand & Bulk Verification Operations
+
+**Problem Statement**: 5.3 triggers verification on schema publish, pact publish, and nightly schedule only, and 5.4 defines a read-only grid — but `verification.html` has a manual "Re-run verification" button, a "Raw log" view, Copy/Download on the replay terminal, expected-vs-actual JSON body diffs, provider build + commit capture (`Build v3.2.0 · f3c7a91`), per-run trigger-provenance labels and durations, and `matrix.html` has "Verify all stale", a free-text pair filter, and a summary rollup (`18 pacts · 14 verified · 2 failing · 1 stale · 1 new`).
+
+**Solution/Scope**: Add **operator-initiated verification** (single pair re-run; bulk verify-all-stale from the matrix) with concurrency guards; persist **trigger provenance** (schema publish / pact publish / nightly / manual / stale re-check) and **run duration** per run, shown in a recent-runs history panel with a KPI strip (contracted interactions · passing · failing · pass-rate % · last verified); capture the **provider build version and git commit** per run for attribution; provide **raw-log retrieval** and **copy/download** of replay output including structured expected-vs-actual body diffs; and upgrade the matrix with the **summary rollup counts**, **free-text pair search**, **counterparty grouping**, and a **filterable list view with hide-empty rows/columns** for large, sparse tenants.
+
+**Acceptance Criteria**:
+- Re-run (single) and verify-all-stale (bulk) are available in the UI and CLI, guarded against overlapping runs per pair
+- Runs persist trigger provenance, duration, and provider build/commit; the runs panel and verdicts display them
+- Raw logs are retrievable per run; replay output is copyable/downloadable with expected/actual diffs intact
+- Matrix shows rollup counts and supports free-text search, counterparty grouping, and a list view that hides empty rows/columns
+- Positive access-level confirmations (e.g. "aggregate-only clause honoured") render per consumer result
+
+**Parallelism/Dependencies**: Extends 5.3/5.4; CLI additions ride 5.6. Parallel with 10.2.
+
+**Technical Stack**: Worker queue, log storage, NextJS, apiome-cli.
+
+**Part of Epic: Pact Operations & Release Intelligence**
+
+---
+
+#### 10.2 (#4279) — Stale-Pact Remediation & Verification Scheduling
+
+**Problem Statement**: Staleness is only a matrix colour in 5.4, but `verification.html` run `#409` shows a workflow — "stale pact · re-publish requested" — and both screens reference a verification cadence ("on publish + nightly") and a configurable stale threshold with no settings surface anywhere.
+
+**Solution/Scope**: A **stale-pact remediation loop**: when a pact exceeds the stale threshold, the system sends a re-publish request to the consumer party (notification + webhook via 11.3/5.6), tracks the request state (requested → acknowledged → re-published / expired), and escalates unanswered requests — mirroring 2.3's renewal-reminder pattern. Plus a **verification settings surface** (per-tenant defaults, per-contract overrides): cadence (on-publish, nightly, hourly, manual-only), stale threshold, and concurrency limits, giving 5.4's "configurable per tenant" threshold an actual screen.
+
+**Acceptance Criteria**:
+- Stale pacts automatically generate re-publish requests with tracked state and escalation on expiry
+- Re-publish requests notify the consumer party via notification and webhook with the pact and contract references
+- Verification cadence and stale threshold are configurable per tenant with per-contract overrides
+- Stale-state transitions and re-publish requests emit 4.1 events
+- The matrix stale cells link to the open re-publish request when one exists
+
+**Parallelism/Dependencies**: Extends 5.3/5.4; delivery via 5.6/11.3; settings surface coordinates with 11.2. Parallel with 10.1.
+
+**Technical Stack**: Scheduler, notification/webhook fan-out, settings tables.
+
+**Part of Epic: Pact Operations & Release Intelligence**
+
+---
+
+#### 10.3 (#4280) — Environment Topology & Deploy Simulator
+
+**Problem Statement**: 5.5's environment model AC is one line ("tracks which consumer versions are deployed where"), yet `can-i-deploy.html` reads a **staging** consumer version, detects it no longer uses the removed field, and predicts "once it reaches production this pair goes green" — plus a named, clause-bound **gate policy** descriptor (`contracts + pacts + consent · required by clause DS-2.6`), a pinned **matrix snapshot** timestamp, an in-UI **CLI snippet** button, a manual **Re-check**, and a **Gate history** link, none of which are specified.
+
+**Solution/Scope**: Build the environment model into a visible **deployed-versions dashboard** (which pacticipant versions run in which environment, recorded via CLI/API on deploy — analogous to Pact Broker environments); extend the gate with a **simulator** that evaluates pending (staging) versions and answers what-if questions ("what does deploying X unblock/break?") including the predicted-clear look-ahead; make gates evaluate against a **pinned matrix snapshot** (timestamp shown, re-check re-pins); define **named gate policies** (which signal classes compose the gate — pacts, clause gates, consent — bound to a clause and rendered in the verdict banner); and add the **CLI snippet** copy affordance and a **gate history** view of past verdicts.
+
+```
+  environments: production ── consumer v4.2.1 (reads sku)   ⇒ gate: BLOCKED
+                staging    ── consumer v4.3.0 (no sku)      ⇒ simulator: clears after promote
+  gate(provider@v, env) = f(pact verdicts @ snapshot, clause gates, consent) per gate policy
+```
+
+**Acceptance Criteria**:
+- Deploy recording (CLI/API) maintains per-environment pacticipant versions shown on a topology dashboard
+- Simulator evaluates hypothetical promotions and reports which gate verdicts change, including predicted-clear guidance in unblock steps
+- Gate verdicts pin and display the matrix snapshot they evaluated; Re-check re-evaluates against a fresh snapshot
+- Gate policies are named, clause-bound, and rendered in the verdict banner; policy changes are contract events
+- Gate history lists prior verdicts per pacticipant/environment; the UI offers a copyable CLI invocation for the current check
+
+**Parallelism/Dependencies**: Extends 5.5/5.6; consumes 5.4 verdict data. Sequenced after 5.5.
+
+**Technical Stack**: Environment/version tables, gate evaluator, NextJS, apiome-cli.
+
+**Part of Epic: Pact Operations & Release Intelligence**
+
+---
+
+#### 10.4 (#4281) — Contract Health Rollup & Verification Analytics
+
+**Problem Statement**: The matrix's failing-pairs panel links a pact failure to "the active uptime breach on `C7_c08d` · dispute evidence attached" — correlating signals across pact verification, SLA breaches, and disputes that the roadmap treats as separate silos; and run durations/pass rates are displayed but never trended.
+
+**Solution/Scope**: A per-contract **health rollup** fusing verification strikes (5.3), SLA breach state (1.2/2.4), consent status (2.2/2.5), and open disputes (4.2) into one health signal with drill-down; **cross-signal correlation** that links a failing pact pair to concurrent breaches on the same contract and auto-attaches the combined evidence to an open dispute case; and **verification analytics** — pass-rate, flakiness (verdict churn), and mean verification duration trends per consumer/provider over time. Health feeds the 6.2 dashboard compliance context.
+
+**Acceptance Criteria**:
+- Health rollup computes per contract from pact, SLA, consent, and dispute signals with component drill-down
+- A pact failure on a contract with an active SLA breach links both and can auto-attach combined evidence to an open dispute
+- Trends render pass-rate, flakiness, and duration per pair over selectable windows
+- Health state changes emit 4.1 events and surface on the contract dashboard
+
+**Parallelism/Dependencies**: Consumes 5.3/5.4, 2.4, 2.2/2.5, 4.2; feeds 6.2. Sequenced after 10.1.
+
+**Technical Stack**: Aggregation service, time-series queries, NextJS.
+
+**Part of Epic: Pact Operations & Release Intelligence**
+
+---
+
+## Epic 11 (#4282): Platform Services & Enterprise Administration
+
+Cross-cutting capabilities every other epic leans on, drawn directly from the mockup README's "Out of scope (not included)" list plus counterparty data rendered inline on every screen. These unblock 8.5 (tax metadata), 7.7 (renewal policies), 9.7 (KMS keys), 6.3 (template notifications), and 10.2 (re-publish nudges).
+
+### Summary Table
+
+| #   | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|-----|-------|---------|--------|----------|-----|------------|------------------|
+| 11.1 (#4283) | Counterparty CRM | System of record for counterparties: profiles, contacts, AP/AR addresses, tax IDs, payment defaults | `enhancement`, `contracts`, `rest` | Yes | N | M | apiome-rest, apiome-db, apiome-ui |
+| 11.2 (#4284) | Tenant Contract Policy Administration | Org-wide defaults: signing rules, retention, KMS keys, renewal policies, verification cadence, anchoring schedules | `enhancement`, `contracts` | Yes | N | M | apiome-ui, apiome-rest, apiome-db |
+| 11.3 (#4285) | Contract Event Webhooks & Notification Center | Subscription config for contract lifecycle events with HMAC delivery and a notification preference center | `enhancement`, `contracts`, `rest` | Yes | N | M | apiome-rest, apiome-ui |
+| 11.4 (#4286) | E-Signature Provider Integrations | DocuSign / Adobe Sign hand-off and PKI signing as alternatives to self-hosted click-to-sign | `enhancement`, `contracts` | Yes | N | M | apiome-rest, apiome-ui |
+| 11.5 (#4287) | Smart-Contract Clause Execution & Metric Oracles (Exploratory) | On-chain enforcement of machine-readable clauses fed by metric oracles | `enhancement`, `contracts` | Yes | N | L | apiome-rest |
+
+### Detailed Issue Descriptions
+
+#### 11.1 (#4283) — Counterparty CRM
+
+**Problem Statement**: Counterparty identity is rendered inline on every screen — colour-coded avatars (Hooli purple, Globex emerald, …), `dpo@hooli.com` as a revocation contact, VAT/EIN and PO blocks on invoices, "awaiting Wonka" signature rows — with no system of record; the README explicitly parks "counterparty profiles, contacts, AP/AR addresses, tax IDs" as out of scope.
+
+**Solution/Scope**: A counterparty registry per tenant: organization profile (legal name, avatar colour, jurisdictions), **contacts by role** (signer, DPO, AP/AR, technical, dispute), **billing metadata** (AP/AR addresses, VAT/EIN/tax IDs, default PO handling, remit-to), and **payment/payout defaults** (feeding 3.3/8.4). Contracts reference counterparty records instead of duplicating party metadata; invoices (8.5), signing (1.5), recalls (2.5), and disputes (9.6) resolve their contact and tax data from the registry. Includes the stable avatar-colour convention from the mockup design language.
+
+**Acceptance Criteria**:
+- Counterparty records hold profile, role-based contacts, billing/tax metadata, and payment defaults
+- Contract party references resolve to counterparty records; existing inline `party_metadata` migrates
+- Invoices pull VAT/EIN/PO/remit-to from the registry; recall and dispute notices route to the role-appropriate contact
+- Avatar colour is stable per counterparty across all screens
+- Counterparty edits are audited; merging duplicate records preserves contract references
+
+**Parallelism/Dependencies**: Unblocks 8.5; consumed by 1.5/2.5/9.6. Parallel with 11.2/11.3.
+
+**Technical Stack**: PostgreSQL counterparty tables, migration from `party_metadata`, REST, NextJS.
+
+**Part of Epic: Platform Services & Enterprise Administration**
+
+---
+
+#### 11.2 (#4284) — Tenant Contract Policy Administration
+
+**Problem Statement**: The README parks "org-wide defaults for signing rules, retention, KMS keys" as out of scope, yet the mockups dangle entry points everywhere: "Renewal policies" on `usage.html`, "Configure schedules" on `compliance.html`, "Configure all →" on `data-sharing.html`, the KMS ARN in the export panel, and 5.4's "configurable per tenant" stale threshold — with no settings surface owning any of it.
+
+**Solution/Scope**: A tenant administration area for contract-domain policy: **signing rules** (who may sign, required roles, hash binding on/off), **retention defaults** (event/usage/consent retention windows), **KMS key configuration** (for 9.7 exports and encrypted artifacts), **renewal policies** (default renewal mode, notification lead times, quota-gating defaults for 7.7), **verification defaults** (cadence, stale threshold for 10.2), and **anchoring schedules** (backend enablement and presets for 9.2). Contract-level settings inherit from tenant policy with explicit override tracking.
+
+**Acceptance Criteria**:
+- Tenant policies cover signing, retention, KMS, renewal, verification, and anchoring domains
+- New contracts and templates inherit tenant defaults; overrides are visible and audited
+- KMS key configuration validates key access before acceptance and is consumed by 9.7
+- Policy changes emit 4.1 events and apply prospectively
+- Policy administration is permission-gated to tenant administrators
+
+**Parallelism/Dependencies**: Consumed by 6.5, 7.7, 9.2, 9.7, 10.2. Parallel with 11.1/11.3.
+
+**Technical Stack**: Settings tables with inheritance, NextJS admin screens, REST.
+
+**Part of Epic: Platform Services & Enterprise Administration**
+
+---
+
+#### 11.3 (#4285) — Contract Event Webhooks & Notification Center
+
+**Problem Statement**: 4.5 delivers audit exports and 5.6 delivers pact/gate webhooks, but general contract lifecycle events — signed, activated, expiring, consent revoked, recall issued, usage threshold crossed, renewal due, invoice issued, dispute opened — have no subscription surface; the README notes webhooks appear only as "synced to audit log" footers.
+
+**Solution/Scope**: A webhook/notification configuration screen where each party subscribes endpoints (or notification channels) to contract-event classes, with per-subscription event filters, HMAC signing, retry with dead-lettering, and delivery logs — built on the same delivery layer as 4.5/5.6 so pact events and lifecycle events share infrastructure. Includes a per-user **notification preference center** (email/in-app per event class) replacing the ad-hoc notification mentions scattered through 1.4, 2.3, 2.5, and 3.3.
+
+**Acceptance Criteria**:
+- Subscriptions target event classes with optional per-contract filters; payloads include contract ID, clause references, and evidence URLs (parity with 5.6)
+- Deliveries are HMAC-signed with retry/backoff and a dead-letter queue; delivery logs are viewable per subscription
+- Notification preference center controls email/in-app delivery per event class per user
+- All existing roadmap notification triggers (renewal reminders, recall notices, payment failures) route through this layer
+- Subscription changes are audited as 4.1 events
+
+**Parallelism/Dependencies**: Reuses 4.5 (#980) delivery; supersedes scattered notification logic; consumed by 6.3, 10.2. Parallel with 11.1/11.2.
+
+**Technical Stack**: Webhook workers, HMAC signing, dead-letter queue, NextJS config UI.
+
+**Part of Epic: Platform Services & Enterprise Administration**
+
+---
+
+#### 11.4 (#4286) — E-Signature Provider Integrations
+
+**Problem Statement**: 1.5 (#961) is deliberately self-hosted click-to-sign ("enterprise tier may add PKI signing"), and the README excludes provider hand-off — but enterprise counterparties frequently mandate DocuSign or Adobe Sign, making the absence a deal blocker rather than a nice-to-have.
+
+**Solution/Scope**: A signing-provider abstraction with **DocuSign** and **Adobe Sign** adapters: initiating signature hands the signed-document envelope to the provider, tracks envelope status via provider webhooks, and records the completed signature (with provider evidence ID and certificate) in the existing `contract_signatures` trail — so 1.5's activation logic is unchanged regardless of the signing channel. Optional **PKI signing** (tenant certificate) for the self-hosted path, aligning with 6.5's hash binding.
+
+**Acceptance Criteria**:
+- Contracts can designate a signing channel: self-hosted (default), DocuSign, or Adobe Sign
+- Provider envelopes are created from the signed PDF; status webhooks update signature state in near-real time
+- Completed provider signatures record provider evidence IDs and land in the same immutable signature trail
+- Activation semantics (all required parties signed) are channel-agnostic
+- Provider outage falls back gracefully with re-initiation, never double-signing
+
+**Parallelism/Dependencies**: Extends 1.5 (#961); complements 6.5. Parallel within Epic 11.
+
+**Technical Stack**: DocuSign/Adobe Sign APIs, provider webhook handlers, adapter abstraction.
+
+**Part of Epic: Platform Services & Enterprise Administration**
+
+---
+
+#### 11.5 (#4287) — Smart-Contract Clause Execution & Metric Oracles (Exploratory)
+
+**Problem Statement**: The README bounds the cryptographic surface at audit anchoring (4.4/9.2), but the product thesis — machine-readable, enforceable agreements — points one step further: clauses whose consequences execute automatically on-chain, fed by attested metric inputs, for counterparties that don't trust each other's meters.
+
+**Solution/Scope**: Exploratory track: compile a constrained subset of clause types (uptime credit tiers, usage overage) to on-chain escrow/settlement logic; feed metrics via **oracles** that publish signed, anchored metering attestations (building on 9.1 chain hashes as the attestation source); execute consequences (credit release from escrow) automatically at period close. Explicitly gated behind a design review — this issue produces a prototype and an adoption/risk assessment, not GA functionality.
+
+**Acceptance Criteria**:
+- A design document maps which clause types can compile to on-chain execution and which cannot
+- Prototype executes a tiered uptime-credit clause on a testnet from oracle-attested metrics
+- Oracle attestations are verifiable against the 9.1 event chain
+- Risk assessment covers key custody, gas economics, dispute interaction (9.6), and regulatory posture
+- Go/no-go recommendation with a phased adoption path
+
+**Parallelism/Dependencies**: Builds on 9.1/9.2; interacts with 9.6. Fully parallel; lowest priority in the epic.
+
+**Technical Stack**: Solidity/testnet prototype, oracle attestation service, design documentation.
+
+**Part of Epic: Platform Services & Enterprise Administration**
 
 ---
 
@@ -733,7 +1633,25 @@ Issues 4.1 (Event Log), 4.3 (Compliance Reporting), 4.4 (Blockchain Anchoring), 
 **Epic 5 — Contract Testing & Deploy Gating (Pact)**:
 Issues 5.1 (Pact Data Model) and 5.2 (Consumer Capture) can be developed in parallel once 2.1 lands. Issue 5.3 (Provider Verification) depends on both and on 1.2 for clause binding. Issues 5.4 (Matrix) and 5.5 (Can-I-Deploy) depend on 5.3 for verdict data and can proceed in parallel with each other. Issue 5.6 (CI Integration) depends on 5.5 and reuses 4.5's webhook delivery.
 
-**Cross-Epic Parallelism**: Epic 1 (Contract Builder) and Epic 4 (Audit Trail) can begin simultaneously—the event log (4.1) should be integrated early as other epics emit events. Epic 2 (Data Sharing) depends on Epic 1 for the contract data model. Epic 3 (Billing) depends on Epic 2 for usage data from data sharing contracts. Epic 5 (Contract Testing) depends on Epic 2 for data-sharing clauses and on 1.2 for SLA clause binding, but shares broker infrastructure with the Testing & QA roadmap's Epic 6 (#1914) — coordinate to avoid duplicating pact storage. Within those constraints, UI work across all epics can proceed in parallel.
+**Epic 6 — Contract Authoring & Lifecycle Enhancements**:
+All six issues extend already-filed Epic 1 issues and are mutually parallel. 6.1 (Clause Catalog) should land before 7.6's overage pricing consumes tiered consequences. 6.2 (Dashboard Analytics) degrades gracefully until 8.6 supplies revenue figures. 6.6 (Internal Contracts) only needs 1.1.
+
+**Epic 7 — Data Sharing Enforcement & Intelligence**:
+Issues 7.1 (PII), 7.2 (Aggregate Grants), 7.5 (Clause Refinements), and 7.8 (Consent Ops) are parallel. 7.3 (Gateway Enforcement) depends on 7.2 and the 7.6 quota model. 7.4 (Lineage & Recall) depends on 2.4 usage events. 7.7 (Renewal Recommendations) depends on 7.6 usage analytics.
+
+**Epic 8 — Billing Operations & Financial Integrations**:
+8.1 (Pricing Builder) is the MVP gate — 3.2 invoicing is blocked without it — and is parallel with 8.3 (ERP) and 8.4 (Rails). 8.2 (Billing Run) orchestrates the others and comes after 8.1 + 3.2. 8.5 (Invoice Enhancements) needs 3.2, 11.1, and 7.6. 8.6 (KPIs) is parallel with 8.5.
+
+**Epic 9 — Compliance, Audit & Dispute Operations**:
+9.1 (Hash Chaining) should land early — 7.8, 6.5, 9.2, and 9.7 all reuse its primitives. 9.2 (Multi-Adapter Anchoring), 9.3 (GRC), and 9.4 (DSAR, after 7.1) are parallel. 9.5 (Auditor Vault) follows 9.3. 9.6 (Mediation) follows 4.2 and pairs with 8.5's line-item disputes. 9.7 (Portability) needs 9.1 and 11.2's KMS config.
+
+**Epic 10 — Pact Operations & Release Intelligence**:
+10.1 (Verification Ops) and 10.2 (Stale Remediation) are parallel once 5.3/5.4 land. 10.3 (Environment Topology & Simulator) follows 5.5. 10.4 (Health Rollup) follows 10.1 and consumes signals from Epics 2, 4, and 5.
+
+**Epic 11 — Platform Services & Enterprise Administration**:
+All five issues are mutually parallel and should start early relative to their consumers: 11.1 (Counterparty CRM) unblocks 8.5; 11.2 (Tenant Policy) unblocks 7.7, 9.7, and 10.2; 11.3 (Webhooks) unblocks 6.3 and 10.2 notifications. 11.4 (E-Signature) extends 1.5 independently. 11.5 (Smart Contracts) is exploratory and last.
+
+**Cross-Epic Parallelism**: Epic 1 (Contract Builder) and Epic 4 (Audit Trail) can begin simultaneously—the event log (4.1) should be integrated early as other epics emit events. Epic 2 (Data Sharing) depends on Epic 1 for the contract data model. Epic 3 (Billing) depends on Epic 2 for usage data from data sharing contracts. Epic 5 (Contract Testing) depends on Epic 2 for data-sharing clauses and on 1.2 for SLA clause binding, but shares broker infrastructure with the Testing & QA roadmap's Epic 6 (#1914) — coordinate to avoid duplicating pact storage. Among the gap-analysis epics, Epic 11 is the platform substrate (start 11.1–11.3 early), 9.1 is the shared integrity primitive, and 8.1 is on the MVP critical path; Epics 6, 7, and 10 extend their parent epics and can trail them issue-by-issue. Within those constraints, UI work across all epics can proceed in parallel.
 
 ---
 
@@ -746,6 +1664,13 @@ Issues 5.1 (Pact Data Model) and 5.2 (Consumer Capture) can be developed in para
 5. **Lifecycle**: 2.3 Expiration & Renewal → 2.4 Usage Monitoring → 2.5 Revocation & Recall
 6. **Pact MVP (parallel)**: 5.1 Pact Data Model & Contract Binding · 5.2 Consumer Pact Capture
 7. **Verification**: 5.3 Provider Verification & SLA Clause Binding
-8. **Billing (parallel)**: 3.1 Usage Metering · 3.3 Payment Gateway, then 3.2 Invoices → 3.4 Revenue Sharing → 3.5 Billing Dashboard
+8. **Billing (parallel)**: 8.1 Pricing Model Builder · 3.1 Usage Metering · 3.3 Payment Gateway, then 3.2 Invoices → 3.4 Revenue Sharing → 3.5 Billing Dashboard
 9. **Gating (parallel)**: 5.4 Compatibility Matrix · 5.5 Can-I-Deploy Gate, then 5.6 CI Integration & Gate Events
 10. **Compliance (parallel)**: 4.2 Disputes · 4.3 Compliance Reporting · 4.4 Blockchain Anchoring · 4.5 Audit Export
+11. **Platform substrate (parallel)**: 11.1 Counterparty CRM · 11.2 Tenant Policy Administration · 11.3 Contract Event Webhooks · 9.1 Hash Chaining & Integrity Verifier — shared services the remaining phases consume
+12. **Authoring depth (parallel)**: 6.1 Clause Catalog & Tiers · 6.3 Template Governance · 6.4 Negotiation Enhancements · 6.5 Signing Integrity · 6.6 Internal Contracts, then 6.2 Dashboard Analytics (after 8.6)
+13. **Sharing enforcement**: 7.1 PII Classification · 7.2 Aggregate Grants · 7.5 Clause Refinements · 7.8 Consent Ops (parallel), then 7.6 Quotas & Overage → 7.3 Gateway Enforcement → 7.4 Lineage & Recall → 7.7 Renewal Recommendations
+14. **Billing operations**: 8.3 ERP Reconciliation · 8.4 Payment Rails · 8.6 Revenue KPIs (parallel), then 8.2 Billing Run Orchestration → 8.5 Invoice Disputes & Tax Metadata
+15. **Trust operations**: 9.2 Multi-Adapter Anchoring · 9.3 GRC Control Mapping · 9.4 DSAR (parallel), then 9.5 Auditor Vault · 9.6 Mediation & Settlement · 9.7 Data Portability
+16. **Release intelligence**: 10.1 Verification Ops · 10.2 Stale-Pact Remediation (parallel), then 10.3 Environment Topology & Simulator → 10.4 Contract Health Rollup
+17. **Enterprise signing & exploration**: 11.4 E-Signature Providers · 11.5 Smart-Contract Execution (exploratory)

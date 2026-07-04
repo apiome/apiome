@@ -168,8 +168,14 @@ GraphQL, AsyncAPI), gets the mockup's core experience end-to-end:**
 
 **Explicitly out of MVP** (documented, deferred): alternate import sources beyond File/URL/Clipboard
 (MFI-26.5, gated on per-format source capability), inline versions timeline + diff-select
-(MFI-25.7), provenance enrichment (MFI-25.8), dry-run action (MFI-26.4),
+(MFI-25.7), provenance enrichment (MFI-25.8),
 category-score bars enabler (MFI-25.6), and cosmetic polish (MFI-24.3, 24.5, 27.1, 27.2).
+
+> **Update (2026-07-03 — gap analysis in `ROADMAP_MULTI_FORMAT_IMPORT.md` §0.3):** the **dry-run
+> action (MFI-26.4)** is **promoted to MVP**. The engine, CLI, and conversion flow all treat
+> dry-run as first-class (22.6 even defaults to it) — importing blind from the UI is the one
+> inconsistent surface, and "preview before commit" is the roadmap's signature idea. It pairs with
+> the MFI-22.7 passthrough promotion on the backend side.
 
 **Non-goals:** read-only Designer/Studio view of catalog items (already tracked as **MFI-23.12
 #4021**, v2); any new format parsers/adapters (owned by the per-format epics MFI-EPIC-8…17); any
@@ -497,7 +503,7 @@ Destination guide: Catalog / Projects / JSON Schema choice / future sources
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 |---|---|---|---|---|---|---|---|
-| MFI-26.4 · #4097 | Dry-run preview action | Add a non-committing dry-run that previews detection/routing without storing | `ui`,`typescript`,`import` | Y | N | S | `CatalogImportDialog.tsx` |
+| MFI-26.4 · #4097 | Dry-run preview action | Add a non-committing dry-run that previews detection/routing without storing | `ui`,`typescript`,`import`,`mvp` | Y | Y | S | `CatalogImportDialog.tsx` |
 | MFI-26.5 · #4098 | Alternate import source extensibility | Add future source methods only when a format can be imported through alternate intake | `ui`,`import`,`integrations` | Y | N | M | import dialog + import source registry |
 
 ### MFI-26.1 — Stepped import shell + source panel · #4094 — ✅ Done
@@ -548,7 +554,8 @@ Destination guide: Catalog / Projects / JSON Schema choice / future sources
   `status:'preview'` semantics if available.
 - **Acceptance criteria.** Dry-run shows predicted format/routing with no catalog write; Continue still
   commits; test asserts no store call on dry-run.
-- **Dependencies / parallelism.** Depends on 26.1; parallel with 26.2/26.3. Non-MVP.
+- **Dependencies / parallelism.** Depends on 26.1; parallel with 26.2/26.3. **Promoted to MVP
+  (2026-07 gap analysis — see §1 update note).**
 - **Tech stack.** React/TSX, import proxies.
 
 ### MFI-26.5 — Alternate import source extensibility · #4098
@@ -689,8 +696,8 @@ Dependencies drive ordering; within a wave, issues are parallelizable. Backend e
 graph TD
   W0["Wave 0 — backend enablers (parallel, start first)<br/>25.2 parsed model · 25.6 lint categories · 26.8 JSON Schema as-current"]
   W1["Wave 1 — foundations (parallel)<br/>25.1 tab shell · 26.1 import shell · 26.6 routing policy · 24.1 stats · 24.2 grouping · 24.4 table"]
-  W2["Wave 2 — MVP content (after foundations)<br/>25.3 parsed render (needs 25.2+25.1) · 25.4 Monaco · 25.5 inline lint<br/>26.2 url/paste · 26.3 detect+routing · 26.7 JSON Schema prompt"]
-  W3["Wave 3 — polish & deferred<br/>24.3 · 24.5 · 25.7 · 25.8 · 26.4 · 26.5 · 27.1 · 27.2"]
+  W2["Wave 2 — MVP content (after foundations)<br/>25.3 parsed render (needs 25.2+25.1) · 25.4 Monaco · 25.5 inline lint<br/>26.2 url/paste · 26.3 detect+routing · 26.4 dry-run (MVP, 2026-07) · 26.7 JSON Schema prompt"]
+  W3["Wave 3 — polish & deferred<br/>24.3 · 24.5 · 25.7 · 25.8 · 26.5 · 27.1 · 27.2"]
   W0 --> W2
   W1 --> W2 --> W3
 ```
@@ -703,9 +710,10 @@ graph TD
    MFI-26.1 (import shell — unblocks EPIC-26), **MFI-26.6 (routing policy — the destination contract
    the whole import flow enforces)**, MFI-24.1 / 24.2 / 24.4 (independent list work).
 3. **Wave 2 (MVP content):** MFI-25.3 (needs 25.2 + 25.1), MFI-25.4, MFI-25.5, MFI-26.2, MFI-26.3,
+   **MFI-26.4 (dry-run — promoted to MVP, 2026-07)**,
    MFI-26.7 (JSON Schema prompt — needs 26.1/26.6, and 26.8 for its Types/Projects branch).
    → **At the end of Wave 2 the MVP is met.**
-4. **Wave 3 (polish & deferred, parallel):** MFI-24.3, 24.5, 25.7, 25.8, 26.4, 26.5 (gated on future
+4. **Wave 3 (polish & deferred, parallel):** MFI-24.3, 24.5, 25.7, 25.8, 26.5 (gated on future
    per-format source capability), 27.1, 27.2.
 
 ---

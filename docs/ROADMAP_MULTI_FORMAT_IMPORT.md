@@ -10,6 +10,13 @@
 > **Recommended labels:** new `roadmap-multi-format` + reuse `multi-protocol`, `import`,
 > `integrations`, `rest`, `ui`, `database`, `python`, `typescript`, `linting`,
 > `version-control`, `browser`, `registry`, `validation` (+ optional per-format labels).
+>
+> **Update (2026-07-03 — gap analysis, §0.3):** adds **MFI-EPIC-29…32** (intake hardening ·
+> OpenAPI-family completeness · live-source re-discovery · collections & captured traffic),
+> **MFI-6.4** (cross-format API identity), and the **§9.7** candidate formats. **Filed
+> 2026-07-03:** epics **#4384–#4387**, issues **#4388–#4409**, **MFI-6.4 #4410** (under epic
+> #3721); the §9.7 candidates remain unfiled. **MFI-22.7** is promoted to MVP (matching the §5
+> work order); UI dry-run **MFI-26.4** is promoted to MVP in `ROADMAP_MULTI_FORMAT_IMPORT_UI.md`.
 
 ---
 
@@ -65,6 +72,33 @@ lint-grade + quality orbs) but for **non-publishable** items, each carrying a **
 screens as Projects, may later open read-only in the Designer, and are promoted out of the catalog
 into a publishable OpenAPI Project via the **MFI-EPIC-22** convert + fidelity-preview flow.
 EPIC-23 is the **staging surface**; EPIC-22 is the **promotion path**. See **MFI-EPIC-23** below.
+
+### 0.3 Update request — Gap-analysis additions (verbatim)
+
+> Fold in the gap-analysis results: MVP additions (multi-file/zip intake under EPIC-1, Swagger 2.0/
+> Arazzo adapter cleanup, OpenAPI 3.2 support, promote 26.4 dry-run and 22.7 passthrough to MVP),
+> new v2 epics (live-source re-discovery & drift alerts; Collections & Captured Traffic:
+> HAR/Insomnia/Bruno), remote $ref resolution, git-repo intake, cross-format API identity,
+> registry-crawl throttling, secret scrubbing, and §9 format additions (Google Discovery, GraphQL
+> Federation, .http/cURL, K8s CRDs, LLM tool schemas, OpenAPI Overlays, WIT, gateway configs).
+
+This update (2026-07-03) came out of a walkthrough/gap analysis of the shipped MVP. It adds:
+
+- **MFI-EPIC-29 — Ingestion Intake Hardening** · **#4384** (archives/multi-file, git-repo intake, remote
+  `$ref` resolution, bulk import, secret scrubbing). The MVP slice (29.1/29.2) exists because a
+  *shipped MVP format* — gRPC — is multi-file in every real-world repo, yet the intake accepts
+  only a single file/URL/paste.
+- **MFI-EPIC-30 — OpenAPI-Family Adapter Completeness** · **#4385** (Swagger 2.0 canonical normalizer, an
+  Arazzo `ImportSource` adapter, OpenAPI 3.2 support). MVP-cleanup: these formats are advertised
+  as importable/publishable today but bypass or break the canonical pipeline.
+- **MFI-EPIC-31 — Live-Source Re-Discovery & Drift Alerts** · **#4386** (v2): the scheduled re-crawl +
+  breaking-change notification layer that the MCP catalog (the template for this roadmap) already
+  has and this roadmap omitted.
+- **MFI-EPIC-32 — Collections & Captured Traffic** · **#4387** (v2): HAR, Insomnia, Bruno (+ Postman behind
+  the SPI) — the *observed/collected* API-description family, previously covered only in the
+  export roadmap.
+- **MFI-6.4** (**#4410**) cross-format API identity, **MFI-22.7** promoted to MVP, UI **MFI-26.4** promoted to
+  MVP (tracked in `ROADMAP_MULTI_FORMAT_IMPORT_UI.md`), and the **§9.7** format candidates.
 
 ---
 
@@ -140,9 +174,22 @@ work is **shared foundation built once**, then a thin, repeatable **per-format a
 5. **Polyglot toolchain runner** (MFI-EPIC-5) — sandboxed subprocess to run JS/JVM/native parsers/linters.
 6. **DB additions** (MFI-EPIC-7) and **browse-by-protocol** (MFI-EPIC-6).
 7. **Three first formats proving the seam across paradigms:** **AsyncAPI** (event), **GraphQL** (graph + live introspection), **gRPC/Protobuf** (RPC + live reflection). *(MFI-EPIC-8/9/10)*
+8. **Intake hardening — MVP slice** (MFI-29.1/29.2): archive (zip/tar) upload + multi-document
+   adapter inputs, so a proto tree with imports, a split GraphQL SDL, or an AsyncAPI suite is
+   actually importable through the UI/REST/CLI (today: single file/URL/paste only).
+9. **OpenAPI-family completeness** (MFI-EPIC-30): Swagger 2.0 canonical normalizer (closes the
+   "detect says importable, normalize raises" gap left open by MFI-1.1), an Arazzo `ImportSource`
+   adapter, and **OpenAPI 3.2** detection/normalization/publishability.
+10. **OpenAPI-native passthrough** (MFI-22.7, promoted): the §5 work order already says "ship
+    22.7 first"; the MVP flag now matches. Its UI counterpart, the import dry-run preview
+    (MFI-26.4), is promoted to MVP in `ROADMAP_MULTI_FORMAT_IMPORT_UI.md`.
 
-**v2 / later:** OData, Avro/Schema-Registry (live registry crawl), SOAP/WSDL, TypeSpec, then the
-legacy/niche set RAML, API Blueprint (legacy import + migrate-to-OpenAPI), and Smithy.
+**v2 / later:** OData, Avro/Schema-Registry (live registry crawl), **Collections & Captured
+Traffic (MFI-EPIC-32: HAR/Insomnia/Bruno)**, SOAP/WSDL, TypeSpec, then the legacy/niche set RAML,
+API Blueprint (legacy import + migrate-to-OpenAPI), and Smithy. Cross-cutting v2: **live-source
+re-discovery & drift alerts (MFI-EPIC-31)** — sequenced with the first registry-crawl format
+(EPIC-12) — plus git-repo intake (29.3), remote `$ref` resolution (29.4), bulk import (29.5),
+secret scrubbing (29.6, mandatory before EPIC-32 ships), and cross-format API identity (6.4).
 
 ---
 
@@ -169,11 +216,18 @@ legacy/niche set RAML, API Blueprint (legacy import + migrate-to-OpenAPI), and S
 | MFI-EPIC-17 | Smithy | 17.1–17.5 | ○ v2 |
 | **MFI-EPIC-22** | **Catalog → OpenAPI Conversion & Fidelity Preview** | 22.1–22.8 | ◐ conv-MVP |
 | **MFI-EPIC-23** | **Catalog Screen & Non-Publishable Cataloged Items** | 23.1–23.12 | ◐ catalog-MVP |
+| MFI-EPIC-28 | Catalog UX & Look-and-Feel Improvements | 28.1–28.8 | ○ polish |
+| **MFI-EPIC-29** | **Ingestion Intake Hardening** (archives/git/remote $refs/bulk/scrub) | 29.1–29.6 | ◐ 29.1–29.2 MVP |
+| **MFI-EPIC-30** | **OpenAPI-Family Adapter Completeness** (Swagger 2.0 · Arazzo · OAS 3.2) | 30.1–30.4 | ●●● MVP-cleanup |
+| MFI-EPIC-31 | Live-Source Re-Discovery & Drift Alerts | 31.1–31.5 | ○ v2 |
+| MFI-EPIC-32 | Collections & Captured Traffic (HAR · Insomnia · Bruno · Postman-SPI) | 32.1–32.7 | ○ v2 |
 
-**Total: 19 epics in the main set (1–17 + 22 + 23), ~100 issues** — plus the post-MVP candidate
-epics 18–21 in §9. *(MFI-EPIC-22 depends on the foundation epics 2/3/4; MFI-EPIC-23 is the UI/UX
-surface for non-OpenAPI imports and depends on the model/persistence (EPIC-2/7) and the import
-framework (EPIC-1), and integrates EPIC-22 as its promotion path.)*
+**Total: 24 epics in the main set (1–17, 22, 23, 28–32), ~125 issues** — plus the post-MVP
+candidate epics 18–21 in §9. *(MFI-EPIC-22 depends on the foundation epics 2/3/4; MFI-EPIC-23 is
+the UI/UX surface for non-OpenAPI imports and depends on the model/persistence (EPIC-2/7) and the
+import framework (EPIC-1), and integrates EPIC-22 as its promotion path. EPIC-24…27 are the UI
+mockup-parity epics tracked in `ROADMAP_MULTI_FORMAT_IMPORT_UI.md`. **EPIC-29…32 are the 2026-07
+gap-analysis additions — filed as epics #4384–#4387 with issues #4388–#4409 (+ MFI-6.4 #4410).**)*
 
 ### Discovery tiers (drives ingestion design)
 
@@ -501,6 +555,7 @@ and #3496 (Community & Schema Browser).**
 | 6.1 | Protocol/format facets | filter browse by protocol (REST/RPC/event/graph/data) + format | multi-protocol,browser,mvp | N | N | M | apiome-rest,apiome-ui |
 | 6.2 | Cross-protocol search | search operations/types/messages across all formats | multi-protocol,browser,rest | N | N | M | apiome-rest,apiome-db |
 | 6.3 | Catalog categorization | tag/categorize artifacts by paradigm + domain | multi-protocol,community | Y | N | S | apiome-rest |
+| 6.4 | Cross-format API identity | link artifacts that describe the same logical API across formats | multi-protocol,registry,rest | Y | N | M | apiome-rest,apiome-ui,apiome-db |
 
 ### MFI-6.1 — Protocol/format facets  ·  **#3753**
 - **Problem.** With 15+ formats, browse must filter by paradigm/format.
@@ -522,6 +577,22 @@ and #3496 (Community & Schema Browser).**
 - **Acceptance Criteria.** Artifacts categorizable; facets filter browse.
 - **Dependencies / Parallelism.** After 7.1. Parallel with 6.1.
 - **Technical Stack.** PostgreSQL, FastAPI.
+
+### MFI-6.4 — Cross-format API identity  ·  **#4410**  ·  *(2026-07 gap analysis)*
+- **Problem.** The same logical API imported as proto, SDL, and OpenAPI produces three unrelated
+  catalog items. Nothing groups them, so the "multi-format catalog" reads as three catalogs; a
+  converted OpenAPI project (EPIC-22) is the only linked pair today (via `conversion_provenance`).
+- **Solution / Scope.** A lightweight **"related artifacts"** link: an `api_identity` grouping
+  (manual link/unlink first — an action on the catalog item and project detail; heuristic
+  *suggestions* later from matching titles, operation-name overlap in the canonical model, and
+  shared `format_metadata` coordinates). Surfaced as a "Related artifacts" panel on catalog/project
+  detail and as a browse facet ("show all representations"). Reuse the conversion-provenance
+  back-link as an automatic seed.
+- **Acceptance Criteria.** Two artifacts can be linked/unlinked; linked artifacts render each
+  other's panel with format pills; a conversion (22.5) auto-links source↔converted project;
+  suggestions never auto-link without confirmation.
+- **Dependencies / Parallelism.** After 2.2, 23.9. Parallel with 6.1–6.3.
+- **Technical Stack.** PostgreSQL, FastAPI, Next.js.
 
 ---
 
@@ -942,7 +1013,7 @@ code + media types + schema · `components.schemas` · `securitySchemes`+`securi
 | 22.4 | Conversion preview screen + warning | side-by-side provides-vs-missing, fidelity grade, mandatory warning | multi-protocol,ui,typescript | Y | Y | L | apiome-ui |
 | 22.5 ✅ | Convert-to-project/version job + provenance | emit doc, create project + v1, link source, lint/score, store report | multi-protocol,export,rest,versions | N | Y | M | apiome-rest,apiome-db |
 | 22.6 ✅ | Conversion REST API + CLI | `POST …/convert` (dry-run=preview, commit=create) + `apiome convert` | multi-protocol,rest,devex | Y | Y | M | apiome-rest,apiome-cli |
-| 22.7 | OpenAPI-native passthrough detection | skip conversion when source is OpenAPI/Swagger/TypeSpec-emitted | multi-protocol,rest,validation | Y | N | S | apiome-rest |
+| 22.7 | OpenAPI-native passthrough detection | skip conversion when source is OpenAPI/Swagger/TypeSpec-emitted | multi-protocol,rest,validation,mvp | Y | Y | S | apiome-rest |
 | 22.8 | Per-format conversion packs + fixtures | wrap authoritative converters; consolidate RAML/APIB/WADL off-ramps | multi-protocol,export,integrations | Y | N | XL | apiome-rest |
 
 ### MFI-22.1 — Canonical → OpenAPI 3.1 emitter SPI  ·  **#4002**  ·  ✅ **Done**
@@ -998,7 +1069,10 @@ code + media types + schema · `components.schemas` · `securitySchemes`+`securi
 - **Dependencies / Parallelism.** After 22.3/22.5. Parallel with 22.4.
 - **Technical Stack.** FastAPI, Typer.
 
-### MFI-22.7 — OpenAPI-native passthrough detection  ·  **#4008**
+### MFI-22.7 — OpenAPI-native passthrough detection  ·  **#4008**  ·  **Promoted to MVP (2026-07)**
+- **MVP note.** The §5 work order has always said "ship 22.7 passthrough first so OpenAPI/Swagger/
+  TypeSpec sources are handled losslessly from day one" — the MVP flag now matches that sequencing
+  (2026-07 gap analysis).
 - **Problem.** The request is explicit: convert *only if the imported object isn't already OpenAPI*. Converting an OpenAPI source through the canonical model would needlessly lose fidelity.
 - **Solution / Scope.** Detect when the source format is **OpenAPI/Swagger** (already first-class — offer direct project/version creation, no conversion) or **TypeSpec** (which *natively emits* OpenAPI via MFI-EPIC-14 — route to that emit, not the lossy projection). For these, the "convert" action becomes a near-lossless passthrough/adopt and the preview shows a `high`-fidelity report with no warning (or an informational note for Swagger 2.0→3.1 upgrade specifics).
 - **Acceptance Criteria.** OpenAPI/Swagger sources skip lossy conversion and create a project directly; TypeSpec routes through its native OpenAPI emit; non-OpenAPI sources always go through 22.1–22.5.
@@ -1248,6 +1322,421 @@ compare read it can reuse from the existing versions dashboard machinery).
 
 ---
 
+## MFI-EPIC-29 — Ingestion Intake Hardening  ·  **#4384**
+
+The import intake accepts a **single** file, URL, or paste — but the formats this roadmap imports
+are **multi-file in practice**: a proto tree with `import`s across directories, a GraphQL SDL
+split per domain, an AsyncAPI suite sharing message files, WSDL+XSD graphs, RAML `!include`
+trees, Smithy model directories, TypeSpec projects. The backend can already *compile* trees
+(`buf build`, graphql-tools merge, and every v2 format's resolver), but nothing can *receive*
+one. This epic gives the SPI real-world intake channels: archives (MVP), git repositories,
+SSRF-guarded remote `$ref` resolution, bulk import, and secret scrubbing.
+
+```mermaid
+flowchart LR
+  Z[zip / tar upload] --> X[unpack in 5.3 sandbox\nsize/entry caps]
+  G[git repo + ref + path/glob] --> X
+  X --> FS[fileset input\nroot doc + siblings]
+  FS --> AD[adapter parse\nbuf / graphql-tools / AMF / smithy]
+  RR[remote $ref resolver\nSSRF-guarded + cached] -.-> AD
+  AD --> N[normalize → canonical]
+  SCRUB[secret scrubbing] --> FS
+```
+
+| ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|---------|--------|----------|-----|-----------|------------------|
+| 29.1 | Archive (zip/tar) upload intake | accept `.zip`/`.tgz` across UI/REST/CLI; unpack sandboxed; route to adapter | multi-protocol,import,rest,ui,mvp | N | Y | M | apiome-rest,apiome-ui,apiome-cli |
+| 29.2 | Adapter multi-document (fileset) inputs | new SPI input kind `fileset`: proto tree, split SDL, AsyncAPI suite, WSDL+XSD | multi-protocol,rest,python,mvp | N | Y | M | apiome-rest |
+| 29.3 | Git-repo intake for adapter formats | extend the git source card to registry adapters (repo + ref + path/glob) | import,integrations,version-control | Y | N | M | apiome-rest,apiome-ui |
+| 29.4 | SSRF-guarded remote $ref resolver | shared resolver for external `$ref`s (AsyncAPI/JSON-Schema) with cache + budgets | rest,validation,security | Y | N | M | apiome-rest |
+| 29.5 | Bulk import of independent specs | one archive/repo containing N unrelated specs → N catalog items + per-item results | import,rest,ui | Y | N | M | apiome-rest,apiome-ui,apiome-cli |
+| 29.6 | Secret scrubbing on intake | detect/redact credentials in uploaded payloads before persistence | security,validation,import | Y | N | M | apiome-rest |
+
+### MFI-29.1 — Archive (zip/tar) upload intake  ·  **#4388**
+- **Problem.** Real-world protobuf (an MVP format!) is never one file; today a `.proto` with
+  imports cannot be imported through the UI at all. Every v2 format has the same shape.
+- **Solution / Scope.** Accept `.zip`/`.tar.gz` in the file intake (UI drop zone, REST import
+  submit, CLI `--file`). Unpack inside the MFI-5.3 sandbox discipline: entry-count cap, total- and
+  per-file-size caps, no path traversal (`..`/absolute/symlink entries rejected — extend the 9.1
+  path-validation rules), depth cap. Detect the root document (`detect_format` over candidate
+  entries; explicit `--root` / UI picker when ambiguous) and hand the unpacked tree to the adapter
+  as a fileset (29.2).
+- **Acceptance Criteria.** A zipped proto tree with cross-directory imports imports end-to-end via
+  UI, REST, and CLI; a zip-bomb/path-traversal archive is rejected pre-parse with a clear error;
+  single-file behavior unchanged.
+- **Dependencies / Parallelism.** After 1.2, 5.3. Blocks 29.2 UI surfacing; parallel with 29.3.
+- **Technical Stack.** Python (zipfile/tarfile hardened), FastAPI, Next.js, Typer.
+
+### MFI-29.2 — Adapter multi-document (fileset) inputs  ·  **#4389**
+- **Problem.** The `ImportSource` SPI models file/url/paste/discovery — there is no input kind for
+  "a root document plus its siblings," so adapters that *can* compile trees never receive them.
+- **Solution / Scope.** Add a `fileset` input kind to the SPI descriptor + a `Fileset` payload
+  (root + named members). Wire the three MVP adapters: **gRPC** (feed the tree to
+  `buf build` with include paths), **GraphQL** (multi-file SDL merge — parser already supports
+  it), **AsyncAPI** (resolve cross-file `$ref`s among members, no network). Fingerprint the
+  *resolved* model as always (§6.2 normalize-before-hash); record member names in
+  `format_metadata`.
+- **Acceptance Criteria.** Each MVP adapter imports a multi-file fixture; the resolved fingerprint
+  is identical whether the same content arrives pre-flattened or as a fileset; a missing member
+  produces a diagnostic naming the unresolved import/ref.
+- **Dependencies / Parallelism.** After 29.1 (or CLI-only before it). v2 format epics 11–17 adopt
+  `fileset` as they land.
+- **Technical Stack.** Python.
+
+### MFI-29.3 — Git-repo intake for adapter formats  ·  **#4390**
+- **Problem.** Specs live in git; the existing git source card serves only the legacy
+  OpenAPI-family path. CI-adjacent teams want "import `protos/**` from this repo at this ref."
+- **Solution / Scope.** Extend the git source to registry adapters: repo URL + ref + path or glob
+  → shallow fetch (existing git plumbing) → build a fileset (29.2) → adapter import. Record
+  repo/ref/commit in `format_metadata` for provenance; pairs with EPIC-31 for re-import-on-change
+  later. Credentials via the existing credential vault.
+- **Acceptance Criteria.** A repo path of protos imports via the git card and CLI; provenance
+  shows repo+commit; private-repo auth reuses stored credentials.
+- **Dependencies / Parallelism.** After 29.2. Parallel with 29.4/29.5.
+- **Technical Stack.** Python, git, FastAPI, Next.js.
+
+### MFI-29.4 — SSRF-guarded remote $ref resolver  ·  **#4391**
+- **Problem.** AsyncAPI dereferences **in-document** `$ref`s only; shared message libraries and
+  JSON-Schema bundles reference external URLs. Unresolved refs degrade the canonical model, and
+  naive fetching is an SSRF hole.
+- **Solution / Scope.** One shared resolver service used by adapters (AsyncAPI first, JSON-Schema
+  next): fetch via `ssrf_guard.build_guarded_client`, per-import budgets (max refs, max depth, max
+  bytes, timeout), content-addressed cache so a re-import doesn't re-fetch, and an explicit
+  opt-in flag (default **off**; off = current behavior + a lint finding listing unresolved
+  externals). Resolved refs are inlined before fingerprinting.
+- **Acceptance Criteria.** An AsyncAPI doc with external message refs imports fully resolved when
+  enabled; budgets terminate a hostile ref-chain; disabled mode lists unresolved refs as findings;
+  every fetch passes the SSRF guard (redirects re-validated).
+- **Dependencies / Parallelism.** After 1.2. Parallel with 29.3.
+- **Technical Stack.** Python, httpx.
+
+### MFI-29.5 — Bulk import of independent specs  ·  **#4392**
+- **Problem.** Distinct from 29.1's one-spec-many-files: a team's "specs/" folder holds N
+  unrelated documents. Importing them one by one doesn't scale to onboarding.
+- **Solution / Scope.** When an archive/repo contains multiple *independent* root documents,
+  offer bulk mode: auto-detect per file, group filesets, submit N import jobs, and render a
+  per-item result list (imported → Catalog/Projects per the §0.2 routing policy; failed → reason).
+  CLI: `apiome import auto --bulk <archive|dir>`. Complements MFI-28.5 (bulk actions on existing
+  items).
+- **Acceptance Criteria.** A mixed archive (proto tree + 2 AsyncAPI docs + 1 OpenAPI) yields 4
+  correctly-routed items + a summary; partial failure doesn't abort the batch.
+- **Dependencies / Parallelism.** After 29.1/29.2, 1.5. Parallel with 29.3/29.4.
+- **Technical Stack.** Python async, FastAPI, Next.js, Typer.
+
+### MFI-29.6 — Secret scrubbing on intake  ·  **#4393**
+- **Problem.** Uploaded payloads can embed live credentials (server URLs with basic-auth,
+  API keys in examples/extensions). This becomes **mandatory** the moment EPIC-32 lands —
+  Postman/Insomnia/HAR files routinely carry bearer tokens and cookies.
+- **Solution / Scope.** A scrubbing pass on intake, before persistence of source material
+  (23.9 stores it): pattern + entropy detection (authorization headers, `api_key`/token fields,
+  basic-auth URLs, cookie jars), redact-in-place with `«redacted»` markers, and record a
+  scrub report (what/where, not the values) on the import job summary. Configurable per tenant
+  (warn-only vs enforce); **enforce is the default for EPIC-32 formats** (32.5 gates on this).
+- **Acceptance Criteria.** A fixture with embedded tokens persists only redacted content; the job
+  summary lists redactions; scrubbing never alters fingerprint-relevant structure (values only);
+  warn-only mode surfaces findings without modifying content.
+- **Dependencies / Parallelism.** After 1.2. Blocks 32.x ship; parallel with everything else here.
+- **Technical Stack.** Python.
+
+---
+
+## MFI-EPIC-30 — OpenAPI-Family Adapter Completeness (Swagger 2.0 · Arazzo · OpenAPI 3.2)  ·  **#4385**
+
+MVP-cleanup epic. Three formats are advertised as first-class today but bypass or break the
+canonical pipeline: **Swagger 2.0** is detected as importable and is in `PUBLISHABLE_FORMATS`,
+but `normalize()` raises `ImportSourceError` (MFI-1.1 explicitly deferred its normalizer — no
+epic owned it until now); **Arazzo** routes to Projects via the legacy worker with no
+`ImportSource` adapter, so it gets no canonical model, cross-format diff, or conversion support;
+**OpenAPI 3.2** (QUERY method, streaming media types, tag hierarchy) is unacknowledged across
+detection, publishability, and the EPIC-22 emitter.
+
+| ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|---------|--------|----------|-----|-----------|------------------|
+| 30.1 | Swagger 2.0 canonical normalizer | close the "detect says importable / normalize raises" gap | rest,python,validation,mvp | Y | Y | M | apiome-rest |
+| 30.2 | Arazzo ImportSource adapter | workflows behind the SPI: canonical model + lint + diff | rest,python,mvp | Y | Y | M | apiome-rest |
+| 30.3 | OpenAPI 3.2 support | detect/normalize/publish OAS 3.2; emitter + validator awareness | rest,validation,mvp | Y | Y | M | apiome-rest,apiome-ui |
+| 30.4 | OpenAPI-family conformance fixtures | 2.0/3.0/3.1/3.2 + Arazzo round-trip matrix (import→canonical→emit) | rest,validation | Y | Y | S | apiome-rest |
+
+### MFI-30.1 — Swagger 2.0 canonical normalizer  ·  **#4394**
+- **Problem.** MFI-1.1's detection recognizes Swagger 2.0 and the routing policy publishes it, but
+  the SPI path raises — so Swagger 2.0 rides the legacy worker only and never enters the canonical
+  model (no cross-format diff, no conversion fidelity, no format packs).
+- **Solution / Scope.** A `Swagger2Normalizer` registered beside `OpenApiNormalizer`: map
+  `basePath`/`host`/`schemes`→servers, `definitions`→types, parameter forms (`body`/`formData`)
+  →messages, `produces`/`consumes`→media types. Keep the worker path for project decomposition;
+  the adapter path feeds canonical persistence so both stay consistent (same fingerprint
+  semantics as 3.x).
+- **Acceptance Criteria.** A Swagger 2.0 fixture normalizes without error; diffing it against its
+  own 3.0 conversion shows only expected structural changes; `detect` and `normalize` verdicts
+  agree for every fixture.
+- **Dependencies / Parallelism.** After 2.3. Parallel with 30.2/30.3.
+- **Technical Stack.** Python.
+
+### MFI-30.2 — Arazzo ImportSource adapter  ·  **#4395**
+- **Problem.** Arazzo (workflows) is sniffed by `format_detection` and routed to Projects, but has
+  no adapter — it is invisible to the canonical model, lint packs, and compare-any-two diff.
+- **Solution / Scope.** An `ArazzoImportSource`: parse (JSON/YAML), normalize workflows/steps →
+  canonical services/operations (steps reference source-description operations; keep
+  `sourceDescriptions` links in `extras`/`format_metadata`), lint pack (unresolvable operation
+  refs, unused inputs, missing success criteria), diff (step add/remove/reorder classified via
+  3.3). Routing stays Projects-bound (publishable) per the §0.2 policy.
+- **Acceptance Criteria.** An Arazzo fixture imports through the SPI with canonical entities;
+  lint flags a dangling `operationId` ref; two workflow versions diff step-level.
+- **Dependencies / Parallelism.** After 1.1/2.3. Parallel with 30.1.
+- **Technical Stack.** Python.
+
+### MFI-30.3 — OpenAPI 3.2 support  ·  **#4396**
+- **Problem.** OAS 3.2.0 shipped (Q4 2025): `QUERY` method, `additionalOperations`, streaming
+  media-type guidance, hierarchical tags, `$self`. Detection pins 3.0/3.1, `PUBLISHABLE_FORMATS`
+  omits 3.2, and the EPIC-22 emitter/validator only know 3.1 — a current-version OpenAPI doc
+  imports as "unknown" or mis-normalizes.
+- **Solution / Scope.** Add `openapi-3.2` to detection + the OpenAPI adapter's `formats`;
+  normalizer handles the new operation kinds (QUERY → canonical operation with method preserved;
+  tag hierarchy → categorization metadata); add 3.2 to `PUBLISHABLE_FORMATS` and the routing
+  policy; vendor the 3.2 meta-schema beside the 3.1 one for validation. Emitter target stays 3.1
+  for now (3.2 emit is a later `--to` target for the target-generic convert verb, 22.6).
+- **Acceptance Criteria.** A 3.2 doc with a QUERY operation imports, normalizes, lints, and
+  publishes; 3.1 behavior unchanged; the fidelity preview correctly reports a 3.2→3.1 conversion
+  note if converted.
+- **Dependencies / Parallelism.** After 1.5. Parallel with 30.1/30.2.
+- **Technical Stack.** Python, JSON Schema.
+
+### MFI-30.4 — OpenAPI-family conformance fixtures  ·  **#4397**
+- **Problem.** The family now spans Swagger 2.0 → OAS 3.2 + Arazzo across two pipelines (worker +
+  SPI); regressions between them are currently invisible.
+- **Solution / Scope.** A fixture matrix (2.0, 3.0, 3.1, 3.2, Arazzo) asserting: detect verdict =
+  normalize capability; canonical entity counts; fingerprint stability; round-trip
+  `normalize(emit(normalize(doc))) == normalize(doc)` where the emitter supports the version;
+  routing policy (all → Projects).
+- **Acceptance Criteria.** Matrix runs in CI; any detect/normalize disagreement fails loudly.
+- **Dependencies / Parallelism.** After 30.1–30.3.
+- **Technical Stack.** Python, pytest.
+
+---
+
+## MFI-EPIC-31 — Live-Source Re-Discovery & Drift Alerts · v2  ·  **#4386**
+
+The largest structural omission the gap analysis found. GraphQL introspection, gRPC reflection,
+OData `$metadata`, Schema-Registry crawl, and (future) FHIR `/metadata` are **one-shot** imports:
+nothing re-polls, so the catalog silently goes stale and the breaking-change engine (3.3) — the
+most valuable machinery in this roadmap — never fires on drift. The MCP catalog (this roadmap's
+stated template) already has a periodic re-discovery sweep (`repository_refresh_sweep.py`), and
+`ROADMAP_REPOSITORY_AUTOREFRESH.md` covers git repos; this epic is the same capability for
+live-discovery import sources. Sequence with EPIC-12 — a registry crawl without re-crawl is half
+a feature.
+
+```mermaid
+flowchart LR
+  SCHED[per-artifact cadence\nopt-in schedule] --> SWEEP[re-discovery sweep]
+  SWEEP --> DISC[adapter discover\nreflection / introspection / crawl]
+  DISC --> FP{fingerprint\nchanged?}
+  FP -- no --> SKIP[touch last-checked]
+  FP -- yes --> VER[new version 3.4] --> CLS[breaking classifier 3.3]
+  CLS --> NOTIF[UI drift badge\n+ webhook / email]
+  VER --> RET[retention policy]
+```
+
+| ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|---------|--------|----------|-----|-----------|------------------|
+| 31.1 | Refresh scheduler & per-artifact cadence | opt-in re-discovery schedule for live-capable artifacts | rest,registry,database | N | N | L | apiome-rest,apiome-db |
+| 31.2 | Re-discovery pipeline reuse | re-run discover→normalize→fingerprint; version-on-change via 3.4 | rest,python | N | N | M | apiome-rest |
+| 31.3 | Drift & breaking-change notifications | UI badge + webhook/email when a sweep lands a breaking version | rest,ui,integrations | Y | N | M | apiome-rest,apiome-ui |
+| 31.4 | Registry-crawl throttling & incremental resume | rate limits, page budgets, checkpoint/resume for registry-as-source crawls | rest,registry,security | Y | N | M | apiome-rest |
+| 31.5 | Version retention & pruning policy | cap sweep-generated history; keep tagged/breaking/converted versions | database,rest | Y | N | S | apiome-rest,apiome-db |
+
+### MFI-31.1 — Refresh scheduler & per-artifact cadence  ·  **#4398**
+- **Problem.** No mechanism exists to re-check a live source; staleness is invisible.
+- **Solution / Scope.** Per-artifact opt-in refresh: cadence (hourly/daily/weekly/manual-only,
+  default off), stored on the artifact; a background sweep (generalize the MCP
+  `repository_refresh_sweep` pattern) walks due artifacts whose adapter declares
+  `supports_live_discovery`, honoring a global concurrency cap and per-host politeness delay.
+  Failures back off exponentially and surface as a "last check failed" state, never as a new
+  version. Credentials via the vault; every call SSRF-guarded (unchanged adapter paths).
+- **Acceptance Criteria.** An artifact with daily cadence re-discovers on schedule; failure shows
+  status without corrupting history; disabling stops the sweep; tenant-level kill switch.
+- **Dependencies / Parallelism.** After 3.4 + ≥1 live-capable adapter (exists: gRPC/GraphQL).
+  Blocks 31.2/31.3.
+- **Technical Stack.** Python async, PostgreSQL, FastAPI.
+
+### MFI-31.2 — Re-discovery pipeline reuse  ·  **#4399**
+- **Problem.** A sweep hit must behave exactly like a manual re-import — same normalize,
+  fingerprint, version-on-change, lint capture — with zero new pipeline code.
+- **Solution / Scope.** Drive the existing adapter import pipeline (1.2) in "refresh" mode:
+  discover→parse→normalize→fingerprint; `decide_version()` (3.4) CREATEs on change else SKIPs;
+  lint/score captured per 4.2; diff + breaking classification (3.2/3.3) stored with the new
+  version. Provenance records `trigger=sweep` vs `trigger=manual`.
+- **Acceptance Criteria.** An unchanged endpoint produces no version; a changed one produces a
+  version whose diff/classification matches a manual re-import byte-for-byte.
+- **Dependencies / Parallelism.** After 31.1. Parallel with 31.4.
+- **Technical Stack.** Python.
+
+### MFI-31.3 — Drift & breaking-change notifications  ·  **#4400**
+- **Problem.** A breaking change landing silently in version history defeats the purpose of
+  watching.
+- **Solution / Scope.** On a sweep-created version: catalog/project card **drift badge** (colored
+  by 3.3 severity: safe/dangerous/breaking), a dismissible detail banner linking the diff, and
+  outbound **webhook** (JSON payload: artifact, versions, severity, top findings) + optional
+  email per tenant notification settings. Batch digest option for chatty sources.
+- **Acceptance Criteria.** A breaking sweep version raises badge + webhook within one sweep cycle;
+  webhook retries with backoff; safe changes badge quietly without notifying (configurable).
+- **Dependencies / Parallelism.** After 31.2. Parallel with 31.5.
+- **Technical Stack.** FastAPI, Next.js, httpx.
+
+### MFI-31.4 — Registry-crawl throttling & incremental resume  ·  **#4401**
+- **Problem.** §9's "registry-as-source" mode (Confluent SR, xRegistry, FHIR `/metadata`) implies
+  crawling catalogs with thousands of subjects; an unthrottled or restart-from-zero crawl is
+  hostile to the registry and fragile for us.
+- **Solution / Scope.** Crawl budget primitives for discovery adapters: requests/sec + max-pages +
+  max-bytes per crawl, checkpoint cursor persisted per source so an interrupted crawl resumes,
+  and incremental mode (only subjects changed since the stored registry offset/etag where the
+  registry exposes one). Applies first to EPIC-12's Confluent crawler.
+- **Acceptance Criteria.** A crawl against a 10k-subject fixture respects rate/page budgets,
+  resumes from checkpoint after a kill, and an incremental pass touches only changed subjects.
+- **Dependencies / Parallelism.** With/after 12.3. Parallel with 31.2.
+- **Technical Stack.** Python async.
+
+### MFI-31.5 — Version retention & pruning policy  ·  **#4402**
+- **Problem.** A daily sweep on a churning endpoint mints unbounded version rows.
+- **Solution / Scope.** Per-artifact retention: keep-last-N sweep versions plus **always keep**
+  tagged versions, breaking-change versions, and conversion-source versions
+  (`conversion_provenance` referenced). Pruning is soft-delete, consistent with house style.
+- **Acceptance Criteria.** History respects the policy; protected versions survive; diff endpoints
+  handle pruned gaps gracefully.
+- **Dependencies / Parallelism.** After 31.2.
+- **Technical Stack.** PostgreSQL, Python.
+
+---
+
+## MFI-EPIC-32 — Collections & Captured Traffic (HAR · Insomnia · Bruno · Postman-SPI) · v2  ·  **#4387**
+
+The roadmap covers everything *designed* (IDLs, schemas) but nothing *observed or collected* —
+and those are precisely the artifacts most teams actually have. This epic imports the
+collection/traffic family: **HAR** captures (browser devtools, proxies), **Insomnia** and
+**Bruno** collections (import direction; the export roadmap's MFX-EPIC-31 already covers the
+reverse), and refactors the legacy **Postman** importer behind the SPI. All of it feeds one
+**inferred-spec engine**: requests/entries merge into inferred operations whose provenance is
+`inferred` — which is exactly what the EPIC-22 fidelity machinery was built to represent, and why
+these land in the **Catalog** (non-publishable) with conversion as the promotion path.
+**Hard gate: 29.6 secret scrubbing ships first — these files carry live tokens.**
+
+```mermaid
+flowchart LR
+  HAR[.har traffic capture] --> SCRUB[29.6 secret scrub\nENFORCED]
+  INS[Insomnia export v4/v5] --> SCRUB
+  BRU[Bruno .bru folder] --> SCRUB
+  PM[Postman collection] --> SCRUB
+  SCRUB --> INF[inferred-spec engine\nmerge → operations + schemas]
+  INF --> CAN[canonical model\nprovenance = inferred]
+  CAN --> CAT[Catalog item\nformat pill + fidelity]
+  CAT --> CONV[EPIC-22 convert\n→ OpenAPI project]
+```
+
+| ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
+|----|-------|---------|--------|----------|-----|-----------|------------------|
+| 32.1 | Inferred-spec engine (observations → canonical) | merge requests/entries into inferred operations + JSON-Schema shapes | rest,python,import | N | N | L | apiome-rest |
+| 32.2 | HAR adapter | `.har` (browser/proxy) → inferred canonical REST model | import,rest,python | Y | N | M | apiome-rest |
+| 32.3 | Insomnia collection adapter | Insomnia v4/v5 export (JSON/YAML) incl. environments | import,rest,python | Y | N | M | apiome-rest |
+| 32.4 | Bruno collection adapter | `.bru` folder / `bruno.json` (git-native; pairs with 29.3) | import,rest,python | Y | N | M | apiome-rest |
+| 32.5 | Secret scrubbing & environment mapping (gate) | 29.6 enforced ON; env vars → server variables, auth → securityScheme stubs | security,import | N | N | M | apiome-rest |
+| 32.6 | Source cards + CLI + fixtures | cards + `apiome import har\|insomnia\|bruno` + fixtures | ui,devex,python | Y | N | S | apiome-rest,apiome-ui,apiome-cli |
+| 32.7 | Postman importer behind the SPI | refactor the legacy Postman path into an ImportSource sharing 32.1 | import,rest,python | Y | N | M | apiome-rest |
+
+### MFI-32.1 — Inferred-spec engine (observations → canonical)  ·  **#4403**
+- **Problem.** Collections and captures are *lists of concrete requests*, not specs: the same
+  endpoint appears many times with different ids/params/bodies. Naive 1:1 mapping produces
+  garbage paths (`/users/123`, `/users/456` as separate operations).
+- **Solution / Scope.** A shared inference layer (the proven traffic→spec approach: Optic/Akita/
+  Postman-style): cluster requests by host+method+tokenized path (numeric/UUID/hash segments →
+  `{param}`), union observed query/header params (required = seen in all samples), derive
+  JSON-Schema from observed bodies/responses (type widening across samples), keep per-operation
+  sample counts as confidence. Everything lands in the canonical model with **provenance =
+  `inferred`** (the EPIC-22 primitive), so fidelity reports and the Catalog's non-publishable
+  stance tell the truth automatically.
+- **Acceptance Criteria.** A 500-entry HAR of a CRUD API infers the parameterized paths (not one
+  op per URL); response schemas widen correctly across samples; every inferred construct carries
+  `inferred` provenance and a sample count; deterministic for a fixed input.
+- **Dependencies / Parallelism.** After 2.3, 22.1 (provenance primitives). Blocks 32.2–32.4/32.7.
+- **Technical Stack.** Python.
+
+### MFI-32.2 — HAR adapter  ·  **#4404**
+- **Problem.** "Record in devtools/proxy, import the traffic" is the fastest onboarding path a
+  cataloging product can offer, and it is entirely missing.
+- **Solution / Scope.** `HarImportSource`: parse HAR 1.2 (`log.entries`), filter non-API noise
+  (static assets, analytics — content-type + heuristic filters, user-tunable), feed entries to
+  32.1, one artifact per host (or user-selected hosts on multi-host captures). Scrubbing (32.5)
+  strips cookies/auth headers before anything persists. Detection: `{"log":{"version":"1.2"`.
+- **Acceptance Criteria.** A devtools HAR of a REST app imports as a Catalog item with inferred
+  operations + schemas; assets are excluded; no header/cookie secret survives to storage; format
+  pill shows `HAR (inferred)`.
+- **Dependencies / Parallelism.** After 32.1/32.5. Parallel with 32.3/32.4.
+- **Technical Stack.** Python.
+
+### MFI-32.3 — Insomnia collection adapter  ·  **#4405**
+- **Problem.** Insomnia workspaces describe real APIs (requests, folders, environments) but only
+  the *export* direction exists (MFX-EPIC-31); users switching to or cataloging alongside
+  Insomnia cannot bring them in.
+- **Solution / Scope.** `InsomniaImportSource`: parse v4 JSON / v5 YAML exports, folders→tags,
+  requests→32.1 (single-sample operations; bodies as declared), environment variables→server
+  variables/parameter defaults via 32.5's mapping (never resolve secret values). Detection:
+  `_type: export` / `insomnia.rest` markers.
+- **Acceptance Criteria.** A v5 export imports with folder structure as tags and env-var-templated
+  URLs mapped to server variables; secrets redacted; round-trip with MFX-EPIC-31 export is
+  structurally stable.
+- **Dependencies / Parallelism.** After 32.1/32.5. Parallel with 32.2/32.4.
+- **Technical Stack.** Python, YAML.
+
+### MFI-32.4 — Bruno collection adapter  ·  **#4406**
+- **Problem.** Bruno's git-native `.bru` folders are rapidly displacing Postman in dev teams;
+  export exists (MFX-EPIC-31.3), import does not.
+- **Solution / Scope.** `BrunoImportSource`: parse `bruno.json` + `.bru` files (their `meta`/
+  `get`/`post`/`body`/`vars` block grammar), folder tree→tags, environments→32.5 mapping. Natural
+  fileset/git citizen: arrives via 29.1 archive or 29.3 git intake.
+- **Acceptance Criteria.** A Bruno repo imports via archive and via git intake with identical
+  fingerprints; `.bru` grammar edge cases (multipart, scripts blocks ignored-with-note) handled.
+- **Dependencies / Parallelism.** After 32.1/32.5, 29.2. Parallel with 32.2/32.3.
+- **Technical Stack.** Python.
+
+### MFI-32.5 — Secret scrubbing & environment mapping (gate)  ·  **#4407**
+- **Problem.** Collections/captures are the highest-risk payloads this roadmap will ever ingest:
+  cookies, bearer tokens, API keys in env files. A single leak into stored source material
+  (23.9) is an incident.
+- **Solution / Scope.** Turn 29.6 **on and unskippable** for every EPIC-32 format; add the
+  family-specific mappings: environment *names* become OpenAPI server variables / parameter
+  placeholders while their *values* are redacted; declared auth (Postman/Insomnia auth blocks,
+  observed `Authorization` headers) becomes `securityScheme` **stubs** (type only, no material).
+  Scrub report attached to the import job and the catalog item's provenance panel.
+- **Acceptance Criteria.** Fixtures seeded with tokens/cookies/env secrets persist zero secret
+  bytes (verified by scanning stored source); auth appears as scheme stubs; scrub report lists
+  every redaction site.
+- **Dependencies / Parallelism.** After 29.6. Blocks 32.2–32.4/32.6 ship.
+- **Technical Stack.** Python.
+
+### MFI-32.6 — Source cards + CLI + fixtures  ·  **#4408**
+- **Problem.** Standard adapter surfacing, per the template every format epic ends with.
+- **Solution / Scope.** Source cards (HAR: activity icon; Insomnia/Bruno: their marks are
+  trademarked — use neutral Lucide icons), file/archive input kinds; `apiome import har|insomnia|
+  bruno`; `detect()` entries; fixtures per format incl. a secrets-seeded scrub fixture. Catalog
+  format pills read `HAR (inferred)` / `Insomnia` / `Bruno`.
+- **Acceptance Criteria.** Cards appear via the registry with no UI code change (1.3); CLI
+  dispatch works via 1.4 with no new command code; fixtures green in CI.
+- **Dependencies / Parallelism.** After 32.2–32.4. Parallel across formats.
+- **Technical Stack.** Python, Next.js, Typer.
+
+### MFI-32.7 — Postman importer behind the SPI  ·  **#4409**
+- **Problem.** Postman import predates the SPI (legacy path), so Postman collections get no
+  canonical model, no cross-format diff, no conversion fidelity — while newer, less-used formats
+  do.
+- **Solution / Scope.** `PostmanImportSource` (Collection v2.1): reuse 32.1 for request→operation
+  inference and 32.5 for env/auth handling; keep the legacy path until parity, then route the
+  source card through the adapter (same behavior-preserving pattern as MFI-1.1's OpenAPI
+  refactor).
+- **Acceptance Criteria.** A Postman collection imports through the SPI with canonical entities
+  and identical user-visible results to the legacy path; legacy path retired behind a flag.
+- **Dependencies / Parallelism.** After 32.1/32.5. Parallel with 32.2–32.4.
+- **Technical Stack.** Python.
+
+---
+
 ## 5. Work order (dependency-driven)
 
 ```mermaid
@@ -1271,14 +1760,29 @@ flowchart LR
 1. **Foundation first:** MFI-1.1 → 1.2 (SPI + generalized engine) ‖ MFI-5.1 (runner) ‖ MFI-2.1 → 2.2/2.3 (model + persistence) ‖ MFI-7.1.
 2. **Cross-cutting:** MFI-3.1 → 3.2 → 3.3 (fingerprint/diff/breaking SPI) ‖ MFI-4.1 → 4.2/4.3 (lint engine) ‖ MFI-5.2/5.3 (tool packaging + sandbox) ‖ MFI-1.3/1.4/1.5 (UI/CLI/auto-detect).
 3. **MVP formats (prove the seam):** MFI-EPIC-8 AsyncAPI, MFI-EPIC-10 GraphQL, MFI-EPIC-9 gRPC — each: parse → normalize → discover (9/10) → lint → breaking → UI/CLI.
-4. **MVP ships.** Then v2 formats by value: **OData → Avro/Schema-Registry → SOAP/WSDL → TypeSpec**, then legacy **RAML → API Blueprint**, then **Smithy**.
-5. **Browse/Search (MFI-EPIC-6)** lands once ≥3 formats populate the model (align with #3489/#3496).
-6. **Catalog → OpenAPI conversion (MFI-EPIC-22)** can start as soon as the canonical model +
+4. **MVP-hardening (2026-07 additions, before v2 formats):** **MFI-EPIC-30** (Swagger 2.0 /
+   Arazzo / OAS 3.2 completeness) ‖ **MFI-29.1 → 29.2** (archive + fileset intake — unblocks
+   real-world proto/SDL/AsyncAPI inputs for the already-shipped MVP formats) ‖ **22.7**
+   (passthrough, now MVP) ‖ UI **26.4** dry-run (in `ROADMAP_MULTI_FORMAT_IMPORT_UI.md`).
+5. **MVP ships.** Then v2 formats by value: **OData → Avro/Schema-Registry →
+   Collections & Captured Traffic (MFI-EPIC-32, gated on 29.6 scrubbing) → SOAP/WSDL →
+   TypeSpec**, then legacy **RAML → API Blueprint**, then **Smithy**.
+6. **Browse/Search (MFI-EPIC-6)** lands once ≥3 formats populate the model (align with
+   #3489/#3496); **6.4 cross-format identity** rides with it (conversion-provenance auto-links
+   arrive free from 22.5).
+7. **Live-source re-discovery (MFI-EPIC-31)** is sequenced with **EPIC-12**: 31.1 scheduler →
+   31.2 pipeline reuse → 31.3 notifications, with 31.4 crawl-throttling built alongside 12.3's
+   Confluent crawler and 31.5 retention after the first sweeps run. (gRPC/GraphQL artifacts can
+   opt in as soon as 31.1/31.2 exist — the adapters already support live discovery.)
+8. **Intake scale-out:** 29.3 git intake + 29.4 remote `$refs` + 29.5 bulk import land with the
+   first v2 format wave; **29.6 secret scrubbing must land before MFI-EPIC-32 starts** (32.5
+   enforces it).
+9. **Catalog → OpenAPI conversion (MFI-EPIC-22)** can start as soon as the canonical model +
    versioning + lint (EPIC-2/3/4) exist — its conv-MVP (22.1 emitter → 22.2 projections → 22.3 gap
    analyzer → 22.5 convert job → 22.6 API → 22.4 preview) is independent of which format epics have
    shipped. Per-format packs (22.8) light up incrementally as each format's normalizer lands;
    ship 22.7 passthrough first so OpenAPI/Swagger/TypeSpec sources are handled losslessly from day one.
-7. **Catalog screen (MFI-EPIC-23)** needs only the model/persistence (EPIC-2/7) + import framework
+10. **Catalog screen (MFI-EPIC-23)** needs only the model/persistence (EPIC-2/7) + import framework
    (EPIC-1) to start. Build the catalog-MVP as: 23.1 entity + 23.2 API → 23.7 import routing →
    23.3/23.4/23.5/23.6 screen+card+pills+nav → 23.8 non-publishable enforcement → 23.9/23.10
    detail+lint parity. **23.11 promotion** lands once EPIC-22's preview (22.4) exists — it is the
@@ -1321,6 +1825,16 @@ flowchart LR
    parity (view/lint/format-pill/source) but never offers publish; the *only* path to a publishable
    artifact is MFI-EPIC-22 conversion (23.11). This keeps "incomplete imports" from leaking into the
    public/published surface while still making them first-class, inspectable catalog citizens.
+10. **A live-discovered catalog decays without re-discovery (MFI-EPIC-31).** One-shot imports of
+    living endpoints (introspection/reflection/registry crawls) go stale silently, and the
+    breaking-change engine never fires on drift. Re-discovery must reuse the exact import pipeline
+    (a sweep version = a manual re-import version), be opt-in with backoff and per-host politeness,
+    and never turn a fetch failure into a phantom version. Retention (31.5) caps sweep churn.
+11. **Collections & captures carry live secrets and only *inferred* truth (MFI-EPIC-32).**
+    Postman/Insomnia/HAR payloads routinely embed bearer tokens, cookies, and env secrets —
+    scrubbing (29.6/32.5) is a ship-gate, not a lint. And an inferred spec is a *sample* of an API,
+    not its contract: keep `inferred` provenance on every construct, keep these items
+    non-publishable (EPIC-23), and let EPIC-22's fidelity preview tell the truth at promotion time.
 
 ---
 
@@ -1343,7 +1857,16 @@ flowchart LR
   - gRPC/Protobuf → OpenAPI — https://github.com/google/gnostic · https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/customizing_openapi_output/ · https://github.com/sudorandom/protoc-gen-connect-openapi
   - GraphQL → REST/OpenAPI (SOFA) — https://github.com/Urigo/sofa · https://github.com/schwer/graphql-to-openapi
   - OpenAPI 3.1 = JSON Schema (schema reuse for `components`) — https://spec.openapis.org/oas/v3.1.0
-- Reused in-repo: `ROADMAP_MCP_CATALOGING.md` (V2-MCP-EPIC-15…27, #3637), `spec_import_engine.py`, `schema_lint.py`, `versions`/`version_tags`/`quality_*`, `browse_public_routes.py`, `ImportDialog.tsx`, `DashboardSideNav.tsx`, apiome-cli, apiome-db Flyway.
+- **Gap-analysis additions (EPIC-29…32, §9.7):**
+  - HAR 1.2 — http://www.softwareishard.com/blog/har-12-spec/ · traffic→spec prior art: https://github.com/opticdev/optic
+  - Insomnia export format — https://docs.insomnia.rest/insomnia/import-export-data · Bruno `.bru` — https://docs.usebruno.com/bru-lang/overview
+  - Postman Collection v2.1 — https://schema.postman.com/collection/json/v2.1.0/draft-07/docs/index.html
+  - Google API Discovery — https://developers.google.com/discovery/v1/reference
+  - OpenAPI 3.2.0 — https://spec.openapis.org/oas/v3.2.0 · Overlay Specification 1.0 — https://spec.openapis.org/overlay/v1.0.0
+  - GraphQL Federation / supergraph (rover already bundled per MFI-5.2) — https://www.apollographql.com/docs/rover/
+  - Kubernetes CRDs (structural schemas) — https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/ · Gateway API — https://gateway-api.sigs.k8s.io/
+  - WIT (WebAssembly Component Model) — https://component-model.bytecodealliance.org/design/wit.html
+- Reused in-repo: `ROADMAP_MCP_CATALOGING.md` (V2-MCP-EPIC-15…27, #3637), `spec_import_engine.py`, `schema_lint.py`, `versions`/`version_tags`/`quality_*`, `browse_public_routes.py`, `ImportDialog.tsx`, `DashboardSideNav.tsx`, apiome-cli, apiome-db Flyway, `repository_refresh_sweep.py` (EPIC-31 template), `ROADMAP_REPOSITORY_AUTOREFRESH.md`, `ROADMAP_MULTI_FORMAT_EXPORT.md` (MFX-EPIC-25/29/31/33/34 — export counterparts of §9/EPIC-32 formats).
 
 ---
 
@@ -1367,7 +1890,8 @@ flowchart LR
 > actually adopting in 2026, plus long-lived legacy/mainframe formats with large installed bases.
 > They are documented here so the **plug-in seam (MFI-EPIC-1/2)** is designed wide enough to absorb
 > them; the Tier-1 set (**A2A Agent Cards #3974**, **OpenRPC #3979**, **CloudEvents/xRegistry
-> #3980**, **FHIR #3985**) is flagged to promote first. See **§9.6** for the full issue map.
+> #3980**, **FHIR #3985**) is flagged to promote first. See **§9.6** for the full issue map, and
+> **§9.7** for the 2026-07 gap-analysis candidates (documented only, **not yet filed**).
 >
 > Every candidate below is scored against the SAME pipeline the rest of this roadmap uses
 > (*parse → normalize → fingerprint → diff → lint/score → catalog/browse*) and reuses MFI-EPIC-1…7.
@@ -1460,6 +1984,11 @@ Tier 3 (niche / fold-in / opportunistic):
   Connect-RPC (→EPIC-9)  ·  FlatBuffers/Cap'n Proto  ·  WADL  ·  ASN.1  ·  JSON:API/HAL  ·  JTD  ·  CORBA IDL  ·  ISO 8583  ·  XML-RPC/ONC-RPC
 ```
 
+> **2026-07 gap analysis:** see **§9.7** for a further set of candidates (collections/traffic,
+> Google Discovery, Federation, CRDs, LLM tool schemas, Overlays, WIT, gateway configs) — the
+> highest-value of which (HAR/Insomnia/Bruno) were promoted straight into **MFI-EPIC-32** rather
+> than parked here.
+
 **Two model changes these candidates imply for MFI-EPIC-1/2 (worth designing in now):**
 1. An **"agent descriptor" paradigm** (skills/capabilities/auth) in the canonical model so A2A/ACP
    Agent Cards catalog as first-class citizens beside operation-based APIs.
@@ -1509,3 +2038,29 @@ Umbrella **#3715**. Epics & issues created from this section (all `roadmap-candi
 | | #3994 | MFI-21.4 CORBA IDL (OMG IDL) | 3 |
 | | #3995 | MFI-21.5 ASN.1 | 3 |
 | | #3996 | MFI-21.6 XML-RPC / ONC-RPC (XDR) | 3 |
+
+### 9.7 Gap-analysis additions (2026-07 — **not yet filed**)
+
+The §1–§17 set covers formats that are *designed* (IDLs, schemas, contracts); §9.0–9.6 adds
+agents, modern RPC/event, verticals, and legacy. The systematic blind spot the 2026-07 gap
+analysis found is the **observed / collected** family — traffic captures and API-client
+workspaces — which is what mid-market teams actually possess. The three highest-value entries
+(**HAR, Insomnia, Bruno**) were promoted directly into **MFI-EPIC-32** (with Postman-behind-SPI);
+the rest are cataloged here. None of these are filed as issues yet.
+
+| Candidate | What it is | Path into apiome | Fit |
+|---|---|---|---|
+| **HAR / Insomnia / Bruno / Postman-SPI** | Traffic captures + API-client collections | **Promoted → MFI-EPIC-32** (inferred-spec engine, scrub gate, Catalog + EPIC-22 promotion) | ●●● shipped upstairs |
+| **Google API Discovery** | Google's JSON API description (near-OpenAPI shape); export side already planned (MFX-EPIC-29.2) | Cheap normalizer (REST paradigm); huge public corpus for seeding catalogs; live discovery via the public directory endpoint | ●● Tier 2 |
+| **GraphQL Federation supergraph/subgraph** | Apollo Federation composition (supergraph SDL, subgraph set) — `rover` is **already bundled** (MFI-5.2) | Extend **EPIC-10**: composition-aware import, subgraph-level ownership + diff (which subgraph broke the supergraph) | ●● Tier 2 (fold into EPIC-10) |
+| **`.http` / `.rest` files + cURL snippets** | VS Code REST Client / JetBrains HTTP Client request files; ubiquitous in repos | Same inferred-spec engine as EPIC-32 (32.1); natural 29.3 git-intake citizen | ●● Tier 2 (fold into EPIC-32) |
+| **Kubernetes CRDs** | CustomResourceDefinitions embed OpenAPI v3 structural schemas | Schemas → the JSON-Schema/types path (data-schema paradigm); opens the platform-engineering audience; live discovery via cluster API is a later opt-in | ●● Tier 2 |
+| **LLM tool/function schema bundles** | Bare OpenAI/Anthropic function-calling tool arrays (JSON-Schema based) — the most common agent artifact in the wild, *not* covered by MCP/A2A/agents.json | Candidate **MFI-18.6** in the agent-descriptor epic; reuse JSON-Schema normalizer + agent paradigm | ●● Tier 2 (→ EPIC-18) |
+| **OpenAPI Overlay Specification 1.0** | Standardized patch/overlay documents applied to a base OpenAPI doc | Pre-processor in the OpenAPI adapter: overlay + base → resolved spec, provenance notes which values came from the overlay | ● Tier 3 |
+| **WIT (WebAssembly Component Model)** | Interface types for Wasm components (`.wit`) | Watch-list: RPC-ish normalize (worlds/interfaces/functions); revisit when the ecosystem settles | ○ Tier 3 |
+| **Gateway configs (Kong declarative, K8s Gateway API HTTPRoute)** | Infra route configs that imply an API surface | Inferred, partial-fidelity import (routes/hosts/methods, no schemas) — pairs with the EPIC-32 provenance machinery | ○ Tier 3 |
+
+**Also folded from this analysis (features, not formats — filed 2026-07-03):** MFI-EPIC-29 #4384 (intake hardening),
+MFI-EPIC-30 #4385 (Swagger 2.0 / Arazzo / **OpenAPI 3.2** — note OAS 3.2 is a *current-spec* obligation,
+not a candidate), MFI-EPIC-31 #4386 (re-discovery & drift alerts), MFI-EPIC-32 #4387, MFI-6.4 #4410 (cross-format identity), and
+the MFI-22.7 / UI-26.4 MVP promotions. See §0.3.
