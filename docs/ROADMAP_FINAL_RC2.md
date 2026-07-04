@@ -1,4 +1,4 @@
-# ROADMAP — FINAL RC2: Implementation Order
+ # ROADMAP — FINAL RC2: Implementation Order
 
 > **Status:** 📋 **Consolidated execution plan** (2026-07-04). This document files **no new
 > issues** — it sequences already-filed work into the order it should be implemented for
