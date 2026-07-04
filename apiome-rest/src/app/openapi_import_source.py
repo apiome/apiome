@@ -21,20 +21,19 @@ the job engine onto adapters is MFI-1.2), wrapping the OpenAPI path behind the S
 is **behavior-preserving**: the same parser, normalizer, and linter run.
 
 Detection recognizes both OpenAPI 3.x and Swagger 2.0 so each routes to this
-adapter; ``swagger-2.0`` *normalization* awaits its own normalizer (a later
-format epic), so :meth:`OpenApiImportSource.normalize` of a Swagger 2.0 document
-raises a clear :class:`~app.import_source.ImportSourceError` rather than silently
-mis-normalizing it.
+adapter. Swagger 2.0 normalization is handled by
+:class:`app.swagger2_normalizer.Swagger2Normalizer` (MFI-30.1); OpenAPI 3.x by
+:class:`app.openapi_normalizer.OpenApiNormalizer` (MFI-2.3).
 """
 
 from __future__ import annotations
 
 from typing import Any, Optional
 
-# Importing the reference normalizer self-registers the ``openapi-3.0`` /
-# ``openapi-3.1`` format keys, which :meth:`OpenApiImportSource.normalize`
-# resolves through the normalizer registry.
+# Importing the normalizers self-registers format keys resolved by
+# :meth:`OpenApiImportSource.normalize`.
 from . import openapi_normalizer  # noqa: F401
+from . import swagger2_normalizer  # noqa: F401
 from .canonical_model import ApiParadigm, CanonicalApi
 from .import_ingestion import IngestionError, parse_document
 from .import_source import (
@@ -117,7 +116,7 @@ class OpenApiImportSource(ImportSource, register=True):
         Raises:
             ImportSourceError: If ``native_ast`` is not a mapping, is not an
                 OpenAPI/Swagger document, or names a format with no registered
-                normalizer (e.g. Swagger 2.0, pending its own epic).
+                normalizer.
         """
         if not isinstance(native_ast, dict):
             raise ImportSourceError("OpenAPI/Swagger source must be a parsed mapping (dict)")

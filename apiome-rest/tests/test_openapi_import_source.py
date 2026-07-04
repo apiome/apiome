@@ -157,10 +157,16 @@ def test_normalize_is_deterministic(adapter: OpenApiImportSource) -> None:
     assert adapter.fingerprint(a) == adapter.fingerprint(b)
 
 
-def test_normalize_swagger_raises_pending_normalizer(adapter: OpenApiImportSource) -> None:
-    # Swagger 2.0 is detected (so it routes here) but has no normalizer yet.
-    with pytest.raises(ImportSourceError, match="No normalizer registered"):
-        adapter.normalize({"swagger": "2.0", "info": {"title": "x", "version": "1"}})
+def test_normalize_swagger_produces_canonical_model(adapter: OpenApiImportSource) -> None:
+    model = adapter.normalize(
+        {
+            "swagger": "2.0",
+            "info": {"title": "x", "version": "1"},
+            "paths": {},
+        }
+    )
+    assert model.format == "swagger-2.0"
+    assert model.identity.name == "x"
 
 
 def test_normalize_non_dict_raises(adapter: OpenApiImportSource) -> None:

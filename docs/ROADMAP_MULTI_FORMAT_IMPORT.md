@@ -1454,12 +1454,12 @@ detection, publishability, and the EPIC-22 emitter.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 30.1 | Swagger 2.0 canonical normalizer | close the "detect says importable / normalize raises" gap | rest,python,validation,mvp | Y | Y | M | apiome-rest |
 | 30.2 | Arazzo ImportSource adapter | workflows behind the SPI: canonical model + lint + diff | rest,python,mvp | Y | Y | M | apiome-rest |
 | 30.3 | OpenAPI 3.2 support | detect/normalize/publish OAS 3.2; emitter + validator awareness | rest,validation,mvp | Y | Y | M | apiome-rest,apiome-ui |
 | 30.4 | OpenAPI-family conformance fixtures | 2.0/3.0/3.1/3.2 + Arazzo round-trip matrix (import→canonical→emit) | rest,validation | Y | Y | S | apiome-rest |
 
-### MFI-30.1 — Swagger 2.0 canonical normalizer  ·  **#4394**
+### MFI-30.1 — Swagger 2.0 canonical normalizer  ·  **#4394**  ·  ✅ **Done**
+- **Status.** Implemented in `apiome-rest/src/app/swagger2_normalizer.py` (`Swagger2Normalizer`, registered under `swagger-2.0`) and wired into `openapi_import_source.py` so the OpenAPI/Swagger adapter's `normalize()` path no longer raises for Swagger 2.0. Maps `host`/`basePath`/`schemes`→servers, `definitions`→types (via `SchemaCoercer` with `#/definitions/` refs), Swagger parameter forms (`body`/`formData`)→request messages, and `produces`/`consumes`→media types on messages — matching OpenAPI 3.x fingerprint semantics for the same contract. Tests in `tests/test_swagger2_normalizer.py`; `test_openapi_import_source.py` updated. apiome-rest 1.75.2 → 1.75.3.
 - **Problem.** MFI-1.1's detection recognizes Swagger 2.0 and the routing policy publishes it, but
   the SPI path raises — so Swagger 2.0 rides the legacy worker only and never enters the canonical
   model (no cross-format diff, no conversion fidelity, no format packs).
