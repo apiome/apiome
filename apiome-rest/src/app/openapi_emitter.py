@@ -65,6 +65,7 @@ from .canonical_model import (
 from .emitter import (
     EmitResult,
     Emitter,
+    LossKind,
     LossTracker,
     Provenance,
     ProvenanceTracker,
@@ -74,6 +75,16 @@ from .emitter import (
 from .projection import ProjectionStrategy, RouteBinding, get_projection
 
 __all__ = ["OpenApiEmitter"]
+
+# OpenAPI 3.1 path-item methods the emitter can emit natively. OpenAPI 3.2-only
+# methods (QUERY, additionalOperations) are stashed on vendor extensions instead.
+_OAS31_METHODS = frozenset(
+    {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
+)
+# Vendor extensions used when a 3.2-only HTTP method cannot be emitted as a native
+# 3.1 path-item operation key (mirrors the UI 3.2→3.1 converter).
+X_QUERY_OPERATION = "x-apiome-query-operation"
+X_ADDITIONAL_OPERATIONS = "x-apiome-additional-operations"
 
 # Extracts the identifier-safe tokens of a path/key when synthesizing an
 # ``operationId`` (drops slashes, dots, and ``{param}`` braces).
@@ -267,8 +278,38 @@ class OpenApiEmitter(Emitter, register=True):
                 operation, binding.method, binding.path, op_ptr, reserved, schema, tracker
             )
             self._apply_extensions(operation_obj, binding, op_ptr, tracker)
-            item[binding.method] = operation_obj
+            method = binding.method.lower()
+            if method not in _OAS31_METHODS:
+                self._stash_non_oas31_operation(
+                    item, method, operation_obj, operation, losses
+                )
+                continue
+            item[method] = operation_obj
         return paths
+
+    @staticmethod
+    def _stash_non_oas31_operation(
+        item: Dict[str, Any],
+        method: str,
+        operation_obj: Dict[str, Any],
+        operation: Operation,
+        losses: LossTracker,
+    ) -> None:
+        """Carry a 3.2-only HTTP method forward on ``x-apiome-*`` extensions."""
+        if method == "query":
+            item[X_QUERY_OPERATION] = operation_obj
+            extension = X_QUERY_OPERATION
+        else:
+            additional = item.setdefault(X_ADDITIONAL_OPERATIONS, {})
+            additional[method.upper()] = operation_obj
+            extension = X_ADDITIONAL_OPERATIONS
+        losses.record(
+            LossKind.NA,
+            "openapi-3.2-http-method",
+            f"{method.upper()} {operation.http_path or operation.key} has no native "
+            f"OpenAPI 3.1 path-item method; stashed on {extension}",
+            pointer=operation.key,
+        )
 
     @staticmethod
     def _apply_extensions(

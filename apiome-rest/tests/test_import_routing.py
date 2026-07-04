@@ -164,7 +164,7 @@ def test_openapi_31_routes_to_project() -> None:
 
 
 def test_openapi_30_swagger_and_arazzo_route_to_project() -> None:
-    for fmt in ("openapi-3.0", "swagger-2.0", "arazzo"):
+    for fmt in ("openapi-3.0", "openapi-3.2", "swagger-2.0", "arazzo"):
         decision = _decide(
             key="openapi", paradigm=ApiParadigm.REST, fmt=fmt, operations=1
         )
@@ -173,7 +173,13 @@ def test_openapi_30_swagger_and_arazzo_route_to_project() -> None:
 
 
 def test_publishable_formats_set_is_the_project_family() -> None:
-    assert PUBLISHABLE_FORMATS == {"openapi-3.0", "openapi-3.1", "swagger-2.0", "arazzo"}
+    assert PUBLISHABLE_FORMATS == {
+        "openapi-3.0",
+        "openapi-3.1",
+        "openapi-3.2",
+        "swagger-2.0",
+        "arazzo",
+    }
 
 
 def test_typespec_emitting_openapi_routes_to_project() -> None:

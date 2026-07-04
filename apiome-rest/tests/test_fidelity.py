@@ -546,6 +546,7 @@ def test_checklist_order_is_fixed_and_complete() -> None:
         "info.description",
         "info.contact",
         "info.license",
+        "source.openapi-version",
         "servers",
         "paths",
         "operation.metadata",

@@ -1,7 +1,7 @@
 """Reference normalizer: OpenAPI → canonical model — MFI-2.3 (#3740).
 
 The reference implementation of the :class:`app.normalizer.Normalizer` SPI. It
-maps a parsed **OpenAPI 3.0 / 3.1** document (a ``dict``, already ``$ref``-merged
+maps a parsed **OpenAPI 3.0 / 3.1 / 3.2** document (a ``dict``, already ``$ref``-merged
 for any *remote* refs — local ``#/components/schemas`` refs are preserved as
 keyed references) into a :class:`~app.canonical_model.CanonicalApi`:
 
@@ -21,8 +21,8 @@ identity, and the whole model is run through
 regardless of how the source orders its paths and schemas. The normalizer is pure
 (no I/O); it is the inverse, eventually, of the MFI-22.1 ``OpenApiEmitter``.
 
-This module *self-registers* two format keys — ``openapi-3.0`` and
-``openapi-3.1`` — so :func:`app.normalizer.get_normalizer` resolves an OpenAPI
+This module *self-registers* three format keys — ``openapi-3.0``, ``openapi-3.1``,
+and ``openapi-3.2`` — so :func:`app.normalizer.get_normalizer` resolves an OpenAPI
 document to this class.
 """
 
@@ -50,7 +50,8 @@ from .normalizer import Keys, Normalizer, SchemaCoercer, coerce_constraints, nor
 __all__ = ["OpenApiNormalizer"]
 
 # The HTTP methods an OpenAPI Path Item may carry, lower-cased as they appear in
-# the document. ``trace`` is included for completeness (rare but valid).
+# the document. ``trace`` is included for completeness (rare but valid). OpenAPI
+# 3.2 adds ``query`` (the QUERY HTTP method) as a first-class operation key.
 _HTTP_METHODS: Tuple[str, ...] = (
     "get",
     "put",
@@ -60,6 +61,7 @@ _HTTP_METHODS: Tuple[str, ...] = (
     "head",
     "patch",
     "trace",
+    "query",
 )
 
 # OpenAPI parameter ``in`` value → canonical :class:`ParameterLocation`.
@@ -98,7 +100,8 @@ class OpenApiNormalizer(Normalizer, register=True):
 
         Returns:
             The order-normalized :class:`CanonicalApi`. ``format`` reflects the
-            document's declared OpenAPI version (``openapi-3.0`` / ``openapi-3.1``).
+            document's declared OpenAPI version (``openapi-3.0`` / ``openapi-3.1`` /
+            ``openapi-3.2``).
 
         Raises:
             ValueError: If ``source`` is not a mapping or is not an OpenAPI 3.x
@@ -112,6 +115,11 @@ class OpenApiNormalizer(Normalizer, register=True):
         components = (source.get("components") or {}).get("schemas") or {}
         coercer = SchemaCoercer(components=components)
 
+        tag_metadata = self._tag_hierarchy(source.get("tags") or [])
+        extras: Dict[str, Any] = {}
+        if tag_metadata:
+            extras["tagHierarchy"] = tag_metadata
+
         api = CanonicalApi(
             paradigm=self.paradigm,
             format=format_key,
@@ -124,6 +132,7 @@ class OpenApiNormalizer(Normalizer, register=True):
             services=self._services(source, coercer),
             types=coercer.named_types_from_components(),
             raw=source if include_raw else None,
+            extras=extras,
         )
         return normalize_ordering(api)
 
@@ -137,8 +146,8 @@ class OpenApiNormalizer(Normalizer, register=True):
             source: The parsed document.
 
         Returns:
-            ``openapi-3.0`` or ``openapi-3.1`` (3.1 is assumed for any other 3.x
-            patch level so newer minor versions still normalize).
+            ``openapi-3.0``, ``openapi-3.1``, or ``openapi-3.2`` (newer 3.x minors
+            without a dedicated key normalize under ``openapi-3.2``).
 
         Raises:
             ValueError: If the document has no ``openapi: 3.x`` version string.
@@ -148,7 +157,13 @@ class OpenApiNormalizer(Normalizer, register=True):
             raise ValueError(
                 "not an OpenAPI 3.x document (missing or unsupported `openapi` version)"
             )
-        return "openapi-3.0" if version.startswith("3.0") else "openapi-3.1"
+        if version.startswith("3.0"):
+            return "openapi-3.0"
+        if version.startswith("3.1"):
+            return "openapi-3.1"
+        if version.startswith("3.2"):
+            return "openapi-3.2"
+        return "openapi-3.2"
 
     # --- servers ------------------------------------------------------------
 
@@ -176,6 +191,40 @@ class OpenApiNormalizer(Normalizer, register=True):
                     variables=variables,
                 )
             )
+        return result
+
+    @staticmethod
+    def _tag_hierarchy(tags: List[Any]) -> Dict[str, Dict[str, Any]]:
+        """Collect OpenAPI 3.2 hierarchical tag metadata keyed by tag name."""
+        result: Dict[str, Dict[str, Any]] = {}
+        for tag in tags:
+            if not isinstance(tag, dict) or "name" not in tag:
+                continue
+            meta: Dict[str, Any] = {}
+            for key in ("parent", "summary", "kind"):
+                if tag.get(key) is not None:
+                    meta[key] = tag[key]
+            if meta:
+                result[str(tag["name"])] = meta
+        return result
+
+    @staticmethod
+    def _path_operations(item: Dict[str, Any]) -> List[Tuple[str, Dict[str, Any]]]:
+        """Return every operation on a path item as ``(method, op_obj)`` pairs.
+
+        Includes standard HTTP methods, the OpenAPI 3.2 ``query`` operation key,
+        and any custom methods declared under ``additionalOperations``.
+        """
+        result: List[Tuple[str, Dict[str, Any]]] = []
+        for method in _HTTP_METHODS:
+            op_obj = item.get(method)
+            if isinstance(op_obj, dict):
+                result.append((method, op_obj))
+        additional = item.get("additionalOperations")
+        if isinstance(additional, dict):
+            for method, op_obj in additional.items():
+                if isinstance(method, str) and isinstance(op_obj, dict):
+                    result.append((method.lower(), op_obj))
         return result
 
     # --- services / operations ---------------------------------------------
@@ -206,10 +255,7 @@ class OpenApiNormalizer(Normalizer, register=True):
                 continue
             # Path-level parameters are shared by every method on the path.
             shared_params = item.get("parameters") or []
-            for method in _HTTP_METHODS:
-                op_obj = item.get(method)
-                if not isinstance(op_obj, dict):
-                    continue
+            for method, op_obj in self._path_operations(item):
                 operation = self._operation(method, path, op_obj, shared_params, coercer)
                 service_key = operation.tags[0] if operation.tags else _DEFAULT_SERVICE
                 by_service.setdefault(service_key, []).append(operation)
@@ -442,6 +488,12 @@ class OpenApiNormalizer(Normalizer, register=True):
                 )
             )
         return result
+
+
+class _OpenApi32Normalizer(OpenApiNormalizer, register=True):
+    """Alias registration of :class:`OpenApiNormalizer` under the ``openapi-3.2`` key."""
+
+    format = "openapi-3.2"
 
 
 class _OpenApi30Normalizer(OpenApiNormalizer, register=True):

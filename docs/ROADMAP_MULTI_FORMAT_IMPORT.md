@@ -1454,7 +1454,6 @@ detection, publishability, and the EPIC-22 emitter.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 30.3 | OpenAPI 3.2 support | detect/normalize/publish OAS 3.2; emitter + validator awareness | rest,validation,mvp | Y | Y | M | apiome-rest,apiome-ui |
 | 30.4 | OpenAPI-family conformance fixtures | 2.0/3.0/3.1/3.2 + Arazzo round-trip matrix (import→canonical→emit) | rest,validation | Y | Y | S | apiome-rest |
 
 ### MFI-30.1 — Swagger 2.0 canonical normalizer  ·  **#4394**  ·  ✅ **Done**
@@ -1487,7 +1486,8 @@ detection, publishability, and the EPIC-22 emitter.
 - **Dependencies / Parallelism.** After 1.1/2.3. Parallel with 30.1.
 - **Technical Stack.** Python.
 
-### MFI-30.3 — OpenAPI 3.2 support  ·  **#4396**
+### MFI-30.3 — OpenAPI 3.2 support  ·  **#4396**  ·  ✅ **Done**
+- **Status.** Implemented in `apiome-rest`: `openapi-3.2` detection/format key, `OpenApiNormalizer` handles QUERY/additionalOperations/tag hierarchy, `PUBLISHABLE_FORMATS` routing, bundled 3.2 meta-schema (`data/openapi_3_2_meta_schema.json`), emitter stashes non-3.1 methods on `x-apiome-*` extensions, and fidelity preview notes 3.2→3.1 conversion. UI catalog format registry adds `openapi32` alias. Tests in `tests/test_openapi_32.py`. apiome-rest 1.75.4 → 1.75.5; apiome-ui 0.49.1 → 0.49.2.
 - **Problem.** OAS 3.2.0 shipped (Q4 2025): `QUERY` method, `additionalOperations`, streaming
   media-type guidance, hierarchical tags, `$self`. Detection pins 3.0/3.1, `PUBLISHABLE_FORMATS`
   omits 3.2, and the EPIC-22 emitter/validator only know 3.1 — a current-version OpenAPI doc

@@ -86,7 +86,7 @@ def test_descriptor_metadata(adapter: OpenApiImportSource) -> None:
     assert d.key == "openapi"
     assert d.paradigm is ApiParadigm.REST
     assert InputKind.FILE in d.input_kinds
-    assert "openapi-3.1" in d.formats
+    assert "openapi-3.2" in d.formats
     assert "swagger-2.0" in d.formats
     assert d.supports_live_discovery is False
 
@@ -94,6 +94,14 @@ def test_descriptor_metadata(adapter: OpenApiImportSource) -> None:
 # ===========================================================================
 # Detection
 # ===========================================================================
+
+
+def test_detect_openapi_32(adapter: OpenApiImportSource) -> None:
+    result = adapter.detect(
+        DetectionInput(document={"openapi": "3.2.0", "info": {"title": "T"}, "paths": {}})
+    )
+    assert result.format == "openapi-3.2"
+    assert result.confidence > 0.9
 
 
 def test_detect_openapi_31(adapter: OpenApiImportSource) -> None:

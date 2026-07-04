@@ -42,12 +42,14 @@ from app.normalizer import (
 # ===========================================================================
 
 
-def test_openapi_normalizer_registers_both_versions() -> None:
+def test_openapi_normalizer_registers_all_openapi_versions() -> None:
     assert "openapi-3.0" in available_formats()
     assert "openapi-3.1" in available_formats()
+    assert "openapi-3.2" in available_formats()
     assert "swagger-2.0" in available_formats()
     assert get_normalizer("openapi-3.1").format == "openapi-3.1"
     assert get_normalizer("openapi-3.0").format == "openapi-3.0"
+    assert get_normalizer("openapi-3.2").format == "openapi-3.2"
     assert get_normalizer("swagger-2.0").format == "swagger-2.0"
 
 
