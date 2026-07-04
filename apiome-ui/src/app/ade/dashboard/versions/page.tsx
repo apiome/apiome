@@ -116,6 +116,7 @@ import {
 import { VersionMergeConflictList } from '../../../components/ade/dashboard/VersionMergeConflictList';
 import { CompatibilityReportPanel } from '../../../components/ade/dashboard/CompatibilityReportPanel';
 import { VersionChangeReportPanel } from './VersionChangeReportPanel';
+import { ProjectRelatedArtifactsSection } from '../../../components/ade/dashboard/ProjectRelatedArtifactsSection';
 import {
   dashboardContentStackClass,
   dashboardMainClass,
@@ -2946,6 +2947,10 @@ const Versions = () => {
           currentUserId={currentUserId}
           effectiveIsAdmin={!!effectiveIsAdmin}
         />
+      ) : null}
+
+      {selectedProjectId ? (
+        <ProjectRelatedArtifactsSection projectId={selectedProjectId} />
       ) : null}
 
       {FEATURE_GITLIKE && (!showChangeReportTab || versionsMainTab === 'timeline') && selectedProjectId && versionTags.length > 0 && (

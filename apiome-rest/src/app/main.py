@@ -27,6 +27,7 @@ from .type_namespaces_routes import router as type_namespaces_router
 from .classes_routes import router as classes_router
 from .projects_routes import router as projects_router
 from .catalog_routes import router as catalog_router
+from .identity_routes import router as identity_router
 from .workflow_audit_routes import router as workflow_audit_router
 from .versions_routes import router as versions_router
 from .version_merge_routes import router as version_merge_router
@@ -199,6 +200,7 @@ app.include_router(type_namespaces_router)
 app.include_router(classes_router)
 app.include_router(projects_router)
 app.include_router(catalog_router)
+app.include_router(identity_router)
 app.include_router(compatibility_router)
 app.include_router(lint_router)
 app.include_router(version_merge_router)

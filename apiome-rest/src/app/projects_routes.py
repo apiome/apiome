@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional, List, Dict, Any
 
 from .database import db
+from .api_identity_service import build_related_artifact_refs
 from .models import (
     ProjectSchema,
     ProjectCreateRequest,
@@ -117,7 +118,17 @@ async def get_project(
             detail=f"Project not found: {project_id}"
         )
 
-    return ProjectSchema(**project)
+    tenant_id = auth_data["tenant_id"]
+    group_id = db.get_identity_group_id_for_project(tenant_id, project_id)
+    related = build_related_artifact_refs(
+        db.get_related_artifact_rows(tenant_id, project_id)
+    )
+
+    return ProjectSchema(
+        **project,
+        identity_group_id=group_id,
+        related_artifacts=related,
+    )
 
 
 @router.get("/{tenant_slug}/by-slug/{project_slug}")

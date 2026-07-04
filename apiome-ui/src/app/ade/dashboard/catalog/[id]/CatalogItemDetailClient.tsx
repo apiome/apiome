@@ -81,6 +81,8 @@ import { catalogEntityAnchorId } from '@/app/utils/catalog-lint-panel';
 import { CatalogSourceViewer } from '@/app/components/ade/dashboard/catalog/CatalogSourceViewer';
 import { CatalogLintPanel } from '@/app/components/ade/dashboard/catalog/CatalogLintPanel';
 import { CatalogVersionsPanel } from '@/app/components/ade/dashboard/catalog/CatalogVersionsPanel';
+import { CatalogRelatedArtifactsPanel } from '@/app/components/ade/dashboard/catalog/CatalogRelatedArtifactsPanel';
+import type { RelatedArtifact } from '@/app/utils/catalog-related-artifacts';
 
 /** The normalized-content counts the import recorded for the item (each null until captured). */
 interface CatalogNormalizedSummary {
@@ -125,6 +127,9 @@ interface CatalogItemDetail {
   source?: CatalogSourceDescriptor;
   /** The convert-to-OpenAPI back-link (MFI-23.11): present once the item has been converted. */
   conversion?: CatalogConversion | null;
+  /** Cross-format identity group (MFI-6.4, #4410). */
+  identityGroupId?: string | null;
+  relatedArtifacts?: RelatedArtifact[];
 }
 
 const CATALOG_LIST_HREF = '/ade/dashboard/catalog';
@@ -527,6 +532,14 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
               )}
             </div>
           ) : null}
+
+          <CatalogRelatedArtifactsPanel
+            projectId={item.id}
+            identityGroupId={item.identityGroupId}
+            relatedArtifacts={item.relatedArtifacts ?? []}
+            readonly={Boolean(item.deleted_at)}
+            onChanged={() => void load()}
+          />
         </section>
 
         {/* Tabbed detail shell (MFI-25.1) — panes switch without a route change. */}

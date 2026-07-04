@@ -17,7 +17,7 @@
  */
 
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   useEffect,
@@ -149,6 +149,8 @@ interface CatalogItem {
   protocol?: string | null;
   /** Format-specific metadata off the latest revision; carries source-material provenance (MFI-7.x). */
   formatMetadata?: Record<string, unknown> | null;
+  /** Cross-format identity group when filtering representations (MFI-6.4). */
+  identityGroupId?: string | null;
   /** The convert-to-OpenAPI back-link (MFI-23.11): present once the item has been converted. */
   conversion?: CatalogConversion | null;
 }
@@ -444,6 +446,8 @@ function CatalogQualityBadge({ item }: { item: CatalogItem }) {
 
 const Catalog = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const identityGroupFilter = searchParams.get('identityGroupId');
   const { data: session } = useSession();
   const { confirm: confirmDialog, alert: alertDialog } = useDialog();
 
@@ -596,7 +600,10 @@ const Catalog = () => {
     }
     setListLoading(true);
     try {
-      const qs = showDeleted ? '?include_deleted=true' : '';
+      const params = new URLSearchParams();
+      if (showDeleted) params.set('include_deleted', 'true');
+      if (identityGroupFilter) params.set('identityGroupId', identityGroupFilter);
+      const qs = params.toString() ? `?${params.toString()}` : '';
       const response = await fetch(`/api/catalog${qs}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch catalog: ${response.statusText}`);
@@ -613,7 +620,7 @@ const Catalog = () => {
     } finally {
       setListLoading(false);
     }
-  }, [currentTenantId, showDeleted]);
+  }, [currentTenantId, showDeleted, identityGroupFilter]);
 
   useEffect(() => {
     if (currentTenantId) void loadCatalog();
@@ -867,6 +874,23 @@ const Catalog = () => {
           {/* Persistent non-publishable info banner (MFI-24.3). Rendered above the gallery, stats and
               toolbar so it shows on both the empty and populated list, matching the mockup. */}
           <CatalogNonPublishableBanner />
+          {identityGroupFilter ? (
+            <div
+              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-indigo-200 bg-indigo-50/70 px-3 py-2 text-sm dark:border-indigo-800 dark:bg-indigo-950/30"
+              data-testid="catalog-representations-filter-banner"
+            >
+              <span className="text-indigo-900 dark:text-indigo-200">
+                Showing all representations in identity group{' '}
+                <span className="font-mono text-xs">{identityGroupFilter.slice(0, 8)}…</span>
+              </span>
+              <Link
+                href="/ade/dashboard/catalog"
+                className="text-xs font-medium text-indigo-700 underline-offset-2 hover:underline dark:text-indigo-300"
+              >
+                Clear filter
+              </Link>
+            </div>
+          ) : null}
           {/* Auto-expand the gallery for an empty catalog (nothing imported yet); collapse it once
               there are items. Keying on that boundary remounts with the right initial state. */}
           <CatalogSupportedFormats

@@ -132,7 +132,7 @@ def test_list_catalog_default_excludes_deleted():
         assert len(data) == 1
         assert data[0]["slug"] == "acme-grpc-api"
         mock_db.get_catalog_items_for_tenant.assert_called_once_with(
-            "test-tenant-id", include_deleted=False
+            "test-tenant-id", include_deleted=False, identity_group_id=None
         )
     finally:
         app.dependency_overrides.pop(validate_authentication, None)
@@ -155,7 +155,7 @@ def test_list_catalog_include_deleted_returns_all_rows():
         assert "acme-grpc-api" in slugs
         assert "deleted-catalog-item" in slugs
         mock_db.get_catalog_items_for_tenant.assert_called_once_with(
-            "test-tenant-id", include_deleted=True
+            "test-tenant-id", include_deleted=True, identity_group_id=None
         )
     finally:
         app.dependency_overrides.pop(validate_authentication, None)

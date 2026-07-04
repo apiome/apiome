@@ -555,7 +555,7 @@ and #3496 (Community & Schema Browser).**
 | 6.1 | Protocol/format facets | filter browse by protocol (REST/RPC/event/graph/data) + format | multi-protocol,browser,mvp | N | N | M | apiome-rest,apiome-ui |
 | 6.2 | Cross-protocol search | search operations/types/messages across all formats | multi-protocol,browser,rest | N | N | M | apiome-rest,apiome-db |
 | 6.3 | Catalog categorization | tag/categorize artifacts by paradigm + domain | multi-protocol,community | Y | N | S | apiome-rest |
-| 6.4 | Cross-format API identity | link artifacts that describe the same logical API across formats | multi-protocol,registry,rest | Y | N | M | apiome-rest,apiome-ui,apiome-db |
+| 6.4 ✅ | Cross-format API identity | link artifacts that describe the same logical API across formats | multi-protocol,registry,rest | Y | N | M | apiome-rest,apiome-ui,apiome-db |
 
 ### MFI-6.1 — Protocol/format facets  ·  **#3753**
 - **Problem.** With 15+ formats, browse must filter by paradigm/format.
@@ -578,7 +578,8 @@ and #3496 (Community & Schema Browser).**
 - **Dependencies / Parallelism.** After 7.1. Parallel with 6.1.
 - **Technical Stack.** PostgreSQL, FastAPI.
 
-### MFI-6.4 — Cross-format API identity  ·  **#4410**  ·  *(2026-07 gap analysis)*
+### MFI-6.4 — Cross-format API identity  ·  **#4410**  ·  ✅ **Done**
+- **Status.** Implemented across `apiome-db`, `apiome-rest`, and `apiome-ui` (MFI-6.4, #4410). **DB:** `V140__api_identity_4410.sql` adds `apiome.api_identity_groups` + `apiome.api_identity_members` (each project belongs to at most one group; `link_source` is `manual` or `conversion`). **REST:** new `/v1/identity` routes for link/unlink, related-artifact reads, and heuristic suggestions (never auto-applied); catalog list/detail and project detail project `identityGroupId` + `relatedArtifacts`; catalog list accepts `identityGroupId` browse facet; convert job (MFI-22.5) auto-links source↔converted Project after provenance write. **UI:** Related artifacts panel on catalog detail and project versions screen with format pills, manual link/unlink, suggestion confirm flow, and "Show all representations" browse link. Structural tests in `apiome-db/test/api-identity.test.ts`; REST/UI unit tests green.
 - **Problem.** The same logical API imported as proto, SDL, and OpenAPI produces three unrelated
   catalog items. Nothing groups them, so the "multi-format catalog" reads as three catalogs; a
   converted OpenAPI project (EPIC-22) is the only linked pair today (via `conversion_provenance`).
