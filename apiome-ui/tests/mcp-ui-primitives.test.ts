@@ -133,10 +133,17 @@ describe('mcpHealthFromDiscoveryStatus', () => {
   it.each([
     ['ok', 'healthy'],
     ['success', 'healthy'],
+    // Discovery engine / auto-refresh sweep stamps these on successful runs.
+    ['changed', 'healthy'],
+    ['unchanged', 'healthy'],
     ['degraded', 'degraded'],
     ['partial', 'degraded'],
+    ['partial_page', 'degraded'],
     ['failed', 'unreachable'],
     ['timeout', 'unreachable'],
+    ['connect_error', 'unreachable'],
+    ['connect_timeout', 'unreachable'],
+    ['auth_required', 'unreachable'],
   ])('maps %p to %p', (input, expected) => {
     expect(mcpHealthFromDiscoveryStatus(input)).toBe(expected);
   });

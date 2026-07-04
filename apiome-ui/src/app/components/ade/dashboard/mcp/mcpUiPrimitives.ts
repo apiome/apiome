@@ -232,24 +232,52 @@ export function mcpHealthMeta(status: McpHealthStatus): McpHealthMeta {
 }
 
 /**
- * Map a raw discovery status (as recorded on the endpoint, e.g. `ok` / `degraded` / `failed`) to a
- * {@link McpHealthStatus}. Absent/blank statuses — an endpoint not yet discovered — resolve to
- * `unknown`; anything unrecognized is treated conservatively as `unreachable`.
+ * Map a raw discovery status (as recorded on the endpoint) to a {@link McpHealthStatus}.
+ *
+ * Successful discovery runs stamp `changed` (new version) or `unchanged` (same surface fingerprint)
+ * — both mean the server was reached. Absent/blank statuses — an endpoint not yet discovered —
+ * resolve to `unknown`; anything unrecognized is treated conservatively as `unreachable`.
  */
 export function mcpHealthFromDiscoveryStatus(status: string | null | undefined): McpHealthStatus {
   const value = (status ?? '').trim().toLowerCase();
   if (!value) return 'unknown';
-  if (['ok', 'success', 'succeeded', 'healthy', 'reachable', 'complete', 'completed'].includes(value)) {
+  // Success outcomes from the discovery engine / sweep (`changed` / `unchanged`) plus legacy aliases.
+  if (
+    [
+      'ok',
+      'success',
+      'succeeded',
+      'healthy',
+      'reachable',
+      'complete',
+      'completed',
+      'changed',
+      'unchanged',
+    ].includes(value)
+  ) {
     return 'healthy';
   }
-  if (['degraded', 'partial', 'warning', 'warn', 'stale'].includes(value)) {
+  if (['degraded', 'partial', 'partial_page', 'warning', 'warn', 'stale'].includes(value)) {
     return 'degraded';
   }
   if (
-    ['error', 'failed', 'failure', 'unreachable', 'timeout', 'timed_out', 'refused'].includes(value)
+    [
+      'error',
+      'failed',
+      'failure',
+      'unreachable',
+      'timeout',
+      'timed_out',
+      'connect_timeout',
+      'connect_error',
+      'tls_error',
+      'refused',
+    ].includes(value)
   ) {
     return 'unreachable';
   }
+  // Specific discovery error codes (auth_required, rate_limited, protocol_error, …) are still
+  // failures to reach a usable surface — treat them as unreachable rather than inventing new pills.
   return 'unreachable';
 }
 

@@ -70,8 +70,10 @@ have it resolved via `mcpHealthFromDiscoveryStatus`.
 
 ```tsx
 <HealthPill status="healthy" />
-<HealthPill discoveryStatus="failed" />   {/* → Unreachable */}
-<HealthPill status="degraded" dotOnly />  {/* dot only, label kept for screen readers */}
+<HealthPill discoveryStatus="unchanged" /> {/* → Healthy (successful auto-refresh) */}
+<HealthPill discoveryStatus="changed" />   {/* → Healthy (surface updated) */}
+<HealthPill discoveryStatus="failed" />    {/* → Unreachable */}
+<HealthPill status="degraded" dotOnly />   {/* dot only, label kept for screen readers */}
 ```
 
 ### `<RecencyPill>`
