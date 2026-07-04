@@ -1503,7 +1503,8 @@ detection, publishability, and the EPIC-22 emitter.
 - **Dependencies / Parallelism.** After 1.5. Parallel with 30.1/30.2.
 - **Technical Stack.** Python, JSON Schema.
 
-### MFI-30.4 — OpenAPI-family conformance fixtures  ·  **#4397**
+### MFI-30.4 — OpenAPI-family conformance fixtures  ·  **#4397**  ·  ✅ **Done**
+- **Status.** Implemented in `apiome-rest`: YAML fixtures under `tests/fixtures/openapi_family/` (Swagger 2.0, OAS 3.0/3.1/3.2, Arazzo) and a parametrized pytest matrix in `tests/test_openapi_family_conformance.py` asserting detect/sniffer vs adapter/normalize agreement, canonical entity counts, import-source fingerprint stability, OpenAPI 3.1 emit round-trip where supported, and publishable Project routing for every family format. apiome-rest 1.75.5 → 1.75.6.
 - **Problem.** The family now spans Swagger 2.0 → OAS 3.2 + Arazzo across two pipelines (worker +
   SPI); regressions between them are currently invisible.
 - **Solution / Scope.** A fixture matrix (2.0, 3.0, 3.1, 3.2, Arazzo) asserting: detect verdict =
