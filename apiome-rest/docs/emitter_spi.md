@@ -88,6 +88,22 @@ Built-in emitters self-register on import via the `register=True` subclass flag;
 `load_builtin_emitters()` imports them so a lookup works even if the caller never
 imported the adapter module (mirrors `load_builtin_import_sources`).
 
+## Export orchestration (MFX-1.3)
+
+Live export paths resolve emitters through `app.export_service` rather than
+importing concrete emitter classes:
+
+```python
+from app.export_service import emit_canonical
+
+result = emit_canonical(api, "openapi")  # key or format — both resolve to openapi-3.1
+document = result.document
+```
+
+`resolve_emit_format(target)` maps an emitter `key` or registry `format` to the
+format key; `resolve_emitter(target)` returns an instance. Catalog conversion
+(`app.conversion_job.preview_conversion`) is wired through this seam today.
+
 ## Emit result envelope
 
 `EmitResult` carries:
