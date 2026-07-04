@@ -41,7 +41,7 @@ const PRODUCT_SHOTS: Shot[] = [
   },
   {
     src: "/features-03.png",
-    alt: "Enterprise import wizard with sources and quality scoring",
+    alt: "Import wizard with live progress, validation warnings, and import log",
     title: "Import",
     description:
       "Multi-source import flow with progress, scoring, and review — matching what teams use to onboard existing specs.",

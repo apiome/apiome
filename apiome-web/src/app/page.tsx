@@ -187,13 +187,10 @@ export default function Home() {
 
             <Reveal delay={0.14}>
               <p className="mx-auto mb-10 max-w-3xl font-display text-xl leading-relaxed text-zinc-700 dark:text-zinc-200 sm:text-2xl">
+                <span className="block">Every company runs on APIs.</span>
                 <span className="block">
-                  Every organization has an <span className="italic">apiome</span> &mdash; the
-                  complete set of APIs it runs on.
-                </span>
-                <span className="block">
-                  <span className="font-semibold text-zinc-900 dark:text-zinc-50">Apiome by NobuData</span>{" "}
-                  is its <span className="display-accent">system of record</span>.
+                  <span className="font-semibold text-zinc-900 dark:text-zinc-50">Apiome</span> is{" "}
+                  <span className="display-accent">the map</span>.
                 </span>
               </p>
             </Reveal>
