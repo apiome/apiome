@@ -328,7 +328,7 @@ flowchart TB
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 2.1 ✅ | Lossiness report model + severities | DROP/APPROX/SYNTH/OK per construct + severity | export,multi-protocol,version-control,mvp | N | Y | M | apiome-rest |
-| 2.2 | Fidelity computation engine | diff source constructs vs target capability profile | export,multi-protocol,python,mvp | N | Y | L | apiome-rest |
+| 2.2 ✅ | Fidelity computation engine | diff source constructs vs target capability profile | export,multi-protocol,python,mvp | N | Y | L | apiome-rest |
 | 2.3 | Fidelity rule-pack SPI | per-target degradation rules (how a construct degrades) | export,multi-protocol,python,mvp | N | Y | M | apiome-rest |
 | 2.4 | User-facing advisory message | the "may lose fidelity" copy + i18n string + thresholds | export,ui,browser,mvp | Y | Y | S | apiome-rest,apiome-ui |
 | 2.5 | Fidelity report REST surfacing | return report from export + a dry-run preview endpoint | export,rest,mvp | Y | Y | S | apiome-rest |
@@ -341,7 +341,7 @@ flowchart TB
 - **Dependencies / Parallelism.** After MFI-EPIC-2. Blocks 2.2.
 - **Technical Stack.** Python, Pydantic.
 
-### MFX-2.2 — Fidelity computation engine  ·  **#3839**
+### MFX-2.2 — Fidelity computation engine  ·  **#3839**  ·  ✅ **Done**
 - **Problem.** Need to actually compute the report for a given (model, emitter).
 - **Solution / Scope.** Walk the `CanonicalApi`; for each construct, consult the emitter's capability profile + rule pack (2.3) to decide DROP/APPROX/SYNTH/OK. Pure function (no I/O) → deterministic, testable. Runs **before** emit (preview) and is attached **to** the emit result.
 - **Acceptance Criteria.** For a rich source → Protobuf, reports unions/constraints/nullability/field-numbers correctly; clean REST→OpenAPI reports mostly OK.
