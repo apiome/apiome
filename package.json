@@ -25,7 +25,8 @@
     "@testing-library/dom/pretty-format": "30.3.0",
     "ansi-regex": "5.0.1",
     "string-width": "4.2.3",
-    "strip-ansi": "6.0.1"
+    "strip-ansi": "6.0.1",
+    "lru-cache@npm:^10.4.3": "npm:10.4.3"
   },
   "devDependencies": {
     "turbo": "^2.9.6"
