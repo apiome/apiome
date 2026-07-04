@@ -90,16 +90,27 @@ export function HomeClient({
       <section className="relative overflow-hidden border-b border-zinc-200/80 bg-gradient-to-b from-white to-zinc-50 py-12 sm:py-16 dark:border-zinc-800/80 dark:from-zinc-950 dark:to-zinc-950/40">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-72 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.10),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.18),transparent_60%)]"
+          className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-72 bg-[radial-gradient(ellipse_at_top_left,rgba(16,128,208,0.10),transparent_55%),radial-gradient(ellipse_at_top_right,rgba(242,196,28,0.10),transparent_55%)] dark:bg-[radial-gradient(ellipse_at_top_left,rgba(46,151,221,0.16),transparent_55%),radial-gradient(ellipse_at_top_right,rgba(242,196,28,0.09),transparent_55%)]"
         />
+        <div aria-hidden="true" className="pointer-events-none absolute -left-10 top-8 -z-0 hidden lg:block">
+          <div className="hex h-40 w-36 rotate-6 bg-gradient-to-br from-sky-500/15 to-sky-500/0 dark:from-sky-400/15" />
+          <div className="hex -mt-10 ml-24 h-24 w-[5.5rem] -rotate-3 bg-gradient-to-br from-amber-400/25 to-amber-400/0 dark:from-amber-400/15" />
+        </div>
+        <div aria-hidden="true" className="pointer-events-none absolute -right-8 bottom-4 -z-0 hidden lg:block">
+          <div className="hex h-36 w-32 -rotate-6 bg-gradient-to-tl from-blue-700/15 to-blue-700/0 dark:from-blue-400/10" />
+          <div className="hex -mt-24 -ml-16 h-20 w-[4.5rem] rotate-12 bg-gradient-to-br from-amber-400/20 to-amber-400/0 dark:from-amber-400/10" />
+        </div>
         <AppShell>
           <div className="relative mx-auto max-w-3xl text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-zinc-200/80 bg-white/80 px-3 py-1 text-[12px] font-medium text-zinc-600 shadow-xs backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-900/60 dark:text-zinc-400">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+              <span aria-hidden="true" className="hex inline-block h-2 w-2 bg-[var(--gold)]"></span>
               Public API specification directory
             </div>
             <h1 className="text-balance text-[2rem] font-semibold tracking-tight text-zinc-900 sm:text-[2.5rem] dark:text-zinc-50">
-              Discover, browse, and compare public API specifications
+              Discover, browse, and compare{' '}
+              <span className="bg-gradient-to-r from-[var(--brand-navy)] via-[#1080d0] to-[var(--brand)] bg-clip-text text-transparent dark:from-sky-300 dark:via-sky-400 dark:to-sky-500">
+                public API specifications
+              </span>
             </h1>
             <p className="mx-auto mt-3 max-w-xl text-pretty text-[15px] leading-relaxed text-zinc-600 dark:text-zinc-400">
               An always-current directory of OpenAPI, Arazzo, and JSON Schema documents published by
@@ -122,12 +133,12 @@ export function HomeClient({
                   value={query}
                   onChange={(e) => setQuery(sanitizeSearchInput(e.target.value))}
                   placeholder="Search paths, schemas, projects, organizations…"
-              className="h-12 w-full rounded-lg border border-zinc-200 bg-white pl-12 pr-4 text-[15px] text-zinc-900 placeholder-zinc-400 shadow-sm transition-colors focus-visible:border-[var(--brand)] focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
+              className="h-12 w-full rounded-xl border border-zinc-200 bg-white pl-12 pr-4 text-[15px] text-zinc-900 placeholder-zinc-400 shadow-sm transition-colors focus-visible:border-[var(--brand)] focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
                 />
               </div>
               <button
                 type="submit"
-                className="h-12 shrink-0 rounded-lg bg-[var(--brand)] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[var(--brand-hover)]"
+                className="h-12 shrink-0 rounded-xl bg-[var(--brand)] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[var(--brand-hover)]"
               >
                 Search
               </button>
@@ -250,7 +261,7 @@ export function HomeClient({
                   sortable: true,
                   render: (tenant) => (
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-indigo-500/15 to-indigo-500/5 text-[12px] font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-500/30 dark:text-indigo-300">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-sky-500/15 to-sky-500/5 text-[12px] font-semibold text-sky-700 ring-1 ring-inset ring-sky-500/30 dark:text-sky-300">
                         {monogram(tenant.name)}
                       </div>
                       <div className="min-w-0">

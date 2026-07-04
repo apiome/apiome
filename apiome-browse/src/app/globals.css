@@ -2,6 +2,12 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Apiome brand palette — derived from the logo:
+ *   navy ink #102050 · azure #1080D0 · honey gold #F2C41C
+ * Neutrals are navy-tinted (see the zinc overrides in @theme) so the whole
+ * surface system carries the brand cast in both themes.
+ */
 :root {
   --app-font-sans: "Aptos", "Inter", "Segoe UI", "Segoe UI Variable", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   --app-font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -9,31 +15,41 @@
   --font-geist-mono: var(--app-font-mono);
 
   /* Surfaces */
-  --background: #fafbfc;
-  --foreground: #0f172a;
+  --background: #f8fafd;
+  --foreground: #101b3e;
   --surface: #ffffff;
-  --surface-muted: #f1f5f9;
-  --surface-sunken: #f8fafc;
+  --surface-muted: #eef2f8;
+  --surface-sunken: #f4f7fb;
 
   /* Hairlines */
-  --border-subtle: #e5e7eb;
-  --border-default: #e2e8f0;
-  --border-strong: #cbd5e1;
+  --border-subtle: #e4e9f2;
+  --border-default: #dde4ef;
+  --border-strong: #c4cfe0;
 
-  /* Text */
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-tertiary: #94a3b8;
+  /* Text (navy ink) */
+  --text-primary: #101b3e;
+  --text-secondary: #46536f;
+  --text-tertiary: #8b96b1;
   --text-inverse: #ffffff;
 
-  /* Brand (single indigo accent) */
-  --brand: #4f46e5;
-  --brand-hover: #4338ca;
-  --brand-pressed: #3730a3;
-  --brand-soft: #eef2ff;
-  --brand-soft-hover: #e0e7ff;
-  --brand-soft-text: #4338ca;
-  --brand-ring: #6366f1;
+  /* Brand — logo azure */
+  --brand: #0f76c2;
+  --brand-hover: #0d63a5;
+  --brand-pressed: #0a5188;
+  --brand-soft: #e8f3fb;
+  --brand-soft-hover: #d8ebf8;
+  --brand-soft-text: #0b5e9c;
+  --brand-ring: #3d9ad9;
+
+  /* Brand — logo navy (deep counterpart for gradients/headers) */
+  --brand-navy: #102050;
+  --brand-navy-soft: #e9edf7;
+
+  /* Accent — logo honey gold (highlights only, never body text) */
+  --gold: #efbe13;
+  --gold-strong: #d9a90a;
+  --gold-soft: #fbf3d3;
+  --gold-soft-text: #7d6407;
 
   /* Semantic */
   --success: #16a34a;
@@ -52,11 +68,11 @@
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
 
-  /* Elevation */
-  --shadow-xs: 0 1px 1px rgb(15 23 42 / 0.04);
-  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06), 0 1px 1px rgb(15 23 42 / 0.04);
-  --shadow-md: 0 4px 8px -2px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.04);
-  --shadow-lg: 0 12px 24px -8px rgb(15 23 42 / 0.12), 0 4px 8px -4px rgb(15 23 42 / 0.06);
+  /* Elevation (navy-tinted shadows) */
+  --shadow-xs: 0 1px 1px rgb(16 32 80 / 0.05);
+  --shadow-sm: 0 1px 2px rgb(16 32 80 / 0.07), 0 1px 1px rgb(16 32 80 / 0.04);
+  --shadow-md: 0 4px 8px -2px rgb(16 32 80 / 0.09), 0 2px 4px -2px rgb(16 32 80 / 0.05);
+  --shadow-lg: 0 12px 24px -8px rgb(16 32 80 / 0.14), 0 4px 8px -4px rgb(16 32 80 / 0.07);
 
   /* Focus */
   --focus-ring: var(--brand-ring);
@@ -80,72 +96,133 @@
   --font-mono: var(--app-font-mono);
 }
 
+/*
+ * Navy-tinted neutral scale: every zinc-* utility in the app now carries the
+ * logo's ink hue instead of stock gray. Sky is pinned to the logo azure and
+ * amber-400/500 to the logo gold so utility classes match the brand exactly.
+ */
+@theme {
+  --color-zinc-50: #f6f8fb;
+  --color-zinc-100: #edf1f7;
+  --color-zinc-200: #dfe5f0;
+  --color-zinc-300: #c7d1e2;
+  --color-zinc-400: #93a0bd;
+  --color-zinc-500: #647192;
+  --color-zinc-600: #49567b;
+  --color-zinc-700: #333f63;
+  --color-zinc-800: #202b52;
+  --color-zinc-900: #131c3e;
+  --color-zinc-950: #0b1129;
+
+  --color-sky-50: #eaf4fc;
+  --color-sky-100: #d8ebf8;
+  --color-sky-200: #b4d9f2;
+  --color-sky-300: #7fc0e9;
+  --color-sky-400: #3d9ad9;
+  --color-sky-500: #1583d3;
+  --color-sky-600: #0f76c2;
+  --color-sky-700: #0b5e9c;
+  --color-sky-800: #0a4a7b;
+  --color-sky-900: #0b3d63;
+  --color-sky-950: #082a46;
+
+  --color-amber-300: #f7d868;
+  --color-amber-400: #f2c41c;
+  --color-amber-500: #efbe13;
+  --color-amber-600: #c9990b;
+  --color-amber-700: #9c760a;
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --background: #0a0f1c;
-    --foreground: #e2e8f0;
-    --surface: #0f172a;
-    --surface-muted: #1e293b;
-    --surface-sunken: #020617;
-    --border-subtle: #1e293b;
-    --border-default: #1e293b;
-    --border-strong: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-tertiary: #64748b;
-    --brand-soft: rgb(79 70 229 / 0.15);
-    --brand-soft-hover: rgb(79 70 229 / 0.22);
-    --brand-soft-text: #a5b4fc;
+    --background: #0a1026;
+    --foreground: #e6ebf7;
+    --surface: #101734;
+    --surface-muted: #1a2349;
+    --surface-sunken: #060b1d;
+    --border-subtle: #1d2750;
+    --border-default: #202b52;
+    --border-strong: #2e3a68;
+    --text-primary: #eef2fa;
+    --text-secondary: #9aa7cc;
+    --text-tertiary: #6b7699;
+    --brand: #2e97dd;
+    --brand-hover: #55aae4;
+    --brand-pressed: #1583d3;
+    --brand-soft: rgb(46 151 221 / 0.14);
+    --brand-soft-hover: rgb(46 151 221 / 0.22);
+    --brand-soft-text: #8cc8f0;
+    --brand-ring: #3d9ad9;
+    --brand-navy-soft: rgb(63 92 191 / 0.18);
+    --gold: #f2c41c;
+    --gold-soft: rgb(242 196 28 / 0.13);
+    --gold-soft-text: #f0d472;
     --success-soft: rgb(22 163 74 / 0.15);
     --success-soft-text: #86efac;
     --warning-soft: rgb(217 119 6 / 0.15);
     --danger-soft: rgb(220 38 38 / 0.15);
     --danger-soft-text: #fca5a5;
-    --shadow-xs: 0 1px 1px rgb(0 0 0 / 0.2);
-    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3), 0 1px 1px rgb(0 0 0 / 0.2);
-    --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.35), 0 2px 4px -2px rgb(0 0 0 / 0.2);
-    --shadow-lg: 0 12px 24px -8px rgb(0 0 0 / 0.45), 0 4px 8px -4px rgb(0 0 0 / 0.25);
+    --shadow-xs: 0 1px 1px rgb(0 0 0 / 0.25);
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35), 0 1px 1px rgb(0 0 0 / 0.22);
+    --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.22);
+    --shadow-lg: 0 12px 24px -8px rgb(0 0 0 / 0.5), 0 4px 8px -4px rgb(0 0 0 / 0.28);
   }
 }
 
 html.dark {
-  --background: #0a0f1c;
-  --foreground: #e2e8f0;
-  --surface: #0f172a;
-  --surface-muted: #1e293b;
-  --surface-sunken: #020617;
-  --border-subtle: #1e293b;
-  --border-default: #1e293b;
-  --border-strong: #334155;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-tertiary: #64748b;
-  --brand-soft: rgb(79 70 229 / 0.15);
-  --brand-soft-hover: rgb(79 70 229 / 0.22);
-  --brand-soft-text: #a5b4fc;
+  --background: #0a1026;
+  --foreground: #e6ebf7;
+  --surface: #101734;
+  --surface-muted: #1a2349;
+  --surface-sunken: #060b1d;
+  --border-subtle: #1d2750;
+  --border-default: #202b52;
+  --border-strong: #2e3a68;
+  --text-primary: #eef2fa;
+  --text-secondary: #9aa7cc;
+  --text-tertiary: #6b7699;
+  --brand: #2e97dd;
+  --brand-hover: #55aae4;
+  --brand-pressed: #1583d3;
+  --brand-soft: rgb(46 151 221 / 0.14);
+  --brand-soft-hover: rgb(46 151 221 / 0.22);
+  --brand-soft-text: #8cc8f0;
+  --brand-ring: #3d9ad9;
+  --brand-navy-soft: rgb(63 92 191 / 0.18);
+  --gold: #f2c41c;
+  --gold-soft: rgb(242 196 28 / 0.13);
+  --gold-soft-text: #f0d472;
   --success-soft: rgb(22 163 74 / 0.15);
   --success-soft-text: #86efac;
   --warning-soft: rgb(217 119 6 / 0.15);
   --danger-soft: rgb(220 38 38 / 0.15);
   --danger-soft-text: #fca5a5;
-  --shadow-xs: 0 1px 1px rgb(0 0 0 / 0.2);
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3), 0 1px 1px rgb(0 0 0 / 0.2);
-  --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.35), 0 2px 4px -2px rgb(0 0 0 / 0.2);
-  --shadow-lg: 0 12px 24px -8px rgb(0 0 0 / 0.45), 0 4px 8px -4px rgb(0 0 0 / 0.25);
+  --shadow-xs: 0 1px 1px rgb(0 0 0 / 0.25);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35), 0 1px 1px rgb(0 0 0 / 0.22);
+  --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.22);
+  --shadow-lg: 0 12px 24px -8px rgb(0 0 0 / 0.5), 0 4px 8px -4px rgb(0 0 0 / 0.28);
 }
 
 html.light {
-  --background: #fafbfc;
-  --foreground: #0f172a;
+  --background: #f8fafd;
+  --foreground: #101b3e;
   --surface: #ffffff;
-  --surface-muted: #f1f5f9;
-  --surface-sunken: #f8fafc;
-  --border-subtle: #e5e7eb;
-  --border-default: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-tertiary: #94a3b8;
+  --surface-muted: #eef2f8;
+  --surface-sunken: #f4f7fb;
+  --border-subtle: #e4e9f2;
+  --border-default: #dde4ef;
+  --border-strong: #c4cfe0;
+  --text-primary: #101b3e;
+  --text-secondary: #46536f;
+  --text-tertiary: #8b96b1;
+  --brand: #0f76c2;
+  --brand-hover: #0d63a5;
+  --brand-pressed: #0a5188;
+  --brand-soft: #e8f3fb;
+  --brand-soft-hover: #d8ebf8;
+  --brand-soft-text: #0b5e9c;
+  --gold-soft: #fbf3d3;
+  --gold-soft-text: #7d6407;
 }
 
 html {
@@ -210,19 +287,19 @@ input, textarea, select, button {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #93a0bd;
   background-clip: padding-box;
   border: 2px solid transparent;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #2e3a68;
   background-clip: padding-box;
   border: 2px solid transparent;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #3d4c82;
   background-clip: padding-box;
   border: 2px solid transparent;
 }
@@ -303,7 +380,7 @@ a.table-row:hover {
 }
 
 ::selection {
-  background-color: rgb(99 102 241 / 0.25);
+  background-color: rgb(21 131 211 / 0.25);
 }
 
 /* Utility classes for consistency */
@@ -353,6 +430,16 @@ a.table-row:hover {
 
 .btn-brand-soft:hover {
   background-color: var(--brand-soft-hover);
+}
+
+/* Brand signature: navy → azure → gold, echoing the logo */
+.brand-hairline {
+  background: linear-gradient(90deg, var(--brand-navy) 0%, #1080d0 55%, var(--gold) 100%);
+}
+
+/* Hexagon (honeycomb) shape from the logo mark */
+.hex {
+  clip-path: polygon(25% 3%, 75% 3%, 98% 50%, 75% 97%, 25% 97%, 2% 50%);
 }
 
 /* Skip link */

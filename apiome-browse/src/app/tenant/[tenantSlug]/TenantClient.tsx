@@ -207,7 +207,7 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
                   sortable: true,
                   render: (project) => (
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-violet-500/15 to-violet-500/5 text-violet-700 ring-1 ring-inset ring-violet-500/30 dark:text-violet-300">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-blue-500/15 to-blue-500/5 text-blue-700 ring-1 ring-inset ring-blue-500/30 dark:text-blue-300">
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>

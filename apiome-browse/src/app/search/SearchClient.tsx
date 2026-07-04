@@ -34,7 +34,7 @@ function HighlightMatches({ text, query }: { text: string; query: string }) {
         part.toLowerCase() === q.toLowerCase() ? (
           <mark
             key={i}
-            className="rounded-sm bg-indigo-500/20 px-0.5 text-inherit dark:bg-indigo-400/35"
+            className="rounded-sm bg-sky-500/20 px-0.5 text-inherit dark:bg-sky-400/35"
           >
             {part}
           </mark>
@@ -97,12 +97,12 @@ function hitIcon(hitType: string) {
 function hitTone(hitType: string): string {
   switch (hitType) {
     case 'path':
-      return 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300';
+      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
     case 'schema':
     case 'property':
-      return 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300';
+      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
     case 'project':
-      return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300';
+      return 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300';
     case 'request_body':
     case 'response':
       return 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300';
@@ -301,7 +301,7 @@ export function SearchClient({
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={() => applyQuery(s)}
                       >
-                        <span className="text-indigo-500">↵</span>
+                        <span className="text-sky-500">↵</span>
                         {s}
                       </button>
                     </li>
@@ -313,7 +313,7 @@ export function SearchClient({
                       Recent
                       <button
                         type="button"
-                        className="normal-case font-normal text-indigo-600 hover:underline dark:text-indigo-400"
+                        className="normal-case font-normal text-sky-600 hover:underline dark:text-sky-400"
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={() => {
                           localStorage.removeItem(RECENT_KEY);
@@ -349,14 +349,14 @@ export function SearchClient({
         <aside className="col-span-12 lg:col-span-3">
           <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex items-center gap-2 rounded-t-lg border-b border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
-              <svg className="h-4 w-4 text-indigo-500" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+              <svg className="h-4 w-4 text-sky-500" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
               </svg>
               <h3 className="flex-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Filters</h3>
               <button
                 type="button"
                 onClick={resetTenants}
-                className="text-[11px] text-indigo-600 hover:underline dark:text-indigo-400"
+                className="text-[11px] text-sky-600 hover:underline dark:text-sky-400"
               >
                 Reset
               </button>
@@ -377,7 +377,7 @@ export function SearchClient({
                           id={`t-${slug}`}
                           checked={allowedTenants.has(slug)}
                           onChange={() => toggleTenant(slug)}
-                          className="accent-indigo-600"
+                          className="accent-sky-600"
                         />
                         <label htmlFor={`t-${slug}`} className="flex-1 cursor-pointer truncate">
                           {name}
@@ -411,7 +411,7 @@ export function SearchClient({
                 {query.trim() && (
                   <>
                     {' for '}
-                    <span className="font-mono text-indigo-600 dark:text-indigo-400">&ldquo;{query.trim()}&rdquo;</span>
+                    <span className="font-mono text-sky-600 dark:text-sky-400">&ldquo;{query.trim()}&rdquo;</span>
                   </>
                 )}
                 …
@@ -447,7 +447,7 @@ export function SearchClient({
                 <p className="text-sm text-zinc-600 dark:text-zinc-300">
                   <span className="font-semibold text-zinc-900 dark:text-zinc-50">{filtered.length} results</span>
                   <span className="text-zinc-400"> for </span>
-                  <span className="font-mono text-indigo-600 dark:text-indigo-400">&ldquo;{initialQuery}&rdquo;</span>
+                  <span className="font-mono text-sky-600 dark:text-sky-400">&ldquo;{initialQuery}&rdquo;</span>
                   {elapsedMs != null && (
                     <span className="text-zinc-400">
                       {' '}
@@ -501,7 +501,7 @@ export function SearchClient({
                     No public published matches for{' '}
                     <span className="font-medium text-zinc-900 dark:text-zinc-50">&ldquo;{initialQuery}&rdquo;</span>.
                   </p>
-                  <Link href="/" className="mt-4 inline-block text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                  <Link href="/" className="mt-4 inline-block text-sm font-medium text-sky-600 dark:text-sky-400">
                     Browse the directory
                   </Link>
                 </div>
@@ -520,7 +520,7 @@ export function SearchClient({
                       <li key={hit.hit_id}>
                         <Link
                           href={href}
-                          className="block rounded-lg border border-zinc-200 bg-white p-4 transition-colors hover:border-indigo-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-indigo-700"
+                          className="block rounded-lg border border-zinc-200 bg-white p-4 transition-colors hover:border-sky-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-sky-700"
                         >
                           <div className="flex items-start gap-3">
                             <div
@@ -533,7 +533,7 @@ export function SearchClient({
                                 <span>
                                   {hit.tenant_slug} · {hit.project_slug}
                                 </span>
-                                <span className="rounded bg-indigo-500/10 px-1.5 py-0.5 font-mono text-[10px] text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                                <span className="rounded bg-sky-500/10 px-1.5 py-0.5 font-mono text-[10px] text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
                                   v{hit.version_slug}
                                 </span>
                                 <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">

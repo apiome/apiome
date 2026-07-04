@@ -57,7 +57,7 @@ const HTTP_METHOD_TONE: Record<string, string> = {
   get: 'bg-emerald-50 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30',
   post: 'bg-sky-50 text-sky-700 ring-sky-500/20 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30',
   put: 'bg-amber-50 text-amber-700 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/30',
-  patch: 'bg-violet-50 text-violet-700 ring-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/30',
+  patch: 'bg-blue-50 text-blue-700 ring-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/30',
   delete: 'bg-rose-50 text-rose-700 ring-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/30',
   options: 'bg-zinc-100 text-zinc-700 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700',
   head: 'bg-zinc-100 text-zinc-700 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700',
@@ -681,7 +681,7 @@ function SpecOverview({ spec, format }: { spec: unknown; format: SpecFormat }) {
                   className="scroll-mt-24 rounded-lg border border-zinc-100 p-3 dark:border-zinc-800"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="rounded bg-violet-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
+                    <span className="rounded bg-blue-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
                       WF
                     </span>
                     <code className="font-mono text-[13px] font-medium text-zinc-900 dark:text-zinc-50">{id}</code>

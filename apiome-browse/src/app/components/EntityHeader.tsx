@@ -17,11 +17,11 @@ interface EntityHeaderProps {
 
 const monogramTone: Record<Variant, string> = {
   tenant:
-    'bg-gradient-to-br from-indigo-500/15 to-indigo-500/5 text-indigo-700 ring-1 ring-inset ring-indigo-500/30 dark:text-indigo-300',
+    'bg-gradient-to-br from-sky-500/25 to-sky-500/5 text-sky-700 dark:text-sky-300',
   project:
-    'bg-gradient-to-br from-violet-500/15 to-violet-500/5 text-violet-700 ring-1 ring-inset ring-violet-500/30 dark:text-violet-300',
+    'bg-gradient-to-br from-blue-700/25 to-blue-700/5 text-blue-800 dark:text-blue-300',
   version:
-    'bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 text-emerald-700 ring-1 ring-inset ring-emerald-500/30 dark:text-emerald-300',
+    'bg-gradient-to-br from-amber-400/35 to-amber-400/10 text-amber-700 dark:text-amber-300',
 };
 
 const metaTone: Record<NonNullable<EntityHeaderProps['meta']>[number]['tone'] & string, string> = {
@@ -67,7 +67,7 @@ export function EntityHeader({
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4 min-w-0">
           <div
-            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${monogramTone[variant]}`}
+            className={`hex flex h-14 w-14 shrink-0 items-center justify-center ${monogramTone[variant]}`}
             aria-hidden="true"
           >
             {monogram ? (

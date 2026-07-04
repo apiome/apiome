@@ -40,14 +40,14 @@ const HTTP_METHOD_TONE: Record<string, string> = {
   get: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300',
   post: 'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300',
   put: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
-  patch: 'bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300',
+  patch: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
   delete: 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300',
   options: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
   head: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
   trace: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
   cls: 'bg-fuchsia-50 text-fuchsia-800 dark:bg-fuchsia-500/10 dark:text-fuchsia-300',
-  def: 'bg-indigo-50 text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-300',
-  wf: 'bg-violet-50 text-violet-800 dark:bg-violet-500/10 dark:text-violet-300',
+  def: 'bg-sky-50 text-sky-800 dark:bg-sky-500/10 dark:text-sky-300',
+  wf: 'bg-blue-50 text-blue-800 dark:bg-blue-500/10 dark:text-blue-300',
 };
 
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];

@@ -233,7 +233,7 @@ export function CompareClient({
 
         <header className="border-b border-zinc-200 pb-4 dark:border-zinc-700">
           <h1 className="flex flex-wrap items-center gap-2 text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--brand)] to-purple-600 shadow-xs">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--brand)] to-blue-600 shadow-xs">
               <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"

@@ -17,11 +17,11 @@ interface SpecCardProps {
 
 const monogramTone: Record<Variant, string> = {
   tenant:
-    'bg-gradient-to-br from-indigo-500/15 to-indigo-500/5 text-indigo-700 ring-1 ring-inset ring-indigo-500/30 dark:text-indigo-300',
+    'bg-gradient-to-br from-sky-500/25 to-sky-500/5 text-sky-700 dark:text-sky-300',
   project:
-    'bg-gradient-to-br from-violet-500/15 to-violet-500/5 text-violet-700 ring-1 ring-inset ring-violet-500/30 dark:text-violet-300',
+    'bg-gradient-to-br from-blue-700/25 to-blue-700/5 text-blue-800 dark:text-blue-300',
   version:
-    'bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 text-emerald-700 ring-1 ring-inset ring-emerald-500/30 dark:text-emerald-300',
+    'bg-gradient-to-br from-amber-400/35 to-amber-400/10 text-amber-700 dark:text-amber-300',
 };
 
 const badgeTone: Record<NonNullable<SpecCardProps['badge']>['tone'] & string, string> = {
@@ -65,10 +65,10 @@ export function SpecCard({
   return (
     <Link
       href={href}
-      className="group flex h-full flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700"
+      className="group flex h-full flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md dark:hover:border-sky-800 focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-950"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${monogramTone[variant]}`}>
+        <div className={`hex flex h-10 w-10 shrink-0 items-center justify-center ${monogramTone[variant]}`}>
           {monogram ? (
             <span className="text-sm font-semibold tabular-nums">{monogram}</span>
           ) : (

@@ -30,7 +30,7 @@ function HighlightMatches({ text, query }: { text: string; query: string }) {
     <>
       {parts.map((part, i) =>
         part.toLowerCase() === q.toLowerCase() ? (
-          <mark key={i} className="rounded-sm bg-indigo-500/20 px-0.5 text-inherit dark:bg-indigo-400/35">
+          <mark key={i} className="rounded-sm bg-sky-500/20 px-0.5 text-inherit dark:bg-sky-400/35">
             {part}
           </mark>
         ) : (
@@ -135,7 +135,7 @@ export function McpSearchClient({
               {query.trim() && (
                 <>
                   {' for '}
-                  <span className="font-mono text-indigo-600 dark:text-indigo-400">&ldquo;{query.trim()}&rdquo;</span>
+                  <span className="font-mono text-sky-600 dark:text-sky-400">&ldquo;{query.trim()}&rdquo;</span>
                 </>
               )}
               …
@@ -147,7 +147,7 @@ export function McpSearchClient({
             <p className="mx-auto mt-2 max-w-lg text-[14px] text-zinc-600 dark:text-zinc-400">
               Match tool, resource, and prompt names and descriptions across every published public
               server. Or{' '}
-              <Link href="/mcp" className="font-medium text-indigo-600 dark:text-indigo-400">
+              <Link href="/mcp" className="font-medium text-sky-600 dark:text-sky-400">
                 browse by site
               </Link>
               .
@@ -161,7 +161,7 @@ export function McpSearchClient({
                   {initialResults.length} result{initialResults.length === 1 ? '' : 's'}
                 </span>
                 <span className="text-zinc-400"> for </span>
-                <span className="font-mono text-indigo-600 dark:text-indigo-400">
+                <span className="font-mono text-sky-600 dark:text-sky-400">
                   &ldquo;{initialQuery}&rdquo;
                 </span>
               </p>
@@ -190,7 +190,7 @@ export function McpSearchClient({
                   </span>
                   .
                 </p>
-                <Link href="/mcp" className="mt-4 inline-block text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                <Link href="/mcp" className="mt-4 inline-block text-sm font-medium text-sky-600 dark:text-sky-400">
                   Browse the catalog
                 </Link>
               </div>
@@ -200,7 +200,7 @@ export function McpSearchClient({
                   <li key={`${hit.item_id}`}>
                     <Link
                       href={`/mcp/${hit.tenant_slug}/${hit.endpoint_slug}`}
-                      className="block rounded-lg border border-zinc-200 bg-white p-4 transition-colors hover:border-indigo-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-indigo-700"
+                      className="block rounded-lg border border-zinc-200 bg-white p-4 transition-colors hover:border-sky-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-sky-700"
                     >
                       <div className="flex items-start gap-3">
                         <GradeBadge grade={hit.grade} score={hit.score} size="sm" />

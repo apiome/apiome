@@ -31,6 +31,7 @@ export function Navbar({ stats }: { stats: DirectoryStats }) {
 
   return (
     <nav className="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/70 dark:border-zinc-800/80 dark:bg-zinc-950/85 dark:supports-[backdrop-filter]:bg-zinc-950/70">
+      <div aria-hidden="true" className="brand-hairline h-0.5 w-full" />
       <div className="mx-auto flex h-14 max-w-[1480px] items-center gap-3 px-4 sm:px-6 lg:gap-4 lg:px-8">
         {/* Left: Logo + Nav */}
         <div className="flex min-w-0 shrink-0 items-center gap-6 lg:gap-8">
@@ -64,7 +65,7 @@ export function Navbar({ stats }: { stats: DirectoryStats }) {
                   href={item.href}
                   className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                     active
-                      ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50'
+                      ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]'
                       : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-50'
                   }`}
                 >
@@ -82,7 +83,7 @@ export function Navbar({ stats }: { stats: DirectoryStats }) {
           {/* Search trigger (cmd+k) */}
           <Link
             href="/search"
-            className="hidden items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50/80 px-3 py-1.5 text-sm text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 lg:flex"
+            className="hidden items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50/80 px-3 py-1.5 text-sm text-zinc-500 transition-colors hover:border-sky-300 hover:bg-sky-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-sky-800 dark:hover:bg-zinc-800 lg:flex"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
