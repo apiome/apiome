@@ -5,10 +5,15 @@ on:
     branches: [ main, develop ]
     paths:
       - 'apiome-ui/**'
+      # Root workspace resolution affects jsdom/jest (e.g. lru-cache hoisting).
+      - 'package.json'
+      - 'yarn.lock'
   pull_request:
     branches: [ main, develop ]
     paths:
       - 'apiome-ui/**'
+      - 'package.json'
+      - 'yarn.lock'
   # Allow manual trigger
   workflow_dispatch:
 
