@@ -28,6 +28,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Import: Corrects base ref and $ref external dereferencing
 - Import: Updating class creation step to increase speed using transactions and commits in groups
 - Import: Added the ability to add MCP servers for cataloging
+- Projects: Now displays quality and linting information in each project
 - UI: Fixes Published Versions viewing of OpenAPI and Arazzo URLs
 - UI: Fixes Published Versions list so versions starting with a "v" don't duplicate and show "vv"
 - UI: Adds the ability to import MCP servers as an input for API cataloging
