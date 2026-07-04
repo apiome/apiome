@@ -13,7 +13,9 @@ rich source as lossy against this target.
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Union
+
+from pydantic import Field
 
 from .canonical_model import ApiParadigm, CanonicalApi
 from .emitter import (
@@ -24,10 +26,19 @@ from .emitter import (
     Emitter,
 )
 
-__all__ = ["SampleEmitter", "SAMPLE_EMIT_FORMAT"]
+__all__ = ["SampleEmitOptions", "SampleEmitter", "SAMPLE_EMIT_FORMAT"]
 
 #: Format key this no-op target registers under.
 SAMPLE_EMIT_FORMAT = "sample-noop"
+
+
+class SampleEmitOptions(EmitOptions):
+    """Per-target options for :class:`SampleEmitter` (MFX-1.4)."""
+
+    content: str = Field(
+        default="",
+        description="Plain-text payload written into the sample artifact.",
+    )
 
 
 class SampleEmitter(Emitter, register=True):
@@ -40,6 +51,7 @@ class SampleEmitter(Emitter, register=True):
     icon = "flask-conical"
     paradigm = ApiParadigm.DATA_SCHEMA
     multi_file = False
+    options_model = SampleEmitOptions
 
     @classmethod
     def capability_profile(cls) -> CapabilityProfile:
@@ -50,15 +62,20 @@ class SampleEmitter(Emitter, register=True):
         self,
         api: CanonicalApi,
         *,
-        opts: Optional[EmitOptions] = None,
+        opts: Optional[Union[SampleEmitOptions, EmitOptions]] = None,
     ) -> EmitResult:
-        """Return an empty single-file artifact without mutating ``api``."""
-        _ = api, opts
+        """Return a single-file artifact without mutating ``api``."""
+        _ = api
+        options = (
+            opts
+            if isinstance(opts, SampleEmitOptions)
+            else SampleEmitOptions.model_validate(opts.model_dump() if opts else {})
+        )
         return EmitResult(
             files=[
                 EmittedFile(
                     path="sample.txt",
-                    content="",
+                    content=options.content,
                     media_type="text/plain",
                 )
             ],

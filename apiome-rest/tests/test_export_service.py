@@ -99,6 +99,15 @@ def test_emit_canonical_unknown_target_raises() -> None:
     assert "graphql" in str(exc.value)
 
 
+def test_emit_canonical_accepts_valid_options_dict() -> None:
+    result = emit_canonical(
+        _minimal_rest_api(),
+        "openapi",
+        opts={"include_projection_extensions": False},
+    )
+    assert validate_openapi_document(result.document) == []
+
+
 def test_preview_conversion_routes_through_emitter_registry() -> None:
     source = ConversionSource(
         api=_minimal_rest_api(),

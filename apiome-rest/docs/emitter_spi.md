@@ -164,6 +164,34 @@ the emitter class itself:
 | `needs_toolchain` | Whether a hard-required external binary is needed |
 | `available` / `unavailable_reason` | Runtime toolchain availability (MFI-5.2 pattern) |
 
+## Per-target options (MFX-1.4)
+
+Each emitter declares a Pydantic ``options_model`` subclass of
+:class:`EmitOptions` with format-specific fields and safe defaults. The registry
+exposes them on every :class:`EmitterTarget` as ``options_schema`` (JSON Schema
+for UI/CLI form generation) and ``default_options`` (validated default values).
+
+```python
+OpenApiEmitter.options_schema()   # → JSON Schema dict
+OpenApiEmitter.default_options()  # → OpenApiEmitOptions(...)
+coerce_emit_options(OpenApiEmitter, {"include_paths": False})
+describe_emit_targets()[0].options_schema
+describe_emit_targets()[0].default_options
+```
+
+Export callers validate options through :func:`app.export_service.resolve_emit_options`
+or by passing a raw ``dict`` to :func:`app.export_service.emit_canonical` (coerced
+automatically). Invalid options raise :class:`EmitOptionsError` / :class:`ExportError`
+with status 422.
+
+| Target | Options model | Notable fields |
+|--------|---------------|----------------|
+| OpenAPI 3.1 | `OpenApiEmitOptions` | `include_paths`, `include_components`, `include_projection_extensions` |
+| Sample (no-op) | `SampleEmitOptions` | `content` |
+
+Defaults for every built-in target produce a schema-valid artifact (OpenAPI output
+passes ``validate_openapi_document``).
+
 ## Provenance
 
 Every emitted value gets a `ProvenanceRecord(pointer, provenance, detail)` where

@@ -43,7 +43,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from .canonical_model import (
     ApiParadigm,
@@ -56,6 +56,7 @@ from .canonical_model import (
 
 __all__ = [
     "EmitOptions",
+    "EmitOptionsError",
     "EmittedFile",
     "CapabilityProfile",
     "EmitterDescriptor",
@@ -66,6 +67,7 @@ __all__ = [
     "get_emitter_instance",
     "available_emit_formats",
     "describe_emit_targets",
+    "coerce_emit_options",
     "load_builtin_emitters",
     "Provenance",
     "ProvenanceRecord",
@@ -253,11 +255,24 @@ class EmittedFile(BaseModel):
     )
 
 
-class EmitOptions(BaseModel):
-    """Per-target emit options passed to :meth:`Emitter.emit` (MFX-1.1).
+class EmitOptionsError(Exception):
+    """Raised when per-target emit options fail validation (MFX-1.4).
 
-    Concrete emitters extend this in later epics (MFX-1.4) with format-specific
-    fields; the base model is an empty, validated envelope today.
+    Carries a human-readable message and an HTTP status code so REST routes and
+    the export service can surface a 422 without leaking a stack trace.
+    """
+
+    def __init__(self, message: str, *, status_code: int = 422) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class EmitOptions(BaseModel):
+    """Per-target emit options passed to :meth:`Emitter.emit` (MFX-1.1 / MFX-1.4).
+
+    Concrete emitters declare a subclass with format-specific fields (proto3 vs
+    editions, AsyncAPI 2 vs 3, …). The base model is an empty, validated envelope
+    for emitters that need no options today.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -397,12 +412,18 @@ class EmitterDescriptor(BaseModel):
 
 
 class EmitterTarget(BaseModel):
-    """One registered export target: descriptor + capability profile (MFX-1.1)."""
+    """One registered export target: descriptor, profile, and options (MFX-1.1 / 1.4)."""
 
     model_config = ConfigDict(frozen=True)
 
     descriptor: EmitterDescriptor
     capability_profile: CapabilityProfile
+    options_schema: Dict[str, Any] = Field(
+        description="JSON Schema describing this target's per-emit options (MFX-1.4).",
+    )
+    default_options: Dict[str, Any] = Field(
+        description="Validated default option values for this target (MFX-1.4).",
+    )
 
 
 # ===========================================================================
@@ -447,6 +468,8 @@ class Emitter(ABC):
     #: Toolchain tool keys this emitter's emit **hard-requires**. When any is
     #: unavailable in the runtime, the descriptor reports ``available = False``.
     required_tools: ClassVar[Tuple[str, ...]] = ()
+    #: Pydantic model describing this emitter's per-target options (MFX-1.4).
+    options_model: ClassVar[type[EmitOptions]] = EmitOptions
 
     def __init_subclass__(cls, *, register: bool = False, **kwargs: Any) -> None:
         """Optionally self-register a concrete subclass in the format registry.
@@ -463,6 +486,16 @@ class Emitter(ABC):
     def capability_profile(cls) -> CapabilityProfile:
         """Return this emitter's static capability/fidelity profile (MFX-1.1)."""
         return CapabilityProfile()
+
+    @classmethod
+    def default_options(cls) -> EmitOptions:
+        """Return validated default emit options for this target (MFX-1.4)."""
+        return cls.options_model()
+
+    @classmethod
+    def options_schema(cls) -> Dict[str, Any]:
+        """Return the JSON Schema for this target's emit options (MFX-1.4)."""
+        return cls.options_model.model_json_schema()
 
     @classmethod
     def descriptor(cls) -> EmitterDescriptor:
@@ -578,20 +611,52 @@ def available_emit_formats() -> List[str]:
     return sorted(_REGISTRY)
 
 
+def coerce_emit_options(
+    emitter: type[Emitter],
+    raw: Optional[Dict[str, Any]],
+) -> EmitOptions:
+    """Validate ``raw`` against ``emitter``'s options model, or return defaults (MFX-1.4).
+
+    Args:
+        emitter: The emitter class whose :attr:`~Emitter.options_model` applies.
+        raw: Caller-supplied option values (``None`` or ``{}`` → defaults).
+
+    Returns:
+        A validated :class:`EmitOptions` instance (the emitter's concrete subclass
+        when one is declared).
+
+    Raises:
+        EmitOptionsError: When ``raw`` is present but fails Pydantic validation.
+    """
+    if raw is None or raw == {}:
+        return emitter.default_options()
+    try:
+        return emitter.options_model.model_validate(raw)
+    except ValidationError as exc:
+        raise EmitOptionsError(str(exc), status_code=422) from exc
+
+
 def describe_emit_targets() -> List[EmitterTarget]:
     """Return every registered emitter's descriptor + capability profile, sorted by key.
 
     This is the **target list** the UI (target cards), the CLI (``export --list``),
-    and REST enumerate — the registry's public view (MFX-1.1).
+    and REST enumerate — the registry's public view (MFX-1.1). Each entry carries
+    an ``options_schema`` and ``default_options`` for per-target option forms
+    (MFX-1.4).
     """
     load_builtin_emitters()
-    targets = [
-        EmitterTarget(
-            descriptor=_REGISTRY[format_key].descriptor(),
-            capability_profile=_REGISTRY[format_key].capability_profile(),
+    targets: List[EmitterTarget] = []
+    for format_key in sorted(_REGISTRY):
+        emitter_cls = _REGISTRY[format_key]
+        defaults = emitter_cls.default_options()
+        targets.append(
+            EmitterTarget(
+                descriptor=emitter_cls.descriptor(),
+                capability_profile=emitter_cls.capability_profile(),
+                options_schema=emitter_cls.options_schema(),
+                default_options=defaults.model_dump(),
+            )
         )
-        for format_key in sorted(_REGISTRY)
-    ]
     return sorted(targets, key=lambda target: target.descriptor.key)
 
 
