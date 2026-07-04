@@ -55,7 +55,9 @@ __all__ = [
 #: OpenAPI/Swagger/Arazzo family, as today. A non-OpenAPI source that *emits* one of these
 #: (TypeSpec → ``openapi-3.x``) routes here too, because the branch is on the emitted
 #: format, not the source tool. Every other format routes to the catalog.
-PUBLISHABLE_FORMATS = frozenset({"openapi-3.0", "openapi-3.1", "swagger-2.0", "arazzo"})
+PUBLISHABLE_FORMATS = frozenset(
+    {"openapi-3.0", "openapi-3.1", "openapi-3.2", "swagger-2.0", "arazzo"}
+)
 
 #: The explicit ``requested_target`` values (from the JSON Schema disambiguation prompt,
 #: MFI-26.7) that mean "import the schema **as current** into Types/Projects" rather than

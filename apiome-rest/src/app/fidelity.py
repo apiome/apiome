@@ -751,6 +751,33 @@ def _na_operation_item(key: str, title: str, weight: int) -> ChecklistItem:
     )
 
 
+def _source_openapi_version(ctx: _Context) -> ChecklistItem:
+    """Note when a 3.2 source is emitted as the 3.1 target format."""
+    if ctx.api.format != "openapi-3.2":
+        return ChecklistItem(
+            key="source.openapi-version",
+            title="Source OpenAPI version",
+            coverage=Coverage.NA,
+            weight=0,
+            count=0,
+            examples=[],
+            reason="source is not OpenAPI 3.2",
+        )
+    return ChecklistItem(
+        key="source.openapi-version",
+        title="Source OpenAPI version",
+        coverage=Coverage.PARTIAL,
+        weight=5,
+        count=1,
+        examples=["openapi-3.2"],
+        reason=(
+            "OpenAPI 3.2 source converted to OpenAPI 3.1 target; QUERY and "
+            "additionalOperations methods are stashed on x-apiome-* extensions "
+            "rather than native 3.1 path-item methods"
+        ),
+    )
+
+
 #: The completeness checklist, in the fixed order the report renders it. Mirrors the
 #: MFI-22.3 checklist: info (title/version/description/contact/license), servers,
 #: paths+methods, operation metadata, parameters, requestBody, responses,
@@ -761,6 +788,7 @@ _CHECKLIST: Tuple[Callable[["_Context"], ChecklistItem], ...] = (
     _info_description,
     _info_contact,
     _info_license,
+    _source_openapi_version,
     _servers,
     _paths,
     _operation_metadata,

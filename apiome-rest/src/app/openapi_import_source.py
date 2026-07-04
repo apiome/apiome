@@ -54,20 +54,20 @@ class OpenApiImportSource(ImportSource, register=True):
 
     key = "openapi"
     label = "OpenAPI / Swagger"
-    description = "Import an OpenAPI 3.0/3.1 or Swagger 2.0 REST API description."
+    description = "Import an OpenAPI 3.0/3.1/3.2 or Swagger 2.0 REST API description."
     icon = "file-json"
     paradigm = ApiParadigm.REST
     input_kinds = (InputKind.FILE, InputKind.URL, InputKind.PASTE)
     supports_live_discovery = False
-    formats = ("openapi-3.0", "openapi-3.1", "swagger-2.0")
+    formats = ("openapi-3.0", "openapi-3.1", "openapi-3.2", "swagger-2.0")
 
     def detect(self, payload: DetectionInput) -> DetectionResult:
         """Recognize an OpenAPI/Swagger document by its version marker.
 
         Reads the already-parsed ``document`` when present, else parses ``text``
         cheaply (a malformed document is simply not a match — never raises). An
-        ``openapi: 3.x`` marker pins ``openapi-3.0``/``openapi-3.1`` with high
-        confidence; a ``swagger: 2.x`` marker pins ``swagger-2.0``.
+        ``openapi: 3.x`` marker pins ``openapi-3.0``/``openapi-3.1``/``openapi-3.2``
+        with high confidence; a ``swagger: 2.x`` marker pins ``swagger-2.0``.
         """
         document = payload.document
         if document is None and payload.text:
@@ -80,7 +80,15 @@ class OpenApiImportSource(ImportSource, register=True):
 
         version = document.get("openapi")
         if isinstance(version, str) and version.startswith("3."):
-            fmt = "openapi-3.0" if version.startswith("3.0") else "openapi-3.1"
+            if version.startswith("3.0"):
+                fmt = "openapi-3.0"
+            elif version.startswith("3.2"):
+                fmt = "openapi-3.2"
+            elif version.startswith("3.1"):
+                fmt = "openapi-3.1"
+            else:
+                # Future 3.x minors normalize under the latest supported key.
+                fmt = "openapi-3.2"
             return DetectionResult(
                 confidence=0.99, format=fmt, reason=f"`openapi: {version}` marker"
             )

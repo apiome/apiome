@@ -145,7 +145,7 @@ export interface CatalogFormat {
  */
 export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   // ---- Native / publishable (Projects) ----
-  { id: 'openapi', label: 'OpenAPI', icon: FileJson, tone: 'sky', native: true, importable: true, aliases: ['openapi30', 'openapi31', 'oas', 'oas3'], description: 'OpenAPI 3.x REST API description.' },
+  { id: 'openapi', label: 'OpenAPI', icon: FileJson, tone: 'sky', native: true, importable: true, aliases: ['openapi30', 'openapi31', 'openapi32', 'oas', 'oas3'], description: 'OpenAPI 3.x REST API description.' },
   { id: 'swagger', label: 'Swagger', icon: FileJson, tone: 'teal', native: true, importable: true, aliases: ['swagger20', 'oas2'], description: 'Swagger 2.0 REST API description.' },
 
   // ---- RPC ----

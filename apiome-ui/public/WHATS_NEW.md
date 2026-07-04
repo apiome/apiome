@@ -4,6 +4,10 @@ We continue to improve the platform based on your feedback with improvements and
 
 ---
 
+## Features
+
+- Import: OpenAPI 3.2 documents (QUERY method, additionalOperations, hierarchical tags) now import, normalize, lint, and publish through the multi-format SPI; fidelity preview notes 3.2→3.1 conversion
+
 ## Bug Fixes
 
 - Import: Arazzo workflow documents now import through the multi-format SPI with canonical model, lint, and step-level diff support

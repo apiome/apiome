@@ -9,9 +9,11 @@ import pytest
 
 from app.openapi_validator import (
     OPENAPI_31_META_SCHEMA_ID,
+    OPENAPI_32_META_SCHEMA_ID,
     OpenApiValidationError,
     assert_valid_openapi_document,
     load_openapi_31_meta_schema,
+    load_openapi_32_meta_schema,
     validate_openapi_document,
 )
 
@@ -46,6 +48,27 @@ def test_bundled_meta_schema_loads() -> None:
     assert meta["$id"] == OPENAPI_31_META_SCHEMA_ID
     # It is itself a draft 2020-12 schema (OAS 3.1 schemas *are* JSON Schema).
     assert meta["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+
+
+def test_bundled_openapi_32_meta_schema_loads() -> None:
+    meta = load_openapi_32_meta_schema()
+    assert meta["$id"] == OPENAPI_32_META_SCHEMA_ID
+    assert meta["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+
+
+def test_openapi_32_document_validates() -> None:
+    doc = {
+        "openapi": "3.2.0",
+        "info": {"title": "T", "version": "1.0.0"},
+        "paths": {
+            "/x": {
+                "query": {
+                    "responses": {"200": {"description": "ok"}},
+                }
+            }
+        },
+    }
+    assert validate_openapi_document(doc) == []
 
 
 def test_valid_document_has_no_errors() -> None:
