@@ -140,17 +140,15 @@ const DashboardSideNav: React.FC = () => {
 
   return (
     <aside
-      className="flex-shrink-0 w-[280px] border-r-0"
+      className="flex h-full w-[280px] shrink-0 flex-col border-r-0"
       style={{
         width: 280,
         boxSizing: 'border-box',
-        top: 48,
-        height: 'calc(100vh - 48px)',
         background: sidebarBg,
         boxShadow: sidebarShadow,
       }}
     >
-      <div className="overflow-auto p-4">
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-4">
         {navSections.map((section, index) => (
           <div key={section.header ?? `section-${index}`} className={index < navSections.length - 1 ? 'mb-6' : ''}>
             {section.header ? (

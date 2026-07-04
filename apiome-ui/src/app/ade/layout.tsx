@@ -39,8 +39,11 @@ export default function RootLayout({
             <SessionWrapper>
               <PushConflictBannerProvider>
                 <AuthenticatedLayout>
-                  <ConditionalHeader />
-                  {children}
+                  {/* Viewport shell: header + route content scroll independently of the document. */}
+                  <div className="flex h-screen flex-col overflow-hidden">
+                    <ConditionalHeader />
+                    <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+                  </div>
                 </AuthenticatedLayout>
               </PushConflictBannerProvider>
             </SessionWrapper>

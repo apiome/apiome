@@ -1,4 +1,4 @@
-# Apiome 07-2026 RC
+# Apiome 07-2026 RC2
 
 We continue to improve the platform based on your feedback with improvements and new features!
 
@@ -39,6 +39,7 @@ We continue to improve the platform based on your feedback with improvements and
 - UI: Applied Fable 5 to improve overall UI additions
 - UI: Improved Profile layout
 - UI: Fixed sidebar so that "Sunset Timeline" doesn't also highlight Projects at the same time
+- UI: Fixed sidebar to be static with scrollable content to the right-hand side
 - Naming: Renamed the project to Apiome
 
 ---

@@ -15,11 +15,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div
-      className="bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800"
-      style={{ display: "flex", height: "calc(100vh - 48px)" }}
-    >
-      <DashboardSideNav/>
+    <div className="flex h-full min-h-0 overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+      <DashboardSideNav />
 
       <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-transparent">
         <DashboardTooltipProvider>{children}</DashboardTooltipProvider>

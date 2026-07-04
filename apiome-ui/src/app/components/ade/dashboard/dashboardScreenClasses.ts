@@ -1,5 +1,6 @@
-/** Shared layout tokens aligned with the Primitives dashboard screen. */
-export const dashboardMainClass = 'flex-1 overflow-y-auto p-6';
+/** Shared layout tokens aligned with the Primitives dashboard screen.
+ *  Scrolls inside the dashboard content pane (not the document / sidebar). */
+export const dashboardMainClass = 'min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-6';
 export const dashboardContentStackClass = 'space-y-6';
 
 export const dashboardPanelClass =

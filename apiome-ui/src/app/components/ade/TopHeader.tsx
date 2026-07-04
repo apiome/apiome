@@ -162,7 +162,7 @@ const TopHeader = () => {
 
   return (
     <header
-      className="relative z-[2000] flex h-12 items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-3 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/95"
+      className="relative z-[2000] flex h-12 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-3 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/95"
     >
       {/* Left: Logo */}
       <div className="flex h-10 items-center gap-2">
