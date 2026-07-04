@@ -1,20 +1,23 @@
-# Emitter SPI (MFI-22.1)
+# Emitter SPI (MFI-22.1, MFX-1.1)
 
-> **Status:** SPI + reference implementation — `src/app/emitter.py`,
-> `src/app/openapi_emitter.py`, `src/app/openapi_validator.py`
-> **Issue:** [#4002](https://github.com/objectified-project/objectified/issues/4002) ·
-> **Epic:** MFI-EPIC-22 (#4000) · **Roadmap:** `docs/ROADMAP_MULTI_FORMAT_IMPORT.md`
+> **Status:** SPI + reference implementations — `src/app/emitter.py`,
+> `src/app/openapi_emitter.py`, `src/app/sample_emitter.py`,
+> `src/app/openapi_validator.py`
+> **Issues:** [#4002](https://github.com/apiome/apiome/issues/4002) (MFI-22.1),
+> [#3834](https://github.com/apiome/apiome/issues/3834) (MFX-1.1) ·
+> **Epic:** MFX-EPIC-1 (#3814) · **Roadmap:** `docs/ROADMAP_MULTI_FORMAT_EXPORT.md`
 
-The **Emitter SPI** is the inverse of the [Normalizer SPI](./normalizer_spi.md).
-Where a normalizer turns a parsed source document *into* the paradigm-agnostic
+The **Emitter SPI** is the inverse of the [ImportSource SPI](./import_source_spi.md)
+(MFI-1.1) and the [Normalizer SPI](./normalizer_spi.md). Where a normalizer turns a
+parsed source document *into* the paradigm-agnostic
 [canonical model](./canonical_model.md) (`CanonicalApi`), an emitter turns a
 `CanonicalApi` back *out* to a concrete API-description format. **Conversion**
-(catalog → OpenAPI, MFI-EPIC-22) is exactly *normalize one format → emit another*.
+(catalog → OpenAPI, MFI-EPIC-22) and **export** (MFX-EPIC-1) both hang on this seam.
 
 ```
  normalize (MFI-2.3)              emit (this SPI)                 validate
- parsed tree ──────────▶ CanonicalApi ──────────▶ OpenAPI 3.1 doc ─────▶ valid?
-              (Normalizer)          (Emitter)             (openapi_validator)
+ parsed tree ──────────▶ CanonicalApi ──────────▶ target artifact ─────▶ valid?
+              (Normalizer)          (Emitter)             (per-target validator)
 ```
 
 An emitter is **pure**: given the same model it returns an equal result, performs
@@ -25,37 +28,125 @@ byte-stable.
 
 ```python
 class Emitter(ABC):
+    key: ClassVar[str]               # stable target id, e.g. "openapi"
     format: ClassVar[str]            # registry key, e.g. "openapi-3.1"
-    paradigm: ClassVar[ApiParadigm]  # the paradigm it primarily targets
+    label: ClassVar[str]
+    description: ClassVar[str]
+    icon: ClassVar[str]              # Lucide icon name
+    paradigm: ClassVar[ApiParadigm]
+    multi_file: ClassVar[bool]       # single artifact vs bundle
+    required_tools: ClassVar[Tuple[str, ...]]  # hard toolchain deps
+
+    @classmethod
+    def capability_profile(cls) -> CapabilityProfile: ...
+
+    @classmethod
+    def descriptor(cls) -> EmitterDescriptor: ...
 
     @abstractmethod
-    def emit(self, api: CanonicalApi) -> EmitResult: ...
+    def emit(
+        self,
+        api: CanonicalApi,
+        *,
+        opts: Optional[EmitOptions] = None,
+    ) -> EmitResult: ...
 ```
 
 A concrete emitter must:
 
 1. **Be deterministic and side-effect free** — same `api` → equal `EmitResult`,
    no I/O. Order every emitted collection by a stable key/name.
-2. **Emit a schema-valid document** — the reference `OpenApiEmitter` output passes
+2. **Emit a schema-valid artifact** — the reference `OpenApiEmitter` output passes
    `openapi_validator.validate_openapi_document` (the OpenAPI 3.1 meta-schema).
 3. **Record provenance** — tag every emitted value `source` (came from the model),
    `inferred` (derived from the model's structure), or `default` (a system
-   fallback), so the fidelity analyzer (MFI-22.3) can show what the conversion
-   added.
+   fallback), so the fidelity analyzer (MFI-22.3 / MFX-EPIC-2) can show what the
+   conversion added.
+4. **Declare a static capability profile** — which canonical constructs the target
+   can represent faithfully (see below).
 
 ### Registration & lookup
 
 ```python
 class MyFormatEmitter(Emitter, register=True):   # auto-registers on definition
+    key = "myformat"
     format = "myformat-1"
+    label = "My Format"
     paradigm = ApiParadigm.REST
-    def emit(self, api): ...
+    def emit(self, api, *, opts=None): ...
 ```
 
 ```python
-get_emitter("openapi-3.1")     # -> OpenApiEmitter
-available_emit_formats()       # -> ["openapi-3.1", ...]
+get_emitter("openapi-3.1")          # -> OpenApiEmitter class
+get_emitter_instance("openapi-3.1") # -> OpenApiEmitter()
+available_emit_formats()            # -> ["openapi-3.1", "sample-noop", ...]
+describe_emit_targets()             # -> [EmitterTarget(descriptor, capability_profile), ...]
+load_builtin_emitters()             # lazy built-in registration (idempotent)
 ```
+
+Built-in emitters self-register on import via the `register=True` subclass flag;
+`load_builtin_emitters()` imports them so a lookup works even if the caller never
+imported the adapter module (mirrors `load_builtin_import_sources`).
+
+## Emit result envelope
+
+`EmitResult` carries:
+
+| Field | Meaning |
+|-------|---------|
+| `files` | One or more `EmittedFile{path, content, media_type?}` entries, sorted by `path` |
+| `media_type` | Primary bundle media type (e.g. `application/vnd.oai.openapi+json`) |
+| `provenance` | Per-construct provenance notes (`ProvenanceRecord`), sorted by JSON Pointer |
+| `losses` | Paradigm projection fidelity losses (`Loss`), sorted deterministically |
+
+`EmitResult.document` is a backward-compatible view of the **first file's content**
+when it is a structured `dict` (single-file JSON/YAML targets).
+
+```python
+EmitResult.from_document(openapi_dict, path="openapi.json", media_type="application/json")
+```
+
+## Capability / fidelity profile (MFX-1.1)
+
+Each emitter declares a frozen `CapabilityProfile` — a static boolean matrix of
+which **canonical constructs** the target supports **faithfully** (not merely
+approximated or synthesized). The fidelity engine (MFX-EPIC-2) compares a source
+`CanonicalApi` against this profile to predict loss *before* emit.
+
+| Field | Meaning when `True` |
+|-------|---------------------|
+| `operations` | HTTP/RPC operations (services, routes, bindings) |
+| `events` | Event channels, pub/sub actions, async message flows |
+| `unions` | Discriminated unions / one-of type alternatives |
+| `nullability` | Explicit nullable / optional member semantics |
+| `constraints` | Validation facets (min/max, pattern, format, enum) |
+| `field_identity` | Stable field identifiers (protobuf field numbers, Avro names) |
+
+Example profiles:
+
+| Target | operations | events | unions | nullability | constraints | field_identity |
+|--------|------------|--------|--------|-------------|-------------|----------------|
+| OpenAPI 3.1 | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
+| Sample (no-op) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+Retrieve a target's profile via `OpenApiEmitter.capability_profile()` or from
+`describe_emit_targets()[].capability_profile`.
+
+## Target descriptor (MFX-1.1)
+
+`EmitterDescriptor` is the registry's public, serializable view of an emitter —
+everything a consumer needs to render a target card or a CLI verb without importing
+the emitter class itself:
+
+| Field | Meaning |
+|-------|---------|
+| `key` | Stable target id (`openapi`, `sample`, …) |
+| `format` | Registry format key (`openapi-3.1`, …) |
+| `label` / `description` / `icon` | Card / CLI presentation |
+| `paradigm` | Primary `ApiParadigm` |
+| `multi_file` | Whether emit produces a bundle vs one artifact |
+| `needs_toolchain` | Whether a hard-required external binary is needed |
+| `available` / `unavailable_reason` | Runtime toolchain availability (MFI-5.2 pattern) |
 
 ## Provenance
 
@@ -69,8 +160,7 @@ Every emitted value gets a `ProvenanceRecord(pointer, provenance, detail)` where
 | `default`  | system fallback with no basis in the model | the `openapi` version string; an empty response `description` |
 
 `ProvenanceTracker.records()` returns the notes sorted by pointer, so the
-provenance list is deterministic too. `EmitResult` pairs the emitted `document`
-with its `provenance`.
+provenance list is deterministic too.
 
 ## Schema emission
 
@@ -89,9 +179,11 @@ are valid at both layers:
   from the member values), `UNION` → `oneOf`, `MAP` → object + `additionalProperties`,
   `ALIAS` → the aliased ref's schema, `SCALAR` → a constrained leaf.
 
-## Reference implementation: `OpenApiEmitter`
+## Reference implementations
 
-`OpenApiEmitter` (format `openapi-3.1`, paradigm `REST`) maps:
+### `OpenApiEmitter`
+
+`OpenApiEmitter` (key `openapi`, format `openapi-3.1`, paradigm `REST`) maps:
 
 | Canonical | OpenAPI 3.1 |
 |-----------|-------------|
@@ -111,6 +203,13 @@ OpenAPI representation), gathering any `x-` extensions and document-level notes.
 
 On REST input the emitter is a **fixed point** of the reference normalizer:
 `normalize(emit(normalize(doc))) == normalize(doc)`.
+
+### `SampleEmitter`
+
+`SampleEmitter` (key `sample`, format `sample-noop`) is the no-op acceptance adapter:
+it registers and appears in `describe_emit_targets()` with an empty capability profile
+and returns a blank single-file artifact. Use it as the smallest worked example when
+adding a new export target.
 
 ## Losses (MFI-22.2)
 

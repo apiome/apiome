@@ -1,4 +1,4 @@
-"""Emitter SPI: canonical model → format — MFI-22.1 (#4002).
+"""Emitter SPI: canonical model → format — MFI-22.1 (#4002), MFX-1.1 (#3834).
 
 The [normalizer SPI](./normalizer.py) turns a parsed source document *into* the
 paradigm-agnostic :class:`~app.canonical_model.CanonicalApi`. *This* module is the
@@ -55,10 +55,18 @@ from .canonical_model import (
 )
 
 __all__ = [
+    "EmitOptions",
+    "EmittedFile",
+    "CapabilityProfile",
+    "EmitterDescriptor",
+    "EmitterTarget",
     "Emitter",
     "register_emitter",
     "get_emitter",
+    "get_emitter_instance",
     "available_emit_formats",
+    "describe_emit_targets",
+    "load_builtin_emitters",
     "Provenance",
     "ProvenanceRecord",
     "ProvenanceTracker",
@@ -227,8 +235,36 @@ class LossTracker:
         )
 
 
+class EmittedFile(BaseModel):
+    """One file in an emitter's output bundle (MFX-1.1).
+
+    Single-file targets (OpenAPI JSON) return one entry; multi-file targets
+    (protobuf packages, WSDL+XSD) return many. ``content`` is structured (``dict``)
+    for JSON/YAML targets or plain text for others.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    path: str = Field(description="Relative path within the output bundle.")
+    content: Any = Field(description="Structured document or plain-text payload.")
+    media_type: Optional[str] = Field(
+        default=None,
+        description="Per-file media type when it differs from the bundle default.",
+    )
+
+
+class EmitOptions(BaseModel):
+    """Per-target emit options passed to :meth:`Emitter.emit` (MFX-1.1).
+
+    Concrete emitters extend this in later epics (MFX-1.4) with format-specific
+    fields; the base model is an empty, validated envelope today.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+
 class EmitResult(BaseModel):
-    """An emitter's output: the emitted ``document`` plus its ``provenance``.
+    """An emitter's output: emitted ``files``, bundle ``media_type``, and trails.
 
     Both halves are deterministic for a given input model, so two emissions of the
     same :class:`~app.canonical_model.CanonicalApi` compare equal. ``losses`` (added
@@ -237,8 +273,13 @@ class EmitResult(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    document: Dict[str, Any] = Field(
-        description="The emitted API-description document (e.g. an OpenAPI 3.1 dict)."
+    files: List[EmittedFile] = Field(
+        default_factory=list,
+        description="Emitted artifacts, sorted by ``path`` for determinism.",
+    )
+    media_type: str = Field(
+        default="application/json",
+        description="Primary bundle media type (e.g. ``application/json``).",
     )
     provenance: List[ProvenanceRecord] = Field(
         default_factory=list,
@@ -250,6 +291,119 @@ class EmitResult(BaseModel):
         "sorted deterministically. Empty when the conversion was lossless.",
     )
 
+    @property
+    def document(self) -> Dict[str, Any]:
+        """Primary structured document — the first file's content when it is a ``dict``.
+
+        Retained for callers (conversion preview, fidelity analyzer) that predate
+        the multi-file ``files`` envelope (MFX-1.1).
+        """
+        if not self.files:
+            return {}
+        content = self.files[0].content
+        return content if isinstance(content, dict) else {}
+
+    @classmethod
+    def from_document(
+        cls,
+        document: Dict[str, Any],
+        *,
+        path: str = "openapi.json",
+        media_type: str = "application/json",
+        provenance: Optional[List[ProvenanceRecord]] = None,
+        losses: Optional[List[Loss]] = None,
+    ) -> "EmitResult":
+        """Build a single-file :class:`EmitResult` from one structured document."""
+        return cls(
+            files=[EmittedFile(path=path, content=document, media_type=media_type)],
+            media_type=media_type,
+            provenance=provenance or [],
+            losses=losses or [],
+        )
+
+
+# ===========================================================================
+# Capability / fidelity profile (MFX-1.1)
+# ===========================================================================
+
+
+class CapabilityProfile(BaseModel):
+    """Static declaration of which canonical constructs a target can represent.
+
+    Consumed by the fidelity engine (MFX-EPIC-2) to predict loss *before* emit.
+    Each flag is ``True`` when the target can carry the construct faithfully (not
+    merely approximate or synthesize a stand-in).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    operations: bool = Field(
+        default=False,
+        description="HTTP/RPC operations (services, routes, bindings).",
+    )
+    events: bool = Field(
+        default=False,
+        description="Event channels, pub/sub actions, and async message flows.",
+    )
+    unions: bool = Field(
+        default=False,
+        description="Discriminated unions / one-of type alternatives.",
+    )
+    nullability: bool = Field(
+        default=False,
+        description="Explicit nullable / optional member semantics.",
+    )
+    constraints: bool = Field(
+        default=False,
+        description="Validation facets (min/max, pattern, format, enum).",
+    )
+    field_identity: bool = Field(
+        default=False,
+        description="Stable field identifiers (protobuf field numbers, Avro names).",
+    )
+
+
+class EmitterDescriptor(BaseModel):
+    """Self-description of an export target for UI/CLI/REST enumeration (MFX-1.1)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    key: str = Field(description="Stable registry key, e.g. ``openapi``.")
+    format: str = Field(
+        description="Output format key this emitter produces, e.g. ``openapi-3.1``.",
+    )
+    label: str = Field(description="Human label for target cards / CLI listings.")
+    description: str = Field(description="One-line description of what it exports.")
+    icon: str = Field(
+        description="Icon name (Lucide) the UI renders for this target's card.",
+    )
+    paradigm: ApiParadigm = Field(
+        description="The canonical paradigm this emitter primarily targets.",
+    )
+    multi_file: bool = Field(
+        description="Whether the emitter produces a multi-file bundle (vs one artifact).",
+    )
+    needs_toolchain: bool = Field(
+        description="Whether emit hard-requires an external toolchain binary.",
+    )
+    available: bool = Field(
+        default=True,
+        description="Whether this emitter can run in the current runtime.",
+    )
+    unavailable_reason: Optional[str] = Field(
+        default=None,
+        description="Human-readable reason the target is unavailable, or ``null`` when available.",
+    )
+
+
+class EmitterTarget(BaseModel):
+    """One registered export target: descriptor + capability profile (MFX-1.1)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    descriptor: EmitterDescriptor
+    capability_profile: CapabilityProfile
+
 
 # ===========================================================================
 # The SPI contract + registry
@@ -259,25 +413,40 @@ class EmitResult(BaseModel):
 class Emitter(ABC):
     """Service-provider contract: :class:`CanonicalApi` → an :class:`EmitResult`.
 
-    A concrete emitter declares which ``format`` key it produces and which
-    :class:`~app.canonical_model.ApiParadigm` it primarily targets, and implements
-    :meth:`emit`. It must be **deterministic and side-effect free** — given the
-    same model it returns an equal result, performs no I/O, and emits every
-    collection in a stable order so re-conversion is byte-stable.
+    A concrete emitter declares descriptor metadata (``key``/``label``/``icon``,
+    :class:`~app.canonical_model.ApiParadigm`, single vs multi-file,
+    toolchain requirement), a static :class:`CapabilityProfile`, which ``format``
+    key it produces, and implements :meth:`emit`. It must be **deterministic and
+    side-effect free** — given the same model it returns an equal result, performs
+    no I/O, and emits every collection in a stable order so re-conversion is
+    byte-stable.
 
     Subclasses register with :func:`register_emitter` (typically via the
     ``register=True`` flag on ``__init_subclass__``) and are looked up by
     ``format`` with :func:`get_emitter`.
     """
 
+    #: Stable target key for cards/CLI, e.g. ``"openapi"``. Distinct from
+    #: :attr:`format` when one logical target spans version-specific emitters.
+    key: ClassVar[str] = ""
     #: Output format key this emitter produces, e.g. ``"openapi-3.1"``. Used as the
     #: registry key.
     format: ClassVar[str] = ""
-
+    #: Human label for target cards / CLI listings.
+    label: ClassVar[str] = ""
+    #: One-line description of what the emitter exports.
+    description: ClassVar[str] = ""
+    #: Icon name (Lucide) the UI renders for this target's card.
+    icon: ClassVar[str] = "file-output"
     #: The canonical paradigm this emitter primarily targets. An emitter may still
     #: accept models of other paradigms on a best-effort basis (a REST emitter can
     #: render RPC operations as HTTP endpoints, for instance).
     paradigm: ClassVar[ApiParadigm]
+    #: Whether this emitter produces a multi-file bundle.
+    multi_file: ClassVar[bool] = False
+    #: Toolchain tool keys this emitter's emit **hard-requires**. When any is
+    #: unavailable in the runtime, the descriptor reports ``available = False``.
+    required_tools: ClassVar[Tuple[str, ...]] = ()
 
     def __init_subclass__(cls, *, register: bool = False, **kwargs: Any) -> None:
         """Optionally self-register a concrete subclass in the format registry.
@@ -290,15 +459,54 @@ class Emitter(ABC):
         if register:
             register_emitter(cls)
 
+    @classmethod
+    def capability_profile(cls) -> CapabilityProfile:
+        """Return this emitter's static capability/fidelity profile (MFX-1.1)."""
+        return CapabilityProfile()
+
+    @classmethod
+    def descriptor(cls) -> EmitterDescriptor:
+        """Return this emitter's serializable :class:`EmitterDescriptor`."""
+        from .toolchain_runner import is_tool_available
+
+        missing = [tool for tool in cls.required_tools if not is_tool_available(tool)]
+        available = not missing
+        unavailable_reason = (
+            None
+            if available
+            else (
+                f"Requires the {', '.join(missing)} toolchain, which is not available "
+                "in this runtime."
+            )
+        )
+        return EmitterDescriptor(
+            key=cls.key or cls.format,
+            format=cls.format,
+            label=cls.label or cls.key or cls.format,
+            description=cls.description,
+            icon=cls.icon,
+            paradigm=cls.paradigm,
+            multi_file=cls.multi_file,
+            needs_toolchain=bool(cls.required_tools),
+            available=available,
+            unavailable_reason=unavailable_reason,
+        )
+
     @abstractmethod
-    def emit(self, api: CanonicalApi) -> EmitResult:
-        """Emit ``api`` as a concrete document, with per-construct provenance.
+    def emit(
+        self,
+        api: CanonicalApi,
+        *,
+        opts: Optional[EmitOptions] = None,
+    ) -> EmitResult:
+        """Emit ``api`` as one or more files, with per-construct provenance.
 
         Args:
             api: The canonical model to emit.
+            opts: Optional per-target options (MFX-1.4 extends these).
 
         Returns:
-            An :class:`EmitResult` whose ``document`` is a valid document in this
+            An :class:`EmitResult` whose ``files`` are valid artifacts in this
             emitter's :attr:`format` and whose ``provenance`` records where each
             emitted value came from.
         """
@@ -308,6 +516,7 @@ class Emitter(ABC):
 # Format-key → emitter-class registry, mirroring the normalizer registry so the
 # conversion pipeline can resolve an emitter by target format key.
 _REGISTRY: Dict[str, type[Emitter]] = {}
+_builtins_loaded = False
 
 
 def register_emitter(cls: type[Emitter]) -> type[Emitter]:
@@ -337,14 +546,53 @@ def register_emitter(cls: type[Emitter]) -> type[Emitter]:
     return cls
 
 
+def load_builtin_emitters() -> None:
+    """Import built-in emitter modules so they self-register.
+
+    Idempotent and cheap after the first call. Kept lazy so adapter modules can
+    import this one without a cycle.
+    """
+    global _builtins_loaded
+    if _builtins_loaded:
+        return
+    _builtins_loaded = True
+    from . import openapi_emitter as _openapi  # noqa: F401
+    from . import sample_emitter as _sample  # noqa: F401
+
+
 def get_emitter(format_key: str) -> Optional[type[Emitter]]:
     """Return the emitter class registered for ``format_key``, or ``None``."""
+    load_builtin_emitters()
     return _REGISTRY.get(format_key)
+
+
+def get_emitter_instance(format_key: str) -> Optional[Emitter]:
+    """Return an instance of the emitter registered for ``format_key``, or ``None``."""
+    cls = get_emitter(format_key)
+    return cls() if cls is not None else None
 
 
 def available_emit_formats() -> List[str]:
     """Return the sorted list of format keys that have a registered emitter."""
+    load_builtin_emitters()
     return sorted(_REGISTRY)
+
+
+def describe_emit_targets() -> List[EmitterTarget]:
+    """Return every registered emitter's descriptor + capability profile, sorted by key.
+
+    This is the **target list** the UI (target cards), the CLI (``export --list``),
+    and REST enumerate — the registry's public view (MFX-1.1).
+    """
+    load_builtin_emitters()
+    targets = [
+        EmitterTarget(
+            descriptor=_REGISTRY[format_key].descriptor(),
+            capability_profile=_REGISTRY[format_key].capability_profile(),
+        )
+        for format_key in sorted(_REGISTRY)
+    ]
+    return sorted(targets, key=lambda target: target.descriptor.key)
 
 
 # ===========================================================================

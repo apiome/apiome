@@ -1,15 +1,17 @@
-"""Unit tests for the emitter SPI — MFI-22.1 (#4002).
+"""Unit tests for the emitter SPI — MFI-22.1 (#4002), MFX-1.1 (#3834).
 
-Covers the format registry, the provenance primitives, the result envelope, and
-the :class:`~app.emitter.SchemaEmitter` (the inverse of the normalizer's
-:class:`~app.normalizer.SchemaCoercer`) in isolation. The end-to-end OpenAPI
-emission is exercised in ``test_openapi_emitter.py``.
+Covers the format registry, descriptor + capability profile, the provenance
+primitives, the result envelope, and the :class:`~app.emitter.SchemaEmitter`
+(the inverse of the normalizer's :class:`~app.normalizer.SchemaCoercer`) in
+isolation. The end-to-end OpenAPI emission is exercised in ``test_openapi_emitter.py``.
 """
 
 import pytest
 
 from app.canonical_model import (
+    ApiIdentity,
     ApiParadigm,
+    CanonicalApi,
     CanonicalField,
     Constraints,
     EnumValue,
@@ -18,6 +20,7 @@ from app.canonical_model import (
     TypeRef,
 )
 from app.emitter import (
+    CapabilityProfile,
     EmitResult,
     Emitter,
     Provenance,
@@ -26,7 +29,9 @@ from app.emitter import (
     SchemaEmitter,
     _emit_constraints,
     available_emit_formats,
+    describe_emit_targets,
     get_emitter,
+    load_builtin_emitters,
     register_emitter,
 )
 
@@ -34,20 +39,67 @@ from app.emitter import (
 
 
 def test_openapi_emitter_is_registered() -> None:
-    # Importing the emitter module self-registers it under its format key.
-    import app.openapi_emitter  # noqa: F401
+    load_builtin_emitters()
     from app.openapi_emitter import OpenApiEmitter
 
     assert get_emitter("openapi-3.1") is OpenApiEmitter
     assert "openapi-3.1" in available_emit_formats()
 
 
+def test_sample_emitter_is_registered_and_in_target_list() -> None:
+    load_builtin_emitters()
+    from app.sample_emitter import SAMPLE_EMIT_FORMAT, SampleEmitter
+
+    assert get_emitter(SAMPLE_EMIT_FORMAT) is SampleEmitter
+    keys = [target.descriptor.key for target in describe_emit_targets()]
+    assert "sample" in keys
+    sample = next(t for t in describe_emit_targets() if t.descriptor.key == "sample")
+    assert sample.capability_profile == CapabilityProfile()
+    assert sample.descriptor.multi_file is False
+    assert sample.descriptor.needs_toolchain is False
+
+
+def test_openapi_descriptor_and_capability_profile() -> None:
+    load_builtin_emitters()
+    from app.openapi_emitter import OpenApiEmitter
+
+    descriptor = OpenApiEmitter.descriptor()
+    assert descriptor.key == "openapi"
+    assert descriptor.format == "openapi-3.1"
+    assert descriptor.icon == "file-json"
+    assert descriptor.multi_file is False
+    profile = OpenApiEmitter.capability_profile()
+    assert profile.operations is True
+    assert profile.unions is True
+    assert profile.constraints is True
+    assert profile.field_identity is False
+
+
+def test_sample_emitter_emit_is_noop() -> None:
+    load_builtin_emitters()
+    from app.sample_emitter import SampleEmitter
+
+    api = CanonicalApi(
+        paradigm=ApiParadigm.DATA_SCHEMA,
+        format="sample-noop",
+        identity=ApiIdentity(name="Sample"),
+    )
+    result = SampleEmitter().emit(api)
+    assert result.media_type == "text/plain"
+    assert len(result.files) == 1
+    assert result.files[0].path == "sample.txt"
+    assert result.files[0].content == ""
+    assert result.document == {}
+    assert result.provenance == []
+    assert result.losses == []
+
+
 def test_register_rejects_empty_format() -> None:
     class NoFormatEmitter(Emitter):
         paradigm = ApiParadigm.REST
 
-        def emit(self, api):  # pragma: no cover - never called
-            return EmitResult(document={})
+        def emit(self, api, *, opts=None):  # pragma: no cover - never called
+            return EmitResult.from_document({})
 
     with pytest.raises(ValueError, match="non-empty"):
         register_emitter(NoFormatEmitter)
@@ -58,8 +110,8 @@ def test_register_is_idempotent_but_rejects_conflicts() -> None:
         format = "dummy-emit-test"
         paradigm = ApiParadigm.REST
 
-        def emit(self, api):  # pragma: no cover - never called
-            return EmitResult(document={})
+        def emit(self, api, *, opts=None):  # pragma: no cover - never called
+            return EmitResult.from_document({})
 
     assert register_emitter(DummyEmitter) is DummyEmitter
     assert get_emitter("dummy-emit-test") is DummyEmitter
@@ -70,8 +122,8 @@ def test_register_is_idempotent_but_rejects_conflicts() -> None:
         format = "dummy-emit-test"
         paradigm = ApiParadigm.REST
 
-        def emit(self, api):  # pragma: no cover - never called
-            return EmitResult(document={})
+        def emit(self, api, *, opts=None):  # pragma: no cover - never called
+            return EmitResult.from_document({})
 
     with pytest.raises(ValueError, match="already registered"):
         register_emitter(OtherEmitter)
@@ -110,12 +162,14 @@ def test_tracker_records_sorted_by_pointer() -> None:
 
 
 def test_emit_result_is_serializable() -> None:
-    result = EmitResult(
-        document={"openapi": "3.1.0"},
+    result = EmitResult.from_document(
+        {"openapi": "3.1.0"},
         provenance=[ProvenanceRecord(pointer="/openapi", provenance=Provenance.DEFAULT)],
     )
     reloaded = EmitResult.model_validate(result.model_dump())
     assert reloaded == result
+    assert result.document == {"openapi": "3.1.0"}
+    assert result.files[0].path == "openapi.json"
 
 
 # --- constraints ------------------------------------------------------------
