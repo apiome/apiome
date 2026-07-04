@@ -36,7 +36,7 @@ wheels = [
 
 [[package]]
 name = "apiome-rest"
-version = "1.75.6"
+version = "1.75.8"
 source = { editable = "." }
 dependencies = [
     { name = "bcrypt" },

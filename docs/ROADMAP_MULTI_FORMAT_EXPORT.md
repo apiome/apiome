@@ -273,12 +273,13 @@ flowchart LR
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 1.1 | Emitter SPI + capability/fidelity profile | interface: emit(model)→files, declare capabilities | export,multi-protocol,rest,python,mvp | N | Y | L | apiome-rest |
+| 1.1 ✅ | Emitter SPI + capability/fidelity profile | interface: emit(model)→files, declare capabilities | export,multi-protocol,rest,python,mvp | N | Y | L | apiome-rest |
 | 1.2 | Emitter registry + REST target list | enumerate emitters for UI/CLI (`GET /export/targets`) | export,multi-protocol,rest,mvp | N | Y | M | apiome-rest |
 | 1.3 | Refactor existing exports behind SPI | move current OpenAPI/MCP export under the SPI | export,multi-protocol,rest | Y | Y | M | apiome-rest |
 | 1.4 | Target selection & defaults | choose target + options; sensible per-format defaults | export,multi-protocol,rest,mvp | Y | Y | S | apiome-rest |
 
-### MFX-1.1 — Emitter SPI + capability/fidelity profile  ·  **#3834**
+### MFX-1.1 — Emitter SPI + capability/fidelity profile  ·  **#3834**  ·  ✅ **Done**
+- **Status.** Implemented in `apiome-rest/src/app/emitter.py` (the `Emitter` ABC + `EmitOptions`/`EmittedFile`/`EmitResult{files[], media_type}` envelope + `CapabilityProfile` + `EmitterDescriptor`/`EmitterTarget` + by-format registry with `register_emitter`/`get_emitter`/`get_emitter_instance`/`available_emit_formats`/`describe_emit_targets`/`load_builtin_emitters`), `apiome-rest/src/app/openapi_emitter.py` (reference emitter — descriptor metadata, OpenAPI capability profile, `emit(api, opts)` returning a single-file bundle), and `apiome-rest/src/app/sample_emitter.py` (no-op acceptance adapter). Profile schema documented in `apiome-rest/docs/emitter_spi.md`; tests in `tests/test_emitter.py`. apiome-rest 1.75.7 → 1.75.8.
 - **Problem.** Export is ad-hoc per format; there's no seam to add targets or to reason about what a target can represent.
 - **Solution / Scope.** Define an `Emitter` interface in `apiome-rest`: `emit(model: CanonicalApi, opts) → EmitResult{files[], mediaType}`; plus a static **capability/fidelity profile** declaring which canonical constructs the target supports (operations? events? unions? nullability? constraints? field-identity?), consumed by the fidelity engine (EPIC-2). Inverse of the import `ImportSource` SPI (MFI-1.1). Descriptor: key, label, icon, paradigm, single/multi-file, needs-toolchain.
 - **Acceptance Criteria.** A no-op emitter registers and appears in the target list; profile schema documented; OpenAPI emitter (9.x) implements it.

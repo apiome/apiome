@@ -1,4 +1,4 @@
-"""Reference emitter: canonical model → OpenAPI 3.1 — MFI-22.1 (#4002).
+"""Reference emitter: canonical model → OpenAPI 3.1 — MFI-22.1 (#4002), MFX-1.1 (#3834).
 
 The inverse of :class:`app.openapi_normalizer.OpenApiNormalizer` and the reference
 implementation of the :class:`app.emitter.Emitter` SPI. It walks a
@@ -63,6 +63,8 @@ from .canonical_model import (
     Service,
 )
 from .emitter import (
+    CapabilityProfile,
+    EmitOptions,
     EmitResult,
     Emitter,
     LossKind,
@@ -99,11 +101,20 @@ class OpenApiEmitter(Emitter, register=True):
     binding so the acceptance-criterion RPC/data-schema coverage holds.
     """
 
+    key = "openapi"
     format = "openapi-3.1"
+    label = "OpenAPI 3.1"
+    description = "Export as an OpenAPI 3.1 JSON document (JSON Schema components)."
+    icon = "file-json"
     paradigm = ApiParadigm.REST
+    multi_file = False
 
     #: The OpenAPI version string this emitter targets.
     OPENAPI_VERSION = "3.1.0"
+    #: Primary output filename within a bundle.
+    OUTPUT_PATH = "openapi.json"
+    #: Primary bundle media type.
+    OUTPUT_MEDIA_TYPE = "application/vnd.oai.openapi+json"
     #: ``info.version`` used when the model declares none (OAS requires the field).
     DEFAULT_INFO_VERSION = "0.0.0"
     #: Media type assumed when a message declares no ``content_types``.
@@ -113,17 +124,36 @@ class OpenApiEmitter(Emitter, register=True):
     #: JSON-Pointer prefix component-type references are emitted with.
     REF_PREFIX = "#/components/schemas/"
 
-    def emit(self, api: CanonicalApi) -> EmitResult:
+    @classmethod
+    def capability_profile(cls) -> CapabilityProfile:
+        """OpenAPI 3.1 carries operations, schemas, unions, and constraints."""
+        return CapabilityProfile(
+            operations=True,
+            events=True,
+            unions=True,
+            nullability=True,
+            constraints=True,
+            field_identity=False,
+        )
+
+    def emit(
+        self,
+        api: CanonicalApi,
+        *,
+        opts: Optional[EmitOptions] = None,
+    ) -> EmitResult:
         """Emit ``api`` as an OpenAPI 3.1 document with per-construct provenance.
 
         Args:
             api: The canonical model to convert.
+            opts: Optional emit options (unused today; reserved for MFX-1.4).
 
         Returns:
-            An :class:`~app.emitter.EmitResult` whose ``document`` is a schema-valid
+            An :class:`~app.emitter.EmitResult` whose primary file is a schema-valid
             OpenAPI 3.1 dict and whose ``provenance`` records where each value came
-            from. The document is deterministic for a given ``api``.
+            from. The output is deterministic for a given ``api``.
         """
+        _ = opts
         tracker = ProvenanceTracker()
         losses = LossTracker()
         schema = SchemaEmitter(ref_prefix=self.REF_PREFIX)
@@ -155,8 +185,12 @@ class OpenApiEmitter(Emitter, register=True):
                 f"{api.paradigm.value} projection document note",
             )
 
-        return EmitResult(
-            document=document, provenance=tracker.records(), losses=losses.records()
+        return EmitResult.from_document(
+            document,
+            path=self.OUTPUT_PATH,
+            media_type=self.OUTPUT_MEDIA_TYPE,
+            provenance=tracker.records(),
+            losses=losses.records(),
         )
 
     # --- info ---------------------------------------------------------------
