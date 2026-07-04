@@ -161,7 +161,13 @@ class GrpcImportSource(ImportSource, register=True):
     description = "Import a gRPC / Protocol Buffers API from a .proto file or live server reflection."
     icon = "share-2"
     paradigm = ApiParadigm.RPC
-    input_kinds = (InputKind.FILE, InputKind.URL, InputKind.PASTE, InputKind.DISCOVERY)
+    input_kinds = (
+        InputKind.FILE,
+        InputKind.URL,
+        InputKind.PASTE,
+        InputKind.DISCOVERY,
+        InputKind.FILESET,
+    )
     supports_live_discovery = True
     formats = ("protobuf",)
     # parse() compiles .proto via `buf build`; with no bundled `buf` there is no fallback, so the
@@ -246,7 +252,7 @@ class GrpcImportSource(ImportSource, register=True):
         ]
         if not proto_members:
             raise ImportSourceError(
-                "Archive fileset contains no .proto files for gRPC / Protobuf import."
+                "Fileset contains no .proto files for gRPC / Protobuf import."
             )
         files = tuple(ProtoFile(path=path, content=content) for path, content in proto_members)
         try:

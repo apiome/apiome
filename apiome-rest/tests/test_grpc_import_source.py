@@ -101,6 +101,7 @@ def test_descriptor_shape() -> None:
         InputKind.URL,
         InputKind.PASTE,
         InputKind.DISCOVERY,
+        InputKind.FILESET,
     }
 
 

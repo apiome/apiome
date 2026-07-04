@@ -1,0 +1,6 @@
+components:
+  messages:
+    UserSignedUp:
+      name: UserSignedUp
+      payload:
+        $ref: './schemas.yaml#/components/schemas/UserSignedUpPayload'

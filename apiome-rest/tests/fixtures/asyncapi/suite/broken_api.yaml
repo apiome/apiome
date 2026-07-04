@@ -1,0 +1,10 @@
+asyncapi: '3.0.0'
+info:
+  title: Broken Suite
+  version: '1.0.0'
+channels:
+  userSignedUp:
+    address: user/signedup
+    messages:
+      UserSignedUp:
+        $ref: './components/missing.yaml#/components/messages/UserSignedUp'

@@ -1,0 +1,17 @@
+asyncapi: '3.0.0'
+info:
+  title: User Service Suite
+  version: '1.0.0'
+  description: Multi-file AsyncAPI suite for fileset intake tests.
+defaultContentType: application/json
+channels:
+  userSignedUp:
+    address: user/signedup
+    messages:
+      UserSignedUp:
+        $ref: './components/messages.yaml#/components/messages/UserSignedUp'
+operations:
+  onUserSignedUp:
+    action: receive
+    channel:
+      $ref: '#/channels/userSignedUp'

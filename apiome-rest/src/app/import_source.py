@@ -105,6 +105,7 @@ class InputKind(str, Enum):
     URL = "url"  # an http/https document URL
     PASTE = "paste"  # inline pasted text
     DISCOVERY = "discovery"  # a live endpoint the adapter introspects
+    FILESET = "fileset"  # a root document plus sibling members (archive/git intake)
 
 
 class ImportSourceDescriptor(BaseModel):
@@ -445,7 +446,7 @@ class ImportSource(ABC):
         """
         _ = fileset, source_label
         raise ImportSourceError(
-            f"The {self.label!r} source does not accept multi-file archive uploads."
+            f"The {self.label!r} source does not accept multi-document fileset input."
         )
 
     @abstractmethod

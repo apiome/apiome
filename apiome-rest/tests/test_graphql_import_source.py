@@ -115,6 +115,7 @@ def test_descriptor_metadata(adapter: GraphQlImportSource) -> None:
         InputKind.URL,
         InputKind.PASTE,
         InputKind.DISCOVERY,
+        InputKind.FILESET,
     }
     assert d.formats == ["graphql"]
     # GraphQL is the first source advertising live discovery (introspection).
