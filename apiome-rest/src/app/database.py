@@ -2167,8 +2167,18 @@ class Database:
                    tp.deleted_at AS conv_target_project_deleted_at
     """
 
+    #: Identity group membership for browse facet + detail (MFI-6.4, #4410).
+    _CATALOG_IDENTITY_JOIN = """
+            LEFT JOIN apiome.api_identity_members aim
+              ON aim.tenant_id = p.tenant_id AND aim.project_id = p.id
+    """
+
     def get_catalog_items_for_tenant(
-        self, tenant_id: str, *, include_deleted: bool = False
+        self,
+        tenant_id: str,
+        *,
+        include_deleted: bool = False,
+        identity_group_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """List a tenant's catalog items (MFI-23.1): the ``publishable = false`` slice of projects.
 
@@ -2178,8 +2188,14 @@ class Database:
         the latest revision's ``source_format`` / ``protocol`` / ``format_metadata`` /
         ``tool_versions`` so the Catalog screen can show each item's format/protocol/source. Live
         rows only by default; ``include_deleted`` appends soft-deleted items (active first).
+
+        When ``identity_group_id`` is set, only catalog items in that cross-format identity group
+        are returned (MFI-6.4 browse facet: "show all representations").
         """
         deleted_filter = "" if include_deleted else "AND p.deleted_at IS NULL"
+        identity_filter = (
+            "AND aim.group_id = %s::uuid" if identity_group_id else ""
+        )
         order_clause = (
             "ORDER BY (p.deleted_at IS NULL) DESC, p.created_at DESC"
             if include_deleted
@@ -2192,15 +2208,20 @@ class Database:
                    u.name as creator_name, u.email as creator_email,
                    cv.quality_score, cv.quality_grade,
                    cv.source_format, cv.protocol, cv.format_metadata, cv.tool_versions,
+                   aim.group_id::text AS identity_group_id,
                    {self._CATALOG_CONVERSION_COLUMNS}
             FROM apiome.projects p
             LEFT JOIN apiome.users u ON p.creator_id = u.id
             {self._CATALOG_VERSION_LATERAL}
             {self._CATALOG_CONVERSION_LATERAL}
-            WHERE p.tenant_id = %s AND p.publishable = false {deleted_filter}
+            {self._CATALOG_IDENTITY_JOIN}
+            WHERE p.tenant_id = %s AND p.publishable = false {deleted_filter} {identity_filter}
             {order_clause}
         """
-        return self.execute_query(query, (tenant_id,))
+        params: tuple[Any, ...] = (tenant_id,)
+        if identity_group_id:
+            params = (tenant_id, identity_group_id)
+        return self.execute_query(query, params)
 
     def get_catalog_item_by_id(
         self, item_id: str, tenant_id: str, *, include_deleted: bool = False
@@ -2220,11 +2241,13 @@ class Database:
                    u.name as creator_name, u.email as creator_email,
                    cv.quality_score, cv.quality_grade,
                    cv.source_format, cv.protocol, cv.format_metadata, cv.tool_versions,
+                   aim.group_id::text AS identity_group_id,
                    {self._CATALOG_CONVERSION_COLUMNS}
             FROM apiome.projects p
             LEFT JOIN apiome.users u ON p.creator_id = u.id
             {self._CATALOG_VERSION_LATERAL}
             {self._CATALOG_CONVERSION_LATERAL}
+            {self._CATALOG_IDENTITY_JOIN}
             WHERE p.id = %s AND p.tenant_id = %s AND p.publishable = false {deleted_clause}
         """
         results = self.execute_query(query, (item_id, tenant_id))
@@ -7034,6 +7057,320 @@ class Database:
             ORDER BY created_at DESC
         """
         return self.execute_query(query, (tenant_id, target_project_id))
+
+    # -----------------------------------------------------------------------
+    # Cross-format API identity (api_identity_groups / api_identity_members, V140, MFI-6.4)
+    # -----------------------------------------------------------------------
+
+    _IDENTITY_MEMBER_COLUMNS = (
+        "m.id, m.tenant_id, m.group_id, m.project_id, m.link_source, m.created_by, m.created_at"
+    )
+
+    def get_identity_group_id_for_project(
+        self, tenant_id: str, project_id: str
+    ) -> Optional[str]:
+        """Return the identity group id for ``project_id``, or ``None`` when ungrouped."""
+        query = """
+            SELECT group_id::text AS group_id
+            FROM apiome.api_identity_members
+            WHERE tenant_id = %s AND project_id = %s
+            LIMIT 1
+        """
+        rows = self.execute_query(query, (tenant_id, project_id))
+        return str(rows[0]["group_id"]) if rows else None
+
+    def get_related_artifact_rows(
+        self, tenant_id: str, project_id: str
+    ) -> List[Dict[str, Any]]:
+        """Return sibling members of ``project_id``'s identity group (excluding ``project_id``)."""
+        query = """
+            SELECT p.id::text AS project_id, p.name, p.slug, p.publishable,
+                   p.deleted_at IS NOT NULL AS deleted,
+                   cv.source_format, cv.protocol, m.link_source
+            FROM apiome.api_identity_members anchor
+            JOIN apiome.api_identity_members m
+              ON m.tenant_id = anchor.tenant_id AND m.group_id = anchor.group_id
+            JOIN apiome.projects p ON p.id = m.project_id
+            LEFT JOIN LATERAL (
+                SELECT v.source_format, v.protocol
+                FROM apiome.versions v
+                WHERE v.project_id = p.id AND v.deleted_at IS NULL
+                ORDER BY v.created_at DESC NULLS LAST, v.id DESC
+                LIMIT 1
+            ) cv ON TRUE
+            WHERE anchor.tenant_id = %s AND anchor.project_id = %s
+              AND m.project_id <> %s
+            ORDER BY p.name ASC, p.id ASC
+        """
+        return self.execute_query(query, (tenant_id, project_id, project_id))
+
+    def _create_identity_group(
+        self, tenant_id: str, created_by: Optional[str]
+    ) -> str:
+        query = """
+            INSERT INTO apiome.api_identity_groups (tenant_id, created_by)
+            VALUES (%s, %s)
+            RETURNING id::text AS id
+        """
+        rows = self.execute_query(query, (tenant_id, created_by))
+        return str(rows[0]["id"])
+
+    def _add_identity_member(
+        self,
+        *,
+        tenant_id: str,
+        group_id: str,
+        project_id: str,
+        created_by: Optional[str],
+        link_source: str,
+    ) -> None:
+        query = """
+            INSERT INTO apiome.api_identity_members
+                (tenant_id, group_id, project_id, link_source, created_by)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (tenant_id, project_id) DO NOTHING
+        """
+        self.execute_query(
+            query, (tenant_id, group_id, project_id, link_source, created_by)
+        )
+
+    def _merge_identity_groups(
+        self, tenant_id: str, keep_group_id: str, drop_group_id: str
+    ) -> None:
+        query = """
+            UPDATE apiome.api_identity_members
+            SET group_id = %s
+            WHERE tenant_id = %s AND group_id = %s
+        """
+        self.execute_query(query, (keep_group_id, tenant_id, drop_group_id))
+        self.execute_query(
+            "DELETE FROM apiome.api_identity_groups WHERE id = %s AND tenant_id = %s",
+            (drop_group_id, tenant_id),
+        )
+
+    def _dissolve_identity_group_if_small(
+        self, tenant_id: str, group_id: str
+    ) -> None:
+        count_query = """
+            SELECT COUNT(*)::int AS cnt
+            FROM apiome.api_identity_members
+            WHERE tenant_id = %s AND group_id = %s
+        """
+        rows = self.execute_query(count_query, (tenant_id, group_id))
+        if rows and int(rows[0]["cnt"]) < 2:
+            self.execute_query(
+                "DELETE FROM apiome.api_identity_members WHERE tenant_id = %s AND group_id = %s",
+                (tenant_id, group_id),
+            )
+            self.execute_query(
+                "DELETE FROM apiome.api_identity_groups WHERE id = %s AND tenant_id = %s",
+                (group_id, tenant_id),
+            )
+
+    def link_identity_projects(
+        self,
+        *,
+        tenant_id: str,
+        project_id_a: str,
+        project_id_b: str,
+        created_by: Optional[str],
+        link_source: str = "manual",
+    ) -> Optional[str]:
+        """Link two projects into the same identity group; return the resulting group id."""
+        if project_id_a == project_id_b:
+            raise ValueError("Cannot link a project to itself")
+
+        for pid in (project_id_a, project_id_b):
+            if not self.get_project_by_id(pid, tenant_id):
+                raise ValueError(f"Project not found: {pid}")
+
+        group_a = self.get_identity_group_id_for_project(tenant_id, project_id_a)
+        group_b = self.get_identity_group_id_for_project(tenant_id, project_id_b)
+
+        if group_a and group_b:
+            if group_a == group_b:
+                return group_a
+            self._merge_identity_groups(tenant_id, group_a, group_b)
+            return group_a
+
+        if group_a:
+            self._add_identity_member(
+                tenant_id=tenant_id,
+                group_id=group_a,
+                project_id=project_id_b,
+                created_by=created_by,
+                link_source=link_source,
+            )
+            return group_a
+
+        if group_b:
+            self._add_identity_member(
+                tenant_id=tenant_id,
+                group_id=group_b,
+                project_id=project_id_a,
+                created_by=created_by,
+                link_source=link_source,
+            )
+            return group_b
+
+        group_id = self._create_identity_group(tenant_id, created_by)
+        for pid in (project_id_a, project_id_b):
+            self._add_identity_member(
+                tenant_id=tenant_id,
+                group_id=group_id,
+                project_id=pid,
+                created_by=created_by,
+                link_source=link_source,
+            )
+        return group_id
+
+    def unlink_identity_projects(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        related_project_id: str,
+    ) -> None:
+        """Remove ``related_project_id`` from the shared identity group when both are members."""
+        group_id = self.get_identity_group_id_for_project(tenant_id, project_id)
+        related_group = self.get_identity_group_id_for_project(
+            tenant_id, related_project_id
+        )
+        if not group_id or group_id != related_group:
+            return
+
+        self.execute_query(
+            """
+            DELETE FROM apiome.api_identity_members
+            WHERE tenant_id = %s AND group_id = %s AND project_id = %s
+            """,
+            (tenant_id, group_id, related_project_id),
+        )
+        self._dissolve_identity_group_if_small(tenant_id, group_id)
+
+    def seed_identity_from_conversion_provenance(self, tenant_id: str) -> int:
+        """Back-fill identity links from existing conversion provenance rows; return rows seeded."""
+        query = """
+            SELECT DISTINCT ON (cp.source_project_id, cp.target_project_id)
+                   cp.source_project_id::text AS source_project_id,
+                   cp.target_project_id::text AS target_project_id
+            FROM apiome.conversion_provenance cp
+            WHERE cp.tenant_id = %s
+              AND cp.source_project_id IS NOT NULL
+            ORDER BY cp.source_project_id, cp.target_project_id, cp.created_at DESC
+        """
+        rows = self.execute_query(query, (tenant_id,))
+        seeded = 0
+        for row in rows:
+            source_id = row.get("source_project_id")
+            target_id = row.get("target_project_id")
+            if not source_id or not target_id:
+                continue
+            before_a = self.get_identity_group_id_for_project(tenant_id, source_id)
+            before_b = self.get_identity_group_id_for_project(tenant_id, target_id)
+            self.link_identity_projects(
+                tenant_id=tenant_id,
+                project_id_a=source_id,
+                project_id_b=target_id,
+                created_by=None,
+                link_source="conversion",
+            )
+            after_a = self.get_identity_group_id_for_project(tenant_id, source_id)
+            after_b = self.get_identity_group_id_for_project(tenant_id, target_id)
+            if (not before_a and after_a) or (not before_b and after_b):
+                seeded += 1
+        return seeded
+
+    def get_project_identity_profile(
+        self, tenant_id: str, project_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Latest format/identity coordinates for one project (MFI-6.4 suggestions anchor)."""
+        query = """
+            SELECT p.id::text AS project_id, p.name, p.slug, p.publishable,
+                   cv.source_format, cv.protocol, cv.format_metadata,
+                   aa.identity_name, aa.identity_namespace
+            FROM apiome.projects p
+            LEFT JOIN LATERAL (
+                SELECT v.source_format, v.protocol, v.format_metadata
+                FROM apiome.versions v
+                WHERE v.project_id = p.id AND v.deleted_at IS NULL
+                ORDER BY v.created_at DESC NULLS LAST, v.id DESC
+                LIMIT 1
+            ) cv ON TRUE
+            LEFT JOIN LATERAL (
+                SELECT a.identity_name, a.identity_namespace
+                FROM apiome.api_artifacts a
+                JOIN apiome.versions v ON v.id = a.version_id
+                WHERE v.project_id = p.id AND v.deleted_at IS NULL
+                ORDER BY v.created_at DESC NULLS LAST, v.id DESC
+                LIMIT 1
+            ) aa ON TRUE
+            WHERE p.tenant_id = %s AND p.id = %s::uuid
+            LIMIT 1
+        """
+        rows = self.execute_query(query, (tenant_id, project_id))
+        return rows[0] if rows else None
+
+    def get_identity_suggestion_candidates(
+        self, tenant_id: str, project_id: str, *, limit: int = 20
+    ) -> List[Dict[str, Any]]:
+        """Return tenant projects that are not already grouped with ``project_id``."""
+        query = """
+            SELECT p.id::text AS project_id, p.name, p.slug, p.publishable,
+                   cv.source_format, cv.protocol, cv.format_metadata,
+                   aa.identity_name, aa.identity_namespace
+            FROM apiome.projects p
+            LEFT JOIN LATERAL (
+                SELECT v.source_format, v.protocol, v.format_metadata
+                FROM apiome.versions v
+                WHERE v.project_id = p.id AND v.deleted_at IS NULL
+                ORDER BY v.created_at DESC NULLS LAST, v.id DESC
+                LIMIT 1
+            ) cv ON TRUE
+            LEFT JOIN LATERAL (
+                SELECT a.identity_name, a.identity_namespace
+                FROM apiome.api_artifacts a
+                JOIN apiome.versions v ON v.id = a.version_id
+                WHERE v.project_id = p.id AND v.deleted_at IS NULL
+                ORDER BY v.created_at DESC NULLS LAST, v.id DESC
+                LIMIT 1
+            ) aa ON TRUE
+            WHERE p.tenant_id = %s
+              AND p.deleted_at IS NULL
+              AND p.id <> %s::uuid
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM apiome.api_identity_members anchor
+                  JOIN apiome.api_identity_members peer
+                    ON peer.tenant_id = anchor.tenant_id
+                   AND peer.group_id = anchor.group_id
+                   AND peer.project_id = p.id
+                  WHERE anchor.tenant_id = %s
+                    AND anchor.project_id = %s::uuid
+              )
+            ORDER BY p.updated_at DESC NULLS LAST, p.created_at DESC
+            LIMIT %s
+        """
+        return self.execute_query(
+            query, (tenant_id, project_id, tenant_id, project_id, limit)
+        )
+
+    def get_operation_keys_for_project(
+        self, tenant_id: str, project_id: str
+    ) -> List[str]:
+        """Distinct canonical operation keys for the project's latest revision."""
+        query = """
+            SELECT DISTINCT o.key
+            FROM apiome.api_operations o
+            JOIN apiome.api_services s ON s.id = o.service_id
+            JOIN apiome.api_artifacts a ON a.id = s.artifact_id
+            JOIN apiome.versions v ON v.id = a.version_id
+            JOIN apiome.projects p ON p.id = v.project_id
+            WHERE p.tenant_id = %s AND p.id = %s::uuid
+              AND v.deleted_at IS NULL AND o.key IS NOT NULL
+        """
+        rows = self.execute_query(query, (tenant_id, project_id))
+        return [str(r["key"]) for r in rows if r.get("key")]
 
     def create_version_push_transaction(
         self,

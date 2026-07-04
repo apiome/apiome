@@ -21,6 +21,8 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
+import app.database as database
+
 from app.canonical_model import (
     ApiIdentity,
     ApiParadigm,
@@ -61,6 +63,16 @@ from app.fidelity import FidelityReport, FidelityTier
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def _stub_identity_auto_link(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Conversion auto-link (MFI-6.4) is DB-backed; stub it so orchestrator tests stay port-only."""
+    monkeypatch.setattr(
+        database.db,
+        "link_identity_projects",
+        lambda **kwargs: "identity-group-stub",
+    )
 
 
 def _record(key: str, name: str) -> Type:

@@ -1263,6 +1263,11 @@ class ProjectSchema(BaseModel):
     # Project-vs-Catalog boundary (MFI-23.1): true for publishable OpenAPI/Swagger Projects,
     # false for non-publishable catalog items. Existing projects default to publishable.
     publishable: bool = True
+    # Cross-format identity group (MFI-6.4, #4410).
+    identity_group_id: Optional[str] = Field(None, serialization_alias="identityGroupId")
+    related_artifacts: List["RelatedArtifactRef"] = Field(
+        default_factory=list, serialization_alias="relatedArtifacts"
+    )
     creator_name: Optional[str] = None
     creator_email: Optional[str] = None
     created_at: Optional[Union[datetime, str]] = None
@@ -1320,6 +1325,68 @@ class CatalogConversionRef(BaseModel):
         from_attributes = True
 
 
+class RelatedArtifactRef(BaseModel):
+    """One related artifact in a cross-format API identity group (MFI-6.4, #4410).
+
+    Projects linked manually or via conversion provenance share an ``api_identity`` group; each member
+    carries enough catalog/project metadata for the Related artifacts panel (format pills, name, link
+    target) without a second round-trip.
+    """
+
+    project_id: str = Field(serialization_alias="projectId")
+    name: str
+    slug: str
+    publishable: bool = False
+    source_format: Optional[str] = Field(None, serialization_alias="sourceFormat")
+    protocol: Optional[str] = None
+    link_source: str = Field("manual", serialization_alias="linkSource")
+    deleted: bool = False
+
+    class Config:
+        from_attributes = True
+
+
+class IdentitySuggestionRef(BaseModel):
+    """A heuristic suggestion to link two artifacts (MFI-6.4, #4410).
+
+    Suggestions are never auto-applied — the user must confirm a link action.
+    """
+
+    project_id: str = Field(serialization_alias="projectId")
+    name: str
+    slug: str
+    publishable: bool = False
+    source_format: Optional[str] = Field(None, serialization_alias="sourceFormat")
+    protocol: Optional[str] = None
+    reason: str
+    score: int = Field(description="Relative ranking score (higher = stronger match).")
+
+    class Config:
+        from_attributes = True
+
+
+class LinkArtifactsRequest(BaseModel):
+    """Link two projects into the same cross-format API identity group."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    project_id: str = Field(validation_alias=AliasChoices("projectId", "project_id"))
+    related_project_id: str = Field(
+        validation_alias=AliasChoices("relatedProjectId", "related_project_id")
+    )
+
+
+class UnlinkArtifactsRequest(BaseModel):
+    """Remove one project from a shared identity group (pairwise unlink)."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    project_id: str = Field(validation_alias=AliasChoices("projectId", "project_id"))
+    related_project_id: str = Field(
+        validation_alias=AliasChoices("relatedProjectId", "related_project_id")
+    )
+
+
 class CatalogItemSchema(BaseModel):
     """A catalog item (MFI-23.1): an OpenAPI-worthy non-OpenAPI import that is *not* a publishable
     Project.
@@ -1359,6 +1426,11 @@ class CatalogItemSchema(BaseModel):
     # The convert-to-OpenAPI back-link (MFI-23.11): present once the item has been converted into a
     # publishable Project, so the card/detail can show "Converted → {project}". None until converted.
     conversion: Optional[CatalogConversionRef] = None
+    # Cross-format identity group (MFI-6.4, #4410): present when this artifact is linked to others.
+    identity_group_id: Optional[str] = Field(None, serialization_alias="identityGroupId")
+    related_artifacts: List["RelatedArtifactRef"] = Field(
+        default_factory=list, serialization_alias="relatedArtifacts"
+    )
 
     class Config:
         from_attributes = True

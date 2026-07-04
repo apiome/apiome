@@ -445,6 +445,20 @@ async def run_conversion(
         reconverted=reconverted,
     )
 
+    # 6. Auto-link source catalog item ↔ converted publishable Project (MFI-6.4, #4410).
+    from .database import db as _db
+
+    try:
+        _db.link_identity_projects(
+            tenant_id=tenant_id,
+            project_id_a=source.source_project_id,
+            project_id_b=commit.project_id,
+            created_by=user_id,
+            link_source="conversion",
+        )
+    except ValueError:
+        pass  # source project missing — provenance row still valid
+
     return ConversionResult(
         project_id=commit.project_id,
         project_slug=commit.project_slug,

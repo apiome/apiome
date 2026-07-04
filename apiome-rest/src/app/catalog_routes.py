@@ -28,6 +28,7 @@ from .catalog_detail import (
     resolve_source_payload,
 )
 from .catalog_parsed_model import derive_catalog_parsed_model
+from .api_identity_service import build_related_artifact_refs
 from .conversion_job import (
     ConversionDefaults,
     ConversionError,
@@ -78,12 +79,24 @@ def _build_conversion_ref(item: Dict[str, Any]) -> Optional[CatalogConversionRef
     )
 
 
+def _build_related_artifacts(
+    tenant_id: str, project_id: str
+) -> list:
+    rows = db.get_related_artifact_rows(tenant_id, project_id)
+    return build_related_artifact_refs(rows)
+
+
 @router.get("/{tenant_slug}")
 async def list_catalog_items(
     tenant_slug: str,
     include_deleted: bool = Query(
         False,
         description="When true, include soft-deleted catalog items (active items listed first).",
+    ),
+    identity_group_id: Optional[str] = Query(
+        None,
+        alias="identityGroupId",
+        description="When set, return only catalog items in this cross-format identity group (MFI-6.4).",
     ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[CatalogItemSchema]:
@@ -107,11 +120,18 @@ async def list_catalog_items(
         List of catalog items for the tenant (active first when include_deleted is set).
     """
     items = db.get_catalog_items_for_tenant(
-        auth_data['tenant_id'], include_deleted=include_deleted
+        auth_data['tenant_id'],
+        include_deleted=include_deleted,
+        identity_group_id=identity_group_id,
     )
 
+    tenant_id = auth_data["tenant_id"]
     return [
-        CatalogItemSchema(**item, conversion=_build_conversion_ref(item)) for item in items
+        CatalogItemSchema(
+            **item,
+            conversion=_build_conversion_ref(item),
+        )
+        for item in items
     ]
 
 
@@ -152,10 +172,12 @@ async def get_catalog_item(
     summary = derive_catalog_summary(item.get("format_metadata"))
     source = derive_catalog_source(item.get("format_metadata"), item.get("metadata"))
     parsed = derive_catalog_parsed_model(item)
+    tenant_id = auth_data["tenant_id"]
 
     return CatalogItemDetailSchema(
         **item,
         conversion=_build_conversion_ref(item),
+        related_artifacts=_build_related_artifacts(tenant_id, item_id),
         summary=CatalogNormalizedSummary(**summary),
         source=CatalogSourceDescriptor(**source),
         parsed=parsed,

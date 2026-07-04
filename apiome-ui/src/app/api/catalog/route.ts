@@ -118,7 +118,11 @@ export async function GET(request: NextRequest) {
     const includeDeletedParam = request.nextUrl.searchParams.get('include_deleted');
     const includeDeleted =
       includeDeletedParam === 'true' || includeDeletedParam === '1';
-    const querySuffix = includeDeleted ? '?include_deleted=true' : '';
+    const identityGroupId = request.nextUrl.searchParams.get('identityGroupId');
+    const params = new URLSearchParams();
+    if (includeDeleted) params.set('include_deleted', 'true');
+    if (identityGroupId) params.set('identityGroupId', identityGroupId);
+    const querySuffix = params.toString() ? `?${params.toString()}` : '';
 
     // Build REST API URL
     const url = `${REST_API_BASE_URL}/catalog/${tenantSlug}${querySuffix}`;

@@ -30,8 +30,9 @@ describe('data wiring', () => {
     expect(src).toContain('data.catalog');
   });
 
-  it('forwards include_deleted for trash/restore parity', () => {
-    expect(src).toContain("showDeleted ? '?include_deleted=true' : ''");
+  it('forwards include_deleted and identityGroupId query params', () => {
+    expect(src).toContain("if (showDeleted) params.set('include_deleted', 'true')");
+    expect(src).toContain("if (identityGroupFilter) params.set('identityGroupId', identityGroupFilter)");
   });
 
   it('does not create or edit items (catalog is read-only here)', () => {
