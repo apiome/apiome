@@ -19,11 +19,14 @@ prompt the user instead of guessing.
 
 from __future__ import annotations
 
+import base64
+import binascii
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from .archive_intake import ArchiveIntakeError, detect_archive_format, is_archive_payload
 from .auth import validate_session_credentials
 from .format_detection import FormatCandidate, FormatDetection, detect_format
 from .import_source import (
@@ -82,6 +85,18 @@ class DetectFormatRequest(BaseModel):
         default=None, description="Optional MIME type hint."
     )
     url: Optional[str] = Field(default=None, description="Optional source URL hint.")
+    document_base64: Optional[str] = Field(
+        default=None,
+        description=(
+            "Standard base64 of an uploaded archive (.zip / .tar.gz) for multi-file intake "
+            "(MFI-29.1). When present and the payload is an archive, the root document is "
+            "auto-detected (or chosen via ``archive_root``)."
+        ),
+    )
+    archive_root: Optional[str] = Field(
+        default=None,
+        description="Explicit module-relative root path inside an uploaded archive.",
+    )
 
 
 class FormatCandidateModel(BaseModel):
@@ -126,6 +141,14 @@ class DetectFormatResponse(BaseModel):
         default_factory=list,
         description="The close cluster to choose between when ambiguous; empty otherwise.",
     )
+    archive_root: Optional[str] = Field(
+        default=None,
+        description="When the request carried an archive, the chosen root member path.",
+    )
+    archive_members: List[str] = Field(
+        default_factory=list,
+        description="Sorted member paths when an archive was unpacked for detection.",
+    )
 
     @classmethod
     def from_detection(cls, detection: FormatDetection) -> "DetectFormatResponse":
@@ -168,6 +191,32 @@ async def detect_import_format(
     # ``{tenant_slug}`` path segment, the tenant-scoped dependency would make
     # ``tenant_slug`` a required query parameter and 422 every real call.
     _ = auth_data
+
+    if body.document_base64:
+        try:
+            raw = base64.standard_b64decode(body.document_base64)
+        except (binascii.Error, ValueError) as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=f"document_base64 is not valid base64: {exc}",
+            ) from exc
+        if is_archive_payload(raw, body.filename):
+            try:
+                unpacked = detect_archive_format(
+                    raw,
+                    filename=body.filename,
+                    root_path=body.archive_root,
+                )
+            except ArchiveIntakeError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+            base = DetectFormatResponse.from_detection(unpacked.detection)
+            return base.model_copy(
+                update={
+                    "archive_root": unpacked.root_path,
+                    "archive_members": sorted(unpacked.members.keys()),
+                }
+            )
+
     detection = detect_format(
         DetectionInput(
             text=body.text,

@@ -58,9 +58,12 @@ import binascii
 import json
 import logging
 import time
+from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
+from .archive_intake import ArchiveIntakeError, is_archive_payload, unpack_archive
 from .canonical_model import CanonicalApi
+from .fileset import IntakeFileset
 from .import_routing import ImportRoutingDecision, ImportTarget, decide_import_routing
 from .import_source import ImportSource, ImportSourceError, LintReport
 from .models import (
@@ -160,8 +163,8 @@ class _AdapterRunState:
         )
 
 
-def _decode_document(payload: Dict[str, Any]) -> str:
-    """Decode the base64 worker payload into source text.
+def _decode_document_bytes(payload: Dict[str, Any]) -> bytes:
+    """Decode the base64 worker payload into raw bytes.
 
     Raises:
         ImportSourceError: If ``document_base64`` is missing or not valid base64.
@@ -170,12 +173,81 @@ def _decode_document(payload: Dict[str, Any]) -> str:
     if not isinstance(b64, str) or not b64:
         raise ImportSourceError("Import payload is missing document_base64 content")
     try:
-        raw_bytes = base64.standard_b64decode(b64)
+        return base64.standard_b64decode(b64)
     except (binascii.Error, ValueError) as exc:
         raise ImportSourceError(f"document_base64 is not valid base64: {exc}") from exc
+
+
+def _decode_document(payload: Dict[str, Any]) -> str:
+    """Decode the base64 worker payload into source text.
+
+    Raises:
+        ImportSourceError: If ``document_base64`` is missing or not valid base64.
+    """
+    raw_bytes = _decode_document_bytes(payload)
     # Decode permissively: a per-format adapter's parse() is responsible for rejecting
     # genuinely malformed text; we should not fail the whole job on a stray byte.
     return raw_bytes.decode("utf-8", errors="replace")
+
+
+@dataclass(frozen=True)
+class _ResolvedIntake:
+    """Either a single text document or an unpacked archive fileset."""
+
+    raw_bytes: bytes
+    text: Optional[str]
+    fileset: Optional[IntakeFileset]
+    archive_root: Optional[str]
+
+
+def _resolve_intake(payload: Dict[str, Any], options: Dict[str, Any]) -> _ResolvedIntake:
+    """Classify the payload as a single file or an archive fileset."""
+    raw_bytes = _decode_document_bytes(payload)
+    source_label = payload.get("filename")
+    archive_root = options.get("archive_root") if isinstance(options, dict) else None
+    if isinstance(archive_root, str):
+        archive_root = archive_root.strip() or None
+    else:
+        archive_root = None
+
+    if not is_archive_payload(raw_bytes, source_label if isinstance(source_label, str) else None):
+        return _ResolvedIntake(
+            raw_bytes=raw_bytes,
+            text=raw_bytes.decode("utf-8", errors="replace"),
+            fileset=None,
+            archive_root=None,
+        )
+
+    try:
+        unpacked = unpack_archive(
+            raw_bytes,
+            source_label=source_label if isinstance(source_label, str) else None,
+            root_path=archive_root,
+        )
+    except ArchiveIntakeError as exc:
+        raise ImportSourceError(str(exc)) from exc
+
+    fileset = IntakeFileset.from_members(unpacked.members, root=unpacked.root_path)
+    return _ResolvedIntake(
+        raw_bytes=raw_bytes,
+        text=None,
+        fileset=fileset,
+        archive_root=unpacked.root_path,
+    )
+
+
+def _source_content_for_persist(intake: _ResolvedIntake) -> Dict[str, Any]:
+    """Build format_metadata source fields preserving the original upload verbatim."""
+    if intake.fileset is not None:
+        return {
+            "sourceContent": base64.standard_b64encode(intake.raw_bytes).decode("ascii"),
+            "sourceEncoding": "base64",
+            "intakeKind": "archive",
+            "filesetRoot": intake.fileset.root,
+            "filesetMembers": sorted(intake.fileset.members.keys()),
+        }
+    assert intake.text is not None
+    return {"sourceContent": intake.text, "intakeKind": "file"}
 
 
 def capture_canonical_quality_score(
@@ -227,7 +299,7 @@ def capture_canonical_quality_score(
 def persist_adapter_import(
     payload: Dict[str, Any],
     model: CanonicalApi,
-    raw_text: str,
+    intake: _ResolvedIntake,
     routing: ImportRoutingDecision,
 ) -> Optional[SpecImportJobResult]:
     """Persist a non-dry-run adapter import as its routed artifact (canonical→catalog hook, MFI-23.7).
@@ -248,7 +320,7 @@ def persist_adapter_import(
     Args:
         payload: The worker payload (``tenant_id`` / ``user_id`` / ``metadata`` / ``filename``).
         model: The normalized canonical model (its ``format`` / ``paradigm`` label the revision).
-        raw_text: The decoded original source, stored verbatim for later conversion.
+        intake: The resolved upload (single file or archive fileset), stored verbatim.
         routing: The Project-vs-Catalog decision; ``routing.publishable`` sets the created row.
 
     Returns:
@@ -299,10 +371,10 @@ def persist_adapter_import(
     # can link/redirect back to it.
     input_kind = options.get("input_kind") if isinstance(options, dict) else None
     format_metadata: Dict[str, Any] = {
-        "sourceContent": raw_text,
         "sourceLabel": source_label,
         "inputKind": input_kind or "file",
     }
+    format_metadata.update(_source_content_for_persist(intake))
     if input_kind == "url" and source_label:
         format_metadata["sourceUri"] = source_label
     db.set_version_source_format(
@@ -377,7 +449,7 @@ def _extract_schema_definitions(document: Dict[str, Any]) -> Dict[str, Any]:
 def persist_types_as_current(
     payload: Dict[str, Any],
     model: CanonicalApi,
-    raw_text: str,
+    intake: _ResolvedIntake,
     routing: ImportRoutingDecision,
 ) -> Optional[Dict[str, Any]]:
     """Persist a JSON Schema import **as current** into the type registry (MFI-26.8).
@@ -396,7 +468,7 @@ def persist_types_as_current(
     Args:
         payload: The worker payload (``tenant_slug`` / ``tenant_id`` / ``user_id`` / ``metadata``).
         model: The normalized canonical model; its verbatim ``raw`` source is the schema imported.
-        raw_text: The decoded original source, parsed as a fallback when ``model.raw`` is absent.
+        intake: The resolved upload; the root member text is parsed when ``model.raw`` is absent.
         routing: The routing decision (``target`` is :attr:`ImportTarget.TYPES`).
 
     Returns:
@@ -413,8 +485,11 @@ def persist_types_as_current(
     if isinstance(model.raw, dict):
         document = model.raw.get("source")
     if not isinstance(document, dict):
+        fallback_text = intake.text
+        if fallback_text is None and intake.fileset is not None:
+            fallback_text = intake.fileset.root_content()
         try:
-            document = json.loads(raw_text)
+            document = json.loads(fallback_text or "")
         except (ValueError, TypeError):
             document = None
     if not isinstance(document, dict):
@@ -558,8 +633,12 @@ async def run_adapter_import_job(
 
     # --- parse ----------------------------------------------------------------
     try:
-        raw_text = _decode_document(payload)
-        native_ast = adapter.parse(raw_text, source_label=source_label)
+        intake = _resolve_intake(payload, options if isinstance(options, dict) else {})
+        if intake.fileset is not None:
+            native_ast = adapter.parse_fileset(intake.fileset, source_label=source_label)
+        else:
+            assert intake.text is not None
+            native_ast = adapter.parse(intake.text, source_label=source_label)
     except ImportSourceError as exc:
         state.event("PARSE_ERROR", str(exc), level="error")
         return state.snapshot(state="failed", percent=_PCT_INIT)
@@ -637,11 +716,11 @@ async def run_adapter_import_job(
         try:
             if imports_as_types:
                 types_outcome = await asyncio.to_thread(
-                    persist_types_as_current, payload, model, raw_text, routing
+                    persist_types_as_current, payload, model, intake, routing
                 )
             else:
                 result = await asyncio.to_thread(
-                    persist_adapter_import, payload, model, raw_text, routing
+                    persist_adapter_import, payload, model, intake, routing
                 )
         except Exception as exc:  # noqa: BLE001 - surface a persistence fault as a failed job
             logger.exception("adapter import persistence failed job=%s", job_id)

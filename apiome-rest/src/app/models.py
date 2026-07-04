@@ -679,6 +679,14 @@ class SpecImportOptions(BaseModel):
             "other format always routes to the catalog, regardless of this value."
         ),
     )
+    archive_root: Optional[str] = Field(
+        None,
+        description=(
+            "When the uploaded document is a .zip/.tar.gz archive, the module-relative path of "
+            "the root document inside the archive (MFI-29.1). Required when auto-detection is "
+            "ambiguous; optional when a single root candidate is found."
+        ),
+    )
 
 
 # Current envelope version for a persisted repository import spec. Bumped by

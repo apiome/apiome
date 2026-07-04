@@ -1331,6 +1331,13 @@ def _build_generic_import_command(source_format: str) -> click.Command:
     @click.argument("source", required=False, metavar="INPUT")
     @click.option("--file", "file_path", default=None, metavar="PATH", help=_GENERIC_FILE_HELP)
     @click.option("--url", "url", default=None, metavar="URL", help=_GENERIC_URL_HELP)
+    @click.option(
+        "--root",
+        "archive_root",
+        default=None,
+        metavar="PATH",
+        help="Root document path inside a .zip/.tar.gz archive (MFI-29.1).",
+    )
     @click.option("--dry-run", "dry_run", is_flag=True, default=False, help=_GENERIC_DRY_RUN_HELP)
     @click.option(
         "--import-timeout",
@@ -1356,6 +1363,7 @@ def _build_generic_import_command(source_format: str) -> click.Command:
         source: str | None,
         file_path: str | None,
         url: str | None,
+        archive_root: str | None,
         dry_run: bool,
         import_timeout: float | None,
         wait: bool,
@@ -1367,6 +1375,7 @@ def _build_generic_import_command(source_format: str) -> click.Command:
             source=source,
             file_path=file_path,
             url=url,
+            archive_root=archive_root,
             dry_run=dry_run,
             import_timeout_override=import_timeout,
             wait=wait,
@@ -1411,6 +1420,7 @@ def _run_generic_adapter_import(
     source: str | None,
     file_path: str | None,
     url: str | None,
+    archive_root: str | None,
     dry_run: bool,
     import_timeout_override: float | None,
     wait: bool,
@@ -1454,6 +1464,7 @@ def _run_generic_adapter_import(
         source_format=source_format,
         source_label=source_label,
         dry_run=dry_run,
+        archive_root=archive_root,
     )
 
     tenant_slug = require_tenant_slug(settings, client)

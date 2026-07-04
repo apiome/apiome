@@ -84,6 +84,7 @@ def build_adapter_import_body(
     source_label: str | None,
     dry_run: bool,
     content_type: str | None = None,
+    archive_root: str | None = None,
 ) -> dict[str, Any]:
     """Build the ``SpecImportStartJsonRequest`` body for a generic adapter import.
 
@@ -106,12 +107,15 @@ def build_adapter_import_body(
         A JSON body for ``POST /v1/tenants/{tenant_slug}/imports``.
     """
     name = _project_name_from_label(source_label, source_format)
+    options: dict[str, Any] = {"dry_run": dry_run}
+    if archive_root:
+        options["archive_root"] = archive_root
     body: dict[str, Any] = {
         "metadata": {
             "source_kind": source_format,
             "project": {"name": name, "slug": slugify_project_name(name)},
             "version": {"version_id": "0.0.0"},
-            "options": {"dry_run": dry_run},
+            "options": options,
         },
         "document_base64": base64.b64encode(document_bytes).decode("ascii"),
     }

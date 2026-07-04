@@ -27,7 +27,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Import: Fixes linting problem in rare cases during import
 - Import: Corrects base ref and $ref external dereferencing
 - Import: Updating class creation step to increase speed using transactions and commits in groups
-- Import: Added the ability to add MCP servers for cataloging
+- Import: Catalog import dialog accepts `.zip`/`.tar.gz` archives for multi-file gRPC/GraphQL/AsyncAPI sources (MFI-29.1)
 - Projects: Now displays quality and linting information in each project
 - UI: Fixes Published Versions viewing of OpenAPI and Arazzo URLs
 - UI: Fixes Published Versions list so versions starting with a "v" don't duplicate and show "vv"
