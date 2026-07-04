@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Bug Fixes
 
+- Import: Arazzo workflow documents now import through the multi-format SPI with canonical model, lint, and step-level diff support
 - Browser: Updated to show MCP Catalog
 - Browser: Updated to show activity spinner when searching
 - Catalog: Implementation of the catalog to import API sources other than OpenAPI and Arazzo

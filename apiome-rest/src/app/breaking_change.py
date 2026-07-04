@@ -338,6 +338,9 @@ def load_format_breaking_change_classifiers() -> None:
     # ``buf breaking`` (WIRE / WIRE_JSON / PACKAGE / FILE strictness).
     from . import proto_breaking as _proto_breaking  # noqa: F401
 
+    # Arazzo breaking-change classifier (MFI-30.2): registers under ``arazzo``.
+    from . import arazzo_breaking_change as _arazzo_breaking  # noqa: F401
+
 
 def register_breaking_change_classifier(
     cls: type[BreakingChangeClassifier],

@@ -1454,7 +1454,6 @@ detection, publishability, and the EPIC-22 emitter.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 30.2 | Arazzo ImportSource adapter | workflows behind the SPI: canonical model + lint + diff | rest,python,mvp | Y | Y | M | apiome-rest |
 | 30.3 | OpenAPI 3.2 support | detect/normalize/publish OAS 3.2; emitter + validator awareness | rest,validation,mvp | Y | Y | M | apiome-rest,apiome-ui |
 | 30.4 | OpenAPI-family conformance fixtures | 2.0/3.0/3.1/3.2 + Arazzo round-trip matrix (import→canonical→emit) | rest,validation | Y | Y | S | apiome-rest |
 
@@ -1474,7 +1473,8 @@ detection, publishability, and the EPIC-22 emitter.
 - **Dependencies / Parallelism.** After 2.3. Parallel with 30.2/30.3.
 - **Technical Stack.** Python.
 
-### MFI-30.2 — Arazzo ImportSource adapter  ·  **#4395**
+### MFI-30.2 — Arazzo ImportSource adapter  ·  **#4395**  ·  ✅ **Done**
+- **Status.** Implemented in `apiome-rest/src/app/arazzo_import_source.py` (`ArazzoImportSource`, registered under `arazzo`), `arazzo_normalizer.py` (workflows→services/steps→operations, `sourceDescriptions` in root `extras`), `arazzo_lint.py` (dangling `operationId`, unused inputs, missing success criteria), and `arazzo_breaking_change.py` (step reorder graded via MFI-3.3). Tests in `tests/test_arazzo_import_source.py`. Auto-detection now reports Arazzo as `importable: true`. apiome-rest 1.75.3 → 1.75.4.
 - **Problem.** Arazzo (workflows) is sniffed by `format_detection` and routed to Projects, but has
   no adapter — it is invisible to the canonical model, lint packs, and compare-any-two diff.
 - **Solution / Scope.** An `ArazzoImportSource`: parse (JSON/YAML), normalize workflows/steps →
