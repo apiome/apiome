@@ -269,6 +269,9 @@ def load_format_rule_packs() -> None:
     # Protobuf lint pack (MFI-9.4): registers under ``protobuf``.
     from . import proto_lint as _proto_lint  # noqa: F401
 
+    # Arazzo lint pack (MFI-30.2): registers under ``arazzo``.
+    from . import arazzo_lint as _arazzo_lint  # noqa: F401
+
 
 # ===========================================================================
 # Cross-format hygiene helpers (shared by the common pack's rules)

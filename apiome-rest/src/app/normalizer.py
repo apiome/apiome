@@ -259,6 +259,15 @@ class Keys:
         return f"{root_type}.{field_name}"
 
     @staticmethod
+    def workflow_step(workflow_id: str, step_id: str) -> str:
+        """Arazzo workflow-step key, e.g. ``checkout#createCart``.
+
+        Each step in an Arazzo workflow is modeled as an operation under a service
+        named for the ``workflowId``; the step coordinate is ``{workflowId}#{stepId}``.
+        """
+        return f"{workflow_id}#{step_id}"
+
+    @staticmethod
     def graphql_argument(operation_key: str, name: str) -> str:
         """GraphQL field-argument key, e.g. ``Query.user#arg.id``.
 
