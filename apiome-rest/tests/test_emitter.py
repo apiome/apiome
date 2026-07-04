@@ -94,6 +94,13 @@ def test_sample_emitter_emit_is_noop() -> None:
     assert result.losses == []
 
 
+def test_describe_emit_targets_carries_options_metadata() -> None:
+    load_builtin_emitters()
+    openapi = next(t for t in describe_emit_targets() if t.descriptor.key == "openapi")
+    assert "include_paths" in openapi.options_schema["properties"]
+    assert openapi.default_options["include_paths"] is True
+
+
 def test_register_rejects_empty_format() -> None:
     class NoFormatEmitter(Emitter):
         paradigm = ApiParadigm.REST

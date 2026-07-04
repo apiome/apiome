@@ -16,14 +16,16 @@ now flows through :func:`emit_canonical` so additional targets (AsyncAPI, GraphQ
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Dict, Optional, Union
 
 from .canonical_model import CanonicalApi
 from .emitter import (
     EmitOptions,
+    EmitOptionsError,
     EmitResult,
     Emitter,
     available_emit_formats,
+    coerce_emit_options,
     describe_emit_targets,
     get_emitter,
     load_builtin_emitters,
@@ -33,6 +35,7 @@ __all__ = [
     "ExportError",
     "resolve_emit_format",
     "resolve_emitter",
+    "resolve_emit_options",
     "emit_canonical",
 ]
 
@@ -110,23 +113,66 @@ def resolve_emitter(target: str) -> Emitter:
     return emitter_cls()
 
 
+def resolve_emit_options(
+    target: str,
+    raw: Optional[Dict[str, Any]] = None,
+) -> EmitOptions:
+    """Validate per-target emit options for ``target`` (MFX-1.4).
+
+    Args:
+        target: Emitter key or format key.
+        raw: Caller-supplied option values (``None`` or ``{}`` → defaults).
+
+    Returns:
+        Validated options for the resolved emitter.
+
+    Raises:
+        ExportError: When ``target`` is unknown or options fail validation.
+    """
+    emitter_cls = type(resolve_emitter(target))
+    try:
+        return coerce_emit_options(emitter_cls, raw)
+    except EmitOptionsError as exc:
+        raise ExportError(str(exc), status_code=exc.status_code) from exc
+
+
+def _normalize_opts(
+    emitter_cls: type[Emitter],
+    opts: Optional[Union[EmitOptions, Dict[str, Any]]],
+) -> EmitOptions:
+    """Coerce ``opts`` to a validated options instance for ``emitter_cls``."""
+    if opts is None:
+        return emitter_cls.default_options()
+    if isinstance(opts, EmitOptions):
+        if not isinstance(opts, emitter_cls.options_model):
+            return emitter_cls.options_model.model_validate(opts.model_dump())
+        return opts
+    try:
+        return coerce_emit_options(emitter_cls, opts)
+    except EmitOptionsError as exc:
+        raise ExportError(str(exc), status_code=exc.status_code) from exc
+
+
 def emit_canonical(
     api: CanonicalApi,
     target: str,
     *,
-    opts: Optional[EmitOptions] = None,
+    opts: Optional[Union[EmitOptions, Dict[str, Any]]] = None,
 ) -> EmitResult:
     """Emit ``api`` through the registered emitter for ``target``.
 
     Args:
         api: Canonical model to export.
         target: Emitter key or format key.
-        opts: Optional per-target emit options.
+        opts: Optional per-target emit options — a validated :class:`EmitOptions`
+            instance or a raw ``dict`` validated against the target's schema.
 
     Returns:
         The emitter's :class:`~app.emitter.EmitResult`.
 
     Raises:
-        ExportError: When ``target`` does not resolve to a registered emitter.
+        ExportError: When ``target`` does not resolve or options fail validation.
     """
-    return resolve_emitter(target).emit(api, opts=opts)
+    emitter = resolve_emitter(target)
+    options = _normalize_opts(type(emitter), opts)
+    return emitter.emit(api, opts=options)

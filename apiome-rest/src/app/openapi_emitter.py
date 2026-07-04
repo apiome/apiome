@@ -50,7 +50,9 @@ key so :func:`app.emitter.get_emitter` resolves it.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
+from pydantic import Field
 
 from .canonical_model import (
     ApiParadigm,
@@ -76,7 +78,7 @@ from .emitter import (
 )
 from .projection import ProjectionStrategy, RouteBinding, get_projection
 
-__all__ = ["OpenApiEmitter"]
+__all__ = ["OpenApiEmitOptions", "OpenApiEmitter"]
 
 # OpenAPI 3.1 path-item methods the emitter can emit natively. OpenAPI 3.2-only
 # methods (QUERY, additionalOperations) are stashed on vendor extensions instead.
@@ -91,6 +93,26 @@ X_ADDITIONAL_OPERATIONS = "x-apiome-additional-operations"
 # Extracts the identifier-safe tokens of a path/key when synthesizing an
 # ``operationId`` (drops slashes, dots, and ``{param}`` braces).
 _ID_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
+
+
+class OpenApiEmitOptions(EmitOptions):
+    """Per-target options for :class:`OpenApiEmitter` (MFX-1.4)."""
+
+    include_paths: bool = Field(
+        default=True,
+        description="Emit HTTP path operations. Disable for a components-only export.",
+    )
+    include_components: bool = Field(
+        default=True,
+        description="Emit ``components/schemas``. Disable for an operations-only export.",
+    )
+    include_projection_extensions: bool = Field(
+        default=True,
+        description=(
+            "Include paradigm-projection ``x-`` vendor extensions "
+            "(e.g. low-fidelity caveats for event/RPC sources)."
+        ),
+    )
 
 
 class OpenApiEmitter(Emitter, register=True):
@@ -108,6 +130,7 @@ class OpenApiEmitter(Emitter, register=True):
     icon = "file-json"
     paradigm = ApiParadigm.REST
     multi_file = False
+    options_model = OpenApiEmitOptions
 
     #: The OpenAPI version string this emitter targets.
     OPENAPI_VERSION = "3.1.0"
@@ -140,20 +163,24 @@ class OpenApiEmitter(Emitter, register=True):
         self,
         api: CanonicalApi,
         *,
-        opts: Optional[EmitOptions] = None,
+        opts: Optional[Union[OpenApiEmitOptions, EmitOptions]] = None,
     ) -> EmitResult:
         """Emit ``api`` as an OpenAPI 3.1 document with per-construct provenance.
 
         Args:
             api: The canonical model to convert.
-            opts: Optional emit options (unused today; reserved for MFX-1.4).
+            opts: Optional emit options. Defaults apply when omitted.
 
         Returns:
             An :class:`~app.emitter.EmitResult` whose primary file is a schema-valid
             OpenAPI 3.1 dict and whose ``provenance`` records where each value came
             from. The output is deterministic for a given ``api``.
         """
-        _ = opts
+        options = (
+            opts
+            if isinstance(opts, OpenApiEmitOptions)
+            else OpenApiEmitOptions.model_validate(opts.model_dump() if opts else {})
+        )
         tracker = ProvenanceTracker()
         losses = LossTracker()
         schema = SchemaEmitter(ref_prefix=self.REF_PREFIX)
@@ -168,22 +195,24 @@ class OpenApiEmitter(Emitter, register=True):
         if servers:
             document["servers"] = servers
 
-        document["paths"] = self._paths(api, schema, tracker, projection, losses)
+        if options.include_paths:
+            document["paths"] = self._paths(api, schema, tracker, projection, losses)
+        else:
+            document["paths"] = {}
 
-        components = self._components(api, schema, tracker)
-        if components:
-            document["components"] = components
+        if options.include_components:
+            components = self._components(api, schema, tracker)
+            if components:
+                document["components"] = components
 
-        # Document-level ``x-`` notes the projection contributes (e.g. an event
-        # projection's low-fidelity caveat). Emitted last, after components, so the
-        # document order stays deterministic.
-        for key, value in sorted(projection.document_extensions(api, losses).items()):
-            document[key] = value
-            tracker.record(
-                ProvenanceTracker.child("", key),
-                Provenance.INFERRED,
-                f"{api.paradigm.value} projection document note",
-            )
+        if options.include_projection_extensions:
+            for key, value in sorted(projection.document_extensions(api, losses).items()):
+                document[key] = value
+                tracker.record(
+                    ProvenanceTracker.child("", key),
+                    Provenance.INFERRED,
+                    f"{api.paradigm.value} projection document note",
+                )
 
         return EmitResult.from_document(
             document,

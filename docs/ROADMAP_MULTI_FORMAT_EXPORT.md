@@ -276,7 +276,7 @@ flowchart LR
 | 1.1 ✅ | Emitter SPI + capability/fidelity profile | interface: emit(model)→files, declare capabilities | export,multi-protocol,rest,python,mvp | N | Y | L | apiome-rest |
 | 1.2 | Emitter registry + REST target list | enumerate emitters for UI/CLI (`GET /export/targets`) | export,multi-protocol,rest,mvp | N | Y | M | apiome-rest |
 | 1.3 ✅ | Refactor existing exports behind SPI | move current OpenAPI/MCP export under the SPI | export,multi-protocol,rest | Y | Y | M | apiome-rest |
-| 1.4 | Target selection & defaults | choose target + options; sensible per-format defaults | export,multi-protocol,rest,mvp | Y | Y | S | apiome-rest |
+| 1.4 ✅ | Target selection & defaults | choose target + options; sensible per-format defaults | export,multi-protocol,rest,mvp | Y | Y | S | apiome-rest |
 
 ### MFX-1.1 — Emitter SPI + capability/fidelity profile  ·  **#3834**  ·  ✅ **Done**
 - **Status.** Implemented in `apiome-rest/src/app/emitter.py` (the `Emitter` ABC + `EmitOptions`/`EmittedFile`/`EmitResult{files[], media_type}` envelope + `CapabilityProfile` + `EmitterDescriptor`/`EmitterTarget` + by-format registry with `register_emitter`/`get_emitter`/`get_emitter_instance`/`available_emit_formats`/`describe_emit_targets`/`load_builtin_emitters`), `apiome-rest/src/app/openapi_emitter.py` (reference emitter — descriptor metadata, OpenAPI capability profile, `emit(api, opts)` returning a single-file bundle), and `apiome-rest/src/app/sample_emitter.py` (no-op acceptance adapter). Profile schema documented in `apiome-rest/docs/emitter_spi.md`; tests in `tests/test_emitter.py`. apiome-rest 1.75.7 → 1.75.8.
@@ -301,7 +301,8 @@ flowchart LR
 - **Dependencies / Parallelism.** After 1.1. Parallel with 1.4.
 - **Technical Stack.** Python.
 
-### MFX-1.4 — Target selection & defaults  ·  **#3837**
+### MFX-1.4 — Target selection & defaults  ·  **#3837**  ·  ✅ **Done**
+- **Status.** Implemented in `apiome-rest/src/app/emitter.py` (`options_model`/`default_options`/`options_schema` on `Emitter`, `coerce_emit_options`, `EmitOptionsError`, `EmitterTarget.options_schema` + `default_options` on `describe_emit_targets()`), `apiome-rest/src/app/openapi_emitter.py` (`OpenApiEmitOptions` — `include_paths`/`include_components`/`include_projection_extensions`), `apiome-rest/src/app/sample_emitter.py` (`SampleEmitOptions`), and `apiome-rest/src/app/export_service.py` (`resolve_emit_options`, dict coercion in `emit_canonical`). Documented in `apiome-rest/docs/emitter_spi.md`; tests in `tests/test_emit_options.py`. apiome-rest 1.75.9 → 1.75.10.
 - **Problem.** Each target needs options (e.g. proto3 vs editions, CSDL JSON vs XML, AsyncAPI 2 vs 3) with safe defaults.
 - **Solution / Scope.** A per-emitter options schema + defaults, surfaced in UI/CLI.
 - **Acceptance Criteria.** Options validated; defaults produce a valid artifact.
