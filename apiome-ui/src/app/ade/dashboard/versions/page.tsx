@@ -610,8 +610,10 @@ const Versions = () => {
   const [rollbackShortMessage, setRollbackShortMessage] = useState('');
   const [showRollbackConfirmAlert, setShowRollbackConfirmAlert] = useState(false);
 
+  // Fork targets are real Projects only — forking into a catalog item would bypass the
+  // import routing that mints catalog items (#4587).
   const otherProjects = useMemo(
-    () => projects.filter((p) => p.id !== selectedProjectId),
+    () => projects.filter((p) => p.id !== selectedProjectId && isProjectPublishable(p)),
     [projects, selectedProjectId]
   );
 
@@ -619,6 +621,18 @@ const Versions = () => {
     () => projects.find((p) => p.id === selectedProjectId),
     [projects, selectedProjectId]
   );
+
+  /**
+   * Project selector options (#4587): catalog items (publishable=false) are excluded — they are
+   * browsed and exported from Dashboard → Catalog, not the Projects surface. A deep-linked catalog
+   * item (the catalog's "View" / "Open version history" actions pass `?projectId=`) stays
+   * selectable so those flows keep working; it is appended only while it is the selection.
+   */
+  const selectableProjects = useMemo(() => {
+    const publishable = projects.filter(isProjectPublishable);
+    const selected = projects.find((p) => p.id === selectedProjectId);
+    return selected && !isProjectPublishable(selected) ? [...publishable, selected] : publishable;
+  }, [projects, selectedProjectId]);
 
   /**
    * Whether a revision's owning project is a publishable Project (vs a non-publishable catalog
@@ -728,7 +742,8 @@ const Versions = () => {
     }
     setSelectedProjectId((prev) => {
       if (prev && projects.some((p) => p.id === prev)) return prev;
-      return projects[0].id;
+      // Default to the first real Project — never auto-select a catalog item (#4587).
+      return projects.find((p) => isProjectPublishable(p))?.id ?? '';
     });
   }, [projects, searchParams]);
 
@@ -849,6 +864,9 @@ const Versions = () => {
       }
       const data = await response.json();
       if (data.success && data.projects) {
+        // The full unfiltered list (catalog items included): revision rows resolve their owning
+        // project here for the publish gate (MFI-23.8) and catalog deep-links must keep working.
+        // The *selector options* exclude catalog items instead — see `selectableProjects` (#4587).
         setProjects(data.projects);
       } else {
         throw new Error(data.error || 'Failed to load projects');
@@ -2853,7 +2871,7 @@ const Versions = () => {
             <div className="flex items-center gap-3">
               <Select value={selectedProjectId} onValueChange={handleSelectedProjectChange}>
                 <SelectTrigger className="w-56"><SelectValue placeholder="Select Project" /></SelectTrigger>
-                <SelectContent>{projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{selectableProjects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
               </Select>
               <Button variant="secondary" onClick={handleCompareDialogOpen} disabled={!selectedProjectId || versions.length < 2}>
                 <Copy className="h-4 w-4 mr-2" />

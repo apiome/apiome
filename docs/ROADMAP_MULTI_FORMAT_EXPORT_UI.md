@@ -290,6 +290,14 @@ item, project version) open pre-scoped, matching apiome-ui's design system. The 
 - **Technical Stack.** Next.js App Router, Radix, TanStack Query.
 
 ### MFX-41.2 — Catalog-item export entry (the non-OpenAPI case) · #4349
+- **Status (partial, quick path).** The entry points shipped ahead of the Studio (#4587's PR):
+  the catalog list row menu carries **"Export to another format…"** and the detail idhead an
+  **Export** CTA beside Convert, both opening the version-scoped `ExportDialog` (MFX-6.1) aimed
+  at the item's latest revision, with the Convert/Export distinction stated in the UI copy
+  (`CATALOG_EXPORT_VS_CONVERT_COPY`) and exports recorded in the MFX-6.5 recent-exports store.
+  Confirmed the REST export dispatch is artifact-scoped (no project gate) — no rest fix needed.
+  Remaining for this issue: swapping the dialog handoff for the **Export Studio** escalation once
+  MFX-41.1 lands.
 - **Problem.** The request's core: *"allows for imported APIs to be exported … even if it's not an
   OpenAPI project already."* Catalog items (gRPC/GraphQL/AsyncAPI/… — non-publishable, MFI-EPIC-23)
   have Convert-to-OpenAPI as their only exit; there is no Export action anywhere on the catalog

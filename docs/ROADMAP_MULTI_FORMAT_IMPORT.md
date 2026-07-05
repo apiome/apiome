@@ -1114,6 +1114,11 @@ project card already renders. The only way out of the catalog to a *publishable*
 > lint-report and `ProjectQualityHistoryDialog` dialogs, `DashboardSideNav.tsx`, and the
 > `/projects/{tenantSlug}` REST shape. The catalog is a *parallel list surface*, not a new UI
 > language. The one hard rule: **no publish path** for catalog items, anywhere.
+>
+> **Boundary enforcement (#4587, done):** catalog items never list on the Projects page or in the
+> versions page's project selector — a file imported into the catalog stays there until the
+> MFI-EPIC-22 conversion mints a Project. Deep links from the catalog ("View", "Open version
+> history") keep working; export of a catalog item happens on the catalog surfaces (MFX-41.2).
 
 ```mermaid
 flowchart TB
