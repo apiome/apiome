@@ -1,4 +1,4 @@
-"""Apache Avro emitter: canonical model → ``.avsc`` — MFX-19.1 (#3909).
+"""Apache Avro emitter: canonical model → ``.avsc`` — MFX-19.1 (#3909), fidelity pack MFX-19.2 (#3910).
 
 The inverse of a future Avro normalizer and an implementation of the
 :class:`app.emitter.Emitter` SPI. It walks a :class:`~app.canonical_model.CanonicalApi` and
@@ -31,7 +31,9 @@ from .canonical_model import (
     ApiParadigm,
     CanonicalApi,
     CanonicalField,
+    Channel,
     Constraints,
+    Operation,
     Type,
     TypeKind,
     TypeRef,
@@ -45,8 +47,15 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
+from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
+from .lossiness import LossinessReport, LossinessSeverity
 
-__all__ = ["AvroEmitOptions", "AvroEmitter", "validate_avro_schema"]
+__all__ = [
+    "AvroEmitOptions",
+    "AvroEmitter",
+    "AvroFidelityRulePack",
+    "validate_avro_schema",
+]
 
 # Canonical / JSON-Schema / protobuf scalar names → Avro primitive keywords.
 _AVRO_PRIMITIVES = frozenset(
@@ -84,6 +93,163 @@ _FORMAT_LOGICAL_TYPES: Dict[str, Tuple[str, str]] = {
 }
 
 _NON_IDENT_RE = re.compile(r"[^A-Za-z0-9_]")
+
+_TYPES_ONLY_DROP_MESSAGE = "only data schemas are exported"
+
+def _avro_union_member_eligible(target: Type) -> bool:
+    """Return ``True`` when ``target`` can appear as an Avro union branch."""
+    if target.kind in (TypeKind.RECORD, TypeKind.ENUM):
+        return True
+    return target.kind is TypeKind.SCALAR and _fixed_size(target) is not None
+
+
+def _union_avro_eligible(type_: Type, types_by_key: Dict[str, Type]) -> bool:
+    """Return ``True`` when a ``UNION``'s members map to Avro union branches."""
+    if not type_.union_members:
+        return False
+    for member in type_.union_members:
+        if not isinstance(member, str) or not member:
+            return False
+        if member == "null":
+            continue
+        if _canonical_primitive(member) is not None:
+            continue
+        target = types_by_key.get(member)
+        if target is None or not _avro_union_member_eligible(target):
+            return False
+    return True
+
+
+def _field_needs_synth_default(field: CanonicalField) -> bool:
+    """Return ``True`` when Avro schema evolution requires a synthesized default."""
+    if _field_has_default(field):
+        return False
+    return field.type.nullable is True
+
+
+class AvroFidelityRulePack(CapabilityRulePack):
+    """Reference fidelity rule pack for the Avro target — MFX-19.2 (#3910).
+
+    The predictive counterpart to :class:`AvroEmitter`: refines the profile-derived
+    default wherever Avro's six-axis :class:`~app.emitter.CapabilityProfile` is too
+    coarse to describe how a construct actually degrades. It runs against the source
+    :class:`~app.canonical_model.CanonicalApi` alone (never the emitted ``.avsc``), so
+    the fidelity advisory can predict an OpenAPI/REST → Avro export's losses without
+    emitting.
+
+    Avro is a **types-only** target — operations, channels, and services have no Avro
+    representation and are dropped with a loud critical advisory. Among type losses:
+
+    * **operations/channels** — critical ``DROP`` with an explicit types-only message;
+    * **validation constraints** — ``DROP`` (pattern/min/max/format are not enforced);
+    * **discriminated unions / oneOf** — carried as an Avro union when member shapes
+      allow, otherwise ``APPROX``;
+    * **optional/nullable fields** — approximated as ``["null", T]`` unions (``APPROX``);
+    * **defaults** — synthesized when required for schema-evolution compatibility (``SYNTH``).
+    """
+
+    def __init__(
+        self, profile: CapabilityProfile, target_label: str = "the target"
+    ) -> None:
+        super().__init__(profile, target_label)
+        self._types_by_key: Dict[str, Type] = {}
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Walk ``api`` with a type lookup for union-eligibility checks."""
+        self._types_by_key = {type_.key: type_ for type_ in api.types}
+        try:
+            return super().evaluate(api)
+        finally:
+            self._types_by_key = {}
+
+    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
+        """Every operation is a critical ``DROP`` on a types-only Avro export."""
+        return FidelityVerdict.drop(
+            message=f"{self.target_label} is types-only — {_TYPES_ONLY_DROP_MESSAGE}; "
+            f"the {operation.kind.value} operation is dropped",
+            target_mapping="operation → dropped (types-only export)",
+        )
+
+    def channel_verdict(self, channel: Channel) -> FidelityVerdict:
+        """Every event channel is a critical ``DROP`` on a types-only Avro export."""
+        return FidelityVerdict.drop(
+            message=f"{self.target_label} is types-only — {_TYPES_ONLY_DROP_MESSAGE}; "
+            "the event channel is dropped",
+            target_mapping="channel → dropped (types-only export)",
+        )
+
+    def type_verdict(self, type_: Type) -> FidelityVerdict:
+        """Dispatch named types, refining ineligible unions."""
+        if type_.kind is TypeKind.UNION:
+            return self._union_verdict(type_)
+        return super().type_verdict(type_)
+
+    def _union_verdict(self, type_: Type) -> FidelityVerdict:
+        """``OK`` when members are Avro-eligible, else ``APPROX``."""
+        if _union_avro_eligible(type_, self._types_by_key):
+            return FidelityVerdict.ok(
+                message=f"union carried to {self.target_label}",
+                target_mapping="oneOf/discriminated alternatives → Avro union",
+            )
+        return FidelityVerdict.approx(
+            message=f"{self.target_label} cannot represent the union shape; "
+            f"{type_.key!r} is approximated without faithful member alternatives",
+            target_mapping="oneOf/union → ineligible members approximated",
+        )
+
+    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        """Collect every independent loss one record field incurs."""
+        verdicts = super().field_verdicts(field)
+        default = self._default_verdict(field)
+        if default is not None:
+            verdicts.append(default)
+        return verdicts
+
+    def _nullability_verdict(
+        self, field: CanonicalField
+    ) -> Optional[FidelityVerdict]:
+        """Approximate optional/nullable fields as ``["null", T]`` unions."""
+        if field.type.nullable is True:
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} maps optional/nullable fields to a "
+                "null-union, not JSON Schema optional semantics",
+                target_mapping="optional/nullable → [\"null\", T] union",
+            )
+        return None
+
+    def _constraints_verdict(
+        self, field: CanonicalField
+    ) -> Optional[FidelityVerdict]:
+        """Drop validation constraints Avro cannot enforce."""
+        if not _has_any_constraint(field.constraints):
+            return None
+        return FidelityVerdict.drop(
+            message=f"{self.target_label} cannot enforce validation constraints; "
+            "pattern/min/max/format facets are dropped",
+            severity=LossinessSeverity.WARN,
+            target_mapping="constraints → dropped",
+        )
+
+    def _scalar_verdict(self, type_: Type) -> FidelityVerdict:
+        """Drop a scalar type's constraints when Avro cannot enforce them."""
+        if _has_any_constraint(type_.constraints):
+            return FidelityVerdict.drop(
+                message=f"{self.target_label} cannot enforce validation constraints; "
+                "pattern/min/max/format facets are dropped",
+                severity=LossinessSeverity.WARN,
+                target_mapping="constraints → dropped",
+            )
+        return FidelityVerdict.ok(message=f"scalar carried to {self.target_label}")
+
+    def _default_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """Synthesize a default when schema-evolution compatibility requires one."""
+        if not _field_needs_synth_default(field):
+            return None
+        return FidelityVerdict.synth(
+            message=f"{self.target_label} requires a default for schema-evolution "
+            "compatibility; one is synthesized for this optional field",
+            target_mapping="synthesized default for evolution",
+        )
 
 
 class AvroEmitOptions(EmitOptions):
@@ -125,6 +291,11 @@ class AvroEmitter(Emitter, register=True):
             constraints=False,
             field_identity=False,
         )
+
+    @classmethod
+    def fidelity_rule_pack(cls) -> type[AvroFidelityRulePack]:
+        """Return the reference Avro fidelity rule pack (MFX-19.2)."""
+        return AvroFidelityRulePack
 
     def emit(
         self,

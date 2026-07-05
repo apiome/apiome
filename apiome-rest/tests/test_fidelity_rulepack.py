@@ -24,6 +24,7 @@ from typing import List
 
 import pytest
 
+from app.avro_emitter import AvroEmitter, AvroFidelityRulePack
 from app.asyncapi_emitter import AsyncApiEmitter, AsyncApiFidelityRulePack
 from app.canonical_model import (
     ApiIdentity,
@@ -45,6 +46,7 @@ from app.canonical_model import (
     TypeRef,
 )
 from app.emitter import CapabilityProfile, Emitter
+from app.export_fidelity import ExportFidelityTier, build_export_fidelity
 from app.fidelity_engine import compute_lossiness, compute_lossiness_for_emitter
 from app.fidelity_rulepack import (
     CapabilityRulePack,
@@ -1020,3 +1022,221 @@ def test_graphql_pack_carries_native_graph_operations_cleanly():
     report = compute_lossiness_for_emitter(api, GraphQlEmitter)
     assert _items_for(report, "Query.users")[0].kind is LossinessKind.OK
     assert _items_for(report, "Mutation.createUser")[0].kind is LossinessKind.OK
+
+
+# ---------------------------------------------------------------------------
+# Reference Avro pack reports types-only + type losses (MFX-19.2, #3910)
+# ---------------------------------------------------------------------------
+
+
+def test_avro_emitter_declares_reference_pack():
+    """The Avro emitter ships its reference pack alongside itself."""
+    assert AvroEmitter.fidelity_rule_pack() is AvroFidelityRulePack
+    assert issubclass(AvroFidelityRulePack, CapabilityRulePack)
+
+
+def _avro_rich_api() -> CanonicalApi:
+    """An OpenAPI-shaped source exercising every Avro fidelity loss class."""
+    get_user = Operation(
+        key="GET /users/{id}",
+        name="getUser",
+        kind=OperationKind.REQUEST_RESPONSE,
+        http_method="GET",
+        http_path="/users/{id}",
+    )
+    user = Type(
+        key="User",
+        name="User",
+        kind=TypeKind.RECORD,
+        fields=[
+            CanonicalField(
+                key="User.id",
+                name="id",
+                type=TypeRef(name="string", nullable=False),
+            ),
+            CanonicalField(
+                key="User.age",
+                name="age",
+                type=TypeRef(name="integer", nullable=True),
+                constraints=Constraints(minimum=0, maximum=120),
+            ),
+            CanonicalField(
+                key="User.email",
+                name="email",
+                type=TypeRef(name="string", nullable=True),
+                constraints=Constraints(pattern=r".+@.+"),
+            ),
+        ],
+    )
+    org = Type(
+        key="Org",
+        name="Org",
+        kind=TypeKind.RECORD,
+        fields=[
+            CanonicalField(
+                key="Org.name",
+                name="name",
+                type=TypeRef(name="string", nullable=False),
+            )
+        ],
+    )
+    contact = Type(
+        key="Contact",
+        name="Contact",
+        kind=TypeKind.UNION,
+        union_members=["User", "Org"],
+    )
+    loose = Type(
+        key="Loose",
+        name="Loose",
+        kind=TypeKind.UNION,
+        union_members=[],
+    )
+    bad_union = Type(
+        key="Tag",
+        name="Tag",
+        kind=TypeKind.UNION,
+        union_members=["MissingType"],
+    )
+    money = Type(
+        key="Money",
+        name="Money",
+        kind=TypeKind.SCALAR,
+        constraints=Constraints(pattern=r"^\d+\.\d{2}$"),
+    )
+    return CanonicalApi(
+        paradigm=ApiParadigm.REST,
+        format="openapi-3.1",
+        identity=ApiIdentity(name="Users API"),
+        services=[Service(key="Users", name="Users", operations=[get_user])],
+        channels=[Channel(key="user/signedup", address="user/signedup", protocol="kafka")],
+        types=[user, org, contact, loose, bad_union, money],
+    )
+
+
+def test_avro_pack_surfaces_types_only_critical_warning_and_counts():
+    """Operation-bearing API → Avro: critical types-only DROP + enumerated type losses."""
+    report = compute_lossiness_for_emitter(_avro_rich_api(), AvroEmitter)
+    assert not report.is_lossless
+    assert report.worst_severity is LossinessSeverity.CRITICAL
+
+    op = _items_for(report, "GET /users/{id}")[0]
+    assert op.kind is LossinessKind.DROP
+    assert op.severity is LossinessSeverity.CRITICAL
+    assert "only data schemas are exported" in op.message
+
+    channel = _items_for(report, "user/signedup")[0]
+    assert channel.kind is LossinessKind.DROP
+    assert channel.severity is LossinessSeverity.CRITICAL
+    assert "only data schemas are exported" in channel.message
+
+    xf = build_export_fidelity(_avro_rich_api(), AvroEmitter)
+    assert xf.summary.tier is ExportFidelityTier.TYPES_ONLY
+    assert xf.advisory.show is True
+    assert xf.advisory.severity is LossinessSeverity.CRITICAL
+    assert xf.advisory.requires_ack is True
+    assert xf.advisory.dropped >= 2
+
+
+def test_avro_pack_enumerates_type_losses():
+    """Rich OpenAPI source → Avro: unions, constraints, nullability, and defaults."""
+    report = compute_lossiness_for_emitter(_avro_rich_api(), AvroEmitter)
+
+    assert _items_for(report, "Contact")[0].kind is LossinessKind.OK
+    assert "Avro union" in (_items_for(report, "Contact")[0].target_mapping or "")
+
+    assert _items_for(report, "Loose")[0].kind is LossinessKind.APPROX
+    assert _items_for(report, "Tag")[0].kind is LossinessKind.APPROX
+
+    assert _items_for(report, "Money")[0].kind is LossinessKind.DROP
+    assert "constraints" in (_items_for(report, "Money")[0].target_mapping or "").lower()
+
+    age_kinds = {item.kind for item in _items_for(report, "User.age")}
+    assert age_kinds == {LossinessKind.APPROX, LossinessKind.DROP, LossinessKind.SYNTH}
+
+    email_kinds = sorted(i.kind.value for i in _items_for(report, "User.email"))
+    assert email_kinds == ["approx", "drop", "synth"]
+
+    assert _items_for(report, "User.id") == []
+    assert _items_for(report, "User")[0].kind is LossinessKind.OK
+
+
+def test_avro_pack_only_marks_avro_union_members_with_named_branches_as_ok():
+    """Maps, nested unions, and non-fixed scalars stay APPROX; fixed scalars remain OK."""
+    fixed = Type(
+        key="Md5",
+        name="Md5",
+        kind=TypeKind.SCALAR,
+        extras={"avro_type": "fixed", "avro_size": 16},
+    )
+    logical = Type(
+        key="Money",
+        name="Money",
+        kind=TypeKind.SCALAR,
+        constraints=Constraints(format="decimal"),
+        extras={"precision": 10, "scale": 2},
+    )
+    labels = Type(
+        key="Labels",
+        name="Labels",
+        kind=TypeKind.MAP,
+        value_type=TypeRef(name="string", nullable=False),
+    )
+    opt_string = Type(
+        key="OptString",
+        name="OptString",
+        kind=TypeKind.UNION,
+        union_members=["null", "string"],
+    )
+    digest = Type(key="Digest", name="Digest", kind=TypeKind.UNION, union_members=["Md5"])
+    amount = Type(key="Amount", name="Amount", kind=TypeKind.UNION, union_members=["Money"])
+    metadata = Type(key="Metadata", name="Metadata", kind=TypeKind.UNION, union_members=["Labels"])
+    nested = Type(key="Nested", name="Nested", kind=TypeKind.UNION, union_members=["OptString"])
+
+    report = compute_lossiness_for_emitter(
+        CanonicalApi(
+            paradigm=ApiParadigm.REST,
+            format="openapi-3.1",
+            identity=ApiIdentity(name="Union members"),
+            types=[fixed, logical, labels, opt_string, digest, amount, metadata, nested],
+        ),
+        AvroEmitter,
+    )
+
+    assert _items_for(report, "Digest")[0].kind is LossinessKind.OK
+    assert _items_for(report, "Amount")[0].kind is LossinessKind.APPROX
+    assert _items_for(report, "Metadata")[0].kind is LossinessKind.APPROX
+    assert _items_for(report, "Nested")[0].kind is LossinessKind.APPROX
+
+
+def test_default_pack_oks_unions_the_avro_pack_approximates_ineligible():
+    """The refinement is the pack's: ineligible unions APPROX instead of silent OK."""
+    api = _avro_rich_api()
+    default = compute_lossiness(api, AvroEmitter.capability_profile(), target_label="Apache Avro")
+    assert _items_for(default, "Loose")[0].kind is LossinessKind.OK
+    via_pack = compute_lossiness_for_emitter(api, AvroEmitter)
+    assert _items_for(via_pack, "Loose")[0].kind is LossinessKind.APPROX
+
+
+def test_avro_data_schema_source_is_lossless():
+    """A types-only Avro source round-trips without fidelity losses."""
+    user = Type(
+        key="com.example.User",
+        name="User",
+        kind=TypeKind.RECORD,
+        fields=[
+            CanonicalField(
+                key="com.example.User.id",
+                name="id",
+                type=TypeRef(name="string", nullable=False),
+            )
+        ],
+    )
+    api = CanonicalApi(
+        paradigm=ApiParadigm.DATA_SCHEMA,
+        format="avro",
+        identity=ApiIdentity(name="Users", namespace="com.example"),
+        types=[user],
+    )
+    report = compute_lossiness_for_emitter(api, AvroEmitter)
+    assert report.is_lossless
