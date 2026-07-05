@@ -96,10 +96,11 @@ _NON_IDENT_RE = re.compile(r"[^A-Za-z0-9_]")
 
 _TYPES_ONLY_DROP_MESSAGE = "only data schemas are exported"
 
-# Named type kinds Avro can reference as union branches.
-_AVRO_UNION_NAMED_KINDS = frozenset(
-    {TypeKind.RECORD, TypeKind.ENUM, TypeKind.SCALAR, TypeKind.MAP, TypeKind.UNION}
-)
+def _avro_union_member_eligible(target: Type) -> bool:
+    """Return ``True`` when ``target`` can appear as an Avro union branch."""
+    if target.kind in (TypeKind.RECORD, TypeKind.ENUM):
+        return True
+    return target.kind is TypeKind.SCALAR and _fixed_size(target) is not None
 
 
 def _union_avro_eligible(type_: Type, types_by_key: Dict[str, Type]) -> bool:
@@ -114,7 +115,7 @@ def _union_avro_eligible(type_: Type, types_by_key: Dict[str, Type]) -> bool:
         if _canonical_primitive(member) is not None:
             continue
         target = types_by_key.get(member)
-        if target is None or target.kind not in _AVRO_UNION_NAMED_KINDS:
+        if target is None or not _avro_union_member_eligible(target):
             return False
     return True
 

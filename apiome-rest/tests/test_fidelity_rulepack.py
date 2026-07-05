@@ -1161,6 +1161,54 @@ def test_avro_pack_enumerates_type_losses():
     assert _items_for(report, "User")[0].kind is LossinessKind.OK
 
 
+def test_avro_pack_only_marks_avro_union_members_with_named_branches_as_ok():
+    """Maps, nested unions, and non-fixed scalars stay APPROX; fixed scalars remain OK."""
+    fixed = Type(
+        key="Md5",
+        name="Md5",
+        kind=TypeKind.SCALAR,
+        extras={"avro_type": "fixed", "avro_size": 16},
+    )
+    logical = Type(
+        key="Money",
+        name="Money",
+        kind=TypeKind.SCALAR,
+        constraints=Constraints(format="decimal"),
+        extras={"precision": 10, "scale": 2},
+    )
+    labels = Type(
+        key="Labels",
+        name="Labels",
+        kind=TypeKind.MAP,
+        value_type=TypeRef(name="string", nullable=False),
+    )
+    opt_string = Type(
+        key="OptString",
+        name="OptString",
+        kind=TypeKind.UNION,
+        union_members=["null", "string"],
+    )
+    digest = Type(key="Digest", name="Digest", kind=TypeKind.UNION, union_members=["Md5"])
+    amount = Type(key="Amount", name="Amount", kind=TypeKind.UNION, union_members=["Money"])
+    metadata = Type(key="Metadata", name="Metadata", kind=TypeKind.UNION, union_members=["Labels"])
+    nested = Type(key="Nested", name="Nested", kind=TypeKind.UNION, union_members=["OptString"])
+
+    report = compute_lossiness_for_emitter(
+        CanonicalApi(
+            paradigm=ApiParadigm.REST,
+            format="openapi-3.1",
+            identity=ApiIdentity(name="Union members"),
+            types=[fixed, logical, labels, opt_string, digest, amount, metadata, nested],
+        ),
+        AvroEmitter,
+    )
+
+    assert _items_for(report, "Digest")[0].kind is LossinessKind.OK
+    assert _items_for(report, "Amount")[0].kind is LossinessKind.APPROX
+    assert _items_for(report, "Metadata")[0].kind is LossinessKind.APPROX
+    assert _items_for(report, "Nested")[0].kind is LossinessKind.APPROX
+
+
 def test_default_pack_oks_unions_the_avro_pack_approximates_ineligible():
     """The refinement is the pack's: ineligible unions APPROX instead of silent OK."""
     api = _avro_rich_api()
