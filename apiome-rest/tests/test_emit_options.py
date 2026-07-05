@@ -83,6 +83,7 @@ def test_describe_emit_targets_includes_options_schema_and_defaults() -> None:
     openapi = next(t for t in describe_emit_targets() if t.descriptor.key == "openapi")
     assert openapi.options_schema["title"] == "OpenApiEmitOptions"
     assert openapi.default_options == {
+        "openapi_version": "3.1",
         "include_paths": True,
         "include_components": True,
         "include_projection_extensions": True,
