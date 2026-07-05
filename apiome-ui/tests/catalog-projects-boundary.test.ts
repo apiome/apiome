@@ -24,6 +24,26 @@ const detailSrc = fs.readFileSync(
   path.join(APP, 'ade', 'dashboard', 'catalog', '[id]', 'CatalogItemDetailClient.tsx'),
   'utf8',
 );
+const proxySrc = fs.readFileSync(path.join(APP, 'api', 'projects', 'route.ts'), 'utf8');
+
+describe('/api/projects proxy strips catalog items by default (#4587)', () => {
+  it('filters the REST list through isProjectPublishable unless include_catalog opts in', () => {
+    // Enforced at the proxy so EVERY project picker (Projects page, Studio, Database, Migration,
+    // sunset timeline, repository import mapping, future consumers) upholds the boundary.
+    expect(proxySrc).toMatch(/import \{ isProjectPublishable, type PublishableProjectLike \}/);
+    expect(proxySrc).toContain("searchParams.get('include_catalog')");
+    expect(proxySrc).toContain(
+      'data.filter((p) => isProjectPublishable(p as PublishableProjectLike))',
+    );
+  });
+
+  it('the versions page is the sole opt-in (publish gate + catalog deep-links need the full list)', () => {
+    expect(versionsSrc).toContain("fetch('/api/projects?include_catalog=true')");
+    for (const src of [projectsSrc, catalogSrc, detailSrc]) {
+      expect(src).not.toContain('include_catalog=true');
+    }
+  });
+});
 
 describe('Projects page excludes catalog items (#4587)', () => {
   it('imports the shared publishability predicate', () => {

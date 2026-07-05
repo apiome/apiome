@@ -858,7 +858,9 @@ const Versions = () => {
   const loadProjects = async () => {
     if (!currentTenantId) return;
     try {
-      const response = await fetch('/api/projects');
+      // include_catalog: the proxy strips catalog items by default (#4587); this page needs the
+      // full list — see the comment in loadProjects' success branch below.
+      const response = await fetch('/api/projects?include_catalog=true');
       if (!response.ok) {
         throw new Error(`Failed to fetch projects: ${response.statusText}`);
       }
