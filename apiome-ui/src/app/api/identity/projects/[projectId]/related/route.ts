@@ -3,7 +3,7 @@ import {
   REST_API_BASE_URL,
   handleIdentityRestResponse,
   resolveIdentityProxyContext,
-} from '../../_proxy';
+} from '../../../_proxy';
 
 export async function GET(
   _request: Request,

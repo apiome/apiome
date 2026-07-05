@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
     }
-    return NextResponse.json({ success: true, ...data });
+    return NextResponse.json({ success: true, ...(data as Record<string, unknown>) });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ success: false, error: message }, { status: 500 });
@@ -44,7 +44,7 @@ export async function DELETE(request: NextRequest) {
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
     }
-    return NextResponse.json({ success: true, ...data });
+    return NextResponse.json({ success: true, ...(data as Record<string, unknown>) });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ success: false, error: message }, { status: 500 });
