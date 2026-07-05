@@ -6,6 +6,7 @@ import { Breadcrumb } from '../../../../components/Breadcrumb';
 import { EntityHeader } from '../../../../components/EntityHeader';
 import { SpecSidebar } from '../../../../components/SpecSidebar';
 import { SpecViewer, type SpecFormat } from '../../../../components/SpecViewer';
+import { PublicExportDialog } from '../../../../components/export/PublicExportDialog';
 
 interface Version {
   id: string;
@@ -43,6 +44,7 @@ export function VersionClient({
   const [spec, setSpec] = useState<unknown>(null);
   const [format, setFormat] = useState<SpecFormat>('openapi');
   const [activeAnchor, setActiveAnchor] = useState<string | undefined>(undefined);
+  const [showExport, setShowExport] = useState(false);
 
   const onSpecChange = useCallback((next: unknown, nextFormat: SpecFormat) => {
     setSpec(next);
@@ -132,6 +134,16 @@ export function VersionClient({
                 Browse the structured overview or view the raw document.
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowExport(true)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+              </svg>
+              Export to another format…
+            </button>
           </header>
           <SpecViewer
             tenantSlug={tenantSlug}
@@ -142,6 +154,15 @@ export function VersionClient({
           />
         </section>
       </div>
+
+      <PublicExportDialog
+        open={showExport}
+        onClose={() => setShowExport(false)}
+        tenantSlug={tenantSlug}
+        projectSlug={projectSlug}
+        versionSlug={versionSlug}
+        restApiBaseUrl={restApiBaseUrl}
+      />
     </AppShell>
   );
 }

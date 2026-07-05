@@ -49,6 +49,7 @@ from .change_report_template_routes import router as change_report_template_rout
 from .tenant_repositories_routes import router as tenant_repositories_router
 from .tenants_session_routes import router as tenants_session_router
 from .browse_public_routes import router as browse_public_router
+from .browse_export_routes import router as browse_export_router
 from .spec_import_routes import router as spec_import_router
 from .import_sources_routes import router as import_sources_router
 from .export_routes import router as export_router
@@ -192,6 +193,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 # Include routers (browse_public_router first for unauthenticated /v1/browse/* routes;
 # data_router next so /v1/data/* is matched before any generic patterns)
 app.include_router(browse_public_router)
+app.include_router(browse_export_router)
 app.include_router(data_router)
 # registry_audit_router before primitives_router so its literal /{tenant_slug}/audit route is
 # matched ahead of the primitives /{tenant_slug}/{primitive_id} catch-all (#3481).

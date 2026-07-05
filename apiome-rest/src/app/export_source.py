@@ -30,6 +30,7 @@ __all__ = [
     "ExportSourceError",
     "ExportSource",
     "load_export_source",
+    "load_public_export_source",
 ]
 
 
@@ -158,6 +159,67 @@ def load_export_source(
     return ExportSource(
         api=source.api,
         artifact_id=str(artifact_id),
+        version_record_id=revision_id,
+        version_label=projection.get("version_label"),
+    )
+
+
+def load_public_export_source(
+    tenant_slug: str, project_slug: str, version_slug: str
+) -> ExportSource:
+    """Load the canonical model for a **published, public** revision, resolved by slugs (MFX-7.1).
+
+    The public browse export path is anonymous: there is no authenticated tenant to scope by, so
+    the source is resolved from the URL coordinates (tenant slug / project slug / version label)
+    and hard-gated to the published+public slice by
+    :meth:`app.database.Database.get_public_version_source_projection`. Anything outside that
+    slice — a private version, an unpublished draft, an unknown slug — raises the same ``404`` so
+    an anonymous caller can never probe for hidden artifacts. The canonical-model rebuild is the
+    same parse + normalize the authenticated loader uses.
+
+    Args:
+        tenant_slug: The owning tenant's slug.
+        project_slug: The project (artifact) slug within the tenant.
+        version_slug: The version label (e.g. ``1.0.0``) of the published revision.
+
+    Returns:
+        The loaded :class:`ExportSource`.
+
+    Raises:
+        ExportSourceError: ``404`` when no published public revision matches the slugs; ``422``
+            when the revision has no reconstructable captured source.
+    """
+    projection = db.get_public_version_source_projection(
+        tenant_slug, project_slug, version_slug
+    )
+    if projection is None:
+        raise ExportSourceError(
+            f"Published version {version_slug!r} was not found for "
+            f"{tenant_slug!r}/{project_slug!r}.",
+            status_code=404,
+        )
+
+    revision_id = str(projection["version_record_id"])
+    item: Dict[str, Any] = {
+        "id": str(projection["id"]),
+        "slug": projection.get("project_slug"),
+        "source_format": projection.get("source_format"),
+        "protocol": projection.get("protocol"),
+        "format_metadata": projection.get("format_metadata"),
+        "tool_versions": projection.get("tool_versions"),
+        "metadata": projection.get("metadata"),
+    }
+
+    try:
+        source = build_conversion_source(item, source_version_id=revision_id)
+    except ConversionError as exc:
+        # No captured source / unresolvable adapter / unparseable text — mirror the
+        # authenticated loader's classification (422/400) for the public path.
+        raise ExportSourceError(str(exc), status_code=exc.status_code) from exc
+
+    return ExportSource(
+        api=source.api,
+        artifact_id=str(projection["id"]),
         version_record_id=revision_id,
         version_label=projection.get("version_label"),
     )

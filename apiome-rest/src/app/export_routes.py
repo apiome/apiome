@@ -163,6 +163,41 @@ class ExportDocumentRequest(BaseModel):
 
 
 # ===========================================================================
+# Shared route helpers
+# ===========================================================================
+
+
+def build_target_fidelity_entries(api: Any) -> List[ExportTargetFidelity]:
+    """Enumerate every registered export target with its per-source fidelity badge.
+
+    The shared body of every ``…/targets`` route (authenticated and public browse alike):
+    walk the emitter registry's public view and pair each target's descriptor/profile/options
+    with the cheap :func:`~app.export_fidelity.build_target_fidelity` badge for ``api``.
+
+    Args:
+        api: The source :class:`~app.canonical_model.CanonicalApi` fidelity is measured against.
+
+    Returns:
+        One :class:`ExportTargetFidelity` per registered target, in registry (key) order.
+    """
+    entries: List[ExportTargetFidelity] = []
+    for target in describe_emit_targets():
+        emitter_cls = get_emitter(target.descriptor.format)
+        if emitter_cls is None:  # pragma: no cover - registry/describe are always in sync
+            continue
+        entries.append(
+            ExportTargetFidelity(
+                descriptor=target.descriptor,
+                capability_profile=target.capability_profile,
+                options_schema=target.options_schema,
+                default_options=target.default_options,
+                fidelity=build_target_fidelity(api, emitter_cls),
+            )
+        )
+    return entries
+
+
+# ===========================================================================
 # Routes
 # ===========================================================================
 
@@ -209,20 +244,7 @@ async def list_export_targets(
     except ExportSourceError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
-    entries: List[ExportTargetFidelity] = []
-    for target in describe_emit_targets():
-        emitter_cls = get_emitter(target.descriptor.format)
-        if emitter_cls is None:  # pragma: no cover - registry/describe are always in sync
-            continue
-        entries.append(
-            ExportTargetFidelity(
-                descriptor=target.descriptor,
-                capability_profile=target.capability_profile,
-                options_schema=target.options_schema,
-                default_options=target.default_options,
-                fidelity=build_target_fidelity(source.api, emitter_cls),
-            )
-        )
+    entries = build_target_fidelity_entries(source.api)
 
     return ExportTargetsResponse(
         artifact=source.artifact_id,
@@ -310,6 +332,75 @@ def _document_filename(base_path: str, *, yaml_serialization: bool) -> str:
     return name
 
 
+def render_emitted_document(
+    api: Any,
+    target: str,
+    options: Optional[Dict[str, Any]],
+    accept: Optional[str],
+    *,
+    persistence: Optional[ExportPersistenceContext] = None,
+) -> Response:
+    """Emit ``api`` to ``target`` and wrap the primary file as an HTTP download response.
+
+    The shared tail of every ``…/document`` route (authenticated and public browse alike):
+    run the Emitter SPI, pick the primary emitted file, serialize it as JSON (default) or YAML
+    (when ``accept`` asks for it), and attach a ``Content-Disposition`` filename derived from
+    the emitter's output path.
+
+    Args:
+        api: The source :class:`~app.canonical_model.CanonicalApi` to emit.
+        target: Target emitter key (``asyncapi``) or format key (``asyncapi-3``).
+        options: Per-target emit options; ``None``/empty applies the target defaults.
+        accept: The request's ``Accept`` header, for JSON/YAML content negotiation.
+        persistence: Optional field-identity persistence context; ``None`` keeps the emit
+            fully read-only (the public path must never write).
+
+    Returns:
+        The emitted document as a download :class:`~fastapi.Response`.
+
+    Raises:
+        HTTPException: 400 when the target or options are unsupported; 422 when the emitter
+            produced no document.
+    """
+    try:
+        result = emit_canonical(api, target, opts=options, persistence=persistence)
+    except ExportError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
+    if not result.files:  # pragma: no cover - registered emitters always produce a file
+        raise HTTPException(
+            status_code=422,
+            detail=f"Target {target!r} produced no document for this source.",
+        )
+
+    primary = result.files[0]
+    content = primary.content
+    yaml_serialization = _wants_yaml(accept)
+    filename = _document_filename(primary.path, yaml_serialization=yaml_serialization)
+    disposition = {"Content-Disposition": f'attachment; filename="{filename}"'}
+
+    # Structured (dict) documents serialize to the requested wire format; a plain-text bundle
+    # (rare, non-JSON/YAML targets) is returned verbatim under its own media type.
+    if isinstance(content, dict):
+        if yaml_serialization:
+            body = yaml.dump(content, sort_keys=False, default_flow_style=False)
+            return Response(
+                content=body, media_type="application/x-yaml", headers=disposition
+            )
+        body = json.dumps(content, indent=2, ensure_ascii=False)
+        return Response(
+            content=body,
+            media_type=primary.media_type or result.media_type or "application/json",
+            headers=disposition,
+        )
+
+    return Response(
+        content=str(content),
+        media_type=primary.media_type or result.media_type or "text/plain",
+        headers=disposition,
+    )
+
+
 @router.post(
     "/{tenant_slug}/document",
     summary="Emit the export document for one target",
@@ -352,48 +443,13 @@ async def emit_export_document(
     except ExportSourceError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
-    try:
-        result = emit_canonical(
-            source.api,
-            request.target,
-            opts=request.options,
-            persistence=ExportPersistenceContext(
-                tenant_id=tenant_id,
-                artifact_id=source.artifact_id,
-            ),
-        )
-    except ExportError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
-
-    if not result.files:  # pragma: no cover - registered emitters always produce a file
-        raise HTTPException(
-            status_code=422,
-            detail=f"Target {request.target!r} produced no document for this source.",
-        )
-
-    primary = result.files[0]
-    content = primary.content
-    yaml_serialization = _wants_yaml(accept)
-    filename = _document_filename(primary.path, yaml_serialization=yaml_serialization)
-    disposition = {"Content-Disposition": f'attachment; filename="{filename}"'}
-
-    # Structured (dict) documents serialize to the requested wire format; a plain-text bundle
-    # (rare, non-JSON/YAML targets) is returned verbatim under its own media type.
-    if isinstance(content, dict):
-        if yaml_serialization:
-            body = yaml.dump(content, sort_keys=False, default_flow_style=False)
-            return Response(
-                content=body, media_type="application/x-yaml", headers=disposition
-            )
-        body = json.dumps(content, indent=2, ensure_ascii=False)
-        return Response(
-            content=body,
-            media_type=primary.media_type or result.media_type or "application/json",
-            headers=disposition,
-        )
-
-    return Response(
-        content=str(content),
-        media_type=primary.media_type or result.media_type or "text/plain",
-        headers=disposition,
+    return render_emitted_document(
+        source.api,
+        request.target,
+        request.options,
+        accept,
+        persistence=ExportPersistenceContext(
+            tenant_id=tenant_id,
+            artifact_id=source.artifact_id,
+        ),
     )
