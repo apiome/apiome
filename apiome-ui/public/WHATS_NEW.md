@@ -6,7 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
-- Export: GraphQL fidelity pack — REST HTTP method/path/status/headers are reported as APPROX when reframing to Query/Mutation fields (HTTP semantics have no GraphQL representation); validation constraints approximate as custom scalars; oneOf/unions report OK when member shapes allow (MFX-13.3)
+- Export: GraphQL validate + round-trip — emitted SDL is checked with `build_schema`/`validate_schema`, re-imported through the MFI GraphQL parser, and diffed against the source; predicted fidelity losses corroborated and divergences flagged (MFX-13.4)
 - Export: GraphQL input/output type splitting — cross-paradigm request bodies and object-typed arguments synthesize deduplicated `{Name}Input` types so emitted SDL never uses output objects as inputs; synthesized inputs reported in the fidelity envelope (MFX-13.2)
 - Export: GraphQL SDL emitter — canonical model → valid SDL via `graphql-core` `print_schema`; preserves nullability/list wrappers; Graph-native sources round-trip; REST sources map GET→Query and write verbs→Mutation (MFX-13.1)
 - Export: `apiome export grpc` writes a proto3 `.proto` document with the honest fidelity report; UI export-target metadata maps protobuf/gRPC/proto3 to Monaco `protobuf` + `.proto` download names (MFX-12.5)
