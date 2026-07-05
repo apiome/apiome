@@ -348,9 +348,9 @@ flowchart TB
 - **Dependencies / Parallelism.** After 2.1/2.3. Blocks emitter fidelity packs.
 - **Technical Stack.** Python.
 
-### MFX-2.3 — Fidelity rule-pack SPI  ·  **#3840**
+### MFX-2.3 — Fidelity rule-pack SPI  ·  **#3840**  ·  ✅ **Done**
 - **Problem.** Each target degrades constructs differently; rules must be pluggable per emitter.
-- **Solution / Scope.** A `FidelityRulePack` SPI: maps canonical constructs → target handling (`OK`/`APPROX how`/`DROP`/`SYNTH`). Format epics ship their pack alongside the emitter. Cross-paradigm rules included (operations→types-only targets like Avro = DROP all operations).
+- **Solution / Scope.** A `FidelityRulePack` SPI (`app.fidelity_rulepack`): maps canonical constructs → target handling (`OK`/`APPROX how`/`DROP`/`SYNTH`) via one `FidelityVerdict` per operation/channel/type and zero-or-more per field. Default `CapabilityRulePack` derives every verdict from the `CapabilityProfile`; format epics ship their pack alongside the emitter (`Emitter.fidelity_rule_pack`) and the engine consumes it. Reference pack `OpenApiFidelityRulePack` upgrades a source field number from `DROP` to a lossless `APPROX` (`x-field-number`). Cross-paradigm rules included (operations→types-only targets like Avro = DROP all operations).
 - **Acceptance Criteria.** SPI documented; a reference pack (OpenAPI) implemented; engine consumes packs.
 - **Dependencies / Parallelism.** After 2.1. Blocks 2.2 and emitter packs.
 - **Technical Stack.** Python.
