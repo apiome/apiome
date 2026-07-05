@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import {
   CheckCircle2,
   Download,
+  FileArchive,
   FileOutput,
   Loader2,
   Package,
@@ -15,7 +16,10 @@ import { Alert } from '../../../ui/Alert';
 import { useExportTargets } from './useExportTargets';
 import { useExportPreview } from './useExportPreview';
 import { FidelityWarningPanel } from './FidelityWarningPanel';
+import { ArtifactPreviewCard } from './ArtifactPreviewCard';
 import { requiresExportAcknowledgement } from './exportFidelityPreview';
+import { zipFilenameFor, type EmittedArtifact } from './exportArtifactPreview';
+import { buildZip } from './zipBundle';
 import {
   changedOptions,
   exportTargetCards,
@@ -35,7 +39,7 @@ interface ExportDialogProps {
   artifactLabel?: string;
   /** The revision to export (UUID or version label); the latest revision when omitted. */
   version?: string | null;
-  /** Called after a successful export (the document download has been handed to the browser). */
+  /** Called after a successful export (the document has been emitted and is being previewed). */
   onExported?: () => void;
 }
 
@@ -75,7 +79,9 @@ function downloadBlob(blob: Blob, filename: string): void {
  * `POST /api/export/preview` dry run. A lossy conversion keeps the download gated behind an
  * explicit "Export anyway" acknowledgement; a lossless one stays quiet. Per-target options
  * (MFX-1.4) render from the target's options schema. Export emits via `POST /api/export/document`
- * and downloads the artifact.
+ * and shows the emitted artifact in a preview card (MFX-6.3, #3857) — content, size, and the
+ * "valid · round-trip OK" status badge — before the user downloads it as the single file or as
+ * a `.zip` bundle built client-side.
  */
 export function ExportDialog({
   open,
@@ -89,7 +95,8 @@ export function ExportDialog({
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [optionValues, setOptionValues] = useState<Record<string, unknown>>({});
   const [exporting, setExporting] = useState(false);
-  const [exportedFilename, setExportedFilename] = useState<string | null>(null);
+  /** The emitted document being previewed on the Export step (MFX-6.3), once emitted. */
+  const [emitted, setEmitted] = useState<EmittedArtifact | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** Whether the user has acknowledged a lossy conversion ("Export anyway", MFX-6.2). */
   const [acknowledged, setAcknowledged] = useState(false);
@@ -124,7 +131,7 @@ export function ExportDialog({
     setSelectedKey(null);
     setOptionValues({});
     setExporting(false);
-    setExportedFilename(null);
+    setEmitted(null);
     setError(null);
     setAcknowledged(false);
   }, []);
@@ -152,7 +159,7 @@ export function ExportDialog({
     setOptionValues((current) => ({ ...current, [key]: value }));
   }, []);
 
-  /** Emit the document for the selected target and hand it to the browser as a download. */
+  /** Emit the document for the selected target and show it in the preview card (MFX-6.3). */
   const handleExport = useCallback(async () => {
     if (!selected) return;
     setStep('export');
@@ -175,12 +182,11 @@ export function ExportDialog({
           typeof data?.error === 'string' ? data.error : 'The export failed. Try again.',
         );
       }
-      const blob = await res.blob();
+      const text = await res.text();
       const filename =
         filenameFromDisposition(res.headers.get('content-disposition')) ||
         `${artifact}-${selected.key}.txt`;
-      downloadBlob(blob, filename);
-      setExportedFilename(filename);
+      setEmitted({ filename, mediaType: res.headers.get('content-type') || '', text });
       onExported?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The export failed. Try again.');
@@ -189,6 +195,30 @@ export function ExportDialog({
       setExporting(false);
     }
   }, [artifact, onExported, optionValues, selected, version]);
+
+  /** Download the previewed document as its single file (MFX-6.3). */
+  const handleDownloadFile = useCallback(() => {
+    if (!emitted) return;
+    downloadBlob(
+      new Blob([emitted.text], { type: emitted.mediaType || 'text/plain' }),
+      emitted.filename,
+    );
+  }, [emitted]);
+
+  /**
+   * Download the previewed document as a `.zip` built client-side (MFX-6.3). The bundle
+   * holds the file(s) the emit returned — the primary document today; every bundle file
+   * once the multi-file endpoint (MFX-4.2) lands.
+   */
+  const handleDownloadZip = useCallback(() => {
+    if (!emitted) return;
+    try {
+      const bytes = buildZip([{ path: emitted.filename, content: emitted.text }]);
+      downloadBlob(new Blob([bytes], { type: 'application/zip' }), zipFilenameFor(emitted.filename));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'The zip download failed. Try again.');
+    }
+  }, [emitted]);
 
   const stepIndex = STEP_ORDER.indexOf(step);
   const fidelity = selected?.entry.fidelity ?? null;
@@ -373,31 +403,28 @@ export function ExportDialog({
           </div>
         )}
 
-        {step === 'export' && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center">
-            {exportedFilename ? (
-              <>
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500 text-white">
-                  <CheckCircle2 className="h-7 w-7" aria-hidden />
-                </div>
-                <div className="text-sm text-gray-700 dark:text-gray-200">
-                  Exported <strong>{exportedFilename}</strong> — check your downloads.
-                </div>
-              </>
-            ) : (
-              <>
-                <Loader2 className="h-8 w-8 animate-spin text-indigo-500" aria-hidden />
-                <div className="text-sm text-gray-700 dark:text-gray-200">
-                  Emitting {selected?.entry.descriptor.label ?? 'the document'}…
-                </div>
-              </>
-            )}
-          </div>
-        )}
+        {step === 'export' &&
+          (emitted ? (
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+                <CheckCircle2 className="h-5 w-5 text-green-500" aria-hidden />
+                Emitted <strong>{emitted.filename}</strong> — review it below, then download
+                the file or a .zip bundle.
+              </div>
+              <ArtifactPreviewCard artifact={emitted} report={preview?.fidelity.report ?? null} />
+            </div>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-indigo-500" aria-hidden />
+              <div className="text-sm text-gray-700 dark:text-gray-200">
+                Emitting {selected?.entry.descriptor.label ?? 'the document'}…
+              </div>
+            </div>
+          ))}
 
         <div className="mt-4 flex justify-between gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
           <Button variant="outline" onClick={handleClose} disabled={exporting}>
-            {exportedFilename ? 'Close' : 'Cancel'}
+            {emitted ? 'Close' : 'Cancel'}
           </Button>
           <div className="flex gap-2">
             {(step === 'target' || step === 'fidelity') && (
@@ -433,8 +460,18 @@ export function ExportDialog({
                 {needsAck ? 'Export anyway' : 'Export'}
               </Button>
             )}
-            {step === 'export' && exportedFilename && (
-              <Button onClick={handleClose}>Done</Button>
+            {step === 'export' && emitted && (
+              <>
+                <Button variant="outline" onClick={handleDownloadZip}>
+                  <FileArchive className="h-4 w-4" aria-hidden />
+                  Download .zip
+                </Button>
+                <Button variant="outline" onClick={handleDownloadFile}>
+                  <Download className="h-4 w-4" aria-hidden />
+                  Download {emitted.filename}
+                </Button>
+                <Button onClick={handleClose}>Done</Button>
+              </>
             )}
           </div>
         </div>

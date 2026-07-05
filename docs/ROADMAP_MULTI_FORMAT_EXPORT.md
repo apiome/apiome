@@ -467,7 +467,7 @@ flowchart LR
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 6.1 ✅ | ExportDialog + target-card grid | mirror ImportDialog; pick target + options | export,ui,typescript,mvp | N | Y | M | apiome-ui |
 | 6.2 ✅ | Fidelity warning panel + report | advisory message + per-construct DROP/APPROX/SYNTH list | export,ui,mvp | N | Y | M | apiome-ui |
-| 6.3 | Preview + download | preview emitted artifact; download single/zip | export,ui,mvp | Y | Y | S | apiome-ui |
+| 6.3 ✅ | Preview + download | preview emitted artifact; download single/zip | export,ui,mvp | Y | Y | S | apiome-ui |
 | 6.4 | Round-trip diff view | show what changed if re-imported (uses 2.6) | export,ui,version-control | Y | N | M | apiome-ui |
 | 6.5 | Version-scoped entry points | Export is an action on the viewed version (NOT a global nav item) | export,ui | Y | Y | S | apiome-ui |
 
@@ -483,6 +483,9 @@ flowchart LR
 - **Acceptance Criteria.** Warning shows real counts + preserved-%; full report expandable; "Export anyway" required when lossy; absent when clean.
 - **Dependencies / Parallelism.** After 6.1, 2.4/2.5. Blocks nothing.
 - **Technical Stack.** Next.js.
+
+### MFX-6.3 — Preview + download  ·  **#3857**  ·  ✅ **Done**
+- **Status.** Implemented in `apiome-ui`: the Export step now previews the emitted document before any download (`ArtifactPreviewCard.tsx` — filename, scrollable content, size/media-type meta) with the mockup's **"valid · round-trip OK"** status badge (`exportArtifactPreview.ts` — the "valid" half re-parses JSON/YAML client-side, never faking a check for formats without a browser parser; the round-trip half reads the MFX-2.5 loss report: clean → `round-trip OK`, degraded → `lossy round-trip`; the hint line states both bases — the *empirical* server-side round-trip lands with MFX-5.3/6.4). Downloads are on-demand from the preview: the single file, or a `.zip` built client-side by a dependency-free stored-ZIP writer (`zipBundle.ts`, UTF-8 names, deterministic output) that takes the file *list* so multi-file bundles flow through unchanged once MFX-4.2's endpoint returns them. Tests in `tests/exportArtifactPreview.test.ts`, `tests/zipBundle.test.ts` (format-level checks incl. CRC-32 vectors), and `tests/ExportDialog.test.tsx`. apiome-ui 0.52.0 → 0.53.0.
 
 *(6.3 preview/download incl. the emitted-artifact preview with a "valid · round-trip OK" badge; 6.4 round-trip diff (v2). **6.5 — version-scoped entry points:** Export is an action on the viewed version's actions/menu, **not** a global left-nav item, since a tenant may have hundreds of projects/versions — navigate Projects → project → version, then export that version. The version view also shows a **fidelity pre-summary** (best-fidelity vs lossy targets for this source) and a **recent-exports** list with fidelity %, per the mockup.)*
 
