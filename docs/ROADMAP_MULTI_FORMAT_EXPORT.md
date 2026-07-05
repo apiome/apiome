@@ -860,18 +860,19 @@ Sources: https://avro.apache.org/docs/1.12.0/specification/ · https://docs.conf
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 19.1 | Avro emitter | model types → `.avsc` (records/enums/unions/logical) | export,multi-protocol,mvp | N | Y | M | apiome-rest |
+| 19.1 ✅ | Avro emitter | model types → `.avsc` (records/enums/unions/logical) | export,multi-protocol,mvp | N | Y | M | apiome-rest |
 | 19.2 | Avro fidelity pack | operations DROP (types-only); constraints DROP | export,multi-protocol,mvp | N | Y | M | apiome-rest |
 | 19.3 | Subjects & defaults | per-type subjects; defaults for evolution; naming | export,multi-protocol,registry,mvp | N | Y | M | apiome-rest |
 | 19.4 | Validate + (push) | validate `.avsc`; optional register to Schema Registry | export,validation,registry | Y | N | M | apiome-rest |
 | 19.5 | Avro target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 | 19.6 · #4183 | Multi-format Schema Registry subjects | publish JSON Schema (21.1) + Protobuf (12.1) subjects, not just Avro | export,registry,integrations | Y | N | M | apiome-rest |
 
-### MFX-19.1 — Avro emitter  ·  **#3909**
+### MFX-19.1 — Avro emitter  ·  **#3909**  ·  ✅ **Done**
 - **Solution / Scope.** Map canonical types → Avro records/enums/arrays/maps/unions/fixed; nullability → `["null", T]` unions; dates/decimals → logical types; names sanitized to Avro rules. **Operations/endpoints have no Avro representation** → excluded (reported by 19.2).
 - **Acceptance Criteria.** Emits valid `.avsc` for the type set; logical types correct; names valid.
 - **Dependencies / Parallelism.** After 1.1, 2.3, 3.1. Blocks 19.2/19.3.
 - **Technical Stack.** Python (`fastavro`/`avro`).
+- **Status.** A pure, deterministic, provenance-tracked `apiome-rest/src/app/avro_emitter.py` (`AvroEmitter`, self-registered under the `avro` format key) — an implementation of the Emitter SPI. It walks a `CanonicalApi` → one validated `.avsc` per named type (records, enums, unions, maps, fixed/logical scalars); `TypeRef` nullability maps to `["null", T]` unions; JSON-Schema `format` and Avro `extras` map to logical types (date, timestamp-millis, uuid, decimal); field/type names are sanitized to Avro identifier rules. Operations/channels/services are omitted (types-only target; MFX-19.2 reports that loss). Every schema is validated with `fastavro.parse_schema`. Tests in `tests/test_avro_emitter.py`; export registry wired via `load_builtin_emitters()`. apiome-rest 1.75.29 → 1.75.30.
 
 ### MFX-19.2 — Avro fidelity pack  ·  **#3910**
 - **Problem.** **(headline, extreme case)** Avro is types-only — most of an API can't be expressed.

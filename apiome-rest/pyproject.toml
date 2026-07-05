@@ -1,6 +1,6 @@
 [project]
 name = "apiome-rest"
-version = "1.75.29"
+version = "1.75.30"
 description = "REST API for serving OpenAPI specifications from the Apiome database"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -38,6 +38,7 @@ dependencies = [
     "jsonschema>=4.21.0",
     "structlog>=24.4.0",
     "graphql-core>=3.2.3",
+    "fastavro>=1.9.0",
     "protobuf>=5.28.0",
     "grpcio>=1.66.0",
     "grpcio-reflection>=1.66.0",
