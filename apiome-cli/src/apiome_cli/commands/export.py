@@ -69,6 +69,9 @@ _ASYNCAPI_TARGET = "asyncapi"
 # ``grpc`` — the user-facing name — while the REST target is the emitter's stable ``protobuf`` key.
 _PROTOBUF_TARGET = "protobuf"
 
+# The registry key for the GraphQL SDL emitter (apiome-rest GraphQlEmitter, MFX-13.5).
+_GRAPHQL_TARGET = "graphql"
+
 _JSON_STDOUT_NOTE = (
     "With --output -, document bytes are written to stdout; the fidelity summary and --json "
     "metadata are written to stderr so stdout stays byte-safe for pipelines."
@@ -394,6 +397,99 @@ def export_grpc(
         typer.echo(
             "Lossy export — the proto3 document does not carry every source construct "
             "(a REST/OpenAPI source loses unions, constraints, and HTTP semantics). "
+            "Re-run with --force to accept.",
+            err=True,
+        )
+        raise typer.Exit(EXIT_ERROR)
+
+
+@app.command(
+    "graphql",
+    help=(
+        "Export a version as GraphQL SDL + a fidelity report. "
+        "With --output -, document bytes go to stdout; fidelity summary and --json metadata go to stderr."
+    ),
+)
+def export_graphql(
+    ctx: typer.Context,
+    project: str = typer.Option(..., "--project", help="Project UUID or slug."),
+    version: str = typer.Option(..., "--version", help="Version UUID, slug, or label."),
+    output: str = typer.Option(
+        ...,
+        "--output",
+        "-o",
+        help="Destination file path, or - for stdout (document bytes only).",
+    ),
+    tenant: str | None = typer.Option(
+        None,
+        "--tenant",
+        help="Tenant UUID or slug (overrides APIOME_TENANT_ID).",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Write and exit 0 even when the export loses fidelity (lossy/types-only).",
+    ),
+) -> None:
+    """Export a version as GraphQL SDL and surface the emitter registry's fidelity report.
+
+    The SDL bytes come from the Emitter SPI (``POST /v1/export/{tenant}/document``, target
+    ``graphql``); the honest fidelity report comes from the dry-run preview
+    (``POST /v1/export/{tenant}/preview``). A native GraphQL source round-trips **lossless**
+    (exit 0); a REST/OpenAPI source loses HTTP semantics and validation constraints (non-zero
+    exit unless ``--force``).
+    """
+    output = output.strip()
+    if not output:
+        typer.echo("--output cannot be empty.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+
+    settings = settings_from_context(ctx)
+    require_api_key(settings)
+    client = _export_client(ctx)
+    tenant_slug = resolve_tenant_slug(settings, client, tenant_override=tenant)
+
+    project_id = resolve_project_uuid(client, tenant_slug, project)
+
+    document = fetch_export_document(
+        client,
+        tenant_slug,
+        artifact=str(project_id),
+        version=version,
+        target=_GRAPHQL_TARGET,
+        serialization=None,
+    )
+    write_document_bytes(document.body, output)
+
+    preview = fetch_export_preview(
+        client,
+        tenant_slug,
+        artifact=str(project_id),
+        version=version,
+        target=_GRAPHQL_TARGET,
+    )
+    fidelity = preview_fidelity(preview)
+
+    json_mode = json_mode_from_context(ctx)
+    metadata = SpecExportMetadata(
+        output=output,
+        bytes_written=len(document.body),
+        content_type=document.content_type,
+        format="graphql",
+        fidelity_target=_GRAPHQL_TARGET,
+        fidelity=_fidelity_metadata(fidelity),
+        filename=document.filename,
+    )
+    emit_download_metadata(metadata, json_mode=json_mode)
+
+    if not json_mode:
+        for line in format_export_fidelity_summary(fidelity, target=_GRAPHQL_TARGET):
+            typer.echo(line, err=True)
+
+    if is_lossy(fidelity) and not force:
+        typer.echo(
+            "Lossy export — the GraphQL SDL does not carry every source construct "
+            "(a REST/OpenAPI source loses HTTP semantics and validation constraints). "
             "Re-run with --force to accept.",
             err=True,
         )

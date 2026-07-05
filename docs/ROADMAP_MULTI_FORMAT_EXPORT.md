@@ -728,7 +728,7 @@ Sources: https://spec.graphql.org/September2025/ · `graphql-core` `print_schema
 | 13.2 ✅ | Input/output type splitting | derive input types; map operations→fields | export,multi-protocol,mvp | N | Y | M | apiome-rest |
 | 13.3 ✅ | GraphQL fidelity pack | HTTP semantics DROP; constraints→custom scalars | export,multi-protocol,mvp | N | Y | S | apiome-rest |
 | 13.4 ✅ | Validate + round-trip | `build_schema` validate; re-import diff | export,validation,mvp | Y | Y | S | apiome-rest |
-| 13.5 | GraphQL target card + CLI + fixtures | UI/CLI + fixtures; supersede #221/#2214 | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
+| 13.5 ✅ | GraphQL target card + CLI + fixtures | UI/CLI + fixtures; supersede #221/#2214 | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 | 13.6 · #4344 | Federation subgraph output mode | subgraph SDL w/ synthesized `@key` (SYNTH); rover composition check | export,multi-protocol | Y | N | M | apiome-rest |
 
 ### MFX-13.1 — GraphQL SDL emitter  ·  **#3884**  ·  ✅ **Done**
@@ -760,6 +760,13 @@ Sources: https://spec.graphql.org/September2025/ · `graphql-core` `print_schema
 - **Dependencies / Parallelism.** After 13.1–13.3, MFI parsers + diff. Blocks 13.5.
 - **Technical Stack.** Python (`graphql-core`).
 - **Status.** A pure `apiome-rest/src/app/graphql_roundtrip.py` module (`round_trip_graphql(api, *, opts, emit_result) → RoundTripReport`) that composes existing machinery — the GraphQL emitter (MFX-13.1), the MFI-10.1 SDL parser (`parse_graphql` / `build_schema` + `validate_schema`), the GraphQL import source (`GraphQlImportSource`, MFI-10.6) and normalizer (MFI-10.2), and the compare-any-two canonical diff (`app.diff.diff`, MFI-3.2) — into one emit → validate → re-import → diff loop. The `RoundTripReport` carries a single ordered `RoundTripStatus` (`INVALID` build/validate failure → `UNPARSEABLE` re-import failure → `LOSSY` → `LOSSLESS`), the empirical `ModelDiff`, and the emitter's *predicted* `losses`, with derived `valid` (schema-clean **and** re-importable — the MFX-5.1 check), `empirically_lossless` (entity diff empty), `predicted_lossless`, and `diverges` (prediction vs. measurement disagree — the MFX-2.6 "flagged where they diverge" flag). A Graph-native source in normal form round-trips **lossless** (empty diff); invalid SDL is `INVALID`; a cross-paradigm REST source round-trips `LOSSY` with its synthesized-input / HTTP-reframing losses corroborated. Tests in `tests/test_graphql_roundtrip.py`. apiome-rest 1.75.28 → 1.75.29.
+
+### MFX-13.5 — GraphQL target card + CLI + fixtures  ·  **#3888**  ·  ✅ **Done**
+- **Solution / Scope.** Make the GraphQL SDL emitter (13.1–13.4) reachable from the CLI + UI, with round-trip fixtures; supersede closed #221 and feed #2214.
+- **Acceptance Criteria.** `apiome export graphql` writes valid GraphQL SDL with the honest fidelity report; the UI target-card metadata knows GraphQL; fixtures cover native Graph (lossless) + REST/OpenAPI (lossy).
+- **Dependencies / Parallelism.** After 13.1–13.4 (emitter + round-trip). Parallel within the epic.
+- **Technical Stack.** Typer · Next.js (client metadata only — no apiome-rest change).
+- **Status.** **`apiome export graphql`** (`apiome-cli/src/apiome_cli/commands/export.py`): pairs `POST /v1/export/{tenant}/document` (target `graphql`) for the SDL bytes with `POST /v1/export/{tenant}/preview` for the fidelity envelope — a native Graph source exports **lossless** (exit 0), a REST/OpenAPI source loses HTTP semantics and validation constraints and exports **lossy** (non-zero exit unless `--force`); `--output -` keeps stdout byte-safe. UI adds `graphql`/`gql`/`sdl` entries in `apiome-ui/src/app/utils/export-target-language.ts` (Monaco `graphql` grammar, `.graphql` extension, `schema.graphql` download name). Round-trip fixtures under `apiome-cli/tests/fixtures/` (emitted SDL document + lossless/lossy preview envelopes). Tests: CLI command suite (`tests/test_export_graphql_command.py`), UI metadata (`tests/export-target-language.test.ts`). apiome-cli 0.19.0 → 0.20.0, apiome-ui 0.50.2 → 0.50.3.
 
 *(13.5 target card + `apiome export graphql` + fixtures, **superseding closed #221** and feeding #2214.)*
 

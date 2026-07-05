@@ -1,0 +1,43 @@
+# Emitted GraphQL SDL fixture for `export graphql` round-trip tests (MFX-13.5, #3888).
+# Mirrors the blog schema surface — a native Graph source that round-trips losslessly.
+
+type Query {
+  "Fetch a single post by id."
+  post(id: ID!): Post
+  "List every published post."
+  posts: [Post!]!
+}
+
+type Mutation {
+  "Create a new post and return it."
+  addPost(input: AddPostInput!): Post!
+}
+
+"Input for creating a post."
+input AddPostInput {
+  title: String!
+  body: String!
+  authorId: ID!
+}
+
+"A blog post."
+type Post {
+  id: ID!
+  title: String!
+  body: String!
+  author: Author!
+  status: PostStatus!
+}
+
+"The author of a post."
+type Author {
+  id: ID!
+  name: String!
+}
+
+"Publication state of a post."
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}

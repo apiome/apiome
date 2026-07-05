@@ -2,9 +2,9 @@
 
 Thin HTTP helper over ``POST /v1/export/{tenant}/document``, the emit counterpart to the dry-run
 fidelity preview (:mod:`apiome_cli.client.export_registry`): ``/preview`` predicts the loss, this
-route returns the bytes. It gives non-OpenAPI targets (AsyncAPI) a document source the OpenAPI-only
-browse reconstruction (:mod:`apiome_cli.client.spec_download`) cannot supply, so ``export asyncapi``
-can write the artifact while ``/preview`` supplies its honest fidelity report.
+route returns the bytes. It gives non-OpenAPI targets (AsyncAPI, GraphQL SDL, protobuf/gRPC) a document source the OpenAPI-only
+browse reconstruction (:mod:`apiome_cli.client.spec_download`) cannot supply, so ``export asyncapi``,
+``export grpc``, and ``export graphql`` can write the artifact while ``/preview`` supplies its honest fidelity report.
 
 The server serializes the document as JSON (default) or YAML (``Accept: application/yaml``); this
 helper only chooses the wire format and hands back the raw bytes + response metadata — all
