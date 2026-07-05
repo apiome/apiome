@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Export: Avro emitter — canonical model → validated `.avsc` per named type (records, enums, unions, maps, fixed/logical scalars); nullability as `["null", T]` unions; date/timestamp/uuid/decimal logical types; names sanitized to Avro rules (MFX-19.1)
 - Export: `apiome export graphql` writes GraphQL SDL with the honest fidelity report; UI export-target metadata maps graphql/gql/sdl to Monaco `graphql` + `.graphql` download names (MFX-13.5)
 - Export: GraphQL validate + round-trip — emitted SDL is checked with `build_schema`/`validate_schema`, re-imported through the MFI GraphQL parser, and diffed against the source; predicted fidelity losses corroborated and divergences flagged (MFX-13.4)
 - Export: GraphQL fidelity pack — REST HTTP method/path/status/headers are reported as APPROX when reframing to Query/Mutation fields (HTTP semantics have no GraphQL representation); validation constraints approximate as custom scalars; oneOf/unions report OK when member shapes allow (MFX-13.3)
