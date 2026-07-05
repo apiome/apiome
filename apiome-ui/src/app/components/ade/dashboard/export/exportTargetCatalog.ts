@@ -1,0 +1,338 @@
+/**
+ * Export-target card catalog (MFX-6.1, #3855).
+ *
+ * The ExportDialog target grid is data-driven: `GET /api/export/targets` returns every
+ * registered emitter (descriptor + capability profile + per-emit options schema, MFX-1.1/1.4)
+ * together with a cheap per-source fidelity badge (tier + preserved-%, MFX-2.5). This module
+ * maps that response into renderable target cards, resolves each card's Lucide icon, derives
+ * the tier badge styling, and flattens a target's Pydantic-generated options JSON Schema into
+ * a simple form model the dialog can render.
+ *
+ * Everything here is pure (no React, no fetch) so it can be unit-tested directly — mirroring
+ * `../importSourceCatalog.ts`, whose icon resolver it reuses.
+ */
+
+import type { LucideIcon } from 'lucide-react';
+import { resolveLucideIcon } from '../importSourceCatalog';
+
+/** One-word fidelity badge for a (source, target) pairing (mirrors Python `ExportFidelityTier`). */
+export type ExportFidelityTier = 'lossless' | 'lossy' | 'types-only';
+
+/** An emitter's self-description (mirrors REST `EmitterDescriptor`, MFX-1.1). */
+export interface ExportTargetDescriptor {
+  /** Stable registry key, e.g. `"openapi"`. */
+  key: string;
+  /** Output format key this emitter produces, e.g. `"openapi-3.1"`. */
+  format: string;
+  /** Human label for the target card. */
+  label: string;
+  /** One-line description of what it exports. */
+  description: string;
+  /** Lucide icon name in kebab-case, e.g. `"file-json"`. */
+  icon: string;
+  /** The canonical paradigm this emitter primarily targets, e.g. `"rest"`. */
+  paradigm: string;
+  /** Whether the emitter produces a multi-file bundle (vs one artifact). */
+  multi_file: boolean;
+  /** Whether emit hard-requires an external toolchain binary. */
+  needs_toolchain: boolean;
+  /** Whether this emitter can run in the current runtime. Absent (older REST) is treated as `true`. */
+  available?: boolean;
+  /** Human-readable reason the target is unavailable, when `available` is `false`. */
+  unavailable_reason?: string | null;
+}
+
+/** The cheap per-target fidelity summary for one source (mirrors Python `TargetFidelity`, MFX-2.5). */
+export interface TargetFidelitySummary {
+  /** One-word fidelity badge: lossless / lossy / types-only. */
+  tier: ExportFidelityTier;
+  /** Estimated share of constructs carried faithfully to the target, 0–100. */
+  preserved_percent: number;
+  /** Total source constructs the prediction considered. */
+  total: number;
+  /** Constructs carried faithfully. */
+  preserved: number;
+  /** Constructs dropped entirely. */
+  dropped: number;
+  /** Constructs represented imperfectly. */
+  approximated: number;
+  /** Constructs invented to satisfy the target. */
+  synthesized: number;
+}
+
+/** One target entry from `GET /api/export/targets` (mirrors REST `ExportTargetFidelity`). */
+export interface ExportTargetEntry {
+  descriptor: ExportTargetDescriptor;
+  /** Static capability flags (operations / events / unions / …); not rendered on the card yet. */
+  capability_profile: Record<string, boolean>;
+  /** JSON Schema for this target's per-emit options (MFX-1.4). */
+  options_schema: Record<string, unknown>;
+  /** Validated default option values for this target (MFX-1.4). */
+  default_options: Record<string, unknown>;
+  /** Per-source fidelity badge for exporting the requested source to this target. */
+  fidelity: TargetFidelitySummary;
+}
+
+/** The full `GET /api/export/targets` response (mirrors REST `ExportTargetsResponse`). */
+export interface ExportTargetsResponse {
+  /** The artifact (project) id the fidelity was computed for. */
+  artifact: string;
+  /** The version selector as requested (label, UUID, or null for latest). */
+  version?: string | null;
+  /** The resolved revision record id. */
+  version_record_id: string;
+  /** The resolved revision's version label, e.g. `"1.2.0"`. */
+  version_label?: string | null;
+  /** Every registered target with its per-source fidelity, sorted by target key. */
+  targets: ExportTargetEntry[];
+}
+
+/** A renderable target card: the entry plus its resolved icon component. */
+export interface ExportTargetCard {
+  /** Stable key (the descriptor's registry key). */
+  key: string;
+  /** The full REST entry backing this card. */
+  entry: ExportTargetEntry;
+  /** Resolved Lucide icon component for the card. */
+  icon: LucideIcon;
+  /** Whether the target can actually emit in this runtime. */
+  available: boolean;
+}
+
+/**
+ * Map the targets response into renderable cards, resolving each descriptor's icon.
+ * Entries missing a descriptor key are skipped; server order (sorted by key) is preserved.
+ *
+ * @param response The `GET /api/export/targets` response (may be undefined while loading).
+ * @returns One card per valid target entry.
+ */
+export function exportTargetCards(
+  response: ExportTargetsResponse | null | undefined,
+): ExportTargetCard[] {
+  const cards: ExportTargetCard[] = [];
+  for (const entry of response?.targets ?? []) {
+    const key = entry?.descriptor?.key;
+    if (typeof key !== 'string' || key.length === 0) continue;
+    cards.push({
+      key,
+      entry,
+      icon: resolveLucideIcon(entry.descriptor.icon),
+      available: entry.descriptor.available !== false,
+    });
+  }
+  return cards;
+}
+
+/** Human label for a fidelity tier, as printed on the card badge. */
+export function tierLabel(tier: ExportFidelityTier): string {
+  return tier;
+}
+
+/**
+ * CSS utility classes for a card's fidelity tier badge. Colors follow the export mockup:
+ * lossless → green, lossy → amber, types-only (severe) → red.
+ */
+export function tierBadgeClass(tier: ExportFidelityTier): string {
+  switch (tier) {
+    case 'lossless':
+      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300';
+    case 'lossy':
+      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300';
+    case 'types-only':
+    default:
+      return 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300';
+  }
+}
+
+/** One count chip of the fidelity panel, in display order (worst first). */
+export interface FidelityChip {
+  /** Stable key for the chip. */
+  key: 'dropped' | 'approximated' | 'synthesized' | 'preserved';
+  /** Human label, e.g. `dropped`. */
+  label: string;
+  /** How many constructs fell into this bucket. */
+  count: number;
+  /** CSS utility classes for the chip (mockup palette: red / amber / violet / green). */
+  className: string;
+}
+
+/**
+ * Break a target's fidelity summary into the panel's count chips — `N dropped · N approximated ·
+ * N synthesized · N clean` — dropping empty loss buckets. The `clean` chip always renders so a
+ * lossless target still shows something positive.
+ */
+export function fidelityChips(fidelity: TargetFidelitySummary): FidelityChip[] {
+  const lossChips: FidelityChip[] = [
+    {
+      key: 'dropped',
+      label: 'dropped',
+      count: fidelity.dropped,
+      className: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
+    },
+    {
+      key: 'approximated',
+      label: 'approximated',
+      count: fidelity.approximated,
+      className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+    },
+    {
+      key: 'synthesized',
+      label: 'synthesized',
+      count: fidelity.synthesized,
+      className: 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
+    },
+  ];
+  const chips = lossChips.filter((chip) => chip.count > 0);
+  chips.push({
+    key: 'preserved',
+    label: 'clean',
+    count: fidelity.preserved,
+    className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
+  });
+  return chips;
+}
+
+// ===========================================================================
+// Per-target options (MFX-1.4 schemas → a renderable form model)
+// ===========================================================================
+
+/** The kinds of option fields the dialog renders. Non-primitive fields are skipped. */
+export type OptionFieldKind = 'boolean' | 'enum' | 'string';
+
+/** One renderable per-target option field, flattened from the target's options JSON Schema. */
+export interface OptionField {
+  /** The option's property name in the emit request's `options` object. */
+  key: string;
+  /** Human label (the schema `title`, or the key humanized). */
+  label: string;
+  /** The schema `description`, when present. */
+  description: string | null;
+  /** How the field renders: a toggle, a segmented enum choice, or a text input. */
+  kind: OptionFieldKind;
+  /** The allowed values, for `enum` fields. */
+  enumValues: string[];
+  /** The target's validated default for this option (from `default_options`). */
+  defaultValue: unknown;
+}
+
+/** A JSON-Schema node, loosely typed — Pydantic emits `$ref`/`allOf`/`anyOf` wrappers freely. */
+type SchemaNode = Record<string, unknown>;
+
+/** Resolve a local `#/$defs/...` reference against the root schema, or return null. */
+function resolveRef(root: SchemaNode, ref: unknown): SchemaNode | null {
+  if (typeof ref !== 'string' || !ref.startsWith('#/')) return null;
+  let node: unknown = root;
+  for (const part of ref.slice(2).split('/')) {
+    if (typeof node !== 'object' || node === null) return null;
+    node = (node as Record<string, unknown>)[part];
+  }
+  return typeof node === 'object' && node !== null ? (node as SchemaNode) : null;
+}
+
+/**
+ * Unwrap the Pydantic wrappers around a property schema:
+ *  - `$ref` / single-entry `allOf: [{$ref}]` (enum classes) resolve through `$defs`;
+ *  - `anyOf: [X, {type: "null"}]` (Optional fields) unwraps to `X`.
+ */
+function unwrapSchema(root: SchemaNode, node: SchemaNode): SchemaNode {
+  let current = node;
+  for (let depth = 0; depth < 4; depth++) {
+    if (current.$ref) {
+      const resolved = resolveRef(root, current.$ref);
+      if (!resolved) return current;
+      current = { ...resolved, ...current, $ref: undefined };
+      continue;
+    }
+    const allOf = current.allOf;
+    if (Array.isArray(allOf) && allOf.length === 1 && typeof allOf[0] === 'object') {
+      current = { ...(allOf[0] as SchemaNode), ...current, allOf: undefined };
+      continue;
+    }
+    const anyOf = current.anyOf;
+    if (Array.isArray(anyOf)) {
+      const nonNull = anyOf.filter(
+        (option) => !(typeof option === 'object' && option !== null && (option as SchemaNode).type === 'null'),
+      );
+      if (nonNull.length === 1 && typeof nonNull[0] === 'object') {
+        current = { ...(nonNull[0] as SchemaNode), ...current, anyOf: undefined };
+        continue;
+      }
+      return current;
+    }
+    return current;
+  }
+  return current;
+}
+
+/** Humanize a snake_case option key into a label, e.g. `emit_services` → `Emit services`. */
+function humanizeKey(key: string): string {
+  const words = key.replace(/[_-]+/g, ' ').trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/**
+ * Flatten a target's options JSON Schema (MFX-1.4) into the primitive fields the dialog can
+ * render. Booleans become toggles, string enums become segmented choices, and plain strings
+ * become text inputs; objects/arrays/dicts (e.g. persisted field-number maps) are advanced
+ * options with no generic form control, so they are skipped and the emit request simply leaves
+ * them at their server-side defaults.
+ *
+ * @param schema The target's `options_schema` (a Pydantic-generated JSON Schema).
+ * @param defaults The target's validated `default_options` values.
+ * @returns The renderable option fields, in schema property order.
+ */
+export function optionFieldsFromSchema(
+  schema: Record<string, unknown> | null | undefined,
+  defaults: Record<string, unknown> | null | undefined,
+): OptionField[] {
+  const root = (schema ?? {}) as SchemaNode;
+  const properties = root.properties;
+  if (typeof properties !== 'object' || properties === null) return [];
+
+  const fields: OptionField[] = [];
+  for (const [key, rawNode] of Object.entries(properties as Record<string, unknown>)) {
+    if (typeof rawNode !== 'object' || rawNode === null) continue;
+    const node = unwrapSchema(root, rawNode as SchemaNode);
+    const label = typeof node.title === 'string' && node.title.length > 0 ? node.title : humanizeKey(key);
+    const description = typeof node.description === 'string' ? node.description : null;
+    const defaultValue = defaults?.[key] ?? node.default ?? null;
+
+    const enumValues = Array.isArray(node.enum)
+      ? node.enum.filter((value): value is string => typeof value === 'string')
+      : [];
+    if (enumValues.length > 0) {
+      fields.push({ key, label, description, kind: 'enum', enumValues, defaultValue });
+      continue;
+    }
+    if (node.type === 'boolean') {
+      fields.push({ key, label, description, kind: 'boolean', enumValues: [], defaultValue });
+      continue;
+    }
+    if (node.type === 'string') {
+      fields.push({ key, label, description, kind: 'string', enumValues: [], defaultValue });
+    }
+    // Other types (object/array/integer/…) have no generic control — skipped by design.
+  }
+  return fields;
+}
+
+/**
+ * Compute the options payload to send with the emit request: only values that differ from the
+ * target's defaults are included, so the server applies its own validated defaults for the rest
+ * (and an untouched form sends no `options` at all).
+ *
+ * @param values The dialog's current option values keyed by option key.
+ * @param defaults The target's validated `default_options`.
+ * @returns The changed values, or `null` when nothing was changed.
+ */
+export function changedOptions(
+  values: Record<string, unknown>,
+  defaults: Record<string, unknown> | null | undefined,
+): Record<string, unknown> | null {
+  const changed: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(values)) {
+    const defaultValue = defaults?.[key] ?? null;
+    if (value !== defaultValue) changed[key] = value;
+  }
+  return Object.keys(changed).length > 0 ? changed : null;
+}

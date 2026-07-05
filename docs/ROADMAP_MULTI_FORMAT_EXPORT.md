@@ -465,13 +465,13 @@ flowchart LR
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 6.1 | ExportDialog + target-card grid | mirror ImportDialog; pick target + options | export,ui,typescript,mvp | N | Y | M | apiome-ui |
+| 6.1 ✅ | ExportDialog + target-card grid | mirror ImportDialog; pick target + options | export,ui,typescript,mvp | N | Y | M | apiome-ui |
 | 6.2 | Fidelity warning panel + report | advisory message + per-construct DROP/APPROX/SYNTH list | export,ui,mvp | N | Y | M | apiome-ui |
 | 6.3 | Preview + download | preview emitted artifact; download single/zip | export,ui,mvp | Y | Y | S | apiome-ui |
 | 6.4 | Round-trip diff view | show what changed if re-imported (uses 2.6) | export,ui,version-control | Y | N | M | apiome-ui |
 | 6.5 | Version-scoped entry points | Export is an action on the viewed version (NOT a global nav item) | export,ui | Y | Y | S | apiome-ui |
 
-### MFX-6.1 — ExportDialog + target-card grid  ·  **#3855**
+### MFX-6.1 — ExportDialog + target-card grid  ·  **#3855**  ·  ✅ **Done**
 - **Solution / Scope.** A symmetric `ExportDialog` (reuse `ImportDialog` patterns/tokens): a **12-target card grid** from `GET /export/targets` where **each card shows a per-source fidelity badge** (`lossless`/`lossy`/`types-only`, from 1.2/2.5) so the user sees the trade-off before selecting; numbered stepper (Source → Target → Fidelity → Export); per-target options per 1.4 (e.g. proto3 vs editions, single-file vs multi-file zip). Selecting a target updates the fidelity headline (6.2). Follow `frontend-design` guidance. See the mockup.
 - **Acceptance Criteria.** Pick a target → fidelity panel updates → export; each card shows its fidelity tier for the current source; consistent with ImportDialog look & feel.
 - **Dependencies / Parallelism.** After 1.2, 2.5. Blocks 6.2.
