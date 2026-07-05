@@ -862,7 +862,7 @@ Sources: https://avro.apache.org/docs/1.12.0/specification/ · https://docs.conf
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 19.1 ✅ | Avro emitter | model types → `.avsc` (records/enums/unions/logical) | export,multi-protocol,mvp | N | Y | M | apiome-rest |
 | 19.2 ✅ | Avro fidelity pack | operations DROP (types-only); constraints DROP | export,multi-protocol,mvp | N | Y | M | apiome-rest |
-| 19.3 | Subjects & defaults | per-type subjects; defaults for evolution; naming | export,multi-protocol,registry,mvp | N | Y | M | apiome-rest |
+| 19.3 ✅ | Subjects & defaults | per-type subjects; defaults for evolution; naming | export,multi-protocol,registry,mvp | N | Y | M | apiome-rest |
 | 19.4 | Validate + (push) | validate `.avsc`; optional register to Schema Registry | export,validation,registry | Y | N | M | apiome-rest |
 | 19.5 | Avro target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 | 19.6 · #4183 | Multi-format Schema Registry subjects | publish JSON Schema (21.1) + Protobuf (12.1) subjects, not just Avro | export,registry,integrations | Y | N | M | apiome-rest |
@@ -882,7 +882,14 @@ Sources: https://avro.apache.org/docs/1.12.0/specification/ · https://docs.conf
 - **Technical Stack.** Python.
 - **Status.** `AvroFidelityRulePack` shipped alongside `AvroEmitter` in `apiome-rest/src/app/avro_emitter.py` (MFX-19.2): operations/channels critical DROP with an explicit "only data schemas are exported" message; validation constraints DROP; eligible unions OK / ineligible APPROX; nullable fields APPROX as `["null", T]` unions; evolution defaults SYNTH. Tests in `tests/test_fidelity_rulepack.py`. apiome-rest 1.75.30 → 1.75.31.
 
-*(19.3 per-type subjects + evolution defaults + naming strategy; 19.4 validate + optional **push to a live Confluent Schema Registry** (reuse import registry client in reverse, v2 for push); 19.5 target card + `apiome export avro` + fixtures. Coordinate with #239/#2776/#3489.)*
+### MFX-19.3 — Subjects & defaults  ·  **#3911**  ·  ✅ **Done**
+- **Solution / Scope.** Per-type Confluent Schema Registry subjects on each emitted ``.avsc`` (``RecordNameStrategy`` default ``{qualifiedName}-value``; ``TopicNameStrategy`` / ``TopicRecordNameStrategy`` via emit options); nullable optional fields without source defaults receive synthesized evolution defaults (`default: null` on `["null", T]` unions) with ``INFERRED`` losses + ``DEFAULT`` provenance.
+- **Acceptance Criteria.** Each emitted file carries a deterministic registry subject; naming strategy is configurable; evolution-compatible defaults are synthesized where required; schemas remain valid under ``fastavro``.
+- **Dependencies / Parallelism.** After 19.1, 19.2. Blocks 19.4.
+- **Technical Stack.** Python.
+- **Status.** `AvroSubjectNamingStrategy`, extended `AvroEmitOptions` (`subject_naming`, `topic`, `subject_role`), `resolve_avro_subject()`, evolution-default synthesis in `_AvroWriter`, and optional `EmittedFile.subject` metadata in `apiome-rest/src/app/avro_emitter.py` + `emitter.py`. Tests in `tests/test_avro_emitter.py`. apiome-rest 1.75.31 → 1.75.32.
+
+*(19.4 validate + optional **push to a live Confluent Schema Registry** (reuse import registry client in reverse, v2 for push); 19.5 target card + `apiome export avro` + fixtures. Coordinate with #239/#2776/#3489.)*
 
 ---
 

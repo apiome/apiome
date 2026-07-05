@@ -1,9 +1,11 @@
-"""Tests for the Apache Avro emitter — MFX-19.1 (#3909).
+"""Tests for the Apache Avro emitter — MFX-19.1 (#3909), subjects MFX-19.3 (#3911).
 
 Exercises the acceptance criteria: canonical types emit **valid** ``.avsc`` schemas
 (records, enums, unions, arrays, maps, fixed, logical types), nullability maps to
-``["null", T]`` unions, names are sanitized to Avro rules, and every schema passes
-``fastavro.parse_schema``. Operations are omitted (types-only target).
+``["null", T]`` unions, names are sanitized to Avro rules, every schema passes
+``fastavro.parse_schema``, per-type Schema Registry subjects are assigned, and
+optional fields without source defaults receive evolution-compatible synthesized
+defaults. Operations are omitted (types-only target).
 """
 
 from __future__ import annotations
@@ -12,7 +14,14 @@ import json
 
 import pytest
 
-from app.avro_emitter import AvroEmitOptions, AvroEmitter, validate_avro_schema
+from app.avro_emitter import (
+    AvroEmitOptions,
+    AvroEmitter,
+    AvroSubjectNamingStrategy,
+    resolve_avro_subject,
+    validate_avro_schema,
+)
+from app.emitter import LossKind, Provenance, get_emitter, load_builtin_emitters
 from app.canonical_model import (
     ApiIdentity,
     ApiParadigm,
@@ -27,7 +36,6 @@ from app.canonical_model import (
     TypeKind,
     TypeRef,
 )
-from app.emitter import Provenance, get_emitter, load_builtin_emitters
 
 
 def _emit(api: CanonicalApi, *, opts: AvroEmitOptions | None = None):
@@ -234,6 +242,7 @@ def test_record_fields_logical_types_and_nullability() -> None:
         "null",
         {"type": "bytes", "logicalType": "decimal", "precision": 10, "scale": 2},
     ]
+    assert fields["balance"]["default"] is None
     assert fields["bad_name"]["type"] == "string"
 
 
@@ -313,7 +322,7 @@ def test_operations_are_omitted() -> None:
     ]
     result = _emit(api)
     assert len(result.files) == 6
-    assert result.losses == []
+    assert all(loss.subject == "evolution-default" for loss in result.losses)
 
 
 def test_emission_is_deterministic() -> None:
@@ -327,7 +336,8 @@ def test_provenance_records_each_schema() -> None:
     result = _emit(_data_schema_api())
     pointers = {record.pointer for record in result.provenance}
     assert "/schemas/com.example.User" in pointers
-    assert all(record.provenance is Provenance.SOURCE for record in result.provenance)
+    assert any(record.provenance is Provenance.SOURCE for record in result.provenance)
+    assert any(record.provenance is Provenance.DEFAULT for record in result.provenance)
 
 
 def test_falsy_defaults_are_preserved() -> None:
@@ -370,3 +380,130 @@ def test_falsy_defaults_are_preserved() -> None:
 def test_validate_avro_schema_rejects_invalid_schema() -> None:
     with pytest.raises(ValueError, match="Invalid Avro schema"):
         validate_avro_schema({"type": "not-a-real-avro-type"})
+
+
+# ---------------------------------------------------------------------------
+# MFX-19.3 — Schema Registry subjects, naming strategy, evolution defaults
+# ---------------------------------------------------------------------------
+
+
+def test_each_emitted_file_has_record_name_subject() -> None:
+    """Default ``record_name`` strategy assigns one ``{qualifiedName}-value`` subject per type."""
+    result = _emit(_data_schema_api())
+    subjects = {emitted.subject for emitted in result.files}
+    assert subjects == {
+        "com.example.Suit-value",
+        "com.example.Labels-value",
+        "com.example.OptString-value",
+        "com.example.md5-value",
+        "com.example.Money-value",
+        "com.example.User-value",
+    }
+
+
+def test_topic_record_name_subject_strategy() -> None:
+    result = _emit(
+        _data_schema_api(),
+        opts=AvroEmitOptions(
+            subject_naming=AvroSubjectNamingStrategy.TOPIC_RECORD_NAME,
+            topic="users",
+        ),
+    )
+    assert {emitted.subject for emitted in result.files} == {
+        "users-com.example.Suit-value",
+        "users-com.example.Labels-value",
+        "users-com.example.OptString-value",
+        "users-com.example.md5-value",
+        "users-com.example.Money-value",
+        "users-com.example.User-value",
+    }
+
+
+def test_topic_name_subject_strategy_uses_single_topic_subject() -> None:
+    result = _emit(
+        _data_schema_api(),
+        opts=AvroEmitOptions(
+            subject_naming=AvroSubjectNamingStrategy.TOPIC_NAME,
+            topic="users",
+        ),
+    )
+    assert {emitted.subject for emitted in result.files} == {"users-value"}
+
+
+def test_subject_role_key_suffix() -> None:
+    result = _emit(
+        _data_schema_api(),
+        opts=AvroEmitOptions(subject_role="key"),
+    )
+    assert all(emitted.subject.endswith("-key") for emitted in result.files)
+    assert "com.example.Suit-key" in {emitted.subject for emitted in result.files}
+
+
+def test_topic_strategies_require_topic() -> None:
+    with pytest.raises(ValueError, match="topic is required"):
+        AvroEmitOptions(subject_naming=AvroSubjectNamingStrategy.TOPIC_NAME)
+
+
+def test_resolve_avro_subject_is_deterministic() -> None:
+    api = _data_schema_api()
+    user = next(t for t in api.types if t.name == "User")
+    opts = AvroEmitOptions()
+    assert resolve_avro_subject(user, opts, "com.example") == "com.example.User-value"
+    assert (
+        resolve_avro_subject(
+            user,
+            AvroEmitOptions(
+                subject_naming=AvroSubjectNamingStrategy.TOPIC_RECORD_NAME,
+                topic="events",
+            ),
+            "com.example",
+        )
+        == "events-com.example.User-value"
+    )
+
+
+def test_synthesized_evolution_defaults_on_nullable_fields_without_source_default() -> None:
+    """Nullable fields without an explicit source default get ``default: null`` for evolution."""
+    rec = Type(
+        key="com.example.Rec",
+        name="Rec",
+        kind=TypeKind.RECORD,
+        namespace="com.example",
+        fields=[
+            CanonicalField(
+                key="com.example.Rec.note",
+                name="note",
+                type=TypeRef(name="string", nullable=True),
+            ),
+            CanonicalField(
+                key="com.example.Rec.balance",
+                name="balance",
+                type=TypeRef(name="com.example.Money", nullable=True),
+            ),
+        ],
+    )
+    money = Type(
+        key="com.example.Money",
+        name="Money",
+        kind=TypeKind.SCALAR,
+        namespace="com.example",
+        constraints=Constraints(format="decimal"),
+        extras={"precision": 10, "scale": 2},
+    )
+    result = _emit(
+        CanonicalApi(
+            paradigm=ApiParadigm.DATA_SCHEMA,
+            format="avro",
+            identity=ApiIdentity(name="x", namespace="com.example"),
+            types=[money, rec],
+        )
+    )
+    schema = _schema_by_name(result, "Rec")
+    fields = {f["name"]: f for f in schema["fields"]}
+    assert fields["note"]["default"] is None
+    assert fields["balance"]["default"] is None
+
+    synth = [loss for loss in result.losses if loss.subject == "evolution-default"]
+    assert len(synth) == 2
+    assert all(loss.kind is LossKind.INFERRED for loss in synth)
+    assert any(record.provenance is Provenance.DEFAULT for record in result.provenance)
