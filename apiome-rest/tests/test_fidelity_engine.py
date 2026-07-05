@@ -169,15 +169,29 @@ def test_rest_to_openapi_is_lossless():
         assert _items_for(report, key), f"missing OK item for {key}"
 
 
-def test_openapi_emitter_profile_matches_helper():
-    """The engine's convenience wrapper reads the emitter's real capability profile."""
+def test_openapi_emitter_profile_and_pack_drive_the_helper():
+    """The wrapper reads the emitter's real profile *and* its declared rule pack.
+
+    For faithful constructs (the REST operation and the record/union/enum/scalar
+    types) the emitter's pack agrees with the raw-profile default. The one divergence
+    is the event channel: OpenAPI's profile advertises ``events`` so the raw default
+    calls it lossless, but the emitter's MFX-9.2 pack refines it to a documented-only
+    ``APPROX`` — proving the wrapper honours the pack, not merely the profile.
+    """
     api = _rich_api()
     via_emitter = compute_lossiness_for_emitter(api, OpenApiEmitter)
     via_profile = compute_lossiness(
         api, OpenApiEmitter.capability_profile(), target_label=OpenApiEmitter.label
     )
-    assert via_emitter.model_dump() == via_profile.model_dump()
-    assert via_emitter.is_lossless
+    # The raw profile hides the event-channel loss; the emitter's pack surfaces it.
+    assert via_profile.is_lossless
+    assert not via_emitter.is_lossless
+    assert _items_for(via_emitter, "user/signedup")[0].kind is LossinessKind.APPROX
+    # Every non-channel construct still agrees with the raw-profile default.
+    for key in ("GET /users/{id}", "Contact", "Status", "Money"):
+        assert (
+            _items_for(via_emitter, key)[0].kind is _items_for(via_profile, key)[0].kind
+        )
 
 
 # ---------------------------------------------------------------------------

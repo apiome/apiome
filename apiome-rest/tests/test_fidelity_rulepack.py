@@ -11,7 +11,10 @@ Pins the ticket's acceptance criteria and the SPI's contract:
   (:meth:`Emitter.fidelity_rule_pack`) is honoured, and a custom pack refines a
   verdict the profile alone could not express;
 * the **reference OpenAPI pack** upgrades a source field number from ``DROP`` to a
-  lossless ``APPROX`` (preserved as an ``x-field-number`` extension);
+  lossless ``APPROX`` (preserved as an ``x-field-number`` extension), and (MFX-9.2,
+  #3867) reports the event/RPC losses OpenAPI's flat ``events``/``operations`` axes
+  hide: an event channel and a pub/sub or RPC-streaming operation are documented-only
+  ``APPROX``\\es, a GraphQL subscription is a ``DROP``;
 * a pack is **pure and deterministic** — same inputs yield an equal, byte-identically
   serialized report, and evaluation never mutates the source model.
 """
@@ -31,6 +34,7 @@ from app.canonical_model import (
     Operation,
     OperationKind,
     Service,
+    StreamingMode,
     Type,
     TypeKind,
     TypeRef,
@@ -304,15 +308,174 @@ def test_default_pack_drops_field_number_that_openapi_pack_keeps():
     assert _items_for(via_pack, "Msg.a")[0].kind is LossinessKind.APPROX
 
 
-def test_openapi_pack_leaves_other_verdicts_unchanged():
-    """Only the field-number verdict is refined; the rest defers to the default."""
-    api = _rich_api()  # no field numbers → refinement never triggers
+def test_openapi_pack_leaves_faithful_verdicts_unchanged():
+    """A unary REST source with no event/RPC constructs still reports lossless.
+
+    The MFX-9.2 refinements only fire for event channels, pub/sub, subscription, and
+    streaming operations. A plain REST model that has none of those (no channels, no
+    field numbers) must still defer to the capability-derived default and stay
+    lossless, so the pack never over-reports loss on a faithful export.
+    """
+    get_user = Operation(
+        key="GET /users/{id}",
+        name="getUser",
+        kind=OperationKind.REQUEST_RESPONSE,
+        http_method="GET",
+        http_path="/users/{id}",
+    )
+    api = CanonicalApi(
+        paradigm=ApiParadigm.REST,
+        format="openapi-3.1",
+        identity=ApiIdentity(name="Users API"),
+        services=[Service(key="Users", name="Users", operations=[get_user])],
+        types=[
+            Type(
+                key="User",
+                name="User",
+                kind=TypeKind.RECORD,
+                fields=[
+                    CanonicalField(
+                        key="User.id",
+                        name="id",
+                        type=TypeRef(name="string", nullable=False),
+                    )
+                ],
+            )
+        ],
+    )
     via_pack = compute_lossiness_for_emitter(api, OpenApiEmitter)
     via_default = compute_lossiness(
         api, OpenApiEmitter.capability_profile(), target_label=OpenApiEmitter.label
     )
     assert via_pack.model_dump() == via_default.model_dump()
     assert via_pack.is_lossless
+
+
+# ---------------------------------------------------------------------------
+# Reference OpenAPI pack reports event / RPC source losses (MFX-9.2, #3867)
+# ---------------------------------------------------------------------------
+
+
+def _event_api() -> CanonicalApi:
+    """An AsyncAPI-shaped source: a channel plus a publish and a subscribe op."""
+    channel = Channel(
+        key="user/signedup",
+        address="user/signedup",
+        protocol="kafka",
+        bindings={"kafka": {"partitions": 3}},
+    )
+    publish = Operation(
+        key="user/signedup#publish",
+        name="onUserSignedUp",
+        kind=OperationKind.PUBLISH,
+        channel_ref="user/signedup",
+    )
+    subscribe = Operation(
+        key="user/signedup#subscribe",
+        name="receiveUserSignedUp",
+        kind=OperationKind.SUBSCRIBE,
+        channel_ref="user/signedup",
+    )
+    return CanonicalApi(
+        paradigm=ApiParadigm.EVENT,
+        format="asyncapi-3.0",
+        identity=ApiIdentity(name="Events API"),
+        services=[Service(key="Events", name="Events", operations=[publish, subscribe])],
+        channels=[channel],
+    )
+
+
+def test_openapi_pack_approximates_event_channel():
+    """An event channel is a documented-only APPROX, not the profile's clean OK."""
+    report = compute_lossiness_for_emitter(_event_api(), OpenApiEmitter)
+    item = _items_for(report, "user/signedup")[0]
+    assert item.kind is LossinessKind.APPROX
+    assert item.severity is LossinessSeverity.WARN
+    assert "documentation" in item.message
+
+
+def test_openapi_pack_approximates_pubsub_operations():
+    """Both pub/sub actions are APPROX'd with an x-apiome-event-action mapping."""
+    report = compute_lossiness_for_emitter(_event_api(), OpenApiEmitter)
+    for key in ("user/signedup#publish", "user/signedup#subscribe"):
+        item = _items_for(report, key)[0]
+        assert item.kind is LossinessKind.APPROX
+        assert "x-apiome-event-action" in (item.target_mapping or "")
+    # The event source is reported as lossy (the acceptance criterion), never silent.
+    assert not report.is_lossless
+
+
+def test_default_pack_would_call_event_source_lossless():
+    """The refinement is the pack's: the raw OpenAPI profile still reports OK.
+
+    Contrasts the honest MFX-9.2 pack against the flat capability profile, which —
+    because OpenAPI advertises ``events=True`` — would call an AsyncAPI export
+    lossless and hide exactly the losses the fidelity pack exists to surface.
+    """
+    api = _event_api()
+    default = compute_lossiness(api, OpenApiEmitter.capability_profile())
+    assert default.is_lossless
+    via_pack = compute_lossiness_for_emitter(api, OpenApiEmitter)
+    assert not via_pack.is_lossless
+
+
+def test_openapi_pack_approximates_rpc_streaming_operation():
+    """An RPC streaming method is an APPROX surfaced via x-apiome-streaming."""
+    stream = Operation(
+        key="acme.Chat.Stream",
+        name="Stream",
+        kind=OperationKind.REQUEST_RESPONSE,
+        streaming=StreamingMode.BIDIRECTIONAL,
+    )
+    api = CanonicalApi(
+        paradigm=ApiParadigm.RPC,
+        format="grpc",
+        identity=ApiIdentity(name="Chat"),
+        services=[Service(key="acme.Chat", name="Chat", operations=[stream])],
+    )
+    item = _items_for(compute_lossiness_for_emitter(api, OpenApiEmitter), "acme.Chat.Stream")[0]
+    assert item.kind is LossinessKind.APPROX
+    assert "bidirectional" in item.message
+    assert "x-apiome-streaming" in (item.target_mapping or "")
+
+
+def test_openapi_pack_carries_unary_rpc_operation_cleanly():
+    """A unary (non-streaming) RPC method is still a clean OK — only streams degrade."""
+    unary = Operation(
+        key="acme.Chat.Send",
+        name="Send",
+        kind=OperationKind.REQUEST_RESPONSE,
+        streaming=StreamingMode.NONE,
+    )
+    api = CanonicalApi(
+        paradigm=ApiParadigm.RPC,
+        format="grpc",
+        identity=ApiIdentity(name="Chat"),
+        services=[Service(key="acme.Chat", name="Chat", operations=[unary])],
+    )
+    item = _items_for(compute_lossiness_for_emitter(api, OpenApiEmitter), "acme.Chat.Send")[0]
+    assert item.kind is LossinessKind.OK
+
+
+def test_openapi_pack_drops_graphql_subscription():
+    """A GraphQL subscription has no OpenAPI projection and is a critical DROP."""
+    sub = Operation(
+        key="Subscription.messageAdded",
+        name="messageAdded",
+        kind=OperationKind.SUBSCRIPTION,
+        streaming=StreamingMode.SERVER,
+    )
+    api = CanonicalApi(
+        paradigm=ApiParadigm.GRAPH,
+        format="graphql",
+        identity=ApiIdentity(name="Chat"),
+        services=[Service(key="Subscription", name="Subscription", operations=[sub])],
+    )
+    item = _items_for(
+        compute_lossiness_for_emitter(api, OpenApiEmitter), "Subscription.messageAdded"
+    )[0]
+    assert item.kind is LossinessKind.DROP
+    assert item.severity is LossinessSeverity.CRITICAL
 
 
 # ---------------------------------------------------------------------------
