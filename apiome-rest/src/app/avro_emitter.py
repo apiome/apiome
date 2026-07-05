@@ -368,8 +368,8 @@ class _AvroWriter:
         return _named_type_reference_by_key(member, namespace=namespace)
 
 
-def _as_dict_schema(schema: Any) -> Dict[str, Any]:
-    """Normalize a schema fragment for ``fastavro.parse_schema`` (unions are arrays)."""
+def _as_dict_schema(schema: Any) -> Any:
+    """Normalize a schema fragment for ``fastavro.parse_schema`` (unions remain arrays)."""
     if isinstance(schema, list):
         return schema  # type: ignore[return-value]
     if isinstance(schema, dict):
@@ -411,7 +411,7 @@ def _schema_path(type_: Type, default_namespace: Optional[str]) -> str:
 
 
 def _qualified_name(type_: Type, default_namespace: Optional[str]) -> str:
-    """Return the Avro-qualified name ``namespace.name`` when a namespace is set."""
+    """Return ``namespace.name`` when a namespace is set, otherwise the simple Avro name."""
     namespace = _type_namespace(type_, default_namespace)
     name = _sanitize_name(type_.name)
     return f"{namespace}.{name}" if namespace else name
