@@ -2,7 +2,7 @@
 
 > **Status:** SPI + reference implementations — `src/app/emitter.py`,
 > `src/app/openapi_emitter.py`, `src/app/asyncapi_emitter.py`,
-> `src/app/sample_emitter.py`, `src/app/openapi_validator.py`
+> `src/app/proto_emitter.py`, `src/app/sample_emitter.py`, `src/app/openapi_validator.py`
 > **Issues:** [#4002](https://github.com/apiome/apiome/issues/4002) (MFI-22.1),
 > [#3834](https://github.com/apiome/apiome/issues/3834) (MFX-1.1) ·
 > **Epic:** MFX-EPIC-1 (#3814) · **Roadmap:** `docs/ROADMAP_MULTI_FORMAT_EXPORT.md`

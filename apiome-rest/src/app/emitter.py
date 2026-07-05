@@ -613,6 +613,7 @@ def load_builtin_emitters() -> None:
     _builtins_loaded = True
     from . import asyncapi_emitter as _asyncapi  # noqa: F401
     from . import openapi_emitter as _openapi  # noqa: F401
+    from . import proto_emitter as _proto  # noqa: F401
     from . import sample_emitter as _sample  # noqa: F401
 
 

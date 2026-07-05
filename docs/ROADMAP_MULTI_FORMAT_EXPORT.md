@@ -675,19 +675,20 @@ Sources: https://protobuf.dev/ · https://buf.build/docs/
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 12.1 | Protobuf emitter | model services/methods/types → `.proto` (+ descriptor) | export,multi-protocol,mvp | N | Y | L | apiome-rest |
+| 12.1 ✅ | Protobuf emitter | model services/methods/types → `.proto` (+ descriptor) | export,multi-protocol,mvp | N | Y | L | apiome-rest |
 | 12.2 | Stable field-number assignment | deterministic, persisted field numbers (SYNTH) | export,multi-protocol,version-control,mvp | N | Y | M | apiome-rest |
 | 12.3 | Protobuf fidelity pack | unions/nullability/constraints/inheritance loss | export,multi-protocol,mvp | N | Y | M | apiome-rest |
 | 12.4 | Multi-file packaging + validate | per-package files + imports; `buf build` validate | export,rest,validation,mvp | Y | Y | M | apiome-rest |
 | 12.5 | gRPC target card + CLI + fixtures | UI/CLI + round-trip fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 | 12.6 · #4343 | Connect-RPC / gRPC-Gateway flavor options | `google.api.http` annotations from REST bindings (mirror MFI-19.5) | export,multi-protocol | Y | N | S | apiome-rest |
 
-### MFX-12.1 — Protobuf emitter  ·  **#3879**
+### MFX-12.1 — Protobuf emitter  ·  **#3879**  ·  ✅ **Done**
 - **Solution / Scope.** Map services→`service`, operations→`rpc` (streaming flags), types→`message`/`enum`, fields→typed fields. Emit `.proto` (and optionally a `FileDescriptorSet`). Map canonical types → proto scalar/message types; arrays→`repeated`; maps→`map`; optionals→proto3 `optional`.
   - Source: https://protobuf.dev/programming-guides/proto3/
 - **Acceptance Criteria.** Emits compilable `.proto` (via `buf build`) for a typed source; streaming preserved.
 - **Dependencies / Parallelism.** After 1.1, 2.3, 3.1, 5.x. Blocks 12.2/12.3.
 - **Technical Stack.** Python + buf (toolchain runner).
+- **Status.** A pure, deterministic, provenance-tracked `apiome-rest/src/app/proto_emitter.py` (`ProtoEmitter`, self-registered under the `proto3` format key) — the inverse of `ProtoNormalizer` (MFI-9.2) and an implementation of the Emitter SPI. It walks a `CanonicalApi` → proto3 source text: identity `namespace` → `package`; `Service`→`service`, each `Operation`→`rpc` whose `StreamingMode` restores the `stream` keyword on the request and/or response (unary / client / server / bidi — the acceptance criterion), plus `idempotency_level`/`deprecated` method options; `RECORD` types → `message` blocks with nesting **reconstructed from the dotted type keys** (`pkg.Outer.Inner` → nested `Inner`), fields carrying their preserved `field_number`, `repeated` for a list, `map<K,V>` for a `MAP`-type reference (the synthetic `*Entry` message is never re-emitted), proto3 `optional`, and `oneof` blocks rebuilt from the field/type `extras`; `ENUM` types → `enum` blocks preserving value numbers and floating a proto3-required zero value first; `reserved` ranges/names restored (message ranges converted half-open→inclusive, enum ranges kept inclusive); referenced well-known types → the right `import`. Constructs proto3 cannot carry — a field `Constraints`, a proto2 `default`, a `UNION` type (approximated as a message wrapping a `oneof`), an event operation, a source field with no number (synthesized), a type outside the file's package — are recorded as `EmitResult.losses` rather than silently dropped, the material the fidelity pack (12.2/12.3) turns into `APPROX`/`DROP` verdicts. `emit()` is pure text (no I/O); the convenience `compile_emitted_descriptor_set` pairs it with `compile_proto_descriptor_set` for the optional `FileDescriptorSet`. A protobuf source is an exact fixed point of `normalize ∘ emit` — verified end to end (emit → `buf build` → re-import via `ProtoNormalizer` → diff) with streaming modes and field numbers preserved, gated on the bundled `buf` like the other toolchain e2e tests. Tests in `tests/test_proto_emitter.py`; docs in `docs/proto_emitter.md`. apiome-rest 1.75.22 → 1.75.23.
 
 ### MFX-12.2 — Stable field-number assignment  ·  **#3880**
 - **Problem.** Protobuf requires field numbers the source may not have; they must be **stable across exports** or every re-export is wire-incompatible.
