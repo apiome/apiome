@@ -92,11 +92,22 @@ def test_emit_canonical_produces_schema_valid_openapi() -> None:
     assert result.files[0].path == "openapi.json"
 
 
+def test_emit_canonical_produces_valid_graphql_sdl() -> None:
+    from graphql import validate_schema
+
+    from app.graphql_parser import build_graphql_schema
+
+    result = emit_canonical(_minimal_rest_api(), "graphql")
+    assert result.files[0].path == "schema.graphql"
+    schema = build_graphql_schema(result.files[0].content)
+    assert validate_schema(schema) == []
+
+
 def test_emit_canonical_unknown_target_raises() -> None:
     with pytest.raises(ExportError) as exc:
-        emit_canonical(_minimal_rest_api(), "graphql")
+        emit_canonical(_minimal_rest_api(), "wsdl")
     assert exc.value.status_code == 400
-    assert "graphql" in str(exc.value)
+    assert "wsdl" in str(exc.value)
 
 
 def test_emit_canonical_accepts_valid_options_dict() -> None:
@@ -127,5 +138,5 @@ def test_preview_conversion_rejects_unknown_target() -> None:
         source_format="graphql",
     )
     with pytest.raises(ConversionError) as exc:
-        preview_conversion(source, target_format="graphql")
+        preview_conversion(source, target_format="wsdl")
     assert exc.value.status_code == 400

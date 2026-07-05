@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Export: GraphQL SDL emitter — canonical model → valid SDL via `graphql-core` `print_schema`; preserves nullability/list wrappers; Graph-native sources round-trip; REST sources map GET→Query and write verbs→Mutation (MFX-13.1)
 - Export: `apiome export grpc` writes a proto3 `.proto` document with the honest fidelity report; UI export-target metadata maps protobuf/gRPC/proto3 to Monaco `protobuf` + `.proto` download names (MFX-12.5)
 - Export: Protobuf fidelity pack — unions, nullability, constraints, inheritance, and arbitrary JSON losses are predicted as APPROX/SYNTH (not silent DROPs) when exporting OpenAPI/GraphQL sources to proto3; pub/sub operations reframed as unary rpc (MFX-12.3)
 - Export: Stable protobuf field-number assignment — synthesized field numbers persist per artifact and are reused on re-export; new fields get the next free number honouring `reserved` ranges; reported as SYNTH in the fidelity report (MFX-12.2)
