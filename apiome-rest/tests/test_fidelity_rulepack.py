@@ -36,6 +36,8 @@ from app.canonical_model import (
     MessageRole,
     Operation,
     OperationKind,
+    Parameter,
+    ParameterLocation,
     Service,
     StreamingMode,
     Type,
@@ -50,6 +52,7 @@ from app.fidelity_rulepack import (
     FidelityVerdict,
 )
 from app.lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from app.graphql_emitter import GraphQlEmitter, GraphQlFidelityRulePack
 from app.openapi_emitter import X_FIELD_NUMBER, OpenApiEmitter, OpenApiFidelityRulePack
 from app.proto_emitter import ProtoEmitter, ProtoFidelityRulePack
 from app.sample_emitter import SampleEmitter
@@ -863,3 +866,157 @@ def test_proto_pack_skips_nullability_loss_for_proto3_optional():
     )
     report = compute_lossiness_for_emitter(api, ProtoEmitter)
     assert _items_for(report, "Msg.nick") == []
+
+
+# ---------------------------------------------------------------------------
+# Reference GraphQL pack reports REST/OpenAPI losses (MFX-13.3, #3886)
+# ---------------------------------------------------------------------------
+
+
+def test_graphql_emitter_declares_reference_pack():
+    """The GraphQL emitter ships its reference pack alongside itself."""
+    assert GraphQlEmitter.fidelity_rule_pack() is GraphQlFidelityRulePack
+    assert issubclass(GraphQlFidelityRulePack, CapabilityRulePack)
+
+
+def _graphql_rich_api() -> CanonicalApi:
+    """An OpenAPI-shaped source exercising every GraphQL fidelity loss class."""
+    get_user = Operation(
+        key="GET /users/{id}",
+        name="getUser",
+        kind=OperationKind.REQUEST_RESPONSE,
+        http_method="GET",
+        http_path="/users/{id}",
+        parameters=[
+            Parameter(
+                key="GET /users/{id}#header.X-Request-Id",
+                name="X-Request-Id",
+                location=ParameterLocation.HEADER,
+                type=TypeRef(name="string", nullable=False),
+            )
+        ],
+        messages=[
+            Message(
+                key="GET /users/{id}#response.200",
+                role=MessageRole.RESPONSE,
+                status_code="200",
+            )
+        ],
+    )
+    user = Type(
+        key="User",
+        name="User",
+        kind=TypeKind.RECORD,
+        fields=[
+            CanonicalField(
+                key="User.email",
+                name="email",
+                type=TypeRef(name="string", nullable=False),
+                constraints=Constraints(pattern=r".+@.+"),
+            )
+        ],
+    )
+    contact = Type(
+        key="Contact",
+        name="Contact",
+        kind=TypeKind.UNION,
+        union_members=["User", "Org"],
+    )
+    org = Type(
+        key="Org",
+        name="Org",
+        kind=TypeKind.RECORD,
+        fields=[
+            CanonicalField(
+                key="Org.name",
+                name="name",
+                type=TypeRef(name="string", nullable=False),
+            )
+        ],
+    )
+    loose = Type(
+        key="Loose",
+        name="Loose",
+        kind=TypeKind.UNION,
+        union_members=[],
+    )
+    bad_union = Type(
+        key="Tag",
+        name="Tag",
+        kind=TypeKind.UNION,
+        union_members=["Money"],
+    )
+    money = Type(
+        key="Money",
+        name="Money",
+        kind=TypeKind.SCALAR,
+        constraints=Constraints(pattern=r"^\d+\.\d{2}$"),
+    )
+    return CanonicalApi(
+        paradigm=ApiParadigm.REST,
+        format="openapi-3.1",
+        identity=ApiIdentity(name="Users API"),
+        services=[Service(key="Users", name="Users", operations=[get_user])],
+        channels=[Channel(key="user/signedup", address="user/signedup", protocol="kafka")],
+        types=[user, org, contact, loose, bad_union, money],
+    )
+
+
+def test_graphql_pack_enumerates_rich_openapi_losses():
+    """Rich OpenAPI source → GraphQL: every loss class reports kind + reason."""
+    report = compute_lossiness_for_emitter(_graphql_rich_api(), GraphQlEmitter)
+    assert not report.is_lossless
+
+    rest_op = _items_for(report, "GET /users/{id}")[0]
+    assert rest_op.kind is LossinessKind.APPROX
+    assert "HTTP method" in rest_op.message
+    assert "path" in rest_op.message
+    assert "response status" in rest_op.message
+    assert "headers" in rest_op.message
+    assert "Query/Mutation" in (rest_op.target_mapping or "")
+
+    assert _items_for(report, "Contact")[0].kind is LossinessKind.OK
+    assert _items_for(report, "Loose")[0].kind is LossinessKind.APPROX
+    assert _items_for(report, "Tag")[0].kind is LossinessKind.APPROX
+
+    email = _items_for(report, "User.email")[0]
+    assert email.kind is LossinessKind.APPROX
+    assert "custom scalar" in (email.target_mapping or "")
+
+    assert _items_for(report, "Money")[0].kind is LossinessKind.APPROX
+    assert _items_for(report, "user/signedup")[0].kind is LossinessKind.DROP
+
+
+def test_default_pack_calls_rest_operation_ok_the_graphql_pack_approximates():
+    """The refinement is the pack's: the profile default OK understates HTTP losses."""
+    api = _rest_operation_api()
+    default = compute_lossiness(api, GraphQlEmitter.capability_profile())
+    assert _items_for(default, "GET /users/{id}")[0].kind is LossinessKind.OK
+    via_pack = compute_lossiness_for_emitter(api, GraphQlEmitter)
+    assert _items_for(via_pack, "GET /users/{id}")[0].kind is LossinessKind.APPROX
+
+
+def test_graphql_pack_carries_native_graph_operations_cleanly():
+    """Native query/mutation operations are GraphQL's home turf — clean OK."""
+    query = Operation(
+        key="Query.users",
+        name="users",
+        kind=OperationKind.QUERY,
+    )
+    mutation = Operation(
+        key="Mutation.createUser",
+        name="createUser",
+        kind=OperationKind.MUTATION,
+    )
+    api = CanonicalApi(
+        paradigm=ApiParadigm.GRAPH,
+        format="graphql",
+        identity=ApiIdentity(name="Users API"),
+        services=[
+            Service(key="Query", name="Query", operations=[query]),
+            Service(key="Mutation", name="Mutation", operations=[mutation]),
+        ],
+    )
+    report = compute_lossiness_for_emitter(api, GraphQlEmitter)
+    assert _items_for(report, "Query.users")[0].kind is LossinessKind.OK
+    assert _items_for(report, "Mutation.createUser")[0].kind is LossinessKind.OK
