@@ -45,12 +45,19 @@ returned :class:`~app.emitter.EmitResult` for the fidelity analyzer (MFI-22.3).
 
 The emitter is pure (no I/O). It self-registers under the ``openapi-3.1`` format
 key so :func:`app.emitter.get_emitter` resolves it.
+
+The ``openapi_version`` emit option (MFX-9.1) additionally lets a caller downgrade
+the 3.1 output to **OpenAPI 3.0.3** or **Swagger 2.0** through
+:mod:`app.openapi_downgrade`. Those older dialects cannot express every JSON-Schema
+2020-12 construct, so each downgrade records the constructs it loses on the result's
+:attr:`~app.emitter.EmitResult.losses` — the "3.0/2.0 downgrades flagged as lossy"
+acceptance criterion — feeding the fidelity pack (MFX-9.2).
 """
 
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Set, Tuple, Union
 
 from pydantic import Field
 
@@ -79,6 +86,12 @@ from .emitter import (
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessSeverity
+from .openapi_downgrade import (
+    OPENAPI_30_VERSION,
+    SWAGGER_20_VERSION,
+    downgrade_to_openapi_30,
+    downgrade_to_swagger_2,
+)
 from .projection import ProjectionStrategy, RouteBinding, get_projection
 
 __all__ = ["OpenApiEmitOptions", "OpenApiEmitter", "OpenApiFidelityRulePack"]
@@ -107,6 +120,14 @@ _ID_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
 class OpenApiEmitOptions(EmitOptions):
     """Per-target options for :class:`OpenApiEmitter` (MFX-1.4)."""
 
+    openapi_version: Literal["3.1", "3.0", "2.0"] = Field(
+        default="3.1",
+        description=(
+            "OpenAPI dialect to emit. ``3.1`` (default) is the native, lossless "
+            "target; ``3.0`` and ``2.0`` (Swagger) are downgrades of the 3.1 output "
+            "and lose 3.1-only constructs, each recorded as a fidelity loss (MFX-9.1)."
+        ),
+    )
     include_paths: bool = Field(
         default=True,
         description="Emit HTTP path operations. Disable for a components-only export.",
@@ -180,12 +201,16 @@ class OpenApiEmitter(Emitter, register=True):
     multi_file = False
     options_model = OpenApiEmitOptions
 
-    #: The OpenAPI version string this emitter targets.
+    #: The OpenAPI version string this emitter targets natively (before any downgrade).
     OPENAPI_VERSION = "3.1.0"
     #: Primary output filename within a bundle.
     OUTPUT_PATH = "openapi.json"
+    #: Output filename for a Swagger 2.0 downgrade.
+    SWAGGER_OUTPUT_PATH = "swagger.json"
     #: Primary bundle media type.
     OUTPUT_MEDIA_TYPE = "application/vnd.oai.openapi+json"
+    #: Bundle media type for a Swagger 2.0 downgrade (no OpenAPI vendor type applies).
+    SWAGGER_MEDIA_TYPE = "application/json"
     #: ``info.version`` used when the model declares none (OAS requires the field).
     DEFAULT_INFO_VERSION = "0.0.0"
     #: Media type assumed when a message declares no ``content_types``.
@@ -220,14 +245,20 @@ class OpenApiEmitter(Emitter, register=True):
     ) -> EmitResult:
         """Emit ``api`` as an OpenAPI 3.1 document with per-construct provenance.
 
+        The default target is the native OpenAPI 3.1. When ``opts.openapi_version`` is
+        ``"3.0"`` or ``"2.0"``, the 3.1 document is downgraded to that dialect via
+        :mod:`app.openapi_downgrade`, and every 3.1-only construct the older dialect
+        cannot carry is recorded as a :class:`~app.emitter.Loss` on the result — the
+        MFX-9.1 "downgrades flagged as lossy" behaviour.
+
         Args:
             api: The canonical model to convert.
             opts: Optional emit options. Defaults apply when omitted.
 
         Returns:
             An :class:`~app.emitter.EmitResult` whose primary file is a schema-valid
-            OpenAPI 3.1 dict and whose ``provenance`` records where each value came
-            from. The output is deterministic for a given ``api``.
+            document in the requested dialect and whose ``provenance`` records where
+            each value came from. The output is deterministic for a given ``api``.
         """
         options = (
             opts
@@ -239,8 +270,9 @@ class OpenApiEmitter(Emitter, register=True):
         schema = SchemaEmitter(ref_prefix=self.REF_PREFIX)
         projection = get_projection(api.paradigm)
 
+        # The version string is recorded in ``_apply_version`` so its provenance
+        # pointer matches the emitted document (``/openapi`` vs ``/swagger``).
         document: Dict[str, Any] = {"openapi": self.OPENAPI_VERSION}
-        tracker.record("/openapi", Provenance.DEFAULT, "emitter target OpenAPI version")
 
         document["info"] = self._info(api, tracker)
 
@@ -267,13 +299,56 @@ class OpenApiEmitter(Emitter, register=True):
                     f"{api.paradigm.value} projection document note",
                 )
 
+        document, path, media_type = self._apply_version(
+            document, options.openapi_version, tracker, losses
+        )
+
         return EmitResult.from_document(
             document,
-            path=self.OUTPUT_PATH,
-            media_type=self.OUTPUT_MEDIA_TYPE,
+            path=path,
+            media_type=media_type,
             provenance=tracker.records(),
             losses=losses.records(),
         )
+
+    def _apply_version(
+        self,
+        document: Dict[str, Any],
+        version: str,
+        tracker: ProvenanceTracker,
+        losses: LossTracker,
+    ) -> Tuple[Dict[str, Any], str, str]:
+        """Downgrade the 3.1 ``document`` to ``version`` and return its file identity.
+
+        The native ``3.1`` target passes the document through unchanged. ``3.0`` and
+        ``2.0`` (Swagger) run the corresponding :mod:`app.openapi_downgrade`
+        projection, which records every 3.1-only construct it cannot carry on
+        ``losses`` — the acceptance-criterion "downgrades flagged as lossy". The
+        version-string provenance is recorded here so it points at the *emitted*
+        document's version key (``/openapi`` for 3.x, ``/swagger`` for 2.0).
+
+        Returns:
+            A ``(document, path, media_type)`` triple for the downgraded output.
+        """
+        if version == "3.0":
+            document = downgrade_to_openapi_30(document, losses)
+            tracker.record(
+                "/openapi",
+                Provenance.DEFAULT,
+                f"downgraded from {self.OPENAPI_VERSION} to OpenAPI {OPENAPI_30_VERSION}",
+            )
+            return document, self.OUTPUT_PATH, self.OUTPUT_MEDIA_TYPE
+        if version == "2.0":
+            document = downgrade_to_swagger_2(document, losses)
+            tracker.record(
+                "/swagger",
+                Provenance.DEFAULT,
+                f"downgraded from OpenAPI {self.OPENAPI_VERSION} to Swagger "
+                f"{SWAGGER_20_VERSION}",
+            )
+            return document, self.SWAGGER_OUTPUT_PATH, self.SWAGGER_MEDIA_TYPE
+        tracker.record("/openapi", Provenance.DEFAULT, "emitter target OpenAPI version")
+        return document, self.OUTPUT_PATH, self.OUTPUT_MEDIA_TYPE
 
     # --- info ---------------------------------------------------------------
 

@@ -545,19 +545,20 @@ RPC streaming, event channels, gRPC field numbers; can express oneOf/anyOf/discr
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 9.1 | OpenAPI emitter | CanonicalApi → OpenAPI 3.1 (+ 3.0/Swagger opt) | export,multi-protocol,rest,mvp | N | Y | M | apiome-rest |
+| 9.1 ✅ | OpenAPI emitter | CanonicalApi → OpenAPI 3.1 (+ 3.0/Swagger opt) | export,multi-protocol,rest,mvp | N | Y | M | apiome-rest |
 | 9.2 | OpenAPI fidelity pack | what OpenAPI can't represent (events/RPC streaming) | export,multi-protocol,mvp | N | Y | S | apiome-rest |
 | 9.3 | Validate + round-trip | re-import via MFI OpenAPI parser; diff | export,validation,mvp | Y | Y | S | apiome-rest |
 | 9.4 | OpenAPI target card + CLI + fixtures | UI/CLI target + round-trip fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 | 9.5 · #4342 | OpenAPI 3.2 output option | emit OAS 3.2 (webhooks/security); 3.2→3.1 downgrade rules; coordinate #2662 | export,multi-protocol,rest,openapi | Y | N | M | apiome-rest |
 
-### MFX-9.1 — OpenAPI emitter  ·  **#3866**
+### MFX-9.1 — OpenAPI emitter  ·  **#3866**  ·  ✅ **Done**
 - **Problem.** Need the canonical REST emitter (and the reference implementation of the SPI).
 - **Solution / Scope.** Map `CanonicalApi` operations/types → OpenAPI 3.1 (paths, operations, components/schemas via the existing JSON-Schema/primitives model); option for 3.0/Swagger 2.0 downgrade (which itself loses 3.1 features — feed the fidelity pack). Reuse the existing OpenAPI generation where present.
   - Source: OpenAPI 3.1 — https://spec.openapis.org/oas/v3.1.0.html
 - **Acceptance Criteria.** Emits valid 3.1 from a REST source; 3.0/2.0 downgrades flagged as lossy.
 - **Dependencies / Parallelism.** After 1.1, 2.3, 3.1. Blocks 9.2/9.3.
 - **Technical Stack.** Python.
+- **Status.** The reference 3.1 emitter (`apiome-rest/src/app/openapi_emitter.py`) already emitted schema-valid OpenAPI 3.1 (MFI-22.1). This ticket adds the **3.0/Swagger 2.0 downgrade option**: a new `openapi_version` (`"3.1"` default / `"3.0"` / `"2.0"`) field on `OpenApiEmitOptions`, and a pure `apiome-rest/src/app/openapi_downgrade.py` module that projects the emitted 3.1 document onto **OpenAPI 3.0.3** (nullability → `nullable`, numeric exclusive bounds → the draft-4 boolean form, `const` → single-value `enum`, `examples` → `example`, unsupported JSON-Schema keywords dropped) and **Swagger 2.0** (`servers` → `host`/`basePath`/`schemes`, `components.schemas` → `definitions` with rewritten `$ref`s, `requestBody` → a `body` parameter + `consumes`, response `content` → `schema` + `produces`, parameters/headers inlined, `oneOf`/`anyOf`/`not`/nullable dropped). Every 3.1-only construct the older dialect cannot carry is recorded as an `EmitResult.loss` (INFERRED when approximated, NA when unrepresentable) — the "downgrades flagged as lossy" criterion, feeding the fidelity pack (9.2). Both downgrades are pure/deterministic and re-import cleanly through `OpenApiNormalizer` (3.0) / `Swagger2Normalizer` (2.0). Tests in `tests/test_openapi_downgrade.py` and `tests/test_openapi_emitter_versions.py`. apiome-rest 1.75.15 → 1.75.16.
 
 ### MFX-9.2 — OpenAPI fidelity pack  ·  **#3867**
 - **Solution / Scope.** Rules: event channels (AsyncAPI sources) → DROP/notes; RPC streaming → APPROX (callbacks/notes); gRPC field numbers → DROP; downgrade-to-3.0 (`oneOf` nuance, `examples`) / 2.0 (`nullable`, `oneOf`, multiple content types) → APPROX/DROP.
