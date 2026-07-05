@@ -8,7 +8,7 @@ produces one **valid** Avro schema (``.avsc`` JSON) per named type:
 * ``ENUM`` → ``enum`` with sanitized symbols;
 * ``UNION`` → an Avro union schema (primitive and/or named member refs);
 * ``MAP`` → ``map`` (string keys; Avro has no named map types);
-* ``SCALAR`` / ``ALIAS`` → logical primitives or ``fixed`` when extras carry Avro metadata;
+* ``SCALAR`` → logical primitives or ``fixed`` when extras carry Avro metadata;
 * :class:`~app.canonical_model.TypeRef` list nesting → ``array``; nullability → ``["null", T]``.
 
 Dates, timestamps, UUIDs, and decimals map to Avro **logical types**. Field and type names are
@@ -180,20 +180,20 @@ class _AvroWriter:
             schema = schemas_by_key[type_.key]
             validate_avro_schema(_as_dict_schema(schema), named_schemas=named_schemas)
             if type_.kind in (TypeKind.RECORD, TypeKind.ENUM, TypeKind.SCALAR):
-                qualified = _qualified_name(type_)
+                qualified = _qualified_name(type_, self._default_namespace)
                 if qualified:
                     named_schemas[qualified] = _as_dict_schema(schema)
 
         return [
             EmittedFile(
-                path=_schema_path(type_),
+                path=_schema_path(type_, self._default_namespace),
                 content=schemas_by_key[type_.key],
                 media_type=AvroEmitter.OUTPUT_MEDIA_TYPE,
             )
             for type_ in ordered
         ]
 
-    def _emit_named_type(self, type_: Type) -> Dict[str, Any]:
+    def _emit_named_type(self, type_: Type) -> Any:
         """Emit one named canonical type as an Avro schema dict."""
         if type_.kind is TypeKind.RECORD:
             return self._emit_record(type_)
@@ -401,18 +401,18 @@ def validate_avro_schema(
         raise ValueError(f"Invalid Avro schema: {exc}") from exc
 
 
-def _schema_path(type_: Type) -> str:
+def _schema_path(type_: Type, default_namespace: Optional[str]) -> str:
     """Return a deterministic ``.avsc`` path for a named type."""
     simple = _sanitize_name(type_.name) or "schema"
-    namespace = _type_namespace(type_, None)
+    namespace = _type_namespace(type_, default_namespace)
     if namespace:
         return f"{namespace.replace('.', '/')}/{simple}.avsc"
     return f"{simple}.avsc"
 
 
-def _qualified_name(type_: Type) -> str:
+def _qualified_name(type_: Type, default_namespace: Optional[str]) -> str:
     """Return the Avro-qualified name ``namespace.name`` when a namespace is set."""
-    namespace = _type_namespace(type_, None)
+    namespace = _type_namespace(type_, default_namespace)
     name = _sanitize_name(type_.name)
     return f"{namespace}.{name}" if namespace else name
 

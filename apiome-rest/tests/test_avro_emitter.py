@@ -12,7 +12,7 @@ import json
 
 import pytest
 
-from app.avro_emitter import AvroEmitter, validate_avro_schema
+from app.avro_emitter import AvroEmitOptions, AvroEmitter, validate_avro_schema
 from app.canonical_model import (
     ApiIdentity,
     ApiParadigm,
@@ -30,8 +30,8 @@ from app.canonical_model import (
 from app.emitter import Provenance, get_emitter, load_builtin_emitters
 
 
-def _emit(api: CanonicalApi):
-    return AvroEmitter().emit(api)
+def _emit(api: CanonicalApi, *, opts: AvroEmitOptions | None = None):
+    return AvroEmitter().emit(api, opts=opts)
 
 
 def _schema_by_name(result, name: str) -> dict:
@@ -230,7 +230,10 @@ def test_record_fields_logical_types_and_nullability() -> None:
     assert fields["labels"]["type"] == {"type": "map", "values": "string"}
     assert fields["nick"]["type"] == ["null", "string"]
     assert fields["digest"]["type"] == "md5"
-    assert fields["balance"]["type"] == ["null", {"type": "bytes", "logicalType": "decimal", "precision": 10, "scale": 2}]
+    assert fields["balance"]["type"] == [
+        "null",
+        {"type": "bytes", "logicalType": "decimal", "precision": 10, "scale": 2},
+    ]
     assert fields["bad_name"]["type"] == "string"
 
 
@@ -243,6 +246,44 @@ def test_union_type_emits_as_array_schema() -> None:
     result = _emit(_data_schema_api())
     union_file = next(f for f in result.files if f.path.endswith("OptString.avsc"))
     assert union_file.content == ["null", "string"]
+
+
+def test_namespace_override_applies_to_paths_and_named_refs() -> None:
+    suit = Type(
+        key="com.example.Suit",
+        name="Suit",
+        kind=TypeKind.ENUM,
+        enum_values=[EnumValue(key="com.example.Suit.SPADES", name="SPADES", value=0)],
+    )
+    user = Type(
+        key="com.example.User",
+        name="User",
+        kind=TypeKind.RECORD,
+        fields=[
+            CanonicalField(
+                key="com.example.User.suit",
+                name="suit",
+                type=TypeRef(name="com.example.Suit", nullable=False),
+            )
+        ],
+    )
+    result = _emit(
+        CanonicalApi(
+            paradigm=ApiParadigm.DATA_SCHEMA,
+            format="avro",
+            identity=ApiIdentity(name="Users", namespace="com.example"),
+            types=[suit, user],
+        ),
+        opts=AvroEmitOptions(namespace="io.override"),
+    )
+
+    assert [emitted.path for emitted in result.files] == [
+        "io/override/Suit.avsc",
+        "io/override/User.avsc",
+    ]
+    assert _schema_by_name(result, "Suit")["namespace"] == "io.override"
+    assert _schema_by_name(result, "User")["namespace"] == "io.override"
+    assert _schema_by_name(result, "User")["fields"][0]["type"] == "Suit"
 
 
 def test_fixed_scalar_emits_named_fixed_type() -> None:
@@ -311,7 +352,14 @@ def test_falsy_defaults_are_preserved() -> None:
         ],
     )
     schema = _schema_by_name(
-        _emit(CanonicalApi(paradigm=ApiParadigm.DATA_SCHEMA, format="avro", identity=ApiIdentity(name="x"), types=[rec])),
+        _emit(
+            CanonicalApi(
+                paradigm=ApiParadigm.DATA_SCHEMA,
+                format="avro",
+                identity=ApiIdentity(name="x"),
+                types=[rec],
+            )
+        ),
         "Rec",
     )
     fields = {f["name"]: f for f in schema["fields"]}
