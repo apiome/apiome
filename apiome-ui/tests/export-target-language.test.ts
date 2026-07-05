@@ -17,6 +17,8 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('openapi')).toBe('json');
     expect(monacoLanguageForExportTarget('swagger')).toBe('json');
     expect(monacoLanguageForExportTarget('asyncapi')).toBe('json');
+    expect(monacoLanguageForExportTarget('protobuf')).toBe('protobuf');
+    expect(monacoLanguageForExportTarget('grpc')).toBe('protobuf');
   });
 
   it('collapses version/variant suffixes to the base target id', () => {
@@ -26,6 +28,8 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('OpenAPI-3.1')).toBe('json');
     expect(monacoLanguageForExportTarget('asyncapi-3')).toBe('json');
     expect(monacoLanguageForExportTarget('AsyncAPI-3')).toBe('json');
+    expect(monacoLanguageForExportTarget('proto3')).toBe('protobuf');
+    expect(monacoLanguageForExportTarget('Proto3')).toBe('protobuf');
   });
 
   it('refines a JSON-or-YAML target from the emitted bytes', () => {
@@ -56,6 +60,9 @@ describe('fileExtensionForExportTarget', () => {
     expect(fileExtensionForExportTarget('openapi')).toBe('.json');
     expect(fileExtensionForExportTarget('openapi-3.1')).toBe('.json');
     expect(fileExtensionForExportTarget('openapi', 'openapi: 3.1.0')).toBe('.yaml');
+    expect(fileExtensionForExportTarget('protobuf')).toBe('.proto');
+    expect(fileExtensionForExportTarget('grpc')).toBe('.proto');
+    expect(fileExtensionForExportTarget('proto3')).toBe('.proto');
   });
 
   it('falls back to .txt for unrecognised targets', () => {
@@ -72,6 +79,9 @@ describe('downloadFileNameForExportTarget', () => {
     expect(downloadFileNameForExportTarget('swagger-2.0')).toBe('swagger.json');
     expect(downloadFileNameForExportTarget('asyncapi-3')).toBe('asyncapi.json');
     expect(downloadFileNameForExportTarget('asyncapi-3', 'asyncapi: 3.1.0')).toBe('asyncapi.yaml');
+    expect(downloadFileNameForExportTarget('protobuf')).toBe('api.proto');
+    expect(downloadFileNameForExportTarget('grpc')).toBe('api.proto');
+    expect(downloadFileNameForExportTarget('proto3')).toBe('api.proto');
   });
 
   it('falls back to export.txt for unrecognised targets', () => {

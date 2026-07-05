@@ -14,8 +14,9 @@
  * base id, so a new OpenAPI or AsyncAPI dialect maps without a code change. Unlike a raw imported
  * source (authored as either JSON or YAML), an emitter emits a **canonical serialization** —
  * OpenAPI/Swagger/AsyncAPI emit JSON — so the default language is JSON, refined to YAML/XML only when a
- * byte sample of the actual artifact says otherwise (e.g. the CLI's `--yaml` output). Everything
- * unknown degrades to `plaintext`, never throwing.
+ * byte sample of the actual artifact says otherwise (e.g. the CLI's `--yaml` output). Protobuf/gRPC
+ * emits `.proto` source (Monaco `protobuf` grammar). Everything unknown degrades to `plaintext`, never
+ * throwing.
  *
  * The full registry-driven export dialog + target-card grid is a later epic (MFX-EPIC-41); this
  * module is the small client-metadata layer that grid — and any emitted-artifact viewer — reads.
@@ -34,13 +35,21 @@ interface ExportTargetMeta {
 /**
  * Per canonical export-target id. OpenAPI and its Swagger 2.0 downgrade both emit JSON documents
  * (`openapi.json` / `swagger.json`); AsyncAPI 3 emits a JSON document too (`asyncapi.json`, MFX-11.5);
- * the no-op `sample` emitter is plaintext.
+ * protobuf/gRPC emits `.proto` source (`api.proto` by default, MFX-12.5); the no-op `sample` emitter
+ * is plaintext.
  */
 const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   openapi: { language: 'json', extension: '.json', baseName: 'openapi' },
   swagger: { language: 'json', extension: '.json', baseName: 'swagger' },
   asyncapi: { language: 'json', extension: '.json', baseName: 'asyncapi' },
+  protobuf: { language: 'protobuf', extension: '.proto', baseName: 'api' },
+  grpc: { language: 'protobuf', extension: '.proto', baseName: 'api' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
+};
+
+/** Emitter format keys that collapse to a canonical export-target id (`proto3` → `protobuf`). */
+const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
+  proto3: 'protobuf',
 };
 
 /** Targets whose emitted serialization can vary (JSON default, YAML/XML sniffed from the bytes). */
@@ -62,8 +71,11 @@ function resolveExportTargetId(target: string | null | undefined): string | unde
   const normalized = (target ?? '').trim().toLowerCase();
   if (!normalized) return undefined;
   if (normalized in EXPORT_TARGET_LANGUAGE) return normalized;
+  const aliased = EXPORT_TARGET_ALIASES[normalized];
+  if (aliased) return aliased;
   const base = normalized.split(/[-\s]/, 1)[0];
-  return base in EXPORT_TARGET_LANGUAGE ? base : undefined;
+  if (base in EXPORT_TARGET_LANGUAGE) return base;
+  return EXPORT_TARGET_ALIASES[base];
 }
 
 /**
