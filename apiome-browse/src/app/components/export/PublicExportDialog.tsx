@@ -11,7 +11,7 @@
  * download of the emitted document.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   exportFallbackFilename,
   filenameFromContentDisposition,
@@ -58,7 +58,10 @@ export function PublicExportDialog({
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
-  const coords = { tenantSlug, projectSlug, versionSlug };
+  const coords = useMemo(
+    () => ({ tenantSlug, projectSlug, versionSlug }),
+    [tenantSlug, projectSlug, versionSlug]
+  );
 
   // (Re)load the target catalog each time the dialog opens, resetting prior choices.
   useEffect(() => {
@@ -92,7 +95,7 @@ export function PublicExportDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, restApiBaseUrl, tenantSlug, projectSlug, versionSlug]);
+  }, [open, restApiBaseUrl, coords]);
 
   // Load the dry-run fidelity preview when a target is selected (MFX-7.2).
   useEffect(() => {
@@ -111,18 +114,13 @@ export function PublicExportDialog({
           body: JSON.stringify({ target: selectedKey }),
         });
         if (!response.ok) {
-          const detail = await response.text();
-          throw new Error(
-            `Could not load the fidelity report (${response.status})${
-              detail ? `: ${detail.substring(0, 120)}` : ''
-            }`
-          );
+          throw new Error(`Could not load the fidelity report (${response.status})`);
         }
         const data: PublicExportPreviewResponse = await response.json();
         if (!cancelled) setPreview(data);
-      } catch (err) {
+      } catch {
         if (!cancelled) {
-          setPreviewError(err instanceof Error ? err.message : 'Could not load the fidelity report.');
+          setPreviewError('Could not load the fidelity report.');
           setPreview(null);
         }
       } finally {
@@ -133,7 +131,7 @@ export function PublicExportDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, selectedKey, restApiBaseUrl, tenantSlug, projectSlug, versionSlug]);
+  }, [open, selectedKey, restApiBaseUrl, coords]);
 
   useEffect(() => {
     if (!open) return;
