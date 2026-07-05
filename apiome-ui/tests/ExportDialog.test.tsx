@@ -1,7 +1,8 @@
 /**
- * ExportDialog — stepped export shell + target-card grid (MFX-6.1, #3855).
+ * ExportDialog — stepped export shell + target-card grid (MFX-6.1, #3855) and the fidelity
+ * warning panel (MFX-6.2, #3856).
  *
- * Covers the ticket's acceptance criteria:
+ * Covers the tickets' acceptance criteria:
  *  1. The target grid renders from a mocked `GET /api/export/targets` response and every card
  *     shows its per-source fidelity tier badge (`lossless` / `lossy` / `types-only`).
  *  2. Picking a target updates the fidelity headline (tier + preserved-%).
@@ -9,6 +10,10 @@
  *  4. The stepper advances Source → Target → Fidelity → Export, and Export emits via
  *     `POST /api/export/document` and reports the downloaded filename.
  *  5. An unavailable target (missing toolchain) renders disabled and cannot be selected.
+ *  6. The Fidelity step fetches the `POST /api/export/preview` dry run and renders the server
+ *     advisory verbatim with the expandable per-construct report (MFX-6.2).
+ *  7. A lossy target gates the download behind the explicit "Export anyway" acknowledgement;
+ *     a lossless target exports without one.
  */
 
 import React from 'react';
@@ -18,6 +23,7 @@ import { jest } from '@jest/globals';
 
 import { ExportDialog } from '../src/app/components/ade/dashboard/export/ExportDialog';
 import type { ExportTargetsResponse } from '../src/app/components/ade/dashboard/export/exportTargetCatalog';
+import type { ExportFidelityEnvelope } from '../src/app/components/ade/dashboard/export/exportFidelityPreview';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 const TARGETS: ExportTargetsResponse = {
@@ -122,13 +128,104 @@ const TARGETS: ExportTargetsResponse = {
   ],
 };
 
+/** The MFX-6.2 dry-run previews (advisory + per-construct report) per selectable target. */
+const PREVIEWS: Record<string, ExportFidelityEnvelope> = {
+  proto: {
+    target: TARGETS.targets[2].descriptor,
+    summary: TARGETS.targets[2].fidelity,
+    report: {
+      items: [
+        {
+          construct: 'User.name',
+          kind: 'ok',
+          severity: 'info',
+          message: 'Carried faithfully.',
+          target_mapping: null,
+        },
+        {
+          construct: 'User.email',
+          kind: 'drop',
+          severity: 'warn',
+          message: 'The email format constraint is unrepresentable in proto3.',
+          target_mapping: null,
+        },
+        {
+          construct: 'GET /pets/{id}',
+          kind: 'approx',
+          severity: 'warn',
+          message: 'Query parameters become request-message fields.',
+          target_mapping: 'query parameter → request message field',
+        },
+      ],
+      kind_counts: { drop: 1, approx: 1, synth: 0, ok: 1 },
+      severity_counts: { info: 1, warn: 2, critical: 0 },
+    },
+    advisory: {
+      show: true,
+      severity: 'warn',
+      requires_ack: false,
+      target_format: 'gRPC / Protobuf',
+      dropped: 3,
+      approximated: 2,
+      synthesized: 2,
+      affected: 7,
+      headline: 'This export loses fidelity',
+      message: 'Exporting to gRPC / Protobuf may lose some fidelity: 7 constructs affected.',
+    },
+  },
+  openapi: {
+    target: TARGETS.targets[1].descriptor,
+    summary: TARGETS.targets[1].fidelity,
+    report: {
+      items: [
+        {
+          construct: 'User.name',
+          kind: 'ok',
+          severity: 'info',
+          message: 'Carried faithfully.',
+          target_mapping: null,
+        },
+      ],
+      kind_counts: { drop: 0, approx: 0, synth: 0, ok: 1 },
+      severity_counts: { info: 1, warn: 0, critical: 0 },
+    },
+    advisory: {
+      show: false,
+      severity: null,
+      requires_ack: false,
+      target_format: 'OpenAPI 3.1',
+      dropped: 0,
+      approximated: 0,
+      synthesized: 0,
+      affected: 0,
+      headline: 'Lossless export to OpenAPI 3.1',
+      message: 'Every construct is carried faithfully to OpenAPI 3.1.',
+    },
+  },
+};
+
 function mockFetch(): jest.Mock {
-  return jest.fn((input: unknown, init?: { method?: string }) => {
+  return jest.fn((input: unknown, init?: { method?: string; body?: string }) => {
     const url = typeof input === 'string' ? input : String(input);
     if (url.includes('/api/export/targets')) {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ success: true, ...TARGETS }),
+      });
+    }
+    if (url.includes('/api/export/preview') && init?.method === 'POST') {
+      const target = String(JSON.parse(init?.body ?? '{}').target);
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            artifact: 'proj-petstore',
+            version: null,
+            version_record_id: 'rev-1',
+            version_label: '1.2.0',
+            fidelity: PREVIEWS[target],
+          }),
       });
     }
     if (url.includes('/api/export/document') && init?.method === 'POST') {
@@ -246,6 +343,8 @@ describe('ExportDialog — target-card grid (MFX-6.1)', () => {
     expect(screen.getByText('2 approximated')).toBeInTheDocument();
     expect(screen.getByText('2 synthesized')).toBeInTheDocument();
     expect(screen.getByText('51 clean')).toBeInTheDocument();
+    // The dry-run preview (MFX-6.2) lands and adds the advisory to the panel.
+    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
   });
 
   it('exports the document, sending only changed options, and reports the filename', async () => {
@@ -256,7 +355,11 @@ describe('ExportDialog — target-card grid (MFX-6.1)', () => {
     // Change one option so the emit request carries it; the untouched option stays server-side.
     fireEvent.click(screen.getByLabelText(/Emit Services/i));
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
-    fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
+    // Let the dry-run preview settle so no state update lands mid-assertion.
+    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
+    // proto is lossy: acknowledge the fidelity loss to unlock "Export anyway" (MFX-6.2).
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: /^export anyway$/i }));
 
     await waitFor(() =>
       expect(screen.getByText(/check your downloads/i)).toBeInTheDocument(),
@@ -302,12 +405,120 @@ describe('ExportDialog — target-card grid (MFX-6.1)', () => {
     await renderAtTargetStep(fetchMock);
     fireEvent.click(screen.getByTestId('export-target-proto'));
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
-    fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
+    // This mock has no preview handler: the panel degrades to the summary + error note.
+    await waitFor(() => expect(screen.getByTestId('export-advisory-error')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: /^export anyway$/i }));
 
     await waitFor(() =>
       expect(screen.getByText('Target proto is unavailable.')).toBeInTheDocument(),
     );
-    // Back on the Fidelity step, the user can retry.
-    expect(screen.getByRole('button', { name: /^export$/i })).toBeEnabled();
+    // Back on the Fidelity step, the acknowledgement persists and the user can retry.
+    expect(screen.getByRole('button', { name: /^export anyway$/i })).toBeEnabled();
+  });
+});
+
+describe('ExportDialog — fidelity warning panel (MFX-6.2)', () => {
+  beforeEach(() => {
+    (URL as unknown as { createObjectURL: unknown }).createObjectURL = jest.fn(() => 'blob:mock');
+    (URL as unknown as { revokeObjectURL: unknown }).revokeObjectURL = jest.fn();
+    jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  /** Advance a fresh dialog to the Fidelity step for the given target. */
+  async function renderAtFidelityStep(fetchMock: jest.Mock, target: string) {
+    await renderAtTargetStep(fetchMock);
+    fireEvent.click(screen.getByTestId(`export-target-${target}`));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
+  }
+
+  it('fetches the dry-run preview and renders the advisory verbatim', async () => {
+    const fetchMock = mockFetch();
+    await renderAtFidelityStep(fetchMock, 'proto');
+
+    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
+    const advisory = screen.getByTestId('export-advisory');
+    expect(advisory).toHaveTextContent('This export loses fidelity');
+    expect(advisory).toHaveTextContent(
+      'Exporting to gRPC / Protobuf may lose some fidelity: 7 constructs affected.',
+    );
+
+    const previewCall = fetchMock.mock.calls.find(([url]) =>
+      String(url).includes('/api/export/preview'),
+    );
+    expect(previewCall).toBeDefined();
+    expect(JSON.parse((previewCall![1] as { body: string }).body)).toEqual({
+      artifact: 'proj-petstore',
+      version: null,
+      target: 'proto',
+    });
+  });
+
+  it('expands the per-construct report with source paths and degradations', async () => {
+    await renderAtFidelityStep(mockFetch(), 'proto');
+
+    await waitFor(() => expect(screen.getByTestId('export-report-toggle')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('export-report-toggle'));
+
+    const report = screen.getByTestId('export-fidelity-report');
+    expect(report).toHaveTextContent('DROP');
+    expect(report).toHaveTextContent('User.email');
+    expect(report).toHaveTextContent('APPROX');
+    expect(report).toHaveTextContent('query parameter → request message field');
+    expect(report).toHaveTextContent('OK');
+  });
+
+  it('keeps a lossy export disabled until the loss is acknowledged', async () => {
+    await renderAtFidelityStep(mockFetch(), 'proto');
+    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
+
+    const exportButton = screen.getByRole('button', { name: /^export anyway$/i });
+    expect(exportButton).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(exportButton).toBeEnabled();
+
+    // Withdrawing the acknowledgement re-locks the download.
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(exportButton).toBeDisabled();
+  });
+
+  it('re-requires the acknowledgement after re-picking a lossy target', async () => {
+    await renderAtFidelityStep(mockFetch(), 'proto');
+    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(screen.getByRole('button', { name: /^export anyway$/i })).toBeEnabled();
+
+    // Back to the target grid, re-pick the same lossy target: the conversion must be
+    // re-acknowledged from scratch.
+    fireEvent.click(screen.getByRole('button', { name: /^back$/i }));
+    fireEvent.click(screen.getByTestId('export-target-proto'));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
+    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
+
+    expect(screen.getByRole('checkbox')).not.toBeChecked();
+    expect(screen.getByRole('button', { name: /^export anyway$/i })).toBeDisabled();
+  });
+
+  it('exports a lossless target without any acknowledgement and shows the quiet reassurance', async () => {
+    const fetchMock = mockFetch();
+    await renderAtFidelityStep(fetchMock, 'openapi');
+
+    // No warning gate for a clean conversion: plain Export, no checkbox, quiet advisory.
+    await waitFor(() =>
+      expect(screen.getByTestId('export-advisory')).toHaveTextContent(
+        'Lossless export to OpenAPI 3.1',
+      ),
+    );
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+
+    const exportButton = screen.getByRole('button', { name: /^export$/i });
+    expect(exportButton).toBeEnabled();
+    fireEvent.click(exportButton);
+    await waitFor(() => expect(screen.getByText(/check your downloads/i)).toBeInTheDocument());
   });
 });
