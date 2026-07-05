@@ -330,7 +330,7 @@ flowchart TB
 | 2.1 ✅ | Lossiness report model + severities | DROP/APPROX/SYNTH/OK per construct + severity | export,multi-protocol,version-control,mvp | N | Y | M | apiome-rest |
 | 2.2 ✅ | Fidelity computation engine | diff source constructs vs target capability profile | export,multi-protocol,python,mvp | N | Y | L | apiome-rest |
 | 2.3 | Fidelity rule-pack SPI | per-target degradation rules (how a construct degrades) | export,multi-protocol,python,mvp | N | Y | M | apiome-rest |
-| 2.4 | User-facing advisory message | the "may lose fidelity" copy + i18n string + thresholds | export,ui,browser,mvp | Y | Y | S | apiome-rest,apiome-ui |
+| 2.4 ✅ | User-facing advisory message | the "may lose fidelity" copy + i18n string + thresholds | export,ui,browser,mvp | Y | Y | S | apiome-rest,apiome-ui |
 | 2.5 | Fidelity report REST surfacing | return report from export + a dry-run preview endpoint | export,rest,mvp | Y | Y | S | apiome-rest |
 | 2.6 | Round-trip fidelity measurement | export→re-import→diff to quantify actual loss | export,version-control,validation | Y | N | M | apiome-rest |
 
@@ -355,9 +355,9 @@ flowchart TB
 - **Dependencies / Parallelism.** After 2.1. Blocks 2.2 and emitter packs.
 - **Technical Stack.** Python.
 
-### MFX-2.4 — User-facing advisory message  ·  **#3841**
+### MFX-2.4 — User-facing advisory message  ·  **#3841**  ·  ✅ **Done**
 - **Problem.** The user explicitly wants a clear "you may lose fidelity" message in apiome-ui **and** the browser.
-- **Solution / Scope.** A canonical advisory string + severity thresholds returned with every cross-format (and lossy same-format) export: e.g. *"Exporting to **{format}** may lose some fidelity. The destination format can't represent everything in this API, so **{n}** construct(s) will be dropped or approximated — review the fidelity report before downloading."* Shared by UI (6.2), browse (7.2), CLI (8.2). Suppressed/relaxed when the report is all-OK (same-format high-fidelity round-trips).
+- **Solution / Scope.** A canonical advisory string + severity thresholds returned with every cross-format (and lossy same-format) export: e.g. *"Exporting to **{format}** may lose some fidelity. The destination format can't represent everything in this API, so **{n}** construct(s) will be dropped or approximated — review the fidelity report before downloading."* Shared by UI (6.2), browse (7.2), CLI (8.2). Suppressed/relaxed when the report is all-OK (same-format high-fidelity round-trips). **Implemented** as `app.fidelity_advisory` (Python string source: `build_export_advisory(report, target_format, *, min_severity)` → `ExportAdvisory` with `show`/`severity`/`requires_ack`/counts/`headline`/`message`), consumed field-for-field by `apiome-ui/src/app/utils/export-advisory.ts` (presentation helpers only — no re-templating).
 - **Acceptance Criteria.** Message reflects real counts; shown when loss > threshold; hidden when lossless; identical wording across UI/browse/CLI.
 - **Dependencies / Parallelism.** After 2.2. Blocks 6.2/7.2/8.2.
 - **Technical Stack.** Python (string source), TS (consumers).
