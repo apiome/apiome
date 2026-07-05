@@ -113,6 +113,20 @@ export function publicExportDocumentUrl(
 }
 
 /**
+ * The URL for the dry-run fidelity preview (full advisory + per-construct report).
+ *
+ * @param restApiBaseUrl - The browser-reachable REST base URL, ending in `/v1`.
+ * @param coords - The tenant/project/version slugs of the viewed published version.
+ * @returns The absolute `POST .../export/preview` URL.
+ */
+export function publicExportPreviewUrl(
+  restApiBaseUrl: string,
+  coords: PublicExportCoordinates
+): string {
+  return `${publicExportBaseUrl(restApiBaseUrl, coords)}/preview`;
+}
+
+/**
  * The `Accept` header value selecting the chosen download serialization.
  *
  * @param serialization - The serialization the user picked (`json` or `yaml`).
@@ -197,10 +211,10 @@ export function requiresExportAcknowledgement(tier: ExportFidelityTier): boolean
 }
 
 /**
- * The fidelity warning sentence for a lossy/types-only target, built from the badge counts.
+ * The coarse fidelity warning sentence for a lossy/types-only target, built from badge counts.
  *
- * (The full per-construct advisory report arrives with MFX-7.2; this is the headline warning
- * MFX-7.1's acceptance criteria require.)
+ * Used as a fallback when the detailed preview cannot load. The full advisory (MFX-2.4) and
+ * per-construct report render from `POST …/export/preview` via `PublicFidelityWarningPanel`.
  *
  * @param target - The selected target entry.
  * @returns The warning sentence, or an empty string for a lossless target.
