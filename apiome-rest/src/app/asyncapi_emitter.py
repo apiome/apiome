@@ -27,10 +27,11 @@ exchange (an ``action: send`` operation whose ``reply`` carries the response
 message), the request/response bodies become the sent/replied messages, and the
 HTTP method/path/status semantics — which AsyncAPI cannot carry — are recorded as
 :class:`~app.emitter.Loss`\\es on the returned :class:`~app.emitter.EmitResult`
-rather than silently dropped. The AsyncAPI fidelity pack (MFX-11.2) turns those
-losses into the per-construct ``APPROX``/``DROP`` verdicts the fidelity advisory
-shows; this emitter's job is to emit the best-effort document and enumerate what the
-reframing lost.
+rather than silently dropped. The AsyncAPI fidelity pack (:class:`AsyncApiFidelityRulePack`,
+MFX-11.2) is the predictive counterpart that turns the same reframing into the
+per-construct ``APPROX``/``DROP`` verdicts the fidelity advisory shows *without*
+emitting; this emitter's job is to emit the best-effort document and enumerate what
+the reframing lost.
 
 Two properties make the output trustworthy:
 
@@ -69,6 +70,7 @@ from .canonical_model import (
     OperationKind,
     Server,
     Service,
+    StreamingMode,
 )
 from .emitter import (
     CapabilityProfile,
@@ -81,8 +83,9 @@ from .emitter import (
     ProvenanceTracker,
     SchemaEmitter,
 )
+from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 
-__all__ = ["AsyncApiEmitOptions", "AsyncApiEmitter"]
+__all__ = ["AsyncApiEmitOptions", "AsyncApiEmitter", "AsyncApiFidelityRulePack"]
 
 # AsyncAPI 3 operation ``action`` values, from the application's own perspective: it
 # *sends* to (publishes) or *receives* from (subscribes to) a channel. The inverse of
@@ -126,6 +129,108 @@ class AsyncApiEmitOptions(EmitOptions):
         default=True,
         description="Emit ``components/schemas`` from the model's named types.",
     )
+
+
+class AsyncApiFidelityRulePack(CapabilityRulePack):
+    """Reference fidelity rule pack for the AsyncAPI 3.1 target — MFX-11.2 (#3875).
+
+    The predictive counterpart to :class:`AsyncApiEmitter` and the AsyncAPI analogue
+    of :class:`~app.openapi_emitter.OpenApiFidelityRulePack`: a
+    :class:`~app.fidelity_rulepack.FidelityRulePack` shipped *alongside* its emitter
+    that refines the profile-derived default wherever AsyncAPI's six-axis
+    :class:`~app.emitter.CapabilityProfile` is too coarse to describe how a construct
+    actually degrades. It runs against the source :class:`~app.canonical_model.CanonicalApi`
+    alone (never the emitted document), so the fidelity advisory can predict a REST→AsyncAPI
+    export's losses without emitting, and its verdicts line up construct-for-construct
+    with the :class:`~app.emitter.Loss`\\es :class:`AsyncApiEmitter` records at emit time.
+
+    AsyncAPI's profile advertises ``events=True`` (its home vocabulary) and — honestly
+    — ``operations=False``: it has no HTTP method/path/status vocabulary. The capability
+    default would therefore report every non-event (REST/RPC/GraphQL query·mutation)
+    operation a critical ``DROP``. But the emitter does not drop them — it **reframes**
+    each as an ``action: send`` (+ ``reply``) message exchange onto a synthesized
+    channel. This pack corrects the verdict to the honest reframing outcome:
+
+    * **REST/RPC request-response operations** — reframed and carried, so an ``APPROX``
+      (not a ``DROP``); the HTTP method/path/status AsyncAPI cannot carry are enumerated
+      as the loss (:meth:`operation_verdict`);
+    * **RPC streaming operations** — reframed onto a channel with their streaming
+      cardinality lost, an ``APPROX`` (:meth:`operation_verdict`);
+    * **native pub/sub operations, event channels, and every named type** — carried
+      faithfully (AsyncAPI schemas *are* JSON Schema, so records/scalars/unions/enums
+      land in ``components.schemas``), inherited unchanged from the capability default.
+    """
+
+    # Pub/sub operation kinds AsyncAPI carries natively (its home vocabulary); every
+    # other kind is reframed as a send/receive message exchange, not carried faithfully.
+    _EVENT_OPERATION_KINDS = frozenset(
+        {OperationKind.PUBLISH, OperationKind.SUBSCRIBE}
+    )
+
+    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
+        """Correct the capability default's ``DROP`` for a reframed non-event operation.
+
+        A native pub/sub operation (``PUBLISH`` / ``SUBSCRIBE``) is AsyncAPI's home
+        vocabulary and defers to the inherited ``OK``. Every other kind has no native
+        AsyncAPI representation, so :class:`AsyncApiEmitter` reframes it rather than
+        dropping it — the capability default's critical ``DROP`` (AsyncAPI advertises
+        ``operations=False``) is too harsh. This override reports the honest reframe:
+
+        * an **RPC streaming** method (any non-event operation whose ``streaming`` is
+          not ``NONE``) is reframed onto a channel as a send/receive exchange but loses
+          its streaming cardinality — an ``APPROX``;
+        * every other **request-response** exchange (REST, unary RPC, GraphQL
+          query/mutation, GraphQL subscription) is reframed as an ``action: send`` + a
+          ``reply`` block, and whichever of the HTTP method/path/response-status the
+          source carried — none representable in AsyncAPI — is enumerated as the loss.
+          Still carried, so an ``APPROX``.
+        """
+        if operation.kind in self._EVENT_OPERATION_KINDS:
+            return super().operation_verdict(operation)
+        if operation.streaming is not StreamingMode.NONE:
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} cannot model "
+                f"{operation.streaming.value} streaming; the operation is reframed "
+                "onto a channel as a send/receive message exchange and its streaming "
+                "cardinality is dropped",
+                target_mapping=f"{operation.streaming.value} streaming → "
+                "send/receive message exchange (cardinality dropped)",
+            )
+        dropped = self._dropped_http_semantics(operation)
+        loss_clause = f" and its {dropped} are dropped" if dropped else ""
+        mapping_clause = f" ({dropped} dropped)" if dropped else ""
+        return FidelityVerdict.approx(
+            message=f"{self.target_label} has no HTTP operation vocabulary; the "
+            f"{operation.kind.value} exchange is reframed as an action: send + reply"
+            f"{loss_clause}",
+            target_mapping=f"request/response → send + reply{mapping_clause}",
+        )
+
+    @staticmethod
+    def _dropped_http_semantics(operation: Operation) -> str:
+        """Enumerate the HTTP semantics AsyncAPI drops from a reframed operation.
+
+        Names only the facets the operation actually carries — its HTTP verb, its route
+        template, and (from any response/error message) its status code — so the verdict
+        message states exactly what the reframe lost, matching the ``http-binding`` and
+        ``http-status`` :class:`~app.emitter.Loss`\\es the emitter records for the same
+        operation. Returns an empty string for an abstract operation carrying none.
+
+        Args:
+            operation: The non-event operation being reframed.
+
+        Returns:
+            A comma-joined phrase (e.g. ``"HTTP method, path, response status"``), or
+            ``""`` when the operation carries no HTTP semantics at all.
+        """
+        facets: List[str] = []
+        if operation.http_method:
+            facets.append("HTTP method")
+        if operation.http_path:
+            facets.append("path")
+        if any(message.status_code for message in operation.messages):
+            facets.append("response status")
+        return ", ".join(facets)
 
 
 class AsyncApiEmitter(Emitter, register=True):
@@ -178,6 +283,16 @@ class AsyncApiEmitter(Emitter, register=True):
             constraints=True,
             field_identity=False,
         )
+
+    @classmethod
+    def fidelity_rule_pack(cls) -> type[AsyncApiFidelityRulePack]:
+        """Return the reference AsyncAPI fidelity rule pack (MFX-11.2).
+
+        Refines the profile-derived default so a reframed REST/RPC operation is
+        predicted as the honest reframing ``APPROX`` rather than the capability
+        default's critical ``DROP`` — see :class:`AsyncApiFidelityRulePack`.
+        """
+        return AsyncApiFidelityRulePack
 
     def emit(
         self,
