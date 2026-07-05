@@ -700,7 +700,15 @@ class _GraphQlWriter:
         args: Dict[str, GraphQLArgument] = {}
         for parameter in operation.parameters:
             default = parameter.default if parameter.default is not None else Undefined
-            args[parameter.name] = GraphQLArgument(
+            arg_name = _graphql_name(parameter.name, prefix="param")
+            if arg_name in args:
+                suffix = 2
+                candidate = f"{arg_name}{suffix}"
+                while candidate in args:
+                    suffix += 1
+                    candidate = f"{arg_name}{suffix}"
+                arg_name = candidate
+            args[arg_name] = GraphQLArgument(
                 self._input_type_for_ref(parameter.type),
                 default_value=default,
                 description=parameter.description,
@@ -716,10 +724,10 @@ class _GraphQlWriter:
                     suffix += 1
                     candidate = f"{arg_name}{suffix}"
                 arg_name = candidate
-            args[arg_name] = GraphQLArgument(
-                self._input_type_for_ref(message.payload),
-                description=message.description,
-            )
+            arg_type = self._input_type_for_ref(message.payload)
+            if not message.required and isinstance(arg_type, GraphQLNonNull):
+                arg_type = arg_type.of_type
+            args[arg_name] = GraphQLArgument(arg_type, description=message.description)
             self.tracker.record(
                 f"/operations/{_graphql_field_name(operation)}/args/{arg_name}",
                 Provenance.INFERRED,

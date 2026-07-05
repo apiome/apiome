@@ -11,7 +11,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from graphql import GraphQLInputObjectType, GraphQLNamedType, GraphQLNonNull, GraphQLString, validate_schema
+from graphql import (
+    GraphQLInputObjectType,
+    GraphQLList,
+    GraphQLNamedType,
+    GraphQLNonNull,
+    GraphQLString,
+    validate_schema,
+)
 
 from app.canonical_model import (
     ApiIdentity,
@@ -125,8 +132,8 @@ def _emit_and_build(api: CanonicalApi):
 
 
 def _named_type(gql_type: Any) -> GraphQLNamedType:
-    if isinstance(gql_type, GraphQLNonNull):
-        return gql_type.of_type
+    while isinstance(gql_type, (GraphQLNonNull, GraphQLList)):
+        gql_type = gql_type.of_type
     assert isinstance(gql_type, GraphQLNamedType)
     return gql_type
 
