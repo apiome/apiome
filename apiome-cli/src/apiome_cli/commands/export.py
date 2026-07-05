@@ -337,9 +337,9 @@ def export_grpc(
 ) -> None:
     """Export a version as proto3 and surface the emitter registry's fidelity report.
 
-    The ``.proto`` bytes come from the Emitter SPI (``POST /export/{tenant}/document``, target
+    The ``.proto`` bytes come from the Emitter SPI (``POST /v1/export/{tenant}/document``, target
     ``protobuf``); the honest fidelity report comes from the dry-run preview
-    (``POST /export/{tenant}/preview``). A native gRPC/protobuf source round-trips **lossless**
+    (``POST /v1/export/{tenant}/preview``). A native gRPC/protobuf source round-trips **lossless**
     (exit 0); a REST/OpenAPI source loses unions, constraints, and HTTP semantics (non-zero exit
     unless ``--force``).
     """
@@ -361,7 +361,7 @@ def export_grpc(
         artifact=str(project_id),
         version=version,
         target=_PROTOBUF_TARGET,
-        serialization="json",
+        serialization=None,
     )
     write_document_bytes(document.body, output)
 

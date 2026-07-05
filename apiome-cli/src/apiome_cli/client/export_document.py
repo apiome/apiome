@@ -29,7 +29,7 @@ class ExportDocument:
     body: bytes
     content_type: str | None
     filename: str | None
-    serialization: SpecSerialization
+    serialization: SpecSerialization | None
 
 
 def _filename_from_disposition(disposition: str | None) -> str | None:
@@ -54,7 +54,7 @@ def fetch_export_document(
     artifact: str,
     version: str | None,
     target: str,
-    serialization: SpecSerialization,
+    serialization: SpecSerialization | None,
     options: Mapping[str, Any] | None = None,
 ) -> ExportDocument:
     """Emit ``target`` for one artifact revision and return the document bytes.
@@ -72,7 +72,9 @@ def fetch_export_document(
     target:
         Target emitter key (``asyncapi``) or format key (``asyncapi-3``).
     serialization:
-        ``json`` (default) or ``yaml`` — sets the ``Accept`` header the server negotiates on.
+        ``json`` or ``yaml`` — sets the ``Accept`` header the server negotiates on.
+        Pass ``None`` to omit the ``Accept`` header (e.g. for binary targets such as
+        ``protobuf`` that return ``text/x-protobuf`` or ``text/plain``).
     options:
         Optional per-target emit options (MFX-1.4); omitted applies the target defaults.
 
@@ -87,11 +89,15 @@ def fetch_export_document(
     if options:
         body["options"] = dict(options)
 
-    accept = "application/yaml" if serialization == "yaml" else "application/json"
+    headers: dict[str, str] = {}
+    if serialization == "yaml":
+        headers["Accept"] = "application/yaml"
+    elif serialization == "json":
+        headers["Accept"] = "application/json"
     response = client.post_raw(
         api_paths.export_document(tenant_slug),
         json=body,
-        headers={"Accept": accept},
+        headers=headers,
     )
     exit_on_api_error(response)
     return ExportDocument(
