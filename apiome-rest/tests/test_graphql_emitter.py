@@ -13,11 +13,15 @@ from app.canonical_model import (
     ApiIdentity,
     ApiParadigm,
     CanonicalApi,
+    CanonicalField,
+    Message,
+    MessageRole,
     Operation,
     OperationKind,
     Parameter,
     ParameterLocation,
     Service,
+    Type,
     TypeKind,
     TypeRef,
 )
@@ -393,3 +397,123 @@ def test_manual_operation_without_response_gets_string_fallback() -> None:
     _, schema = _emit_and_build(api)
     field = schema.query_type.fields["noop"]
     assert field.type is GraphQLString
+
+
+def test_map_types_fall_back_to_string_and_record_loss_message() -> None:
+    api = CanonicalApi(
+        paradigm=ApiParadigm.RPC,
+        format="proto",
+        identity=ApiIdentity(name="Maps"),
+        types=[
+            Type(
+                key="p.Holder.AttrsEntry",
+                name="AttrsEntry",
+                kind=TypeKind.MAP,
+                key_type=TypeRef(name="String", nullable=False),
+                value_type=TypeRef(name="Int", nullable=False),
+            )
+        ],
+        services=[
+            Service(
+                key="Query",
+                name="Query",
+                operations=[
+                    Operation(
+                        key="Query.attrs",
+                        name="attrs",
+                        kind=OperationKind.QUERY,
+                        messages=[
+                            Message(
+                                key="Query.attrs#response",
+                                role=MessageRole.RESPONSE,
+                                payload=TypeRef(name="p.Holder.AttrsEntry"),
+                            )
+                        ],
+                    )
+                ],
+            )
+        ],
+    )
+
+    result = GraphQlEmitter().emit(api)
+    assert any(
+        loss.subject == "map-type" and "emitted as String" in loss.detail
+        for loss in result.losses
+    )
+    _, schema = _emit_and_build(api)
+    assert schema.query_type.fields["attrs"].type is GraphQLString
+
+
+def test_distinct_type_keys_with_same_name_get_distinct_graphql_types() -> None:
+    api = CanonicalApi(
+        paradigm=ApiParadigm.RPC,
+        format="proto",
+        identity=ApiIdentity(name="Nested"),
+        types=[
+            Type(
+                key="ParentA.Entry",
+                name="Entry",
+                kind=TypeKind.RECORD,
+                fields=[
+                    CanonicalField(
+                        key="ParentA.Entry.a",
+                        name="a",
+                        type=TypeRef(name="String"),
+                    )
+                ],
+            ),
+            Type(
+                key="ParentB.Entry",
+                name="Entry",
+                kind=TypeKind.RECORD,
+                fields=[
+                    CanonicalField(
+                        key="ParentB.Entry.b",
+                        name="b",
+                        type=TypeRef(name="Int"),
+                    )
+                ],
+            ),
+        ],
+        services=[
+            Service(
+                key="Query",
+                name="Query",
+                operations=[
+                    Operation(
+                        key="Query.left",
+                        name="left",
+                        kind=OperationKind.QUERY,
+                        messages=[
+                            Message(
+                                key="Query.left#response",
+                                role=MessageRole.RESPONSE,
+                                payload=TypeRef(name="ParentA.Entry"),
+                            )
+                        ],
+                    ),
+                    Operation(
+                        key="Query.right",
+                        name="right",
+                        kind=OperationKind.QUERY,
+                        messages=[
+                            Message(
+                                key="Query.right#response",
+                                role=MessageRole.RESPONSE,
+                                payload=TypeRef(name="ParentB.Entry"),
+                            )
+                        ],
+                    ),
+                ],
+            )
+        ],
+    )
+
+    sdl, schema = _emit_and_build(api)
+    left_type = schema.query_type.fields["left"].type
+    right_type = schema.query_type.fields["right"].type
+    assert left_type.name != right_type.name
+    assert left_type.fields.keys() == {"a"}
+    assert right_type.fields.keys() == {"b"}
+    assert "type ParentA_Entry" in sdl
+    assert "type ParentB_Entry" in sdl

@@ -23,15 +23,20 @@ cross-paradigm request bodies is deferred to MFX-13.2.
 from __future__ import annotations
 
 import re
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from collections import Counter
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from graphql import (
     GraphQLArgument,
+    GraphQLBoolean,
     GraphQLEnumType,
     GraphQLEnumValue,
     GraphQLField,
+    GraphQLFloat,
+    GraphQLID,
     GraphQLInputField,
     GraphQLInputObjectType,
+    GraphQLInt,
     GraphQLInterfaceType,
     GraphQLList,
     GraphQLNamedType,
@@ -39,13 +44,9 @@ from graphql import (
     GraphQLObjectType,
     GraphQLScalarType,
     GraphQLSchema,
+    GraphQLString,
     GraphQLUnionType,
     Undefined,
-    GraphQLBoolean,
-    GraphQLFloat,
-    GraphQLID,
-    GraphQLInt,
-    GraphQLString,
     print_schema,
     validate_schema,
 )
@@ -55,13 +56,10 @@ from .canonical_model import (
     ApiParadigm,
     CanonicalApi,
     CanonicalField,
-    EnumValue,
     MessageRole,
     Operation,
     OperationKind,
-    Parameter,
     Service,
-    StreamingMode,
     Type,
     TypeKind,
     TypeRef,
@@ -173,7 +171,10 @@ class _GraphQlWriter:
         self.tracker = ProvenanceTracker()
         self.losses = LossTracker()
         self._types_by_key: Dict[str, Type] = {t.key: t for t in api.types}
+        self._type_name_counts = Counter(type_.name for type_ in api.types)
         self._gql_types: Dict[str, GraphQLNamedType] = {}
+        self._gql_names_by_key: Dict[str, str] = {}
+        self._type_keys_by_gql_name: Dict[str, str] = {}
 
     @property
     def output_path(self) -> str:
@@ -206,26 +207,25 @@ class _GraphQlWriter:
 
     def _ensure_named_type(self, type_: Type) -> GraphQLNamedType:
         """Return the graphql-core type for ``type_``, building it on first use."""
-        name = type_.name
-        existing = self._gql_types.get(name)
+        existing = self._gql_types.get(type_.key)
         if existing is not None:
             return existing
 
         if type_.kind is TypeKind.ALIAS and type_.aliased is not None:
             gql = self._from_type_ref(type_.aliased)
             if isinstance(gql, GraphQLNamedType):
-                self._gql_types[name] = gql
+                self._gql_types[type_.key] = gql
                 return gql
 
         if type_.kind is TypeKind.MAP:
             self.losses.record(
                 LossKind.NA,
                 "map-type",
-                f"GraphQL has no native map type; {type_.key!r} was omitted.",
+                f"GraphQL has no native map type; {type_.key!r} was emitted as String.",
                 pointer=type_.key,
             )
             gql = GraphQLString
-            self._gql_types[name] = gql
+            self._gql_types[type_.key] = gql
             return gql
 
         builder = {
@@ -242,31 +242,54 @@ class _GraphQlWriter:
                 pointer=type_.key,
             )
             gql = GraphQLString
-            self._gql_types[name] = gql
+            self._gql_types[type_.key] = gql
             return gql
 
         gql = builder(type_)
-        self._gql_types[name] = gql
-        self.tracker.record(f"/types/{name}", Provenance.SOURCE)
+        self._gql_types[type_.key] = gql
+        self.tracker.record(f"/types/{type_.key}", Provenance.SOURCE)
         return gql
 
+    def _graphql_type_name(self, type_: Type) -> str:
+        existing = self._gql_names_by_key.get(type_.key)
+        if existing is not None:
+            return existing
+
+        if self._type_name_counts[type_.name] == 1:
+            candidate = type_.name
+        else:
+            candidate = _graphql_name(type_.key, prefix="Type")
+
+        name = candidate
+        suffix = 2
+        while name in _BUILTIN_SCALARS or (
+            name in self._type_keys_by_gql_name and self._type_keys_by_gql_name[name] != type_.key
+        ):
+            name = f"{candidate}_{suffix}"
+            suffix += 1
+
+        self._gql_names_by_key[type_.key] = name
+        self._type_keys_by_gql_name[name] = type_.key
+        return name
+
     def _build_record(self, type_: Type) -> GraphQLNamedType:
+        name = self._graphql_type_name(type_)
         family = (type_.extras or {}).get("graphql_type", "object")
         if family == "input":
             return GraphQLInputObjectType(
-                name=type_.name,
+                name=name,
                 description=type_.description,
                 fields=lambda: self._input_fields(type_),
             )
         if family == "interface":
             return GraphQLInterfaceType(
-                name=type_.name,
+                name=name,
                 description=type_.description,
                 interfaces=lambda: self._interfaces(type_),
                 fields=lambda: self._output_fields(type_),
             )
         return GraphQLObjectType(
-            name=type_.name,
+            name=name,
             description=type_.description,
             interfaces=lambda: self._interfaces(type_),
             fields=lambda: self._output_fields(type_),
@@ -278,7 +301,7 @@ class _GraphQlWriter:
             for member_name in (type_.union_members or [])
         ]
         return GraphQLUnionType(
-            name=type_.name,
+            name=self._graphql_type_name(type_),
             description=type_.description,
             types=members,
         )
@@ -293,7 +316,7 @@ class _GraphQlWriter:
             for value in (type_.enum_values or [])
         }
         return GraphQLEnumType(
-            name=type_.name,
+            name=self._graphql_type_name(type_),
             description=type_.description,
             values=values,
         )
@@ -303,7 +326,7 @@ class _GraphQlWriter:
             return _BUILTIN_SCALARS[type_.name]
         specified_by = (type_.extras or {}).get("specified_by_url")
         return GraphQLScalarType(
-            name=type_.name,
+            name=self._graphql_type_name(type_),
             description=type_.description,
             specified_by_url=specified_by,
         )
@@ -336,7 +359,7 @@ class _GraphQlWriter:
                 deprecation_reason=deprecation,
             )
             self.tracker.record(
-                f"/types/{type_.name}/fields/{field.name}",
+                f"/types/{type_.key}/fields/{field.name}",
                 Provenance.SOURCE if not field.extras.get("arguments") else Provenance.SOURCE,
             )
         return fields
@@ -586,7 +609,13 @@ def _graphql_field_name(operation: Operation) -> str:
     candidate = operation.name
     if operation.extras.get("operationId"):
         candidate = str(operation.extras["operationId"])
+    return _graphql_name(candidate, prefix="op")
+
+
+def _graphql_name(candidate: str, *, prefix: str) -> str:
     sanitized = _FIELD_NAME_RE.sub("_", candidate.strip())
-    if not sanitized or not sanitized[0].isalpha() and sanitized[0] != "_":
-        sanitized = f"op_{sanitized}" if sanitized else "operation"
+    if not sanitized:
+        return prefix
+    if not sanitized[0].isalpha() and sanitized[0] != "_":
+        return f"{prefix}_{sanitized}"
     return sanitized
