@@ -19,6 +19,8 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('asyncapi')).toBe('json');
     expect(monacoLanguageForExportTarget('protobuf')).toBe('protobuf');
     expect(monacoLanguageForExportTarget('grpc')).toBe('protobuf');
+    expect(monacoLanguageForExportTarget('graphql')).toBe('graphql');
+    expect(monacoLanguageForExportTarget('gql')).toBe('graphql');
   });
 
   it('collapses version/variant suffixes to the base target id', () => {
@@ -30,6 +32,8 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('AsyncAPI-3')).toBe('json');
     expect(monacoLanguageForExportTarget('proto3')).toBe('protobuf');
     expect(monacoLanguageForExportTarget('Proto3')).toBe('protobuf');
+    expect(monacoLanguageForExportTarget('sdl')).toBe('graphql');
+    expect(monacoLanguageForExportTarget('GraphQL')).toBe('graphql');
   });
 
   it('refines a JSON-or-YAML target from the emitted bytes', () => {
@@ -63,6 +67,9 @@ describe('fileExtensionForExportTarget', () => {
     expect(fileExtensionForExportTarget('protobuf')).toBe('.proto');
     expect(fileExtensionForExportTarget('grpc')).toBe('.proto');
     expect(fileExtensionForExportTarget('proto3')).toBe('.proto');
+    expect(fileExtensionForExportTarget('graphql')).toBe('.graphql');
+    expect(fileExtensionForExportTarget('gql')).toBe('.graphql');
+    expect(fileExtensionForExportTarget('sdl')).toBe('.graphql');
   });
 
   it('falls back to .txt for unrecognised targets', () => {
@@ -82,6 +89,9 @@ describe('downloadFileNameForExportTarget', () => {
     expect(downloadFileNameForExportTarget('protobuf')).toBe('api.proto');
     expect(downloadFileNameForExportTarget('grpc')).toBe('api.proto');
     expect(downloadFileNameForExportTarget('proto3')).toBe('api.proto');
+    expect(downloadFileNameForExportTarget('graphql')).toBe('schema.graphql');
+    expect(downloadFileNameForExportTarget('gql')).toBe('schema.graphql');
+    expect(downloadFileNameForExportTarget('sdl')).toBe('schema.graphql');
   });
 
   it('falls back to export.txt for unrecognised targets', () => {

@@ -1,0 +1,70 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "version_record_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "version_label": "1.0.0",
+  "fidelity": {
+    "target": {
+      "key": "graphql",
+      "format": "graphql",
+      "label": "GraphQL SDL",
+      "description": "Export as a GraphQL schema definition language (SDL) document.",
+      "icon": "share-2",
+      "paradigm": "graph",
+      "multi_file": false,
+      "needs_toolchain": false,
+      "available": true,
+      "unavailable_reason": null
+    },
+    "summary": {
+      "tier": "lossy",
+      "preserved_percent": 58,
+      "total": 12,
+      "preserved": 7,
+      "dropped": 1,
+      "approximated": 4,
+      "synthesized": 0
+    },
+    "report": {
+      "items": [
+        {
+          "kind": "approx",
+          "severity": "info",
+          "construct": "GET /pets/{id}",
+          "detail": "HTTP method, path, response status, and headers reframed to Query/Mutation fields."
+        },
+        {
+          "kind": "approx",
+          "severity": "info",
+          "construct": "User.email",
+          "detail": "Validation constraints approximated as a custom scalar."
+        },
+        {
+          "kind": "approx",
+          "severity": "info",
+          "construct": "Loose",
+          "detail": "Union shape cannot be represented faithfully as a GraphQL union."
+        },
+        {
+          "kind": "drop",
+          "severity": "warning",
+          "construct": "user/signedup",
+          "detail": "GraphQL has no native event/pub-sub vocabulary; the channel was dropped."
+        }
+      ],
+      "total": 12
+    },
+    "advisory": {
+      "show": true,
+      "severity": "warning",
+      "requires_ack": false,
+      "target_format": "graphql",
+      "dropped": 1,
+      "approximated": 4,
+      "synthesized": 0,
+      "affected": 5,
+      "headline": "GraphQL SDL may lose fidelity",
+      "message": "Exporting to GraphQL SDL drops 1 construct and approximates 4 (HTTP binding, validation constraints, union shape)."
+    }
+  }
+}

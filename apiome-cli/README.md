@@ -436,7 +436,8 @@ API key and tenant scope.
 `export` is the inverse of `import` — it emits a stored version to a registered target format and
 reports how faithful that export is. `export targets` lists the emitters available for a version;
 `export openapi` and `export asyncapi` write the document and its fidelity report;
-`export grpc` writes a proto3 `.proto` document and its fidelity report:
+`export grpc` writes a proto3 `.proto` document and its fidelity report;
+`export graphql` writes GraphQL SDL and its fidelity report:
 
 ```bash
 # List the emitter targets + per-source fidelity for a version:
@@ -451,6 +452,9 @@ apiome export asyncapi --project user-events --version 1.0.0 --output asyncapi.j
 # Export a version as proto3 (native gRPC sources are lossless; REST/OpenAPI sources are lossy):
 apiome export grpc --project echo-api --version 1.0.0 --output v1.proto
 
+# Export a version as GraphQL SDL (native Graph sources are lossless; REST/OpenAPI sources are lossy):
+apiome export graphql --project blog-api --version 1.0.0 --output schema.graphql
+
 # Write the document to stdout (fidelity summary + metadata go to stderr):
 apiome export openapi --project payments-api --version 1.0.0 --output -
 
@@ -460,7 +464,7 @@ apiome --json export openapi --project payments-api --version 1.0.0 --output ope
 ```
 
 OpenAPI document bytes come from the OpenAPI reconstruction (the same source as `spec export`);
-every other target — AsyncAPI and protobuf/gRPC included — is emitted through the Emitter SPI
+every other target — AsyncAPI, protobuf/gRPC, and GraphQL SDL included — is emitted through the Emitter SPI
 (`POST /v1/export/{tenant}/document`). The fidelity **tier + preserved-%** and the "may lose
 fidelity" advisory always come from the emitter registry's dry-run preview.
 

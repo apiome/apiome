@@ -15,8 +15,8 @@
  * source (authored as either JSON or YAML), an emitter emits a **canonical serialization** —
  * OpenAPI/Swagger/AsyncAPI emit JSON — so the default language is JSON, refined to YAML/XML only when a
  * byte sample of the actual artifact says otherwise (e.g. the CLI's `--yaml` output). Protobuf/gRPC
- * emits `.proto` source (Monaco `protobuf` grammar). Everything unknown degrades to `plaintext`, never
- * throwing.
+ * emits `.proto` source (Monaco `protobuf` grammar). GraphQL emits SDL (Monaco `graphql` grammar).
+ * Everything unknown degrades to `plaintext`, never throwing.
  *
  * The full registry-driven export dialog + target-card grid is a later epic (MFX-EPIC-41); this
  * module is the small client-metadata layer that grid — and any emitted-artifact viewer — reads.
@@ -35,8 +35,8 @@ interface ExportTargetMeta {
 /**
  * Per canonical export-target id. OpenAPI and its Swagger 2.0 downgrade both emit JSON documents
  * (`openapi.json` / `swagger.json`); AsyncAPI 3 emits a JSON document too (`asyncapi.json`, MFX-11.5);
- * protobuf/gRPC emits `.proto` source (`api.proto` by default, MFX-12.5); the no-op `sample` emitter
- * is plaintext.
+ * protobuf/gRPC emits `.proto` source (`api.proto` by default, MFX-12.5); GraphQL emits SDL
+ * (`schema.graphql` by default, MFX-13.5); the no-op `sample` emitter is plaintext.
  */
 const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   openapi: { language: 'json', extension: '.json', baseName: 'openapi' },
@@ -44,12 +44,15 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   asyncapi: { language: 'json', extension: '.json', baseName: 'asyncapi' },
   protobuf: { language: 'protobuf', extension: '.proto', baseName: 'api' },
   grpc: { language: 'protobuf', extension: '.proto', baseName: 'api' },
+  graphql: { language: 'graphql', extension: '.graphql', baseName: 'schema' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };
 
 /** Emitter format keys that collapse to a canonical export-target id (`proto3` → `protobuf`). */
 const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
+  gql: 'graphql',
   proto3: 'protobuf',
+  sdl: 'graphql',
 };
 
 /** Targets whose emitted serialization can vary (JSON default, YAML/XML sniffed from the bytes). */
