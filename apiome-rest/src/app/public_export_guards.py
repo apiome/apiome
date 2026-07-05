@@ -25,9 +25,9 @@ from starlette.responses import Response
 from .config import settings
 from .rate_limit import FixedWindowRateLimiter, _client_ip
 
-# Matches the three public export endpoints under browse (targets / preview / document).
+# Matches exactly the three public export endpoints under browse (targets / preview / document).
 _PUBLIC_EXPORT_PATH = re.compile(
-    r"^/v1/browse/tenants/[^/]+/projects/[^/]+/versions/[^/]+/export/"
+    r"^/v1/browse/tenants/[^/]+/projects/[^/]+/versions/[^/]+/export/(?:targets|preview|document)$"
 )
 
 _public_export_limiter = FixedWindowRateLimiter()

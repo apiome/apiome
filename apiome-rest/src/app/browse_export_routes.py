@@ -161,7 +161,10 @@ def _load_public_source(
         "``GET /v1/export/{tenant_slug}/targets``; drives the public export dialog's target "
         "cards and fidelity warning (MFX-7.1)."
     ),
-    responses=_NOT_FOUND_RESPONSES,
+    responses={
+        **_NOT_FOUND_RESPONSES,
+        429: {"description": "Public export rate limit exceeded (MFX-7.3)."},
+    },
     dependencies=[Depends(_require_public_export_rate_limit)],
 )
 async def list_public_export_targets(
@@ -205,7 +208,10 @@ async def list_public_export_targets(
         "``POST /v1/export/{tenant_slug}/preview``; backs the public fidelity advisory "
         "(MFX-7.2)."
     ),
-    responses=_NOT_FOUND_RESPONSES,
+    responses={
+        **_NOT_FOUND_RESPONSES,
+        429: {"description": "Public export rate limit exceeded (MFX-7.3)."},
+    },
     dependencies=[Depends(_require_public_export_rate_limit)],
 )
 async def preview_public_export_fidelity(
