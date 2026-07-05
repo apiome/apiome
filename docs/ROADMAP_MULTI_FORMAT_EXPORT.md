@@ -331,7 +331,7 @@ flowchart TB
 | 2.2 ✅ | Fidelity computation engine | diff source constructs vs target capability profile | export,multi-protocol,python,mvp | N | Y | L | apiome-rest |
 | 2.3 | Fidelity rule-pack SPI | per-target degradation rules (how a construct degrades) | export,multi-protocol,python,mvp | N | Y | M | apiome-rest |
 | 2.4 ✅ | User-facing advisory message | the "may lose fidelity" copy + i18n string + thresholds | export,ui,browser,mvp | Y | Y | S | apiome-rest,apiome-ui |
-| 2.5 | Fidelity report REST surfacing | return report from export + a dry-run preview endpoint | export,rest,mvp | Y | Y | S | apiome-rest |
+| 2.5 ✅ | Fidelity report REST surfacing | return report from export + a dry-run preview endpoint | export,rest,mvp | Y | Y | S | apiome-rest |
 | 2.6 | Round-trip fidelity measurement | export→re-import→diff to quantify actual loss | export,version-control,validation | Y | N | M | apiome-rest |
 
 ### MFX-2.1 — Lossiness report model + severities  ·  **#3838**  ·  ✅ **Done**
@@ -362,7 +362,8 @@ flowchart TB
 - **Dependencies / Parallelism.** After 2.2. Blocks 6.2/7.2/8.2.
 - **Technical Stack.** Python (string source), TS (consumers).
 
-### MFX-2.5 — Fidelity report REST surfacing  ·  **#3842**
+### MFX-2.5 — Fidelity report REST surfacing  ·  **#3842**  ·  ✅ **Done**
+- **Status.** Implemented in `apiome-rest/src/app/export_fidelity.py` (the presentation seam over the MFX-2.2 engine: `ExportFidelityTier` `lossless`/`lossy`/`types-only`, `preserved_percent`, `classify_tier`, the cheap `TargetFidelity` badge via `build_target_fidelity`, and the full `ExportFidelity` envelope — target + tier + `LossinessReport` + MFX-2.4 advisory — via `build_export_fidelity`, all pure/no-emit), `apiome-rest/src/app/export_source.py` (`load_export_source` resolves a tenant/artifact/version to a `CanonicalApi`, reusing the convert path's parse+normalize; `ExportSourceError` maps 404/422), a new `Database.get_version_source_projection` (version-scoped source fields), and `apiome-rest/src/app/export_routes.py` (`GET /v1/export/{tenant_slug}/targets?artifact=&version=` → per-target descriptor + capability profile + options + tier/preserved-% badge; `POST /v1/export/{tenant_slug}/preview` → the full `ExportFidelity` with **no artifact**). The `ExportFidelity` envelope is the shared shape an export job embeds in its result (MFX-3.1/3.2 consume `build_export_fidelity`). Tenant-scoped via `validate_authentication`. Tests in `tests/test_export_fidelity.py`, `tests/test_export_source.py`, `tests/test_export_routes.py`. apiome-rest 1.75.14 → 1.75.15.
 - **Problem.** UI/CLI need the report before committing a download, and (per mockup) the version view needs a **fast, per-target fidelity tier + preserved-%** for all targets at once to render card badges and the pre-summary.
 - **Solution / Scope.** Two granularities: (1) `GET /export/targets?artifact&version` returns the cheap per-target **tier** + a **preserved-%** estimate for every target (drives 6.1 card badges + 6.5 pre-summary, no emit); (2) `POST /export/preview` (artifact/version+target → full `LossinessReport`, no artifact) for the dialog's detailed panel; and the report is also embedded in the export job result. Tenant-scoped.
 - **Acceptance Criteria.** Targets endpoint returns tier + preserved-% per target; preview returns the full report without producing the artifact; export result carries it.

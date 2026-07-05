@@ -2740,6 +2740,46 @@ class Database:
         results = self.execute_query(query, (project_id, version_id_str, tenant_id))
         return results[0] if results else None
 
+    def get_version_source_projection(
+        self, version_record_id: str, tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Project one revision's captured-source fields for canonical-model rebuild (MFX-2.5).
+
+        The catalog item view (:meth:`get_catalog_item_by_id`) projects the *latest* revision's
+        ``source_format`` / ``protocol`` / ``format_metadata`` / ``tool_versions``. Export fidelity
+        is **version-scoped** (a version may differ from the latest), so this returns the same
+        projection for a *specific* revision, shaped like a catalog item row so
+        :func:`app.catalog_conversion.build_conversion_source` can rebuild its canonical model.
+        Scoped to ``tenant_id`` via the owning project so a caller cannot read another tenant's
+        revision.
+
+        Args:
+            version_record_id: The revision (``versions.id``) to project.
+            tenant_id: Owning tenant id.
+
+        Returns:
+            A row carrying ``id`` (the owning project id), ``project_slug``, ``version_label``,
+            ``source_format``, ``protocol``, ``format_metadata``, ``tool_versions`` and the project
+            ``metadata``, or ``None`` when no live revision with that id exists for the tenant.
+        """
+        if not version_record_id or not is_uuid_string(str(version_record_id)):
+            return None
+        query = """
+            SELECT v.project_id AS id, p.slug AS project_slug,
+                   v.version_id AS version_label,
+                   v.source_format, v.protocol, v.format_metadata,
+                   v.source_tool_versions AS tool_versions,
+                   p.metadata
+            FROM apiome.versions v
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE v.id = %s
+              AND p.tenant_id = %s
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+        """
+        results = self.execute_query(query, (version_record_id, tenant_id))
+        return results[0] if results else None
+
     def revision_has_protected_named_ref(
         self, version_row_id: str, project_id: str, tenant_id: str
     ) -> bool:
