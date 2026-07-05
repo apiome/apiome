@@ -51,6 +51,7 @@ from app.fidelity_rulepack import (
 )
 from app.lossiness import LossinessKind, LossinessReport, LossinessSeverity
 from app.openapi_emitter import X_FIELD_NUMBER, OpenApiEmitter, OpenApiFidelityRulePack
+from app.proto_emitter import ProtoEmitter, ProtoFidelityRulePack
 from app.sample_emitter import SampleEmitter
 
 # ---------------------------------------------------------------------------
@@ -663,3 +664,202 @@ def test_asyncapi_event_source_is_lossless_but_rest_source_is_not():
     assert not compute_lossiness_for_emitter(
         _rest_operation_api(), AsyncApiEmitter
     ).is_lossless
+
+
+# ---------------------------------------------------------------------------
+# Reference Protobuf pack reports OpenAPI/GraphQL losses (MFX-12.3, #3881)
+# ---------------------------------------------------------------------------
+
+
+def test_proto_emitter_declares_reference_pack():
+    """The Protobuf emitter ships its reference pack alongside itself."""
+    assert ProtoEmitter.fidelity_rule_pack() is ProtoFidelityRulePack
+    assert issubclass(ProtoFidelityRulePack, CapabilityRulePack)
+
+
+def _protobuf_rich_api() -> CanonicalApi:
+    """An OpenAPI-shaped source exercising every protobuf fidelity loss class."""
+    get_user = Operation(
+        key="GET /users/{id}",
+        name="getUser",
+        kind=OperationKind.REQUEST_RESPONSE,
+        http_method="GET",
+        http_path="/users/{id}",
+    )
+    user = Type(
+        key="User",
+        name="User",
+        kind=TypeKind.RECORD,
+        fields=[
+            CanonicalField(
+                key="User.id",
+                name="id",
+                type=TypeRef(name="string", nullable=False),
+            ),
+            CanonicalField(
+                key="User.age",
+                name="age",
+                type=TypeRef(name="integer", nullable=True),
+                constraints=Constraints(minimum=0, maximum=120),
+            ),
+            CanonicalField(
+                key="User.email",
+                name="email",
+                type=TypeRef(name="string", nullable=False),
+                constraints=Constraints(pattern=r".+@.+"),
+            ),
+            CanonicalField(
+                key="User.metadata",
+                name="metadata",
+                type=TypeRef(nullable=True),
+            ),
+        ],
+    )
+    contact = Type(
+        key="Contact",
+        name="Contact",
+        kind=TypeKind.UNION,
+        union_members=["User", "Org"],
+    )
+    empty_union = Type(
+        key="Loose",
+        name="Loose",
+        kind=TypeKind.UNION,
+        union_members=[],
+    )
+    derived = Type(
+        key="Employee",
+        name="Employee",
+        kind=TypeKind.RECORD,
+        extras={"allOf": [{"$ref": "#/components/schemas/Person"}]},
+        fields=[
+            CanonicalField(
+                key="Employee.badge",
+                name="badge",
+                type=TypeRef(name="string", nullable=False),
+            )
+        ],
+    )
+    graph_user = Type(
+        key="GraphUser",
+        name="GraphUser",
+        kind=TypeKind.RECORD,
+        extras={"graphql_type": "object", "interfaces": ["Node"]},
+        fields=[
+            CanonicalField(
+                key="GraphUser.id",
+                name="id",
+                type=TypeRef(name="ID", nullable=False),
+            )
+        ],
+    )
+    money = Type(
+        key="Money",
+        name="Money",
+        kind=TypeKind.SCALAR,
+        constraints=Constraints(pattern=r"^\d+\.\d{2}$"),
+    )
+    return CanonicalApi(
+        paradigm=ApiParadigm.REST,
+        format="openapi-3.1",
+        identity=ApiIdentity(name="Users API"),
+        services=[Service(key="Users", name="Users", operations=[get_user])],
+        channels=[Channel(key="user/signedup", address="user/signedup", protocol="kafka")],
+        types=[user, contact, empty_union, derived, graph_user, money],
+    )
+
+
+def test_proto_pack_enumerates_rich_openapi_losses():
+    """Rich OpenAPI source → Protobuf: every loss class reports kind + reason."""
+    report = compute_lossiness_for_emitter(_protobuf_rich_api(), ProtoEmitter)
+    assert not report.is_lossless
+
+    union_item = _items_for(report, "Contact")[0]
+    assert union_item.kind is LossinessKind.APPROX
+    assert "oneof" in (union_item.target_mapping or "")
+
+    bad_union = _items_for(report, "Loose")[0]
+    assert bad_union.kind is LossinessKind.APPROX
+    assert "google.protobuf.Any" in (bad_union.target_mapping or "")
+
+    inheritance = _items_for(report, "Employee")[0]
+    assert inheritance.kind is LossinessKind.APPROX
+    assert "flatten" in (inheritance.target_mapping or "").lower()
+
+    graph_iface = _items_for(report, "GraphUser")[0]
+    assert graph_iface.kind is LossinessKind.APPROX
+    assert "flatten" in (graph_iface.message or "").lower()
+
+    metadata = _items_for(report, "User.metadata")[0]
+    assert metadata.kind is LossinessKind.APPROX
+    assert "google.protobuf.Struct" in (metadata.target_mapping or "")
+
+    id_kinds = {item.kind for item in _items_for(report, "User.id")}
+    assert id_kinds == {LossinessKind.APPROX, LossinessKind.SYNTH}
+
+    age_kinds = {item.kind for item in _items_for(report, "User.age")}
+    assert age_kinds == {LossinessKind.APPROX, LossinessKind.SYNTH}
+
+    email_kinds = sorted(i.kind.value for i in _items_for(report, "User.email"))
+    assert email_kinds == ["approx", "approx", "synth"]
+
+    assert _items_for(report, "Money")[0].kind is LossinessKind.APPROX
+    assert _items_for(report, "user/signedup")[0].kind is LossinessKind.DROP
+    assert _items_for(report, "GET /users/{id}")[0].kind is LossinessKind.OK
+
+
+def test_default_pack_drops_union_the_proto_pack_approximates():
+    """The refinement is the pack's: the profile default DROPs unions as unrepresentable."""
+    api = _protobuf_rich_api()
+    default = compute_lossiness(api, ProtoEmitter.capability_profile())
+    assert _items_for(default, "Contact")[0].kind is LossinessKind.DROP
+    via_pack = compute_lossiness_for_emitter(api, ProtoEmitter)
+    assert _items_for(via_pack, "Contact")[0].kind is LossinessKind.APPROX
+
+
+def test_proto_pack_approximates_pubsub_operation():
+    """A pub/sub operation is reframed as a unary rpc APPROX, not a critical DROP."""
+    publish = Operation(
+        key="user/signedup#publish",
+        name="onUserSignedUp",
+        kind=OperationKind.PUBLISH,
+        channel_ref="user/signedup",
+    )
+    api = CanonicalApi(
+        paradigm=ApiParadigm.EVENT,
+        format="asyncapi-3.0",
+        identity=ApiIdentity(name="Events API"),
+        services=[Service(key="Events", name="Events", operations=[publish])],
+        channels=[Channel(key="user/signedup", address="user/signedup", protocol="kafka")],
+    )
+    default = compute_lossiness(api, ProtoEmitter.capability_profile())
+    assert _items_for(default, "user/signedup#publish")[0].kind is LossinessKind.DROP
+    item = _items_for(compute_lossiness_for_emitter(api, ProtoEmitter), "user/signedup#publish")[0]
+    assert item.kind is LossinessKind.APPROX
+    assert "unary rpc" in (item.target_mapping or "")
+
+
+def test_proto_pack_skips_nullability_loss_for_proto3_optional():
+    """A proto-sourced optional field round-trips without a nullability APPROX."""
+    typed = Type(
+        key="Msg",
+        name="Msg",
+        kind=TypeKind.RECORD,
+        fields=[
+            CanonicalField(
+                key="Msg.nick",
+                name="nick",
+                type=TypeRef(name="string", nullable=True),
+                field_number=3,
+                extras={"proto3_optional": True},
+            )
+        ],
+    )
+    api = CanonicalApi(
+        paradigm=ApiParadigm.RPC,
+        format="protobuf",
+        identity=ApiIdentity(name="Svc"),
+        types=[typed],
+    )
+    report = compute_lossiness_for_emitter(api, ProtoEmitter)
+    assert _items_for(report, "Msg.nick") == []

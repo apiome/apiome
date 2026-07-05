@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Export: Protobuf fidelity pack — unions, nullability, constraints, inheritance, and arbitrary JSON losses are predicted as APPROX/SYNTH (not silent DROPs) when exporting OpenAPI/GraphQL sources to proto3; pub/sub operations reframed as unary rpc (MFX-12.3)
 - Export: Stable protobuf field-number assignment — synthesized field numbers persist per artifact and are reused on re-export; new fields get the next free number honouring `reserved` ranges; reported as SYNTH in the fidelity report (MFX-12.2)
 - Export: Per-target emit options — each registered emitter declares a Pydantic options model with JSON Schema + validated defaults on the registry target list; OpenAPI 3.1 and sample targets ship reference option sets (MFX-1.4)
 - Export: Refactored existing OpenAPI export behind the Emitter SPI — catalog conversion and future export surfaces resolve emitters through the registry instead of direct emitter imports (MFX-1.3)
