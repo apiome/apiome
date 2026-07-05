@@ -1,0 +1,58 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "version_record_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "version_label": "1.0.0",
+  "fidelity": {
+    "target": {
+      "key": "openapi",
+      "format": "openapi-3.1",
+      "label": "OpenAPI 3.1",
+      "description": "Export as an OpenAPI 3.1 JSON document (JSON Schema components).",
+      "icon": "file-json",
+      "paradigm": "rest",
+      "multi_file": false,
+      "needs_toolchain": false,
+      "available": true,
+      "unavailable_reason": null
+    },
+    "summary": {
+      "tier": "lossy",
+      "preserved_percent": 60,
+      "total": 5,
+      "preserved": 3,
+      "dropped": 1,
+      "approximated": 1,
+      "synthesized": 0
+    },
+    "report": {
+      "items": [
+        {
+          "kind": "drop",
+          "severity": "warning",
+          "construct": "event channel",
+          "detail": "OpenAPI has no native event channel; dropped."
+        },
+        {
+          "kind": "approx",
+          "severity": "info",
+          "construct": "pub/sub action",
+          "detail": "Projected onto a non-normative path via x-apiome-event-action."
+        }
+      ],
+      "total": 5
+    },
+    "advisory": {
+      "show": true,
+      "severity": "warning",
+      "requires_ack": false,
+      "target_format": "openapi-3.1",
+      "dropped": 1,
+      "approximated": 1,
+      "synthesized": 0,
+      "affected": 2,
+      "headline": "OpenAPI may lose fidelity",
+      "message": "Exporting to OpenAPI 3.1 drops 1 construct and approximates 1 (event channel, pub/sub action)."
+    }
+  }
+}

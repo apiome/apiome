@@ -13,3 +13,7 @@ Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, and gRPC/Protobuf documents used b
 | `blog-graphql.graphql` | Minimal GraphQL SDL import example (Query/Mutation/types/enum) |
 | `inventory-graphql.gql` | Minimal GraphQL SDL import example (`.gql` extension) |
 | `echo-grpc.proto` | Self-contained proto3 gRPC service import example (`echo.v1`) |
+| `export-openapi-lossless.json` | Reconstructed OpenAPI 3.1 document returned by the browse export, for `export openapi` round-trip tests |
+| `export-preview-lossless.json` | `ExportPreviewResponse` for a lossless OpenAPI export (fidelity preview) |
+| `export-preview-lossy.json` | `ExportPreviewResponse` for a lossy (event-source) OpenAPI export, with advisory |
+| `export-targets.json` | `ExportTargetsResponse` listing the `openapi` + `sample` emitter targets |

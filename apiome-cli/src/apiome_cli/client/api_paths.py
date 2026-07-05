@@ -24,6 +24,24 @@ def import_sources() -> str:
     return f"{V1}/import/sources"
 
 
+def export_targets(tenant_slug: str) -> str:
+    """Emitter registry targets + per-source fidelity for an artifact (MFX-2.5/9.4).
+
+    Drives ``export targets``: ``GET`` with ``?artifact=&version=`` returns each emitter's
+    descriptor, capability profile, options schema, and a cheap fidelity badge (no artifact emitted).
+    """
+    return f"{V1}/export/{tenant_slug}/targets"
+
+
+def export_preview(tenant_slug: str) -> str:
+    """Dry-run fidelity preview for one (artifact, target) export (MFX-2.5/9.4).
+
+    Drives the ``export openapi`` fidelity surface: ``POST`` a source revision + chosen target and
+    receive the full fidelity envelope (tier, per-construct report, advisory) with no artifact emitted.
+    """
+    return f"{V1}/export/{tenant_slug}/preview"
+
+
 def tenant_imports(tenant_slug: str) -> str:
     return f"{V1}/tenants/{tenant_slug}/imports"
 
