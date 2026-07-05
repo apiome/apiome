@@ -1,4 +1,4 @@
-"""GraphQL SDL emitter: canonical model → SDL — MFX-13.1 (#3884), MFX-13.2 (#3885).
+"""GraphQL SDL emitter: canonical model → SDL — MFX-13.1 (#3884), MFX-13.2 (#3885), MFX-13.3 (#3886).
 
 The inverse of :class:`app.graphql_normalizer.GraphQlNormalizer` and an implementation of the
 :class:`app.emitter.Emitter` SPI. It walks a :class:`~app.canonical_model.CanonicalApi` and
@@ -60,11 +60,14 @@ from .canonical_model import (
     MessageRole,
     Operation,
     OperationKind,
+    ParameterLocation,
     Service,
     Type,
     TypeKind,
     TypeRef,
 )
+from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
+from .lossiness import LossinessReport
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -77,7 +80,7 @@ from .emitter import (
     ProvenanceTracker,
 )
 
-__all__ = ["GraphQlEmitOptions", "GraphQlEmitter"]
+__all__ = ["GraphQlEmitOptions", "GraphQlEmitter", "GraphQlFidelityRulePack"]
 
 # Built-in GraphQL scalars — referenced by name, never emitted as custom types.
 _BUILTIN_SCALARS: Dict[str, GraphQLScalarType] = {
@@ -98,6 +101,151 @@ _GRAPH_ROOT_NAMES = frozenset({"Query", "Mutation", "Subscription"})
 _READ_HTTP_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 _FIELD_NAME_RE = re.compile(r"[^_A-Za-z0-9]")
+
+
+# Graph-native operation kinds the emitter carries without reframing.
+_GRAPH_OPERATION_KINDS = frozenset(
+    {OperationKind.QUERY, OperationKind.MUTATION, OperationKind.SUBSCRIPTION}
+)
+
+# Pub/sub operation kinds GraphQL cannot represent.
+_EVENT_OPERATION_KINDS = frozenset(
+    {OperationKind.PUBLISH, OperationKind.SUBSCRIBE}
+)
+
+
+def _union_graphql_eligible(
+    type_: Type, types_by_key: Dict[str, Type]
+) -> bool:
+    """Return ``True`` when a ``UNION``'s members are object types for a GraphQL union."""
+    if not type_.union_members:
+        return False
+    for member_key in type_.union_members:
+        if not isinstance(member_key, str) or not member_key:
+            return False
+        member = types_by_key.get(member_key)
+        if member is None or member.kind is not TypeKind.RECORD:
+            return False
+        family = (member.extras or {}).get("graphql_type", "object")
+        if family != "object":
+            return False
+    return True
+
+
+def _dropped_http_semantics(operation: Operation) -> str:
+    """Enumerate HTTP facets GraphQL drops when reframing a non-graph operation."""
+    facets: List[str] = []
+    if operation.http_method:
+        facets.append("HTTP method")
+    if operation.http_path:
+        facets.append("path")
+    if any(message.status_code for message in operation.messages):
+        facets.append("response status")
+    if any(
+        parameter.location is ParameterLocation.HEADER
+        for parameter in operation.parameters
+    ) or any(message.headers for message in operation.messages):
+        facets.append("headers")
+    return ", ".join(facets)
+
+
+class GraphQlFidelityRulePack(CapabilityRulePack):
+    """Reference fidelity rule pack for the GraphQL SDL target — MFX-13.3 (#3886).
+
+    The predictive counterpart to :class:`GraphQlEmitter`: refines the profile-derived
+    default wherever GraphQL's six-axis :class:`~app.emitter.CapabilityProfile` is too
+    coarse to describe how a construct actually degrades. It runs against the source
+    :class:`~app.canonical_model.CanonicalApi` alone (never the emitted SDL), so the
+    fidelity advisory can predict an OpenAPI/REST → GraphQL export's losses without
+    emitting, and its verdicts line up construct-for-construct with the
+    :class:`~app.emitter.Loss`\\es :class:`GraphQlEmitter` records at emit time.
+
+    GraphQL's profile advertises ``operations=True`` and ``unions=True``, which hides
+    several honest losses the emitter still incurs when reframing a non-graph source:
+
+    * **HTTP semantics** — method, path, response status, and headers have no GraphQL
+      representation; a REST operation is reframed as a ``Query``/``Mutation`` field
+      (``APPROX``, not a silent carry);
+    * **validation constraints** — pattern/min/max/format facets cannot be enforced
+      natively; they are approximated as custom scalars (``APPROX``);
+    * **discriminated unions** — carried as a GraphQL ``union`` when member shapes allow,
+      otherwise approximated (``APPROX``).
+
+    Native graph operations, nullability/list wrappers, and eligible unions defer to
+    the inherited ``OK``.
+    """
+
+    def __init__(
+        self, profile: CapabilityProfile, target_label: str = "the target"
+    ) -> None:
+        super().__init__(profile, target_label)
+        self._types_by_key: Dict[str, Type] = {}
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Walk ``api`` with a type lookup for union-eligibility checks."""
+        self._types_by_key = {type_.key: type_ for type_ in api.types}
+        try:
+            return super().evaluate(api)
+        finally:
+            self._types_by_key = {}
+
+    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
+        """Reframe non-graph operations, enumerating dropped HTTP semantics."""
+        if operation.kind in _GRAPH_OPERATION_KINDS:
+            return super().operation_verdict(operation)
+        if operation.kind in _EVENT_OPERATION_KINDS:
+            return super().operation_verdict(operation)
+        dropped = _dropped_http_semantics(operation)
+        if dropped:
+            dropped_verb = "is" if "," not in dropped else "are"
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} has no HTTP operation vocabulary; the "
+                f"{operation.kind.value} operation is reframed as a Query/Mutation "
+                f"field and its {dropped} {dropped_verb} dropped",
+                target_mapping=f"HTTP operation → Query/Mutation field ({dropped} dropped)",
+            )
+        return super().operation_verdict(operation)
+
+    def type_verdict(self, type_: Type) -> FidelityVerdict:
+        """Dispatch named types, refining ineligible unions."""
+        if type_.kind is TypeKind.UNION:
+            return self._union_verdict(type_)
+        return super().type_verdict(type_)
+
+    def _union_verdict(self, type_: Type) -> FidelityVerdict:
+        """``OK`` when members are object types, else ``APPROX``."""
+        if _union_graphql_eligible(type_, self._types_by_key):
+            return FidelityVerdict.ok(
+                message=f"union carried to {self.target_label}",
+                target_mapping="oneOf/discriminated alternatives → GraphQL union",
+            )
+        return FidelityVerdict.approx(
+            message=f"{self.target_label} cannot represent the union shape; "
+            f"{type_.key!r} is approximated without faithful member alternatives",
+            target_mapping="oneOf/union → ineligible members approximated",
+        )
+
+    def _constraints_verdict(
+        self, field: CanonicalField
+    ) -> Optional[FidelityVerdict]:
+        """Approximate validation constraints as custom scalars."""
+        if not _has_any_constraint(field.constraints):
+            return None
+        return FidelityVerdict.approx(
+            message=f"{self.target_label} cannot enforce validation constraints; "
+            "they are approximated as a custom scalar",
+            target_mapping="constraints → custom scalar",
+        )
+
+    def _scalar_verdict(self, type_: Type) -> FidelityVerdict:
+        """Approximate a constrained scalar as a custom scalar."""
+        if _has_any_constraint(type_.constraints):
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} cannot enforce validation constraints; "
+                "they are approximated as a custom scalar",
+                target_mapping="constraints → custom scalar",
+            )
+        return FidelityVerdict.ok(message=f"scalar carried to {self.target_label}")
 
 
 class GraphQlEmitOptions(EmitOptions):
@@ -134,6 +282,11 @@ class GraphQlEmitter(Emitter, register=True):
             constraints=False,
             field_identity=False,
         )
+
+    @classmethod
+    def fidelity_rule_pack(cls) -> type[GraphQlFidelityRulePack]:
+        """Return the reference GraphQL fidelity rule pack (MFX-13.3)."""
+        return GraphQlFidelityRulePack
 
     def emit(
         self,
@@ -326,6 +479,14 @@ class _GraphQlWriter:
     def _build_scalar(self, type_: Type) -> GraphQLScalarType:
         if type_.name in _BUILTIN_SCALARS:
             return _BUILTIN_SCALARS[type_.name]
+        if _has_any_constraint(type_.constraints):
+            self.losses.record(
+                LossKind.INFERRED,
+                "scalar-constraints",
+                f"GraphQL cannot enforce validation facets; {type_.key!r} is "
+                "approximated as a custom scalar",
+                pointer=type_.key,
+            )
         specified_by = (type_.extras or {}).get("specified_by_url")
         return GraphQLScalarType(
             name=self._graphql_type_name(type_),
@@ -353,6 +514,7 @@ class _GraphQlWriter:
     def _output_fields(self, type_: Type) -> Dict[str, GraphQLField]:
         fields: Dict[str, GraphQLField] = {}
         for field in type_.fields:
+            self._record_constraint_loss(field)
             deprecation = (field.extras or {}).get("deprecation_reason")
             fields[field.name] = GraphQLField(
                 self._from_type_ref(field.type),
@@ -369,6 +531,7 @@ class _GraphQlWriter:
     def _input_fields(self, type_: Type) -> Dict[str, GraphQLInputField]:
         fields: Dict[str, GraphQLInputField] = {}
         for field in type_.fields:
+            self._record_constraint_loss(field)
             default = field.default if field.default is not None else Undefined
             deprecation = (field.extras or {}).get("deprecation_reason")
             fields[field.name] = GraphQLInputField(
@@ -666,6 +829,7 @@ class _GraphQlWriter:
     def _root_fields(self, operations: List[Operation]) -> Dict[str, GraphQLField]:
         fields: Dict[str, GraphQLField] = {}
         for operation in operations:
+            self._record_http_semantics_losses(operation)
             name = _graphql_field_name(operation)
             return_type = self._operation_return_type(operation)
             deprecation = (operation.extras or {}).get("deprecation_reason")
@@ -740,6 +904,54 @@ class _GraphQlWriter:
         if payload.name is None:
             return "input"
         return _camel_case(payload.name)
+
+    def _record_constraint_loss(self, field: CanonicalField) -> None:
+        """Record when validation constraints are approximated as a custom scalar."""
+        if not _has_any_constraint(field.constraints):
+            return
+        self.losses.record(
+            LossKind.INFERRED,
+            "field-constraints",
+            f"GraphQL cannot enforce validation facets; {field.key!r} is "
+            "approximated as a custom scalar",
+            pointer=field.key,
+        )
+
+    def _record_http_semantics_losses(self, operation: Operation) -> None:
+        """Record HTTP facets dropped when reframing a non-graph operation."""
+        if operation.kind in _GRAPH_OPERATION_KINDS:
+            return
+        if operation.http_method or operation.http_path:
+            binding = " ".join(
+                part for part in (operation.http_method, operation.http_path) if part
+            )
+            self.losses.record(
+                LossKind.NA,
+                "http-binding",
+                f"HTTP binding ({binding}) on {operation.key!r} has no GraphQL "
+                "representation and is dropped",
+                pointer=operation.key,
+            )
+        for message in operation.messages:
+            if message.status_code:
+                self.losses.record(
+                    LossKind.NA,
+                    "http-status",
+                    f"response status {message.status_code!r} on {operation.key!r} "
+                    "has no GraphQL representation and is dropped",
+                    pointer=message.key,
+                )
+        if any(
+            parameter.location is ParameterLocation.HEADER
+            for parameter in operation.parameters
+        ) or any(message.headers for message in operation.messages):
+            self.losses.record(
+                LossKind.NA,
+                "http-headers",
+                f"header parameters/messages on {operation.key!r} have no GraphQL "
+                "representation and are dropped",
+                pointer=operation.key,
+            )
 
 
 def _graphql_field_name(operation: Operation) -> str:

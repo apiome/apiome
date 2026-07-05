@@ -726,7 +726,7 @@ Sources: https://spec.graphql.org/September2025/ · `graphql-core` `print_schema
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 13.1 ✅ | GraphQL SDL emitter | model → SDL (Query/Mutation/types) via graphql-core | export,multi-protocol,python,mvp | N | Y | M | apiome-rest |
 | 13.2 ✅ | Input/output type splitting | derive input types; map operations→fields | export,multi-protocol,mvp | N | Y | M | apiome-rest |
-| 13.3 | GraphQL fidelity pack | HTTP semantics DROP; constraints→custom scalars | export,multi-protocol,mvp | N | Y | S | apiome-rest |
+| 13.3 ✅ | GraphQL fidelity pack | HTTP semantics DROP; constraints→custom scalars | export,multi-protocol,mvp | N | Y | S | apiome-rest |
 | 13.4 | Validate + round-trip | `build_schema` validate; re-import diff | export,validation,mvp | Y | Y | S | apiome-rest |
 | 13.5 | GraphQL target card + CLI + fixtures | UI/CLI + fixtures; supersede #221/#2214 | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 | 13.6 · #4344 | Federation subgraph output mode | subgraph SDL w/ synthesized `@key` (SYNTH); rover composition check | export,multi-protocol | Y | N | M | apiome-rest |
@@ -747,7 +747,14 @@ Sources: https://spec.graphql.org/September2025/ · `graphql-core` `print_schema
 - **Technical Stack.** Python.
 - **Status.** `GraphQlEmitter` (`apiome-rest/src/app/graphql_emitter.py`) now maps cross-paradigm `REQUEST` messages to mutation/query arguments and resolves every input position (operation args, request bodies, field args) through `_input_type_for_ref`, which synthesizes deduplicated `{OutputName}Input` types from output `RECORD`s (deterministic naming with collision suffixes), leaves Graph-native `input` types untouched, and records `synthesized-input` / `input-union-unsupported` losses plus `INFERRED` provenance. Nested object references recurse into nested input types; re-emission stays schema-valid via `validate_schema`. Tests in `tests/test_graphql_emitter.py`. apiome-rest 1.75.26 → 1.75.27.
 
-*(13.3 fidelity (HTTP method/path/status/headers DROP; pattern/min/max → custom scalar APPROX; oneOf→union if shape allows); 13.4 round-trip validate; 13.5 target card + `apiome export graphql` + fixtures, **superseding closed #221** and feeding #2214.)*
+### MFX-13.3 — GraphQL fidelity pack  ·  **#3886**  ·  ✅ **Done**
+- **Solution / Scope.** HTTP method/path/status/headers DROP when reframing REST operations to Query/Mutation fields; pattern/min/max/format constraints → custom scalar APPROX; oneOf/union → GraphQL union when member shapes allow else APPROX.
+- **Acceptance Criteria.** A rich OpenAPI/REST source enumerates each loss with kind + reason; native graph operations stay lossless.
+- **Dependencies / Parallelism.** After 13.1, 2.3. Parallel with 13.4.
+- **Technical Stack.** Python.
+- **Status.** The predictive fidelity pack (MFX-2.3 seam) that surfaces what the GraphQL target *can't* natively carry — the constructs GraphQL's six-axis `CapabilityProfile` (`events=False`, `constraints=False`) hides. The reference `GraphQlFidelityRulePack` (`apiome-rest/src/app/graphql_emitter.py`) refines the profile-derived default so a **REST/OpenAPI source no longer reports silent HTTP carries or generic constraint demotions**: **HTTP semantics** (method, path, status, headers) become honest `APPROX` reframes to Query/Mutation fields, **validation constraints** map to `custom scalar` (`APPROX`), and **oneOf/unions** stay `OK` when members are object types or `APPROX` when ineligible. Verdicts flow through `compute_lossiness_for_emitter` → the fidelity advisory (MFX-2.4) and target/export fidelity surfaces (MFX-2.5); `GraphQlEmitter` records matching `http-binding`/`http-status`/`http-headers`/`field-constraints` losses at emit time. Tests in `tests/test_fidelity_rulepack.py`. apiome-rest 1.75.27 → 1.75.28.
+
+*(13.4 round-trip validate; 13.5 target card + `apiome export graphql` + fixtures, **superseding closed #221** and feeding #2214.)*
 
 ---
 
