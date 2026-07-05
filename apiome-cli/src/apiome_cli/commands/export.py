@@ -26,6 +26,7 @@ from apiome_cli.client.browse_scope import (
     resolve_browse_export_scope,
     resolve_tenant_slug,
 )
+from apiome_cli.client.export_document import fetch_export_document
 from apiome_cli.client.export_registry import (
     fetch_export_preview,
     fetch_export_targets,
@@ -45,6 +46,7 @@ from apiome_cli.export_output import (
 from apiome_cli.help_util import group_callback_without_subcommand
 from apiome_cli.output import emit_json, emit_list_table
 from apiome_cli.spec_output import (
+    SpecExportMetadata,
     build_spec_export_metadata,
     emit_download_metadata,
     write_document_bytes,
@@ -59,6 +61,9 @@ app = typer.Typer(
 
 # The registry key + format for the reference OpenAPI 3.1 emitter (apiome-rest OpenApiEmitter).
 _OPENAPI_TARGET = "openapi"
+
+# The registry key for the AsyncAPI 3.1 emitter (apiome-rest AsyncApiEmitter, MFX-11.5).
+_ASYNCAPI_TARGET = "asyncapi"
 
 _JSON_STDOUT_NOTE = (
     "With --output -, document bytes are written to stdout; the fidelity summary and --json "
@@ -190,6 +195,109 @@ def export_openapi(
         typer.echo(
             "Lossy export — the OpenAPI document does not carry every source construct. "
             "Re-run with --force to accept.",
+            err=True,
+        )
+        raise typer.Exit(EXIT_ERROR)
+
+
+@app.command(
+    "asyncapi",
+    help=f"Export a version as AsyncAPI 3 + a fidelity report. {_JSON_STDOUT_NOTE}",
+)
+def export_asyncapi(
+    ctx: typer.Context,
+    project: str = typer.Option(..., "--project", help="Project UUID or slug."),
+    version: str = typer.Option(..., "--version", help="Version UUID, slug, or label."),
+    output: str = typer.Option(
+        ...,
+        "--output",
+        "-o",
+        help="Destination file path, or - for stdout (document bytes only).",
+    ),
+    tenant: str | None = typer.Option(
+        None,
+        "--tenant",
+        help="Tenant UUID or slug (overrides APIOME_TENANT_ID).",
+    ),
+    yaml_serialization: bool = typer.Option(
+        False,
+        "--yaml",
+        help="Request YAML serialization (default JSON). Alias for --accept yaml.",
+    ),
+    accept: str | None = typer.Option(
+        None,
+        "--accept",
+        help="Response serialization: json or yaml (default json).",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Write and exit 0 even when the export loses fidelity (lossy/types-only).",
+    ),
+) -> None:
+    """Export a version as AsyncAPI 3 and surface the emitter registry's fidelity report.
+
+    Unlike ``export openapi`` — whose bytes come from the OpenAPI browse reconstruction — AsyncAPI
+    is produced through the Emitter SPI (``POST /export/{tenant}/document``); the honest fidelity
+    report still comes from the dry-run preview (``POST /export/{tenant}/preview``). A REST/RPC
+    source reframes onto channels and therefore exports *lossy* — a non-zero exit unless ``--force``
+    — while a native event source round-trips lossless.
+    """
+    output = output.strip()
+    if not output:
+        typer.echo("--output cannot be empty.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+
+    serialization = _parse_serialization(yaml_flag=yaml_serialization, accept=accept)
+    settings = settings_from_context(ctx)
+    require_api_key(settings)
+    client = _export_client(ctx)
+    tenant_slug = resolve_tenant_slug(settings, client, tenant_override=tenant)
+
+    # The artifact (project) id both the emit and the fidelity preview key on.
+    project_id = resolve_project_uuid(client, tenant_slug, project)
+
+    document = fetch_export_document(
+        client,
+        tenant_slug,
+        artifact=str(project_id),
+        version=version,
+        target=_ASYNCAPI_TARGET,
+        serialization=serialization,
+    )
+    write_document_bytes(document.body, output)
+
+    preview = fetch_export_preview(
+        client,
+        tenant_slug,
+        artifact=str(project_id),
+        version=version,
+        target=_ASYNCAPI_TARGET,
+    )
+    fidelity = preview_fidelity(preview)
+
+    json_mode = json_mode_from_context(ctx)
+    metadata = SpecExportMetadata(
+        output=output,
+        bytes_written=len(document.body),
+        content_type=document.content_type,
+        format=_ASYNCAPI_TARGET,
+        serialization=serialization,
+        filename=document.filename,
+        fidelity_target=_ASYNCAPI_TARGET,
+        fidelity=_fidelity_metadata(fidelity),
+    )
+    emit_download_metadata(metadata, json_mode=json_mode)
+
+    # Human fidelity summary is a diagnostic → stderr (keeps stdout byte-safe under --output -).
+    if not json_mode:
+        for line in format_export_fidelity_summary(fidelity, target=_ASYNCAPI_TARGET):
+            typer.echo(line, err=True)
+
+    if is_lossy(fidelity) and not force:
+        typer.echo(
+            "Lossy export — the AsyncAPI document does not carry every source construct "
+            "(a REST/RPC source is reframed onto channels). Re-run with --force to accept.",
             err=True,
         )
         raise typer.Exit(EXIT_ERROR)

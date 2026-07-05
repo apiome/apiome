@@ -16,6 +16,7 @@ describe('monacoLanguageForExportTarget', () => {
   it('defaults known targets to their canonical JSON serialization', () => {
     expect(monacoLanguageForExportTarget('openapi')).toBe('json');
     expect(monacoLanguageForExportTarget('swagger')).toBe('json');
+    expect(monacoLanguageForExportTarget('asyncapi')).toBe('json');
   });
 
   it('collapses version/variant suffixes to the base target id', () => {
@@ -23,6 +24,8 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('openapi-3.0')).toBe('json');
     expect(monacoLanguageForExportTarget('swagger-2.0')).toBe('json');
     expect(monacoLanguageForExportTarget('OpenAPI-3.1')).toBe('json');
+    expect(monacoLanguageForExportTarget('asyncapi-3')).toBe('json');
+    expect(monacoLanguageForExportTarget('AsyncAPI-3')).toBe('json');
   });
 
   it('refines a JSON-or-YAML target from the emitted bytes', () => {
@@ -30,6 +33,9 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('openapi', 'openapi: 3.1.0\ninfo:')).toBe('yaml');
     expect(monacoLanguageForExportTarget('openapi', '---\nopenapi: 3.1.0')).toBe('yaml');
     expect(monacoLanguageForExportTarget('openapi', '<?xml version="1.0"?>')).toBe('xml');
+    // AsyncAPI is serialization-variable too: JSON by default, YAML when the bytes say so.
+    expect(monacoLanguageForExportTarget('asyncapi-3', '{\n  "asyncapi": "3.1.0"\n}')).toBe('json');
+    expect(monacoLanguageForExportTarget('asyncapi-3', 'asyncapi: 3.1.0\ninfo:')).toBe('yaml');
   });
 
   it('maps the no-op sample emitter to plaintext', () => {
@@ -64,6 +70,8 @@ describe('downloadFileNameForExportTarget', () => {
     expect(downloadFileNameForExportTarget('openapi-3.1')).toBe('openapi.json');
     expect(downloadFileNameForExportTarget('openapi', 'openapi: 3.1.0')).toBe('openapi.yaml');
     expect(downloadFileNameForExportTarget('swagger-2.0')).toBe('swagger.json');
+    expect(downloadFileNameForExportTarget('asyncapi-3')).toBe('asyncapi.json');
+    expect(downloadFileNameForExportTarget('asyncapi-3', 'asyncapi: 3.1.0')).toBe('asyncapi.yaml');
   });
 
   it('falls back to export.txt for unrecognised targets', () => {

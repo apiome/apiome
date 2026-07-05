@@ -12,7 +12,6 @@ import typer
 
 from apiome_cli.client.spec_download import (
     SpecDownloadResult,
-    SpecFormat,
     SpecSerialization,
 )
 from apiome_cli.exit_codes import EXIT_ERROR
@@ -27,7 +26,8 @@ class SpecExportMetadata:
     content_type: str | None = None
     etag: str | None = None
     checksum: str | None = None
-    format: SpecFormat | None = None
+    # A reconstructed spec format (``openapi``/``arazzo``) or an emitter target key (``asyncapi``).
+    format: str | None = None
     serialization: SpecSerialization | None = None
     source_openapi_version: str | None = None
     fidelity_target: str | None = None
