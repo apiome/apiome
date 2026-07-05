@@ -1,4 +1,4 @@
-"""GraphQL SDL emitter: canonical model → SDL — MFX-13.1 (#3884).
+"""GraphQL SDL emitter: canonical model → SDL — MFX-13.1 (#3884), MFX-13.2 (#3885).
 
 The inverse of :class:`app.graphql_normalizer.GraphQlNormalizer` and an implementation of the
 :class:`app.emitter.Emitter` SPI. It walks a :class:`~app.canonical_model.CanonicalApi` and
@@ -13,11 +13,12 @@ with :func:`~graphql.print_schema` so the output is guaranteed valid SDL:
 * root operations become ``Query`` / ``Mutation`` / ``Subscription`` fields — Graph-native
   sources reuse their :class:`~app.canonical_model.Service` root types; other paradigms
   aggregate operations with a read-vs-write heuristic (``QUERY`` / ``GET`` → ``Query``,
-  ``MUTATION`` / other HTTP verbs → ``Mutation``).
+  ``MUTATION`` / other HTTP verbs → ``Mutation``);
+* cross-paradigm request bodies and any argument that would reference an output object are
+  mapped to deterministically named, deduplicated ``input`` types (MFX-13.2).
 
 Constructs GraphQL cannot carry (``MAP`` types, event pub/sub, HTTP bindings) are recorded as
-:class:`~app.emitter.Loss`\\es rather than silently dropped. Input/output splitting for
-cross-paradigm request bodies is deferred to MFX-13.2.
+:class:`~app.emitter.Loss`\\es rather than silently dropped.
 """
 
 from __future__ import annotations
@@ -175,6 +176,7 @@ class _GraphQlWriter:
         self._gql_types: Dict[str, GraphQLNamedType] = {}
         self._gql_names_by_key: Dict[str, str] = {}
         self._type_keys_by_gql_name: Dict[str, str] = {}
+        self._synth_inputs_by_source_key: Dict[str, GraphQLInputObjectType] = {}
 
     @property
     def output_path(self) -> str:
@@ -370,7 +372,7 @@ class _GraphQlWriter:
             default = field.default if field.default is not None else Undefined
             deprecation = (field.extras or {}).get("deprecation_reason")
             fields[field.name] = GraphQLInputField(
-                self._from_type_ref(field.type),
+                self._input_type_for_ref(field.type),
                 default_value=default,
                 description=field.description,
                 deprecation_reason=deprecation,
@@ -385,7 +387,7 @@ class _GraphQlWriter:
             if default is None and "default" not in descriptor:
                 default = Undefined
             args[descriptor["name"]] = GraphQLArgument(
-                self._from_type_ref(arg_type),
+                self._input_type_for_ref(arg_type),
                 default_value=default,
                 description=descriptor.get("description"),
             )
@@ -434,6 +436,108 @@ class _GraphQlWriter:
         else:
             leaf = self._resolve_named(ref.name)
         return leaf if ref.nullable else GraphQLNonNull(leaf)
+
+    def _input_type_for_ref(self, ref: TypeRef) -> Any:
+        """Resolve a type reference for an input position (args, request bodies).
+
+        Output ``RECORD`` types are replaced with synthesized ``input`` types so the
+        emitted schema never uses an object type where GraphQL requires an input type.
+        """
+        if ref.is_list():
+            inner = GraphQLList(self._input_type_for_ref(ref.item))  # type: ignore[arg-type]
+            return inner if ref.nullable else GraphQLNonNull(inner)
+        assert ref.name is not None
+        if ref.name in _BUILTIN_SCALARS:
+            leaf: Any = _BUILTIN_SCALARS[ref.name]
+        else:
+            leaf = self._resolve_input_named(ref.name)
+        return leaf if ref.nullable else GraphQLNonNull(leaf)
+
+    def _resolve_input_named(self, name: str) -> Any:
+        if name in _BUILTIN_SCALARS:
+            return _BUILTIN_SCALARS[name]
+        type_ = self._types_by_key.get(name)
+        if type_ is None:
+            self.losses.record(
+                LossKind.INFERRED,
+                "dangling-type-reference",
+                f"Reference to unknown type {name!r}; emitted as String.",
+                pointer=name,
+            )
+            return GraphQLString
+        if type_.kind is TypeKind.ALIAS and type_.aliased is not None:
+            return self._input_type_for_ref(type_.aliased)
+        if type_.kind is TypeKind.RECORD and self._is_output_record(type_):
+            return self._synthesize_input_type(type_)
+        if type_.kind is TypeKind.UNION:
+            self.losses.record(
+                LossKind.INFERRED,
+                "input-union-unsupported",
+                f"GraphQL input positions cannot reference union {name!r}; "
+                "emitted as String.",
+                pointer=type_.key,
+            )
+            return GraphQLString
+        return self._ensure_named_type(type_)
+
+    @staticmethod
+    def _is_output_record(type_: Type) -> bool:
+        if type_.kind is not TypeKind.RECORD:
+            return False
+        return (type_.extras or {}).get("graphql_type", "object") != "input"
+
+    def _synthesize_input_type(self, source: Type) -> GraphQLInputObjectType:
+        """Derive a deduplicated input type from an output ``RECORD``."""
+        cached = self._synth_inputs_by_source_key.get(source.key)
+        if cached is not None:
+            return cached
+
+        output_name = self._graphql_type_name(source)
+        input_name = self._synthesized_input_name(output_name, source.key)
+        gql = GraphQLInputObjectType(
+            name=input_name,
+            description=source.description,
+            fields=lambda src=source: self._synthesized_input_fields(src),
+        )
+        self._synth_inputs_by_source_key[source.key] = gql
+        self._type_keys_by_gql_name[input_name] = f"{source.key}#input"
+        self.losses.record(
+            LossKind.INFERRED,
+            "synthesized-input",
+            f"Derived input type {input_name!r} from output type {output_name!r}.",
+            pointer=source.key,
+        )
+        self.tracker.record(f"/types/{source.key}/input", Provenance.INFERRED)
+        return gql
+
+    def _synthesized_input_name(self, output_name: str, source_key: str) -> str:
+        candidate = f"{output_name}Input"
+        name = candidate
+        suffix = 2
+        while name in _BUILTIN_SCALARS or (
+            name in self._type_keys_by_gql_name
+            and self._type_keys_by_gql_name[name] != f"{source_key}#input"
+        ):
+            name = f"{candidate}_{suffix}"
+            suffix += 1
+        return name
+
+    def _synthesized_input_fields(self, source: Type) -> Dict[str, GraphQLInputField]:
+        fields: Dict[str, GraphQLInputField] = {}
+        for field in source.fields:
+            default = field.default if field.default is not None else Undefined
+            deprecation = (field.extras or {}).get("deprecation_reason")
+            fields[field.name] = GraphQLInputField(
+                self._input_type_for_ref(field.type),
+                default_value=default,
+                description=field.description,
+                deprecation_reason=deprecation,
+            )
+            self.tracker.record(
+                f"/types/{source.key}/input/fields/{field.name}",
+                Provenance.INFERRED,
+            )
+        return fields
 
     # --- root operations ---------------------------------------------------
 
@@ -596,12 +700,46 @@ class _GraphQlWriter:
         args: Dict[str, GraphQLArgument] = {}
         for parameter in operation.parameters:
             default = parameter.default if parameter.default is not None else Undefined
-            args[parameter.name] = GraphQLArgument(
-                self._from_type_ref(parameter.type),
+            arg_name = _graphql_name(parameter.name, prefix="param")
+            if arg_name in args:
+                suffix = 2
+                candidate = f"{arg_name}{suffix}"
+                while candidate in args:
+                    suffix += 1
+                    candidate = f"{arg_name}{suffix}"
+                arg_name = candidate
+            args[arg_name] = GraphQLArgument(
+                self._input_type_for_ref(parameter.type),
                 default_value=default,
                 description=parameter.description,
             )
+        for message in operation.messages:
+            if message.role is not MessageRole.REQUEST or message.payload is None:
+                continue
+            arg_name = self._request_argument_name(message.payload)
+            if arg_name in args:
+                suffix = 2
+                candidate = f"{arg_name}{suffix}"
+                while candidate in args:
+                    suffix += 1
+                    candidate = f"{arg_name}{suffix}"
+                arg_name = candidate
+            arg_type = self._input_type_for_ref(message.payload)
+            if not message.required and isinstance(arg_type, GraphQLNonNull):
+                arg_type = arg_type.of_type
+            args[arg_name] = GraphQLArgument(arg_type, description=message.description)
+            self.tracker.record(
+                f"/operations/{_graphql_field_name(operation)}/args/{arg_name}",
+                Provenance.INFERRED,
+            )
         return args
+
+    @staticmethod
+    def _request_argument_name(payload: TypeRef) -> str:
+        """Derive a camelCase argument name from a request-body payload type."""
+        if payload.name is None:
+            return "input"
+        return _camel_case(payload.name)
 
 
 def _graphql_field_name(operation: Operation) -> str:
@@ -619,3 +757,15 @@ def _graphql_name(candidate: str, *, prefix: str) -> str:
     if not sanitized[0].isalpha() and sanitized[0] != "_":
         return f"{prefix}_{sanitized}"
     return sanitized
+
+
+def _camel_case(name: str) -> str:
+    """Lower-camel-case a GraphQL type name for use as an argument name."""
+    if not name:
+        return "input"
+    parts = name.split("_")
+    head = parts[0]
+    if not head:
+        return "input"
+    tail = "".join(part[:1].upper() + part[1:] for part in parts[1:] if part)
+    return head[:1].lower() + head[1:] + tail

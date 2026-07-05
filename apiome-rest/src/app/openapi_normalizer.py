@@ -375,6 +375,7 @@ class OpenApiNormalizer(Normalizer, register=True):
                 Message(
                     key=Keys.request_message(op_key),
                     role=MessageRole.REQUEST,
+                    required=bool(request_body.get("required", False)),
                     payload=payload,
                     payload_schema=payload_schema,
                     content_types=content_types,

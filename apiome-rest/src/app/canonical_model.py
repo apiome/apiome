@@ -46,7 +46,6 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # Envelope version for a persisted canonical model. Bumped by MFI-2.4 (or later)
 # when the canonical shape changes so readers can migrate older JSONB rows
 # forward, the same way ``REPOSITORY_IMPORT_SPEC_SCHEMA_VERSION`` does in
@@ -321,6 +320,10 @@ class Message(CanonicalBase):
         default_factory=list,
         description="Media types this message is encoded as (for example "
         "application/json).",
+    )
+    required: bool = Field(
+        default=False,
+        description="Whether this message is required (e.g. requestBody.required in OpenAPI).",
     )
     status_code: Optional[str] = Field(
         default=None,
