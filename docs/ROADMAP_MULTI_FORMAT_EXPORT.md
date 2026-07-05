@@ -864,7 +864,7 @@ Sources: https://avro.apache.org/docs/1.12.0/specification/ · https://docs.conf
 | 19.2 ✅ | Avro fidelity pack | operations DROP (types-only); constraints DROP | export,multi-protocol,mvp | N | Y | M | apiome-rest |
 | 19.3 ✅ | Subjects & defaults | per-type subjects; defaults for evolution; naming | export,multi-protocol,registry,mvp | N | Y | M | apiome-rest |
 | 19.4 | Validate + (push) | validate `.avsc`; optional register to Schema Registry | export,validation,registry | Y | N | M | apiome-rest |
-| 19.5 | Avro target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
+| 19.5 ✅ | Avro target card + CLI + fixtures | UI/CLI + fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 | 19.6 · #4183 | Multi-format Schema Registry subjects | publish JSON Schema (21.1) + Protobuf (12.1) subjects, not just Avro | export,registry,integrations | Y | N | M | apiome-rest |
 
 ### MFX-19.1 — Avro emitter  ·  **#3909**  ·  ✅ **Done**
@@ -889,7 +889,14 @@ Sources: https://avro.apache.org/docs/1.12.0/specification/ · https://docs.conf
 - **Technical Stack.** Python.
 - **Status.** `AvroSubjectNamingStrategy`, extended `AvroEmitOptions` (`subject_naming`, `topic`, `subject_role`), `resolve_avro_subject()`, evolution-default synthesis in `_AvroWriter`, and optional `EmittedFile.subject` metadata in `apiome-rest/src/app/avro_emitter.py` + `emitter.py`. Tests in `tests/test_avro_emitter.py`. apiome-rest 1.75.31 → 1.75.32.
 
-*(19.4 validate + optional **push to a live Confluent Schema Registry** (reuse import registry client in reverse, v2 for push); 19.5 target card + `apiome export avro` + fixtures. Coordinate with #239/#2776/#3489.)*
+### MFX-19.5 — Avro target card + CLI + fixtures  ·  **#3913**  ·  ✅ **Done**
+- **Solution / Scope.** Make the Avro emitter (19.1–19.3) reachable from the CLI + UI, with round-trip fixtures.
+- **Acceptance Criteria.** `apiome export avro` writes valid `.avsc` with the honest fidelity report; the UI target-card metadata knows Avro; fixtures cover native data-schema (lossless) + REST/OpenAPI (types-only).
+- **Dependencies / Parallelism.** After 19.1–19.3 (emitter + subjects). Parallel within the epic.
+- **Technical Stack.** Typer · Next.js (client metadata only — no apiome-rest change).
+- **Status.** **`apiome export avro`** (`apiome-cli/src/apiome_cli/commands/export.py`): pairs `POST /v1/export/{tenant}/document` (target `avro`) for the `.avsc` bytes with `POST /v1/export/{tenant}/preview` for the fidelity envelope — a native Avro/data-schema source exports **lossless** (exit 0), a REST/OpenAPI source exports **types-only** (operations/channels omitted; non-zero exit unless `--force`); `--output -` keeps stdout byte-safe. UI adds `avro`/`avsc` entries in `apiome-ui/src/app/utils/export-target-language.ts` (Monaco `json` grammar, `.avsc` extension, `schema.avsc` download name). Round-trip fixtures under `apiome-cli/tests/fixtures/` (emitted `.avsc` document + lossless/types-only preview envelopes). Tests: CLI command suite (`tests/test_export_avro_command.py`), UI metadata (`tests/export-target-language.test.ts`). apiome-cli 0.20.0 → 0.21.0, apiome-ui 0.50.3 → 0.50.4.
+
+*(19.4 validate + optional **push to a live Confluent Schema Registry** (reuse import registry client in reverse, v2 for push); coordinate with #239/#2776/#3489.)*
 
 ---
 
