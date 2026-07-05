@@ -1,13 +1,17 @@
-"""Tests for the GraphQL SDL emitter — MFX-13.1 (#3884).
+"""Tests for the GraphQL SDL emitter — MFX-13.1 (#3884), MFX-13.2 (#3885).
 
 Exercises the acceptance criteria: emits **valid SDL** via ``graphql-core``
 ``print_schema``, **nullability/list wrappers** reproduce exactly, emission is
-deterministic, and a Graph-native source is a fixed point of ``normalize ∘ emit``.
+deterministic, a Graph-native source is a fixed point of ``normalize ∘ emit``, and
+cross-paradigm request bodies produce synthesized **input** types (no output-as-input
+violations).
 """
 
 from __future__ import annotations
 
-from graphql import GraphQLString, validate_schema
+from typing import Any
+
+from graphql import GraphQLInputObjectType, GraphQLNamedType, GraphQLNonNull, GraphQLString, validate_schema
 
 from app.canonical_model import (
     ApiIdentity,
@@ -118,6 +122,13 @@ def _emit_and_build(api: CanonicalApi):
     errors = validate_schema(schema)
     assert not errors, [e.message for e in errors]
     return sdl, schema
+
+
+def _named_type(gql_type: Any) -> GraphQLNamedType:
+    if isinstance(gql_type, GraphQLNonNull):
+        return gql_type.of_type
+    assert isinstance(gql_type, GraphQLNamedType)
+    return gql_type
 
 
 # ---------------------------------------------------------------------------
@@ -312,6 +323,201 @@ def test_openapi_to_graphql_and_back_preserves_types() -> None:
     again = GraphQlNormalizer().normalize(build_graphql_schema(sdl), include_raw=False)
     assert again.type_by_key("Pet") is not None
     assert again.type_by_key("Pet").kind is TypeKind.RECORD
+
+
+# ---------------------------------------------------------------------------
+# Input/output type splitting (MFX-13.2)
+# ---------------------------------------------------------------------------
+
+
+def test_rest_request_body_produces_synthesized_input_type() -> None:
+    api = _petstore_api()
+    sdl, schema = _emit_and_build(api)
+    assert "input PetInput" in sdl
+    assert "type Pet" in sdl
+    mutation = schema.mutation_type.fields["createPet"]
+    pet_arg = _named_type(mutation.args["pet"].type)
+    assert isinstance(pet_arg, GraphQLInputObjectType)
+    assert pet_arg.name == "PetInput"
+    assert set(pet_arg.fields.keys()) == {"id", "name"}
+
+
+def test_synthesized_inputs_are_reported_as_losses() -> None:
+    result = GraphQlEmitter().emit(_petstore_api())
+    synth = [loss for loss in result.losses if loss.subject == "synthesized-input"]
+    assert synth
+    assert any("PetInput" in loss.detail for loss in synth)
+
+
+def test_synthesized_inputs_are_deduped_across_operations() -> None:
+    spec = {
+        "openapi": "3.1.0",
+        "info": {"title": "Dup", "version": "1.0.0"},
+        "paths": {
+            "/pets": {
+                "post": {
+                    "operationId": "createPet",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Pet"}
+                            }
+                        },
+                    },
+                    "responses": {"201": {"description": "created"}},
+                },
+                "put": {
+                    "operationId": "replacePet",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Pet"}
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "ok"}},
+                },
+            }
+        },
+        "components": {
+            "schemas": {
+                "Pet": {
+                    "type": "object",
+                    "properties": {"name": {"type": "string"}},
+                }
+            }
+        },
+    }
+    api = OpenApiNormalizer().normalize(spec, include_raw=False)
+    sdl, schema = _emit_and_build(api)
+    assert sdl.count("input PetInput") == 1
+    create_arg = _named_type(schema.mutation_type.fields["createPet"].args["pet"].type)
+    replace_arg = _named_type(schema.mutation_type.fields["replacePet"].args["pet"].type)
+    assert create_arg is replace_arg
+
+
+def test_nested_output_records_produce_nested_input_types() -> None:
+    spec = {
+        "openapi": "3.1.0",
+        "info": {"title": "Nested", "version": "1.0.0"},
+        "paths": {
+            "/orders": {
+                "post": {
+                    "operationId": "createOrder",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Order"}
+                            }
+                        },
+                    },
+                    "responses": {"201": {"description": "created"}},
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "Customer": {
+                    "type": "object",
+                    "properties": {"email": {"type": "string"}},
+                },
+                "Order": {
+                    "type": "object",
+                    "properties": {
+                        "customer": {"$ref": "#/components/schemas/Customer"},
+                    },
+                },
+            }
+        },
+    }
+    api = OpenApiNormalizer().normalize(spec, include_raw=False)
+    sdl, schema = _emit_and_build(api)
+    assert "input OrderInput" in sdl
+    assert "input CustomerInput" in sdl
+    order_input = _named_type(schema.mutation_type.fields["createOrder"].args["order"].type)
+    customer_field = _named_type(order_input.fields["customer"].type)
+    assert customer_field.name == "CustomerInput"
+
+
+def test_graph_native_input_types_are_not_double_suffixed() -> None:
+    api = _normalize()
+    sdl, schema = _emit_and_build(api)
+    assert "input UserFilterInput" not in sdl
+    assert "input UserFilter" in sdl
+    create_user = schema.mutation_type.fields["createUser"]
+    filter_arg = _named_type(create_user.args["filter"].type)
+    assert isinstance(filter_arg, GraphQLInputObjectType)
+    assert filter_arg.name == "UserFilter"
+
+
+def test_field_arguments_use_input_types_for_output_references() -> None:
+    api = CanonicalApi(
+        paradigm=ApiParadigm.RPC,
+        format="openapi-3.1",
+        identity=ApiIdentity(name="Args"),
+        types=[
+            Type(
+                key="Filter",
+                name="Filter",
+                kind=TypeKind.RECORD,
+                fields=[
+                    CanonicalField(
+                        key="Filter.name",
+                        name="name",
+                        type=TypeRef(name="String"),
+                    )
+                ],
+            ),
+            Type(
+                key="Pet",
+                name="Pet",
+                kind=TypeKind.RECORD,
+                fields=[
+                    CanonicalField(
+                        key="Pet.findSimilar",
+                        name="findSimilar",
+                        type=TypeRef(name="String", nullable=False),
+                        extras={
+                            "arguments": [
+                                {
+                                    "name": "filter",
+                                    "type": TypeRef(name="Filter", nullable=False),
+                                }
+                            ]
+                        },
+                    )
+                ],
+            ),
+        ],
+        services=[
+            Service(
+                key="Query",
+                name="Query",
+                operations=[
+                    Operation(
+                        key="Query.pets",
+                        name="pets",
+                        kind=OperationKind.QUERY,
+                        messages=[
+                            Message(
+                                key="Query.pets#response",
+                                role=MessageRole.RESPONSE,
+                                payload=TypeRef(name="Pet", nullable=False),
+                            )
+                        ],
+                    )
+                ],
+            )
+        ],
+    )
+    sdl, schema = _emit_and_build(api)
+    assert "input FilterInput" in sdl
+    pet_type = schema.type_map["Pet"]
+    field = pet_type.fields["findSimilar"]
+    assert _named_type(field.args["filter"].type).name == "FilterInput"
 
 
 # ---------------------------------------------------------------------------

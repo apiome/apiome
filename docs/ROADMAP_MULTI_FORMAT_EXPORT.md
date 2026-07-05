@@ -724,8 +724,8 @@ Sources: https://spec.graphql.org/September2025/ · `graphql-core` `print_schema
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 13.1 | GraphQL SDL emitter | model → SDL (Query/Mutation/types) via graphql-core | export,multi-protocol,python,mvp | N | Y | M | apiome-rest |
-| 13.2 | Input/output type splitting | derive input types; map operations→fields | export,multi-protocol,mvp | N | Y | M | apiome-rest |
+| 13.1 ✅ | GraphQL SDL emitter | model → SDL (Query/Mutation/types) via graphql-core | export,multi-protocol,python,mvp | N | Y | M | apiome-rest |
+| 13.2 ✅ | Input/output type splitting | derive input types; map operations→fields | export,multi-protocol,mvp | N | Y | M | apiome-rest |
 | 13.3 | GraphQL fidelity pack | HTTP semantics DROP; constraints→custom scalars | export,multi-protocol,mvp | N | Y | S | apiome-rest |
 | 13.4 | Validate + round-trip | `build_schema` validate; re-import diff | export,validation,mvp | Y | Y | S | apiome-rest |
 | 13.5 | GraphQL target card + CLI + fixtures | UI/CLI + fixtures; supersede #221/#2214 | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
@@ -739,12 +739,13 @@ Sources: https://spec.graphql.org/September2025/ · `graphql-core` `print_schema
 - **Technical Stack.** Python (`graphql-core`).
 - **Status.** A pure, deterministic, provenance-tracked `apiome-rest/src/app/graphql_emitter.py` (`GraphQlEmitter`, self-registered under the `graphql` format key) — the inverse of `GraphQlNormalizer` (MFI-10.2) and an implementation of the Emitter SPI. It walks a `CanonicalApi` → valid SDL by building a `graphql-core` `GraphQLSchema` programmatically (object/interface/input/union/enum/scalar types; `TypeRef` nullability/list wrappers inverted level-by-level; Graph-native sources reuse their root `Service` types; other paradigms aggregate operations with a read-vs-write heuristic — `QUERY`/`GET` → `Query`, `MUTATION`/other HTTP verbs → `Mutation`) and serializing with `print_schema`. Constructs GraphQL cannot carry (`MAP` types, event pub/sub) are recorded as `EmitResult.losses`. A Graph-native source is an exact fixed point of `normalize ∘ emit`; emission is validated with `validate_schema`. Tests in `tests/test_graphql_emitter.py`; export registry wired via `load_builtin_emitters()`. apiome-rest 1.75.25 → 1.75.26.
 
-### MFX-13.2 — Input/output type splitting  ·  **#3885**
+### MFX-13.2 — Input/output type splitting  ·  **#3885**  ·  ✅ **Done**
 - **Problem.** GraphQL forbids using output object types as inputs; request bodies must become `input` types.
 - **Solution / Scope.** Derive `input` types for operation arguments/request bodies; dedupe; name deterministically; report synthesized inputs.
 - **Acceptance Criteria.** Operations with body args produce valid `input` types; no output-as-input violations.
 - **Dependencies / Parallelism.** After 13.1. Blocks 13.4.
 - **Technical Stack.** Python.
+- **Status.** `GraphQlEmitter` (`apiome-rest/src/app/graphql_emitter.py`) now maps cross-paradigm `REQUEST` messages to mutation/query arguments and resolves every input position (operation args, request bodies, field args) through `_input_type_for_ref`, which synthesizes deduplicated `{OutputName}Input` types from output `RECORD`s (deterministic naming with collision suffixes), leaves Graph-native `input` types untouched, and records `synthesized-input` / `input-union-unsupported` losses plus `INFERRED` provenance. Nested object references recurse into nested input types; re-emission stays schema-valid via `validate_schema`. Tests in `tests/test_graphql_emitter.py`. apiome-rest 1.75.26 → 1.75.27.
 
 *(13.3 fidelity (HTTP method/path/status/headers DROP; pattern/min/max → custom scalar APPROX; oneOf→union if shape allows); 13.4 round-trip validate; 13.5 target card + `apiome export graphql` + fixtures, **superseding closed #221** and feeding #2214.)*
 
