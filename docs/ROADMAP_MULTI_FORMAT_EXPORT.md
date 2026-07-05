@@ -500,7 +500,7 @@ flowchart LR
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 7.1 ✅ | Public export of published artifacts | export published versions; no auth | export,browser,mvp | N | Y | M | apiome-browse,apiome-rest |
 | 7.2 ✅ | Fidelity advisory in browse | same "may lose fidelity" message + report publicly | export,browser,mvp | N | Y | S | apiome-browse |
-| 7.3 | Public download + guards | rate-limit, size caps, published/public only | export,browser,security | Y | Y | S | apiome-browse,apiome-rest |
+| 7.3 ✅ | Public download + guards | rate-limit, size caps, published/public only | export,browser,security | Y | Y | S | apiome-browse,apiome-rest |
 
 ### MFX-7.1 — Public export of published artifacts  ·  **#3860**  ·  ✅ **Done**
 - **Status.** Implemented across `apiome-rest` + `apiome-browse`. REST: a new anonymous export surface `browse_export_routes.py` (`/v1/browse/tenants/{t}/projects/{p}/versions/{v}/export/{targets,preview,document}`) mirroring the authenticated `/v1/export` trio one-for-one but resolved by URL slugs through `load_public_export_source` (`export_source.py`) → `get_public_version_source_projection` (`database.py`), which hard-gates on the public browse predicate (`published IS TRUE AND visibility = 'public'`, undeleted) — private/draft/unknown are a **uniform 404** so anonymous callers can never probe hidden artifacts; the emit runs with `persistence=None` so the public path is strictly read-only. The shared route bodies were extracted for reuse (`build_target_fidelity_entries`, `render_emitted_document` in `export_routes.py`). Browse: an **"Export to another format…"** button on the version view's Specification header opens `PublicExportDialog.tsx` — a target-card grid with tier badges + preserved-% from `/export/targets`, the **"may lose fidelity" warning gated by an explicit "Export anyway" acknowledgement** for any non-lossless target, a JSON/YAML toggle, and a `Content-Disposition`-named download from `/export/document`; framework-free logic in `lib/export/publicExport.ts` (URL builders, tier presentation, warning sentence, filename parsing). Tests: `tests/test_browse_export_public_api.py` + public-loader cases in `tests/test_export_source.py` (rest), `lib/export/__tests__/publicExport.test.ts` (browse). apiome-rest 1.75.32 → 1.76.0; apiome-browse 0.3.0 → 0.4.0. (`/preview` already serves the full advisory envelope for MFX-7.2; rate-limit/size caps land with MFX-7.3.)
@@ -518,6 +518,13 @@ flowchart LR
 - **Technical Stack.** Next.js.
 
 *(7.3 adds rate-limit/size caps + published-only guards.)*
+
+### MFX-7.3 — Public download + guards  ·  **#3862**  ·  ✅ **Done**
+- **Status.** Implemented across `apiome-rest` + `apiome-browse`. REST: `public_export_guards.py` adds a dedicated per-IP rate limit (default 30/min, honours global `rate_limit_enabled`) on all three anonymous `/v1/browse/.../export/*` routes and a configurable download size cap (default 8 MiB, `413` when exceeded) on `/document`; published/public-only access remains the MFX-7.1 loader gate. Browse: `publicExportErrors.ts` maps `429`/`413`/`404` to stable dialog copy; `PublicExportDialog` surfaces server detail when present. Tests: `tests/test_public_export_guards.py`, guard cases in `tests/test_browse_export_public_api.py`, `lib/export/__tests__/publicExportErrors.test.ts`. apiome-rest 1.76.0 → 1.76.1; apiome-browse 0.5.0 → 0.5.1.
+- **Solution / Scope.** rate-limit, size caps, published/public only. Follows the epic emitter template — 7.3 adds rate-limit/size caps + published-only guards.
+- **Acceptance Criteria.** Implements this step of the emitter and passes the standard contract with round-trip fixtures; consistent with the epic's other steps.
+- **Dependencies / Parallelism.** After 7.1. Parallel with 7.2.
+- **Technical Stack.** Next.js (apiome-browse), FastAPI.
 
 ---
 

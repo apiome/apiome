@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Browser: public export downloads are rate-limited and size-capped on the server; the dialog shows clear messages when throttled or the artifact is too large (MFX-7.3)
 - Browser: public export dialog shows the full fidelity advisory + per-construct report, matching the ADE export flow (MFX-7.2)
 - Export: `apiome export avro` writes Avro `.avsc` with the honest fidelity report; UI export-target metadata maps avro/avsc to Monaco `json` + `.avsc` download names (MFX-19.5)
 - Export: Avro Schema Registry subjects — per-type Confluent subjects on each `.avsc` (`RecordNameStrategy` default; `TopicNameStrategy` / `TopicRecordNameStrategy` via emit options); nullable optional fields without source defaults get synthesized evolution defaults (MFX-19.3)

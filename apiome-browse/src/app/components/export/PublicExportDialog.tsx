@@ -28,6 +28,7 @@ import {
   type PublicExportTargetsResponse,
 } from '../../../../lib/export/publicExport';
 import type { PublicExportPreviewResponse } from '../../../../lib/export/exportFidelityPreview';
+import { publicExportErrorFromResponse } from '../../../../lib/export/publicExportErrors';
 import { PublicFidelityWarningPanel } from './PublicFidelityWarningPanel';
 
 interface PublicExportDialogProps {
@@ -81,7 +82,7 @@ export function PublicExportDialog({
       try {
         const response = await fetch(publicExportTargetsUrl(restApiBaseUrl, coords));
         if (!response.ok) {
-          throw new Error(`Failed to load export targets (${response.status})`);
+          throw new Error(await publicExportErrorFromResponse(response));
         }
         const data: PublicExportTargetsResponse = await response.json();
         if (!cancelled) setTargets(sortTargetsForDisplay(data.targets));
@@ -114,7 +115,7 @@ export function PublicExportDialog({
           body: JSON.stringify({ target: selectedKey }),
         });
         if (!response.ok) {
-          throw new Error(`Could not load the fidelity report (${response.status})`);
+          throw new Error(await publicExportErrorFromResponse(response));
         }
         const data: PublicExportPreviewResponse = await response.json();
         if (!cancelled) setPreview(data);
@@ -167,10 +168,7 @@ export function PublicExportDialog({
         body: JSON.stringify({ target: selected.descriptor.key }),
       });
       if (!response.ok) {
-        const detail = await response.text();
-        throw new Error(
-          `Export failed (${response.status})${detail ? `: ${detail.substring(0, 200)}` : ''}`
-        );
+        throw new Error(await publicExportErrorFromResponse(response));
       }
       const blob = await response.blob();
       const filename = filenameFromContentDisposition(
