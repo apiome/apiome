@@ -731,12 +731,13 @@ Sources: https://spec.graphql.org/September2025/ · `graphql-core` `print_schema
 | 13.5 | GraphQL target card + CLI + fixtures | UI/CLI + fixtures; supersede #221/#2214 | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 | 13.6 · #4344 | Federation subgraph output mode | subgraph SDL w/ synthesized `@key` (SYNTH); rover composition check | export,multi-protocol | Y | N | M | apiome-rest |
 
-### MFX-13.1 — GraphQL SDL emitter  ·  **#3884**
+### MFX-13.1 — GraphQL SDL emitter  ·  **#3884**  ·  ✅ **Done**
 - **Solution / Scope.** Map canonical types→GraphQL types (object/interface/union/enum/scalar), operations→`Query`/`Mutation` fields (read vs write heuristic), preserving nullability/list wrappers. Serialize via `graphql-core` `print_schema` (guarantees validity).
   - Source: https://github.com/graphql-python/graphql-core
 - **Acceptance Criteria.** Emits valid SDL; nullability/list wrappers correct.
 - **Dependencies / Parallelism.** After 1.1, 2.3, 3.1. Blocks 13.2/13.4.
 - **Technical Stack.** Python (`graphql-core`).
+- **Status.** A pure, deterministic, provenance-tracked `apiome-rest/src/app/graphql_emitter.py` (`GraphQlEmitter`, self-registered under the `graphql` format key) — the inverse of `GraphQlNormalizer` (MFI-10.2) and an implementation of the Emitter SPI. It walks a `CanonicalApi` → valid SDL by building a `graphql-core` `GraphQLSchema` programmatically (object/interface/input/union/enum/scalar types; `TypeRef` nullability/list wrappers inverted level-by-level; Graph-native sources reuse their root `Service` types; other paradigms aggregate operations with a read-vs-write heuristic — `QUERY`/`GET` → `Query`, `MUTATION`/other HTTP verbs → `Mutation`) and serializing with `print_schema`. Constructs GraphQL cannot carry (`MAP` types, event pub/sub) are recorded as `EmitResult.losses`. A Graph-native source is an exact fixed point of `normalize ∘ emit`; emission is validated with `validate_schema`. Tests in `tests/test_graphql_emitter.py`; export registry wired via `load_builtin_emitters()`. apiome-rest 1.75.25 → 1.75.26.
 
 ### MFX-13.2 — Input/output type splitting  ·  **#3885**
 - **Problem.** GraphQL forbids using output object types as inputs; request bodies must become `input` types.
