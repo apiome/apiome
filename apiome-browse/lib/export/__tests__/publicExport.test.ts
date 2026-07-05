@@ -13,6 +13,7 @@ import {
   fidelityWarningMessage,
   filenameFromContentDisposition,
   publicExportDocumentUrl,
+  publicExportPreviewUrl,
   publicExportTargetsUrl,
   requiresExportAcknowledgement,
   serializationAcceptHeader,
@@ -77,6 +78,12 @@ describe('URL builders', () => {
   it('builds the public document URL from the slug coordinates', () => {
     expect(publicExportDocumentUrl('http://localhost:8000/v1', COORDS)).toBe(
       'http://localhost:8000/v1/browse/tenants/acme/projects/widgets/versions/1.0.0/export/document'
+    );
+  });
+
+  it('builds the public preview URL from the slug coordinates', () => {
+    expect(publicExportPreviewUrl('http://localhost:8000/v1', COORDS)).toBe(
+      'http://localhost:8000/v1/browse/tenants/acme/projects/widgets/versions/1.0.0/export/preview'
     );
   });
 

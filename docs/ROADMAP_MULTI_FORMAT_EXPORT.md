@@ -499,7 +499,7 @@ flowchart LR
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 7.1 ✅ | Public export of published artifacts | export published versions; no auth | export,browser,mvp | N | Y | M | apiome-browse,apiome-rest |
-| 7.2 | Fidelity advisory in browse | same "may lose fidelity" message + report publicly | export,browser,mvp | N | Y | S | apiome-browse |
+| 7.2 ✅ | Fidelity advisory in browse | same "may lose fidelity" message + report publicly | export,browser,mvp | N | Y | S | apiome-browse |
 | 7.3 | Public download + guards | rate-limit, size caps, published/public only | export,browser,security | Y | Y | S | apiome-browse,apiome-rest |
 
 ### MFX-7.1 — Public export of published artifacts  ·  **#3860**  ·  ✅ **Done**
@@ -509,7 +509,8 @@ flowchart LR
 - **Dependencies / Parallelism.** After 3.x, 6.2. Blocks 7.2/7.3.
 - **Technical Stack.** Next.js (apiome-browse), FastAPI.
 
-### MFX-7.2 — Fidelity advisory in browse  ·  **#3861**
+### MFX-7.2 — Fidelity advisory in browse  ·  **#3861**  ·  ✅ **Done**
+- **Status.** Implemented in `apiome-browse`: the public export dialog now fetches `POST …/export/preview` when a target is selected and renders `PublicFidelityWarningPanel.tsx` — the same advisory (MFX-2.4) verbatim from the server, preserved-% ring, count chips (`N dropped · N approximated · N synthesized · N clean`), expandable per-construct report (DROP/APPROX/SYNTH/OK with source path + degradation), and explicit "Export anyway" acknowledgement for lossy conversions, matching the ADE's `FidelityWarningPanel`. Framework-free helpers in `lib/export/export-advisory.ts`, `lib/export/exportFidelityPreview.ts`, and `publicExportPreviewUrl` in `publicExport.ts`. Tests in `lib/export/__tests__/export-advisory.test.ts`, `exportFidelityPreview.test.ts`, plus preview URL in `publicExport.test.ts`. apiome-browse 0.4.0 → 0.5.0.
 - **Problem.** **(headline)** The browser must carry the same fidelity message as the ADE.
 - **Solution / Scope.** Render the identical advisory (2.4) + report in the public export flow.
 - **Acceptance Criteria.** Same wording/severity as apiome-ui; report visible publicly.
