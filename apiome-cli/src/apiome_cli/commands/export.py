@@ -65,6 +65,10 @@ _OPENAPI_TARGET = "openapi"
 # The registry key for the AsyncAPI 3.1 emitter (apiome-rest AsyncApiEmitter, MFX-11.5).
 _ASYNCAPI_TARGET = "asyncapi"
 
+# The registry key for the proto3 emitter (apiome-rest ProtoEmitter, MFX-12.5). The CLI verb is
+# ``grpc`` — the user-facing name — while the REST target is the emitter's stable ``protobuf`` key.
+_PROTOBUF_TARGET = "protobuf"
+
 _JSON_STDOUT_NOTE = (
     "With --output -, document bytes are written to stdout; the fidelity summary and --json "
     "metadata are written to stderr so stdout stays byte-safe for pipelines."
@@ -298,6 +302,99 @@ def export_asyncapi(
         typer.echo(
             "Lossy export — the AsyncAPI document does not carry every source construct "
             "(a REST/RPC source is reframed onto channels). Re-run with --force to accept.",
+            err=True,
+        )
+        raise typer.Exit(EXIT_ERROR)
+
+
+@app.command(
+    "grpc",
+    help=(
+        "Export a version as proto3 (.proto) + a fidelity report. "
+        "With --output -, document bytes go to stdout; fidelity summary and --json metadata go to stderr."
+    ),
+)
+def export_grpc(
+    ctx: typer.Context,
+    project: str = typer.Option(..., "--project", help="Project UUID or slug."),
+    version: str = typer.Option(..., "--version", help="Version UUID, slug, or label."),
+    output: str = typer.Option(
+        ...,
+        "--output",
+        "-o",
+        help="Destination file path, or - for stdout (document bytes only).",
+    ),
+    tenant: str | None = typer.Option(
+        None,
+        "--tenant",
+        help="Tenant UUID or slug (overrides APIOME_TENANT_ID).",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Write and exit 0 even when the export loses fidelity (lossy/types-only).",
+    ),
+) -> None:
+    """Export a version as proto3 and surface the emitter registry's fidelity report.
+
+    The ``.proto`` bytes come from the Emitter SPI (``POST /v1/export/{tenant}/document``, target
+    ``protobuf``); the honest fidelity report comes from the dry-run preview
+    (``POST /v1/export/{tenant}/preview``). A native gRPC/protobuf source round-trips **lossless**
+    (exit 0); a REST/OpenAPI source loses unions, constraints, and HTTP semantics (non-zero exit
+    unless ``--force``).
+    """
+    output = output.strip()
+    if not output:
+        typer.echo("--output cannot be empty.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+
+    settings = settings_from_context(ctx)
+    require_api_key(settings)
+    client = _export_client(ctx)
+    tenant_slug = resolve_tenant_slug(settings, client, tenant_override=tenant)
+
+    project_id = resolve_project_uuid(client, tenant_slug, project)
+
+    document = fetch_export_document(
+        client,
+        tenant_slug,
+        artifact=str(project_id),
+        version=version,
+        target=_PROTOBUF_TARGET,
+        serialization=None,
+    )
+    write_document_bytes(document.body, output)
+
+    preview = fetch_export_preview(
+        client,
+        tenant_slug,
+        artifact=str(project_id),
+        version=version,
+        target=_PROTOBUF_TARGET,
+    )
+    fidelity = preview_fidelity(preview)
+
+    json_mode = json_mode_from_context(ctx)
+    metadata = SpecExportMetadata(
+        output=output,
+        bytes_written=len(document.body),
+        content_type=document.content_type,
+        format="grpc",
+        fidelity_target=_PROTOBUF_TARGET,
+        fidelity=_fidelity_metadata(fidelity),
+        filename=document.filename,
+    )
+    emit_download_metadata(metadata, json_mode=json_mode)
+
+    if not json_mode:
+        for line in format_export_fidelity_summary(fidelity, target=_PROTOBUF_TARGET):
+            typer.echo(line, err=True)
+
+    if is_lossy(fidelity) and not force:
+        typer.echo(
+            "Lossy export — the proto3 document does not carry every source construct "
+            "(a REST/OpenAPI source loses unions, constraints, and HTTP semantics). "
+            "Re-run with --force to accept.",
             err=True,
         )
         raise typer.Exit(EXIT_ERROR)

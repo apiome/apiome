@@ -1,0 +1,28 @@
+// Emitted proto3 document fixture for `export grpc` round-trip tests (MFX-12.5, #3883).
+// Mirrors the self-contained echo.v1 surface from echo-grpc.proto — a native RPC source that
+// round-trips losslessly through the protobuf emitter.
+syntax = "proto3";
+
+package echo.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message EchoRequest {
+  string message = 1;
+  string correlation_id = 2;
+}
+
+message EchoResponse {
+  string message = 1;
+  google.protobuf.Timestamp served_at = 2;
+}
+
+message ChatMessage {
+  string body = 1;
+  string author = 2;
+}
+
+service EchoService {
+  rpc Echo(EchoRequest) returns (EchoResponse);
+  rpc Chat(stream ChatMessage) returns (stream ChatMessage);
+}

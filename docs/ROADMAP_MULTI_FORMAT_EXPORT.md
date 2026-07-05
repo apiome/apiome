@@ -679,7 +679,7 @@ Sources: https://protobuf.dev/ · https://buf.build/docs/
 | 12.2 ✅ | Stable field-number assignment | deterministic, persisted field numbers (SYNTH) | export,multi-protocol,version-control,mvp | N | Y | M | apiome-rest |
 | 12.3 ✅ | Protobuf fidelity pack | unions/nullability/constraints/inheritance loss | export,multi-protocol,mvp | N | Y | M | apiome-rest |
 | 12.4 | Multi-file packaging + validate | per-package files + imports; `buf build` validate | export,rest,validation,mvp | Y | Y | M | apiome-rest |
-| 12.5 | gRPC target card + CLI + fixtures | UI/CLI + round-trip fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
+| 12.5 ✅ | gRPC target card + CLI + fixtures | UI/CLI + round-trip fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 | 12.6 · #4343 | Connect-RPC / gRPC-Gateway flavor options | `google.api.http` annotations from REST bindings (mirror MFI-19.5) | export,multi-protocol | Y | N | S | apiome-rest |
 
 ### MFX-12.1 — Protobuf emitter  ·  **#3879**  ·  ✅ **Done**
@@ -706,6 +706,13 @@ Sources: https://protobuf.dev/ · https://buf.build/docs/
 - **Status.** The predictive fidelity pack (MFX-2.3 seam) that surfaces what the proto3 target *can't* natively carry — the constructs protobuf's six-axis `CapabilityProfile` (`unions=False`, `nullability=True`, `constraints=False`) hides. The reference `ProtoFidelityRulePack` (`apiome-rest/src/app/proto_emitter.py`) refines the profile-derived default so an **OpenAPI/GraphQL source no longer reports silent union DROPs or missing nullability losses**: a **named union** becomes an honest `APPROX` (`oneof`-bearing message or `google.protobuf.Any` when the shape is ineligible), **nullability/requiredness** and **validation constraints** are `APPROX` (proto3 `optional` / doc comments), **inheritance/allOf/GraphQL interfaces** flatten to a single message (`APPROX`), **arbitrary JSON** maps to `google.protobuf.Struct` (`APPROX`), **field numbers** stay `SYNTH` (MFX-12.2), and **pub/sub operations** are reframed as unary `rpc` (`APPROX`) rather than the capability default's critical `DROP`. Verdicts flow through `compute_lossiness_for_emitter` → the fidelity advisory (MFX-2.4) and target/export fidelity surfaces (MFX-2.5). Tests in `tests/test_fidelity_rulepack.py`. apiome-rest 1.75.24 → 1.75.25.
 
 *(12.4 multi-file packaging (per-package + imports) + `buf build` validation; 12.5 target card + `apiome export grpc` + round-trip fixtures. Coordinate with #1384/#1427.)*
+
+### MFX-12.5 — gRPC target card + CLI + fixtures  ·  **#3883**  ·  ✅ **Done**
+- **Solution / Scope.** Make the protobuf emitter (12.1) reachable from the CLI + UI, with round-trip fixtures; the user-facing verb is `grpc`, the REST target is the emitter's `protobuf` key.
+- **Acceptance Criteria.** `apiome export grpc` writes a compilable `.proto` document with the honest fidelity report; the UI target-card metadata knows protobuf/gRPC; fixtures cover native gRPC (lossless) + REST/OpenAPI (lossy).
+- **Dependencies / Parallelism.** After 12.1 (emitter registration) + MFX-2.5 (fidelity surface). Parallel within the epic.
+- **Technical Stack.** Typer · Next.js (client metadata only — no apiome-rest change).
+- **Status.** **`apiome export grpc`** (`apiome-cli/src/apiome_cli/commands/export.py`): pairs `POST /v1/export/{tenant}/document` (target `protobuf`) for the `.proto` bytes with `POST /v1/export/{tenant}/preview` for the fidelity envelope — a native gRPC source exports **lossless** (exit 0), a REST/OpenAPI source loses unions/constraints/HTTP semantics and exports **lossy** (non-zero exit unless `--force`); `--output -` keeps stdout byte-safe. UI adds `protobuf`/`grpc`/`proto3` entries in `apiome-ui/src/app/utils/export-target-language.ts` (Monaco `protobuf` grammar, `.proto` extension, `api.proto` download name). Round-trip fixtures under `apiome-cli/tests/fixtures/` (emitted proto document + lossless/lossy preview envelopes). Tests: CLI command suite (`tests/test_export_grpc_command.py`), UI metadata (`tests/export-target-language.test.ts`). apiome-cli 0.18.0 → 0.19.0, apiome-ui 0.50.1 → 0.50.2.
 
 ---
 

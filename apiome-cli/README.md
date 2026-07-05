@@ -435,7 +435,8 @@ API key and tenant scope.
 
 `export` is the inverse of `import` — it emits a stored version to a registered target format and
 reports how faithful that export is. `export targets` lists the emitters available for a version;
-`export openapi` and `export asyncapi` write the document and its fidelity report:
+`export openapi` and `export asyncapi` write the document and its fidelity report;
+`export grpc` writes a proto3 `.proto` document and its fidelity report:
 
 ```bash
 # List the emitter targets + per-source fidelity for a version:
@@ -447,6 +448,9 @@ apiome export openapi --project payments-api --version 1.0.0 --output openapi.js
 # Export a version as AsyncAPI 3 (event sources are lossless; REST sources reframe onto channels):
 apiome export asyncapi --project user-events --version 1.0.0 --output asyncapi.json
 
+# Export a version as proto3 (native gRPC sources are lossless; REST/OpenAPI sources are lossy):
+apiome export grpc --project echo-api --version 1.0.0 --output v1.proto
+
 # Write the document to stdout (fidelity summary + metadata go to stderr):
 apiome export openapi --project payments-api --version 1.0.0 --output -
 
@@ -456,7 +460,7 @@ apiome --json export openapi --project payments-api --version 1.0.0 --output ope
 ```
 
 OpenAPI document bytes come from the OpenAPI reconstruction (the same source as `spec export`);
-every other target — AsyncAPI included — is emitted through the Emitter SPI
+every other target — AsyncAPI and protobuf/gRPC included — is emitted through the Emitter SPI
 (`POST /v1/export/{tenant}/document`). The fidelity **tier + preserved-%** and the "may lose
 fidelity" advisory always come from the emitter registry's dry-run preview.
 
