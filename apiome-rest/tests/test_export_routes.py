@@ -1,12 +1,16 @@
-"""Tests for the fidelity REST surface — ``/export/targets`` + ``/export/preview`` — MFX-2.5 (#3842).
+"""Tests for the fidelity REST surface — ``/export/targets`` + ``/export/preview`` — MFX-2.5 (#3842)
+plus the emit surface ``/export/document`` — MFX-11.5 (#3878).
 
 Pins the route contract:
 
-* both endpoints require authentication and are tenant-scoped;
+* all three endpoints require authentication and are tenant-scoped;
 * ``GET …/targets`` returns every registered target with its per-source fidelity badge
   (tier + preserved-%), and echoes the resolved revision;
 * ``POST …/preview`` returns the full fidelity envelope (report + advisory + summary) for one
   target, **without emitting an artifact**;
+* ``POST …/document`` emits the chosen target through the Emitter SPI and returns the document
+  itself (JSON by default, YAML under ``Accept: application/yaml``), the byte source the OpenAPI
+  browse reconstruction cannot supply for non-OpenAPI targets;
 * the loader's not-found (404) and no-source (422) errors, and an unknown target (400), map to
   the right HTTP status.
 
@@ -18,6 +22,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+import yaml
 from fastapi.testclient import TestClient
 
 from app.auth import validate_authentication
@@ -82,6 +87,14 @@ def test_preview_requires_auth():
     response = client.post(
         "/v1/export/test-tenant/preview",
         json={"artifact": "artifact-1", "target": "openapi"},
+    )
+    assert response.status_code == 401
+
+
+def test_document_requires_auth():
+    response = client.post(
+        "/v1/export/test-tenant/document",
+        json={"artifact": "artifact-1", "target": "asyncapi"},
     )
     assert response.status_code == 401
 
@@ -219,6 +232,140 @@ def test_preview_422_when_source_unreconstructable():
             response = client.post(
                 "/v1/export/test-tenant/preview",
                 json={"artifact": "artifact-1", "target": "openapi"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+    assert response.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# POST /export/{tenant}/document
+# ---------------------------------------------------------------------------
+def test_document_emits_asyncapi_json():
+    """The emit route returns the AsyncAPI document as JSON by default, with a filename hint."""
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        with patch("app.export_routes.load_export_source", return_value=_source()):
+            response = client.post(
+                "/v1/export/test-tenant/document",
+                json={"artifact": "artifact-1", "version": "1.0.0", "target": "asyncapi"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/json")
+    assert 'filename="asyncapi.json"' in response.headers["content-disposition"]
+    body = response.json()
+    # A real, schema-shaped AsyncAPI 3 document (the REST source is reframed onto channels).
+    assert body["asyncapi"] == "3.1.0"
+    assert body["info"]["title"] == "widgets"
+    assert "operations" in body
+
+
+def test_document_emits_yaml_with_accept():
+    """``Accept: application/yaml`` serializes the same document as YAML with a .yaml filename."""
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        with patch("app.export_routes.load_export_source", return_value=_source()):
+            response = client.post(
+                "/v1/export/test-tenant/document",
+                json={"artifact": "artifact-1", "target": "asyncapi"},
+                headers={"Accept": "application/yaml"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert "yaml" in response.headers["content-type"]
+    assert 'filename="asyncapi.yaml"' in response.headers["content-disposition"]
+    document = yaml.safe_load(response.text)
+    assert document["asyncapi"] == "3.1.0"
+
+
+def test_document_target_generic_openapi():
+    """The route is target-generic: ``openapi`` emits an OpenAPI document through the same SPI."""
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        with patch("app.export_routes.load_export_source", return_value=_source()):
+            response = client.post(
+                "/v1/export/test-tenant/document",
+                json={"artifact": "artifact-1", "target": "openapi"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    body = response.json()
+    assert str(body.get("openapi", "")).startswith("3.")
+
+
+def test_document_400_for_unknown_target():
+    """An unresolvable target is a 400 (the export service's status)."""
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        with patch("app.export_routes.load_export_source", return_value=_source()):
+            response = client.post(
+                "/v1/export/test-tenant/document",
+                json={"artifact": "artifact-1", "target": "no-such-target"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+    assert response.status_code == 400
+    assert "unsupported export target" in response.json()["detail"].lower()
+
+
+def test_document_applies_emit_options():
+    """Per-target emit options flow through: ``include_channels=false`` yields a schemas-only doc."""
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        with patch("app.export_routes.load_export_source", return_value=_source()):
+            response = client.post(
+                "/v1/export/test-tenant/document",
+                json={
+                    "artifact": "artifact-1",
+                    "target": "asyncapi",
+                    "options": {"include_channels": False},
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+    assert response.status_code == 200
+    body = response.json()
+    assert body["asyncapi"] == "3.1.0"
+    # With channels/operations suppressed, only the declaration + info remain.
+    assert "operations" not in body
+    assert "channels" not in body
+
+
+def test_document_404_when_source_not_found():
+    """The loader's 404 (unknown artifact/version) surfaces as an HTTP 404."""
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        with patch(
+            "app.export_routes.load_export_source",
+            side_effect=ExportSourceError("Artifact 'nope' was not found.", status_code=404),
+        ):
+            response = client.post(
+                "/v1/export/test-tenant/document",
+                json={"artifact": "nope", "target": "asyncapi"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+    assert response.status_code == 404
+
+
+def test_document_422_when_source_unreconstructable():
+    """The loader's 422 (a revision with no captured source) surfaces as an HTTP 422."""
+    app.dependency_overrides[validate_authentication] = _override_auth
+    try:
+        with patch(
+            "app.export_routes.load_export_source",
+            side_effect=ExportSourceError("no captured source", status_code=422),
+        ):
+            response = client.post(
+                "/v1/export/test-tenant/document",
+                json={"artifact": "artifact-1", "target": "asyncapi"},
             )
     finally:
         app.dependency_overrides.clear()

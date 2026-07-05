@@ -42,6 +42,16 @@ def export_preview(tenant_slug: str) -> str:
     return f"{V1}/export/{tenant_slug}/preview"
 
 
+def export_document(tenant_slug: str) -> str:
+    """Emit one (artifact, target) export document through the Emitter SPI (MFX-11.5).
+
+    Drives ``export asyncapi``: ``POST`` a source revision + chosen target and receive the emitted
+    document itself — JSON by default, YAML under ``Accept: application/yaml``. The byte source the
+    OpenAPI-only browse reconstruction (``GET /v1/schema/…``) cannot supply for non-OpenAPI targets.
+    """
+    return f"{V1}/export/{tenant_slug}/document"
+
+
 def tenant_imports(tenant_slug: str) -> str:
     return f"{V1}/tenants/{tenant_slug}/imports"
 

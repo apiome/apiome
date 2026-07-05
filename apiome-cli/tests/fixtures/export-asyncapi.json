@@ -1,0 +1,47 @@
+{
+  "asyncapi": "3.1.0",
+  "info": {
+    "title": "User Events",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "userSignedUp": {
+      "address": "user/signedup",
+      "messages": {
+        "UserSignedUp": {
+          "$ref": "#/components/messages/UserSignedUp"
+        }
+      }
+    }
+  },
+  "operations": {
+    "onUserSignedUp": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/userSignedUp"
+      }
+    }
+  },
+  "components": {
+    "messages": {
+      "UserSignedUp": {
+        "payload": {
+          "$ref": "#/components/schemas/UserSignedUp"
+        }
+      }
+    },
+    "schemas": {
+      "UserSignedUp": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

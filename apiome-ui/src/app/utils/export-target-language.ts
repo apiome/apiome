@@ -1,8 +1,8 @@
 /**
  * Export target → Monaco language, file extension, and download filename (MFX-9.4, #3869).
  *
- * The multi-format export surface lets a version be emitted to a registered target (OpenAPI today;
- * Arazzo, AsyncAPI, … as their emitter epics land). A target card previews the emitted artifact and
+ * The multi-format export surface lets a version be emitted to a registered target (OpenAPI and
+ * AsyncAPI today; Arazzo, GraphQL, … as their emitter epics land). A target card previews the emitted artifact and
  * offers it for download, both of which need three pieces of client metadata the backend emitter
  * descriptor does not spell out directly: the Monaco language id for syntax highlighting, the file
  * extension, and a sensible download filename. This module is the single, data-driven bridge — pure
@@ -10,11 +10,12 @@
  * {@link file://./catalog-source-language.ts} resolver.
  *
  * Targets are keyed by the emitter's canonical id — either its registry `format` (`openapi-3.1`,
- * `swagger-2.0`) or its `key` (`openapi`). Version suffixes collapse to the base id, so a new OpenAPI
- * dialect maps without a code change. Unlike a raw imported source (authored as either JSON or YAML),
- * an emitter emits a **canonical serialization** — OpenAPI/Swagger emit JSON — so the default language
- * is JSON, refined to YAML/XML only when a byte sample of the actual artifact says otherwise (e.g. the
- * CLI's `--yaml` output). Everything unknown degrades to `plaintext`, never throwing.
+ * `swagger-2.0`, `asyncapi-3`) or its `key` (`openapi`, `asyncapi`). Version suffixes collapse to the
+ * base id, so a new OpenAPI or AsyncAPI dialect maps without a code change. Unlike a raw imported
+ * source (authored as either JSON or YAML), an emitter emits a **canonical serialization** —
+ * OpenAPI/Swagger/AsyncAPI emit JSON — so the default language is JSON, refined to YAML/XML only when a
+ * byte sample of the actual artifact says otherwise (e.g. the CLI's `--yaml` output). Everything
+ * unknown degrades to `plaintext`, never throwing.
  *
  * The full registry-driven export dialog + target-card grid is a later epic (MFX-EPIC-41); this
  * module is the small client-metadata layer that grid — and any emitted-artifact viewer — reads.
@@ -32,16 +33,18 @@ interface ExportTargetMeta {
 
 /**
  * Per canonical export-target id. OpenAPI and its Swagger 2.0 downgrade both emit JSON documents
- * (`openapi.json` / `swagger.json`); the no-op `sample` emitter is plaintext.
+ * (`openapi.json` / `swagger.json`); AsyncAPI 3 emits a JSON document too (`asyncapi.json`, MFX-11.5);
+ * the no-op `sample` emitter is plaintext.
  */
 const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   openapi: { language: 'json', extension: '.json', baseName: 'openapi' },
   swagger: { language: 'json', extension: '.json', baseName: 'swagger' },
+  asyncapi: { language: 'json', extension: '.json', baseName: 'asyncapi' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };
 
 /** Targets whose emitted serialization can vary (JSON default, YAML/XML sniffed from the bytes). */
-const SERIALIZED_TARGETS: ReadonlySet<string> = new Set(['openapi', 'swagger']);
+const SERIALIZED_TARGETS: ReadonlySet<string> = new Set(['openapi', 'swagger', 'asyncapi']);
 
 /** Monaco language id → file extension for a sniff-refined serialization. */
 const LANGUAGE_EXTENSION: Readonly<Record<string, string>> = {

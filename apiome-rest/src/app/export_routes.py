@@ -16,15 +16,25 @@ Two granularities the export UX needs *before* a download is committed:
   summary — again **without emitting an artifact**. It backs the dialog's detailed fidelity
   panel and is the same envelope an export job embeds in its result (MFX-3.1/3.2).
 
-Both endpoints are tenant-scoped (JWT or API key, via :func:`app.auth.validate_authentication`)
+* **``POST /v1/export/{tenant_slug}/document``** — for one chosen ``target``, the emitted
+  document itself, produced through the Emitter SPI (:func:`app.export_service.emit_canonical`)
+  and serialized as JSON (default) or YAML (``Accept: application/yaml``). This is the emit
+  counterpart to ``/preview``: ``/preview`` predicts the loss, ``/document`` returns the bytes.
+  It gives non-OpenAPI targets (AsyncAPI, MFX-11.5) a byte source the legacy OpenAPI browse
+  reconstruction (``GET /v1/schema/…``) cannot supply, and the ``apiome export <target>`` CLI
+  pairs it with ``/preview`` to write the artifact and surface its honest fidelity.
+
+All three endpoints are tenant-scoped (JWT or API key, via :func:`app.auth.validate_authentication`)
 and load the source model version-scoped through :func:`app.export_source.load_export_source`.
 """
 
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+import yaml
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import validate_authentication
@@ -40,7 +50,7 @@ from .export_fidelity import (
     build_export_fidelity,
     build_target_fidelity,
 )
-from .export_service import ExportError, resolve_emitter
+from .export_service import ExportError, emit_canonical, resolve_emitter
 from .export_source import ExportSourceError, load_export_source
 from .lossiness import LossinessSeverity
 
@@ -130,6 +140,25 @@ class ExportPreviewResponse(BaseModel):
     )
     fidelity: ExportFidelity = Field(
         description="The full fidelity envelope (target + tier + report + advisory), no artifact.",
+    )
+
+
+class ExportDocumentRequest(BaseModel):
+    """An emit request: source revision + chosen target + per-emit options (MFX-11.5)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    artifact: str = Field(description="The artifact (project) id to export.")
+    version: Optional[str] = Field(
+        default=None,
+        description="Revision UUID, version label (``1.0.0``), or null for the latest revision.",
+    )
+    target: str = Field(
+        description="Target emitter key (``asyncapi``) or format key (``asyncapi-3``).",
+    )
+    options: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Per-target emit options (MFX-1.4); null or empty applies the target defaults.",
     )
 
 
@@ -255,4 +284,108 @@ async def preview_export_fidelity(
         version_record_id=source.version_record_id,
         version_label=source.version_label,
         fidelity=fidelity,
+    )
+
+
+# Accept-header tokens that select YAML serialization of the emitted document.
+_YAML_ACCEPT_TOKENS = ("application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml")
+
+
+def _wants_yaml(accept: Optional[str]) -> bool:
+    """True when the ``Accept`` header requests a YAML serialization of the document."""
+    header = (accept or "").lower()
+    return any(token in header for token in _YAML_ACCEPT_TOKENS)
+
+
+def _document_filename(base_path: str, *, yaml_serialization: bool) -> str:
+    """Derive the download filename from the emitted file's path, honouring the serialization.
+
+    ``base_path`` is the emitter's primary file path (e.g. ``asyncapi.json``); when the caller
+    asked for YAML we swap the extension so a saved artifact keeps an honest suffix.
+    """
+    name = (base_path or "document").rsplit("/", 1)[-1]
+    if yaml_serialization:
+        stem = name.rsplit(".", 1)[0] if "." in name else name
+        return f"{stem}.yaml"
+    return name
+
+
+@router.post(
+    "/{tenant_slug}/document",
+    summary="Emit the export document for one target",
+    description=(
+        "Emit the source artifact/version to one ``target`` through the Emitter SPI and return "
+        "the document itself — JSON by default, YAML when ``Accept: application/yaml`` is sent. "
+        "This is the emit counterpart to ``/preview`` (which predicts the loss without emitting); "
+        "the ``apiome export <target>`` CLI pairs the two to write the artifact and surface its "
+        "fidelity. Gives non-OpenAPI targets (AsyncAPI) a byte source the OpenAPI-only browse "
+        "reconstruction cannot supply."
+    ),
+    response_class=Response,
+)
+async def emit_export_document(
+    tenant_slug: str,
+    request: ExportDocumentRequest,
+    accept: Optional[str] = Header(None),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Response:
+    """Emit and return the export document for one (source, target) pair.
+
+    Args:
+        tenant_slug: The tenant slug (scopes the artifact lookup).
+        request: The source coordinates + chosen target + optional per-emit options.
+        accept: Accept header for JSON/YAML content negotiation.
+        auth_data: Authenticated tenant context (JWT or API key).
+
+    Returns:
+        The emitted document, serialized as JSON (default) or YAML, with a ``Content-Disposition``
+        filename derived from the emitter's primary output path.
+
+    Raises:
+        HTTPException: 404 when the artifact/version is unknown; 422 when the revision has no
+            reconstructable source or the emitter produced no document; 400 when the target,
+            source format, or options are unsupported.
+    """
+    tenant_id = auth_data["tenant_id"]
+    try:
+        source = load_export_source(tenant_id, request.artifact, request.version)
+    except ExportSourceError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
+    try:
+        result = emit_canonical(source.api, request.target, opts=request.options)
+    except ExportError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
+    if not result.files:  # pragma: no cover - registered emitters always produce a file
+        raise HTTPException(
+            status_code=422,
+            detail=f"Target {request.target!r} produced no document for this source.",
+        )
+
+    primary = result.files[0]
+    content = primary.content
+    yaml_serialization = _wants_yaml(accept)
+    filename = _document_filename(primary.path, yaml_serialization=yaml_serialization)
+    disposition = {"Content-Disposition": f'attachment; filename="{filename}"'}
+
+    # Structured (dict) documents serialize to the requested wire format; a plain-text bundle
+    # (rare, non-JSON/YAML targets) is returned verbatim under its own media type.
+    if isinstance(content, dict):
+        if yaml_serialization:
+            body = yaml.dump(content, sort_keys=False, default_flow_style=False)
+            return Response(
+                content=body, media_type="application/x-yaml", headers=disposition
+            )
+        body = json.dumps(content, indent=2, ensure_ascii=False)
+        return Response(
+            content=body,
+            media_type=primary.media_type or result.media_type or "application/json",
+            headers=disposition,
+        )
+
+    return Response(
+        content=str(content),
+        media_type=primary.media_type or result.media_type or "text/plain",
+        headers=disposition,
     )
