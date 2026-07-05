@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Export: `apiome export avro` writes Avro `.avsc` with the honest fidelity report; UI export-target metadata maps avro/avsc to Monaco `json` + `.avsc` download names (MFX-19.5)
 - Export: Avro Schema Registry subjects — per-type Confluent subjects on each `.avsc` (`RecordNameStrategy` default; `TopicNameStrategy` / `TopicRecordNameStrategy` via emit options); nullable optional fields without source defaults get synthesized evolution defaults (MFX-19.3)
 - Export: Avro fidelity pack — operations/channels critical DROP with "only data schemas are exported"; constraints DROP; unions OK when shape allows else APPROX; optional fields APPROX as `["null", T]` unions; evolution defaults SYNTH (MFX-19.2)
 - Export: Avro emitter — canonical model → validated `.avsc` per named type (records, enums, unions, maps, fixed/logical scalars); nullability as `["null", T]` unions; date/timestamp/uuid/decimal logical types; names sanitized to Avro rules (MFX-19.1)

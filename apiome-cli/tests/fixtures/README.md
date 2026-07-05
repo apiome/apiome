@@ -1,6 +1,6 @@
 # CLI test fixtures
 
-Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, and gRPC/Protobuf documents used by pytest and integration tests. They contain **no credentials, API keys, or PII** — only example titles, paths, channels, types, and workflow IDs suitable for mocked REST tests.
+Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, gRPC/Protobuf, and Avro documents used by pytest and integration tests. They contain **no credentials, API keys, or PII** — only example titles, paths, channels, types, and workflow IDs suitable for mocked REST tests.
 
 | File | Purpose |
 |------|---------|
@@ -16,10 +16,13 @@ Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, and gRPC/Protobuf documents used b
 | `export-openapi-lossless.json` | Reconstructed OpenAPI 3.1 document returned by the browse export, for `export openapi` round-trip tests |
 | `export-grpc.proto` | Emitted proto3 document returned by `/export/document`, for `export grpc` round-trip tests (MFX-12.5) |
 | `export-graphql.graphql` | Emitted GraphQL SDL returned by `/export/document`, for `export graphql` round-trip tests (MFX-13.5) |
+| `export-avro.avsc` | Emitted Avro `.avsc` JSON returned by `/export/document`, for `export avro` round-trip tests (MFX-19.5) |
 | `export-preview-grpc-lossless.json` | `ExportPreviewResponse` for a lossless protobuf export (native gRPC source) |
 | `export-preview-grpc-lossy.json` | `ExportPreviewResponse` for a lossy protobuf export (REST/OpenAPI source), with advisory |
 | `export-preview-graphql-lossless.json` | `ExportPreviewResponse` for a lossless GraphQL export (native Graph source) |
 | `export-preview-graphql-lossy.json` | `ExportPreviewResponse` for a lossy GraphQL export (REST/OpenAPI source), with advisory |
+| `export-preview-avro-lossless.json` | `ExportPreviewResponse` for a lossless Avro export (native data-schema source) |
+| `export-preview-avro-types-only.json` | `ExportPreviewResponse` for a types-only Avro export (REST/OpenAPI source), with critical advisory |
 | `export-preview-lossless.json` | `ExportPreviewResponse` for a lossless OpenAPI export (fidelity preview) |
 | `export-preview-lossy.json` | `ExportPreviewResponse` for a lossy (event-source) OpenAPI export, with advisory |
 | `export-targets.json` | `ExportTargetsResponse` listing the `openapi` + `sample` emitter targets |

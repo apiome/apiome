@@ -1,0 +1,22 @@
+{
+  "type": "record",
+  "name": "User",
+  "namespace": "com.example",
+  "doc": "A catalog user.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string"
+    },
+    {
+      "name": "email",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "age",
+      "type": ["null", "int"],
+      "default": 0
+    }
+  ]
+}

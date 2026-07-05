@@ -1,0 +1,70 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "version_record_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "version_label": "1.0.0",
+  "fidelity": {
+    "target": {
+      "key": "avro",
+      "format": "avro",
+      "label": "Apache Avro",
+      "description": "Export data schemas as Avro .avsc (records, enums, unions, logical types).",
+      "icon": "database",
+      "paradigm": "data-schema",
+      "multi_file": true,
+      "needs_toolchain": false,
+      "available": true,
+      "unavailable_reason": null
+    },
+    "summary": {
+      "tier": "types-only",
+      "preserved_percent": 42,
+      "total": 12,
+      "preserved": 5,
+      "dropped": 4,
+      "approximated": 2,
+      "synthesized": 1
+    },
+    "report": {
+      "items": [
+        {
+          "kind": "drop",
+          "severity": "critical",
+          "construct": "GET /users/{id}",
+          "detail": "Apache Avro is types-only — only data schemas are exported; the operation was dropped."
+        },
+        {
+          "kind": "drop",
+          "severity": "critical",
+          "construct": "user/signedup",
+          "detail": "Apache Avro is types-only — only data schemas are exported; the channel was dropped."
+        },
+        {
+          "kind": "approx",
+          "severity": "info",
+          "construct": "User.email",
+          "detail": "Apache Avro maps optional/nullable fields to a [\"null\", T] union."
+        },
+        {
+          "kind": "drop",
+          "severity": "warning",
+          "construct": "Money",
+          "detail": "Apache Avro cannot enforce validation constraints; the constraint was dropped."
+        }
+      ],
+      "total": 12
+    },
+    "advisory": {
+      "show": true,
+      "severity": "critical",
+      "requires_ack": true,
+      "target_format": "avro",
+      "dropped": 4,
+      "approximated": 2,
+      "synthesized": 1,
+      "affected": 7,
+      "headline": "Fidelity notice — exporting to Apache Avro may lose detail.",
+      "message": "Exporting to Apache Avro may lose some fidelity. The destination format can't represent everything in this API, so 7 constructs will be dropped or approximated — review the fidelity report before downloading."
+    }
+  }
+}
