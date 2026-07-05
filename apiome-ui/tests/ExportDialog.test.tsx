@@ -1,6 +1,6 @@
 /**
- * ExportDialog — stepped export shell + target-card grid (MFX-6.1, #3855) and the fidelity
- * warning panel (MFX-6.2, #3856).
+ * ExportDialog — stepped export shell + target-card grid (MFX-6.1, #3855), the fidelity
+ * warning panel (MFX-6.2, #3856), and the emitted-artifact preview + download (MFX-6.3, #3857).
  *
  * Covers the tickets' acceptance criteria:
  *  1. The target grid renders from a mocked `GET /api/export/targets` response and every card
@@ -8,12 +8,14 @@
  *  2. Picking a target updates the fidelity headline (tier + preserved-%).
  *  3. Per-target options (MFX-1.4) render from the selected target's options schema.
  *  4. The stepper advances Source → Target → Fidelity → Export, and Export emits via
- *     `POST /api/export/document` and reports the downloaded filename.
+ *     `POST /api/export/document` into the preview card.
  *  5. An unavailable target (missing toolchain) renders disabled and cannot be selected.
  *  6. The Fidelity step fetches the `POST /api/export/preview` dry run and renders the server
  *     advisory verbatim with the expandable per-construct report (MFX-6.2).
  *  7. A lossy target gates the download behind the explicit "Export anyway" acknowledgement;
  *     a lossless target exports without one.
+ *  8. The Export step previews the emitted document with the "valid · round-trip OK" status
+ *     badge, and downloads it on demand as the single file or a client-built `.zip` (MFX-6.3).
  */
 
 import React from 'react';
@@ -229,13 +231,22 @@ function mockFetch(): jest.Mock {
       });
     }
     if (url.includes('/api/export/document') && init?.method === 'POST') {
+      const target = String(JSON.parse(init?.body ?? '{}').target);
+      const doc =
+        target === 'openapi'
+          ? { filename: 'petstore.json', type: 'application/json', text: '{"openapi":"3.1.0"}' }
+          : { filename: 'petstore.proto', type: 'text/plain', text: 'syntax = "proto3";' };
       return Promise.resolve({
         ok: true,
         headers: {
-          get: (name: string) =>
-            name.toLowerCase() === 'content-disposition' ? 'attachment; filename="petstore.proto"' : null,
+          get: (name: string) => {
+            if (name.toLowerCase() === 'content-disposition') {
+              return `attachment; filename="${doc.filename}"`;
+            }
+            return name.toLowerCase() === 'content-type' ? doc.type : null;
+          },
         },
-        blob: () => Promise.resolve(new Blob(['syntax = "proto3";'], { type: 'text/plain' })),
+        text: () => Promise.resolve(doc.text),
       });
     }
     return Promise.resolve({ ok: false, json: () => Promise.resolve({}) });
@@ -258,6 +269,13 @@ async function renderAtTargetStep(fetchMock: jest.Mock) {
   );
   fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
   await waitFor(() => expect(screen.getByText('Choose a target format')).toBeInTheDocument());
+}
+
+/** Advance a fresh dialog to the Fidelity step for the given target. */
+async function renderAtFidelityStep(fetchMock: jest.Mock, target: string) {
+  await renderAtTargetStep(fetchMock);
+  fireEvent.click(screen.getByTestId(`export-target-${target}`));
+  fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
 }
 
 describe('ExportDialog — target-card grid (MFX-6.1)', () => {
@@ -347,7 +365,7 @@ describe('ExportDialog — target-card grid (MFX-6.1)', () => {
     await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
   });
 
-  it('exports the document, sending only changed options, and reports the filename', async () => {
+  it('exports the document, sending only changed options, into the preview card', async () => {
     const fetchMock = mockFetch();
     await renderAtTargetStep(fetchMock);
 
@@ -361,10 +379,11 @@ describe('ExportDialog — target-card grid (MFX-6.1)', () => {
     fireEvent.click(screen.getByRole('checkbox'));
     fireEvent.click(screen.getByRole('button', { name: /^export anyway$/i }));
 
+    // The emitted document lands in the preview card (MFX-6.3), not an immediate download.
     await waitFor(() =>
-      expect(screen.getByText(/check your downloads/i)).toBeInTheDocument(),
+      expect(screen.getByTestId('export-artifact-preview')).toBeInTheDocument(),
     );
-    expect(screen.getByText('petstore.proto')).toBeInTheDocument();
+    expect(screen.getByTestId('export-artifact-preview')).toHaveTextContent('petstore.proto');
 
     const documentCall = fetchMock.mock.calls.find(([url]) =>
       String(url).includes('/api/export/document'),
@@ -377,7 +396,6 @@ describe('ExportDialog — target-card grid (MFX-6.1)', () => {
       target: 'proto',
       options: { emit_services: false },
     });
-    expect(URL.createObjectURL).toHaveBeenCalled();
 
     // The stepper reached the final step.
     expect(screen.getByText('4. Export')).toBeInTheDocument();
@@ -428,13 +446,6 @@ describe('ExportDialog — fidelity warning panel (MFX-6.2)', () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });
-
-  /** Advance a fresh dialog to the Fidelity step for the given target. */
-  async function renderAtFidelityStep(fetchMock: jest.Mock, target: string) {
-    await renderAtTargetStep(fetchMock);
-    fireEvent.click(screen.getByTestId(`export-target-${target}`));
-    fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
-  }
 
   it('fetches the dry-run preview and renders the advisory verbatim', async () => {
     const fetchMock = mockFetch();
@@ -519,6 +530,122 @@ describe('ExportDialog — fidelity warning panel (MFX-6.2)', () => {
     const exportButton = screen.getByRole('button', { name: /^export$/i });
     expect(exportButton).toBeEnabled();
     fireEvent.click(exportButton);
-    await waitFor(() => expect(screen.getByText(/check your downloads/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('export-artifact-preview')).toBeInTheDocument(),
+    );
+  });
+});
+
+describe('ExportDialog — emitted-artifact preview + download (MFX-6.3)', () => {
+  /** The `download` filenames handed to the browser, captured from the anchor clicks. */
+  let downloads: string[];
+  /** The blobs handed to `URL.createObjectURL`, captured per download. */
+  let blobs: Blob[];
+
+  beforeEach(() => {
+    downloads = [];
+    blobs = [];
+    (URL as unknown as { createObjectURL: unknown }).createObjectURL = jest.fn((blob: unknown) => {
+      blobs.push(blob as Blob);
+      return 'blob:mock';
+    });
+    (URL as unknown as { revokeObjectURL: unknown }).revokeObjectURL = jest.fn();
+    jest
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(function (this: HTMLAnchorElement) {
+        downloads.push(this.download);
+      });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  /** Run a fresh dialog through Fidelity into the Export step's preview for `target`. */
+  async function renderAtPreview(fetchMock: jest.Mock, target: string) {
+    await renderAtFidelityStep(fetchMock, target);
+    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
+    if (target === 'proto') {
+      fireEvent.click(screen.getByRole('checkbox'));
+      fireEvent.click(screen.getByRole('button', { name: /^export anyway$/i }));
+    } else {
+      fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
+    }
+    await waitFor(() =>
+      expect(screen.getByTestId('export-artifact-preview')).toBeInTheDocument(),
+    );
+  }
+
+  it('previews the emitted document text before any download', async () => {
+    await renderAtPreview(mockFetch(), 'proto');
+
+    expect(screen.getByTestId('export-artifact-content')).toHaveTextContent('syntax = "proto3";');
+    // Nothing was downloaded yet — the preview replaces the old immediate download.
+    expect(downloads).toHaveLength(0);
+  });
+
+  it('badges a parsed lossless export as "valid · round-trip OK" (mockup wording)', async () => {
+    await renderAtPreview(mockFetch(), 'openapi');
+
+    expect(screen.getByTestId('export-artifact-badge')).toHaveTextContent(
+      'valid · round-trip OK',
+    );
+  });
+
+  it('badges a lossy export as a lossy round-trip, without a validity claim for unparsed formats', async () => {
+    await renderAtPreview(mockFetch(), 'proto');
+
+    // proto has no client-side parser and its report predicts losses: round-trip half only.
+    expect(screen.getByTestId('export-artifact-badge')).toHaveTextContent(/^lossy round-trip$/);
+  });
+
+  it('badges a malformed emitted document as invalid', async () => {
+    const fetchMock = mockFetch();
+    // Corrupt the emitted JSON: the client-side re-parse must catch it.
+    fetchMock.mockImplementation(((input: unknown, init?: { method?: string; body?: string }) => {
+      const url = typeof input === 'string' ? input : String(input);
+      if (url.includes('/api/export/document') && init?.method === 'POST') {
+        return Promise.resolve({
+          ok: true,
+          headers: {
+            get: (name: string) => {
+              if (name.toLowerCase() === 'content-disposition') {
+                return 'attachment; filename="petstore.json"';
+              }
+              return name.toLowerCase() === 'content-type' ? 'application/json' : null;
+            },
+          },
+          text: () => Promise.resolve('{"openapi": '),
+        });
+      }
+      return mockFetch()(input, init);
+    }) as never);
+
+    await renderAtPreview(fetchMock, 'openapi');
+    expect(screen.getByTestId('export-artifact-badge')).toHaveTextContent('invalid JSON');
+  });
+
+  it('downloads the single file on demand with its served media type', async () => {
+    await renderAtPreview(mockFetch(), 'proto');
+
+    fireEvent.click(screen.getByRole('button', { name: /download petstore\.proto/i }));
+    expect(downloads).toEqual(['petstore.proto']);
+    expect(blobs[0].type).toBe('text/plain');
+  });
+
+  it('downloads a client-built .zip bundle on demand', async () => {
+    await renderAtPreview(mockFetch(), 'proto');
+
+    fireEvent.click(screen.getByRole('button', { name: /download \.zip/i }));
+    expect(downloads).toEqual(['petstore.zip']);
+    expect(blobs[0].type).toBe('application/zip');
+  });
+
+  it('supports downloading both forms from one preview', async () => {
+    await renderAtPreview(mockFetch(), 'openapi');
+
+    fireEvent.click(screen.getByRole('button', { name: /download petstore\.json/i }));
+    fireEvent.click(screen.getByRole('button', { name: /download \.zip/i }));
+    expect(downloads).toEqual(['petstore.json', 'petstore.zip']);
   });
 });
