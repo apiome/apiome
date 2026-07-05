@@ -26,9 +26,24 @@ import {
   optionFieldsFromSchema,
   tierBadgeClass,
   tierLabel,
+  type ExportFidelityTier,
   type ExportTargetCard,
   type OptionField,
 } from './exportTargetCatalog';
+
+/** What a successful emit produced — handed to `onExported` (e.g. to record it as a recent export, MFX-6.5). */
+export interface ExportedArtifactSummary {
+  /** Registry key of the emitted target, e.g. `"proto"`. */
+  targetKey: string;
+  /** Human label of the emitted target, e.g. `"Protobuf"`. */
+  targetLabel: string;
+  /** Fidelity tier of the conversion (MFX-2.5). */
+  tier: ExportFidelityTier;
+  /** Share of constructs carried faithfully, 0–100. */
+  preservedPercent: number;
+  /** Filename of the emitted document. */
+  filename: string;
+}
 
 interface ExportDialogProps {
   open: boolean;
@@ -40,7 +55,7 @@ interface ExportDialogProps {
   /** The revision to export (UUID or version label); the latest revision when omitted. */
   version?: string | null;
   /** Called after a successful export (the document has been emitted and is being previewed). */
-  onExported?: () => void;
+  onExported?: (summary: ExportedArtifactSummary) => void;
 }
 
 type Step = 'source' | 'target' | 'fidelity' | 'export';
@@ -187,7 +202,13 @@ export function ExportDialog({
         filenameFromDisposition(res.headers.get('content-disposition')) ||
         `${artifact}-${selected.key}.txt`;
       setEmitted({ filename, mediaType: res.headers.get('content-type') || '', text });
-      onExported?.();
+      onExported?.({
+        targetKey: selected.key,
+        targetLabel: selected.entry.descriptor.label,
+        tier: selected.entry.fidelity.tier,
+        preservedPercent: selected.entry.fidelity.preserved_percent,
+        filename,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The export failed. Try again.');
       setStep('fidelity');
