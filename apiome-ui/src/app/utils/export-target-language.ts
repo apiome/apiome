@@ -16,7 +16,8 @@
  * OpenAPI/Swagger/AsyncAPI emit JSON — so the default language is JSON, refined to YAML/XML only when a
  * byte sample of the actual artifact says otherwise (e.g. the CLI's `--yaml` output). Protobuf/gRPC
  * emits `.proto` source (Monaco `protobuf` grammar). GraphQL emits SDL (Monaco `graphql` grammar).
- * Avro emits `.avsc` JSON (Monaco `json` grammar). Everything unknown degrades to `plaintext`, never throwing.
+ * Avro emits `.avsc` JSON (Monaco `json` grammar). Unknown targets degrade to `plaintext` when no
+ * sample is available, and are otherwise sniffed as JSON/YAML/XML when their bytes are recognisable.
  *
  * The full registry-driven export dialog + target-card grid is a later epic (MFX-EPIC-41); this
  * module is the small client-metadata layer that grid — and any emitted-artifact viewer — reads.
@@ -110,7 +111,7 @@ function sniffSerialization(sample: string | null | undefined): string | undefin
  * @param sample An optional sample of the emitted bytes used to refine JSON-or-YAML targets and to
  *   type otherwise-unknown targets; omit it to get the target's canonical default.
  * @returns A Monaco language id (`json`, `yaml`, `xml`, `plaintext`), defaulting to `'plaintext'` for
- *   unrecognised targets.
+ *   unrecognised targets when the sample is absent or inconclusive.
  */
 export function monacoLanguageForExportTarget(
   targetFormat: string | null | undefined,

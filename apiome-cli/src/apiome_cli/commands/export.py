@@ -39,6 +39,7 @@ from apiome_cli.config import require_api_key
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_USAGE
 from apiome_cli.export_output import (
     EXPORT_TARGET_COLUMNS,
+    fidelity_tier,
     format_export_fidelity_summary,
     is_lossy,
     target_rows,
@@ -583,10 +584,19 @@ def export_avro(
             typer.echo(line, err=True)
 
     if is_lossy(fidelity) and not force:
+        if fidelity_tier(fidelity) == "types-only":
+            message = (
+                "Types-only export — Avro is a data-schema format; operations and channels are "
+                "omitted (a REST/OpenAPI source also loses HTTP semantics and validation "
+                "constraints). Re-run with --force to accept."
+            )
+        else:
+            message = (
+                "Lossy export — the Avro schema does not carry every source construct. "
+                "Re-run with --force to accept."
+            )
         typer.echo(
-            "Types-only export — Avro is a data-schema format; operations and channels are "
-            "omitted (a REST/OpenAPI source also loses HTTP semantics and validation "
-            "constraints). Re-run with --force to accept.",
+            message,
             err=True,
         )
         raise typer.Exit(EXIT_ERROR)
