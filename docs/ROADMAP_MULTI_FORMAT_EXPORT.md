@@ -727,7 +727,7 @@ Sources: https://spec.graphql.org/September2025/ · `graphql-core` `print_schema
 | 13.1 ✅ | GraphQL SDL emitter | model → SDL (Query/Mutation/types) via graphql-core | export,multi-protocol,python,mvp | N | Y | M | apiome-rest |
 | 13.2 ✅ | Input/output type splitting | derive input types; map operations→fields | export,multi-protocol,mvp | N | Y | M | apiome-rest |
 | 13.3 ✅ | GraphQL fidelity pack | HTTP semantics DROP; constraints→custom scalars | export,multi-protocol,mvp | N | Y | S | apiome-rest |
-| 13.4 | Validate + round-trip | `build_schema` validate; re-import diff | export,validation,mvp | Y | Y | S | apiome-rest |
+| 13.4 ✅ | Validate + round-trip | `build_schema` validate; re-import diff | export,validation,mvp | Y | Y | S | apiome-rest |
 | 13.5 | GraphQL target card + CLI + fixtures | UI/CLI + fixtures; supersede #221/#2214 | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 | 13.6 · #4344 | Federation subgraph output mode | subgraph SDL w/ synthesized `@key` (SYNTH); rover composition check | export,multi-protocol | Y | N | M | apiome-rest |
 
@@ -754,7 +754,14 @@ Sources: https://spec.graphql.org/September2025/ · `graphql-core` `print_schema
 - **Technical Stack.** Python.
 - **Status.** The predictive fidelity pack (MFX-2.3 seam) that surfaces what the GraphQL target *can't* natively carry — the constructs GraphQL's six-axis `CapabilityProfile` (`events=False`, `constraints=False`) hides. The reference `GraphQlFidelityRulePack` (`apiome-rest/src/app/graphql_emitter.py`) refines the profile-derived default so a **REST/OpenAPI source no longer reports silent HTTP carries or generic constraint demotions**: **HTTP semantics** (method, path, status, headers) become honest `APPROX` reframes to Query/Mutation fields, **validation constraints** map to `custom scalar` (`APPROX`), and **oneOf/unions** stay `OK` when members are object types or `APPROX` when ineligible. Verdicts flow through `compute_lossiness_for_emitter` → the fidelity advisory (MFX-2.4) and target/export fidelity surfaces (MFX-2.5); `GraphQlEmitter` records matching `http-binding`/`http-status`/`http-headers`/`field-constraints` losses at emit time. Tests in `tests/test_fidelity_rulepack.py`. apiome-rest 1.75.27 → 1.75.28.
 
-*(13.4 round-trip validate; 13.5 target card + `apiome export graphql` + fixtures, **superseding closed #221** and feeding #2214.)*
+### MFX-13.4 — Validate + round-trip  ·  **#3887**  ·  ✅ **Done**
+- **Problem.** A buggy emitter could produce output that is illegal GraphQL SDL, and *predicted* fidelity loss (MFX-13.3) is only a prediction until it is *measured* against a real re-import.
+- **Solution / Scope.** Re-import the emitted SDL via the matching MFI GraphQL parser (`build_schema` + `validate_schema`) and diff the re-imported model against the source. **Acceptance Criteria.** Valid output passes / broken output is caught; round-trip diff corroborates the predicted reframing losses and flags where they diverge.
+- **Dependencies / Parallelism.** After 13.1–13.3, MFI parsers + diff. Blocks 13.5.
+- **Technical Stack.** Python (`graphql-core`).
+- **Status.** A pure `apiome-rest/src/app/graphql_roundtrip.py` module (`round_trip_graphql(api, *, opts, emit_result) → RoundTripReport`) that composes existing machinery — the GraphQL emitter (MFX-13.1), the MFI-10.1 SDL parser (`parse_graphql` / `build_schema` + `validate_schema`), the GraphQL import source (`GraphQlImportSource`, MFI-10.6) and normalizer (MFI-10.2), and the compare-any-two canonical diff (`app.diff.diff`, MFI-3.2) — into one emit → validate → re-import → diff loop. The `RoundTripReport` carries a single ordered `RoundTripStatus` (`INVALID` build/validate failure → `UNPARSEABLE` re-import failure → `LOSSY` → `LOSSLESS`), the empirical `ModelDiff`, and the emitter's *predicted* `losses`, with derived `valid` (schema-clean **and** re-importable — the MFX-5.1 check), `empirically_lossless` (entity diff empty), `predicted_lossless`, and `diverges` (prediction vs. measurement disagree — the MFX-2.6 "flagged where they diverge" flag). A Graph-native source in normal form round-trips **lossless** (empty diff); invalid SDL is `INVALID`; a cross-paradigm REST source round-trips `LOSSY` with its synthesized-input / HTTP-reframing losses corroborated. Tests in `tests/test_graphql_roundtrip.py`. apiome-rest 1.75.28 → 1.75.29.
+
+*(13.5 target card + `apiome export graphql` + fixtures, **superseding closed #221** and feeding #2214.)*
 
 ---
 
