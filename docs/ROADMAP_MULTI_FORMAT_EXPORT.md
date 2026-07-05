@@ -466,7 +466,7 @@ flowchart LR
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 6.1 ✅ | ExportDialog + target-card grid | mirror ImportDialog; pick target + options | export,ui,typescript,mvp | N | Y | M | apiome-ui |
-| 6.2 | Fidelity warning panel + report | advisory message + per-construct DROP/APPROX/SYNTH list | export,ui,mvp | N | Y | M | apiome-ui |
+| 6.2 ✅ | Fidelity warning panel + report | advisory message + per-construct DROP/APPROX/SYNTH list | export,ui,mvp | N | Y | M | apiome-ui |
 | 6.3 | Preview + download | preview emitted artifact; download single/zip | export,ui,mvp | Y | Y | S | apiome-ui |
 | 6.4 | Round-trip diff view | show what changed if re-imported (uses 2.6) | export,ui,version-control | Y | N | M | apiome-ui |
 | 6.5 | Version-scoped entry points | Export is an action on the viewed version (NOT a global nav item) | export,ui | Y | Y | S | apiome-ui |
@@ -477,7 +477,7 @@ flowchart LR
 - **Dependencies / Parallelism.** After 1.2, 2.5. Blocks 6.2.
 - **Technical Stack.** Next.js, TanStack Query.
 
-### MFX-6.2 — Fidelity warning panel + report  ·  **#3856**
+### MFX-6.2 — Fidelity warning panel + report  ·  **#3856**  ·  ✅ **Done**
 - **Problem.** **(headline)** The user must see, before downloading, that the target may lose fidelity.
 - **Solution / Scope.** Render (per the mockup): the advisory message (2.4) prominently; a **preserved-% ring** and **count chips** (`N dropped · N approximated · N synthesized · N clean`); an expandable per-construct report (DROP/APPROX/SYNTH/OK with source path + how it degrades); and an explicit **"Export anyway"** confirm for lossy conversions. Hidden/relaxed when lossless.
 - **Acceptance Criteria.** Warning shows real counts + preserved-%; full report expandable; "Export anyway" required when lossy; absent when clean.

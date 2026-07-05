@@ -13,10 +13,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '../../../ui/Button';
 import { Alert } from '../../../ui/Alert';
 import { useExportTargets } from './useExportTargets';
+import { useExportPreview } from './useExportPreview';
+import { FidelityWarningPanel } from './FidelityWarningPanel';
+import { requiresExportAcknowledgement } from './exportFidelityPreview';
 import {
   changedOptions,
   exportTargetCards,
-  fidelityChips,
   optionFieldsFromSchema,
   tierBadgeClass,
   tierLabel,
@@ -68,9 +70,12 @@ function downloadBlob(blob: Blob, filename: string): void {
  * every registered emitter from `GET /api/export/targets`, each card carrying a per-source
  * fidelity badge (`lossless` / `lossy` / `types-only`, MFX-2.5) so the trade-off is visible
  * before selecting. Picking a target updates the fidelity headline under the grid; the Fidelity
- * step shows the preserved-% summary and count chips (the full advisory + per-construct report
- * lands with MFX-6.2); per-target options (MFX-1.4) render from the target's options schema.
- * Export emits via `POST /api/export/document` and downloads the artifact.
+ * step renders the full warning panel (MFX-6.2, #3856): the server-computed advisory (MFX-2.4),
+ * a preserved-% ring with count chips, and the expandable per-construct report from the
+ * `POST /api/export/preview` dry run. A lossy conversion keeps the download gated behind an
+ * explicit "Export anyway" acknowledgement; a lossless one stays quiet. Per-target options
+ * (MFX-1.4) render from the target's options schema. Export emits via `POST /api/export/document`
+ * and downloads the artifact.
  */
 export function ExportDialog({
   open,
@@ -86,6 +91,8 @@ export function ExportDialog({
   const [exporting, setExporting] = useState(false);
   const [exportedFilename, setExportedFilename] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** Whether the user has acknowledged a lossy conversion ("Export anyway", MFX-6.2). */
+  const [acknowledged, setAcknowledged] = useState(false);
 
   const { response, loading, error: targetsError } = useExportTargets(open, artifact, version);
   const cards = useMemo(() => exportTargetCards(response), [response]);
@@ -101,6 +108,14 @@ export function ExportDialog({
     [selected],
   );
 
+  // The dry-run fidelity preview (advisory + per-construct report, MFX-6.2) for the chosen
+  // target, fetched while the Fidelity step is showing.
+  const {
+    preview,
+    loading: previewLoading,
+    error: previewError,
+  } = useExportPreview(open && step === 'fidelity', artifact, version, selectedKey);
+
   const sourceLabel = artifactLabel || artifact;
   const versionLabel = response?.version_label || version || 'latest';
 
@@ -111,6 +126,7 @@ export function ExportDialog({
     setExporting(false);
     setExportedFilename(null);
     setError(null);
+    setAcknowledged(false);
   }, []);
 
   const handleClose = useCallback(() => {
@@ -123,6 +139,8 @@ export function ExportDialog({
     if (!card.available) return;
     setSelectedKey(card.key);
     setError(null);
+    // A different target is a different conversion — its loss must be re-acknowledged.
+    setAcknowledged(false);
     const defaults: Record<string, unknown> = {};
     for (const field of optionFieldsFromSchema(card.entry.options_schema, card.entry.default_options)) {
       defaults[field.key] = field.defaultValue;
@@ -174,6 +192,9 @@ export function ExportDialog({
 
   const stepIndex = STEP_ORDER.indexOf(step);
   const fidelity = selected?.entry.fidelity ?? null;
+  // Lossy conversions gate the download behind the explicit "Export anyway" acknowledgement
+  // (MFX-6.2). Driven by the coarse tier so the gate never depends on the preview fetch.
+  const needsAck = fidelity ? requiresExportAcknowledgement(fidelity.tier) : false;
 
   return (
     <Dialog open={open} onOpenChange={(o) => (!o ? handleClose() : undefined)}>
@@ -339,52 +360,16 @@ export function ExportDialog({
 
         {step === 'fidelity' && selected && fidelity && (
           <div className="mt-4 space-y-4">
-            <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    Exporting to {selected.entry.descriptor.label}
-                  </div>
-                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {selected.entry.descriptor.description}
-                  </div>
-                </div>
-                <span
-                  className={`rounded-full px-2.5 py-1 text-xs font-semibold ${tierBadgeClass(fidelity.tier)}`}
-                >
-                  {tierLabel(fidelity.tier)}
-                </span>
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center gap-4">
-                <div className="text-center">
-                  <div
-                    data-testid="export-preserved-percent"
-                    className="text-3xl font-bold text-gray-900 dark:text-gray-100"
-                  >
-                    {fidelity.preserved_percent}%
-                  </div>
-                  <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    preserved
-                  </div>
-                </div>
-                <div className="flex flex-1 flex-wrap items-center gap-2">
-                  {fidelityChips(fidelity).map((chip) => (
-                    <span
-                      key={chip.key}
-                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${chip.className}`}
-                    >
-                      {chip.count} {chip.label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                {fidelity.total} construct{fidelity.total === 1 ? '' : 's'} considered for this
-                source. The per-construct fidelity report opens with the detailed warning panel.
-              </p>
-            </div>
+            <FidelityWarningPanel
+              targetLabel={selected.entry.descriptor.label}
+              targetDescription={selected.entry.descriptor.description}
+              fidelity={fidelity}
+              preview={preview}
+              previewLoading={previewLoading}
+              previewError={previewError}
+              acknowledged={acknowledged}
+              onAcknowledgedChange={setAcknowledged}
+            />
           </div>
         )}
 
@@ -435,9 +420,17 @@ export function ExportDialog({
               </Button>
             )}
             {step === 'fidelity' && (
-              <Button onClick={() => void handleExport()} disabled={exporting}>
+              <Button
+                onClick={() => void handleExport()}
+                disabled={exporting || (needsAck && !acknowledged)}
+                title={
+                  needsAck && !acknowledged
+                    ? 'Acknowledge the fidelity loss to enable the export.'
+                    : undefined
+                }
+              >
                 <Download className="h-4 w-4" aria-hidden />
-                Export
+                {needsAck ? 'Export anyway' : 'Export'}
               </Button>
             )}
             {step === 'export' && exportedFilename && (
