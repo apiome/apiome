@@ -117,7 +117,7 @@ _EVENT_OPERATION_KINDS = frozenset(
 def _union_graphql_eligible(
     type_: Type, types_by_key: Dict[str, Type]
 ) -> bool:
-    """Return ``True`` when a ``UNION``'s members are object/interface types for a GraphQL union."""
+    """Return ``True`` when a ``UNION``'s members are object types for a GraphQL union."""
     if not type_.union_members:
         return False
     for member_key in type_.union_members:
@@ -127,7 +127,7 @@ def _union_graphql_eligible(
         if member is None or member.kind is not TypeKind.RECORD:
             return False
         family = (member.extras or {}).get("graphql_type", "object")
-        if family not in ("object", "interface"):
+        if family != "object":
             return False
     return True
 
@@ -197,10 +197,11 @@ class GraphQlFidelityRulePack(CapabilityRulePack):
             return super().operation_verdict(operation)
         dropped = _dropped_http_semantics(operation)
         if dropped:
+            dropped_verb = "is" if "," not in dropped else "are"
             return FidelityVerdict.approx(
                 message=f"{self.target_label} has no HTTP operation vocabulary; the "
                 f"{operation.kind.value} operation is reframed as a Query/Mutation "
-                f"field and its {dropped} are dropped",
+                f"field and its {dropped} {dropped_verb} dropped",
                 target_mapping=f"HTTP operation → Query/Mutation field ({dropped} dropped)",
             )
         return super().operation_verdict(operation)
@@ -212,7 +213,7 @@ class GraphQlFidelityRulePack(CapabilityRulePack):
         return super().type_verdict(type_)
 
     def _union_verdict(self, type_: Type) -> FidelityVerdict:
-        """``OK`` when members are object/interface types, else ``APPROX``."""
+        """``OK`` when members are object types, else ``APPROX``."""
         if _union_graphql_eligible(type_, self._types_by_key):
             return FidelityVerdict.ok(
                 message=f"union carried to {self.target_label}",
