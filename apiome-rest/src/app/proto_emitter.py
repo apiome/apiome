@@ -77,6 +77,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
+from .field_identity_store import FieldNumberAllocator
 
 __all__ = ["ProtoEmitOptions", "ProtoEmitter", "compile_emitted_descriptor_set"]
 
@@ -170,6 +171,10 @@ class ProtoEmitOptions(EmitOptions):
         default=True,
         description="Emit ``service``/``rpc`` blocks. Disable for a types-only ``.proto``.",
     )
+    persisted_field_numbers: Dict[str, int] = Field(
+        default_factory=dict,
+        description="Pre-loaded stable field numbers keyed by canonical field key (MFX-12.2).",
+    )
 
 
 class ProtoEmitter(Emitter, register=True):
@@ -248,6 +253,7 @@ class ProtoEmitter(Emitter, register=True):
             media_type=self.OUTPUT_MEDIA_TYPE,
             provenance=writer.tracker.records(),
             losses=writer.losses.records(),
+            field_identity_assignments=writer.field_identity_assignments,
         )
 
 
@@ -284,6 +290,7 @@ class _ProtoWriter:
         self._emittable_keys = {t.key for t in self._emittable}
         self._children = self._build_nesting()
         self._imports: set[str] = set()
+        self.field_identity_assignments: Dict[str, int] = {}
         self._note_foreign_types(api)
 
     def _is_local(self, key: str) -> bool:
@@ -423,7 +430,9 @@ class _ProtoWriter:
     def _render_fields(self, type_: Type, pad: str) -> List[str]:
         """Render a record's fields, grouping ``oneof`` members and synthesizing missing numbers."""
         lines: List[str] = []
-        counter = _FieldNumberAllocator(type_)
+        counter = FieldNumberAllocator(
+            type_, persisted=self._options.persisted_field_numbers
+        )
         declared_oneofs: List[str] = [
             _sanitize_identifier(name) for name in type_.extras.get("oneofs", [])
         ]
@@ -446,6 +455,7 @@ class _ProtoWriter:
             if name not in emitted_oneofs:
                 lines.append(f"{pad}oneof {name} {{")
                 lines.append(f"{pad}}}")
+        self.field_identity_assignments.update(counter.new_assignments)
         return lines
 
     def _render_oneof(
@@ -454,7 +464,7 @@ class _ProtoWriter:
         safe_name: str,
         source_name: str,
         pad: str,
-        counter: "_FieldNumberAllocator",
+        counter: FieldNumberAllocator,
     ) -> List[str]:
         """Render a ``oneof`` block with every member field of ``source_name``."""
         inner = pad + _INDENT
@@ -470,7 +480,7 @@ class _ProtoWriter:
         type_: Type,
         field: CanonicalField,
         pad: str,
-        counter: "_FieldNumberAllocator",
+        counter: FieldNumberAllocator,
         *,
         in_oneof: bool = False,
     ) -> str:
@@ -481,8 +491,8 @@ class _ProtoWriter:
         """
         pointer = ProvenanceTracker.child("/messages", type_.key, "fields", field.name)
         name = _sanitize_identifier(field.name)
-        number = counter.allocate(field)
-        if field.field_number is None:
+        number, synthesized = counter.allocate(field)
+        if synthesized:
             self.losses.record(
                 LossKind.INFERRED,
                 "synthesized-field-number",
@@ -824,30 +834,6 @@ class _ProtoWriter:
         if operation.deprecated:
             options.append(f"{inner}option deprecated = true;")
         return options
-
-
-class _FieldNumberAllocator:
-    """Assigns field numbers, honouring source numbers and filling gaps for numberless fields.
-
-    A protobuf source's fields all carry a number (round-trip fidelity); a field converted in from
-    a non-proto source may not, so the allocator hands it the next number not already claimed by a
-    source-numbered field in the same message.
-    """
-
-    def __init__(self, type_: Type) -> None:
-        self._used: set[int] = {
-            f.field_number for f in type_.fields if isinstance(f.field_number, int)
-        }
-        self._next = 1
-
-    def allocate(self, field: CanonicalField) -> int:
-        """Return ``field``'s source number, or the next free number when it has none."""
-        if isinstance(field.field_number, int):
-            return field.field_number
-        while self._next in self._used:
-            self._next += 1
-        self._used.add(self._next)
-        return self._next
 
 
 # ===========================================================================

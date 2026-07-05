@@ -11962,6 +11962,47 @@ class Database:
         except Exception as exc:  # pragma: no cover - accounting must never raise
             _logger.warning("Failed to update mock instance activity for %s: %s", mock_id, exc)
 
+    def list_export_field_identities(
+        self, tenant_id: str, project_id: str, target: str
+    ) -> list[Dict[str, Any]]:
+        """Return persisted field-identity rows for one artifact export target (MFX-12.2)."""
+        query = """
+            SELECT field_key, field_number
+            FROM apiome.export_field_identities
+            WHERE tenant_id = %s::uuid
+              AND project_id = %s::uuid
+              AND target = %s
+            ORDER BY field_key
+        """
+        return self.execute_query(query, (tenant_id, project_id, target))
+
+    def upsert_export_field_identity(
+        self,
+        tenant_id: str,
+        project_id: str,
+        target: str,
+        field_key: str,
+        field_number: int,
+    ) -> Dict[str, Any]:
+        """Insert or refresh one persisted export field identity (MFX-12.2)."""
+        query = """
+            INSERT INTO apiome.export_field_identities (
+                tenant_id, project_id, target, field_key, field_number
+            )
+            VALUES (%s::uuid, %s::uuid, %s, %s, %s)
+            ON CONFLICT ON CONSTRAINT uq_export_field_identities_scope
+            DO UPDATE SET
+                field_number = EXCLUDED.field_number,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING id, tenant_id, project_id, target, field_key, field_number,
+                      created_at, updated_at
+        """
+        rows = self.execute_query(
+            query,
+            (tenant_id, project_id, target, field_key, field_number),
+        )
+        return rows[0]
+
 
 # Global database instance
 db = Database()

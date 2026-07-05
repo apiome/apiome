@@ -50,7 +50,7 @@ from .export_fidelity import (
     build_export_fidelity,
     build_target_fidelity,
 )
-from .export_service import ExportError, emit_canonical, resolve_emitter
+from .export_service import ExportError, ExportPersistenceContext, emit_canonical, resolve_emitter
 from .export_source import ExportSourceError, load_export_source
 from .lossiness import LossinessSeverity
 
@@ -353,7 +353,15 @@ async def emit_export_document(
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
     try:
-        result = emit_canonical(source.api, request.target, opts=request.options)
+        result = emit_canonical(
+            source.api,
+            request.target,
+            opts=request.options,
+            persistence=ExportPersistenceContext(
+                tenant_id=tenant_id,
+                artifact_id=source.artifact_id,
+            ),
+        )
     except ExportError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 

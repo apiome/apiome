@@ -308,6 +308,11 @@ class EmitResult(BaseModel):
         description="Fidelity losses the paradigm projection incurred (MFI-22.2), "
         "sorted deterministically. Empty when the conversion was lossless.",
     )
+    field_identity_assignments: Dict[str, int] = Field(
+        default_factory=dict,
+        description="Newly synthesized field-identity numbers from this emit (MFX-12.2), "
+        "keyed by canonical field key. Empty when no new assignments were made.",
+    )
 
     @property
     def document(self) -> Dict[str, Any]:

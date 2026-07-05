@@ -18,6 +18,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional, Union
 
+from pydantic import BaseModel, ConfigDict, Field
+
 from .canonical_model import CanonicalApi
 from .emitter import (
     EmitOptions,
@@ -30,9 +32,17 @@ from .emitter import (
     get_emitter,
     load_builtin_emitters,
 )
+from .field_identity_store import (
+    PROTO3_TARGET,
+    load_persisted_field_numbers,
+    merge_persisted_into_options,
+    persist_field_number_assignments,
+)
+from .proto_emitter import ProtoEmitOptions, ProtoEmitter
 
 __all__ = [
     "ExportError",
+    "ExportPersistenceContext",
     "resolve_emit_format",
     "resolve_emitter",
     "resolve_emit_options",
@@ -46,6 +56,15 @@ class ExportError(Exception):
     def __init__(self, message: str, *, status_code: int = 400) -> None:
         super().__init__(message)
         self.status_code = status_code
+
+
+class ExportPersistenceContext(BaseModel):
+    """Optional tenant/artifact coordinates for persisting synthesized field identities (MFX-12.2)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tenant_id: str = Field(description="Owning tenant id.")
+    artifact_id: str = Field(description="The artifact (project) id being exported.")
 
 
 def _available_target_labels() -> list[str]:
@@ -158,6 +177,7 @@ def emit_canonical(
     target: str,
     *,
     opts: Optional[Union[EmitOptions, Dict[str, Any]]] = None,
+    persistence: Optional[ExportPersistenceContext] = None,
 ) -> EmitResult:
     """Emit ``api`` through the registered emitter for ``target``.
 
@@ -166,6 +186,8 @@ def emit_canonical(
         target: Emitter key or format key.
         opts: Optional per-target emit options — a validated :class:`EmitOptions`
             instance or a raw ``dict`` validated against the target's schema.
+        persistence: When provided for a proto3 export, load and persist stable
+            synthesized field numbers (MFX-12.2).
 
     Returns:
         The emitter's :class:`~app.emitter.EmitResult`.
@@ -174,5 +196,32 @@ def emit_canonical(
         ExportError: When ``target`` does not resolve or options fail validation.
     """
     emitter = resolve_emitter(target)
-    options = _normalize_opts(type(emitter), opts)
-    return emitter.emit(api, opts=options)
+    emitter_cls = type(emitter)
+    options = _normalize_opts(emitter_cls, opts)
+
+    if persistence is not None and issubclass(emitter_cls, ProtoEmitter):
+        persisted = load_persisted_field_numbers(
+            persistence.tenant_id,
+            persistence.artifact_id,
+            PROTO3_TARGET,
+        )
+        if isinstance(options, ProtoEmitOptions):
+            options = merge_persisted_into_options(options, persisted)
+        else:
+            raw = options.model_dump() if isinstance(options, EmitOptions) else {}
+            merged = {**(raw.get("persisted_field_numbers") or {}), **persisted}
+            options = ProtoEmitOptions.model_validate(
+                {**raw, "persisted_field_numbers": merged}
+            )
+
+    result = emitter.emit(api, opts=options)
+
+    if persistence is not None and result.field_identity_assignments:
+        persist_field_number_assignments(
+            persistence.tenant_id,
+            persistence.artifact_id,
+            PROTO3_TARGET,
+            result.field_identity_assignments,
+        )
+
+    return result
