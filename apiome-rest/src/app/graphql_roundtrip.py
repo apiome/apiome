@@ -228,7 +228,18 @@ def round_trip_graphql(
         :attr:`RoundTripReport.import_error` carries the reason.
     """
     if emit_result is None:
-        emit_result = GraphQlEmitter().emit(api, opts=opts)
+        try:
+            emit_result = GraphQlEmitter().emit(api, opts=opts)
+        except ValueError as exc:
+            return RoundTripReport(
+                validation_errors=[
+                    {"severity": "error", "message": str(exc), "source": "", "locations": ""}
+                ],
+                reimported=False,
+                import_error=None,
+                diff=None,
+                predicted_losses=[],
+            )
 
     sdl = _sdl_from_emit_result(emit_result)
 

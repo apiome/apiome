@@ -17,6 +17,8 @@ against the source. The acceptance criteria proven here:
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 from app.canonical_model import (
     ApiIdentity,
     ApiParadigm,
@@ -36,6 +38,7 @@ from app.emitter import EmitResult, EmittedFile, Loss, LossKind
 from app.graphql_normalizer import GraphQlNormalizer
 from app.graphql_parser import build_graphql_schema
 from app.graphql_roundtrip import RoundTripStatus, round_trip_graphql
+from app.import_source import ImportSourceError
 from app.openapi_normalizer import OpenApiNormalizer
 
 # Simple schema without directives — a true fixed point of normalize ∘ emit (MFX-13.1).
@@ -261,6 +264,22 @@ def test_a_real_emission_is_valid() -> None:
         report = round_trip_graphql(model)
         assert report.valid, model.paradigm
         assert report.reimported, model.paradigm
+
+
+def test_valid_sdl_that_fails_normalization_is_unparseable() -> None:
+    """UNPARSEABLE: SDL passes build_schema but the normalizer raises, so re-import fails."""
+    with patch(
+        "app.graphql_roundtrip.GraphQlImportSource.normalize",
+        side_effect=ImportSourceError("normalizer failure"),
+    ):
+        report = round_trip_graphql(_graph_native_model())
+
+    assert report.status is RoundTripStatus.UNPARSEABLE
+    assert not report.valid
+    assert not report.reimported
+    assert report.import_error == "normalizer failure"
+    assert report.diff is None
+    assert not report.diverges
 
 
 # ---------------------------------------------------------------------------
