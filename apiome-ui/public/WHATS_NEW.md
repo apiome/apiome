@@ -6,7 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
-- Catalog: Cross-format API identity — link related catalog items and publishable Projects as representations of the same logical API; conversion auto-links source↔converted project; browse by identity group (MFI-6.4)
+- Export: Stable protobuf field-number assignment — synthesized field numbers persist per artifact and are reused on re-export; new fields get the next free number honouring `reserved` ranges; reported as SYNTH in the fidelity report (MFX-12.2)
 - Export: Per-target emit options — each registered emitter declares a Pydantic options model with JSON Schema + validated defaults on the registry target list; OpenAPI 3.1 and sample targets ship reference option sets (MFX-1.4)
 - Export: Refactored existing OpenAPI export behind the Emitter SPI — catalog conversion and future export surfaces resolve emitters through the registry instead of direct emitter imports (MFX-1.3)
 - Export: Emitter SPI + capability/fidelity profile — export targets register with descriptor metadata (key/label/icon/paradigm/single-vs-multi-file/toolchain), static capability profiles for fidelity prediction, and multi-file `EmitResult` envelopes; OpenAPI 3.1 and a no-op sample target ship as reference emitters (MFX-1.1)

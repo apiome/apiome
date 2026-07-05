@@ -62,7 +62,15 @@ material the gRPC fidelity pack, MFX-12.2/12.3, turns into `APPROX`/`DROP` verdi
 |---|---|
 | `field-constraints` | a field carried `Constraints` (min/max/pattern/…), which proto3 has no syntax for |
 | `proto3-default` | a proto2 `default` value (proto3 has no field defaults) |
-| `synthesized-field-number` | a field arrived without a number; the next free one was assigned |
+| `synthesized-field-number` | a field arrived without a number; the next free one was assigned (reuses a persisted assignment on re-export when available) |
+
+## Stable field numbers (MFX-12.2)
+
+When exporting through `/v1/export/.../document` (or `emit_canonical` with
+`ExportPersistenceContext`), synthesized protobuf field numbers are stored in
+`export_field_identities` keyed by `(project, target, field_key)` and loaded on
+the next export. Pass `ProtoEmitOptions.persisted_field_numbers` for dry-run /
+unit tests without the database.
 | `synthesized-enum-number` / `synthesized-enum-zero` | an enum lacked wire numbers, or lacked the proto3-required zero value |
 | `union-as-oneof` | a `UNION` type, approximated as a message wrapping a `oneof` |
 | `event-operation` / `synthesized-request` / `synthesized-response` | a non-RPC (pub/sub/one-way) operation reframed as a unary `rpc`, using `google.protobuf.Empty` where a message was missing |
