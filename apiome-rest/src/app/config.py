@@ -236,6 +236,27 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Public browse export guards (MFX-7.3, #3862). The anonymous
+    # ``/v1/browse/.../export/*`` surface runs emitters without auth, so it gets a
+    # dedicated per-IP rate limit (in addition to the global middleware) and a hard
+    # cap on ``/document`` response size. Both honour ``rate_limit_enabled`` for the
+    # limiter only; set ``public_browse_export_document_max_bytes`` to ``0`` to disable
+    # the size cap.
+    public_browse_export_rate_limit_per_minute: int = Field(
+        default=30,
+        validation_alias=AliasChoices(
+            "APIOME_PUBLIC_BROWSE_EXPORT_RATE_LIMIT_PER_MINUTE",
+            "public_browse_export_rate_limit_per_minute",
+        ),
+    )
+    public_browse_export_document_max_bytes: int = Field(
+        default=8_388_608,  # 8 MiB — matches archive_max_file_bytes
+        validation_alias=AliasChoices(
+            "APIOME_PUBLIC_BROWSE_EXPORT_DOCUMENT_MAX_BYTES",
+            "public_browse_export_document_max_bytes",
+        ),
+    )
+
     # Global auto-refresh kill switch (RAR-3.3, #3524). When False, the refresh
     # sweep halts entirely (no repository is auto-refreshed) regardless of per-repo
     # auto_refresh_enabled. Intended for incident response. Manual "Refresh Now"

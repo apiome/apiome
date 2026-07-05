@@ -1,4 +1,4 @@
-"""Public browse export endpoints (no authentication) — MFX-7.1 (#3860).
+"""Public browse export endpoints (no authentication) — MFX-7.1 (#3860), guards MFX-7.3 (#3862).
 
 The public export slice of the browse surface: let an **anonymous** visitor of
 ``apiome-browse`` export a **published, public** version to any registered target, reusing the
@@ -19,13 +19,16 @@ public browse predicate (``published IS TRUE AND visibility = 'public'``, undele
 else — private, draft, unknown — is a uniform ``404``, so the routes can never confirm that a
 hidden artifact exists. The path is strictly **read-only**: the emit runs without a field-identity
 persistence context, so an anonymous export writes nothing.
+
+MFX-7.3 adds a dedicated per-IP rate limit on all three routes and a response-size cap on
+``/document`` downloads (:mod:`app.public_export_guards`).
 """
 
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Header, HTTPException, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from .export_fidelity import ExportFidelity, build_export_fidelity
@@ -37,6 +40,10 @@ from .export_routes import (
 from .export_service import ExportError, resolve_emitter
 from .export_source import ExportSource, ExportSourceError, load_public_export_source
 from .lossiness import LossinessSeverity
+from .public_export_guards import (
+    enforce_public_export_document_size,
+    enforce_public_export_rate_limit,
+)
 
 router = APIRouter(prefix="/v1/browse", tags=["browse"])
 
@@ -128,6 +135,11 @@ class PublicExportDocumentRequest(BaseModel):
 # ===========================================================================
 
 
+def _require_public_export_rate_limit(request: Request) -> None:
+    """FastAPI dependency: enforce the MFX-7.3 public-export rate limit."""
+    enforce_public_export_rate_limit(request)
+
+
 def _load_public_source(
     tenant_slug: str, project_slug: str, version_slug: str
 ) -> ExportSource:
@@ -149,7 +161,11 @@ def _load_public_source(
         "``GET /v1/export/{tenant_slug}/targets``; drives the public export dialog's target "
         "cards and fidelity warning (MFX-7.1)."
     ),
-    responses=_NOT_FOUND_RESPONSES,
+    responses={
+        **_NOT_FOUND_RESPONSES,
+        429: {"description": "Public export rate limit exceeded (MFX-7.3)."},
+    },
+    dependencies=[Depends(_require_public_export_rate_limit)],
 )
 async def list_public_export_targets(
     tenant_slug: str,
@@ -192,7 +208,11 @@ async def list_public_export_targets(
         "``POST /v1/export/{tenant_slug}/preview``; backs the public fidelity advisory "
         "(MFX-7.2)."
     ),
-    responses=_NOT_FOUND_RESPONSES,
+    responses={
+        **_NOT_FOUND_RESPONSES,
+        429: {"description": "Public export rate limit exceeded (MFX-7.3)."},
+    },
+    dependencies=[Depends(_require_public_export_rate_limit)],
 )
 async def preview_public_export_fidelity(
     tenant_slug: str,
@@ -247,7 +267,12 @@ async def preview_public_export_fidelity(
         "state is persisted for anonymous exports."
     ),
     response_class=Response,
-    responses=_NOT_FOUND_RESPONSES,
+    responses={
+        **_NOT_FOUND_RESPONSES,
+        413: {"description": "Emitted document exceeds the public download size cap (MFX-7.3)."},
+        429: {"description": "Public export rate limit exceeded (MFX-7.3)."},
+    },
+    dependencies=[Depends(_require_public_export_rate_limit)],
 )
 async def emit_public_export_document(
     tenant_slug: str,
@@ -276,6 +301,8 @@ async def emit_public_export_document(
     """
     source = _load_public_source(tenant_slug, project_slug, version_slug)
     # persistence=None keeps the anonymous path read-only (no field-number writes).
-    return render_emitted_document(
+    response = render_emitted_document(
         source.api, request.target, request.options, accept, persistence=None
     )
+    enforce_public_export_document_size(response)
+    return response

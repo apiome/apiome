@@ -238,3 +238,35 @@ def test_public_document_rejects_unknown_body_fields():
             json={"target": "asyncapi", "artifact": "someone-elses-project"},
         )
     assert response.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# MFX-7.3 guards — rate limit + download size cap
+# ---------------------------------------------------------------------------
+def test_public_export_rate_limit_returns_429(monkeypatch):
+    """Anonymous export routes enforce a dedicated per-IP rate limit (MFX-7.3)."""
+    from app.config import settings
+    from app.rate_limit import FixedWindowRateLimiter
+
+    monkeypatch.setattr(settings, "rate_limit_enabled", True)
+    monkeypatch.setattr(settings, "public_browse_export_rate_limit_per_minute", 2)
+    monkeypatch.setattr(settings, "rate_limit_window_seconds", 60)
+    with patch("app.public_export_guards._public_export_limiter", FixedWindowRateLimiter()):
+        with patch(_LOADER, return_value=_source()):
+            assert client.get(f"{_BASE}/targets").status_code == 200
+            assert client.get(f"{_BASE}/targets").status_code == 200
+            third = client.get(f"{_BASE}/targets")
+    assert third.status_code == 429
+    assert third.headers.get("Retry-After")
+    assert "rate limit" in third.json()["detail"].lower()
+
+
+def test_public_document_413_when_over_download_size_cap(monkeypatch):
+    """Oversized emitted documents are rejected on the public download path (MFX-7.3)."""
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "public_browse_export_document_max_bytes", 32)
+    with patch(_LOADER, return_value=_source()):
+        response = client.post(f"{_BASE}/document", json={"target": "asyncapi"})
+    assert response.status_code == 413
+    assert "download limit" in response.json()["detail"].lower()
