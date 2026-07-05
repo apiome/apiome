@@ -1,0 +1,37 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Payments API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/payments": {
+      "get": {
+        "operationId": "listPayments",
+        "responses": {
+          "200": {
+            "description": "A list of payments.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Payment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "amount": { "type": "number" }
+        }
+      }
+    }
+  }
+}

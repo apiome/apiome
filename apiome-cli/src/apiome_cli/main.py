@@ -12,6 +12,7 @@ from apiome_cli.commands import (
     config,
     convert,
     doctor,
+    export,
     health,
     lint,
     mcp,
@@ -67,6 +68,7 @@ app.add_typer(spec.app, name="spec")
 app.add_typer(operations.app, name="operations")
 app.add_typer(mcp.app, name="mcp")
 app.add_typer(import_commands.app, name="import")
+app.add_typer(export.app, name="export")
 app.command("convert")(convert.convert)
 
 

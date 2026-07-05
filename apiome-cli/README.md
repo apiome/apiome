@@ -431,6 +431,36 @@ supply `--title` / `--api-version` / `--server` to close gaps and lift the tier.
 with `--dry-run` (the commit path creates the project instead of writing a file). Requires a workspace
 API key and tenant scope.
 
+### Export a version to a target format
+
+`export` is the inverse of `import` — it emits a stored version to a registered target format and
+reports how faithful that export is. `export targets` lists the emitters available for a version;
+`export openapi` writes the OpenAPI document and its fidelity report:
+
+```bash
+# List the emitter targets + per-source fidelity for a version:
+apiome export targets --project payments-api --version 1.0.0
+
+# Export a version as OpenAPI and write the document to a file:
+apiome export openapi --project payments-api --version 1.0.0 --output openapi.json
+
+# Write the document to stdout (fidelity summary + metadata go to stderr):
+apiome export openapi --project payments-api --version 1.0.0 --output -
+
+# YAML serialization, and a machine-readable metadata envelope:
+apiome export openapi --project payments-api --version 1.0.0 --yaml --output openapi.yaml
+apiome --json export openapi --project payments-api --version 1.0.0 --output openapi.json
+```
+
+The document bytes come from the OpenAPI reconstruction (the same source as `spec export`); the
+fidelity **tier + preserved-%** and the "may lose fidelity" advisory come from the emitter registry's
+dry-run preview.
+
+**Exit codes.** A **lossy** or **types-only** export exits non-zero — a CI-friendly gate that the
+OpenAPI document does not carry every source construct (e.g. an event-driven source loses its channels).
+The document is written regardless; pass `--force` to accept the loss and exit `0`. Requires a
+workspace API key and tenant scope.
+
 ### Repository Store
 
 Connect Git repositories, scan branches for spec files, sniff importability, and import into projects or versions. The CLI mirrors the Control Panel Repositories tab (`add` → `scan` → `files` → `inspect` → `import` → `imports`).

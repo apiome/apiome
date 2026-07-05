@@ -548,7 +548,7 @@ RPC streaming, event channels, gRPC field numbers; can express oneOf/anyOf/discr
 | 9.1 ✅ | OpenAPI emitter | CanonicalApi → OpenAPI 3.1 (+ 3.0/Swagger opt) | export,multi-protocol,rest,mvp | N | Y | M | apiome-rest |
 | 9.2 ✅ | OpenAPI fidelity pack | what OpenAPI can't represent (events/RPC streaming) | export,multi-protocol,mvp | N | Y | S | apiome-rest |
 | 9.3 ✅ | Validate + round-trip | re-import via MFI OpenAPI parser; diff | export,validation,mvp | Y | Y | S | apiome-rest |
-| 9.4 | OpenAPI target card + CLI + fixtures | UI/CLI target + round-trip fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
+| 9.4 ✅ | OpenAPI target card + CLI + fixtures | UI/CLI target + round-trip fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 | 9.5 · #4342 | OpenAPI 3.2 output option | emit OAS 3.2 (webhooks/security); 3.2→3.1 downgrade rules; coordinate #2662 | export,multi-protocol,rest,openapi | Y | N | M | apiome-rest |
 
 ### MFX-9.1 — OpenAPI emitter  ·  **#3866**  ·  ✅ **Done**
@@ -575,7 +575,32 @@ RPC streaming, event channels, gRPC field numbers; can express oneOf/anyOf/discr
 - **Technical Stack.** Python.
 - **Status.** A pure `apiome-rest/src/app/openapi_roundtrip.py` module (`round_trip_openapi(api, *, opts, emit_result) → RoundTripReport`) that composes existing machinery — the OpenAPI emitter (MFX-9.1), the meta-schema validator (`validate_openapi_document`, MFI-22.1), the OpenAPI import source (`OpenApiImportSource`, MFI-1.1), and the compare-any-two canonical diff (`app.diff.diff`, MFI-3.2) — into one emit → validate → re-import → diff loop. The `RoundTripReport` carries a single ordered `RoundTripStatus` (`INVALID` meta-schema failure → `UNPARSEABLE` re-import failure → `LOSSY` → `LOSSLESS`), the empirical `ModelDiff`, and the emitter's *predicted* `losses`, with derived `valid` (schema-clean **and** re-importable — the MFX-5.1 check), `empirically_lossless` (entity diff empty), `predicted_lossless`, and `diverges` (prediction vs. measurement disagree — the MFX-2.6 "flagged where they diverge" flag). A REST/OpenAPI source in normal form round-trips **lossless** (empty diff); a schema-invalid document is `INVALID`; a non-OpenAPI document is `UNPARSEABLE`; a cross-paradigm (event) source round-trips `LOSSY` with the predicted pub/sub-action / channel-binding drops corroborated. The 3.0 and Swagger 2.0 downgrades have no bundled meta-schema, so their re-import through their own normalizer is the validation. Tests in `tests/test_openapi_roundtrip.py`. apiome-rest 1.75.17 → 1.75.18.
 
-*(9.4 adds the target card + `apiome export openapi` + fixtures. Coordinate with #2249.)*
+### MFX-9.4 — OpenAPI target card + CLI + fixtures  ·  **#3869**  ·  ✅ **Done**
+- **Problem.** The OpenAPI emitter (9.1–9.3) had no client surface: no CLI export command and no UI
+  metadata for an emitted-artifact target card.
+- **Solution / Scope.** A CLI `apiome export` group + the UI export-target language registry + fixtures,
+  built strictly on existing REST endpoints (affected modules `apiome-ui`, `apiome-cli` only — no
+  apiome-rest change). Coordinate with #2249.
+- **Acceptance Criteria.** `apiome export openapi` writes a version's OpenAPI document and surfaces its
+  fidelity; a lossy export is flagged; round-trip fixtures back the tests.
+- **Status.** Because there is no Emitter-SPI artifact-download endpoint, the CLI composes the two
+  surfaces that do exist: the document bytes come from the OpenAPI reconstruction
+  (`GET /v1/schema/{tenant}/{project}/{version}`, the same source as `spec export`) and the honest
+  fidelity report comes from the emitter registry's dry-run preview
+  (`POST /v1/export/{tenant}/preview`, target `openapi`). New CLI `export` group
+  (`apiome-cli/src/apiome_cli/commands/export.py`): `export openapi --project P --version V -o FILE`
+  writes the document, prints the tier + preserved-% + advisory, and **exits non-zero on a
+  lossy/types-only export unless `--force`** (mirroring `convert`; the document is written either way);
+  `export targets` lists the registered emitters + per-source fidelity (`GET /v1/export/{tenant}/targets`).
+  Reuses `resolve_browse_export_scope` / `fetch_browse_spec` / `write_document_bytes` /
+  `build_spec_export_metadata`; new `client/export_registry.py` (HTTP) + `export_output.py` (pure
+  rendering/gating). UI adds `apiome-ui/src/app/utils/export-target-language.ts` — the emitter
+  `format`/`key` → Monaco language + file extension + download filename map the registry-driven target
+  card and any emitted-artifact viewer read (mirrors `catalog-source-language.ts`; the full
+  ExportDialog + target-card grid is MFX-EPIC-41, which renders OpenAPI automatically from its backend
+  descriptor). Round-trip fixtures in `apiome-cli/tests/fixtures/export-*.json`; tests in
+  `tests/test_export_command.py` and `apiome-ui/tests/export-target-language.test.ts`.
+  apiome-cli 0.16.0 → 0.17.0, apiome-ui 0.49.4 → 0.49.5.
 
 ---
 
