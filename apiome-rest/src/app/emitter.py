@@ -611,6 +611,7 @@ def load_builtin_emitters() -> None:
     if _builtins_loaded:
         return
     _builtins_loaded = True
+    from . import asyncapi_emitter as _asyncapi  # noqa: F401
     from . import openapi_emitter as _openapi  # noqa: F401
     from . import sample_emitter as _sample  # noqa: F401
 
@@ -874,6 +875,18 @@ class SchemaEmitter:
         if required:
             schema["required"] = required
         return schema
+
+    def field_schema(self, field: Any) -> Dict[str, Any]:
+        """Emit one field (its type plus per-field facets) as a JSON-Schema property.
+
+        The public entry point onto :meth:`_field_schema` so an emitter can render a
+        stand-alone field group that is not a named RECORD — for example the object
+        schema an AsyncAPI message ``headers`` block is (:class:`~app.canonical_model.Message.headers`
+        is a list of :class:`~app.canonical_model.CanonicalField`). Reference-leaf
+        sibling stripping and constraint/default/description composition behave
+        exactly as they do for a record member.
+        """
+        return self._field_schema(field)
 
     def _field_schema(self, field: Any) -> Dict[str, Any]:
         """Emit one RECORD field (its type plus per-field facets)."""

@@ -628,17 +628,18 @@ Source: https://www.asyncapi.com/docs/reference/specification/v3.1.0
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 11.1 | AsyncAPI emitter | model channels/operations/messages → AsyncAPI 3 (+2 opt) | export,multi-protocol,mvp | N | Y | M | apiome-rest |
+| 11.1 ✅ | AsyncAPI emitter | model channels/operations/messages → AsyncAPI 3 (+2 opt) | export,multi-protocol,mvp | N | Y | M | apiome-rest |
 | 11.2 | AsyncAPI fidelity pack | REST/RPC→message reframing; HTTP semantics DROP | export,multi-protocol,mvp | N | Y | S | apiome-rest |
 | 11.3 | Multi-version (2.6/3.0/3.1) | emit per requested version; 3→2 downgrade losses | export,multi-protocol | Y | N | S | apiome-rest |
 | 11.4 | Validate + round-trip | re-import via MFI AsyncAPI parser; diff | export,validation,mvp | Y | Y | S | apiome-rest |
 | 11.5 | AsyncAPI target card + CLI + fixtures | UI/CLI + fixtures; supersede #222/#2866 | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 
-### MFX-11.1 — AsyncAPI emitter  ·  **#3874**
+### MFX-11.1 — AsyncAPI emitter  ·  **#3874**  ·  ✅ **Done**
 - **Solution / Scope.** Map canonical channels/operations/messages → AsyncAPI 3.1 (servers, channels, operations action send/receive, messages with payload schema). For REST/RPC sources, reframe operations as request/reply messages (flagged APPROX by 11.2). Reuse `@asyncapi/parser` (via toolchain runner) to validate output.
 - **Acceptance Criteria.** Emits valid AsyncAPI 3 from an event source; REST source emits with documented reframing.
 - **Dependencies / Parallelism.** After 1.1, 2.3, 3.1. Blocks 11.2/11.4.
 - **Technical Stack.** Python (+ Node for validation).
+- **Status.** The AsyncAPI target and inverse of `AsyncApiNormalizer` (MFI-8.2): a pure, deterministic, provenance-tracked `apiome-rest/src/app/asyncapi_emitter.py` (`AsyncApiEmitter`, self-registered under the `asyncapi-3` format key) that walks a `CanonicalApi` → schema-valid **AsyncAPI 3.1** — `info`, `servers` (v3 `host`/`pathname` split + `protocol`, derived from a REST source's URL when absent), `channels` (address, address `parameters`, protocol `bindings`), `operations` (`action: send` for `PUBLISH` / `receive` for `SUBSCRIBE`, bound to their channel by `$ref`), per-channel `messages` (payload `$ref`/inline schema, `headers` object schema rebuilt from the message's header fields, `contentType`), and `components.schemas` from the model's named types (via the shared `SchemaEmitter`; a new public `SchemaEmitter.field_schema` renders the header-object properties). A **native event source is an exact fixed point** of `normalize ∘ emit`. A **non-event (REST/RPC/GraphQL) source is reframed**: each request/response operation becomes an `action: send` whose `reply` block carries the response message, its request/response bodies become the sent/replied messages, and the HTTP method/path/status AsyncAPI cannot carry are enumerated as `EmitResult.losses` (`INFERRED` reframe + synthesized channel, `NA` HTTP binding + response status) for the fidelity pack (11.2) to turn into `APPROX`/`DROP` verdicts. The honest `CapabilityProfile` (`events=True`, `operations=False`) predicts a REST operation as a `DROP` until 11.2 refines it. Both the event and reframed-REST outputs validate against the real `@asyncapi/parser` with zero errors/warnings (the round-trip check 11.4 automates via `parse_asyncapi`). Tests in `tests/test_asyncapi_emitter.py`. apiome-rest 1.75.18 → 1.75.19.
 
 ### MFX-11.2 — AsyncAPI fidelity pack  ·  **#3875**
 - **Solution / Scope.** Rules: HTTP method/path/status (REST source) → DROP/notes; RPC streaming → channel APPROX; non-message types → components. 
