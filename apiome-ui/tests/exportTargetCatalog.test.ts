@@ -11,6 +11,7 @@ import {
   changedOptions,
   exportTargetCards,
   fidelityChips,
+  fidelityPreSummary,
   optionFieldsFromSchema,
   tierBadgeClass,
   type ExportTargetEntry,
@@ -246,5 +247,37 @@ describe('changedOptions', () => {
     expect(
       changedOptions({ emit_services: true, package: 'com.example', syntax: 'editions' }, DEFAULTS),
     ).toEqual({ package: 'com.example', syntax: 'editions' });
+  });
+});
+
+describe('fidelityPreSummary (MFX-6.5)', () => {
+  const cards = exportTargetCards({
+    artifact: 'proj',
+    version: null,
+    version_record_id: 'rev-1',
+    version_label: '1.0.0',
+    targets: [
+      makeEntry({ key: 'avro', label: 'Avro' }, { tier: 'types-only', preserved_percent: 31 }),
+      makeEntry({ key: 'graphql', label: 'GraphQL SDL' }, { tier: 'lossy', preserved_percent: 82 }),
+      makeEntry({ key: 'openapi', label: 'OpenAPI 3.1' }, { tier: 'lossless' }),
+      makeEntry({ key: 'proto', label: 'gRPC / Protobuf' }, { tier: 'lossy', preserved_percent: 64 }),
+      makeEntry({ key: 'typespec', label: 'TypeSpec' }, { tier: 'lossless' }),
+    ],
+  });
+
+  it('puts lossless targets in the best row, preserving server order', () => {
+    expect(fidelityPreSummary(cards).best.map((c) => c.key)).toEqual(['openapi', 'typespec']);
+  });
+
+  it('puts degrading targets in the lossy row, lossy before types-only', () => {
+    expect(fidelityPreSummary(cards).lossy.map((c) => c.key)).toEqual([
+      'graphql',
+      'proto',
+      'avro',
+    ]);
+  });
+
+  it('returns empty rows for an empty card list', () => {
+    expect(fidelityPreSummary([])).toEqual({ best: [], lossy: [] });
   });
 });

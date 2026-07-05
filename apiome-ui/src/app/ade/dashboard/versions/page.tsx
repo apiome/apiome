@@ -33,6 +33,7 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
+  FileOutput,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import {
@@ -116,6 +117,9 @@ import {
 import { VersionMergeConflictList } from '../../../components/ade/dashboard/VersionMergeConflictList';
 import { CompatibilityReportPanel } from '../../../components/ade/dashboard/CompatibilityReportPanel';
 import { VersionChangeReportPanel } from './VersionChangeReportPanel';
+import ExportDialog, { type ExportedArtifactSummary } from '../../../components/ade/dashboard/export/ExportDialog';
+import VersionExportPanel from '../../../components/ade/dashboard/export/VersionExportPanel';
+import { recordRecentExport } from '../../../components/ade/dashboard/export/recentExports';
 import { ProjectRelatedArtifactsSection } from '../../../components/ade/dashboard/ProjectRelatedArtifactsSection';
 import {
   dashboardContentStackClass,
@@ -453,6 +457,10 @@ const Versions = () => {
 
   const [showOpenApiDialog, setShowOpenApiDialog] = useState(false);
   const [openApiSpec, setOpenApiSpec] = useState<string>('');
+  /** The revision the ExportDialog is open for — export is version-scoped (MFX-6.5, #3859). */
+  const [exportVersion, setExportVersion] = useState<Version | null>(null);
+  /** Bumped after an export is recorded so the recent-exports list re-reads storage. */
+  const [recentExportsRefresh, setRecentExportsRefresh] = useState(0);
   const [openApiFormat, setOpenApiFormat] = useState<'json' | 'yaml'>('json');
   const [viewingVersion, setViewingVersion] = useState<Version | null>(null);
   const [isLoadingSpec, setIsLoadingSpec] = useState(false);
@@ -2145,6 +2153,9 @@ const Versions = () => {
     const canUnpub = isPublished && canModify(version);
     switch (action) {
       case 'view': await handleViewOpenApi(version); break;
+      // Export is version-scoped (MFX-6.5, #3859): an action on the viewed revision, never a
+      // global nav item — a tenant may have hundreds of projects/versions.
+      case 'export': setExportVersion(version); break;
       case 'relationshipGraph': await handleShowRelationshipGraph(version); break;
       case 'edit':
         if (!isPublished) handleEditClick(version);
@@ -3452,6 +3463,19 @@ const Versions = () => {
                                 <Eye className="w-4 h-4 text-purple-500" />
                                 View Spec
                               </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenVersionDropdown(null);
+                                  handleRowAction('export', version);
+                                }}
+                                title="Convert this version to another API format (fidelity shown per target)"
+                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                              >
+                                <FileOutput className="w-4 h-4 text-emerald-600 dark:text-emerald-500" />
+                                Export to another format…
+                              </button>
                               {FEATURE_GITLIKE && (
                                 <button
                                   type="button"
@@ -4225,7 +4249,7 @@ const Versions = () => {
 
       {/* OpenAPI Viewer Dialog */}
       <Dialog open={showOpenApiDialog} onOpenChange={setShowOpenApiDialog}>
-        <DialogContent className="max-w-4xl max-h-[80vh]" aria-describedby={undefined}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto" aria-describedby={undefined}>
           <DialogHeader className="space-y-0">
             <div className="flex items-start justify-between gap-4 pr-8">
               <div className="min-w-0">
@@ -4251,6 +4275,20 @@ const Versions = () => {
               <Editor height="100%" language={openApiFormat} value={openApiFormat === 'json' ? openApiSpec : YAML.stringify(JSON.parse(openApiSpec || '{}'))} theme="vs-dark" options={{ readOnly: true, minimap: { enabled: true }, fontSize: 13 }} />
             )}
           </div>
+          {/* Version-scoped export entry point (MFX-6.5, #3859): the fidelity pre-summary
+              (best-fidelity vs lossy targets for this source) + this version's recent exports,
+              rendered on the version view before the ExportDialog opens. */}
+          {viewingVersion && (
+            <div className="mt-3">
+              <VersionExportPanel
+                artifact={viewingVersion.project_id}
+                version={viewingVersion.id}
+                active={showOpenApiDialog}
+                onOpenExport={() => setExportVersion(viewingVersion)}
+                refreshToken={recentExportsRefresh}
+              />
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowOpenApiDialog(false)}>Close</Button>
             <Button onClick={async () => { await navigator.clipboard.writeText(openApiFormat === 'json' ? openApiSpec : YAML.stringify(JSON.parse(openApiSpec))); toast.success('Copied to clipboard!'); }} disabled={isLoadingSpec}>Copy</Button>
@@ -4266,6 +4304,24 @@ const Versions = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Version-scoped ExportDialog (MFX-6.5, #3859) — opened from a revision's actions menu
+          or the version view's "Export this version" button. Mounted per revision so all
+          stepper state resets when a different revision is exported. */}
+      {exportVersion && (
+        <ExportDialog
+          open
+          onClose={() => setExportVersion(null)}
+          artifact={exportVersion.project_id}
+          artifactLabel={projects.find((p) => p.id === exportVersion.project_id)?.name}
+          version={exportVersion.id}
+          onExported={(summary: ExportedArtifactSummary) => {
+            // Feed the version view's recent-exports list (browser-local until MFX-46.1).
+            recordRecentExport(exportVersion.project_id, exportVersion.id, summary);
+            setRecentExportsRefresh((n) => n + 1);
+          }}
+        />
+      )}
 
       {/* Version Comparison Dialog */}
       <Dialog open={showCompareDialog} onOpenChange={setShowCompareDialog}>

@@ -649,3 +649,90 @@ describe('ExportDialog — emitted-artifact preview + download (MFX-6.3)', () =>
     expect(downloads).toEqual(['petstore.json', 'petstore.zip']);
   });
 });
+
+describe('ExportDialog — version-scoped entry-point handoff (MFX-6.5)', () => {
+  beforeEach(() => {
+    (URL as unknown as { createObjectURL: unknown }).createObjectURL = jest.fn(() => 'blob:mock');
+    (URL as unknown as { revokeObjectURL: unknown }).revokeObjectURL = jest.fn();
+    jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('reports the emitted target, fidelity, and filename via onExported', async () => {
+    const onExported = jest.fn();
+    const fetchMock = mockFetch();
+    global.fetch = fetchMock as unknown as typeof fetch;
+    render(
+      <ExportDialog
+        open
+        onClose={jest.fn()}
+        artifact="proj-petstore"
+        artifactLabel="Pet Store API"
+        version="rev-1"
+        onExported={onExported}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /choose target/i })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByTestId('export-target-proto'));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
+    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: /^export anyway$/i }));
+    await waitFor(() =>
+      expect(screen.getByTestId('export-artifact-preview')).toBeInTheDocument(),
+    );
+
+    // The summary is what the versions page records as a recent export (recentExports.ts).
+    expect(onExported).toHaveBeenCalledTimes(1);
+    expect(onExported).toHaveBeenCalledWith({
+      targetKey: 'proto',
+      targetLabel: 'gRPC / Protobuf',
+      tier: 'lossy',
+      preservedPercent: 64,
+      filename: 'petstore.proto',
+    });
+  });
+
+  it('does not report a failed emit', async () => {
+    const onExported = jest.fn();
+    const fetchMock = jest.fn((input: unknown, init?: { method?: string; body?: string }) => {
+      const url = typeof input === 'string' ? input : String(input);
+      if (url.includes('/api/export/document')) {
+        return Promise.resolve({
+          ok: false,
+          json: () => Promise.resolve({ error: 'Emit failed.' }),
+        });
+      }
+      return (mockFetch()(input, init) as unknown) as Promise<unknown>;
+    }) as unknown as jest.Mock;
+    global.fetch = fetchMock as unknown as typeof fetch;
+    render(
+      <ExportDialog
+        open
+        onClose={jest.fn()}
+        artifact="proj-petstore"
+        onExported={onExported}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /choose target/i })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByTestId('export-target-proto'));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
+    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: /^export anyway$/i }));
+
+    await waitFor(() => expect(screen.getByText('Emit failed.')).toBeInTheDocument());
+    expect(onExported).not.toHaveBeenCalled();
+  });
+});

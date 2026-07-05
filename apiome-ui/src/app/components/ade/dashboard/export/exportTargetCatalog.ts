@@ -144,6 +144,31 @@ export function tierBadgeClass(tier: ExportFidelityTier): string {
   }
 }
 
+/** The version view's fidelity pre-summary rows (MFX-6.5): best-fidelity vs lossy targets. */
+export interface FidelityPreSummary {
+  /** Targets that carry this source cleanly (`lossless`). */
+  best: ExportTargetCard[];
+  /** Targets that degrade this source — `lossy` first, then `types-only` (worst last). */
+  lossy: ExportTargetCard[];
+}
+
+/**
+ * Split the target cards into the version view's fidelity pre-summary (MFX-6.5, #3859):
+ * a "best-fidelity targets" row (lossless) and a "lossy targets" row (lossy, then types-only,
+ * mirroring the mockup's amber-before-red ordering). Server order is preserved within a tier.
+ *
+ * @param cards The renderable target cards from {@link exportTargetCards}.
+ * @returns The two pre-summary rows.
+ */
+export function fidelityPreSummary(cards: ExportTargetCard[]): FidelityPreSummary {
+  const byTier = (tier: ExportFidelityTier) =>
+    cards.filter((card) => card.entry.fidelity.tier === tier);
+  return {
+    best: byTier('lossless'),
+    lossy: [...byTier('lossy'), ...byTier('types-only')],
+  };
+}
+
 /** One count chip of the fidelity panel, in display order (worst first). */
 export interface FidelityChip {
   /** Stable key for the chip. */
