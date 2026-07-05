@@ -65,12 +65,15 @@ from .canonical_model import (
     ApiParadigm,
     CanonicalApi,
     CanonicalField,
+    Channel,
     Message,
     MessageRole,
     Operation,
+    OperationKind,
     ParameterLocation,
     Server,
     Service,
+    StreamingMode,
 )
 from .emitter import (
     CapabilityProfile,
@@ -92,7 +95,13 @@ from .openapi_downgrade import (
     downgrade_to_openapi_30,
     downgrade_to_swagger_2,
 )
-from .projection import ProjectionStrategy, RouteBinding, get_projection
+from .projection import (
+    X_EVENT_ACTION,
+    X_STREAMING,
+    ProjectionStrategy,
+    RouteBinding,
+    get_projection,
+)
 
 __all__ = ["OpenApiEmitOptions", "OpenApiEmitter", "OpenApiFidelityRulePack"]
 
@@ -146,22 +155,111 @@ class OpenApiEmitOptions(EmitOptions):
 
 
 class OpenApiFidelityRulePack(CapabilityRulePack):
-    """Reference fidelity rule pack for the OpenAPI 3.1 target — MFX-2.3 (#3840).
+    """Reference fidelity rule pack for the OpenAPI 3.1 target — MFX-2.3 (#3840), MFX-9.2 (#3867).
 
-    The worked example the ticket calls for: a :class:`~app.fidelity_rulepack.FidelityRulePack`
-    shipped *alongside* its emitter that refines the profile-derived default for the
-    one construct OpenAPI handles better than its six-axis
-    :class:`~app.emitter.CapabilityProfile` can express.
+    The worked example the SPI calls for: a :class:`~app.fidelity_rulepack.FidelityRulePack`
+    shipped *alongside* its emitter that refines the profile-derived default wherever
+    OpenAPI's six-axis :class:`~app.emitter.CapabilityProfile` is too coarse to
+    describe how a construct actually degrades. The profile advertises ``events`` and
+    ``operations`` as a flat yes and ``field_identity`` as a flat no — but OpenAPI's
+    *native* (path/verb/response + JSON-Schema) vocabulary cannot carry an event
+    channel, a pub/sub action, an RPC stream, or a field number, and only
+    *projects* each onto a vendor extension or a non-normative path
+    (:mod:`app.projection`). This pack (the MFX-9.2 fidelity pack) reports those
+    projections as the honest losses they are:
 
-    OpenAPI's profile declares ``field_identity = False`` — it has no native concept
-    of stable field numbers — so :class:`~app.fidelity_rulepack.CapabilityRulePack`
-    would report a source field number as an outright ``DROP``. But OpenAPI 3.1
-    schemas admit ``x-`` vendor extensions, so this emitter preserves such a number
-    as an :data:`X_FIELD_NUMBER` extension. The number is not *enforced* by the
-    format (nothing keys off it), so the honest verdict is a lossless ``APPROX``
-    (``info``) — "carried, but only as documentation" — not a ``DROP``. Every other
-    verdict is inherited unchanged from the capability-derived default.
+    * **field numbers** (``field_identity = False``) — the capability default would
+      ``DROP`` a source field number outright, but OpenAPI 3.1 schemas admit ``x-``
+      vendor extensions, so the emitter preserves the number as an
+      :data:`X_FIELD_NUMBER` extension. It is not *enforced* by the format, so the
+      honest verdict is a lossless ``APPROX`` (``info``) — "carried, but only as
+      documentation" — not a ``DROP``;
+
+    * **event channels** (``events = True``) — OpenAPI has no channel object, so a
+      channel is surfaced only as documentation (an ``APPROX``): see
+      :meth:`channel_verdict`;
+
+    * **pub/sub, GraphQL subscription, and RPC streaming operations** — pub/sub and
+      streaming project to non-normative documentation only (``APPROX``) and a
+      GraphQL subscription has no projection at all (``DROP``): see
+      :meth:`operation_verdict`.
+
+    Every faithfully-carried construct (a unary REST/RPC call, a GraphQL
+    query/mutation, an ordinary record field) is inherited unchanged from the
+    capability-derived default.
     """
+
+    # Operation kinds that are event flows (a producer/consumer bound to a channel);
+    # OpenAPI can only *document* them, never model their pub/sub semantics.
+    _EVENT_OPERATION_KINDS = frozenset(
+        {OperationKind.PUBLISH, OperationKind.SUBSCRIBE}
+    )
+
+    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
+        """Refine event/subscription/streaming operations OpenAPI can only document.
+
+        The profile-derived default reports every operation an unqualified ``OK``
+        because OpenAPI's profile advertises both ``operations`` and ``events``. But
+        three operation shapes have no *native* OpenAPI representation and are only
+        projected onto its path/verb/response vocabulary (:mod:`app.projection`) —
+        the event/RPC losses MFX-9.2 must surface:
+
+        * a **pub/sub** operation (``PUBLISH`` / ``SUBSCRIBE``) is emitted as a
+          *non-normative* documentation path carrying an :data:`X_EVENT_ACTION` note
+          (:class:`~app.projection.EventProjection`); the action itself is not
+          enforceable, so it is an ``APPROX``, not a clean carry;
+        * a **GraphQL subscription** (``SUBSCRIPTION``) has no projection at all — it
+          is not emitted (:class:`~app.projection.GraphProjection`) — so it is a
+          ``DROP``;
+        * an **RPC streaming** method (any non-event operation whose ``streaming`` is
+          not ``NONE``) keeps its request/response shape but loses its streaming
+          cardinality, surfaced only as an :data:`X_STREAMING` note
+          (:class:`~app.projection.RpcProjection`) — an ``APPROX``.
+
+        Every other operation (a unary REST/RPC call, a GraphQL query/mutation) is
+        carried faithfully and defers to the inherited ``OK``.
+        """
+        if operation.kind in self._EVENT_OPERATION_KINDS:
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} has no pub/sub semantics; the "
+                f"{operation.kind.value!r} operation is emitted only as a "
+                f"non-normative documentation path with an {X_EVENT_ACTION} note",
+                target_mapping=f"pub/sub action → non-normative path + {X_EVENT_ACTION}",
+            )
+        if operation.kind is OperationKind.SUBSCRIPTION:
+            return FidelityVerdict.drop(
+                message=f"{self.target_label} cannot represent a GraphQL "
+                "subscription; the operation has no path/verb projection and is "
+                "not emitted",
+            )
+        if operation.streaming is not StreamingMode.NONE:
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} cannot model "
+                f"{operation.streaming.value} streaming; the operation keeps its "
+                "request/response shape but the streaming cardinality is surfaced "
+                f"only as an {X_STREAMING} note",
+                target_mapping=f"{operation.streaming.value} streaming → {X_STREAMING}",
+            )
+        return super().operation_verdict(operation)
+
+    def channel_verdict(self, channel: Channel) -> FidelityVerdict:
+        """OpenAPI has no event-channel construct; a channel survives only as notes.
+
+        The profile advertises ``events``, so the default reports a channel a clean
+        ``OK``. In truth OpenAPI has no channel object:
+        :class:`~app.projection.EventProjection` surfaces a channel's address as the
+        documentation path of its pub/sub operations and its message payloads stay
+        faithful in ``components.schemas``, but the channel's protocol bindings and
+        correlation ids have no representation and are dropped. The honest single
+        verdict is therefore an ``APPROX`` (``warn``) — "carried as documentation
+        only" — not the profile's ``OK``.
+        """
+        return FidelityVerdict.approx(
+            message=f"{self.target_label} has no event-channel construct; the "
+            "channel is surfaced only as a non-normative documentation path and its "
+            "protocol bindings and correlation ids are dropped",
+            target_mapping="event channel → documentation path (bindings dropped)",
+        )
 
     def _field_identity_verdict(
         self, field: CanonicalField
