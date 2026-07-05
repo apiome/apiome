@@ -1,8 +1,8 @@
 # Emitter SPI (MFI-22.1, MFX-1.1)
 
 > **Status:** SPI + reference implementations — `src/app/emitter.py`,
-> `src/app/openapi_emitter.py`, `src/app/sample_emitter.py`,
-> `src/app/openapi_validator.py`
+> `src/app/openapi_emitter.py`, `src/app/asyncapi_emitter.py`,
+> `src/app/sample_emitter.py`, `src/app/openapi_validator.py`
 > **Issues:** [#4002](https://github.com/apiome/apiome/issues/4002) (MFI-22.1),
 > [#3834](https://github.com/apiome/apiome/issues/3834) (MFX-1.1) ·
 > **Epic:** MFX-EPIC-1 (#3814) · **Roadmap:** `docs/ROADMAP_MULTI_FORMAT_EXPORT.md`
@@ -247,6 +247,30 @@ OpenAPI representation), gathering any `x-` extensions and document-level notes.
 
 On REST input the emitter is a **fixed point** of the reference normalizer:
 `normalize(emit(normalize(doc))) == normalize(doc)`.
+
+### `AsyncApiEmitter`
+
+`AsyncApiEmitter` (key `asyncapi`, format `asyncapi-3`, paradigm `EVENT`) is the
+inverse of `AsyncApiNormalizer` (MFI-8.2). It maps:
+
+| Canonical | AsyncAPI 3.1 |
+|-----------|--------------|
+| `identity` / `title` / `version` / `description` | `info` (title + version required — defaulted when absent) |
+| `Server` (+ variables) | `servers[name]` (v3 `host` + `pathname` split, `protocol`) |
+| `Channel` (+ parameters, bindings) | `channels[name]` (`address`, `parameters`, `bindings`) |
+| `Operation` (`PUBLISH`/`SUBSCRIBE`) | `operations[name]` (`action: send`/`receive`, channel `$ref`) |
+| `Message` | `channels[name].messages[msg]` (`payload`, `headers` object schema, `contentType`) |
+| `Type` | `components.schemas` (via `SchemaEmitter`) |
+
+On an event source the emitter is a **fixed point** of the reference normalizer
+(`normalize(emit(normalize(doc))) == normalize(doc)`). A non-event (REST/RPC/GraphQL)
+source is **reframed**: each request/response operation becomes an `action: send`
+whose `reply` block carries the response message, and the HTTP method/path/status
+AsyncAPI cannot represent are recorded as `EmitResult.losses` (`INFERRED` reframe +
+synthesized channel, `NA` HTTP binding + response status) for the AsyncAPI fidelity
+pack (MFX-11.2) to turn into `APPROX`/`DROP` verdicts. Its `CapabilityProfile` is
+honest about this — `events=True`, `operations=False`. Options: `include_channels`
+(disable for a schemas-only export) and `include_components`.
 
 ### `SampleEmitter`
 
