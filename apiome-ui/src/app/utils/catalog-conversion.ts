@@ -75,3 +75,12 @@ export function isConvertedLinkLive(conversion: CatalogConversion | null | undef
 export function convertActionLabel(conversion: CatalogConversion | null | undefined): string {
   return conversion ? 'Re-convert to OpenAPI' : 'Convert to OpenAPI';
 }
+
+/**
+ * Copy stating the Export-vs-Convert distinction on catalog surfaces (MFX-41.2, #4349): Export
+ * emits a document in another format and never mutates the catalog item or mints a Project;
+ * Convert is the one action that turns the item into an OpenAPI Project. Shown wherever both
+ * actions sit side by side (catalog list actions, detail CTAs).
+ */
+export const CATALOG_EXPORT_VS_CONVERT_COPY =
+  'Produce a document in another API format. Unlike Convert, this never turns the item into a project.';

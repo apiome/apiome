@@ -48,6 +48,7 @@ import {
   PanelsTopLeft,
   CheckCircle2,
   Upload,
+  FileOutput,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Label } from '../../../components/ui/Label';
@@ -86,6 +87,7 @@ import {
   type CatalogFormatOption,
 } from '../../../components/ade/dashboard/catalog/CatalogFormatFacet';
 import {
+  CATALOG_EXPORT_VS_CONVERT_COPY,
   convertActionLabel,
   convertedProjectHref,
   convertedProjectLabel,
@@ -120,6 +122,8 @@ import {
   type CatalogGroupMode,
 } from '@/app/utils/catalog-view-preferences';
 import { groupCatalogItemsByParadigm } from '@/app/utils/catalog-paradigm-grouping';
+import ExportDialog, { type ExportedArtifactSummary } from '../../../components/ade/dashboard/export/ExportDialog';
+import { recordRecentExport } from '../../../components/ade/dashboard/export/recentExports';
 import { cn } from '../../../../../lib/utils';
 
 /**
@@ -210,13 +214,14 @@ const CATALOG_GROUP_OPTIONS: ReadonlyArray<{ mode: CatalogGroupMode; label: stri
 ];
 
 /**
- * Per-row actions menu for a catalog item: View / Lint / Convert to OpenAPI, then
+ * Per-row actions menu for a catalog item: View / Lint / Export / Convert to OpenAPI, then
  * soft-delete / undelete / permanent delete.
  *
  * There is intentionally **no Publish** — catalog items are the non-publishable slice of projects
  * (MFI-23.1) — and no "Edit": items are read-only here (minted by the import routing, MFI-23.7).
- * The delete/restore handlers operate on the item's id, which is a project id, so they reuse the
- * project server actions.
+ * Export (MFX-41.2, #4349) emits the item in another format without ever minting a Project —
+ * that is Convert's job. The delete/restore handlers operate on the item's id, which is a
+ * project id, so they reuse the project server actions.
  */
 function CatalogItemActions({
   item,
@@ -228,6 +233,7 @@ function CatalogItemActions({
   onOpenDetail,
   onView,
   onLint,
+  onExport,
   onConvert,
   onDelete,
   onRestore,
@@ -242,6 +248,7 @@ function CatalogItemActions({
   onOpenDetail: (item: CatalogItem) => void;
   onView: (item: CatalogItem) => void;
   onLint: (item: CatalogItem) => void;
+  onExport: (item: CatalogItem) => void;
   onConvert: (item: CatalogItem) => void | Promise<void>;
   onDelete: (id: string) => void | Promise<void>;
   onRestore: (item: CatalogItem) => void | Promise<void>;
@@ -335,6 +342,20 @@ function CatalogItemActions({
                   >
                     <ScanLine className="h-4 w-4 text-indigo-500" />
                     Lint
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="catalog-action-export"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenDropdown(null);
+                      onExport(item);
+                    }}
+                    title={CATALOG_EXPORT_VS_CONVERT_COPY}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                  >
+                    <FileOutput className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />
+                    Export to another format…
                   </button>
                   <button
                     type="button"
@@ -480,6 +501,8 @@ const Catalog = () => {
   // Server-backed lint-report dialog (the lint orb / Lint action open it, MFI-23.10).
   const [lintDialogItem, setLintDialogItem] = useState<CatalogItem | null>(null);
   const [convertDialogItem, setConvertDialogItem] = useState<CatalogItem | null>(null);
+  /** The item the ExportDialog is open for (MFX-41.2, #4349) — export never leaves the catalog. */
+  const [exportDialogItem, setExportDialogItem] = useState<CatalogItem | null>(null);
   // Import flow (MFI-23.12): the catalog owns the alternative (non-OpenAPI) format intake. An import
   // that produces a non-publishable item lands right back in this list, so we just reload on success.
   const [showImportDialog, setShowImportDialog] = useState(false);
@@ -684,6 +707,15 @@ const Catalog = () => {
     setConvertDialogItem(item);
   }, []);
 
+  /**
+   * "Export to another format…" (MFX-41.2, #4349) — opens the ExportDialog scoped to the item's
+   * latest revision (a catalog item's id is a project id, and the export pipeline is
+   * artifact-scoped). Unlike Convert this emits a document and never mutates the catalog item.
+   */
+  const handleExport = useCallback((item: CatalogItem) => {
+    setExportDialogItem(item);
+  }, []);
+
   /** After a successful conversion, refresh the catalog list so the new project is reflected. */
   const handleConverted = useCallback(() => {
     toast.success('Conversion complete — a new OpenAPI project was created.');
@@ -809,6 +841,7 @@ const Catalog = () => {
             onOpenDetail={handleOpenDetail}
             onView={handleView}
             onLint={handleOpenLint}
+            onExport={handleExport}
             onConvert={handleConvert}
             onDelete={handleDelete}
             onRestore={handleRestore}
@@ -1289,6 +1322,7 @@ const Catalog = () => {
                                   onOpenDetail={handleOpenDetail}
                                   onView={handleView}
                                   onLint={handleOpenLint}
+                                  onExport={handleExport}
                                   onConvert={handleConvert}
                                   onDelete={handleDelete}
                                   onRestore={handleRestore}
@@ -1347,6 +1381,22 @@ const Catalog = () => {
         }}
         onConverted={handleConverted}
       />
+
+      {/* Catalog-item export (MFX-41.2, #4349): the same version-scoped ExportDialog the versions
+          page uses, aimed at the item's latest revision. Emits a document in the chosen target
+          format with the full fidelity flow — the item itself never becomes a project. */}
+      {exportDialogItem && (
+        <ExportDialog
+          open
+          onClose={() => setExportDialogItem(null)}
+          artifact={exportDialogItem.id}
+          artifactLabel={exportDialogItem.name}
+          onExported={(summary: ExportedArtifactSummary) => {
+            // Recorded under the item's "latest" bucket (no explicit version selector here).
+            recordRecentExport(exportDialogItem.id, null, summary);
+          }}
+        />
+      )}
 
       {/* Catalog importer (MFI-23.7): store-raw intake — the source is kept in its original format
           and converted only when the user is ready, not at import time. */}

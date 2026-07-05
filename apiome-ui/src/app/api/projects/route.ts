@@ -10,6 +10,7 @@ import { getServerSession } from 'next-auth';
 import jwt from 'jsonwebtoken';
 import { authOptions } from '../auth/[...nextauth]/route';
 import { getTenantById } from '@lib/db/helper';
+import { isProjectPublishable, type PublishableProjectLike } from '@/app/utils/catalog-publishable';
 
 const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
 
@@ -125,6 +126,16 @@ export async function GET(request: NextRequest) {
       includeDeletedParam === 'true' || includeDeletedParam === '1';
     const querySuffix = includeDeleted ? '?include_deleted=true' : '';
 
+    // Catalog/Projects boundary (#4587): catalog items (publishable=false, MFI-23.1) are excluded
+    // from this list by default, so every Projects-surface consumer — the Projects page and the
+    // project pickers in Studio, Database, Migration, the sunset timeline, and repository import
+    // mapping — upholds the boundary without needing its own filter. `include_catalog=true` opts
+    // back in; the versions page uses it because it must resolve owning projects for the publish
+    // gate (MFI-23.8) and honor catalog deep-links. Catalog surfaces list via `/api/catalog`.
+    const includeCatalogParam = request.nextUrl.searchParams.get('include_catalog');
+    const includeCatalog =
+      includeCatalogParam === 'true' || includeCatalogParam === '1';
+
     // Build REST API URL
     const url = `${REST_API_BASE_URL}/projects/${tenantSlug}${querySuffix}`;
 
@@ -148,7 +159,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error }, { status });
     }
 
-    return NextResponse.json({ success: true, projects: data });
+    const projects =
+      Array.isArray(data) && !includeCatalog
+        ? data.filter((p) => isProjectPublishable(p as PublishableProjectLike))
+        : data;
+
+    return NextResponse.json({ success: true, projects });
   } catch (error) {
     console.error('Error fetching projects:', error);
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';

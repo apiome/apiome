@@ -333,6 +333,22 @@ describe('CatalogItemDetailClient', () => {
     await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
   });
 
+  it('opens the ExportDialog from the Export CTA without touching Convert (MFX-41.2, #4349)', async () => {
+    mockFetchItem(RICH_ITEM);
+    render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
+
+    const exportCta = await screen.findByTestId('catalog-detail-export');
+    // The CTA states the Export-vs-Convert distinction (export never mints a Project).
+    expect(exportCta).toHaveAttribute('title', expect.stringContaining('never turns the item into a project'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(exportCta);
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
+    // It is the export dialog (target/fidelity flow), not the conversion preview.
+    expect(screen.getByRole('dialog')).toHaveTextContent(/Export\s+“Acme gRPC API”/);
+    // Convert stays present and unchanged next to it.
+    expect(screen.getByTestId('catalog-detail-convert')).toHaveTextContent('Convert to OpenAPI');
+  });
+
   it('exposes ARIA tab semantics and moves selection + focus with the arrow keys', async () => {
     mockFetchItem(RICH_ITEM);
     render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);

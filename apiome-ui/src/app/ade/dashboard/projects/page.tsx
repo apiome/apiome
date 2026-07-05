@@ -58,6 +58,7 @@ import ImportDialog from '../../../components/ade/dashboard/ImportDialog';
 import { LLMChatPanel } from '../../../components/ade/dashboard/LLMImportDialog';
 import { useDialog } from '../../../components/providers/DialogProvider';
 import { filterSlugInput } from '../../../utils/slug';
+import { isProjectPublishable } from '../../../utils/catalog-publishable';
 import { SPDX_LICENSES, getLicenseUrl, SPDXLicense } from '../../../utils/spdx-licenses';
 import { type ProjectOpenApiMetadata } from '../../../utils/project-templates';
 import {
@@ -144,6 +145,8 @@ interface Project {
   creator_name: string;
   creator_email: string;
   metadata?: ProjectMetadata;
+  /** Project-vs-Catalog boundary (MFI-23.1): `false` marks a catalog item, which never lists here (#4587). */
+  publishable?: boolean;
   /** Mean quality score across the project's versions (#3609), camelCase from REST. */
   qualityScore?: number | null;
   qualityGrade?: string | null;
@@ -545,7 +548,9 @@ const Projects = () => {
       }
       const data = await response.json();
       if (data.success && data.projects) {
-        setProjects(data.projects);
+        // Catalog items (non-OpenAPI imports, publishable=false) never list here (#4587):
+        // they live in Dashboard → Catalog until converted to OpenAPI, which mints a project.
+        setProjects((data.projects as Project[]).filter(isProjectPublishable));
       } else {
         throw new Error(data.error || 'Failed to load projects');
       }

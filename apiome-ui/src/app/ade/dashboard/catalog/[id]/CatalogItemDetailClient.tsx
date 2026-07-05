@@ -31,6 +31,7 @@ import {
   ArrowLeftRight,
   CheckCircle2,
   Code,
+  FileOutput,
   Info,
   Wrench,
 } from 'lucide-react';
@@ -55,12 +56,17 @@ import {
 } from '@/app/utils/catalog-card-presentation';
 import { LoadingState } from '@/app/components/ui/LoadingState';
 import {
+  CATALOG_EXPORT_VS_CONVERT_COPY,
   convertActionLabel,
   convertedProjectHref,
   convertedProjectLabel,
   isConvertedLinkLive,
   type CatalogConversion,
 } from '@/app/utils/catalog-conversion';
+import ExportDialog, {
+  type ExportedArtifactSummary,
+} from '@/app/components/ade/dashboard/export/ExportDialog';
+import { recordRecentExport } from '@/app/components/ade/dashboard/export/recentExports';
 import {
   dashboardMainClass,
   dashboardContentStackClass,
@@ -245,6 +251,8 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
   const [lintOpen, setLintOpen] = useState(false);
   // The convert-to-OpenAPI fidelity preview (MFI-22.4/23.11).
   const [convertOpen, setConvertOpen] = useState(false);
+  // The export dialog (MFX-41.2, #4349): emit the item in another format; never mints a Project.
+  const [exportOpen, setExportOpen] = useState(false);
   // The active detail pane (MFI-25.1). Tab switches never change the route.
   const [activeTab, setActiveTab] = useState<DetailTabId>('overview');
   // A lint finding deep-link (MFI-28.2) wants to scroll to this Overview entity once the tab mounts.
@@ -484,7 +492,9 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
               </div>
             </div>
 
-            {/* Primary CTAs (MFI-25.1): Convert is the primary action; "View code" opens the Source tab. */}
+            {/* Primary CTAs (MFI-25.1): Convert is the primary action; Export (MFX-41.2, #4349)
+                emits the item in another format without minting a Project; "View code" opens the
+                Source tab. */}
             <div className="flex shrink-0 flex-col gap-2">
               {!item.deleted_at ? (
                 <button
@@ -494,6 +504,17 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
                 >
                   <ArrowLeftRight className="h-4 w-4" /> {convertActionLabel(item.conversion)}
+                </button>
+              ) : null}
+              {!item.deleted_at ? (
+                <button
+                  type="button"
+                  data-testid="catalog-detail-export"
+                  onClick={() => setExportOpen(true)}
+                  title={CATALOG_EXPORT_VS_CONVERT_COPY}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                >
+                  <FileOutput className="h-4 w-4 text-emerald-600 dark:text-emerald-500" /> Export
                 </button>
               ) : null}
               <button
@@ -695,6 +716,22 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
         onOpenChange={setConvertOpen}
         onConverted={handleConverted}
       />
+
+      {/* Catalog-item export (MFX-41.2, #4349): the version-scoped ExportDialog aimed at the
+          item's latest revision. Emits a document with the full fidelity flow; unlike Convert
+          it never mints a Project or mutates the item. */}
+      {exportOpen ? (
+        <ExportDialog
+          open
+          onClose={() => setExportOpen(false)}
+          artifact={item.id}
+          artifactLabel={item.name}
+          onExported={(summary: ExportedArtifactSummary) => {
+            // Recorded under the item's "latest" bucket (no explicit version selector here).
+            recordRecentExport(item.id, null, summary);
+          }}
+        />
+      ) : null}
     </main>
   );
 }
