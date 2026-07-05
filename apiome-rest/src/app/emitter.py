@@ -41,9 +41,12 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, ClassVar, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+if TYPE_CHECKING:  # avoid an import cycle — fidelity_rulepack imports this module.
+    from .fidelity_rulepack import FidelityRulePack
 
 from .canonical_model import (
     ApiParadigm,
@@ -486,6 +489,25 @@ class Emitter(ABC):
     def capability_profile(cls) -> CapabilityProfile:
         """Return this emitter's static capability/fidelity profile (MFX-1.1)."""
         return CapabilityProfile()
+
+    @classmethod
+    def fidelity_rule_pack(cls) -> "Optional[type[FidelityRulePack]]":
+        """Return this target's fidelity rule-pack class, or ``None`` (MFX-2.3).
+
+        A format epic *ships its degradation rules alongside its emitter* by
+        returning a :class:`~app.fidelity_rulepack.FidelityRulePack` subclass here —
+        typically one extending :class:`~app.fidelity_rulepack.CapabilityRulePack` to
+        refine how its target handles specific constructs (a richer
+        ``target_mapping``, a downgraded severity, a ``DROP`` upgraded to a lossless
+        ``APPROX``). The fidelity engine (:func:`app.fidelity_engine.compute_lossiness_for_emitter`)
+        instantiates the returned class with this emitter's
+        :meth:`capability_profile` and label.
+
+        Returns ``None`` by default, in which case the engine falls back to the
+        profile-derived :class:`~app.fidelity_rulepack.CapabilityRulePack` — so a
+        target with no special degradation rules needs no pack at all.
+        """
+        return None
 
     @classmethod
     def default_options(cls) -> EmitOptions:

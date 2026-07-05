@@ -57,6 +57,7 @@ from pydantic import Field
 from .canonical_model import (
     ApiParadigm,
     CanonicalApi,
+    CanonicalField,
     Message,
     MessageRole,
     Operation,
@@ -76,9 +77,17 @@ from .emitter import (
     SchemaEmitter,
     _emit_constraints,
 )
+from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
+from .lossiness import LossinessSeverity
 from .projection import ProjectionStrategy, RouteBinding, get_projection
 
-__all__ = ["OpenApiEmitOptions", "OpenApiEmitter"]
+__all__ = ["OpenApiEmitOptions", "OpenApiEmitter", "OpenApiFidelityRulePack"]
+
+#: Vendor extension an OpenAPI 3.1 schema carries a source field number on, so a
+#: field number a source declares (e.g. a protobuf field number on a round-tripped
+#: model) is preserved rather than dropped — the refinement the reference fidelity
+#: rule pack advertises.
+X_FIELD_NUMBER = "x-field-number"
 
 # OpenAPI 3.1 path-item methods the emitter can emit natively. OpenAPI 3.2-only
 # methods (QUERY, additionalOperations) are stashed on vendor extensions instead.
@@ -113,6 +122,45 @@ class OpenApiEmitOptions(EmitOptions):
             "(e.g. low-fidelity caveats for event/RPC sources)."
         ),
     )
+
+
+class OpenApiFidelityRulePack(CapabilityRulePack):
+    """Reference fidelity rule pack for the OpenAPI 3.1 target — MFX-2.3 (#3840).
+
+    The worked example the ticket calls for: a :class:`~app.fidelity_rulepack.FidelityRulePack`
+    shipped *alongside* its emitter that refines the profile-derived default for the
+    one construct OpenAPI handles better than its six-axis
+    :class:`~app.emitter.CapabilityProfile` can express.
+
+    OpenAPI's profile declares ``field_identity = False`` — it has no native concept
+    of stable field numbers — so :class:`~app.fidelity_rulepack.CapabilityRulePack`
+    would report a source field number as an outright ``DROP``. But OpenAPI 3.1
+    schemas admit ``x-`` vendor extensions, so this emitter preserves such a number
+    as an :data:`X_FIELD_NUMBER` extension. The number is not *enforced* by the
+    format (nothing keys off it), so the honest verdict is a lossless ``APPROX``
+    (``info``) — "carried, but only as documentation" — not a ``DROP``. Every other
+    verdict is inherited unchanged from the capability-derived default.
+    """
+
+    def _field_identity_verdict(
+        self, field: CanonicalField
+    ) -> Optional[FidelityVerdict]:
+        """Preserve a source field number as an ``x-field-number`` extension (``APPROX``).
+
+        Overrides the base ``DROP`` for a present-but-unrepresentable field number:
+        OpenAPI keeps the value on a vendor extension rather than discarding it, so
+        the loss is a documentation-only approximation, not a drop. Fields with no
+        source number need nothing (OpenAPI never *requires* one), so those defer to
+        the inherited behaviour, which returns ``None``.
+        """
+        if field.field_number is not None:
+            return FidelityVerdict.approx(
+                message="OpenAPI 3.1 has no native field numbers; the source field "
+                f"number is preserved as an {X_FIELD_NUMBER} extension",
+                severity=LossinessSeverity.INFO,
+                target_mapping=f"field number → {X_FIELD_NUMBER} extension",
+            )
+        return super()._field_identity_verdict(field)
 
 
 class OpenApiEmitter(Emitter, register=True):
@@ -158,6 +206,11 @@ class OpenApiEmitter(Emitter, register=True):
             constraints=True,
             field_identity=False,
         )
+
+    @classmethod
+    def fidelity_rule_pack(cls) -> type[OpenApiFidelityRulePack]:
+        """Return the reference OpenAPI fidelity rule pack (MFX-2.3)."""
+        return OpenApiFidelityRulePack
 
     def emit(
         self,
