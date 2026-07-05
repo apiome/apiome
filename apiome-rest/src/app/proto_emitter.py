@@ -29,7 +29,7 @@ facets, no first-class union type, and no pub/sub. A construct a proto3 document
 faithfully (a field ``Constraints``, a ``UNION`` type, a proto2 ``default``, an event operation,
 a source field with no number) is emitted with the closest proto stand-in and recorded as a
 :class:`~app.emitter.Loss` on the result rather than silently dropped — the material the gRPC
-fidelity pack (MFX-12.2) turns into per-construct ``APPROX``/``DROP`` verdicts.
+fidelity pack (MFX-12.3) turns into per-construct ``APPROX``/``DROP``/``SYNTH`` verdicts.
 
 Two properties make the output trustworthy:
 
@@ -60,12 +60,15 @@ from .canonical_model import (
     CanonicalField,
     EnumValue,
     Operation,
+    OperationKind,
     Service,
     StreamingMode,
     Type,
     TypeKind,
     TypeRef,
 )
+from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
+from .lossiness import LossinessSeverity
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -79,7 +82,12 @@ from .emitter import (
 )
 from .field_identity_store import FieldNumberAllocator
 
-__all__ = ["ProtoEmitOptions", "ProtoEmitter", "compile_emitted_descriptor_set"]
+__all__ = [
+    "ProtoEmitOptions",
+    "ProtoEmitter",
+    "ProtoFidelityRulePack",
+    "compile_emitted_descriptor_set",
+]
 
 # The 15 protobuf scalar keywords. A leaf :class:`TypeRef.name` that is one of these is a proto
 # scalar; any other name is a package-qualified reference to a named (or imported) type. This is
@@ -177,6 +185,161 @@ class ProtoEmitOptions(EmitOptions):
     )
 
 
+# Well-known types the emitter uses when a source construct has no faithful proto shape.
+_WKT_STRUCT = "google.protobuf.Struct"
+_WKT_ANY = "google.protobuf.Any"
+
+# Pub/sub operation kinds the emitter reframes as unary ``rpc`` methods rather than dropping.
+_EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
+
+
+def _union_oneof_eligible(type_: Type) -> bool:
+    """Return ``True`` when a ``UNION``'s members are named type refs suitable for a ``oneof``."""
+    if not type_.union_members:
+        return False
+    return all(isinstance(member, str) and member for member in type_.union_members)
+
+
+def _record_has_inheritance(type_: Type) -> bool:
+    """Return ``True`` when a ``RECORD`` carried composition/inheritance the emitter flattens."""
+    all_of = type_.extras.get("allOf")
+    if isinstance(all_of, list) and all_of:
+        return True
+    interfaces = type_.extras.get("interfaces")
+    return isinstance(interfaces, list) and bool(interfaces)
+
+
+def _is_arbitrary_json_ref(ref: TypeRef) -> bool:
+    """Return ``True`` for a typeless leaf ref (arbitrary JSON) the emitter maps to ``Struct``."""
+    return not ref.is_list() and ref.name is None
+
+
+class ProtoFidelityRulePack(CapabilityRulePack):
+    """Reference fidelity rule pack for the proto3 target — MFX-12.3 (#3881).
+
+    The predictive counterpart to :class:`ProtoEmitter`: refines the profile-derived
+    default wherever protobuf's six-axis :class:`~app.emitter.CapabilityProfile` is too
+    coarse to describe how a construct actually degrades. It runs against the source
+    :class:`~app.canonical_model.CanonicalApi` alone (never the emitted ``.proto``), so
+    the fidelity advisory can predict an OpenAPI/GraphQL → protobuf export's losses
+    without emitting, and its verdicts line up construct-for-construct with the
+    :class:`~app.emitter.Loss`\\es :class:`ProtoEmitter` records at emit time.
+
+    Protobuf's profile advertises ``unions=False`` and ``nullability=True``, which hides
+    several honest losses the emitter still incurs:
+
+    * **discriminated unions** — emitted as a message wrapping a ``oneof`` when member
+      shapes allow, otherwise approximated as :data:`_WKT_ANY` (``APPROX``, not a silent
+      ``DROP``);
+    * **nullability / requiredness** — proto3 ``optional`` carries presence, not JSON Schema
+      nullability or ``required`` enforcement (``APPROX``);
+    * **validation constraints** — demoted to doc comments (``APPROX``);
+    * **inheritance / ``allOf`` / GraphQL interfaces** — flattened into one message (
+      ``APPROX``);
+    * **arbitrary JSON** — mapped to :data:`_WKT_STRUCT` (``APPROX``);
+    * **field numbers** — synthesized when the source lacks them (``SYNTH``, MFX-12.2).
+
+    Native pub/sub operations are reframed as unary ``rpc`` methods (``APPROX``), not the
+    capability default's critical ``DROP``.
+    """
+
+    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
+        """Reframe pub/sub operations the emitter carries as unary ``rpc`` methods."""
+        if operation.kind in _EVENT_OPERATION_KINDS:
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} has no pub/sub semantics; the "
+                f"{operation.kind.value!r} operation is reframed as a unary rpc",
+                target_mapping="pub/sub action → unary rpc",
+            )
+        return super().operation_verdict(operation)
+
+    def type_verdict(self, type_: Type) -> FidelityVerdict:
+        """Dispatch named types, refining unions and flattened inheritance."""
+        if type_.kind is TypeKind.UNION:
+            return self._union_verdict(type_)
+        if type_.kind is TypeKind.RECORD and _record_has_inheritance(type_):
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} has no inheritance; "
+                f"{type_.key!r} is flattened into a single message",
+                target_mapping="inheritance/allOf → flattened message fields",
+            )
+        return super().type_verdict(type_)
+
+    def _union_verdict(self, type_: Type) -> FidelityVerdict:
+        """``APPROX`` a union as ``oneof`` when eligible, otherwise as ``google.protobuf.Any``."""
+        if _union_oneof_eligible(type_):
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} has no first-class union type; "
+                f"{type_.key!r} is emitted as a message wrapping a oneof",
+                target_mapping="union/oneOf → message wrapping oneof",
+            )
+        return FidelityVerdict.approx(
+            message=f"{self.target_label} cannot represent the union shape; "
+            f"{type_.key!r} is approximated as google.protobuf.Any with notes",
+            target_mapping=f"union → {_WKT_ANY}",
+        )
+
+    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        """Collect every independent loss one record field incurs."""
+        verdicts = super().field_verdicts(field)
+        arbitrary = self._arbitrary_json_verdict(field)
+        if arbitrary is not None:
+            verdicts.append(arbitrary)
+        return verdicts
+
+    def _nullability_verdict(
+        self, field: CanonicalField
+    ) -> Optional[FidelityVerdict]:
+        """Report nullability/requiredness losses proto3 ``optional`` cannot enforce."""
+        if field.extras.get("proto3_optional"):
+            return None
+        if field.type.nullable is False:
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} cannot enforce a non-null/required guarantee; "
+                "the field is emitted without proto3 ``required`` semantics",
+                target_mapping="required/non-null → proto3 field (presence not enforced)",
+            )
+        return FidelityVerdict.approx(
+            message=f"{self.target_label} maps nullable fields to proto3 ``optional`` "
+            "presence, not JSON nullability",
+            target_mapping="nullable → proto3 optional",
+        )
+
+    def _constraints_verdict(
+        self, field: CanonicalField
+    ) -> Optional[FidelityVerdict]:
+        """Demote validation constraints to documentation comments."""
+        if not _has_any_constraint(field.constraints):
+            return None
+        return FidelityVerdict.approx(
+            message=f"{self.target_label} cannot enforce validation constraints; "
+            "they are demoted to documentation comments",
+            target_mapping="constraints → doc comment",
+        )
+
+    def _scalar_verdict(self, type_: Type) -> FidelityVerdict:
+        """Demote a scalar type's constraints to documentation comments."""
+        if _has_any_constraint(type_.constraints):
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} cannot enforce validation constraints; "
+                "they are demoted to documentation comments",
+                target_mapping="constraints → doc comment",
+            )
+        return FidelityVerdict.ok(message=f"scalar carried to {self.target_label}")
+
+    def _arbitrary_json_verdict(
+        self, field: CanonicalField
+    ) -> Optional[FidelityVerdict]:
+        """Approximate a typeless JSON value as ``google.protobuf.Struct``."""
+        if not _is_arbitrary_json_ref(field.type):
+            return None
+        return FidelityVerdict.approx(
+            message=f"{self.target_label} has no arbitrary JSON type; "
+            f"{field.key!r} is approximated as {_WKT_STRUCT}",
+            target_mapping=f"arbitrary JSON → {_WKT_STRUCT}",
+        )
+
+
 class ProtoEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as proto3 ``.proto`` source with provenance.
 
@@ -206,7 +369,7 @@ class ProtoEmitter(Emitter, register=True):
         ``unions`` is ``False`` (proto has no first-class union type — a ``UNION`` is approximated
         as a message wrapping a ``oneof``) and ``constraints`` is ``False`` (proto has no native
         validation facets). ``field_identity`` is ``True`` — stable field numbers are protobuf's
-        signature strength. The gRPC fidelity pack (MFX-12.2) refines these predictions.
+        signature strength. The gRPC fidelity pack (MFX-12.3) refines these predictions.
         """
         return CapabilityProfile(
             operations=True,
@@ -216,6 +379,11 @@ class ProtoEmitter(Emitter, register=True):
             constraints=False,
             field_identity=True,
         )
+
+    @classmethod
+    def fidelity_rule_pack(cls) -> type[ProtoFidelityRulePack]:
+        """Return the reference protobuf fidelity rule pack (MFX-12.3)."""
+        return ProtoFidelityRulePack
 
     def emit(
         self,

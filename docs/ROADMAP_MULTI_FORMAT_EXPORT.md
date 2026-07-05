@@ -677,7 +677,7 @@ Sources: https://protobuf.dev/ · https://buf.build/docs/
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 12.1 ✅ | Protobuf emitter | model services/methods/types → `.proto` (+ descriptor) | export,multi-protocol,mvp | N | Y | L | apiome-rest |
 | 12.2 ✅ | Stable field-number assignment | deterministic, persisted field numbers (SYNTH) | export,multi-protocol,version-control,mvp | N | Y | M | apiome-rest |
-| 12.3 | Protobuf fidelity pack | unions/nullability/constraints/inheritance loss | export,multi-protocol,mvp | N | Y | M | apiome-rest |
+| 12.3 ✅ | Protobuf fidelity pack | unions/nullability/constraints/inheritance loss | export,multi-protocol,mvp | N | Y | M | apiome-rest |
 | 12.4 | Multi-file packaging + validate | per-package files + imports; `buf build` validate | export,rest,validation,mvp | Y | Y | M | apiome-rest |
 | 12.5 | gRPC target card + CLI + fixtures | UI/CLI + round-trip fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 | 12.6 · #4343 | Connect-RPC / gRPC-Gateway flavor options | `google.api.http` annotations from REST bindings (mirror MFI-19.5) | export,multi-protocol | Y | N | S | apiome-rest |
@@ -698,11 +698,12 @@ Sources: https://protobuf.dev/ · https://buf.build/docs/
 - **Technical Stack.** Python, PostgreSQL.
 - **Status.** `apiome-db/scripts/V141__export_field_identities_3880.sql` adds `export_field_identities` (scoped by tenant, project, target, canonical field key). `apiome-rest/src/app/field_identity_store.py` owns allocation (honours source numbers, persisted assignments, and message `reserved` ranges) and DB load/persist helpers. `ProtoEmitOptions.persisted_field_numbers` feeds the pure emitter; `export_service.emit_canonical(..., persistence=…)` loads before proto3 emit and upserts `EmitResult.field_identity_assignments` after. `/v1/export/.../document` passes persistence context automatically. Synthesized numbers remain `LossKind.INFERRED` / fidelity `SYNTH`. Tests in `tests/test_field_identity_store.py` and `tests/test_export_field_identities_migration.py`. apiome-rest 1.75.23 → 1.75.24.
 
-### MFX-12.3 — Protobuf fidelity pack  ·  **#3881**
+### MFX-12.3 — Protobuf fidelity pack  ·  **#3881**  ·  ✅ **Done**
 - **Solution / Scope.** Rules: `oneOf`/union → `oneof` if shape allows else DROP-to-`Any`/notes (APPROX); nullability → proto3 `optional` (APPROX); constraints (pattern/min/max/format) → comments (APPROX/DROP); inheritance/`allOf` → flatten (APPROX); arbitrary JSON → `google.protobuf.Struct` (APPROX); field numbers → SYNTH.
 - **Acceptance Criteria.** A rich OpenAPI/GraphQL source enumerates each loss with kind + reason.
 - **Dependencies / Parallelism.** After 12.1, 2.3. Parallel with 12.4.
 - **Technical Stack.** Python.
+- **Status.** The predictive fidelity pack (MFX-2.3 seam) that surfaces what the proto3 target *can't* natively carry — the constructs protobuf's six-axis `CapabilityProfile` (`unions=False`, `nullability=True`, `constraints=False`) hides. The reference `ProtoFidelityRulePack` (`apiome-rest/src/app/proto_emitter.py`) refines the profile-derived default so an **OpenAPI/GraphQL source no longer reports silent union DROPs or missing nullability losses**: a **named union** becomes an honest `APPROX` (`oneof`-bearing message or `google.protobuf.Any` when the shape is ineligible), **nullability/requiredness** and **validation constraints** are `APPROX` (proto3 `optional` / doc comments), **inheritance/allOf/GraphQL interfaces** flatten to a single message (`APPROX`), **arbitrary JSON** maps to `google.protobuf.Struct` (`APPROX`), **field numbers** stay `SYNTH` (MFX-12.2), and **pub/sub operations** are reframed as unary `rpc` (`APPROX`) rather than the capability default's critical `DROP`. Verdicts flow through `compute_lossiness_for_emitter` → the fidelity advisory (MFX-2.4) and target/export fidelity surfaces (MFX-2.5). Tests in `tests/test_fidelity_rulepack.py`. apiome-rest 1.75.24 → 1.75.25.
 
 *(12.4 multi-file packaging (per-package + imports) + `buf build` validation; 12.5 target card + `apiome export grpc` + round-trip fixtures. Coordinate with #1384/#1427.)*
 

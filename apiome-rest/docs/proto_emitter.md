@@ -56,7 +56,7 @@ the same key.
 
 Protobuf is an RPC/type vocabulary with no validation facets, no first-class union, and no pub/sub.
 Rather than drop such a construct silently, the emitter records an `EmitResult.losses` entry (the
-material the gRPC fidelity pack, MFX-12.2/12.3, turns into `APPROX`/`DROP` verdicts):
+material the gRPC fidelity pack (MFX-12.3 `ProtoFidelityRulePack`) turns into `APPROX`/`DROP`/`SYNTH` verdicts):
 
 | Loss `subject` | When |
 |---|---|
