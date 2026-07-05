@@ -1,4 +1,5 @@
-"""Apache Avro emitter: canonical model → ``.avsc`` — MFX-19.1 (#3909), fidelity pack MFX-19.2 (#3910).
+"""Apache Avro emitter: canonical model → ``.avsc`` — MFX-19.1 (#3909), fidelity pack MFX-19.2 (#3910),
+subjects & evolution defaults MFX-19.3 (#3911).
 
 The inverse of a future Avro normalizer and an implementation of the
 :class:`app.emitter.Emitter` SPI. It walks a :class:`~app.canonical_model.CanonicalApi` and
@@ -22,10 +23,11 @@ here (MFX-19.2 reports that loss). Emission is pure, deterministic, and validate
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Tuple, Union
+from enum import Enum
+from typing import Any, Dict, List, Literal, Optional, Self, Tuple, Union
 
 from fastavro import parse_schema
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from .canonical_model import (
     ApiParadigm,
@@ -44,6 +46,8 @@ from .emitter import (
     EmitResult,
     EmittedFile,
     Emitter,
+    LossKind,
+    LossTracker,
     Provenance,
     ProvenanceTracker,
 )
@@ -54,8 +58,22 @@ __all__ = [
     "AvroEmitOptions",
     "AvroEmitter",
     "AvroFidelityRulePack",
+    "AvroSubjectNamingStrategy",
+    "resolve_avro_subject",
     "validate_avro_schema",
 ]
+
+
+class AvroSubjectNamingStrategy(str, Enum):
+    """Confluent Schema Registry subject naming (MFX-19.3).
+
+    See Confluent's ``TopicNameStrategy``, ``RecordNameStrategy``, and
+    ``TopicRecordNameStrategy`` — https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html
+    """
+
+    RECORD_NAME = "record_name"
+    TOPIC_NAME = "topic_name"
+    TOPIC_RECORD_NAME = "topic_record_name"
 
 # Canonical / JSON-Schema / protobuf scalar names → Avro primitive keywords.
 _AVRO_PRIMITIVES = frozenset(
@@ -253,13 +271,39 @@ class AvroFidelityRulePack(CapabilityRulePack):
 
 
 class AvroEmitOptions(EmitOptions):
-    """Per-target options for :class:`AvroEmitter` (MFX-1.4)."""
+    """Per-target options for :class:`AvroEmitter` (MFX-1.4 / MFX-19.3)."""
 
     namespace: Optional[str] = Field(
         default=None,
         description="Override the emitted namespace. Defaults to the model's identity "
         "namespace; useful for a non-Avro source whose model carries none.",
     )
+    subject_naming: AvroSubjectNamingStrategy = Field(
+        default=AvroSubjectNamingStrategy.RECORD_NAME,
+        description="Schema Registry subject naming strategy. ``record_name`` emits one "
+        "subject per type (``{qualifiedName}-value``); ``topic_name`` uses the Kafka "
+        "topic; ``topic_record_name`` combines both.",
+    )
+    topic: Optional[str] = Field(
+        default=None,
+        description="Kafka topic for ``topic_name`` / ``topic_record_name`` strategies.",
+    )
+    subject_role: Literal["value", "key"] = Field(
+        default="value",
+        description="Subject suffix: ``value`` → ``-value``, ``key`` → ``-key`` (Confluent convention).",
+    )
+
+    @model_validator(mode="after")
+    def _require_topic_for_topic_strategies(self) -> Self:
+        """Topic-based strategies need a non-empty ``topic``."""
+        if self.subject_naming in (
+            AvroSubjectNamingStrategy.TOPIC_NAME,
+            AvroSubjectNamingStrategy.TOPIC_RECORD_NAME,
+        ) and not (self.topic or "").strip():
+            raise ValueError(
+                "topic is required when subject_naming is topic_name or topic_record_name"
+            )
+        return self
 
 
 class AvroEmitter(Emitter, register=True):
@@ -315,7 +359,7 @@ class AvroEmitter(Emitter, register=True):
             files=files,
             media_type=self.OUTPUT_MEDIA_TYPE,
             provenance=writer.tracker.records(),
-            losses=[],
+            losses=writer.losses.records(),
         )
 
 
@@ -326,6 +370,7 @@ class _AvroWriter:
         self._api = api
         self._options = options
         self.tracker = ProvenanceTracker()
+        self.losses = LossTracker()
         self._default_namespace = (
             (options.namespace or api.identity.namespace or "").strip() or None
         )
@@ -360,6 +405,7 @@ class _AvroWriter:
                 path=_schema_path(type_, self._default_namespace),
                 content=schemas_by_key[type_.key],
                 media_type=AvroEmitter.OUTPUT_MEDIA_TYPE,
+                subject=resolve_avro_subject(type_, self._options, self._default_namespace),
             )
             for type_ in ordered
         ]
@@ -382,7 +428,10 @@ class _AvroWriter:
         schema: Dict[str, Any] = {
             "type": "record",
             "name": _sanitize_name(type_.name),
-            "fields": [self._emit_field(field, namespace=namespace) for field in type_.fields],
+            "fields": [
+                self._emit_field(field, namespace=namespace, type_key=type_.key)
+                for field in type_.fields
+            ],
         }
         if namespace:
             schema["namespace"] = namespace
@@ -390,14 +439,40 @@ class _AvroWriter:
             schema["doc"] = type_.description
         return schema
 
-    def _emit_field(self, field: CanonicalField, *, namespace: Optional[str]) -> Dict[str, Any]:
+    def _emit_field(
+        self,
+        field: CanonicalField,
+        *,
+        namespace: Optional[str],
+        type_key: str,
+    ) -> Dict[str, Any]:
         """Emit one record field with type, optional default, and doc."""
+        avro_type = self._emit_type_ref(field.type, namespace=namespace, field=field)
         entry: Dict[str, Any] = {
             "name": _sanitize_name(field.name),
-            "type": self._emit_type_ref(field.type, namespace=namespace, field=field),
+            "type": avro_type,
         }
         if _field_has_default(field):
             entry["default"] = _field_default(field)
+        elif _field_needs_synth_default(field):
+            entry["default"] = _synthesized_evolution_default(avro_type)
+            pointer = ProvenanceTracker.child(
+                f"/schemas/{type_key}",
+                "fields",
+                _sanitize_name(field.name),
+                "default",
+            )
+            self.tracker.record(
+                pointer,
+                Provenance.DEFAULT,
+                "synthesized evolution default",
+            )
+            self.losses.record(
+                LossKind.INFERRED,
+                "evolution-default",
+                f"synthesized null default on {field.key!r} for schema-evolution compatibility",
+                pointer=field.key,
+            )
         if field.description:
             entry["doc"] = field.description
         return entry
@@ -570,6 +645,75 @@ def validate_avro_schema(
         return parse_schema(schema, named_schemas=registry)  # type: ignore[return-value]
     except Exception as exc:  # fastavro raises several exception types
         raise ValueError(f"Invalid Avro schema: {exc}") from exc
+
+
+def resolve_avro_subject(
+    type_: Type,
+    options: AvroEmitOptions,
+    default_namespace: Optional[str],
+) -> str:
+    """Return the Confluent Schema Registry subject for one emitted Avro type (MFX-19.3)."""
+    role_suffix = f"-{options.subject_role}"
+    qualified = _qualified_name(type_, default_namespace) or _sanitize_name(type_.name) or type_.key
+
+    if options.subject_naming is AvroSubjectNamingStrategy.TOPIC_NAME:
+        topic = (options.topic or "").strip()
+        return f"{topic}{role_suffix}"
+
+    if options.subject_naming is AvroSubjectNamingStrategy.TOPIC_RECORD_NAME:
+        topic = (options.topic or "").strip()
+        return f"{topic}-{qualified}{role_suffix}"
+
+    return f"{qualified}{role_suffix}"
+
+
+def _synthesized_evolution_default(avro_type: Any) -> Any:
+    """Return an Avro default compatible with ``avro_type`` for schema evolution (MFX-19.3).
+
+    Nullable optional fields are emitted as ``["null", T]`` unions; Confluent-compatible
+    evolution requires a default matching the first union branch — ``null``.
+    """
+    if isinstance(avro_type, list):
+        if avro_type and avro_type[0] == "null":
+            return None
+        if "null" in avro_type:
+            return None
+        return _synthesized_evolution_default(avro_type[0])
+    if isinstance(avro_type, dict):
+        logical = avro_type.get("type")
+        if logical == "array":
+            return []
+        if logical == "map":
+            return {}
+        if logical == "boolean":
+            return False
+        if logical in {"int", "long"}:
+            return 0
+        if logical in {"float", "double"}:
+            return 0.0
+        if logical == "bytes":
+            return b""
+        if logical == "string":
+            return ""
+        if logical == "enum":
+            symbols = avro_type.get("symbols") or []
+            return symbols[0] if symbols else None
+        if logical == "fixed":
+            size = avro_type.get("size", 0)
+            return b"\x00" * size if isinstance(size, int) and size > 0 else b""
+    if avro_type == "null":
+        return None
+    if avro_type == "boolean":
+        return False
+    if avro_type in {"int", "long"}:
+        return 0
+    if avro_type in {"float", "double"}:
+        return 0.0
+    if avro_type == "bytes":
+        return b""
+    if avro_type == "string":
+        return ""
+    return None
 
 
 def _schema_path(type_: Type, default_namespace: Optional[str]) -> str:

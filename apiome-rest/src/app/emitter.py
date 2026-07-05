@@ -256,6 +256,11 @@ class EmittedFile(BaseModel):
         default=None,
         description="Per-file media type when it differs from the bundle default.",
     )
+    subject: Optional[str] = Field(
+        default=None,
+        description="Schema Registry subject for this artifact when the target assigns one "
+        "(e.g. Confluent ``RecordNameStrategy`` subjects on Avro export).",
+    )
 
 
 class EmitOptionsError(Exception):
