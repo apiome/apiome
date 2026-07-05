@@ -24,6 +24,7 @@ from typing import List
 
 import pytest
 
+from app.asyncapi_emitter import AsyncApiEmitter, AsyncApiFidelityRulePack
 from app.canonical_model import (
     ApiIdentity,
     ApiParadigm,
@@ -31,6 +32,8 @@ from app.canonical_model import (
     CanonicalField,
     Channel,
     Constraints,
+    Message,
+    MessageRole,
     Operation,
     OperationKind,
     Service,
@@ -518,3 +521,145 @@ def test_pack_does_not_mutate_source_model():
     before = deepcopy(api).model_dump()
     CapabilityRulePack(PROTOBUF_PROFILE, "Protobuf").evaluate(api)
     assert api.model_dump() == before
+
+
+# ---------------------------------------------------------------------------
+# Reference AsyncAPI pack reports REST/RPC → message reframing losses
+# (MFX-11.2, #3875)
+# ---------------------------------------------------------------------------
+
+
+def _rest_operation_api() -> CanonicalApi:
+    """A REST source: one GET operation carrying method, path, and a 200 response."""
+    get_user = Operation(
+        key="GET /users/{id}",
+        name="getUser",
+        kind=OperationKind.REQUEST_RESPONSE,
+        http_method="GET",
+        http_path="/users/{id}",
+        messages=[
+            Message(
+                key="GET /users/{id}#response.200",
+                role=MessageRole.RESPONSE,
+                status_code="200",
+            )
+        ],
+    )
+    return CanonicalApi(
+        paradigm=ApiParadigm.REST,
+        format="openapi-3.1",
+        identity=ApiIdentity(name="Users API"),
+        services=[Service(key="Users", name="Users", operations=[get_user])],
+        types=[
+            Type(
+                key="User",
+                name="User",
+                kind=TypeKind.RECORD,
+                fields=[
+                    CanonicalField(
+                        key="User.id",
+                        name="id",
+                        type=TypeRef(name="string", nullable=False),
+                    )
+                ],
+            )
+        ],
+    )
+
+
+def test_asyncapi_emitter_declares_reference_pack():
+    """The AsyncAPI emitter advertises its own pack, a CapabilityRulePack refinement."""
+    assert AsyncApiEmitter.fidelity_rule_pack() is AsyncApiFidelityRulePack
+    assert issubclass(AsyncApiFidelityRulePack, CapabilityRulePack)
+
+
+def test_asyncapi_pack_reframes_rest_operation_as_approx():
+    """A REST operation is a reframing APPROX enumerating the dropped HTTP semantics."""
+    report = compute_lossiness_for_emitter(_rest_operation_api(), AsyncApiEmitter)
+    item = _items_for(report, "GET /users/{id}")[0]
+    assert item.kind is LossinessKind.APPROX
+    assert item.severity is LossinessSeverity.WARN
+    # All three HTTP facets the operation carries are named in the loss.
+    assert "HTTP method" in item.message
+    assert "path" in item.message
+    assert "response status" in item.message
+    assert "send + reply" in (item.target_mapping or "")
+
+
+def test_default_pack_would_drop_rest_operation_the_asyncapi_pack_reframes():
+    """The refinement is the pack's: the flat profile would call the reframe a DROP.
+
+    Contrasts the honest MFX-11.2 pack (APPROX — the operation is carried, reframed)
+    against the capability profile, which — because AsyncAPI advertises
+    ``operations=False`` — predicts a critical ``DROP`` and overstates the loss.
+    """
+    api = _rest_operation_api()
+    default = compute_lossiness(api, AsyncApiEmitter.capability_profile())
+    assert _items_for(default, "GET /users/{id}")[0].kind is LossinessKind.DROP
+    via_pack = compute_lossiness_for_emitter(api, AsyncApiEmitter)
+    assert _items_for(via_pack, "GET /users/{id}")[0].kind is LossinessKind.APPROX
+
+
+def test_asyncapi_pack_reframes_operation_without_http_semantics():
+    """An abstract operation (no verb/path/status) still reframes to an APPROX, no loss list."""
+    op = Operation(
+        key="doThing",
+        name="doThing",
+        kind=OperationKind.REQUEST_RESPONSE,
+    )
+    api = CanonicalApi(
+        paradigm=ApiParadigm.RPC,
+        format="grpc",
+        identity=ApiIdentity(name="Svc"),
+        services=[Service(key="Svc", name="Svc", operations=[op])],
+    )
+    item = _items_for(compute_lossiness_for_emitter(api, AsyncApiEmitter), "doThing")[0]
+    assert item.kind is LossinessKind.APPROX
+    assert "send + reply" in item.message
+    # No HTTP facets to enumerate → the message carries no "are dropped" clause.
+    assert "are dropped" not in item.message
+
+
+def test_asyncapi_pack_approximates_rpc_streaming_operation():
+    """An RPC streaming method is an APPROX whose streaming cardinality is dropped."""
+    stream = Operation(
+        key="acme.Chat.Stream",
+        name="Stream",
+        kind=OperationKind.REQUEST_RESPONSE,
+        streaming=StreamingMode.BIDIRECTIONAL,
+    )
+    api = CanonicalApi(
+        paradigm=ApiParadigm.RPC,
+        format="grpc",
+        identity=ApiIdentity(name="Chat"),
+        services=[Service(key="acme.Chat", name="Chat", operations=[stream])],
+    )
+    item = _items_for(
+        compute_lossiness_for_emitter(api, AsyncApiEmitter), "acme.Chat.Stream"
+    )[0]
+    assert item.kind is LossinessKind.APPROX
+    assert "bidirectional" in item.message
+    assert "cardinality" in (item.target_mapping or "")
+
+
+def test_asyncapi_pack_carries_native_pubsub_and_channel_cleanly():
+    """Native pub/sub operations and their channel are AsyncAPI's home turf — clean OK."""
+    report = compute_lossiness_for_emitter(_event_api(), AsyncApiEmitter)
+    assert _items_for(report, "user/signedup")[0].kind is LossinessKind.OK
+    for key in ("user/signedup#publish", "user/signedup#subscribe"):
+        assert _items_for(report, key)[0].kind is LossinessKind.OK
+
+
+def test_asyncapi_pack_carries_named_types_to_components():
+    """Every named type lands in components.schemas — records/unions/scalars stay OK."""
+    report = compute_lossiness_for_emitter(_rich_api(), AsyncApiEmitter)
+    for key in ("User", "Contact", "Money"):
+        assert _items_for(report, key)[0].kind is LossinessKind.OK
+
+
+def test_asyncapi_event_source_is_lossless_but_rest_source_is_not():
+    """An event source round-trips cleanly; a REST source is honestly reported lossy."""
+    assert compute_lossiness_for_emitter(_event_api(), AsyncApiEmitter).is_lossless
+    assert not compute_lossiness_for_emitter(
+        _rest_operation_api(), AsyncApiEmitter
+    ).is_lossless

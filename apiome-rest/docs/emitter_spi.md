@@ -267,10 +267,22 @@ On an event source the emitter is a **fixed point** of the reference normalizer
 source is **reframed**: each request/response operation becomes an `action: send`
 whose `reply` block carries the response message, and the HTTP method/path/status
 AsyncAPI cannot represent are recorded as `EmitResult.losses` (`INFERRED` reframe +
-synthesized channel, `NA` HTTP binding + response status) for the AsyncAPI fidelity
-pack (MFX-11.2) to turn into `APPROX`/`DROP` verdicts. Its `CapabilityProfile` is
+synthesized channel, `NA` HTTP binding + response status). Its `CapabilityProfile` is
 honest about this — `events=True`, `operations=False`. Options: `include_channels`
 (disable for a schemas-only export) and `include_components`.
+
+`AsyncApiEmitter.fidelity_rule_pack()` returns **`AsyncApiFidelityRulePack`** (MFX-11.2),
+the predictive counterpart the fidelity engine consults so an export's losses can be
+reported without emitting. It refines the profile-derived default: because the profile
+advertises `operations=False`, the `CapabilityRulePack` would predict every reframed
+REST/RPC operation a critical `DROP`, but the emitter *carries* them, so the pack
+corrects the verdict to the honest reframing `APPROX` — a request-response exchange to
+an `action: send` + `reply` whose dropped HTTP method/path/response-status are
+enumerated in the verdict, and an RPC-streaming method to a channel with its streaming
+cardinality dropped. Native pub/sub operations, event channels, and every named type
+(records/unions/scalars → `components.schemas`) are carried faithfully and inherited
+unchanged. This mirrors `OpenApiFidelityRulePack` and lines up construct-for-construct
+with the `EmitResult.losses` the emitter records at emit time.
 
 ### `SampleEmitter`
 
