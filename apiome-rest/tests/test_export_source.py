@@ -19,7 +19,11 @@ import pytest
 
 from app.canonical_model import ApiIdentity, ApiParadigm, CanonicalApi
 from app.conversion_job import ConversionError, ConversionSource
-from app.export_source import ExportSourceError, load_export_source
+from app.export_source import (
+    ExportSourceError,
+    load_export_source,
+    load_public_export_source,
+)
 
 _REV_UUID = "11111111-1111-4111-8111-111111111111"
 
@@ -143,4 +147,52 @@ def test_422_when_source_cannot_be_reconstructed():
         db.get_version_source_projection.return_value = _projection()
         with pytest.raises(ExportSourceError) as exc:
             load_export_source("tenant-1", "artifact-1", _REV_UUID)
+    assert exc.value.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Public loader (MFX-7.1) — slug-resolved, published/public only
+# ---------------------------------------------------------------------------
+def _public_projection() -> dict:
+    """A published/public projection row, as the slug-scoped DB lookup returns it."""
+    row = _projection()
+    row["version_record_id"] = _REV_UUID
+    return row
+
+
+def test_public_load_resolves_by_slugs():
+    """The public loader resolves the slugs through the published/public projection."""
+    with patch("app.export_source.db") as db, patch(
+        "app.export_source.build_conversion_source", return_value=_conversion_source()
+    ):
+        db.get_public_version_source_projection.return_value = _public_projection()
+        source = load_public_export_source("acme", "widgets", "1.0.0")
+
+    db.get_public_version_source_projection.assert_called_once_with(
+        "acme", "widgets", "1.0.0"
+    )
+    assert source.artifact_id == "artifact-1"
+    assert source.version_record_id == _REV_UUID
+    assert source.version_label == "1.0.0"
+
+
+def test_public_load_404_when_not_published_public():
+    """A private, draft, or unknown version is a uniform 404 — no existence probe."""
+    with patch("app.export_source.db") as db:
+        db.get_public_version_source_projection.return_value = None
+        with pytest.raises(ExportSourceError) as exc:
+            load_public_export_source("acme", "widgets", "9.9.9")
+    assert exc.value.status_code == 404
+    assert "not found" in str(exc.value).lower()
+
+
+def test_public_load_422_when_source_cannot_be_reconstructed():
+    """A published revision with no captured source surfaces the convert path's 422."""
+    with patch("app.export_source.db") as db, patch(
+        "app.export_source.build_conversion_source",
+        side_effect=ConversionError("no captured source", status_code=422),
+    ):
+        db.get_public_version_source_projection.return_value = _public_projection()
+        with pytest.raises(ExportSourceError) as exc:
+            load_public_export_source("acme", "widgets", "1.0.0")
     assert exc.value.status_code == 422

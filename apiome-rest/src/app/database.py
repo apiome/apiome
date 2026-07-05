@@ -2780,6 +2780,53 @@ class Database:
         results = self.execute_query(query, (version_record_id, tenant_id))
         return results[0] if results else None
 
+    def get_public_version_source_projection(
+        self, tenant_slug: str, project_slug: str, version_slug: str
+    ) -> Optional[Dict[str, Any]]:
+        """Project a **published, public** revision's captured-source fields by slugs (MFX-7.1).
+
+        The public browse export path (`/v1/browse/.../export/*`) resolves its source from URL
+        slugs, not from an authenticated tenant id, so this variant of
+        :meth:`get_version_source_projection` joins tenants → projects → versions on their slugs
+        and hard-gates on the public browse predicate (``published IS TRUE AND visibility =
+        'public'``, undeleted — the same slice ``apiome-browse`` and the ``/v1/browse`` directory
+        serve). A private, unpublished, or deleted revision is indistinguishable from a missing
+        one: both return ``None``, so a caller can never learn that a hidden artifact exists.
+
+        Args:
+            tenant_slug: The owning tenant's slug.
+            project_slug: The project (artifact) slug within the tenant.
+            version_slug: The version label (``versions.version_id``, e.g. ``1.0.0``).
+
+        Returns:
+            A row shaped like :meth:`get_version_source_projection`'s (``id`` is the owning
+            project id, plus ``project_slug``, ``version_label``, ``source_format``,
+            ``protocol``, ``format_metadata``, ``tool_versions``, project ``metadata``) with an
+            extra ``version_record_id`` (the resolved ``versions.id``), or ``None`` when no
+            published public revision matches the slugs.
+        """
+        query = """
+            SELECT p.id AS id, p.slug AS project_slug,
+                   v.id AS version_record_id,
+                   v.version_id AS version_label,
+                   v.source_format, v.protocol, v.format_metadata,
+                   v.source_tool_versions AS tool_versions,
+                   p.metadata
+            FROM apiome.versions v
+            JOIN apiome.projects p ON v.project_id = p.id
+            JOIN apiome.tenants t ON p.tenant_id = t.id
+            WHERE t.slug = %s
+              AND p.slug = %s
+              AND v.version_id = %s
+              AND v.published IS TRUE
+              AND v.visibility = 'public'
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+              AND t.deleted_at IS NULL
+        """
+        results = self.execute_query(query, (tenant_slug, project_slug, version_slug))
+        return results[0] if results else None
+
     def revision_has_protected_named_ref(
         self, version_row_id: str, project_id: str, tenant_id: str
     ) -> bool:
