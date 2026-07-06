@@ -582,7 +582,6 @@ markers. Deepens MFX-6.3's "preview" into a real viewer; implements MFX-6.4's di
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 43.2 #4362 | Bundle tree + file tabs | zip-manifest tree (proto packages, WSDL+XSD, Avro subjects); tabbed viewing | export,ui,typescript,mvp | N | Y | M | apiome-ui |
 | 43.3 #4363 | Problem markers from verify | validation/lint findings → Monaco markers + gutter; lens↔editor cross-nav | export,ui,validation,linting,mvp | N | Y | M | apiome-ui |
 | 43.4 #4364 | Round-trip Monaco diff | source vs re-imported emitted artifact side-by-side (implements MFX-6.4) | export,ui,version-control | Y | N | M | apiome-ui |
 | 43.5 #4365 | Large-output guards + viewer actions | size caps/virtualization, copy/download-file, wrap/fold, find | export,ui,typescript | Y | N | S | apiome-ui |
@@ -612,6 +611,17 @@ markers. Deepens MFX-6.3's "preview" into a real viewer; implements MFX-6.4's di
 - **Technical Stack.** `@monaco-editor/react`, shared language registry util.
 
 ### MFX-43.2 — Bundle tree + file tabs · #4362
+- **Status (done).** The Studio Review step now explores a multi-file bundle as an IDE-style tree
+  (`BundleTree.tsx`) + recent-files tab strip (`BundleFileTabs.tsx`) over the shared MFX-43.1 viewer,
+  composed by `BundleExplorer.tsx`. A pure model (`exportBundle.ts`) folds the emitted bundle's flat
+  paths into a folders-first tree, buckets the Verify lenses' located validation/lint findings by
+  file (rolled up to folders) for per-node count badges, and detects single vs multi. The emit path
+  reads its response as bytes and, when it is a ZIP bundle (`looksLikeZip` + a new central-directory
+  `readZip` reader in `zipBundle.ts`, the inverse of the existing writer, stored + deflate-raw),
+  explodes it into the manifest; a lone document stays the single-file preview and **skips the tree
+  entirely**. Large bundles stay responsive via CSS `content-visibility` on tree rows (windowing
+  deepens in MFX-43.5). Per-file download is deferred to MFX-43.5; a bundle downloads as the whole
+  `.zip`. Bump apiome-ui 0.63.0 → 0.64.0.
 - **Problem.** Multi-file targets (MFX-4.2: per-package `.proto` + imports, WSDL+XSDs, per-subject
   `.avsc`, Bruno folders) can't be reviewed as one blob.
 - **Solution / Scope.** Left-rail file tree driven by the bundle manifest (folder structure,

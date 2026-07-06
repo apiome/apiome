@@ -34,6 +34,7 @@ jest.mock('next/link', () => ({
 }));
 
 import { ExportStudio } from '../src/app/components/ade/dashboard/export/ExportStudio';
+import { buildZip } from '../src/app/components/ade/dashboard/export/zipBundle';
 import type { ExportTargetsResponse } from '../src/app/components/ade/dashboard/export/exportTargetCatalog';
 import type { ExportFidelityEnvelope } from '../src/app/components/ade/dashboard/export/exportFidelityPreview';
 
@@ -155,7 +156,7 @@ const PREVIEWS: Record<string, ExportFidelityEnvelope> = {
   },
 };
 
-function mockFetch(opts: { invalidVerify?: boolean } = {}): jest.Mock {
+function mockFetch(opts: { invalidVerify?: boolean; bundle?: boolean } = {}): jest.Mock {
   return jest.fn((input: unknown, init?: { method?: string; body?: string }) => {
     const url = typeof input === 'string' ? input : String(input);
     if (url.includes('/api/export/targets')) {
@@ -224,6 +225,25 @@ function mockFetch(opts: { invalidVerify?: boolean } = {}): jest.Mock {
     }
     if (url.includes('/api/export/document') && init?.method === 'POST') {
       const target = String(JSON.parse(init?.body ?? '{}').target);
+      // A multi-file target (MFX-43.2) returns a ZIP bundle; single targets return the doc verbatim.
+      if (opts.bundle && target === 'proto') {
+        const zip = buildZip([
+          { path: 'petstore.proto', content: 'syntax = "proto3";' },
+          { path: 'google/protobuf/timestamp.proto', content: 'message Timestamp {}' },
+        ]);
+        return Promise.resolve({
+          ok: true,
+          headers: {
+            get: (name: string) =>
+              name.toLowerCase() === 'content-disposition'
+                ? 'attachment; filename="petstore.zip"'
+                : name.toLowerCase() === 'content-type'
+                  ? 'application/zip'
+                  : null,
+          },
+          arrayBuffer: () => Promise.resolve(zip.buffer.slice(0)),
+        });
+      }
       const doc =
         target === 'openapi'
           ? { filename: 'petstore.json', type: 'application/json', text: '{"openapi":"3.1.0"}' }
@@ -238,7 +258,7 @@ function mockFetch(opts: { invalidVerify?: boolean } = {}): jest.Mock {
                 ? doc.type
                 : null,
         },
-        text: () => Promise.resolve(doc.text),
+        arrayBuffer: () => Promise.resolve(new TextEncoder().encode(doc.text).buffer),
       });
     }
     // Catalog-source context for the Source step (MFX-41.2) — a non-OpenAPI (gRPC) import.
@@ -631,5 +651,29 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     fireEvent.click(screen.getByRole('button', { name: /download petstore\.json/i }));
     fireEvent.click(screen.getByRole('button', { name: /download \.zip/i }));
     expect(downloads).toEqual(['petstore.json', 'petstore.zip']);
+  });
+
+  it('explores a multi-file bundle in the Review step (MFX-43.2)', async () => {
+    await advanceToVerify(mockFetch({ bundle: true }), 'proto');
+    await runVerification();
+    // A lossy proto conversion: acknowledge, then advance and generate.
+    fireEvent.click(within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+
+    // The bundle explorer (not the single-file preview) renders, with the file tree + tabs.
+    const explorer = await screen.findByTestId('bundle-explorer');
+    expect(explorer).toHaveAttribute('data-multi', 'true');
+    expect(screen.queryByTestId('export-artifact-preview')).not.toBeInTheDocument();
+    expect(screen.getByTestId('bundle-tree')).toBeInTheDocument();
+    expect(screen.getByTestId('bundle-tree-file-petstore.proto')).toBeInTheDocument();
+
+    // Navigate to the nested import file — it opens in the viewer.
+    fireEvent.click(screen.getByTestId('bundle-tree-file-google/protobuf/timestamp.proto'));
+    expect(await screen.findByTestId('bundle-file-editor')).toHaveTextContent('message Timestamp');
+
+    // A bundle downloads only as the whole .zip here (per-file download is MFX-43.5).
+    expect(screen.queryByRole('button', { name: /download petstore\.proto/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /download \.zip/i })).toBeInTheDocument();
   });
 });
