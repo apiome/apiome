@@ -62,6 +62,7 @@ from .export_fidelity import (
 from .export_service import ExportError, ExportPersistenceContext, emit_canonical, resolve_emitter
 from .export_source import ExportSourceError, load_export_source
 from .lossiness import LossinessSeverity
+from .transcoding_guards import TranscodeGuard, TranscodeGuardError, classify_transcode
 
 router = APIRouter(prefix="/v1/export", tags=["export"])
 
@@ -150,6 +151,12 @@ class ExportPreviewResponse(BaseModel):
     fidelity: ExportFidelity = Field(
         description="The full fidelity envelope (target + tier + report + advisory), no artifact.",
     )
+    guard: TranscodeGuard = Field(
+        description="The pre-flight transcoding guard (MFX-3.3): the conversion band "
+        "(clean / lossy / near-empty / severe), whether it needs an explicit confirmation, and "
+        "why. Lets the UI/CLI warn (near-empty) or prompt for confirmation (severe) before "
+        "dispatching the export.",
+    )
 
 
 class ExportDocumentRequest(BaseModel):
@@ -191,6 +198,11 @@ class ExportDispatchRequest(BaseModel):
     dry_run: bool = Field(
         default=False,
         description="When true, stop after the fidelity report: no artifact is emitted.",
+    )
+    confirm: bool = Field(
+        default=False,
+        description="When true, proceed with a **severe** conversion (MFX-3.3) the transcoding "
+        "guard would otherwise block with 409. Ignored for non-severe conversions and dry-runs.",
     )
     min_severity: LossinessSeverity = Field(
         default=LossinessSeverity.INFO,
@@ -237,6 +249,10 @@ class ExportDispatchResponse(BaseModel):
     dry_run: bool = Field(description="True when the dispatch stopped after the fidelity report.")
     fidelity: ExportFidelity = Field(
         description="The full fidelity envelope (target + tier + report + advisory).",
+    )
+    guard: TranscodeGuard = Field(
+        description="The pre-flight transcoding guard (MFX-3.3): the conversion band and why. "
+        "A severe conversion only reaches a real (non-dry-run) dispatch when ``confirm`` was set.",
     )
     files: List[ExportDispatchFile] = Field(
         default_factory=list,
@@ -386,12 +402,16 @@ async def preview_export_fidelity(
     fidelity = build_export_fidelity(
         source.api, emitter_cls, min_severity=request.min_severity
     )
+    # Classify the conversion off the envelope's report so the preview and the eventual
+    # dispatch/job agree, and the UI knows up front whether it must confirm (MFX-3.3).
+    guard = classify_transcode(source.api, emitter_cls, report=fidelity.report)
     return ExportPreviewResponse(
         artifact=source.artifact_id,
         version=request.version,
         version_record_id=source.version_record_id,
         version_label=source.version_label,
         fidelity=fidelity,
+        guard=guard,
     )
 
 
@@ -573,7 +593,8 @@ async def dispatch_export_document(
     Raises:
         HTTPException: 404 when the artifact/version is unknown; 422 when the revision has no
             reconstructable source or the emitter produced no document; 400 when the target or
-            source format is unsupported; 422 when the emit options are invalid for the target.
+            source format is unsupported; 422 when the emit options are invalid for the target;
+            409 when the conversion is severe (MFX-3.3) and ``confirm`` was not set.
     """
     tenant_id = str(auth_data["tenant_id"])
     try:
@@ -585,11 +606,19 @@ async def dispatch_export_document(
             options=request.options,
             min_severity=request.min_severity,
             dry_run=request.dry_run,
+            confirm=request.confirm,
         )
     except ExportSourceError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     except ExportError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    except TranscodeGuardError as exc:
+        # A severe conversion the caller did not confirm: 409 with the guard so the client can
+        # render the confirmation prompt and retry with ``confirm: true`` (MFX-3.3).
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={"message": exc.guard.message, "guard": exc.guard.model_dump(mode="json")},
+        ) from exc
 
     files: List[ExportDispatchFile] = []
     media_type: Optional[str] = None
@@ -613,6 +642,7 @@ async def dispatch_export_document(
         target=dispatch.target,
         dry_run=dispatch.dry_run,
         fidelity=dispatch.fidelity,
+        guard=dispatch.guard,
         files=files,
         media_type=media_type,
     )

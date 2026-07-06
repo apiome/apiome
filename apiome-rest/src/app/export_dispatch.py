@@ -42,6 +42,11 @@ from .export_service import (
 )
 from .export_source import ExportSource, load_export_source
 from .lossiness import LossinessSeverity
+from .transcoding_guards import (
+    TranscodeGuard,
+    classify_transcode,
+    enforce_transcode_guard,
+)
 
 __all__ = [
     "ExportDispatch",
@@ -70,6 +75,11 @@ class ExportDispatch(BaseModel):
     fidelity: ExportFidelity = Field(
         description="The full fidelity envelope (target + tier + report + advisory).",
     )
+    guard: TranscodeGuard = Field(
+        description="The pre-flight transcoding guard (MFX-3.3): the conversion band "
+        "(clean / lossy / near-empty / severe) and why. A severe conversion is only reached "
+        "here when the caller confirmed it (or on a dry-run, which never blocks).",
+    )
     emit: Optional[EmitResult] = Field(
         default=None,
         description="The emitter's output bundle; ``None`` for a dry-run (no artifact emitted).",
@@ -83,15 +93,23 @@ def dispatch_from_source(
     options: Optional[Dict[str, Any]] = None,
     min_severity: LossinessSeverity = LossinessSeverity.INFO,
     dry_run: bool = False,
+    confirm: bool = False,
     persistence: Optional[ExportPersistenceContext] = None,
 ) -> ExportDispatch:
-    """Dispatch an already-loaded source to ``target``: resolve, run, attach fidelity.
+    """Dispatch an already-loaded source to ``target``: resolve, guard, run, attach fidelity.
 
     The pure composition, with the DB-bound source load already done by the caller. Resolves the
-    target emitter, computes the fidelity envelope, and — unless ``dry_run`` — runs the emitter,
-    returning both together. Splitting the load out lets callers that already hold an
+    target emitter, computes the fidelity envelope, classifies the conversion with the
+    transcoding guard (MFX-3.3), and — unless ``dry_run`` — runs the emitter, returning them
+    together. Splitting the load out lets callers that already hold an
     :class:`~app.export_source.ExportSource` (e.g. the public browse path) reuse the dispatch
     without a second lookup.
+
+    A **severe** conversion (an event API to an operation-only target, or an export that drops a
+    critical construct) is refused with a :class:`~app.transcoding_guards.TranscodeGuardError`
+    unless ``confirm`` is set — the guard's gate — so a caller cannot silently produce a
+    near-empty or semantically-broken artifact. A ``dry_run`` never emits, so it never blocks:
+    it always returns the guard for the caller to prompt on.
 
     Args:
         source: The loaded export source (its canonical model + resolved coordinates).
@@ -99,17 +117,22 @@ def dispatch_from_source(
         options: Per-target emit options (MFX-1.4); ``None``/empty applies the target defaults.
         min_severity: Lowest loss severity that raises the advisory (MFX-2.4); does not affect
             the report or counts.
-        dry_run: When true, stop after the fidelity report — no artifact is emitted.
+        dry_run: When true, stop after the fidelity report — no artifact is emitted (and the
+            guard never blocks).
+        confirm: When true, proceed with a **severe** conversion the guard would otherwise block.
+            Ignored for non-severe conversions.
         persistence: Optional field-identity persistence context (proto3 field numbers, MFX-12.2);
             ``None`` keeps the emit read-only.
 
     Returns:
-        The :class:`ExportDispatch` pairing the resolved coordinates, the fidelity envelope, and —
-        for a real (non-dry-run) dispatch — the emitted bundle.
+        The :class:`ExportDispatch` pairing the resolved coordinates, the fidelity envelope, the
+        transcoding guard, and — for a real (non-dry-run) dispatch — the emitted bundle.
 
     Raises:
         ExportError: When ``target`` does not resolve (400), its options are invalid (422), or the
             emitter produced no document (422).
+        TranscodeGuardError: When the conversion is severe and ``confirm`` is not set (409); a
+            dry-run never raises it.
     """
     # Resolve the format key (and validate the target) once; a bad target fails here, before any
     # emit, matching the preview/document routes.
@@ -117,8 +140,10 @@ def dispatch_from_source(
     emitter_cls = get_emitter(target_format)
 
     # The fidelity envelope is computed the same way the preview endpoint does, so a preview and
-    # the dispatch it previews agree byte-for-byte.
+    # the dispatch it previews agree byte-for-byte. The guard reuses the envelope's report so it
+    # never re-walks the model and always corroborates what the report shows.
     fidelity = build_export_fidelity(source.api, emitter_cls, min_severity=min_severity)
+    guard = classify_transcode(source.api, emitter_cls, report=fidelity.report)
 
     if dry_run:
         return ExportDispatch(
@@ -128,8 +153,12 @@ def dispatch_from_source(
             target=target_format,
             dry_run=True,
             fidelity=fidelity,
+            guard=guard,
             emit=None,
         )
+
+    # Pre-flight gate: a severe conversion needs explicit confirmation before any emit runs.
+    enforce_transcode_guard(guard, confirmed=confirm)
 
     emit_result = emit_canonical(
         source.api, target_format, opts=options, persistence=persistence
@@ -149,6 +178,7 @@ def dispatch_from_source(
         target=target_format,
         dry_run=False,
         fidelity=fidelity,
+        guard=guard,
         emit=emit_result,
     )
 
@@ -162,14 +192,15 @@ def dispatch_export(
     options: Optional[Dict[str, Any]] = None,
     min_severity: LossinessSeverity = LossinessSeverity.INFO,
     dry_run: bool = False,
+    confirm: bool = False,
     persist: bool = True,
 ) -> ExportDispatch:
     """Load a (tenant, artifact, version) source and dispatch it to ``target``.
 
     The full, tenant-scoped primitive: resolve the revision's canonical model, then resolve the
-    emitter, run it, and attach the fidelity report. Tenant scoping is enforced by the loader —
-    the ``tenant_id`` scopes every source lookup — and the emit's field-identity writes are scoped
-    to ``(tenant, artifact)`` via the persistence context.
+    emitter, guard the conversion (MFX-3.3), run it, and attach the fidelity report. Tenant
+    scoping is enforced by the loader — the ``tenant_id`` scopes every source lookup — and the
+    emit's field-identity writes are scoped to ``(tenant, artifact)`` via the persistence context.
 
     Args:
         tenant_id: The authenticated tenant id (scopes the source lookup and any field-identity
@@ -180,6 +211,8 @@ def dispatch_export(
         options: Per-target emit options (MFX-1.4); ``None``/empty applies the target defaults.
         min_severity: Lowest loss severity that raises the advisory (MFX-2.4).
         dry_run: When true, stop after the fidelity report — no artifact is emitted.
+        confirm: When true, proceed with a **severe** conversion the transcoding guard would
+            otherwise block. Ignored for non-severe conversions.
         persist: When true (the default for an authenticated export), persist synthesized
             field-identity numbers for proto3 targets (MFX-12.2). A dry-run never emits, so this
             has no effect on it.
@@ -192,6 +225,7 @@ def dispatch_export(
             reconstructable source (422).
         ExportError: When the target is unknown (400), its options are invalid (422), or the
             emitter produced no document (422).
+        TranscodeGuardError: When the conversion is severe and ``confirm`` is not set (409).
     """
     source = load_export_source(tenant_id, artifact, version)
     persistence = (
@@ -205,5 +239,6 @@ def dispatch_export(
         options=options,
         min_severity=min_severity,
         dry_run=dry_run,
+        confirm=confirm,
         persistence=persistence,
     )
