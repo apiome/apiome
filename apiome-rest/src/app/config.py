@@ -257,6 +257,20 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Async export job artifact retention (MFX-4.3, #3850). A completed export job keeps its
+    # emitted artifact bytes in memory so the download route can serve them without re-emitting.
+    # That retained artifact is *temporary*: after this many hours it is dropped and the
+    # download route returns 410 Gone (the poller must resubmit the job). Set to ``0`` (or any
+    # non-positive value) to disable expiry entirely — the artifact is then retained for the
+    # process lifetime, matching the pre-4.3 behaviour.
+    export_artifact_retention_hours: int = Field(
+        default=24,
+        validation_alias=AliasChoices(
+            "APIOME_EXPORT_ARTIFACT_RETENTION_HOURS",
+            "export_artifact_retention_hours",
+        ),
+    )
+
     # Global auto-refresh kill switch (RAR-3.3, #3524). When False, the refresh
     # sweep halts entirely (no repository is auto-refreshed) regardless of per-repo
     # auto_refresh_enabled. Intended for incident response. Manual "Refresh Now"

@@ -40,6 +40,7 @@ from app.canonical_model import (
     TypeKind,
     TypeRef,
 )
+from app.config import settings
 from app.emitter import EmitResult, EmittedFile
 from app.export_job_engine import (
     ExportJobStartRequest,
@@ -749,3 +750,152 @@ async def test_resolve_export_download_serves_plain_text_target():
     assert artifact.media_type == "text/plain"
     assert artifact.body == 'syntax = "proto3";\n'
     assert artifact.filename == "widgets.proto"
+
+
+# ---------------------------------------------------------------------------
+# Streaming download & temp artifact retention — MFX-4.3 (#3850)
+# ---------------------------------------------------------------------------
+def test_content_length_measures_str_and_bytes_bodies():
+    """content_length is the UTF-8 byte size of a str body and the length of a bytes body."""
+    from app.export_job_engine import ExportDownloadArtifact
+
+    # A multibyte character makes the char count and byte count differ, so a naive len() fails.
+    text = ExportDownloadArtifact(filename="d.json", media_type="application/json", body=" é")
+    assert text.content_length == len(" é".encode("utf-8")) == 3
+
+    raw = ExportDownloadArtifact(filename="b.zip", media_type="application/zip", body=b"PK\x03\x04")
+    assert raw.content_length == 4
+
+
+def test_iter_download_chunks_reassembles_str_and_bytes_bodies():
+    """The streamed chunks concatenate back to the exact encoded body, in order."""
+    from app.export_job_engine import (
+        DOWNLOAD_CHUNK_SIZE,
+        ExportDownloadArtifact,
+        iter_download_chunks,
+    )
+
+    # A str body longer than the chunk size, with a multibyte char, streams as several chunks.
+    text = "é" + "x" * (DOWNLOAD_CHUNK_SIZE * 2 + 7)
+    art = ExportDownloadArtifact(filename="d.txt", media_type="text/plain", body=text)
+    chunks = list(iter_download_chunks(art))
+    assert len(chunks) == 3
+    assert all(isinstance(c, bytes) for c in chunks)
+    assert all(len(c) <= DOWNLOAD_CHUNK_SIZE for c in chunks)
+    assert b"".join(chunks) == text.encode("utf-8")
+
+    raw = ExportDownloadArtifact(filename="b.zip", media_type="application/zip", body=b"abcdefgh")
+    assert list(iter_download_chunks(raw, chunk_size=3)) == [b"abc", b"def", b"gh"]
+
+
+def test_iter_download_chunks_of_empty_body_yields_nothing():
+    """An empty body streams zero chunks (not one empty chunk)."""
+    from app.export_job_engine import ExportDownloadArtifact, iter_download_chunks
+
+    art = ExportDownloadArtifact(filename="empty.txt", media_type="text/plain", body="")
+    assert list(iter_download_chunks(art)) == []
+
+
+def test_iter_download_chunks_rejects_a_non_positive_chunk_size():
+    """A zero/negative chunk size is a programming error, not an infinite loop."""
+    from app.export_job_engine import ExportDownloadArtifact, iter_download_chunks
+
+    art = ExportDownloadArtifact(filename="d.txt", media_type="text/plain", body="hi")
+    with pytest.raises(ValueError):
+        list(iter_download_chunks(art, chunk_size=0))
+
+
+async def test_completed_job_result_advertises_a_download_expiry():
+    """A real export records the retention deadline on the result and the record (MFX-4.3)."""
+    from app.export_job_engine import _jobs
+
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()), patch.object(
+        settings, "export_artifact_retention_hours", 2
+    ):
+        before = int(time.time() * 1000)
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        status = await _wait_terminal(accepted.job_id)
+        after = int(time.time() * 1000)
+
+    expires = status["result"]["download_expires_at"]
+    assert expires is not None
+    # The deadline is ~2h out (window = 2 * 3_600_000 ms), bracketed by the emit instant.
+    window = 2 * 3_600_000
+    assert before + window <= expires <= after + window
+    # The record carries the same deadline the poller was handed.
+    assert _jobs[accepted.job_id].artifact_expires_at_ms == expires
+
+
+async def test_retention_disabled_leaves_no_expiry_and_still_downloads():
+    """A non-positive retention setting keeps the artifact for the process lifetime (MFX-4.3)."""
+    from app.export_job_engine import _jobs, resolve_export_download
+
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()), patch.object(
+        settings, "export_artifact_retention_hours", 0
+    ):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        status = await _wait_terminal(accepted.job_id)
+
+    assert status["result"]["download_expires_at"] is None
+    assert _jobs[accepted.job_id].artifact_expires_at_ms is None
+    # No deadline ⇒ the download resolves normally, never a 410.
+    assert resolve_export_download(TENANT_SLUG, accepted.job_id).filename.endswith(".json")
+
+
+async def test_expired_artifact_download_is_410_and_drops_the_bytes():
+    """Past the retention window the download is 410 Gone and the retained bytes are freed."""
+    from fastapi import HTTPException
+
+    from app.export_job_engine import _jobs, resolve_export_download
+
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        await _wait_terminal(accepted.job_id)
+
+    # Force the deadline into the past — deterministic, no sleeping on a real clock.
+    _jobs[accepted.job_id].artifact_expires_at_ms = int(time.time() * 1000) - 1
+    assert _jobs[accepted.job_id].emit_result is not None
+
+    with pytest.raises(HTTPException) as excinfo:
+        resolve_export_download(TENANT_SLUG, accepted.job_id)
+    assert excinfo.value.status_code == 410
+    assert "expired" in excinfo.value.detail
+    # The heavy bytes are dropped; the record (status, manifest) survives.
+    assert _jobs[accepted.job_id].emit_result is None
+    assert get_export_job_emit_result(TENANT_SLUG, accepted.job_id) is None
+
+
+async def test_download_resolve_sweeps_other_expired_artifacts():
+    """Resolving one download lazily reaps every other job's expired artifact (MFX-4.3)."""
+    from app.export_job_engine import _jobs, resolve_export_download
+
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        first = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        await _wait_terminal(first.job_id)
+        second = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        await _wait_terminal(second.job_id)
+
+    # The first job's artifact is stale; the second is fresh. Downloading the second must still
+    # reap the first's bytes even though no one asked for it.
+    _jobs[first.job_id].artifact_expires_at_ms = int(time.time() * 1000) - 1
+    resolve_export_download(TENANT_SLUG, second.job_id)
+    assert _jobs[first.job_id].emit_result is None
+    assert _jobs[second.job_id].emit_result is not None
+
+
+async def test_get_emit_result_returns_none_after_expiry():
+    """The delivery seam drops and reports None once the artifact's window has elapsed."""
+    from app.export_job_engine import _jobs
+
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        await _wait_terminal(accepted.job_id)
+
+    _jobs[accepted.job_id].artifact_expires_at_ms = int(time.time() * 1000) - 1
+    assert get_export_job_emit_result(TENANT_SLUG, accepted.job_id) is None
+    assert _jobs[accepted.job_id].emit_result is None

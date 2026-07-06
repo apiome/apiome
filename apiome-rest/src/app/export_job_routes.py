@@ -11,7 +11,7 @@ The route layout and status contract deliberately mirror the spec-import surface
 * ``POST   /v1/export/{tenant_slug}/jobs``          → 202 + ``{job_id, status_path}``
 * ``GET    /v1/export/{tenant_slug}/jobs``          → summary list (in-memory, per process)
 * ``GET    /v1/export/{tenant_slug}/jobs/{job_id}`` → ``{job_id, state, percent, events, progress, result, error}``
-* ``GET    /v1/export/{tenant_slug}/jobs/{job_id}/download`` → the emitted artifact (single file MFX-4.1 / zip MFX-4.2)
+* ``GET    /v1/export/{tenant_slug}/jobs/{job_id}/download`` → the emitted artifact, streamed (MFX-4.1/4.2; 4.3)
 * ``DELETE /v1/export/{tenant_slug}/jobs/{job_id}`` → 204 cancel request
 
 All routes are tenant-scoped (JWT or API key) via :func:`app.auth.validate_authentication`,
@@ -23,6 +23,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.responses import StreamingResponse
 
 from .auth import validate_authentication
 from .export_job_engine import (
@@ -30,6 +31,7 @@ from .export_job_engine import (
     ExportJobListResponse,
     ExportJobStartRequest,
     ExportJobStatus,
+    iter_download_chunks,
     schedule_export_job,
 )
 from .export_job_engine import (
@@ -155,21 +157,27 @@ async def get_export_job_status(
     description=(
         "Serve the artifact a completed export job produced — the target the poller was handed "
         "via ``result.download_path``. The bytes come from the job's retained emit result (no "
-        "re-emit). A **single-file** export (MFX-4.1) is served inline with the emitted file's "
-        "content type and a ``Content-Disposition`` filename, byte-identical to the size the job "
-        "manifest reported. A **multi-file** export (protobuf packages, WSDL+XSD, per-subject "
-        "Avro) is served as an ``application/zip`` bundle (MFX-4.2) carrying every emitted file "
-        "plus a root ``manifest.json``. A job that is not completed or is a dry-run (no artifact) "
-        "is rejected with 409."
+        "re-emit) and are **streamed** in fixed-size chunks with an up-front ``Content-Length`` "
+        "(MFX-4.3), so a large bundle is not buffered whole. A **single-file** export (MFX-4.1) "
+        "is served inline with the emitted file's content type and a ``Content-Disposition`` "
+        "filename, byte-identical to the size the job manifest reported. A **multi-file** export "
+        "(protobuf packages, WSDL+XSD, per-subject Avro) is served as an ``application/zip`` "
+        "bundle (MFX-4.2) carrying every emitted file plus a root ``manifest.json``. A job that "
+        "is not completed or is a dry-run (no artifact) is rejected with 409; a completed job "
+        "whose retained artifact has passed its retention window (MFX-4.3) is 410 Gone."
     ),
-    response_class=Response,
+    response_class=StreamingResponse,
 )
 async def download_export_job_artifact(
     tenant_slug: str,
     job_id: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
-) -> Response:
-    """Return a completed export job's emitted artifact as a download.
+) -> StreamingResponse:
+    """Stream a completed export job's emitted artifact as a download.
+
+    The body is streamed in fixed-size chunks (:func:`iter_download_chunks`) with an explicit
+    ``Content-Length`` so a client can show progress without the response layer buffering a
+    large bundle whole (MFX-4.3).
 
     Args:
         tenant_slug: The tenant slug the job was submitted under.
@@ -178,18 +186,23 @@ async def download_export_job_artifact(
 
     Returns:
         The emitted artifact — a single document, or an ``application/zip`` bundle for a
-        multi-file target — with its content type and a ``Content-Disposition`` filename.
+        multi-file target — streamed with its content type and a ``Content-Disposition``
+        filename.
 
     Raises:
         HTTPException: 404 when the job is unknown for this tenant; 409 when the job has no
-            downloadable artifact (not completed, or a dry-run that emitted nothing).
+            downloadable artifact (not completed, or a dry-run that emitted nothing); 410 when
+            the retained artifact has passed its retention window (MFX-4.3).
     """
     _ = auth_data
     artifact = engine_resolve_export_download(tenant_slug, job_id)
-    return Response(
-        content=artifact.body,
+    return StreamingResponse(
+        iter_download_chunks(artifact),
         media_type=artifact.media_type,
-        headers={"Content-Disposition": f'attachment; filename="{artifact.filename}"'},
+        headers={
+            "Content-Disposition": f'attachment; filename="{artifact.filename}"',
+            "Content-Length": str(artifact.content_length),
+        },
     )
 
 

@@ -430,7 +430,7 @@ validate → deliver. Enables any-to-any.
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 4.1 ✅ | Single-file emit & download | one document; content-type + filename | export,rest,mvp | N | Y | S | apiome-rest |
 | 4.2 ✅ | Multi-file bundle (zip) | protobuf packages, WSDL+XSD, Smithy, Avro subjects | export,rest,mvp | N | Y | M | apiome-rest |
-| 4.3 | Streaming/download & retention | stream large bundles; temp artifact retention | export,rest | Y | Y | S | apiome-rest |
+| 4.3 ✅ | Streaming/download & retention | stream large bundles; temp artifact retention | export,rest | Y | Y | S | apiome-rest |
 | 4.4 | Push-to-registry delivery | push Avro→Schema Registry, proto→BSR (opt) | export,registry,integrations | Y | N | M | apiome-rest |
 
 *(4.1–4.4 follow the delivery template. Multi-file is mandatory for protobuf (per-package files + imports), WSDL (+ separate XSDs), Smithy (multi-namespace), and Avro (per-subject `.avsc`); deliver as a zip with a manifest. 4.4 (v2) reuses the import discovery clients in reverse to **register** schemas into a live Confluent Schema Registry / Buf Schema Registry.)*
@@ -447,6 +447,13 @@ validate → deliver. Enables any-to-any.
 - **Solution / Scope.** protobuf packages, WSDL+XSD, Smithy, Avro subjects; deliver as a zip with a manifest. Follows the epic delivery template.
 - **Acceptance Criteria.** Implements this step of the emitter and passes the standard contract with round-trip fixtures; consistent with the epic's other steps.
 - **Dependencies / Parallelism.** Within MFX-EPIC-4; after MFX-4.1 (extends its download route from a single file to a zip bundle).
+- **Technical Stack.** FastAPI.
+
+### MFX-4.3 — Streaming/download & retention  ·  **#3850**  ·  ✅ **Done**
+- **Status.** Two additions to the MFX-4.1/4.2 delivery route (`apiome-rest/src/app/export_job_engine.py`, `export_job_routes.py`), both aimed at *large* bundles. **Streaming:** the download route now returns a `StreamingResponse` fed by the new `iter_download_chunks` (64 KiB `DOWNLOAD_CHUNK_SIZE`), so a bundle's bytes are written to the socket in slices rather than handed to the response layer as one buffer; an explicit `Content-Length` header (from the new `ExportDownloadArtifact.content_length`) is set up front so a client still gets a progress bar. The resolver (`resolve_export_download`) and zip builder are unchanged — only the wire delivery is chunked, and the concatenated chunks stay byte-identical to the single-file/`.zip` body. **Temp artifact retention:** the retained `EmitResult` a completed job keeps in memory is now *temporary* — on completion the record stamps `artifact_expires_at_ms` = now + `export_artifact_retention_hours` (new config, default **24h**; non-positive disables expiry → process-lifetime retention, the pre-4.3 behaviour), surfaced to pollers on the new `ExportJobResult.download_expires_at`. Past the deadline the download route answers **410 Gone** (distinct from the 409 a dry-run/never-completed job gets — the artifact *existed* but is gone; the detail hints resubmit) and the heavy bytes are dropped from the record. A lazy sweep (`_expire_stale_artifacts`) runs on every download resolve, so any *other* job's expired artifact is reclaimed too — no background reaper thread. `get_export_job_emit_result` honours the same expiry. Tests: streaming/chunking + `content_length` (str/bytes/empty/multibyte), retention-deadline advertising, disabled-retention, 410-on-expiry + byte-drop, cross-job lazy sweep in `tests/test_export_job_engine.py`, plus streamed-`Content-Length` and 410 route tests in `tests/test_export_job_routes.py`. apiome-rest 1.77.0 → 1.78.0.
+- **Solution / Scope.** stream large bundles; temp artifact retention. Follows the epic delivery template.
+- **Acceptance Criteria.** Implements this step of the emitter and passes the standard contract with round-trip fixtures; consistent with the epic's other steps.
+- **Dependencies / Parallelism.** Within MFX-EPIC-4; after MFX-4.1/4.2 (adds streaming + a retention window to their download route).
 - **Technical Stack.** FastAPI.
 
 ---
