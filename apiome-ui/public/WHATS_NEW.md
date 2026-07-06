@@ -6,7 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
-- Export: Emitter registry REST target list — `GET /v1/export/{tenant}/targets` enumerates every registered emitter with descriptor, capability profile, options, and a per-source fidelity tier badge (`lossless`/`lossy`/`types-only`) computed without emitting (MFX-1.2)
+- Export: Emitter registry REST target list — `GET /v1/export/{tenant}/targets` enumerates every registered emitter with descriptor, capability profile, `options_schema` and `default_options`, and a per-source fidelity tier badge (`lossless`/`lossy`/`types-only`) computed without emitting (MFX-1.2)
 - Browser: public export downloads are rate-limited and size-capped on the server; the dialog shows clear messages when throttled or the artifact is too large (MFX-7.3)
 - Browser: public export dialog shows the full fidelity advisory + per-construct report, matching the ADE export flow (MFX-7.2)
 - Export: `apiome export avro` writes Avro `.avsc` with the honest fidelity report; UI export-target metadata maps avro/avsc to Monaco `json` + `.avsc` download names (MFX-19.5)

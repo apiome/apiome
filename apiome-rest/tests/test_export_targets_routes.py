@@ -1,7 +1,7 @@
 """Endpoint tests for the export-target enumeration API (MFX-1.2, #3835).
 
 Mirrors :mod:`test_import_sources_routes` (MFI-1.3): the emitter registry is exposed
-as ``GET /v1/export/{tenant}/targets?artifact=&version=`` so the UI/CLI can discover
+as ``GET /v1/export/{tenant_slug}/targets?artifact=&version=`` so the UI/CLI can discover
 every registered target with its descriptor, capability profile, options metadata,
 and a cheap per-source fidelity tier — without emitting an artifact.
 """
