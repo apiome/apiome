@@ -48,14 +48,16 @@ import {
 } from '../../../../utils/conversion-fidelity';
 import { convertPreviewDialogTitle } from '../../../../utils/catalog-conversion';
 
-/** Offline fallback when Monaco cannot load — keeps the raw OpenAPI JSON visible. */
-function OfflineOpenApiFallback({ value }: { value: string }) {
+/** Offline fallback when Monaco cannot load — keeps the raw OpenAPI JSON visible.
+ * `value` is optional to stay prop-compatible with Monaco's `EditorProps` in the
+ * dynamic-import union below. */
+function OfflineOpenApiFallback({ value }: { value?: string }) {
   return (
     <pre
       data-testid="conversion-raw-content"
       className="h-full overflow-auto whitespace-pre-wrap break-words p-3 font-mono text-xs leading-5 text-gray-800 dark:text-gray-200"
     >
-      {value}
+      {value ?? ''}
     </pre>
   );
 }

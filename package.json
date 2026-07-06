@@ -4,7 +4,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "test": "yarn workspace apiome-cli test && yarn workspace apiome-db test && yarn workspace apiome-mcp test && yarn workspace apiome-ui test && yarn workspace apiome-web test && yarn workspace apiome-browse test",
+    "test": "yarn workspace @apiome/cli test && yarn workspace apiome-db test && yarn workspace apiome-mcp test && yarn workspace apiome-ui test && yarn workspace apiome-web test && yarn workspace apiome-browse test",
     "cli:build": "turbo run cli:build",
     "cli:test": "turbo run cli:test",
     "cli:lint": "turbo run cli:lint"
