@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Export: Protobuf multi-file packaging — the proto3 emitter emits one `.proto` per package with cross-package `import` lines; the full bundle is validated via `buf build` (MFX-12.4)
 - Export: `apiome export <format> <artifact>` — generic CLI export via the async job pipeline (submit, poll, download); writes a single file or unpacks a zip bundle to `--out`; supports `--option`, `--force`, `--confirm`, and `--json` (MFX-8.1)
 - Export: CLI fidelity report — every `export` verb prints the server advisory (MFX-2.4) and a concise per-construct loss table on stderr; lossy/types-only exports exit non-zero unless `--force` or the user confirms at an interactive prompt (MFX-8.2)
 - Export: emitted-artifact validation gate — completed export jobs now surface a structured validation report (`valid` / `invalid` / `skipped` / `not_applicable`) alongside the fidelity envelope; invalid output blocks delivery with actionable parser findings (MFX-5.3)

@@ -726,7 +726,7 @@ Sources: https://protobuf.dev/ · https://buf.build/docs/
 | 12.1 ✅ | Protobuf emitter | model services/methods/types → `.proto` (+ descriptor) | export,multi-protocol,mvp | N | Y | L | apiome-rest |
 | 12.2 ✅ | Stable field-number assignment | deterministic, persisted field numbers (SYNTH) | export,multi-protocol,version-control,mvp | N | Y | M | apiome-rest |
 | 12.3 ✅ | Protobuf fidelity pack | unions/nullability/constraints/inheritance loss | export,multi-protocol,mvp | N | Y | M | apiome-rest |
-| 12.4 | Multi-file packaging + validate | per-package files + imports; `buf build` validate | export,rest,validation,mvp | Y | Y | M | apiome-rest |
+| 12.4 ✅ | Multi-file packaging + validate | per-package files + imports; `buf build` validate | export,rest,validation,mvp | Y | Y | M | apiome-rest |
 | 12.5 ✅ | gRPC target card + CLI + fixtures | UI/CLI + round-trip fixtures | export,ui,devex,mvp | Y | Y | S | apiome-ui,apiome-cli |
 | 12.6 · #4343 | Connect-RPC / gRPC-Gateway flavor options | `google.api.http` annotations from REST bindings (mirror MFI-19.5) | export,multi-protocol | Y | N | S | apiome-rest |
 
@@ -753,7 +753,12 @@ Sources: https://protobuf.dev/ · https://buf.build/docs/
 - **Technical Stack.** Python.
 - **Status.** The predictive fidelity pack (MFX-2.3 seam) that surfaces what the proto3 target *can't* natively carry — the constructs protobuf's six-axis `CapabilityProfile` (`unions=False`, `nullability=True`, `constraints=False`) hides. The reference `ProtoFidelityRulePack` (`apiome-rest/src/app/proto_emitter.py`) refines the profile-derived default so an **OpenAPI/GraphQL source no longer reports silent union DROPs or missing nullability losses**: a **named union** becomes an honest `APPROX` (`oneof`-bearing message or `google.protobuf.Any` when the shape is ineligible), **nullability/requiredness** and **validation constraints** are `APPROX` (proto3 `optional` / doc comments), **inheritance/allOf/GraphQL interfaces** flatten to a single message (`APPROX`), **arbitrary JSON** maps to `google.protobuf.Struct` (`APPROX`), **field numbers** stay `SYNTH` (MFX-12.2), and **pub/sub operations** are reframed as unary `rpc` (`APPROX`) rather than the capability default's critical `DROP`. Verdicts flow through `compute_lossiness_for_emitter` → the fidelity advisory (MFX-2.4) and target/export fidelity surfaces (MFX-2.5). Tests in `tests/test_fidelity_rulepack.py`. apiome-rest 1.75.24 → 1.75.25.
 
-*(12.4 multi-file packaging (per-package + imports) + `buf build` validation; 12.5 target card + `apiome export grpc` + round-trip fixtures. Coordinate with #1384/#1427.)*
+### MFX-12.4 — Multi-file packaging + validate  ·  **#3882**  ·  ✅ **Done**
+- **Solution / Scope.** per-package files + imports; `buf build` validate.
+- **Acceptance Criteria.** Implements this step of the emitter and passes the standard contract (emit → fidelity report → packaging → emitted-output validation as applicable) with round-trip fixtures; consistent with the epic's other steps.
+- **Dependencies / Parallelism.** After 12.1, 12.2. Parallel with 12.3.
+- **Technical Stack.** Python + buf (toolchain runner).
+- **Status.** The protobuf emitter (MFX-12.1) now packages **one `.proto` per protobuf `package`** with deterministic module-relative paths and cross-package `import` lines; sibling packages no longer surface as `out-of-package-type` losses. `ProtoEmitter.multi_file` is `True` so MFX-4.2 zip delivery applies to multi-package exports. `compile_emitted_descriptor_set` and `export_validation._validate_proto` pass the full `EmitResult.files` list to `buf build`. Tests in `tests/test_proto_emitter.py` (structural multi-package + gated real-`buf` compile). Docs in `docs/proto_emitter.md`. apiome-rest 1.80.0 → 1.80.1.
 
 ### MFX-12.5 — gRPC target card + CLI + fixtures  ·  **#3883**  ·  ✅ **Done**
 - **Solution / Scope.** Make the protobuf emitter (12.1) reachable from the CLI + UI, with round-trip fixtures; the user-facing verb is `grpc`, the REST target is the emitter's `protobuf` key.
