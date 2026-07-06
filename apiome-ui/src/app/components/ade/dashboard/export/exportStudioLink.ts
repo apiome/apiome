@@ -12,6 +12,8 @@
  *  - `from` — where the export was launched from, so the Studio's back link returns there;
  *  - `sourceFormat` — the source's original import format (e.g. `graphql`), so the Studio can
  *    hide the redundant same-format target and offer the original source unchanged.
+ *  - `options` — a JSON-encoded map of non-default option overrides, so a "re-run in Studio"
+ *    (MFX-41.3) reopens the Studio with the prior run's option values pre-filled.
  */
 
 /** The base path of the Export Studio route (tenant-scoped by the dashboard layout). */
@@ -60,6 +62,12 @@ export interface ExportStudioScope {
   origin?: ExportStudioOrigin | null;
   /** The source's original import format (e.g. `graphql`), when known (catalog sources). */
   sourceFormat?: string | null;
+  /**
+   * Non-default option overrides to pre-fill (the `changedOptions` payload of a prior run), so a
+   * "re-run in Studio" (MFX-41.3) reproduces that run's configuration. Omitted/empty carries no
+   * `options` param, leaving the target at its defaults.
+   */
+  options?: Record<string, unknown> | null;
 }
 
 /**
@@ -76,5 +84,29 @@ export function exportStudioHref(scope: ExportStudioScope): string {
   if (scope.target) params.set('target', scope.target);
   if (scope.origin) params.set('from', scope.origin);
   if (scope.sourceFormat) params.set('sourceFormat', scope.sourceFormat);
+  if (scope.options && Object.keys(scope.options).length > 0) {
+    params.set('options', JSON.stringify(scope.options));
+  }
   return `${EXPORT_STUDIO_PATH}?${params.toString()}`;
+}
+
+/**
+ * Parse the Studio's `options` deep-link param back into an option-override map. Tolerant by
+ * design: a missing, malformed, or non-object value yields null, so a hand-edited URL can never
+ * break the Studio — it simply opens the target at its defaults.
+ *
+ * @param raw The raw `options` query-string value (e.g. from `searchParams.get('options')`).
+ * @returns The decoded override map, or null when absent/unparseable/not a plain object.
+ */
+export function parseExportStudioOptions(
+  raw: string | null | undefined,
+): Record<string, unknown> | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null;
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
 }

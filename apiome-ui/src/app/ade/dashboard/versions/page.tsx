@@ -4303,8 +4303,8 @@ const Versions = () => {
               <VersionExportPanel
                 artifact={viewingVersion.project_id}
                 version={viewingVersion.id}
+                artifactLabel={projects.find((p) => p.id === viewingVersion.project_id)?.name}
                 active={showOpenApiDialog}
-                onOpenExport={() => setExportVersion(viewingVersion)}
                 refreshToken={recentExportsRefresh}
               />
             </div>
@@ -4325,9 +4325,10 @@ const Versions = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Version-scoped ExportDialog (MFX-6.5, #3859) — opened from a revision's actions menu
-          or the version view's "Export this version" button. Mounted per revision so all
-          stepper state resets when a different revision is exported. */}
+      {/* Version-scoped ExportDialog (MFX-6.5, #3859) — the compact quick path, opened from a
+          revision's row-menu "Export to another format…" action. (The version view's "Export this
+          version" button and its target chips open the full Export Studio instead, MFX-41.3.)
+          Mounted per revision so all stepper state resets when a different revision is exported. */}
       {exportVersion && (
         <ExportDialog
           open

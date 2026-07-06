@@ -356,6 +356,32 @@ describe('ExportStudio — step gating + options validation (MFX-41.1)', () => {
     expect(screen.getByRole('button', { name: /^continue$/i })).toBeEnabled();
   });
 
+  it('pre-fills a re-run\'s option overrides over the target defaults (MFX-41.3)', async () => {
+    // A re-run carries the prior run's non-default overrides; they replace the target defaults for
+    // the matching keys, so the Options step opens already reproducing that configuration.
+    await renderStudio(mockFetch(), {
+      initialTarget: 'proto',
+      initialOptions: { package: 'com.rerun', emit_services: false },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
+
+    expect(screen.getByLabelText(/Package/i)).toHaveValue('com.rerun');
+    // Required `package` is already satisfied by the seeded value, so Continue is enabled.
+    expect(screen.getByRole('button', { name: /^continue$/i })).toBeEnabled();
+  });
+
+  it('ignores re-run overrides for keys the target does not define (MFX-41.3)', async () => {
+    // A foreign key from a stale/hand-edited link must not be injected; `package` still needs a value.
+    await renderStudio(mockFetch(), {
+      initialTarget: 'proto',
+      initialOptions: { not_a_real_option: 'x' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
+    expect(screen.getByText(/Package is required\./)).toBeInTheDocument();
+  });
+
   it('shows a no-options note for a target without options', async () => {
     await renderStudio(mockFetch(), { initialTarget: 'openapi' });
     fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
@@ -419,8 +445,13 @@ describe('ExportStudio — verify gate + generate (MFX-41.1)', () => {
   });
 
   it('generates a lossy target and sends only the changed options', async () => {
+    const onGenerated = jest.fn();
     const fetchMock = mockFetch();
-    await advanceToVerify(fetchMock, 'proto');
+    await renderStudio(fetchMock, { initialTarget: 'proto', onGenerated });
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
+    fireEvent.change(screen.getByLabelText(/Package/i), { target: { value: 'com.example' } });
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
     await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
     fireEvent.click(screen.getByRole('checkbox'));
     fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
@@ -440,6 +471,11 @@ describe('ExportStudio — verify gate + generate (MFX-41.1)', () => {
       target: 'proto',
       options: { package: 'com.example' },
     });
+    // The same changed options are reported to onGenerated, so the recent-export record can offer
+    // a faithful re-run (MFX-41.3).
+    expect(onGenerated).toHaveBeenCalledWith(
+      expect.objectContaining({ targetKey: 'proto', options: { package: 'com.example' } }),
+    );
   });
 
   it('reports the generated artifact via onGenerated', async () => {
@@ -462,6 +498,9 @@ describe('ExportStudio — verify gate + generate (MFX-41.1)', () => {
       tier: 'lossless',
       preservedPercent: 100,
       filename: 'petstore.json',
+      // No options were changed from their defaults (openapi has none), so the recorded overrides
+      // are null — a re-run of this record reopens the target at its defaults (MFX-41.3).
+      options: null,
     });
   });
 

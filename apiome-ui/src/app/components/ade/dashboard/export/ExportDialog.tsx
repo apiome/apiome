@@ -49,6 +49,12 @@ export interface ExportedArtifactSummary {
   preservedPercent: number;
   /** Filename of the emitted document. */
   filename: string;
+  /**
+   * The non-default option overrides the emit used (the `changedOptions` payload, MFX-1.4), so a
+   * recent-export record can offer an exact "re-run in Studio" (MFX-41.3). Null when every option
+   * ran at its default.
+   */
+  options?: Record<string, unknown> | null;
 }
 
 interface ExportDialogProps {
@@ -228,6 +234,7 @@ export function ExportDialog({
         tier: selected.entry.fidelity.tier,
         preservedPercent: selected.entry.fidelity.preserved_percent,
         filename,
+        options: changedOptions(optionValues, selected.entry.default_options),
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The export failed. Try again.');

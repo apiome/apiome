@@ -262,7 +262,6 @@ item, project version) open pre-scoped, matching apiome-ui's design system. The 
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 41.3 #4350 | Version entry + recent-exports wiring | version view Export→Studio; pre-summary + recent list link into Studio state | export,ui,typescript,mvp | Y | Y | S | apiome-ui |
 | 41.4 #4351 | Deep links & resumable Studio state | URL-encoded source/target/options; shareable, reload-safe | export,ui,typescript | Y | N | S | apiome-ui |
 | 41.5 #4352 | Mockup extension + design/a11y parity | extend `mockups/multi-format-export` with Studio screens; token/a11y audit | export,ui,design-system | Y | N | M | apiome-ui,docs |
 
@@ -338,6 +337,18 @@ item, project version) open pre-scoped, matching apiome-ui's design system. The 
 - **Technical Stack.** Next.js, existing catalog components.
 
 ### MFX-41.3 — Version entry + recent-exports wiring · #4350
+- **Status (done).** The version view's three export paths now land in the Export Studio, keeping
+  the quick `ExportDialog` only on the compact row-menu **"Export to another format…"** action.
+  (1) **"Export this version"** deep-links to the Studio scoped to the source (`exportStudioHref`,
+  origin `versions`). (2) Each **fidelity pre-summary chip** (best-fidelity + lossy rows) links to
+  the Studio with that target pre-selected. (3) Each **recent-export row** gains a **"Re-run in
+  Studio"** link that reproduces the prior run: it carries the target *and* that run's non-default
+  option overrides. To make re-run faithful, the recorded export (`recentExports.ts`) and both
+  emitters' `onExported`/`onGenerated` summaries now capture the `changedOptions` payload; the
+  Studio deep link carries it as a JSON `options` param (`parseExportStudioOptions`), and the
+  Studio seeds those overrides over the target defaults when it pre-selects the target (foreign
+  keys ignored). Covered by updated `VersionExportPanel`, `ExportStudio`, `exportStudioLink`,
+  `recentExports`, and `ExportDialog` tests.
 - **Problem.** MFX-6.5 #3859 defines the version-view entry, pre-summary, and recent-exports list;
   they must open/resume the Studio, not just the dialog.
 - **Solution / Scope.** "Export this version" → Studio (dialog remains on the compact action);
