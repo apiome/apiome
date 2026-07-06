@@ -25,8 +25,15 @@ and then runs through the export pipeline in the background:
 The status/polling contract deliberately matches the import engine's: the same job-record
 store (in-memory, per-process, tenant-scoped), the same state vocabulary (a subset —
 exports have no two-phase commit, so no ``pending-approval``/``committing``/``rolled-back``),
-the same ``{job_id, state, percent, events, progress, result}`` poll payload shape, and the
+the ``{job_id, state, percent, events, progress, result}`` poll payload shape, and the
 same 202-accepted + ``status_path`` submission response.
+
+Terminal jobs make the poll payload self-describing for UI/CLI pollers (MFX-3.4): a
+``completed`` real export carries a ``result`` whose ``download_path`` points at the
+delivery route (MFX-4.x) that serves the retained bytes, alongside the fidelity report;
+a ``failed`` job carries a structured :class:`ExportJobError` (``code``/``message``/
+``context``) on ``status.error`` — the machine-readable twin of the terminal error event —
+so a poller renders the failure without scraping the event log.
 
 Unlike imports (which shell out to the ``apiome-ui`` ``tsx`` worker for OpenAPI), the whole
 export pipeline is in-process Python. Jobs are driven on the engine's own process-lifetime
@@ -72,6 +79,7 @@ __all__ = [
     "ExportJobStartRequest",
     "ExportJobFile",
     "ExportJobResult",
+    "ExportJobError",
     "ExportJobStatus",
     "ExportJobListItem",
     "ExportJobListResponse",
@@ -233,10 +241,38 @@ class ExportJobResult(BaseModel):
         default=None,
         description="The bundle's primary media type; null for a dry-run.",
     )
+    download_path: Optional[str] = Field(
+        default=None,
+        description="Relative URL a poller dereferences to fetch the emitted artifact "
+        "bundle (served by the delivery epics, MFX-4.x). Set once a real export completes; "
+        "null for a dry-run (no artifact was emitted).",
+    )
+
+
+class ExportJobError(BaseModel):
+    """Structured terminal error for a ``failed`` export job (MFX-3.4).
+
+    The machine-readable twin of a job's terminal error event: a poller shows ``message``
+    and branches on ``code`` (e.g. distinguish ``TRANSCODE_CONFIRMATION_REQUIRED`` — resubmit
+    with ``confirm`` — from ``SOURCE_LOAD_FAILED``) without scraping the free-form event log.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    code: str = Field(description="Stable error code (same code as the terminal error event).")
+    message: str = Field(description="Human-readable failure description.")
+    context: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Structured detail (e.g. an upstream ``status_code`` or guard reasons).",
+    )
 
 
 class ExportJobStatus(BaseModel):
-    """Poll payload for an export job (same shape as the import job status)."""
+    """Poll payload for an export job (same shape as the import job status).
+
+    A terminal job is self-describing: ``completed`` carries ``result`` (with a
+    ``download_path`` for a real export), ``failed`` carries a structured ``error`` (MFX-3.4).
+    """
 
     job_id: str
     state: ExportJobState
@@ -244,6 +280,10 @@ class ExportJobStatus(BaseModel):
     events: List[ExportJobEvent] = Field(default_factory=list)
     progress: Optional[ExportJobProgress] = None
     result: Optional[ExportJobResult] = None
+    error: Optional[ExportJobError] = Field(
+        default=None,
+        description="Structured failure detail; set only in the ``failed`` terminal state.",
+    )
 
 
 class ExportJobListItem(BaseModel):
@@ -369,12 +409,14 @@ async def _publish(
     stage: Optional[str] = None,
     event: Optional[_EventTuple] = None,
     result: Optional[ExportJobResult] = None,
+    error: Optional[ExportJobError] = None,
 ) -> bool:
     """Apply one snapshot update to the job record; return False if the job is gone/canceled.
 
     ``event`` is ``(level, code, message, context)``; ``stage`` updates the progress
-    snapshot (its position in :data:`_STAGES` gives total/completed). A job whose cancel
-    flag is set is finalized to ``canceled`` here — the single stage-boundary cancel point.
+    snapshot (its position in :data:`_STAGES` gives total/completed); ``error`` attaches the
+    structured terminal failure (MFX-3.4). A job whose cancel flag is set is finalized to
+    ``canceled`` here — the single stage-boundary cancel point.
     """
     logged: Optional[ExportJobEvent] = None
     with _jobs_lock:
@@ -409,6 +451,8 @@ async def _publish(
             rec.status.events.append(logged)
         if result is not None:
             rec.status.result = result
+        if error is not None:
+            rec.status.error = error
     # Log outside the lock (logging handlers can block).
     if logged is not None:
         _log_event(job_id, logged)
@@ -417,11 +461,17 @@ async def _publish(
 
 async def _fail(job_id: str, code: str, message: str,
                 context: Optional[Dict[str, Any]] = None) -> None:
-    """Move a job to ``failed`` with one terminal error event."""
+    """Move a job to ``failed`` with one terminal error event and structured error (MFX-3.4).
+
+    The same ``(code, message, context)`` is recorded twice — as an ``error``-level event on
+    the log and as the structured :class:`ExportJobError` on ``status.error`` — so a poller
+    can render the failure from either surface.
+    """
     await _publish(
         job_id,
         state="failed",
         event=("error", code, message, context),
+        error=ExportJobError(code=code, message=message, context=context),
     )
 
 
@@ -505,6 +555,7 @@ async def _drive_export_job(job_id: str) -> None:
             return
         request = rec.request
         tenant_id = rec.tenant_id
+        tenant_slug = rec.tenant_slug
 
     try:
         if not await _publish(
@@ -678,6 +729,7 @@ async def _drive_export_job(job_id: str) -> None:
             guard=guard,
             files=manifest,
             media_type=emit_result.media_type,
+            download_path=_download_path(tenant_slug, job_id),
         )
 
         with _jobs_lock:
@@ -722,6 +774,15 @@ def _get_record(tenant_slug: str, job_id: str) -> _ExportJobRecord:
 def _status_path(tenant_slug: str, job_id: str) -> str:
     """Relative poll URL for a job (matches the router's path layout)."""
     return f"/v1/export/{tenant_slug}/jobs/{job_id}"
+
+
+def _download_path(tenant_slug: str, job_id: str) -> str:
+    """Relative URL for the emitted artifact of a completed job (MFX-3.4 → MFX-4.x seam).
+
+    The reference a poller puts on a completed job's ``result.download_path``; the delivery
+    epics (MFX-4.1 single-file, MFX-4.2 zip bundle) serve the retained bytes at this path.
+    """
+    return f"/v1/export/{tenant_slug}/jobs/{job_id}/download"
 
 
 async def schedule_export_job(

@@ -5,8 +5,10 @@ Pins the route contract, mirroring the spec-import contract tests
 
 * all routes require authentication and are tenant-scoped;
 * ``POST …/jobs`` answers 202 with ``{job_id, status_path}`` and the job then runs to a
-  terminal state observable through ``GET …/jobs/{job_id}`` — the same
-  ``{job_id, state, percent, events, progress, result}`` poll shape as imports;
+  terminal state observable through ``GET …/jobs/{job_id}`` — the import-shaped
+  ``{job_id, state, percent, events, progress, result}`` poll payload, plus the MFX-3.4
+  terminal contract: a completed export exposes ``result.download_path``, a failed one a
+  structured ``error``;
 * an unknown target is rejected at submit time (400), invalid emit options 422 —
   matching the synchronous ``/export/document`` behaviour;
 * ``dry_run`` completes with the fidelity envelope and no files;
@@ -154,10 +156,12 @@ def test_submit_and_poll_full_export_job():
 
         body = _wait_terminal(accepted["job_id"])
 
-    # The poll payload carries the same field vocabulary as an import job status.
-    assert set(body) >= {"job_id", "state", "percent", "events", "progress", "result"}
+    # The poll payload carries the same field vocabulary as an import job status,
+    # plus the MFX-3.4 structured ``error`` slot (null here — the job succeeded).
+    assert set(body) >= {"job_id", "state", "percent", "events", "progress", "result", "error"}
     assert body["state"] == "completed"
     assert body["percent"] == 100
+    assert body["error"] is None
 
     result = body["result"]
     assert result["artifact"] == "artifact-1"
@@ -169,6 +173,8 @@ def test_submit_and_poll_full_export_job():
     assert result["fidelity"]["summary"]["tier"] == "lossless"
     assert result["fidelity"]["summary"]["total"] > 0
     assert result["fidelity"]["advisory"] is not None
+    # MFX-3.4: a terminal completed export hands the poller a download ref.
+    assert result["download_path"] == f"/v1/export/acme/jobs/{accepted['job_id']}/download"
 
     codes = [e["code"] for e in body["events"]]
     assert codes[0] == "EXPORT_STARTED"
@@ -190,6 +196,7 @@ def test_dry_run_job_returns_report_without_artifact():
     assert result["dry_run"] is True
     assert result["files"] == []
     assert result["media_type"] is None
+    assert result["download_path"] is None  # MFX-3.4: no artifact ⇒ no download ref
     assert result["fidelity"]["summary"]["preserved_percent"] == 100
 
 
@@ -209,6 +216,9 @@ def test_source_failure_surfaces_in_job_status_not_submit():
     assert body["result"] is None
     errors = [e for e in body["events"] if e["level"] == "error"]
     assert errors and errors[0]["code"] == "SOURCE_LOAD_FAILED"
+    # MFX-3.4: the terminal failure is also a structured error on the poll payload.
+    assert body["error"]["code"] == "SOURCE_LOAD_FAILED"
+    assert body["error"]["context"] == {"status_code": 404}
 
 
 # ---------------------------------------------------------------------------
