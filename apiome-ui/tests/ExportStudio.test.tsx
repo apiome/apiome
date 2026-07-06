@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
@@ -155,7 +155,7 @@ const PREVIEWS: Record<string, ExportFidelityEnvelope> = {
   },
 };
 
-function mockFetch(): jest.Mock {
+function mockFetch(opts: { invalidVerify?: boolean } = {}): jest.Mock {
   return jest.fn((input: unknown, init?: { method?: string; body?: string }) => {
     const url = typeof input === 'string' ? input : String(input);
     if (url.includes('/api/export/targets')) {
@@ -173,6 +173,52 @@ function mockFetch(): jest.Mock {
             version_record_id: 'rev-1',
             version_label: '1.2.0',
             fidelity: PREVIEWS[target],
+          }),
+      });
+    }
+    // One-call Verify (MFX-42.1) — all three lenses + verdict in one dry-run. Proto is a lossy
+    // (valid, lint-clean) conversion; OpenAPI is clean.
+    if (url.includes('/api/export/verify') && init?.method === 'POST') {
+      const target = String(JSON.parse(init?.body ?? '{}').target);
+      const lossy = target !== 'openapi';
+      const invalid = Boolean(opts.invalidVerify);
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            artifact: 'proj-petstore',
+            version: null,
+            version_record_id: 'rev-1',
+            version_label: '1.2.0',
+            fidelity: PREVIEWS[target],
+            validation: invalid
+              ? {
+                  verdict: 'invalid',
+                  target,
+                  blocks_delivery: true,
+                  warns: false,
+                  valid: false,
+                  findings: [
+                    { message: 'Field number 0 is not allowed.', file: 'petstore.proto', line: 12, column: 3, rule: 'buf.field-number' },
+                  ],
+                  detail: null,
+                  headline: 'Invalid — export blocked',
+                  message: 'The export was blocked before delivery.',
+                }
+              : {
+                  verdict: 'valid',
+                  target,
+                  blocks_delivery: false,
+                  warns: false,
+                  valid: true,
+                  findings: [],
+                  detail: null,
+                  headline: 'Valid',
+                  message: 'The emitted artifact re-parsed cleanly.',
+                },
+            lint: { applicable: true, pack: 'pack', score: 95, grade: 'A', findings: [] },
+            verdict: invalid ? 'invalid' : lossy ? 'lossy' : 'clean',
           }),
       });
     }
@@ -404,8 +450,8 @@ describe('ExportStudio — step gating + options validation (MFX-41.1)', () => {
   });
 });
 
-describe('ExportStudio — verify gate + generate (MFX-41.1)', () => {
-  /** Drive a lossless target from the grid to the Verify step. */
+describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
+  /** Drive a target from the grid to the Verify step (before verification has run). */
   async function advanceToVerify(fetchMock: jest.Mock, target: string) {
     await renderStudio(fetchMock, { initialTarget: target });
     fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
@@ -416,16 +462,41 @@ describe('ExportStudio — verify gate + generate (MFX-41.1)', () => {
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
   }
 
-  it('runs the dry-run verify and generates a lossless target without acknowledgement', async () => {
+  /** Click "Run verification" and wait for the verdict banner to settle. */
+  async function runVerification() {
+    fireEvent.click(screen.getByTestId('verify-run'));
+    await waitFor(() => expect(screen.getByTestId('verify-verdict')).toBeInTheDocument());
+  }
+
+  it('gates "Continue to review" until verification has been run (MFX-42.1)', async () => {
+    await advanceToVerify(mockFetch(), 'openapi');
+    // Nothing has been verified yet: the gate is closed and the run action is offered.
+    expect(screen.getByRole('button', { name: /continue to review/i })).toBeDisabled();
+    expect(screen.getByTestId('verify-run')).toBeInTheDocument();
+
+    await runVerification();
+    // A clean verdict opens the gate with no acknowledgement.
+    expect(screen.getByTestId('verify-verdict')).toHaveAttribute('data-verdict', 'clean');
+    expect(screen.getByRole('button', { name: /continue to review/i })).toBeEnabled();
+  });
+
+  it('one Run verification yields all three lenses + verdict (MFX-42.1)', async () => {
+    await advanceToVerify(mockFetch(), 'proto');
+    await runVerification();
+    // All three lens tabs render, each with a badge, under one verdict banner.
+    for (const lens of ['fidelity', 'validation', 'lint']) {
+      expect(screen.getByTestId(`verify-tab-${lens}`)).toBeInTheDocument();
+    }
+    expect(screen.getByTestId('verify-verdict')).toHaveTextContent('Lossy — acknowledge to continue');
+  });
+
+  it('runs verify and generates a clean target without acknowledgement', async () => {
     const fetchMock = mockFetch();
     await advanceToVerify(fetchMock, 'openapi');
+    await runVerification();
 
-    await waitFor(() =>
-      expect(screen.getByTestId('export-advisory')).toHaveTextContent('Lossless export to OpenAPI 3.1'),
-    );
-    // Verify ran (preview settled): can proceed to review with no acknowledgement.
     const toReview = screen.getByRole('button', { name: /continue to review/i });
-    await waitFor(() => expect(toReview).toBeEnabled());
+    expect(toReview).toBeEnabled();
     fireEvent.click(toReview);
 
     fireEvent.click(screen.getByTestId('export-studio-generate'));
@@ -434,14 +505,56 @@ describe('ExportStudio — verify gate + generate (MFX-41.1)', () => {
   });
 
   it('keeps a lossy target from proceeding until the loss is acknowledged', async () => {
-    const fetchMock = mockFetch();
-    await advanceToVerify(fetchMock, 'proto');
-    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
+    await advanceToVerify(mockFetch(), 'proto');
+    await runVerification();
 
     const toReview = screen.getByRole('button', { name: /continue to review/i });
     expect(toReview).toBeDisabled();
-    fireEvent.click(screen.getByRole('checkbox'));
+    // The "Export anyway" checkbox lives in the fidelity lens (the lossy verdict's default tab).
+    const checkbox = within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox');
+    fireEvent.click(checkbox);
     expect(toReview).toBeEnabled();
+  });
+
+  it('blocks Generate for an invalid output and shows the validator detail (MFX-42.1)', async () => {
+    await advanceToVerify(mockFetch({ invalidVerify: true }), 'proto');
+    await runVerification();
+
+    // Invalid blocks unconditionally — no acknowledgement is offered, the gate stays shut.
+    expect(screen.getByTestId('verify-verdict')).toHaveAttribute('data-verdict', 'invalid');
+    expect(screen.getByRole('button', { name: /continue to review/i })).toBeDisabled();
+    // The blocked export leads with the validation lens and its structured detail + location.
+    const panel = screen.getByTestId('verify-panel-validation');
+    expect(within(panel).getByTestId('verify-validation-findings')).toHaveTextContent(
+      'Field number 0 is not allowed.',
+    );
+    expect(within(panel).getByTestId('verify-finding-location')).toHaveTextContent('petstore.proto');
+  });
+
+  it('persists the verdict to the Review step (MFX-42.1)', async () => {
+    await advanceToVerify(mockFetch(), 'openapi');
+    await runVerification();
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+
+    // The same verdict banner the Verify step showed follows the user to Review.
+    expect(screen.getByTestId('verify-verdict')).toHaveAttribute('data-verdict', 'clean');
+    expect(screen.getByTestId('export-studio-review-summary')).toBeInTheDocument();
+  });
+
+  it('re-locks the gate when an option changes after a verdict (MFX-42.1)', async () => {
+    await advanceToVerify(mockFetch(), 'proto');
+    await runVerification();
+    fireEvent.click(within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
+    expect(screen.getByRole('button', { name: /continue to review/i })).toBeEnabled();
+
+    // Change an option: the prior verdict no longer describes what Generate would produce, so the
+    // gate re-locks and the run action returns (auto re-verify is MFX-42.6).
+    fireEvent.click(screen.getByRole('button', { name: /^back$/i })); // → options
+    fireEvent.change(screen.getByLabelText(/Package/i), { target: { value: 'com.other' } });
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
+    expect(screen.queryByTestId('verify-verdict')).not.toBeInTheDocument();
+    expect(screen.getByTestId('verify-run')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /continue to review/i })).toBeDisabled();
   });
 
   it('generates a lossy target and sends only the changed options', async () => {
@@ -452,8 +565,8 @@ describe('ExportStudio — verify gate + generate (MFX-41.1)', () => {
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
     fireEvent.change(screen.getByLabelText(/Package/i), { target: { value: 'com.example' } });
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
-    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('checkbox'));
+    await runVerification();
+    fireEvent.click(within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
     fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
 
     expect(screen.getByTestId('export-studio-review-summary')).toHaveTextContent('gRPC / Protobuf');
@@ -485,10 +598,8 @@ describe('ExportStudio — verify gate + generate (MFX-41.1)', () => {
     fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
-    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
-    const toReview = screen.getByRole('button', { name: /continue to review/i });
-    await waitFor(() => expect(toReview).toBeEnabled());
-    fireEvent.click(toReview);
+    await runVerification();
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
     fireEvent.click(screen.getByTestId('export-studio-generate'));
 
     await waitFor(() => expect(onGenerated).toHaveBeenCalledTimes(1));
@@ -511,15 +622,9 @@ describe('ExportStudio — verify gate + generate (MFX-41.1)', () => {
       .mockImplementation(function (this: HTMLAnchorElement) {
         downloads.push(this.download);
       });
-    const fetchMock = mockFetch();
-    await renderStudio(fetchMock, { initialTarget: 'openapi' });
-    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
-    fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
-    fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
-    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
-    const toReview = screen.getByRole('button', { name: /continue to review/i });
-    await waitFor(() => expect(toReview).toBeEnabled());
-    fireEvent.click(toReview);
+    await advanceToVerify(mockFetch(), 'openapi');
+    await runVerification();
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
     fireEvent.click(screen.getByTestId('export-studio-generate'));
     await waitFor(() => expect(screen.getByTestId('export-artifact-preview')).toBeInTheDocument());
 

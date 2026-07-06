@@ -22,16 +22,16 @@ import {
   dashboardPanelPaddedClass,
 } from '../dashboardScreenClasses';
 import { useExportTargets } from './useExportTargets';
-import { useExportPreview } from './useExportPreview';
+import { useExportVerify } from './useExportVerify';
 import { useCatalogSourceContext } from './useCatalogSourceContext';
 import { FormatPill } from '../../../ui/catalog/FormatPill';
 import { ProtocolPill } from '../../../ui/catalog/ProtocolPill';
 import { ExportTargetGrid } from './ExportTargetGrid';
 import { ExportOptionsForm } from './ExportOptionsForm';
-import { FidelityWarningPanel } from './FidelityWarningPanel';
+import { VerifyWorkbench, VerdictBanner } from './VerifyWorkbench';
 import { ArtifactPreviewCard } from './ArtifactPreviewCard';
 import { OriginalSourceOption } from './OriginalSourceOption';
-import { requiresExportAcknowledgement } from './exportFidelityPreview';
+import { deriveVerifyVerdict, verifyGatePasses } from './exportVerify';
 import { zipFilenameFor, type EmittedArtifact } from './exportArtifactPreview';
 import { buildZip } from './zipBundle';
 import { downloadBlob, filenameFromDisposition } from './exportDownload';
@@ -94,9 +94,10 @@ const STEP_ORDER: StudioStep[] = STUDIO_STEPS.map((s) => s.key);
  * *work* an export: a numbered stepper **Source → Target → Options → Verify → Review & Generate**
  * over the same registry-driven target grid and generated options form the dialog uses (shared
  * components, not forks). Each step gates forward navigation — no Verify until a target is picked,
- * no Options step advance until the options validate, and no Generate until Verify ran (or the
- * user explicitly skips it, acknowledging any fidelity loss). The stepper's state (selected
- * target, option values, acknowledgement) survives moving back and forth between steps.
+ * no Options step advance until the options validate, and no Generate until the Verify workbench
+ * (MFX-42.1) has run and returned a passing verdict (or a lossy one the user acknowledged). The
+ * stepper's state (selected target, option values, verify verdict) survives moving back and forth
+ * between steps.
  *
  * The route is always scoped to a source (`artifact` [+ `version`]); it is never a bare global
  * screen. The ExportDialog's "Open in Export Studio" footer action lands here with the source —
@@ -115,9 +116,7 @@ export function ExportStudio({
   const [step, setStep] = useState<StudioStep>('source');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [optionValues, setOptionValues] = useState<Record<string, unknown>>({});
-  /** Whether the Verify step's dry run has run (preview settled) or was explicitly skipped. */
-  const [verifyRan, setVerifyRan] = useState(false);
-  /** Whether the user acknowledged a lossy conversion ("Generate anyway" / skip-with-ack). */
+  /** Whether the user acknowledged a lossy conversion ("Export anyway"). */
   const [acknowledged, setAcknowledged] = useState(false);
   const [generating, setGenerating] = useState(false);
   /** The emitted document being reviewed on the Review step, once generated. */
@@ -147,19 +146,25 @@ export function ExportStudio({
     () => validateExportOptions(optionFields, optionValues),
     [optionFields, optionValues],
   );
-
-  // The dry-run fidelity preview (advisory + per-construct report, MFX-6.2) for the chosen target,
-  // fetched once the Verify step is reached and kept for the Review step's artifact report.
-  const {
-    preview,
-    loading: previewLoading,
-    error: previewError,
-  } = useExportPreview(
-    (step === 'verify' || step === 'review') && !emitted,
-    artifact,
-    version,
-    selectedKey,
+  // Only the non-default overrides are sent (to verify and to generate), so the two dry-run and
+  // real emits share one configuration — a verify verdict always describes what Generate produces.
+  const changedOpts = useMemo(
+    () => (selected ? changedOptions(optionValues, selected.entry.default_options) : null),
+    [selected, optionValues],
   );
+
+  // The one-call, pre-generation Verify (MFX-42.1): a manual "Run verification" dry-run that
+  // returns all three lenses (fidelity + validation + lint) and a go/no-go verdict without
+  // emitting an artifact. Its result lives here so the Review step shows the same verdict.
+  const {
+    result: verifyResult,
+    running: verifyRunning,
+    hasRun: verifyHasRun,
+    error: verifyError,
+    run: runVerify,
+    reset: resetVerify,
+  } = useExportVerify(artifact, version, selectedKey, changedOpts);
+  const verifyVerdict = verifyResult ? deriveVerifyVerdict(verifyResult) : null;
 
   // Catalog-launched exports (MFX-41.2) show the item's provenance on the Source step so a
   // non-OpenAPI import is recognizable before a target is chosen. The context is advisory: it
@@ -173,9 +178,6 @@ export function ExportStudio({
   const versionLabel = response?.version_label || version || 'latest';
 
   const fidelity = selected?.entry.fidelity ?? null;
-  // Lossy conversions gate Generate behind an explicit acknowledgement (MFX-6.2), driven by the
-  // coarse tier so the gate never depends on the preview fetch.
-  const needsAck = fidelity ? requiresExportAcknowledgement(fidelity.tier) : false;
 
   /**
    * Select a target card and seed the options form with that target's defaults. When `seedOptions`
@@ -190,7 +192,7 @@ export function ExportStudio({
       setError(null);
       // A different target is a different conversion: its loss and verify must be re-established.
       setAcknowledged(false);
-      setVerifyRan(false);
+      resetVerify();
       const values: Record<string, unknown> = {};
       for (const field of optionFieldsFromSchema(card.entry.options_schema, card.entry.default_options)) {
         values[field.key] =
@@ -200,7 +202,7 @@ export function ExportStudio({
       }
       setOptionValues(values);
     },
-    [],
+    [resetVerify],
   );
 
   // Pre-select the target carried from the dialog escalation (and pre-fill a re-run's prior
@@ -215,15 +217,17 @@ export function ExportStudio({
     selectCard(card, initialOptions);
   }, [initialTarget, initialOptions, cards, selectCard]);
 
-  // The Verify step "ran" as soon as the dry run settles (loaded or errored) — a preview failure
-  // degrades to the coarse summary but still counts as verified, matching the dialog.
-  useEffect(() => {
-    if (step === 'verify' && (preview || previewError)) setVerifyRan(true);
-  }, [step, preview, previewError]);
-
-  const setOption = useCallback((key: string, value: unknown) => {
-    setOptionValues((current) => ({ ...current, [key]: value }));
-  }, []);
+  const setOption = useCallback(
+    (key: string, value: unknown) => {
+      setOptionValues((current) => ({ ...current, [key]: value }));
+      // The configuration changed: any prior verdict no longer describes what Generate would
+      // produce, so re-lock the gate until the user re-runs verification (auto re-verify is
+      // MFX-42.6). Acknowledgement is tied to that verdict, so it clears with it.
+      setAcknowledged(false);
+      resetVerify();
+    },
+    [resetVerify],
+  );
 
   /** Generate the document for the selected target and show it in the Review preview. */
   const handleGenerate = useCallback(async () => {
@@ -297,13 +301,13 @@ export function ExportStudio({
       case 'options':
         return Boolean(selected) && validation.valid;
       case 'verify':
-        // No Generate until Verify ran (or an explicit lossy-acknowledged skip); a lossy
-        // conversion additionally needs the acknowledgement before proceeding.
-        return verifyRan && (!needsAck || acknowledged);
+        // Generate is gated on the verdict (MFX-42.1): clean proceeds, lossy needs the
+        // acknowledgement, invalid is blocked outright, and an unrun/failed verify stays closed.
+        return verifyGatePasses(verifyVerdict, acknowledged);
       default:
         return false;
     }
-  }, [step, response, loading, selected, validation.valid, verifyRan, needsAck, acknowledged]);
+  }, [step, response, loading, selected, validation.valid, verifyVerdict, acknowledged]);
 
   const stepIndex = STEP_ORDER.indexOf(step);
   const goBack = useCallback(() => {
@@ -458,42 +462,26 @@ export function ExportStudio({
           )}
 
           {step === 'verify' && selected && fidelity && (
-            <div className="space-y-4">
-              <FidelityWarningPanel
-                targetLabel={selected.entry.descriptor.label}
-                targetDescription={selected.entry.descriptor.description}
-                fidelity={fidelity}
-                preview={preview}
-                previewLoading={previewLoading}
-                previewError={previewError}
-                acknowledged={acknowledged}
-                onAcknowledgedChange={setAcknowledged}
-              />
-              {!verifyRan && (
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Don’t want to wait for the full report? Skip verification and generate anyway.
-                  </span>
-                  <Button
-                    variant="outline"
-                    data-testid="export-studio-skip-verify"
-                    onClick={() => setVerifyRan(true)}
-                    disabled={needsAck && !acknowledged}
-                    title={
-                      needsAck && !acknowledged
-                        ? 'Acknowledge the fidelity loss to skip verification.'
-                        : undefined
-                    }
-                  >
-                    Skip verification
-                  </Button>
-                </div>
-              )}
-            </div>
+            <VerifyWorkbench
+              targetLabel={selected.entry.descriptor.label}
+              targetDescription={selected.entry.descriptor.description}
+              fidelitySummary={fidelity}
+              running={verifyRunning}
+              hasRun={verifyHasRun}
+              error={verifyError}
+              result={verifyResult}
+              verdict={verifyVerdict}
+              acknowledged={acknowledged}
+              onAcknowledgedChange={setAcknowledged}
+              onRun={() => void runVerify()}
+            />
           )}
 
           {step === 'review' && selected && (
             <div className="space-y-4">
+              {/* The verify verdict follows the user to Review (MFX-42.1): the same banner it saw
+                  on the Verify step, so what gated Generate stays visible while generating. */}
+              {verifyVerdict && <VerdictBanner verdict={verifyVerdict} />}
               {emitted ? (
                 <div className="flex min-h-0 flex-col gap-2">
                   <p className="shrink-0 text-xs text-gray-600 dark:text-gray-300">
@@ -504,7 +492,7 @@ export function ExportStudio({
                   <ArtifactPreviewCard
                     className="min-h-[420px]"
                     artifact={emitted}
-                    report={preview?.fidelity.report ?? null}
+                    report={verifyResult?.fidelity.report ?? null}
                     targetKey={selected.key}
                   />
                 </div>
