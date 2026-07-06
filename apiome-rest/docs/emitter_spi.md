@@ -4,7 +4,8 @@
 > `src/app/openapi_emitter.py`, `src/app/asyncapi_emitter.py`,
 > `src/app/proto_emitter.py`, `src/app/sample_emitter.py`, `src/app/openapi_validator.py`
 > **Issues:** [#4002](https://github.com/apiome/apiome/issues/4002) (MFI-22.1),
-> [#3834](https://github.com/apiome/apiome/issues/3834) (MFX-1.1) ·
+> [#3834](https://github.com/apiome/apiome/issues/3834) (MFX-1.1),
+> [#3835](https://github.com/apiome/apiome/issues/3835) (MFX-1.2) ·
 > **Epic:** MFX-EPIC-1 (#3814) · **Roadmap:** `docs/ROADMAP_MULTI_FORMAT_EXPORT.md`
 
 The **Emitter SPI** is the inverse of the [ImportSource SPI](./import_source_spi.md)
@@ -103,6 +104,22 @@ document = result.document
 `resolve_emit_format(target)` maps an emitter `key` or registry `format` to the
 format key; `resolve_emitter(target)` returns an instance. Catalog conversion
 (`app.conversion_job.preview_conversion`) is wired through this seam today.
+
+## REST target list (MFX-1.2)
+
+The registry is exposed for UI/CLI discovery at:
+
+```
+GET /v1/export/{tenant_slug}/targets?artifact={id}&version={v}
+```
+
+Each entry combines the registry's public view (descriptor, capability profile,
+options schema + defaults — MFX-1.1/1.4) with a cheap per-source fidelity badge
+(`lossless` / `lossy` / `types-only` plus a preserved-% estimate), computed from
+the prediction engine with **no emit**. Mirrors `GET /v1/import/sources` (MFI-1.3);
+adding an emitter server-side (`register=True` or `register_emitter`) makes it appear
+automatically. Implemented in `app.export_routes.list_export_targets` /
+`build_target_fidelity_entries`.
 
 ## Emit result envelope
 

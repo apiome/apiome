@@ -274,7 +274,7 @@ flowchart LR
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 1.1 ✅ | Emitter SPI + capability/fidelity profile | interface: emit(model)→files, declare capabilities | export,multi-protocol,rest,python,mvp | N | Y | L | apiome-rest |
-| 1.2 | Emitter registry + REST target list | enumerate emitters for UI/CLI (`GET /export/targets`) | export,multi-protocol,rest,mvp | N | Y | M | apiome-rest |
+| 1.2 ✅ | Emitter registry + REST target list | enumerate emitters for UI/CLI (`GET /export/targets`) | export,multi-protocol,rest,mvp | N | Y | M | apiome-rest |
 | 1.3 ✅ | Refactor existing exports behind SPI | move current OpenAPI/MCP export under the SPI | export,multi-protocol,rest | Y | Y | M | apiome-rest |
 | 1.4 ✅ | Target selection & defaults | choose target + options; sensible per-format defaults | export,multi-protocol,rest,mvp | Y | Y | S | apiome-rest |
 
@@ -286,7 +286,8 @@ flowchart LR
 - **Dependencies / Parallelism.** Root. Blocks all emitter epics. Depends on MFI-EPIC-2 (model).
 - **Technical Stack.** Python, FastAPI.
 
-### MFX-1.2 — Emitter registry + REST target list  ·  **#3835**
+### MFX-1.2 — Emitter registry + REST target list  ·  **#3835**  ·  ✅ **Done**
+- **Status.** Implemented in `apiome-rest/src/app/export_routes.py` (`GET /v1/export/{tenant}/targets?artifact=&version=` via `list_export_targets` + `build_target_fidelity_entries`): every registered emitter's descriptor, capability profile, options schema/defaults (MFX-1.1/1.4), and a cheap per-source fidelity tier (`lossless`/`lossy`/`types-only` + preserved-%) derived from the prediction engine with no emit. Mirrors MFI-1.3's `/import/sources`; new emitters appear automatically. Documented in `apiome-rest/docs/emitter_spi.md`; acceptance tests in `tests/test_export_targets_routes.py`. apiome-rest 1.76.1 → 1.76.2.
 - **Problem.** UI/CLI need to discover available targets + their fidelity profile, and the mockup shows a **per-target fidelity badge on every card** (computed for the current source) *before* any job runs.
 - **Solution / Scope.** Registry + `GET /export/targets?artifact={id}&version={v}` returning each emitter's descriptor + capability profile **plus a cheap per-target fidelity tier** (`lossless`/`lossy`/`types-only`) derived by comparing the source `CanonicalApi`'s construct classes against each target's capability profile (no full emit). Drives the card badges (6.1) and the version pre-summary (6.5). Mirrors MFI-1.3's `/import/sources`.
 - **Acceptance Criteria.** New emitter appears automatically; each target returns a fidelity tier for the given source; OpenAPI→OpenAPI is `lossless`, →Avro is `types-only`.
