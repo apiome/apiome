@@ -253,6 +253,75 @@ export function lensBadgeCount(lens: VerifyLensKey, result: ExportVerifyResponse
   }
 }
 
+/**
+ * The visual state the validation lens renders in (MFX-42.2). It tracks the report's verdict
+ * one-for-one but renames `skipped` to `unavailable` to name the case the lens must surface as a
+ * *warning* — an external toolchain (e.g. `buf build`) was not installed on the server, so the
+ * artifact was **not** validated — never as silent success:
+ *
+ * - **valid** — a validator ran and the emitted artifact re-parsed cleanly (the positive verdict).
+ * - **invalid** — a validator ran and rejected the artifact (blocks delivery); findings render.
+ * - **unavailable** — the required toolchain was missing; validation could not run (warns).
+ * - **not_applicable** — no validator matches the target format; there is nothing to validate.
+ *
+ * @param validation The emitted-output validation report.
+ * @returns The lens presentation state.
+ */
+export function validationLensState(validation: EmittedValidationReport): ValidationLensState {
+  switch (validation.verdict) {
+    case 'invalid':
+      return 'invalid';
+    case 'skipped':
+      return 'unavailable';
+    case 'not_applicable':
+      return 'not_applicable';
+    case 'valid':
+    default:
+      return 'valid';
+  }
+}
+
+/** The four states the validation lens can present (MFX-42.2). */
+export type ValidationLensState = 'valid' | 'invalid' | 'unavailable' | 'not_applicable';
+
+/** The colour tone driving the validation lens's headline icon and classes. */
+export type ValidationLensTone = 'ok' | 'invalid' | 'warn' | 'neutral';
+
+/**
+ * The colour tone for a validation lens state (MFX-42.2): a clean pass is `ok` (green), a
+ * rejection is `invalid` (red), a missing toolchain is `warn` (amber — distinct from success),
+ * and a not-applicable format is `neutral`.
+ *
+ * @param state The validation lens state.
+ * @returns The tone token.
+ */
+export function validationLensTone(state: ValidationLensState): ValidationLensTone {
+  switch (state) {
+    case 'invalid':
+      return 'invalid';
+    case 'unavailable':
+      return 'warn';
+    case 'not_applicable':
+      return 'neutral';
+    case 'valid':
+    default:
+      return 'ok';
+  }
+}
+
+/**
+ * The validator identity to display, trimmed, or null when the report names no tool (MFX-42.2).
+ * Drives the "Validated with `buf build`" / "`xmlschema` is not installed on the server" lines so
+ * the user knows which toolchain produced (or would have produced) the verdict.
+ *
+ * @param validation The emitted-output validation report.
+ * @returns The tool identity, or null when none is known.
+ */
+export function validatorToolLabel(validation: EmittedValidationReport): string | null {
+  const tool = validation.tool?.trim();
+  return tool ? tool : null;
+}
+
 /** Per-severity counts for a lint report's findings, zero-filled for every severity. */
 export function lintSeverityCounts(
   findings: EmittedLintFinding[],

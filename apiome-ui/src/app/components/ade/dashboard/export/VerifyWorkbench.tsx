@@ -4,8 +4,6 @@ import { useMemo, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
-  FileWarning,
-  Gauge,
   Loader2,
   RefreshCw,
   ShieldCheck,
@@ -15,6 +13,8 @@ import {
 import { Button } from '../../../ui/Button';
 import { Alert } from '../../../ui/Alert';
 import { FidelityWarningPanel } from './FidelityWarningPanel';
+import { FindingLocation } from './FindingLocation';
+import { ValidationResultsLens } from './ValidationResultsLens';
 import { gradeChipClass, type LintSeverity } from '../../../../utils/version-lint-report';
 import type { TargetFidelitySummary } from './exportTargetCatalog';
 import {
@@ -23,7 +23,6 @@ import {
   verifyVerdictBanner,
   verifyVerdictBannerClass,
   type EmittedArtifactLintReport,
-  type EmittedValidationReport,
   type ExportVerifyResponse,
   type ExportVerifyVerdict,
   type VerifyLensKey,
@@ -340,52 +339,8 @@ function LensBody({
       />
     );
   }
-  if (lens === 'validation') return <ValidationLens validation={result.validation} />;
+  if (lens === 'validation') return <ValidationResultsLens validation={result.validation} />;
   return <LintLens lint={result.lint} />;
-}
-
-/**
- * The emitted-output validation lens (MFX-42.1 scaffold; deepened in MFX-42.2). Shows the gate's
- * verdict headline and — when the artifact was rejected — the structured errors with locations.
- */
-function ValidationLens({ validation }: { validation: EmittedValidationReport }) {
-  const tone =
-    validation.verdict === 'invalid'
-      ? 'invalid'
-      : validation.verdict === 'skipped'
-        ? 'warn'
-        : validation.verdict === 'not_applicable'
-          ? 'neutral'
-          : 'ok';
-  return (
-    <div className="space-y-3" data-testid="verify-validation">
-      <VerdictHeadline
-        tone={tone}
-        headline={validation.headline}
-        message={validation.message}
-        detail={validation.detail}
-      />
-      {validation.findings.length > 0 && (
-        <ul className="space-y-2" data-testid="verify-validation-findings">
-          {validation.findings.map((finding, idx) => (
-            <li
-              key={`${finding.keyword ?? 'err'}-${idx}`}
-              className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm dark:border-rose-900 dark:bg-rose-950/30"
-            >
-              <div className="text-gray-900 dark:text-gray-100">{finding.message}</div>
-              <FindingLocation
-                file={finding.file}
-                path={finding.path}
-                line={finding.line}
-                column={finding.column}
-                rule={finding.keyword}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
 }
 
 /**
@@ -440,68 +395,6 @@ function LintLens({ lint }: { lint: EmittedArtifactLintReport | null }) {
           ))}
         </ul>
       )}
-    </div>
-  );
-}
-
-/** The one-line "file · pointer · line:col · rule" location under a finding, when known. */
-function FindingLocation({
-  file,
-  path,
-  line,
-  column,
-  rule,
-}: {
-  file?: string | null;
-  path?: string | null;
-  line?: number | null;
-  column?: number | null;
-  rule?: string | null;
-}) {
-  const parts: string[] = [];
-  if (file) parts.push(file);
-  if (path) parts.push(path);
-  if (typeof line === 'number') parts.push(typeof column === 'number' ? `${line}:${column}` : `line ${line}`);
-  if (rule) parts.push(rule);
-  if (parts.length === 0) return null;
-  return (
-    <div className="mt-1 font-mono text-xs text-gray-500 dark:text-gray-400" data-testid="verify-finding-location">
-      {parts.join(' · ')}
-    </div>
-  );
-}
-
-/** A lens verdict headline row with an icon, message, and optional detail. */
-function VerdictHeadline({
-  tone,
-  headline,
-  message,
-  detail,
-}: {
-  tone: 'ok' | 'warn' | 'invalid' | 'neutral';
-  headline: string;
-  message: string;
-  detail?: string | null;
-}) {
-  const Icon = tone === 'invalid' ? ShieldX : tone === 'warn' ? FileWarning : tone === 'ok' ? ShieldCheck : Gauge;
-  const toneClass =
-    tone === 'invalid'
-      ? 'text-rose-700 dark:text-rose-300'
-      : tone === 'warn'
-        ? 'text-amber-700 dark:text-amber-300'
-        : tone === 'ok'
-          ? 'text-emerald-700 dark:text-emerald-300'
-          : 'text-gray-600 dark:text-gray-300';
-  return (
-    <div className="flex items-start gap-2">
-      <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${toneClass}`} aria-hidden />
-      <div className="space-y-0.5">
-        <div className={`text-sm font-semibold ${toneClass}`} data-testid="verify-validation-headline">
-          {headline}
-        </div>
-        <p className="text-xs text-gray-600 dark:text-gray-300">{message}</p>
-        {detail && <p className="text-xs text-gray-500 dark:text-gray-400">{detail}</p>}
-      </div>
     </div>
   );
 }

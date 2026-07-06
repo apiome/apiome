@@ -8,6 +8,9 @@ import {
   deriveVerifyVerdict,
   lensBadgeCount,
   lintSeverityCounts,
+  validationLensState,
+  validationLensTone,
+  validatorToolLabel,
   verifyGatePasses,
   verifyVerdictBanner,
   verifyVerdictBannerClass,
@@ -223,5 +226,41 @@ describe('verifyGatePasses', () => {
 
   it('always passes clean', () => {
     expect(verifyGatePasses('clean', false)).toBe(true);
+  });
+});
+
+describe('validationLensState (MFX-42.2)', () => {
+  it('maps each verdict to its lens state, renaming skipped to unavailable', () => {
+    expect(validationLensState(validation('valid'))).toBe('valid');
+    expect(validationLensState(validation('invalid'))).toBe('invalid');
+    expect(validationLensState(validation('skipped'))).toBe('unavailable');
+    expect(validationLensState(validation('not_applicable'))).toBe('not_applicable');
+  });
+});
+
+describe('validationLensTone (MFX-42.2)', () => {
+  it('tones a missing toolchain as a warning, distinct from a clean pass', () => {
+    // The whole point of 42.2: unavailable is a warning, never silent success.
+    expect(validationLensTone('unavailable')).toBe('warn');
+    expect(validationLensTone('valid')).toBe('ok');
+    expect(validationLensTone('invalid')).toBe('invalid');
+    expect(validationLensTone('not_applicable')).toBe('neutral');
+  });
+
+  it('gives clean and toolchain-unavailable different tones', () => {
+    expect(validationLensTone('valid')).not.toBe(validationLensTone('unavailable'));
+  });
+});
+
+describe('validatorToolLabel (MFX-42.2)', () => {
+  it('returns the trimmed validator identity when present', () => {
+    expect(validatorToolLabel(validation('invalid', { tool: 'buf build' }))).toBe('buf build');
+    expect(validatorToolLabel(validation('skipped', { tool: '  xmlschema  ' }))).toBe('xmlschema');
+  });
+
+  it('is null when the report names no tool (null, undefined, or blank)', () => {
+    expect(validatorToolLabel(validation('not_applicable', { tool: null }))).toBeNull();
+    expect(validatorToolLabel(validation('valid', { tool: undefined }))).toBeNull();
+    expect(validatorToolLabel(validation('valid', { tool: '   ' }))).toBeNull();
   });
 });
