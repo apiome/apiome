@@ -332,6 +332,85 @@ export function lintSeverityCounts(
 }
 
 /**
+ * The visual state the emitted-artifact lint lens renders in (MFX-42.3):
+ *
+ * - **not_applicable** — no lint pack is registered for the target's format (`applicable === false`
+ *   or no report at all); the lens shows an explicit empty state, never a misleading clean score.
+ * - **clean** — a lint pack ran and reported no findings; the lens shows a positive confirmation.
+ * - **findings** — a lint pack ran and reported one or more findings; the grouped list renders.
+ *
+ * The lint lens is advisory — it never gates the export (the workbench verdict owns Generate) — so
+ * every state is informational.
+ *
+ * @param lint The emitted-artifact lint report, or null when the endpoint ran no lint pass.
+ * @returns The lens presentation state.
+ */
+export function emittedLintLensState(lint: EmittedArtifactLintReport | null): EmittedLintLensState {
+  if (!lint || !lint.applicable) return 'not_applicable';
+  return lint.findings.length > 0 ? 'findings' : 'clean';
+}
+
+/** The three states the emitted-artifact lint lens can present (MFX-42.3). */
+export type EmittedLintLensState = 'not_applicable' | 'clean' | 'findings';
+
+/** A group of lint findings sharing one severity, in the grouped findings list (MFX-42.3). */
+export interface EmittedLintSeverityGroup {
+  /** The severity all findings in the group share. */
+  severity: LintSeverity;
+  /** The findings of that severity, in the server's order. */
+  findings: EmittedLintFinding[];
+}
+
+/** Lint severity order, most severe first — mirrors the catalog panel's MUST/SHOULD/advisory tiers. */
+const LINT_SEVERITY_ORDER: readonly LintSeverity[] = ['error', 'warning', 'info'];
+
+/**
+ * Group lint findings by severity in error → warning → info order (MFX-42.3), preserving the
+ * server's order within each severity and dropping empty groups. This mirrors the catalog lint
+ * panel's requirement-tier grouping (MUST/SHOULD/advisory) so the emitted-artifact lens and the
+ * source's catalog lint read the same.
+ *
+ * @param findings The lint findings to group.
+ * @returns One group per non-empty severity, most severe first.
+ */
+export function groupLintFindingsBySeverity(
+  findings: EmittedLintFinding[],
+): EmittedLintSeverityGroup[] {
+  return LINT_SEVERITY_ORDER.map((severity) => ({
+    severity,
+    findings: findings.filter((finding) => finding.severity === severity),
+  })).filter((group) => group.findings.length > 0);
+}
+
+/** A lint report's 0–100 score plus its display letter grade (MFX-42.3). */
+export interface EmittedLintScore {
+  /** The 0–100 quality score the pack computed. */
+  score: number;
+  /** The display letter grade — the pack's grade trimmed, or `–` when it supplies none. */
+  grade: string;
+}
+
+/**
+ * The score/grade to display for a lint report, or null when the pack computes none (MFX-42.3).
+ *
+ * Only a numeric {@link EmittedArtifactLintReport.score} counts as present — a report without one
+ * renders its findings without a (misleading) score chip. The letter grade falls back to a dash so
+ * the chip always has a stable shape, matching the catalog lint gauge's `–` placeholder.
+ *
+ * @param lint The emitted-artifact lint report, or null.
+ * @returns The score + display grade, or null when there is no numeric score.
+ */
+export function emittedLintScore(lint: EmittedArtifactLintReport | null): EmittedLintScore | null {
+  if (!lint || typeof lint.score !== 'number') return null;
+  return { score: lint.score, grade: (lint.grade ?? '').trim() || '–' };
+}
+
+/** The number of distinct lint rules that fired across a report's findings (MFX-42.3). */
+export function lintRulesTriggered(findings: EmittedLintFinding[]): number {
+  return new Set(findings.map((finding) => finding.rule)).size;
+}
+
+/**
  * Whether the Verify gate permits generating the export (MFX-42.1 acceptance):
  *
  * - **invalid** — never; the export is blocked regardless of acknowledgement.

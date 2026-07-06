@@ -177,6 +177,17 @@ export function ExportStudio({
   const sourceLabel = artifactLabel || artifact;
   const versionLabel = response?.version_label || version || 'latest';
 
+  // The source's own catalog lint report, linked from the Verify lint lens's distinguishing note so
+  // the emitted-artifact lint is never conflated with the source's catalog lint (MFX-42.3). Only
+  // catalog sources have a catalog detail (with its Lint & Score tab) to link to.
+  const sourceLintReport = useMemo(
+    () =>
+      isCatalogSource
+        ? { href: `/ade/dashboard/catalog/${encodeURIComponent(artifact)}`, label: sourceLabel }
+        : null,
+    [isCatalogSource, artifact, sourceLabel],
+  );
+
   const fidelity = selected?.entry.fidelity ?? null;
 
   /**
@@ -474,6 +485,7 @@ export function ExportStudio({
               acknowledged={acknowledged}
               onAcknowledgedChange={setAcknowledged}
               onRun={() => void runVerify()}
+              sourceLintReport={sourceLintReport}
             />
           )}
 

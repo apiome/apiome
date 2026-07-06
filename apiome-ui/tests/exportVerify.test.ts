@@ -6,7 +6,11 @@
 
 import {
   deriveVerifyVerdict,
+  emittedLintLensState,
+  emittedLintScore,
+  groupLintFindingsBySeverity,
   lensBadgeCount,
+  lintRulesTriggered,
   lintSeverityCounts,
   validationLensState,
   validationLensTone,
@@ -205,6 +209,97 @@ describe('lintSeverityCounts', () => {
 
   it('is all-zero for no findings', () => {
     expect(lintSeverityCounts([])).toEqual({ error: 0, warning: 0, info: 0 });
+  });
+});
+
+describe('emittedLintLensState (MFX-42.3)', () => {
+  it('is not_applicable when no pack is registered (or no report at all)', () => {
+    expect(emittedLintLensState(null)).toBe('not_applicable');
+    expect(emittedLintLensState({ applicable: false, findings: [] })).toBe('not_applicable');
+    // Applicability wins even if stray findings are present.
+    expect(
+      emittedLintLensState({ applicable: false, findings: [{ severity: 'info', rule: 'r', message: 'm' }] }),
+    ).toBe('not_applicable');
+  });
+
+  it('is clean when a pack ran with zero findings', () => {
+    expect(emittedLintLensState({ applicable: true, findings: [] })).toBe('clean');
+  });
+
+  it('is findings when a pack ran with one or more findings', () => {
+    expect(
+      emittedLintLensState({ applicable: true, findings: [{ severity: 'warning', rule: 'r', message: 'm' }] }),
+    ).toBe('findings');
+  });
+});
+
+describe('groupLintFindingsBySeverity (MFX-42.3)', () => {
+  it('orders groups error → warning → info and drops empty severities', () => {
+    const groups = groupLintFindingsBySeverity([
+      { severity: 'info', rule: 'i', message: 'm' },
+      { severity: 'error', rule: 'e', message: 'm' },
+      { severity: 'warning', rule: 'w', message: 'm' },
+    ]);
+    expect(groups.map((g) => g.severity)).toEqual(['error', 'warning', 'info']);
+    // A severity with no findings produces no group.
+    const noInfo = groupLintFindingsBySeverity([{ severity: 'error', rule: 'e', message: 'm' }]);
+    expect(noInfo.map((g) => g.severity)).toEqual(['error']);
+  });
+
+  it('preserves the server order within a severity group', () => {
+    const [group] = groupLintFindingsBySeverity([
+      { severity: 'warning', rule: 'first', message: 'm' },
+      { severity: 'warning', rule: 'second', message: 'm' },
+    ]);
+    expect(group.findings.map((f) => f.rule)).toEqual(['first', 'second']);
+  });
+
+  it('is empty for no findings', () => {
+    expect(groupLintFindingsBySeverity([])).toEqual([]);
+  });
+});
+
+describe('emittedLintScore (MFX-42.3)', () => {
+  it('returns the score and letter grade when the pack computes a numeric score', () => {
+    expect(emittedLintScore({ applicable: true, score: 88, grade: 'B', findings: [] })).toEqual({
+      score: 88,
+      grade: 'B',
+    });
+    // A zero score is still a score (not treated as absent).
+    expect(emittedLintScore({ applicable: true, score: 0, grade: 'F', findings: [] })).toEqual({
+      score: 0,
+      grade: 'F',
+    });
+  });
+
+  it('falls back to a dash grade when the pack supplies a score but no grade', () => {
+    expect(emittedLintScore({ applicable: true, score: 70, grade: null, findings: [] })).toEqual({
+      score: 70,
+      grade: '–',
+    });
+    expect(emittedLintScore({ applicable: true, score: 70, grade: '  ', findings: [] })?.grade).toBe('–');
+  });
+
+  it('is null when there is no numeric score (or no report)', () => {
+    expect(emittedLintScore(null)).toBeNull();
+    expect(emittedLintScore({ applicable: true, score: null, grade: 'B', findings: [] })).toBeNull();
+    expect(emittedLintScore({ applicable: true, findings: [] })).toBeNull();
+  });
+});
+
+describe('lintRulesTriggered (MFX-42.3)', () => {
+  it('counts distinct rule ids', () => {
+    expect(
+      lintRulesTriggered([
+        { severity: 'error', rule: 'a', message: 'm' },
+        { severity: 'warning', rule: 'a', message: 'm' },
+        { severity: 'info', rule: 'b', message: 'm' },
+      ]),
+    ).toBe(2);
+  });
+
+  it('is 0 for no findings', () => {
+    expect(lintRulesTriggered([])).toBe(0);
   });
 });
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -13,16 +13,13 @@ import {
 import { Button } from '../../../ui/Button';
 import { Alert } from '../../../ui/Alert';
 import { FidelityWarningPanel } from './FidelityWarningPanel';
-import { FindingLocation } from './FindingLocation';
 import { ValidationResultsLens } from './ValidationResultsLens';
-import { gradeChipClass, type LintSeverity } from '../../../../utils/version-lint-report';
+import { EmittedLintLens, type EmittedLintSourceReport } from './EmittedLintLens';
 import type { TargetFidelitySummary } from './exportTargetCatalog';
 import {
   lensBadgeCount,
-  lintSeverityCounts,
   verifyVerdictBanner,
   verifyVerdictBannerClass,
-  type EmittedArtifactLintReport,
   type ExportVerifyResponse,
   type ExportVerifyVerdict,
   type VerifyLensKey,
@@ -51,6 +48,11 @@ export interface VerifyWorkbenchProps {
   onAcknowledgedChange: (acknowledged: boolean) => void;
   /** Trigger (or re-trigger) a verification run. */
   onRun: () => void;
+  /**
+   * The source's own (catalog) lint report, linked from the lint lens's distinguishing note so the
+   * emitted-artifact lint is never conflated with the source's catalog lint. Omitted when unknown.
+   */
+  sourceLintReport?: EmittedLintSourceReport | null;
 }
 
 /** The three lenses, in tab / accordion order. */
@@ -87,6 +89,7 @@ export function VerifyWorkbench({
   acknowledged,
   onAcknowledgedChange,
   onRun,
+  sourceLintReport = null,
 }: VerifyWorkbenchProps) {
   // Lead with the lens that most needs attention: the validator's detail for a blocked export,
   // else the fidelity lens (where the loss + acknowledgement live).
@@ -201,6 +204,7 @@ export function VerifyWorkbench({
             fidelitySummary={fidelitySummary}
             acknowledged={acknowledged}
             onAcknowledgedChange={onAcknowledgedChange}
+            sourceLintReport={sourceLintReport}
           />
         </div>
       </div>
@@ -229,6 +233,7 @@ export function VerifyWorkbench({
                 fidelitySummary={fidelitySummary}
                 acknowledged={acknowledged}
                 onAcknowledgedChange={onAcknowledgedChange}
+                sourceLintReport={sourceLintReport}
               />
             </div>
           </details>
@@ -313,6 +318,7 @@ interface LensBodyProps {
   fidelitySummary: TargetFidelitySummary;
   acknowledged: boolean;
   onAcknowledgedChange: (acknowledged: boolean) => void;
+  sourceLintReport: EmittedLintSourceReport | null;
 }
 
 /** Dispatch a lens key to its body; shared by the desktop tab panel and the narrow accordion. */
@@ -324,6 +330,7 @@ function LensBody({
   fidelitySummary,
   acknowledged,
   onAcknowledgedChange,
+  sourceLintReport,
 }: LensBodyProps) {
   if (lens === 'fidelity') {
     return (
@@ -340,80 +347,12 @@ function LensBody({
     );
   }
   if (lens === 'validation') return <ValidationResultsLens validation={result.validation} />;
-  return <LintLens lint={result.lint} />;
-}
-
-/**
- * The emitted-artifact lint lens (MFX-42.1 scaffold; deepened in MFX-42.3). Shows the score/grade
- * when the pack computes one, a severity breakdown, and the findings — or an explicit empty state
- * when no lint pack applies to the target.
- */
-function LintLens({ lint }: { lint: EmittedArtifactLintReport | null }) {
-  const counts = useMemo(() => lintSeverityCounts(lint?.findings ?? []), [lint]);
-  if (!lint || !lint.applicable) {
-    return (
-      <p className="text-sm text-gray-500 dark:text-gray-400" data-testid="verify-lint-empty">
-        No lint pack is registered for this target — there is nothing to lint. The export is not
-        blocked by lint.
-      </p>
-    );
-  }
   return (
-    <div className="space-y-3" data-testid="verify-lint">
-      <div className="flex flex-wrap items-center gap-2">
-        {typeof lint.score === 'number' && (
-          <span
-            data-testid="verify-lint-grade"
-            className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold ${gradeChipClass(lint.grade ?? '')}`}
-          >
-            {(lint.grade ?? '–').trim() || '–'} · {lint.score}/100
-          </span>
-        )}
-        <SeverityChip severity="error" count={counts.error} />
-        <SeverityChip severity="warning" count={counts.warning} />
-        <SeverityChip severity="info" count={counts.info} />
-      </div>
-      {lint.findings.length === 0 ? (
-        <p className="text-sm text-emerald-700 dark:text-emerald-300" data-testid="verify-lint-clean">
-          <CheckCircle2 className="mr-1.5 inline h-4 w-4 align-text-bottom" aria-hidden />
-          The lint pack reported no findings.
-        </p>
-      ) : (
-        <ul className="space-y-2" data-testid="verify-lint-findings">
-          {lint.findings.map((finding, idx) => (
-            <li
-              key={`${finding.rule}-${idx}`}
-              className="rounded-md border border-gray-200 p-3 text-sm dark:border-gray-700"
-            >
-              <div className="flex items-center gap-2">
-                <SeverityChip severity={finding.severity} />
-                <code className="text-xs text-gray-600 dark:text-gray-300">{finding.rule}</code>
-              </div>
-              <div className="mt-1 text-gray-900 dark:text-gray-100">{finding.message}</div>
-              <FindingLocation file={finding.file} path={finding.path} line={finding.line} column={finding.column} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-/** A severity chip (`3 errors`) or, without a count, a bare severity tag on a finding. */
-function SeverityChip({ severity, count }: { severity: LintSeverity; count?: number }) {
-  if (typeof count === 'number' && count === 0) return null;
-  const cls =
-    severity === 'error'
-      ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300'
-      : severity === 'warning'
-        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
-        : 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300';
-  const label =
-    typeof count === 'number' ? `${count} ${severity}${count === 1 ? '' : 's'}` : severity;
-  return (
-    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium capitalize ${cls}`}>
-      {label}
-    </span>
+    <EmittedLintLens
+      lint={result.lint}
+      targetLabel={targetLabel}
+      sourceReport={sourceLintReport}
+    />
   );
 }
 
