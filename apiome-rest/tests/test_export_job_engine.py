@@ -351,3 +351,90 @@ async def test_emit_result_lookup_returns_a_snapshot():
     fresh = get_export_job_emit_result(TENANT_SLUG, accepted.job_id)
     assert fresh is not None
     assert fresh.files[0].path != "mutated.json"
+
+
+# ---------------------------------------------------------------------------
+# Transcode guard gate — MFX-3.3 (#3846)
+# ---------------------------------------------------------------------------
+def _event_source() -> ExportSource:
+    """An event-only source (one channel + one message schema), for the guard cases."""
+    from app.canonical_model import Channel
+
+    msg = Type(
+        key="Signup",
+        name="Signup",
+        kind=TypeKind.RECORD,
+        fields=[CanonicalField(key="Signup.id", name="id", type=TypeRef(name="string"))],
+    )
+    api = CanonicalApi(
+        paradigm=ApiParadigm.EVENT,
+        format="asyncapi-3",
+        identity=ApiIdentity(name="signup"),
+        channels=[Channel(key="user/signedup", address="user/signedup")],
+        types=[msg],
+    )
+    return ExportSource(
+        api=api, artifact_id="artifact-2", version_record_id="rev-uuid-2", version_label="2.0.0"
+    )
+
+
+async def test_completed_job_result_carries_the_transcode_guard():
+    """A normal completed job attaches the transcoding guard alongside the fidelity envelope."""
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        status = await _wait_terminal(accepted.job_id)
+
+    assert status["state"] == "completed"
+    guard = status["result"]["guard"]
+    assert guard["verdict"] == "clean"
+    assert guard["requires_confirmation"] is False
+
+
+async def test_severe_conversion_fails_the_job_without_confirmation():
+    """A severe conversion (event-only → GraphQL) with no ``confirm`` fails before emit."""
+    request = ExportJobStartRequest(artifact="artifact-2", target="graphql")
+
+    def _must_not_emit(*args, **kwargs):
+        raise AssertionError("emit_canonical must not run for an unconfirmed severe job")
+
+    with patch("app.export_job_engine.load_export_source", return_value=_event_source()), patch(
+        "app.export_job_engine.emit_canonical", side_effect=_must_not_emit
+    ):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        status = await _wait_terminal(accepted.job_id)
+
+    assert status["state"] == "failed"
+    assert status["result"] is None
+    errors = [e for e in status["events"] if e["level"] == "error"]
+    assert len(errors) == 1
+    assert errors[0]["code"] == "TRANSCODE_CONFIRMATION_REQUIRED"
+    assert errors[0]["context"]["verdict"] == "severe"
+
+
+async def test_severe_conversion_completes_when_confirmed():
+    """The same severe conversion runs to completion once submitted with ``confirm``."""
+    request = ExportJobStartRequest(artifact="artifact-2", target="graphql", confirm=True)
+    with patch("app.export_job_engine.load_export_source", return_value=_event_source()):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        status = await _wait_terminal(accepted.job_id)
+
+    assert status["state"] == "completed"
+    result = status["result"]
+    assert result["files"]  # the emitter ran
+    assert result["guard"]["verdict"] == "severe"
+    assert result["guard"]["requires_confirmation"] is True
+
+
+async def test_dry_run_of_severe_conversion_never_blocks():
+    """A dry-run of a severe conversion completes with the report + guard, never fails."""
+    request = ExportJobStartRequest(artifact="artifact-2", target="graphql", dry_run=True)
+    with patch("app.export_job_engine.load_export_source", return_value=_event_source()):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        status = await _wait_terminal(accepted.job_id)
+
+    assert status["state"] == "completed"
+    result = status["result"]
+    assert result["dry_run"] is True
+    assert result["files"] == []
+    assert result["guard"]["verdict"] == "severe"

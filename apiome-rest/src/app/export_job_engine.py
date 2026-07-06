@@ -61,6 +61,7 @@ from .export_service import (
 )
 from .export_source import ExportSource, ExportSourceError, load_export_source
 from .lossiness import LossinessSeverity
+from .transcoding_guards import TranscodeGuard, classify_transcode
 
 logger = logging.getLogger(__name__)
 
@@ -168,6 +169,11 @@ class ExportJobStartRequest(BaseModel):
         default=False,
         description="When true, stop after the fidelity report: no artifact is emitted.",
     )
+    confirm: bool = Field(
+        default=False,
+        description="When true, proceed with a **severe** conversion (MFX-3.3) the transcoding "
+        "guard would otherwise fail the job on. Ignored for non-severe conversions and dry-runs.",
+    )
     min_severity: LossinessSeverity = Field(
         default=LossinessSeverity.INFO,
         description="Lowest loss severity that raises the advisory (MFX-2.4); does not affect "
@@ -214,6 +220,10 @@ class ExportJobResult(BaseModel):
     dry_run: bool = Field(description="True when the job stopped after the fidelity report.")
     fidelity: ExportFidelity = Field(
         description="The full fidelity envelope (target + tier + report + advisory).",
+    )
+    guard: TranscodeGuard = Field(
+        description="The pre-flight transcoding guard (MFX-3.3): the conversion band and why. "
+        "A severe conversion only completes when it was submitted with ``confirm``.",
     )
     files: List[ExportJobFile] = Field(
         default_factory=list,
@@ -555,6 +565,11 @@ async def _drive_export_job(job_id: str) -> None:
             emitter_cls,
             min_severity=request.min_severity,
         )
+        # Classify the conversion off the envelope's report (MFX-3.3), so the job's guard and
+        # the /preview guard agree and the pre-flight gate can refuse a severe conversion.
+        guard: TranscodeGuard = classify_transcode(
+            source.api, emitter_cls, report=fidelity.report
+        )
 
         if not await _publish(
             job_id,
@@ -563,9 +578,10 @@ async def _drive_export_job(job_id: str) -> None:
                 "FIDELITY_COMPUTED",
                 f"Fidelity: {fidelity.summary.tier.value}, "
                 f"{fidelity.summary.preserved_percent}% preserved "
-                f"({fidelity.summary.total} constructs)",
+                f"({fidelity.summary.total} constructs); transcode guard: {guard.verdict.value}",
                 {"tier": fidelity.summary.tier.value,
-                 "preserved_percent": fidelity.summary.preserved_percent},
+                 "preserved_percent": fidelity.summary.preserved_percent,
+                 "guard": guard.verdict.value},
             ),
         ):
             return
@@ -579,6 +595,7 @@ async def _drive_export_job(job_id: str) -> None:
                 target=target_format,
                 dry_run=True,
                 fidelity=fidelity,
+                guard=guard,
                 files=[],
                 media_type=None,
             )
@@ -590,6 +607,18 @@ async def _drive_export_job(job_id: str) -> None:
                 event=("info", "DRY_RUN_COMPLETED",
                        "Dry-run finished: fidelity report attached, no artifact emitted.",
                        None),
+            )
+            return
+
+        # --- Transcode guard gate (MFX-3.3): a severe conversion needs explicit confirmation ---
+        if guard.requires_confirmation and not request.confirm:
+            await _fail(
+                job_id,
+                "TRANSCODE_CONFIRMATION_REQUIRED",
+                guard.message,
+                {"verdict": guard.verdict.value,
+                 "reasons": guard.reasons,
+                 "preserved_percent": guard.preserved_percent},
             )
             return
 
@@ -646,6 +675,7 @@ async def _drive_export_job(job_id: str) -> None:
             target=target_format,
             dry_run=False,
             fidelity=fidelity,
+            guard=guard,
             files=manifest,
             media_type=emit_result.media_type,
         )
