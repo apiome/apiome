@@ -218,7 +218,21 @@ function mockFetch(opts: { invalidVerify?: boolean; bundle?: boolean } = {}): je
                   headline: 'Valid',
                   message: 'The emitted artifact re-parsed cleanly.',
                 },
-            lint: { applicable: true, pack: 'pack', score: 95, grade: 'A', findings: [] },
+            lint: {
+              applicable: true,
+              pack: 'pack',
+              score: 95,
+              grade: 'A',
+              // The bundle scenario carries located lint findings (MFX-43.3): one per bundle
+              // file, plus one with no location that must stay list-only.
+              findings: opts.bundle
+                ? [
+                    { severity: 'warning', rule: 'proto-style', message: 'Prefer explicit package.', file: 'petstore.proto', line: 1, column: 8 },
+                    { severity: 'info', rule: 'naming', message: 'Consider a suffix.', file: 'google/protobuf/timestamp.proto', line: 1 },
+                    { severity: 'info', rule: 'no-loc', message: 'Location-less lint.' },
+                  ]
+                : [],
+            },
             verdict: invalid ? 'invalid' : lossy ? 'lossy' : 'clean',
           }),
       });
@@ -675,5 +689,33 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     // A bundle downloads only as the whole .zip here (per-file download is MFX-43.5).
     expect(screen.queryByRole('button', { name: /download petstore\.proto/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /download \.zip/i })).toBeInTheDocument();
+  });
+
+  it('round-trips a located finding from the Verify lens to the Review editor (MFX-43.3)', async () => {
+    await advanceToVerify(mockFetch({ bundle: true }), 'proto');
+    await runVerification();
+    fireEvent.click(within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+    await screen.findByTestId('bundle-explorer');
+
+    // The primary file's located lint finding shows in the Review problems panel.
+    expect(screen.getByTestId('verify-problem-lint-0')).toBeInTheDocument();
+
+    // Back on the Verify lint lens, located findings are openable; the location-less one is not.
+    fireEvent.click(screen.getByRole('button', { name: /^back$/i }));
+    fireEvent.click(screen.getByTestId('verify-tab-lint'));
+    const lintPanel = screen.getByTestId('verify-panel-lint');
+    expect(within(lintPanel).getByTestId('verify-open-lint-1')).toBeInTheDocument();
+    expect(within(lintPanel).getByText('Location-less lint.')).toBeInTheDocument();
+    expect(within(lintPanel).queryByTestId('verify-open-lint-2')).not.toBeInTheDocument();
+
+    // Click the import file's finding → the Studio jumps to Review with that file open and the
+    // finding highlighted in the problems panel (the lens → editor direction).
+    fireEvent.click(within(lintPanel).getByTestId('verify-open-lint-1'));
+    await screen.findByTestId('bundle-explorer');
+    expect(screen.getByTestId('bundle-tab-google/protobuf/timestamp.proto')).toHaveAttribute('data-active', 'true');
+    expect(screen.getByTestId('bundle-file-editor')).toHaveTextContent('message Timestamp');
+    expect(screen.getByTestId('verify-problem-lint-1')).toHaveAttribute('data-selected', 'true');
   });
 });

@@ -5,7 +5,10 @@ import { Check, Copy, FileCode2 } from 'lucide-react';
 import { monacoLanguageForArtifact } from '@/app/utils/export-target-language';
 import { cn } from '@lib/utils';
 import { ReadOnlyCodeViewer } from './ReadOnlyCodeViewer';
+import { ProblemsPanel } from './ProblemsPanel';
+import { useProblemMarkers } from './useProblemMarkers';
 import type { LossinessReport } from './exportFidelityPreview';
+import type { LocatedProblem, ProblemRevealRequest } from './exportProblemMarkers';
 import {
   artifactBadgeClass,
   buildArtifactBadge,
@@ -25,6 +28,16 @@ interface ArtifactPreviewCardProps {
   report: LossinessReport | null;
   /** The chosen export target's registry key — drives Monaco syntax highlighting. */
   targetKey?: string | null;
+  /**
+   * The Verify lenses' located problems belonging to this document (MFX-43.3, already filtered by
+   * the caller) — rendered as squiggle markers, gutter bars, and the problems list.
+   */
+  problems?: LocatedProblem[];
+  /**
+   * A "open this problem" request from outside (a Verify lens click, MFX-43.3): highlights the
+   * problem and reveals its line. Repeat requests re-trigger via nonce.
+   */
+  reveal?: ProblemRevealRequest | null;
   className?: string;
 }
 
@@ -36,14 +49,31 @@ interface ArtifactPreviewCardProps {
  * (MFX-43.1) with syntax highlighting, a copy-to-clipboard control, and size/meta hints underneath.
  * The highlight language is resolved registry-driven — the emitter key, then the artifact's own
  * media type / filename / bytes — so a newly-registered emitter highlights without a change here.
+ *
+ * When the caller passes the document's located Verify problems (MFX-43.3), they render exactly as
+ * in the bundle explorer: squiggle markers + gutter bars in the viewer and a {@link ProblemsPanel}
+ * underneath, with the same two-way problem ↔ line navigation.
  */
 export function ArtifactPreviewCard({
   artifact,
   report,
   targetKey,
+  problems = [],
+  reveal = null,
   className,
 }: ArtifactPreviewCardProps) {
   const [copied, setCopied] = useState(false);
+  /** The highlighted problem (MFX-43.3), kept in sync between the editor and the problems list. */
+  const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
+  /** The last external reveal request seen, so a re-render never replays it. */
+  const [seenRevealNonce, setSeenRevealNonce] = useState<number | null>(null);
+
+  // An external reveal request (a Verify lens click): select the problem — the "adjust state
+  // during render" pattern. The editor-side line reveal is applied by {@link useProblemMarkers}.
+  if (reveal && reveal.nonce !== seenRevealNonce) {
+    setSeenRevealNonce(reveal.nonce);
+    setSelectedProblemId(reveal.problem.id);
+  }
 
   const badge = useMemo(
     () => buildArtifactBadge(validateEmittedArtifact(artifact), report),
@@ -59,6 +89,22 @@ export function ArtifactPreviewCard({
         sample: artifact.text,
       }),
     [artifact.filename, artifact.mediaType, artifact.text, targetKey],
+  );
+
+  const markers = useProblemMarkers({
+    problems,
+    text: artifact.text,
+    selectedProblemId,
+    onMarkerSelect: (problem) => setSelectedProblemId(problem.id),
+    reveal,
+  });
+
+  const openProblem = useCallback(
+    (problem: LocatedProblem) => {
+      setSelectedProblemId(problem.id);
+      markers.reveal(problem);
+    },
+    [markers],
   );
 
   useEffect(() => {
@@ -121,9 +167,16 @@ export function ArtifactPreviewCard({
         value={artifact.text}
         language={language}
         overlay={copyButton}
+        onMount={markers.onEditorMount}
         className="mt-2 min-h-0 flex-1 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e]"
         editorTestId="export-artifact-editor"
         fallbackTestId="export-artifact-content"
+      />
+      <ProblemsPanel
+        problems={problems}
+        selectedId={selectedProblemId}
+        onSelect={openProblem}
+        className="mt-2"
       />
 
       <p className="mt-2 shrink-0 text-xs text-gray-500 dark:text-gray-400">{badge.hint}</p>

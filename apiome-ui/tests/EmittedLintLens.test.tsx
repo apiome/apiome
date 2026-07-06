@@ -8,13 +8,16 @@
  *  4. A clean (applicable, zero-finding) report renders a positive confirmation.
  *  5. The lens distinguishes emitted-artifact lint from the source's catalog lint, linking the
  *     source's report when one is supplied.
+ *  6. A finding whose located problem is openable is a clickable row (MFX-43.3); findings without
+ *     one (no location, or no artifact yet) stay plain.
  */
 
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { EmittedLintLens } from '../src/app/components/ade/dashboard/export/EmittedLintLens';
+import { collectLocatedProblems } from '../src/app/components/ade/dashboard/export/exportProblemMarkers';
 import type {
   EmittedArtifactLintReport,
   EmittedLintFinding,
@@ -145,5 +148,38 @@ describe('EmittedLintLens — distinguishes emitted lint from the source catalog
     const link = screen.getByTestId('verify-lint-source-link');
     expect(link).toHaveAttribute('href', '/ade/dashboard/catalog/item-7');
     expect(link).toHaveTextContent(/Pet Store/);
+  });
+});
+
+describe('EmittedLintLens — located findings click through to the editor (MFX-43.3)', () => {
+  const findings: EmittedLintFinding[] = [
+    { severity: 'warning', rule: 'oas3-schema', message: 'Missing example.', file: 'openapi.yaml', line: 20, column: 5 },
+    { severity: 'error', rule: 'no-eval-in-markdown', message: 'No location.', path: '#/info/description' },
+  ];
+
+  it('renders an openable finding as a button that reports its problem', () => {
+    const problems = collectLocatedProblems([], findings);
+    const onOpenProblem = jest.fn();
+    render(
+      <EmittedLintLens
+        targetLabel="OpenAPI 3.1"
+        lint={report(findings)}
+        openableProblems={problems}
+        onOpenProblem={onOpenProblem}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('verify-open-lint-0'));
+    expect(onOpenProblem).toHaveBeenCalledWith(expect.objectContaining({ id: 'lint-0' }));
+
+    // The location-less finding still renders, but plainly — no click affordance.
+    const errorGroup = screen.getByTestId('verify-lint-group-error');
+    expect(errorGroup).toHaveTextContent('No location.');
+    expect(within(errorGroup).queryAllByRole('button')).toHaveLength(0);
+  });
+
+  it('renders every finding plainly when nothing is openable (no artifact generated yet)', () => {
+    render(<EmittedLintLens targetLabel="OpenAPI 3.1" lint={report(findings)} openableProblems={[]} onOpenProblem={jest.fn()} />);
+    expect(within(screen.getByTestId('verify-lint-findings')).queryAllByRole('button')).toHaveLength(0);
   });
 });

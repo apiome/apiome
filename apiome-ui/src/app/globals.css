@@ -404,3 +404,33 @@ button {
   }
 }
 
+
+/* Export Studio Verify problem markers (MFX-43.3, #4363): the gutter bar Monaco paints in the
+   line-decorations margin for each line carrying a located finding, and the whole-line highlight
+   for the currently selected problem. Severity tints mirror the Verify palette (rose = error,
+   amber = warning, sky = info). */
+.verify-problem-gutter {
+  width: 4px !important;
+  margin-left: 2px;
+  border-radius: 2px;
+}
+
+.verify-problem-gutter--error {
+  background: rgb(225 29 72 / 0.85); /* rose-600 */
+}
+
+.verify-problem-gutter--warning {
+  background: rgb(217 119 6 / 0.85); /* amber-600 */
+}
+
+.verify-problem-gutter--info {
+  background: rgb(2 132 199 / 0.85); /* sky-600 */
+}
+
+.verify-problem-line--selected {
+  background: rgb(99 102 241 / 0.14); /* indigo-500 */
+}
+
+.dark .verify-problem-line--selected {
+  background: rgb(129 140 248 / 0.18); /* indigo-400 */
+}
