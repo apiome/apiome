@@ -122,8 +122,7 @@ import {
   type CatalogGroupMode,
 } from '@/app/utils/catalog-view-preferences';
 import { groupCatalogItemsByParadigm } from '@/app/utils/catalog-paradigm-grouping';
-import ExportDialog, { type ExportedArtifactSummary } from '../../../components/ade/dashboard/export/ExportDialog';
-import { recordRecentExport } from '../../../components/ade/dashboard/export/recentExports';
+import { exportStudioHref } from '../../../components/ade/dashboard/export/exportStudioLink';
 import { cn } from '../../../../../lib/utils';
 
 /**
@@ -501,8 +500,6 @@ const Catalog = () => {
   // Server-backed lint-report dialog (the lint orb / Lint action open it, MFI-23.10).
   const [lintDialogItem, setLintDialogItem] = useState<CatalogItem | null>(null);
   const [convertDialogItem, setConvertDialogItem] = useState<CatalogItem | null>(null);
-  /** The item the ExportDialog is open for (MFX-41.2, #4349) — export never leaves the catalog. */
-  const [exportDialogItem, setExportDialogItem] = useState<CatalogItem | null>(null);
   // Import flow (MFI-23.12): the catalog owns the alternative (non-OpenAPI) format intake. An import
   // that produces a non-publishable item lands right back in this list, so we just reload on success.
   const [showImportDialog, setShowImportDialog] = useState(false);
@@ -708,13 +705,24 @@ const Catalog = () => {
   }, []);
 
   /**
-   * "Export to another format…" (MFX-41.2, #4349) — opens the ExportDialog scoped to the item's
+   * "Export to another format…" (MFX-41.2, #4349) — opens the Export Studio scoped to the item's
    * latest revision (a catalog item's id is a project id, and the export pipeline is
-   * artifact-scoped). Unlike Convert this emits a document and never mutates the catalog item.
+   * artifact-scoped). Carries the launch origin (so the Studio returns to Catalog) and the source
+   * format. Unlike Convert this emits a document and never mutates the catalog item.
    */
-  const handleExport = useCallback((item: CatalogItem) => {
-    setExportDialogItem(item);
-  }, []);
+  const handleExport = useCallback(
+    (item: CatalogItem) => {
+      router.push(
+        exportStudioHref({
+          artifact: item.id,
+          label: item.name,
+          origin: 'catalog',
+          sourceFormat: item.sourceFormat ?? null,
+        }),
+      );
+    },
+    [router],
+  );
 
   /** After a successful conversion, refresh the catalog list so the new project is reflected. */
   const handleConverted = useCallback(() => {
@@ -1381,24 +1389,6 @@ const Catalog = () => {
         }}
         onConverted={handleConverted}
       />
-
-      {/* Catalog-item export (MFX-41.2, #4349): the same version-scoped ExportDialog the versions
-          page uses, aimed at the item's latest revision. Emits a document in the chosen target
-          format with the full fidelity flow — the item itself never becomes a project. */}
-      {exportDialogItem && (
-        <ExportDialog
-          open
-          onClose={() => setExportDialogItem(null)}
-          artifact={exportDialogItem.id}
-          artifactLabel={exportDialogItem.name}
-          sourceFormat={exportDialogItem.sourceFormat ?? null}
-          studioOrigin="catalog"
-          onExported={(summary: ExportedArtifactSummary) => {
-            // Recorded under the item's "latest" bucket (no explicit version selector here).
-            recordRecentExport(exportDialogItem.id, null, summary);
-          }}
-        />
-      )}
 
       {/* Catalog importer (MFI-23.7): store-raw intake — the source is kept in its original format
           and converted only when the user is ready, not at import time. */}

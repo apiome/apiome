@@ -92,14 +92,15 @@ describe('Catalog list export entry (MFX-41.2, #4349)', () => {
     expect(catalogSrc).toContain('CATALOG_EXPORT_VS_CONVERT_COPY');
   });
 
-  it('mounts the shared ExportDialog aimed at the item (a catalog id is a project id)', () => {
-    expect(catalogSrc).toMatch(/import ExportDialog, \{ type ExportedArtifactSummary \}/);
-    expect(catalogSrc).toContain('artifact={exportDialogItem.id}');
-    expect(catalogSrc).toContain('artifactLabel={exportDialogItem.name}');
+  it('routes to the version-scoped Export Studio aimed at the item (a catalog id is a project id)', () => {
+    expect(catalogSrc).toMatch(/import \{ exportStudioHref \} from '.*export\/exportStudioLink'/);
+    expect(catalogSrc).toContain('exportStudioHref({');
+    expect(catalogSrc).toContain('artifact: item.id,');
+    expect(catalogSrc).toContain("origin: 'catalog',");
   });
 
-  it('records the export in the browser-local recent-exports store (MFX-6.5)', () => {
-    expect(catalogSrc).toContain('recordRecentExport(exportDialogItem.id, null, summary)');
+  it('carries the source format so the Studio hides the redundant same-format target', () => {
+    expect(catalogSrc).toContain('sourceFormat: item.sourceFormat ?? null,');
   });
 
   it('leaves Convert untouched (Export must not replace it)', () => {
@@ -115,8 +116,10 @@ describe('Catalog detail export CTA (MFX-41.2, #4349)', () => {
     expect(detailSrc).toContain('CATALOG_EXPORT_VS_CONVERT_COPY');
   });
 
-  it('mounts the shared ExportDialog and records the export', () => {
-    expect(detailSrc).toContain('artifact={item.id}');
-    expect(detailSrc).toContain('recordRecentExport(item.id, null, summary)');
+  it('routes to the Export Studio scoped to the item, carrying origin + source format', () => {
+    expect(detailSrc).toMatch(/import \{ exportStudioHref \} from '.*export\/exportStudioLink'/);
+    expect(detailSrc).toContain('artifact: item.id,');
+    expect(detailSrc).toContain("origin: 'catalog',");
+    expect(detailSrc).toContain('sourceFormat: item.sourceFormat ?? null,');
   });
 });

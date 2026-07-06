@@ -26,6 +26,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   ArrowLeftRight,
@@ -63,10 +64,7 @@ import {
   isConvertedLinkLive,
   type CatalogConversion,
 } from '@/app/utils/catalog-conversion';
-import ExportDialog, {
-  type ExportedArtifactSummary,
-} from '@/app/components/ade/dashboard/export/ExportDialog';
-import { recordRecentExport } from '@/app/components/ade/dashboard/export/recentExports';
+import { exportStudioHref } from '@/app/components/ade/dashboard/export/exportStudioLink';
 import {
   dashboardMainClass,
   dashboardContentStackClass,
@@ -243,6 +241,7 @@ function TabPanel({
 }
 
 export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
+  const router = useRouter();
   const [item, setItem] = useState<CatalogItemDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -251,8 +250,6 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
   const [lintOpen, setLintOpen] = useState(false);
   // The convert-to-OpenAPI fidelity preview (MFI-22.4/23.11).
   const [convertOpen, setConvertOpen] = useState(false);
-  // The export dialog (MFX-41.2, #4349): emit the item in another format; never mints a Project.
-  const [exportOpen, setExportOpen] = useState(false);
   // The active detail pane (MFI-25.1). Tab switches never change the route.
   const [activeTab, setActiveTab] = useState<DetailTabId>('overview');
   // A lint finding deep-link (MFI-28.2) wants to scroll to this Overview entity once the tab mounts.
@@ -319,6 +316,25 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
   const handleConverted = useCallback(() => {
     void load();
   }, [load]);
+
+  /**
+   * Open the Export Studio (MFX-41.2, #4349) scoped to this catalog item's latest revision — the
+   * power path where the item is emitted in another format with the full verify-then-generate
+   * flow. Carries the launch origin (so the Studio's back link returns to Catalog) and the source
+   * format (so the redundant same-format target is hidden). Unlike Convert, this never mints a
+   * Project or mutates the item.
+   */
+  const handleExport = useCallback(() => {
+    if (!item) return;
+    router.push(
+      exportStudioHref({
+        artifact: item.id,
+        label: item.name,
+        origin: 'catalog',
+        sourceFormat: item.sourceFormat ?? null,
+      }),
+    );
+  }, [item, router]);
 
   // The orbs reuse the project quality-history machinery (a catalog item's id is a project id),
   // falling back to the server-captured score/grade when there is no browser-local history.
@@ -510,7 +526,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
                 <button
                   type="button"
                   data-testid="catalog-detail-export"
-                  onClick={() => setExportOpen(true)}
+                  onClick={handleExport}
                   title={CATALOG_EXPORT_VS_CONVERT_COPY}
                   className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                 >
@@ -716,24 +732,6 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
         onOpenChange={setConvertOpen}
         onConverted={handleConverted}
       />
-
-      {/* Catalog-item export (MFX-41.2, #4349): the version-scoped ExportDialog aimed at the
-          item's latest revision. Emits a document with the full fidelity flow; unlike Convert
-          it never mints a Project or mutates the item. */}
-      {exportOpen ? (
-        <ExportDialog
-          open
-          onClose={() => setExportOpen(false)}
-          artifact={item.id}
-          artifactLabel={item.name}
-          sourceFormat={item.sourceFormat ?? null}
-          studioOrigin="catalog"
-          onExported={(summary: ExportedArtifactSummary) => {
-            // Recorded under the item's "latest" bucket (no explicit version selector here).
-            recordRecentExport(item.id, null, summary);
-          }}
-        />
-      ) : null}
     </main>
   );
 }

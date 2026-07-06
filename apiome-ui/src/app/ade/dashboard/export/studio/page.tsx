@@ -8,6 +8,8 @@ import { PanelsTopLeft } from 'lucide-react';
 import { LoadingState } from '../../../../components/ui/LoadingState';
 import { Button } from '../../../../components/ui/Button';
 import { ExportStudio } from '../../../../components/ade/dashboard/export/ExportStudio';
+import type { ExportedArtifactSummary } from '../../../../components/ade/dashboard/export/ExportDialog';
+import { recordRecentExport } from '../../../../components/ade/dashboard/export/recentExports';
 
 /**
  * Export Studio route — `…/ade/dashboard/export/studio` (MFX-41.1, #4348).
@@ -76,6 +78,11 @@ function ExportStudioRouteContent() {
       initialTarget={target}
       origin={origin}
       sourceFormat={sourceFormat}
+      // Record every Studio generate in the MFX-6.5 recent-exports store, keyed by the scoped
+      // source — so a catalog item's exports (MFX-41.2) are tracked just as the dialog tracked them.
+      onGenerated={(summary: ExportedArtifactSummary) =>
+        recordRecentExport(artifact, version || null, summary)
+      }
     />
   );
 }

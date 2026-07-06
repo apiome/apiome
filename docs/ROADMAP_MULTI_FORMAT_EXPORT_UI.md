@@ -262,7 +262,6 @@ item, project version) open pre-scoped, matching apiome-ui's design system. The 
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 41.2 #4349 | Catalog-item export entry | Export CTA + tab on catalog detail; paradigm-aware pre-scoping (the non-OpenAPI case) | export,ui,typescript,mvp | N | Y | M | apiome-ui |
 | 41.3 #4350 | Version entry + recent-exports wiring | version view Export→Studio; pre-summary + recent list link into Studio state | export,ui,typescript,mvp | Y | Y | S | apiome-ui |
 | 41.4 #4351 | Deep links & resumable Studio state | URL-encoded source/target/options; shareable, reload-safe | export,ui,typescript | Y | N | S | apiome-ui |
 | 41.5 #4352 | Mockup extension + design/a11y parity | extend `mockups/multi-format-export` with Studio screens; token/a11y audit | export,ui,design-system | Y | N | M | apiome-ui,docs |
@@ -304,14 +303,20 @@ item, project version) open pre-scoped, matching apiome-ui's design system. The 
 - **Technical Stack.** Next.js App Router, Radix, TanStack Query.
 
 ### MFX-41.2 — Catalog-item export entry (the non-OpenAPI case) · #4349
-- **Status (partial, quick path).** The entry points shipped ahead of the Studio (#4587's PR):
-  the catalog list row menu carries **"Export to another format…"** and the detail idhead an
-  **Export** CTA beside Convert, both opening the version-scoped `ExportDialog` (MFX-6.1) aimed
-  at the item's latest revision, with the Convert/Export distinction stated in the UI copy
-  (`CATALOG_EXPORT_VS_CONVERT_COPY`) and exports recorded in the MFX-6.5 recent-exports store.
-  Confirmed the REST export dispatch is artifact-scoped (no project gate) — no rest fix needed.
-  Remaining for this issue: swapping the dialog handoff for the **Export Studio** escalation once
-  MFX-41.1 lands.
+- **Status (done).** The entry points first shipped ahead of the Studio (#4587's PR) as the
+  quick `ExportDialog` path; now that MFX-41.1 has landed, both the catalog list row action
+  (**"Export to another format…"**) and the detail idhead **Export** CTA (beside Convert) route
+  to the version-scoped **Export Studio** (`exportStudioHref`), pre-scoped to the item and
+  carrying the launch **origin** (back-link → Catalog) and **source format** (the redundant
+  same-format target is hidden, the original source offered unchanged). The Studio's **Source**
+  step now renders catalog-item context for a catalog launch — the `FormatPill`/`ProtocolPill`
+  and the normalized service/operation/type/channel counts (`useCatalogSourceContext`) — and
+  restates that exporting produces an artifact and never turns the item into a project. The
+  Convert/Export distinction remains in the shared UI copy (`CATALOG_EXPORT_VS_CONVERT_COPY`),
+  Convert is untouched, and the Studio records each generate in the MFX-6.5 recent-exports store.
+  The REST export dispatch is artifact-scoped (no project gate) — no rest fix needed. Covered by
+  `ExportStudio.test.tsx` (catalog context), `useCatalogSourceContext.test.tsx`,
+  `catalog-item-detail.test.tsx`, and `catalog-projects-boundary.test.ts`.
 - **Problem.** The request's core: *"allows for imported APIs to be exported … even if it's not an
   OpenAPI project already."* Catalog items (gRPC/GraphQL/AsyncAPI/… — non-publishable, MFI-EPIC-23)
   have Convert-to-OpenAPI as their only exit; there is no Export action anywhere on the catalog

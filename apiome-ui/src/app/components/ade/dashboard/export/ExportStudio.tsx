@@ -23,6 +23,9 @@ import {
 } from '../dashboardScreenClasses';
 import { useExportTargets } from './useExportTargets';
 import { useExportPreview } from './useExportPreview';
+import { useCatalogSourceContext } from './useCatalogSourceContext';
+import { FormatPill } from '../../../ui/catalog/FormatPill';
+import { ProtocolPill } from '../../../ui/catalog/ProtocolPill';
 import { ExportTargetGrid } from './ExportTargetGrid';
 import { ExportOptionsForm } from './ExportOptionsForm';
 import { FidelityWarningPanel } from './FidelityWarningPanel';
@@ -150,6 +153,14 @@ export function ExportStudio({
     version,
     selectedKey,
   );
+
+  // Catalog-launched exports (MFX-41.2) show the item's provenance on the Source step so a
+  // non-OpenAPI import is recognizable before a target is chosen. The context is advisory: it
+  // never gates the export, so a failed fetch simply hides the extra pills.
+  const isCatalogSource = origin === 'catalog';
+  const { context: catalogContext } = useCatalogSourceContext(isCatalogSource, artifact);
+  // Prefer the URL-carried format (instant, no round-trip) and fall back to the fetched context.
+  const catalogFormat = sourceFormat ?? catalogContext?.sourceFormat ?? null;
 
   const sourceLabel = artifactLabel || artifact;
   const versionLabel = response?.version_label || version || 'latest';
@@ -348,7 +359,7 @@ export function ExportStudio({
                   Measuring export fidelity for this source…
                 </div>
               ) : (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {sourceLabel}
                   </div>
@@ -356,11 +367,26 @@ export function ExportStudio({
                     Version {versionLabel}
                     {response ? ` · ${cards.length} export targets available` : ''}
                   </div>
+                  {/* Catalog-item context (MFX-41.2, #4349): format + paradigm pills and the
+                      normalized counts — the same provenance the catalog detail idhead shows —
+                      so the "not an OpenAPI project" source is recognizable here. */}
+                  {isCatalogSource && (catalogFormat || catalogContext) && (
+                    <div className="space-y-2" data-testid="export-studio-catalog-context">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <FormatPill format={catalogFormat} />
+                        <ProtocolPill protocol={catalogContext?.protocol} />
+                      </div>
+                      {catalogContext && <CatalogSummaryCounts summary={catalogContext.summary} />}
+                    </div>
+                  )}
                 </div>
               )}
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Export is scoped to this version: the fidelity badge on every target card is
                 computed for this source, not a generic estimate.
+                {isCatalogSource
+                  ? ' Exporting a catalog item produces an artifact — it never turns the item into a project.'
+                  : ''}
               </p>
             </div>
           )}
@@ -549,6 +575,39 @@ export function ExportStudio({
         </div>
       </div>
     </main>
+  );
+}
+
+/**
+ * The normalized-content counts for a catalog source, shown on the Studio Source step (MFX-41.2).
+ * Only the counts the import captured (non-null) are shown; a source with none renders nothing.
+ */
+function CatalogSummaryCounts({
+  summary,
+}: {
+  summary: { services: number | null; operations: number | null; types: number | null; channels: number | null };
+}) {
+  const entries: { label: string; value: number }[] = [
+    { label: 'Services', value: summary.services ?? -1 },
+    { label: 'Operations', value: summary.operations ?? -1 },
+    { label: 'Types', value: summary.types ?? -1 },
+    { label: 'Channels', value: summary.channels ?? -1 },
+  ].filter((entry) => entry.value >= 0);
+  if (entries.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5" data-testid="export-studio-catalog-counts">
+      {entries.map((entry) => (
+        <span
+          key={entry.label}
+          className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-700/60 dark:text-gray-300"
+        >
+          <span className="font-mono font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+            {entry.value}
+          </span>
+          {entry.label}
+        </span>
+      ))}
+    </div>
   );
 }
 
