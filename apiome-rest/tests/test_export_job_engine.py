@@ -4,8 +4,8 @@ Pins the engine seams and the pipeline outcomes independently of the REST layer:
 
 * the packaging seam (:func:`app.export_job_engine.build_result_manifest`) reduces an
   :class:`~app.emitter.EmitResult` to path/media-type/size metadata (never content);
-* the validation seam (:func:`app.export_job_engine.validate_emitted_result`) honestly
-  reports *deferred* (not passed) until MFX-5.x lands;
+* the validation event builder (:func:`app.export_job_engine.build_validation_events`)
+  renders a passing / skipped / not-applicable emitted-artifact validation (MFX-5.1);
 * a scheduled job runs load → fidelity → emit → validate → package to ``completed``,
   with sequenced phase events and the raw emit result retained for delivery (MFX-4.x);
 * ``dry_run`` completes with the fidelity report and **no artifact** (the emitter is
@@ -48,14 +48,15 @@ from app.export_job_engine import (
     build_bundle_manifest,
     build_export_zip,
     build_result_manifest,
+    build_validation_events,
     cancel_export_job,
     get_export_job_emit_result,
     get_export_job_status,
     list_export_jobs,
     schedule_export_job,
-    validate_emitted_result,
 )
 from app.export_source import ExportSource, ExportSourceError
+from app.export_validation import EmittedArtifactValidation
 
 TENANT_SLUG = "acme"
 TENANT_ID = "550e8400-e29b-41d4-a716-446655440000"
@@ -90,6 +91,19 @@ def _source() -> ExportSource:
         artifact_id="artifact-1",
         version_record_id="rev-uuid-1",
         version_label="1.0.0",
+    )
+
+
+async def _passing_validation(*args, **kwargs) -> EmittedArtifactValidation:
+    """Stub emitted-artifact validation (MFX-5.1) as passing.
+
+    The download/packaging tests below mock ``emit_canonical`` with hand-crafted content that
+    is deliberately *not* a valid artifact for the ``openapi`` target (proto text, a minimal
+    stub document) to isolate delivery mechanics; patching the validation step keeps those
+    tests about the download path rather than the emitter's correctness.
+    """
+    return EmittedArtifactValidation(
+        target="openapi-3.1", applicable=True, validated=True, valid=True
     )
 
 
@@ -204,16 +218,48 @@ def test_build_bundle_manifest_disambiguates_a_colliding_manifest_name():
     assert [f["path"] for f in manifest["files"]] == ["manifest.json"]
 
 
-def test_validate_emitted_result_reports_deferred_not_passed():
-    """Until MFX-5.x, the validation seam must say 'deferred', never imply success."""
-    result = EmitResult(files=[EmittedFile(path="openapi.json", content={})])
-    events = validate_emitted_result(result, "openapi-3.1")
+def test_build_validation_events_reports_a_passing_validation():
+    """A validated, valid artifact yields a single ARTIFACT_VALIDATED info event."""
+    validation = EmittedArtifactValidation(
+        target="openapi-3.1", applicable=True, validated=True, valid=True
+    )
+    events = build_validation_events(validation)
     assert len(events) == 1
     level, code, message, context = events[0]
     assert level == "info"
-    assert code == "VALIDATION_DEFERRED"
-    assert "not implemented" in message
+    assert code == "ARTIFACT_VALIDATED"
+    assert "re-parsed cleanly" in message
     assert context == {"target": "openapi-3.1"}
+
+
+def test_build_validation_events_warns_when_validation_is_skipped():
+    """A matching parser whose toolchain is missing is a warn, not a silent pass."""
+    validation = EmittedArtifactValidation(
+        target="asyncapi-3",
+        applicable=True,
+        validated=False,
+        valid=True,
+        detail="The 'asyncapi-parser' toolchain is unavailable in this runtime; ...",
+    )
+    events = build_validation_events(validation)
+    level, code, message, _context = events[0]
+    assert level == "warn"
+    assert code == "VALIDATION_SKIPPED"
+    assert "unavailable" in message
+
+
+def test_build_validation_events_notes_a_not_applicable_target():
+    """A target with no importer (the sample no-op) is reported not-applicable, never failed."""
+    validation = EmittedArtifactValidation(
+        target="sample-noop",
+        applicable=False,
+        validated=False,
+        valid=True,
+        detail="No import parser matches the 'sample-noop' target; ...",
+    )
+    events = build_validation_events(validation)
+    _level, code, _message, _context = events[0]
+    assert code == "VALIDATION_NOT_APPLICABLE"
 
 
 # ---------------------------------------------------------------------------
@@ -256,7 +302,7 @@ async def test_job_runs_end_to_end_to_completed():
         "SOURCE_LOADED",
         "FIDELITY_COMPUTED",
         "EMITTED",
-        "VALIDATION_DEFERRED",
+        "ARTIFACT_VALIDATED",
         "EXPORT_COMPLETED",
     ]
     assert [e["id"] for e in status["events"]] == [f"export-{i}" for i in range(1, 7)]
@@ -335,6 +381,35 @@ async def test_unexpected_exception_fails_the_job():
     # MFX-3.4: an unclassified crash still yields a structured error.
     assert status["error"]["code"] == "EXPORT_EXCEPTION"
     assert "boom" in status["error"]["message"]
+
+
+async def test_invalid_emitted_artifact_fails_the_job():
+    """MFX-5.1: an emitter that produced an illegal artifact fails the job before delivery."""
+    # A 3.1 document missing the OAS-required ``info`` object: emit succeeds but the emitted
+    # artifact is not legal OpenAPI, so the validation stage must catch it and fail the job.
+    def _emit_broken(*args, **kwargs):
+        return EmitResult(
+            files=[EmittedFile(path="openapi.json", content={"openapi": "3.1.0", "paths": {}})],
+            media_type="application/json",
+        )
+
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()), patch(
+        "app.export_job_engine.emit_canonical", side_effect=_emit_broken
+    ):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        status = await _wait_terminal(accepted.job_id)
+
+    assert status["state"] == "failed"
+    assert status["result"] is None
+    # The failure is the validation gate, and it carries the parser detail (MFX-3.4).
+    assert status["error"]["code"] == "EMITTED_ARTIFACT_INVALID"
+    assert status["error"]["context"]["errors"]
+    codes = [e["code"] for e in status["events"]]
+    assert codes[-1] == "EMITTED_ARTIFACT_INVALID"
+    assert "EXPORT_COMPLETED" not in codes
+    # The invalid artifact never becomes downloadable.
+    assert get_export_job_emit_result(TENANT_SLUG, accepted.job_id) is None
 
 
 async def test_cancel_takes_effect_at_next_stage_boundary():
@@ -592,7 +667,7 @@ async def test_resolve_export_download_derives_basename_from_nested_path():
     request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
     with patch("app.export_job_engine.load_export_source", return_value=_source()), patch(
         "app.export_job_engine.emit_canonical", side_effect=_nested
-    ):
+    ), patch("app.export_job_engine.validate_emitted_artifact", _passing_validation):
         accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
         await _wait_terminal(accepted.job_id)
 
@@ -618,7 +693,7 @@ async def test_resolve_export_download_normalizes_windows_path_and_sanitizes_hea
     request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
     with patch("app.export_job_engine.load_export_source", return_value=_source()), patch(
         "app.export_job_engine.emit_canonical", side_effect=_unsafe
-    ):
+    ), patch("app.export_job_engine.validate_emitted_artifact", _passing_validation):
         accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
         await _wait_terminal(accepted.job_id)
 
@@ -683,7 +758,7 @@ async def test_resolve_export_download_serves_zip_bundle_for_multi_file_export()
     request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
     with patch("app.export_job_engine.load_export_source", return_value=_source()), patch(
         "app.export_job_engine.emit_canonical", side_effect=_multi
-    ):
+    ), patch("app.export_job_engine.validate_emitted_artifact", _passing_validation):
         accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
         status = await _wait_terminal(accepted.job_id)
 
@@ -742,7 +817,7 @@ async def test_resolve_export_download_serves_plain_text_target():
     request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
     with patch("app.export_job_engine.load_export_source", return_value=_source()), patch(
         "app.export_job_engine.emit_canonical", side_effect=_text
-    ):
+    ), patch("app.export_job_engine.validate_emitted_artifact", _passing_validation):
         accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
         await _wait_terminal(accepted.job_id)
 

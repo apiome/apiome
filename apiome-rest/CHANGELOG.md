@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.79.0] - 2026-07-05
+
+### Added
+- **Validate emitted artifact (#3852, MFX-5.1)** — the async export job now **re-validates the
+  emitted artifact through its matching MFI import parser** before delivery, so a buggy emitter
+  that produced output illegal in its own target format is caught rather than shipped. New
+  `app.export_validation.validate_emitted_artifact(target_format, emit_result, *, api)` dispatches
+  per emitter `format`, reusing (not rebuilding) the existing re-import paths — the OpenAPI /
+  GraphQL / AsyncAPI round-trip modules (`round_trip_openapi` / `round_trip_graphql` /
+  `round_trip_asyncapi`), `fastavro` for Avro, and `buf` for protobuf — and collapses each into a
+  uniform `EmittedArtifactValidation` (`applicable` / `validated` / `valid` / `errors` / `detail`).
+  The job's validation stage now **fails the job** with a structured `EMITTED_ARTIFACT_INVALID`
+  error (carrying the parser detail) when a validator ran and rejected the artifact, emits
+  `ARTIFACT_VALIDATED` on success, and honestly reports `VALIDATION_SKIPPED` (a `warn`) when a
+  toolchain-backed validator (`asyncapi-parser`, `buf`) is unavailable in the runtime — a
+  possibly-valid export is never failed for a check that could not run — or
+  `VALIDATION_NOT_APPLICABLE` for a target with no importer (the sample no-op). Replaces the
+  `validate_emitted_result` placeholder seam (which reported `VALIDATION_DEFERRED`) with
+  `build_validation_events`.
+
 ## [1.78.0] - 2026-07-05
 
 ### Added

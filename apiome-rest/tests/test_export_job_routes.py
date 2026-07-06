@@ -362,6 +362,7 @@ def test_download_serves_a_zip_bundle_for_a_multi_file_export():
     import zipfile
 
     from app.emitter import EmitResult, EmittedFile
+    from app.export_validation import EmittedArtifactValidation
 
     def _multi(*args, **kwargs):
         return EmitResult(
@@ -374,9 +375,16 @@ def test_download_serves_a_zip_bundle_for_a_multi_file_export():
             media_type="text/plain",
         )
 
+    # The crafted proto files are not a valid ``openapi`` artifact; this test isolates the
+    # multi-file zip delivery path, so stub the MFX-5.1 validation as passing.
+    async def _passing_validation(*args, **kwargs):
+        return EmittedArtifactValidation(
+            target="openapi-3.1", applicable=True, validated=True, valid=True
+        )
+
     with patch("app.export_job_engine.load_export_source", return_value=_source()), patch(
         "app.export_job_engine.emit_canonical", side_effect=_multi
-    ):
+    ), patch("app.export_job_engine.validate_emitted_artifact", _passing_validation):
         r = client.post(
             "/v1/export/acme/jobs", json={"artifact": "artifact-1", "target": "openapi"}
         )
