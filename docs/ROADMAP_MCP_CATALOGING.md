@@ -1277,12 +1277,11 @@ here is user-visible on its own — it exists so 15–18 never re-derive metrics
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
-| 14.1 | Capability-surface metrics service | Pure functions computing per-version surface metrics (counts, schema complexity, param stats, doc/schema/annotation coverage) from `mcp_capability_items` | `mcp-insights` `backend` | N | Y | ●● | apiome-rest |
 | 14.2 | Insight aggregation REST endpoints | `/mcp/endpoints/{id}/insight/*` read APIs (surface summary, evolution series, reliability series) + catalog aggregates | `mcp-insights` `backend` | N | Y | ●● | apiome-rest, apiome-db |
 | 14.3 | Token-driven SVG chart kit | Small React chart primitives (sparkline, bar, donut, stacked-timeline, radar, heatmap, gauge) using design-system tokens + dark theme; no heavy dep | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
 | 14.4 | "Insight" detail tab + page scaffold | New tab in the ADE endpoint-detail shell (`DetailTabs`) that lays out the viz panels 15–17 fill | `mcp-insights` `frontend` | N | Y | ● | apiome-ui |
 
-### MCAT-14.1 — Capability-surface metrics service  ·  **#4627**
+### MCAT-14.1 — Capability-surface metrics service  ·  **#4627**  ·  ✅ Done (apiome-rest 1.82.0)
 - **Problem.** Every visualization needs the same derived numbers (how many tools, how complex,
   how well documented, how safe). Computing them ad-hoc in each panel would duplicate logic and
   drift. There is no metrics layer over `mcp_capability_items` today.
