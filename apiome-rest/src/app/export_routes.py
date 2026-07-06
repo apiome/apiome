@@ -39,6 +39,7 @@ and load the source model version-scoped through :func:`app.export_source.load_e
 from __future__ import annotations
 
 import json
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import yaml
@@ -52,15 +53,18 @@ from .emitter import (
     describe_emit_targets,
     get_emitter,
 )
-from .export_dispatch import dispatch_export
+from .export_dispatch import dispatch_export, dispatch_from_source
 from .export_fidelity import (
     ExportFidelity,
+    ExportFidelityTier,
     TargetFidelity,
     build_export_fidelity,
     build_target_fidelity,
 )
 from .export_service import ExportError, ExportPersistenceContext, emit_canonical, resolve_emitter
 from .export_source import ExportSourceError, load_export_source
+from .export_validation import validate_emitted_artifact
+from .export_validation_gate import EmittedValidationReport, build_validation_report
 from .lossiness import LossinessSeverity
 from .transcoding_guards import TranscodeGuard, TranscodeGuardError, classify_transcode
 
@@ -261,6 +265,132 @@ class ExportDispatchResponse(BaseModel):
     media_type: Optional[str] = Field(
         default=None,
         description="The bundle's primary media type; null for a dry-run.",
+    )
+
+
+class ExportVerifyVerdict(str, Enum):
+    """The overall go/no-go verdict for a one-call verify (MFX-42.1/42.5).
+
+    The single band the Verify workbench's banner and Generate gate read, derived from the
+    validation gate (MFX-5.3) and the fidelity tier (MFX-2.5) per the MFX-3.3 severity classes:
+
+    * ``clean`` — a lossless conversion whose emitted artifact validated (or had nothing to
+      validate); the green path.
+    * ``lossy`` — a valid artifact, but the conversion is not lossless; the user may proceed only
+      after acknowledging the loss.
+    * ``invalid`` — a validator ran and rejected the emitted artifact; the export is blocked and no
+      acknowledgement can override it.
+    """
+
+    CLEAN = "clean"
+    LOSSY = "lossy"
+    INVALID = "invalid"
+
+
+class EmittedArtifactLint(BaseModel):
+    """The emitted-artifact lint report slot for one verify (MFX-5.2 → MFX-42.3).
+
+    The lint pass over the emitted artifact is **MFX-5.2**, which is not yet implemented; until it
+    lands, :func:`verify_export` returns ``lint: null`` and the Verify workbench renders the lint
+    lens's "no lint pack ran" empty state. This model documents the shape MFX-5.2 will populate so
+    the response contract is stable for the UI (`EmittedArtifactLintReport`).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    applicable: bool = Field(
+        description="Whether a lint pack is registered for this target's format.",
+    )
+    pack: Optional[str] = Field(
+        default=None, description="The lint pack that ran (e.g. ``spectral:oas``), when applicable."
+    )
+    score: Optional[int] = Field(
+        default=None, description="The 0–100 quality score, when the pack computes one."
+    )
+    grade: Optional[str] = Field(
+        default=None, description="The A–F letter grade, when the pack computes one."
+    )
+    findings: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="The itemized lint findings (severity, rule, message, location).",
+    )
+
+
+class ExportVerifyRequest(BaseModel):
+    """A one-call verify request: source revision + chosen target + options (MFX-42.5)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    artifact: str = Field(description="The artifact (project) id to export.")
+    version: Optional[str] = Field(
+        default=None,
+        description="Revision UUID, version label (``1.0.0``), or null for the latest revision.",
+    )
+    target: str = Field(
+        description="Target emitter key (``openapi``) or format key (``openapi-3.1``).",
+    )
+    options: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Per-target emit options (MFX-1.4); null or empty applies the target defaults.",
+    )
+    include_content: bool = Field(
+        default=True,
+        description="When true, return the emitted artifact inline (under the size cap) so the "
+        "Monaco viewer (MFX-43.x) can render the preview from this same call; the bytes are "
+        "still discarded server-side.",
+    )
+    min_severity: LossinessSeverity = Field(
+        default=LossinessSeverity.INFO,
+        description="Lowest loss severity that raises the advisory (MFX-2.4); does not affect "
+        "the report or counts.",
+    )
+
+
+class ExportVerifyResponse(BaseModel):
+    """The one-call verify result: fidelity + validation + lint + verdict (MFX-42.5).
+
+    Everything the Studio's Verify workbench (MFX-42.1) needs in one round-trip, computed by
+    emitting the artifact to a **temporary buffer** — no artifact and no job row are persisted.
+    The emit is read-only (no field-identity persistence), so a verify never mutates tenant state.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    artifact: str = Field(description="The artifact (project) id the verify was computed for.")
+    version: Optional[str] = Field(
+        default=None, description="The version selector as requested (label, UUID, or null)."
+    )
+    version_record_id: str = Field(description="The resolved revision (``versions.id``).")
+    version_label: Optional[str] = Field(
+        default=None, description="The resolved revision's version label (e.g. ``1.0.0``)."
+    )
+    target: str = Field(description="The resolved target format key (e.g. ``openapi-3.1``).")
+    fidelity: ExportFidelity = Field(
+        description="The full fidelity envelope (target + tier + per-construct report + advisory).",
+    )
+    guard: TranscodeGuard = Field(
+        description="The pre-flight transcoding guard (MFX-3.3): the conversion band and why.",
+    )
+    validation: EmittedValidationReport = Field(
+        description="The emitted-output validation gate + structured report (MFX-5.1/5.3).",
+    )
+    lint: Optional[EmittedArtifactLint] = Field(
+        default=None,
+        description="The emitted-artifact lint report (MFX-5.2); null until MFX-5.2 lands, which "
+        "the Verify workbench renders as the lint lens's empty state.",
+    )
+    verdict: ExportVerifyVerdict = Field(
+        description="The overall go/no-go band the Generate gate reads (clean / lossy / invalid).",
+    )
+    files: List[ExportDispatchFile] = Field(
+        default_factory=list,
+        description="The emitted artifact inline (under the size cap); empty when the caller "
+        "opted out (``include_content: false``) or the artifact exceeded the cap (`truncated`).",
+    )
+    truncated: bool = Field(
+        default=False,
+        description="True when the emitted artifact exceeded the inline size cap and was omitted "
+        "from ``files``; the Monaco viewer should fetch it via the job/document surface instead.",
     )
 
 
@@ -645,4 +775,160 @@ async def dispatch_export_document(
         guard=dispatch.guard,
         files=files,
         media_type=media_type,
+    )
+
+
+# The inline-content budget for a verify response: emitted artifacts up to this serialized size
+# ride back inline (so the Monaco viewer, MFX-43.x, renders from the same call); larger ones set
+# ``truncated`` and are omitted, to be fetched via the job/document surface instead.
+_VERIFY_INLINE_CONTENT_CAP = 256 * 1024
+
+
+def _verify_verdict(
+    validation: EmittedValidationReport, tier: ExportFidelityTier
+) -> ExportVerifyVerdict:
+    """Derive the overall verify verdict from the validation gate and the fidelity tier.
+
+    Mirrors the client's ``deriveVerifyVerdict`` (MFX-42.1) so the server-authored verdict and the
+    UI's fallback derivation always agree: an ``invalid`` validation blocks unconditionally; a
+    non-lossless (loss-bearing) tier is ``lossy``; everything else is ``clean``. A ``skipped``
+    validation (toolchain unavailable) warns but never demotes a clean band.
+
+    Args:
+        validation: The MFX-5.3 validation gate for the emitted artifact.
+        tier: The conversion's fidelity tier (MFX-2.5).
+
+    Returns:
+        The go/no-go band the Generate gate reads.
+    """
+    if validation.blocks_delivery:
+        return ExportVerifyVerdict.INVALID
+    if tier is not ExportFidelityTier.LOSSLESS:
+        return ExportVerifyVerdict.LOSSY
+    return ExportVerifyVerdict.CLEAN
+
+
+def _inline_verify_files(
+    emit: Optional[Any], *, include_content: bool
+) -> tuple[List[ExportDispatchFile], bool]:
+    """Build the inline emitted-file list for a verify response, honouring the size cap.
+
+    Returns the emitted files inline when the caller opted in and the serialized bundle fits under
+    :data:`_VERIFY_INLINE_CONTENT_CAP`; otherwise returns an empty list and ``truncated=True`` so
+    the client fetches the artifact separately (MFX-43.x). The bytes are measured, never persisted.
+
+    Args:
+        emit: The emitter's output bundle (an :class:`~app.emitter.EmitResult`), or ``None``.
+        include_content: Whether the caller asked for the artifact inline.
+
+    Returns:
+        A ``(files, truncated)`` pair: the inline files (possibly empty) and whether the artifact
+        was omitted for exceeding the cap.
+    """
+    if emit is None or not include_content:
+        return [], False
+    total = 0
+    for f in emit.files:
+        content = f.content
+        total += len(content if isinstance(content, str) else json.dumps(content, ensure_ascii=False))
+    if total > _VERIFY_INLINE_CONTENT_CAP:
+        return [], True
+    files = [
+        ExportDispatchFile(path=f.path, content=f.content, media_type=f.media_type, subject=f.subject)
+        for f in emit.files
+    ]
+    return files, False
+
+
+@router.post(
+    "/{tenant_slug}/verify",
+    response_model=ExportVerifyResponse,
+    summary="One-call pre-generation verify: fidelity + validation + lint + verdict",
+    description=(
+        "The Verify workbench's dry run (MFX-42.5, backing MFX-42.1): emit the source "
+        "artifact/version to one ``target`` in a **temporary buffer**, then run fidelity "
+        "(MFX-2.5) + emitted-output validation (MFX-5.1/5.3) + emitted-artifact lint (MFX-5.2) "
+        "over it, and return all three lenses plus an overall go/no-go **verdict** — **without "
+        "persisting an artifact or a job row**. The emit is read-only (no field-identity "
+        "persistence), so a verify never mutates tenant state. The emitted artifact rides back "
+        "inline under a size cap (``include_content``) for the Monaco viewer (MFX-43.x). A severe "
+        "conversion (MFX-3.3) is **verified, not blocked** — its verdict reports the loss so the "
+        "user can decide. Rate-limited by the global per-tenant middleware (it does real emit "
+        "work). Lint (MFX-5.2) is not yet implemented, so ``lint`` is currently ``null``. "
+        "Typical p50 for the five MVP emitters (OpenAPI, AsyncAPI, GraphQL, gRPC/Protobuf, Avro) "
+        "is dominated by the single emit + re-parse and runs in the tens of milliseconds for "
+        "pure-Python validators; protobuf/AsyncAPI add their toolchain's startup when installed."
+    ),
+)
+async def verify_export(
+    tenant_slug: str,
+    request: ExportVerifyRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ExportVerifyResponse:
+    """Emit one (source, target) pair to a temporary buffer and return all three verify lenses.
+
+    Args:
+        tenant_slug: The tenant slug (scopes the artifact lookup).
+        request: Source coordinates + chosen target + per-emit options + inline-content flag.
+        auth_data: Authenticated tenant context (JWT or API key).
+
+    Returns:
+        The one-call verify result: the fidelity envelope, the emitted-output validation gate, the
+        (currently null) lint report, the overall verdict, and — under the cap — the artifact
+        inline. No artifact or job row is persisted.
+
+    Raises:
+        HTTPException: 404 when the artifact/version is unknown; 422 when the revision has no
+            reconstructable source or the emitter produced no document; 400 when the target or
+            source format is unsupported; 422 when the emit options are invalid for the target.
+    """
+    tenant_id = auth_data["tenant_id"]
+    try:
+        source = load_export_source(tenant_id, request.artifact, request.version)
+    except ExportSourceError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
+    try:
+        # confirm=True: a severe conversion is *verified* here (its verdict reports the loss), not
+        # blocked — blocking is the job/dispatch path's job, not the pre-generation preview's.
+        # persistence=None keeps the emit read-only: a verify never persists field identities.
+        dispatch = dispatch_from_source(
+            source,
+            request.target,
+            options=request.options,
+            min_severity=request.min_severity,
+            dry_run=False,
+            confirm=True,
+            persistence=None,
+        )
+    except ExportError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
+    # A real (non-dry-run) dispatch that returned without raising always carries an artifact.
+    if dispatch.emit is None:  # pragma: no cover - defensive; a real dispatch always emits
+        raise HTTPException(
+            status_code=422,
+            detail=f"Target {request.target!r} produced no document for this source.",
+        )
+
+    validation = await validate_emitted_artifact(dispatch.target, dispatch.emit, api=source.api)
+    validation_report = build_validation_report(validation)
+    verdict = _verify_verdict(validation_report, dispatch.fidelity.summary.tier)
+    files, truncated = _inline_verify_files(
+        dispatch.emit, include_content=request.include_content
+    )
+
+    return ExportVerifyResponse(
+        artifact=dispatch.artifact,
+        version=request.version,
+        version_record_id=dispatch.version_record_id,
+        version_label=dispatch.version_label,
+        target=dispatch.target,
+        fidelity=dispatch.fidelity,
+        guard=dispatch.guard,
+        validation=validation_report,
+        lint=None,
+        verdict=verdict,
+        files=files,
+        truncated=truncated,
     )

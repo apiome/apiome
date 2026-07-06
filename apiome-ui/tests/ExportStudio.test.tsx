@@ -200,7 +200,7 @@ function mockFetch(opts: { invalidVerify?: boolean } = {}): jest.Mock {
                   warns: false,
                   valid: false,
                   findings: [
-                    { message: 'Field number 0 is not allowed.', file: 'petstore.proto', line: 12, column: 3, rule: 'buf.field-number' },
+                    { message: 'Field number 0 is not allowed.', file: 'petstore.proto', line: 12, column: 3, keyword: 'buf.field-number' },
                   ],
                   detail: null,
                   headline: 'Invalid — export blocked',
