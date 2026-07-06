@@ -6,13 +6,16 @@
  *  2. A toolchain-missing verdict renders as a distinct warning (not silent success).
  *  3. A zero-error verdict renders a positive confirmation.
  *  4. A not-applicable format renders an explicit neutral state.
+ *  5. A finding whose located problem is openable is a clickable row (MFX-43.3); findings without
+ *     one (no location, or no artifact yet) stay plain.
  */
 
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { ValidationResultsLens } from '../src/app/components/ade/dashboard/export/ValidationResultsLens';
+import { collectLocatedProblems } from '../src/app/components/ade/dashboard/export/exportProblemMarkers';
 import type { EmittedValidationReport } from '../src/app/components/ade/dashboard/export/exportVerify';
 
 /** A validation report with the given verdict; override any field. */
@@ -122,6 +125,38 @@ describe('ValidationResultsLens — zero errors render a positive verdict (MFX-4
     expect(screen.getByTestId('verify-validation-clean')).toHaveTextContent(/no validation errors/i);
     expect(screen.getByTestId('verify-validation-tool')).toHaveTextContent('xmlschema');
     expect(screen.queryByTestId('verify-validation-findings')).not.toBeInTheDocument();
+  });
+});
+
+describe('ValidationResultsLens — located findings click through to the editor (MFX-43.3)', () => {
+  const findings = [
+    { message: 'Field number 0 is not allowed.', file: 'petstore.proto', line: 12, column: 3, keyword: 'buf.field-number' },
+    { message: 'No location for this one.', keyword: 'schema' },
+  ];
+
+  it('renders an openable finding as a button that reports its problem', () => {
+    const problems = collectLocatedProblems(findings, []);
+    const onOpenProblem = jest.fn();
+    render(
+      <ValidationResultsLens
+        validation={report('invalid', { findings })}
+        openableProblems={problems}
+        onOpenProblem={onOpenProblem}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('verify-open-validation-0'));
+    expect(onOpenProblem).toHaveBeenCalledWith(expect.objectContaining({ id: 'validation-0' }));
+
+    // The location-less finding still renders, but plainly — no click affordance at all.
+    const list = screen.getByTestId('verify-validation-findings');
+    expect(list).toHaveTextContent('No location for this one.');
+    expect(within(list).getAllByRole('button')).toHaveLength(1);
+  });
+
+  it('renders every finding plainly when nothing is openable (no artifact generated yet)', () => {
+    render(<ValidationResultsLens validation={report('invalid', { findings })} openableProblems={[]} onOpenProblem={jest.fn()} />);
+    expect(within(screen.getByTestId('verify-validation-findings')).queryAllByRole('button')).toHaveLength(0);
   });
 });
 

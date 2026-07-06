@@ -33,10 +33,24 @@ import { ExportTargetGrid } from './ExportTargetGrid';
 import { ExportOptionsForm } from './ExportOptionsForm';
 import { VerifyWorkbench, VerdictBanner } from './VerifyWorkbench';
 import { ArtifactPreviewCard } from './ArtifactPreviewCard';
+import { BundleExplorer } from './BundleExplorer';
 import { OriginalSourceOption } from './OriginalSourceOption';
 import { deriveVerifyVerdict, verifyGatePasses } from './exportVerify';
 import { zipFilenameFor, type EmittedArtifact } from './exportArtifactPreview';
-import { buildZip } from './zipBundle';
+import {
+  collectLocatedProblems,
+  problemsForFile,
+  type LocatedProblem,
+  type ProblemRevealRequest,
+} from './exportProblemMarkers';
+import {
+  buildBundleManifest,
+  countFindingsByFile,
+  isMultiFileBundle,
+  normalizeBundlePath,
+  type BundleManifest,
+} from './exportBundle';
+import { buildZip, looksLikeZip, readZip } from './zipBundle';
 import { downloadBlob, filenameFromDisposition } from './exportDownload';
 import { resolveStudioBack } from './exportStudioLink';
 import type { ExportedArtifactSummary } from './ExportDialog';
@@ -123,6 +137,12 @@ export function ExportStudio({
   const [acknowledged, setAcknowledged] = useState(false);
   /** The emitted document being reviewed on the Review step, once generated + downloaded. */
   const [emitted, setEmitted] = useState<EmittedArtifact | null>(null);
+  /** The emitted bundle when the target produced multiple files (MFX-43.2); null for single-file. */
+  const [bundle, setBundle] = useState<BundleManifest | null>(null);
+  /** A pending "open this finding in the Review editor" request (MFX-43.3), from a lens click. */
+  const [problemReveal, setProblemReveal] = useState<ProblemRevealRequest | null>(null);
+  /** Monotonic nonce so re-clicking the same finding still re-triggers the reveal. */
+  const revealNonce = useRef(0);
   const [error, setError] = useState<string | null>(null);
   /**
    * The validation report from a validation-gate job failure (MFX-46.2). When set, the Verify
@@ -204,6 +224,17 @@ export function ExportStudio({
   const sourceLabel = artifactLabel || artifact;
   const versionLabel = response?.version_label || version || 'latest';
 
+  // The source's own catalog lint report, linked from the Verify lint lens's distinguishing note so
+  // the emitted-artifact lint is never conflated with the source's catalog lint (MFX-42.3). Only
+  // catalog sources have a catalog detail (with its Lint & Score tab) to link to.
+  const sourceLintReport = useMemo(
+    () =>
+      isCatalogSource
+        ? { href: `/ade/dashboard/catalog/${encodeURIComponent(artifact)}`, label: sourceLabel }
+        : null,
+    [isCatalogSource, artifact, sourceLabel],
+  );
+
   const fidelity = selected?.entry.fidelity ?? null;
 
   // Guards the "fetch the completed artifact once" effect so a re-render never re-downloads.
@@ -232,8 +263,12 @@ export function ExportStudio({
       if (!card.available) return;
       setSelectedKey(card.key);
       setError(null);
-      // A different target is a different conversion: its loss and verify must be re-established.
+      // A different target is a different conversion: its loss and verify must be re-established,
+      // and any artifact/bundle from the previous target no longer describes it.
       setAcknowledged(false);
+      setEmitted(null);
+      setBundle(null);
+      setProblemReveal(null);
       resetVerify();
       const values: Record<string, unknown> = {};
       for (const field of optionFieldsFromSchema(card.entry.options_schema, card.entry.default_options)) {
@@ -264,9 +299,12 @@ export function ExportStudio({
       setOptionValues((current) => ({ ...current, [key]: value }));
       // The configuration changed: any prior verdict no longer describes what Generate would
       // produce, so re-lock the gate until the user re-runs verification (auto re-verify is
-      // MFX-42.6). Acknowledgement is tied to that verdict, so it clears with it, and a job run
-      // against the old config is no longer relevant.
+      // MFX-42.6). Acknowledgement is tied to that verdict, so it clears with it, and any
+      // already-generated artifact/bundle is stale.
       setAcknowledged(false);
+      setEmitted(null);
+      setBundle(null);
+      setProblemReveal(null);
       resetVerify();
       clearActiveJob();
     },
@@ -302,6 +340,8 @@ export function ExportStudio({
     if (!selected) return;
     setError(null);
     setEmitted(null);
+    setBundle(null);
+    setProblemReveal(null);
     downloadedJobRef.current = null;
     start({
       target: selected.key,
@@ -341,10 +381,12 @@ export function ExportStudio({
   useEffect(() => {
     const result = jobStatus?.state === 'completed' ? jobStatus.result : null;
     if (!job?.jobId || !result || result.dry_run) return;
+    if (!selected || selected.key !== result.target) return;
     if (downloadedJobRef.current === job.jobId) return;
     const jobId = job.jobId;
     downloadedJobRef.current = jobId;
     let cancelled = false;
+    let settled = false;
     void (async () => {
       try {
         const res = await fetch(`/api/export/jobs/${encodeURIComponent(jobId)}/download`, {
@@ -358,26 +400,43 @@ export function ExportStudio({
               : 'The export generated but the artifact could not be downloaded.',
           );
         }
-        const text = await res.text();
-        const filename =
-          filenameFromDisposition(res.headers.get('content-disposition')) ||
-          `${artifact}-${result.target}.txt`;
+        const contentType = res.headers.get('content-type') || result.media_type || '';
+        const bytes = new Uint8Array(await res.arrayBuffer());
+        const filename = filenameFromDisposition(res.headers.get('content-disposition'));
         if (cancelled) return;
-        setEmitted({
-          filename,
-          mediaType: res.headers.get('content-type') || result.media_type || '',
-          text,
-        });
-        if (selected) {
+        let emittedFilename = `${artifact}-${result.target}.txt`;
+        if (looksLikeZip(bytes, contentType)) {
+          const files = await readZip(bytes);
+          const manifest = buildBundleManifest(
+            files.map((file) => ({ path: file.path, text: file.text })),
+          );
+          setBundle(manifest);
+          setProblemReveal(null);
+          const primary = manifest.files[0];
+          emittedFilename = primary.path;
+          setEmitted({
+            filename: primary.path,
+            mediaType: primary.mediaType,
+            text: primary.text,
+          });
+        } else {
+          const text = new TextDecoder('utf-8').decode(bytes);
+          emittedFilename = filename || `${artifact}-${result.target}.txt`;
+          setBundle(null);
+          setEmitted({ filename: emittedFilename, mediaType: contentType, text });
+        }
+        const targetCard = cards.find((card) => card.key === result.target);
+        if (targetCard) {
           onGenerated?.({
-            targetKey: selected.key,
-            targetLabel: selected.entry.descriptor.label,
-            tier: selected.entry.fidelity.tier,
-            preservedPercent: selected.entry.fidelity.preserved_percent,
-            filename,
-            options: changedOptions(optionValues, selected.entry.default_options),
+            targetKey: targetCard.key,
+            targetLabel: targetCard.entry.descriptor.label,
+            tier: targetCard.entry.fidelity.tier,
+            preservedPercent: targetCard.entry.fidelity.preserved_percent,
+            filename: emittedFilename,
+            options: job.params.options,
           });
         }
+        settled = true;
       } catch (e) {
         if (cancelled) return;
         // Allow the fetch to be retried (e.g. by re-generating) after a transient download error.
@@ -385,13 +444,17 @@ export function ExportStudio({
         setError(
           e instanceof Error ? e.message : 'The generated artifact could not be downloaded.',
         );
+        settled = true;
       }
     })();
     return () => {
       cancelled = true;
+      if (!settled && downloadedJobRef.current === jobId) {
+        downloadedJobRef.current = null;
+      }
     };
     // `jobStatus` is derived from `job`; depending on `job` alone keeps this to one run per job id.
-  }, [job, jobStatus, artifact, selected, optionValues, onGenerated]);
+  }, [job, jobStatus, artifact, selected, cards, onGenerated]);
 
   /** Download the generated document as its single file. */
   const handleDownloadFile = useCallback(() => {
@@ -402,16 +465,70 @@ export function ExportStudio({
     );
   }, [emitted]);
 
-  /** Download the generated document as a `.zip` built client-side. */
+  /**
+   * Download the generated export as a `.zip` built client-side. For a multi-file bundle every
+   * member is packed (MFX-43.2); for a single document the one file is packed as before.
+   */
   const handleDownloadZip = useCallback(() => {
-    if (!emitted) return;
+    if (!emitted && !bundle) return;
     try {
-      const bytes = buildZip([{ path: emitted.filename, content: emitted.text }]);
-      downloadBlob(new Blob([bytes], { type: 'application/zip' }), zipFilenameFor(emitted.filename));
+      const entries = bundle
+        ? bundle.files.map((file) => ({ path: file.path, content: file.text }))
+        : [{ path: emitted!.filename, content: emitted!.text }];
+      const zipName = zipFilenameFor(bundle ? bundle.primaryPath : emitted!.filename);
+      const bytes = buildZip(entries);
+      downloadBlob(new Blob([bytes], { type: 'application/zip' }), zipName);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The zip download failed. Try again.');
     }
-  }, [emitted]);
+  }, [bundle, emitted]);
+
+  // Per-file finding counts for the bundle tree/tabs badges (MFX-43.2): the Verify lenses' located
+  // validation + lint findings, bucketed by the bundle file they name.
+  const bundleFindingCounts = useMemo(
+    () =>
+      countFindingsByFile(
+        verifyResult?.validation.findings ?? [],
+        verifyResult?.lint?.findings ?? [],
+      ),
+    [verifyResult],
+  );
+
+  // The Verify lenses' located problems (MFX-43.3): findings with a real line number, unified
+  // across validation + lint. These drive the Review viewers' markers/gutter/problems list and
+  // the lenses' click-through rows.
+  const locatedProblems = useMemo(
+    () =>
+      collectLocatedProblems(
+        verifyResult?.validation.findings ?? [],
+        verifyResult?.lint?.findings ?? [],
+      ),
+    [verifyResult],
+  );
+
+  // The problems a Verify lens click can actually open (MFX-43.3). Nothing is openable until a
+  // generated artifact exists; a multi-file bundle can open only problems naming one of its files
+  // (an unfiled problem has no unambiguous home there); a single document also owns the unfiled
+  // ones — the only file the location can mean.
+  const openableProblems = useMemo(() => {
+    if (bundle && isMultiFileBundle(bundle)) {
+      const paths = new Set(bundle.files.map((file) => file.path));
+      return locatedProblems.filter((p) => p.file !== null && paths.has(p.file));
+    }
+    if (emitted) {
+      return problemsForFile(locatedProblems, normalizeBundlePath(emitted.filename), {
+        includeUnfiled: true,
+      });
+    }
+    return [];
+  }, [bundle, emitted, locatedProblems]);
+
+  /** Open a located finding on the Review step: jump there and ask the viewer to reveal it. */
+  const openProblem = useCallback((problem: LocatedProblem) => {
+    revealNonce.current += 1;
+    setProblemReveal({ problem, nonce: revealNonce.current });
+    setStep('review');
+  }, []);
 
   /** Whether the current step permits advancing to the next one. */
   const canAdvance = useMemo(() => {
@@ -604,6 +721,9 @@ export function ExportStudio({
                 acknowledged={acknowledged}
                 onAcknowledgedChange={setAcknowledged}
                 onRun={handleRunVerify}
+                sourceLintReport={sourceLintReport}
+                openableProblems={openableProblems}
+                onOpenProblem={openProblem}
               />
             </>
           )}
@@ -613,7 +733,23 @@ export function ExportStudio({
               {/* The verify verdict follows the user to Review (MFX-42.1): the same banner it saw
                   on the Verify step, so what gated Generate stays visible while generating. */}
               {verifyVerdict && <VerdictBanner verdict={verifyVerdict} />}
-              {emitted ? (
+              {bundle && isMultiFileBundle(bundle) ? (
+                <div className="flex min-h-0 flex-col gap-2">
+                  <p className="shrink-0 text-xs text-gray-600 dark:text-gray-300">
+                    <CheckCircle2 className="mr-1.5 inline h-4 w-4 align-text-bottom text-green-500" aria-hidden />
+                    Generated a <strong>{bundle.files.length}-file bundle</strong>. Navigate the files
+                    on the left, then download the .zip.
+                  </p>
+                  <BundleExplorer
+                    className="min-h-[420px]"
+                    manifest={bundle}
+                    countsByPath={bundleFindingCounts}
+                    targetKey={selected.key}
+                    problems={locatedProblems}
+                    reveal={problemReveal}
+                  />
+                </div>
+              ) : emitted ? (
                 <div className="flex min-h-0 flex-col gap-2">
                   <p className="shrink-0 text-xs text-gray-600 dark:text-gray-300">
                     <CheckCircle2 className="mr-1.5 inline h-4 w-4 align-text-bottom text-green-500" aria-hidden />
@@ -625,6 +761,8 @@ export function ExportStudio({
                     artifact={emitted}
                     report={verifyResult?.fidelity.report ?? null}
                     targetKey={selected.key}
+                    problems={openableProblems}
+                    reveal={problemReveal}
                   />
                 </div>
               ) : job && jobStatus ? (
@@ -728,10 +866,13 @@ export function ExportStudio({
                   <FileArchive className="h-4 w-4" aria-hidden />
                   Download .zip
                 </Button>
-                <Button variant="outline" onClick={handleDownloadFile}>
-                  <Download className="h-4 w-4" aria-hidden />
-                  Download {emitted.filename}
-                </Button>
+                {/* A bundle downloads only as the .zip here; per-file download lands in MFX-43.5. */}
+                {!(bundle && isMultiFileBundle(bundle)) && (
+                  <Button variant="outline" onClick={handleDownloadFile}>
+                    <Download className="h-4 w-4" aria-hidden />
+                    Download {emitted.filename}
+                  </Button>
+                )}
               </>
             )}
           </div>

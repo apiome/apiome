@@ -401,14 +401,13 @@ flowchart LR
   DRY --> L[Lint lens\nfindings + score]
   F & V & L --> GATE{verdict}
   GATE -->|clean| GEN[Generate enabled]
-  GATE -->|lossy| ACK[Export anyway acknowledgment]
+  GATE -->|lossy| ACK[Export anyway checkbox]
+  GATE -->|severe| TYPED[Typed acknowledgment\ntypes-only artifact]
   GATE -->|invalid| BLOCK[Generate blocked + detail]
 ```
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 42.3 #4356 | Emitted-artifact lint lens | findings list, severity chips, score; reuse LintReportDialog patterns | export,ui,linting,mvp | Y | Y | M | apiome-ui |
-| 42.4 #4357 | Fidelity lens + go/no-go gate | embed MFX-6.2 panel; verdict logic; "Export anyway" acknowledgment | export,ui,mvp | Y | Y | S | apiome-ui |
 | 42.6 #4359 | Re-verify on change + result caching | option-change invalidation, debounce, cached verdicts per config hash | export,ui,typescript | Y | N | S | apiome-ui |
 
 ### MFX-42.1 — Verify orchestration UI · #4354
@@ -468,6 +467,23 @@ flowchart LR
 - **Technical Stack.** Next.js.
 
 ### MFX-42.3 — Emitted-artifact lint lens · #4356
+- **Status (done).** The Verify workbench's **lint lens** is now a dedicated `EmittedLintLens.tsx`
+  (extracted from the 42.1 scaffold and deepened), keyed on `data-lint-state` in three states:
+  **not_applicable** — an explicit empty state ("no lint pack is registered for *<target>*") when
+  the target has no lint pack, never a misleading clean score; **clean** — a positive "the lint
+  pack reported no findings" confirmation (the score chip still shows so a clean result reads as
+  scored); **findings** — the itemized findings **grouped by severity** (error → warning → info,
+  mirroring the catalog panel's MUST/SHOULD/advisory tiers), each with its rule id, category,
+  message, and location (via the shared `FindingLocation`, whose file/line/column feed MFX-43.3's
+  Monaco markers). The **0–100 score + A–F grade** render as a chip coloured by the same
+  `gradeChipClass` the catalog lint gauge uses, alongside per-severity count chips and a
+  distinct-rules-triggered count — visually consistent with `CatalogLintPanel` (MFI-25.5). A note
+  distinguishes this **emitted-artifact** lint from the **source's catalog lint** and, for catalog
+  sources, links the source's report (`/ade/dashboard/catalog/{id}`). Pure presentation logic
+  (`emittedLintLensState`, `groupLintFindingsBySeverity`, `emittedLintScore`, `lintRulesTriggered`)
+  lives in `exportVerify.ts` and is unit-tested; the lens is advisory and never gates Generate (the
+  MFX-42.1 verdict owns the gate). Covered by `EmittedLintLens.test.tsx` + `exportVerify.test.ts`.
+  Bump apiome-ui 0.60.0 → 0.61.0.
 - **Problem.** MFX-5.2 lints the emitted artifact with the target's lint packs; findings need the
   same quality UX the import side has (`LintReportDialog`, MFI-25.5 inline lint panel).
 - **Solution / Scope.** Findings list grouped by severity/category with rule ids, per-finding
@@ -480,6 +496,24 @@ flowchart LR
 - **Technical Stack.** Next.js.
 
 ### MFX-42.4 — Fidelity lens + go/no-go gate · #4357
+- **Status (done).** The Verify workbench already embeds the MFX-6.2 `FidelityWarningPanel` as its
+  Fidelity lens (from MFX-42.1); 42.4 completes the **go/no-go matrix** by adding a fourth verdict
+  band, **`severe`**, for a types-only / near-empty (MFX-3.3) reduction and gating it behind an
+  explicit **typed** acknowledgement rather than the lossy checkbox. `exportVerify.ts` now mirrors
+  the response's `guard` (`TranscodeGuard`, MFX-3.3), and `deriveVerifyVerdict` promotes a result to
+  `severe` when the guard is `near-empty`/`severe` (falling back to the `types-only` tier when no
+  guard rode along) — otherwise it honours the server verdict, so the client gate stays
+  stricter-or-equal to the server's `clean`/`lossy`/`invalid`. The matrix: `invalid` ⇒ blocked
+  outright; `severe` ⇒ the user types `export produces a types-only artifact` (single-sourced as
+  `EXPORT_TYPES_ONLY_ACK_PHRASE` + `acknowledgementPhraseMatches`, case-insensitive/trimmed);
+  `lossy` ⇒ the "Export anyway" checkbox (MFX-6.2); `clean` ⇒ green path. `verifyVerdictBanner`
+  gains a red `Severe — acknowledge to continue` band whose copy names the types-only outcome, and
+  the panel renders the checkbox vs the typed input by an `acknowledgementMode` prop
+  (`fidelityAcknowledgementMode(verdict)`); the ADE dialog omits the prop and keeps its tier-driven
+  checkbox default. Covered by `exportVerify.test.ts`, `FidelityWarningPanel.test.tsx`,
+  `VerifyWorkbench.test.tsx`, and `exportFidelityPreview.test.ts` on the ticket's fixture bands
+  (clean OpenAPI→OpenAPI; lossy OpenAPI→proto; severe REST→Avro). Full apiome-ui suite green (4575
+  tests, +17). Bump apiome-ui 0.61.0 → 0.62.0.
 - **Problem.** The fidelity panel exists (MFX-6.2); the Verify workbench must embed it and derive
   the gate from it plus the other lenses.
 - **Solution / Scope.** Embed the MFX-6.2 panel (advisory, preserved-% ring, DROP/APPROX/SYNTH/OK
@@ -548,13 +582,19 @@ markers. Deepens MFX-6.3's "preview" into a real viewer; implements MFX-6.4's di
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 43.1 #4361 | Monaco viewer + format→language map | read-only Monaco; proto/graphql/sql/xml/yaml/json/… language registry | export,ui,typescript,mvp | N | Y | M | apiome-ui |
-| 43.2 #4362 | Bundle tree + file tabs | zip-manifest tree (proto packages, WSDL+XSD, Avro subjects); tabbed viewing | export,ui,typescript,mvp | N | Y | M | apiome-ui |
-| 43.3 #4363 | Problem markers from verify | validation/lint findings → Monaco markers + gutter; lens↔editor cross-nav | export,ui,validation,linting,mvp | N | Y | M | apiome-ui |
 | 43.4 #4364 | Round-trip Monaco diff | source vs re-imported emitted artifact side-by-side (implements MFX-6.4) | export,ui,version-control | Y | N | M | apiome-ui |
 | 43.5 #4365 | Large-output guards + viewer actions | size caps/virtualization, copy/download-file, wrap/fold, find | export,ui,typescript | Y | N | S | apiome-ui |
 
 ### MFX-43.1 — Monaco viewer + format→language map · #4361
+- **Status (done).** A shared read-only `@monaco-editor/react` viewer (`ReadOnlyCodeViewer.tsx`) now
+  backs the emitted-artifact preview (`ArtifactPreviewCard.tsx` was refactored onto it) and is ready
+  for the Verify/Review surfaces of 43.2–43.5 — one shared, lazily-loaded, SSR-free Monaco loader
+  with an offline `<pre>` fallback and live dark/light theming. The language map
+  (`export-target-language.ts`) gained a registry-driven resolver `monacoLanguageForArtifact` that
+  types an artifact from its emitter key, then its own `mediaType` / filename extension / bytes,
+  covering the ~20 export languages (proto, GraphQL SDL, WSDL/XSD XML, YAML/JSON, SQL, RAML,
+  Markdown/apib, thrift/asn.1/copybook → plaintext) so a new emitter highlights from its descriptor
+  with no UI change, degrading to plaintext otherwise. Bump apiome-ui 0.62.0 → 0.63.0.
 - **Problem.** Emitted artifacts span ~20 languages (proto, GraphQL SDL, WSDL/XSD XML, YAML/JSON,
   SQL, RAML, Markdown/apib, thrift, asn.1, copybook…); the existing
   `catalog-source-language.ts` maps only import-side formats.
@@ -570,6 +610,17 @@ markers. Deepens MFX-6.3's "preview" into a real viewer; implements MFX-6.4's di
 - **Technical Stack.** `@monaco-editor/react`, shared language registry util.
 
 ### MFX-43.2 — Bundle tree + file tabs · #4362
+- **Status (done).** The Studio Review step now explores a multi-file bundle as an IDE-style tree
+  (`BundleTree.tsx`) + recent-files tab strip (`BundleFileTabs.tsx`) over the shared MFX-43.1 viewer,
+  composed by `BundleExplorer.tsx`. A pure model (`exportBundle.ts`) folds the emitted bundle's flat
+  paths into a folders-first tree, buckets the Verify lenses' located validation/lint findings by
+  file (rolled up to folders) for per-node count badges, and detects single vs multi. The emit path
+  reads its response as bytes and, when it is a ZIP bundle (`looksLikeZip` + a new central-directory
+  `readZip` reader in `zipBundle.ts`, the inverse of the existing writer, stored + deflate-raw),
+  explodes it into the manifest; a lone document stays the single-file preview and **skips the tree
+  entirely**. Large bundles stay responsive via CSS `content-visibility` on tree rows (windowing
+  deepens in MFX-43.5). Per-file download is deferred to MFX-43.5; a bundle downloads as the whole
+  `.zip`. Bump apiome-ui 0.63.0 → 0.64.0.
 - **Problem.** Multi-file targets (MFX-4.2: per-package `.proto` + imports, WSDL+XSDs, per-subject
   `.avsc`, Bruno folders) can't be reviewed as one blob.
 - **Solution / Scope.** Left-rail file tree driven by the bundle manifest (folder structure,
@@ -581,6 +632,19 @@ markers. Deepens MFX-6.3's "preview" into a real viewer; implements MFX-6.4's di
 - **Technical Stack.** Radix tree/scroll primitives.
 
 ### MFX-43.3 — Problem markers from verify results · #4363
+- **Status (done).** The Verify lenses' located findings now behave like IDE problems. A pure model
+  (`exportProblemMarkers.ts`) unifies validation (MFX-42.2) + lint (MFX-42.3) findings into located
+  problems — only findings with a real line qualify, location-less ones stay list-only (no fake
+  positions) — and builds the Monaco `IMarkerData` squiggles (severity-mapped: validation always
+  error; lint error/warning/info) and gutter-bar/selected-line decorations, clamped to the
+  document. A shared hook (`useProblemMarkers.ts`) wires them onto the MFX-43.1 viewer (which
+  gained an `onMount` passthrough + `renderValidationDecorations: 'on'`), including editor-click →
+  problem resolution. Both review surfaces — `BundleExplorer` (per active file, unfiled problems
+  admitted only for a single-document bundle) and `ArtifactPreviewCard` — render a per-file
+  `ProblemsPanel` under the viewer with two-way problem ↔ line sync. Round trip: once an artifact
+  is generated, located findings in the Verify validation/lint lenses become clickable and jump to
+  Review with the file opened, the line revealed, and the finding highlighted; clicking a marked
+  editor line highlights its problems-panel row. Bump apiome-ui 0.64.0 → 0.65.0.
 - **Problem.** Findings in a list are half the story; enterprise users expect IDE behavior —
   squiggles at the offending line.
 - **Solution / Scope.** Map 42.2 validation errors and 42.3 lint findings (file + line/col where

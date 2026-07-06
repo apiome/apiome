@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
   Loader2,
   RefreshCw,
+  ShieldAlert,
   ShieldCheck,
   ShieldX,
   Sparkles,
@@ -13,16 +14,16 @@ import {
 import { Button } from '../../../ui/Button';
 import { Alert } from '../../../ui/Alert';
 import { FidelityWarningPanel } from './FidelityWarningPanel';
-import { FindingLocation } from './FindingLocation';
 import { ValidationResultsLens } from './ValidationResultsLens';
-import { gradeChipClass, type LintSeverity } from '../../../../utils/version-lint-report';
+import { EmittedLintLens, type EmittedLintSourceReport } from './EmittedLintLens';
+import type { LocatedProblem } from './exportProblemMarkers';
 import type { TargetFidelitySummary } from './exportTargetCatalog';
 import {
+  fidelityAcknowledgementMode,
+  isSevereConversion,
   lensBadgeCount,
-  lintSeverityCounts,
   verifyVerdictBanner,
   verifyVerdictBannerClass,
-  type EmittedArtifactLintReport,
   type ExportVerifyResponse,
   type ExportVerifyVerdict,
   type VerifyLensKey,
@@ -51,6 +52,19 @@ export interface VerifyWorkbenchProps {
   onAcknowledgedChange: (acknowledged: boolean) => void;
   /** Trigger (or re-trigger) a verification run. */
   onRun: () => void;
+  /**
+   * The source's own (catalog) lint report, linked from the lint lens's distinguishing note so the
+   * emitted-artifact lint is never conflated with the source's catalog lint. Omitted when unknown.
+   */
+  sourceLintReport?: EmittedLintSourceReport | null;
+  /**
+   * The located problems that can open in the Review editor (MFX-43.3): the Studio passes these
+   * only once a generated artifact exists to open. Findings matching one render as clickable rows
+   * in the validation/lint lenses.
+   */
+  openableProblems?: LocatedProblem[];
+  /** Open a located finding in the Review editor (file + line), MFX-43.3. */
+  onOpenProblem?: (problem: LocatedProblem) => void;
 }
 
 /** The three lenses, in tab / accordion order. */
@@ -66,14 +80,15 @@ const LENSES: { key: VerifyLensKey; label: string }[] = [
  * A single **Run verification** action calls the one-call dry-run verify (MFX-42.5) and yields
  * all three lenses at once — fidelity, emitted-output validation, and emitted-artifact lint —
  * under one go/no-go **verdict banner** (`Clean` / `Lossy — acknowledge to continue` /
- * `Invalid — export blocked`, per the MFX-5.3 gate + MFX-3.3 severity). The lenses lay out as
- * tabs-with-badges (count per lens) on desktop and as an accordion on narrow widths; the deeper
- * per-lens rendering lands in MFX-42.2 (validation), 42.3 (lint) and 42.4 (fidelity), which hang
- * their content under the layout this component owns.
+ * `Severe — acknowledge to continue` / `Invalid — export blocked`, per the MFX-5.3 gate + the
+ * MFX-3.3 transcoding guard). The lenses lay out as tabs-with-badges (count per lens) on desktop
+ * and as an accordion on narrow widths.
  *
- * The verdict gates Generate: `invalid` blocks unconditionally (with the validator's detail),
- * `lossy` requires the explicit acknowledgement, `clean` is the green path. The verdict and its
- * result live in Studio state so the Review step shows the same banner.
+ * The verdict gates Generate (MFX-42.4 matrix): `invalid` blocks unconditionally (with the
+ * validator's detail); `severe` — a types-only / near-empty reduction — requires the explicit
+ * **typed** acknowledgement in the fidelity lens; `lossy` requires the "Export anyway" checkbox;
+ * `clean` is the green path. The verdict and its result live in Studio state so the Review step
+ * shows the same banner.
  */
 export function VerifyWorkbench({
   targetLabel,
@@ -87,6 +102,9 @@ export function VerifyWorkbench({
   acknowledged,
   onAcknowledgedChange,
   onRun,
+  sourceLintReport = null,
+  openableProblems,
+  onOpenProblem,
 }: VerifyWorkbenchProps) {
   // Lead with the lens that most needs attention: the validator's detail for a blocked export,
   // else the fidelity lens (where the loss + acknowledgement live).
@@ -196,11 +214,15 @@ export function VerifyWorkbench({
           <LensBody
             lens={activeLens}
             result={result}
+            verdict={verdict}
             targetLabel={targetLabel}
             targetDescription={targetDescription}
             fidelitySummary={fidelitySummary}
             acknowledged={acknowledged}
             onAcknowledgedChange={onAcknowledgedChange}
+            sourceLintReport={sourceLintReport}
+            openableProblems={openableProblems}
+            onOpenProblem={onOpenProblem}
           />
         </div>
       </div>
@@ -224,11 +246,15 @@ export function VerifyWorkbench({
               <LensBody
                 lens={lens.key}
                 result={result}
+                verdict={verdict}
                 targetLabel={targetLabel}
                 targetDescription={targetDescription}
                 fidelitySummary={fidelitySummary}
                 acknowledged={acknowledged}
                 onAcknowledgedChange={onAcknowledgedChange}
+                sourceLintReport={sourceLintReport}
+                openableProblems={openableProblems}
+                onOpenProblem={onOpenProblem}
               />
             </div>
           </details>
@@ -258,7 +284,14 @@ function VerifyIntro({ targetLabel }: { targetLabel: string }) {
 /** The single go/no-go verdict banner shown above the lenses (and reused on Review). */
 export function VerdictBanner({ verdict }: { verdict: ExportVerifyVerdict }) {
   const banner = verifyVerdictBanner(verdict);
-  const Icon = banner.tone === 'invalid' ? ShieldX : banner.tone === 'lossy' ? AlertTriangle : CheckCircle2;
+  const Icon =
+    banner.tone === 'invalid'
+      ? ShieldX
+      : banner.tone === 'severe'
+        ? ShieldAlert
+        : banner.tone === 'lossy'
+          ? AlertTriangle
+          : CheckCircle2;
   return (
     <div
       data-testid="verify-verdict"
@@ -302,28 +335,39 @@ function lensBadgeTone(
   if (lens === 'lint') {
     return (result?.lint?.findings ?? []).some((f) => f.severity === 'error') ? rose : amber;
   }
+  // Fidelity: a severe (types-only / near-empty) reduction reads red like its verdict banner; an
+  // ordinary lossy conversion stays amber.
+  if (result && isSevereConversion(result)) return rose;
   return amber;
 }
 
 interface LensBodyProps {
   lens: VerifyLensKey;
   result: ExportVerifyResponse;
+  verdict: ExportVerifyVerdict;
   targetLabel: string;
   targetDescription: string;
   fidelitySummary: TargetFidelitySummary;
   acknowledged: boolean;
   onAcknowledgedChange: (acknowledged: boolean) => void;
+  sourceLintReport: EmittedLintSourceReport | null;
+  openableProblems?: LocatedProblem[];
+  onOpenProblem?: (problem: LocatedProblem) => void;
 }
 
 /** Dispatch a lens key to its body; shared by the desktop tab panel and the narrow accordion. */
 function LensBody({
   lens,
   result,
+  verdict,
   targetLabel,
   targetDescription,
   fidelitySummary,
   acknowledged,
   onAcknowledgedChange,
+  sourceLintReport,
+  openableProblems,
+  onOpenProblem,
 }: LensBodyProps) {
   if (lens === 'fidelity') {
     return (
@@ -336,84 +380,27 @@ function LensBody({
         previewError={null}
         acknowledged={acknowledged}
         onAcknowledgedChange={onAcknowledgedChange}
+        acknowledgementMode={fidelityAcknowledgementMode(verdict)}
       />
     );
   }
-  if (lens === 'validation') return <ValidationResultsLens validation={result.validation} />;
-  return <LintLens lint={result.lint} />;
-}
-
-/**
- * The emitted-artifact lint lens (MFX-42.1 scaffold; deepened in MFX-42.3). Shows the score/grade
- * when the pack computes one, a severity breakdown, and the findings — or an explicit empty state
- * when no lint pack applies to the target.
- */
-function LintLens({ lint }: { lint: EmittedArtifactLintReport | null }) {
-  const counts = useMemo(() => lintSeverityCounts(lint?.findings ?? []), [lint]);
-  if (!lint || !lint.applicable) {
+  if (lens === 'validation') {
     return (
-      <p className="text-sm text-gray-500 dark:text-gray-400" data-testid="verify-lint-empty">
-        No lint pack is registered for this target — there is nothing to lint. The export is not
-        blocked by lint.
-      </p>
+      <ValidationResultsLens
+        validation={result.validation}
+        openableProblems={openableProblems}
+        onOpenProblem={onOpenProblem}
+      />
     );
   }
   return (
-    <div className="space-y-3" data-testid="verify-lint">
-      <div className="flex flex-wrap items-center gap-2">
-        {typeof lint.score === 'number' && (
-          <span
-            data-testid="verify-lint-grade"
-            className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold ${gradeChipClass(lint.grade ?? '')}`}
-          >
-            {(lint.grade ?? '–').trim() || '–'} · {lint.score}/100
-          </span>
-        )}
-        <SeverityChip severity="error" count={counts.error} />
-        <SeverityChip severity="warning" count={counts.warning} />
-        <SeverityChip severity="info" count={counts.info} />
-      </div>
-      {lint.findings.length === 0 ? (
-        <p className="text-sm text-emerald-700 dark:text-emerald-300" data-testid="verify-lint-clean">
-          <CheckCircle2 className="mr-1.5 inline h-4 w-4 align-text-bottom" aria-hidden />
-          The lint pack reported no findings.
-        </p>
-      ) : (
-        <ul className="space-y-2" data-testid="verify-lint-findings">
-          {lint.findings.map((finding, idx) => (
-            <li
-              key={`${finding.rule}-${idx}`}
-              className="rounded-md border border-gray-200 p-3 text-sm dark:border-gray-700"
-            >
-              <div className="flex items-center gap-2">
-                <SeverityChip severity={finding.severity} />
-                <code className="text-xs text-gray-600 dark:text-gray-300">{finding.rule}</code>
-              </div>
-              <div className="mt-1 text-gray-900 dark:text-gray-100">{finding.message}</div>
-              <FindingLocation file={finding.file} path={finding.path} line={finding.line} column={finding.column} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-/** A severity chip (`3 errors`) or, without a count, a bare severity tag on a finding. */
-function SeverityChip({ severity, count }: { severity: LintSeverity; count?: number }) {
-  if (typeof count === 'number' && count === 0) return null;
-  const cls =
-    severity === 'error'
-      ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300'
-      : severity === 'warning'
-        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
-        : 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300';
-  const label =
-    typeof count === 'number' ? `${count} ${severity}${count === 1 ? '' : 's'}` : severity;
-  return (
-    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium capitalize ${cls}`}>
-      {label}
-    </span>
+    <EmittedLintLens
+      lint={result.lint}
+      targetLabel={targetLabel}
+      sourceReport={sourceLintReport}
+      openableProblems={openableProblems}
+      onOpenProblem={onOpenProblem}
+    />
   );
 }
 

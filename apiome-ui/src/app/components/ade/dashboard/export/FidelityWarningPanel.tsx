@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { AlertTriangle, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronUp, Loader2, ShieldAlert } from 'lucide-react';
 import {
   advisoryBannerClass,
   advisoryPresentation,
@@ -10,6 +10,8 @@ import {
 import { tierBadgeClass, tierLabel, fidelityChips } from './exportTargetCatalog';
 import type { TargetFidelitySummary } from './exportTargetCatalog';
 import {
+  acknowledgementPhraseMatches,
+  EXPORT_TYPES_ONLY_ACK_PHRASE,
   kindBadgeClass,
   kindLabel,
   requiresExportAcknowledgement,
@@ -17,7 +19,11 @@ import {
   ringStrokeClass,
   sortReportItemsWorstFirst,
 } from './exportFidelityPreview';
-import type { ExportPreviewResponse, LossItem } from './exportFidelityPreview';
+import type {
+  AcknowledgementMode,
+  ExportPreviewResponse,
+  LossItem,
+} from './exportFidelityPreview';
 
 /** The ring circle's radius in SVG user units (viewBox 96×96, 8-unit stroke). */
 const RING_RADIUS = 40;
@@ -35,10 +41,17 @@ export interface FidelityWarningPanelProps {
   previewLoading: boolean;
   /** Preview fetch error; the panel falls back to the summary and stays exportable. */
   previewError: string | null;
-  /** Whether the user has acknowledged the lossy export ("Export anyway"). */
+  /** Whether the user has acknowledged the lossy/severe export. */
   acknowledged: boolean;
   /** Toggle the acknowledgement. */
   onAcknowledgedChange: (acknowledged: boolean) => void;
+  /**
+   * Which acknowledgement control to render (MFX-42.4). Omit for the dialog's tier-driven default
+   * (a checkbox for any non-lossless conversion); the Verify workbench passes an explicit mode so a
+   * `severe` (types-only) conversion gets the **typed** acknowledgement while a `lossy` one keeps
+   * the checkbox.
+   */
+  acknowledgementMode?: AcknowledgementMode;
 }
 
 /**
@@ -65,6 +78,7 @@ export function FidelityWarningPanel({
   previewError,
   acknowledged,
   onAcknowledgedChange,
+  acknowledgementMode,
 }: FidelityWarningPanelProps) {
   const [reportOpen, setReportOpen] = useState(false);
 
@@ -73,7 +87,11 @@ export function FidelityWarningPanel({
     () => sortReportItemsWorstFirst(preview?.fidelity.report.items ?? []),
     [preview],
   );
-  const needsAck = requiresExportAcknowledgement(fidelity.tier);
+  // The workbench passes an explicit mode; the dialog omits it and falls back to the tier-driven
+  // default (a checkbox for any non-lossless conversion) it has always used.
+  const ackMode: AcknowledgementMode =
+    acknowledgementMode ??
+    (requiresExportAcknowledgement(fidelity.tier) ? 'checkbox' : 'hidden');
   const ring = ringGeometry(fidelity.preserved_percent, RING_RADIUS);
 
   return (
@@ -224,8 +242,9 @@ export function FidelityWarningPanel({
         </div>
       )}
 
-      {/* The explicit "Export anyway" acknowledgement: required when lossy, absent when clean. */}
-      {needsAck && (
+      {/* The acknowledgement gate: the "Export anyway" checkbox for a lossy conversion, the typed
+          acknowledgement for a severe (types-only) one, and nothing for a clean/invalid export. */}
+      {ackMode === 'checkbox' && (
         <label
           data-testid="export-ack"
           className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
@@ -245,6 +264,84 @@ export function FidelityWarningPanel({
             </span>
           </span>
         </label>
+      )}
+      {ackMode === 'typed' && (
+        <TypedAcknowledgement acknowledged={acknowledged} onAcknowledgedChange={onAcknowledgedChange} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * The typed acknowledgement for a **severe** (types-only / near-empty) conversion (MFX-42.4).
+ *
+ * A severe export produces a types-only artifact — only the source's schemas survive, every
+ * operation and channel is dropped — so, unlike a merely lossy conversion, it is not gated by a
+ * one-click checkbox but by an explicit **typed** confirmation: the user must type
+ * {@link EXPORT_TYPES_ONLY_ACK_PHRASE} exactly (case-insensitively) before Generate unlocks. The
+ * phrase and its match check come from the single shared source so the prompt and the gate can
+ * never drift, and the consequence copy above it is the server advisory (MFX-2.4) rendered verbatim.
+ *
+ * The input holds its own text; it seeds from {@link acknowledged} so navigating back to a
+ * previously-confirmed export keeps the phrase in place, and reports each keystroke's match up to
+ * the parent-owned `acknowledged` flag that drives the gate.
+ */
+function TypedAcknowledgement({
+  acknowledged,
+  onAcknowledgedChange,
+}: {
+  acknowledged: boolean;
+  onAcknowledgedChange: (acknowledged: boolean) => void;
+}) {
+  const [typed, setTyped] = useState(() => (acknowledged ? EXPORT_TYPES_ONLY_ACK_PHRASE : ''));
+  const matches = acknowledgementPhraseMatches(typed);
+
+  const handleChange = (value: string) => {
+    setTyped(value);
+    // Report every keystroke's match up to the parent-owned flag; re-reporting the same value is a
+    // no-op setState, and this keeps the gate correct even if the parent does not echo the flag back.
+    onAcknowledgedChange(acknowledgementPhraseMatches(value));
+  };
+
+  return (
+    <div
+      data-testid="export-ack-typed"
+      className="mt-4 rounded-lg border border-red-400 bg-red-50 p-3 text-sm text-red-900 dark:border-red-700 dark:bg-red-950/40 dark:text-red-100"
+    >
+      <div className="flex items-center gap-2">
+        <ShieldAlert className="h-4 w-4 shrink-0" aria-hidden />
+        <span className="font-semibold">This export produces a types-only artifact.</span>
+      </div>
+      <p className="mt-1.5 text-xs opacity-90">
+        Only the schemas will be exported — every operation and channel is dropped. To confirm you
+        understand, type <code className="font-mono font-semibold">{EXPORT_TYPES_ONLY_ACK_PHRASE}</code>{' '}
+        below. Generate stays disabled until it matches.
+      </p>
+      <label className="mt-2 block">
+        <span className="sr-only">Type “{EXPORT_TYPES_ONLY_ACK_PHRASE}” to acknowledge</span>
+        <input
+          type="text"
+          data-testid="export-ack-typed-input"
+          value={typed}
+          onChange={(e) => handleChange(e.target.value)}
+          placeholder={EXPORT_TYPES_ONLY_ACK_PHRASE}
+          autoComplete="off"
+          spellCheck={false}
+          aria-invalid={typed.length > 0 && !matches}
+          className={`w-full rounded-md border bg-white px-2.5 py-1.5 font-mono text-xs text-gray-900 outline-none dark:bg-gray-900 dark:text-gray-100 ${
+            matches
+              ? 'border-emerald-400 focus:border-emerald-500 dark:border-emerald-600'
+              : 'border-red-300 focus:border-red-500 dark:border-red-700'
+          }`}
+        />
+      </label>
+      {matches && (
+        <p
+          data-testid="export-ack-typed-confirmed"
+          className="mt-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300"
+        >
+          Acknowledged — you can generate this export.
+        </p>
       )}
     </div>
   );

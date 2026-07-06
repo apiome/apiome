@@ -284,4 +284,75 @@ describe('FidelityWarningPanel — "Export anyway" acknowledgement', () => {
     expect(screen.queryByTestId('export-ack')).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
+
+  it('honours an explicit acknowledgementMode over the tier default', () => {
+    // A lossy tier, but the workbench asked for no control (e.g. an invalid verdict).
+    renderPanel({ acknowledgementMode: 'hidden' });
+    expect(screen.queryByTestId('export-ack')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('export-ack-typed')).not.toBeInTheDocument();
+  });
+});
+
+const TYPES_ONLY_SUMMARY: TargetFidelitySummary = {
+  tier: 'types-only',
+  preserved_percent: 31,
+  total: 58,
+  preserved: 18,
+  dropped: 38,
+  approximated: 2,
+  synthesized: 0,
+};
+
+const ACK_PHRASE = 'export produces a types-only artifact';
+
+describe('FidelityWarningPanel — typed acknowledgement for a severe conversion (MFX-42.4)', () => {
+  function renderTyped(overrides: Partial<React.ComponentProps<typeof FidelityWarningPanel>> = {}) {
+    return renderPanel({
+      targetLabel: 'Apache Avro',
+      targetDescription: 'Export the schemas as an Avro schema.',
+      fidelity: TYPES_ONLY_SUMMARY,
+      acknowledgementMode: 'typed',
+      ...overrides,
+    });
+  }
+
+  it('shows the typed acknowledgement (not the checkbox) and quotes the phrase', () => {
+    renderTyped();
+    const block = screen.getByTestId('export-ack-typed');
+    expect(block).toBeInTheDocument();
+    expect(block).toHaveTextContent(ACK_PHRASE);
+    // The lossy checkbox is not used for a severe conversion.
+    expect(screen.queryByTestId('export-ack')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('acknowledges only once the phrase is typed exactly (case-insensitively)', () => {
+    const props = renderTyped();
+    const input = screen.getByTestId('export-ack-typed-input');
+
+    // A partial phrase does not acknowledge.
+    fireEvent.change(input, { target: { value: 'export produces' } });
+    expect(props.onAcknowledgedChange).not.toHaveBeenCalledWith(true);
+    expect(screen.queryByTestId('export-ack-typed-confirmed')).not.toBeInTheDocument();
+
+    // The full phrase (with stray casing/spacing) acknowledges.
+    fireEvent.change(input, { target: { value: '  Export Produces A Types-Only Artifact  ' } });
+    expect(props.onAcknowledgedChange).toHaveBeenLastCalledWith(true);
+    expect(screen.getByTestId('export-ack-typed-confirmed')).toBeInTheDocument();
+  });
+
+  it('revokes the acknowledgement when the phrase is edited away', () => {
+    const props = renderTyped();
+    const input = screen.getByTestId('export-ack-typed-input');
+    fireEvent.change(input, { target: { value: ACK_PHRASE } });
+    expect(props.onAcknowledgedChange).toHaveBeenLastCalledWith(true);
+    fireEvent.change(input, { target: { value: ACK_PHRASE.slice(0, -1) } });
+    expect(props.onAcknowledgedChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('seeds the input from an already-given acknowledgement', () => {
+    renderTyped({ acknowledged: true });
+    expect(screen.getByTestId('export-ack-typed-input')).toHaveValue(ACK_PHRASE);
+    expect(screen.getByTestId('export-ack-typed-confirmed')).toBeInTheDocument();
+  });
 });

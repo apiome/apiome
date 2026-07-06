@@ -21,6 +21,14 @@
  *
  * The full registry-driven export dialog + target-card grid is a later epic (MFX-EPIC-41); this
  * module is the small client-metadata layer that grid — and any emitted-artifact viewer — reads.
+ *
+ * The Monaco artifact viewer (MFX-EPIC-43) emits ~20 languages — proto, GraphQL SDL, WSDL/XSD XML,
+ * YAML/JSON, SQL, RAML, Markdown/apib, thrift, asn.1, copybook… — far more than the handful of
+ * emitter *keys* the export dialog knows by name. {@link monacoLanguageForArtifact} resolves those
+ * the way the registry does: it lets the emitted artifact's own `mediaType` and filename extension
+ * decide the highlight language, so a newly-registered emitter highlights correctly from its
+ * descriptor alone, with no change here. It falls back to `plaintext` when nothing recognises the
+ * artifact.
  */
 
 /** The client metadata one export target carries: highlight language, extension, and filename stem. */
@@ -69,6 +77,90 @@ const LANGUAGE_EXTENSION: Readonly<Record<string, string>> = {
   yaml: '.yaml',
   xml: '.xml',
 };
+
+/**
+ * File extension (with leading dot, lower-cased) → Monaco language id, spanning every format the
+ * emitter registry can produce. This is the registry-driven half of language resolution: any emitter
+ * whose artifact carries one of these extensions highlights correctly without a per-key entry above.
+ * Formats Monaco ships no grammar for (thrift, ASN.1, COBOL copybooks) map to `plaintext` so the raw
+ * text still renders with line numbers.
+ */
+const EXTENSION_LANGUAGE: Readonly<Record<string, string>> = {
+  // Structured serializations
+  '.json': 'json',
+  '.avsc': 'json', // Avro schema (JSON)
+  '.avro': 'json',
+  '.yaml': 'yaml',
+  '.yml': 'yaml',
+  '.raml': 'yaml', // RAML is a YAML dialect
+  '.xml': 'xml',
+  '.xsd': 'xml',
+  '.wsdl': 'xml',
+  '.wadl': 'xml',
+  // IDLs / schema languages
+  '.proto': 'protobuf',
+  '.graphql': 'graphql',
+  '.graphqls': 'graphql',
+  '.gql': 'graphql',
+  '.sdl': 'graphql',
+  '.sql': 'sql',
+  // Docs
+  '.md': 'markdown',
+  '.markdown': 'markdown',
+  '.apib': 'markdown', // API Blueprint
+  // Grammar-less: render as plaintext rather than mis-highlight
+  '.thrift': 'plaintext',
+  '.asn1': 'plaintext',
+  '.asn': 'plaintext',
+  '.cpy': 'plaintext', // COBOL copybook
+  '.cbl': 'plaintext',
+  '.cob': 'plaintext',
+  '.copybook': 'plaintext',
+  '.txt': 'plaintext',
+};
+
+/**
+ * Media-type token → Monaco language id, matched as a case-insensitive substring so charset
+ * parameters (`; charset=utf-8`) and vendor/suffix forms (`application/schema+json`,
+ * `application/wsdl+xml`, `application/x-protobuf`) all resolve. Ordered most-specific first, since a
+ * media type is tested against each token in turn. `text/plain` is deliberately absent — it names no
+ * language, so an artifact served as plaintext falls through to its filename extension or a byte
+ * sniff before defaulting to `plaintext`.
+ */
+const MEDIA_TYPE_LANGUAGE: ReadonlyArray<readonly [string, string]> = [
+  ['graphql', 'graphql'],
+  ['protobuf', 'protobuf'],
+  ['x-proto', 'protobuf'],
+  ['markdown', 'markdown'],
+  ['json', 'json'],
+  ['yaml', 'yaml'],
+  ['xml', 'xml'],
+  ['sql', 'sql'],
+];
+
+/**
+ * Resolve a Monaco language from an artifact's media type (its `Content-Type`), or `undefined` when
+ * the media type is absent or names no language Monaco highlights.
+ */
+function languageForMediaType(mediaType: string | null | undefined): string | undefined {
+  const media = (mediaType ?? '').toLowerCase();
+  if (!media) return undefined;
+  for (const [token, language] of MEDIA_TYPE_LANGUAGE) {
+    if (media.includes(token)) return language;
+  }
+  return undefined;
+}
+
+/**
+ * Resolve a Monaco language from an artifact's filename via its extension, or `undefined` when the
+ * filename is absent or carries no known extension.
+ */
+function languageForExtension(filename: string | null | undefined): string | undefined {
+  const name = (filename ?? '').toLowerCase();
+  const dot = name.lastIndexOf('.');
+  if (dot < 0) return undefined;
+  return EXTENSION_LANGUAGE[name.slice(dot)];
+}
 
 /**
  * Collapse an emitter `format`/`key` to its base target id: lower-cased, with any version or variant
@@ -128,6 +220,63 @@ export function monacoLanguageForExportTarget(
     if (sniffed) return sniffed;
   }
   return base;
+}
+
+/** Everything {@link monacoLanguageForArtifact} can learn about an emitted artifact. */
+export interface ArtifactLanguageHints {
+  /** The emitter `format` or `key`, when known (e.g. `openapi-3.1`, `graphql`); null for a bare file. */
+  targetFormat?: string | null;
+  /** The artifact's media type — its `Content-Type` (e.g. `application/graphql`); '' or null when absent. */
+  mediaType?: string | null;
+  /** The artifact's filename, whose extension types formats the media type doesn't (e.g. `schema.proto`). */
+  filename?: string | null;
+  /** A sample of the emitted bytes, used to refine JSON-or-YAML-or-XML serializations. */
+  sample?: string | null;
+}
+
+/**
+ * Resolve the Monaco editor language for an emitted artifact, registry-driven.
+ *
+ * Unlike {@link monacoLanguageForExportTarget} (which keys off the emitter id alone), this lets the
+ * artifact describe itself, so an emitter the UI has never heard of still highlights from its
+ * descriptor's `mediaType`/extension with no code change here:
+ *
+ *  - a **known** emitter with a fixed serialization (protobuf, GraphQL, Avro) is authoritative — its
+ *    canonical language wins;
+ *  - a **known** emitter whose serialization varies (OpenAPI/Swagger/AsyncAPI: JSON *or* YAML *or*
+ *    XML) is decided by the actual bytes, then the media type, then the filename, then its default;
+ *  - an **unknown** emitter is typed by its media type, then filename extension, then a byte sniff;
+ *  - anything still unrecognised degrades to `plaintext`, never throwing.
+ *
+ * @param hints What is known about the artifact (emitter id, media type, filename, byte sample).
+ * @returns A Monaco language id (e.g. `protobuf`, `graphql`, `xml`, `json`, `yaml`, `sql`, `markdown`),
+ *   defaulting to `'plaintext'`.
+ */
+export function monacoLanguageForArtifact({
+  targetFormat,
+  mediaType,
+  filename,
+  sample,
+}: ArtifactLanguageHints): string {
+  const id = resolveExportTargetId(targetFormat);
+  if (id) {
+    const base = EXPORT_TARGET_LANGUAGE[id].language;
+    if (!SERIALIZED_TARGETS.has(id)) return base;
+    // JSON-or-YAML-or-XML emitter: the bytes are truth, then the headers/filename, then the default.
+    return (
+      sniffSerialization(sample) ??
+      languageForMediaType(mediaType) ??
+      languageForExtension(filename) ??
+      base
+    );
+  }
+  // Unknown emitter: the descriptor's media type / extension decide, then a byte sniff, else plaintext.
+  return (
+    languageForMediaType(mediaType) ??
+    languageForExtension(filename) ??
+    sniffSerialization(sample) ??
+    'plaintext'
+  );
 }
 
 /**

@@ -1,11 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { Check, Copy, FileCode2 } from 'lucide-react';
-import { monacoLanguageForExportTarget } from '@/app/utils/export-target-language';
+import { monacoLanguageForArtifact } from '@/app/utils/export-target-language';
 import { cn } from '@lib/utils';
+import { ReadOnlyCodeViewer } from './ReadOnlyCodeViewer';
+import { ProblemsPanel } from './ProblemsPanel';
+import { useProblemMarkers } from './useProblemMarkers';
 import type { LossinessReport } from './exportFidelityPreview';
+import type { LocatedProblem, ProblemRevealRequest } from './exportProblemMarkers';
 import {
   artifactBadgeClass,
   buildArtifactBadge,
@@ -14,33 +17,6 @@ import {
   validateEmittedArtifact,
   type EmittedArtifact,
 } from './exportArtifactPreview';
-
-/** Offline fallback when Monaco cannot load — keeps the emitted text visible. */
-function OfflineArtifactFallback({ value }: { value?: string }) {
-  return (
-    <pre
-      data-testid="export-artifact-content"
-      className="h-full overflow-auto whitespace-pre-wrap break-words p-3 font-mono text-xs leading-5 text-gray-800 dark:text-gray-200"
-    >
-      {value ?? ''}
-    </pre>
-  );
-}
-
-const MonacoEditor = dynamic(
-  () =>
-    import('@monaco-editor/react')
-      .then((mod) => mod.default)
-      .catch(() => OfflineArtifactFallback),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-        Loading preview…
-      </div>
-    ),
-  },
-);
 
 interface ArtifactPreviewCardProps {
   /** The emitted document as captured from `POST /api/export/document`. */
@@ -52,6 +28,16 @@ interface ArtifactPreviewCardProps {
   report: LossinessReport | null;
   /** The chosen export target's registry key — drives Monaco syntax highlighting. */
   targetKey?: string | null;
+  /**
+   * The Verify lenses' located problems belonging to this document (MFX-43.3, already filtered by
+   * the caller) — rendered as squiggle markers, gutter bars, and the problems list.
+   */
+  problems?: LocatedProblem[];
+  /**
+   * A "open this problem" request from outside (a Verify lens click, MFX-43.3): highlights the
+   * problem and reveals its line. Repeat requests re-trigger via nonce.
+   */
+  reveal?: ProblemRevealRequest | null;
   className?: string;
 }
 
@@ -59,17 +45,35 @@ interface ArtifactPreviewCardProps {
  * ArtifactPreviewCard — the emitted-artifact preview (MFX-6.3, #3857).
  *
  * Shows the document the export produced *before* the user downloads it: a compact header
- * (filename + fidelity badge), the full emitted buffer in a read-only Monaco editor with
- * syntax highlighting, a copy-to-clipboard control, and size/meta hints underneath.
+ * (filename + fidelity badge), the full emitted buffer in the shared read-only Monaco viewer
+ * (MFX-43.1) with syntax highlighting, a copy-to-clipboard control, and size/meta hints underneath.
+ * The highlight language is resolved registry-driven — the emitter key, then the artifact's own
+ * media type / filename / bytes — so a newly-registered emitter highlights without a change here.
+ *
+ * When the caller passes the document's located Verify problems (MFX-43.3), they render exactly as
+ * in the bundle explorer: squiggle markers + gutter bars in the viewer and a {@link ProblemsPanel}
+ * underneath, with the same two-way problem ↔ line navigation.
  */
 export function ArtifactPreviewCard({
   artifact,
   report,
   targetKey,
+  problems = [],
+  reveal = null,
   className,
 }: ArtifactPreviewCardProps) {
-  const [isDark, setIsDark] = useState(false);
   const [copied, setCopied] = useState(false);
+  /** The highlighted problem (MFX-43.3), kept in sync between the editor and the problems list. */
+  const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
+  /** The last external reveal request seen, so a re-render never replays it. */
+  const [seenRevealNonce, setSeenRevealNonce] = useState<number | null>(null);
+
+  // An external reveal request (a Verify lens click): select the problem — the "adjust state
+  // during render" pattern. The editor-side line reveal is applied by {@link useProblemMarkers}.
+  if (reveal && reveal.nonce !== seenRevealNonce) {
+    setSeenRevealNonce(reveal.nonce);
+    setSelectedProblemId(reveal.problem.id);
+  }
 
   const badge = useMemo(
     () => buildArtifactBadge(validateEmittedArtifact(artifact), report),
@@ -77,17 +81,31 @@ export function ArtifactPreviewCard({
   );
   const size = useMemo(() => formatByteSize(utf8ByteLength(artifact.text)), [artifact.text]);
   const language = useMemo(
-    () => monacoLanguageForExportTarget(targetKey ?? null, artifact.text),
-    [artifact.text, targetKey],
+    () =>
+      monacoLanguageForArtifact({
+        targetFormat: targetKey ?? null,
+        mediaType: artifact.mediaType,
+        filename: artifact.filename,
+        sample: artifact.text,
+      }),
+    [artifact.filename, artifact.mediaType, artifact.text, targetKey],
   );
 
-  useEffect(() => {
-    const sync = () => setIsDark(document.documentElement.classList.contains('dark'));
-    sync();
-    const observer = new MutationObserver(sync);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
+  const markers = useProblemMarkers({
+    problems,
+    text: artifact.text,
+    selectedProblemId,
+    onMarkerSelect: (problem) => setSelectedProblemId(problem.id),
+    reveal,
+  });
+
+  const openProblem = useCallback(
+    (problem: LocatedProblem) => {
+      setSelectedProblemId(problem.id);
+      markers.reveal(problem);
+    },
+    [markers],
+  );
 
   useEffect(() => {
     if (!copied) return undefined;
@@ -145,37 +163,21 @@ export function ArtifactPreviewCard({
         </span>
       </div>
 
-      <div
-        data-testid="export-artifact-editor"
-        data-language={language}
-        className="relative mt-2 min-h-0 flex-1 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e]"
-      >
-        <div className="absolute right-2 top-2 z-10">{copyButton}</div>
-        <MonacoEditor
-          height="100%"
-          language={language}
-          theme={isDark ? 'vs-dark' : 'light'}
-          value={artifact.text}
-          options={{
-            readOnly: true,
-            domReadOnly: true,
-            minimap: { enabled: false },
-            fontSize: 13,
-            fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
-            lineNumbers: 'on',
-            scrollBeyondLastLine: false,
-            wordWrap: 'off',
-            padding: { top: 14, bottom: 14 },
-            automaticLayout: true,
-            renderLineHighlight: 'none',
-            overviewRulerLanes: 0,
-            hideCursorInOverviewRuler: true,
-            contextmenu: false,
-            links: false,
-            scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
-          }}
-        />
-      </div>
+      <ReadOnlyCodeViewer
+        value={artifact.text}
+        language={language}
+        overlay={copyButton}
+        onMount={markers.onEditorMount}
+        className="mt-2 min-h-0 flex-1 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e]"
+        editorTestId="export-artifact-editor"
+        fallbackTestId="export-artifact-content"
+      />
+      <ProblemsPanel
+        problems={problems}
+        selectedId={selectedProblemId}
+        onSelect={openProblem}
+        className="mt-2"
+      />
 
       <p className="mt-2 shrink-0 text-xs text-gray-500 dark:text-gray-400">{badge.hint}</p>
       <p className="mt-0.5 shrink-0 text-[11px] text-gray-400 dark:text-gray-500">

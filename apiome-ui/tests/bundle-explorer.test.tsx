@@ -1,0 +1,270 @@
+/**
+ * Render tests for the bundle explorer (MFX-43.2, #4362) and its problem markers (MFX-43.3, #4363).
+ *
+ * The explorer must: skip the tree/tabs for a single-file bundle; show the tree, tabs, and viewer
+ * for a multi-file one; open a file from the tree into the viewer and add it to the tab strip; and
+ * resolve each file's highlight language registry-driven. For MFX-43.3 it must set Monaco markers
+ * for the active file's located findings only, list them in a problems panel with two-way
+ * problem ↔ line navigation, and honour an external "open this problem" request.
+ *
+ * Monaco is stubbed with a spy harness (exposed via `jest.requireMock`) whose fake editor/monaco
+ * instances are handed to `onMount`, so marker/reveal behaviour asserts against jest spies and the
+ * assertions never depend on the real editor loading.
+ */
+
+jest.mock('@monaco-editor/react', () => {
+  const React = jest.requireActual<typeof import('react')>('react');
+  type MouseHandler = (event: { target?: { position?: { lineNumber?: number } } }) => void;
+  const mouseHandlers: MouseHandler[] = [];
+  const model = { getLineCount: () => 1000, isDisposed: () => false };
+  const editor = {
+    getModel: () => model,
+    revealLineInCenter: jest.fn(),
+    setPosition: jest.fn(),
+    focus: jest.fn(),
+    onMouseDown: (handler: MouseHandler) => {
+      mouseHandlers.push(handler);
+      return { dispose: () => undefined };
+    },
+    createDecorationsCollection: jest.fn(() => ({ clear: jest.fn(), set: jest.fn() })),
+  };
+  const monaco = { editor: { setModelMarkers: jest.fn() } };
+  const harness = {
+    editor,
+    monaco,
+    /** Simulate a click on an editor line (what Monaco reports via onMouseDown). */
+    fireLineClick: (lineNumber: number) => {
+      mouseHandlers.forEach((handler) => handler({ target: { position: { lineNumber } } }));
+    },
+    reset: () => {
+      mouseHandlers.length = 0;
+      editor.revealLineInCenter.mockClear();
+      editor.setPosition.mockClear();
+      editor.focus.mockClear();
+      editor.createDecorationsCollection.mockClear();
+      monaco.editor.setModelMarkers.mockClear();
+    },
+  };
+  function MockMonaco(props: {
+    value?: string;
+    language?: string;
+    onMount?: (ed: typeof editor, m: typeof monaco) => void;
+  }) {
+    // Mount-once like the real editor: hand the fake instances to onMount exactly one time.
+    React.useEffect(() => {
+      props.onMount?.(editor, monaco);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    return (
+      <div data-testid="mock-monaco" data-language={props.language}>
+        {props.value}
+      </div>
+    );
+  }
+  return { __esModule: true, default: MockMonaco, __harness: harness };
+});
+
+import React from 'react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { BundleExplorer } from '../src/app/components/ade/dashboard/export/BundleExplorer';
+import {
+  collectLocatedProblems,
+  PROBLEM_MARKER_OWNER,
+} from '../src/app/components/ade/dashboard/export/exportProblemMarkers';
+import {
+  buildBundleManifest,
+  countFindingsByFile,
+} from '../src/app/components/ade/dashboard/export/exportBundle';
+
+/** The spy harness the Monaco mock exposes (fake editor/monaco + line-click simulation). */
+const { __harness: monacoHarness } = jest.requireMock('@monaco-editor/react') as {
+  __harness: {
+    editor: {
+      revealLineInCenter: jest.Mock;
+      setPosition: jest.Mock;
+      createDecorationsCollection: jest.Mock;
+    };
+    monaco: { editor: { setModelMarkers: jest.Mock } };
+    fireLineClick: (lineNumber: number) => void;
+    reset: () => void;
+  };
+};
+
+beforeEach(() => monacoHarness.reset());
+
+const emptyCounts = countFindingsByFile([], []);
+
+const multiManifest = buildBundleManifest([
+  { path: 'petstore.proto', text: 'syntax = "proto3";' },
+  { path: 'com/example/User.avsc', text: '{"type":"record","name":"User"}' },
+]);
+
+describe('BundleExplorer (MFX-43.2)', () => {
+  it('skips the tree and tabs for a single-file bundle', async () => {
+    const single = buildBundleManifest([{ path: 'openapi.yaml', text: 'openapi: 3.1.0' }]);
+    render(<BundleExplorer manifest={single} countsByPath={emptyCounts} targetKey="openapi" />);
+
+    expect(screen.getByTestId('bundle-explorer')).toHaveAttribute('data-multi', 'false');
+    expect(screen.queryByTestId('bundle-tree')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('bundle-file-tabs')).not.toBeInTheDocument();
+    // The one file is shown in the viewer, YAML-highlighted (registry-driven).
+    expect(await screen.findByTestId('bundle-file-editor')).toHaveAttribute('data-language', 'yaml');
+  });
+
+  it('shows the tree, tabs, and viewer for a multi-file bundle', async () => {
+    render(<BundleExplorer manifest={multiManifest} countsByPath={emptyCounts} targetKey="protobuf" />);
+
+    expect(screen.getByTestId('bundle-explorer')).toHaveAttribute('data-multi', 'true');
+    expect(screen.getByTestId('bundle-tree')).toBeInTheDocument();
+    expect(screen.getByTestId('bundle-file-tabs')).toBeInTheDocument();
+    // The primary file opens first, protobuf-highlighted.
+    const editor = await screen.findByTestId('bundle-file-editor');
+    expect(editor).toHaveAttribute('data-language', 'protobuf');
+    expect(editor).toHaveTextContent('syntax = "proto3"');
+  });
+
+  it('opens a file from the tree into the viewer and adds a tab', async () => {
+    render(<BundleExplorer manifest={multiManifest} countsByPath={emptyCounts} targetKey="protobuf" />);
+
+    // Only the primary is tabbed to start.
+    expect(screen.queryByTestId('bundle-tab-com/example/User.avsc')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('bundle-tree-file-com/example/User.avsc'));
+
+    // The viewer now shows the .avsc (its own language), and a tab appeared for it.
+    const editor = await screen.findByTestId('bundle-file-editor');
+    expect(editor).toHaveTextContent('"name":"User"');
+    expect(screen.getByTestId('bundle-tab-com/example/User.avsc')).toHaveAttribute('data-active', 'true');
+  });
+
+  it('closes the active tab and falls back to a neighbour', async () => {
+    render(<BundleExplorer manifest={multiManifest} countsByPath={emptyCounts} targetKey="protobuf" />);
+    // Open the second file so two tabs exist, with the second active.
+    fireEvent.click(screen.getByTestId('bundle-tree-file-com/example/User.avsc'));
+    expect(screen.getByTestId('bundle-tab-com/example/User.avsc')).toHaveAttribute('data-active', 'true');
+
+    // Close the active tab → focus falls back to the remaining primary.
+    fireEvent.click(screen.getByTestId('bundle-tab-close-com/example/User.avsc'));
+    expect(screen.queryByTestId('bundle-tab-com/example/User.avsc')).not.toBeInTheDocument();
+    expect(screen.getByTestId('bundle-tab-petstore.proto')).toHaveAttribute('data-active', 'true');
+    expect(await screen.findByTestId('bundle-file-editor')).toHaveTextContent('syntax = "proto3"');
+  });
+});
+
+describe('BundleExplorer — problem markers (MFX-43.3)', () => {
+  const markerManifest = buildBundleManifest([
+    { path: 'petstore.proto', text: 'syntax = "proto3";\npackage example;\nmessage Pet {}' },
+    { path: 'google/protobuf/timestamp.proto', text: 'message Timestamp {}' },
+  ]);
+
+  /** Two located problems on the primary, one on the import, one location-less (never marked). */
+  const problems = collectLocatedProblems(
+    [{ message: 'Field number 0 is not allowed.', file: 'petstore.proto', line: 3, column: 9, keyword: 'buf.field-number' }],
+    [
+      { severity: 'warning', rule: 'proto-style', message: 'Prefer explicit package.', file: 'petstore.proto', line: 2 },
+      { severity: 'info', rule: 'naming', message: 'Consider a suffix.', file: 'google/protobuf/timestamp.proto', line: 1 },
+      { severity: 'error', rule: 'no-loc', message: 'Location-less lint.', file: 'petstore.proto' },
+    ],
+  );
+
+  it('sets markers and gutter decorations for the active file only — nothing fabricated', () => {
+    render(
+      <BundleExplorer
+        manifest={markerManifest}
+        countsByPath={emptyCounts}
+        targetKey="protobuf"
+        problems={problems}
+      />,
+    );
+
+    // The primary's two located problems become markers under the verify owner; the
+    // location-less lint finding and the other file's problem are absent.
+    const calls = monacoHarness.monaco.editor.setModelMarkers.mock.calls;
+    expect(calls.length).toBeGreaterThan(0);
+    const [, owner, markers] = calls[calls.length - 1];
+    expect(owner).toBe(PROBLEM_MARKER_OWNER);
+    expect(markers).toHaveLength(2);
+    expect(markers.map((m: { severity: number }) => m.severity).sort()).toEqual([4, 8]);
+    expect(markers.map((m: { startLineNumber: number }) => m.startLineNumber).sort()).toEqual([2, 3]);
+    // Gutter decorations ride along on the same lines.
+    expect(monacoHarness.editor.createDecorationsCollection).toHaveBeenCalled();
+
+    // The problems panel lists the same two problems.
+    expect(screen.getByTestId('verify-problems-count')).toHaveTextContent('2');
+    expect(screen.getByTestId('verify-problem-validation-0')).toBeInTheDocument();
+    expect(screen.queryByTestId('verify-problem-lint-1')).not.toBeInTheDocument(); // other file
+    expect(screen.queryByTestId('verify-problem-lint-2')).not.toBeInTheDocument(); // no location
+  });
+
+  it('re-marks when switching files, leaving unfiled problems list-only in a multi-file bundle', () => {
+    render(
+      <BundleExplorer
+        manifest={markerManifest}
+        countsByPath={emptyCounts}
+        targetKey="protobuf"
+        problems={problems}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('bundle-tree-file-google/protobuf/timestamp.proto'));
+
+    const calls = monacoHarness.monaco.editor.setModelMarkers.mock.calls;
+    const [, , markers] = calls[calls.length - 1];
+    expect(markers).toHaveLength(1);
+    expect(markers[0]).toMatchObject({ severity: 2, startLineNumber: 1 });
+    expect(screen.getByTestId('verify-problem-lint-1')).toBeInTheDocument();
+  });
+
+  it('clicking a problem row reveals its line and highlights the row (finding → editor)', () => {
+    render(
+      <BundleExplorer
+        manifest={markerManifest}
+        countsByPath={emptyCounts}
+        targetKey="protobuf"
+        problems={problems}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('verify-problem-validation-0'));
+    expect(monacoHarness.editor.revealLineInCenter).toHaveBeenCalledWith(3);
+    expect(monacoHarness.editor.setPosition).toHaveBeenCalledWith({ lineNumber: 3, column: 9 });
+    expect(screen.getByTestId('verify-problem-validation-0')).toHaveAttribute('data-selected', 'true');
+  });
+
+  it('clicking a marked editor line highlights its problem row (marker → finding)', () => {
+    render(
+      <BundleExplorer
+        manifest={markerManifest}
+        countsByPath={emptyCounts}
+        targetKey="protobuf"
+        problems={problems}
+      />,
+    );
+
+    act(() => monacoHarness.fireLineClick(2));
+    expect(screen.getByTestId('verify-problem-lint-0')).toHaveAttribute('data-selected', 'true');
+
+    // A line with no problem changes nothing.
+    act(() => monacoHarness.fireLineClick(1));
+    expect(screen.getByTestId('verify-problem-lint-0')).toHaveAttribute('data-selected', 'true');
+  });
+
+  it('honours an external reveal request: opens the file, reveals the line, selects the row', () => {
+    const target = problems.find((p) => p.id === 'lint-1')!;
+    render(
+      <BundleExplorer
+        manifest={markerManifest}
+        countsByPath={emptyCounts}
+        targetKey="protobuf"
+        problems={problems}
+        reveal={{ problem: target, nonce: 1 }}
+      />,
+    );
+
+    // The import file was opened (tab + viewer), its problem selected and revealed.
+    expect(screen.getByTestId('bundle-tab-google/protobuf/timestamp.proto')).toHaveAttribute('data-active', 'true');
+    expect(screen.getByTestId('bundle-file-editor')).toHaveTextContent('message Timestamp');
+    expect(screen.getByTestId('verify-problem-lint-1')).toHaveAttribute('data-selected', 'true');
+    expect(monacoHarness.editor.revealLineInCenter).toHaveBeenCalledWith(1);
+  });
+});

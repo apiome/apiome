@@ -42,6 +42,7 @@ jest.mock('sonner', () => ({
 
 import { ExportStudio } from '../src/app/components/ade/dashboard/export/ExportStudio';
 import { __resetExportJobTrackerForTests } from '../src/app/components/ade/dashboard/export/exportJobTracker';
+import { buildZip } from '../src/app/components/ade/dashboard/export/zipBundle';
 import type { ExportTargetsResponse } from '../src/app/components/ade/dashboard/export/exportTargetCatalog';
 import type { ExportFidelityEnvelope } from '../src/app/components/ade/dashboard/export/exportFidelityPreview';
 
@@ -170,8 +171,26 @@ function docFor(target: string) {
     : { filename: 'petstore.proto', type: 'text/plain', text: 'syntax = "proto3";' };
 }
 
-/** A downloadable-artifact HTTP response (headers + text), like the job download route returns. */
-function downloadResponse(target: string) {
+/** A downloadable-artifact HTTP response, like the job download route returns. */
+function downloadResponse(target: string, bundle = false) {
+  if (bundle && target === 'proto') {
+    const zip = buildZip([
+      { path: 'petstore.proto', content: 'syntax = "proto3";' },
+      { path: 'google/protobuf/timestamp.proto', content: 'message Timestamp {}' },
+    ]);
+    return {
+      ok: true,
+      headers: {
+        get: (name: string) =>
+          name.toLowerCase() === 'content-disposition'
+            ? 'attachment; filename="petstore.zip"'
+            : name.toLowerCase() === 'content-type'
+              ? 'application/zip'
+              : null,
+      },
+      arrayBuffer: () => Promise.resolve(zip.buffer.slice(0)),
+    };
+  }
   const doc = docFor(target);
   return {
     ok: true,
@@ -183,12 +202,16 @@ function downloadResponse(target: string) {
             ? doc.type
             : null,
     },
-    text: () => Promise.resolve(doc.text),
+    arrayBuffer: () => Promise.resolve(new TextEncoder().encode(doc.text).buffer),
   };
 }
 
 function mockFetch(
-  opts: { invalidVerify?: boolean; jobFailure?: 'validation' | 'confirmation' | 'emit' } = {},
+  opts: {
+    invalidVerify?: boolean;
+    bundle?: boolean;
+    jobFailure?: 'validation' | 'confirmation' | 'emit';
+  } = {},
 ): jest.Mock {
   // Closure state so a job's GET status reflects what its POST was submitted with (target/confirm).
   let submittedTarget = 'openapi';
@@ -254,14 +277,28 @@ function mockFetch(
                   headline: 'Valid',
                   message: 'The emitted artifact re-parsed cleanly.',
                 },
-            lint: { applicable: true, pack: 'pack', score: 95, grade: 'A', findings: [] },
+            lint: {
+              applicable: true,
+              pack: 'pack',
+              score: 95,
+              grade: 'A',
+              // The bundle scenario carries located lint findings (MFX-43.3): one per bundle
+              // file, plus one with no location that must stay list-only.
+              findings: opts.bundle
+                ? [
+                    { severity: 'warning', rule: 'proto-style', message: 'Prefer explicit package.', file: 'petstore.proto', line: 1, column: 8 },
+                    { severity: 'info', rule: 'naming', message: 'Consider a suffix.', file: 'google/protobuf/timestamp.proto', line: 1 },
+                    { severity: 'info', rule: 'no-loc', message: 'Location-less lint.' },
+                  ]
+                : [],
+            },
             verdict: invalid ? 'invalid' : lossy ? 'lossy' : 'clean',
           }),
       });
     }
     // Async export job download (MFX-46.2) — the completed job's emitted artifact bytes.
     if (url.includes('/api/export/jobs/') && url.endsWith('/download')) {
-      return Promise.resolve(downloadResponse(submittedTarget));
+      return Promise.resolve(downloadResponse(submittedTarget, Boolean(opts.bundle)));
     }
     // Submit an async export job — 202 with the job id + poll path.
     if (url.endsWith('/api/export/jobs') && init?.method === 'POST') {
@@ -748,6 +785,58 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     fireEvent.click(screen.getByRole('button', { name: /download petstore\.json/i }));
     fireEvent.click(screen.getByRole('button', { name: /download \.zip/i }));
     expect(downloads).toEqual(['petstore.json', 'petstore.zip']);
+  });
+
+  it('explores a multi-file bundle in the Review step (MFX-43.2)', async () => {
+    await advanceToVerify(mockFetch({ bundle: true }), 'proto');
+    await runVerification();
+    // A lossy proto conversion: acknowledge, then advance and generate.
+    fireEvent.click(within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+
+    // The bundle explorer (not the single-file preview) renders, with the file tree + tabs.
+    const explorer = await screen.findByTestId('bundle-explorer');
+    expect(explorer).toHaveAttribute('data-multi', 'true');
+    expect(screen.queryByTestId('export-artifact-preview')).not.toBeInTheDocument();
+    expect(screen.getByTestId('bundle-tree')).toBeInTheDocument();
+    expect(screen.getByTestId('bundle-tree-file-petstore.proto')).toBeInTheDocument();
+
+    // Navigate to the nested import file — it opens in the viewer.
+    fireEvent.click(screen.getByTestId('bundle-tree-file-google/protobuf/timestamp.proto'));
+    expect(await screen.findByTestId('bundle-file-editor')).toHaveTextContent('message Timestamp');
+
+    // A bundle downloads only as the whole .zip here (per-file download is MFX-43.5).
+    expect(screen.queryByRole('button', { name: /download petstore\.proto/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /download \.zip/i })).toBeInTheDocument();
+  });
+
+  it('round-trips a located finding from the Verify lens to the Review editor (MFX-43.3)', async () => {
+    await advanceToVerify(mockFetch({ bundle: true }), 'proto');
+    await runVerification();
+    fireEvent.click(within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+    await screen.findByTestId('bundle-explorer');
+
+    // The primary file's located lint finding shows in the Review problems panel.
+    expect(screen.getByTestId('verify-problem-lint-0')).toBeInTheDocument();
+
+    // Back on the Verify lint lens, located findings are openable; the location-less one is not.
+    fireEvent.click(screen.getByRole('button', { name: /^back$/i }));
+    fireEvent.click(screen.getByTestId('verify-tab-lint'));
+    const lintPanel = screen.getByTestId('verify-panel-lint');
+    expect(within(lintPanel).getByTestId('verify-open-lint-1')).toBeInTheDocument();
+    expect(within(lintPanel).getByText('Location-less lint.')).toBeInTheDocument();
+    expect(within(lintPanel).queryByTestId('verify-open-lint-2')).not.toBeInTheDocument();
+
+    // Click the import file's finding → the Studio jumps to Review with that file open and the
+    // finding highlighted in the problems panel (the lens → editor direction).
+    fireEvent.click(within(lintPanel).getByTestId('verify-open-lint-1'));
+    await screen.findByTestId('bundle-explorer');
+    expect(screen.getByTestId('bundle-tab-google/protobuf/timestamp.proto')).toHaveAttribute('data-active', 'true');
+    expect(screen.getByTestId('bundle-file-editor')).toHaveTextContent('message Timestamp');
+    expect(screen.getByTestId('verify-problem-lint-1')).toHaveAttribute('data-selected', 'true');
   });
 });
 

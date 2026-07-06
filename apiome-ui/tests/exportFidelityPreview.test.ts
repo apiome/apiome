@@ -6,6 +6,8 @@
  */
 
 import {
+  acknowledgementPhraseMatches,
+  EXPORT_TYPES_ONLY_ACK_PHRASE,
   kindBadgeClass,
   kindLabel,
   requiresExportAcknowledgement,
@@ -132,5 +134,23 @@ describe('ringStrokeClass', () => {
     expect(ringStrokeClass('lossless')).toContain('emerald');
     expect(ringStrokeClass('lossy')).toContain('amber');
     expect(ringStrokeClass('types-only')).toContain('rose');
+  });
+});
+
+describe('acknowledgementPhraseMatches (MFX-42.4)', () => {
+  it('matches the canonical types-only phrase exactly', () => {
+    expect(acknowledgementPhraseMatches(EXPORT_TYPES_ONLY_ACK_PHRASE)).toBe(true);
+  });
+
+  it('ignores surrounding whitespace and casing', () => {
+    expect(acknowledgementPhraseMatches('  Export Produces A Types-Only Artifact ')).toBe(true);
+    expect(acknowledgementPhraseMatches('EXPORT PRODUCES A TYPES-ONLY ARTIFACT')).toBe(true);
+  });
+
+  it('rejects partial, altered, or empty input', () => {
+    expect(acknowledgementPhraseMatches('')).toBe(false);
+    expect(acknowledgementPhraseMatches('export produces')).toBe(false);
+    expect(acknowledgementPhraseMatches('export produces a types only artifact')).toBe(false);
+    expect(acknowledgementPhraseMatches('produce a types-only artifact')).toBe(false);
   });
 });
