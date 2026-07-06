@@ -438,11 +438,18 @@ reports how faithful that export is. `export targets` lists the emitters availab
 `export openapi` and `export asyncapi` write the document and its fidelity report;
 `export grpc` writes a proto3 `.proto` document and its fidelity report;
 `export graphql` writes GraphQL SDL and its fidelity report;
-`export avro` writes Avro `.avsc` schema JSON and its fidelity report:
+`export avro` writes Avro `.avsc` schema JSON and its fidelity report.
+Any other registered target (or a format key like `openapi-3.1` / `protobuf`) is also exportable
+via the async job pipeline: `apiome export <format> <artifact> [--version] [--out file|dir]`.
 
 ```bash
 # List the emitter targets + per-source fidelity for a version:
 apiome export targets --project payments-api --version 1.0.0
+
+# Generic async export (submit job → poll → download → write/unzip):
+apiome export openapi-3.1 payments-api --version 1.0.0 --out openapi.json
+apiome export protobuf my-grpc-api --version 1.0.0 --out ./proto-bundle/
+apiome export sample payments-api --out report.json --force
 
 # Export a version as OpenAPI and write the document to a file:
 apiome export openapi --project payments-api --version 1.0.0 --output openapi.json

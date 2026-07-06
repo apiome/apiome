@@ -563,15 +563,16 @@ flowchart LR
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 8.1 | `apiome export <format>` | export an artifact/version to a target; poll | export,devex,python,mvp | N | Y | M | apiome-cli |
+| 8.1 ✅ | `apiome export <format>` | export an artifact/version to a target; poll | export,devex,python,mvp | N | Y | M | apiome-cli |
 | 8.2 | Fidelity report in CLI | print advisory + report; `--force` for lossy | export,devex,mvp | Y | Y | S | apiome-cli |
 | 8.3 | Toolchain runner reuse | wire emitters needing tsp/buf/smithy/AMF | export,multi-protocol,infrastructure | Y | N | S | apiome-rest |
 
-### MFX-8.1 — `apiome export <format>`  ·  **#3863**
+### MFX-8.1 — `apiome export <format>`  ·  **#3863**  ·  ✅ **Done**
 - **Solution / Scope.** `apiome export <format> <artifact> [--version] [--out file|dir] [--option ...]`; resolves the emitter, polls the export job, writes single file or unzips a bundle.
 - **Acceptance Criteria.** Exports from CLI to a chosen format; bundle unpacked; `--json` mode.
 - **Dependencies / Parallelism.** After 1.2, 3.4. Blocks 8.2.
 - **Technical Stack.** Python, Typer.
+- **Status.** Implemented in `apiome-cli` via `DispatchExportGroup` (mirrors MFI-1.4 import dispatch): any registry target not covered by a dedicated verb is invokable as ``apiome export <format> <artifact>`` — resolves the emitter against ``GET /export/targets``, submits ``POST /export/{tenant}/jobs``, polls ``GET …/jobs/{job_id}`` to a terminal state, downloads ``GET …/jobs/{job_id}/download``, writes a single file (or ``-`` for stdout) or unpacks a zip bundle to ``--out`` directory; repeatable ``--option key=value`` passes emit options; ``--force`` / ``--confirm`` mirror the dedicated export verbs; global ``--json`` emits structured metadata. Client modules: `client/export_jobs.py`, `export_dispatch.py`. Dedicated per-format verbs (`export openapi`, `export asyncapi`, …) remain for synchronous ``--project``/``--output`` workflows (MFX-9.4+).
 
 ### MFX-8.2 — Fidelity report in CLI  ·  **#3864**
 - **Problem.** **(headline)** CLI users must also be warned.

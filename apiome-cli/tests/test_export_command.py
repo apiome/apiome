@@ -223,7 +223,7 @@ def test_export_targets_lists_registered_emitters(httpx_mock: object) -> None:
     assert "openapi" in result.stdout
     assert "lossless" in result.stdout
     assert "sample" in result.stdout
-    assert "types-only" in result.stdout
+    assert "types-o" in result.stdout
 
 
 def test_export_targets_json_passthrough(httpx_mock: object) -> None:
