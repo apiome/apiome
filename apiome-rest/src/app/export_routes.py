@@ -24,7 +24,15 @@ Two granularities the export UX needs *before* a download is committed:
   reconstruction (``GET /v1/schema/…``) cannot supply, and the ``apiome export <target>`` CLI
   pairs it with ``/preview`` to write the artifact and surface its honest fidelity.
 
-All three endpoints are tenant-scoped (JWT or API key, via :func:`app.auth.validate_authentication`)
+* **``POST /v1/export/{tenant_slug}/dispatch``** — the "run it, attach the fidelity report" step
+  (MFX-3.2) in one round-trip: emit the chosen ``target`` **and** return its full fidelity
+  envelope together. Where ``/preview`` predicts the loss and ``/document`` returns only the
+  bytes, ``/dispatch`` returns both — the synchronous, one-shot twin of submitting an export
+  job (``POST …/jobs``) and polling it, without the poll. Intended for small artifacts and the
+  ``apiome export`` CLI; large or toolchain-backed exports still use the async job. ``dry_run``
+  stops after the report (no artifact), the same shape ``/preview`` returns.
+
+All endpoints are tenant-scoped (JWT or API key, via :func:`app.auth.validate_authentication`)
 and load the source model version-scoped through :func:`app.export_source.load_export_source`.
 """
 
@@ -44,6 +52,7 @@ from .emitter import (
     describe_emit_targets,
     get_emitter,
 )
+from .export_dispatch import dispatch_export
 from .export_fidelity import (
     ExportFidelity,
     TargetFidelity,
@@ -159,6 +168,83 @@ class ExportDocumentRequest(BaseModel):
     options: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Per-target emit options (MFX-1.4); null or empty applies the target defaults.",
+    )
+
+
+class ExportDispatchRequest(BaseModel):
+    """A dispatch request: source revision + chosen target + options + dry-run flag (MFX-3.2)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    artifact: str = Field(description="The artifact (project) id to export.")
+    version: Optional[str] = Field(
+        default=None,
+        description="Revision UUID, version label (``1.0.0``), or null for the latest revision.",
+    )
+    target: str = Field(
+        description="Target emitter key (``openapi``) or format key (``openapi-3.1``).",
+    )
+    options: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Per-target emit options (MFX-1.4); null or empty applies the target defaults.",
+    )
+    dry_run: bool = Field(
+        default=False,
+        description="When true, stop after the fidelity report: no artifact is emitted.",
+    )
+    min_severity: LossinessSeverity = Field(
+        default=LossinessSeverity.INFO,
+        description="Lowest loss severity that raises the advisory (MFX-2.4); does not affect "
+        "the report or counts.",
+    )
+
+
+class ExportDispatchFile(BaseModel):
+    """One emitted file returned inline by the dispatch surface (MFX-3.2).
+
+    Unlike the async job's metadata-only manifest (the bytes are served later by MFX-4.x),
+    a synchronous dispatch returns the ``content`` inline — there is no job to poll and no
+    separate download step.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    path: str = Field(description="Relative path within the output bundle.")
+    content: Any = Field(description="The emitted file's content (structured document or text).")
+    media_type: Optional[str] = Field(
+        default=None, description="Per-file media type when it differs from the bundle default."
+    )
+    subject: Optional[str] = Field(
+        default=None,
+        description="Schema Registry subject when the target assigns one (e.g. Avro).",
+    )
+
+
+class ExportDispatchResponse(BaseModel):
+    """The dispatch result: resolved coordinates + fidelity envelope + emitted artifact (MFX-3.2)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    artifact: str = Field(description="The artifact (project) id the dispatch exported.")
+    version: Optional[str] = Field(
+        default=None, description="The version selector as requested (label, UUID, or null)."
+    )
+    version_record_id: str = Field(description="The resolved revision (``versions.id``).")
+    version_label: Optional[str] = Field(
+        default=None, description="The resolved revision's version label (e.g. ``1.0.0``)."
+    )
+    target: str = Field(description="The resolved target format key (e.g. ``openapi-3.1``).")
+    dry_run: bool = Field(description="True when the dispatch stopped after the fidelity report.")
+    fidelity: ExportFidelity = Field(
+        description="The full fidelity envelope (target + tier + report + advisory).",
+    )
+    files: List[ExportDispatchFile] = Field(
+        default_factory=list,
+        description="The emitted files (inline); empty for a dry-run.",
+    )
+    media_type: Optional[str] = Field(
+        default=None,
+        description="The bundle's primary media type; null for a dry-run.",
     )
 
 
@@ -452,4 +538,81 @@ async def emit_export_document(
             tenant_id=tenant_id,
             artifact_id=source.artifact_id,
         ),
+    )
+
+
+@router.post(
+    "/{tenant_slug}/dispatch",
+    response_model=ExportDispatchResponse,
+    summary="Dispatch an export: emit one target and attach its fidelity report",
+    description=(
+        "The one-shot transcode (MFX-3.2): load the source artifact/version, resolve the target "
+        "emitter, run it, and return the emitted document **together with** its full fidelity "
+        "envelope (report + advisory + summary). The synchronous twin of submitting an export job "
+        "and polling it — for small artifacts and the ``apiome export`` CLI; large or "
+        "toolchain-backed exports should use ``POST …/jobs``. ``dry_run: true`` stops after the "
+        "fidelity report (no artifact), the same shape ``POST …/preview`` returns."
+    ),
+)
+async def dispatch_export_document(
+    tenant_slug: str,
+    request: ExportDispatchRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ExportDispatchResponse:
+    """Emit one (source, target) pair and return the artifact alongside its fidelity report.
+
+    Args:
+        tenant_slug: The tenant slug (scopes the artifact lookup).
+        request: Source coordinates + chosen target + optional per-emit options + dry-run flag.
+        auth_data: Authenticated tenant context (JWT or API key).
+
+    Returns:
+        The dispatch result: resolved coordinates, the full fidelity envelope, and — for a real
+        (non-dry-run) export — the emitted files inline.
+
+    Raises:
+        HTTPException: 404 when the artifact/version is unknown; 422 when the revision has no
+            reconstructable source or the emitter produced no document; 400 when the target or
+            source format is unsupported; 422 when the emit options are invalid for the target.
+    """
+    tenant_id = str(auth_data["tenant_id"])
+    try:
+        dispatch = dispatch_export(
+            tenant_id,
+            request.artifact,
+            request.version,
+            request.target,
+            options=request.options,
+            min_severity=request.min_severity,
+            dry_run=request.dry_run,
+        )
+    except ExportSourceError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    except ExportError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
+    files: List[ExportDispatchFile] = []
+    media_type: Optional[str] = None
+    if dispatch.emit is not None:
+        media_type = dispatch.emit.media_type
+        files = [
+            ExportDispatchFile(
+                path=f.path,
+                content=f.content,
+                media_type=f.media_type,
+                subject=f.subject,
+            )
+            for f in dispatch.emit.files
+        ]
+
+    return ExportDispatchResponse(
+        artifact=dispatch.artifact,
+        version=request.version,
+        version_record_id=dispatch.version_record_id,
+        version_label=dispatch.version_label,
+        target=dispatch.target,
+        dry_run=dispatch.dry_run,
+        fidelity=dispatch.fidelity,
+        files=files,
+        media_type=media_type,
     )
