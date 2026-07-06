@@ -720,6 +720,8 @@ describe('ExportDialog — version-scoped entry-point handoff (MFX-6.5)', () => 
       tier: 'lossy',
       preservedPercent: 64,
       filename: 'petstore.proto',
+      // Every option ran at its default here, so no overrides are recorded (MFX-41.3).
+      options: null,
     });
   });
 

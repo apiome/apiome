@@ -25,6 +25,12 @@ export type RecentExport = {
   preservedPercent: number;
   /** Filename of the emitted document. */
   filename: string;
+  /**
+   * The non-default option overrides this export used (the `changedOptions` payload, MFX-1.4), so
+   * "re-run in Studio" (MFX-41.3) can reproduce the exact configuration. Absent/null when the
+   * export ran with every option at its default (older records also lack it).
+   */
+  options?: Record<string, unknown> | null;
   /** When the export happened (epoch milliseconds). */
   exportedAt: number;
 };
@@ -76,6 +82,8 @@ export function isRecentExport(v: unknown): v is RecentExport {
     typeof v.preservedPercent === 'number' &&
     Number.isFinite(v.preservedPercent) &&
     typeof v.filename === 'string' &&
+    // `options` is optional (older records predate MFX-41.3); when present it must be an object.
+    (v.options === undefined || v.options === null || isPlainObject(v.options)) &&
     typeof v.exportedAt === 'number' &&
     Number.isFinite(v.exportedAt)
   );

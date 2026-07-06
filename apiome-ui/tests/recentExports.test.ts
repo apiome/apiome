@@ -108,6 +108,12 @@ describe('recentExports — record and load', () => {
     );
     expect(loadRecentExports(ARTIFACT, VERSION)).toEqual([good]);
   });
+
+  it('round-trips the option overrides for a re-run (MFX-41.3)', () => {
+    const options = { package: 'com.example', emit_services: false };
+    recordRecentExport(ARTIFACT, VERSION, makeInput({ options }));
+    expect(loadRecentExports(ARTIFACT, VERSION)[0].options).toEqual(options);
+  });
 });
 
 describe('recentExports — shape guard and badge label', () => {
@@ -118,6 +124,15 @@ describe('recentExports — shape guard and badge label', () => {
     expect(isRecentExport({ ...base, tier: 'types-only' })).toBe(true);
     expect(isRecentExport({ ...base, tier: 'pristine' })).toBe(false);
     expect(isRecentExport({ ...base, exportedAt: Number.NaN })).toBe(false);
+  });
+
+  it('treats options as optional but rejects a non-object options value (MFX-41.3)', () => {
+    const base = { ...makeInput(), exportedAt: 1 };
+    expect(isRecentExport(base)).toBe(true); // absent options (older records)
+    expect(isRecentExport({ ...base, options: null })).toBe(true);
+    expect(isRecentExport({ ...base, options: { package: 'com.example' } })).toBe(true);
+    expect(isRecentExport({ ...base, options: 'nope' })).toBe(false);
+    expect(isRecentExport({ ...base, options: [1, 2] })).toBe(false);
   });
 
   it('labels lossless exports as lossless and lossy ones with their preserved-%', () => {

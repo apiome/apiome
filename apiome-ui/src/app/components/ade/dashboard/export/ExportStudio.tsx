@@ -57,6 +57,12 @@ interface ExportStudioProps {
   version?: string | null;
   /** A target emitter key to pre-select (carried from the ExportDialog escalation). */
   initialTarget?: string | null;
+  /**
+   * Non-default option overrides to pre-fill for {@link initialTarget}, so a "re-run in Studio"
+   * (MFX-41.3) reproduces the prior run's configuration. Applied over the target's defaults once,
+   * during the same seeding pass that selects the target; ignored without an `initialTarget`.
+   */
+  initialOptions?: Record<string, unknown> | null;
   /** Where the export was launched from — resolves the back link (Versions vs Catalog). */
   origin?: string | null;
   /**
@@ -101,6 +107,7 @@ export function ExportStudio({
   artifactLabel,
   version = null,
   initialTarget = null,
+  initialOptions = null,
   origin = null,
   sourceFormat = null,
   onGenerated,
@@ -170,31 +177,43 @@ export function ExportStudio({
   // coarse tier so the gate never depends on the preview fetch.
   const needsAck = fidelity ? requiresExportAcknowledgement(fidelity.tier) : false;
 
-  /** Select a target card and seed the options form with that target's defaults. */
-  const selectCard = useCallback((card: ExportTargetCard) => {
-    if (!card.available) return;
-    setSelectedKey(card.key);
-    setError(null);
-    // A different target is a different conversion: its loss and verify must be re-established.
-    setAcknowledged(false);
-    setVerifyRan(false);
-    const defaults: Record<string, unknown> = {};
-    for (const field of optionFieldsFromSchema(card.entry.options_schema, card.entry.default_options)) {
-      defaults[field.key] = field.defaultValue;
-    }
-    setOptionValues(defaults);
-  }, []);
+  /**
+   * Select a target card and seed the options form with that target's defaults. When `seedOptions`
+   * is given (a re-run's prior overrides, MFX-41.3), its values replace the defaults for the
+   * matching option keys — foreign keys are ignored, so a stale or hand-edited override can never
+   * inject an option the target doesn't have.
+   */
+  const selectCard = useCallback(
+    (card: ExportTargetCard, seedOptions?: Record<string, unknown> | null) => {
+      if (!card.available) return;
+      setSelectedKey(card.key);
+      setError(null);
+      // A different target is a different conversion: its loss and verify must be re-established.
+      setAcknowledged(false);
+      setVerifyRan(false);
+      const values: Record<string, unknown> = {};
+      for (const field of optionFieldsFromSchema(card.entry.options_schema, card.entry.default_options)) {
+        values[field.key] =
+          seedOptions && Object.prototype.hasOwnProperty.call(seedOptions, field.key)
+            ? seedOptions[field.key]
+            : field.defaultValue;
+      }
+      setOptionValues(values);
+    },
+    [],
+  );
 
-  // Pre-select the target carried from the dialog escalation, once the target list has loaded.
-  // Runs at most once (guarded by the ref) so a later manual re-pick is never overwritten.
+  // Pre-select the target carried from the dialog escalation (and pre-fill a re-run's prior
+  // options, MFX-41.3), once the target list has loaded. Runs at most once (guarded by the ref)
+  // so a later manual re-pick is never overwritten.
   const seeded = useRef(false);
   useEffect(() => {
     if (seeded.current || !initialTarget || cards.length === 0) return;
     const card = cards.find((c) => c.key === initialTarget);
     if (!card) return;
     seeded.current = true;
-    selectCard(card);
-  }, [initialTarget, cards, selectCard]);
+    selectCard(card, initialOptions);
+  }, [initialTarget, initialOptions, cards, selectCard]);
 
   // The Verify step "ran" as soon as the dry run settles (loaded or errored) — a preview failure
   // degrades to the coarse summary but still counts as verified, matching the dialog.
@@ -239,6 +258,7 @@ export function ExportStudio({
         tier: selected.entry.fidelity.tier,
         preservedPercent: selected.entry.fidelity.preserved_percent,
         filename,
+        options: changedOptions(optionValues, selected.entry.default_options),
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The export failed. Try again.');

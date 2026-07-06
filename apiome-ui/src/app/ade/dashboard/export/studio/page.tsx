@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -10,6 +10,7 @@ import { Button } from '../../../../components/ui/Button';
 import { ExportStudio } from '../../../../components/ade/dashboard/export/ExportStudio';
 import type { ExportedArtifactSummary } from '../../../../components/ade/dashboard/export/ExportDialog';
 import { recordRecentExport } from '../../../../components/ade/dashboard/export/recentExports';
+import { parseExportStudioOptions } from '../../../../components/ade/dashboard/export/exportStudioLink';
 
 /**
  * Export Studio route — `…/ade/dashboard/export/studio` (MFX-41.1, #4348).
@@ -29,6 +30,9 @@ function ExportStudioRouteContent() {
   const target = searchParams.get('target');
   const origin = searchParams.get('from');
   const sourceFormat = searchParams.get('sourceFormat');
+  const optionsParam = searchParams.get('options');
+  // Decode the re-run overrides (MFX-41.3) once; a malformed value degrades to no pre-fill.
+  const initialOptions = useMemo(() => parseExportStudioOptions(optionsParam), [optionsParam]);
 
   if (status === 'loading') {
     return (
@@ -76,6 +80,7 @@ function ExportStudioRouteContent() {
       artifactLabel={label}
       version={version}
       initialTarget={target}
+      initialOptions={initialOptions}
       origin={origin}
       sourceFormat={sourceFormat}
       // Record every Studio generate in the MFX-6.5 recent-exports store, keyed by the scoped
