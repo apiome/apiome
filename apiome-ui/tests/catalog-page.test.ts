@@ -111,11 +111,12 @@ describe('CatalogItemCard wiring (MFI-23.4)', () => {
     expect(src).toMatch(/handleOpenLint[\s\S]{0,80}?setLintDialogItem\(item\)/);
   });
 
-  it('offers View / Lint / Convert to OpenAPI actions but never Publish', () => {
+  it('offers View / Lint / Convert actions but never Publish', () => {
     expect(src).toMatch(/<Eye[\s\S]{0,80}?>\s*View/);
     expect(src).toMatch(/<ScanLine[\s\S]{0,80}?>\s*Lint/);
-    // The convert action label is derived (Convert vs Re-convert) from the item's conversion state.
-    expect(src).toContain('convertActionLabel(item.conversion)');
+    // The convert action label is derived (Convert vs Re-convert, OpenAPI Project vs Project) from
+    // the item's conversion state and source format.
+    expect(src).toContain('convertActionLabel(item.conversion, item.sourceFormat)');
     // No publish action label, handler or icon — the catalog is the non-publishable slice (MFI-23.1).
     // Word boundaries keep this targeted at publish *handlers*, so it doesn't false-positive on the
     // domain term "non-publishable" (e.g. the CatalogNonPublishableBanner identifier, MFI-24.3).

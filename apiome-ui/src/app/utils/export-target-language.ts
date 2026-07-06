@@ -55,6 +55,7 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
 const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
   avsc: 'avro',
   gql: 'graphql',
+  proto: 'protobuf',
   proto3: 'protobuf',
   sdl: 'graphql',
 };

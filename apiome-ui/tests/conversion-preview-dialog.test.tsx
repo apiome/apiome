@@ -9,6 +9,15 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+jest.mock('@monaco-editor/react', () => ({
+  __esModule: true,
+  default: ({ value, language }: { value?: string; language?: string }) => (
+    <div data-testid="conversion-raw-content" data-language={language}>
+      {value}
+    </div>
+  ),
+}));
+
 import { ConversionPreviewDialog } from '../src/app/components/ade/dashboard/catalog/ConversionPreviewDialog';
 
 /** A low-tier dry-run result: pub/sub source, gaps + losses, gated behind acknowledgement. */
@@ -192,6 +201,10 @@ describe('ConversionPreviewDialog', () => {
     await waitFor(() => expect(screen.getByTestId('conversion-raw-toggle')).toBeInTheDocument());
     expect(screen.queryByTestId('conversion-raw-preview')).not.toBeInTheDocument();
     fireEvent.click(screen.getByTestId('conversion-raw-toggle'));
-    expect(screen.getByTestId('conversion-raw-preview')).toHaveTextContent('3.1.0');
+    expect(screen.getByTestId('conversion-raw-preview')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId('conversion-raw-content')).toHaveTextContent('3.1.0'),
+    );
+    expect(screen.getByTestId('conversion-raw-content')).toHaveAttribute('data-language', 'json');
   });
 });

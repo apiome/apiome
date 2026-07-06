@@ -33,6 +33,7 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('asyncapi-3')).toBe('json');
     expect(monacoLanguageForExportTarget('AsyncAPI-3')).toBe('json');
     expect(monacoLanguageForExportTarget('proto3')).toBe('protobuf');
+    expect(monacoLanguageForExportTarget('proto')).toBe('protobuf');
     expect(monacoLanguageForExportTarget('Proto3')).toBe('protobuf');
     expect(monacoLanguageForExportTarget('sdl')).toBe('graphql');
     expect(monacoLanguageForExportTarget('GraphQL')).toBe('graphql');

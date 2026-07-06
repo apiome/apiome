@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
+import { cn } from '@lib/utils';
 import {
   CheckCircle2,
   Download,
@@ -249,8 +250,8 @@ export function ExportDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => (!o ? handleClose() : undefined)}>
-      <DialogContent className="flex max-h-[92vh] max-w-4xl flex-col overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden">
+        <DialogHeader className="shrink-0">
           <DialogTitle>
             Export “{sourceLabel}” {versionLabel !== 'latest' ? `v${versionLabel}` : ''}
           </DialogTitle>
@@ -260,7 +261,7 @@ export function ExportDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-3 grid grid-cols-4 gap-2 text-xs">
+        <div className="mt-3 grid shrink-0 grid-cols-4 gap-2 text-xs">
           {STEP_LABELS.map((label, idx) => (
             <div
               key={label}
@@ -276,13 +277,22 @@ export function ExportDialog({
         </div>
 
         {(error || targetsError) && (
-          <Alert variant="error" className="mt-3">
+          <Alert variant="error" className="mt-3 shrink-0">
             {error || targetsError}
           </Alert>
         )}
 
+        <div
+          data-testid="export-dialog-body"
+          className={cn(
+            'mt-4 flex flex-col',
+            step === 'export' && emitted
+              ? 'h-[60vh] min-h-[420px] overflow-hidden'
+              : 'h-[60vh] min-h-[420px] overflow-y-auto',
+          )}
+        >
         {step === 'source' && (
-          <div className="mt-4 space-y-4">
+          <div className="space-y-4">
             <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-900 dark:text-gray-100">
                 <Package className="h-4 w-4 text-indigo-500" aria-hidden />
@@ -314,7 +324,7 @@ export function ExportDialog({
         )}
 
         {step === 'target' && (
-          <div className="mt-4 space-y-4">
+          <div className="space-y-4">
             <div className="text-center">
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 Choose a target format
@@ -410,7 +420,7 @@ export function ExportDialog({
         )}
 
         {step === 'fidelity' && selected && fidelity && (
-          <div className="mt-4 space-y-4">
+          <div className="space-y-4">
             <FidelityWarningPanel
               targetLabel={selected.entry.descriptor.label}
               targetDescription={selected.entry.descriptor.description}
@@ -426,24 +436,29 @@ export function ExportDialog({
 
         {step === 'export' &&
           (emitted ? (
-            <div className="mt-4 space-y-3">
-              <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
-                <CheckCircle2 className="h-5 w-5 text-green-500" aria-hidden />
-                Emitted <strong>{emitted.filename}</strong> — review it below, then download
-                the file or a .zip bundle.
-              </div>
-              <ArtifactPreviewCard artifact={emitted} report={preview?.fidelity.report ?? null} />
+            <div className="flex h-full min-h-0 flex-col gap-2">
+              <p className="shrink-0 text-xs text-gray-600 dark:text-gray-300">
+                <CheckCircle2 className="mr-1.5 inline h-4 w-4 text-green-500 align-text-bottom" aria-hidden />
+                Review <strong>{emitted.filename}</strong> below, then download the file or a .zip bundle.
+              </p>
+              <ArtifactPreviewCard
+                className="min-h-0 flex-1"
+                artifact={emitted}
+                report={preview?.fidelity.report ?? null}
+                targetKey={selected?.key ?? null}
+              />
             </div>
           ) : (
-            <div className="flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center">
+            <div className="flex h-full flex-col items-center justify-center gap-3 py-10 text-center">
               <Loader2 className="h-8 w-8 animate-spin text-indigo-500" aria-hidden />
               <div className="text-sm text-gray-700 dark:text-gray-200">
                 Emitting {selected?.entry.descriptor.label ?? 'the document'}…
               </div>
             </div>
           ))}
+        </div>
 
-        <div className="mt-4 flex justify-between gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+        <div className="mt-4 flex shrink-0 justify-between gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
           <Button variant="outline" onClick={handleClose} disabled={exporting}>
             {emitted ? 'Close' : 'Cancel'}
           </Button>

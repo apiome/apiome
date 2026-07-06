@@ -7,9 +7,11 @@
  */
 import {
   convertActionLabel,
+  convertPreviewDialogTitle,
   convertedProjectHref,
   convertedProjectLabel,
   isConvertedLinkLive,
+  isDirectProjectConvertFormat,
   type CatalogConversion,
 } from '../src/app/utils/catalog-conversion';
 
@@ -74,13 +76,47 @@ describe('isConvertedLinkLive', () => {
   });
 });
 
-describe('convertActionLabel', () => {
-  it('reads "Convert to OpenAPI" for an unconverted item', () => {
-    expect(convertActionLabel(null)).toBe('Convert to OpenAPI');
-    expect(convertActionLabel(undefined)).toBe('Convert to OpenAPI');
+describe('isDirectProjectConvertFormat', () => {
+  it('is true for OpenAPI and Arazzo sources', () => {
+    expect(isDirectProjectConvertFormat('openapi-3.1')).toBe(true);
+    expect(isDirectProjectConvertFormat('arazzo')).toBe(true);
   });
 
-  it('reads "Re-convert to OpenAPI" once the item has been converted', () => {
-    expect(convertActionLabel(makeConversion())).toBe('Re-convert to OpenAPI');
+  it('is false for other catalog formats', () => {
+    expect(isDirectProjectConvertFormat('protobuf')).toBe(false);
+    expect(isDirectProjectConvertFormat('graphql')).toBe(false);
+    expect(isDirectProjectConvertFormat(null)).toBe(false);
+  });
+});
+
+describe('convertActionLabel', () => {
+  it('reads "Convert to OpenAPI Project" for an unconverted non-OpenAPI item', () => {
+    expect(convertActionLabel(null, 'protobuf')).toBe('Convert to OpenAPI Project');
+    expect(convertActionLabel(undefined, 'asyncapi')).toBe('Convert to OpenAPI Project');
+  });
+
+  it('reads "Convert to Project" for an unconverted OpenAPI or Arazzo item', () => {
+    expect(convertActionLabel(null, 'openapi-3.1')).toBe('Convert to Project');
+    expect(convertActionLabel(null, 'arazzo')).toBe('Convert to Project');
+  });
+
+  it('reads "Re-convert to OpenAPI Project" once a non-OpenAPI item has been converted', () => {
+    expect(convertActionLabel(makeConversion(), 'protobuf')).toBe('Re-convert to OpenAPI Project');
+  });
+
+  it('reads "Re-convert to Project" once an OpenAPI or Arazzo item has been converted', () => {
+    expect(convertActionLabel(makeConversion(), 'openapi-3.1')).toBe('Re-convert to Project');
+    expect(convertActionLabel(makeConversion(), 'arazzo')).toBe('Re-convert to Project');
+  });
+});
+
+describe('convertPreviewDialogTitle', () => {
+  it('uses the OpenAPI Project prefix for non-OpenAPI sources', () => {
+    expect(convertPreviewDialogTitle('Acme API', 'protobuf')).toBe('Convert to OpenAPI Project — Acme API');
+  });
+
+  it('uses the shorter Project prefix for OpenAPI and Arazzo sources', () => {
+    expect(convertPreviewDialogTitle('Acme API', 'openapi-3.1')).toBe('Convert to Project — Acme API');
+    expect(convertPreviewDialogTitle('Acme API', 'arazzo')).toBe('Convert to Project — Acme API');
   });
 });

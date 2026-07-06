@@ -503,7 +503,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
                   onClick={() => setConvertOpen(true)}
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
                 >
-                  <ArrowLeftRight className="h-4 w-4" /> {convertActionLabel(item.conversion)}
+                  <ArrowLeftRight className="h-4 w-4" /> {convertActionLabel(item.conversion, item.sourceFormat)}
                 </button>
               ) : null}
               {!item.deleted_at ? (

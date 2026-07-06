@@ -298,7 +298,7 @@ function CatalogItemActions({
             }}
           />
           <div
-            className="fixed z-20 w-56 min-w-0 overflow-x-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900"
+            className="fixed z-20 min-w-56 w-max rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900"
             style={{
               top: `${dropdownPosition.top}px`,
               right: `${dropdownPosition.right}px`,
@@ -314,9 +314,9 @@ function CatalogItemActions({
                       setOpenDropdown(null);
                       onOpenDetail(item);
                     }}
-                    className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                    className="flex w-full items-center gap-3 whitespace-nowrap px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
                   >
-                    <PanelsTopLeft className="h-4 w-4 text-indigo-500" />
+                    <PanelsTopLeft className="h-4 w-4 shrink-0 text-indigo-500" />
                     Details
                   </button>
                   <button
@@ -326,9 +326,9 @@ function CatalogItemActions({
                       setOpenDropdown(null);
                       onView(item);
                     }}
-                    className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                    className="flex w-full items-center gap-3 whitespace-nowrap px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
                   >
-                    <Eye className="h-4 w-4 text-indigo-500" />
+                    <Eye className="h-4 w-4 shrink-0 text-indigo-500" />
                     View
                   </button>
                   <button
@@ -338,9 +338,9 @@ function CatalogItemActions({
                       setOpenDropdown(null);
                       onLint(item);
                     }}
-                    className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                    className="flex w-full items-center gap-3 whitespace-nowrap px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
                   >
-                    <ScanLine className="h-4 w-4 text-indigo-500" />
+                    <ScanLine className="h-4 w-4 shrink-0 text-indigo-500" />
                     Lint
                   </button>
                   <button
@@ -352,9 +352,9 @@ function CatalogItemActions({
                       onExport(item);
                     }}
                     title={CATALOG_EXPORT_VS_CONVERT_COPY}
-                    className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                    className="flex w-full items-center gap-3 whitespace-nowrap px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
                   >
-                    <FileOutput className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />
+                    <FileOutput className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-500" />
                     Export to another format…
                   </button>
                   <button
@@ -364,10 +364,10 @@ function CatalogItemActions({
                       setOpenDropdown(null);
                       void onConvert(item);
                     }}
-                    className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                    className="flex w-full items-center gap-3 whitespace-nowrap px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
                   >
-                    <ArrowLeftRight className="h-4 w-4 text-indigo-500" />
-                    {convertActionLabel(item.conversion)}
+                    <ArrowLeftRight className="h-4 w-4 shrink-0 text-indigo-500" />
+                    {convertActionLabel(item.conversion, item.sourceFormat)}
                   </button>
                   <div className="my-1 border-t border-gray-200 dark:border-gray-700" />
                   <button
@@ -377,9 +377,9 @@ function CatalogItemActions({
                       setOpenDropdown(null);
                       void onDelete(item.id);
                     }}
-                    className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                    className="flex w-full items-center gap-3 whitespace-nowrap px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
                   >
-                    <Trash2 className="h-4 w-4 text-red-500" />
+                    <Trash2 className="h-4 w-4 shrink-0 text-red-500" />
                     Delete item
                   </button>
                 </>

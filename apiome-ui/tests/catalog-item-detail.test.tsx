@@ -237,14 +237,21 @@ describe('CatalogItemDetailClient', () => {
     expect(screen.queryByText(/publish/i)).not.toBeInTheDocument();
   });
 
-  it('offers a "Convert to OpenAPI" action for an unconverted item (MFI-23.11)', async () => {
+  it('offers a "Convert to OpenAPI Project" action for an unconverted non-OpenAPI item (MFI-23.11)', async () => {
     mockFetchItem(RICH_ITEM);
     render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
 
     const convert = await screen.findByTestId('catalog-detail-convert');
-    expect(convert).toHaveTextContent('Convert to OpenAPI');
+    expect(convert).toHaveTextContent('Convert to OpenAPI Project');
     // No converted-state panel until the item has actually been converted.
     expect(screen.queryByTestId('catalog-detail-converted')).not.toBeInTheDocument();
+  });
+
+  it('offers "Convert to Project" for an unconverted OpenAPI or Arazzo item', async () => {
+    mockFetchItem({ ...RICH_ITEM, sourceFormat: 'openapi-3.1', name: 'Acme OpenAPI' });
+    render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
+
+    expect(await screen.findByTestId('catalog-detail-convert')).toHaveTextContent('Convert to Project');
   });
 
   it('shows the Converted → {project} back-link and a Re-convert action once converted (MFI-23.11)', async () => {
@@ -270,7 +277,7 @@ describe('CatalogItemDetailClient', () => {
     const link = screen.getByRole('link', { name: 'Acme OpenAPI' });
     expect(link).toHaveAttribute('href', '/ade/dashboard/versions?projectId=proj-openapi');
     // The convert action relabels to Re-convert (re-convert is always allowed).
-    expect(screen.getByTestId('catalog-detail-convert')).toHaveTextContent('Re-convert to OpenAPI');
+    expect(screen.getByTestId('catalog-detail-convert')).toHaveTextContent('Re-convert to OpenAPI Project');
   });
 
   // ── Tabbed detail shell (MFI-25.1, #4086) ──────────────────────────────────────────────────
@@ -346,7 +353,7 @@ describe('CatalogItemDetailClient', () => {
     // It is the export dialog (target/fidelity flow), not the conversion preview.
     expect(screen.getByRole('dialog')).toHaveTextContent(/Export\s+“Acme gRPC API”/);
     // Convert stays present and unchanged next to it.
-    expect(screen.getByTestId('catalog-detail-convert')).toHaveTextContent('Convert to OpenAPI');
+    expect(screen.getByTestId('catalog-detail-convert')).toHaveTextContent('Convert to OpenAPI Project');
   });
 
   it('exposes ARIA tab semantics and moves selection + focus with the arrow keys', async () => {

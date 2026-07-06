@@ -103,7 +103,7 @@ describe('Catalog list export entry (MFX-41.2, #4349)', () => {
   });
 
   it('leaves Convert untouched (Export must not replace it)', () => {
-    expect(catalogSrc).toContain('convertActionLabel(item.conversion)');
+    expect(catalogSrc).toContain('convertActionLabel(item.conversion, item.sourceFormat)');
     expect(catalogSrc).toContain('onConvert={handleConvert}');
   });
 });

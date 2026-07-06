@@ -6,11 +6,14 @@
  * ledger (MFI-22.5): the publishable Project it produced, that Project's name/slug (or a `projectDeleted`
  * flag if it was since removed), the produced revision, whether the latest conversion was a re-convert,
  * and the fidelity grade/tier. The Catalog card and detail render this as **"Converted → {project}"**
- * with a link, and the convert action relabels to **"Re-convert to OpenAPI"**.
+ * with a link, and the convert action relabels to **"Re-convert to OpenAPI Project"** (or
+ * **"Re-convert to Project"** when the source is already OpenAPI or Arazzo).
  *
  * These helpers are pure (no React, no fetch) so they can be unit-tested and reused by the card, the
  * table row, and the detail view.
  */
+
+import { resolveCatalogFormat } from './catalog-format-registry';
 
 /** The convert-to-OpenAPI back-link for a catalog item (mirrors the REST `CatalogConversionRef`). */
 export interface CatalogConversion {
@@ -67,13 +70,44 @@ export function isConvertedLinkLive(conversion: CatalogConversion | null | undef
 }
 
 /**
- * The convert action's label. The catalog only holds non-OpenAPI sources, so a first convert reads
- * "Convert to OpenAPI"; once an item has been converted the action becomes "Re-convert to OpenAPI"
+ * True when the catalog item's source is already OpenAPI or Arazzo — the convert action can say
+ * "Convert to Project" because no cross-format OpenAPI projection needs to be spelled out.
+ */
+export function isDirectProjectConvertFormat(sourceFormat?: string | null): boolean {
+  const id = resolveCatalogFormat(sourceFormat)?.id;
+  return id === 'openapi' || id === 'arazzo';
+}
+
+/**
+ * The convert action's label. Non-OpenAPI/Arazzo sources read "Convert to OpenAPI Project" on first
+ * convert (the catalog item becomes a publishable Project via OpenAPI projection). OpenAPI and Arazzo
+ * items read the shorter "Convert to Project". Once converted, the action becomes "Re-convert …"
  * (re-convert is always allowed — a changed source appends a new version rather than duplicating the
  * Project, MFI-22.5).
  */
-export function convertActionLabel(conversion: CatalogConversion | null | undefined): string {
-  return conversion ? 'Re-convert to OpenAPI' : 'Convert to OpenAPI';
+export function convertActionLabel(
+  conversion: CatalogConversion | null | undefined,
+  sourceFormat?: string | null,
+): string {
+  const short = isDirectProjectConvertFormat(sourceFormat);
+  if (conversion) {
+    return short ? 'Re-convert to Project' : 'Re-convert to OpenAPI Project';
+  }
+  return short ? 'Convert to Project' : 'Convert to OpenAPI Project';
+}
+
+/**
+ * Title for the conversion preview dialog — mirrors {@link convertActionLabel} without the
+ * Re-convert variant.
+ */
+export function convertPreviewDialogTitle(
+  itemName: string,
+  sourceFormat?: string | null,
+): string {
+  const prefix = isDirectProjectConvertFormat(sourceFormat)
+    ? 'Convert to Project'
+    : 'Convert to OpenAPI Project';
+  return `${prefix} — ${itemName}`;
 }
 
 /**

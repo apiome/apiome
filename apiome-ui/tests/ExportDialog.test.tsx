@@ -23,6 +23,21 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
+jest.mock('@monaco-editor/react', () => ({
+  __esModule: true,
+  default: ({
+    value,
+    language,
+  }: {
+    value?: string;
+    language?: string;
+  }) => (
+    <div data-testid="export-artifact-content" data-language={language}>
+      {value}
+    </div>
+  ),
+}));
+
 import { ExportDialog } from '../src/app/components/ade/dashboard/export/ExportDialog';
 import type { ExportTargetsResponse } from '../src/app/components/ade/dashboard/export/exportTargetCatalog';
 import type { ExportFidelityEnvelope } from '../src/app/components/ade/dashboard/export/exportFidelityPreview';
@@ -580,6 +595,8 @@ describe('ExportDialog — emitted-artifact preview + download (MFX-6.3)', () =>
     await renderAtPreview(mockFetch(), 'proto');
 
     expect(screen.getByTestId('export-artifact-content')).toHaveTextContent('syntax = "proto3";');
+    expect(screen.getByTestId('export-artifact-editor')).toHaveAttribute('data-language', 'protobuf');
+    expect(screen.getByTestId('export-artifact-copy')).toBeInTheDocument();
     // Nothing was downloaded yet — the preview replaces the old immediate download.
     expect(downloads).toHaveLength(0);
   });

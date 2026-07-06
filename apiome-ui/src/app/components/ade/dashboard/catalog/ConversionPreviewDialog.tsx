@@ -20,6 +20,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import {
   Dialog,
@@ -45,6 +46,34 @@ import {
   type ConversionDryRunResult,
   type Loss,
 } from '../../../../utils/conversion-fidelity';
+import { convertPreviewDialogTitle } from '../../../../utils/catalog-conversion';
+
+/** Offline fallback when Monaco cannot load — keeps the raw OpenAPI JSON visible. */
+function OfflineOpenApiFallback({ value }: { value: string }) {
+  return (
+    <pre
+      data-testid="conversion-raw-content"
+      className="h-full overflow-auto whitespace-pre-wrap break-words p-3 font-mono text-xs leading-5 text-gray-800 dark:text-gray-200"
+    >
+      {value}
+    </pre>
+  );
+}
+
+const MonacoEditor = dynamic(
+  () =>
+    import('@monaco-editor/react')
+      .then((mod) => mod.default)
+      .catch(() => OfflineOpenApiFallback),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+        Loading preview…
+      </div>
+    ),
+  },
+);
 
 interface ConversionPreviewDialogProps {
   /** The catalog item id to convert (a project id), or null when closed. */
@@ -124,6 +153,7 @@ export function ConversionPreviewDialog({
   const [defaults, setDefaults] = useState<ConversionDefaults>({ title: '', version: '', servers: [] });
   const [serversText, setServersText] = useState('');
   const [showRaw, setShowRaw] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const [committing, setCommitting] = useState(false);
   const [commitError, setCommitError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -165,7 +195,19 @@ export function ConversionPreviewDialog({
     void load(controller);
   }, [itemId, load]);
 
+  useEffect(() => {
+    const sync = () => setIsDark(document.documentElement.classList.contains('dark'));
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
   const report = result?.report ?? null;
+  const openapiJson = useMemo(
+    () => (result?.openapi != null ? JSON.stringify(result.openapi, null, 2) : ''),
+    [result?.openapi],
+  );
   const warning = report ? tierWarning(report.tier) : null;
   const { provided, missing } = useMemo(
     () => (report ? partitionChecklist(report.items) : { provided: [], missing: [] }),
@@ -198,7 +240,7 @@ export function ConversionPreviewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col">
         <DialogHeader>
-          <DialogTitle>Convert to OpenAPI — {itemName}</DialogTitle>
+          <DialogTitle>{convertPreviewDialogTitle(itemName, sourceFormat)}</DialogTitle>
           <DialogDescription>
             Review what the {sourceFormat ? `${sourceFormat} ` : ''}source can and cannot carry onto OpenAPI
             before creating a project. Nothing is created until you convert.
@@ -367,12 +409,35 @@ export function ConversionPreviewDialog({
                     {showRaw ? 'Hide' : 'Show'} raw OpenAPI preview
                   </button>
                   {showRaw && (
-                    <pre
-                      className="mt-2 max-h-64 overflow-auto rounded-lg border border-gray-200 bg-gray-50 p-3 font-mono text-[11px] text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                    <div
+                      className="mt-2 h-64 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e]"
                       data-testid="conversion-raw-preview"
                     >
-                      {JSON.stringify(result.openapi, null, 2)}
-                    </pre>
+                      <MonacoEditor
+                        height="100%"
+                        language="json"
+                        theme={isDark ? 'vs-dark' : 'light'}
+                        value={openapiJson}
+                        options={{
+                          readOnly: true,
+                          domReadOnly: true,
+                          minimap: { enabled: false },
+                          fontSize: 12,
+                          fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+                          lineNumbers: 'on',
+                          scrollBeyondLastLine: false,
+                          wordWrap: 'off',
+                          padding: { top: 12, bottom: 12 },
+                          automaticLayout: true,
+                          renderLineHighlight: 'none',
+                          overviewRulerLanes: 0,
+                          hideCursorInOverviewRuler: true,
+                          contextmenu: false,
+                          links: false,
+                          scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
+                        }}
+                      />
+                    </div>
                   )}
                 </section>
               )}
