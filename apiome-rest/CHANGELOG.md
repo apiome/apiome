@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.77.0] - 2026-07-05
+
+### Added
+- **Multi-file export bundle download (#3849, MFX-4.2)** — the async export job download route
+  `GET /v1/export/{tenant_slug}/jobs/{job_id}/download` now delivers **multi-file** targets
+  (protobuf packages, WSDL+XSD, Smithy multi-namespace, per-subject Avro `.avsc`) as an
+  `application/zip` bundle instead of rejecting them with 409. `resolve_export_download`
+  branches on the retained `EmitResult`: a single file is served inline as before (MFX-4.1), a
+  bundle of two-plus files is zipped by the new `build_export_zip`. The zip carries every
+  emitted file at its bundle-relative path — each serialized through `serialize_file_content`,
+  so bundle bytes match the `size_bytes` the job manifest reports — plus a root `manifest.json`
+  (`build_bundle_manifest`) listing the resolved target, bundle media type, and per-file
+  metadata (path, media type, serialized size, Schema Registry subject). Zip entries use pinned
+  timestamps so the same emit result packages to byte-identical bytes. The bundle is named
+  `<target>.zip`; `ExportDownloadArtifact.body` now carries `str` (single file) or `bytes` (zip).
+
 ## [1.70.0] - 2026-07-01
 
 ### Added

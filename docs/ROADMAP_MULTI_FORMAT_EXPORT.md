@@ -429,7 +429,7 @@ validate → deliver. Enables any-to-any.
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 4.1 ✅ | Single-file emit & download | one document; content-type + filename | export,rest,mvp | N | Y | S | apiome-rest |
-| 4.2 | Multi-file bundle (zip) | protobuf packages, WSDL+XSD, Smithy, Avro subjects | export,rest,mvp | N | Y | M | apiome-rest |
+| 4.2 ✅ | Multi-file bundle (zip) | protobuf packages, WSDL+XSD, Smithy, Avro subjects | export,rest,mvp | N | Y | M | apiome-rest |
 | 4.3 | Streaming/download & retention | stream large bundles; temp artifact retention | export,rest | Y | Y | S | apiome-rest |
 | 4.4 | Push-to-registry delivery | push Avro→Schema Registry, proto→BSR (opt) | export,registry,integrations | Y | N | M | apiome-rest |
 
@@ -440,6 +440,13 @@ validate → deliver. Enables any-to-any.
 - **Solution / Scope.** one document; content-type + filename. Follows the epic emitter template.
 - **Acceptance Criteria.** Implements this step of the emitter and passes the standard contract with round-trip fixtures; consistent with the epic's other steps.
 - **Dependencies / Parallelism.** Within MFX-EPIC-4; after MFX-3.1/3.4 (the job engine + `download_path` seam). Blocks 4.2 (extends this route to zip).
+- **Technical Stack.** FastAPI.
+
+### MFX-4.2 — Multi-file bundle (zip)  ·  **#3849**  ·  ✅ **Done**
+- **Status.** Extended the MFX-4.1 delivery route to package **multi-file** targets (protobuf packages, WSDL+XSD, Smithy multi-namespace, per-subject Avro `.avsc`) as a zip bundle instead of rejecting them with 409. `resolve_export_download` (`apiome-rest/src/app/export_job_engine.py`) now branches on the retained `EmitResult`: a single file is still served inline (MFX-4.1, unchanged), while a bundle of two-plus files is served as `application/zip` with a `<target>.zip` filename. The new `build_export_zip` writes every emitted file at its bundle-relative path — each serialized through the existing `serialize_file_content`, so bundle bytes match the `size_bytes` the MFX-3.1 manifest already reported — plus a root `manifest.json` (`build_bundle_manifest`): a table of contents carrying the resolved target, the bundle media type, and the same per-file metadata (path, media type, serialized size, Schema Registry subject) as the job's poll manifest, so a consumer sees identical file facts whether it reads the job status or unzips the bundle. Zip entries use pinned DOS-epoch timestamps so the same emit result packages to **byte-identical** bytes, and a (theoretical) emitted `manifest.json` is disambiguated rather than clobbered. `ExportDownloadArtifact.body` widened to `str | bytes` (FastAPI's `Response` accepts either); the route and its `download_path` seam are otherwise unchanged — the completed job already advertised `download_path` for multi-file exports, only delivery was pending. Tests: the MFX-4.1 multi-file-409 case is replaced by zip-delivery coverage, plus new seam tests (`build_export_zip` contents/manifest/subjects, determinism, manifest-name collision) in `tests/test_export_job_engine.py` and an end-to-end `application/zip` route test in `tests/test_export_job_routes.py`. apiome-rest 1.76.7 → 1.77.0.
+- **Solution / Scope.** protobuf packages, WSDL+XSD, Smithy, Avro subjects; deliver as a zip with a manifest. Follows the epic delivery template.
+- **Acceptance Criteria.** Implements this step of the emitter and passes the standard contract with round-trip fixtures; consistent with the epic's other steps.
+- **Dependencies / Parallelism.** Within MFX-EPIC-4; after MFX-4.1 (extends its download route from a single file to a zip bundle).
 - **Technical Stack.** FastAPI.
 
 ---

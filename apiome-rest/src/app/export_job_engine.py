@@ -19,8 +19,10 @@ and then runs through the export pipeline in the background:
    output through the matching import parser. Today a documented no-op placeholder;
 6. **package** — the MFX-EPIC-4 seam (:func:`build_result_manifest`): reduce the emitted
    files to a download manifest. The raw :class:`~app.emitter.EmitResult` stays on the
-   in-memory job record (:func:`get_export_job_emit_result`) so the delivery epics can
-   serve bytes without re-emitting.
+   in-memory job record (:func:`get_export_job_emit_result`) so the delivery routes can
+   serve bytes without re-emitting — a single file inline (MFX-4.1) or, for a multi-file
+   target (protobuf packages, WSDL+XSD, per-subject Avro), a **zip bundle** carrying every
+   emitted file plus a ``manifest.json`` (MFX-4.2, :func:`build_export_zip`).
 
 The status/polling contract deliberately matches the import engine's: the same job-record
 store (in-memory, per-process, tenant-scoped), the same state vocabulary (a subset —
@@ -45,13 +47,15 @@ responsive, and a cancel request takes effect at the next stage boundary.
 from __future__ import annotations
 
 import asyncio
+import io
 import json
 import logging
 import threading
 import time
 import uuid
+import zipfile
 from dataclasses import dataclass
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field
@@ -91,6 +95,8 @@ __all__ = [
     "get_export_job_emit_result",
     "validate_emitted_result",
     "build_result_manifest",
+    "build_bundle_manifest",
+    "build_export_zip",
     "serialize_file_content",
     "ExportDownloadArtifact",
     "resolve_export_download",
@@ -328,22 +334,32 @@ class ExportJobAccepted(BaseModel):
 
 @dataclass
 class ExportDownloadArtifact:
-    """The materialized bytes of a single-file export ready to serve (MFX-4.1).
+    """The materialized bytes of an export ready to serve (MFX-4.1 / MFX-4.2).
 
     Produced by :func:`resolve_export_download` from a completed job's retained
     :class:`~app.emitter.EmitResult`; the delivery route wraps it in an HTTP download
     response (content-type + ``Content-Disposition`` filename).
 
+    Two shapes flow through the same dataclass:
+
+    * a **single-file** export (MFX-4.1) — ``body`` is the serialized document *text*
+      (UTF-8 encodable), byte-identical to what the job manifest's ``size_bytes`` measured,
+      served with the emitted file's media type;
+    * a **multi-file** export (MFX-4.2) — ``body`` is the ``application/zip`` *bytes* of a
+      bundle carrying every emitted file plus a ``manifest.json``, served with a ``.zip``
+      filename.
+
     Attributes:
-        filename: The download filename (basename of the emitted file's path).
-        media_type: The response content type (the file's, else the bundle's, else a default).
-        body: The serialized document text (UTF-8 encodable), byte-identical to what the
-            job manifest's ``size_bytes`` measured.
+        filename: The download filename (a single file's basename, or ``<target>.zip``).
+        media_type: The response content type (the file's, the bundle's, ``application/zip``,
+            or a default).
+        body: The response payload — serialized document ``str`` (single file) or zip
+            ``bytes`` (multi-file bundle). FastAPI's ``Response`` accepts either.
     """
 
     filename: str
     media_type: str
-    body: str
+    body: Union[str, bytes]
 
 
 @dataclass
@@ -576,6 +592,109 @@ def build_result_manifest(result: EmitResult) -> List[ExportJobFile]:
         )
         for f in result.files
     ]
+
+
+# The media type and in-bundle manifest name for a multi-file zip delivery (MFX-4.2).
+BUNDLE_MEDIA_TYPE = "application/zip"
+_BUNDLE_MANIFEST_NAME = "manifest.json"
+# A fixed DOS epoch for every zip entry's timestamp so the same emit result always packages
+# to byte-identical bundle bytes (zip stores an mtime per entry; without pinning it the
+# bundle would differ on every call). 1980-01-01 is the earliest a DOS timestamp can encode.
+_ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
+
+
+def _bundle_manifest_name(result: EmitResult) -> str:
+    """The manifest filename to use inside the zip, disambiguated from emitted paths.
+
+    Emitters do not emit a ``manifest.json`` today, but a target could in principle claim
+    that path; rather than let the manifest overwrite (or be overwritten by) an emitted
+    file, pick a deterministic non-colliding name.
+    """
+    taken = {f.path for f in result.files}
+    if _BUNDLE_MANIFEST_NAME not in taken:
+        return _BUNDLE_MANIFEST_NAME
+    candidate = "export-manifest.json"
+    counter = 1
+    while candidate in taken:
+        counter += 1
+        candidate = f"export-manifest-{counter}.json"
+    return candidate
+
+
+def build_bundle_manifest(
+    result: EmitResult, target_format: str, *, manifest_name: str = _BUNDLE_MANIFEST_NAME
+) -> Dict[str, Any]:
+    """Build the ``manifest.json`` document embedded at the root of a zip bundle (MFX-4.2).
+
+    A machine-readable table of contents for the bundle: the resolved target, the bundle's
+    primary media type, and one entry per emitted file (path, media type, serialized size,
+    Schema Registry subject) — the same per-file metadata the job's poll manifest carries
+    (:func:`build_result_manifest`), so a consumer sees identical file facts whether it reads
+    the job status or unzips the bundle. The manifest describes the *emitted* files only; it
+    never lists itself.
+
+    Args:
+        result: The emitter's output bundle.
+        target_format: The resolved target format key (e.g. ``protobuf-3``).
+        manifest_name: The manifest's own filename within the bundle (recorded so a reader
+            knows which entry to skip); defaults to ``manifest.json``.
+
+    Returns:
+        The manifest as a JSON-serializable dict.
+    """
+    files = build_result_manifest(result)
+    return {
+        "target": target_format,
+        "media_type": result.media_type,
+        "manifest": manifest_name,
+        "file_count": len(files),
+        "files": [f.model_dump() for f in files],
+    }
+
+
+def _write_zip_entry(archive: zipfile.ZipFile, name: str, text: str) -> None:
+    """Write one UTF-8 text entry to ``archive`` with a pinned timestamp (deterministic bytes)."""
+    info = zipfile.ZipInfo(filename=name, date_time=_ZIP_EPOCH)
+    info.compress_type = zipfile.ZIP_DEFLATED
+    # 0o644 (rw-r--r--) in the high 16 bits, the conventional Unix mode for a zip entry.
+    info.external_attr = 0o644 << 16
+    archive.writestr(info, text.encode("utf-8"))
+
+
+def build_export_zip(result: EmitResult, target_format: str) -> bytes:
+    """Package a multi-file emit result into a deterministic zip bundle (MFX-4.2).
+
+    The bundle carries every emitted file at its bundle-relative path — each serialized by
+    :func:`serialize_file_content`, so its bytes match the size the manifest reported — plus a
+    root ``manifest.json`` table of contents (:func:`build_bundle_manifest`). Entries are
+    written in the emitter's (path-sorted) order with a pinned timestamp, so the same emit
+    result always packages to byte-identical bundle bytes.
+
+    Args:
+        result: The emitter's output bundle (typically multi-file, but valid for one file too).
+        target_format: The resolved target format key, recorded in the manifest.
+
+    Returns:
+        The zip archive as raw bytes, ready to serve as ``application/zip``.
+    """
+    manifest_name = _bundle_manifest_name(result)
+    manifest = build_bundle_manifest(result, target_format, manifest_name=manifest_name)
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for emitted in result.files:
+            _write_zip_entry(archive, emitted.path, serialize_file_content(emitted.content))
+        _write_zip_entry(
+            archive, manifest_name, json.dumps(manifest, indent=2, ensure_ascii=False)
+        )
+    return buffer.getvalue()
+
+
+def _bundle_filename(target_format: str) -> str:
+    """The download filename for a zip bundle, derived from the resolved target format."""
+    stem = _download_filename(target_format)
+    if stem == "document":  # _download_filename's fallback when the input is unusable
+        stem = "export"
+    return f"{stem}.zip"
 
 
 # ===========================================================================
@@ -821,7 +940,8 @@ def _download_path(tenant_slug: str, job_id: str) -> str:
     """Relative URL for the emitted artifact of a completed job (MFX-3.4 → MFX-4.x seam).
 
     The reference a poller puts on a completed job's ``result.download_path``; the delivery
-    epics (MFX-4.1 single-file, MFX-4.2 zip bundle) serve the retained bytes at this path.
+    routes serve the retained bytes at this path — a single file inline (MFX-4.1) or a zip
+    bundle for a multi-file target (MFX-4.2).
     """
     return f"/v1/export/{tenant_slug}/jobs/{job_id}/download"
 
@@ -914,7 +1034,7 @@ async def cancel_export_job(tenant_slug: str, job_id: str) -> None:
 
 
 def get_export_job_emit_result(tenant_slug: str, job_id: str) -> Optional[EmitResult]:
-    """The retained raw emit result for a completed job, for the delivery epics (MFX-4.x).
+    """The retained raw emit result for a completed job, for the delivery routes (MFX-4.x).
 
     Returns ``None`` while the job is running, after a failure/cancel, or for a dry-run.
 
@@ -934,33 +1054,37 @@ def _download_filename(path: str) -> str:
 
 
 def resolve_export_download(tenant_slug: str, job_id: str) -> ExportDownloadArtifact:
-    """Materialize a completed single-file export job's artifact for download (MFX-4.1).
+    """Materialize a completed export job's artifact for download (MFX-4.1 / MFX-4.2).
 
-    Serves the emitted document the poller was pointed at via ``result.download_path``: the
-    bytes come from the retained :class:`~app.emitter.EmitResult` (no re-emit), serialized by
-    :func:`serialize_file_content` so they match the manifest's reported ``size_bytes``, with
-    the content type and a ``Content-Disposition`` filename derived from the emitted file.
+    Serves the artifact the poller was pointed at via ``result.download_path`` from the
+    retained :class:`~app.emitter.EmitResult` (no re-emit). The delivery shape follows the
+    emit result:
 
-    Multi-file bundles (protobuf packages, WSDL+XSD, per-subject Avro) are **out of scope**
-    here — zip delivery lands with MFX-4.2 — so a multi-file result is rejected with 409
-    rather than silently serving only its first file.
+    * a **single-file** export is served inline (MFX-4.1) — the document serialized by
+      :func:`serialize_file_content` so its bytes match the manifest's ``size_bytes``, with
+      the emitted file's content type and a ``Content-Disposition`` filename from its basename;
+    * a **multi-file** export (protobuf packages, WSDL+XSD, per-subject Avro) is served as a
+      zip bundle (MFX-4.2, :func:`build_export_zip`) — every emitted file plus a root
+      ``manifest.json`` — as ``application/zip`` with a ``<target>.zip`` filename.
 
     Args:
         tenant_slug: The tenant slug the job was submitted under (scopes the lookup).
         job_id: The job id from the 202 acceptance payload.
 
     Returns:
-        The single file's filename, media type, and serialized body.
+        The artifact's filename, media type, and body (document ``str`` for a single file,
+        zip ``bytes`` for a multi-file bundle).
 
     Raises:
         HTTPException: 404 when the job is unknown for this tenant; 409 when the job has no
-            downloadable single-file artifact (not completed, a dry-run, or a multi-file bundle).
+            downloadable artifact (not completed, or a dry-run that emitted nothing).
     """
     with _jobs_lock:
         rec = _get_record_locked(tenant_slug, job_id)
         state = rec.state
         request_dry_run = rec.request.dry_run
         emit_result = rec.emit_result
+        result_target = rec.status.result.target if rec.status.result else None
 
     if state != "completed":
         raise HTTPException(
@@ -973,11 +1097,14 @@ def resolve_export_download(tenant_slug: str, job_id: str) -> ExportDownloadArti
             status_code=409,
             detail="This export job produced no artifact to download (dry-run).",
         )
+
+    # Multi-file targets are delivered as a zip bundle with an embedded manifest (MFX-4.2).
     if len(emit_result.files) > 1:
-        raise HTTPException(
-            status_code=409,
-            detail=f"Export produced {len(emit_result.files)} files; multi-file bundle "
-            "download is not available yet (lands with MFX-4.2). Use the job's file manifest.",
+        target_format = result_target or "export"
+        return ExportDownloadArtifact(
+            filename=_bundle_filename(target_format),
+            media_type=BUNDLE_MEDIA_TYPE,
+            body=build_export_zip(emit_result, target_format),
         )
 
     primary = emit_result.files[0]

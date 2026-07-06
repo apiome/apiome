@@ -44,6 +44,8 @@ from app.emitter import EmitResult, EmittedFile
 from app.export_job_engine import (
     ExportJobStartRequest,
     _jobs,
+    build_bundle_manifest,
+    build_export_zip,
     build_result_manifest,
     cancel_export_job,
     get_export_job_emit_result,
@@ -129,6 +131,76 @@ def test_build_result_manifest_reports_paths_and_serialized_sizes():
     assert manifest[1].size_bytes == len(text.encode("utf-8"))
     # Metadata only — the manifest model has no content field at all.
     assert "content" not in manifest[0].model_dump()
+
+
+def test_build_export_zip_bundles_every_file_and_a_manifest():
+    """The zip seam (MFX-4.2) packages each emitted file plus a root manifest.json."""
+    import io
+    import zipfile
+
+    from app.export_job_engine import serialize_file_content
+
+    doc = {"openapi": "3.1.0"}
+    result = EmitResult(
+        files=[
+            EmittedFile(path="openapi.json", content=doc, media_type="application/json"),
+            EmittedFile(path="schemas/widget.avsc", content='{"type":"record"}',
+                        media_type="application/json", subject="widget-value"),
+        ],
+        media_type="application/json",
+    )
+
+    blob = build_export_zip(result, "avro")
+
+    with zipfile.ZipFile(io.BytesIO(blob)) as archive:
+        assert set(archive.namelist()) == {"openapi.json", "schemas/widget.avsc", "manifest.json"}
+        # Each file's bytes are its canonical serialization (pretty JSON for a dict).
+        assert archive.read("openapi.json").decode("utf-8") == serialize_file_content(doc)
+        manifest = json.loads(archive.read("manifest.json").decode("utf-8"))
+
+    assert manifest["target"] == "avro"
+    assert manifest["media_type"] == "application/json"
+    assert manifest["manifest"] == "manifest.json"
+    assert manifest["file_count"] == 2
+    # The Schema Registry subject rides through into the manifest entry.
+    subjects = {f["path"]: f["subject"] for f in manifest["files"]}
+    assert subjects["schemas/widget.avsc"] == "widget-value"
+
+
+def test_build_export_zip_is_deterministic():
+    """The same emit result packages to byte-identical bundle bytes (pinned timestamps)."""
+    result = EmitResult(
+        files=[
+            EmittedFile(path="a.proto", content='syntax = "proto3";\n', media_type="text/plain"),
+            EmittedFile(path="b.proto", content='syntax = "proto3";\n', media_type="text/plain"),
+        ],
+        media_type="text/plain",
+    )
+    assert build_export_zip(result, "protobuf-3") == build_export_zip(result, "protobuf-3")
+
+
+def test_build_bundle_manifest_disambiguates_a_colliding_manifest_name():
+    """When a target emits its own manifest.json, the bundle manifest takes a distinct name."""
+    import io
+    import zipfile
+
+    result = EmitResult(
+        files=[
+            EmittedFile(path="manifest.json", content={"i-am": "an emitted file"},
+                        media_type="application/json"),
+        ],
+        media_type="application/json",
+    )
+
+    manifest = build_bundle_manifest(result, "smithy", manifest_name="whatever")
+    # build_export_zip picks the real, non-colliding name and records it in the manifest.
+    with zipfile.ZipFile(io.BytesIO(build_export_zip(result, "smithy"))) as archive:
+        names = set(archive.namelist())
+    assert "manifest.json" in names  # the emitted file keeps its path
+    assert "export-manifest.json" in names  # the bundle manifest is renamed out of the way
+    assert len(names) == 2
+    # The manifest builder always describes the emitted files, never itself.
+    assert [f["path"] for f in manifest["files"]] == ["manifest.json"]
 
 
 def test_validate_emitted_result_reports_deferred_not_passed():
@@ -590,17 +662,19 @@ async def test_resolve_export_download_409_for_failed_job():
     assert "failed" in excinfo.value.detail
 
 
-async def test_resolve_export_download_409_for_multi_file_bundle():
-    """Multi-file bundles are out of scope for 4.1 — a download attempt is a 409, not file[0]."""
-    from fastapi import HTTPException
+async def test_resolve_export_download_serves_zip_bundle_for_multi_file_export():
+    """A multi-file export is delivered as an application/zip bundle (MFX-4.2), not a 409."""
+    import io
+    import zipfile
 
-    from app.export_job_engine import resolve_export_download
+    from app.export_job_engine import resolve_export_download, serialize_file_content
 
     def _multi(*args, **kwargs):
         return EmitResult(
             files=[
                 EmittedFile(path="a.proto", content='syntax = "proto3";\n', media_type="text/plain"),
-                EmittedFile(path="b.proto", content='syntax = "proto3";\n', media_type="text/plain"),
+                EmittedFile(path="pkg/b.proto", content='syntax = "proto3";\nmessage B {}\n',
+                            media_type="text/plain"),
             ],
             media_type="text/plain",
         )
@@ -610,12 +684,32 @@ async def test_resolve_export_download_409_for_multi_file_bundle():
         "app.export_job_engine.emit_canonical", side_effect=_multi
     ):
         accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
-        await _wait_terminal(accepted.job_id)
+        status = await _wait_terminal(accepted.job_id)
 
-    with pytest.raises(HTTPException) as excinfo:
-        resolve_export_download(TENANT_SLUG, accepted.job_id)
-    assert excinfo.value.status_code == 409
-    assert "MFX-4.2" in excinfo.value.detail
+    artifact = resolve_export_download(TENANT_SLUG, accepted.job_id)
+    assert artifact.media_type == "application/zip"
+    assert artifact.filename.endswith(".zip")
+    # The resolved target format keys the bundle filename.
+    assert artifact.filename == f"{status['result']['target']}.zip"
+    assert isinstance(artifact.body, bytes)
+
+    # The bundle is a real zip carrying every emitted file (byte-for-byte) plus a manifest.
+    with zipfile.ZipFile(io.BytesIO(artifact.body)) as archive:
+        names = archive.namelist()
+        assert set(names) == {"a.proto", "pkg/b.proto", "manifest.json"}
+        assert archive.read("a.proto").decode("utf-8") == 'syntax = "proto3";\n'
+        assert archive.read("pkg/b.proto").decode("utf-8") == serialize_file_content(
+            'syntax = "proto3";\nmessage B {}\n'
+        )
+        manifest = json.loads(archive.read("manifest.json").decode("utf-8"))
+
+    # The embedded manifest mirrors the job's file manifest (paths + serialized sizes).
+    assert manifest["target"] == status["result"]["target"]
+    assert manifest["file_count"] == 2
+    assert [f["path"] for f in manifest["files"]] == ["a.proto", "pkg/b.proto"]
+    assert manifest["files"][0]["size_bytes"] == status["result"]["files"][0]["size_bytes"]
+    # The manifest never lists itself.
+    assert "manifest.json" not in [f["path"] for f in manifest["files"]]
 
 
 async def test_resolve_export_download_is_tenant_scoped():
