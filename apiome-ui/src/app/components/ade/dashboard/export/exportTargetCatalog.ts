@@ -123,6 +123,78 @@ export function exportTargetCards(
   return cards;
 }
 
+/**
+ * Collapse a format string (a source import format like `protobuf`, or a target descriptor's
+ * `key`/`format` like `proto` / `proto-3`) to a canonical family token, so a source and a target
+ * that mean the same format compare equal. Lowercases, drops version suffixes and punctuation,
+ * and folds well-known synonyms (`grpc`/`proto3` → `protobuf`, `oas`/`swagger` → `openapi`, …).
+ *
+ * @param value A source format or a target key/format string.
+ * @returns The canonical family token, or null when the value is empty.
+ */
+export function canonicalFormatFamily(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') return null;
+  // Strip version numbers (`proto-3`, `openapi-3.1`, `avro-1.12`) and any punctuation.
+  const base = value.toLowerCase().replace(/[^a-z]/g, '');
+  if (!base) return null;
+  const synonyms: Record<string, string> = {
+    proto: 'protobuf',
+    proto3: 'protobuf',
+    protobuf: 'protobuf',
+    grpc: 'protobuf',
+    oas: 'openapi',
+    openapi: 'openapi',
+    swagger: 'openapi',
+    graphql: 'graphql',
+    gql: 'graphql',
+    asyncapi: 'asyncapi',
+    avro: 'avro',
+    typespec: 'typespec',
+    tsp: 'typespec',
+    jsonschema: 'jsonschema',
+  };
+  return synonyms[base] ?? base;
+}
+
+/**
+ * Whether a target emits the same format the source was imported as — a redundant round-trip
+ * (e.g. a GraphQL source re-exported to GraphQL). Matched by canonical family against the
+ * target's registry key and its output format, so `proto` / `proto-3` both match a `protobuf`
+ * source.
+ *
+ * @param descriptor The target's descriptor.
+ * @param sourceFormat The source's original import format (e.g. `graphql`).
+ */
+export function targetMatchesSourceFormat(
+  descriptor: ExportTargetDescriptor,
+  sourceFormat: string | null | undefined,
+): boolean {
+  const source = canonicalFormatFamily(sourceFormat);
+  if (!source) return false;
+  return (
+    canonicalFormatFamily(descriptor.key) === source ||
+    canonicalFormatFamily(descriptor.format) === source
+  );
+}
+
+/**
+ * Drop the target that merely re-emits the source's own format (MFX-41.1): exporting a GraphQL
+ * source to GraphQL is a lossy round-trip when the original bytes are already on hand. The
+ * "Original source" option replaces it. With no known `sourceFormat` (e.g. a version source),
+ * every card is kept.
+ *
+ * @param cards The renderable target cards from {@link exportTargetCards}.
+ * @param sourceFormat The source's original import format, when known.
+ * @returns The cards with any same-format target removed.
+ */
+export function filterSameFormatTargets(
+  cards: ExportTargetCard[],
+  sourceFormat: string | null | undefined,
+): ExportTargetCard[] {
+  if (!canonicalFormatFamily(sourceFormat)) return cards;
+  return cards.filter((card) => !targetMatchesSourceFormat(card.entry.descriptor, sourceFormat));
+}
+
 /** Human label for a fidelity tier, as printed on the card badge. */
 export function tierLabel(tier: ExportFidelityTier): string {
   return tier;

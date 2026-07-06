@@ -8,13 +8,17 @@
  */
 
 import {
+  canonicalFormatFamily,
   changedOptions,
   exportTargetCards,
   fidelityChips,
   fidelityPreSummary,
+  filterSameFormatTargets,
   optionFieldsFromSchema,
+  targetMatchesSourceFormat,
   tierBadgeClass,
   validateExportOptions,
+  type ExportTargetDescriptor,
   type ExportTargetEntry,
   type ExportTargetsResponse,
   type TargetFidelitySummary,
@@ -332,5 +336,68 @@ describe('validateExportOptions (MFX-41.1)', () => {
       {},
     );
     expect(validateExportOptions(optional, { package: null })).toEqual({ valid: true, errors: {} });
+  });
+});
+
+describe('canonicalFormatFamily (MFX-41.1)', () => {
+  it('folds synonyms and version suffixes to one family', () => {
+    expect(canonicalFormatFamily('proto-3')).toBe('protobuf');
+    expect(canonicalFormatFamily('protobuf')).toBe('protobuf');
+    expect(canonicalFormatFamily('grpc')).toBe('protobuf');
+    expect(canonicalFormatFamily('openapi-3.1')).toBe('openapi');
+    expect(canonicalFormatFamily('swagger')).toBe('openapi');
+    expect(canonicalFormatFamily('GraphQL')).toBe('graphql');
+    expect(canonicalFormatFamily('avro-1.12')).toBe('avro');
+  });
+
+  it('returns null for empty input', () => {
+    expect(canonicalFormatFamily(null)).toBeNull();
+    expect(canonicalFormatFamily('')).toBeNull();
+    expect(canonicalFormatFamily('123')).toBeNull();
+  });
+});
+
+describe('targetMatchesSourceFormat (MFX-41.1)', () => {
+  const proto: ExportTargetDescriptor = makeEntry({ key: 'proto', format: 'proto-3' }).descriptor;
+  const graphql: ExportTargetDescriptor = makeEntry({ key: 'graphql', format: 'graphql' }).descriptor;
+
+  it('matches a target to the source by canonical family', () => {
+    expect(targetMatchesSourceFormat(proto, 'protobuf')).toBe(true);
+    expect(targetMatchesSourceFormat(proto, 'grpc')).toBe(true);
+    expect(targetMatchesSourceFormat(graphql, 'graphql')).toBe(true);
+  });
+
+  it('does not match a different format or an unknown source', () => {
+    expect(targetMatchesSourceFormat(proto, 'graphql')).toBe(false);
+    expect(targetMatchesSourceFormat(graphql, 'openapi')).toBe(false);
+    expect(targetMatchesSourceFormat(proto, null)).toBe(false);
+  });
+});
+
+describe('filterSameFormatTargets (MFX-41.1)', () => {
+  const response: ExportTargetsResponse = {
+    artifact: 'item-1',
+    version: null,
+    version_record_id: 'rev-1',
+    version_label: '1.0.0',
+    targets: [
+      makeEntry({ key: 'openapi', format: 'openapi-3.1' }),
+      makeEntry({ key: 'graphql', format: 'graphql', label: 'GraphQL' }),
+      makeEntry({ key: 'proto', format: 'proto-3', label: 'gRPC / Protobuf' }),
+    ],
+  };
+  const cards = exportTargetCards(response);
+
+  it('drops the target that re-emits the source format', () => {
+    const kept = filterSameFormatTargets(cards, 'graphql').map((c) => c.key);
+    expect(kept).toEqual(['openapi', 'proto']);
+  });
+
+  it('keeps every target when the source format is unknown', () => {
+    expect(filterSameFormatTargets(cards, null).map((c) => c.key)).toEqual([
+      'openapi',
+      'graphql',
+      'proto',
+    ]);
   });
 });

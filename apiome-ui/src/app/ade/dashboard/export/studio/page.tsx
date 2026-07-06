@@ -25,6 +25,8 @@ function ExportStudioRouteContent() {
   const version = searchParams.get('version');
   const label = searchParams.get('label');
   const target = searchParams.get('target');
+  const origin = searchParams.get('from');
+  const sourceFormat = searchParams.get('sourceFormat');
 
   if (status === 'loading') {
     return (
@@ -72,6 +74,8 @@ function ExportStudioRouteContent() {
       artifactLabel={label}
       version={version}
       initialTarget={target}
+      origin={origin}
+      sourceFormat={sourceFormat}
     />
   );
 }

@@ -4335,6 +4335,7 @@ const Versions = () => {
           artifact={exportVersion.project_id}
           artifactLabel={projects.find((p) => p.id === exportVersion.project_id)?.name}
           version={exportVersion.id}
+          studioOrigin="versions"
           onExported={(summary: ExportedArtifactSummary) => {
             // Feed the version view's recent-exports list (browser-local until MFX-46.1).
             recordRecentExport(exportVersion.project_id, exportVersion.id, summary);

@@ -27,14 +27,17 @@ import { ExportTargetGrid } from './ExportTargetGrid';
 import { ExportOptionsForm } from './ExportOptionsForm';
 import { FidelityWarningPanel } from './FidelityWarningPanel';
 import { ArtifactPreviewCard } from './ArtifactPreviewCard';
+import { OriginalSourceOption } from './OriginalSourceOption';
 import { requiresExportAcknowledgement } from './exportFidelityPreview';
 import { zipFilenameFor, type EmittedArtifact } from './exportArtifactPreview';
 import { buildZip } from './zipBundle';
 import { downloadBlob, filenameFromDisposition } from './exportDownload';
+import { resolveStudioBack } from './exportStudioLink';
 import type { ExportedArtifactSummary } from './ExportDialog';
 import {
   changedOptions,
   exportTargetCards,
+  filterSameFormatTargets,
   optionFieldsFromSchema,
   tierBadgeClass,
   tierLabel,
@@ -51,6 +54,13 @@ interface ExportStudioProps {
   version?: string | null;
   /** A target emitter key to pre-select (carried from the ExportDialog escalation). */
   initialTarget?: string | null;
+  /** Where the export was launched from — resolves the back link (Versions vs Catalog). */
+  origin?: string | null;
+  /**
+   * The source's original import format (e.g. `graphql`), when known (catalog sources). Hides the
+   * redundant same-format target and offers the original source unchanged instead.
+   */
+  sourceFormat?: string | null;
   /** Called after a successful generate, so an entry point can record it as a recent export. */
   onGenerated?: (summary: ExportedArtifactSummary) => void;
 }
@@ -88,6 +98,8 @@ export function ExportStudio({
   artifactLabel,
   version = null,
   initialTarget = null,
+  origin = null,
+  sourceFormat = null,
   onGenerated,
 }: ExportStudioProps) {
   const [step, setStep] = useState<StudioStep>('source');
@@ -103,7 +115,13 @@ export function ExportStudio({
   const [error, setError] = useState<string | null>(null);
 
   const { response, loading, error: targetsError } = useExportTargets(true, artifact, version);
-  const cards = useMemo(() => exportTargetCards(response), [response]);
+  // Drop the redundant same-format target (e.g. GraphQL→GraphQL); the "Original source" option
+  // replaces it when the source's format is known.
+  const cards = useMemo(
+    () => filterSameFormatTargets(exportTargetCards(response), sourceFormat),
+    [response, sourceFormat],
+  );
+  const backTarget = useMemo(() => resolveStudioBack(origin), [origin]);
   const selected = useMemo(
     () => cards.find((card) => card.key === selectedKey) ?? null,
     [cards, selectedKey],
@@ -269,11 +287,11 @@ export function ExportStudio({
       <div className={dashboardContentStackClass}>
         <div>
           <Link
-            href="/ade/dashboard/versions"
+            href={backTarget.href}
             className="mb-2 inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline dark:text-indigo-400"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back to Versions
+            Back to {backTarget.label}
           </Link>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
             <PanelsTopLeft className="h-6 w-6 text-indigo-500" aria-hidden />
@@ -349,6 +367,7 @@ export function ExportStudio({
 
           {step === 'target' && (
             <div className="space-y-4">
+              {sourceFormat && <OriginalSourceOption artifact={artifact} sourceFormat={sourceFormat} />}
               <ExportTargetGrid
                 cards={cards}
                 selectedKey={selectedKey}

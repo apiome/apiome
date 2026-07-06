@@ -22,14 +22,16 @@ import { FidelityWarningPanel } from './FidelityWarningPanel';
 import { ArtifactPreviewCard } from './ArtifactPreviewCard';
 import { ExportTargetGrid } from './ExportTargetGrid';
 import { ExportOptionsForm } from './ExportOptionsForm';
+import { OriginalSourceOption } from './OriginalSourceOption';
 import { requiresExportAcknowledgement } from './exportFidelityPreview';
 import { zipFilenameFor, type EmittedArtifact } from './exportArtifactPreview';
 import { buildZip } from './zipBundle';
 import { downloadBlob, filenameFromDisposition } from './exportDownload';
-import { exportStudioHref } from './exportStudioLink';
+import { exportStudioHref, type ExportStudioOrigin } from './exportStudioLink';
 import {
   changedOptions,
   exportTargetCards,
+  filterSameFormatTargets,
   optionFieldsFromSchema,
   type ExportFidelityTier,
   type ExportTargetCard,
@@ -58,6 +60,13 @@ interface ExportDialogProps {
   artifactLabel?: string;
   /** The revision to export (UUID or version label); the latest revision when omitted. */
   version?: string | null;
+  /**
+   * The source's original import format (e.g. `graphql`), when known (catalog sources). Hides the
+   * redundant same-format target and offers the original source unchanged instead (MFX-41.1).
+   */
+  sourceFormat?: string | null;
+  /** Where the export was launched from — carried into the Studio so its back link returns there. */
+  studioOrigin?: ExportStudioOrigin;
   /** Called after a successful export (the document has been emitted and is being previewed). */
   onExported?: (summary: ExportedArtifactSummary) => void;
 }
@@ -89,6 +98,8 @@ export function ExportDialog({
   artifact,
   artifactLabel,
   version = null,
+  sourceFormat = null,
+  studioOrigin,
   onExported,
 }: ExportDialogProps) {
   const router = useRouter();
@@ -103,7 +114,12 @@ export function ExportDialog({
   const [acknowledged, setAcknowledged] = useState(false);
 
   const { response, loading, error: targetsError } = useExportTargets(open, artifact, version);
-  const cards = useMemo(() => exportTargetCards(response), [response]);
+  // Drop the redundant same-format target (e.g. GraphQL→GraphQL); the "Original source" option
+  // replaces it when the source's format is known.
+  const cards = useMemo(
+    () => filterSameFormatTargets(exportTargetCards(response), sourceFormat),
+    [response, sourceFormat],
+  );
   const selected = useMemo(
     () => cards.find((card) => card.key === selectedKey) ?? null,
     [cards, selectedKey],
@@ -153,10 +169,12 @@ export function ExportDialog({
       version,
       label: artifactLabel,
       target: selectedKey,
+      origin: studioOrigin,
+      sourceFormat,
     });
     handleClose();
     router.push(href);
-  }, [artifact, version, artifactLabel, selectedKey, handleClose, router]);
+  }, [artifact, version, artifactLabel, selectedKey, studioOrigin, sourceFormat, handleClose, router]);
 
   /** Select a target card and seed the options form with that target's defaults. */
   const handleSelect = useCallback((card: ExportTargetCard) => {
@@ -326,6 +344,7 @@ export function ExportDialog({
 
         {step === 'target' && (
           <div className="space-y-4">
+            {sourceFormat && <OriginalSourceOption artifact={artifact} sourceFormat={sourceFormat} />}
             <ExportTargetGrid
               cards={cards}
               selectedKey={selectedKey}
