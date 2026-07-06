@@ -8,7 +8,9 @@ import {
   deriveVerifyVerdict,
   emittedLintLensState,
   emittedLintScore,
+  fidelityAcknowledgementMode,
   groupLintFindingsBySeverity,
+  isSevereConversion,
   lensBadgeCount,
   lintRulesTriggered,
   lintSeverityCounts,
@@ -20,7 +22,9 @@ import {
   verifyVerdictBannerClass,
   type EmittedArtifactLintReport,
   type EmittedValidationReport,
+  type ExportTranscodeGuard,
   type ExportVerifyResponse,
+  type TranscodeVerdict,
 } from '../src/app/components/ade/dashboard/export/exportVerify';
 import type {
   ExportFidelityEnvelope,
@@ -93,12 +97,32 @@ function validation(
   };
 }
 
+/** A transcoding guard with the given band; fields default to a REST→Avro near-empty shape. */
+function guard(
+  verdict: TranscodeVerdict,
+  overrides: Partial<ExportTranscodeGuard> = {},
+): ExportTranscodeGuard {
+  return {
+    verdict,
+    requires_confirmation: verdict === 'severe',
+    target_format: 'Apache Avro',
+    preserved_percent: 31,
+    dropped_operations: verdict === 'clean' || verdict === 'lossy' ? 0 : 6,
+    dropped_events: 0,
+    headline: 'Only schemas will be exported to Apache Avro.',
+    message: 'Apache Avro is a types-only format: it can carry this API\'s schemas but not its operations.',
+    reasons: [],
+    ...overrides,
+  };
+}
+
 /** Assemble a verify result from its lens parts. */
 function result(
   fid: ExportFidelityEnvelope,
   val: EmittedValidationReport,
   lint: EmittedArtifactLintReport | null = null,
   verdict?: ExportVerifyResponse['verdict'],
+  grd?: ExportTranscodeGuard | null,
 ): ExportVerifyResponse {
   return {
     artifact: 'proj-1',
@@ -106,6 +130,7 @@ function result(
     version_record_id: 'rev-1',
     version_label: '1.0.0',
     fidelity: fid,
+    guard: grd ?? null,
     validation: val,
     lint,
     verdict: verdict ?? null,
@@ -117,12 +142,29 @@ describe('deriveVerifyVerdict', () => {
     expect(deriveVerifyVerdict(result(fidelity('lossless'), validation('invalid')))).toBe('invalid');
   });
 
-  it('is lossy when the conversion is not lossless and validation passes', () => {
+  it('is lossy when the conversion is loss-bearing but the operational surface survives', () => {
     expect(deriveVerifyVerdict(result(fidelity('lossy', { drop: 2 }), validation('valid')))).toBe(
       'lossy',
     );
-    // types-only is also a non-lossless (acknowledgement-requiring) band.
-    expect(deriveVerifyVerdict(result(fidelity('types-only'), validation('valid')))).toBe('lossy');
+  });
+
+  it('is severe for a types-only (near-empty) reduction — MFX-42.4', () => {
+    // Fallback path: no guard rode along, so the types-only tier stands in.
+    expect(deriveVerifyVerdict(result(fidelity('types-only'), validation('valid')))).toBe('severe');
+    // With the guard present: near-empty and severe both promote to the severe band.
+    expect(
+      deriveVerifyVerdict(result(fidelity('types-only'), validation('valid'), null, null, guard('near-empty'))),
+    ).toBe('severe');
+    expect(
+      deriveVerifyVerdict(result(fidelity('lossy', { drop: 4 }), validation('valid'), null, null, guard('severe'))),
+    ).toBe('severe');
+  });
+
+  it('promotes a server "lossy" verdict to severe when the guard is near-empty/severe', () => {
+    // The endpoint has no severe band (it reports a types-only conversion as lossy); the client
+    // must still surface the typed-acknowledgement gate.
+    const r = result(fidelity('types-only'), validation('valid'), null, 'lossy', guard('near-empty'));
+    expect(deriveVerifyVerdict(r)).toBe('severe');
   });
 
   it('is clean for a lossless, valid conversion', () => {
@@ -139,18 +181,54 @@ describe('deriveVerifyVerdict', () => {
     const r = result(fidelity('lossless'), validation('valid'), null, 'invalid');
     expect(deriveVerifyVerdict(r)).toBe('invalid');
   });
+
+  it('honours a server "lossy" for a lossy-tier conversion with no severe guard', () => {
+    const r = result(fidelity('lossy', { drop: 2 }), validation('valid'), null, 'lossy', guard('lossy'));
+    expect(deriveVerifyVerdict(r)).toBe('lossy');
+  });
+});
+
+describe('isSevereConversion (MFX-42.4)', () => {
+  it('uses the guard when present — near-empty and severe are severe; clean and lossy are not', () => {
+    expect(isSevereConversion(result(fidelity('lossy'), validation('valid'), null, null, guard('near-empty')))).toBe(true);
+    expect(isSevereConversion(result(fidelity('lossy'), validation('valid'), null, null, guard('severe')))).toBe(true);
+    expect(isSevereConversion(result(fidelity('lossy'), validation('valid'), null, null, guard('lossy')))).toBe(false);
+    expect(isSevereConversion(result(fidelity('lossless'), validation('valid'), null, null, guard('clean')))).toBe(false);
+  });
+
+  it('falls back to the types-only tier when no guard rode along', () => {
+    expect(isSevereConversion(result(fidelity('types-only'), validation('valid')))).toBe(true);
+    expect(isSevereConversion(result(fidelity('lossy'), validation('valid')))).toBe(false);
+    expect(isSevereConversion(result(fidelity('lossless'), validation('valid')))).toBe(false);
+  });
+});
+
+describe('fidelityAcknowledgementMode (MFX-42.4)', () => {
+  it('maps each verdict to its acknowledgement control', () => {
+    expect(fidelityAcknowledgementMode('severe')).toBe('typed');
+    expect(fidelityAcknowledgementMode('lossy')).toBe('checkbox');
+    expect(fidelityAcknowledgementMode('clean')).toBe('hidden');
+    expect(fidelityAcknowledgementMode('invalid')).toBe('hidden');
+    expect(fidelityAcknowledgementMode(null)).toBe('hidden');
+  });
 });
 
 describe('verifyVerdictBanner', () => {
   it('uses the roadmap label strings verbatim', () => {
     expect(verifyVerdictBanner('clean').label).toBe('Clean');
     expect(verifyVerdictBanner('lossy').label).toBe('Lossy — acknowledge to continue');
+    expect(verifyVerdictBanner('severe').label).toBe('Severe — acknowledge to continue');
     expect(verifyVerdictBanner('invalid').label).toBe('Invalid — export blocked');
+  });
+
+  it('names the types-only outcome in the severe description (MFX-42.4)', () => {
+    expect(verifyVerdictBanner('severe').description).toMatch(/types-only artifact/);
   });
 
   it('maps each verdict to its tone', () => {
     expect(verifyVerdictBanner('clean').tone).toBe('clean');
     expect(verifyVerdictBanner('lossy').tone).toBe('lossy');
+    expect(verifyVerdictBanner('severe').tone).toBe('severe');
     expect(verifyVerdictBanner('invalid').tone).toBe('invalid');
   });
 
@@ -158,9 +236,10 @@ describe('verifyVerdictBanner', () => {
     const classes = new Set([
       verifyVerdictBannerClass('clean'),
       verifyVerdictBannerClass('lossy'),
+      verifyVerdictBannerClass('severe'),
       verifyVerdictBannerClass('invalid'),
     ]);
-    expect(classes.size).toBe(3);
+    expect(classes.size).toBe(4);
   });
 });
 
@@ -317,6 +396,11 @@ describe('verifyGatePasses', () => {
   it('passes lossy only once acknowledged', () => {
     expect(verifyGatePasses('lossy', false)).toBe(false);
     expect(verifyGatePasses('lossy', true)).toBe(true);
+  });
+
+  it('passes severe only once acknowledged (the typed acknowledgement) — MFX-42.4', () => {
+    expect(verifyGatePasses('severe', false)).toBe(false);
+    expect(verifyGatePasses('severe', true)).toBe(true);
   });
 
   it('always passes clean', () => {

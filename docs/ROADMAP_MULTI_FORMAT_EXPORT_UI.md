@@ -401,13 +401,13 @@ flowchart LR
   DRY --> L[Lint lens\nfindings + score]
   F & V & L --> GATE{verdict}
   GATE -->|clean| GEN[Generate enabled]
-  GATE -->|lossy| ACK[Export anyway acknowledgment]
+  GATE -->|lossy| ACK[Export anyway checkbox]
+  GATE -->|severe| TYPED[Typed acknowledgment\ntypes-only artifact]
   GATE -->|invalid| BLOCK[Generate blocked + detail]
 ```
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 42.4 #4357 | Fidelity lens + go/no-go gate | embed MFX-6.2 panel; verdict logic; "Export anyway" acknowledgment | export,ui,mvp | Y | Y | S | apiome-ui |
 | 42.6 #4359 | Re-verify on change + result caching | option-change invalidation, debounce, cached verdicts per config hash | export,ui,typescript | Y | N | S | apiome-ui |
 
 ### MFX-42.1 — Verify orchestration UI · #4354
@@ -496,6 +496,24 @@ flowchart LR
 - **Technical Stack.** Next.js.
 
 ### MFX-42.4 — Fidelity lens + go/no-go gate · #4357
+- **Status (done).** The Verify workbench already embeds the MFX-6.2 `FidelityWarningPanel` as its
+  Fidelity lens (from MFX-42.1); 42.4 completes the **go/no-go matrix** by adding a fourth verdict
+  band, **`severe`**, for a types-only / near-empty (MFX-3.3) reduction and gating it behind an
+  explicit **typed** acknowledgement rather than the lossy checkbox. `exportVerify.ts` now mirrors
+  the response's `guard` (`TranscodeGuard`, MFX-3.3), and `deriveVerifyVerdict` promotes a result to
+  `severe` when the guard is `near-empty`/`severe` (falling back to the `types-only` tier when no
+  guard rode along) — otherwise it honours the server verdict, so the client gate stays
+  stricter-or-equal to the server's `clean`/`lossy`/`invalid`. The matrix: `invalid` ⇒ blocked
+  outright; `severe` ⇒ the user types `export produces a types-only artifact` (single-sourced as
+  `EXPORT_TYPES_ONLY_ACK_PHRASE` + `acknowledgementPhraseMatches`, case-insensitive/trimmed);
+  `lossy` ⇒ the "Export anyway" checkbox (MFX-6.2); `clean` ⇒ green path. `verifyVerdictBanner`
+  gains a red `Severe — acknowledge to continue` band whose copy names the types-only outcome, and
+  the panel renders the checkbox vs the typed input by an `acknowledgementMode` prop
+  (`fidelityAcknowledgementMode(verdict)`); the ADE dialog omits the prop and keeps its tier-driven
+  checkbox default. Covered by `exportVerify.test.ts`, `FidelityWarningPanel.test.tsx`,
+  `VerifyWorkbench.test.tsx`, and `exportFidelityPreview.test.ts` on the ticket's fixture bands
+  (clean OpenAPI→OpenAPI; lossy OpenAPI→proto; severe REST→Avro). Full apiome-ui suite green (4575
+  tests, +17). Bump apiome-ui 0.61.0 → 0.62.0.
 - **Problem.** The fidelity panel exists (MFX-6.2); the Verify workbench must embed it and derive
   the gate from it plus the other lenses.
 - **Solution / Scope.** Embed the MFX-6.2 panel (advisory, preserved-% ring, DROP/APPROX/SYNTH/OK

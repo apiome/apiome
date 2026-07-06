@@ -136,6 +136,44 @@ export function requiresExportAcknowledgement(tier: ExportFidelityTier): boolean
   return tier !== 'lossless';
 }
 
+/**
+ * The single source of the types-only (severe / MFX-3.3 near-empty) acknowledgement phrase.
+ *
+ * A severe conversion — one whose target is a types-only format, so only the source's schemas
+ * export and every operation/channel is dropped — is gated in the Verify workbench (MFX-42.4) not
+ * by the lossy "Export anyway" checkbox but by an explicit **typed** acknowledgement: the user must
+ * type this exact phrase to confirm they understand the outcome. Keeping the phrase in one place
+ * means the confirmation prompt, the input's match check, and any copy that quotes it can never
+ * drift — and it mirrors the MFX-2.4 advisory's plain description of what a types-only export
+ * produces. The match is case-insensitive and trims surrounding whitespace (see
+ * {@link acknowledgementPhraseMatches}).
+ */
+export const EXPORT_TYPES_ONLY_ACK_PHRASE = 'export produces a types-only artifact';
+
+/**
+ * Which acknowledgement control the fidelity panel renders (MFX-42.4): a `typed` phrase input for a
+ * severe (types-only) conversion, the `checkbox` for a lossy one, or `hidden` when none is needed
+ * (clean, or an invalid export that cannot be overridden). Lives in this pure module so the panel
+ * depends only on the fidelity primitives; the workbench maps a verdict to it via
+ * `fidelityAcknowledgementMode`.
+ */
+export type AcknowledgementMode = 'typed' | 'checkbox' | 'hidden';
+
+/**
+ * Whether a user's typed input satisfies the types-only acknowledgement (MFX-42.4).
+ *
+ * Compares the input against {@link EXPORT_TYPES_ONLY_ACK_PHRASE} case-insensitively and ignoring
+ * surrounding whitespace, so trivial casing/spacing differences do not block a user who clearly
+ * typed the phrase. Interior wording must still match exactly — this is a deliberate friction gate,
+ * not a fuzzy search.
+ *
+ * @param input The raw text the user typed into the confirmation field.
+ * @returns True when the input matches the acknowledgement phrase.
+ */
+export function acknowledgementPhraseMatches(input: string): boolean {
+  return input.trim().toLowerCase() === EXPORT_TYPES_ONLY_ACK_PHRASE;
+}
+
 /** The SVG geometry for the preserved-% ring, precomputed so the component stays declarative. */
 export interface RingGeometry {
   /** The ring circle's circumference (the `stroke-dasharray`). */

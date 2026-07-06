@@ -15,7 +15,11 @@
  * verdict those lenses hang under.
  */
 
-import { requiresExportAcknowledgement, type ExportFidelityEnvelope } from './exportFidelityPreview';
+import {
+  requiresExportAcknowledgement,
+  type AcknowledgementMode,
+  type ExportFidelityEnvelope,
+} from './exportFidelityPreview';
 import type { LintSeverity } from '../../../../utils/version-lint-report';
 
 /**
@@ -109,10 +113,53 @@ export interface EmittedArtifactLintReport {
 }
 
 /**
- * The overall Verify verdict band shown in the workbench banner (MFX-42.1):
- * `clean` green go · `lossy` acknowledge-to-continue · `invalid` export blocked.
+ * The overall Verify verdict band shown in the workbench banner (MFX-42.1 / MFX-42.4):
+ * `clean` green go · `lossy` acknowledge-to-continue (checkbox) · `severe` typed
+ * acknowledge-to-continue (a types-only / near-empty reduction, MFX-3.3) · `invalid` export
+ * blocked.
+ *
+ * `severe` is a UI-only refinement of the band the server reports: the endpoint's own `verdict`
+ * only distinguishes `clean` / `lossy` / `invalid` (a types-only conversion is a `lossy` band
+ * there), so the workbench promotes a `lossy`-tier result to `severe` when the transcoding guard
+ * (MFX-3.3) classifies it near-empty/severe — see {@link deriveVerifyVerdict}.
  */
-export type ExportVerifyVerdict = 'clean' | 'lossy' | 'invalid';
+export type ExportVerifyVerdict = 'clean' | 'lossy' | 'severe' | 'invalid';
+
+/**
+ * The transcoding guard's coarse conversion band (mirrors Python `TranscodeVerdict`, MFX-3.3):
+ * `clean` lossless · `lossy` some loss but the operational surface survives · `near-empty` a
+ * types-only target keeps only the schemas and drops every operation/channel · `severe` the
+ * target structurally cannot represent the source's essence (a nonsensical paradigm shift) or the
+ * export drops a critical construct. The last two are the ones the Verify gate treats as `severe`.
+ */
+export type TranscodeVerdict = 'clean' | 'lossy' | 'near-empty' | 'severe';
+
+/**
+ * The pre-flight transcoding guard for one (source, target) conversion (mirrors Python
+ * `TranscodeGuard`, MFX-3.3). The Verify workbench reads its {@link verdict} to tell a types-only /
+ * near-empty reduction (which needs the explicit typed acknowledgement) apart from an ordinary
+ * lossy conversion (the checkbox), and renders its verbatim {@link message} as the guard's *why*.
+ */
+export interface ExportTranscodeGuard {
+  /** The conversion band: clean / lossy / near-empty / severe. */
+  verdict: TranscodeVerdict;
+  /** Whether the emit must be explicitly confirmed before it runs (true only for `severe`). */
+  requires_confirmation: boolean;
+  /** Human label for the target format woven into the copy (e.g. `Apache Avro`). */
+  target_format: string;
+  /** Estimated share of constructs carried faithfully, 0–100. */
+  preserved_percent: number;
+  /** Source operations the target structurally cannot represent (0 when it can carry operations). */
+  dropped_operations: number;
+  /** Source event channels the target structurally cannot represent (0 when it can carry events). */
+  dropped_events: number;
+  /** Short banner heading for the guard. */
+  headline: string;
+  /** The full, ready-to-display guard sentence; consumers render it verbatim. */
+  message: string;
+  /** The structured *why*: one line per contributing factor. */
+  reasons?: string[];
+}
 
 /**
  * The `POST /api/export/verify` response (mirrors REST `ExportVerifyResponse`, MFX-42.5).
@@ -132,6 +179,13 @@ export interface ExportVerifyResponse {
   version_label?: string | null;
   /** The full fidelity envelope (target + summary + per-construct report + advisory). */
   fidelity: ExportFidelityEnvelope;
+  /**
+   * The pre-flight transcoding guard (MFX-3.3): the conversion band + why. Present on every real
+   * verify response; optional here so fixtures/older payloads without it still type-check — a
+   * missing guard falls back to the fidelity tier for the severe/lossy split (see
+   * {@link isSevereConversion}).
+   */
+  guard?: ExportTranscodeGuard | null;
   /** The emitted-output validation gate + report (MFX-5.3). */
   validation: EmittedValidationReport;
   /** The emitted-artifact lint report (MFX-5.2); null when the endpoint ran no lint pass. */
@@ -144,25 +198,49 @@ export interface ExportVerifyResponse {
 }
 
 /**
- * The overall go/no-go verdict for a verify result (MFX-42.1), per the MFX-5.3 gate + MFX-3.3
- * severity classes:
+ * Whether a verify result is a *severe* conversion (MFX-42.4) — a types-only / near-empty
+ * reduction that exports only the source's schemas, dropping its whole operational surface, or a
+ * structurally nonsensical paradigm shift / critical-construct drop. A severe conversion is gated
+ * by the explicit **typed** acknowledgement rather than the lossy "Export anyway" checkbox.
  *
- * - **invalid** — a validator ran and rejected the artifact ({@link EmittedValidationReport.blocks_delivery});
- *   the export is blocked and no acknowledgement can override it.
- * - **lossy** — the conversion is not lossless (its fidelity tier requires acknowledgement,
- *   MFX-6.2); the user may continue only after the explicit "Export anyway" acknowledgement.
+ * The transcoding guard (MFX-3.3) is the authority when present — its `near-empty` and `severe`
+ * bands are exactly this case. When no guard rode along (older payloads / fixtures) the fidelity
+ * tier stands in: a `types-only` tier is the near-empty reduction.
+ *
+ * @param result The verify result to inspect.
+ * @returns True when the conversion is severe (types-only / near-empty / structurally severe).
+ */
+export function isSevereConversion(result: ExportVerifyResponse): boolean {
+  const guard = result.guard;
+  if (guard) return guard.verdict === 'severe' || guard.verdict === 'near-empty';
+  return result.fidelity.summary.tier === 'types-only';
+}
+
+/**
+ * The overall go/no-go verdict for a verify result (MFX-42.1 / MFX-42.4), per the MFX-5.3 gate +
+ * the MFX-3.3 transcoding guard:
+ *
+ * - **invalid** — a validator ran and rejected the artifact ({@link EmittedValidationReport.blocks_delivery},
+ *   or the server said so); the export is blocked and no acknowledgement can override it.
+ * - **severe** — a types-only / near-empty (or structurally severe) conversion ({@link isSevereConversion});
+ *   the user may continue only after the explicit **typed** acknowledgement (MFX-42.4).
+ * - **lossy** — any other non-lossless conversion; the user may continue after the "Export anyway"
+ *   checkbox (MFX-6.2).
  * - **clean** — a lossless conversion that validated (or was not-applicable/skipped); the green
  *   path. A `skipped` validation (toolchain unavailable) warns but does not demote a clean band.
  *
- * The server's own {@link ExportVerifyResponse.verdict} wins when present; this derivation is the
- * client fallback and keeps the two in agreement.
+ * `invalid` and `severe` are evaluated first because they refine what the server's own
+ * {@link ExportVerifyResponse.verdict} reports: the endpoint has no `severe` band (it reports a
+ * types-only conversion as `lossy`), so the client promotes a severe conversion here and otherwise
+ * honours the server verdict, keeping the Generate gate stricter-or-equal to the server's.
  *
  * @param result The verify result to classify.
  * @returns The overall verdict band.
  */
 export function deriveVerifyVerdict(result: ExportVerifyResponse): ExportVerifyVerdict {
+  if (result.verdict === 'invalid' || result.validation.blocks_delivery) return 'invalid';
+  if (isSevereConversion(result)) return 'severe';
   if (result.verdict) return result.verdict;
-  if (result.validation.blocks_delivery) return 'invalid';
   if (requiresExportAcknowledgement(result.fidelity.summary.tier)) return 'lossy';
   return 'clean';
 }
@@ -174,13 +252,14 @@ export interface VerifyVerdictBanner {
   /** The one-line explanation under the heading. */
   description: string;
   /** The colour tone driving the banner classes and icon. */
-  tone: 'clean' | 'lossy' | 'invalid';
+  tone: 'clean' | 'lossy' | 'severe' | 'invalid';
 }
 
 /**
- * The banner copy + tone for a verdict (MFX-42.1). The labels are the roadmap's exact strings so
- * the Verify and Review steps read identically:
- * `Clean` / `Lossy — acknowledge to continue` / `Invalid — export blocked`.
+ * The banner copy + tone for a verdict (MFX-42.1 / MFX-42.4). The labels are the roadmap's exact
+ * strings so the Verify and Review steps read identically:
+ * `Clean` / `Lossy — acknowledge to continue` / `Severe — acknowledge to continue` /
+ * `Invalid — export blocked`.
  *
  * @param verdict The overall verdict band.
  * @returns The banner label, description, and tone.
@@ -193,6 +272,13 @@ export function verifyVerdictBanner(verdict: ExportVerifyVerdict): VerifyVerdict
         description:
           'A validator re-parsed the emitted artifact and rejected it. Fix the source or choose a different target — this export cannot be generated.',
         tone: 'invalid',
+      };
+    case 'severe':
+      return {
+        label: 'Severe — acknowledge to continue',
+        description:
+          'The target is a types-only format: this export produces a types-only artifact — only the schemas survive and every operation and channel is dropped. Review the fidelity lens, then type the acknowledgement to continue.',
+        tone: 'severe',
       };
     case 'lossy':
       return {
@@ -217,6 +303,8 @@ export function verifyVerdictBannerClass(tone: VerifyVerdictBanner['tone']): str
   switch (tone) {
     case 'invalid':
       return 'border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-100';
+    case 'severe':
+      return 'border-red-400 bg-red-100 text-red-900 dark:border-red-700 dark:bg-red-950/50 dark:text-red-100';
     case 'lossy':
       return 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100';
     case 'clean':
@@ -411,14 +499,19 @@ export function lintRulesTriggered(findings: EmittedLintFinding[]): number {
 }
 
 /**
- * Whether the Verify gate permits generating the export (MFX-42.1 acceptance):
+ * Whether the Verify gate permits generating the export (MFX-42.1 / MFX-42.4 acceptance):
  *
  * - **invalid** — never; the export is blocked regardless of acknowledgement.
- * - **lossy** — only once the loss has been acknowledged.
+ * - **severe** — only once the types-only outcome has been acknowledged (the typed acknowledgement).
+ * - **lossy** — only once the loss has been acknowledged (the "Export anyway" checkbox).
  * - **clean** — always.
  *
+ * Severe and lossy share the single `acknowledged` flag — only one verdict is ever in play at a
+ * time, and the fidelity panel renders the matching control (typed input vs checkbox) that drives
+ * it (see {@link fidelityAcknowledgementMode}).
+ *
  * @param verdict The overall verdict, or null before a verification has run.
- * @param acknowledged Whether the user has acknowledged a lossy conversion.
+ * @param acknowledged Whether the user has acknowledged a lossy/severe conversion.
  * @returns True when Generate should be enabled.
  */
 export function verifyGatePasses(
@@ -427,6 +520,27 @@ export function verifyGatePasses(
 ): boolean {
   if (!verdict) return false;
   if (verdict === 'invalid') return false;
-  if (verdict === 'lossy') return acknowledged;
+  if (verdict === 'lossy' || verdict === 'severe') return acknowledged;
   return true;
 }
+
+/**
+ * Which acknowledgement control the fidelity lens must show for a verdict (MFX-42.4):
+ *
+ * - **typed** — a `severe` conversion needs the explicit typed acknowledgement (the user types the
+ *   {@link EXPORT_TYPES_ONLY_ACK_PHRASE} phrase to confirm the types-only outcome);
+ * - **checkbox** — a `lossy` conversion needs the "Export anyway" checkbox (MFX-6.2);
+ * - **hidden** — `clean` needs none, and `invalid` cannot be overridden, so no control is shown.
+ *
+ * @param verdict The overall verdict, or null before a verification has run.
+ * @returns The acknowledgement control to render.
+ */
+export function fidelityAcknowledgementMode(
+  verdict: ExportVerifyVerdict | null,
+): AcknowledgementMode {
+  if (verdict === 'severe') return 'typed';
+  if (verdict === 'lossy') return 'checkbox';
+  return 'hidden';
+}
+
+export type { AcknowledgementMode } from './exportFidelityPreview';
