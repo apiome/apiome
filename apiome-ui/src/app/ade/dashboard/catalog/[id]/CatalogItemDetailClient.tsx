@@ -726,6 +726,8 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
           onClose={() => setExportOpen(false)}
           artifact={item.id}
           artifactLabel={item.name}
+          sourceFormat={item.sourceFormat ?? null}
+          studioOrigin="catalog"
           onExported={(summary: ExportedArtifactSummary) => {
             // Recorded under the item's "latest" bucket (no explicit version selector here).
             recordRecentExport(item.id, null, summary);

@@ -214,7 +214,7 @@ async function renderStudio(
       expect.anything(),
     ),
   );
-  await waitFor(() => expect(screen.getByText(/3 export targets available/)).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText(/export targets available/)).toBeInTheDocument());
   return utils;
 }
 
@@ -234,6 +234,17 @@ describe('ExportStudio — scope + target grid (MFX-41.1)', () => {
     expect(screen.getByTestId('export-studio')).toBeInTheDocument();
     expect(screen.getAllByText(/Pet Store API/).length).toBeGreaterThan(0);
     expect(screen.getByText(/Version 1\.2\.0/)).toBeInTheDocument();
+  });
+
+  it('resolves the back link to the launch origin', async () => {
+    await renderStudio(mockFetch(), { origin: 'catalog' });
+    expect(screen.getByRole('link', { name: /back to catalog/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /back to versions/i })).not.toBeInTheDocument();
+  });
+
+  it('defaults the back link to Versions when no origin was carried', async () => {
+    await renderStudio(mockFetch());
+    expect(screen.getByRole('link', { name: /back to versions/i })).toBeInTheDocument();
   });
 
   it('renders all five stepper stops', async () => {
@@ -260,6 +271,23 @@ describe('ExportStudio — scope + target grid (MFX-41.1)', () => {
     // The fidelity headline reflects the pre-selected target without a manual pick.
     expect(screen.getByTestId('export-fidelity-headline')).toHaveTextContent('gRPC / Protobuf');
     expect(screen.getByRole('button', { name: /^continue$/i })).toBeEnabled();
+  });
+
+  it('hides the same-format target and offers the original source when the format is known', async () => {
+    await renderStudio(mockFetch(), { sourceFormat: 'protobuf' });
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+
+    // proto (a protobuf emitter) is dropped — re-exporting to the source format is redundant.
+    expect(screen.queryByTestId('export-target-proto')).not.toBeInTheDocument();
+    expect(screen.getByTestId('export-target-openapi')).toBeInTheDocument();
+
+    // The "Original source" option downloads the stored source from the catalog endpoint.
+    const original = screen.getByTestId('export-original-source');
+    expect(original).toHaveTextContent(/protobuf/i);
+    expect(screen.getByTestId('export-original-source-download')).toHaveAttribute(
+      'href',
+      '/api/catalog/proj-petstore/source',
+    );
   });
 });
 

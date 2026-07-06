@@ -1391,6 +1391,8 @@ const Catalog = () => {
           onClose={() => setExportDialogItem(null)}
           artifact={exportDialogItem.id}
           artifactLabel={exportDialogItem.name}
+          sourceFormat={exportDialogItem.sourceFormat ?? null}
+          studioOrigin="catalog"
           onExported={(summary: ExportedArtifactSummary) => {
             // Recorded under the item's "latest" bucket (no explicit version selector here).
             recordRecentExport(exportDialogItem.id, null, summary);

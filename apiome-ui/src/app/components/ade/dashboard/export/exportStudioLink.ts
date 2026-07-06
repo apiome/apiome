@@ -8,11 +8,43 @@
  *  - `artifact` (required) — the artifact (project / catalog-item) id to export;
  *  - `version` — the revision selector (UUID or label); the latest revision when omitted;
  *  - `label` — a human name for the source, shown in the header (falls back to the id);
- *  - `target` — a pre-selected emitter key carried from the dialog's current selection.
+ *  - `target` — a pre-selected emitter key carried from the dialog's current selection;
+ *  - `from` — where the export was launched from, so the Studio's back link returns there;
+ *  - `sourceFormat` — the source's original import format (e.g. `graphql`), so the Studio can
+ *    hide the redundant same-format target and offer the original source unchanged.
  */
 
 /** The base path of the Export Studio route (tenant-scoped by the dashboard layout). */
 export const EXPORT_STUDIO_PATH = '/ade/dashboard/export/studio';
+
+/** Where an export was launched from — determines the Studio's "back" destination. */
+export type ExportStudioOrigin = 'versions' | 'catalog';
+
+/** A resolved back-link target: where to return and what to call it. */
+export interface ExportStudioBackTarget {
+  href: string;
+  label: string;
+}
+
+/** The known launch origins and the screen each returns to. */
+const STUDIO_BACK_TARGETS: Record<ExportStudioOrigin, ExportStudioBackTarget> = {
+  versions: { href: '/ade/dashboard/versions', label: 'Versions' },
+  catalog: { href: '/ade/dashboard/catalog', label: 'Catalog' },
+};
+
+/** The fallback origin when none was carried (the version view is the primary export entry). */
+const DEFAULT_STUDIO_ORIGIN: ExportStudioOrigin = 'versions';
+
+/**
+ * Resolve the Studio's back-link target for a carried origin. Unknown or missing origins fall
+ * back to the Versions screen, so the link is always valid.
+ */
+export function resolveStudioBack(origin: string | null | undefined): ExportStudioBackTarget {
+  if (origin && Object.prototype.hasOwnProperty.call(STUDIO_BACK_TARGETS, origin)) {
+    return STUDIO_BACK_TARGETS[origin as ExportStudioOrigin];
+  }
+  return STUDIO_BACK_TARGETS[DEFAULT_STUDIO_ORIGIN];
+}
 
 /** The scoped source the Studio opens against, carried in the deep link. */
 export interface ExportStudioScope {
@@ -24,13 +56,17 @@ export interface ExportStudioScope {
   label?: string | null;
   /** A pre-selected emitter key (the dialog's current target selection), when escalating. */
   target?: string | null;
+  /** Where the export was launched from, so the Studio's back link returns there. */
+  origin?: ExportStudioOrigin | null;
+  /** The source's original import format (e.g. `graphql`), when known (catalog sources). */
+  sourceFormat?: string | null;
 }
 
 /**
  * Build the Export Studio href for a scoped source. Empty/undefined optional fields are omitted
  * so the URL only carries what was actually selected.
  *
- * @param scope The source (and optional pre-selected target) to open the Studio against.
+ * @param scope The source (and optional pre-selected target / origin / format) to open against.
  * @returns A root-relative URL, e.g. `/ade/dashboard/export/studio?artifact=proj-1&target=proto`.
  */
 export function exportStudioHref(scope: ExportStudioScope): string {
@@ -38,5 +74,7 @@ export function exportStudioHref(scope: ExportStudioScope): string {
   if (scope.version) params.set('version', scope.version);
   if (scope.label) params.set('label', scope.label);
   if (scope.target) params.set('target', scope.target);
+  if (scope.origin) params.set('from', scope.origin);
+  if (scope.sourceFormat) params.set('sourceFormat', scope.sourceFormat);
   return `${EXPORT_STUDIO_PATH}?${params.toString()}`;
 }

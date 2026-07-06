@@ -276,8 +276,13 @@ item, project version) open pre-scoped, matching apiome-ui's design system. The 
   including required options); forward-navigation is gated (no Verify without a target, no Generate
   until Verify ran or the user skips with the lossy loss acknowledged); stepper state survives
   navigation. The ExportDialog gained an **"Open in Export Studio"** footer action that carries
-  the current source + target selection into the Studio via `exportStudioLink`. Covered by
-  `ExportStudio.test.tsx`, `exportStudioLink.test.ts`, and new `validateExportOptions` tests.
+  the current source + target selection into the Studio via `exportStudioLink`. The escalation
+  also carries the launch **origin** (so the Studio's back link returns to Versions *or* Catalog,
+  not always Versions) and, for catalog sources, the **source format**: the redundant same-format
+  target is hidden (no GraphQL→GraphQL round-trip) and replaced by an **Original source** option
+  that downloads the stored source unchanged (`filterSameFormatTargets` + `OriginalSourceOption`).
+  Covered by `ExportStudio.test.tsx`, `exportStudioLink.test.ts`, and new
+  `validateExportOptions` / format-matching tests.
 - **Problem.** The planned ExportDialog (MFX-6.1) is a modal: right for quick exports, too small
   for verify-then-generate workflows with Monaco viewing, test tools, and visualizations. There is
   no surface where an enterprise user can *work* an export.
