@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Loader2,
   RefreshCw,
+  ShieldAlert,
   ShieldCheck,
   ShieldX,
   Sparkles,
@@ -17,6 +18,8 @@ import { ValidationResultsLens } from './ValidationResultsLens';
 import { EmittedLintLens, type EmittedLintSourceReport } from './EmittedLintLens';
 import type { TargetFidelitySummary } from './exportTargetCatalog';
 import {
+  fidelityAcknowledgementMode,
+  isSevereConversion,
   lensBadgeCount,
   verifyVerdictBanner,
   verifyVerdictBannerClass,
@@ -68,14 +71,15 @@ const LENSES: { key: VerifyLensKey; label: string }[] = [
  * A single **Run verification** action calls the one-call dry-run verify (MFX-42.5) and yields
  * all three lenses at once — fidelity, emitted-output validation, and emitted-artifact lint —
  * under one go/no-go **verdict banner** (`Clean` / `Lossy — acknowledge to continue` /
- * `Invalid — export blocked`, per the MFX-5.3 gate + MFX-3.3 severity). The lenses lay out as
- * tabs-with-badges (count per lens) on desktop and as an accordion on narrow widths; the deeper
- * per-lens rendering lands in MFX-42.2 (validation), 42.3 (lint) and 42.4 (fidelity), which hang
- * their content under the layout this component owns.
+ * `Severe — acknowledge to continue` / `Invalid — export blocked`, per the MFX-5.3 gate + the
+ * MFX-3.3 transcoding guard). The lenses lay out as tabs-with-badges (count per lens) on desktop
+ * and as an accordion on narrow widths.
  *
- * The verdict gates Generate: `invalid` blocks unconditionally (with the validator's detail),
- * `lossy` requires the explicit acknowledgement, `clean` is the green path. The verdict and its
- * result live in Studio state so the Review step shows the same banner.
+ * The verdict gates Generate (MFX-42.4 matrix): `invalid` blocks unconditionally (with the
+ * validator's detail); `severe` — a types-only / near-empty reduction — requires the explicit
+ * **typed** acknowledgement in the fidelity lens; `lossy` requires the "Export anyway" checkbox;
+ * `clean` is the green path. The verdict and its result live in Studio state so the Review step
+ * shows the same banner.
  */
 export function VerifyWorkbench({
   targetLabel,
@@ -199,6 +203,7 @@ export function VerifyWorkbench({
           <LensBody
             lens={activeLens}
             result={result}
+            verdict={verdict}
             targetLabel={targetLabel}
             targetDescription={targetDescription}
             fidelitySummary={fidelitySummary}
@@ -228,6 +233,7 @@ export function VerifyWorkbench({
               <LensBody
                 lens={lens.key}
                 result={result}
+                verdict={verdict}
                 targetLabel={targetLabel}
                 targetDescription={targetDescription}
                 fidelitySummary={fidelitySummary}
@@ -263,7 +269,14 @@ function VerifyIntro({ targetLabel }: { targetLabel: string }) {
 /** The single go/no-go verdict banner shown above the lenses (and reused on Review). */
 export function VerdictBanner({ verdict }: { verdict: ExportVerifyVerdict }) {
   const banner = verifyVerdictBanner(verdict);
-  const Icon = banner.tone === 'invalid' ? ShieldX : banner.tone === 'lossy' ? AlertTriangle : CheckCircle2;
+  const Icon =
+    banner.tone === 'invalid'
+      ? ShieldX
+      : banner.tone === 'severe'
+        ? ShieldAlert
+        : banner.tone === 'lossy'
+          ? AlertTriangle
+          : CheckCircle2;
   return (
     <div
       data-testid="verify-verdict"
@@ -307,12 +320,16 @@ function lensBadgeTone(
   if (lens === 'lint') {
     return (result?.lint?.findings ?? []).some((f) => f.severity === 'error') ? rose : amber;
   }
+  // Fidelity: a severe (types-only / near-empty) reduction reads red like its verdict banner; an
+  // ordinary lossy conversion stays amber.
+  if (result && isSevereConversion(result)) return rose;
   return amber;
 }
 
 interface LensBodyProps {
   lens: VerifyLensKey;
   result: ExportVerifyResponse;
+  verdict: ExportVerifyVerdict;
   targetLabel: string;
   targetDescription: string;
   fidelitySummary: TargetFidelitySummary;
@@ -325,6 +342,7 @@ interface LensBodyProps {
 function LensBody({
   lens,
   result,
+  verdict,
   targetLabel,
   targetDescription,
   fidelitySummary,
@@ -343,6 +361,7 @@ function LensBody({
         previewError={null}
         acknowledged={acknowledged}
         onAcknowledgedChange={onAcknowledgedChange}
+        acknowledgementMode={fidelityAcknowledgementMode(verdict)}
       />
     );
   }

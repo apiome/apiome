@@ -56,12 +56,20 @@ function fidelity(tier: ExportFidelityTier): ExportFidelityEnvelope {
   };
 }
 
-/** A clean / lossy / invalid verify result, with an optional lint report. */
-function makeResult(kind: 'clean' | 'lossy' | 'invalid', withLint = true): ExportVerifyResponse {
-  const fid = fidelity(kind === 'clean' ? 'lossless' : 'lossy');
+/** A clean / lossy / severe / invalid verify result, with an optional lint report. */
+function makeResult(kind: 'clean' | 'lossy' | 'severe' | 'invalid', withLint = true): ExportVerifyResponse {
+  const fid = fidelity(kind === 'clean' ? 'lossless' : kind === 'severe' ? 'types-only' : 'lossy');
   return {
     artifact: 'proj-1', version: null, version_record_id: 'rev-1', version_label: '1.0.0',
     fidelity: fid,
+    guard:
+      kind === 'severe'
+        ? {
+            verdict: 'near-empty', requires_confirmation: false, target_format: 'gRPC / Protobuf',
+            preserved_percent: 31, dropped_operations: 6, dropped_events: 0,
+            headline: 'Only schemas will be exported.', message: 'A types-only reduction.', reasons: [],
+          }
+        : null,
     validation:
       kind === 'invalid'
         ? {
@@ -213,5 +221,22 @@ describe('VerifyWorkbench — lens content (MFX-42.1)', () => {
     const checkbox = within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox');
     fireEvent.click(checkbox);
     expect(onAck).toHaveBeenCalledWith(true);
+  });
+
+  it('gates a severe (types-only) conversion behind the typed acknowledgement (MFX-42.4)', () => {
+    const { onAck } = renderWorkbench({
+      hasRun: true,
+      result: makeResult('severe'),
+      verdict: 'severe',
+      fidelitySummary: SUMMARY['types-only'],
+    });
+    // The severe banner leads to the fidelity lens with the typed acknowledgement — no checkbox.
+    expect(screen.getByTestId('verify-verdict')).toHaveAttribute('data-verdict', 'severe');
+    expect(screen.getByTestId('verify-verdict')).toHaveTextContent('Severe — acknowledge to continue');
+    const panel = screen.getByTestId('verify-panel-fidelity');
+    expect(within(panel).queryByRole('checkbox')).not.toBeInTheDocument();
+    const input = within(panel).getByTestId('export-ack-typed-input');
+    fireEvent.change(input, { target: { value: 'export produces a types-only artifact' } });
+    expect(onAck).toHaveBeenLastCalledWith(true);
   });
 });
