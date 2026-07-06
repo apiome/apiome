@@ -410,7 +410,6 @@ flowchart LR
 | 42.2 #4355 | Validation results lens | parser/toolchain verdict, structured errors w/ locations | export,ui,validation,mvp | N | Y | M | apiome-ui |
 | 42.3 #4356 | Emitted-artifact lint lens | findings list, severity chips, score; reuse LintReportDialog patterns | export,ui,linting,mvp | Y | Y | M | apiome-ui |
 | 42.4 #4357 | Fidelity lens + go/no-go gate | embed MFX-6.2 panel; verdict logic; "Export anyway" acknowledgment | export,ui,mvp | Y | Y | S | apiome-ui |
-| 42.5 #4358 | (rest) One-call dry-run verify endpoint | preview+validate+lint in one dry-run, no stored artifact | export,rest,python,validation,mvp | N | Y | M | apiome-rest |
 | 42.6 #4359 | Re-verify on change + result caching | option-change invalidation, debounce, cached verdicts per config hash | export,ui,typescript | Y | N | S | apiome-ui |
 
 ### MFX-42.1 — Verify orchestration UI · #4354
@@ -481,6 +480,25 @@ flowchart LR
 - **Technical Stack.** Next.js.
 
 ### MFX-42.5 — (rest) One-call dry-run verify endpoint · #4358
+- **Status (done).** `POST /v1/export/{tenant}/verify` (`app.export_routes.verify_export`) emits the
+  source to a **temporary buffer** via the MFX-3.2 `dispatch_from_source` seam, then runs MFX-2.5
+  fidelity + MFX-5.1/5.3 emitted-output validation over it and returns
+  `{fidelity, validation, lint, verdict, guard, files, truncated}` in one round-trip. The emit is
+  **read-only** (`persistence=None`) and a severe conversion is **verified, not blocked**
+  (`confirm=True`) — the verdict reports the loss — so **no artifact or job row is persisted**. The
+  overall `verdict` (`clean` / `lossy` / `invalid`) is computed server-side (`_verify_verdict`) to
+  match the client's `deriveVerifyVerdict`. The emitted artifact rides back **inline under a 256 KB
+  cap** with a `truncated` flag (`include_content`) for the Monaco viewer (MFX-43.x). Rate-limiting
+  is the existing global per-tenant middleware. **Lint (MFX-5.2) is not yet implemented, so `lint`
+  is `null`** — the Verify workbench renders the lint lens's empty state; the `EmittedArtifactLint`
+  response slot documents the shape MFX-5.2 will populate. p50 for the five MVP emitters is
+  dominated by one emit + re-parse (tens of ms for pure-Python validators; protobuf/AsyncAPI add
+  their toolchain's startup when installed). Bumped apiome-rest 1.80.1 → 1.81.0. (The checked-in
+  `openapi.yaml`/`openapi.json` were left untouched: they are already broadly stale versus the live
+  app — a separate drift — and a full regen would bury this change under thousands of unrelated
+  lines; the endpoint is fully defined by its FastAPI models and appears in the live
+  `app.openapi()`, which the golden-path contract test reads.) Also aligned the UI's
+  validation-finding contract to the real models (`keyword`, `tool`); apiome-ui 0.59.0 → 0.59.1.
 - **Problem.** The UI needs preview + validation + lint in one round-trip **without** persisting
   an artifact; today `POST /export/preview` returns only the fidelity report, and validation/lint
   run only inside real jobs (MFX-3.1/5.x).

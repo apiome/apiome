@@ -369,7 +369,7 @@ function ValidationLens({ validation }: { validation: EmittedValidationReport })
         <ul className="space-y-2" data-testid="verify-validation-findings">
           {validation.findings.map((finding, idx) => (
             <li
-              key={`${finding.rule ?? 'err'}-${idx}`}
+              key={`${finding.keyword ?? 'err'}-${idx}`}
               className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm dark:border-rose-900 dark:bg-rose-950/30"
             >
               <div className="text-gray-900 dark:text-gray-100">{finding.message}</div>
@@ -378,7 +378,7 @@ function ValidationLens({ validation }: { validation: EmittedValidationReport })
                 path={finding.path}
                 line={finding.line}
                 column={finding.column}
-                rule={finding.rule}
+                rule={finding.keyword}
               />
             </li>
           ))}

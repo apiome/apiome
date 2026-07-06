@@ -67,7 +67,7 @@ function makeResult(kind: 'clean' | 'lossy' | 'invalid', withLint = true): Expor
         ? {
             verdict: 'invalid', target: 'proto-3', blocks_delivery: true, warns: false, valid: false,
             findings: [
-              { message: 'Field number 0 is not allowed.', file: 'petstore.proto', line: 12, column: 3, rule: 'buf.field-number' },
+              { message: 'Field number 0 is not allowed.', file: 'petstore.proto', line: 12, column: 3, keyword: 'buf.field-number' },
             ],
             detail: null, headline: 'Invalid — export blocked', message: 'The export was blocked before delivery.',
           }

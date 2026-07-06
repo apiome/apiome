@@ -39,7 +39,7 @@ export interface EmittedValidationFinding {
   /** 1-based column number when the validator reports a location. */
   column?: number | null;
   /** Validator-specific rule keyword (e.g. a JSON Schema `keyword`), when available. */
-  rule?: string | null;
+  keyword?: string | null;
 }
 
 /**
@@ -58,6 +58,8 @@ export interface EmittedValidationReport {
   warns: boolean;
   /** Whether the emitted artifact re-parsed cleanly when validation ran. */
   valid: boolean;
+  /** The validator identity that ran (or would have run) for this target, when known. */
+  tool?: string | null;
   /** Structured parser/toolchain failures for UI rendering; non-empty only when `invalid`. */
   findings: EmittedValidationFinding[];
   /** Why validation did not run (skipped / not_applicable); null when validation ran. */
