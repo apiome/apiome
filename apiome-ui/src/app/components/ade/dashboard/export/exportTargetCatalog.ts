@@ -238,6 +238,8 @@ export interface OptionField {
   enumValues: string[];
   /** The target's validated default for this option (from `default_options`). */
   defaultValue: unknown;
+  /** Whether the schema marks this option as required (listed in the schema's `required` array). */
+  required: boolean;
 }
 
 /** A JSON-Schema node, loosely typed — Pydantic emits `$ref`/`allOf`/`anyOf` wrappers freely. */
@@ -314,6 +316,12 @@ export function optionFieldsFromSchema(
   const properties = root.properties;
   if (typeof properties !== 'object' || properties === null) return [];
 
+  const requiredKeys = new Set(
+    Array.isArray(root.required)
+      ? root.required.filter((value): value is string => typeof value === 'string')
+      : [],
+  );
+
   const fields: OptionField[] = [];
   for (const [key, rawNode] of Object.entries(properties as Record<string, unknown>)) {
     if (typeof rawNode !== 'object' || rawNode === null) continue;
@@ -321,24 +329,74 @@ export function optionFieldsFromSchema(
     const label = typeof node.title === 'string' && node.title.length > 0 ? node.title : humanizeKey(key);
     const description = typeof node.description === 'string' ? node.description : null;
     const defaultValue = defaults?.[key] ?? node.default ?? null;
+    const required = requiredKeys.has(key);
 
     const enumValues = Array.isArray(node.enum)
       ? node.enum.filter((value): value is string => typeof value === 'string')
       : [];
     if (enumValues.length > 0) {
-      fields.push({ key, label, description, kind: 'enum', enumValues, defaultValue });
+      fields.push({ key, label, description, kind: 'enum', enumValues, defaultValue, required });
       continue;
     }
     if (node.type === 'boolean') {
-      fields.push({ key, label, description, kind: 'boolean', enumValues: [], defaultValue });
+      fields.push({ key, label, description, kind: 'boolean', enumValues: [], defaultValue, required });
       continue;
     }
     if (node.type === 'string') {
-      fields.push({ key, label, description, kind: 'string', enumValues: [], defaultValue });
+      fields.push({ key, label, description, kind: 'string', enumValues: [], defaultValue, required });
     }
     // Other types (object/array/integer/…) have no generic control — skipped by design.
   }
   return fields;
+}
+
+/** The outcome of validating the export options form against the emitter's schema. */
+export interface OptionValidationResult {
+  /** Whether every rendered field holds a value the schema accepts. */
+  valid: boolean;
+  /** Per-field human-readable error message, keyed by option key; empty when valid. */
+  errors: Record<string, string>;
+}
+
+/**
+ * Validate the current option values against the target's flattened schema fields (MFX-1.4).
+ *
+ * Only the primitive fields the form actually renders are checked — the same fields
+ * `optionFieldsFromSchema` returns — so the result matches what the user can see and fix:
+ *  - a `required` field must hold a non-empty value;
+ *  - an optional field left empty (null / undefined / `''`) is fine — the server applies its
+ *    validated default;
+ *  - an `enum` value must be one of the schema's allowed values;
+ *  - a `boolean` value must be a boolean and a `string` value must be a string.
+ *
+ * The controls constrain most inputs already, so this mainly guards required options and
+ * defends against stale values carried across a target change.
+ *
+ * @param fields The rendered option fields from {@link optionFieldsFromSchema}.
+ * @param values The form's current values keyed by option key.
+ * @returns Whether the form is valid, plus any per-field error messages.
+ */
+export function validateExportOptions(
+  fields: OptionField[],
+  values: Record<string, unknown>,
+): OptionValidationResult {
+  const errors: Record<string, string> = {};
+  for (const field of fields) {
+    const value = values[field.key];
+    const isEmpty = value === null || value === undefined || value === '';
+    if (isEmpty) {
+      if (field.required) errors[field.key] = `${field.label} is required.`;
+      continue;
+    }
+    if (field.kind === 'enum' && !field.enumValues.includes(value as string)) {
+      errors[field.key] = `${field.label} must be one of: ${field.enumValues.join(', ')}.`;
+    } else if (field.kind === 'boolean' && typeof value !== 'boolean') {
+      errors[field.key] = `${field.label} must be true or false.`;
+    } else if (field.kind === 'string' && typeof value !== 'string') {
+      errors[field.key] = `${field.label} must be text.`;
+    }
+  }
+  return { valid: Object.keys(errors).length === 0, errors };
 }
 
 /**

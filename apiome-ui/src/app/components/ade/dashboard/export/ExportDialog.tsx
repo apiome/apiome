@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { cn } from '@lib/utils';
 import {
   CheckCircle2,
@@ -9,6 +10,7 @@ import {
   FileOutput,
   Loader2,
   Package,
+  PanelsTopLeft,
   SlidersHorizontal,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../ui/Dialog';
@@ -18,18 +20,19 @@ import { useExportTargets } from './useExportTargets';
 import { useExportPreview } from './useExportPreview';
 import { FidelityWarningPanel } from './FidelityWarningPanel';
 import { ArtifactPreviewCard } from './ArtifactPreviewCard';
+import { ExportTargetGrid } from './ExportTargetGrid';
+import { ExportOptionsForm } from './ExportOptionsForm';
 import { requiresExportAcknowledgement } from './exportFidelityPreview';
 import { zipFilenameFor, type EmittedArtifact } from './exportArtifactPreview';
 import { buildZip } from './zipBundle';
+import { downloadBlob, filenameFromDisposition } from './exportDownload';
+import { exportStudioHref } from './exportStudioLink';
 import {
   changedOptions,
   exportTargetCards,
   optionFieldsFromSchema,
-  tierBadgeClass,
-  tierLabel,
   type ExportFidelityTier,
   type ExportTargetCard,
-  type OptionField,
 } from './exportTargetCatalog';
 
 /** What a successful emit produced — handed to `onExported` (e.g. to record it as a recent export, MFX-6.5). */
@@ -64,25 +67,6 @@ type Step = 'source' | 'target' | 'fidelity' | 'export';
 const STEP_LABELS = ['Source', 'Target', 'Fidelity', 'Export'] as const;
 const STEP_ORDER: Step[] = ['source', 'target', 'fidelity', 'export'];
 
-/** Parse the filename out of a `Content-Disposition: attachment; filename="…"` header. */
-function filenameFromDisposition(disposition: string | null): string | null {
-  if (!disposition) return null;
-  const match = /filename="?([^";]+)"?/i.exec(disposition);
-  return match ? match[1] : null;
-}
-
-/** Hand a fetched document to the browser as a file download. */
-function downloadBlob(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
-
 /**
  * ExportDialog — the export mirror of the ImportDialog (MFX-6.1, #3855).
  *
@@ -107,6 +91,7 @@ export function ExportDialog({
   version = null,
   onExported,
 }: ExportDialogProps) {
+  const router = useRouter();
   const [step, setStep] = useState<Step>('source');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [optionValues, setOptionValues] = useState<Record<string, unknown>>({});
@@ -156,6 +141,22 @@ export function ExportDialog({
     reset();
     onClose();
   }, [reset, onClose]);
+
+  /**
+   * Escalate to the full-page Export Studio (MFX-41.1), carrying the current selection: the
+   * source coordinates and, when one is picked, the chosen target. The dialog is the quick path;
+   * the Studio is where a verify-then-generate workflow gets room to work.
+   */
+  const openInStudio = useCallback(() => {
+    const href = exportStudioHref({
+      artifact,
+      version,
+      label: artifactLabel,
+      target: selectedKey,
+    });
+    handleClose();
+    router.push(href);
+  }, [artifact, version, artifactLabel, selectedKey, handleClose, router]);
 
   /** Select a target card and seed the options form with that target's defaults. */
   const handleSelect = useCallback((card: ExportTargetCard) => {
@@ -325,76 +326,22 @@ export function ExportDialog({
 
         {step === 'target' && (
           <div className="space-y-4">
-            <div className="text-center">
-              <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                Choose a target format
-              </div>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Fidelity badges are computed for <strong>this</strong> source (version{' '}
-                {versionLabel}).
-              </p>
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
-              {cards.map((card) => {
-                const Icon = card.icon;
-                const isSelected = card.key === selectedKey;
-                return (
-                  <button
-                    key={card.key}
-                    type="button"
-                    data-testid={`export-target-${card.key}`}
-                    onClick={() => handleSelect(card)}
-                    disabled={!card.available}
-                    title={
-                      card.available
-                        ? card.entry.descriptor.description
-                        : card.entry.descriptor.unavailable_reason || 'Unavailable in this runtime'
-                    }
-                    className={`relative rounded-lg border p-3 text-center transition ${
-                      isSelected
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-100'
-                        : card.available
-                          ? 'border-gray-200 bg-white text-gray-700 hover:border-indigo-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200'
-                          : 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-600'
-                    }`}
-                  >
-                    <span
-                      className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold ${tierBadgeClass(card.entry.fidelity.tier)}`}
-                    >
-                      {tierLabel(card.entry.fidelity.tier)}
-                    </span>
-                    <Icon className="mx-auto mb-2 mt-3 h-5 w-5" aria-hidden />
-                    <div className="text-sm font-medium">{card.entry.descriptor.label}</div>
-                    <div className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
-                      {card.entry.descriptor.paradigm}
-                      {card.entry.descriptor.multi_file ? ' · multi-file' : ''}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {selected && fidelity && (
-              <div
-                data-testid="export-fidelity-headline"
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700"
-              >
-                <div className="text-gray-700 dark:text-gray-200">
-                  Exporting to <strong>{selected.entry.descriptor.label}</strong>
+            <ExportTargetGrid
+              cards={cards}
+              selectedKey={selectedKey}
+              onSelect={handleSelect}
+              heading={
+                <div className="text-center">
+                  <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    Choose a target format
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Fidelity badges are computed for <strong>this</strong> source (version{' '}
+                    {versionLabel}).
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${tierBadgeClass(fidelity.tier)}`}
-                  >
-                    {tierLabel(fidelity.tier)}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {fidelity.preserved_percent}% preserved
-                  </span>
-                </div>
-              </div>
-            )}
+              }
+            />
 
             {selected && optionFields.length > 0 && (
               <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
@@ -403,17 +350,12 @@ export function ExportDialog({
                   Target options
                 </div>
                 <div className="my-3 h-px bg-gray-200 dark:bg-gray-700" />
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {optionFields.map((field) => (
-                    <ExportOptionControl
-                      key={field.key}
-                      targetKey={selected.key}
-                      field={field}
-                      value={optionValues[field.key]}
-                      onChange={(value) => setOption(field.key, value)}
-                    />
-                  ))}
-                </div>
+                <ExportOptionsForm
+                  targetKey={selected.key}
+                  fields={optionFields}
+                  values={optionValues}
+                  onChange={setOption}
+                />
               </div>
             )}
           </div>
@@ -459,9 +401,22 @@ export function ExportDialog({
         </div>
 
         <div className="mt-4 flex shrink-0 justify-between gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
-          <Button variant="outline" onClick={handleClose} disabled={exporting}>
-            {emitted ? 'Close' : 'Cancel'}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleClose} disabled={exporting}>
+              {emitted ? 'Close' : 'Cancel'}
+            </Button>
+            {!emitted && (
+              <Button
+                variant="ghost"
+                onClick={openInStudio}
+                disabled={exporting}
+                title="Open this export in the full-page Export Studio, carrying your selection."
+              >
+                <PanelsTopLeft className="h-4 w-4" aria-hidden />
+                Open in Export Studio
+              </Button>
+            )}
+          </div>
           <div className="flex gap-2">
             {(step === 'target' || step === 'fidelity') && (
               <Button
@@ -513,88 +468,6 @@ export function ExportDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-interface ExportOptionControlProps {
-  /** The selected target's key, used to namespace input ids/names. */
-  targetKey: string;
-  field: OptionField;
-  value: unknown;
-  onChange: (value: unknown) => void;
-}
-
-/**
- * One per-target option control (MFX-1.4): a checkbox for booleans, a segmented button row for
- * string enums, and a text input for free strings. Complex option types never reach here —
- * `optionFieldsFromSchema` already filters them out.
- */
-function ExportOptionControl({ targetKey, field, value, onChange }: ExportOptionControlProps) {
-  const inputId = `export-option-${targetKey}-${field.key}`;
-
-  if (field.kind === 'boolean') {
-    return (
-      <label className="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-200" htmlFor={inputId}>
-        <input
-          id={inputId}
-          type="checkbox"
-          checked={value === true}
-          onChange={(e) => onChange(e.target.checked)}
-          className="mt-0.5"
-        />
-        <span>
-          <span className="block font-medium">{field.label}</span>
-          {field.description && (
-            <span className="block text-xs text-gray-500 dark:text-gray-400">{field.description}</span>
-          )}
-        </span>
-      </label>
-    );
-  }
-
-  if (field.kind === 'enum') {
-    return (
-      <div className="text-sm">
-        <div className="font-medium text-gray-700 dark:text-gray-200">{field.label}</div>
-        {field.description && (
-          <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{field.description}</div>
-        )}
-        <div className="mt-2 inline-flex overflow-hidden rounded-lg border border-gray-300 dark:border-gray-700">
-          {field.enumValues.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => onChange(option)}
-              className={`px-3 py-1.5 text-xs transition ${
-                value === option
-                  ? 'bg-indigo-600 font-medium text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-900'
-              }`}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="text-sm">
-      <label className="font-medium text-gray-700 dark:text-gray-200" htmlFor={inputId}>
-        {field.label}
-      </label>
-      {field.description && (
-        <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{field.description}</div>
-      )}
-      <input
-        id={inputId}
-        value={typeof value === 'string' ? value : ''}
-        onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}
-        placeholder="server default"
-        className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950"
-      />
-    </div>
   );
 }
 

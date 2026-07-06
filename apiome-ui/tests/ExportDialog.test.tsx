@@ -38,6 +38,12 @@ jest.mock('@monaco-editor/react', () => ({
   ),
 }));
 
+/** Capture navigations from the "Open in Export Studio" escalation (MFX-41.1). */
+const routerPush = jest.fn();
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: routerPush, replace: jest.fn(), prefetch: jest.fn() }),
+}));
+
 import { ExportDialog } from '../src/app/components/ade/dashboard/export/ExportDialog';
 import type { ExportTargetsResponse } from '../src/app/components/ade/dashboard/export/exportTargetCatalog';
 import type { ExportFidelityEnvelope } from '../src/app/components/ade/dashboard/export/exportFidelityPreview';
@@ -751,5 +757,52 @@ describe('ExportDialog — version-scoped entry-point handoff (MFX-6.5)', () => 
 
     await waitFor(() => expect(screen.getByText('Emit failed.')).toBeInTheDocument());
     expect(onExported).not.toHaveBeenCalled();
+  });
+});
+
+describe('ExportDialog — Export Studio escalation (MFX-41.1)', () => {
+  beforeEach(() => {
+    routerPush.mockClear();
+    (URL as unknown as { createObjectURL: unknown }).createObjectURL = jest.fn(() => 'blob:mock');
+    (URL as unknown as { revokeObjectURL: unknown }).revokeObjectURL = jest.fn();
+    jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('escalates to the scoped Studio route carrying the current target selection', async () => {
+    const onClose = jest.fn();
+    const fetchMock = mockFetch();
+    global.fetch = fetchMock as unknown as typeof fetch;
+    render(
+      <ExportDialog
+        open
+        onClose={onClose}
+        artifact="proj-petstore"
+        artifactLabel="Pet Store API"
+        version="rev-1"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /choose target/i })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByTestId('export-target-proto'));
+
+    fireEvent.click(screen.getByRole('button', { name: /open in export studio/i }));
+
+    // The dialog closes and hands the source + picked target to the Studio deep link.
+    expect(onClose).toHaveBeenCalled();
+    expect(routerPush).toHaveBeenCalledTimes(1);
+    const href = routerPush.mock.calls[0][0] as string;
+    expect(href).toContain('/ade/dashboard/export/studio?');
+    const query = new URLSearchParams(href.split('?')[1]);
+    expect(query.get('artifact')).toBe('proj-petstore');
+    expect(query.get('version')).toBe('rev-1');
+    expect(query.get('label')).toBe('Pet Store API');
+    expect(query.get('target')).toBe('proto');
   });
 });
