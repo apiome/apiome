@@ -407,7 +407,6 @@ flowchart LR
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 42.2 #4355 | Validation results lens | parser/toolchain verdict, structured errors w/ locations | export,ui,validation,mvp | N | Y | M | apiome-ui |
 | 42.3 #4356 | Emitted-artifact lint lens | findings list, severity chips, score; reuse LintReportDialog patterns | export,ui,linting,mvp | Y | Y | M | apiome-ui |
 | 42.4 #4357 | Fidelity lens + go/no-go gate | embed MFX-6.2 panel; verdict logic; "Export anyway" acknowledgment | export,ui,mvp | Y | Y | S | apiome-ui |
 | 42.6 #4359 | Re-verify on change + result caching | option-change invalidation, debounce, cached verdicts per config hash | export,ui,typescript | Y | N | S | apiome-ui |
@@ -443,6 +442,20 @@ flowchart LR
 - **Technical Stack.** Next.js, TanStack Query.
 
 ### MFX-42.2 — Validation results lens · #4355
+- **Status (done).** The Verify workbench's **validation lens** is now a dedicated
+  `ValidationResultsLens.tsx` (extracted from the 42.1 scaffold and deepened). It renders the
+  emitted-output validation report (MFX-5.1/5.3) as four distinct states, each keyed on the
+  `data-validation-state` attribute: **valid** — a positive "re-parsed with no validation errors"
+  confirmation; **invalid** — the structured, actionable error list (message + file-in-bundle +
+  JSON pointer + line:col + rule keyword, via the shared `FindingLocation`, whose locations feed
+  MFX-43.3's Monaco markers); **unavailable** — an explicit amber warning that the artifact was
+  **not validated** because the external toolchain is not installed on the server (never a silent
+  pass); **not_applicable** — a neutral "no validator matches this format" note. The **validator
+  identity** (`buf build`, `xmlschema`, the Postman collection schema, …) is surfaced on every band
+  that ran or would have run ("Validated with …" / "… is not installed on the server"). Pure
+  presentation logic (`validationLensState`, `validationLensTone`, `validatorToolLabel`) lives in
+  `exportVerify.ts` and is unit-tested; the lens itself never gates Generate (the MFX-42.1 verdict
+  owns the gate — a rejection here drives its `invalid` band). Bump apiome-ui 0.59.1 → 0.60.0.
 - **Problem.** MFX-5.1/5.3 produce parser/toolchain verdicts with detail; there is no UI for them.
 - **Solution / Scope.** Render the emitted-output validation result: overall verdict; structured
   error list (message, file-in-bundle, line/col where the validator provides them, tool identity —
