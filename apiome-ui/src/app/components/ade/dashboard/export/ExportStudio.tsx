@@ -23,7 +23,10 @@ import {
 } from '../dashboardScreenClasses';
 import { useExportTargets } from './useExportTargets';
 import { useExportVerify } from './useExportVerify';
+import { useExportJob } from './useExportJob';
+import { GenerateProgress } from './GenerateProgress';
 import { useCatalogSourceContext } from './useCatalogSourceContext';
+import type { EmittedValidationReport } from './exportVerify';
 import { FormatPill } from '../../../ui/catalog/FormatPill';
 import { ProtocolPill } from '../../../ui/catalog/ProtocolPill';
 import { ExportTargetGrid } from './ExportTargetGrid';
@@ -132,8 +135,7 @@ export function ExportStudio({
   const [optionValues, setOptionValues] = useState<Record<string, unknown>>({});
   /** Whether the user acknowledged a lossy conversion ("Export anyway"). */
   const [acknowledged, setAcknowledged] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  /** The emitted document being reviewed on the Review step, once generated. */
+  /** The emitted document being reviewed on the Review step, once generated + downloaded. */
   const [emitted, setEmitted] = useState<EmittedArtifact | null>(null);
   /** The emitted bundle when the target produced multiple files (MFX-43.2); null for single-file. */
   const [bundle, setBundle] = useState<BundleManifest | null>(null);
@@ -142,6 +144,14 @@ export function ExportStudio({
   /** Monotonic nonce so re-clicking the same finding still re-triggers the reveal. */
   const revealNonce = useRef(0);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * The validation report from a validation-gate job failure (MFX-46.2). When set, the Verify
+   * step renders it in place of the last verify result so the user sees exactly what the real emit
+   * was rejected for, and the Generate gate re-locks until they re-verify.
+   */
+  const [jobValidationOverride, setJobValidationOverride] = useState<EmittedValidationReport | null>(
+    null,
+  );
 
   const { response, loading, error: targetsError } = useExportTargets(true, artifact, version);
   // Drop the redundant same-format target (e.g. GraphQL→GraphQL); the "Original source" option
@@ -186,6 +196,23 @@ export function ExportStudio({
   } = useExportVerify(artifact, version, selectedKey, changedOpts);
   const verifyVerdict = verifyResult ? deriveVerifyVerdict(verifyResult) : null;
 
+  // The async export job (MFX-46.2): Generate submits a job that runs the emit → fidelity →
+  // validate → package pipeline and reports staged progress. The tracker keeps polling across
+  // navigation and toasts on background completion, so `job` reflects the current run for this
+  // source even after leaving and returning.
+  const { job, submitting, start, retry, cancel, clear } = useExportJob(artifact, version);
+  const jobStatus = job?.status ?? null;
+  const jobState = jobStatus?.state ?? null;
+  const jobCompleted = jobState === 'completed' && !jobStatus?.result?.dry_run;
+
+  // When the Verify step is showing a validation-gate override, the last verify verdict no longer
+  // reflects reality: present it as `invalid` and re-lock Generate until the user re-verifies.
+  const displayVerifyResult =
+    jobValidationOverride && verifyResult
+      ? { ...verifyResult, validation: jobValidationOverride, verdict: 'invalid' as const }
+      : verifyResult;
+  const displayVerifyVerdict = jobValidationOverride ? ('invalid' as const) : verifyVerdict;
+
   // Catalog-launched exports (MFX-41.2) show the item's provenance on the Source step so a
   // non-OpenAPI import is recognizable before a target is chosen. The context is advisory: it
   // never gates the export, so a failed fetch simply hides the extra pills.
@@ -209,6 +236,21 @@ export function ExportStudio({
   );
 
   const fidelity = selected?.entry.fidelity ?? null;
+
+  // Guards the "fetch the completed artifact once" effect so a re-render never re-downloads.
+  const downloadedJobRef = useRef<string | null>(null);
+
+  /**
+   * Forget the active export job and any generated artifact — called whenever the configuration
+   * changes (a new target or option), so a stale job/preview from the previous config never
+   * lingers into a new Generate.
+   */
+  const clearActiveJob = useCallback(() => {
+    clear();
+    setJobValidationOverride(null);
+    setEmitted(null);
+    downloadedJobRef.current = null;
+  }, [clear]);
 
   /**
    * Select a target card and seed the options form with that target's defaults. When `seedOptions`
@@ -264,70 +306,155 @@ export function ExportStudio({
       setBundle(null);
       setProblemReveal(null);
       resetVerify();
+      clearActiveJob();
     },
-    [resetVerify],
+    [resetVerify, clearActiveJob],
   );
 
-  /** Generate the document for the selected target and show it in the Review preview. */
-  const handleGenerate = useCallback(async () => {
+  /** Pick a target from the grid — a manual re-pick forgets any job from the previous target. */
+  const handleSelectCard = useCallback(
+    (card: ExportTargetCard) => {
+      clearActiveJob();
+      selectCard(card);
+    },
+    [clearActiveJob, selectCard],
+  );
+
+  // Resume a job that is still running (or finished) for this source after navigating away and
+  // back (MFX-46.2 / MFX-41.4): once the targets load, re-select the job's target and land on the
+  // Review step so the staged progress (or the result) is where the user left it. Runs at most
+  // once, and never fights an explicit target already chosen this mount.
+  const resumed = useRef(false);
+  useEffect(() => {
+    if (resumed.current || !job || cards.length === 0) return;
+    resumed.current = true;
+    if (selectedKey) return;
+    const card = cards.find((c) => c.key === job.params.target);
+    if (!card) return;
+    selectCard(card, job.params.options);
+    setStep('review');
+  }, [job, cards, selectedKey, selectCard]);
+
+  /** Submit the async export job for the selected target (MFX-46.2); progress renders on Review. */
+  const handleGenerate = useCallback(() => {
     if (!selected) return;
-    setGenerating(true);
     setError(null);
     setEmitted(null);
     setBundle(null);
     setProblemReveal(null);
-    try {
-      const res = await fetch('/api/export/document', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          artifact,
-          version: version || null,
-          target: selected.key,
-          options: changedOptions(optionValues, selected.entry.default_options),
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(
-          typeof data?.error === 'string' ? data.error : 'The export failed. Try again.',
+    downloadedJobRef.current = null;
+    start({
+      target: selected.key,
+      targetLabel: selected.entry.descriptor.label,
+      options: changedOptions(optionValues, selected.entry.default_options),
+      // A conversion past the lossy acknowledgement is confirmed, so the transcoding guard
+      // (MFX-3.3) does not fail a severe-but-acknowledged job.
+      confirm: acknowledged,
+    });
+  }, [selected, optionValues, acknowledged, start]);
+
+  /** Re-run verification, dropping any validation-gate override so the fresh result shows. */
+  const handleRunVerify = useCallback(() => {
+    setJobValidationOverride(null);
+    void runVerify();
+  }, [runVerify]);
+
+  /** Route a validation-gate job failure back to the Verify lenses with its findings loaded. */
+  const handleFixInVerify = useCallback(
+    (validation: EmittedValidationReport | null) => {
+      setJobValidationOverride(validation);
+      clear();
+      downloadedJobRef.current = null;
+      setStep('verify');
+    },
+    [clear],
+  );
+
+  /** Acknowledge a severe conversion and re-submit the job with confirmation (MFX-3.3). */
+  const handleAcknowledgeAndRetry = useCallback(() => {
+    setAcknowledged(true);
+    void retry({ confirm: true });
+  }, [retry]);
+
+  // Once a real export job completes, fetch its emitted artifact (single document or bundle) so the
+  // Review step can preview and download it, and record the recent export. Runs once per job id.
+  useEffect(() => {
+    const result = jobStatus?.state === 'completed' ? jobStatus.result : null;
+    if (!job?.jobId || !result || result.dry_run) return;
+    if (!selected || selected.key !== result.target) return;
+    if (downloadedJobRef.current === job.jobId) return;
+    const jobId = job.jobId;
+    downloadedJobRef.current = jobId;
+    let cancelled = false;
+    let settled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/export/jobs/${encodeURIComponent(jobId)}/download`, {
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(
+            typeof data?.error === 'string'
+              ? data.error
+              : 'The export generated but the artifact could not be downloaded.',
+          );
+        }
+        const contentType = res.headers.get('content-type') || result.media_type || '';
+        const bytes = new Uint8Array(await res.arrayBuffer());
+        const filename = filenameFromDisposition(res.headers.get('content-disposition'));
+        if (cancelled) return;
+        let emittedFilename = `${artifact}-${result.target}.txt`;
+        if (looksLikeZip(bytes, contentType)) {
+          const files = await readZip(bytes);
+          const manifest = buildBundleManifest(
+            files.map((file) => ({ path: file.path, text: file.text })),
+          );
+          setBundle(manifest);
+          setProblemReveal(null);
+          const primary = manifest.files[0];
+          emittedFilename = primary.path;
+          setEmitted({
+            filename: primary.path,
+            mediaType: primary.mediaType,
+            text: primary.text,
+          });
+        } else {
+          const text = new TextDecoder('utf-8').decode(bytes);
+          emittedFilename = filename || `${artifact}-${result.target}.txt`;
+          setBundle(null);
+          setEmitted({ filename: emittedFilename, mediaType: contentType, text });
+        }
+        const targetCard = cards.find((card) => card.key === result.target);
+        if (targetCard) {
+          onGenerated?.({
+            targetKey: targetCard.key,
+            targetLabel: targetCard.entry.descriptor.label,
+            tier: targetCard.entry.fidelity.tier,
+            preservedPercent: targetCard.entry.fidelity.preserved_percent,
+            filename: emittedFilename,
+            options: job.params.options,
+          });
+        }
+        settled = true;
+      } catch (e) {
+        if (cancelled) return;
+        // Allow the fetch to be retried (e.g. by re-generating) after a transient download error.
+        downloadedJobRef.current = null;
+        setError(
+          e instanceof Error ? e.message : 'The generated artifact could not be downloaded.',
         );
+        settled = true;
       }
-      const contentType = res.headers.get('content-type') || '';
-      const filename =
-        filenameFromDisposition(res.headers.get('content-disposition')) ||
-        `${artifact}-${selected.key}.txt`;
-      // A multi-file target returns a ZIP bundle; a single target returns the document verbatim.
-      // Read the body as bytes so a bundle can be exploded into its files (MFX-43.2), and decode a
-      // lone document as text otherwise.
-      const bytes = new Uint8Array(await res.arrayBuffer());
-      if (looksLikeZip(bytes, contentType)) {
-        const files = await readZip(bytes);
-        const manifest = buildBundleManifest(
-          files.map((file) => ({ path: file.path, text: file.text })),
-        );
-        setBundle(manifest);
-        // Keep a single-file handle on the primary member so the file/zip downloads still work.
-        const primary = manifest.files[0];
-        setEmitted({ filename: primary.path, mediaType: primary.mediaType, text: primary.text });
-      } else {
-        const text = new TextDecoder('utf-8').decode(bytes);
-        setEmitted({ filename, mediaType: contentType, text });
+    })();
+    return () => {
+      cancelled = true;
+      if (!settled && downloadedJobRef.current === jobId) {
+        downloadedJobRef.current = null;
       }
-      onGenerated?.({
-        targetKey: selected.key,
-        targetLabel: selected.entry.descriptor.label,
-        tier: selected.entry.fidelity.tier,
-        preservedPercent: selected.entry.fidelity.preserved_percent,
-        filename,
-        options: changedOptions(optionValues, selected.entry.default_options),
-      });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'The export failed. Try again.');
-    } finally {
-      setGenerating(false);
-    }
-  }, [artifact, onGenerated, optionValues, selected, version]);
+    };
+    // `jobStatus` is derived from `job`; depending on `job` alone keeps this to one run per job id.
+  }, [job, jobStatus, artifact, selected, cards, onGenerated]);
 
   /** Download the generated document as its single file. */
   const handleDownloadFile = useCallback(() => {
@@ -414,12 +541,13 @@ export function ExportStudio({
         return Boolean(selected) && validation.valid;
       case 'verify':
         // Generate is gated on the verdict (MFX-42.1): clean proceeds, lossy needs the
-        // acknowledgement, invalid is blocked outright, and an unrun/failed verify stays closed.
-        return verifyGatePasses(verifyVerdict, acknowledged);
+        // acknowledgement, invalid is blocked outright, and an unrun/failed verify stays closed. A
+        // validation-gate override (MFX-46.2) keeps it closed until the user re-verifies.
+        return !jobValidationOverride && verifyGatePasses(verifyVerdict, acknowledged);
       default:
         return false;
     }
-  }, [step, response, loading, selected, validation.valid, verifyVerdict, acknowledged]);
+  }, [step, response, loading, selected, validation.valid, verifyVerdict, acknowledged, jobValidationOverride]);
 
   const stepIndex = STEP_ORDER.indexOf(step);
   const goBack = useCallback(() => {
@@ -533,7 +661,7 @@ export function ExportStudio({
               <ExportTargetGrid
                 cards={cards}
                 selectedKey={selectedKey}
-                onSelect={selectCard}
+                onSelect={handleSelectCard}
                 heading={
                   <div className="text-center">
                     <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -574,22 +702,30 @@ export function ExportStudio({
           )}
 
           {step === 'verify' && selected && fidelity && (
-            <VerifyWorkbench
-              targetLabel={selected.entry.descriptor.label}
-              targetDescription={selected.entry.descriptor.description}
-              fidelitySummary={fidelity}
-              running={verifyRunning}
-              hasRun={verifyHasRun}
-              error={verifyError}
-              result={verifyResult}
-              verdict={verifyVerdict}
-              acknowledged={acknowledged}
-              onAcknowledgedChange={setAcknowledged}
-              onRun={() => void runVerify()}
-              sourceLintReport={sourceLintReport}
-              openableProblems={openableProblems}
-              onOpenProblem={openProblem}
-            />
+            <>
+              {jobValidationOverride && (
+                <Alert variant="error" data-testid="verify-gate-failure-notice">
+                  The generated artifact failed validation. Review the findings below, then fix the
+                  source or options and re-run verification before generating again.
+                </Alert>
+              )}
+              <VerifyWorkbench
+                targetLabel={selected.entry.descriptor.label}
+                targetDescription={selected.entry.descriptor.description}
+                fidelitySummary={fidelity}
+                running={verifyRunning}
+                hasRun={verifyHasRun || Boolean(jobValidationOverride)}
+                error={verifyError}
+                result={displayVerifyResult}
+                verdict={displayVerifyVerdict}
+                acknowledged={acknowledged}
+                onAcknowledgedChange={setAcknowledged}
+                onRun={handleRunVerify}
+                sourceLintReport={sourceLintReport}
+                openableProblems={openableProblems}
+                onOpenProblem={openProblem}
+              />
+            </>
           )}
 
           {step === 'review' && selected && (
@@ -629,13 +765,37 @@ export function ExportStudio({
                     reveal={problemReveal}
                   />
                 </div>
-              ) : generating ? (
-                <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-indigo-500" aria-hidden />
-                  <div className="text-sm text-gray-700 dark:text-gray-200">
-                    Generating {selected.entry.descriptor.label}…
+              ) : job && jobStatus ? (
+                jobCompleted ? (
+                  // Completed — the emitted artifact is being fetched for the preview/download.
+                  <div
+                    className="flex flex-col items-center justify-center gap-3 py-10 text-center"
+                    data-testid="export-studio-preparing-download"
+                  >
+                    <Loader2 className="h-8 w-8 animate-spin text-indigo-500" aria-hidden />
+                    <div className="text-sm text-gray-700 dark:text-gray-200">
+                      Generated {selected.entry.descriptor.label} — preparing your download…
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <GenerateProgress
+                    status={jobStatus}
+                    targetLabel={selected.entry.descriptor.label}
+                    submitting={submitting}
+                    onRetry={handleGenerate}
+                    onCancel={cancel}
+                    onReconfigureTarget={() => {
+                      clearActiveJob();
+                      setStep('target');
+                    }}
+                    onReconfigureOptions={() => {
+                      clearActiveJob();
+                      setStep('options');
+                    }}
+                    onAcknowledgeAndRetry={handleAcknowledgeAndRetry}
+                    onFixInVerify={handleFixInVerify}
+                  />
+                )
               ) : (
                 <ExportReviewSummary
                   sourceLabel={sourceLabel}
@@ -661,7 +821,7 @@ export function ExportStudio({
 
         {/* Step navigation (MFX-41.1): Back / Continue, with Generate + downloads on the last step. */}
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <Button variant="outline" onClick={goBack} disabled={stepIndex === 0 || generating}>
+          <Button variant="outline" onClick={goBack} disabled={stepIndex === 0}>
             <ArrowLeft className="h-4 w-4" aria-hidden />
             Back
           </Button>
@@ -690,11 +850,11 @@ export function ExportStudio({
                 Continue to review
               </Button>
             )}
-            {step === 'review' && !emitted && (
+            {step === 'review' && !emitted && !job && (
               <Button
                 data-testid="export-studio-generate"
-                onClick={() => void handleGenerate()}
-                disabled={generating}
+                onClick={handleGenerate}
+                disabled={submitting}
               >
                 <Sparkles className="h-4 w-4" aria-hidden />
                 Generate

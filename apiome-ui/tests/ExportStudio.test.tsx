@@ -9,7 +9,8 @@
  *  4. Stepper state (selected target, option values) survives navigating back and forth.
  *  5. Forward navigation is gated: no Verify until a target is picked; no Generate until Verify
  *     ran (or was skipped with the lossy loss acknowledged).
- *  6. Generate emits via `POST /api/export/document` into the Review preview card.
+ *  6. Generate submits an async export job (`POST /api/export/jobs`), polls it to completion, and
+ *     downloads the emitted artifact into the Review preview card (MFX-46.2).
  */
 
 import React from 'react';
@@ -33,7 +34,14 @@ jest.mock('next/link', () => ({
   ),
 }));
 
+// The job tracker toasts on background completion; a stub keeps that out of the DOM in tests.
+jest.mock('sonner', () => ({
+  __esModule: true,
+  toast: Object.assign(jest.fn(), { success: jest.fn(), error: jest.fn() }),
+}));
+
 import { ExportStudio } from '../src/app/components/ade/dashboard/export/ExportStudio';
+import { __resetExportJobTrackerForTests } from '../src/app/components/ade/dashboard/export/exportJobTracker';
 import { buildZip } from '../src/app/components/ade/dashboard/export/zipBundle';
 import type { ExportTargetsResponse } from '../src/app/components/ade/dashboard/export/exportTargetCatalog';
 import type { ExportFidelityEnvelope } from '../src/app/components/ade/dashboard/export/exportFidelityPreview';
@@ -156,7 +164,58 @@ const PREVIEWS: Record<string, ExportFidelityEnvelope> = {
   },
 };
 
-function mockFetch(opts: { invalidVerify?: boolean; bundle?: boolean } = {}): jest.Mock {
+/** The emitted document a completed job serves per target. */
+function docFor(target: string) {
+  return target === 'openapi'
+    ? { filename: 'petstore.json', type: 'application/json', text: '{"openapi":"3.1.0"}' }
+    : { filename: 'petstore.proto', type: 'text/plain', text: 'syntax = "proto3";' };
+}
+
+/** A downloadable-artifact HTTP response, like the job download route returns. */
+function downloadResponse(target: string, bundle = false) {
+  if (bundle && target === 'proto') {
+    const zip = buildZip([
+      { path: 'petstore.proto', content: 'syntax = "proto3";' },
+      { path: 'google/protobuf/timestamp.proto', content: 'message Timestamp {}' },
+    ]);
+    return {
+      ok: true,
+      headers: {
+        get: (name: string) =>
+          name.toLowerCase() === 'content-disposition'
+            ? 'attachment; filename="petstore.zip"'
+            : name.toLowerCase() === 'content-type'
+              ? 'application/zip'
+              : null,
+      },
+      arrayBuffer: () => Promise.resolve(zip.buffer.slice(0)),
+    };
+  }
+  const doc = docFor(target);
+  return {
+    ok: true,
+    headers: {
+      get: (name: string) =>
+        name.toLowerCase() === 'content-disposition'
+          ? `attachment; filename="${doc.filename}"`
+          : name.toLowerCase() === 'content-type'
+            ? doc.type
+            : null,
+    },
+    arrayBuffer: () => Promise.resolve(new TextEncoder().encode(doc.text).buffer),
+  };
+}
+
+function mockFetch(
+  opts: {
+    invalidVerify?: boolean;
+    bundle?: boolean;
+    jobFailure?: 'validation' | 'confirmation' | 'emit';
+  } = {},
+): jest.Mock {
+  // Closure state so a job's GET status reflects what its POST was submitted with (target/confirm).
+  let submittedTarget = 'openapi';
+  let submittedConfirm = false;
   return jest.fn((input: unknown, init?: { method?: string; body?: string }) => {
     const url = typeof input === 'string' ? input : String(input);
     if (url.includes('/api/export/targets')) {
@@ -237,43 +296,96 @@ function mockFetch(opts: { invalidVerify?: boolean; bundle?: boolean } = {}): je
           }),
       });
     }
-    if (url.includes('/api/export/document') && init?.method === 'POST') {
-      const target = String(JSON.parse(init?.body ?? '{}').target);
-      // A multi-file target (MFX-43.2) returns a ZIP bundle; single targets return the doc verbatim.
-      if (opts.bundle && target === 'proto') {
-        const zip = buildZip([
-          { path: 'petstore.proto', content: 'syntax = "proto3";' },
-          { path: 'google/protobuf/timestamp.proto', content: 'message Timestamp {}' },
-        ]);
-        return Promise.resolve({
-          ok: true,
-          headers: {
-            get: (name: string) =>
-              name.toLowerCase() === 'content-disposition'
-                ? 'attachment; filename="petstore.zip"'
-                : name.toLowerCase() === 'content-type'
-                  ? 'application/zip'
-                  : null,
-          },
-          arrayBuffer: () => Promise.resolve(zip.buffer.slice(0)),
-        });
-      }
-      const doc =
-        target === 'openapi'
-          ? { filename: 'petstore.json', type: 'application/json', text: '{"openapi":"3.1.0"}' }
-          : { filename: 'petstore.proto', type: 'text/plain', text: 'syntax = "proto3";' };
+    // Async export job download (MFX-46.2) — the completed job's emitted artifact bytes.
+    if (url.includes('/api/export/jobs/') && url.endsWith('/download')) {
+      return Promise.resolve(downloadResponse(submittedTarget, Boolean(opts.bundle)));
+    }
+    // Submit an async export job — 202 with the job id + poll path.
+    if (url.endsWith('/api/export/jobs') && init?.method === 'POST') {
+      const body = JSON.parse(init?.body ?? '{}');
+      submittedTarget = String(body.target);
+      submittedConfirm = Boolean(body.confirm);
       return Promise.resolve({
         ok: true,
-        headers: {
-          get: (name: string) =>
-            name.toLowerCase() === 'content-disposition'
-              ? `attachment; filename="${doc.filename}"`
-              : name.toLowerCase() === 'content-type'
-                ? doc.type
-                : null,
-        },
-        arrayBuffer: () => Promise.resolve(new TextEncoder().encode(doc.text).buffer),
+        json: () =>
+          Promise.resolve({ success: true, job_id: 'job-1', status_path: '/api/export/jobs/job-1' }),
       });
+    }
+    // Poll a job — resolves terminal on the first poll: completed, or a structured failure.
+    if (url.includes('/api/export/jobs/')) {
+      const target = submittedTarget;
+      let status: Record<string, unknown>;
+      if (opts.jobFailure === 'validation') {
+        status = {
+          job_id: 'job-1',
+          state: 'failed',
+          percent: 75,
+          events: [],
+          progress: { phase: 'validating', total: 5, completed: 3 },
+          error: {
+            code: 'EMITTED_ARTIFACT_INVALID',
+            message: 'The export was blocked before delivery.',
+            context: {
+              target,
+              validation: {
+                verdict: 'invalid',
+                target,
+                blocks_delivery: true,
+                warns: false,
+                valid: false,
+                findings: [
+                  { message: 'Field number 0 is not allowed.', file: 'petstore.proto', line: 12, column: 3, keyword: 'buf.field-number' },
+                ],
+                detail: null,
+                headline: 'Invalid — export blocked',
+                message: 'The export was blocked before delivery.',
+              },
+            },
+          },
+        };
+      } else if (opts.jobFailure === 'emit') {
+        status = {
+          job_id: 'job-1',
+          state: 'failed',
+          percent: 55,
+          events: [],
+          progress: { phase: 'emitting', total: 5, completed: 2 },
+          error: { code: 'EMIT_FAILED', message: 'The emitter crashed.', context: { status_code: 500 } },
+        };
+      } else if (opts.jobFailure === 'confirmation' && !submittedConfirm) {
+        status = {
+          job_id: 'job-1',
+          state: 'failed',
+          percent: 30,
+          events: [],
+          progress: { phase: 'analyzing-fidelity', total: 5, completed: 1 },
+          error: {
+            code: 'TRANSCODE_CONFIRMATION_REQUIRED',
+            message: 'This is a severe conversion.',
+            context: { verdict: 'severe', reasons: ['Drops all response types'], preserved_percent: 31 },
+          },
+        };
+      } else {
+        status = {
+          job_id: 'job-1',
+          state: 'completed',
+          percent: 100,
+          events: [],
+          progress: { phase: 'packaging', total: 5, completed: 4 },
+          result: {
+            artifact: 'proj-petstore',
+            version_record_id: 'rev-1',
+            version_label: '1.2.0',
+            target,
+            dry_run: false,
+            fidelity: PREVIEWS[target],
+            files: [{ path: docFor(target).filename, size_bytes: 42 }],
+            media_type: docFor(target).type,
+            download_path: `/v1/export/t/jobs/job-1/download`,
+          },
+        };
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true, ...status }) });
     }
     // Catalog-source context for the Source step (MFX-41.2) — a non-OpenAPI (gRPC) import.
     if (url.includes('/api/catalog/')) {
@@ -316,6 +428,10 @@ async function renderStudio(
 }
 
 beforeEach(() => {
+  // The job tracker is a module singleton with sessionStorage persistence — reset both so a job
+  // from a previous test never resumes into the next one.
+  __resetExportJobTrackerForTests();
+  window.sessionStorage.clear();
   (URL as unknown as { createObjectURL: unknown }).createObjectURL = jest.fn(() => 'blob:mock');
   (URL as unknown as { revokeObjectURL: unknown }).revokeObjectURL = jest.fn();
   jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
@@ -607,16 +723,20 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     fireEvent.click(screen.getByTestId('export-studio-generate'));
 
     await waitFor(() => expect(screen.getByTestId('export-artifact-preview')).toBeInTheDocument());
-    const documentCall = fetchMock.mock.calls.find(([url]) =>
-      String(url).includes('/api/export/document'),
+    const submitCall = fetchMock.mock.calls.find(
+      ([url, init]) =>
+        String(url).endsWith('/api/export/jobs') &&
+        (init as { method?: string } | undefined)?.method === 'POST',
     );
-    expect(documentCall).toBeDefined();
-    const body = JSON.parse((documentCall![1] as { body: string }).body);
+    expect(submitCall).toBeDefined();
+    const body = JSON.parse((submitCall![1] as { body: string }).body);
     expect(body).toEqual({
       artifact: 'proj-petstore',
       version: 'rev-1',
       target: 'proto',
       options: { package: 'com.example' },
+      // A lossy conversion continued past the acknowledgement submits the job confirmed (MFX-3.3).
+      confirm: true,
     });
     // The same changed options are reported to onGenerated, so the recent-export record can offer
     // a faithful re-run (MFX-41.3).
@@ -717,5 +837,142 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     expect(screen.getByTestId('bundle-tab-google/protobuf/timestamp.proto')).toHaveAttribute('data-active', 'true');
     expect(screen.getByTestId('bundle-file-editor')).toHaveTextContent('message Timestamp');
     expect(screen.getByTestId('verify-problem-lint-1')).toHaveAttribute('data-selected', 'true');
+  });
+});
+
+describe('ExportStudio — job progress & failure recovery (MFX-46.2)', () => {
+  /** Verify a clean OpenAPI (or acknowledge a lossy proto) and land on the Review step. */
+  async function advanceToReview(
+    fetchMock: jest.Mock,
+    target: string,
+    { acknowledge = false }: { acknowledge?: boolean } = {},
+  ) {
+    await renderStudio(fetchMock, { initialTarget: target });
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
+    if (target === 'proto') {
+      fireEvent.change(screen.getByLabelText(/Package/i), { target: { value: 'com.example' } });
+    }
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
+    fireEvent.click(screen.getByTestId('verify-run'));
+    await waitFor(() => expect(screen.getByTestId('verify-verdict')).toBeInTheDocument());
+    if (acknowledge) {
+      fireEvent.click(within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
+    }
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+  }
+
+  it('surfaces every pipeline stage on a failed job (MFX-46.2 acceptance #1)', async () => {
+    await advanceToReview(mockFetch({ jobFailure: 'emit' }), 'openapi');
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+
+    await waitFor(() => expect(screen.getByTestId('generate-failure')).toBeInTheDocument());
+    // Each of the five stages is rendered and individually addressable.
+    for (const key of ['loading-source', 'analyzing-fidelity', 'emitting', 'validating', 'packaging']) {
+      expect(screen.getByTestId(`generate-stage-${key}`)).toBeInTheDocument();
+    }
+    // The emit failure marks the emitting row failed and the earlier rows done.
+    expect(screen.getByTestId('generate-stage-emitting')).toHaveAttribute('data-status', 'failed');
+    expect(screen.getByTestId('generate-stage-loading-source')).toHaveAttribute('data-status', 'done');
+    expect(screen.getByTestId('generate-stage-packaging')).toHaveAttribute('data-status', 'pending');
+  });
+
+  it('renders an emitter failure with its detail and a retry action (MFX-46.2 acceptance #2)', async () => {
+    const fetchMock = mockFetch({ jobFailure: 'emit' });
+    await advanceToReview(fetchMock, 'openapi');
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+
+    const failure = await screen.findByTestId('generate-failure');
+    expect(failure).toHaveAttribute('data-failure-class', 'emitter');
+    expect(failure).toHaveAttribute('data-recovery', 'retry');
+    expect(screen.getByTestId('generate-failure-message')).toHaveTextContent('The emitter crashed.');
+
+    // Retry re-submits the same config — a second POST to /api/export/jobs.
+    fireEvent.click(screen.getByTestId('generate-failure-action'));
+    await waitFor(() => {
+      const submits = fetchMock.mock.calls.filter(
+        ([url, init]) =>
+          String(url).endsWith('/api/export/jobs') &&
+          (init as { method?: string } | undefined)?.method === 'POST',
+      );
+      expect(submits.length).toBe(2);
+    });
+  });
+
+  it('routes a validation-gate failure back to the Verify lens with findings loaded (MFX-46.2)', async () => {
+    await advanceToReview(mockFetch({ jobFailure: 'validation' }), 'openapi');
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+
+    const failure = await screen.findByTestId('generate-failure');
+    expect(failure).toHaveAttribute('data-failure-class', 'validation');
+    expect(screen.getByTestId('generate-validation-summary')).toHaveTextContent('1 validation finding');
+
+    // "Review in Verify" jumps back to the Verify step with the validator's findings loaded.
+    fireEvent.click(screen.getByTestId('generate-failure-action'));
+    expect(screen.getByTestId('verify-gate-failure-notice')).toBeInTheDocument();
+    expect(screen.getByTestId('verify-verdict')).toHaveAttribute('data-verdict', 'invalid');
+    const panel = screen.getByTestId('verify-panel-validation');
+    expect(within(panel).getByTestId('verify-validation-findings')).toHaveTextContent(
+      'Field number 0 is not allowed.',
+    );
+    // The gate re-locks: Generate cannot proceed until the user re-verifies.
+    expect(screen.getByRole('button', { name: /continue to review/i })).toBeDisabled();
+  });
+
+  it('re-verifies to clear a validation-gate override (MFX-46.2)', async () => {
+    // The failing job routes to Verify; a fresh (clean) verify run clears the override and unlocks.
+    const fetchMock = mockFetch({ jobFailure: 'validation' });
+    await advanceToReview(fetchMock, 'openapi');
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+    fireEvent.click(await screen.findByTestId('generate-failure-action')); // → verify (invalid)
+
+    fireEvent.click(screen.getByTestId('verify-rerun'));
+    await waitFor(() =>
+      expect(screen.getByTestId('verify-verdict')).toHaveAttribute('data-verdict', 'clean'),
+    );
+    expect(screen.queryByTestId('verify-gate-failure-notice')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /continue to review/i })).toBeEnabled();
+  });
+
+  it('acknowledges a severe conversion and re-submits confirmed (MFX-46.2)', async () => {
+    // The transcoding guard can flag a severe conversion even when Verify passed clean: the first
+    // (unconfirmed) submit fails, and acknowledging re-submits it with confirmation.
+    const fetchMock = mockFetch({ jobFailure: 'confirmation' });
+    await advanceToReview(fetchMock, 'openapi');
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+
+    const failure = await screen.findByTestId('generate-failure');
+    expect(failure).toHaveAttribute('data-failure-class', 'confirmation');
+    expect(screen.getByTestId('generate-guard-reasons')).toHaveTextContent('Drops all response types');
+
+    fireEvent.click(screen.getByTestId('generate-failure-action')); // Acknowledge & generate
+    // The re-submit carries confirm:true, so the guard passes and the artifact is produced.
+    await waitFor(() => expect(screen.getByTestId('export-artifact-preview')).toBeInTheDocument());
+    const submits = fetchMock.mock.calls.filter(
+      ([url, init]) =>
+        String(url).endsWith('/api/export/jobs') &&
+        (init as { method?: string } | undefined)?.method === 'POST',
+    );
+    expect(JSON.parse((submits[submits.length - 1][1] as { body: string }).body).confirm).toBe(true);
+  });
+
+  it('resumes a finished job when the Studio is reopened for the same source (MFX-46.2 acceptance #3)', async () => {
+    const fetchMock = mockFetch();
+    const utils = await renderStudio(fetchMock, { initialTarget: 'openapi' });
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
+    fireEvent.click(screen.getByTestId('verify-run'));
+    await waitFor(() => expect(screen.getByTestId('verify-verdict')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+    await waitFor(() => expect(screen.getByTestId('export-artifact-preview')).toBeInTheDocument());
+
+    // Leave the Studio, then reopen it for the same source with NO deep-link target: the tracked
+    // job resumes — the Studio lands back on Review with the generated artifact, no re-generate.
+    utils.unmount();
+    render(<ExportStudio artifact="proj-petstore" artifactLabel="Pet Store API" version="rev-1" />);
+    await waitFor(() => expect(screen.getByTestId('export-artifact-preview')).toBeInTheDocument());
+    expect(screen.queryByTestId('export-studio-generate')).not.toBeInTheDocument();
   });
 });
