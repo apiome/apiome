@@ -928,7 +928,9 @@ def get_export_job_emit_result(tenant_slug: str, job_id: str) -> Optional[EmitRe
 
 def _download_filename(path: str) -> str:
     """Derive the download filename from an emitted file's relative path (basename only)."""
-    return (path or "").rsplit("/", 1)[-1] or "document"
+    basename = (path or "").replace("\\", "/").rsplit("/", 1)[-1]
+    sanitized = basename.translate({ord('"'): None, ord("\r"): None, ord("\n"): None})
+    return sanitized or "document"
 
 
 def resolve_export_download(tenant_slug: str, job_id: str) -> ExportDownloadArtifact:

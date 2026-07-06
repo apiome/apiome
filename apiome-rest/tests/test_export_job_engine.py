@@ -527,6 +527,32 @@ async def test_resolve_export_download_derives_basename_from_nested_path():
     assert artifact.filename == "openapi.json"
 
 
+async def test_resolve_export_download_normalizes_windows_path_and_sanitizes_header_chars():
+    """Windows separators and header-breaking characters are removed from the filename."""
+    from app.export_job_engine import resolve_export_download
+
+    def _unsafe(*args, **kwargs):
+        return EmitResult(
+            files=[
+                EmittedFile(
+                    path='schemas\\bad"\r\nopenapi.json',
+                    content={"openapi": "3.1.0"},
+                )
+            ],
+            media_type="application/json",
+        )
+
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()), patch(
+        "app.export_job_engine.emit_canonical", side_effect=_unsafe
+    ):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        await _wait_terminal(accepted.job_id)
+
+    artifact = resolve_export_download(TENANT_SLUG, accepted.job_id)
+    assert artifact.filename == "badopenapi.json"
+
+
 async def test_resolve_export_download_409_for_dry_run():
     """A dry-run has no artifact, so a download attempt is a 409 (not a 404)."""
     from fastapi import HTTPException
