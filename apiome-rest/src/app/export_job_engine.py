@@ -675,12 +675,18 @@ async def _drive_export_job(job_id: str) -> None:
 # ===========================================================================
 
 
-def _get_record(tenant_slug: str, job_id: str) -> _ExportJobRecord:
-    """Look up a job scoped to the tenant; 404 when unknown or cross-tenant."""
+def _get_record_locked(tenant_slug: str, job_id: str) -> _ExportJobRecord:
+    """Look up a job scoped to the tenant while :data:`_jobs_lock` is held."""
     rec = _jobs.get(job_id)
     if rec is None or rec.tenant_slug != tenant_slug:
         raise HTTPException(status_code=404, detail="Export job not found")
     return rec
+
+
+def _get_record(tenant_slug: str, job_id: str) -> _ExportJobRecord:
+    """Look up a job scoped to the tenant; 404 when unknown or cross-tenant."""
+    with _jobs_lock:
+        return _get_record_locked(tenant_slug, job_id)
 
 
 def _status_path(tenant_slug: str, job_id: str) -> str:
@@ -732,7 +738,8 @@ async def schedule_export_job(
 
 def get_export_job_status(tenant_slug: str, job_id: str) -> ExportJobStatus:
     """Return the current poll payload for a job (404 when unknown for this tenant)."""
-    return _get_record(tenant_slug, job_id).status
+    with _jobs_lock:
+        return _get_record_locked(tenant_slug, job_id).status.model_copy(deep=True)
 
 
 async def list_export_jobs(tenant_slug: str) -> ExportJobListResponse:
@@ -782,4 +789,6 @@ def get_export_job_emit_result(tenant_slug: str, job_id: str) -> Optional[EmitRe
     Raises:
         HTTPException: 404 when the job is unknown for this tenant.
     """
-    return _get_record(tenant_slug, job_id).emit_result
+    with _jobs_lock:
+        emit_result = _get_record_locked(tenant_slug, job_id).emit_result
+        return None if emit_result is None else emit_result.model_copy(deep=True)

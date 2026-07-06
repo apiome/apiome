@@ -317,3 +317,37 @@ async def test_status_and_emit_result_are_tenant_scoped():
     with pytest.raises(HTTPException) as excinfo:
         get_export_job_emit_result("other-tenant", accepted.job_id)
     assert excinfo.value.status_code == 404
+
+
+async def test_status_lookup_returns_a_snapshot():
+    """Mutating a returned status must not mutate the shared in-memory job record."""
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        await _wait_terminal(accepted.job_id)
+
+    status = get_export_job_status(TENANT_SLUG, accepted.job_id)
+    status.events.clear()
+    assert status.result is not None
+    status.result.artifact = "mutated"
+
+    fresh = get_export_job_status(TENANT_SLUG, accepted.job_id)
+    assert fresh.events
+    assert fresh.result is not None
+    assert fresh.result.artifact == "artifact-1"
+
+
+async def test_emit_result_lookup_returns_a_snapshot():
+    """Mutating a returned emit result must not mutate the shared in-memory job record."""
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        await _wait_terminal(accepted.job_id)
+
+    emit_result = get_export_job_emit_result(TENANT_SLUG, accepted.job_id)
+    assert emit_result is not None
+    emit_result.files[0].path = "mutated.json"
+
+    fresh = get_export_job_emit_result(TENANT_SLUG, accepted.job_id)
+    assert fresh is not None
+    assert fresh.files[0].path != "mutated.json"
