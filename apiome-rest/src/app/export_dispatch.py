@@ -17,10 +17,10 @@ The composition reuses the format seams built earlier in the epic rather than re
    route the model through the Emitter SPI for the requested target, with field-identity persistence;
 3. **attach** — :func:`app.export_fidelity.build_export_fidelity` computes the full
    :class:`~app.export_fidelity.ExportFidelity` envelope (target + tier + report + advisory),
-   byte-identical to what ``POST /export/preview`` returns for the same inputs.
+   byte-identical to what ``POST /v1/export/{tenant_slug}/preview`` returns for the same inputs.
 
 A ``dry_run`` dispatch stops after step 3: it carries the fidelity report and **no artifact** —
-the synchronous twin of ``POST /export/preview``. Every failure mode is a typed exception the
+the synchronous twin of ``POST /v1/export/{tenant_slug}/preview``. Every failure mode is a typed exception the
 caller maps straight to an HTTP status: :class:`~app.export_source.ExportSourceError` (unknown
 artifact/version, no reconstructable source) and :class:`~app.export_service.ExportError`
 (unknown target, invalid options, an emitter that produced nothing).
@@ -32,14 +32,13 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .emitter import EmitResult
+from .emitter import EmitResult, get_emitter
 from .export_fidelity import ExportFidelity, build_export_fidelity
 from .export_service import (
     ExportError,
     ExportPersistenceContext,
     emit_canonical,
     resolve_emit_format,
-    resolve_emitter,
 )
 from .export_source import ExportSource, load_export_source
 from .lossiness import LossinessSeverity
@@ -112,10 +111,10 @@ def dispatch_from_source(
         ExportError: When ``target`` does not resolve (400), its options are invalid (422), or the
             emitter produced no document (422).
     """
-    # Resolve the emitter (and its stable format key) once; a bad target fails here, before any
+    # Resolve the format key (and validate the target) once; a bad target fails here, before any
     # emit, matching the preview/document routes.
-    emitter_cls = type(resolve_emitter(target))
     target_format = resolve_emit_format(target)
+    emitter_cls = get_emitter(target_format)
 
     # The fidelity envelope is computed the same way the preview endpoint does, so a preview and
     # the dispatch it previews agree byte-for-byte.
@@ -133,7 +132,7 @@ def dispatch_from_source(
         )
 
     emit_result = emit_canonical(
-        source.api, target, opts=options, persistence=persistence
+        source.api, target_format, opts=options, persistence=persistence
     )
     if not emit_result.files:
         # A registered emitter that yields nothing for this source is a target error, not a

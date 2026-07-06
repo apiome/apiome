@@ -1,4 +1,4 @@
-"""Tests for the synchronous dispatch route — ``POST /export/{tenant}/dispatch`` — MFX-3.2 (#3845).
+"""Tests for the synchronous dispatch route — ``POST /v1/export/{tenant_slug}/dispatch`` — MFX-3.2 (#3845).
 
 Pins the route contract:
 
