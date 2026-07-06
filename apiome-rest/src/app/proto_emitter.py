@@ -40,11 +40,13 @@ Two properties make the output trustworthy:
   source lacked, a ``oneof`` wrapping a union), or :attr:`~app.emitter.Provenance.DEFAULT`
   (a fixed emitter choice — the ``syntax`` line).
 
-The emitter is pure (no I/O) and self-registers under the ``proto3`` format key. The
-acceptance-criterion validation ("emits compilable ``.proto`` via ``buf build``") is confirmed by
-feeding the emitted text through :func:`app.proto_descriptor.compile_proto_descriptor_set`; the
-convenience :func:`compile_emitted_descriptor_set` pairs the two for the optional
-``FileDescriptorSet`` output, and the round-trip ticket (MFX-12.3) automates the full loop.
+The emitter is pure (no I/O) and self-registers under the ``proto3`` format key. Types are
+packaged **one ``.proto`` per protobuf ``package``** with cross-package ``import`` lines (MFX-12.4);
+a single-package source still yields one file. The acceptance-criterion validation ("emits
+compilable ``.proto`` via ``buf build``") is confirmed by feeding every emitted file through
+:func:`app.proto_descriptor.compile_proto_descriptor_set`; the convenience
+:func:`compile_emitted_descriptor_set` pairs emit + compile for the optional ``FileDescriptorSet``
+output, and the round-trip ticket (MFX-12.3) automates the full loop.
 """
 
 from __future__ import annotations
@@ -165,6 +167,66 @@ _NON_IDENT_RE = re.compile(r"[^A-Za-z0-9_]")
 
 # One indent level in emitted proto text (two spaces, matching the fixtures).
 _INDENT = "  "
+
+
+def _package_for_type(type_: Type, types_by_key: Dict[str, Type]) -> str:
+    """Return the protobuf ``package`` a canonical type belongs to."""
+    parent_key = _parent_key_for_type(type_.key, types_by_key)
+    if parent_key is not None:
+        return _package_for_type(types_by_key[parent_key], types_by_key)
+    if "." in type_.key:
+        return type_.key.rsplit(".", 1)[0]
+    return ""
+
+
+def _parent_key_for_type(key: str, types_by_key: Dict[str, Type]) -> Optional[str]:
+    """Return the enclosing ``RECORD`` type's key for ``key``, or ``None`` when top-level."""
+    if "." not in key:
+        return None
+    prefix = key.rsplit(".", 1)[0]
+    parent = types_by_key.get(prefix)
+    if parent is not None and parent.kind == TypeKind.RECORD:
+        return prefix
+    return None
+
+
+def _package_for_service(service: Service) -> str:
+    """Return the protobuf ``package`` a service belongs to."""
+    if "." in service.key:
+        return service.key.rsplit(".", 1)[0]
+    return ""
+
+
+def _apply_package_override(
+    package: str, api: CanonicalApi, options: ProtoEmitOptions
+) -> str:
+    """Apply :attr:`ProtoEmitOptions.package` when it overrides the model identity namespace."""
+    override = (options.package or "").strip()
+    identity = (api.identity.namespace or "").strip()
+    if override and package == identity:
+        return override
+    return package
+
+
+def _proto_path_for_package(package: str) -> str:
+    """Map a proto ``package`` to a deterministic module-relative ``.proto`` path."""
+    if not package:
+        return "api.proto"
+    segments = [_sanitize_identifier(part) or "pkg" for part in package.split(".")]
+    stem = segments[-1] or "api"
+    if len(segments) == 1:
+        return f"{stem}.proto"
+    return "/".join(segments[:-1] + [stem]) + ".proto"
+
+
+def _package_for_type_name(type_name: str, types_by_key: Dict[str, Type]) -> str:
+    """Resolve the protobuf ``package`` for a referenced type name."""
+    type_ = types_by_key.get(type_name)
+    if type_ is not None:
+        return _package_for_type(type_, types_by_key)
+    if "." in type_name:
+        return type_name.rsplit(".", 1)[0]
+    return ""
 
 
 class ProtoEmitOptions(EmitOptions):
@@ -354,7 +416,7 @@ class ProtoEmitter(Emitter, register=True):
     description = "Export as a Protocol Buffers 3 .proto (gRPC services + messages)."
     icon = "binary"
     paradigm = ApiParadigm.RPC
-    multi_file = False
+    multi_file = True
     options_model = ProtoEmitOptions
 
     #: Primary bundle media type for ``.proto`` source text.
@@ -408,20 +470,70 @@ class ProtoEmitter(Emitter, register=True):
             if isinstance(opts, ProtoEmitOptions)
             else ProtoEmitOptions.model_validate(opts.model_dump() if opts else {})
         )
-        writer = _ProtoWriter(api, options)
-        text = writer.render()
-        return EmitResult(
-            files=[
-                EmittedFile(
-                    path=writer.output_path,
-                    content=text,
-                    media_type=self.OUTPUT_MEDIA_TYPE,
+        return _ProtoBundleWriter(api, options).emit()
+
+
+class _ProtoBundleWriter:
+    """Orchestrates one ``.proto`` file per protobuf ``package`` (MFX-12.4)."""
+
+    def __init__(self, api: CanonicalApi, options: ProtoEmitOptions) -> None:
+        self._api = api
+        self._options = options
+        self._types_by_key: Dict[str, Type] = {t.key: t for t in api.types}
+        self.tracker = ProvenanceTracker()
+        self.losses = LossTracker()
+        self.field_identity_assignments: Dict[str, int] = {}
+
+    def _collect_packages(self) -> List[str]:
+        packages: Dict[str, None] = {}
+        for type_ in self._api.types:
+            if type_.kind in (TypeKind.RECORD, TypeKind.ENUM, TypeKind.UNION):
+                pkg = _apply_package_override(
+                    _package_for_type(type_, self._types_by_key), self._api, self._options
                 )
-            ],
-            media_type=self.OUTPUT_MEDIA_TYPE,
-            provenance=writer.tracker.records(),
-            losses=writer.losses.records(),
-            field_identity_assignments=writer.field_identity_assignments,
+                packages[pkg] = None
+        if self._options.emit_services:
+            for service in self._api.services:
+                pkg = _apply_package_override(
+                    _package_for_service(service), self._api, self._options
+                )
+                packages[pkg] = None
+        if not packages:
+            primary = _apply_package_override(
+                (self._options.package or self._api.identity.namespace or "").strip(),
+                self._api,
+                self._options,
+            )
+            packages[primary] = None
+        return sorted(packages.keys())
+
+    def emit(self) -> EmitResult:
+        packages = self._collect_packages()
+        package_paths = {pkg: _proto_path_for_package(pkg) for pkg in packages}
+        files: List[EmittedFile] = []
+        for pkg in packages:
+            writer = _ProtoWriter(
+                self._api,
+                self._options,
+                package=pkg,
+                package_paths=package_paths,
+                tracker=self.tracker,
+                losses=self.losses,
+            )
+            files.append(
+                EmittedFile(
+                    path=package_paths[pkg],
+                    content=writer.render(),
+                    media_type=ProtoEmitter.OUTPUT_MEDIA_TYPE,
+                )
+            )
+            self.field_identity_assignments.update(writer.field_identity_assignments)
+        return EmitResult(
+            files=files,
+            media_type=ProtoEmitter.OUTPUT_MEDIA_TYPE,
+            provenance=self.tracker.records(),
+            losses=self.losses.records(),
+            field_identity_assignments=self.field_identity_assignments,
         )
 
 
@@ -433,19 +545,32 @@ class _ProtoWriter:
     emitter's :meth:`ProtoEmitter.emit` stays a thin, stateless entry point.
     """
 
-    def __init__(self, api: CanonicalApi, options: ProtoEmitOptions) -> None:
+    def __init__(
+        self,
+        api: CanonicalApi,
+        options: ProtoEmitOptions,
+        *,
+        package: str,
+        package_paths: Dict[str, str],
+        tracker: ProvenanceTracker,
+        losses: LossTracker,
+    ) -> None:
         self._api = api
         self._options = options
-        self.tracker = ProvenanceTracker()
-        self.losses = LossTracker()
+        self.tracker = tracker
+        self.losses = losses
 
-        self._package = (options.package or (api.identity.namespace or "")).strip()
+        self._package = package
+        self._package_paths = package_paths
         self._types_by_key: Dict[str, Type] = {t.key: t for t in api.types}
-        # A single ``.proto`` declares one package, so only types under that package are local
-        # definitions; anything else (a well-known type, a sibling module's type) is referenced by
-        # name and pulled in via ``import`` — exactly the dangling-by-design references the
-        # normalizer leaves when it skips a proto's imports.
-        self._local_keys = {t.key for t in api.types if self._is_local(t.key)}
+        self._local_keys = {
+            t.key
+            for t in api.types
+            if _apply_package_override(
+                _package_for_type(t, self._types_by_key), api, options
+            )
+            == self._package
+        }
         # Types that become their own top-level/nested declaration: RECORD, ENUM, and (best-effort)
         # UNION. MAP types are inlined at the referencing field as ``map<K,V>`` and never emitted
         # standalone; SCALAR/ALIAS types have no proto declaration.
@@ -459,39 +584,15 @@ class _ProtoWriter:
         self._children = self._build_nesting()
         self._imports: set[str] = set()
         self.field_identity_assignments: Dict[str, int] = {}
-        self._note_foreign_types(api)
 
     def _is_local(self, key: str) -> bool:
-        """True when ``key`` is defined by this file's package (so it is emitted, not imported)."""
-        if not self._package:
-            return True
-        return key.startswith(f"{self._package}.")
-
-    def _note_foreign_types(self, api: CanonicalApi) -> None:
-        """Record a loss for any named type that lives outside this file's package.
-
-        A single-file proto emission can only declare one package; a model carrying types from
-        several packages (a multi-file source flattened into one API) loses the out-of-package
-        definitions, which become dangling references. Surfacing this keeps the emission honest.
-        """
-        for type_ in api.types:
-            if type_.kind in (TypeKind.RECORD, TypeKind.ENUM, TypeKind.UNION) and not self._is_local(
-                type_.key
-            ):
-                self.losses.record(
-                    LossKind.NA,
-                    "out-of-package-type",
-                    f"Type {type_.key!r} is outside the emitted package {self._package!r}; a "
-                    "single-file proto cannot declare it, so it became a dangling reference.",
-                    pointer=type_.key,
-                )
+        """True when ``key`` is defined in this file's package."""
+        return key in self._local_keys
 
     @property
     def output_path(self) -> str:
-        """The emitted filename — the package's last segment (or ``api``) plus ``.proto``."""
-        stem = self._package.rsplit(".", 1)[-1] if self._package else ""
-        stem = _sanitize_identifier(stem) if stem else "api"
-        return f"{stem or 'api'}.proto"
+        """The emitted filename for this writer's package."""
+        return self._package_paths[self._package]
 
     # --- nesting reconstruction --------------------------------------------
 
@@ -510,13 +611,7 @@ class _ProtoWriter:
 
     def _parent_key(self, key: str) -> Optional[str]:
         """Return the enclosing RECORD type's key for ``key``, or ``None`` when top-level."""
-        if "." not in key:
-            return None
-        prefix = key.rsplit(".", 1)[0]
-        parent = self._types_by_key.get(prefix)
-        if parent is not None and parent.kind == TypeKind.RECORD:
-            return prefix
-        return None
+        return _parent_key_for_type(key, self._types_by_key)
 
     # --- top-level render ---------------------------------------------------
 
@@ -530,6 +625,11 @@ class _ProtoWriter:
 
         if self._options.emit_services:
             for service in self._api.services:
+                service_pkg = _apply_package_override(
+                    _package_for_service(service), self._api, self._options
+                )
+                if service_pkg != self._package:
+                    continue
                 body.extend(self._render_service(service))
                 body.append("")
         elif self._api.services:
@@ -753,10 +853,8 @@ class _ProtoWriter:
         name = ref.name
         if name in _PROTO_SCALARS:
             return name
-        # A named type: local (emitted here) or an import. Reference it by its fully-qualified name
-        # with a leading dot so resolution is unambiguous regardless of nesting; the normalizer
-        # strips the dot, so this round-trips to the same key.
-        if name not in self._emittable_keys and name not in self._types_by_key:
+        # A named type: local (emitted in this file) or imported from a sibling package / WKT.
+        if name not in self._emittable_keys:
             self._note_import(name)
         return f".{name}"
 
@@ -766,6 +864,12 @@ class _ProtoWriter:
         if path is not None:
             self._imports.add(path)
             return
+        sibling_pkg = _package_for_type_name(type_name, self._types_by_key)
+        if sibling_pkg and sibling_pkg != self._package:
+            sibling_path = self._package_paths.get(sibling_pkg)
+            if sibling_path is not None:
+                self._imports.add(sibling_path)
+                return
         self.losses.record(
             LossKind.NA,
             "unresolved-import",
@@ -983,13 +1087,10 @@ class _ProtoWriter:
         return request_type, response_type
 
     def _register_reference(self, type_name: str) -> None:
-        """Note the import for an rpc request/response type when it is not locally defined."""
-        if (
-            type_name not in self._emittable_keys
-            and type_name not in self._types_by_key
-            and type_name not in _PROTO_SCALARS
-        ):
-            self._note_import(type_name)
+        """Note the import for an rpc request/response type when it is not local to this file."""
+        if type_name in _PROTO_SCALARS or type_name in self._emittable_keys:
+            return
+        self._note_import(type_name)
 
     def _rpc_options(self, operation: Operation) -> List[str]:
         """Render an rpc's method options (``idempotency_level``, ``deprecated``)."""
@@ -1081,6 +1182,7 @@ async def compile_emitted_descriptor_set(
     from .proto_descriptor import ProtoFile, compile_proto_descriptor_set
 
     result = ProtoEmitter().emit(api, opts=opts)
-    primary = result.files[0]
-    proto_file = ProtoFile(path=primary.path, content=str(primary.content))
-    return await compile_proto_descriptor_set([proto_file])
+    proto_files = [
+        ProtoFile(path=f.path, content=str(f.content)) for f in result.files
+    ]
+    return await compile_proto_descriptor_set(proto_files)

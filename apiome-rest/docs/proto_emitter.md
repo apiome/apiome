@@ -74,7 +74,6 @@ unit tests without the database.
 | `synthesized-enum-number` / `synthesized-enum-zero` | an enum lacked wire numbers, or lacked the proto3-required zero value |
 | `union-as-oneof` | a `UNION` type, approximated as a message wrapping a `oneof` |
 | `event-operation` / `synthesized-request` / `synthesized-response` | a non-RPC (pub/sub/one-way) operation reframed as a unary `rpc`, using `google.protobuf.Empty` where a message was missing |
-| `out-of-package-type` | a type outside the emitted package (a single `.proto` declares one package) |
 
 ## Properties
 
@@ -83,13 +82,26 @@ unit tests without the database.
 * **Provenance-tracked.** Each construct is tagged `SOURCE`, `INFERRED` (a synthesized field
   number, a union-as-oneof), or `DEFAULT` (the `syntax` line).
 
+## Multi-file packaging (MFX-12.4)
+
+Types are grouped by their protobuf ``package`` (derived from each type's canonical key) and
+emitted as **one ``.proto`` file per package** with deterministic module-relative paths
+(``acme.user`` → ``acme/user.proto``). Cross-package type references add the sibling file's
+``import`` path; well-known types still import from ``google/protobuf/…``. A single-package source
+yields one file; the emitter's ``multi_file`` descriptor flag is ``True`` so export delivery
+(MFX-4.2) can zip multi-package bundles.
+
+Every emitted file in the bundle is validated together via ``buf build`` — both
+:func:`compile_emitted_descriptor_set` and :func:`app.export_validation.validate_emitted_artifact`
+pass the full ``EmitResult.files`` list to :func:`app.proto_descriptor.compile_proto_descriptor_set`.
+
 ## Optional `FileDescriptorSet` + validation
 
 `emit()` returns text only. The convenience coroutine
 `compile_emitted_descriptor_set(api, *, opts=None)` pairs it with
-`app.proto_descriptor.compile_proto_descriptor_set` to compile the emitted `.proto` with the
-bundled **`buf`** and return the `CompiledDescriptorSet` — proving the document compiles (the
+`app.proto_descriptor.compile_proto_descriptor_set` to compile **every** emitted ``.proto`` with the
+bundled **`buf`** and return the `CompiledDescriptorSet` — proving the bundle compiles (the
 acceptance criterion) and yielding the optional binary `FileDescriptorSet`. A protobuf source is an
 exact **fixed point** of `normalize ∘ emit`: `tests/test_proto_emitter.py` verifies emit → `buf
-build` → re-import with streaming modes and field numbers preserved, gated on `buf` being
-resolvable in the runtime.
+build` → re-import with streaming modes and field numbers preserved (including cross-package
+imports), gated on `buf` being resolvable in the runtime.

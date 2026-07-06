@@ -255,6 +255,7 @@ def test_descriptor_and_capability_profile() -> None:
     assert descriptor.key == "protobuf"
     assert descriptor.format == "proto3"
     assert descriptor.paradigm == ApiParadigm.RPC
+    assert descriptor.multi_file is True
     # Emit needs no toolchain (pure text); buf is only for the optional compile/validate.
     assert descriptor.needs_toolchain is False
 
@@ -598,21 +599,59 @@ def test_union_type_is_approximated_as_message_oneof() -> None:
     assert any(loss.subject == "union-as-oneof" for loss in result.losses)
 
 
-def test_out_of_package_type_records_loss() -> None:
-    """A type outside the emitted package cannot be declared in a single-file proto → a loss."""
-    local = Type(key="a.b.Local", name="Local", kind=TypeKind.RECORD)
-    foreign = Type(key="x.y.Foreign", name="Foreign", kind=TypeKind.RECORD)
+def test_multi_package_emits_per_package_files_with_imports() -> None:
+    """Types in distinct protobuf packages become separate ``.proto`` files linked by ``import``."""
+    address = Type(
+        key="acme.common.Address",
+        name="Address",
+        kind=TypeKind.RECORD,
+        fields=[
+            CanonicalField(
+                key="acme.common.Address.street",
+                name="street",
+                type=TypeRef(name="string"),
+                field_number=1,
+            )
+        ],
+    )
+    user = Type(
+        key="acme.user.User",
+        name="User",
+        kind=TypeKind.RECORD,
+        fields=[
+            CanonicalField(
+                key="acme.user.User.address",
+                name="address",
+                type=TypeRef(name="acme.common.Address"),
+                field_number=1,
+            )
+        ],
+    )
     api = CanonicalApi(
         paradigm=ApiParadigm.RPC,
         format="protobuf",
-        identity=ApiIdentity(name="a.b", namespace="a.b"),
-        types=[local, foreign],
+        identity=ApiIdentity(name="acme.user", namespace="acme.user"),
+        types=[address, user],
     )
     result = ProtoEmitter().emit(api)
-    text = str(result.files[0].content)
-    assert "message Local {" in text
-    assert "message Foreign" not in text  # not in this package
-    assert any(loss.subject == "out-of-package-type" for loss in result.losses)
+    assert len(result.files) == 2
+    paths = {f.path for f in result.files}
+    assert paths == {"acme/common.proto", "acme/user.proto"}
+    user_text = str(next(f for f in result.files if f.path == "acme/user.proto").content)
+    common_text = str(next(f for f in result.files if f.path == "acme/common.proto").content)
+    assert "package acme.common;" in common_text
+    assert "message Address {" in common_text
+    assert "package acme.user;" in user_text
+    assert 'import "acme/common.proto";' in user_text
+    assert ".acme.common.Address address = 1;" in user_text
+    assert not any(loss.subject == "out-of-package-type" for loss in result.losses)
+
+
+def test_single_package_api_emits_one_file() -> None:
+    """A single-package source still yields one ``.proto`` file (not forced into a bundle)."""
+    result = ProtoEmitter().emit(_rpc_api())
+    assert len(result.files) == 1
+    assert result.files[0].path == "acme/user.proto"
 
 
 def test_event_operation_without_response_uses_empty_and_records_losses() -> None:
@@ -660,12 +699,51 @@ class TestRealBuf:
     """Compile the emitted ``.proto`` with the real ``buf`` and normalize it back (fixed point)."""
 
     async def test_emitted_proto_compiles(self) -> None:
-        """The acceptance criterion: the emitted document compiles via ``buf build``."""
+        """The acceptance criterion: every emitted ``.proto`` compiles via ``buf build``."""
         compiled = await compile_emitted_descriptor_set(_rpc_api())
         names = {f.name for f in compiled.files}
-        assert "user.proto" in names
+        assert "acme/user.proto" in names
         # The well-known Timestamp import resolved into the descriptor set.
         assert "google/protobuf/timestamp.proto" in names
+
+    async def test_multi_package_emitted_proto_compiles(self) -> None:
+        """Cross-package imports compile as a single buf module (MFX-12.4)."""
+        address = Type(
+            key="acme.common.Address",
+            name="Address",
+            kind=TypeKind.RECORD,
+            fields=[
+                CanonicalField(
+                    key="acme.common.Address.street",
+                    name="street",
+                    type=TypeRef(name="string"),
+                    field_number=1,
+                )
+            ],
+        )
+        user = Type(
+            key="acme.user.User",
+            name="User",
+            kind=TypeKind.RECORD,
+            fields=[
+                CanonicalField(
+                    key="acme.user.User.address",
+                    name="address",
+                    type=TypeRef(name="acme.common.Address"),
+                    field_number=1,
+                )
+            ],
+        )
+        api = CanonicalApi(
+            paradigm=ApiParadigm.RPC,
+            format="protobuf",
+            identity=ApiIdentity(name="acme.user", namespace="acme.user"),
+            types=[address, user],
+        )
+        compiled = await compile_emitted_descriptor_set(api)
+        names = {f.name for f in compiled.files}
+        assert "acme/common.proto" in names
+        assert "acme/user.proto" in names
 
     async def test_round_trip_preserves_streaming_and_field_numbers(self) -> None:
         """Emit → compile → normalize reproduces the streaming modes and field numbers."""
