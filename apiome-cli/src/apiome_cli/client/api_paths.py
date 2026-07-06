@@ -52,6 +52,24 @@ def export_document(tenant_slug: str) -> str:
     return f"{V1}/export/{tenant_slug}/document"
 
 
+def export_jobs(tenant_slug: str) -> str:
+    """Async export job collection (MFX-3.1 / MFX-8.1).
+
+    ``POST`` submits a job (202 + ``{job_id, status_path}``); ``GET`` lists in-memory jobs for the tenant.
+    """
+    return f"{V1}/export/{tenant_slug}/jobs"
+
+
+def export_job(tenant_slug: str, job_id: str) -> str:
+    """Poll one async export job's status (MFX-3.1 / MFX-8.1)."""
+    return f"{export_jobs(tenant_slug)}/{job_id}"
+
+
+def export_job_download(tenant_slug: str, job_id: str) -> str:
+    """Download a completed export job's artifact bytes (MFX-4.1/4.2 / MFX-8.1)."""
+    return f"{export_job(tenant_slug, job_id)}/download"
+
+
 def tenant_imports(tenant_slug: str) -> str:
     return f"{V1}/tenants/{tenant_slug}/imports"
 

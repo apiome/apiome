@@ -1,20 +1,21 @@
-"""Emitter-registry export commands (MFX-9.4).
+"""Emitter-registry export commands (MFX-9.4 / MFX-8.1).
 
 ``apiome export`` is the client for the multi-format emitter registry — the inverse of ``import``.
-``export targets`` enumerates the registered emitters and their per-source fidelity for a version
-(``GET /v1/export/{tenant}/targets``); ``export openapi`` writes the OpenAPI document for a version
-and surfaces the honest fidelity report for that export.
+Dedicated per-format verbs (``export openapi``, ``export asyncapi``, …) write synchronously via the
+browse reconstruction or ``POST /export/document``. Any other registered target — and any format
+invoked as ``apiome export <format> <artifact>`` when the name is not a dedicated verb — runs
+through the async export job pipeline (``POST /export/jobs`` → poll → download), writing a single
+file or unpacking a zip bundle to ``--out``.
 
-There is no REST endpoint that emits an artifact through the Emitter SPI, so the document bytes come
-from the existing browse reconstruction (``GET /v1/schema/...`` — the same source ``spec export``
-uses) while the fidelity report comes from the emitter registry's dry-run preview
-(``POST /v1/export/{tenant}/preview``). A lossy export exits non-zero (so a CI export gate fails
-loudly) unless ``--force`` is given; the document is written either way, mirroring ``convert``.
+``export targets`` enumerates the registered emitters and their per-source fidelity for a version
+(``GET /v1/export/{tenant}/targets``).
 """
 
 from __future__ import annotations
 
+import click
 import typer
+from typer.core import TyperGroup
 
 from apiome_cli.cli_context import (
     insecure_from_context,
@@ -37,6 +38,7 @@ from apiome_cli.client.project_version_resolve import resolve_project_uuid
 from apiome_cli.client.spec_download import SpecSerialization, fetch_browse_spec
 from apiome_cli.config import require_api_key
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_USAGE
+from apiome_cli.export_dispatch import run_generic_export
 from apiome_cli.export_output import (
     EXPORT_TARGET_COLUMNS,
     fidelity_tier,
@@ -44,6 +46,7 @@ from apiome_cli.export_output import (
     is_lossy,
     target_rows,
 )
+from apiome_cli.import_.jobs import DEFAULT_POLL_INTERVAL
 from apiome_cli.help_util import group_callback_without_subcommand
 from apiome_cli.output import emit_json, emit_list_table
 from apiome_cli.spec_output import (
@@ -51,13 +54,6 @@ from apiome_cli.spec_output import (
     build_spec_export_metadata,
     emit_download_metadata,
     write_document_bytes,
-)
-
-app = typer.Typer(
-    name="export",
-    help="Export a version to a target format via the emitter registry.",
-    context_settings={"help_option_names": ["-h", "--help"]},
-    add_completion=False,
 )
 
 # The registry key + format for the reference OpenAPI 3.1 emitter (apiome-rest OpenApiEmitter).
@@ -79,6 +75,112 @@ _AVRO_TARGET = "avro"
 _JSON_STDOUT_NOTE = (
     "With --output -, document bytes are written to stdout; the fidelity summary and --json "
     "metadata are written to stderr so stdout stays byte-safe for pipelines."
+)
+
+_EXPORT_TIMEOUT_HELP = (
+    "Seconds to wait for the export job to finish (default: import timeout, usually 120)."
+)
+
+
+def _build_generic_export_command(target_format: str) -> click.Command:
+    """Build a Click command that exports ``target_format`` via the async job seam (MFX-8.1)."""
+
+    @click.command(
+        name=target_format,
+        context_settings={"help_option_names": ["-h", "--help"]},
+        help=(
+            f"Export an artifact to {target_format!r} via the async export job pipeline. "
+            "Resolves the target from the emitter registry, polls the job, and writes the "
+            "artifact to --out (file, directory, or .zip)."
+        ),
+    )
+    @click.argument("artifact", metavar="ARTIFACT")
+    @click.option("--version", default=None, help="Version UUID, slug, or label (default: latest).")
+    @click.option(
+        "--out",
+        "out",
+        default=None,
+        metavar="PATH",
+        help="Destination file, directory (for bundles), '-' for stdout, or .zip path.",
+    )
+    @click.option(
+        "--option",
+        "option_values",
+        multiple=True,
+        metavar="KEY=VALUE",
+        help="Per-target emit option (repeatable; value parsed as JSON when valid).",
+    )
+    @click.option(
+        "--force",
+        is_flag=True,
+        default=False,
+        help="Exit 0 even when the export loses fidelity (lossy/types-only).",
+    )
+    @click.option(
+        "--confirm",
+        is_flag=True,
+        default=False,
+        help="Proceed with a severe conversion the transcoding guard would otherwise block.",
+    )
+    @click.option(
+        "--export-timeout",
+        "export_timeout",
+        type=click.FloatRange(min=1.0),
+        default=None,
+        help=_EXPORT_TIMEOUT_HELP,
+    )
+    @click.option(
+        "--poll-interval",
+        "poll_interval",
+        type=click.FloatRange(min=0.1),
+        default=DEFAULT_POLL_INTERVAL,
+        help="Seconds between export job-status polls.",
+    )
+    def _generic(
+        artifact: str,
+        version: str | None,
+        out: str | None,
+        option_values: tuple[str, ...],
+        force: bool,
+        confirm: bool,
+        export_timeout: float | None,
+        poll_interval: float,
+    ) -> None:
+        run_generic_export(
+            click.get_current_context(),
+            target_format=target_format,
+            artifact=artifact,
+            version=version,
+            out=out,
+            option_values=option_values,
+            force=force,
+            confirm=confirm,
+            poll_interval=poll_interval,
+            export_timeout_override=export_timeout,
+        )
+
+    return _generic
+
+
+class DispatchExportGroup(TyperGroup):
+    """Typer group that dispatches unknown ``<format>`` names to the job export seam (MFX-8.1)."""
+
+    def get_command(self, ctx: click.Context, name: str) -> click.Command | None:
+        existing = super().get_command(ctx, name)
+        if existing is not None:
+            return existing
+        return _build_generic_export_command(name)
+
+
+app = typer.Typer(
+    name="export",
+    cls=DispatchExportGroup,
+    help=(
+        "Export a version to a target format via the emitter registry. "
+        "Registered targets are also invokable as ``export <format> <artifact>`` (async job + poll)."
+    ),
+    context_settings={"help_option_names": ["-h", "--help"]},
+    add_completion=False,
 )
 
 
@@ -661,3 +763,4 @@ def export_targets(
         empty_message="No export targets available for this version.",
         min_width=100,
     )
+
