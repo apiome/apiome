@@ -27,6 +27,23 @@
 > foundation & shared primitives, **10.8** grade-led catalog grid, **10.9** Settings tab,
 > **10.10** dark-theme + density polish, and **9.7** public-browse relevance ordering. These were
 > **filed as #3938–#3942** and linked as sub-issues of EPIC-24 (#3647) / EPIC-23 (#3646).
+>
+> **Update (2026-07-06) — Insight & Visualization expansion (✅ filed: epics #4618–#4626, issues #4627–#4667).** With the
+> import → discover → version → score → browse → test loop shipped, the catalog is *informational*
+> (a top-down inventory of what each server offers) but not yet *informative* (insight into the
+> server itself — its shape, safety posture, evolution, reliability, and how it compares). This
+> revision **adds nine new epics — MCAT-EPIC-14…22, to be created as `V2-MCP-EPIC-28…36`**. Epics
+> 14–18 turn the already-captured data (`mcp_capability_items` schemas/annotations,
+> `mcp_endpoint_versions` + `mcp_version_changes`, `mcp_version_scores.report`, `mcp_discovery_jobs`
+> timings, `mcp_test_invocations` latency/errors) into browser visualizations and cross-catalog
+> analytics; epics 19–22 broaden the **discovery + reporting** surface (shareable reports/exports,
+> richer discovery enrichment & provenance, advanced search, and catalog data-quality/curation).
+> All stay strictly within *cataloging* — discovering and reporting on what is found; the catalog is
+> **not** a place to consume the servers (users connect to a server directly to use it).
+> These are **filed** (see §10 for per-issue numbers) and linked as GitHub sub-issues under umbrella
+> #3637. They deliberately **supersede the stub 13.3 (#3713) / 13.4 (#3714)** (health monitoring /
+> analytics dashboard) with fully-specified work — those two stubs should be closed as folded into
+> #4641 / #4645. New label created: **`mcp-insights`** (on top of `mcp-catalog`).
 
 ---
 
@@ -189,6 +206,22 @@ is document-local only.
 | **V2-MCP-EPIC-25** | MCAT-EPIC-11 | CLI | 11.1–11.4 | ●● MVP |
 | **V2-MCP-EPIC-26** | MCAT-EPIC-12 | Official MCP Registry Integration | 12.1–12.4 | ○ v2 |
 | **V2-MCP-EPIC-27** | MCAT-EPIC-13 | Notifications, Webhooks & Observability | 13.1–13.4 | ○ v2 |
+| **V2-MCP-EPIC-28** | MCAT-EPIC-14 | Insight Data Layer & Visualization Foundation | 14.1–14.4 | ◐ next (§10) |
+| **V2-MCP-EPIC-29** | MCAT-EPIC-15 | Server Profile & Capability-Surface Visualization | 15.1–15.5 | ◐ next (§10) |
+| **V2-MCP-EPIC-30** | MCAT-EPIC-16 | Surface Evolution & Change Analytics | 16.1–16.5 | ◐ next (§10) |
+| **V2-MCP-EPIC-31** | MCAT-EPIC-17 | Reliability, Latency & Trust Signals | 17.1–17.4 | ◐ next (§10) |
+| **V2-MCP-EPIC-32** | MCAT-EPIC-18 | Catalog-wide Analytics, Comparison & Semantic Discovery | 18.1–18.5 | ○ v2 (§10) |
+| **V2-MCP-EPIC-33** | MCAT-EPIC-19 | Reporting, Export & Shareable Artifacts | 19.1–19.5 | ○ v2 (§10) |
+| **V2-MCP-EPIC-34** | MCAT-EPIC-20 | Discovery Enrichment & Provenance | 20.1–20.5 | ○ v2 (§10) |
+| **V2-MCP-EPIC-35** | MCAT-EPIC-21 | Advanced Search, Facets & Cross-Server Discovery | 21.1–21.4 | ○ v2 (§10) |
+| **V2-MCP-EPIC-36** | MCAT-EPIC-22 | Catalog Data Quality & Curation | 22.1–22.4 | ○ v2 (§10) |
+
+> **Epics 14–22 (2026-07-06)** are fully specified in **§10** and **filed as `#4618`–`#4667`**
+> (epics #4618–#4626 = EPIC-28…36; issues #4627–#4667), linked under umbrella #3637.
+> ◐ = "next up" (buildable now on shipped data); ○ = later v2. Epics 19–22 broaden the catalog's
+> **discovery + reporting** surface (richer capture of what's found and better ways to report/navigate
+> it) — they deliberately do **not** make the catalog a place to *consume* the servers; apiome
+> catalogs them, and users connect to a server directly if they want to use it.
 
 **Total: 13 epics (V2-MCP-EPIC-15…27), 69 issues** — the original 64 (#3651–#3714) plus the
 5 UI-design issues added in this update (#3938–#3942: 9.7 and 10.7–10.10). Issue `MCAT-E.N` is
@@ -1140,3 +1173,759 @@ beneath a new umbrella issue *"V2-MCP: External MCP Catalog (consume third-party
 servers)."* Link each new epic to the related existing issue above so reviewers can
 confirm it **extends** the V2-MCP line rather than duplicating the
 apiome-as-MCP-server work. Do **not** open a parallel standalone roadmap.
+
+---
+
+## 10. Expansion (2026-07-06) — Insight & Visualization (MCAT-EPIC-14…18)
+
+> **Status:** ✅ **Filed 2026-07-06.** MCAT-14.1 … 22.4 created as **`V2-MCP-EPIC-28…36`**
+> (epics **#4618–#4626**) with **41 child issues #4627–#4667**, under the `mcp-catalog` +
+> **`mcp-insights`** labels, each linked as a GitHub sub-issue of its epic and of the *External MCP
+> Catalog* umbrella (#3637). Per-issue numbers annotate the headings below. **Actual** GitHub title
+> format used (matching the existing catalog issues): `V2-MCP-<epic>.<issue>: <title>` — e.g.
+> `V2-MCP-28.1: Capability-surface metrics service` for MCAT-14.1. Follow-up: close stubs #3713/#3714
+> (13.3/13.4) as superseded by #4641/#4645.
+
+### 10.0 Why — from *informational* to *informative*
+
+The shipped catalog answers **"what does this server offer?"** — a top-down list of tools,
+resources, and prompts, plus a grade and a version history. It does not yet answer the questions a
+human evaluating or operating an MCP server actually asks:
+
+- **What *shape* is this server?** How complex are its tools, how much of its surface is
+  documented, what is its **safety posture** (read-only vs destructive vs open-world)?
+- **How is it *evolving*?** What churned between versions, was a change **breaking**, is the grade
+  trending up or down?
+- **Can I *trust* it?** Is discovery healthy, how fast/reliable are its tools when actually called,
+  how does its score break down?
+- **How does it *compare*?** Against its category peers, against another server I'm evaluating, and
+  what else offers similar capabilities?
+
+Every input needed to answer these is **already persisted** — this expansion is largely a
+**read/aggregate + visualize** effort, not new capture. The one genuinely missing primitive is a
+**charting layer**: the UI ships only `mermaid` today (no Recharts/visx/d3), so MCAT-14.3 adds a
+small, token-driven SVG chart kit rather than pulling a heavyweight dependency.
+
+**Data assets already available to visualize**
+
+| Source (table) | Signal it unlocks |
+|---|---|
+| `mcp_capability_items` (`input_schema`, `output_schema`, `annotations`, `description`, `title`) | Schema complexity, param stats, doc/schema coverage, safety-hint posture, capability graph edges |
+| `mcp_endpoint_versions` (`protocol_version`, `capabilities`, `discovered_at`) + `mcp_version_changes` (added/removed/modified + before/after `detail`) | Churn timeline, capability lifespan, breaking-change classification |
+| `mcp_version_scores` (`score`, `grade`, `report`) | Grade trend, score-category breakdown, lint-finding distribution |
+| `mcp_discovery_jobs` (`state`, `trigger`, `started_at`, `finished_at`, `error`) | Discovery health/availability timeline, sweep reliability |
+| `mcp_test_invocations` (`latency_ms`, `is_error`, `item_name`) | Latency percentiles, error-rate per tool |
+| `mcp_endpoints` (`category`, `transport`, `visibility`) across the catalog | Catalog-wide mix, distributions, peer ranking |
+
+### 10.1 New epics overview
+
+| Created as | Local | Theme | Issues | Weight |
+|---|---|---|---|---|
+| **V2-MCP-EPIC-28** | MCAT-EPIC-14 | Insight Data Layer & Visualization Foundation | 14.1–14.4 | ◐ prerequisite |
+| **V2-MCP-EPIC-29** | MCAT-EPIC-15 | Server Profile & Capability-Surface Visualization | 15.1–15.5 | ◐ next |
+| **V2-MCP-EPIC-30** | MCAT-EPIC-16 | Surface Evolution & Change Analytics | 16.1–16.5 | ◐ next |
+| **V2-MCP-EPIC-31** | MCAT-EPIC-17 | Reliability, Latency & Trust Signals | 17.1–17.4 | ◐ next |
+| **V2-MCP-EPIC-32** | MCAT-EPIC-18 | Catalog-wide Analytics, Comparison & Semantic Discovery | 18.1–18.5 | ○ v2 |
+| **V2-MCP-EPIC-33** | MCAT-EPIC-19 | Reporting, Export & Shareable Artifacts | 19.1–19.5 | ○ v2 |
+| **V2-MCP-EPIC-34** | MCAT-EPIC-20 | Discovery Enrichment & Provenance | 20.1–20.5 | ○ v2 |
+| **V2-MCP-EPIC-35** | MCAT-EPIC-21 | Advanced Search, Facets & Cross-Server Discovery | 21.1–21.4 | ○ v2 |
+| **V2-MCP-EPIC-36** | MCAT-EPIC-22 | Catalog Data Quality & Curation | 22.1–22.4 | ○ v2 |
+
+**Total: 9 epics, 41 issues.**
+
+- **14–18** (23 issues) — insight & visualization over already-captured data.
+- **19–22** (18 issues) — broaden the **discovery + reporting** surface: report/export what is found,
+  capture more *about* each server at discovery time, and search/curate the catalog. These remain
+  pure cataloging — **no re-exposure or brokered invocation** of the servers themselves.
+
+Relationship to the existing v2 stubs: **13.4** (catalog analytics dashboard) is **superseded by
+18.1**, and **13.3** (health/uptime monitoring) is **superseded by 17.1**; both stubs should be
+closed as "folded into 17.1/18.1" when these are filed.
+
+```mermaid
+flowchart LR
+  E14[E14 Insight Data Layer<br/>+ chart kit] --> E15[E15 Server Profile Viz]
+  E14 --> E16[E16 Evolution Analytics]
+  E14 --> E17[E17 Reliability & Trust]
+  E15 --> E17
+  E16 --> E17
+  E14 --> E18[E18 Catalog-wide + Semantic v2]
+  E15 --> E18
+  E17 --> E18
+  E15 --> E19[E19 Reporting & Export]
+  E17 --> E19
+  E2b[Discovery pipeline<br/>E2/E5] --> E20[E20 Discovery Enrichment]
+  E14 --> E21[E21 Advanced Search]
+  E9b[FTS/pgvector<br/>V101/V102] --> E21
+  E1b[Data model<br/>E1] --> E22[E22 Data Quality & Curation]
+  E20 --> E19
+```
+
+Epics **19–22** widen the catalog's **discovery + reporting** reach. They hang off the same
+foundation (14) and the existing discovery pipeline (Epics 2/5) and search infra (V101/V102 FTS +
+pgvector), and are otherwise independent of one another — so they can be scheduled around the
+insight epics as capacity allows.
+
+---
+
+## MCAT-EPIC-14 — Insight Data Layer & Visualization Foundation  ·  _created as **V2-MCP-EPIC-28**_  ·  **#4618**
+
+The shared substrate every other epic in §10 builds on: a backend **metrics/aggregation** service
+over the already-persisted tables, the **read APIs** the browser calls, a **token-driven SVG chart
+kit** (the missing primitive), and the **Insight tab shell** that hosts the visualizations. Nothing
+here is user-visible on its own — it exists so 15–18 never re-derive metrics or scatter chart code.
+
+| Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
+|---|---|---|---|:--:|:--:|---|---|
+| 14.1 | Capability-surface metrics service | Pure functions computing per-version surface metrics (counts, schema complexity, param stats, doc/schema/annotation coverage) from `mcp_capability_items` | `mcp-insights` `backend` | N | Y | ●● | apiome-rest |
+| 14.2 | Insight aggregation REST endpoints | `/mcp/endpoints/{id}/insight/*` read APIs (surface summary, evolution series, reliability series) + catalog aggregates | `mcp-insights` `backend` | N | Y | ●● | apiome-rest, apiome-db |
+| 14.3 | Token-driven SVG chart kit | Small React chart primitives (sparkline, bar, donut, stacked-timeline, radar, heatmap, gauge) using design-system tokens + dark theme; no heavy dep | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
+| 14.4 | "Insight" detail tab + page scaffold | New tab in the ADE endpoint-detail shell (`DetailTabs`) that lays out the viz panels 15–17 fill | `mcp-insights` `frontend` | N | Y | ● | apiome-ui |
+
+### MCAT-14.1 — Capability-surface metrics service  ·  **#4627**
+- **Problem.** Every visualization needs the same derived numbers (how many tools, how complex,
+  how well documented, how safe). Computing them ad-hoc in each panel would duplicate logic and
+  drift. There is no metrics layer over `mcp_capability_items` today.
+- **Solution / Scope.** A **pure, unit-tested module** (`mcp_surface_metrics.py`, mirroring the
+  pure-function style of `schema_lint.py`) that takes a version's capability items and returns a
+  stable metrics object: per-type counts; **schema complexity** per tool (property count, required
+  vs optional, max nesting depth, enum/`oneOf` usage) from `input_schema`; **output-schema
+  presence**; **annotation coverage** (`readOnlyHint`/`destructiveHint`/`idempotentHint`/
+  `openWorldHint` asserted counts) from `annotations`; **documentation coverage** (% of items with
+  `description`, % with `title`, % of tool params with descriptions). Deterministic + fingerprinted
+  so results are cacheable per `surface_fingerprint`.
+- **Acceptance Criteria.** Given a fixture surface, returns the documented metric object; complexity
+  handles nested/`$ref`/array schemas without throwing; coverage percentages are 0–100; identical
+  surfaces yield identical output (pure).
+- **Dependencies / Parallelism.** Foundational — start first. Reuses V127 shape. Parallel with 14.3.
+- **Technical Stack.** Python, pytest. Reuse JSON-Schema walk helpers from the existing linter.
+
+### MCAT-14.2 — Insight aggregation REST endpoints  ·  **#4628**
+- **Problem.** The browser must not run N queries per panel or hold raw item rows; it needs
+  pre-aggregated, cache-friendly series.
+- **Solution / Scope.** Read-only endpoints under `/mcp/endpoints/{id}/insight/`:
+  `surface` (14.1 metrics for current/any version), `evolution` (per-version series: counts, grade,
+  churn from `mcp_version_changes`), `reliability` (discovery-job success/latency from
+  `mcp_discovery_jobs`, invocation latency percentiles + error rate from `mcp_test_invocations`).
+  Plus a tenant-scoped `/mcp/insight/catalog` aggregate for 18.1. All respect visibility/tenant
+  scoping; percentile math in SQL (`percentile_cont`) where possible.
+- **Acceptance Criteria.** Each endpoint returns typed JSON for a seeded endpoint; percentiles match
+  a hand-computed fixture; unauthorized tenant gets 404; empty history returns empty series (not 500).
+- **Dependencies / Parallelism.** After 14.1. Feeds 15–18. Reuses existing MCP REST auth/scoping.
+- **Technical Stack.** FastAPI, asyncpg, Pydantic response models.
+
+### MCAT-14.3 — Token-driven SVG chart kit  ·  **#4629**
+- **Problem.** The UI ships **only `mermaid`** — no chart library. Every §10 panel needs charts,
+  and they must honor the existing token/dark-theme system (MCAT-10.7/10.10), not hardcode color.
+- **Solution / Scope.** A tiny hand-rolled **SVG** primitive set in `src/app/components/ui/mcp/charts/`
+  — `Sparkline`, `BarSeries`, `Donut`, `StackedTimeline`, `Radar`, `Heatmap`, `Gauge` — that take
+  domain data and resolve color from Tailwind tokens (same principle as `GradeGlyph`: consumers pass
+  values, primitives pick color). Accessible (title/`role=img`, tabular fallback), responsive
+  (viewBox), SSR-safe. Documented in the `/design-system/mcp` gallery. Avoids a heavyweight dep;
+  revisit Recharts/visx only if a panel outgrows SVG.
+- **Acceptance Criteria.** Each primitive renders from fixture data in the gallery in light + dark;
+  no hex/color literal in consumers; empty-data renders an empty state, not a crash; unit + snapshot
+  tests pass.
+- **Dependencies / Parallelism.** Parallel with 14.1/14.2 (pure frontend). Extends MCAT-10.7 kit.
+- **Technical Stack.** React, SVG, Tailwind tokens, Vitest/RTL.
+
+### MCAT-14.4 — "Insight" detail tab + page scaffold  ·  **#4630**
+- **Problem.** The visualizations need a home; the current tabs are Overview / Capabilities /
+  Versions / Lint & Score / Test / Credentials / Settings.
+- **Solution / Scope.** Add an **Insight** tab to the `DetailTabs` shell with a responsive panel
+  grid + section headers that 15.x/16.x/17.x fill, a version selector (view insight for any
+  snapshot), loading/empty/error states, and lazy data fetch from 14.2.
+- **Acceptance Criteria.** Tab appears and routes; panels lazy-load; version selector re-fetches;
+  empty endpoint (never discovered) shows a helpful empty state.
+- **Dependencies / Parallelism.** After 14.2/14.3. Blocks the render side of 15–17.
+- **Technical Stack.** Next.js, existing `DetailTabs`.
+
+---
+
+## MCAT-EPIC-15 — Server Profile & Capability-Surface Visualization  ·  _created as **V2-MCP-EPIC-29**_  ·  **#4619**
+
+The single-server "informative" view: at a glance, understand a server's **shape, safety, and
+documentation quality** — not just its list of offerings.
+
+| Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
+|---|---|---|---|:--:|:--:|---|---|
+| 15.1 | Server identity / at-a-glance profile card | Header card: protocol, transport, counts, grade, health, last-change, trust snapshot | `mcp-insights` `frontend` | N | Y | ● | apiome-ui |
+| 15.2 | Capability relationship graph | Node-link map of tools/resources/prompts + schema-derived links (resource URIs, shared types) | `mcp-insights` `frontend` | Y | N | ●●● | apiome-ui, apiome-rest |
+| 15.3 | Tool schema "shape" & complexity cards | Per-tool card: param count, required/optional, depth, enums, output-schema presence | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
+| 15.4 | Safety & annotation posture panel | Heatmap of read-only/destructive/idempotent/open-world hints × tools, cross-referenced with auth | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
+| 15.5 | Documentation & schema coverage meters | Gauges: % described, % titled, % params documented, output-schema adoption | `mcp-insights` `frontend` | Y | Y | ● | apiome-ui |
+
+### MCAT-15.1 — Server identity / at-a-glance profile card  ·  **#4631**
+- **Problem.** The Overview tab lists offerings but there is no single "who is this server" summary.
+- **Solution / Scope.** A header **identity card**: server name/title/version, negotiated
+  `protocol_version`, transport, capability counts, current grade (`GradeGlyph`), discovery health
+  pill, "last changed" recency, and a compact trust snapshot (link to 17.4). Pulls
+  `insight/surface`. Renders the server's `instructions` prominently when present.
+- **Acceptance Criteria.** Card renders for a discovered endpoint; degrades gracefully for older
+  (2025-03-26) servers missing `title`/`outputSchema`; unscored/never-discovered handled.
+- **Dependencies / Parallelism.** After 14.4. Foundation for the Insight tab header.
+- **Technical Stack.** Next.js, MCP primitives.
+
+### MCAT-15.2 — Capability relationship graph  ·  **#4632**
+- **Problem.** A flat list hides how a server's pieces relate; a graph reveals structure
+  (which prompts drive which tools, which tools touch which resources).
+- **Solution / Scope.** A node-link diagram (nodes = tools/resources/resource_templates/prompts,
+  colored by type) with edges inferred from signals we hold: prompt arguments/text referencing tool
+  names, tools whose descriptions/`uri`-shaped params reference resource URIs, and **shared input/
+  output types** (schema `$ref`/`title` overlap). Start with **Mermaid** (already a dependency) for
+  a static graph; upgrade to an interactive force layout (14.3) if needed. Edge inference lives in a
+  small backend helper so it is testable.
+- **Acceptance Criteria.** Graph renders for a multi-capability server; isolated nodes shown; edge
+  inference documented + unit-tested; no edges invented without a concrete signal (precision > recall).
+- **Dependencies / Parallelism.** After 14.2. Parallel with 15.3–15.5. Highest-complexity item.
+- **Technical Stack.** Mermaid (or 14.3 force graph), Python edge-inference helper.
+
+### MCAT-15.3 — Tool schema "shape" & complexity cards  ·  **#4633**
+- **Problem.** Two servers can both expose "10 tools" yet differ wildly in how hard they are to call.
+- **Solution / Scope.** Per-tool cards driven by 14.1 metrics: parameter count, required vs optional
+  split (mini bar), max nesting depth, enum/`oneOf` presence, whether an `output_schema` is declared.
+  A sortable "most/least complex tool" view; a distribution histogram across the server's tools.
+- **Acceptance Criteria.** Cards match fixture metrics; sort/filter works; tools with no params or
+  huge schemas both render sanely.
+- **Dependencies / Parallelism.** After 14.1/14.3/14.4. Parallel with 15.2/15.4/15.5.
+- **Technical Stack.** Next.js, chart kit.
+
+### MCAT-15.4 — Safety & annotation posture panel  ·  **#4634**
+- **Problem.** Whether a server's tools are read-only or **destructive** is the single most important
+  safety signal, and it is buried in per-item `annotations`.
+- **Solution / Scope.** A **heatmap / matrix** of tools × hints (`readOnlyHint`, `destructiveHint`,
+  `idempotentHint`, `openWorldHint`), with a headline "safety posture" summary (e.g. "3 destructive,
+  1 open-world, 8 read-only") and a cross-reference to the endpoint's `auth_type` — flagging
+  destructive tools reachable with no auth. Reuses `mcpAnnotationHints`/`mcpCapabilityAnnotationBadge`.
+- **Acceptance Criteria.** Matrix reflects fixture annotations; servers that assert **no** hints show
+  an explicit "unannotated — treat with caution" state; destructive+no-auth combination is surfaced.
+- **Dependencies / Parallelism.** After 14.1/14.3/14.4. Parallel with 15.2/15.3/15.5.
+- **Technical Stack.** Next.js, Heatmap primitive, MCP annotation helpers.
+
+### MCAT-15.5 — Documentation & schema coverage meters  ·  **#4635**
+- **Problem.** Poorly documented tools are hard for both humans and agents to use well; coverage is
+  invisible today.
+- **Solution / Scope.** Gauge/meter row from 14.1: % of items with `description`, % with `title`, %
+  of tool parameters carrying descriptions, % of tools declaring an `output_schema`. Each meter links
+  to the specific under-documented items.
+- **Acceptance Criteria.** Meters match fixture coverage; drill-down lists the offending items;
+  100%/0% render correctly.
+- **Dependencies / Parallelism.** After 14.1/14.3/14.4. Parallel with 15.2–15.4.
+- **Technical Stack.** Next.js, Gauge primitive.
+
+---
+
+## MCAT-EPIC-16 — Surface Evolution & Change Analytics  ·  _created as **V2-MCP-EPIC-30**_  ·  **#4620**
+
+Make the version history **visual and temporal** — the catalog already stores every snapshot and a
+per-item diff (`mcp_version_changes`); this epic renders how a server changes over time and whether
+those changes are safe.
+
+| Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
+|---|---|---|---|:--:|:--:|---|---|
+| 16.1 | Capability churn timeline | Stacked timeline of added/removed/modified per version | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
+| 16.2 | Capability lifespan / presence matrix | Per-item rows showing when each tool/resource existed across versions | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui |
+| 16.3 | Breaking-change classification | Backend classifier: additive vs breaking (removed item, tightened input schema) from change `detail` | `mcp-insights` `backend` | N | Y | ●●● | apiome-rest |
+| 16.4 | Grade & surface-size trend | Sparkline/area of grade + counts across versions | `mcp-insights` `frontend` | Y | Y | ● | apiome-ui |
+| 16.5 | "Changed since last view" digest | Per-user seen-marker + a summarized diff since last visit | `mcp-insights` `frontend` `backend` | N | N | ●● | apiome-ui, apiome-rest, apiome-db |
+
+### MCAT-16.1 — Capability churn timeline  ·  **#4636**
+- **Problem.** Version history is a list; you cannot see *how much* a server churns or *when*.
+- **Solution / Scope.** A stacked timeline (x = versions by `discovered_at`, y = count) of
+  added/removed/modified from `mcp_version_changes`, via `insight/evolution`. Click a version →
+  existing compare/diff viewer (MCAT-10.3). Highlights high-churn releases.
+- **Acceptance Criteria.** Timeline matches seeded change history; a version with zero changes still
+  positions on the axis; click deep-links to the diff.
+- **Dependencies / Parallelism.** After 14.2/14.3/14.4. Parallel across Epic-16.
+- **Technical Stack.** Next.js, StackedTimeline primitive.
+
+### MCAT-16.2 — Capability lifespan / presence matrix  ·  **#4637**
+- **Problem.** "Is this tool stable or was it added last week and might vanish?" is unanswerable today.
+- **Solution / Scope.** A matrix (rows = distinct capability names ever seen, columns = versions)
+  shading each cell present/absent/modified — a "gantt of the surface". Reveals volatile vs
+  long-lived capabilities. Backed by `mcp_capability_items` joined across versions + `mcp_version_changes`.
+- **Acceptance Criteria.** Matrix reconstructs presence correctly for a seeded multi-version endpoint;
+  renamed-vs-removed handled per the diff record; scales/scrolls for many items.
+- **Dependencies / Parallelism.** After 14.2/14.3/14.4. Parallel across Epic-16.
+- **Technical Stack.** Next.js, Heatmap primitive.
+
+### MCAT-16.3 — Breaking-change classification  ·  **#4638**
+- **Problem.** A "modified" tool could be a harmless doc tweak or a **breaking** input-schema change;
+  the raw diff does not say which.
+- **Solution / Scope.** A **pure classifier** over each `mcp_version_changes.detail` (before/after):
+  removed capability = **breaking**; a modification that adds a required param, removes a param,
+  narrows an enum, or changes a type = **breaking**; description/title/additive-optional = **additive**.
+  Persist/return a severity per change; expose via `insight/evolution`. Mirrors the deterministic,
+  fingerprinted style of the existing diff engine (MCAT-4.2).
+- **Acceptance Criteria.** Fixture diffs classify correctly across the enumerated cases; classifier
+  is pure/unit-tested; unknown/edge schema shapes default to "review" not silent "additive".
+- **Dependencies / Parallelism.** After 14.1; feeds 16.1/16.4 markers. Backend-first in this epic.
+- **Technical Stack.** Python, pytest; reuse JSON-Schema compare helpers.
+
+### MCAT-16.4 — Grade & surface-size trend  ·  **#4639**
+- **Problem.** Is the server getting better or worse over time? No trend view exists.
+- **Solution / Scope.** Sparkline/area of `mcp_version_scores.score`/`grade` and capability counts
+  across versions, with breaking-change markers (16.3) overlaid on the timeline.
+- **Acceptance Criteria.** Trend matches seeded scores; versions without a score are gapped, not
+  zeroed; markers align to the right versions.
+- **Dependencies / Parallelism.** After 14.2/14.3. Uses 16.3 markers if available. Parallel in epic.
+- **Technical Stack.** Next.js, Sparkline/BarSeries.
+
+### MCAT-16.5 — "Changed since last view" digest  ·  **#4640**
+- **Problem.** The catalog grid already hints "changed since last view" (MCAT-10.8) but there is no
+  per-user, per-endpoint summary of *what* changed.
+- **Solution / Scope.** A lightweight **per-user seen-marker** (last-viewed version per endpoint) +
+  a digest panel summarizing changes (and their breaking severity) since then. New small table
+  `mcp_endpoint_views(user_id, endpoint_id, last_seen_version_id, seen_at)`.
+- **Acceptance Criteria.** Digest reflects the delta between last-seen and current version; first
+  visit shows "new to you"; marker advances on view.
+- **Dependencies / Parallelism.** After 16.1/16.3. Needs a migration (new table). Later in epic.
+- **Technical Stack.** Next.js, FastAPI, one additive Flyway migration.
+
+---
+
+## MCAT-EPIC-17 — Reliability, Latency & Trust Signals  ·  _created as **V2-MCP-EPIC-31**_  ·  **#4621**
+
+Behavioral insight — is this server healthy, fast, and trustworthy — from the discovery-job and
+test-invocation logs plus the score report. **Supersedes stub 13.3.**
+
+| Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
+|---|---|---|---|:--:|:--:|---|---|
+| 17.1 | Discovery health & availability timeline | Success/failure/backoff/quarantine over time from discovery jobs | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui, apiome-rest |
+| 17.2 | Tool latency & error-rate panel | p50/p95/p99 latency + error ratio per tool from test invocations | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui, apiome-rest |
+| 17.3 | Score & lint breakdown visualization | `mcp_version_scores.report` → category bars + findings-by-severity | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
+| 17.4 | Composite trust profile radar | Radar across quality/safety/docs/stability/responsiveness | `mcp-insights` `frontend` `backend` | N | N | ●● | apiome-ui, apiome-rest |
+
+### MCAT-17.1 — Discovery health & availability timeline  ·  **#4641**
+- **Problem.** Discovery already records outcomes (`last_discovery_status`, per-job `state`/`error`,
+  backoff/quarantine from V133) but there's no view of a server's **reliability over time**.
+- **Solution / Scope.** A timeline of `mcp_discovery_jobs` outcomes (ok/unreachable/auth_error/…),
+  an uptime/availability % over a window, and backoff/quarantine state, from `insight/reliability`.
+- **Acceptance Criteria.** Timeline matches seeded job history; availability % matches a hand count;
+  quarantined endpoint clearly flagged; empty history → empty state.
+- **Dependencies / Parallelism.** After 14.2/14.3/14.4. Parallel in epic. Closes 13.3.
+- **Technical Stack.** Next.js, StackedTimeline; reuse V132/V133 fields.
+
+### MCAT-17.2 — Tool latency & error-rate panel  ·  **#4642**
+- **Problem.** `mcp_test_invocations` captures `latency_ms`/`is_error` per call, but nobody can see
+  how fast or reliable a tool actually is.
+- **Solution / Scope.** Per-tool p50/p95/p99 latency (SQL `percentile_cont`) and error rate, a
+  distribution chart, and a "slowest/flakiest tools" ranking, from `insight/reliability`. Honors the
+  invocation log's append-only nature; windowed by time.
+- **Acceptance Criteria.** Percentiles/error rates match a fixture; tools never tested show "no data";
+  a single-call tool renders without dividing by zero.
+- **Dependencies / Parallelism.** After 14.2/14.3/14.4. Parallel in epic.
+- **Technical Stack.** Next.js, BarSeries/Sparkline; asyncpg percentile query.
+
+### MCAT-17.3 — Score & lint breakdown visualization  ·  **#4643**
+- **Problem.** The Lint & Score tab shows a single grade; the **`report` JSONB** already holds the
+  category/finding breakdown behind it, unvisualized.
+- **Solution / Scope.** Parse `mcp_version_scores.report` into category bars (which rule groups cost
+  points) and findings grouped by severity, with drill-down to the offending capability. Complements
+  MCAT-10.4 rather than replacing it.
+- **Acceptance Criteria.** Breakdown reconstructs the report faithfully; severity counts match;
+  legacy/empty reports degrade gracefully.
+- **Dependencies / Parallelism.** After 14.3/14.4. Parallel in epic. Reuses `FindingSeverity` chip.
+- **Technical Stack.** Next.js, BarSeries; existing lint primitives.
+
+### MCAT-17.4 — Composite trust profile radar  ·  **#4644**
+- **Problem.** The many signals above are scattered; evaluators want one synthesized "trust" glance.
+- **Solution / Scope.** A **radar** across five normalized axes — **quality** (grade),
+  **safety** (annotation coverage + destructive/auth posture, 15.4), **documentation** (coverage,
+  15.5), **stability** (inverse churn / breaking-change rate, 16.x), **responsiveness** (latency/
+  error, 17.2). A small backend aggregator returns the five 0–100 axes; the panel renders them and
+  explains each. Explicitly a **heuristic composite**, labeled as such (not an official rating).
+- **Acceptance Criteria.** Axes computed from documented inputs; missing inputs (e.g. never tested)
+  render as an explicit gap not a zero; aggregator unit-tested; methodology shown on hover.
+- **Dependencies / Parallelism.** After 15.4/15.5, 16.3, 17.1/17.2. Capstone of the single-server view.
+- **Technical Stack.** Next.js, Radar primitive; Python aggregator.
+
+---
+
+## MCAT-EPIC-18 — Catalog-wide Analytics, Comparison & Semantic Discovery (v2)  ·  _created as **V2-MCP-EPIC-32**_  ·  **#4622**
+
+Cross-server value — the features that make the catalog compelling for **choosing** an MCP server,
+not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 are AI-assisted.
+
+| Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
+|---|---|---|---|:--:|:--:|---|---|
+| 18.1 | Catalog analytics dashboard | Category/transport/protocol mix, grade + tool-count distributions across the tenant catalog | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui, apiome-rest |
+| 18.2 | Side-by-side server comparison | Compare 2–3 endpoints: surface, grade, safety, latency | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui |
+| 18.3 | Peer percentile & category ranking | Rank a server against its category on each axis | `mcp-insights` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-ui |
+| 18.4 | Similar-servers via capability overlap + embeddings | "Servers like this" from tool-name/desc overlap + pgvector (V102) | `mcp-insights` `backend` | Y | N | ●●● | apiome-rest, apiome-db |
+| 18.5 | Natural-language server digest + usage examples | AI-generated "what can this do" summary + per-tool example calls | `mcp-insights` `backend` | Y | N | ●●● | apiome-rest |
+
+### MCAT-18.1 — Catalog analytics dashboard  ·  **#4645**
+- **Problem.** No catalog-wide view; 13.4 was only a stub.
+- **Solution / Scope.** A dashboard over `insight/catalog`: endpoints by `category`/`grade`,
+  transport mix, `protocol_version` adoption, tool-count distribution, change-frequency leaders,
+  discovery-health rollup, most-searched capabilities. Tenant-scoped (private) with a public variant
+  for `apiome-browse`.
+- **Acceptance Criteria.** All tiles render from real aggregates; empty catalog handled; public
+  variant respects published-only. **Closes 13.4.**
+- **Dependencies / Parallelism.** After 14.2. Parallel with 18.2.
+- **Technical Stack.** Next.js, chart kit; apiome-browse for the public variant.
+
+### MCAT-18.2 — Side-by-side server comparison  ·  **#4646**
+- **Problem.** Evaluators pick between servers and have no way to compare them directly.
+- **Solution / Scope.** Select 2–3 endpoints → a comparison view aligning surface counts, grade,
+  safety posture (15.4), coverage (15.5), latency (17.2), and trust radar (17.4) column-by-column,
+  with capability-overlap highlighting (shared vs unique tools).
+- **Acceptance Criteria.** Comparison aligns metrics; differing protocol versions handled; overlap
+  set correct against a fixture.
+- **Dependencies / Parallelism.** After 15.x/17.x. Parallel with 18.1.
+- **Technical Stack.** Next.js, chart kit.
+
+### MCAT-18.3 — Peer percentile & category ranking  ·  **#4647**
+- **Problem.** "Is this a good weather server?" needs a peer baseline, not an absolute grade.
+- **Solution / Scope.** Backend computes, per axis (grade, safety, docs, latency), a server's
+  **percentile within its category**; UI shows "top 10% for documentation in *finance*"-style badges.
+- **Acceptance Criteria.** Percentiles match a seeded category cohort; single-member categories
+  handled; recomputed as the catalog grows.
+- **Dependencies / Parallelism.** After 18.1 aggregates. Backend-first.
+- **Technical Stack.** FastAPI, asyncpg window functions; Next.js badges.
+
+### MCAT-18.4 — Similar-servers via capability overlap + embeddings  ·  **#4648**
+- **Problem.** Discovery is keyword-only; users want "servers like this one".
+- **Solution / Scope.** Similarity from (a) **capability-name/description overlap** (Jaccard over
+  tool/resource names) and (b) **semantic embeddings** reusing the existing **pgvector** setup
+  (V102) — embed capability text, cluster/nearest-neighbor to surface related servers and capability
+  clusters. "Similar servers" rail on the endpoint page + a catalog cluster map.
+- **Acceptance Criteria.** Overlap similarity matches a fixture; vector NN returns sensible neighbors
+  on seeded data; gracefully no-ops if embeddings are disabled.
+- **Dependencies / Parallelism.** After 14.2. Reuses V101/V102 FTS/pgvector. Parallel with 18.5.
+- **Technical Stack.** Python, pgvector, embeddings; FastAPI.
+
+### MCAT-18.5 — Natural-language server digest + usage examples  ·  **#4649**
+- **Problem.** Even a well-visualized surface still asks the reader to synthesize "so what can this
+  actually do for me?"
+- **Solution / Scope.** An **opt-in, gated** AI step that produces a short natural-language digest of
+  a server ("this server lets you …") and one **example call per tool** derived from its
+  `input_schema` (sample arguments) — cached per `surface_fingerprint` so it is computed once per
+  surface. Clearly labeled AI-generated; never auto-invokes tools.
+- **Acceptance Criteria.** Digest + examples generated and cached per fingerprint; regenerated on
+  surface change; feature flag off by default; no tool is executed to produce examples.
+- **Dependencies / Parallelism.** After 14.1 (schemas/metrics). Parallel with 18.4. Latest item.
+- **Technical Stack.** Python, Claude API (latest model), schema-driven example synthesis, cache
+  keyed on `surface_fingerprint`.
+
+---
+
+## MCAT-EPIC-19 — Reporting, Export & Shareable Artifacts (v2)  ·  _created as **V2-MCP-EPIC-33**_  ·  **#4623**
+
+The "reporting of what is found" half of the mandate: turn the cataloged facts and computed insights
+into **artifacts a human can take away** — a report card, an inventory export, an embeddable badge, a
+change feed, a scheduled digest. Nothing here consumes a server; it reports on one.
+
+| Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
+|---|---|---|---|:--:|:--:|---|---|
+| 19.1 | Server report-card export | One-page Markdown/HTML/PDF report per endpoint (identity, grade, surface, safety, coverage, trust) | `mcp-insights` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
+| 19.2 | Catalog inventory export | CSV/JSON export of endpoints + key metrics for offline analysis | `mcp-insights` `backend` | Y | N | ● | apiome-rest |
+| 19.3 | Embeddable status badges | Shields-style SVG grade/health/version badge for READMEs, served from a public endpoint | `mcp-insights` `backend` | Y | N | ●● | apiome-rest, apiome-browse |
+| 19.4 | Catalog change feed (RSS/Atom/JSON) | Subscribable feed of endpoint/catalog changes | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
+| 19.5 | Scheduled catalog digest reports | Periodic summary of catalog state + changes, delivered via the notification channel | `mcp-insights` `backend` | N | N | ●● | apiome-rest |
+
+### MCAT-19.1 — Server report-card export  ·  **#4650**
+- **Problem.** The Insight tab is great in-app, but people need to **share** a server's assessment
+  (in a ticket, a review, a wiki) without sending a link behind auth.
+- **Solution / Scope.** Render a self-contained **one-page report** for an endpoint version —
+  identity (15.1), grade + score breakdown (17.3), surface summary + safety posture (15.3/15.4),
+  documentation coverage (15.5), trust radar (17.4), and the change-since-previous summary. Export as
+  **Markdown** and **HTML**; **PDF** via the same HTML (print stylesheet). Reuses the 14.1 metrics and
+  14.2 APIs — no new computation. Honors visibility (a private endpoint's report requires auth).
+- **Acceptance Criteria.** Report generates for a discovered endpoint in MD/HTML/PDF; content matches
+  the in-app panels; never-discovered/unscored endpoints produce a graceful partial report;
+  credentials/secrets never appear.
+- **Dependencies / Parallelism.** After 15.x/17.x (the panels it serializes). Parallel with 19.2–19.4.
+- **Technical Stack.** Python (template render), print CSS, headless HTML→PDF; Next.js download button.
+
+### MCAT-19.2 — Catalog inventory export  ·  **#4651**
+- **Problem.** Analysts want the whole catalog as data (a spreadsheet, a notebook), not a UI.
+- **Solution / Scope.** Tenant-scoped **CSV** and **JSON** export of all endpoints with key columns
+  (name, host, transport, category, visibility, current grade/score, capability counts, last
+  discovery status/time, health). Streamed for large catalogs. Public variant exports published-only.
+- **Acceptance Criteria.** Export matches catalog rows for a seeded tenant; CSV escaping correct;
+  large catalog streams without loading all rows in memory; visibility respected.
+- **Dependencies / Parallelism.** After 14.2. Parallel across Epic-19.
+- **Technical Stack.** FastAPI streaming response, csv/json.
+
+### MCAT-19.3 — Embeddable status badges  ·  **#4652**
+- **Problem.** Server authors and catalogers want a visible signal (like a CI badge) they can drop
+  into a README pointing at the catalog's assessment.
+- **Solution / Scope.** A public, cacheable **SVG badge** endpoint (`/mcp/badge/{tenant}/{slug}.svg`)
+  rendering grade, health, or version (query-selectable), styled shields-style, only for **published**
+  endpoints. ETag/max-age caching. Optional Markdown snippet in the UI to copy.
+- **Acceptance Criteria.** Badge renders valid SVG for a published endpoint; unpublished/unknown →
+  neutral "unknown" badge, never a data leak; cache headers set; light/dark label variants.
+- **Dependencies / Parallelism.** After 14.2 (grade/health source). Parallel across Epic-19.
+- **Technical Stack.** FastAPI SVG response; apiome-browse copy snippet.
+
+### MCAT-19.4 — Catalog change feed (RSS/Atom/JSON)  ·  **#4653**
+- **Problem.** People tracking a server (or a whole catalog) want to be **told what changed** without
+  polling the UI; the data (`mcp_version_changes`) exists but isn't subscribable.
+- **Solution / Scope.** A feed per endpoint and per (published) catalog emitting new-version /
+  added-removed-modified / breaking-change (16.3) entries as **RSS/Atom** and **JSON Feed**. Read-only
+  projection over `mcp_endpoint_versions` + `mcp_version_changes`.
+- **Acceptance Criteria.** Feed validates as RSS/Atom; entries match seeded change history; private
+  endpoints excluded from public feeds; breaking-change entries flagged.
+- **Dependencies / Parallelism.** After 16.3 (severity). Parallel across Epic-19. Complements Epic-13.
+- **Technical Stack.** FastAPI, feedgen; reuse Epic-13 change events if built.
+
+### MCAT-19.5 — Scheduled catalog digest reports  ·  **#4654**
+- **Problem.** Operators want a recurring "here's your catalog this week" without opening the app.
+- **Solution / Scope.** A scheduled job (reusing the sweep/notification infra from Epic-5/13) that
+  compiles a periodic **digest** — new endpoints, grade movements, breaking changes, discovery-health
+  problems — and delivers it via the configured notification channel (19.4 feed / webhook / email if
+  present). Cadence configurable per tenant.
+- **Acceptance Criteria.** Digest compiles from real data over the window; empty window sends nothing
+  (or an explicit "no changes"); respects tenant scoping; opt-in.
+- **Dependencies / Parallelism.** After 19.4 + Epic-13 delivery. Last in Epic-19.
+- **Technical Stack.** Python scheduled task (reuse `repository_refresh_sweep.py` pattern).
+
+---
+
+## MCAT-EPIC-20 — Discovery Enrichment & Provenance (v2)  ·  _created as **V2-MCP-EPIC-34**_  ·  **#4624**
+
+Deepen **discovery** itself — capture more *about* each server when it's found (not just its
+capability list), and record **where the knowledge came from**. All additive to the existing
+discovery pipeline (Epic-2/5); pure reporting, no invocation of the server beyond the existing
+handshake/discovery calls.
+
+| Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
+|---|---|---|---|:--:|:--:|---|---|
+| 20.1 | Host & transport metadata capture | Record hostname, TLS/cert, HTTP server headers, handshake timing at discovery | `mcp-catalog` `backend` | Y | N | ●● | apiome-rest, apiome-db |
+| 20.2 | Server branding capture | Persist advertised website/logo/icon/instructions for richer catalog cards | `mcp-catalog` `backend` | Y | N | ● | apiome-rest, apiome-db |
+| 20.3 | License & terms signal detection | Detect and report license/ToS hints in server metadata/instructions | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
+| 20.4 | Deprecation & lifecycle signals | Flag deprecated/experimental capabilities from annotations/description text | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
+| 20.5 | Provenance & discovery-source tracking | Record how/when each endpoint & version was found (manual/sweep/registry) and surface it | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
+
+### MCAT-20.1 — Host & transport metadata capture  ·  **#4655**
+- **Problem.** The catalog knows a server's *capabilities* but almost nothing about the *service*
+  hosting them — is it on a reputable host, valid TLS, how responsive at connect time.
+- **Solution / Scope.** During discovery, capture non-invasive transport facts — hostname/host,
+  TLS certificate summary (issuer, validity, SAN) for HTTPS endpoints, notable HTTP response headers
+  (server, rate-limit hints), and handshake/connect timing — and persist to endpoint/version metadata
+  (JSONB or a small side table). Surfaced on the identity card (15.1) and report (19.1).
+- **Acceptance Criteria.** Facts captured for an HTTPS endpoint; missing/invalid cert handled and
+  reported (not fatal to discovery); no extra calls beyond the existing handshake; SSRF guards honored.
+- **Dependencies / Parallelism.** Extends Epic-2 discovery. Parallel across Epic-20. Needs migration.
+- **Technical Stack.** Python (TLS/HTTP introspection at connect), Flyway migration.
+
+### MCAT-20.2 — Server branding capture  ·  **#4656**
+- **Problem.** Catalog cards are text-only; servers often advertise a title/description and sometimes
+  a site/icon that would make the catalog far more recognizable.
+- **Solution / Scope.** Persist the server's advertised `title`/`instructions` (already captured) plus
+  any website/icon URL present in `initialize` metadata; render logo/site on catalog cards and the
+  identity card. Icons fetched safely (SSRF-guarded, size-limited) or referenced, never executed.
+- **Acceptance Criteria.** Branding shown when advertised; absent branding falls back to the current
+  text card; remote assets fetched within guards or omitted.
+- **Dependencies / Parallelism.** Extends Epic-2. Parallel across Epic-20.
+- **Technical Stack.** Python, guarded fetch; Next.js card update.
+
+### MCAT-20.3 — License & terms signal detection  ·  **#4657**
+- **Problem.** Whether a server may be used, and under what terms, is often buried in its instructions
+  text and never surfaced.
+- **Solution / Scope.** A **pure detector** that scans `instructions`/metadata for license/ToS/usage
+  signals (SPDX ids, "terms", "license", URLs) and **reports** them as findings on the endpoint —
+  informational only, no enforcement. Feeds the report card (19.1).
+- **Acceptance Criteria.** Detector flags seeded license hints; no false "no license" claim (absence
+  reported as "not stated"); pure/unit-tested.
+- **Dependencies / Parallelism.** After 20.2 metadata. Parallel across Epic-20.
+- **Technical Stack.** Python, pytest.
+
+### MCAT-20.4 — Deprecation & lifecycle signals  ·  **#4658**
+- **Problem.** Servers signal "this tool is deprecated/experimental" informally in descriptions and
+  annotations; catalog users never see it aggregated.
+- **Solution / Scope.** Detect lifecycle signals per capability (deprecated/experimental/beta markers
+  in `description`, annotations, or naming) and surface them as badges on the capability list and in
+  reports. Complements the safety panel (15.4) and breaking-change view (16.3).
+- **Acceptance Criteria.** Signals detected from fixtures; badges render; no signal ≠ "stable" claim;
+  pure detector unit-tested.
+- **Dependencies / Parallelism.** After 14.1. Parallel across Epic-20.
+- **Technical Stack.** Python detector; Next.js badge.
+
+### MCAT-20.5 — Provenance & discovery-source tracking  ·  **#4659**
+- **Problem.** `mcp_discovery_jobs.trigger` records manual/sweep/registry per job, but the catalog
+  never shows **how a server (or a given version) came to be known** — important for trust and audit.
+- **Solution / Scope.** Persist and surface **provenance**: how each endpoint was added and how/when
+  each version was discovered (which trigger, which sweep, which registry entry), rendered as a
+  provenance strip on the identity card / report and included in exports.
+- **Acceptance Criteria.** Provenance reconstructs correctly for a seeded endpoint across manual +
+  sweep + registry origins; shown in UI and export; back-fills from existing job history where possible.
+- **Dependencies / Parallelism.** After 20.1; touches UI. Last in Epic-20. Possible migration.
+- **Technical Stack.** Python, Flyway migration, Next.js.
+
+---
+
+## MCAT-EPIC-21 — Advanced Search, Facets & Cross-Server Discovery (v2)  ·  _created as **V2-MCP-EPIC-35**_  ·  **#4625**
+
+Better ways to **find** things in the catalog — faceted filtering, cross-server capability search,
+saved views, and a browsable capability directory. Builds on the existing FTS/pgvector (V101/V102)
+and the 14.1 metrics; strictly navigation/discovery over what's cataloged.
+
+| Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
+|---|---|---|---|:--:|:--:|---|---|
+| 21.1 | Faceted catalog search | Filter endpoints by grade, transport, category, safety, complexity, protocol, health | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
+| 21.2 | Cross-server capability search | "Which servers offer a tool like X" over capability FTS + embeddings | `mcp-catalog` `backend` | Y | N | ●● | apiome-rest, apiome-db |
+| 21.3 | Saved searches & catalog views | Persist and re-run filter sets | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
+| 21.4 | Capability directory / index | Browsable index of every tool/resource/prompt across the catalog | `mcp-catalog` `frontend` | Y | N | ●● | apiome-ui, apiome-rest |
+
+### MCAT-21.1 — Faceted catalog search  ·  **#4660**
+- **Problem.** The catalog grid filters/sorts on a few fields; the rich metrics now available (grade,
+  safety posture, complexity, protocol, health) aren't queryable facets.
+- **Solution / Scope.** A faceted search API + UI: filter/aggregate endpoints by grade band,
+  transport, category, safety posture (has-destructive / read-only-only), complexity band, protocol
+  version, and discovery health, with live facet counts. Backed by 14.2 aggregates + endpoint columns.
+- **Acceptance Criteria.** Facets return correct counts on seeded data; multi-facet AND semantics;
+  empty result handled; respects visibility.
+- **Dependencies / Parallelism.** After 14.2. Parallel with 21.2/21.4.
+- **Technical Stack.** FastAPI, asyncpg aggregates; Next.js facet UI.
+
+### MCAT-21.2 — Cross-server capability search  ·  **#4661**
+- **Problem.** Search today finds *servers*; users increasingly want to find a *capability* ("who
+  offers a geocoding tool?") across every cataloged server.
+- **Solution / Scope.** Query `mcp_capability_items` by FTS (V101) and semantic similarity (V102
+  pgvector) across the whole (accessible) catalog, returning matching tools/resources grouped by
+  owning server, ranked by relevance→grade. Reuses the public-browse ordering decision (MCAT-9.7).
+- **Acceptance Criteria.** Keyword + semantic matches returned and grouped; ranking documented;
+  visibility enforced; no-match handled.
+- **Dependencies / Parallelism.** After V101/V102 + 14.2. Parallel with 21.1. Shares infra with 18.4.
+- **Technical Stack.** FastAPI, Postgres FTS + pgvector.
+
+### MCAT-21.3 — Saved searches & catalog views  ·  **#4662**
+- **Problem.** Users re-apply the same filters repeatedly (e.g. "ungraded servers with destructive
+  tools") with no way to save them.
+- **Solution / Scope.** Persist named filter sets per user/tenant and re-run them; optionally pin as
+  catalog "views". Small table `mcp_saved_searches`.
+- **Acceptance Criteria.** Save/run/delete a search; results match the equivalent live filter; scoped
+  to owner/tenant.
+- **Dependencies / Parallelism.** After 21.1. Needs migration. Later in epic.
+- **Technical Stack.** FastAPI, Flyway migration, Next.js.
+
+### MCAT-21.4 — Capability directory / index  ·  **#4663**
+- **Problem.** There's no way to browse the *universe* of capabilities the catalog has seen — only
+  per-server lists.
+- **Solution / Scope.** A browsable, paginated **directory** of all tools/resources/prompts across
+  accessible endpoints, grouped/filterable by name pattern, type, and owning server — a "what can be
+  done" index that links back to each server.
+- **Acceptance Criteria.** Directory lists capabilities across servers with correct owner links;
+  filter/paginate works; visibility enforced.
+- **Dependencies / Parallelism.** After 14.2/21.2. Parallel with 21.1.
+- **Technical Stack.** Next.js, FastAPI listing API.
+
+---
+
+## MCAT-EPIC-22 — Catalog Data Quality & Curation (v2)  ·  _created as **V2-MCP-EPIC-36**_  ·  **#4626**
+
+Keep the catalog **trustworthy and curated** as it grows — detect duplicates and staleness, let
+catalogers add human context, and group endpoints into shareable collections. Reporting/curation
+only; it never changes what a server does.
+
+| Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
+|---|---|---|---|:--:|:--:|---|---|
+| 22.1 | Duplicate / near-duplicate detection | Flag endpoints sharing URL/host/surface fingerprint | `mcp-catalog` `backend` | Y | N | ●● | apiome-rest |
+| 22.2 | Staleness & freshness reporting | Report endpoints overdue for discovery or persistently failing | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
+| 22.3 | Cataloger notes & annotations | Human notes on an endpoint, kept separate from server-reported data | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-db, apiome-ui |
+| 22.4 | Collections / curated lists | Group endpoints into named, shareable collections | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
+
+### MCAT-22.1 — Duplicate / near-duplicate detection  ·  **#4664**
+- **Problem.** As catalogs grow, the same server gets registered twice (different names, same URL) or
+  two servers expose an identical surface; nothing flags it.
+- **Solution / Scope.** Detect duplicates by normalized `endpoint_url`/host and by identical
+  `surface_fingerprint` across a tenant (and, for published, cross-tenant hints), reported as a
+  review list with a "these look like the same server" grouping.
+- **Acceptance Criteria.** Exact-URL and identical-fingerprint duplicates flagged on seeded data;
+  no false positives on legitimately distinct servers; report is advisory (no auto-merge).
+- **Dependencies / Parallelism.** After 14.2. Parallel across Epic-22.
+- **Technical Stack.** FastAPI, SQL grouping over existing columns.
+
+### MCAT-22.2 — Staleness & freshness reporting  ·  **#4665**
+- **Problem.** Endpoints silently go stale (cadence lapsed, discovery persistently failing); the
+  catalog keeps showing old data as if current.
+- **Solution / Scope.** A freshness report: endpoints past their `discovery_cadence_seconds` without a
+  successful discovery, in backoff/quarantine (V133), or repeatedly failing — with a "last known good"
+  timestamp and a freshness badge on cards. Read over `mcp_endpoints` + `mcp_discovery_jobs`.
+- **Acceptance Criteria.** Stale/failing endpoints correctly identified on seeded data; freshness
+  badge on cards; healthy endpoints unflagged.
+- **Dependencies / Parallelism.** After 17.1 (health data). Parallel across Epic-22.
+- **Technical Stack.** FastAPI; Next.js badge.
+
+### MCAT-22.3 — Cataloger notes & annotations  ·  **#4666**
+- **Problem.** Catalogers learn things about a server (context, caveats, "use the other one instead")
+  that have nowhere to live and get lost.
+- **Solution / Scope.** Per-endpoint **human notes/annotations**, authored by tenant users, stored
+  **separately** from server-reported data (clearly labeled as cataloger commentary, never mixed into
+  the discovered surface). Shown on the endpoint page and optionally in reports/exports.
+- **Acceptance Criteria.** Notes CRUD scoped to tenant; visually distinct from discovered data;
+  included in report only when opted in; audit of author/time.
+- **Dependencies / Parallelism.** New table. Parallel across Epic-22.
+- **Technical Stack.** FastAPI, Flyway migration, Next.js.
+
+### MCAT-22.4 — Collections / curated lists  ·  **#4667**
+- **Problem.** Users want to group related servers ("our approved MCP servers", "geo tools") for
+  navigation and sharing; the catalog is a flat list per tenant.
+- **Solution / Scope.** Named **collections** of endpoints (many-to-many), browsable and optionally
+  publishable, with a shareable view. Small join table `mcp_collections` + `mcp_collection_members`.
+- **Acceptance Criteria.** Create/populate/rename/delete a collection; endpoints appear in multiple
+  collections; published collection respects per-endpoint visibility; scoped to tenant.
+- **Dependencies / Parallelism.** After 22.3 patterns. Needs migration. Last in Epic-22.
+- **Technical Stack.** FastAPI, Flyway migration, Next.js; apiome-browse for published collections.
+
+---
+
+## 11. Work order for the expansion (order-of-execution for `create-issues`)
+
+Dependency-driven, sequenced so a small team can ship visible value each day. **Epic 14 is the
+hard prerequisite** (metrics + APIs + chart kit); after it, 15/16/17 fan out in parallel, and 18 is
+the later cross-catalog/AI wave.
+
+```mermaid
+flowchart TD
+  A[Day 1: 14.1 metrics · 14.3 chart kit (parallel)] --> B[Day 1-2: 14.2 insight APIs · 14.4 Insight tab]
+  B --> C[Day 2-3: 15.1 profile · 15.3 shape · 15.4 safety · 15.5 coverage · 16.4 grade trend]
+  B --> D[Day 2-3: 16.3 breaking-change classifier (backend)]
+  D --> E[Day 3-4: 16.1 churn timeline · 16.2 lifespan · 17.1 health · 17.2 latency · 17.3 score breakdown]
+  C --> F[Day 4-5: 15.2 capability graph · 16.5 changed-since · 17.4 trust radar]
+  E --> F
+  F --> G[Day 5+: v2 — 18.1 dashboard · 18.2 compare · 18.3 percentile · 18.4 similar · 18.5 AI digest]
+```
+
+**Recommended order (each line is a create-issues batch / rough day):**
+
+1. **14.1** (surface metrics, pure) ‖ **14.3** (chart kit) — no deps, start both immediately.
+2. **14.2** (insight REST, needs 14.1) → **14.4** (Insight tab shell, needs 14.2/14.3).
+3. **Single-server quick wins (parallel):** **15.1**, **15.3**, **15.4**, **15.5**, **16.4** — all
+   consume 14.x and stand alone. Ship the Insight tab's first useful state here.
+4. **16.3** (breaking-change classifier, backend/pure) — unblocks change severity markers.
+5. **Temporal + reliability (parallel):** **16.1**, **16.2**, **17.1**, **17.2**, **17.3**.
+6. **Synthesis / heavier:** **15.2** (capability graph), **16.5** (changed-since, needs migration),
+   **17.4** (trust radar — capstone, needs 15.4/15.5/16.3/17.2).
+7. **v2 wave (after single-server view is complete):** **18.1** (closes 13.4) ‖ **18.2**, then
+   **18.3**, then **18.4** (pgvector) ‖ **18.5** (AI digest, gated).
+
+**Broaden-the-catalog wave (epics 19–22 — schedule around the insight epics as capacity allows).**
+These depend on the foundation (14) and, for some, the existing discovery pipeline / FTS, but not on
+each other — so they parallelize freely:
+
+8. **Reporting & Export (19):** **19.2** (inventory) ‖ **19.3** (badges) are buildable as soon as
+   14.2 exists; **19.1** (report card) after the 15.x/17.x panels it serializes; then **19.4** (feed,
+   needs 16.3) → **19.5** (scheduled digest, needs 19.4 + Epic-13 delivery).
+9. **Discovery Enrichment (20):** **20.1** (host/TLS) ‖ **20.2** (branding) ‖ **20.3** (license) ‖
+   **20.4** (deprecation) extend the discovery pipeline independently; **20.5** (provenance) last
+   (touches UI + migration). Can begin in parallel with the insight epics since it's pipeline-side.
+10. **Advanced Search (21):** **21.1** (facets) ‖ **21.2** (cross-server, reuses V101/V102 + shares
+    infra with 18.4) ‖ **21.4** (capability directory); **21.3** (saved searches) after 21.1.
+11. **Data Quality & Curation (22):** **22.1** (dedup) ‖ **22.2** (staleness, needs 17.1) ‖ **22.3**
+    (notes); **22.4** (collections) last.
+
+**Close-outs when filing:** mark stub **13.3 → superseded by 17.1** and **13.4 → superseded by
+18.1** so the umbrella (#3637) has no duplicate analytics/health work.
+
+**Scope guard (decided).** Epics 19–22 keep apiome a **catalog** — it discovers external MCP servers
+and reports on what it finds. It does **not** re-expose or broker invocation of those servers for
+agent consumption; a user who wants to *use* a cataloged server connects to it directly. (The
+existing test harness in Epic-8 stays a human-driven diagnostic, not a consumption surface.)
+
+**New labels to create:** `mcp-insights` (visualization epics 14–18), reuse `mcp-catalog` (discovery/
+reporting epics 19–22), `frontend`/`backend`. **Foundation-first rule:** do not file 15–22 ahead of
+14 — every downstream panel/report imports 14.1 metrics, 14.2 APIs, and (for UI) the 14.3 chart kit.
