@@ -30,10 +30,17 @@ import { ExportTargetGrid } from './ExportTargetGrid';
 import { ExportOptionsForm } from './ExportOptionsForm';
 import { VerifyWorkbench, VerdictBanner } from './VerifyWorkbench';
 import { ArtifactPreviewCard } from './ArtifactPreviewCard';
+import { BundleExplorer } from './BundleExplorer';
 import { OriginalSourceOption } from './OriginalSourceOption';
 import { deriveVerifyVerdict, verifyGatePasses } from './exportVerify';
 import { zipFilenameFor, type EmittedArtifact } from './exportArtifactPreview';
-import { buildZip } from './zipBundle';
+import {
+  buildBundleManifest,
+  countFindingsByFile,
+  isMultiFileBundle,
+  type BundleManifest,
+} from './exportBundle';
+import { buildZip, looksLikeZip, readZip } from './zipBundle';
 import { downloadBlob, filenameFromDisposition } from './exportDownload';
 import { resolveStudioBack } from './exportStudioLink';
 import type { ExportedArtifactSummary } from './ExportDialog';
@@ -121,6 +128,8 @@ export function ExportStudio({
   const [generating, setGenerating] = useState(false);
   /** The emitted document being reviewed on the Review step, once generated. */
   const [emitted, setEmitted] = useState<EmittedArtifact | null>(null);
+  /** The emitted bundle when the target produced multiple files (MFX-43.2); null for single-file. */
+  const [bundle, setBundle] = useState<BundleManifest | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { response, loading, error: targetsError } = useExportTargets(true, artifact, version);
@@ -201,8 +210,11 @@ export function ExportStudio({
       if (!card.available) return;
       setSelectedKey(card.key);
       setError(null);
-      // A different target is a different conversion: its loss and verify must be re-established.
+      // A different target is a different conversion: its loss and verify must be re-established,
+      // and any artifact/bundle from the previous target no longer describes it.
       setAcknowledged(false);
+      setEmitted(null);
+      setBundle(null);
       resetVerify();
       const values: Record<string, unknown> = {};
       for (const field of optionFieldsFromSchema(card.entry.options_schema, card.entry.default_options)) {
@@ -233,8 +245,11 @@ export function ExportStudio({
       setOptionValues((current) => ({ ...current, [key]: value }));
       // The configuration changed: any prior verdict no longer describes what Generate would
       // produce, so re-lock the gate until the user re-runs verification (auto re-verify is
-      // MFX-42.6). Acknowledgement is tied to that verdict, so it clears with it.
+      // MFX-42.6). Acknowledgement is tied to that verdict, so it clears with it, and any
+      // already-generated artifact/bundle is stale.
       setAcknowledged(false);
+      setEmitted(null);
+      setBundle(null);
       resetVerify();
     },
     [resetVerify],
@@ -245,6 +260,8 @@ export function ExportStudio({
     if (!selected) return;
     setGenerating(true);
     setError(null);
+    setEmitted(null);
+    setBundle(null);
     try {
       const res = await fetch('/api/export/document', {
         method: 'POST',
@@ -262,11 +279,27 @@ export function ExportStudio({
           typeof data?.error === 'string' ? data.error : 'The export failed. Try again.',
         );
       }
-      const text = await res.text();
+      const contentType = res.headers.get('content-type') || '';
       const filename =
         filenameFromDisposition(res.headers.get('content-disposition')) ||
         `${artifact}-${selected.key}.txt`;
-      setEmitted({ filename, mediaType: res.headers.get('content-type') || '', text });
+      // A multi-file target returns a ZIP bundle; a single target returns the document verbatim.
+      // Read the body as bytes so a bundle can be exploded into its files (MFX-43.2), and decode a
+      // lone document as text otherwise.
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      if (looksLikeZip(bytes, contentType)) {
+        const files = await readZip(bytes);
+        const manifest = buildBundleManifest(
+          files.map((file) => ({ path: file.path, text: file.text })),
+        );
+        setBundle(manifest);
+        // Keep a single-file handle on the primary member so the file/zip downloads still work.
+        const primary = manifest.files[0];
+        setEmitted({ filename: primary.path, mediaType: primary.mediaType, text: primary.text });
+      } else {
+        const text = new TextDecoder('utf-8').decode(bytes);
+        setEmitted({ filename, mediaType: contentType, text });
+      }
       onGenerated?.({
         targetKey: selected.key,
         targetLabel: selected.entry.descriptor.label,
@@ -291,16 +324,34 @@ export function ExportStudio({
     );
   }, [emitted]);
 
-  /** Download the generated document as a `.zip` built client-side. */
+  /**
+   * Download the generated export as a `.zip` built client-side. For a multi-file bundle every
+   * member is packed (MFX-43.2); for a single document the one file is packed as before.
+   */
   const handleDownloadZip = useCallback(() => {
-    if (!emitted) return;
+    if (!emitted && !bundle) return;
     try {
-      const bytes = buildZip([{ path: emitted.filename, content: emitted.text }]);
-      downloadBlob(new Blob([bytes], { type: 'application/zip' }), zipFilenameFor(emitted.filename));
+      const entries = bundle
+        ? bundle.files.map((file) => ({ path: file.path, content: file.text }))
+        : [{ path: emitted!.filename, content: emitted!.text }];
+      const zipName = zipFilenameFor(bundle ? bundle.primaryPath : emitted!.filename);
+      const bytes = buildZip(entries);
+      downloadBlob(new Blob([bytes], { type: 'application/zip' }), zipName);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The zip download failed. Try again.');
     }
-  }, [emitted]);
+  }, [bundle, emitted]);
+
+  // Per-file finding counts for the bundle tree/tabs badges (MFX-43.2): the Verify lenses' located
+  // validation + lint findings, bucketed by the bundle file they name.
+  const bundleFindingCounts = useMemo(
+    () =>
+      countFindingsByFile(
+        verifyResult?.validation.findings ?? [],
+        verifyResult?.lint?.findings ?? [],
+      ),
+    [verifyResult],
+  );
 
   /** Whether the current step permits advancing to the next one. */
   const canAdvance = useMemo(() => {
@@ -494,7 +545,21 @@ export function ExportStudio({
               {/* The verify verdict follows the user to Review (MFX-42.1): the same banner it saw
                   on the Verify step, so what gated Generate stays visible while generating. */}
               {verifyVerdict && <VerdictBanner verdict={verifyVerdict} />}
-              {emitted ? (
+              {bundle && isMultiFileBundle(bundle) ? (
+                <div className="flex min-h-0 flex-col gap-2">
+                  <p className="shrink-0 text-xs text-gray-600 dark:text-gray-300">
+                    <CheckCircle2 className="mr-1.5 inline h-4 w-4 align-text-bottom text-green-500" aria-hidden />
+                    Generated a <strong>{bundle.files.length}-file bundle</strong>. Navigate the files
+                    on the left, then download the .zip.
+                  </p>
+                  <BundleExplorer
+                    className="min-h-[420px]"
+                    manifest={bundle}
+                    countsByPath={bundleFindingCounts}
+                    targetKey={selected.key}
+                  />
+                </div>
+              ) : emitted ? (
                 <div className="flex min-h-0 flex-col gap-2">
                   <p className="shrink-0 text-xs text-gray-600 dark:text-gray-300">
                     <CheckCircle2 className="mr-1.5 inline h-4 w-4 align-text-bottom text-green-500" aria-hidden />
@@ -585,10 +650,13 @@ export function ExportStudio({
                   <FileArchive className="h-4 w-4" aria-hidden />
                   Download .zip
                 </Button>
-                <Button variant="outline" onClick={handleDownloadFile}>
-                  <Download className="h-4 w-4" aria-hidden />
-                  Download {emitted.filename}
-                </Button>
+                {/* A bundle downloads only as the .zip here; per-file download lands in MFX-43.5. */}
+                {!(bundle && isMultiFileBundle(bundle)) && (
+                  <Button variant="outline" onClick={handleDownloadFile}>
+                    <Download className="h-4 w-4" aria-hidden />
+                    Download {emitted.filename}
+                  </Button>
+                )}
               </>
             )}
           </div>
