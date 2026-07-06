@@ -407,7 +407,6 @@ flowchart LR
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 42.3 #4356 | Emitted-artifact lint lens | findings list, severity chips, score; reuse LintReportDialog patterns | export,ui,linting,mvp | Y | Y | M | apiome-ui |
 | 42.4 #4357 | Fidelity lens + go/no-go gate | embed MFX-6.2 panel; verdict logic; "Export anyway" acknowledgment | export,ui,mvp | Y | Y | S | apiome-ui |
 | 42.6 #4359 | Re-verify on change + result caching | option-change invalidation, debounce, cached verdicts per config hash | export,ui,typescript | Y | N | S | apiome-ui |
 
@@ -468,6 +467,23 @@ flowchart LR
 - **Technical Stack.** Next.js.
 
 ### MFX-42.3 — Emitted-artifact lint lens · #4356
+- **Status (done).** The Verify workbench's **lint lens** is now a dedicated `EmittedLintLens.tsx`
+  (extracted from the 42.1 scaffold and deepened), keyed on `data-lint-state` in three states:
+  **not_applicable** — an explicit empty state ("no lint pack is registered for *<target>*") when
+  the target has no lint pack, never a misleading clean score; **clean** — a positive "the lint
+  pack reported no findings" confirmation (the score chip still shows so a clean result reads as
+  scored); **findings** — the itemized findings **grouped by severity** (error → warning → info,
+  mirroring the catalog panel's MUST/SHOULD/advisory tiers), each with its rule id, category,
+  message, and location (via the shared `FindingLocation`, whose file/line/column feed MFX-43.3's
+  Monaco markers). The **0–100 score + A–F grade** render as a chip coloured by the same
+  `gradeChipClass` the catalog lint gauge uses, alongside per-severity count chips and a
+  distinct-rules-triggered count — visually consistent with `CatalogLintPanel` (MFI-25.5). A note
+  distinguishes this **emitted-artifact** lint from the **source's catalog lint** and, for catalog
+  sources, links the source's report (`/ade/dashboard/catalog/{id}`). Pure presentation logic
+  (`emittedLintLensState`, `groupLintFindingsBySeverity`, `emittedLintScore`, `lintRulesTriggered`)
+  lives in `exportVerify.ts` and is unit-tested; the lens is advisory and never gates Generate (the
+  MFX-42.1 verdict owns the gate). Covered by `EmittedLintLens.test.tsx` + `exportVerify.test.ts`.
+  Bump apiome-ui 0.60.0 → 0.61.0.
 - **Problem.** MFX-5.2 lints the emitted artifact with the target's lint packs; findings need the
   same quality UX the import side has (`LintReportDialog`, MFI-25.5 inline lint panel).
 - **Solution / Scope.** Findings list grouped by severity/category with rule ids, per-finding
