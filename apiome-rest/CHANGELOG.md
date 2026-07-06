@@ -5,6 +5,25 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.82.0] - 2026-07-06
+
+### Added
+- **Capability-surface metrics service (#4627, V2-MCP-28.1)** — a pure, deterministic metrics
+  layer over a discovered MCP surface so every insight panel reads one canonical set of derived
+  numbers instead of recomputing them ad-hoc. New `app.mcp_surface_metrics.compute_surface_metrics(
+  surface) → SurfaceMetrics` walks a normalized `DiscoverySurface` and returns per-type item
+  counts; per-tool `input_schema` complexity (top-level property / required / optional counts,
+  documented-parameter count, max nesting depth, and `enum`/`oneOf` usage); the count of tools
+  declaring an `outputSchema`; behavioural-annotation coverage (how many tools assert
+  `readOnlyHint`/`destructiveHint`/`idempotentHint`/`openWorldHint`); and documentation coverage
+  (% of items with a `description`, % with a `title`, % of tool parameters documented). The
+  schema walk is total — nested objects, unresolved `$ref` nodes, `array` items/tuple validation,
+  and `oneOf`/`anyOf`/`allOf` branches are handled, with a `MAX_SCHEMA_DEPTH` budget capping
+  runaway recursion. Output is deterministic and carries a stable `metrics_fingerprint`, so the
+  result is cacheable per `surface_fingerprint`. Mirrors the pure-function style of
+  `app.schema_lint` / `app.mcp_lint` / `app.mcp_score`; no I/O, no DB, no network. Feeds the
+  MCAT-14.2 insight aggregation endpoints and the 15–22 visualization panels.
+
 ## [1.80.0] - 2026-07-05
 
 ### Added
