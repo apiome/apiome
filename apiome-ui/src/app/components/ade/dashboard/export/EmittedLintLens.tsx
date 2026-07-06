@@ -24,8 +24,9 @@
 
 'use client';
 
-import { AlertTriangle, ArrowUpRight, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, CheckCircle2, ExternalLink } from 'lucide-react';
 import { FindingLocation } from './FindingLocation';
+import type { LocatedProblem } from './exportProblemMarkers';
 import {
   emittedLintLensState,
   emittedLintScore,
@@ -56,6 +57,15 @@ export interface EmittedLintLensProps {
   targetLabel?: string;
   /** The source's own lint report, linked from the distinguishing note; omitted when unknown. */
   sourceReport?: EmittedLintSourceReport | null;
+  /**
+   * The located problems that can open in the Review editor (MFX-43.3) — a finding whose problem
+   * is in this list renders as a clickable row. Omitted (or absent from the list) findings stay
+   * plain: location-less findings are list-only, and nothing is clickable before an artifact
+   * exists to open.
+   */
+  openableProblems?: LocatedProblem[];
+  /** Open a located finding in the Review editor (file + line), MFX-43.3. */
+  onOpenProblem?: (problem: LocatedProblem) => void;
 }
 
 /** Section heading copy per severity, matching the catalog panel's tiered sections. */
@@ -82,10 +92,22 @@ function SeverityChip({ severity, count }: { severity: LintSeverity; count?: num
   );
 }
 
-/** One finding row: severity + rule id + category, its message, and its location line. */
-function LintFindingRow({ finding }: { finding: EmittedLintFinding }) {
-  return (
-    <li className="rounded-md border border-gray-200 p-3 text-sm dark:border-gray-700">
+/**
+ * One finding row: severity + rule id + category, its message, and its location line. When the
+ * finding's located problem is openable (MFX-43.3) the row is a button that jumps to its file +
+ * line in the Review editor.
+ */
+function LintFindingRow({
+  finding,
+  problem,
+  onOpenProblem,
+}: {
+  finding: EmittedLintFinding;
+  problem: LocatedProblem | null;
+  onOpenProblem?: (problem: LocatedProblem) => void;
+}) {
+  const content = (
+    <>
       <div className="flex flex-wrap items-center gap-2">
         <SeverityChip severity={finding.severity} />
         <code className="text-xs text-gray-600 dark:text-gray-300">{finding.rule}</code>
@@ -102,6 +124,28 @@ function LintFindingRow({ finding }: { finding: EmittedLintFinding }) {
         line={finding.line}
         column={finding.column}
       />
+    </>
+  );
+  return (
+    <li className="rounded-md border border-gray-200 text-sm dark:border-gray-700">
+      {problem && onOpenProblem ? (
+        <button
+          type="button"
+          data-testid={`verify-open-${problem.id}`}
+          title="Open in the Review editor"
+          onClick={() => onOpenProblem(problem)}
+          className="group relative w-full p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800/60"
+        >
+          {content}
+          <ExternalLink
+            className="absolute right-3 top-3 h-3.5 w-3.5 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 dark:text-gray-500"
+            aria-hidden
+          />
+          <span className="sr-only">Open in the Review editor</span>
+        </button>
+      ) : (
+        <div className="p-3">{content}</div>
+      )}
     </li>
   );
 }
@@ -112,7 +156,13 @@ function LintFindingRow({ finding }: { finding: EmittedLintFinding }) {
  * Leads with the score/grade + severity summary, then the findings grouped by severity — or an
  * explicit empty state when no lint pack applies to the target.
  */
-export function EmittedLintLens({ lint, targetLabel, sourceReport }: EmittedLintLensProps) {
+export function EmittedLintLens({
+  lint,
+  targetLabel,
+  sourceReport,
+  openableProblems,
+  onOpenProblem,
+}: EmittedLintLensProps) {
   const state = emittedLintLensState(lint);
 
   // No lint pack for this target: an explicit empty state, never a misleading clean score.
@@ -207,7 +257,12 @@ export function EmittedLintLens({ lint, targetLabel, sourceReport }: EmittedLint
               </h4>
               <ul className="space-y-2">
                 {group.findings.map((finding, idx) => (
-                  <LintFindingRow key={`${finding.rule}-${idx}`} finding={finding} />
+                  <LintFindingRow
+                    key={`${finding.rule}-${idx}`}
+                    finding={finding}
+                    problem={openableProblems?.find((p) => p.finding === finding) ?? null}
+                    onOpenProblem={onOpenProblem}
+                  />
                 ))}
               </ul>
             </section>

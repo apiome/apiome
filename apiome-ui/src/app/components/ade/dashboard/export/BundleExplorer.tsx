@@ -7,7 +7,14 @@ import { cn } from '@lib/utils';
 import { ReadOnlyCodeViewer } from './ReadOnlyCodeViewer';
 import { BundleTree } from './BundleTree';
 import { BundleFileTabs } from './BundleFileTabs';
+import { ProblemsPanel } from './ProblemsPanel';
+import { useProblemMarkers } from './useProblemMarkers';
 import { formatByteSize } from './exportArtifactPreview';
+import {
+  problemsForFile,
+  type LocatedProblem,
+  type ProblemRevealRequest,
+} from './exportProblemMarkers';
 import {
   buildBundleTree,
   isMultiFileBundle,
@@ -25,6 +32,16 @@ export interface BundleExplorerProps {
   countsByPath: Map<string, FileFindingCounts>;
   /** The chosen export target's registry key — drives Monaco syntax highlighting. */
   targetKey?: string | null;
+  /**
+   * The Verify lenses' located problems for the whole bundle (MFX-43.3); the explorer filters
+   * them to the active file for its markers, gutter bars, and problems list.
+   */
+  problems?: LocatedProblem[];
+  /**
+   * A "open this problem" request from outside (a Verify lens click, MFX-43.3): the explorer opens
+   * the problem's file, highlights it, and reveals its line. Repeat requests re-trigger via nonce.
+   */
+  reveal?: ProblemRevealRequest | null;
   className?: string;
 }
 
@@ -38,8 +55,20 @@ export interface BundleExplorerProps {
  *
  * A single-file bundle skips the tree and tabs entirely (MFX-43.2 acceptance) — it is just the
  * viewer over the one file, so the navigation chrome never appears for a lone document.
+ *
+ * The Verify lenses' located problems (MFX-43.3) ride along as squiggle markers + gutter bars on
+ * the active file and as a per-file {@link ProblemsPanel} under the viewer; clicking a problem row
+ * reveals its line, clicking a marked line highlights its row, and an external
+ * {@link ProblemRevealRequest} (a lens click) opens file + line from outside.
  */
-export function BundleExplorer({ manifest, countsByPath, targetKey, className }: BundleExplorerProps) {
+export function BundleExplorer({
+  manifest,
+  countsByPath,
+  targetKey,
+  problems = [],
+  reveal = null,
+  className,
+}: BundleExplorerProps) {
   const multi = isMultiFileBundle(manifest);
   const tree = useMemo(() => buildBundleTree(manifest.files), [manifest.files]);
   const filesByPath = useMemo(
@@ -51,6 +80,10 @@ export function BundleExplorer({ manifest, countsByPath, targetKey, className }:
   // The recent-files strip; the primary opens first. Single-file bundles never show it.
   const [openPaths, setOpenPaths] = useState<string[]>(multi ? [manifest.primaryPath] : []);
   const [copied, setCopied] = useState(false);
+  /** The highlighted problem (MFX-43.3), kept in sync between the editor and the problems list. */
+  const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
+  /** The last external reveal request seen, so a re-render never replays it. */
+  const [seenRevealNonce, setSeenRevealNonce] = useState<number | null>(null);
 
   // A fresh manifest (a new generate) resets navigation to its primary file.
   const [manifestKey, setManifestKey] = useState(manifest.primaryPath);
@@ -58,11 +91,33 @@ export function BundleExplorer({ manifest, countsByPath, targetKey, className }:
     setManifestKey(manifest.primaryPath);
     setActivePath(manifest.primaryPath);
     setOpenPaths(multi ? [manifest.primaryPath] : []);
+    setSelectedProblemId(null);
+  }
+
+  // An external reveal request (a Verify lens click): make the problem's file active and select
+  // the problem — the "adjust state during render" pattern, like the manifest reset above. The
+  // editor-side line reveal itself is applied by {@link useProblemMarkers} once the file's
+  // problems are in place. A remount with the request still set (leaving Review and coming back)
+  // replays it, restoring the last jumped-to finding. Unfiled problems have no unambiguous home
+  // in a multi-file bundle and are ignored (no fake positions).
+  if (reveal && reveal.nonce !== seenRevealNonce) {
+    setSeenRevealNonce(reveal.nonce);
+    const revealPath = reveal.problem.file ?? (multi ? null : manifest.primaryPath);
+    if (revealPath && filesByPath.has(revealPath)) {
+      setSelectedProblemId(reveal.problem.id);
+      if (activePath !== revealPath) {
+        setActivePath(revealPath);
+        setOpenPaths((current) =>
+          [revealPath, ...current.filter((p) => p !== revealPath)].slice(0, MAX_OPEN_TABS),
+        );
+      }
+    }
   }
 
   const selectFile = useCallback(
     (path: string) => {
       setActivePath(path);
+      setSelectedProblemId(null);
       setOpenPaths((current) => {
         const withoutPath = current.filter((p) => p !== path);
         return [path, ...withoutPath].slice(0, MAX_OPEN_TABS);
@@ -102,6 +157,30 @@ export function BundleExplorer({ manifest, countsByPath, targetKey, className }:
     [activeFile, targetKey],
   );
 
+  // The active file's located problems (MFX-43.3). Problems that name no file are attributable
+  // only when the bundle *is* one document — a multi-file bundle leaves them list-only rather
+  // than guessing (no fake positions).
+  const activeProblems = useMemo(
+    () => (activePath ? problemsForFile(problems, activePath, { includeUnfiled: !multi }) : []),
+    [problems, activePath, multi],
+  );
+
+  const markers = useProblemMarkers({
+    problems: activeProblems,
+    text: activeFile?.text ?? '',
+    selectedProblemId,
+    onMarkerSelect: (problem) => setSelectedProblemId(problem.id),
+    reveal,
+  });
+
+  const openProblem = useCallback(
+    (problem: LocatedProblem) => {
+      setSelectedProblemId(problem.id);
+      markers.reveal(problem);
+    },
+    [markers],
+  );
+
   useEffect(() => {
     if (!copied) return undefined;
     const timer = setTimeout(() => setCopied(false), 1500);
@@ -138,14 +217,23 @@ export function BundleExplorer({ manifest, countsByPath, targetKey, className }:
   );
 
   const viewer = activeFile ? (
-    <ReadOnlyCodeViewer
-      value={activeFile.text}
-      language={language}
-      overlay={copyButton}
-      className="min-h-0 flex-1 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e]"
-      editorTestId="bundle-file-editor"
-      fallbackTestId="bundle-file-content"
-    />
+    <>
+      <ReadOnlyCodeViewer
+        value={activeFile.text}
+        language={language}
+        overlay={copyButton}
+        onMount={markers.onEditorMount}
+        className="min-h-0 flex-1 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e]"
+        editorTestId="bundle-file-editor"
+        fallbackTestId="bundle-file-content"
+      />
+      <ProblemsPanel
+        problems={activeProblems}
+        selectedId={selectedProblemId}
+        onSelect={openProblem}
+        className="mt-2"
+      />
+    </>
   ) : (
     <div
       data-testid="bundle-empty"

@@ -35,9 +35,16 @@ import { OriginalSourceOption } from './OriginalSourceOption';
 import { deriveVerifyVerdict, verifyGatePasses } from './exportVerify';
 import { zipFilenameFor, type EmittedArtifact } from './exportArtifactPreview';
 import {
+  collectLocatedProblems,
+  problemsForFile,
+  type LocatedProblem,
+  type ProblemRevealRequest,
+} from './exportProblemMarkers';
+import {
   buildBundleManifest,
   countFindingsByFile,
   isMultiFileBundle,
+  normalizeBundlePath,
   type BundleManifest,
 } from './exportBundle';
 import { buildZip, looksLikeZip, readZip } from './zipBundle';
@@ -130,6 +137,10 @@ export function ExportStudio({
   const [emitted, setEmitted] = useState<EmittedArtifact | null>(null);
   /** The emitted bundle when the target produced multiple files (MFX-43.2); null for single-file. */
   const [bundle, setBundle] = useState<BundleManifest | null>(null);
+  /** A pending "open this finding in the Review editor" request (MFX-43.3), from a lens click. */
+  const [problemReveal, setProblemReveal] = useState<ProblemRevealRequest | null>(null);
+  /** Monotonic nonce so re-clicking the same finding still re-triggers the reveal. */
+  const revealNonce = useRef(0);
   const [error, setError] = useState<string | null>(null);
 
   const { response, loading, error: targetsError } = useExportTargets(true, artifact, version);
@@ -215,6 +226,7 @@ export function ExportStudio({
       setAcknowledged(false);
       setEmitted(null);
       setBundle(null);
+      setProblemReveal(null);
       resetVerify();
       const values: Record<string, unknown> = {};
       for (const field of optionFieldsFromSchema(card.entry.options_schema, card.entry.default_options)) {
@@ -250,6 +262,7 @@ export function ExportStudio({
       setAcknowledged(false);
       setEmitted(null);
       setBundle(null);
+      setProblemReveal(null);
       resetVerify();
     },
     [resetVerify],
@@ -262,6 +275,7 @@ export function ExportStudio({
     setError(null);
     setEmitted(null);
     setBundle(null);
+    setProblemReveal(null);
     try {
       const res = await fetch('/api/export/document', {
         method: 'POST',
@@ -352,6 +366,42 @@ export function ExportStudio({
       ),
     [verifyResult],
   );
+
+  // The Verify lenses' located problems (MFX-43.3): findings with a real line number, unified
+  // across validation + lint. These drive the Review viewers' markers/gutter/problems list and
+  // the lenses' click-through rows.
+  const locatedProblems = useMemo(
+    () =>
+      collectLocatedProblems(
+        verifyResult?.validation.findings ?? [],
+        verifyResult?.lint?.findings ?? [],
+      ),
+    [verifyResult],
+  );
+
+  // The problems a Verify lens click can actually open (MFX-43.3). Nothing is openable until a
+  // generated artifact exists; a multi-file bundle can open only problems naming one of its files
+  // (an unfiled problem has no unambiguous home there); a single document also owns the unfiled
+  // ones — the only file the location can mean.
+  const openableProblems = useMemo(() => {
+    if (bundle && isMultiFileBundle(bundle)) {
+      const paths = new Set(bundle.files.map((file) => file.path));
+      return locatedProblems.filter((p) => p.file !== null && paths.has(p.file));
+    }
+    if (emitted) {
+      return problemsForFile(locatedProblems, normalizeBundlePath(emitted.filename), {
+        includeUnfiled: true,
+      });
+    }
+    return [];
+  }, [bundle, emitted, locatedProblems]);
+
+  /** Open a located finding on the Review step: jump there and ask the viewer to reveal it. */
+  const openProblem = useCallback((problem: LocatedProblem) => {
+    revealNonce.current += 1;
+    setProblemReveal({ problem, nonce: revealNonce.current });
+    setStep('review');
+  }, []);
 
   /** Whether the current step permits advancing to the next one. */
   const canAdvance = useMemo(() => {
@@ -537,6 +587,8 @@ export function ExportStudio({
               onAcknowledgedChange={setAcknowledged}
               onRun={() => void runVerify()}
               sourceLintReport={sourceLintReport}
+              openableProblems={openableProblems}
+              onOpenProblem={openProblem}
             />
           )}
 
@@ -557,6 +609,8 @@ export function ExportStudio({
                     manifest={bundle}
                     countsByPath={bundleFindingCounts}
                     targetKey={selected.key}
+                    problems={locatedProblems}
+                    reveal={problemReveal}
                   />
                 </div>
               ) : emitted ? (
@@ -571,6 +625,8 @@ export function ExportStudio({
                     artifact={emitted}
                     report={verifyResult?.fidelity.report ?? null}
                     targetKey={selected.key}
+                    problems={openableProblems}
+                    reveal={problemReveal}
                   />
                 </div>
               ) : generating ? (

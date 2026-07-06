@@ -16,6 +16,7 @@ import { Alert } from '../../../ui/Alert';
 import { FidelityWarningPanel } from './FidelityWarningPanel';
 import { ValidationResultsLens } from './ValidationResultsLens';
 import { EmittedLintLens, type EmittedLintSourceReport } from './EmittedLintLens';
+import type { LocatedProblem } from './exportProblemMarkers';
 import type { TargetFidelitySummary } from './exportTargetCatalog';
 import {
   fidelityAcknowledgementMode,
@@ -56,6 +57,14 @@ export interface VerifyWorkbenchProps {
    * emitted-artifact lint is never conflated with the source's catalog lint. Omitted when unknown.
    */
   sourceLintReport?: EmittedLintSourceReport | null;
+  /**
+   * The located problems that can open in the Review editor (MFX-43.3): the Studio passes these
+   * only once a generated artifact exists to open. Findings matching one render as clickable rows
+   * in the validation/lint lenses.
+   */
+  openableProblems?: LocatedProblem[];
+  /** Open a located finding in the Review editor (file + line), MFX-43.3. */
+  onOpenProblem?: (problem: LocatedProblem) => void;
 }
 
 /** The three lenses, in tab / accordion order. */
@@ -94,6 +103,8 @@ export function VerifyWorkbench({
   onAcknowledgedChange,
   onRun,
   sourceLintReport = null,
+  openableProblems,
+  onOpenProblem,
 }: VerifyWorkbenchProps) {
   // Lead with the lens that most needs attention: the validator's detail for a blocked export,
   // else the fidelity lens (where the loss + acknowledgement live).
@@ -210,6 +221,8 @@ export function VerifyWorkbench({
             acknowledged={acknowledged}
             onAcknowledgedChange={onAcknowledgedChange}
             sourceLintReport={sourceLintReport}
+            openableProblems={openableProblems}
+            onOpenProblem={onOpenProblem}
           />
         </div>
       </div>
@@ -240,6 +253,8 @@ export function VerifyWorkbench({
                 acknowledged={acknowledged}
                 onAcknowledgedChange={onAcknowledgedChange}
                 sourceLintReport={sourceLintReport}
+                openableProblems={openableProblems}
+                onOpenProblem={onOpenProblem}
               />
             </div>
           </details>
@@ -336,6 +351,8 @@ interface LensBodyProps {
   acknowledged: boolean;
   onAcknowledgedChange: (acknowledged: boolean) => void;
   sourceLintReport: EmittedLintSourceReport | null;
+  openableProblems?: LocatedProblem[];
+  onOpenProblem?: (problem: LocatedProblem) => void;
 }
 
 /** Dispatch a lens key to its body; shared by the desktop tab panel and the narrow accordion. */
@@ -349,6 +366,8 @@ function LensBody({
   acknowledged,
   onAcknowledgedChange,
   sourceLintReport,
+  openableProblems,
+  onOpenProblem,
 }: LensBodyProps) {
   if (lens === 'fidelity') {
     return (
@@ -365,12 +384,22 @@ function LensBody({
       />
     );
   }
-  if (lens === 'validation') return <ValidationResultsLens validation={result.validation} />;
+  if (lens === 'validation') {
+    return (
+      <ValidationResultsLens
+        validation={result.validation}
+        openableProblems={openableProblems}
+        onOpenProblem={onOpenProblem}
+      />
+    );
+  }
   return (
     <EmittedLintLens
       lint={result.lint}
       targetLabel={targetLabel}
       sourceReport={sourceLintReport}
+      openableProblems={openableProblems}
+      onOpenProblem={onOpenProblem}
     />
   );
 }

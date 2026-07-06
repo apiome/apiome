@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
+import type { OnMount } from '@monaco-editor/react';
 import { cn } from '@lib/utils';
 
 /**
@@ -40,6 +41,7 @@ interface ViewerEditorProps {
   /** Forwarded by next/dynamic to {@link OfflineCodeFallback} if the editor chunk fails to load. */
   fallbackTestId?: string;
   options?: Record<string, unknown>;
+  onMount?: OnMount;
 }
 
 /**
@@ -74,6 +76,9 @@ const READ_ONLY_OPTIONS = {
   scrollBeyondLastLine: false,
   padding: { top: 14, bottom: 14 },
   automaticLayout: true,
+  // Markers (squiggles) are suppressed in read-only editors by default; the Verify problem
+  // markers (MFX-43.3) need them rendered anyway.
+  renderValidationDecorations: 'on' as const,
   renderLineHighlight: 'none' as const,
   overviewRulerLanes: 0,
   hideCursorInOverviewRuler: true,
@@ -99,6 +104,12 @@ export interface ReadOnlyCodeViewerProps {
   editorTestId?: string;
   /** `data-testid` for the offline `<pre>` fallback. */
   fallbackTestId?: string;
+  /**
+   * Monaco's mount callback `(editor, monaco) => void`, for callers that decorate the document —
+   * the MFX-43.3 problem markers set squiggles/gutter bars and reveal lines through these handles.
+   * Never called when the editor chunk fails and the `<pre>` fallback renders instead.
+   */
+  onMount?: OnMount;
 }
 
 /**
@@ -117,6 +128,7 @@ export function ReadOnlyCodeViewer({
   className,
   editorTestId = 'read-only-code-editor',
   fallbackTestId,
+  onMount,
 }: ReadOnlyCodeViewerProps) {
   const [isDark, setIsDark] = useState(false);
 
@@ -142,6 +154,7 @@ export function ReadOnlyCodeViewer({
         value={value}
         fallbackTestId={fallbackTestId}
         options={{ ...READ_ONLY_OPTIONS, wordWrap }}
+        onMount={onMount}
       />
     </div>
   );

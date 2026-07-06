@@ -582,7 +582,6 @@ markers. Deepens MFX-6.3's "preview" into a real viewer; implements MFX-6.4's di
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 43.3 #4363 | Problem markers from verify | validation/lint findings → Monaco markers + gutter; lens↔editor cross-nav | export,ui,validation,linting,mvp | N | Y | M | apiome-ui |
 | 43.4 #4364 | Round-trip Monaco diff | source vs re-imported emitted artifact side-by-side (implements MFX-6.4) | export,ui,version-control | Y | N | M | apiome-ui |
 | 43.5 #4365 | Large-output guards + viewer actions | size caps/virtualization, copy/download-file, wrap/fold, find | export,ui,typescript | Y | N | S | apiome-ui |
 
@@ -633,6 +632,19 @@ markers. Deepens MFX-6.3's "preview" into a real viewer; implements MFX-6.4's di
 - **Technical Stack.** Radix tree/scroll primitives.
 
 ### MFX-43.3 — Problem markers from verify results · #4363
+- **Status (done).** The Verify lenses' located findings now behave like IDE problems. A pure model
+  (`exportProblemMarkers.ts`) unifies validation (MFX-42.2) + lint (MFX-42.3) findings into located
+  problems — only findings with a real line qualify, location-less ones stay list-only (no fake
+  positions) — and builds the Monaco `IMarkerData` squiggles (severity-mapped: validation always
+  error; lint error/warning/info) and gutter-bar/selected-line decorations, clamped to the
+  document. A shared hook (`useProblemMarkers.ts`) wires them onto the MFX-43.1 viewer (which
+  gained an `onMount` passthrough + `renderValidationDecorations: 'on'`), including editor-click →
+  problem resolution. Both review surfaces — `BundleExplorer` (per active file, unfiled problems
+  admitted only for a single-document bundle) and `ArtifactPreviewCard` — render a per-file
+  `ProblemsPanel` under the viewer with two-way problem ↔ line sync. Round trip: once an artifact
+  is generated, located findings in the Verify validation/lint lenses become clickable and jump to
+  Review with the file opened, the line revealed, and the finding highlighted; clicking a marked
+  editor line highlights its problems-panel row. Bump apiome-ui 0.64.0 → 0.65.0.
 - **Problem.** Findings in a list are half the story; enterprise users expect IDE behavior —
   squiggles at the offending line.
 - **Solution / Scope.** Map 42.2 validation errors and 42.3 lint findings (file + line/col where

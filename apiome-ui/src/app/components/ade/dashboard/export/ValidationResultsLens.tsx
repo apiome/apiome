@@ -17,8 +17,9 @@
  * Generate gate; a rejection here is what drives an `invalid` band there.
  */
 
-import { CheckCircle2, FileWarning, Gauge, ShieldCheck, ShieldX, Wrench } from 'lucide-react';
+import { CheckCircle2, ExternalLink, FileWarning, Gauge, ShieldCheck, ShieldX, Wrench } from 'lucide-react';
 import { FindingLocation } from './FindingLocation';
+import type { LocatedProblem } from './exportProblemMarkers';
 import {
   validationLensState,
   validationLensTone,
@@ -30,6 +31,15 @@ import {
 export interface ValidationResultsLensProps {
   /** The emitted-output validation report to render (mirrors REST `EmittedValidationReport`). */
   validation: EmittedValidationReport;
+  /**
+   * The located problems that can open in the Review editor (MFX-43.3) — a finding whose problem
+   * is in this list renders as a clickable row. Omitted (or absent from the list) findings stay
+   * plain: location-less findings are list-only, and nothing is clickable before an artifact
+   * exists to open.
+   */
+  openableProblems?: LocatedProblem[];
+  /** Open a located finding in the Review editor (file + line), MFX-43.3. */
+  onOpenProblem?: (problem: LocatedProblem) => void;
 }
 
 /** Tailwind text colour for each lens tone (headline text + icon). */
@@ -53,8 +63,14 @@ function toneTextClass(tone: ValidationLensTone): string {
  * Leads with a toned headline (and the validator identity when known), then branches by state:
  * an invalid verdict lists the structured errors with their locations; a toolchain-unavailable
  * verdict shows a distinct warning callout; a clean verdict shows a positive confirmation.
+ * Findings whose located problem is openable (MFX-43.3) render as clickable rows that jump to
+ * their file + line in the Review editor.
  */
-export function ValidationResultsLens({ validation }: ValidationResultsLensProps) {
+export function ValidationResultsLens({
+  validation,
+  openableProblems,
+  onOpenProblem,
+}: ValidationResultsLensProps) {
   const state = validationLensState(validation);
   const tone = validationLensTone(state);
   // Select an existing icon component by tone (assigned, not created — the ternary keeps each
@@ -118,24 +134,50 @@ export function ValidationResultsLens({ validation }: ValidationResultsLensProps
         </p>
       )}
 
-      {/* A rejection: the structured, actionable error list with per-finding locations. */}
+      {/* A rejection: the structured, actionable error list with per-finding locations. A finding
+          whose located problem is openable (MFX-43.3) is a button that jumps to file + line. */}
       {validation.findings.length > 0 && (
         <ul className="space-y-2" data-testid="verify-validation-findings">
-          {validation.findings.map((finding, idx) => (
-            <li
-              key={`${finding.keyword ?? 'err'}-${idx}`}
-              className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm dark:border-rose-900 dark:bg-rose-950/30"
-            >
-              <div className="text-gray-900 dark:text-gray-100">{finding.message}</div>
-              <FindingLocation
-                file={finding.file}
-                path={finding.path}
-                line={finding.line}
-                column={finding.column}
-                rule={finding.keyword}
-              />
-            </li>
-          ))}
+          {validation.findings.map((finding, idx) => {
+            const problem = openableProblems?.find((p) => p.finding === finding) ?? null;
+            const content = (
+              <>
+                <div className="text-gray-900 dark:text-gray-100">{finding.message}</div>
+                <FindingLocation
+                  file={finding.file}
+                  path={finding.path}
+                  line={finding.line}
+                  column={finding.column}
+                  rule={finding.keyword}
+                />
+              </>
+            );
+            return (
+              <li
+                key={`${finding.keyword ?? 'err'}-${idx}`}
+                className="rounded-md border border-rose-200 bg-rose-50 text-sm dark:border-rose-900 dark:bg-rose-950/30"
+              >
+                {problem && onOpenProblem ? (
+                  <button
+                    type="button"
+                    data-testid={`verify-open-${problem.id}`}
+                    title="Open in the Review editor"
+                    onClick={() => onOpenProblem(problem)}
+                    className="group relative w-full p-3 text-left hover:bg-rose-100/70 dark:hover:bg-rose-900/30"
+                  >
+                    {content}
+                    <ExternalLink
+                      className="absolute right-3 top-3 h-3.5 w-3.5 text-rose-400 opacity-0 transition-opacity group-hover:opacity-100 dark:text-rose-500"
+                      aria-hidden
+                    />
+                    <span className="sr-only">Open in the Review editor</span>
+                  </button>
+                ) : (
+                  <div className="p-3">{content}</div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
