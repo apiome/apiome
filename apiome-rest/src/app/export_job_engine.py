@@ -15,8 +15,10 @@ and then runs through the export pipeline in the background:
    report and **no artifact**;
 4. **emit** — run the registered emitter through the Emitter SPI
    (:func:`app.export_service.emit_canonical`), with field-identity persistence;
-5. **validate** — the MFX-EPIC-5 seam (:func:`validate_emitted_result`): round-trip the
-   output through the matching import parser. Today a documented no-op placeholder;
+5. **validate** — the MFX-EPIC-5 check (:func:`app.export_validation.validate_emitted_artifact`,
+   MFX-5.1): feed the emitted output back through its matching MFI import parser. A buggy
+   emitter's illegal output fails the job here (``EMITTED_ARTIFACT_INVALID``) before delivery;
+   a format whose parser needs an unavailable toolchain is reported *skipped*, not failed;
 6. **package** — the MFX-EPIC-4 seam (:func:`build_result_manifest`): reduce the emitted
    files to a download manifest. The raw :class:`~app.emitter.EmitResult` stays on the
    in-memory job record (:func:`get_export_job_emit_result`) so the delivery routes can
@@ -81,6 +83,7 @@ from .export_service import (
     resolve_emitter,
 )
 from .export_source import ExportSource, ExportSourceError, load_export_source
+from .export_validation import EmittedArtifactValidation, validate_emitted_artifact
 from .lossiness import LossinessSeverity
 from .transcoding_guards import TranscodeGuard, classify_transcode
 
@@ -103,7 +106,7 @@ __all__ = [
     "list_export_jobs",
     "cancel_export_job",
     "get_export_job_emit_result",
-    "validate_emitted_result",
+    "build_validation_events",
     "build_result_manifest",
     "build_bundle_manifest",
     "build_export_zip",
@@ -585,30 +588,48 @@ async def _fail(job_id: str, code: str, message: str,
 # ===========================================================================
 
 
-def validate_emitted_result(result: EmitResult, target_format: str) -> List[_EventTuple]:
-    """Round-trip validation seam (MFX-EPIC-5): validate the emitted artifact.
+def build_validation_events(validation: EmittedArtifactValidation) -> List[_EventTuple]:
+    """Translate a **non-failing** emitted-artifact validation into job event tuples (MFX-5.1).
 
-    MFX-5.1 feeds the emitted output back through the matching MFI import parser and
-    MFX-5.3 gates delivery on the outcome. Until those land, this placeholder records
-    that validation was **deferred, not passed** — the job stays honest about what ran.
+    The failing case (a validator ran and rejected the artifact) is handled by the pipeline as
+    a terminal ``EMITTED_ARTIFACT_INVALID`` failure, never here. This builds the log line for
+    the three cases the job survives:
+
+    * **passed** — the artifact re-parsed cleanly through its matching MFI import parser;
+    * **skipped** — a matching parser exists but its toolchain was unavailable, so the artifact
+      was not re-validated (a ``warn``: the export ships without this guarantee);
+    * **not applicable** — no importer matches the format (the sample no-op target).
 
     Args:
-        result: The emitter's output bundle.
-        target_format: The resolved target format key (selects the future parser).
+        validation: A validation whose :attr:`~app.export_validation.EmittedArtifactValidation.failed`
+            is ``False``.
 
     Returns:
-        Event tuples ``(level, code, message, context)`` to append to the job's event log.
+        A single event tuple ``(level, code, message, context)`` for the job's event log.
     """
-    _ = result
-    return [
-        (
+    target = validation.target
+    if not validation.applicable:
+        return [(
             "info",
-            "VALIDATION_DEFERRED",
-            "Round-trip validation of the emitted artifact is not implemented yet "
-            "(lands with MFX-5.1/5.3); the artifact was not re-parsed.",
-            {"target": target_format},
-        )
-    ]
+            "VALIDATION_NOT_APPLICABLE",
+            validation.detail
+            or f"No import parser matches the {target!r} target; the artifact was not re-validated.",
+            {"target": target},
+        )]
+    if not validation.validated:
+        return [(
+            "warn",
+            "VALIDATION_SKIPPED",
+            validation.detail
+            or f"The emitted {target!r} artifact could not be re-validated in this runtime.",
+            {"target": target},
+        )]
+    return [(
+        "info",
+        "ARTIFACT_VALIDATED",
+        f"The emitted {target!r} artifact re-parsed cleanly through its matching import parser.",
+        {"target": target},
+    )]
 
 
 def serialize_file_content(content: Any) -> str:
@@ -935,8 +956,21 @@ async def _drive_export_job(job_id: str) -> None:
         ):
             return
 
-        # --- Stage 4: round-trip validation seam (MFX-EPIC-5) -----------------------
-        for level, code, message, context in validate_emitted_result(emit_result, target_format):
+        # --- Stage 4: validate the emitted artifact (MFX-5.1) -----------------------
+        # Feed the emitted output back through its matching MFI import parser: a buggy emitter
+        # that produced illegal output is caught here and fails the job before delivery. A
+        # format whose parser needs an unavailable toolchain is reported skipped (not failed).
+        validation = await validate_emitted_artifact(target_format, emit_result, api=source.api)
+        if validation.failed:
+            await _fail(
+                job_id,
+                "EMITTED_ARTIFACT_INVALID",
+                f"The emitted {target_format!r} artifact failed re-validation through its "
+                f"matching import parser: {'; '.join(validation.errors)}",
+                {"target": target_format, "errors": validation.errors},
+            )
+            return
+        for level, code, message, context in build_validation_events(validation):
             if not await _publish(job_id, event=(level, code, message, context)):
                 return
 
