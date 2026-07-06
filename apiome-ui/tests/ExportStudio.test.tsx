@@ -195,6 +195,23 @@ function mockFetch(): jest.Mock {
         text: () => Promise.resolve(doc.text),
       });
     }
+    // Catalog-source context for the Source step (MFX-41.2) — a non-OpenAPI (gRPC) import.
+    if (url.includes('/api/catalog/')) {
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            item: {
+              id: 'proj-petstore',
+              name: 'Pet Store API',
+              sourceFormat: 'protobuf',
+              protocol: 'grpc',
+              summary: { services: 3, operations: 12, types: 27, channels: null },
+            },
+          }),
+      });
+    }
     return Promise.resolve({ ok: false, json: () => Promise.resolve({}) });
   }) as unknown as jest.Mock;
 }
@@ -245,6 +262,30 @@ describe('ExportStudio — scope + target grid (MFX-41.1)', () => {
   it('defaults the back link to Versions when no origin was carried', async () => {
     await renderStudio(mockFetch());
     expect(screen.getByRole('link', { name: /back to versions/i })).toBeInTheDocument();
+  });
+
+  it('shows catalog-item context on the Source step for a catalog launch (MFX-41.2)', async () => {
+    await renderStudio(mockFetch(), { origin: 'catalog', sourceFormat: 'protobuf' });
+
+    // The Source step carries the item's provenance — format + paradigm pills and the counts.
+    const context = await screen.findByTestId('export-studio-catalog-context');
+    expect(context).toHaveTextContent(/Protobuf/i);
+    expect(context).toHaveTextContent(/gRPC|grpc/i);
+    const counts = screen.getByTestId('export-studio-catalog-counts');
+    expect(counts).toHaveTextContent('3');
+    expect(counts).toHaveTextContent('Services');
+    expect(counts).toHaveTextContent('Operations');
+    // A null count (channels) is omitted, not shown as a zero.
+    expect(counts).not.toHaveTextContent('Channels');
+    // The Source step restates that exporting never turns the item into a project.
+    expect(screen.getByTestId('export-studio-body')).toHaveTextContent(
+      /never turns the item into a project/i,
+    );
+  });
+
+  it('shows no catalog context for a version launch', async () => {
+    await renderStudio(mockFetch(), { origin: 'versions' });
+    expect(screen.queryByTestId('export-studio-catalog-context')).not.toBeInTheDocument();
   });
 
   it('renders all five stepper stops', async () => {

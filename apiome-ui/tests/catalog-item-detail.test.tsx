@@ -340,19 +340,29 @@ describe('CatalogItemDetailClient', () => {
     await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
   });
 
-  it('opens the ExportDialog from the Export CTA without touching Convert (MFX-41.2, #4349)', async () => {
+  it('opens the Export Studio from the Export CTA without touching Convert (MFX-41.2, #4349)', async () => {
     mockFetchItem(RICH_ITEM);
     render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
 
     const exportCta = await screen.findByTestId('catalog-detail-export');
     // The CTA states the Export-vs-Convert distinction (export never mints a Project).
     expect(exportCta).toHaveAttribute('title', expect.stringContaining('never turns the item into a project'));
+    // No conversion preview is opened by exporting.
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     fireEvent.click(exportCta);
-    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
-    // It is the export dialog (target/fidelity flow), not the conversion preview.
-    expect(screen.getByRole('dialog')).toHaveTextContent(/Export\s+“Acme gRPC API”/);
-    // Convert stays present and unchanged next to it.
+
+    // Export routes to the version-scoped Export Studio (the power path), carrying the catalog
+    // origin (back-link → Catalog) and the source format (hide the same-format target).
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    const href = mockPush.mock.calls[0][0] as string;
+    expect(href).toContain('/ade/dashboard/export/studio');
+    const params = new URLSearchParams(href.split('?')[1]);
+    expect(params.get('artifact')).toBe(RICH_ITEM.id);
+    expect(params.get('label')).toBe(RICH_ITEM.name);
+    expect(params.get('from')).toBe('catalog');
+    expect(params.get('sourceFormat')).toBe('protobuf');
+    // Convert stays present and unchanged next to it — no conversion dialog opened.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByTestId('catalog-detail-convert')).toHaveTextContent('Convert to OpenAPI Project');
   });
 
