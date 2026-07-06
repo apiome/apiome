@@ -805,4 +805,39 @@ describe('ExportDialog — Export Studio escalation (MFX-41.1)', () => {
     expect(query.get('label')).toBe('Pet Store API');
     expect(query.get('target')).toBe('proto');
   });
+
+  it('hides the same-format target, offers the original source, and carries origin + format into the Studio', async () => {
+    const fetchMock = mockFetch();
+    global.fetch = fetchMock as unknown as typeof fetch;
+    render(
+      <ExportDialog
+        open
+        onClose={jest.fn()}
+        artifact="proj-petstore"
+        artifactLabel="Pet Store API"
+        sourceFormat="protobuf"
+        studioOrigin="catalog"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /choose target/i })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+
+    // The protobuf source's proto target is dropped; the original-source option replaces it.
+    expect(screen.queryByTestId('export-target-proto')).not.toBeInTheDocument();
+    expect(screen.getByTestId('export-original-source-download')).toHaveAttribute(
+      'href',
+      '/api/catalog/proj-petstore/source',
+    );
+
+    fireEvent.click(screen.getByTestId('export-target-openapi'));
+    fireEvent.click(screen.getByRole('button', { name: /open in export studio/i }));
+
+    const query = new URLSearchParams((routerPush.mock.calls[0][0] as string).split('?')[1]);
+    expect(query.get('from')).toBe('catalog');
+    expect(query.get('sourceFormat')).toBe('protobuf');
+    expect(query.get('target')).toBe('openapi');
+  });
 });
