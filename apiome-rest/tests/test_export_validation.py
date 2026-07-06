@@ -129,6 +129,8 @@ async def test_openapi_schema_invalid_artifact_is_caught() -> None:
     assert not validation.valid
     assert validation.failed
     assert validation.errors  # the meta-schema errors are surfaced
+    assert validation.findings
+    assert validation.findings[0].message
 
 
 async def test_openapi_unparseable_artifact_is_caught() -> None:

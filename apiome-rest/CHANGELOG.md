@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.80.0] - 2026-07-05
+
+### Added
+- **Validation gating & report (#3854, MFX-5.3)** — the export job now surfaces an
+  **emitted-artifact validation gate + report** alongside the fidelity envelope on completed
+  jobs. New `app.export_validation_gate.build_validation_report(validation) →
+  EmittedValidationReport` maps the MFX-5.1 `EmittedArtifactValidation` into four bands
+  (`valid` / `invalid` / `skipped` / `not_applicable`) with `blocks_delivery` and `warns`
+  gates, ready-to-render `headline` / `message` copy, per-target tool identity, and structured
+  `ValidationFinding` rows (message, JSON-pointer path, bundle file, line/column when available).
+  `EmittedArtifactValidation` now carries `findings` in addition to the legacy `errors`
+  one-liners. Completed jobs attach the report on `ExportJobResult.validation` (null for
+  dry-runs); `EMITTED_ARTIFACT_INVALID` failures embed the full report in `error.context`.
+  Tests in `tests/test_export_validation_gate.py` and MFX-5.3 cases in
+  `tests/test_export_job_engine.py`.
+
 ## [1.79.0] - 2026-07-05
 
 ### Added

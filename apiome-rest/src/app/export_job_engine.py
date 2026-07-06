@@ -84,6 +84,7 @@ from .export_service import (
 )
 from .export_source import ExportSource, ExportSourceError, load_export_source
 from .export_validation import EmittedArtifactValidation, validate_emitted_artifact
+from .export_validation_gate import EmittedValidationReport, build_validation_report
 from .lossiness import LossinessSeverity
 from .transcoding_guards import TranscodeGuard, classify_transcode
 
@@ -256,6 +257,11 @@ class ExportJobResult(BaseModel):
     guard: TranscodeGuard = Field(
         description="The pre-flight transcoding guard (MFX-3.3): the conversion band and why. "
         "A severe conversion only completes when it was submitted with ``confirm``.",
+    )
+    validation: Optional[EmittedValidationReport] = Field(
+        default=None,
+        description="The emitted-artifact validation gate + report (MFX-5.3). Set on a "
+        "completed real export after the MFX-5.1 re-parse; null for a dry-run (no artifact).",
     )
     files: List[ExportJobFile] = Field(
         default_factory=list,
@@ -961,13 +967,19 @@ async def _drive_export_job(job_id: str) -> None:
         # that produced illegal output is caught here and fails the job before delivery. A
         # format whose parser needs an unavailable toolchain is reported skipped (not failed).
         validation = await validate_emitted_artifact(target_format, emit_result, api=source.api)
-        if validation.failed:
+        validation_report = build_validation_report(validation)
+        if validation_report.blocks_delivery:
+            findings_payload = [f.model_dump(exclude_none=True) for f in validation_report.findings]
             await _fail(
                 job_id,
                 "EMITTED_ARTIFACT_INVALID",
-                f"The emitted {target_format!r} artifact failed re-validation through its "
-                f"matching import parser: {'; '.join(validation.errors)}",
-                {"target": target_format, "errors": validation.errors},
+                validation_report.message,
+                {
+                    "target": target_format,
+                    "errors": validation.errors,
+                    "findings": findings_payload,
+                    "validation": validation_report.model_dump(exclude_none=True),
+                },
             )
             return
         for level, code, message, context in build_validation_events(validation):
@@ -991,6 +1003,7 @@ async def _drive_export_job(job_id: str) -> None:
             dry_run=False,
             fidelity=fidelity,
             guard=guard,
+            validation=validation_report,
             files=manifest,
             media_type=emit_result.media_type,
             download_path=_download_path(tenant_slug, job_id),

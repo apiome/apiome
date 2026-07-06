@@ -402,9 +402,12 @@ async def test_invalid_emitted_artifact_fails_the_job():
 
     assert status["state"] == "failed"
     assert status["result"] is None
-    # The failure is the validation gate, and it carries the parser detail (MFX-3.4).
+    # The failure is the validation gate, and it carries the parser detail (MFX-3.4 / MFX-5.3).
     assert status["error"]["code"] == "EMITTED_ARTIFACT_INVALID"
     assert status["error"]["context"]["errors"]
+    assert status["error"]["context"]["findings"]
+    assert status["error"]["context"]["validation"]["verdict"] == "invalid"
+    assert status["error"]["context"]["validation"]["blocks_delivery"] is True
     codes = [e["code"] for e in status["events"]]
     assert codes[-1] == "EMITTED_ARTIFACT_INVALID"
     assert "EXPORT_COMPLETED" not in codes
@@ -557,6 +560,32 @@ async def test_completed_job_result_carries_the_transcode_guard():
     guard = status["result"]["guard"]
     assert guard["verdict"] == "clean"
     assert guard["requires_confirmation"] is False
+
+
+async def test_completed_job_result_carries_the_validation_report():
+    """MFX-5.3: a completed real export surfaces the validation gate on the job result."""
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        status = await _wait_terminal(accepted.job_id)
+
+    assert status["state"] == "completed"
+    validation = status["result"]["validation"]
+    assert validation["verdict"] == "valid"
+    assert validation["blocks_delivery"] is False
+    assert validation["tool"] == "OpenAPI meta-schema + OpenAPI import"
+    assert validation["headline"] == "Valid"
+
+
+async def test_dry_run_result_has_no_validation_report():
+    """A dry-run never emits, so no emitted-artifact validation report is attached."""
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi", dry_run=True)
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        status = await _wait_terminal(accepted.job_id)
+
+    assert status["state"] == "completed"
+    assert status["result"]["validation"] is None
 
 
 async def test_severe_conversion_fails_the_job_without_confirmation():
