@@ -313,7 +313,7 @@ def test_unknown_job_status_404s():
 
 
 # ---------------------------------------------------------------------------
-# Single-file download — MFX-4.1 (#3848)
+# Artifact download — MFX-4.1 single file (#3848) / MFX-4.2 zip bundle (#3849)
 # ---------------------------------------------------------------------------
 def test_openapi_lists_the_download_path():
     spec = app.openapi()
@@ -354,6 +354,51 @@ def test_download_serves_the_completed_artifact_with_filename_and_type():
     assert len(dl.content) == body["result"]["files"][0]["size_bytes"]
     # It is the emitted document — parseable JSON with the OpenAPI marker.
     assert dl.json()["openapi"].startswith("3.")
+
+
+def test_download_serves_a_zip_bundle_for_a_multi_file_export():
+    """A multi-file export's download_path serves an application/zip bundle (MFX-4.2)."""
+    import io
+    import zipfile
+
+    from app.emitter import EmitResult, EmittedFile
+
+    def _multi(*args, **kwargs):
+        return EmitResult(
+            files=[
+                EmittedFile(path="widgets.proto", content='syntax = "proto3";\n',
+                            media_type="text/plain"),
+                EmittedFile(path="pkg/common.proto", content='syntax = "proto3";\nmessage C {}\n',
+                            media_type="text/plain"),
+            ],
+            media_type="text/plain",
+        )
+
+    with patch("app.export_job_engine.load_export_source", return_value=_source()), patch(
+        "app.export_job_engine.emit_canonical", side_effect=_multi
+    ):
+        r = client.post(
+            "/v1/export/acme/jobs", json={"artifact": "artifact-1", "target": "openapi"}
+        )
+        assert r.status_code == 202, r.text
+        job_id = r.json()["job_id"]
+        body = _wait_terminal(job_id)
+
+    # The poll payload advertised two files and a download ref — the delivery route now honours it.
+    assert len(body["result"]["files"]) == 2
+    download_path = body["result"]["download_path"]
+    dl = client.get(download_path)
+    assert dl.status_code == 200, dl.text
+    assert dl.headers["content-type"] == "application/zip"
+    disposition = dl.headers["content-disposition"]
+    assert disposition.startswith("attachment; filename=")
+    assert ".zip" in disposition
+
+    # The response body is a genuine zip carrying both files and the manifest.
+    with zipfile.ZipFile(io.BytesIO(dl.content)) as archive:
+        assert set(archive.namelist()) == {"widgets.proto", "pkg/common.proto", "manifest.json"}
+        manifest = archive.read("manifest.json").decode("utf-8")
+    assert '"file_count": 2' in manifest
 
 
 def test_download_of_dry_run_job_is_409():
