@@ -310,3 +310,76 @@ def test_cancel_terminal_job_is_a_204_noop():
 
 def test_unknown_job_status_404s():
     assert client.get("/v1/export/acme/jobs/does-not-exist").status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Single-file download — MFX-4.1 (#3848)
+# ---------------------------------------------------------------------------
+def test_openapi_lists_the_download_path():
+    spec = app.openapi()
+    download = "/v1/export/{tenant_slug}/jobs/{job_id}/download"
+    assert download in spec["paths"]
+    assert "get" in spec["paths"][download]
+
+
+def test_download_requires_auth():
+    app.dependency_overrides.pop(validate_authentication, None)
+    assert client.get("/v1/export/acme/jobs/nope/download").status_code == 401
+
+
+def test_download_serves_the_completed_artifact_with_filename_and_type():
+    """A completed job's download_path serves the emitted document with a filename header."""
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        r = client.post(
+            "/v1/export/acme/jobs",
+            json={"artifact": "artifact-1", "target": "openapi"},
+        )
+        assert r.status_code == 202, r.text
+        job_id = r.json()["job_id"]
+        body = _wait_terminal(job_id)
+
+    download_path = body["result"]["download_path"]
+    assert download_path == f"/v1/export/acme/jobs/{job_id}/download"
+
+    dl = client.get(download_path)
+    assert dl.status_code == 200, dl.text
+    # A Content-Disposition attachment with the emitter's filename.
+    disposition = dl.headers["content-disposition"]
+    assert disposition.startswith("attachment; filename=")
+    filename = body["result"]["files"][0]["path"].rsplit("/", 1)[-1]
+    assert filename in disposition
+    # The content type is the emitted file's media type (OpenAPI JSON here).
+    assert dl.headers["content-type"].startswith("application/")
+    # The served body length matches the size the manifest reported.
+    assert len(dl.content) == body["result"]["files"][0]["size_bytes"]
+    # It is the emitted document — parseable JSON with the OpenAPI marker.
+    assert dl.json()["openapi"].startswith("3.")
+
+
+def test_download_of_dry_run_job_is_409():
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        r = client.post(
+            "/v1/export/acme/jobs",
+            json={"artifact": "artifact-1", "target": "openapi", "dry_run": True},
+        )
+        job_id = r.json()["job_id"]
+        _wait_terminal(job_id)
+
+    dl = client.get(f"/v1/export/acme/jobs/{job_id}/download")
+    assert dl.status_code == 409
+    assert "dry-run" in dl.json()["detail"]
+
+
+def test_download_of_unknown_job_is_404():
+    assert client.get("/v1/export/acme/jobs/does-not-exist/download").status_code == 404
+
+
+def test_download_is_tenant_scoped():
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        r = client.post(
+            "/v1/export/acme/jobs", json={"artifact": "artifact-1", "target": "openapi"}
+        )
+        job_id = r.json()["job_id"]
+        _wait_terminal(job_id)
+
+    assert client.get(f"/v1/export/other/jobs/{job_id}/download").status_code == 404

@@ -11,6 +11,7 @@ The route layout and status contract deliberately mirror the spec-import surface
 * ``POST   /v1/export/{tenant_slug}/jobs``          → 202 + ``{job_id, status_path}``
 * ``GET    /v1/export/{tenant_slug}/jobs``          → summary list (in-memory, per process)
 * ``GET    /v1/export/{tenant_slug}/jobs/{job_id}`` → ``{job_id, state, percent, events, progress, result, error}``
+* ``GET    /v1/export/{tenant_slug}/jobs/{job_id}/download`` → the emitted single-file artifact (MFX-4.1)
 * ``DELETE /v1/export/{tenant_slug}/jobs/{job_id}`` → 204 cancel request
 
 All routes are tenant-scoped (JWT or API key) via :func:`app.auth.validate_authentication`,
@@ -39,6 +40,9 @@ from .export_job_engine import (
 )
 from .export_job_engine import (
     list_export_jobs as engine_list_export_jobs,
+)
+from .export_job_engine import (
+    resolve_export_download as engine_resolve_export_download,
 )
 from .export_service import ExportError
 
@@ -143,6 +147,47 @@ async def get_export_job_status(
     """
     _ = auth_data
     return engine_get_export_job_status(tenant_slug, job_id)
+
+
+@router.get(
+    "/{tenant_slug}/jobs/{job_id}/download",
+    summary="Download a completed export job's single-file artifact",
+    description=(
+        "Serve the emitted document a completed export job produced (MFX-4.1) — the target "
+        "the poller was handed via ``result.download_path``. The bytes come from the job's "
+        "retained emit result (no re-emit), with the content type and a ``Content-Disposition`` "
+        "filename derived from the emitted file; the body is byte-identical to the size the job "
+        "manifest reported. A job that is not completed, is a dry-run, or produced a multi-file "
+        "bundle (zip delivery lands with MFX-4.2) is rejected with 409."
+    ),
+    response_class=Response,
+)
+async def download_export_job_artifact(
+    tenant_slug: str,
+    job_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Response:
+    """Return the emitted single-file artifact of a completed export job as a download.
+
+    Args:
+        tenant_slug: The tenant slug the job was submitted under.
+        job_id: The job id from the 202 acceptance payload.
+        auth_data: Authenticated tenant context (JWT or API key).
+
+    Returns:
+        The emitted document with its content type and a ``Content-Disposition`` filename.
+
+    Raises:
+        HTTPException: 404 when the job is unknown for this tenant; 409 when the job has no
+            downloadable single-file artifact (not completed, a dry-run, or a multi-file bundle).
+    """
+    _ = auth_data
+    artifact = engine_resolve_export_download(tenant_slug, job_id)
+    return Response(
+        content=artifact.body,
+        media_type=artifact.media_type,
+        headers={"Content-Disposition": f'attachment; filename="{artifact.filename}"'},
+    )
 
 
 @router.delete(

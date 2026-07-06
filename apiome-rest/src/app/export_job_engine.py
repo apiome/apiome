@@ -91,6 +91,9 @@ __all__ = [
     "get_export_job_emit_result",
     "validate_emitted_result",
     "build_result_manifest",
+    "serialize_file_content",
+    "ExportDownloadArtifact",
+    "resolve_export_download",
 ]
 
 
@@ -324,6 +327,26 @@ class ExportJobAccepted(BaseModel):
 
 
 @dataclass
+class ExportDownloadArtifact:
+    """The materialized bytes of a single-file export ready to serve (MFX-4.1).
+
+    Produced by :func:`resolve_export_download` from a completed job's retained
+    :class:`~app.emitter.EmitResult`; the delivery route wraps it in an HTTP download
+    response (content-type + ``Content-Disposition`` filename).
+
+    Attributes:
+        filename: The download filename (basename of the emitted file's path).
+        media_type: The response content type (the file's, else the bundle's, else a default).
+        body: The serialized document text (UTF-8 encodable), byte-identical to what the
+            job manifest's ``size_bytes`` measured.
+    """
+
+    filename: str
+    media_type: str
+    body: str
+
+
+@dataclass
 class _ExportJobRecord:
     """One tracked export job. Mutated only under :data:`_jobs_lock`."""
 
@@ -506,11 +529,29 @@ def validate_emitted_result(result: EmitResult, target_format: str) -> List[_Eve
     ]
 
 
+def serialize_file_content(content: Any) -> str:
+    """Serialize one emitted file's content to its canonical download string form.
+
+    A structured (``dict``) document is pretty-printed JSON (two-space indent, non-ASCII
+    preserved); any other payload (plain text such as a ``.proto`` or GraphQL SDL) is its
+    verbatim string form. This is the single source of truth for the emitted bytes: both the
+    manifest's :func:`_serialized_size` and the single-file download (MFX-4.1) go through it,
+    so the byte count a poller reads in the manifest matches the bytes the download serves.
+
+    Args:
+        content: An :class:`~app.emitter.EmittedFile` ``content`` value.
+
+    Returns:
+        The serialized document as a string, ready to be UTF-8 encoded for the wire.
+    """
+    if isinstance(content, dict):
+        return json.dumps(content, indent=2, ensure_ascii=False)
+    return str(content)
+
+
 def _serialized_size(content: Any) -> int:
     """Byte size of an emitted file's content as it would be serialized for download."""
-    if isinstance(content, dict):
-        return len(json.dumps(content, indent=2, ensure_ascii=False).encode("utf-8"))
-    return len(str(content).encode("utf-8"))
+    return len(serialize_file_content(content).encode("utf-8"))
 
 
 def build_result_manifest(result: EmitResult) -> List[ExportJobFile]:
@@ -883,3 +924,64 @@ def get_export_job_emit_result(tenant_slug: str, job_id: str) -> Optional[EmitRe
     with _jobs_lock:
         emit_result = _get_record_locked(tenant_slug, job_id).emit_result
         return None if emit_result is None else emit_result.model_copy(deep=True)
+
+
+def _download_filename(path: str) -> str:
+    """Derive the download filename from an emitted file's relative path (basename only)."""
+    return (path or "").rsplit("/", 1)[-1] or "document"
+
+
+def resolve_export_download(tenant_slug: str, job_id: str) -> ExportDownloadArtifact:
+    """Materialize a completed single-file export job's artifact for download (MFX-4.1).
+
+    Serves the emitted document the poller was pointed at via ``result.download_path``: the
+    bytes come from the retained :class:`~app.emitter.EmitResult` (no re-emit), serialized by
+    :func:`serialize_file_content` so they match the manifest's reported ``size_bytes``, with
+    the content type and a ``Content-Disposition`` filename derived from the emitted file.
+
+    Multi-file bundles (protobuf packages, WSDL+XSD, per-subject Avro) are **out of scope**
+    here — zip delivery lands with MFX-4.2 — so a multi-file result is rejected with 409
+    rather than silently serving only its first file.
+
+    Args:
+        tenant_slug: The tenant slug the job was submitted under (scopes the lookup).
+        job_id: The job id from the 202 acceptance payload.
+
+    Returns:
+        The single file's filename, media type, and serialized body.
+
+    Raises:
+        HTTPException: 404 when the job is unknown for this tenant; 409 when the job has no
+            downloadable single-file artifact (not completed, a dry-run, or a multi-file bundle).
+    """
+    with _jobs_lock:
+        rec = _get_record_locked(tenant_slug, job_id)
+        state = rec.state
+        request_dry_run = rec.request.dry_run
+        emit_result = rec.emit_result
+
+    if state != "completed":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Export job is not downloadable in state {state!r}; "
+            "no artifact has been emitted.",
+        )
+    if request_dry_run or emit_result is None or not emit_result.files:
+        raise HTTPException(
+            status_code=409,
+            detail="This export job produced no artifact to download (dry-run).",
+        )
+    if len(emit_result.files) > 1:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Export produced {len(emit_result.files)} files; multi-file bundle "
+            "download is not available yet (lands with MFX-4.2). Use the job's file manifest.",
+        )
+
+    primary = emit_result.files[0]
+    default_media = "application/json" if isinstance(primary.content, dict) else "text/plain"
+    return ExportDownloadArtifact(
+        filename=_download_filename(primary.path),
+        media_type=primary.media_type or emit_result.media_type or default_media,
+        body=serialize_file_content(primary.content),
+    )

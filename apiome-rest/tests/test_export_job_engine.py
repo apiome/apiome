@@ -467,3 +467,165 @@ async def test_dry_run_of_severe_conversion_never_blocks():
     assert result["dry_run"] is True
     assert result["files"] == []
     assert result["guard"]["verdict"] == "severe"
+
+
+# ---------------------------------------------------------------------------
+# Single-file download — MFX-4.1 (#3848)
+# ---------------------------------------------------------------------------
+def test_serialize_file_content_is_deterministic_for_dict_and_text():
+    """A dict serializes to pretty JSON; any other payload passes through as its string form."""
+    from app.export_job_engine import serialize_file_content
+
+    doc = {"openapi": "3.1.0", "info": {"title": "t", "version": "1"}}
+    assert serialize_file_content(doc) == json.dumps(doc, indent=2, ensure_ascii=False)
+
+    proto = 'syntax = "proto3";\n'
+    assert serialize_file_content(proto) == proto
+
+
+async def test_resolve_export_download_serves_the_single_emitted_file():
+    """A completed single-file job resolves to filename + media type + manifest-sized body."""
+    from app.export_job_engine import resolve_export_download, serialize_file_content
+
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        status = await _wait_terminal(accepted.job_id)
+
+    artifact = resolve_export_download(TENANT_SLUG, accepted.job_id)
+    emit_result = get_export_job_emit_result(TENANT_SLUG, accepted.job_id)
+    assert emit_result is not None
+    primary = emit_result.files[0]
+
+    # Filename is the basename of the emitted path; content type is the file's media type.
+    assert artifact.filename == primary.path.rsplit("/", 1)[-1]
+    assert artifact.media_type == (primary.media_type or emit_result.media_type)
+    # The served body is exactly the canonical serialization the manifest measured.
+    assert artifact.body == serialize_file_content(primary.content)
+    manifest_size = status["result"]["files"][0]["size_bytes"]
+    assert len(artifact.body.encode("utf-8")) == manifest_size
+
+
+async def test_resolve_export_download_derives_basename_from_nested_path():
+    """A nested emitter path is reduced to its filename for the download."""
+    from app.export_job_engine import resolve_export_download
+
+    def _nested(*args, **kwargs):
+        return EmitResult(
+            files=[EmittedFile(path="schemas/openapi.json", content={"openapi": "3.1.0"})],
+            media_type="application/json",
+        )
+
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()), patch(
+        "app.export_job_engine.emit_canonical", side_effect=_nested
+    ):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        await _wait_terminal(accepted.job_id)
+
+    artifact = resolve_export_download(TENANT_SLUG, accepted.job_id)
+    assert artifact.filename == "openapi.json"
+
+
+async def test_resolve_export_download_409_for_dry_run():
+    """A dry-run has no artifact, so a download attempt is a 409 (not a 404)."""
+    from fastapi import HTTPException
+
+    from app.export_job_engine import resolve_export_download
+
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi", dry_run=True)
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        await _wait_terminal(accepted.job_id)
+
+    with pytest.raises(HTTPException) as excinfo:
+        resolve_export_download(TENANT_SLUG, accepted.job_id)
+    assert excinfo.value.status_code == 409
+    assert "dry-run" in excinfo.value.detail
+
+
+async def test_resolve_export_download_409_for_failed_job():
+    """A job that never completed cannot be downloaded (409, state-aware message)."""
+    from fastapi import HTTPException
+
+    from app.export_job_engine import resolve_export_download
+
+    request = ExportJobStartRequest(artifact="missing", target="openapi")
+    with patch(
+        "app.export_job_engine.load_export_source",
+        side_effect=ExportSourceError("nope", status_code=404),
+    ):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        await _wait_terminal(accepted.job_id)
+
+    with pytest.raises(HTTPException) as excinfo:
+        resolve_export_download(TENANT_SLUG, accepted.job_id)
+    assert excinfo.value.status_code == 409
+    assert "failed" in excinfo.value.detail
+
+
+async def test_resolve_export_download_409_for_multi_file_bundle():
+    """Multi-file bundles are out of scope for 4.1 — a download attempt is a 409, not file[0]."""
+    from fastapi import HTTPException
+
+    from app.export_job_engine import resolve_export_download
+
+    def _multi(*args, **kwargs):
+        return EmitResult(
+            files=[
+                EmittedFile(path="a.proto", content='syntax = "proto3";\n', media_type="text/plain"),
+                EmittedFile(path="b.proto", content='syntax = "proto3";\n', media_type="text/plain"),
+            ],
+            media_type="text/plain",
+        )
+
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()), patch(
+        "app.export_job_engine.emit_canonical", side_effect=_multi
+    ):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        await _wait_terminal(accepted.job_id)
+
+    with pytest.raises(HTTPException) as excinfo:
+        resolve_export_download(TENANT_SLUG, accepted.job_id)
+    assert excinfo.value.status_code == 409
+    assert "MFX-4.2" in excinfo.value.detail
+
+
+async def test_resolve_export_download_is_tenant_scoped():
+    """A cross-tenant slug cannot download the artifact (404, like the other lookups)."""
+    from fastapi import HTTPException
+
+    from app.export_job_engine import resolve_export_download
+
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        await _wait_terminal(accepted.job_id)
+
+    with pytest.raises(HTTPException) as excinfo:
+        resolve_export_download("other-tenant", accepted.job_id)
+    assert excinfo.value.status_code == 404
+
+
+async def test_resolve_export_download_serves_plain_text_target():
+    """A text (non-dict) file resolves to text/plain by default and passes bytes verbatim."""
+    from app.export_job_engine import resolve_export_download
+
+    def _text(*args, **kwargs):
+        return EmitResult(
+            files=[EmittedFile(path="widgets.proto", content='syntax = "proto3";\n')],
+            media_type="text/plain",
+        )
+
+    request = ExportJobStartRequest(artifact="artifact-1", target="openapi")
+    with patch("app.export_job_engine.load_export_source", return_value=_source()), patch(
+        "app.export_job_engine.emit_canonical", side_effect=_text
+    ):
+        accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
+        await _wait_terminal(accepted.job_id)
+
+    artifact = resolve_export_download(TENANT_SLUG, accepted.job_id)
+    assert artifact.media_type == "text/plain"
+    assert artifact.body == 'syntax = "proto3";\n'
+    assert artifact.filename == "widgets.proto"

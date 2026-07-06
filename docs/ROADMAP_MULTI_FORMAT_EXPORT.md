@@ -428,12 +428,19 @@ validate → deliver. Enables any-to-any.
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 4.1 | Single-file emit & download | one document; content-type + filename | export,rest,mvp | N | Y | S | apiome-rest |
+| 4.1 ✅ | Single-file emit & download | one document; content-type + filename | export,rest,mvp | N | Y | S | apiome-rest |
 | 4.2 | Multi-file bundle (zip) | protobuf packages, WSDL+XSD, Smithy, Avro subjects | export,rest,mvp | N | Y | M | apiome-rest |
 | 4.3 | Streaming/download & retention | stream large bundles; temp artifact retention | export,rest | Y | Y | S | apiome-rest |
 | 4.4 | Push-to-registry delivery | push Avro→Schema Registry, proto→BSR (opt) | export,registry,integrations | Y | N | M | apiome-rest |
 
 *(4.1–4.4 follow the delivery template. Multi-file is mandatory for protobuf (per-package files + imports), WSDL (+ separate XSDs), Smithy (multi-namespace), and Avro (per-subject `.avsc`); deliver as a zip with a manifest. 4.4 (v2) reuses the import discovery clients in reverse to **register** schemas into a live Confluent Schema Registry / Buf Schema Registry.)*
+
+### MFX-4.1 — Single-file emit & download  ·  **#3848**  ·  ✅ **Done**
+- **Status.** Realized the delivery seam MFX-3.4 pointed pollers at: a new **`GET /v1/export/{tenant_slug}/jobs/{job_id}/download`** (`apiome-rest/src/app/export_job_routes.py`) that serves a completed job's emitted document — the exact URL a poller already reads on `result.download_path`. The bytes come from the job's **retained** `EmitResult` (`get_export_job_emit_result`, no re-emit), serialized through the new single source of truth `serialize_file_content` (`apiome-rest/src/app/export_job_engine.py`) — pretty-printed JSON for a structured document, verbatim text otherwise — so the download body is **byte-identical** to the `size_bytes` the MFX-3.1 file manifest already reported (`_serialized_size` now delegates to it). The route carries the target's content type (the file's `media_type`, else the bundle's, else a `dict`/text default) and a `Content-Disposition` attachment filename derived from the emitted file's basename. `resolve_export_download` gates honestly: **404** for an unknown/cross-tenant job (reusing the tenant-scoped record lookup), **409** when there is no downloadable single-file artifact — a job that is not `completed`, a dry-run (no artifact), or a **multi-file** bundle (protobuf/WSDL/Avro subjects) whose zip delivery lands with **MFX-4.2** (rejected rather than silently serving only the first file). Tests appended to `tests/test_export_job_engine.py` (serializer + resolver: single-file, nested-path basename, dry-run/failed/multi-file 409s, tenant scoping, plain-text target) and `tests/test_export_job_routes.py` (OpenAPI path, auth, end-to-end download with filename/content-type/manifest-sized body, dry-run 409, unknown 404, cross-tenant 404). apiome-rest 1.76.6 → 1.76.7.
+- **Solution / Scope.** one document; content-type + filename. Follows the epic emitter template.
+- **Acceptance Criteria.** Implements this step of the emitter and passes the standard contract with round-trip fixtures; consistent with the epic's other steps.
+- **Dependencies / Parallelism.** Within MFX-EPIC-4; after MFX-3.1/3.4 (the job engine + `download_path` seam). Blocks 4.2 (extends this route to zip).
+- **Technical Stack.** FastAPI.
 
 ---
 
