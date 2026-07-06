@@ -407,7 +407,6 @@ flowchart LR
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 42.1 #4354 | Verify orchestration UI | run/re-run verify; three-lens layout; verdict banner + gate | export,ui,validation,mvp | N | Y | M | apiome-ui |
 | 42.2 #4355 | Validation results lens | parser/toolchain verdict, structured errors w/ locations | export,ui,validation,mvp | N | Y | M | apiome-ui |
 | 42.3 #4356 | Emitted-artifact lint lens | findings list, severity chips, score; reuse LintReportDialog patterns | export,ui,linting,mvp | Y | Y | M | apiome-ui |
 | 42.4 #4357 | Fidelity lens + go/no-go gate | embed MFX-6.2 panel; verdict logic; "Export anyway" acknowledgment | export,ui,mvp | Y | Y | S | apiome-ui |
@@ -415,6 +414,22 @@ flowchart LR
 | 42.6 #4359 | Re-verify on change + result caching | option-change invalidation, debounce, cached verdicts per config hash | export,ui,typescript | Y | N | S | apiome-ui |
 
 ### MFX-42.1 — Verify orchestration UI · #4354
+- **Status (done).** The Studio's Verify step is now a **Verify workbench** (`VerifyWorkbench.tsx`).
+  A single **Run verification** action calls the one-call dry-run (`POST /api/export/verify` →
+  REST `/export/{tenant}/verify`, MFX-42.5) and yields all three lenses at once — fidelity
+  (reusing the MFX-6.2 `FidelityWarningPanel`), emitted-output **validation**, and emitted-artifact
+  **lint** — under one go/no-go **verdict banner** (`Clean` / `Lossy — acknowledge to continue` /
+  `Invalid — export blocked`, derived in `exportVerify.ts` per the MFX-5.3 gate + MFX-3.3
+  severity). Lenses lay out as **tabs-with-badges** (count per lens) on desktop and an
+  **accordion** on narrow widths. The verdict gates Generate — `invalid` blocks unconditionally
+  (with the validator's structured detail + location), `lossy` needs the acknowledgement, `clean`
+  is the green path — and **persists to the Review step** (same banner). Changing the target or an
+  option re-locks the gate and clears the verdict (a `useExportVerify` `reset`), so a stale verdict
+  can never authorise a generate (auto re-verify + caching remain MFX-42.6). The per-lens rendering
+  is scaffolded here for MFX-42.2 (validation) / 42.3 (lint) / 42.4 (fidelity) to deepen. Bump
+  apiome-ui 0.58.0 → 0.59.0. *Built ahead of its backend enabler MFX-42.5 (#4358), which is not yet
+  implemented; the UI ships against the documented `POST /export/verify` contract with a thin Next
+  proxy, mirroring how 41.1–41.3 shipped against their contracts.*
 - **Problem.** Verification signals exist (or will) but only inside a committed export job; users
   need them **before** generation, in one place, with one verdict.
 - **Solution / Scope.** The Studio's Verify step: a **Run verification** action calling 42.5;
