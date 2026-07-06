@@ -564,7 +564,7 @@ flowchart LR
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 8.1 ✅ | `apiome export <format>` | export an artifact/version to a target; poll | export,devex,python,mvp | N | Y | M | apiome-cli |
-| 8.2 | Fidelity report in CLI | print advisory + report; `--force` for lossy | export,devex,mvp | Y | Y | S | apiome-cli |
+| 8.2 ✅ | Fidelity report in CLI | print advisory + report; `--force` for lossy | export,devex,mvp | Y | Y | S | apiome-cli |
 | 8.3 | Toolchain runner reuse | wire emitters needing tsp/buf/smithy/AMF | export,multi-protocol,infrastructure | Y | N | S | apiome-rest |
 
 ### MFX-8.1 — `apiome export <format>`  ·  **#3863**  ·  ✅ **Done**
@@ -574,12 +574,13 @@ flowchart LR
 - **Technical Stack.** Python, Typer.
 - **Status.** Implemented in `apiome-cli` via `DispatchExportGroup` (mirrors MFI-1.4 import dispatch): any registry target not covered by a dedicated verb is invokable as ``apiome export <format> <artifact>`` — resolves the emitter against ``GET /export/targets``, submits ``POST /export/{tenant}/jobs``, polls ``GET …/jobs/{job_id}`` to a terminal state, downloads ``GET …/jobs/{job_id}/download``, writes a single file (or ``-`` for stdout) or unpacks a zip bundle to ``--out`` directory; repeatable ``--option key=value`` passes emit options; ``--force`` / ``--confirm`` mirror the dedicated export verbs; global ``--json`` emits structured metadata. Client modules: `client/export_jobs.py`, `export_dispatch.py`. Dedicated per-format verbs (`export openapi`, `export asyncapi`, …) remain for synchronous ``--project``/``--output`` workflows (MFX-9.4+).
 
-### MFX-8.2 — Fidelity report in CLI  ·  **#3864**
+### MFX-8.2 — Fidelity report in CLI  ·  **#3864**  ·  ✅ **Done**
 - **Problem.** **(headline)** CLI users must also be warned.
 - **Solution / Scope.** Print the advisory (2.4) + a concise loss table; require `--force` (or interactive confirm) when the conversion is lossy.
 - **Acceptance Criteria.** Lossy export warns + needs `--force`; lossless exports cleanly.
 - **Dependencies / Parallelism.** After 8.1, 2.4. Parallel with 8.3.
 - **Technical Stack.** Python, Typer.
+- **Status.** Implemented in `apiome-cli/src/apiome_cli/export_output.py`: `format_export_fidelity_summary` renders the server advisory (MFX-2.4 headline + message), per-kind counts, and a worst-first per-construct loss table; `enforce_export_fidelity_gate` blocks lossy/types-only exports unless `--force` or an interactive TTY confirm. Wired into every dedicated export verb and the generic async job runner (`export_dispatch.py`). Tests in `tests/test_export_output.py` and export command suites.
 
 *(8.3 reuses MFI-EPIC-5 Toolchain Runner for emitters that shell out to tsp/buf/smithy/AMF.)*
 

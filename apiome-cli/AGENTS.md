@@ -81,7 +81,7 @@ Follow [Command Line Interface Guidelines](https://clig.dev/):
 | `src/apiome_cli/client/export_jobs.py` | Async export job client: submit (`POST /export/jobs`), poll (`GET …/jobs/{id}`), download (`GET …/download`) for generic `export <format>` (MFX-8.1) |
 | `src/apiome_cli/export_dispatch.py` | Generic export runner: resolve target, poll job, write single file or unzip bundle to `--out` (MFX-8.1) |
 | `src/apiome_cli/client/export_document.py` | Emit-document client: `POST /export/document` → emitted bytes for `export asyncapi`, `export grpc`, `export graphql`, `export avro`, and other non-OpenAPI targets (MFX-11.5, MFX-12.5, MFX-13.5, MFX-19.5) |
-| `src/apiome_cli/export_output.py` | Export fidelity summary formatting, lossy gating, and targets-table rows for `export` (MFX-9.4) |
+| `src/apiome_cli/export_output.py` | Export fidelity advisory + loss table formatting, lossy gating (`--force` or TTY confirm), and targets-table rows for `export` (MFX-8.2 / MFX-9.4) |
 | `src/apiome_cli/paths_inventory.py` | REST helpers to resolve paths, operations, and workflow steps |
 | `src/apiome_cli/output_paths.py` | Human tables for path/operation/workflow inspection |
 | `src/apiome_cli/import_/` | OpenAPI/Arazzo/JSON Schema load (file, stdin, URL), validate, detect, upload, job poll |

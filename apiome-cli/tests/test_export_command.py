@@ -123,6 +123,9 @@ def test_export_openapi_lossy_exits_nonzero_and_shows_advisory(
     assert "fidelity lossy (60% preserved)" in result.stderr
     assert "1 dropped, 1 approximated" in result.stderr
     assert "drops 1 construct" in result.stderr
+    assert "OpenAPI may lose fidelity" in result.stderr
+    assert "Per-construct losses:" in result.stderr
+    assert "DROP   event channel" in result.stderr
     assert "Lossy export" in result.stderr
 
 

@@ -476,13 +476,13 @@ apiome --json export openapi --project payments-api --version 1.0.0 --output ope
 
 OpenAPI document bytes come from the OpenAPI reconstruction (the same source as `spec export`);
 every other target — AsyncAPI, protobuf/gRPC, GraphQL SDL, and Avro `.avsc` included — is emitted through the Emitter SPI
-(`POST /v1/export/{tenant}/document`). The fidelity **tier + preserved-%** and the "may lose
-fidelity" advisory always come from the emitter registry's dry-run preview.
+(`POST /v1/export/{tenant}/document`). The fidelity **tier + preserved-%**, the server advisory (MFX-2.4),
+and a concise per-construct loss table always come from the emitter registry's dry-run preview (printed on stderr).
 
 **Exit codes.** A **lossy** or **types-only** export exits non-zero — a CI-friendly gate that the
-OpenAPI document does not carry every source construct (e.g. an event-driven source loses its channels).
-The document is written regardless; pass `--force` to accept the loss and exit `0`. Requires a
-workspace API key and tenant scope.
+emitted document does not carry every source construct (e.g. an event-driven source loses its channels).
+The document is written regardless; pass `--force` to accept the loss and exit `0`, or confirm at the
+interactive prompt when stdin is a TTY. Requires a workspace API key and tenant scope.
 
 ### Repository Store
 

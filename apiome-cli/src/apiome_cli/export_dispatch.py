@@ -40,7 +40,10 @@ from apiome_cli.client.http import RestClient
 from apiome_cli.client.project_version_resolve import resolve_project_uuid
 from apiome_cli.config import require_api_key
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_USAGE
-from apiome_cli.export_output import format_export_fidelity_summary, is_lossy
+from apiome_cli.export_output import (
+    enforce_export_fidelity_gate,
+    format_export_fidelity_summary,
+)
 from apiome_cli.spec_output import SpecExportMetadata, emit_download_metadata, write_document_bytes
 
 
@@ -280,10 +283,7 @@ def run_generic_export(
         for line in format_export_fidelity_summary(fidelity, target=target_key):
             typer.echo(line, err=True)
 
-    if is_lossy(fidelity if isinstance(fidelity, dict) else None) and not force:
-        typer.echo(
-            "Lossy export — the emitted document does not carry every source construct. "
-            "Re-run with --force to accept.",
-            err=True,
-        )
-        raise typer.Exit(EXIT_ERROR)
+    enforce_export_fidelity_gate(
+        fidelity if isinstance(fidelity, dict) else None,
+        force=force,
+    )

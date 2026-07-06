@@ -117,7 +117,7 @@ def test_export_avro_types_only_exits_nonzero_and_shows_advisory(
     assert out_file.read_bytes() == _AVRO_BYTES
     assert "fidelity types-only (42% preserved)" in result.stderr
     assert "4 dropped, 2 approximated, 1 synthesized" in result.stderr
-    assert "Types-only export" in result.stderr
+    assert "Lossy export" in result.stderr
 
 
 def test_export_avro_force_overrides_types_only_exit(httpx_mock: object, tmp_path: Path) -> None:

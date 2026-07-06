@@ -29,15 +29,15 @@
       "items": [
         {
           "kind": "drop",
-          "severity": "warning",
+          "severity": "warn",
           "construct": "event channel",
-          "detail": "OpenAPI has no native event channel; dropped."
+          "message": "OpenAPI has no native event channel; dropped."
         },
         {
           "kind": "approx",
           "severity": "info",
           "construct": "pub/sub action",
-          "detail": "Projected onto a non-normative path via x-apiome-event-action."
+          "message": "Projected onto a non-normative path via x-apiome-event-action."
         }
       ],
       "total": 5
