@@ -9,6 +9,7 @@
 import {
   downloadFileNameForExportTarget,
   fileExtensionForExportTarget,
+  monacoLanguageForArtifact,
   monacoLanguageForExportTarget,
 } from '../src/app/utils/export-target-language';
 
@@ -105,5 +106,78 @@ describe('downloadFileNameForExportTarget', () => {
 
   it('falls back to export.txt for unrecognised targets', () => {
     expect(downloadFileNameForExportTarget('totally-made-up')).toBe('export.txt');
+  });
+});
+
+describe('monacoLanguageForArtifact (registry-driven, MFX-43.1)', () => {
+  it('trusts a known fixed-serialization emitter over the artifact hints', () => {
+    // protobuf/graphql/avro are authoritative — the emitter, not the bytes, decides.
+    expect(monacoLanguageForArtifact({ targetFormat: 'protobuf' })).toBe('protobuf');
+    expect(monacoLanguageForArtifact({ targetFormat: 'grpc', mediaType: 'text/plain' })).toBe('protobuf');
+    expect(monacoLanguageForArtifact({ targetFormat: 'graphql', filename: 'schema.txt' })).toBe('graphql');
+    expect(monacoLanguageForArtifact({ targetFormat: 'avro' })).toBe('json');
+  });
+
+  it('decides a JSON-or-YAML emitter from bytes, then media type, then filename', () => {
+    // Bytes are truth.
+    expect(monacoLanguageForArtifact({ targetFormat: 'openapi', sample: 'openapi: 3.1.0\ninfo:' })).toBe('yaml');
+    expect(monacoLanguageForArtifact({ targetFormat: 'openapi', sample: '{ "openapi": "3.1.0" }' })).toBe('json');
+    // No conclusive bytes: fall to the media type.
+    expect(
+      monacoLanguageForArtifact({ targetFormat: 'asyncapi', mediaType: 'application/yaml' }),
+    ).toBe('yaml');
+    // No bytes, no media type: fall to the filename.
+    expect(
+      monacoLanguageForArtifact({ targetFormat: 'openapi', filename: 'openapi.yaml' }),
+    ).toBe('yaml');
+    // Nothing to refine with: the canonical JSON default.
+    expect(monacoLanguageForArtifact({ targetFormat: 'openapi' })).toBe('json');
+  });
+
+  it('types an unknown emitter from its media type', () => {
+    expect(monacoLanguageForArtifact({ mediaType: 'application/graphql' })).toBe('graphql');
+    expect(monacoLanguageForArtifact({ mediaType: 'application/x-protobuf' })).toBe('protobuf');
+    expect(monacoLanguageForArtifact({ mediaType: 'application/schema+json' })).toBe('json');
+    expect(monacoLanguageForArtifact({ mediaType: 'application/wsdl+xml' })).toBe('xml');
+    expect(monacoLanguageForArtifact({ mediaType: 'text/markdown; charset=utf-8' })).toBe('markdown');
+    expect(monacoLanguageForArtifact({ mediaType: 'application/sql' })).toBe('sql');
+  });
+
+  it('types an unknown emitter from its filename extension (the ~20-language registry)', () => {
+    expect(monacoLanguageForArtifact({ filename: 'api.proto' })).toBe('protobuf');
+    expect(monacoLanguageForArtifact({ filename: 'schema.graphql' })).toBe('graphql');
+    expect(monacoLanguageForArtifact({ filename: 'schema.gql' })).toBe('graphql');
+    expect(monacoLanguageForArtifact({ filename: 'service.wsdl' })).toBe('xml');
+    expect(monacoLanguageForArtifact({ filename: 'types.xsd' })).toBe('xml');
+    expect(monacoLanguageForArtifact({ filename: 'schema.avsc' })).toBe('json');
+    expect(monacoLanguageForArtifact({ filename: 'api.raml' })).toBe('yaml');
+    expect(monacoLanguageForArtifact({ filename: 'schema.sql' })).toBe('sql');
+    expect(monacoLanguageForArtifact({ filename: 'api.apib' })).toBe('markdown');
+    expect(monacoLanguageForArtifact({ filename: 'README.md' })).toBe('markdown');
+  });
+
+  it('renders grammar-less formats as plaintext rather than mis-highlighting', () => {
+    expect(monacoLanguageForArtifact({ filename: 'service.thrift' })).toBe('plaintext');
+    expect(monacoLanguageForArtifact({ filename: 'types.asn1' })).toBe('plaintext');
+    expect(monacoLanguageForArtifact({ filename: 'record.cpy' })).toBe('plaintext');
+    expect(monacoLanguageForArtifact({ filename: 'record.copybook' })).toBe('plaintext');
+  });
+
+  it('sniffs the bytes when neither media type nor extension identify the artifact', () => {
+    expect(monacoLanguageForArtifact({ filename: 'blob.bin', sample: '{ "a": 1 }' })).toBe('json');
+    expect(monacoLanguageForArtifact({ mediaType: 'text/plain', sample: '<root/>' })).toBe('xml');
+  });
+
+  it('degrades to plaintext when nothing recognises the artifact', () => {
+    expect(monacoLanguageForArtifact({})).toBe('plaintext');
+    expect(monacoLanguageForArtifact({ targetFormat: 'totally-made-up' })).toBe('plaintext');
+    expect(monacoLanguageForArtifact({ filename: 'mystery.zzz', mediaType: 'text/plain' })).toBe('plaintext');
+  });
+
+  it('prefers the media type over a mismatched filename for an unknown emitter', () => {
+    // A GraphQL SDL delivered with a .txt name still highlights from its media type.
+    expect(
+      monacoLanguageForArtifact({ mediaType: 'application/graphql', filename: 'schema.txt' }),
+    ).toBe('graphql');
   });
 });
