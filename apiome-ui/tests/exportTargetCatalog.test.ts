@@ -14,6 +14,7 @@ import {
   fidelityPreSummary,
   optionFieldsFromSchema,
   tierBadgeClass,
+  validateExportOptions,
   type ExportTargetEntry,
   type ExportTargetsResponse,
   type TargetFidelitySummary,
@@ -279,5 +280,57 @@ describe('fidelityPreSummary (MFX-6.5)', () => {
 
   it('returns empty rows for an empty card list', () => {
     expect(fidelityPreSummary([])).toEqual({ best: [], lossy: [] });
+  });
+});
+
+describe('validateExportOptions (MFX-41.1)', () => {
+  const SCHEMA = {
+    type: 'object',
+    required: ['package'],
+    properties: {
+      emit_services: { type: 'boolean', default: true, title: 'Emit Services' },
+      package: { anyOf: [{ type: 'string' }, { type: 'null' }], default: null, title: 'Package' },
+      syntax: { enum: ['proto3', 'editions'], default: 'proto3', title: 'Syntax' },
+    },
+  };
+  const fields = optionFieldsFromSchema(SCHEMA, { emit_services: true, package: null, syntax: 'proto3' });
+
+  it('marks a required field flagged in the schema', () => {
+    const pkg = fields.find((f) => f.key === 'package');
+    expect(pkg?.required).toBe(true);
+    expect(fields.find((f) => f.key === 'emit_services')?.required).toBe(false);
+  });
+
+  it('fails when a required option is empty', () => {
+    const result = validateExportOptions(fields, { emit_services: true, package: null, syntax: 'proto3' });
+    expect(result.valid).toBe(false);
+    expect(result.errors.package).toMatch(/required/i);
+  });
+
+  it('passes once the required option holds a value', () => {
+    const result = validateExportOptions(fields, {
+      emit_services: true,
+      package: 'com.example',
+      syntax: 'proto3',
+    });
+    expect(result).toEqual({ valid: true, errors: {} });
+  });
+
+  it('rejects an enum value outside the allowed set', () => {
+    const result = validateExportOptions(fields, {
+      emit_services: true,
+      package: 'com.example',
+      syntax: 'proto4',
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors.syntax).toMatch(/one of/i);
+  });
+
+  it('treats an empty optional field as valid (server default applies)', () => {
+    const optional = optionFieldsFromSchema(
+      { type: 'object', properties: { package: { type: 'string', title: 'Package' } } },
+      {},
+    );
+    expect(validateExportOptions(optional, { package: null })).toEqual({ valid: true, errors: {} });
   });
 });

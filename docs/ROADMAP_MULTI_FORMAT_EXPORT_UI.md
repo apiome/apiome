@@ -262,13 +262,22 @@ item, project version) open pre-scoped, matching apiome-ui's design system. The 
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 41.1 #4348 | Export Studio route + stepper shell | full-height Studio (Source→Target→Options→Verify→Review); reuses ExportDialog grid/options | export,ui,typescript,mvp | N | Y | L | apiome-ui |
 | 41.2 #4349 | Catalog-item export entry | Export CTA + tab on catalog detail; paradigm-aware pre-scoping (the non-OpenAPI case) | export,ui,typescript,mvp | N | Y | M | apiome-ui |
 | 41.3 #4350 | Version entry + recent-exports wiring | version view Export→Studio; pre-summary + recent list link into Studio state | export,ui,typescript,mvp | Y | Y | S | apiome-ui |
 | 41.4 #4351 | Deep links & resumable Studio state | URL-encoded source/target/options; shareable, reload-safe | export,ui,typescript | Y | N | S | apiome-ui |
 | 41.5 #4352 | Mockup extension + design/a11y parity | extend `mockups/multi-format-export` with Studio screens; token/a11y audit | export,ui,design-system | Y | N | M | apiome-ui,docs |
 
 ### MFX-41.1 — Export Studio route + stepper shell · #4348
+- **Status (done).** Shipped the tenant/version-scoped route `…/ade/dashboard/export/studio`
+  with the numbered **Source → Target → Options → Verify → Review & Generate** stepper. The
+  ExportDialog's target-card grid and generated options form were extracted into shared
+  components (`ExportTargetGrid`, `ExportOptionsForm`) that both the dialog and the Studio mount —
+  not a fork. The Options step validates against the emitter schema (`validateExportOptions`,
+  including required options); forward-navigation is gated (no Verify without a target, no Generate
+  until Verify ran or the user skips with the lossy loss acknowledged); stepper state survives
+  navigation. The ExportDialog gained an **"Open in Export Studio"** footer action that carries
+  the current source + target selection into the Studio via `exportStudioLink`. Covered by
+  `ExportStudio.test.tsx`, `exportStudioLink.test.ts`, and new `validateExportOptions` tests.
 - **Problem.** The planned ExportDialog (MFX-6.1) is a modal: right for quick exports, too small
   for verify-then-generate workflows with Monaco viewing, test tools, and visualizations. There is
   no surface where an enterprise user can *work* an export.
