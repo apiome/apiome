@@ -11,6 +11,8 @@ Pins the engine seams and the pipeline outcomes independently of the REST layer:
 * ``dry_run`` completes with the fidelity report and **no artifact** (the emitter is
   never invoked);
 * a source-loader failure surfaces as a ``failed`` state with a structured error event;
+* a terminal job is self-describing (MFX-3.4): a completed real export carries a
+  ``download_path``, a failed job carries a structured ``error``, a cancel carries neither;
 * cancellation is honoured at the next stage boundary; terminal jobs ignore it.
 
 The DB-backed source loader is faked (its own logic is covered in
@@ -165,6 +167,10 @@ async def test_job_runs_end_to_end_to_completed():
     assert len(result["files"]) == 1
     assert result["files"][0]["size_bytes"] > 0
 
+    # MFX-3.4: a real export exposes a download ref for pollers and no structured error.
+    assert result["download_path"] == f"/v1/export/{TENANT_SLUG}/jobs/{accepted.job_id}/download"
+    assert status["error"] is None
+
     # The fidelity envelope matches what /export/preview computes: lossless REST→OpenAPI.
     assert result["fidelity"]["summary"]["tier"] == "lossless"
     assert result["fidelity"]["summary"]["preserved_percent"] == 100
@@ -206,6 +212,8 @@ async def test_dry_run_completes_with_report_and_no_artifact():
     assert result["dry_run"] is True
     assert result["files"] == []
     assert result["media_type"] is None
+    # MFX-3.4: a dry-run emits no artifact, so it carries no download ref.
+    assert result["download_path"] is None
     assert result["fidelity"]["summary"]["tier"] == "lossless"
     assert get_export_job_emit_result(TENANT_SLUG, accepted.job_id) is None
     codes = [e["code"] for e in status["events"]]
@@ -230,6 +238,13 @@ async def test_source_load_failure_fails_the_job_with_structured_event():
     assert errors[0]["code"] == "SOURCE_LOAD_FAILED"
     assert errors[0]["context"] == {"status_code": 404}
 
+    # MFX-3.4: the same failure is mirrored as a structured error for pollers.
+    assert status["error"] == {
+        "code": "SOURCE_LOAD_FAILED",
+        "message": "Artifact 'missing' was not found.",
+        "context": {"status_code": 404},
+    }
+
 
 async def test_unexpected_exception_fails_the_job():
     """Any unclassified fault is converted to a failed job, never a crashed task."""
@@ -244,6 +259,9 @@ async def test_unexpected_exception_fails_the_job():
     assert status["state"] == "failed"
     assert status["events"][-1]["code"] == "EXPORT_EXCEPTION"
     assert "boom" in status["events"][-1]["message"]
+    # MFX-3.4: an unclassified crash still yields a structured error.
+    assert status["error"]["code"] == "EXPORT_EXCEPTION"
+    assert "boom" in status["error"]["message"]
 
 
 async def test_cancel_takes_effect_at_next_stage_boundary():
@@ -267,6 +285,8 @@ async def test_cancel_takes_effect_at_next_stage_boundary():
 
     assert status["state"] == "canceled"
     assert status["result"] is None
+    # MFX-3.4: a cancel is not a failure — no structured error is attached.
+    assert status["error"] is None
 
 
 async def test_cancel_of_terminal_job_is_a_noop():
@@ -411,6 +431,12 @@ async def test_severe_conversion_fails_the_job_without_confirmation():
     assert errors[0]["code"] == "TRANSCODE_CONFIRMATION_REQUIRED"
     assert errors[0]["context"]["verdict"] == "severe"
 
+    # MFX-3.4: the guard refusal is a structured error a poller branches on (resubmit
+    # with ``confirm``), carrying the same guard context as the terminal event.
+    assert status["error"]["code"] == "TRANSCODE_CONFIRMATION_REQUIRED"
+    assert status["error"]["context"]["verdict"] == "severe"
+    assert "reasons" in status["error"]["context"]
+
 
 async def test_severe_conversion_completes_when_confirmed():
     """The same severe conversion runs to completion once submitted with ``confirm``."""
@@ -424,6 +450,9 @@ async def test_severe_conversion_completes_when_confirmed():
     assert result["files"]  # the emitter ran
     assert result["guard"]["verdict"] == "severe"
     assert result["guard"]["requires_confirmation"] is True
+    # MFX-3.4: a confirmed severe export still resolves to a downloadable artifact.
+    assert result["download_path"] == f"/v1/export/{TENANT_SLUG}/jobs/{accepted.job_id}/download"
+    assert status["error"] is None
 
 
 async def test_dry_run_of_severe_conversion_never_blocks():

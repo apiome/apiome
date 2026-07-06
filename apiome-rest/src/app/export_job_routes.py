@@ -10,7 +10,7 @@ The route layout and status contract deliberately mirror the spec-import surface
 
 * ``POST   /v1/export/{tenant_slug}/jobs``          → 202 + ``{job_id, status_path}``
 * ``GET    /v1/export/{tenant_slug}/jobs``          → summary list (in-memory, per process)
-* ``GET    /v1/export/{tenant_slug}/jobs/{job_id}`` → ``{job_id, state, percent, events, progress, result}``
+* ``GET    /v1/export/{tenant_slug}/jobs/{job_id}`` → ``{job_id, state, percent, events, progress, result, error}``
 * ``DELETE /v1/export/{tenant_slug}/jobs/{job_id}`` → 204 cancel request
 
 All routes are tenant-scoped (JWT or API key) via :func:`app.auth.validate_authentication`,
@@ -116,9 +116,11 @@ async def list_export_jobs(
     response_model=ExportJobStatus,
     summary="Get export job status",
     description=(
-        "Poll payload for one export job: state, percent, structured events, coarse "
-        "progress, and — once completed — the result (resolved coordinates, fidelity "
-        "envelope, and the emitted-file manifest; a dry-run carries the report only)."
+        "Poll payload for one export job: state, percent, structured events, and coarse "
+        "progress. A terminal job is self-describing — a completed real export carries a "
+        "``result`` (resolved coordinates, fidelity envelope, transcode guard, emitted-file "
+        "manifest, and a ``download_path`` for the artifact bytes); a dry-run carries the "
+        "report only (no ``download_path``); a failed job carries a structured ``error``."
     ),
 )
 async def get_export_job_status(
