@@ -24,6 +24,15 @@ and then runs through the export pipeline in the background:
    target (protobuf packages, WSDL+XSD, per-subject Avro), a **zip bundle** carrying every
    emitted file plus a ``manifest.json`` (MFX-4.2, :func:`build_export_zip`).
 
+The retained artifact is **temporary** (MFX-4.3): a completed job records an expiry
+(``export_artifact_retention_hours`` after emit, or never when that setting is non-positive),
+surfaced to the poller on ``result.download_expires_at``. Past the deadline the bytes are
+dropped from the record and the download route answers ``410 Gone`` — a lazy sweep
+(:func:`_expire_stale_artifacts`) also drops any other expired artifacts on each download
+resolve, so memory is reclaimed without a background reaper. The download itself is
+**streamed** in fixed-size chunks (:func:`iter_download_chunks`) rather than buffered whole,
+so a large bundle does not force a second full copy through the response layer.
+
 The status/polling contract deliberately matches the import engine's: the same job-record
 store (in-memory, per-process, tenant-scoped), the same state vocabulary (a subset —
 exports have no two-phase commit, so no ``pending-approval``/``committing``/``rolled-back``),
@@ -55,11 +64,12 @@ import time
 import uuid
 import zipfile
 from dataclasses import dataclass
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, Iterator, List, Literal, Optional, Union
 
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from .config import settings
 from .emitter import EmitResult
 from .export_fidelity import ExportFidelity, build_export_fidelity
 from .export_service import (
@@ -100,6 +110,8 @@ __all__ = [
     "serialize_file_content",
     "ExportDownloadArtifact",
     "resolve_export_download",
+    "iter_download_chunks",
+    "DOWNLOAD_CHUNK_SIZE",
 ]
 
 
@@ -256,6 +268,12 @@ class ExportJobResult(BaseModel):
         "bundle (served by the delivery epics, MFX-4.x). Set once a real export completes; "
         "null for a dry-run (no artifact was emitted).",
     )
+    download_expires_at: Optional[int] = Field(
+        default=None,
+        description="Epoch-ms deadline after which the retained artifact is dropped and the "
+        "download route returns 410 (MFX-4.3, temp artifact retention). Null for a dry-run "
+        "(no artifact) or when retention is disabled (retained for the process lifetime).",
+    )
 
 
 class ExportJobError(BaseModel):
@@ -361,6 +379,17 @@ class ExportDownloadArtifact:
     media_type: str
     body: Union[str, bytes]
 
+    @property
+    def content_length(self) -> int:
+        """The download body's size in bytes (a ``str`` body measured as UTF-8).
+
+        Lets the streaming delivery route advertise a ``Content-Length`` up front — a
+        chunked :class:`~fastapi.responses.StreamingResponse` otherwise sends none, so a
+        client could not show download progress for a large bundle (MFX-4.3).
+        """
+        body = self.body
+        return len(body.encode("utf-8")) if isinstance(body, str) else len(body)
+
 
 @dataclass
 class _ExportJobRecord:
@@ -376,8 +405,12 @@ class _ExportJobRecord:
     # Sequence for event ids ("export-1", "export-2", …) within this job.
     event_seq: int = 0
     # The raw emit result, retained so the delivery epics (MFX-4.x) can serve the
-    # emitted bytes without re-running the emitter. None until emit succeeds.
+    # emitted bytes without re-running the emitter. None until emit succeeds, and dropped
+    # back to None once the retention window (below) elapses (MFX-4.3).
     emit_result: Optional[EmitResult] = None
+    # Epoch-ms deadline after which the retained artifact expires and is dropped; None means
+    # no expiry (retention disabled) or no artifact yet (MFX-4.3).
+    artifact_expires_at_ms: Optional[int] = None
 
 
 _jobs: Dict[str, _ExportJobRecord] = {}
@@ -413,6 +446,39 @@ def _get_engine_loop() -> asyncio.AbstractEventLoop:
 def _now_ms() -> int:
     """Current wall-clock time in epoch milliseconds (event timestamps)."""
     return int(time.time() * 1000)
+
+
+def _artifact_expiry_from(now_ms: int) -> Optional[int]:
+    """The retention deadline for an artifact retained at ``now_ms`` (MFX-4.3).
+
+    Reads ``export_artifact_retention_hours`` at call time so a config change (or a test
+    override) takes effect on the next completed job. A non-positive setting disables expiry
+    (the artifact is kept for the process lifetime), signalled by ``None``.
+
+    Args:
+        now_ms: The epoch-ms instant the artifact became available.
+
+    Returns:
+        The epoch-ms deadline after which the artifact expires, or ``None`` when retention
+        is disabled.
+    """
+    hours = settings.export_artifact_retention_hours
+    if hours <= 0:
+        return None
+    return now_ms + hours * 3_600_000
+
+
+def _expire_stale_artifacts(now_ms: int) -> None:
+    """Drop every retained emit result whose retention window has elapsed. Call under lock.
+
+    A lazy reaper (MFX-4.3): rather than run a background thread, each download resolve sweeps
+    the store so expired artifacts free their memory even if their own job is never polled
+    again. A record keeps its metadata (status, manifest) — only the heavy retained bytes go.
+    """
+    for rec in _jobs.values():
+        exp = rec.artifact_expires_at_ms
+        if exp is not None and rec.emit_result is not None and now_ms >= exp:
+            rec.emit_result = None
 
 
 def _next_event(rec: _ExportJobRecord, level: str, code: str, message: str,
@@ -879,6 +945,10 @@ async def _drive_export_job(job_id: str) -> None:
             return
         manifest = build_result_manifest(emit_result)
 
+        # Retain the artifact under a temp-retention window (MFX-4.3): compute the expiry once
+        # so the record and the poller-facing result advertise the same deadline.
+        artifact_expires_at = _artifact_expiry_from(_now_ms())
+
         result = ExportJobResult(
             artifact=source.artifact_id,
             version_record_id=source.version_record_id,
@@ -890,12 +960,14 @@ async def _drive_export_job(job_id: str) -> None:
             files=manifest,
             media_type=emit_result.media_type,
             download_path=_download_path(tenant_slug, job_id),
+            download_expires_at=artifact_expires_at,
         )
 
         with _jobs_lock:
             rec = _jobs.get(job_id)
             if rec is not None:
                 rec.emit_result = emit_result
+                rec.artifact_expires_at_ms = artifact_expires_at
 
         await _publish(
             job_id,
@@ -1036,13 +1108,18 @@ async def cancel_export_job(tenant_slug: str, job_id: str) -> None:
 def get_export_job_emit_result(tenant_slug: str, job_id: str) -> Optional[EmitResult]:
     """The retained raw emit result for a completed job, for the delivery routes (MFX-4.x).
 
-    Returns ``None`` while the job is running, after a failure/cancel, or for a dry-run.
+    Returns ``None`` while the job is running, after a failure/cancel, for a dry-run, or once
+    the retention window has elapsed (MFX-4.3) — in which case the expired bytes are dropped.
 
     Raises:
         HTTPException: 404 when the job is unknown for this tenant.
     """
     with _jobs_lock:
-        emit_result = _get_record_locked(tenant_slug, job_id).emit_result
+        rec = _get_record_locked(tenant_slug, job_id)
+        exp = rec.artifact_expires_at_ms
+        if exp is not None and rec.emit_result is not None and _now_ms() >= exp:
+            rec.emit_result = None
+        emit_result = rec.emit_result
         return None if emit_result is None else emit_result.model_copy(deep=True)
 
 
@@ -1077,14 +1154,32 @@ def resolve_export_download(tenant_slug: str, job_id: str) -> ExportDownloadArti
 
     Raises:
         HTTPException: 404 when the job is unknown for this tenant; 409 when the job has no
-            downloadable artifact (not completed, or a dry-run that emitted nothing).
+            downloadable artifact (not completed, or a dry-run that emitted nothing); 410 when
+            the artifact was emitted but its retention window has since elapsed (MFX-4.3).
     """
     with _jobs_lock:
+        # Sweep the store first so expired bytes are reclaimed even for jobs no one polls; the
+        # sweep also drops this job's artifact if it is past its own deadline, folding expiry
+        # into the read below (no artifact ⇒ the 410 branch fires).
+        now_ms = _now_ms()
+        _expire_stale_artifacts(now_ms)
         rec = _get_record_locked(tenant_slug, job_id)
         state = rec.state
         request_dry_run = rec.request.dry_run
         emit_result = rec.emit_result
+        artifact_expired = (
+            rec.artifact_expires_at_ms is not None and now_ms >= rec.artifact_expires_at_ms
+        )
         result_target = rec.status.result.target if rec.status.result else None
+
+    # A real export whose window has elapsed: honest 410 (the artifact existed but is gone),
+    # distinct from the 409 a dry-run / never-completed job gets (no artifact was ever emitted).
+    if state == "completed" and not request_dry_run and artifact_expired:
+        raise HTTPException(
+            status_code=410,
+            detail="This export artifact has expired and is no longer available for "
+            "download; resubmit the export job to regenerate it.",
+        )
 
     if state != "completed":
         raise HTTPException(
@@ -1114,3 +1209,35 @@ def resolve_export_download(tenant_slug: str, job_id: str) -> ExportDownloadArti
         media_type=primary.media_type or emit_result.media_type or default_media,
         body=serialize_file_content(primary.content),
     )
+
+
+# The chunk size the delivery route streams a download body in (MFX-4.3). 64 KiB keeps the
+# in-flight slice small for a large bundle while staying well above per-chunk overhead.
+DOWNLOAD_CHUNK_SIZE = 64 * 1024
+
+
+def iter_download_chunks(
+    artifact: ExportDownloadArtifact, chunk_size: int = DOWNLOAD_CHUNK_SIZE
+) -> Iterator[bytes]:
+    """Yield an export download body as fixed-size UTF-8 byte chunks (MFX-4.3, streaming).
+
+    The delivery route feeds this to a :class:`~fastapi.responses.StreamingResponse` so a
+    large bundle is written to the socket in slices rather than handed to the response layer
+    as one buffer (which would force a second full copy of the bytes). A single-file body is a
+    document ``str`` (encoded here); a multi-file bundle is already zip ``bytes``. The
+    concatenated chunks are byte-identical to :attr:`ExportDownloadArtifact.body`.
+
+    Args:
+        artifact: The resolved download artifact (:func:`resolve_export_download`).
+        chunk_size: The maximum size of each yielded chunk in bytes; defaults to
+            :data:`DOWNLOAD_CHUNK_SIZE`.
+
+    Yields:
+        Successive byte slices of the encoded body, in order. An empty body yields nothing.
+    """
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+    body = artifact.body
+    data = body.encode("utf-8") if isinstance(body, str) else body
+    for start in range(0, len(data), chunk_size):
+        yield data[start:start + chunk_size]

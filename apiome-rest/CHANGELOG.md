@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.78.0] - 2026-07-05
+
+### Added
+- **Export artifact streaming & temp retention (#3850, MFX-4.3)** — the async export job
+  download route `GET /v1/export/{tenant_slug}/jobs/{job_id}/download` now **streams** the
+  emitted artifact in 64 KiB chunks (`iter_download_chunks` → `StreamingResponse`) instead of
+  buffering the whole bundle, with an up-front `Content-Length` (new
+  `ExportDownloadArtifact.content_length`) so clients still get download progress. The retained
+  `EmitResult` is now **temporary**: a completed job stamps an expiry `now + APIOME_EXPORT_ARTIFACT_RETENTION_HOURS`
+  (new setting, default **24h**; set `0` to disable and keep the pre-4.3 process-lifetime
+  retention), advertised to pollers on the new `ExportJobResult.download_expires_at`. After the
+  window elapses the download route returns **410 Gone** (distinct from the 409 for a
+  dry-run/incomplete job — the artifact existed but is gone; resubmit to regenerate) and the
+  bytes are dropped; a lazy sweep (`_expire_stale_artifacts`) on each download resolve reclaims
+  every other job's expired artifact too, so no background reaper is needed.
+  `get_export_job_emit_result` honours the same expiry. apiome-rest 1.77.0 → 1.78.0.
+
 ## [1.77.0] - 2026-07-05
 
 ### Added

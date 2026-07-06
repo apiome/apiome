@@ -428,3 +428,42 @@ def test_download_is_tenant_scoped():
         _wait_terminal(job_id)
 
     assert client.get(f"/v1/export/other/jobs/{job_id}/download").status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Streaming download & temp artifact retention — MFX-4.3 (#3850)
+# ---------------------------------------------------------------------------
+def test_download_streams_with_a_content_length_header():
+    """The download advertises Content-Length and streams a body of exactly that size."""
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        r = client.post(
+            "/v1/export/acme/jobs", json={"artifact": "artifact-1", "target": "openapi"}
+        )
+        job_id = r.json()["job_id"]
+        body = _wait_terminal(job_id)
+
+    dl = client.get(f"/v1/export/acme/jobs/{job_id}/download")
+    assert dl.status_code == 200, dl.text
+    size = body["result"]["files"][0]["size_bytes"]
+    # Content-Length is present, matches the manifest size, and matches the delivered body.
+    assert dl.headers["content-length"] == str(size)
+    assert len(dl.content) == size
+    assert dl.json()["openapi"].startswith("3.")
+
+
+def test_download_of_expired_artifact_is_410():
+    """Once the retention window elapses the route answers 410 Gone (MFX-4.3)."""
+    from app import export_job_engine as eje
+
+    with patch("app.export_job_engine.load_export_source", return_value=_source()):
+        r = client.post(
+            "/v1/export/acme/jobs", json={"artifact": "artifact-1", "target": "openapi"}
+        )
+        job_id = r.json()["job_id"]
+        _wait_terminal(job_id)
+
+    # Force the deadline into the past, then the download is 410 with a resubmit hint.
+    eje._jobs[job_id].artifact_expires_at_ms = int(time.time() * 1000) - 1
+    dl = client.get(f"/v1/export/acme/jobs/{job_id}/download")
+    assert dl.status_code == 410
+    assert "expired" in dl.json()["detail"]
