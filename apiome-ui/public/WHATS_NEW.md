@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Export: emitted-artifact validation gate — completed export jobs now surface a structured validation report (`valid` / `invalid` / `skipped` / `not_applicable`) alongside the fidelity envelope; invalid output blocks delivery with actionable parser findings (MFX-5.3)
 - Export: Emitter registry REST target list — `GET /v1/export/{tenant}/targets` enumerates every registered emitter with descriptor, capability profile, `options_schema` and `default_options`, and a per-source fidelity tier badge (`lossless`/`lossy`/`types-only`) computed without emitting (MFX-1.2)
 - Browser: public export downloads are rate-limited and size-capped on the server; the dialog shows clear messages when throttled or the artifact is too large (MFX-7.3)
 - Browser: public export dialog shows the full fidelity advisory + per-construct report, matching the ADE export flow (MFX-7.2)

@@ -51,8 +51,35 @@ from .emitter import EmitResult, EmittedFile
 
 __all__ = [
     "EmittedArtifactValidation",
+    "ValidationFinding",
     "validate_emitted_artifact",
 ]
+
+
+class ValidationFinding(BaseModel):
+    """One structured emitted-artifact validation failure (MFX-5.3).
+
+    Carries the parser/toolchain detail UIs render — message, JSON-pointer path, bundle file,
+    and line/column when the underlying validator provides them.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    message: str = Field(description="Human-readable failure description.")
+    path: Optional[str] = Field(
+        default=None,
+        description="JSON Pointer or logical location within the artifact when provided.",
+    )
+    file: Optional[str] = Field(
+        default=None,
+        description="Bundle-relative file path when the failure is tied to one emitted file.",
+    )
+    line: Optional[int] = Field(default=None, description="1-based line number when available.")
+    column: Optional[int] = Field(default=None, description="1-based column number when available.")
+    keyword: Optional[str] = Field(
+        default=None,
+        description="Validator-specific rule keyword (e.g. a JSON Schema ``keyword``).",
+    )
 
 
 class EmittedArtifactValidation(BaseModel):
@@ -91,7 +118,12 @@ class EmittedArtifactValidation(BaseModel):
     errors: List[str] = Field(
         default_factory=list,
         description="Human-readable failure detail from the parser. Non-empty only when the "
-        "artifact was validated and found invalid.",
+        "artifact was validated and found invalid. Mirrors :attr:`findings` as one-liners.",
+    )
+    findings: List[ValidationFinding] = Field(
+        default_factory=list,
+        description="Structured parser/toolchain failures for UI rendering (MFX-5.3). "
+        "Non-empty only when the artifact was validated and found invalid.",
     )
     detail: Optional[str] = Field(
         default=None,
@@ -119,14 +151,25 @@ def _passed(target: str) -> EmittedArtifactValidation:
     return EmittedArtifactValidation(target=target, applicable=True, validated=True, valid=True)
 
 
-def _rejected(target: str, errors: List[str]) -> EmittedArtifactValidation:
+def _rejected(
+    target: str,
+    findings: List[ValidationFinding],
+) -> EmittedArtifactValidation:
     """A validator ran and rejected the artifact, carrying its failure detail."""
+    if not findings:
+        findings = [
+            ValidationFinding(
+                message="The emitted artifact did not re-parse through its matching import parser."
+            )
+        ]
+    errors = [_finding_to_line(f) for f in findings]
     return EmittedArtifactValidation(
         target=target,
         applicable=True,
         validated=True,
         valid=False,
-        errors=errors or ["The emitted artifact did not re-parse through its matching import parser."],
+        errors=errors,
+        findings=findings,
     )
 
 
@@ -144,14 +187,56 @@ def _not_applicable(target: str, reason: str) -> EmittedArtifactValidation:
     )
 
 
-def _flatten_diagnostics(diagnostics: List[Dict[str, str]]) -> List[str]:
-    """Flatten a parser's structured diagnostics into human-readable one-liners."""
-    messages: List[str] = []
+def _finding_to_line(finding: ValidationFinding) -> str:
+    """Render one structured finding as a human-readable one-liner (legacy ``errors`` list)."""
+    location = finding.path or finding.file or ""
+    if finding.line is not None:
+        col = f":{finding.column}" if finding.column is not None else ""
+        location = f"{location or finding.file or ''}:{finding.line}{col}".strip(":")
+    if location:
+        return f"{finding.message} ({location})".strip()
+    return finding.message
+
+
+def _findings_from_diagnostics(
+    diagnostics: List[Dict[str, str]], *, file: Optional[str] = None
+) -> List[ValidationFinding]:
+    """Convert a parser's structured diagnostics into :class:`ValidationFinding` rows."""
+    findings: List[ValidationFinding] = []
     for diag in diagnostics:
         message = diag.get("message") or ""
-        location = diag.get("path") or diag.get("locations") or ""
-        messages.append(f"{message} ({location})".strip() if location else message)
-    return [m for m in messages if m]
+        if not message:
+            continue
+        line_raw = diag.get("line")
+        column_raw = diag.get("column")
+        findings.append(
+            ValidationFinding(
+                message=message,
+                path=diag.get("path") or diag.get("locations"),
+                file=file or diag.get("file"),
+                line=int(line_raw) if line_raw and line_raw.isdigit() else None,
+                column=int(column_raw) if column_raw and column_raw.isdigit() else None,
+                keyword=diag.get("keyword"),
+            )
+        )
+    return findings
+
+
+def _finding_from_message(message: str, *, file: Optional[str] = None) -> ValidationFinding:
+    """Build one finding from a free-form parser message."""
+    return ValidationFinding(message=message, file=file)
+
+
+def _findings_from_avro_errors(errors: List[str]) -> List[ValidationFinding]:
+    """Parse Avro per-file errors of the form ``path.avsc: reason`` into findings."""
+    findings: List[ValidationFinding] = []
+    for error in errors:
+        if ": " in error:
+            file_path, message = error.split(": ", 1)
+            findings.append(ValidationFinding(message=message, file=file_path))
+        else:
+            findings.append(ValidationFinding(message=error))
+    return findings
 
 
 async def _validate_openapi(
@@ -163,10 +248,10 @@ async def _validate_openapi(
     report = await asyncio.to_thread(round_trip_openapi, api, emit_result=emit_result)
     if report.valid:
         return _passed(target)
-    errors = _flatten_diagnostics(report.schema_errors)
+    findings = _findings_from_diagnostics(report.schema_errors)
     if report.import_error:
-        errors.append(report.import_error)
-    return _rejected(target, errors)
+        findings.append(_finding_from_message(report.import_error))
+    return _rejected(target, findings)
 
 
 async def _validate_graphql(
@@ -178,10 +263,10 @@ async def _validate_graphql(
     report = await asyncio.to_thread(round_trip_graphql, api, emit_result=emit_result)
     if report.valid:
         return _passed(target)
-    errors = _flatten_diagnostics(report.validation_errors)
+    findings = _findings_from_diagnostics(report.validation_errors)
     if report.import_error:
-        errors.append(report.import_error)
-    return _rejected(target, errors)
+        findings.append(_finding_from_message(report.import_error))
+    return _rejected(target, findings)
 
 
 async def _validate_asyncapi(
@@ -213,10 +298,10 @@ async def _validate_asyncapi(
         )
     if report.valid:
         return _passed(target)
-    errors = _flatten_diagnostics(report.validation_errors)
+    findings = _findings_from_diagnostics(report.validation_errors)
     if report.import_error:
-        errors.append(report.import_error)
-    return _rejected(target, errors)
+        findings.append(_finding_from_message(report.import_error))
+    return _rejected(target, findings)
 
 
 def _avro_fullname(content: object) -> Optional[str]:
@@ -272,7 +357,7 @@ async def _validate_avro(
             pending = unresolved
 
     errors = await asyncio.to_thread(_run)
-    return _passed(target) if not errors else _rejected(target, errors)
+    return _passed(target) if not errors else _rejected(target, _findings_from_avro_errors(errors))
 
 
 async def _validate_proto(
@@ -302,7 +387,10 @@ async def _validate_proto(
         await compile_proto_descriptor_set(files)
     except ProtoCompileError as exc:
         diagnostics = getattr(exc, "diagnostics", None)
-        return _rejected(target, [str(exc)] + ([diagnostics] if diagnostics else []))
+        findings = [_finding_from_message(str(exc))]
+        if diagnostics:
+            findings.append(_finding_from_message(str(diagnostics)))
+        return _rejected(target, findings)
     return _passed(target)
 
 
