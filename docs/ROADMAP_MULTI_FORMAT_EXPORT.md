@@ -388,7 +388,7 @@ validate → deliver. Enables any-to-any.
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
 | 3.1 ✅ | Export job engine | inverse of `spec_import_engine`: emit→validate→package | export,multi-protocol,rest,python,mvp | N | Y | L | apiome-rest |
-| 3.2 | CanonicalApi → emitter dispatch | resolve emitter, run, attach fidelity report | export,multi-protocol,rest,mvp | N | Y | M | apiome-rest |
+| 3.2 ✅ | CanonicalApi → emitter dispatch | resolve emitter, run, attach fidelity report | export,multi-protocol,rest,mvp | N | Y | M | apiome-rest |
 | 3.3 | Any-to-any transcoding guards | source-paradigm ↔ target-paradigm sanity + warnings | export,multi-protocol,validation,mvp | Y | Y | M | apiome-rest |
 | 3.4 | Export job status/polling | job lifecycle + result (artifact ref + report) | export,rest,mvp | Y | Y | S | apiome-rest |
 
@@ -400,7 +400,8 @@ validate → deliver. Enables any-to-any.
 - **Dependencies / Parallelism.** After 1.1, 2.2. Blocks emitter epics.
 - **Technical Stack.** Python async.
 
-### MFX-3.2 — CanonicalApi → emitter dispatch  ·  **#3845**
+### MFX-3.2 — CanonicalApi → emitter dispatch  ·  **#3845**  ·  ✅ **Done**
+- **Status.** Implemented in `apiome-rest/src/app/export_dispatch.py` (the reusable, tenant-scoped **dispatch primitive**: `dispatch_export(tenant_id, artifact, version, target, …)` loads the revision's `CanonicalApi` via `load_export_source`, resolves the emitter from the registry, runs it through the Emitter SPI (`emit_canonical`, with `(tenant, artifact)`-scoped field-identity persistence), and attaches the full `ExportFidelity` envelope (`build_export_fidelity` — byte-identical to `POST /export/preview`), returning the two together as an `ExportDispatch`; the loaded-source variant `dispatch_from_source` lets callers that already hold an `ExportSource` reuse the composition without a second lookup, and `dry_run` stops after the report with no artifact) and surfaced synchronously in `apiome-rest/src/app/export_routes.py` (`POST /v1/export/{tenant_slug}/dispatch` → resolved coordinates + fidelity envelope + emitted files **inline** — the one-shot twin of submitting a job and polling, for small artifacts and the `apiome export` CLI). The composition reuses the format seams (`export_source`/`export_service`/`export_fidelity`) rather than re-deriving them; the async `export_job_engine` (MFX-3.1) runs the same composition staged for large/toolchain-backed targets. Typed failures map straight through: `ExportSourceError` (404/422), `ExportError` (400 unknown target / 422 invalid options / 422 empty emit). Tests in `tests/test_export_dispatch.py` (primitive) and `tests/test_export_dispatch_routes.py` (route). apiome-rest 1.76.3 → 1.76.4.
 - **Solution / Scope.** Load the artifact's `CanonicalApi` for the chosen version, resolve the emitter from the registry, run it, attach the fidelity report.
 - **Acceptance Criteria.** Correct emitter runs; report attached; tenant-scoped.
 - **Dependencies / Parallelism.** After 3.1. Blocks emitter epics.
