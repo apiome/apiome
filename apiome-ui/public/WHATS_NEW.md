@@ -7,6 +7,7 @@ We continue to improve the platform based on your feedback with improvements and
 ## Features
 
 - Export: `apiome export <format> <artifact>` — generic CLI export via the async job pipeline (submit, poll, download); writes a single file or unpacks a zip bundle to `--out`; supports `--option`, `--force`, `--confirm`, and `--json` (MFX-8.1)
+- Export: CLI fidelity report — every `export` verb prints the server advisory (MFX-2.4) and a concise per-construct loss table on stderr; lossy/types-only exports exit non-zero unless `--force` or the user confirms at an interactive prompt (MFX-8.2)
 - Export: emitted-artifact validation gate — completed export jobs now surface a structured validation report (`valid` / `invalid` / `skipped` / `not_applicable`) alongside the fidelity envelope; invalid output blocks delivery with actionable parser findings (MFX-5.3)
 - Export: Emitter registry REST target list — `GET /v1/export/{tenant}/targets` enumerates every registered emitter with descriptor, capability profile, `options_schema` and `default_options`, and a per-source fidelity tier badge (`lossless`/`lossy`/`types-only`) computed without emitting (MFX-1.2)
 - Browser: public export downloads are rate-limited and size-capped on the server; the dialog shows clear messages when throttled or the artifact is too large (MFX-7.3)

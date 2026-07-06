@@ -37,13 +37,12 @@ from apiome_cli.client.http import RestClient
 from apiome_cli.client.project_version_resolve import resolve_project_uuid
 from apiome_cli.client.spec_download import SpecSerialization, fetch_browse_spec
 from apiome_cli.config import require_api_key
-from apiome_cli.exit_codes import EXIT_ERROR, EXIT_USAGE
+from apiome_cli.exit_codes import EXIT_USAGE
 from apiome_cli.export_dispatch import run_generic_export
 from apiome_cli.export_output import (
     EXPORT_TARGET_COLUMNS,
-    fidelity_tier,
+    enforce_export_fidelity_gate,
     format_export_fidelity_summary,
-    is_lossy,
     target_rows,
 )
 from apiome_cli.import_.jobs import DEFAULT_POLL_INTERVAL
@@ -304,13 +303,7 @@ def export_openapi(
         for line in format_export_fidelity_summary(fidelity, target=_OPENAPI_TARGET):
             typer.echo(line, err=True)
 
-    if is_lossy(fidelity) and not force:
-        typer.echo(
-            "Lossy export — the OpenAPI document does not carry every source construct. "
-            "Re-run with --force to accept.",
-            err=True,
-        )
-        raise typer.Exit(EXIT_ERROR)
+    enforce_export_fidelity_gate(fidelity, force=force)
 
 
 @app.command(
@@ -407,13 +400,7 @@ def export_asyncapi(
         for line in format_export_fidelity_summary(fidelity, target=_ASYNCAPI_TARGET):
             typer.echo(line, err=True)
 
-    if is_lossy(fidelity) and not force:
-        typer.echo(
-            "Lossy export — the AsyncAPI document does not carry every source construct "
-            "(a REST/RPC source is reframed onto channels). Re-run with --force to accept.",
-            err=True,
-        )
-        raise typer.Exit(EXIT_ERROR)
+    enforce_export_fidelity_gate(fidelity, force=force)
 
 
 @app.command(
@@ -499,14 +486,7 @@ def export_grpc(
         for line in format_export_fidelity_summary(fidelity, target=_PROTOBUF_TARGET):
             typer.echo(line, err=True)
 
-    if is_lossy(fidelity) and not force:
-        typer.echo(
-            "Lossy export — the proto3 document does not carry every source construct "
-            "(a REST/OpenAPI source loses unions, constraints, and HTTP semantics). "
-            "Re-run with --force to accept.",
-            err=True,
-        )
-        raise typer.Exit(EXIT_ERROR)
+    enforce_export_fidelity_gate(fidelity, force=force)
 
 
 @app.command(
@@ -592,14 +572,7 @@ def export_graphql(
         for line in format_export_fidelity_summary(fidelity, target=_GRAPHQL_TARGET):
             typer.echo(line, err=True)
 
-    if is_lossy(fidelity) and not force:
-        typer.echo(
-            "Lossy export — the GraphQL SDL does not carry every source construct "
-            "(a REST/OpenAPI source loses HTTP semantics and validation constraints). "
-            "Re-run with --force to accept.",
-            err=True,
-        )
-        raise typer.Exit(EXIT_ERROR)
+    enforce_export_fidelity_gate(fidelity, force=force)
 
 
 @app.command(
@@ -685,23 +658,7 @@ def export_avro(
         for line in format_export_fidelity_summary(fidelity, target=_AVRO_TARGET):
             typer.echo(line, err=True)
 
-    if is_lossy(fidelity) and not force:
-        if fidelity_tier(fidelity) == "types-only":
-            message = (
-                "Types-only export — Avro is a data-schema format; operations and channels are "
-                "omitted (a REST/OpenAPI source also loses HTTP semantics and validation "
-                "constraints). Re-run with --force to accept."
-            )
-        else:
-            message = (
-                "Lossy export — the Avro schema does not carry every source construct. "
-                "Re-run with --force to accept."
-            )
-        typer.echo(
-            message,
-            err=True,
-        )
-        raise typer.Exit(EXIT_ERROR)
+    enforce_export_fidelity_gate(fidelity, force=force)
 
 
 def _fidelity_metadata(fidelity: dict[str, object] | None) -> dict[str, object] | None:
