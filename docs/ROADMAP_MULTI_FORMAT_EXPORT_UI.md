@@ -815,6 +815,23 @@ preset/schedule integration, and hardened states.
   recovery action; leaving/returning mid-job resumes cleanly.
 - **Dependencies / Parallelism.** After 41.1; MFX-3.4. MVP.
 - **Technical Stack.** TanStack Query polling, toasts.
+- **Status (done).** The Studio's Generate phase now submits the **async export job** (REST
+  `POST /v1/export/{tenant}/jobs`, MFX-3.1) instead of the blocking `…/document` emit, and renders
+  its five pipeline stages (load source → analyze fidelity → emit → validate → package) as a live
+  stepper (`GenerateProgress.tsx`, `stageStatusFor`). A failed job renders its **structured** error
+  (MFX-3.4) through `classifyExportFailure`: the failure class, the job's message, class detail
+  (guard reasons, validation-finding count), and the one correct recovery — retry (re-submit the
+  same config), reconfigure the target/options, acknowledge a severe conversion and re-submit
+  confirmed, or **route back to the Verify lenses with the validator's findings loaded** (an
+  `EMITTED_ARTIFACT_INVALID` gate failure re-opens the Verify step showing the validation lens and
+  re-locks Generate until re-verified). Long-running jobs **survive navigation** via a module-level
+  tracker (`exportJobTracker.ts`, subscribed through `useExportJob`) that keeps polling after the
+  phase unmounts, persists the job to `sessionStorage` (resume on reload, MFX-41.4), and toasts on
+  background completion; reopening the Studio for the same source resumes onto the staged progress
+  or the finished artifact. The codebase has no TanStack Query, so polling follows the existing
+  `setInterval` job-poll convention (as `ImportExecutionPanel`), not the roadmap's placeholder
+  stack. New proxy routes `/api/export/jobs`, `…/[jobId]`, `…/[jobId]/download`. Bump apiome-ui
+  0.60.0 → 0.61.0.
 
 ### MFX-46.3 — Delivery destination picker · #4381
 - **Problem.** MFX-EPIC-38 adds git/webhook/S3 delivery and 38.4 profiles; MFX-4.4 adds registry
