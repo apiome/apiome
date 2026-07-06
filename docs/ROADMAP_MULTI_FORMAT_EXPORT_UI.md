@@ -582,13 +582,21 @@ markers. Deepens MFX-6.3's "preview" into a real viewer; implements MFX-6.4's di
 
 | ID | Title | Summary | Labels | Parallel | MVP | Complexity | Affected Modules |
 |----|-------|---------|--------|----------|-----|-----------|------------------|
-| 43.1 #4361 | Monaco viewer + format→language map | read-only Monaco; proto/graphql/sql/xml/yaml/json/… language registry | export,ui,typescript,mvp | N | Y | M | apiome-ui |
 | 43.2 #4362 | Bundle tree + file tabs | zip-manifest tree (proto packages, WSDL+XSD, Avro subjects); tabbed viewing | export,ui,typescript,mvp | N | Y | M | apiome-ui |
 | 43.3 #4363 | Problem markers from verify | validation/lint findings → Monaco markers + gutter; lens↔editor cross-nav | export,ui,validation,linting,mvp | N | Y | M | apiome-ui |
 | 43.4 #4364 | Round-trip Monaco diff | source vs re-imported emitted artifact side-by-side (implements MFX-6.4) | export,ui,version-control | Y | N | M | apiome-ui |
 | 43.5 #4365 | Large-output guards + viewer actions | size caps/virtualization, copy/download-file, wrap/fold, find | export,ui,typescript | Y | N | S | apiome-ui |
 
 ### MFX-43.1 — Monaco viewer + format→language map · #4361
+- **Status (done).** A shared read-only `@monaco-editor/react` viewer (`ReadOnlyCodeViewer.tsx`) now
+  backs the emitted-artifact preview (`ArtifactPreviewCard.tsx` was refactored onto it) and is ready
+  for the Verify/Review surfaces of 43.2–43.5 — one shared, lazily-loaded, SSR-free Monaco loader
+  with an offline `<pre>` fallback and live dark/light theming. The language map
+  (`export-target-language.ts`) gained a registry-driven resolver `monacoLanguageForArtifact` that
+  types an artifact from its emitter key, then its own `mediaType` / filename extension / bytes,
+  covering the ~20 export languages (proto, GraphQL SDL, WSDL/XSD XML, YAML/JSON, SQL, RAML,
+  Markdown/apib, thrift/asn.1/copybook → plaintext) so a new emitter highlights from its descriptor
+  with no UI change, degrading to plaintext otherwise. Bump apiome-ui 0.62.0 → 0.63.0.
 - **Problem.** Emitted artifacts span ~20 languages (proto, GraphQL SDL, WSDL/XSD XML, YAML/JSON,
   SQL, RAML, Markdown/apib, thrift, asn.1, copybook…); the existing
   `catalog-source-language.ts` maps only import-side formats.
