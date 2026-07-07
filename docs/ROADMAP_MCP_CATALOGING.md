@@ -1277,7 +1277,6 @@ here is user-visible on its own — it exists so 15–18 never re-derive metrics
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
-| 14.3 | Token-driven SVG chart kit | Small React chart primitives (sparkline, bar, donut, stacked-timeline, radar, heatmap, gauge) using design-system tokens + dark theme; no heavy dep | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
 | 14.4 | "Insight" detail tab + page scaffold | New tab in the ADE endpoint-detail shell (`DetailTabs`) that lays out the viz panels 15–17 fill | `mcp-insights` `frontend` | N | Y | ● | apiome-ui |
 
 ### MCAT-14.1 — Capability-surface metrics service  ·  **#4627**  ·  ✅ Done (apiome-rest 1.82.0)
@@ -1312,7 +1311,7 @@ here is user-visible on its own — it exists so 15–18 never re-derive metrics
 - **Dependencies / Parallelism.** After 14.1. Feeds 15–18. Reuses existing MCP REST auth/scoping.
 - **Technical Stack.** FastAPI, asyncpg, Pydantic response models.
 
-### MCAT-14.3 — Token-driven SVG chart kit  ·  **#4629**
+### MCAT-14.3 — Token-driven SVG chart kit  ·  **#4629**  ·  ✅ Done (apiome-ui 0.66.0)
 - **Problem.** The UI ships **only `mermaid`** — no chart library. Every §10 panel needs charts,
   and they must honor the existing token/dark-theme system (MCAT-10.7/10.10), not hardcode color.
 - **Solution / Scope.** A tiny hand-rolled **SVG** primitive set in `src/app/components/ui/mcp/charts/`

@@ -22,6 +22,16 @@ import {
 // The Monaco-backed code-viewer primitives were promoted out of `ui/mcp` to the format-neutral
 // `ui/code` module (MFI-28.7); the gallery documents them under those neutral names.
 import { JsonViewer, JsonDiffViewer, Disclosure } from '@/app/components/ui/code';
+// Token-driven SVG chart kit (V2-MCP-28.3).
+import {
+  Sparkline,
+  BarSeries,
+  Donut,
+  StackedTimeline,
+  Radar,
+  Heatmap,
+  Gauge,
+} from '@/app/components/ui/mcp';
 import { EmptyState } from '@/app/components/ui/EmptyState';
 import { LoadingState } from '@/app/components/ui/LoadingState';
 import { ErrorState } from '@/app/components/ui/ErrorState';
@@ -197,6 +207,110 @@ export default function McpPrimitivesShowcase() {
             </DetailTabsContent>
           ))}
         </DetailTabs>
+      </section>
+
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Chart kit (V2-MCP-28.3)</h2>
+        <p className="mb-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
+          The token-driven SVG primitives every insight panel reuses. Consumers pass domain data;
+          each chart resolves color from Tailwind tokens (no hex literals), is accessible
+          (<code>role=&quot;img&quot;</code> + hidden data table), responsive (viewBox), and renders an
+          empty state — never a crash — for empty data. Toggle the theme to verify light + dark.
+        </p>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">Sparkline</h3>
+            <div className="flex flex-wrap items-center gap-4">
+              <Sparkline data={[62, 65, 61, 70, 74, 73, 80, 86]} />
+              <Sparkline data={[80, 74, 60, 52, 40, 38, 30]} tone="red" />
+              <Sparkline data={[50]} tone="emerald" />
+              <Sparkline data={[]} />
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">Gauge</h3>
+            <div className="flex flex-wrap items-end gap-4">
+              <Gauge value={94} />
+              <Gauge value={61} />
+              <Gauge value={18} />
+              <Gauge value={420} min={0} max={1000} tone="blue" centerLabel="420ms" />
+              <Gauge value={Number.NaN} />
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">BarSeries</h3>
+            <BarSeries
+              data={[
+                { label: 'tools', value: 18 },
+                { label: 'resources', value: 7 },
+                { label: 'prompts', value: 3 },
+                { label: 'destructive', value: 2, tone: 'red' },
+              ]}
+            />
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">Donut</h3>
+            <div className="flex flex-wrap items-center gap-4">
+              <Donut
+                segments={[
+                  { label: 'streamable_http', value: 12 },
+                  { label: 'http+sse', value: 5 },
+                  { label: 'stdio', value: 3 },
+                ]}
+                centerLabel="20"
+              />
+              <Donut segments={[]} />
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">StackedTimeline</h3>
+            <StackedTimeline
+              series={[
+                { key: 'added', label: 'Added', tone: 'emerald' },
+                { key: 'changed', label: 'Changed', tone: 'amber' },
+                { key: 'removed', label: 'Removed', tone: 'red' },
+              ]}
+              periods={[
+                { label: 'v1', values: { added: 8, changed: 0, removed: 0 } },
+                { label: 'v2', values: { added: 3, changed: 4, removed: 1 } },
+                { label: 'v3', values: { added: 2, changed: 2, removed: 3 } },
+                { label: 'v4', values: { added: 5, changed: 1, removed: 0 } },
+              ]}
+            />
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">Radar</h3>
+            <Radar
+              axes={[
+                { label: 'Docs', value: 82 },
+                { label: 'Annotations', value: 60 },
+                { label: 'Output schemas', value: 45 },
+                { label: 'Safety', value: 90 },
+                { label: 'Simplicity', value: 70 },
+              ]}
+              max={100}
+            />
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">Heatmap</h3>
+            <Heatmap
+              matrix={[
+                [0, 1, 3, 6, 2],
+                [2, 4, 8, 5, 1],
+                [1, 0, 2, 9, 4],
+              ]}
+              rowLabels={['search', 'create', 'delete']}
+              colLabels={['v1', 'v2', 'v3', 'v4', 'v5']}
+            />
+          </div>
+        </div>
       </section>
 
       <section className="space-y-4">
