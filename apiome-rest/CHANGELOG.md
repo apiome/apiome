@@ -5,6 +5,25 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.94.0] - 2026-07-07
+
+### Added
+- **Server report-card export (#4650, V2-MCP-33.1 / MCAT-19.1)** — a shareable one-page report for
+  an endpoint version, serializing the in-app Insight assessment (identity, grade + score breakdown,
+  capability surface, safety posture, documentation coverage, composite trust radar, and the
+  change-since-previous summary) into Markdown or HTML.
+  - New route `GET /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/report?format=markdown|html[&version_id=]`
+    returns the rendered document as a downloadable attachment. It **reuses** the metrics the Insight
+    endpoints already compute (`app.mcp_surface_metrics`, `app.mcp_insight_aggregation`, the persisted
+    `mcp_version_scores.report` and `mcp_version_changes`) — no new computation.
+  - New pure module `app.mcp_report_card` assembles a deterministic `ReportCard` view model and
+    renders Markdown / self-contained HTML (the HTML embeds an `@media print` stylesheet, so **PDF is
+    the browser's print-to-PDF of the same document** — the ticket's "PDF via the same HTML").
+  - Visibility is honoured by the standard token-tenant scoping (a private/cross-tenant endpoint is
+    `404`); a **never-discovered or never-scored** endpoint yields a graceful *partial* report rather
+    than an error; and **no credential secret is ever emitted** — only the auth *posture* and
+    `auth_type` label reach the report.
+
 ## [1.85.0] - 2026-07-07
 
 ### Added
