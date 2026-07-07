@@ -15,6 +15,7 @@ export * from './ServerProfileCard';
 export * from './CapabilityGraphPanel';
 export * from './ToolComplexityPanel';
 export * from './SafetyPosturePanel';
+export * from './DocCoveragePanel';
 export * from './FindingSeverity';
 export * from './DetailTabs';
 export * from './McpJsonViewer';

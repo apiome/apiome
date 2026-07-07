@@ -447,4 +447,38 @@ describe('McpEndpointInsight — scaffold', () => {
       expect.anything(),
     );
   });
+
+  it('renders the documentation coverage gauges and drills down to under-documented items', async () => {
+    routeFetch({
+      versions: () => jsonResponse(versionsPayload()),
+      surface: (vid) => jsonResponse(surfacePayload(vid ?? V3, 3, 2)),
+      // One documented tool and one undocumented tool, so a coverage meter has a real drill-down.
+      detail: (vid) =>
+        jsonResponse(
+          detailPayload(vid, [
+            {
+              item_type: 'tool',
+              name: 'search',
+              ordinal: 0,
+              description: 'Finds records',
+              title: 'Search',
+            },
+            { item_type: 'tool', name: 'undocumented_tool', ordinal: 1, description: null, title: null },
+          ]),
+        ),
+    });
+
+    render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
+
+    // The 15.5 panel heading renders, and the coverage gauges drill to the undocumented tool once the
+    // snapshot's capability items resolve.
+    await waitFor(() =>
+      expect(screen.getByText('Documentation & schema coverage')).toBeInTheDocument(),
+    );
+    await waitFor(() =>
+      expect(screen.getAllByText('undocumented_tool').length).toBeGreaterThan(0),
+    );
+    // At least one meter (e.g. items described, 1 / 2) exposes a drill-down summary.
+    expect(screen.getAllByText(/under-documented →/).length).toBeGreaterThan(0);
+  });
 });
