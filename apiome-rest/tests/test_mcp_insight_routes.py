@@ -173,6 +173,97 @@ def test_surface_cross_tenant_endpoint_is_404():
 
 
 # ===========================================================================
+# graph (V2-MCP-29.2 / MCAT-15.2)
+# ===========================================================================
+
+
+def _prompt_row(name, description, ordinal=0):
+    """A minimal ``mcp_capability_items`` prompt row."""
+    return {
+        "version_id": _V2,
+        "item_type": "prompt",
+        "name": name,
+        "title": None,
+        "description": description,
+        "input_schema": None,
+        "output_schema": None,
+        "annotations": None,
+        "uri": None,
+        "uri_template": None,
+        "raw": {"name": name, "description": description},
+        "ordinal": ordinal,
+    }
+
+
+def test_graph_defaults_to_current_version_and_infers_edges():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = _version_row(_V2, 2)
+        mdb.get_mcp_capability_items.return_value = [
+            _tool_row("forecast", required=["city"], ordinal=0),
+            _prompt_row("plan_trip", "First call forecast to get the weather.", ordinal=0),
+        ]
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/graph")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["version_id"] == _V2
+    assert body["is_current"] is True
+    graph = body["graph"]
+    assert graph["node_count"] == 2
+    # The prompt names the tool → one directed prompt_reference edge, no isolated nodes.
+    assert graph["edge_count"] == 1
+    edge = graph["edges"][0]
+    assert edge["kind"] == "prompt_reference"
+    assert edge["directed"] is True
+    assert edge["label"] == "forecast"
+    assert graph["isolated_count"] == 0
+    assert graph["graph_fingerprint"]
+    mdb.get_mcp_endpoint_version.assert_called_once_with(_EP, _V2)
+
+
+def test_graph_shows_isolated_nodes_without_inventing_edges():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = _version_row(_V1, 1)
+        mdb.get_mcp_capability_items.return_value = [
+            _tool_row("forecast", ordinal=0),
+            _tool_row("current", ordinal=1),
+        ]
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/graph?version_id={_V1}")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["is_current"] is False
+    graph = body["graph"]
+    assert graph["node_count"] == 2
+    assert graph["edge_count"] == 0
+    assert graph["isolated_count"] == 2
+    mdb.get_mcp_endpoint_version.assert_called_once_with(_EP, _V1)
+
+
+def test_graph_unknown_version_is_404():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = None
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/graph?version_id={_V1}")
+    assert r.status_code == 404
+
+
+def test_graph_no_current_version_is_404():
+    endpoint = dict(_ENDPOINT_ROW, current_version_id=None)
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = endpoint
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/graph")
+    assert r.status_code == 404
+
+
+def test_graph_cross_tenant_endpoint_is_404():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = None
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/graph")
+    assert r.status_code == 404
+
+
+# ===========================================================================
 # evolution
 # ===========================================================================
 

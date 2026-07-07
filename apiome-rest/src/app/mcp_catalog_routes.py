@@ -35,6 +35,7 @@ from .mcp_auth import (
     build_auth_headers,
     validate_credential_payload,
 )
+from .mcp_capability_graph import compute_capability_graph
 from .mcp_client.normalize import (
     ITEM_TYPE_PROMPT,
     ITEM_TYPE_RESOURCE,
@@ -75,6 +76,7 @@ from .models import (
     McpEndpointVersionResponse,
     McpInsightCatalogResponse,
     McpInsightEvolutionResponse,
+    McpInsightGraphResponse,
     McpInsightReliabilityResponse,
     McpInsightSurfaceResponse,
     McpInvocationReliabilityOut,
@@ -86,6 +88,7 @@ from .models import (
     McpVersionCompareResponse,
     McpVersionRef,
     group_mcp_browse_endpoints,
+    mcp_capability_graph_out,
     mcp_catalog_insight_from_row,
     mcp_change_counts,
     mcp_credential_status_from_row,
@@ -1476,6 +1479,59 @@ async def get_mcp_endpoint_insight_surface(
         version_tag=version.get("version_tag"),
         is_current=str(version["id"]) == str(endpoint.get("current_version_id")),
         metrics=mcp_surface_metrics_out(metrics.as_dict()),
+    )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/insight/graph",
+    response_model=McpInsightGraphResponse,
+)
+async def get_mcp_endpoint_insight_graph(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    version_id: Optional[uuid.UUID] = Query(
+        None,
+        description="Which snapshot to map; omit to map the endpoint's current surface.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpInsightGraphResponse:
+    """Return the capability relationship graph for a version snapshot (defaults to the current one).
+
+    Resolves the target snapshot — the supplied ``version_id`` or, when omitted, the endpoint's
+    ``current_version_id`` — reconstructs its normalized surface from the persisted rows, and runs
+    the deterministic :func:`app.mcp_capability_graph.compute_capability_graph` inference (one node
+    per capability plus edges for prompts that name a tool, tools that reference a resource URI, and
+    items that share a schema type) the 15.2 "Capability relationship graph" panel renders. Edges are
+    emitted only on concrete signals (precision over recall); isolated nodes are still returned. A GET
+    stays read-only. Returns ``404`` when the endpoint — or the named version under it — is not the
+    caller's tenant's, or when no ``version_id`` was given and the endpoint has never been discovered.
+    """
+    _ = tenant_slug
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+
+    target_version_id = (
+        str(version_id) if version_id is not None else endpoint.get("current_version_id")
+    )
+    if not target_version_id:
+        raise HTTPException(
+            status_code=404,
+            detail="endpoint has no discovered surface yet; run discovery before requesting insight",
+        )
+
+    version = db.get_mcp_endpoint_version(str(endpoint_id), str(target_version_id))
+    if version is None:
+        raise HTTPException(status_code=404, detail="MCP endpoint version not found")
+
+    items = db.get_mcp_capability_items(str(version["id"]))
+    surface = reconstruct_surface(version, items)
+    graph = compute_capability_graph(surface)
+    return McpInsightGraphResponse(
+        endpoint_id=str(endpoint_id),
+        version_id=str(version["id"]),
+        version_seq=int(version["version_seq"]),
+        version_tag=version.get("version_tag"),
+        is_current=str(version["id"]) == str(endpoint.get("current_version_id")),
+        graph=mcp_capability_graph_out(graph.as_dict()),
     )
 
 

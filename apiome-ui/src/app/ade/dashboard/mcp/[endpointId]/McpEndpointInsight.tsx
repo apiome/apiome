@@ -6,6 +6,7 @@ import {
   BarChart3,
   Layers,
   Loader2,
+  Share2,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -13,6 +14,7 @@ import { Badge } from "@/app/components/ui/Badge";
 import { LoadingState } from "@/app/components/ui/LoadingState";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { ServerProfileCard } from "@/app/components/ui/mcp/ServerProfileCard";
+import { CapabilityGraphPanel } from "@/app/components/ui/mcp/CapabilityGraphPanel";
 import { dashboardPanelPaddedClass } from "@/app/components/ade/dashboard/dashboardScreenClasses";
 import type { McpEndpointDetail } from "@/app/components/ade/dashboard/mcp/mcpBrowseUi";
 import {
@@ -28,6 +30,10 @@ import {
   mcpTypeCountTiles,
   type McpInsightSurface,
 } from "@/app/components/ade/dashboard/mcp/mcpInsightUi";
+import {
+  mcpInsightGraphFromPayload,
+  type McpCapabilityGraph,
+} from "@/app/components/ade/dashboard/mcp/mcpCapabilityGraphUi";
 
 interface Props {
   endpointId: string;
@@ -81,8 +87,8 @@ const INSIGHT_SECTIONS: InsightSectionDef[] = [
     subtitle: "What this snapshot exposes and how well it is documented.",
     icon: Layers,
     reserved: [
-      // "Server profile" (MCAT-15.1) now lands as the ServerProfileCard header above the sections.
-      { key: "graph", title: "Capability relationship graph", hint: "How tools, resources, and prompts relate." },
+      // "Server profile" (MCAT-15.1) lands as the ServerProfileCard header above the sections; the
+      // "Capability relationship graph" (MCAT-15.2) now lands as a live panel in this section's body.
       { key: "safety", title: "Safety & annotation posture", hint: "Read-only vs destructive tools, cross-referenced with auth." },
     ],
   },
@@ -355,6 +361,9 @@ export default function McpEndpointInsight({
   const [surface, setSurface] = useState<McpInsightSurface | null>(null);
   const [surfaceLoading, setSurfaceLoading] = useState(false);
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
+  const [graph, setGraph] = useState<McpCapabilityGraph | null>(null);
+  const [graphLoading, setGraphLoading] = useState(false);
+  const [graphError, setGraphError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -442,6 +451,45 @@ export default function McpEndpointInsight({
     void loadSurface(selectedVersionId);
   }, [selectedVersionId, loadSurface]);
 
+  // Fetch the capability relationship graph (MCAT-15.2) for the selected snapshot in parallel with the
+  // surface metrics; the edge inference is done server-side and this only renders the result.
+  const loadGraph = useCallback(
+    async (versionId: string) => {
+      setGraphLoading(true);
+      setGraphError(null);
+      try {
+        const res = await fetch(
+          `/api/mcp/endpoints/${endpointId}/insight/graph?version_id=${encodeURIComponent(versionId)}`,
+          { credentials: "include", cache: "no-store" },
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(typeof data.error === "string" ? data.error : res.statusText);
+        }
+        const parsed = mcpInsightGraphFromPayload(data);
+        if (!mountedRef.current) return;
+        if (!parsed) throw new Error("Malformed graph response.");
+        setGraph(parsed.graph);
+      } catch (e) {
+        if (!mountedRef.current) return;
+        setGraph(null);
+        setGraphError(e instanceof Error ? e.message : "Could not load graph.");
+      } finally {
+        if (mountedRef.current) setGraphLoading(false);
+      }
+    },
+    [endpointId],
+  );
+
+  useEffect(() => {
+    if (!selectedVersionId) {
+      setGraph(null);
+      setGraphError(null);
+      return;
+    }
+    void loadGraph(selectedVersionId);
+  }, [selectedVersionId, loadGraph]);
+
   const selectedVersion = useMemo(
     () => versions.find((v) => v.id === selectedVersionId) ?? null,
     [versions, selectedVersionId],
@@ -511,7 +559,22 @@ export default function McpEndpointInsight({
       {INSIGHT_SECTIONS.map((section) => (
         <InsightSection key={section.key} section={section}>
           {section.key === "surface" ? (
-            <SurfaceBaseline surface={surface} loading={surfaceLoading} error={surfaceError} />
+            <div className="space-y-4">
+              <SurfaceBaseline surface={surface} loading={surfaceLoading} error={surfaceError} />
+              {/* Capability relationship graph (MCAT-15.2) — a live panel in the surface section body. */}
+              <div className={dashboardPanelPaddedClass}>
+                <div className="mb-3">
+                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+                    <Share2 className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+                    Capability relationship graph
+                  </h4>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    How tools, resources, and prompts relate — edges inferred from concrete signals.
+                  </p>
+                </div>
+                <CapabilityGraphPanel graph={graph} loading={graphLoading} error={graphError} />
+              </div>
+            </div>
           ) : null}
         </InsightSection>
       ))}

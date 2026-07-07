@@ -5,6 +5,25 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.84.0] - 2026-07-06
+
+### Added
+- **Capability relationship graph (#4632, V2-MCP-29.2 / MCAT-15.2)** — a pure, deterministic
+  edge-inference helper `app.mcp_capability_graph.compute_capability_graph(surface)` that turns a
+  normalized `DiscoverySurface` into a node-link graph: one node per capability (tool / resource /
+  resource template / prompt) plus edges emitted only on concrete signals (precision over recall):
+  - **prompt → tool** — a prompt whose text (description or argument names/descriptions) names a
+    tool's exact identifier as a whole token;
+  - **tool → resource** — a tool whose description or `uri`-shaped input-schema parameter literals
+    contain a resource's concrete `uri` (or a resource template's literal URI prefix) verbatim;
+  - **shared type** (undirected) — two items whose `input_schema`/`output_schema` share a `$ref`
+    target or a non-generic schema `title`.
+
+  Isolated (unconnected) nodes are always returned. Exposed read-only at
+  `GET /v1/mcp/{tenant_slug}/endpoints/{id}/insight/graph?version_id=` (defaults to the endpoint's
+  current surface), mirroring the 14.2 `insight/*` routes' tenant-scoped `404` behaviour. Unit-tested
+  in `tests/test_mcp_capability_graph.py` and `tests/test_mcp_insight_routes.py`.
+
 ## [1.83.0] - 2026-07-06
 
 ### Added
