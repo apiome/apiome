@@ -6,6 +6,7 @@ import {
   BarChart3,
   BookOpen,
   GitCompareArrows,
+  History,
   Layers,
   LayoutGrid,
   LineChart,
@@ -27,6 +28,7 @@ import { DocCoveragePanel } from "@/app/components/ui/mcp/DocCoveragePanel";
 import { CapabilityChurnPanel } from "@/app/components/ui/mcp/CapabilityChurnPanel";
 import { CapabilityPresenceMatrixPanel } from "@/app/components/ui/mcp/CapabilityPresenceMatrixPanel";
 import { GradeSurfaceTrendPanel } from "@/app/components/ui/mcp/GradeSurfaceTrendPanel";
+import { ChangedSinceDigestPanel } from "@/app/components/ui/mcp/ChangedSinceDigestPanel";
 import { dashboardPanelPaddedClass } from "@/app/components/ade/dashboard/dashboardScreenClasses";
 import {
   mcpVersionDetailFromPayload,
@@ -54,6 +56,10 @@ import {
   mcpEvolutionSeriesFromPayload,
   type McpEvolutionPoint,
 } from "@/app/components/ade/dashboard/mcp/mcpEvolutionUi";
+import {
+  mcpDigestFromPayload,
+  type McpEndpointDigest,
+} from "@/app/components/ade/dashboard/mcp/mcpDigestUi";
 
 interface Props {
   endpointId: string;
@@ -361,6 +367,12 @@ export default function McpEndpointInsight({
   const [matrixVersions, setMatrixVersions] = useState<McpVersionDetail[] | null>(null);
   const [matrixLoading, setMatrixLoading] = useState(true);
   const [matrixError, setMatrixError] = useState<string | null>(null);
+  /** The caller's per-user "changed since last view" digest (endpoint-level, loaded once). */
+  const [digest, setDigest] = useState<McpEndpointDigest | null>(null);
+  const [digestLoading, setDigestLoading] = useState(true);
+  const [digestError, setDigestError] = useState<string | null>(null);
+  /** Guards the one-time seen-marker advance so it fires once per load, after the digest is read. */
+  const viewRecordedRef = useRef(false);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -586,6 +598,52 @@ export default function McpEndpointInsight({
     };
   }, [endpointId]);
 
+  // Load the caller's "changed since last view" digest once (endpoint-level), then advance their
+  // seen-marker to the current version *after* the digest is read — so the digest reflects the
+  // pre-advance "since your last visit" delta, and the next visit reads relative to this one. A
+  // never-discovered endpoint yields a digest with no current version, so no marker is advanced.
+  useEffect(() => {
+    let active = true;
+    setDigestLoading(true);
+    setDigestError(null);
+    viewRecordedRef.current = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/mcp/endpoints/${endpointId}/insight/digest`, {
+          credentials: "include",
+          cache: "no-store",
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(typeof data.error === "string" ? data.error : res.statusText);
+        }
+        if (!active) return;
+        const parsed = mcpDigestFromPayload(data);
+        setDigest(parsed);
+        // Advance the marker to the version the user is now seeing, once, after reading the digest.
+        if (parsed?.current_version_id && !viewRecordedRef.current) {
+          viewRecordedRef.current = true;
+          void fetch(`/api/mcp/endpoints/${endpointId}/views`, {
+            method: "POST",
+            credentials: "include",
+            cache: "no-store",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ version_id: parsed.current_version_id }),
+          }).catch(() => {});
+        }
+      } catch (e) {
+        if (!active) return;
+        setDigest(null);
+        setDigestError(e instanceof Error ? e.message : "Could not load the digest.");
+      } finally {
+        if (active) setDigestLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [endpointId]);
+
   // Fetch every snapshot's full surface once the version list is known — the presence matrix
   // reconstructs each capability's lifespan from the per-version capability items, which the list
   // summary omits. The reads run in parallel; a snapshot whose detail fails to load is dropped so the
@@ -699,6 +757,27 @@ export default function McpEndpointInsight({
           value={selectedVersionId}
           disabled={surfaceLoading}
           onChange={setSelectedVersionId}
+        />
+      </div>
+
+      {/* "Changed since last view" digest (MCAT-16.5) — a per-user welcome-back summary at the top of
+          the tab. Loaded endpoint-level; reading it advances the user's seen-marker (once) so the
+          next visit reads relative to the version they are seeing now. */}
+      <div className={dashboardPanelPaddedClass}>
+        <div className="mb-3">
+          <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+            <History className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+            Changed since your last view
+          </h4>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            What changed on this server&apos;s surface since you last looked — and how breaking it is.
+          </p>
+        </div>
+        <ChangedSinceDigestPanel
+          digest={digest}
+          loading={digestLoading}
+          error={digestError}
+          onReviewChanges={(versionId) => onOpenVersionDiff?.(versionId)}
         />
       </div>
 

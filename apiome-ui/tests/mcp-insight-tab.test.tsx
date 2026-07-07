@@ -2,8 +2,9 @@
  * Render/interaction tests for the MCP endpoint-detail "Insight" tab (V2-MCP-28.4 / MCAT-14.4).
  *
  * Covers the scaffold's contract: lazy data fetch (versions + surface) on mount, the never-discovered
- * empty state, a surface-fetch error state, the live baseline rendered from the 14.2 metrics, and the
- * version selector re-fetching insight for a different snapshot.
+ * empty state, a surface-fetch error state, the live baseline rendered from the 14.2 metrics, the
+ * version selector re-fetching insight for a different snapshot, and the "changed since last view"
+ * digest (MCAT-16.5) rendering + advancing the seen-marker.
  */
 import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
@@ -216,8 +217,43 @@ function routeFetch(handlers: {
   detail?: (versionId: string) => Response;
   credentials?: () => Response;
   evolution?: () => Response;
+  digest?: () => Response;
+  views?: () => Response;
 }) {
   (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
+    if (url.includes('/insight/digest')) {
+      // The "changed since last view" digest (MCAT-16.5) loads per-user; default to an up-to-date
+      // digest so tests that don't care about it render the calm "up to date" state.
+      return handlers.digest
+        ? handlers.digest()
+        : jsonResponse({
+            success: true,
+            endpoint_id: ENDPOINT_ID,
+            new_to_you: false,
+            has_changes: false,
+            last_seen_version_id: V3,
+            last_seen_version_seq: 3,
+            last_seen_at: '2026-07-06T10:00:00Z',
+            current_version_id: V3,
+            current_version_seq: 3,
+            current_version_tag: '2026-07-06',
+            current_type_counts: { tools: 4, resources: 2, resource_templates: 0, prompts: 1, total: 7 },
+            change_counts: { added: 0, removed: 0, modified: 0, total: 0 },
+            severity_counts: { breaking: 0, additive: 0, review: 0, total: 0 },
+            changes: [],
+          });
+    }
+    if (url.includes('/views')) {
+      // Recording a view advances the seen-marker (MCAT-16.5); default to a benign success.
+      return handlers.views
+        ? handlers.views()
+        : jsonResponse({
+            success: true,
+            endpoint_id: ENDPOINT_ID,
+            last_seen_version_id: V3,
+            seen_at: '2026-07-06T10:00:00Z',
+          });
+    }
     if (url.includes('/insight/evolution')) {
       // The churn timeline (MCAT-16.1) loads the whole per-version series; default to empty so tests
       // that don't care about evolution render its "no history" state rather than erroring.
@@ -662,5 +698,95 @@ describe('McpEndpointInsight — scaffold', () => {
     // Clicking a matrix column header deep-links to that snapshot's diff.
     fireEvent.click(screen.getByRole('button', { name: /v2 .* open this snapshot's diff/ }));
     expect(onOpenVersionDiff).toHaveBeenCalledWith(V2);
+  });
+
+  it('renders the "changed since last view" digest and advances the seen-marker after reading it', async () => {
+    const onOpenVersionDiff = jest.fn();
+    routeFetch({
+      versions: () => jsonResponse(versionsPayload()),
+      surface: (vid) => jsonResponse(surfacePayload(vid ?? V3, 3, 4)),
+      // A digest with a delta since the user's last view: one added tool and one breaking removal.
+      digest: () =>
+        jsonResponse({
+          success: true,
+          endpoint_id: ENDPOINT_ID,
+          new_to_you: false,
+          has_changes: true,
+          last_seen_version_id: V2,
+          last_seen_version_seq: 2,
+          last_seen_at: '2026-06-01T10:00:00Z',
+          current_version_id: V3,
+          current_version_seq: 3,
+          current_version_tag: '2026-07-06',
+          current_type_counts: { tools: 4, resources: 2, resource_templates: 0, prompts: 1, total: 7 },
+          change_counts: { added: 1, removed: 1, modified: 0, total: 2 },
+          severity_counts: { breaking: 1, additive: 1, review: 0, total: 2 },
+          changes: [
+            { change_type: 'added', item_type: 'tool', item_name: 'summarize', severity: 'additive' },
+            { change_type: 'removed', item_type: 'tool', item_name: 'legacy_search', severity: 'breaking' },
+          ],
+        }),
+    });
+
+    render(
+      <McpEndpointInsight
+        endpointId={ENDPOINT_ID}
+        currentVersionId={V3}
+        onOpenVersionDiff={onOpenVersionDiff}
+      />,
+    );
+
+    // The digest header + its breaking-change callout and the changed items render.
+    await waitFor(() =>
+      expect(screen.getByText('Changed since your last view')).toBeInTheDocument(),
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent(/breaking change/i);
+    expect(screen.getByText('summarize')).toBeInTheDocument();
+    expect(screen.getByText('legacy_search')).toBeInTheDocument();
+
+    // The digest was fetched, and reading it advanced the seen-marker to the current version.
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/insight/digest'),
+      expect.anything(),
+    );
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining(`/endpoints/${ENDPOINT_ID}/views`),
+        expect.objectContaining({ method: 'POST' }),
+      ),
+    );
+
+    // "Review changes" deep-links to the current version's diff.
+    fireEvent.click(screen.getByRole('button', { name: /Review changes/ }));
+    expect(onOpenVersionDiff).toHaveBeenCalledWith(V3);
+  });
+
+  it('shows the "new to you" digest on a first visit', async () => {
+    routeFetch({
+      versions: () => jsonResponse(versionsPayload()),
+      surface: (vid) => jsonResponse(surfacePayload(vid ?? V3, 3, 4)),
+      digest: () =>
+        jsonResponse({
+          success: true,
+          endpoint_id: ENDPOINT_ID,
+          new_to_you: true,
+          has_changes: false,
+          last_seen_version_id: null,
+          last_seen_version_seq: null,
+          last_seen_at: null,
+          current_version_id: V3,
+          current_version_seq: 3,
+          current_version_tag: '2026-07-06',
+          current_type_counts: { tools: 4, resources: 2, resource_templates: 0, prompts: 1, total: 7 },
+          change_counts: { added: 0, removed: 0, modified: 0, total: 0 },
+          severity_counts: { breaking: 0, additive: 0, review: 0, total: 0 },
+          changes: [],
+        }),
+    });
+
+    render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
+
+    await waitFor(() => expect(screen.getByText('New to you')).toBeInTheDocument());
+    expect(screen.getByText(/haven't viewed this endpoint before/i)).toBeInTheDocument();
   });
 });

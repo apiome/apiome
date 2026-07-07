@@ -208,7 +208,7 @@ is document-local only.
 | **V2-MCP-EPIC-27** | MCAT-EPIC-13 | Notifications, Webhooks & Observability | 13.1–13.4 | ○ v2 |
 | **V2-MCP-EPIC-28** | MCAT-EPIC-14 | Insight Data Layer & Visualization Foundation | 14.1–14.4 | ✅ done |
 | **V2-MCP-EPIC-29** | MCAT-EPIC-15 | Server Profile & Capability-Surface Visualization | 15.1–15.5 | ✅ done |
-| **V2-MCP-EPIC-30** | MCAT-EPIC-16 | Surface Evolution & Change Analytics | 16.1–16.5 | ◐ in progress — 16.1–16.2 ✅ (§10) |
+| **V2-MCP-EPIC-30** | MCAT-EPIC-16 | Surface Evolution & Change Analytics | 16.1–16.5 | ✅ done |
 | **V2-MCP-EPIC-31** | MCAT-EPIC-17 | Reliability, Latency & Trust Signals | 17.1–17.4 | ◐ next (§10) |
 | **V2-MCP-EPIC-32** | MCAT-EPIC-18 | Catalog-wide Analytics, Comparison & Semantic Discovery | 18.1–18.5 | ○ v2 (§10) |
 | **V2-MCP-EPIC-33** | MCAT-EPIC-19 | Reporting, Export & Shareable Artifacts | 19.1–19.5 | ○ v2 (§10) |
@@ -1223,7 +1223,7 @@ small, token-driven SVG chart kit rather than pulling a heavyweight dependency.
 |---|---|---|---|---|
 | **V2-MCP-EPIC-28** | MCAT-EPIC-14 | Insight Data Layer & Visualization Foundation | 14.1–14.4 | ✅ done |
 | **V2-MCP-EPIC-29** | MCAT-EPIC-15 | Server Profile & Capability-Surface Visualization | 15.1–15.5 | ✅ done |
-| **V2-MCP-EPIC-30** | MCAT-EPIC-16 | Surface Evolution & Change Analytics | 16.1–16.5 | ◐ in progress — 16.1–16.2 ✅ |
+| **V2-MCP-EPIC-30** | MCAT-EPIC-16 | Surface Evolution & Change Analytics | 16.1–16.5 | ✅ done |
 | **V2-MCP-EPIC-31** | MCAT-EPIC-17 | Reliability, Latency & Trust Signals | 17.1–17.4 | ◐ next |
 | **V2-MCP-EPIC-32** | MCAT-EPIC-18 | Catalog-wide Analytics, Comparison & Semantic Discovery | 18.1–18.5 | ○ v2 |
 | **V2-MCP-EPIC-33** | MCAT-EPIC-19 | Reporting, Export & Shareable Artifacts | 19.1–19.5 | ○ v2 |
@@ -1463,7 +1463,7 @@ those changes are safe.
 | 16.2 ✅ | Capability lifespan / presence matrix | Per-item rows showing when each tool/resource existed across versions | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui |
 | 16.3 ✅ | Breaking-change classification | Backend classifier: additive vs breaking (removed item, tightened input schema) from change `detail` | `mcp-insights` `backend` | N | Y | ●●● | apiome-rest |
 | 16.4 ✅ | Grade & surface-size trend | Sparkline/area of grade + counts across versions | `mcp-insights` `frontend` | Y | Y | ● | apiome-ui |
-| 16.5 | "Changed since last view" digest | Per-user seen-marker + a summarized diff since last visit | `mcp-insights` `frontend` `backend` | N | N | ●● | apiome-ui, apiome-rest, apiome-db |
+| 16.5 ✅ | "Changed since last view" digest | Per-user seen-marker + a summarized diff since last visit | `mcp-insights` `frontend` `backend` | N | N | ●● | apiome-ui, apiome-rest, apiome-db |
 
 ### MCAT-16.1 — Capability churn timeline  ·  **#4636**  ·  ✅ Done (apiome-ui 0.73.0)
 - **Problem.** Version history is a list; you cannot see *how much* a server churns or *when*.
@@ -1507,7 +1507,7 @@ those changes are safe.
 - **Dependencies / Parallelism.** After 14.2/14.3. Uses 16.3 markers if available. Parallel in epic.
 - **Technical Stack.** Next.js, Sparkline/BarSeries.
 
-### MCAT-16.5 — "Changed since last view" digest  ·  **#4640**
+### MCAT-16.5 — "Changed since last view" digest  ·  **#4640**  ·  ✅ Done (apiome-ui 0.76.0, apiome-rest 1.86.0, apiome-db 0.23.0)
 - **Problem.** The catalog grid already hints "changed since last view" (MCAT-10.8) but there is no
   per-user, per-endpoint summary of *what* changed.
 - **Solution / Scope.** A lightweight **per-user seen-marker** (last-viewed version per endpoint) +
