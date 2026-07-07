@@ -398,3 +398,28 @@ export function mcpOrderedPair(
 export function mcpComparePairKey(baseId: string, targetId: string): string {
   return `${baseId}::${targetId}`;
 }
+
+/**
+ * Build the two-slot compare selection that opens *the diff a version introduced* — the deep-link
+ * target used by the churn timeline (MCAT-16.1 → MCAT-10.3). A snapshot's churn is measured against
+ * its immediate predecessor, so the selection is `[version, predecessor]`: in the newest-first
+ * `versions` list the predecessor is the next entry (one lower `version_seq`). The very first
+ * snapshot has no predecessor, so it selects alone (the diff panel then compares it to itself — an
+ * "identical surface" read, since there is nothing earlier to diff against). An id absent from the
+ * list yields an empty selection (no change).
+ *
+ * @param versionId The snapshot to open the diff for.
+ * @param versions  The endpoint's version list, newest-first (as {@link mcpVersionListFromPayload}
+ *   returns).
+ * @returns The version ids to tick into the compare selection, or `[]` when the id is unknown.
+ */
+export function mcpDiffSelectionForVersion(
+  versionId: string,
+  versions: McpVersionSummary[],
+): string[] {
+  const index = versions.findIndex((v) => v.id === versionId);
+  if (index === -1) return [];
+  // The list is newest-first, so the chronological predecessor sits at the next index.
+  const predecessor = versions[index + 1];
+  return predecessor ? [versionId, predecessor.id] : [versionId];
+}

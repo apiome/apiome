@@ -177,6 +177,8 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
   const [activeTab, setActiveTab] = useState("capabilities");
   /** Anchor a pending deep-link wants to scroll to once the Capabilities tab has mounted. */
   const [pendingAnchor, setPendingAnchor] = useState<string | null>(null);
+  /** A churn-timeline deep-link: the version whose diff the Versions tab should open once shown. */
+  const [pendingDiffVersionId, setPendingDiffVersionId] = useState<string | null>(null);
   /** The item currently highlighted by a followed deep-link (cleared after a short delay). */
   const [highlightedAnchor, setHighlightedAnchor] = useState<string | null>(null);
   const mountedRef = useRef(true);
@@ -374,6 +376,18 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
     setPendingAnchor(mcpCapabilityAnchorId(itemType, name));
     setActiveTab("capabilities");
   }, []);
+
+  /**
+   * Follow a churn-timeline column (Insight tab) to its diff: record the requested version and switch
+   * to the Versions tab, which opens that snapshot against its predecessor (MCAT-16.1 → MCAT-10.3).
+   * The Versions tab clears the request once applied via {@link onDiffRequestConsumed}.
+   */
+  const openVersionDiff = useCallback((versionId: string) => {
+    setPendingDiffVersionId(versionId);
+    setActiveTab("versions");
+  }, []);
+
+  const clearPendingDiff = useCallback(() => setPendingDiffVersionId(null), []);
 
   // Once the Capabilities tab is active and its content has mounted, scroll the pending target
   // into view and highlight it. Runs after commit so the anchor element exists.
@@ -664,6 +678,7 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
                       currentVersionId={endpoint.current_version_id ?? null}
                       endpoint={endpoint}
                       currentInstructions={version?.instructions ?? null}
+                      onOpenVersionDiff={openVersionDiff}
                     />
                   </DetailTabsContent>
 
@@ -677,7 +692,11 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
                   </DetailTabsContent>
 
                   <DetailTabsContent value="versions">
-                    <McpVersionHistory endpointId={endpointId} />
+                    <McpVersionHistory
+                      endpointId={endpointId}
+                      requestedDiffVersionId={pendingDiffVersionId}
+                      onDiffRequestConsumed={clearPendingDiff}
+                    />
                   </DetailTabsContent>
 
                   <DetailTabsContent value="settings">

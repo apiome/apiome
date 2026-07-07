@@ -43,6 +43,14 @@ export interface ChartFrameProps {
   className?: string;
   /** Extra classes for the `<svg>` element. */
   svgClassName?: string;
+  /**
+   * Whether the chart hosts interactive marks (focusable/clickable children, e.g. a
+   * {@link StackedTimeline} with `onSelectPeriod`). A `role="img"` makes an SVG's subtree
+   * presentational, so its interactive children are hidden from assistive tech; when `interactive`
+   * is set the frame uses `role="group"` instead so those controls are reachable, while the
+   * `aria-label` and the `sr-only` data table still describe the whole figure.
+   */
+  interactive?: boolean;
   /** The SVG mark content. */
   children?: React.ReactNode;
 }
@@ -60,6 +68,7 @@ export function ChartFrame({
   tableFallback,
   className,
   svgClassName,
+  interactive = false,
   children,
 }: ChartFrameProps) {
   if (isEmpty) {
@@ -82,7 +91,7 @@ export function ChartFrame({
       <svg
         viewBox={viewBox}
         preserveAspectRatio={preserveAspectRatio}
-        role="img"
+        role={interactive ? 'group' : 'img'}
         aria-label={title}
         className={cn('h-full w-full overflow-visible', svgClassName)}
       >

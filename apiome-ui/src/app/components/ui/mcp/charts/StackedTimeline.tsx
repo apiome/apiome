@@ -38,6 +38,21 @@ export interface StackedTimelineProps {
   title?: string;
   /** Extra classes for the wrapping figure (set height here). */
   className?: string;
+  /**
+   * When provided, every column becomes an interactive control: clicking (or pressing Enter/Space
+   * while focused) calls this with the period's index. A full-height transparent hit target sits over
+   * each column so even a zero-total (empty) column stays clickable. The frame switches to an
+   * interactive role so the controls are reachable by assistive tech (see {@link ChartFrame}).
+   */
+  onSelectPeriod?: (index: number) => void;
+  /**
+   * The accessible label for a column's hit target (also its hover tooltip). Only consulted when
+   * `onSelectPeriod` is set; defaults to the period's `label`. Give each column a descriptive label
+   * (e.g. "v3 · Jul 4 — +2 −1 ~0") so the interactive control is self-describing.
+   */
+  periodActionLabel?: (period: StackPeriod, index: number) => string;
+  /** Index of a column to mark active (a subtle persistent highlight, e.g. the current snapshot). */
+  activeIndex?: number;
 }
 
 /**
@@ -53,8 +68,12 @@ export function StackedTimeline({
   domainMax,
   title,
   className,
+  onSelectPeriod,
+  periodActionLabel,
+  activeIndex,
 }: StackedTimelineProps) {
   const isEmpty = periods.length === 0 || series.length === 0;
+  const interactive = typeof onSelectPeriod === 'function';
 
   const columnTotal = (p: StackPeriod) => sumValues(series.map((s) => p.values[s.key] ?? 0));
   const max = domainMax && domainMax > 0 ? domainMax : Math.max(1, ...periods.map(columnTotal));
@@ -67,6 +86,8 @@ export function StackedTimeline({
       .map((p) => `${p.label}: ${columnTotal(p)}`)
       .join(', ') || 'No data';
   const label = title ?? `Stacked timeline — ${summary}`;
+  const hitLabel = (p: StackPeriod, i: number) =>
+    periodActionLabel ? periodActionLabel(p, i) : p.label;
 
   return (
     <ChartFrame
@@ -75,6 +96,7 @@ export function StackedTimeline({
       viewBox={`0 0 100 ${H}`}
       preserveAspectRatio="none"
       isEmpty={isEmpty}
+      interactive={interactive}
       className={cn('h-40 w-full', className)}
       tableFallback={
         <table>
@@ -133,6 +155,40 @@ export function StackedTimeline({
         vectorEffect="non-scaling-stroke"
         className={CHART_SURFACE.trackStrokeClass}
       />
+      {/* Interactive layer: one full-height, transparent hit target per column, drawn last so it sits
+          above the bars and captures the whole column (a zero-total column included). Enter/Space
+          activates a focused target; hover/focus/active paint a subtle tint via token classes. */}
+      {interactive
+        ? periods.map((p, pi) => {
+            const x = GAP + pi * (bandW + GAP);
+            return (
+              <rect
+                key={`hit-${pi}`}
+                x={x}
+                y={0}
+                width={bandW}
+                height={H}
+                role="button"
+                tabIndex={0}
+                aria-label={hitLabel(p, pi)}
+                onClick={() => onSelectPeriod?.(pi)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+                    e.preventDefault();
+                    onSelectPeriod?.(pi);
+                  }
+                }}
+                className={cn(
+                  'cursor-pointer outline-none transition-colors',
+                  'hover:fill-gray-500/10 focus-visible:fill-gray-500/15',
+                  pi === activeIndex ? 'fill-indigo-500/10' : 'fill-transparent',
+                )}
+              >
+                <title>{hitLabel(p, pi)}</title>
+              </rect>
+            );
+          })
+        : null}
     </ChartFrame>
   );
 }

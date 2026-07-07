@@ -157,6 +157,38 @@ function detailPayload(versionId: string, items: Array<Record<string, unknown>>)
   };
 }
 
+/** A two-point evolution series (oldest first) for the churn timeline (MCAT-16.1). */
+function evolutionPayload() {
+  return {
+    success: true,
+    endpoint_id: ENDPOINT_ID,
+    series: [
+      {
+        version_id: V2,
+        version_seq: 2,
+        version_tag: '2026-06-01',
+        discovered_at: '2026-06-01T10:00:00Z',
+        is_current: false,
+        type_counts: { tools: 3, resources: 2, resource_templates: 0, prompts: 1, total: 6 },
+        score: 80,
+        grade: 'B',
+        change_counts: { added: 2, removed: 1, modified: 0, total: 3 },
+      },
+      {
+        version_id: V3,
+        version_seq: 3,
+        version_tag: '2026-07-06',
+        discovered_at: '2026-07-06T10:00:00Z',
+        is_current: true,
+        type_counts: { tools: 4, resources: 2, resource_templates: 0, prompts: 1, total: 7 },
+        score: 90,
+        grade: 'A',
+        change_counts: { added: 1, removed: 0, modified: 3, total: 4 },
+      },
+    ],
+  };
+}
+
 /** A redacted credential-status payload with the given `auth_type` (MCAT-15.4 auth cross-reference). */
 function credentialsPayload(authType: string) {
   return {
@@ -181,8 +213,16 @@ function routeFetch(handlers: {
   graph?: (versionId: string | null) => Response;
   detail?: (versionId: string) => Response;
   credentials?: () => Response;
+  evolution?: () => Response;
 }) {
   (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
+    if (url.includes('/insight/evolution')) {
+      // The churn timeline (MCAT-16.1) loads the whole per-version series; default to empty so tests
+      // that don't care about evolution render its "no history" state rather than erroring.
+      return handlers.evolution
+        ? handlers.evolution()
+        : jsonResponse({ success: true, endpoint_id: ENDPOINT_ID, series: [] });
+    }
     if (url.includes('/insight/graph')) {
       const versionId = new URL(url, 'http://test').searchParams.get('version_id');
       // The capability graph (MCAT-15.2) loads in parallel with the surface; default to an empty graph
@@ -480,5 +520,37 @@ describe('McpEndpointInsight — scaffold', () => {
     );
     // At least one meter (e.g. items described, 1 / 2) exposes a drill-down summary.
     expect(screen.getAllByText(/under-documented →/).length).toBeGreaterThan(0);
+  });
+
+  it('renders the capability churn timeline and deep-links a column to its diff', async () => {
+    const onOpenVersionDiff = jest.fn();
+    routeFetch({
+      versions: () => jsonResponse(versionsPayload()),
+      surface: (vid) => jsonResponse(surfacePayload(vid ?? V3, 3, 4)),
+      evolution: () => jsonResponse(evolutionPayload()),
+    });
+
+    render(
+      <McpEndpointInsight
+        endpointId={ENDPOINT_ID}
+        currentVersionId={V3}
+        onOpenVersionDiff={onOpenVersionDiff}
+      />,
+    );
+
+    // The churn panel loads its own series and surfaces the busiest release (v3, 4 changes).
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Busiest release/ })).toBeInTheDocument(),
+    );
+    // The evolution series was fetched (endpoint-level, no version_id).
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/insight/evolution'),
+      expect.anything(),
+    );
+
+    // Clicking the current snapshot's column deep-links to V3's diff. Match by V3's unique churn
+    // split (+1 −0 ~3) so we select the column, not the busiest-release callout that shares its date.
+    fireEvent.click(screen.getByRole('button', { name: /\+1 −0 ~3/ }));
+    expect(onOpenVersionDiff).toHaveBeenCalledWith(V3);
   });
 });

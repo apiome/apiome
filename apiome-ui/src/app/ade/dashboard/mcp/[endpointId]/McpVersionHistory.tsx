@@ -35,6 +35,7 @@ import {
   mcpChangeItemPath,
   mcpChangeStyle,
   mcpCompareHeader,
+  mcpDiffSelectionForVersion,
   mcpOrderedPair,
   mcpToggleSelection,
   mcpVersionDateTag,
@@ -48,6 +49,14 @@ import {
 
 interface Props {
   endpointId: string;
+  /**
+   * A deep-link request from the churn timeline (MCAT-16.1): open the diff for this snapshot. When
+   * set, the panel selects that version against its predecessor once its history has loaded, then
+   * clears the request via {@link onDiffRequestConsumed}. Absent on a normal (non-deep-linked) visit.
+   */
+  requestedDiffVersionId?: string | null;
+  /** Called once a {@link requestedDiffVersionId} has been applied, so the parent can clear it. */
+  onDiffRequestConsumed?: () => void;
 }
 
 /** localStorage key remembering the preferred diff layout (side-by-side vs unified). */
@@ -390,7 +399,11 @@ function DiffPanel({
   );
 }
 
-export default function McpVersionHistory({ endpointId }: Props) {
+export default function McpVersionHistory({
+  endpointId,
+  requestedDiffVersionId = null,
+  onDiffRequestConsumed,
+}: Props) {
   const [versions, setVersions] = useState<McpVersionSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -409,6 +422,15 @@ export default function McpVersionHistory({ endpointId }: Props) {
   const [expandAll, setExpandAll] = useState(false);
   const [expandGeneration, setExpandGeneration] = useState(0);
   const mountedRef = useRef(true);
+  // A deep-link request (from the churn timeline) is read inside the history-load effect below. Held
+  // in refs so honoring it never re-keys that effect (which would needlessly re-fetch the history)
+  // and so the latest handler is always called. The detail page unmounts this tab when inactive, so
+  // each deep-link arrives on a fresh mount and is applied as the initial selection — no flash of the
+  // default two-newest diff before the requested one.
+  const requestedDiffRef = useRef(requestedDiffVersionId);
+  requestedDiffRef.current = requestedDiffVersionId;
+  const onDiffRequestConsumedRef = useRef(onDiffRequestConsumed);
+  onDiffRequestConsumedRef.current = onDiffRequestConsumed;
 
   const toggleExpandAll = useCallback(() => {
     setExpandAll((prev) => !prev);
@@ -448,7 +470,16 @@ export default function McpVersionHistory({ endpointId }: Props) {
         const list = mcpVersionListFromPayload(data);
         if (!active) return;
         setVersions(list);
-        setSelection(defaultSelection(list));
+        // Honor a churn-timeline deep-link when one is pending: open that version against its
+        // predecessor instead of the default two-newest diff, then let the parent clear the request.
+        const requested = requestedDiffRef.current;
+        const requestedSelection = requested ? mcpDiffSelectionForVersion(requested, list) : [];
+        if (requestedSelection.length > 0) {
+          setSelection(requestedSelection);
+          onDiffRequestConsumedRef.current?.();
+        } else {
+          setSelection(defaultSelection(list));
+        }
       } catch (e) {
         if (!active) return;
         setError(e instanceof Error ? e.message : "Could not load version history.");

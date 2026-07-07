@@ -15,7 +15,7 @@ keeps a central dark theme (10.10) addable in one place.
 | Layer | Path | What |
 | --- | --- | --- |
 | Pure helpers (React-free, unit-tested) | `src/app/components/ade/dashboard/mcp/mcpUiPrimitives.ts` | Grade styles, badge-tone resolvers, health/recency, tab definitions |
-| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `FindingSeverity`, `DetailTabs` |
+| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `FindingSeverity`, `DetailTabs` |
 | Shared states | `src/app/components/ui/{EmptyState,LoadingState,ErrorState}.tsx` | empty / loading / error placeholders |
 | Barrel | `@/app/components/ui/mcp` (also re-exported from `@/app/components/ui`) | one import for all MCP primitives |
 
@@ -176,6 +176,25 @@ unit-tested `mcpDocCoverageUi` module; the gauge itself is the shared `<Gauge>` 
 <DocCoveragePanel items={items} loading={itemsLoading} error={itemsError} />
 ```
 
+### `<CapabilityChurnPanel>` (V2-MCP-30.1 / MCAT-16.1)
+
+The **capability churn timeline** on the endpoint **Insight** tab — a stacked column per discovery
+snapshot (oldest→newest) split into the **added / removed / modified** counts it introduced, so *how
+much* a server churns and *when* is legible at a glance instead of buried in a version list. A
+**zero-churn version still gets its slot** on the axis (an empty column), the **busiest release** is
+called out, and **clicking any column deep-links to that version's diff** in the Versions tab (the
+detail page routes `onSelectVersion` → the compare/diff viewer, selecting the version against its
+predecessor).
+
+It reads the endpoint's per-version series from `insight/evolution`; all series-shaping and the
+per-column deep-link ids come from the React-free, unit-tested `mcpEvolutionUi` module (`mcpChurnTimeline`),
+so the chart and its click targets can never disagree. The chart itself is the interactive
+`<StackedTimeline>` primitive (`onSelectPeriod`). It owns its loading / error / no-history states.
+
+```tsx
+<CapabilityChurnPanel series={evolution} loading={loading} error={error} onSelectVersion={openDiff} />
+```
+
 ### `<FindingSeverity>`
 
 The shared MUST / SHOULD / Advisory chip used by the Lint & Score tab and inline hints. It renders
@@ -217,7 +236,9 @@ chart follows the same principle as the rest of this kit — **consumers pass do
 picks the color from Tailwind tokens** — and is:
 
 - **Accessible** — the SVG is `role="img"` with a `<title>`/`<desc>`, and a visually-hidden
-  (`sr-only`) `<table>` carries the underlying numbers for screen readers / no-CSS.
+  (`sr-only`) `<table>` carries the underlying numbers for screen readers / no-CSS. An **interactive**
+  chart (e.g. `<StackedTimeline onSelectPeriod>`) switches the frame to `role="group"` so its
+  focusable/clickable marks are reachable, while the label + data table still describe the whole figure.
 - **Responsive** — sized by `viewBox`; set height/size with a `className` on the chart.
 - **SSR-safe** — no DOM/`window` access; gradient ids come from `React.useId`.
 - **Empty-safe** — empty / degenerate data renders a small empty state, never a crash.
@@ -227,7 +248,7 @@ picks the color from Tailwind tokens** — and is:
 | `<Sparkline data tone domainMax area />` | axis-free trend line + area | grade/latency over time (inline) |
 | `<BarSeries data tone domainMax />` | vertical bars (per-bar `tone` override) | capability counts by type, findings by severity |
 | `<Donut segments centerLabel />` | proportional ring | transport / auth-scheme share |
-| `<StackedTimeline series periods />` | stacked bars over an ordered axis | per-version churn (added/changed/removed) |
+| `<StackedTimeline series periods onSelectPeriod? activeIndex? />` | stacked bars over an ordered axis (columns optionally clickable) | per-version churn (added/removed/modified), deep-linked to the diff |
 | `<Radar axes max tone />` | multi-axis profile (≥ 3 axes) | documentation / annotation / safety coverage |
 | `<Heatmap matrix rowLabels colLabels tone />` | intensity grid (opacity = magnitude) | activity by day×hour, error rate by tool×version |
 | `<Gauge value min max tone centerLabel />` | 270° dial | a bounded score; `0–100` auto-colors by score band |

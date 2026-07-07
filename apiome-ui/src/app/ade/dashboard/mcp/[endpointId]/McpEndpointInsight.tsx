@@ -21,6 +21,7 @@ import { CapabilityGraphPanel } from "@/app/components/ui/mcp/CapabilityGraphPan
 import { ToolComplexityPanel } from "@/app/components/ui/mcp/ToolComplexityPanel";
 import { SafetyPosturePanel } from "@/app/components/ui/mcp/SafetyPosturePanel";
 import { DocCoveragePanel } from "@/app/components/ui/mcp/DocCoveragePanel";
+import { CapabilityChurnPanel } from "@/app/components/ui/mcp/CapabilityChurnPanel";
 import { dashboardPanelPaddedClass } from "@/app/components/ade/dashboard/dashboardScreenClasses";
 import {
   mcpVersionDetailFromPayload,
@@ -43,6 +44,10 @@ import {
   mcpInsightGraphFromPayload,
   type McpCapabilityGraph,
 } from "@/app/components/ade/dashboard/mcp/mcpCapabilityGraphUi";
+import {
+  mcpEvolutionSeriesFromPayload,
+  type McpEvolutionPoint,
+} from "@/app/components/ade/dashboard/mcp/mcpEvolutionUi";
 
 interface Props {
   endpointId: string;
@@ -60,6 +65,13 @@ interface Props {
    * the version summary does not carry historical ones).
    */
   currentInstructions?: string | null;
+  /**
+   * Deep-link a snapshot's churn column to its diff: called with a `version_id` when a column in the
+   * churn timeline is activated. The detail page handles it by switching to the Versions tab and
+   * selecting that version against its predecessor (MCAT-16.1 → MCAT-10.3). Optional so the tab still
+   * works standalone (the columns simply become inert when no handler is supplied).
+   */
+  onOpenVersionDiff?: (versionId: string) => void;
 }
 
 /**
@@ -106,8 +118,9 @@ const INSIGHT_SECTIONS: InsightSectionDef[] = [
     title: "Surface evolution",
     subtitle: "How the server has changed across discovery snapshots.",
     icon: Activity,
+    // "Capability churn timeline" (MCAT-16.1) now lands as a live panel in this section's body; the
+    // "Grade & surface-size trend" (MCAT-16.4) slot remains reserved for its downstream ticket.
     reserved: [
-      { key: "churn", title: "Capability churn timeline", hint: "Added, removed, and modified per version." },
       { key: "trend", title: "Grade & surface-size trend", hint: "Quality and capability counts over time." },
     ],
   },
@@ -305,12 +318,14 @@ function InsightSection({
  * @param currentVersionId    The endpoint's current snapshot id, used as the selector's default.
  * @param endpoint            The loaded endpoint record, for the profile-card header (optional).
  * @param currentInstructions The current version's server instructions, for the profile card.
+ * @param onOpenVersionDiff   Deep-link a churn column to its diff in the Versions tab (optional).
  */
 export default function McpEndpointInsight({
   endpointId,
   currentVersionId,
   endpoint = null,
   currentInstructions = null,
+  onOpenVersionDiff,
 }: Props) {
   const [versions, setVersions] = useState<McpVersionSummary[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(true);
@@ -329,6 +344,10 @@ export default function McpEndpointInsight({
   const [itemsError, setItemsError] = useState<string | null>(null);
   /** The endpoint's configured `auth_type` (endpoint-level, loaded once), for the safety cross-reference. */
   const [authType, setAuthType] = useState<string | null>(null);
+  /** The endpoint's per-version evolution series (endpoint-level, loaded once), for the churn timeline. */
+  const [evolution, setEvolution] = useState<McpEvolutionPoint[] | null>(null);
+  const [evolutionLoading, setEvolutionLoading] = useState(true);
+  const [evolutionError, setEvolutionError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -522,6 +541,38 @@ export default function McpEndpointInsight({
     };
   }, [endpointId]);
 
+  // Fetch the whole per-version evolution series once (it is endpoint-level, not per-snapshot) for the
+  // churn timeline. A never-discovered endpoint yields an empty series (a 200), which the panel renders
+  // as its "no history yet" state rather than an error.
+  useEffect(() => {
+    let active = true;
+    setEvolutionLoading(true);
+    setEvolutionError(null);
+    (async () => {
+      try {
+        const res = await fetch(`/api/mcp/endpoints/${endpointId}/insight/evolution`, {
+          credentials: "include",
+          cache: "no-store",
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(typeof data.error === "string" ? data.error : res.statusText);
+        }
+        if (!active) return;
+        setEvolution(mcpEvolutionSeriesFromPayload(data));
+      } catch (e) {
+        if (!active) return;
+        setEvolution(null);
+        setEvolutionError(e instanceof Error ? e.message : "Could not load evolution history.");
+      } finally {
+        if (active) setEvolutionLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [endpointId]);
+
   const selectedVersion = useMemo(
     () => versions.find((v) => v.id === selectedVersionId) ?? null,
     [versions, selectedVersionId],
@@ -588,9 +639,10 @@ export default function McpEndpointInsight({
       {/* At-a-glance server identity (MCAT-15.1) — the Insight tab header. */}
       <ServerProfileCard profile={profile} trustHref="#insight-reliability" />
 
-      {INSIGHT_SECTIONS.map((section) => (
-        <InsightSection key={section.key} section={section}>
-          {section.key === "surface" ? (
+      {INSIGHT_SECTIONS.map((section) => {
+        let body: React.ReactNode = null;
+        if (section.key === "surface") {
+          body = (
             <div className="space-y-4">
               <SurfaceBaseline surface={surface} loading={surfaceLoading} error={surfaceError} />
               {/* Capability relationship graph (MCAT-15.2) — a live panel in the surface section body. */}
@@ -667,9 +719,27 @@ export default function McpEndpointInsight({
                 <DocCoveragePanel items={items} loading={itemsLoading} error={itemsError} />
               </div>
             </div>
-          ) : null}
-        </InsightSection>
-      ))}
+          );
+        } else if (section.key === "evolution") {
+          // Capability churn timeline (MCAT-16.1) — the stacked added/removed/modified-per-version
+          // chart. Each column deep-links to that snapshot's diff via the detail page's handler.
+          body = (
+            <div className={dashboardPanelPaddedClass}>
+              <CapabilityChurnPanel
+                series={evolution}
+                loading={evolutionLoading}
+                error={evolutionError}
+                onSelectVersion={(versionId) => onOpenVersionDiff?.(versionId)}
+              />
+            </div>
+          );
+        }
+        return (
+          <InsightSection key={section.key} section={section}>
+            {body}
+          </InsightSection>
+        );
+      })}
     </div>
   );
 }
