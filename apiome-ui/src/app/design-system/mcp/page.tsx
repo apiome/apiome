@@ -25,6 +25,8 @@ import type { McpCapabilityItem } from '@/app/components/ade/dashboard/mcp/mcpBr
 import { ToolComplexityPanel } from '@/app/components/ui/mcp/ToolComplexityPanel';
 import { SafetyPosturePanel } from '@/app/components/ui/mcp/SafetyPosturePanel';
 import { DocCoveragePanel } from '@/app/components/ui/mcp/DocCoveragePanel';
+import { CapabilityChurnPanel } from '@/app/components/ui/mcp/CapabilityChurnPanel';
+import type { McpEvolutionPoint } from '@/app/components/ade/dashboard/mcp/mcpEvolutionUi';
 // The Monaco-backed code-viewer primitives were promoted out of `ui/mcp` to the format-neutral
 // `ui/code` module (MFI-28.7); the gallery documents them under those neutral names.
 import { JsonViewer, JsonDiffViewer, Disclosure } from '@/app/components/ui/code';
@@ -241,6 +243,56 @@ const DOC_COVERAGE_SAMPLE: McpCapabilityItem[] = [
   },
 ];
 
+/** A four-snapshot evolution series for the CapabilityChurnPanel demo (V2-MCP-30.1). */
+const CHURN_SERIES_SAMPLE: McpEvolutionPoint[] = [
+  {
+    version_id: 'demo-v1',
+    version_seq: 1,
+    version_tag: '2026-05-01',
+    discovered_at: '2026-05-01T10:00:00Z',
+    is_current: false,
+    type_counts: { tools: 8, resources: 0, resource_templates: 0, prompts: 0, total: 8 },
+    score: 70,
+    grade: 'C',
+    change_counts: { added: 8, removed: 0, modified: 0, total: 8 },
+  },
+  {
+    // A quiet release — no churn, but still a column on the axis.
+    version_id: 'demo-v2',
+    version_seq: 2,
+    version_tag: '2026-05-20',
+    discovered_at: '2026-05-20T10:00:00Z',
+    is_current: false,
+    type_counts: { tools: 8, resources: 0, resource_templates: 0, prompts: 0, total: 8 },
+    score: 72,
+    grade: 'C',
+    change_counts: { added: 0, removed: 0, modified: 0, total: 0 },
+  },
+  {
+    // The busiest release.
+    version_id: 'demo-v3',
+    version_seq: 3,
+    version_tag: '2026-06-15',
+    discovered_at: '2026-06-15T10:00:00Z',
+    is_current: false,
+    type_counts: { tools: 9, resources: 2, resource_templates: 0, prompts: 0, total: 11 },
+    score: 84,
+    grade: 'B',
+    change_counts: { added: 3, removed: 2, modified: 4, total: 9 },
+  },
+  {
+    version_id: 'demo-v4',
+    version_seq: 4,
+    version_tag: '2026-07-06',
+    discovered_at: '2026-07-06T10:00:00Z',
+    is_current: true,
+    type_counts: { tools: 11, resources: 2, resource_templates: 1, prompts: 1, total: 15 },
+    score: 90,
+    grade: 'A',
+    change_counts: { added: 5, removed: 0, modified: 1, total: 6 },
+  },
+];
+
 export default function McpPrimitivesShowcase() {
   return (
     <main className="mx-auto max-w-4xl space-y-6 p-8">
@@ -381,6 +433,33 @@ export default function McpPrimitivesShowcase() {
           Mixed coverage (drill-downs populated)
         </div>
         <DocCoveragePanel items={DOC_COVERAGE_SAMPLE} loading={false} error={null} />
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            CapabilityChurnPanel (V2-MCP-30.1)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            A stacked timeline of added / removed / modified per discovery snapshot — how much a server
+            churns and when. A zero-churn version still gets its slot on the axis, the busiest release
+            is called out, and clicking any column deep-links to that version&apos;s diff. Built on the
+            interactive <code>StackedTimeline</code> primitive.
+          </p>
+        </div>
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Four snapshots (one quiet release, one high-churn)
+        </div>
+        <CapabilityChurnPanel
+          series={CHURN_SERIES_SAMPLE}
+          loading={false}
+          error={null}
+          onSelectVersion={() => {}}
+        />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          No history yet
+        </div>
+        <CapabilityChurnPanel series={[]} loading={false} error={null} onSelectVersion={() => {}} />
       </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -549,6 +628,24 @@ export default function McpPrimitivesShowcase() {
                 { label: 'v3', values: { added: 2, changed: 2, removed: 3 } },
                 { label: 'v4', values: { added: 5, changed: 1, removed: 0 } },
               ]}
+            />
+            <p className="mb-1 mt-3 text-xs text-gray-500 dark:text-gray-400">
+              Interactive (<code>onSelectPeriod</code>) — each column is a keyboard-focusable button.
+            </p>
+            <StackedTimeline
+              series={[
+                { key: 'added', label: 'Added', tone: 'emerald' },
+                { key: 'changed', label: 'Changed', tone: 'amber' },
+                { key: 'removed', label: 'Removed', tone: 'red' },
+              ]}
+              periods={[
+                { label: 'v1', values: { added: 8, changed: 0, removed: 0 } },
+                { label: 'v2', values: { added: 0, changed: 0, removed: 0 } },
+                { label: 'v3', values: { added: 2, changed: 4, removed: 3 } },
+              ]}
+              activeIndex={2}
+              onSelectPeriod={() => {}}
+              periodActionLabel={(p) => `Open ${p.label}`}
             />
           </div>
 

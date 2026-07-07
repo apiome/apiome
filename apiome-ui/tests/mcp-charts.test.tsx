@@ -7,7 +7,7 @@
  * so unintended visual regressions surface in review.
  */
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import {
@@ -111,6 +111,65 @@ describe('StackedTimeline', () => {
   it('matches its snapshot', () => {
     const { container } = render(<StackedTimeline series={series} periods={periods} title="snap" />);
     expect(container.firstChild).toMatchSnapshot();
+  });
+
+  it('is non-interactive by default (role="img", no per-column buttons)', () => {
+    render(<StackedTimeline series={series} periods={periods} title="Churn" />);
+    expect(screen.getByRole('img', { name: 'Churn' })).toBeInTheDocument();
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+  });
+
+  it('renders a clickable hit target per column when onSelectPeriod is set', () => {
+    const onSelect = jest.fn();
+    render(
+      <StackedTimeline
+        series={series}
+        periods={periods}
+        title="Churn"
+        onSelectPeriod={onSelect}
+        periodActionLabel={(p) => `open ${p.label}`}
+      />,
+    );
+    // Interactive frames expose a group (not an img) so the button children are reachable.
+    expect(screen.getByRole('group', { name: 'Churn' })).toBeInTheDocument();
+    const buttons = screen.getAllByRole('button');
+    expect(buttons).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: 'open v2' }));
+    expect(onSelect).toHaveBeenCalledWith(1);
+  });
+
+  it('keeps a zero-total column clickable', () => {
+    const onSelect = jest.fn();
+    const withEmptyColumn = [
+      { label: 'v1', values: { added: 0, removed: 0 } },
+      { label: 'v2', values: { added: 3, removed: 1 } },
+    ];
+    render(
+      <StackedTimeline
+        series={series}
+        periods={withEmptyColumn}
+        onSelectPeriod={onSelect}
+        periodActionLabel={(p) => `open ${p.label}`}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'open v1' }));
+    expect(onSelect).toHaveBeenCalledWith(0);
+  });
+
+  it('activates a focused column from the keyboard (Enter / Space)', () => {
+    const onSelect = jest.fn();
+    render(
+      <StackedTimeline
+        series={series}
+        periods={periods}
+        onSelectPeriod={onSelect}
+        periodActionLabel={(p) => `open ${p.label}`}
+      />,
+    );
+    fireEvent.keyDown(screen.getByRole('button', { name: 'open v1' }), { key: 'Enter' });
+    fireEvent.keyDown(screen.getByRole('button', { name: 'open v2' }), { key: ' ' });
+    expect(onSelect).toHaveBeenNthCalledWith(1, 0);
+    expect(onSelect).toHaveBeenNthCalledWith(2, 1);
   });
 });
 

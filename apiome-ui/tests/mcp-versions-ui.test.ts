@@ -17,6 +17,7 @@ import {
   mcpChangeStyle,
   mcpComparePairKey,
   mcpCompareHeader,
+  mcpDiffSelectionForVersion,
   mcpOrderedPair,
   mcpToggleSelection,
   mcpVersionCompareFromPayload,
@@ -311,5 +312,31 @@ describe('mcpOrderedPair', () => {
 describe('mcpComparePairKey', () => {
   it('builds a stable base::target key', () => {
     expect(mcpComparePairKey('a', 'b')).toBe('a::b');
+  });
+});
+
+describe('mcpDiffSelectionForVersion', () => {
+  // Newest-first, as the version list is stored.
+  const v3 = makeVersion({ id: 'c', version_seq: 3 });
+  const v2 = makeVersion({ id: 'b', version_seq: 2 });
+  const v1 = makeVersion({ id: 'a', version_seq: 1 });
+  const versions = [v3, v2, v1];
+
+  it('selects a version against its immediate predecessor', () => {
+    // v2's churn is measured v1 → v2, so the diff opens on [v2, v1].
+    expect(mcpDiffSelectionForVersion('b', versions)).toEqual(['b', 'a']);
+    expect(mcpDiffSelectionForVersion('c', versions)).toEqual(['c', 'b']);
+  });
+
+  it('selects the first snapshot alone (no predecessor to diff against)', () => {
+    expect(mcpDiffSelectionForVersion('a', versions)).toEqual(['a']);
+  });
+
+  it('returns an empty selection for an unknown version id', () => {
+    expect(mcpDiffSelectionForVersion('ghost', versions)).toEqual([]);
+  });
+
+  it('handles a single-version history', () => {
+    expect(mcpDiffSelectionForVersion('c', [v3])).toEqual(['c']);
   });
 });
