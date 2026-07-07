@@ -6004,6 +6004,60 @@ class McpInvocationReliabilityOut(BaseModel):
     latency: McpLatencyStatsOut
 
 
+class McpToolReliabilityOut(BaseModel):
+    """One tool's reliability over the window: call/error tallies, error rate, and latency stats.
+
+    ``error_rate`` is ``error_count / call_count``; ``latency`` carries the p50/p95/p99 (and
+    count/avg/min/max) over the calls that recorded a round-trip latency. A single-call tool renders
+    percentiles equal to that one sample — no divide-by-zero.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    tool_name: str
+    call_count: int = 0
+    error_count: int = 0
+    success_count: int = 0
+    error_rate: float = 0.0
+    latency: McpLatencyStatsOut
+
+
+class McpLatencyBucketOut(BaseModel):
+    """One bar of the tool-latency distribution: a labelled range and how many calls fell in it.
+
+    ``upper_ms`` is the exclusive upper bound of the range in milliseconds, or ``None`` for the
+    open-ended top bucket.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    label: str
+    upper_ms: Optional[float] = None
+    count: int = 0
+
+
+class McpToolInvocationReliabilityOut(BaseModel):
+    """Per-tool test-invocation reliability over a recent window (MCAT-17.2).
+
+    ``tools`` is the per-tool breakdown (busiest first); the browser re-ranks it into "slowest" (by
+    p95) and "flakiest" (by error rate) views. The scalar fields are the endpoint-wide totals over
+    every tool call in the window; ``latency_distribution`` is a histogram of every tool call's
+    latency for the distribution chart. ``window_days`` echoes the trailing window the rows were
+    selected over. An endpoint never tool-tested yields an empty ``tools`` list and zero totals.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    tools: List[McpToolReliabilityOut] = Field(default_factory=list)
+    tool_count: int = 0
+    call_count: int = 0
+    error_count: int = 0
+    success_count: int = 0
+    error_rate: float = 0.0
+    latency_distribution: List[McpLatencyBucketOut] = Field(default_factory=list)
+    window_days: int = 0
+
+
 class McpDiscoveryEventOut(BaseModel):
     """One discovery-job outcome on the health timeline (MCAT-17.1).
 
@@ -6064,7 +6118,9 @@ class McpInsightReliabilityResponse(BaseModel):
 
     ``discovery`` / ``invocation`` are the aggregate roll-ups (state tallies, success/error rates,
     latency); ``health`` adds the MCAT-17.1 discovery health timeline — the recent per-job outcome
-    events, a windowed availability percentage, and the endpoint's quarantine / backoff state.
+    events, a windowed availability percentage, and the endpoint's quarantine / backoff state;
+    ``tools`` adds the MCAT-17.2 per-tool latency & error-rate breakdown (p50/p95/p99 and error rate
+    per tool, a latency distribution, and the endpoint-wide totals) over a recent window.
     """
 
     model_config = ConfigDict(populate_by_name=True)
@@ -6074,6 +6130,7 @@ class McpInsightReliabilityResponse(BaseModel):
     discovery: McpDiscoveryReliabilityOut
     invocation: McpInvocationReliabilityOut
     health: McpDiscoveryHealthOut
+    tools: McpToolInvocationReliabilityOut
 
 
 def mcp_discovery_health_out(

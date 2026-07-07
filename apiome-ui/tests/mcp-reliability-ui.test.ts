@@ -13,7 +13,13 @@ import {
   mcpDiscoveryHealthTimeline,
   mcpDiscoveryOutcomeKind,
   mcpDiscoveryOutcomeLabel,
+  mcpErrorRateKind,
+  mcpFlakiestTools,
+  mcpFormatErrorRate,
+  mcpFormatMs,
   mcpReliabilityHealthFromPayload,
+  mcpSlowestTools,
+  mcpToolReliabilityFromPayload,
 } from '../src/app/components/ade/dashboard/mcp/mcpReliabilityUi';
 
 function job(
@@ -184,5 +190,128 @@ describe('outcome + availability helpers', () => {
   it('formats a locale-free minute-precision timestamp', () => {
     expect(mcpDiscoveryEventTime('2026-07-06T12:34:56Z')).toBe('2026-07-06 12:34');
     expect(mcpDiscoveryEventTime(null)).toBe('—');
+  });
+});
+
+// --- Per-tool latency & error-rate (V2-MCP-31.2 / MCAT-17.2) ----------------------------------
+
+function tool(
+  name: string,
+  callCount: number,
+  errorCount: number,
+  latency: Partial<{ count: number; p50_ms: number; p95_ms: number; p99_ms: number }> = {},
+) {
+  return {
+    tool_name: name,
+    call_count: callCount,
+    error_count: errorCount,
+    success_count: callCount - errorCount,
+    error_rate: 0, // re-derived by the parser; the wire value is intentionally ignored
+    latency: {
+      count: latency.count ?? callCount,
+      avg_ms: null,
+      min_ms: null,
+      max_ms: null,
+      p50_ms: latency.p50_ms ?? null,
+      p95_ms: latency.p95_ms ?? null,
+      p99_ms: latency.p99_ms ?? null,
+    },
+  };
+}
+
+const TOOLS_PAYLOAD = {
+  tools: {
+    tools: [
+      tool('search', 4, 1, { p50_ms: 25, p95_ms: 40, p99_ms: 40 }),
+      tool('write', 2, 2, { p50_ms: 200, p95_ms: 300, p99_ms: 300 }),
+      tool('ping', 3, 0, { p50_ms: 5, p95_ms: 9, p99_ms: 9 }),
+    ],
+    latency_distribution: [
+      { label: '0–50 ms', upper_ms: 50, count: 7 },
+      { label: '250–500 ms', upper_ms: 500, count: 2 },
+    ],
+    window_days: 30,
+    // deliberately wrong totals on the wire — the parser re-derives them from the rows
+    call_count: 999,
+    error_count: 999,
+  },
+};
+
+describe('mcpToolReliabilityFromPayload', () => {
+  it('parses the tools block and re-derives totals + per-tool error rates from the rows', () => {
+    const rel = mcpToolReliabilityFromPayload(TOOLS_PAYLOAD)!;
+    expect(rel.tool_count).toBe(3);
+    // Totals re-derived from the rows (4+2+3 calls, 1+2+0 errors), not the bogus wire values.
+    expect(rel.call_count).toBe(9);
+    expect(rel.error_count).toBe(3);
+    expect(rel.success_count).toBe(6);
+    expect(rel.error_rate).toBeCloseTo(3 / 9);
+    expect(rel.window_days).toBe(30);
+    const byName = Object.fromEntries(rel.tools.map((t) => [t.tool_name, t]));
+    expect(byName.search.error_rate).toBeCloseTo(0.25);
+    expect(byName.write.error_rate).toBeCloseTo(1);
+    expect(byName.ping.error_rate).toBe(0);
+    expect(rel.latency_distribution).toHaveLength(2);
+  });
+
+  it('returns null when the tools block is absent or malformed', () => {
+    expect(mcpToolReliabilityFromPayload({})).toBeNull();
+    expect(mcpToolReliabilityFromPayload({ tools: 'nope' })).toBeNull();
+    expect(mcpToolReliabilityFromPayload(null)).toBeNull();
+  });
+
+  it('drops rows with no resolvable tool name but keeps the rest', () => {
+    const rel = mcpToolReliabilityFromPayload({
+      tools: { tools: [tool('ok', 1, 0, { p50_ms: 1 }), { call_count: 5 }] },
+    })!;
+    expect(rel.tool_count).toBe(1);
+    expect(rel.tools[0].tool_name).toBe('ok');
+  });
+});
+
+describe('mcpSlowestTools / mcpFlakiestTools', () => {
+  const rel = mcpToolReliabilityFromPayload(TOOLS_PAYLOAD)!;
+
+  it('ranks the slowest tools by p95 descending', () => {
+    const slowest = mcpSlowestTools(rel.tools);
+    expect(slowest.map((t) => t.tool_name)).toEqual(['write', 'search', 'ping']);
+  });
+
+  it('excludes tools with no recorded latency from the slowest ranking', () => {
+    const noLatency = mcpToolReliabilityFromPayload({
+      tools: { tools: [tool('timeouts', 3, 3, { count: 0 })] },
+    })!;
+    expect(mcpSlowestTools(noLatency.tools)).toHaveLength(0);
+  });
+
+  it('ranks the flakiest tools by error rate descending, excluding clean tools', () => {
+    const flakiest = mcpFlakiestTools(rel.tools);
+    // write (100%) then search (25%); ping (0%) is excluded.
+    expect(flakiest.map((t) => t.tool_name)).toEqual(['write', 'search']);
+  });
+
+  it('respects the limit argument', () => {
+    expect(mcpSlowestTools(rel.tools, 1).map((t) => t.tool_name)).toEqual(['write']);
+  });
+});
+
+describe('mcpErrorRateKind / formatting helpers', () => {
+  it('buckets error rates into bands', () => {
+    expect(mcpErrorRateKind(0)).toBe('healthy');
+    expect(mcpErrorRateKind(0.05)).toBe('watch');
+    expect(mcpErrorRateKind(0.1)).toBe('poor');
+    expect(mcpErrorRateKind(0.5)).toBe('poor');
+  });
+
+  it('formats milliseconds, switching to seconds at/above 1000 ms', () => {
+    expect(mcpFormatMs(null)).toBe('—');
+    expect(mcpFormatMs(840)).toBe('840 ms');
+    expect(mcpFormatMs(1240)).toBe('1.24 s');
+  });
+
+  it('formats error rates as trimmed percentages', () => {
+    expect(mcpFormatErrorRate(0)).toBe('0%');
+    expect(mcpFormatErrorRate(0.25)).toBe('25%');
+    expect(mcpFormatErrorRate(0.125)).toBe('12.5%');
   });
 });

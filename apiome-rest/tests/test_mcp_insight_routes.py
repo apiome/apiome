@@ -347,6 +347,7 @@ def test_reliability_aggregates_discovery_and_invocation():
         mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
         mdb.list_mcp_discovery_job_stats.return_value = job_rows
         mdb.list_mcp_invocation_stats.return_value = call_rows
+        mdb.list_mcp_tool_invocation_stats.return_value = []
         mdb.list_mcp_discovery_job_timeline.return_value = []
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
     assert r.status_code == 200
@@ -370,6 +371,7 @@ def test_reliability_empty_history_is_zeroes_not_500():
         mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
         mdb.list_mcp_discovery_job_stats.return_value = []
         mdb.list_mcp_invocation_stats.return_value = []
+        mdb.list_mcp_tool_invocation_stats.return_value = []
         mdb.list_mcp_discovery_job_timeline.return_value = []
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
     assert r.status_code == 200
@@ -418,6 +420,7 @@ def test_reliability_health_timeline_and_availability_match_seeded_jobs():
         mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
         mdb.list_mcp_discovery_job_stats.return_value = []
         mdb.list_mcp_invocation_stats.return_value = []
+        mdb.list_mcp_tool_invocation_stats.return_value = []
         mdb.list_mcp_discovery_job_timeline.return_value = timeline_rows
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
     assert r.status_code == 200
@@ -449,6 +452,7 @@ def test_reliability_health_flags_quarantined_endpoint():
         mdb.get_mcp_endpoint.return_value = quarantined
         mdb.list_mcp_discovery_job_stats.return_value = []
         mdb.list_mcp_invocation_stats.return_value = []
+        mdb.list_mcp_tool_invocation_stats.return_value = []
         mdb.list_mcp_discovery_job_timeline.return_value = [
             _timeline_row("j1", "failed", error_code="connect_error"),
         ]
@@ -467,6 +471,7 @@ def test_reliability_health_empty_history_is_empty_timeline_not_500():
         mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
         mdb.list_mcp_discovery_job_stats.return_value = []
         mdb.list_mcp_invocation_stats.return_value = []
+        mdb.list_mcp_tool_invocation_stats.return_value = []
         mdb.list_mcp_discovery_job_timeline.return_value = []
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
     assert r.status_code == 200
@@ -475,6 +480,64 @@ def test_reliability_health_empty_history_is_empty_timeline_not_500():
     assert health["event_count"] == 0
     assert health["availability_pct"] is None
     assert health["quarantined"] is False
+
+
+# ---------------------------------------------------------------------------
+# reliability — per-tool latency & error-rate panel (V2-MCP-31.2 / MCAT-17.2)
+# ---------------------------------------------------------------------------
+
+
+def _tool_call_row(item_name, is_error, latency_ms):
+    return {"item_name": item_name, "is_error": is_error, "latency_ms": latency_ms}
+
+
+def test_reliability_tools_percentiles_and_error_rates_match_fixture():
+    tool_rows = [
+        _tool_call_row("search", False, 10),
+        _tool_call_row("search", False, 20),
+        _tool_call_row("search", True, 30),
+        _tool_call_row("search", False, 40),
+        _tool_call_row("write", True, 100),
+        _tool_call_row("write", True, 300),
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.list_mcp_discovery_job_stats.return_value = []
+        mdb.list_mcp_invocation_stats.return_value = []
+        mdb.list_mcp_tool_invocation_stats.return_value = tool_rows
+        mdb.list_mcp_discovery_job_timeline.return_value = []
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
+    assert r.status_code == 200
+    tools = r.json()["tools"]
+    assert tools["tool_count"] == 2
+    assert tools["call_count"] == 6
+    assert tools["error_count"] == 3
+    assert tools["error_rate"] == pytest.approx(0.5)
+    assert tools["window_days"] == 30
+    by_name = {t["tool_name"]: t for t in tools["tools"]}
+    assert by_name["search"]["error_rate"] == pytest.approx(0.25)
+    assert by_name["search"]["latency"]["p50_ms"] == pytest.approx(25.0)
+    assert by_name["write"]["error_rate"] == pytest.approx(1.0)
+    # The distribution has a stable bucket set that sums to the calls with a recorded latency.
+    assert sum(b["count"] for b in tools["latency_distribution"]) == 6
+    # The window is passed through to the DB helper.
+    mdb.list_mcp_tool_invocation_stats.assert_called_once_with(_EP, 30)
+
+
+def test_reliability_tools_empty_history_is_no_data_not_500():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.list_mcp_discovery_job_stats.return_value = []
+        mdb.list_mcp_invocation_stats.return_value = []
+        mdb.list_mcp_tool_invocation_stats.return_value = []
+        mdb.list_mcp_discovery_job_timeline.return_value = []
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
+    assert r.status_code == 200
+    tools = r.json()["tools"]
+    assert tools["tools"] == []
+    assert tools["tool_count"] == 0
+    assert tools["call_count"] == 0
+    assert tools["error_rate"] == 0.0
 
 
 # ===========================================================================
