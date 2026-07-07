@@ -676,6 +676,38 @@ def test_catalog_insight_rolls_up_tenant_catalog():
         "resource_template_count": 1,
         "prompt_count": 2,
         "grade_distribution": {"A": 2, "B": 1, "C": 1},
+        # composition breakdowns (18.1) — NULL labels exercise the friendly-placeholder projection.
+        "category_rows": [
+            {"label": "search", "count": 3},
+            {"label": None, "count": 2},
+        ],
+        "transport_rows": [
+            {"label": "streamable_http", "count": 4},
+            {"label": "sse", "count": 1},
+        ],
+        "protocol_rows": [
+            {"label": "2025-06-18", "count": 3},
+            {"label": None, "count": 1},
+        ],
+        "discovery_rows": [
+            {"label": "ok", "count": 4},
+            {"label": None, "count": 1},
+        ],
+        "change_leader_rows": [
+            {"endpoint_id": "e1", "name": "Alpha", "change_count": 9},
+            {"endpoint_id": "e2", "name": "Beta", "change_count": 4},
+        ],
+        "top_capability_rows": [
+            {"item_type": "tool", "item_name": "search", "endpoint_count": 3},
+            {"item_type": "resource", "item_name": "readme", "endpoint_count": 1},
+        ],
+        "tool_count_rows": [
+            {"tool_count": 0},
+            {"tool_count": 3},
+            {"tool_count": 12},
+            {"tool_count": 40},
+            {"tool_count": 77},
+        ],
     }
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.get_mcp_catalog_insight.return_value = aggregate
@@ -688,6 +720,32 @@ def test_catalog_insight_rolls_up_tenant_catalog():
     assert body["type_counts"]["tools"] == 20
     assert body["type_counts"]["total"] == 30  # 20 + 7 + 1 + 2
     assert body["grade_distribution"] == {"A": 2, "B": 1, "C": 1}
+    # NULL category / protocol / discovery labels resolve to friendly placeholders.
+    assert body["category_distribution"] == [
+        {"label": "search", "count": 3},
+        {"label": "Uncategorized", "count": 2},
+    ]
+    assert body["transport_distribution"][0] == {"label": "streamable_http", "count": 4}
+    assert body["protocol_version_distribution"][-1] == {"label": "Unknown", "count": 1}
+    assert body["discovery_health"][-1] == {"label": "never", "count": 1}
+    # the five tool counts fall one into each fixed histogram bucket, in display order.
+    assert body["tool_count_distribution"] == [
+        {"label": "0", "count": 1},
+        {"label": "1–5", "count": 1},
+        {"label": "6–20", "count": 1},
+        {"label": "21–50", "count": 1},
+        {"label": "50+", "count": 1},
+    ]
+    assert body["change_leaders"][0] == {
+        "endpoint_id": "e1",
+        "name": "Alpha",
+        "change_count": 9,
+    }
+    assert body["top_capabilities"][0] == {
+        "item_type": "tool",
+        "item_name": "search",
+        "endpoint_count": 3,
+    }
     mdb.get_mcp_catalog_insight.assert_called_once_with("t1")
 
 
@@ -715,3 +773,18 @@ def test_catalog_insight_empty_tenant():
     assert body["average_score"] is None
     assert body["type_counts"]["total"] == 0
     assert body["grade_distribution"] == {}
+    # every composition breakdown is empty — an all-empty body, never a 500.
+    assert body["category_distribution"] == []
+    assert body["transport_distribution"] == []
+    assert body["protocol_version_distribution"] == []
+    assert body["discovery_health"] == []
+    assert body["change_leaders"] == []
+    assert body["top_capabilities"] == []
+    # the tool-count histogram still renders its fixed, all-zero set of buckets so the chart is stable.
+    assert body["tool_count_distribution"] == [
+        {"label": "0", "count": 0},
+        {"label": "1–5", "count": 0},
+        {"label": "6–20", "count": 0},
+        {"label": "21–50", "count": 0},
+        {"label": "50+", "count": 0},
+    ]

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '../components/AppShell';
 import { sanitizeSearchInput } from '../utils/searchValidation';
@@ -35,6 +36,13 @@ export function McpBrowseClient({ groups }: { groups: McpPublicHostGroup[] }) {
           Published, public Model Context Protocol servers grouped by site and ranked by quality
           grade. Private servers never appear here.
         </p>
+
+        <Link
+          href="/mcp/analytics"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[var(--brand)] hover:underline"
+        >
+          View catalog analytics →
+        </Link>
 
         <form onSubmit={handleSearch} className="relative mt-5 max-w-2xl">
           <svg

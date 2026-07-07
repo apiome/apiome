@@ -17,6 +17,7 @@ from app.mcp_insight_aggregation import (
     compute_discovery_timeline,
     compute_invocation_reliability,
     compute_latency_stats,
+    compute_tool_count_histogram,
     compute_tool_reliability,
     compute_trust_profile,
     mcp_auth_posture,
@@ -581,3 +582,41 @@ def test_mcp_auth_posture_bands():
     assert mcp_auth_posture("None") == "anonymous"
     assert mcp_auth_posture("bearer") == "authenticated"
     assert mcp_auth_posture("oauth2") == "authenticated"
+
+
+# ---------------------------------------------------------------------------
+# compute_tool_count_histogram — catalog tool-count distribution (18.1)
+# ---------------------------------------------------------------------------
+
+_TOOL_BUCKET_LABELS = ["0", "1–5", "6–20", "21–50", "50+"]
+
+
+def test_tool_count_histogram_empty_catalog_is_all_zero_buckets():
+    # An empty catalog still yields the full, stable set of bars — every bucket at zero.
+    hist = compute_tool_count_histogram([])
+    assert [b.label for b in hist] == _TOOL_BUCKET_LABELS
+    assert [b.count for b in hist] == [0, 0, 0, 0, 0]
+
+
+def test_tool_count_histogram_bucket_boundaries():
+    # Boundary values land in the bucket whose *inclusive* upper bound they do not exceed:
+    # 0→"0", 1&5→"1–5", 6&20→"6–20", 21&50→"21–50", 51+→"50+".
+    counts = [0, 1, 5, 6, 20, 21, 50, 51, 1000]
+    hist = compute_tool_count_histogram(counts)
+    by_label = {b.label: b.count for b in hist}
+    assert by_label == {"0": 1, "1–5": 2, "6–20": 2, "21–50": 2, "50+": 2}
+
+
+def test_tool_count_histogram_none_counts_as_zero():
+    # A never-discovered endpoint reports no surface (None) and must land in the "0" column, not drop.
+    hist = compute_tool_count_histogram([None, None, 3])
+    by_label = {b.label: b.count for b in hist}
+    assert by_label["0"] == 2
+    assert by_label["1–5"] == 1
+    # the total across buckets always equals the number of endpoints supplied.
+    assert sum(b.count for b in hist) == 3
+
+
+def test_tool_count_histogram_as_dict_shape():
+    hist = compute_tool_count_histogram([7])
+    assert hist[2].as_dict() == {"label": "6–20", "count": 1}

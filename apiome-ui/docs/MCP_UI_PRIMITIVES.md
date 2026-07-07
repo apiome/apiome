@@ -348,6 +348,30 @@ radar, and the list can never disagree.
 <TrustProfilePanel profile={trust} loading={loading} error={error} />
 ```
 
+### `<CatalogAnalyticsDashboard>` (V2-MCP-32.1 / MCAT-18.1)
+
+The **tenant-wide catalog analytics** screen — the catalog-level counterpart to the per-endpoint
+Insight tab, rendered on `/ade/dashboard/mcp/analytics`. From the tenant `insight/catalog` payload it
+rolls the whole catalog into: a **headline stat row** (endpoints, published, discovered, scored, avg
+score); three `Donut` **mixes** — endpoints by **category**, by **transport**, and by A–F **grade**
+(the grade ring toned by band, greens → reds); three `BarSeries` **distributions** — `protocol_version`
+adoption, the **tool-count** histogram, and the **discovery-health** rollup; and two **leaderboards** —
+the most-churned endpoints (**change-frequency leaders**, each linked to its endpoint detail) and the
+most widely exposed capabilities (**top capabilities**, a real "how many endpoints expose each"
+aggregate standing in for the roadmap's "most-searched", which has no backing query log — the panel
+says so). The panel owns its loading / error / **empty-catalog** first-run states.
+
+The panel is presentational: the page fetches `insight/catalog`. The breakdowns are aggregated
+**server-side** (apiome-rest `get_mcp_catalog_insight` + `compute_tool_count_histogram`); the
+React-free, unit-tested `mcpCatalogInsightUi` module (`mcpCatalogInsightFromPayload`,
+`mcpCatalogIsEmpty`, `mcpCatalogPercent`, `mcpCatalogGradeTone`, `mcpCatalogDonutSegments`,
+`mcpCatalogBars`) parses the payload and builds the donut/bar projections, so the tiles, legends, and
+percentages can never disagree.
+
+```tsx
+<CatalogAnalyticsDashboard data={insight} loading={loading} error={error} />
+```
+
 ### `<FindingSeverity>`
 
 The shared MUST / SHOULD / Advisory chip used by the Lint & Score tab and inline hints. It renders

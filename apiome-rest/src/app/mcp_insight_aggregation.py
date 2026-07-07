@@ -30,6 +30,9 @@ The module provides:
 * :func:`compute_trust_profile` — the five-axis composite "trust profile" (quality, safety,
   documentation, stability, responsiveness), each normalized to 0-100 (or an explicit *gap* when
   its input is missing), synthesized from the metric layers above (V2-MCP-31.4 / MCAT-17.4).
+* :func:`compute_tool_count_histogram` — fold a tenant catalog's per-endpoint tool counts into the
+  fixed tool-count distribution buckets the catalog analytics dashboard renders (V2-MCP-32.1 /
+  MCAT-18.1).
 
 Every function is total: an empty sample yields zero counts and ``None`` statistics rather than
 raising or dividing by zero, so an endpoint with no history produces an empty (not a 500) series.
@@ -967,3 +970,60 @@ def compute_trust_profile(
         available_count=len(available),
         axis_count=len(axes),
     )
+
+
+# --- Catalog-wide tool-count histogram (V2-MCP-32.1 / MCAT-18.1) --------------------------------
+
+#: The tool-count buckets the catalog dashboard's distribution bar chart renders, in display order.
+#: Each entry is ``(label, upper)`` where ``upper`` is the *inclusive* top of the range, or ``None``
+#: for the open-ended final bucket. The first bucket is the exact-zero ("no tools") column so a
+#: catalog full of never-discovered or empty servers is visible rather than folded into "1–5".
+_TOOL_COUNT_BUCKETS: Tuple[Tuple[str, Optional[int]], ...] = (
+    ("0", 0),
+    ("1–5", 5),
+    ("6–20", 20),
+    ("21–50", 50),
+    ("50+", None),
+)
+
+
+@dataclass(frozen=True)
+class CatalogCountBucket:
+    """One bar of the catalog tool-count distribution: a labelled range and how many endpoints fell in it."""
+
+    label: str
+    count: int
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {"label": self.label, "count": self.count}
+
+
+def compute_tool_count_histogram(
+    per_endpoint_tool_counts: Iterable[Optional[int]],
+) -> List[CatalogCountBucket]:
+    """Fold each endpoint's tool count into the fixed :data:`_TOOL_COUNT_BUCKETS` histogram.
+
+    Every endpoint contributes exactly one to the first bucket whose *inclusive* ``upper`` its tool
+    count does not exceed; the open-ended final bucket catches everything above the last boundary. A
+    missing / ``None`` count is treated as zero tools (an endpoint that was never discovered has no
+    surface, hence no tools), so it lands in the ``"0"`` column rather than being dropped. Buckets
+    with no members are still returned (``count=0``) so the chart always has the same, stable set of
+    bars — including for an empty catalog, where every bucket is zero.
+
+    Args:
+        per_endpoint_tool_counts: One tool count per live endpoint (``None`` → treated as ``0``).
+
+    Returns:
+        One :class:`CatalogCountBucket` per :data:`_TOOL_COUNT_BUCKETS` entry, in display order.
+    """
+    counts = [0] * len(_TOOL_COUNT_BUCKETS)
+    for raw in per_endpoint_tool_counts:
+        value = int(raw) if raw is not None else 0
+        for index, (_label, upper) in enumerate(_TOOL_COUNT_BUCKETS):
+            if upper is None or value <= upper:
+                counts[index] += 1
+                break
+    return [
+        CatalogCountBucket(label=label, count=counts[index])
+        for index, (label, _upper) in enumerate(_TOOL_COUNT_BUCKETS)
+    ]

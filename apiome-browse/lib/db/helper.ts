@@ -6,6 +6,8 @@ import { mcpSortOrderSql, type McpSortMode } from '../mcpSort';
 import type {
   McpPublicEndpoint,
   McpPublicHostGroup,
+  McpPublicCatalogBucket,
+  McpPublicCatalogInsight,
   McpCapabilityItem,
   McpPublicEndpointDetail,
   McpPublicSearchHit,
@@ -707,6 +709,69 @@ export async function getPublicMcpEndpointsByHost(): Promise<McpPublicHostGroup[
   } catch (err) {
     logError('getPublicMcpEndpointsByHost', err);
     return [];
+  }
+}
+
+/**
+ * The public catalog analytics roll-up (V2-MCP-32.1 / MCAT-18.1) — a reduced, credential-free variant
+ * of the private dashboard. Aggregates only over `apiome.mcp_v_public_endpoints`, so it inherently
+ * respects published-only + public visibility (the acceptance criterion) and can only ever expose the
+ * view's own columns: the endpoint count, the average score, and the category / transport / grade
+ * mixes. NULL categories fold into "Uncategorized"; each mix is ordered busiest-first with a stable
+ * label tiebreak. An empty catalog returns zeroes and empty mixes (never throws); any query failure
+ * logs and returns the same safe empty shape so the page renders its empty state, not a 500.
+ */
+export async function getPublicCatalogInsight(): Promise<McpPublicCatalogInsight> {
+  noStore();
+  const empty: McpPublicCatalogInsight = {
+    endpoint_count: 0,
+    average_score: null,
+    category_distribution: [],
+    transport_distribution: [],
+    grade_distribution: [],
+  };
+  try {
+    // A single round trip: the scalar summary and the three mixes as JSON aggregates, all scoped to
+    // the public view so private / unpublished endpoints can never move a tile.
+    const result = await connectionPool.query(
+      `WITH pub AS (
+         SELECT category, transport, grade, score FROM apiome.mcp_v_public_endpoints
+       ),
+       cats AS (
+         SELECT COALESCE(category, 'Uncategorized') AS label, COUNT(*)::int AS count
+         FROM pub GROUP BY COALESCE(category, 'Uncategorized')
+         ORDER BY count DESC, label ASC
+       ),
+       transports AS (
+         SELECT transport AS label, COUNT(*)::int AS count
+         FROM pub GROUP BY transport
+         ORDER BY count DESC, label ASC
+       ),
+       grades AS (
+         SELECT grade AS label, COUNT(*)::int AS count
+         FROM pub WHERE grade IS NOT NULL GROUP BY grade
+         ORDER BY grade ASC
+       )
+       SELECT
+         (SELECT COUNT(*)::int FROM pub) AS endpoint_count,
+         (SELECT AVG(score) FROM pub) AS average_score,
+         COALESCE((SELECT json_agg(json_build_object('label', label, 'count', count)) FROM cats), '[]') AS category_distribution,
+         COALESCE((SELECT json_agg(json_build_object('label', label, 'count', count)) FROM transports), '[]') AS transport_distribution,
+         COALESCE((SELECT json_agg(json_build_object('label', label, 'count', count)) FROM grades), '[]') AS grade_distribution`
+    );
+    const row = result.rows[0];
+    if (!row) return empty;
+    const avg = row.average_score;
+    return {
+      endpoint_count: Number(row.endpoint_count) || 0,
+      average_score: avg === null || avg === undefined ? null : Math.round(Number(avg) * 10) / 10,
+      category_distribution: (row.category_distribution as McpPublicCatalogBucket[]) ?? [],
+      transport_distribution: (row.transport_distribution as McpPublicCatalogBucket[]) ?? [],
+      grade_distribution: (row.grade_distribution as McpPublicCatalogBucket[]) ?? [],
+    };
+  } catch (err) {
+    logError('getPublicCatalogInsight', err);
+    return empty;
   }
 }
 

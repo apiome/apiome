@@ -11515,7 +11515,12 @@ class Database:
             tenant_id: The owning tenant whose catalog to summarize.
 
         Returns:
-            A dict with the scalar tallies plus ``grade_distribution`` (a ``grade → count`` map).
+            A dict with the scalar tallies, ``grade_distribution`` (a ``grade → count`` map), and the
+            composition breakdowns the catalog analytics dashboard renders (18.1): ``category_rows``,
+            ``transport_rows``, ``protocol_rows``, ``discovery_rows`` (each ``{label, count}``),
+            ``change_leader_rows`` (``{endpoint_id, name, change_count}``), ``top_capability_rows``
+            (``{item_type, item_name, endpoint_count}``), and ``tool_count_rows`` (one ``{tool_count}``
+            per live endpoint, folded into a histogram by the wire projection).
         """
         # Count each endpoint's current-surface items by kind via a correlated subquery, so an
         # endpoint with many items does not fan the tenant-level aggregate.
@@ -11550,12 +11555,94 @@ class Database:
             GROUP BY s.grade
             ORDER BY s.grade ASC
         """
+        # Composition breakdowns (18.1) — each is a simple GROUP BY over the same live-endpoint scope,
+        # ordered so the busiest bucket leads (with a stable label tiebreak for determinism). NULL
+        # labels are preserved here and mapped to a friendly bucket ("Uncategorized"/"Unknown"/"never")
+        # in the wire projection, not in SQL.
+        category_q = """
+            SELECT e.category AS label, COUNT(*) AS count
+            FROM apiome.mcp_endpoints e
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+            GROUP BY e.category
+            ORDER BY count DESC, e.category ASC NULLS LAST
+        """
+        transport_q = """
+            SELECT e.transport AS label, COUNT(*) AS count
+            FROM apiome.mcp_endpoints e
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+            GROUP BY e.transport
+            ORDER BY count DESC, e.transport ASC
+        """
+        # Protocol adoption hangs off each endpoint's current surface: only discovered endpoints
+        # (current_version_id set) have a reported protocol_version, so never-discovered servers do
+        # not appear here.
+        protocol_q = """
+            SELECT v.protocol_version AS label, COUNT(*) AS count
+            FROM apiome.mcp_endpoints e
+            JOIN apiome.mcp_endpoint_versions v ON v.id = e.current_version_id
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+            GROUP BY v.protocol_version
+            ORDER BY count DESC, v.protocol_version ASC NULLS LAST
+        """
+        # Discovery-health rollup — every live endpoint counts, including those never discovered
+        # (last_discovery_status IS NULL → mapped to "never" in the projection).
+        discovery_q = """
+            SELECT e.last_discovery_status AS label, COUNT(*) AS count
+            FROM apiome.mcp_endpoints e
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+            GROUP BY e.last_discovery_status
+            ORDER BY count DESC, e.last_discovery_status ASC NULLS LAST
+        """
+        # Change-frequency leaders — the endpoints whose surface has churned the most, counted over
+        # every recorded change across all their versions (not just the current one).
+        change_leader_q = """
+            SELECT e.id AS endpoint_id, e.name AS name, COUNT(c.id) AS change_count
+            FROM apiome.mcp_endpoints e
+            JOIN apiome.mcp_endpoint_versions v ON v.endpoint_id = e.id
+            JOIN apiome.mcp_version_changes c ON c.version_id = v.id
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+            GROUP BY e.id, e.name
+            ORDER BY change_count DESC, e.name ASC
+            LIMIT 8
+        """
+        # Top capabilities — the most widely exposed capability names across the tenant's current
+        # surfaces, ranked by how many distinct endpoints expose each (a real aggregate standing in
+        # for "most-searched", which has no backing search-query log). item_type is carried so the
+        # panel can badge tool vs resource vs prompt.
+        top_capability_q = """
+            SELECT i.item_type AS item_type, i.item_name AS item_name,
+                   COUNT(DISTINCT e.id) AS endpoint_count
+            FROM apiome.mcp_endpoints e
+            JOIN apiome.mcp_capability_items i ON i.version_id = e.current_version_id
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+            GROUP BY i.item_type, i.item_name
+            ORDER BY endpoint_count DESC, i.item_name ASC
+            LIMIT 8
+        """
+        # Per-endpoint tool counts feed the pure tool-count histogram (compute_tool_count_histogram):
+        # one row per live endpoint, its count being the number of 'tool' items on its current surface
+        # (0 for a never-discovered or tool-less endpoint), so the distribution spans the whole catalog.
+        tool_count_q = """
+            SELECT COALESCE(
+                (SELECT COUNT(*) FROM apiome.mcp_capability_items i
+                 WHERE i.version_id = e.current_version_id AND i.item_type = 'tool'), 0
+            ) AS tool_count
+            FROM apiome.mcp_endpoints e
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+        """
         summary_rows = self.execute_query(summary_q, (tenant_id,))
         grade_rows = self.execute_query(grade_q, (tenant_id,))
         summary = dict(summary_rows[0]) if summary_rows else {}
         summary["grade_distribution"] = {
             str(r["grade"]): int(r["count"]) for r in grade_rows
         }
+        summary["category_rows"] = self.execute_query(category_q, (tenant_id,))
+        summary["transport_rows"] = self.execute_query(transport_q, (tenant_id,))
+        summary["protocol_rows"] = self.execute_query(protocol_q, (tenant_id,))
+        summary["discovery_rows"] = self.execute_query(discovery_q, (tenant_id,))
+        summary["change_leader_rows"] = self.execute_query(change_leader_q, (tenant_id,))
+        summary["top_capability_rows"] = self.execute_query(top_capability_q, (tenant_id,))
+        summary["tool_count_rows"] = self.execute_query(tool_count_q, (tenant_id,))
         return summary
 
     def upsert_repository_import_spec(

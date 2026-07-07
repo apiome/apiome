@@ -34,6 +34,7 @@ import { DiscoveryHealthPanel } from '@/app/components/ui/mcp/DiscoveryHealthPan
 import { ToolLatencyPanel } from '@/app/components/ui/mcp/ToolLatencyPanel';
 import { ScoreBreakdownPanel } from '@/app/components/ui/mcp/ScoreBreakdownPanel';
 import { TrustProfilePanel } from '@/app/components/ui/mcp/TrustProfilePanel';
+import { CatalogAnalyticsDashboard } from '@/app/components/ui/mcp/CatalogAnalyticsDashboard';
 import {
   mcpReliabilityHealthFromPayload,
   mcpToolReliabilityFromPayload,
@@ -48,6 +49,10 @@ import {
   mcpTrustProfileFromPayload,
   type McpTrustProfile,
 } from '@/app/components/ade/dashboard/mcp/mcpTrustUi';
+import {
+  mcpCatalogInsightFromPayload,
+  type McpCatalogInsight,
+} from '@/app/components/ade/dashboard/mcp/mcpCatalogInsightUi';
 import {
   mcpDigestFromPayload,
   type McpEndpointDigest,
@@ -592,6 +597,85 @@ const TRUST_EMPTY_SAMPLE: McpTrustProfile = mcpTrustProfileFromPayload({
   },
 })!;
 
+/** A populated tenant catalog for the CatalogAnalyticsDashboard demo (V2-MCP-32.1). */
+const CATALOG_POPULATED_SAMPLE: McpCatalogInsight = mcpCatalogInsightFromPayload({
+  success: true,
+  endpoint_count: 12,
+  published_count: 7,
+  public_count: 5,
+  private_count: 7,
+  discovered_count: 10,
+  scored_count: 9,
+  average_score: 78.4,
+  type_counts: { tools: 84, resources: 22, resource_templates: 5, prompts: 8, total: 119 },
+  grade_distribution: { A: 3, B: 4, C: 1, D: 1 },
+  category_distribution: [
+    { label: 'search', count: 4 },
+    { label: 'data', count: 3 },
+    { label: 'devtools', count: 3 },
+    { label: 'Uncategorized', count: 2 },
+  ],
+  transport_distribution: [
+    { label: 'streamable_http', count: 8 },
+    { label: 'sse', count: 3 },
+    { label: 'stdio', count: 1 },
+  ],
+  protocol_version_distribution: [
+    { label: '2025-06-18', count: 6 },
+    { label: '2025-03-26', count: 3 },
+    { label: 'Unknown', count: 1 },
+  ],
+  tool_count_distribution: [
+    { label: '0', count: 2 },
+    { label: '1–5', count: 4 },
+    { label: '6–20', count: 4 },
+    { label: '21–50', count: 1 },
+    { label: '50+', count: 1 },
+  ],
+  discovery_health: [
+    { label: 'ok', count: 9 },
+    { label: 'error', count: 1 },
+    { label: 'never', count: 2 },
+  ],
+  change_leaders: [
+    { endpoint_id: 'ep-1', name: 'Acme Search', change_count: 23 },
+    { endpoint_id: 'ep-2', name: 'Data Warehouse', change_count: 14 },
+    { endpoint_id: 'ep-3', name: 'Repo Tools', change_count: 6 },
+  ],
+  top_capabilities: [
+    { item_type: 'tool', item_name: 'search', endpoint_count: 6 },
+    { item_type: 'tool', item_name: 'fetch', endpoint_count: 4 },
+    { item_type: 'resource', item_name: 'readme', endpoint_count: 3 },
+  ],
+})!;
+
+/** An empty tenant catalog → the dashboard's "no servers yet" first-run state. */
+const CATALOG_EMPTY_SAMPLE: McpCatalogInsight = mcpCatalogInsightFromPayload({
+  success: true,
+  endpoint_count: 0,
+  published_count: 0,
+  public_count: 0,
+  private_count: 0,
+  discovered_count: 0,
+  scored_count: 0,
+  average_score: null,
+  type_counts: { tools: 0, resources: 0, resource_templates: 0, prompts: 0, total: 0 },
+  grade_distribution: {},
+  category_distribution: [],
+  transport_distribution: [],
+  protocol_version_distribution: [],
+  tool_count_distribution: [
+    { label: '0', count: 0 },
+    { label: '1–5', count: 0 },
+    { label: '6–20', count: 0 },
+    { label: '21–50', count: 0 },
+    { label: '50+', count: 0 },
+  ],
+  discovery_health: [],
+  change_leaders: [],
+  top_capabilities: [],
+})!;
+
 /**
  * A five-snapshot series for the GradeSurfaceTrendPanel demo (V2-MCP-30.4): a rising score, one
  * **unscored** snapshot (v3 — its score gaps, is not zeroed), and one breaking release (v4).
@@ -1102,6 +1186,31 @@ export default function McpPrimitivesShowcase() {
           Nothing measured yet
         </div>
         <TrustProfilePanel profile={TRUST_EMPTY_SAMPLE} loading={false} error={null} />
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            CatalogAnalyticsDashboard (V2-MCP-32.1)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            The tenant-wide catalog roll-up over <code>insight/catalog</code>: a headline stat row,
+            three <code>Donut</code> mixes (<strong>category</strong>, <strong>transport</strong>,{' '}
+            <strong>grade</strong>), three <code>BarSeries</code> distributions (
+            <strong>protocol version</strong>, <strong>tool count</strong>,{' '}
+            <strong>discovery health</strong>), and two leaderboards — the most-changed servers and the
+            most widely exposed capabilities (a real aggregate standing in for &ldquo;most-searched&rdquo;,
+            which has no backing query log). Owns its loading / error / empty-catalog states.
+          </p>
+        </div>
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Populated catalog
+        </div>
+        <CatalogAnalyticsDashboard data={CATALOG_POPULATED_SAMPLE} loading={false} error={null} />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Empty catalog
+        </div>
+        <CatalogAnalyticsDashboard data={CATALOG_EMPTY_SAMPLE} loading={false} error={null} />
       </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
