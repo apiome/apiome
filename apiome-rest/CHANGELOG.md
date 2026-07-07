@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.95.0] - 2026-07-07
+
+### Added
+- **Catalog inventory export (#4651, V2-MCP-33.2 / MCAT-19.2)** — a tenant-scoped CSV / JSON export
+  of the whole MCP catalog as data (for a spreadsheet or a notebook), not the browse UI.
+  - New route `GET /v1/mcp/{tenant_slug}/endpoints:export?format=csv|json&scope=all|public` streams
+    one flat row per cataloged endpoint: id, name, host, transport, category, visibility, published
+    flag, current grade/score, per-kind capability counts (tools/resources/resource templates/
+    prompts) and their total, last discovery status/time, and a derived **health** label
+    (`healthy` / `failing` / `undiscovered` / `disabled` / `quarantined`).
+  - **Streamed for large catalogs.** The catalog is walked one bounded **keyset page** at a time
+    (`Database.list_mcp_endpoints_export_page`, ordered by primary key) and serialized incrementally
+    by the pure `app.mcp_catalog_inventory` layer, so a large catalog exports without ever holding
+    every row in memory. CSV is written through the stdlib `csv` writer (**RFC-4180 escaping**);
+    JSON is a streamed `{success, tenant_slug, scope, generated_at, endpoints[], count}` wrapper.
+  - **Visibility respected.** Scoping comes from the validated token's tenant — never the URL slug —
+    so the export only ever contains the caller's own catalog. `scope=public` restricts to published
+    endpoints (the published-only variant). **Only each endpoint's host is exported** (via
+    `urlparse().hostname`, which strips any embedded `user:pass@` credential and port) — the stored
+    URL never appears in the output.
+  - The action-style `:export` path (matching the repo's `imports:batch` / `:manifest` convention)
+    avoids colliding with the `endpoints/{endpoint_id}` route.
+
 ## [1.94.0] - 2026-07-07
 
 ### Added

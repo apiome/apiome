@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import jsonschema
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi.responses import StreamingResponse
 from psycopg2 import errors as pg_errors
 
 from .auth import get_authenticated_user_id, validate_authentication
@@ -38,6 +39,7 @@ from .mcp_auth import (
     validate_credential_payload,
 )
 from .mcp_capability_graph import compute_capability_graph
+from .mcp_catalog_inventory import inventory_record, stream_csv, stream_json
 from .mcp_change_severity import severity_counts
 from .mcp_client.normalize import (
     ITEM_TYPE_PROMPT,
@@ -2076,6 +2078,142 @@ async def export_mcp_endpoint_report(
     filename = f"report-card-{slug}" + (f"-v{seq}" if seq is not None else "") + f".{ext}"
     return Response(
         content=body,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ---------------------------------------------------------------------------------------------------
+# Catalog inventory export (V2-MCP-33.2 / MCAT-19.2, #4651).
+#
+# Analysts want the whole catalog as data (a spreadsheet, a notebook), not the browse UI. This route
+# streams a tenant-scoped CSV or JSON of every cataloged endpoint with the key columns — name, host,
+# transport, category, visibility, current grade/score, per-kind capability counts, last discovery
+# status/time, and a derived health label. The catalog is walked one bounded keyset page at a time
+# (:meth:`Database.list_mcp_endpoints_export_page`) and serialized incrementally by the pure
+# :mod:`app.mcp_catalog_inventory` layer, so a large catalog streams without ever loading every row
+# into memory. Visibility is honoured the same way every catalog route honours it — scoping comes
+# from the validated token's tenant, never the URL slug — and only the endpoint *host* is exported
+# (never the stored URL, which may embed a credential). ``scope=public`` is the published-only
+# variant (what a public directory would show).
+# ---------------------------------------------------------------------------------------------------
+
+#: MIME type + file extension per supported inventory format (the query ``format`` selects one).
+_INVENTORY_FORMATS = {
+    "csv": ("text/csv; charset=utf-8", "csv"),
+    "json": ("application/json; charset=utf-8", "json"),
+}
+
+#: Keyset page size for the streaming export — how many endpoints each DB round-trip fetches. Bounds
+#: the export's peak memory to one page regardless of catalog size; a middle-of-the-road value that
+#: keeps the round-trip count low without buffering a large catalog.
+_INVENTORY_PAGE_SIZE = 500
+
+
+def _iter_inventory_records(tenant_id: str, published_only: bool):
+    """Yield every endpoint's inventory record for a tenant, one keyset page at a time (MCAT-19.2).
+
+    Walks :meth:`Database.list_mcp_endpoints_export_page` by primary-key keyset: each page starts
+    after the previous page's last ``id``, so the whole catalog is traversed without an OFFSET (which
+    degrades on large tables) and without ever holding more than one page in memory. Iteration stops
+    on the first short page (fewer rows than the page size), which can only be the last one.
+
+    Args:
+        tenant_id: The caller's token tenant; the sole cross-tenant scoping predicate.
+        published_only: Restrict to published endpoints (the ``scope=public`` variant).
+
+    Yields:
+        One :func:`inventory_record` dict per endpoint, in ``id`` order.
+    """
+    after_id: Optional[str] = None
+    while True:
+        page = db.list_mcp_endpoints_export_page(
+            tenant_id,
+            published_only=published_only,
+            after_id=after_id,
+            limit=_INVENTORY_PAGE_SIZE,
+        )
+        for row in page:
+            yield inventory_record(row)
+        if len(page) < _INVENTORY_PAGE_SIZE:
+            return
+        after_id = str(page[-1]["id"])
+
+
+@mcp_endpoints_router.get("/{tenant_slug}/endpoints:export")
+async def export_mcp_catalog_inventory(
+    tenant_slug: str,
+    format: str = Query(
+        "csv",
+        description="Inventory format: 'csv' or 'json'.",
+    ),
+    scope: str = Query(
+        "all",
+        description=(
+            "'all' exports the tenant's full catalog; 'public' exports only published endpoints "
+            "(the public-directory variant)."
+        ),
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StreamingResponse:
+    """Export the tenant's whole MCP catalog as streamed CSV or JSON data (MCAT-19.2).
+
+    Serializes every cataloged endpoint into a flat inventory row — id, name, host, transport,
+    category, visibility, published flag, current grade/score, per-kind capability counts (and their
+    total), last discovery status/time, and a derived health label — as **CSV** (RFC-4180 escaped)
+    or a **JSON** wrapper whose ``endpoints`` array carries the same fields. The catalog is walked one
+    bounded keyset page at a time and the body is streamed, so a large catalog exports without
+    loading every row into memory.
+
+    Like every catalog route, scoping comes from the validated token's ``tenant_id`` — never the URL
+    slug — so the export only ever contains the caller's own catalog. ``scope=public`` restricts the
+    export to published endpoints (the published-only variant a public directory would show). Only
+    each endpoint's *host* is exported; the stored URL, which may embed a credential, never appears.
+
+    Args:
+        tenant_slug: Informational; scoping comes from the validated token's tenant.
+        format: ``csv`` or ``json`` (``400`` on anything else).
+        scope: ``all`` (full catalog) or ``public`` (published-only); ``400`` on anything else.
+        auth_data: The validated caller identity (also what enforces tenant scoping).
+
+    Returns:
+        A ``StreamingResponse`` carrying the rendered inventory with the right ``Content-Type`` and
+        an ``attachment`` ``Content-Disposition`` filename.
+    """
+    _ = tenant_slug  # scoping comes from the token, not the URL slug
+    fmt = (format or "csv").strip().lower()
+    if fmt not in _INVENTORY_FORMATS:
+        raise HTTPException(
+            status_code=400,
+            detail="unsupported inventory format; use 'csv' or 'json'",
+        )
+    scope_value = (scope or "all").strip().lower()
+    if scope_value not in ("all", "public"):
+        raise HTTPException(
+            status_code=400,
+            detail="unsupported scope; use 'all' or 'public'",
+        )
+    tenant_id = str(auth_data["tenant_id"])
+    published_only = scope_value == "public"
+
+    records = _iter_inventory_records(tenant_id, published_only)
+    if fmt == "json":
+        generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        body_iter = stream_json(
+            records,
+            tenant_slug=str(tenant_slug),
+            scope=scope_value,
+            generated_at=generated_at,
+        )
+    else:
+        body_iter = stream_csv(records)
+
+    media_type, ext = _INVENTORY_FORMATS[fmt]
+    filename = f"catalog-inventory-{_slugify(str(tenant_slug))}" + (
+        "-public" if published_only else ""
+    ) + f".{ext}"
+    return StreamingResponse(
+        body_iter,
         media_type=media_type,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

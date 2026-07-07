@@ -9819,6 +9819,67 @@ class Database:
         """
         return self.execute_query(q, (tenant_id,))
 
+    def list_mcp_endpoints_export_page(
+        self,
+        tenant_id: str,
+        *,
+        published_only: bool = False,
+        after_id: Optional[str] = None,
+        limit: int = 500,
+    ) -> List[Dict[str, Any]]:
+        """Fetch one keyset page of a tenant's catalog, enriched for inventory export (MCAT-19.2).
+
+        The streaming source for the catalog inventory export (#4651). Each row is the same
+        enrichment :meth:`browse_mcp_endpoints` produces — the endpoint joined to its *current*
+        snapshot's ``score`` / ``grade`` and its per-kind capability tallies — plus the
+        ``enabled`` / ``consecutive_failures`` columns the export's derived *health* label needs.
+        Unlike browse, rows are ordered by the primary key ``e.id`` and windowed by a **keyset**
+        predicate (``e.id > after_id``), so the export route can walk the whole catalog one bounded
+        page at a time and never hold every row in memory. ``id`` ordering (a uuid) is stable and
+        unique, so the keyset never skips or repeats a row across pages.
+
+        Args:
+            tenant_id: The caller's token tenant; the sole cross-tenant scoping predicate, so the
+                export never leaks another tenant's catalog.
+            published_only: When true, restrict to ``published = TRUE`` — the public-directory
+                variant, which exports only endpoints the tenant has published.
+            after_id: Keyset cursor; return only endpoints whose ``id`` sorts strictly after this
+                one. ``None`` (the default) starts from the first page.
+            limit: Maximum rows in this page.
+
+        Returns:
+            Up to ``limit`` enriched endpoint rows, ordered by ``id`` ascending. A short (or empty)
+            page signals the caller that the catalog is exhausted.
+        """
+        clauses = ["e.tenant_id = %s::uuid", "e.deleted_at IS NULL"]
+        params: List[Any] = [tenant_id]
+        if published_only:
+            clauses.append("e.published = TRUE")
+        if after_id:
+            clauses.append("e.id > %s::uuid")
+            params.append(after_id)
+        where = " AND ".join(clauses)
+        params.append(int(limit))
+        q = f"""
+            SELECT e.id, e.name, e.endpoint_url, e.transport, e.category,
+                   e.visibility, e.published, e.enabled,
+                   e.last_discovered_at, e.last_discovery_status,
+                   e.consecutive_failures, e.quarantined_at, e.current_version_id,
+                   s.score, s.grade,
+                   COUNT(ci.id) FILTER (WHERE ci.item_type = 'tool')              AS tool_count,
+                   COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource')          AS resource_count,
+                   COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource_template') AS resource_template_count,
+                   COUNT(ci.id) FILTER (WHERE ci.item_type = 'prompt')            AS prompt_count
+            FROM apiome.mcp_endpoints e
+            LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
+            LEFT JOIN apiome.mcp_capability_items ci ON ci.version_id = e.current_version_id
+            WHERE {where}
+            GROUP BY e.id, s.score, s.grade
+            ORDER BY e.id ASC
+            LIMIT %s
+        """
+        return self.execute_query(q, tuple(params))
+
     # -----------------------------------------------------------------------
     # MCP Catalog — capability search index & query (MCAT-9.2, #3692)
     # -----------------------------------------------------------------------
