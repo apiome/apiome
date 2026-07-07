@@ -24,6 +24,7 @@ import type { McpServerProfile, McpToolComplexity } from '@/app/components/ade/d
 import type { McpCapabilityItem } from '@/app/components/ade/dashboard/mcp/mcpBrowseUi';
 import { ToolComplexityPanel } from '@/app/components/ui/mcp/ToolComplexityPanel';
 import { SafetyPosturePanel } from '@/app/components/ui/mcp/SafetyPosturePanel';
+import { DocCoveragePanel } from '@/app/components/ui/mcp/DocCoveragePanel';
 // The Monaco-backed code-viewer primitives were promoted out of `ui/mcp` to the format-neutral
 // `ui/code` module (MFI-28.7); the gallery documents them under those neutral names.
 import { JsonViewer, JsonDiffViewer, Disclosure } from '@/app/components/ui/code';
@@ -194,6 +195,52 @@ const SAFETY_TOOLS_UNANNOTATED: McpCapabilityItem[] = [
   galleryTool('do_other', {}),
 ];
 
+/** A mixed-documentation surface for the coverage gauges: some items/params documented, some not. */
+const DOC_COVERAGE_SAMPLE: McpCapabilityItem[] = [
+  {
+    item_type: 'tool',
+    name: 'search',
+    title: 'Search',
+    description: 'Full-text search over the catalog.',
+    uri: null,
+    uri_template: null,
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'The text to search for.' },
+        limit: { type: 'number' },
+      },
+    },
+    output_schema: { type: 'object' },
+    annotations: null,
+    ordinal: 0,
+  },
+  {
+    item_type: 'tool',
+    name: 'delete_record',
+    title: null,
+    description: null,
+    uri: null,
+    uri_template: null,
+    input_schema: { type: 'object', properties: { id: { type: 'string' } } },
+    output_schema: null,
+    annotations: null,
+    ordinal: 1,
+  },
+  {
+    item_type: 'resource',
+    name: 'catalog_index',
+    title: 'Catalog index',
+    description: 'The full catalog index resource.',
+    uri: 'catalog://index',
+    uri_template: null,
+    input_schema: null,
+    output_schema: null,
+    annotations: null,
+    ordinal: 2,
+  },
+];
+
 export default function McpPrimitivesShowcase() {
   return (
     <main className="mx-auto max-w-4xl space-y-6 p-8">
@@ -316,6 +363,24 @@ export default function McpPrimitivesShowcase() {
           Fully unannotated surface
         </div>
         <SafetyPosturePanel items={SAFETY_TOOLS_UNANNOTATED} authType="bearer" loading={false} error={null} />
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            DocCoveragePanel (V2-MCP-29.5)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            A gauge row for a snapshot&apos;s documentation quality — % of items described / titled, %
+            of tool parameters documented, and output-schema adoption. Each gauge drills down to the
+            specific under-documented items; a tool-less surface renders an explicit N/A rather than a
+            misleading 0%.
+          </p>
+        </div>
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Mixed coverage (drill-downs populated)
+        </div>
+        <DocCoveragePanel items={DOC_COVERAGE_SAMPLE} loading={false} error={null} />
       </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">

@@ -15,7 +15,7 @@ keeps a central dark theme (10.10) addable in one place.
 | Layer | Path | What |
 | --- | --- | --- |
 | Pure helpers (React-free, unit-tested) | `src/app/components/ade/dashboard/mcp/mcpUiPrimitives.ts` | Grade styles, badge-tone resolvers, health/recency, tab definitions |
-| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `FindingSeverity`, `DetailTabs` |
+| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `FindingSeverity`, `DetailTabs` |
 | Shared states | `src/app/components/ui/{EmptyState,LoadingState,ErrorState}.tsx` | empty / loading / error placeholders |
 | Barrel | `@/app/components/ui/mcp` (also re-exported from `@/app/components/ui`) | one import for all MCP primitives |
 
@@ -153,6 +153,27 @@ React-free, unit-tested `mcpSafetyPostureUi` module, reusing `mcpAnnotationHints
   loading={itemsLoading}
   error={itemsError}
 />
+```
+
+### `<DocCoveragePanel>` (V2-MCP-29.5 / MCAT-15.5)
+
+The **documentation & schema coverage** meters on the endpoint **Insight** tab — a four-gauge row that
+makes a server's otherwise-invisible documentation quality legible: **% of items described**, **% of
+items titled**, **% of tool parameters documented**, and **output-schema adoption** across tools. Each
+gauge is a **drill-down**: expanding it lists the *specific* under-documented items behind the
+percentage (the params gauge names each tool with its `N of M undocumented` tally), so a coverage number
+is one click from the items that fall short. A meter with nothing to measure — a tool-less server has no
+parameters or output schemas — renders an explicit **N/A** rather than a misleading red `0%`, keeping a
+`0%` reading meaning "measured, none covered".
+
+It is purely presentational — it reads the snapshot's capability `items` (the same fetch the safety
+panel uses), so a gauge's percentage and its drill-down are computed from one source and can never
+disagree. All counting, the offender lists, and the not-applicable resolution live in the React-free,
+unit-tested `mcpDocCoverageUi` module; the gauge itself is the shared `<Gauge>` chart primitive
+(`0–100` auto-colors by score band). It handles its own loading / error / no-capability states.
+
+```tsx
+<DocCoveragePanel items={items} loading={itemsLoading} error={itemsError} />
 ```
 
 ### `<FindingSeverity>`

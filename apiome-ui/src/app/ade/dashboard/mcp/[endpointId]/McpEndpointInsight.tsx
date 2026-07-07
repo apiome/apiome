@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   BarChart3,
+  BookOpen,
   Layers,
   ListTree,
   Loader2,
@@ -19,6 +20,7 @@ import { ServerProfileCard } from "@/app/components/ui/mcp/ServerProfileCard";
 import { CapabilityGraphPanel } from "@/app/components/ui/mcp/CapabilityGraphPanel";
 import { ToolComplexityPanel } from "@/app/components/ui/mcp/ToolComplexityPanel";
 import { SafetyPosturePanel } from "@/app/components/ui/mcp/SafetyPosturePanel";
+import { DocCoveragePanel } from "@/app/components/ui/mcp/DocCoveragePanel";
 import { dashboardPanelPaddedClass } from "@/app/components/ade/dashboard/dashboardScreenClasses";
 import {
   mcpVersionDetailFromPayload,
@@ -32,7 +34,6 @@ import {
   type McpVersionSummary,
 } from "@/app/components/ade/dashboard/mcp/mcpVersionsUi";
 import {
-  mcpCoverageStats,
   mcpInsightSurfaceFromPayload,
   mcpServerProfileFrom,
   mcpTypeCountTiles,
@@ -180,51 +181,13 @@ function CountTile({ label, value }: { label: string; value: number }) {
   );
 }
 
-/** A single documentation-coverage meter (label, percentage bar, and the raw have/of counts). */
-function CoverageMeter({
-  label,
-  pct,
-  have,
-  of,
-}: {
-  label: string;
-  pct: number;
-  have: number;
-  of: number;
-}) {
-  return (
-    <div className={dashboardPanelPaddedClass}>
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-          {label}
-        </span>
-        <span className="text-sm font-semibold tabular-nums text-gray-900 dark:text-white">
-          {pct}%
-        </span>
-      </div>
-      <div
-        className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
-        role="progressbar"
-        aria-valuenow={pct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={label}
-      >
-        <div className="h-full rounded-full bg-indigo-500" style={{ width: `${pct}%` }} />
-      </div>
-      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 tabular-nums">
-        {have} / {of}
-      </div>
-    </div>
-  );
-}
-
 /**
- * The live baseline the scaffold renders for the selected snapshot: total-capability headline, the
- * per-kind count tiles, and the documentation-coverage meters. This is the real 14.2 data proving
- * the lazy fetch and version-selector re-fetch work; the 15.x panels build richer views on the same
- * source. Handles its own loading / error / empty (zero-capability) states so a slow or missing
- * surface never blanks the whole tab.
+ * The live baseline the scaffold renders for the selected snapshot: total-capability headline and the
+ * per-kind count tiles. This is the real 14.2 data proving the lazy fetch and version-selector
+ * re-fetch work; the 15.x panels build richer views on the same source (documentation coverage now
+ * lives in its own {@link DocCoveragePanel} below, so the baseline no longer duplicates those meters).
+ * Handles its own loading / error / empty (zero-capability) states so a slow or missing surface never
+ * blanks the whole tab.
  */
 function SurfaceBaseline({
   surface,
@@ -251,7 +214,6 @@ function SurfaceBaseline({
   if (!surface) return null;
 
   const tiles = mcpTypeCountTiles(surface.metrics.type_counts);
-  const coverage = mcpCoverageStats(surface.metrics);
   const total = surface.metrics.type_counts.total;
 
   return (
@@ -274,24 +236,11 @@ function SurfaceBaseline({
           description="This snapshot declares no tools, resources, or prompts to summarize."
         />
       ) : (
-        <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {tiles.map((tile) => (
-              <CountTile key={tile.key} label={tile.label} value={tile.value} />
-            ))}
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {coverage.map((stat) => (
-              <CoverageMeter
-                key={stat.key}
-                label={stat.label}
-                pct={stat.pct}
-                have={stat.have}
-                of={stat.of}
-              />
-            ))}
-          </div>
-        </>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {tiles.map((tile) => (
+            <CountTile key={tile.key} label={tile.label} value={tile.value} />
+          ))}
+        </div>
       )}
     </div>
   );
@@ -700,6 +649,22 @@ export default function McpEndpointInsight({
                   loading={itemsLoading}
                   error={itemsError}
                 />
+              </div>
+              {/* Documentation & schema coverage (MCAT-15.5) — the gauge row (% described / titled /
+                  params documented / output-schema adoption), each drill-down-able to the specific
+                  under-documented items. Reads the same snapshot capability items as the safety panel. */}
+              <div className={dashboardPanelPaddedClass}>
+                <div className="mb-3">
+                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+                    <BookOpen className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+                    Documentation &amp; schema coverage
+                  </h4>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    How well this snapshot is documented — descriptions, titles, parameter docs, and
+                    output-schema adoption — each meter linking to the items that fall short.
+                  </p>
+                </div>
+                <DocCoveragePanel items={items} loading={itemsLoading} error={itemsError} />
               </div>
             </div>
           ) : null}

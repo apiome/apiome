@@ -207,7 +207,7 @@ is document-local only.
 | **V2-MCP-EPIC-26** | MCAT-EPIC-12 | Official MCP Registry Integration | 12.1–12.4 | ○ v2 |
 | **V2-MCP-EPIC-27** | MCAT-EPIC-13 | Notifications, Webhooks & Observability | 13.1–13.4 | ○ v2 |
 | **V2-MCP-EPIC-28** | MCAT-EPIC-14 | Insight Data Layer & Visualization Foundation | 14.1–14.4 | ✅ done |
-| **V2-MCP-EPIC-29** | MCAT-EPIC-15 | Server Profile & Capability-Surface Visualization | 15.1–15.5 | ◐ next (§10) |
+| **V2-MCP-EPIC-29** | MCAT-EPIC-15 | Server Profile & Capability-Surface Visualization | 15.1–15.5 | ✅ done |
 | **V2-MCP-EPIC-30** | MCAT-EPIC-16 | Surface Evolution & Change Analytics | 16.1–16.5 | ◐ next (§10) |
 | **V2-MCP-EPIC-31** | MCAT-EPIC-17 | Reliability, Latency & Trust Signals | 17.1–17.4 | ◐ next (§10) |
 | **V2-MCP-EPIC-32** | MCAT-EPIC-18 | Catalog-wide Analytics, Comparison & Semantic Discovery | 18.1–18.5 | ○ v2 (§10) |
@@ -1222,7 +1222,7 @@ small, token-driven SVG chart kit rather than pulling a heavyweight dependency.
 | Created as | Local | Theme | Issues | Weight |
 |---|---|---|---|---|
 | **V2-MCP-EPIC-28** | MCAT-EPIC-14 | Insight Data Layer & Visualization Foundation | 14.1–14.4 | ✅ done |
-| **V2-MCP-EPIC-29** | MCAT-EPIC-15 | Server Profile & Capability-Surface Visualization | 15.1–15.5 | ◐ next |
+| **V2-MCP-EPIC-29** | MCAT-EPIC-15 | Server Profile & Capability-Surface Visualization | 15.1–15.5 | ✅ done |
 | **V2-MCP-EPIC-30** | MCAT-EPIC-16 | Surface Evolution & Change Analytics | 16.1–16.5 | ◐ next |
 | **V2-MCP-EPIC-31** | MCAT-EPIC-17 | Reliability, Latency & Trust Signals | 17.1–17.4 | ◐ next |
 | **V2-MCP-EPIC-32** | MCAT-EPIC-18 | Catalog-wide Analytics, Comparison & Semantic Discovery | 18.1–18.5 | ○ v2 |
@@ -1342,9 +1342,9 @@ _All Epic-14 items are complete (14.1–14.4); the render-side epics 15–17 bui
 The single-server "informative" view: at a glance, understand a server's **shape, safety, and
 documentation quality** — not just its list of offerings.
 
-| Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
-|---|---|---|---|:--:|:--:|---|---|
-| 15.5 | Documentation & schema coverage meters | Gauges: % described, % titled, % params documented, output-schema adoption | `mcp-insights` `frontend` | Y | Y | ● | apiome-ui |
+_All Epic-15 items are complete (15.1–15.5); the Insight tab's capability-surface section now hosts
+the identity card, relationship graph, complexity cards, safety posture, and documentation-coverage
+meters._
 
 ### MCAT-15.1 — Server identity / at-a-glance profile card  ·  **#4631**  ·  ✅ Done (apiome-ui 0.68.0)
 - **Problem.** The Overview tab lists offerings but there is no single "who is this server" summary.
@@ -1423,12 +1423,27 @@ documentation quality** — not just its list of offerings.
 - **Dependencies / Parallelism.** After 14.1/14.3/14.4. Parallel with 15.2/15.3/15.5.
 - **Technical Stack.** Next.js, MCP annotation helpers.
 
-### MCAT-15.5 — Documentation & schema coverage meters  ·  **#4635**
+### MCAT-15.5 — Documentation & schema coverage meters  ·  **#4635**  ·  ✅ Done (apiome-ui 0.72.0)
 - **Problem.** Poorly documented tools are hard for both humans and agents to use well; coverage is
   invisible today.
 - **Solution / Scope.** Gauge/meter row from 14.1: % of items with `description`, % with `title`, %
   of tool parameters carrying descriptions, % of tools declaring an `output_schema`. Each meter links
   to the specific under-documented items.
+- **Delivered.** UI-only. New pure, React-free `mcpDocCoverageUi` module computes all four meters —
+  item **description** & **title** coverage (over every capability kind), tool **parameter
+  documentation** (from each tool's `input_schema.properties`), and **output-schema adoption** (over
+  tools) — from the single snapshot `items` list, so each meter's percentage and its **drill-down**
+  offenders (the items excluded from the numerator, in surface order) are guaranteed consistent. A
+  meter with no denominator (a tool-less server has no parameters/output schemas) is marked
+  **not-applicable** and renders an explicit **N/A**, so a `0%` reading unambiguously means "measured,
+  none covered". New `DocCoveragePanel` client component renders the four-gauge row on the shared
+  `<Gauge>` primitive (auto-colored by score band), each drill-down-able to its under-documented items
+  (the params gauge naming each tool's `N of M undocumented` tally), with an "all documented" state at
+  100%. Wired into `McpEndpointInsight`'s surface section, reusing the safety panel's `items` fetch;
+  the scaffold's now-superseded baseline coverage-meter row was removed so the four percentages are
+  shown once, from one source. Unit-tested (`mcp-doc-coverage-ui.test.ts`), component-tested
+  (`mcp-doc-coverage-panel.test.tsx`), plus an Insight-tab wiring test; design-system gallery section +
+  `MCP_UI_PRIMITIVES.md` entry.
 - **Acceptance Criteria.** Meters match fixture coverage; drill-down lists the offending items;
   100%/0% render correctly.
 - **Dependencies / Parallelism.** After 14.1/14.3/14.4. Parallel with 15.2–15.4.
