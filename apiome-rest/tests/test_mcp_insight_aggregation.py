@@ -10,10 +10,12 @@ import pytest
 
 from app.mcp_insight_aggregation import (
     DISCOVERY_TIMELINE_WINDOW,
+    TOOL_LATENCY_WINDOW_DAYS,
     compute_discovery_reliability,
     compute_discovery_timeline,
     compute_invocation_reliability,
     compute_latency_stats,
+    compute_tool_reliability,
     percentile_cont,
 )
 
@@ -282,3 +284,103 @@ def test_discovery_timeline_caps_to_window_and_flags_truncation():
 def test_discovery_timeline_default_window_is_the_module_constant():
     tl = compute_discovery_timeline([])
     assert tl.window == DISCOVERY_TIMELINE_WINDOW
+
+
+# ---------------------------------------------------------------------------
+# compute_tool_reliability (V2-MCP-31.2 / MCAT-17.2)
+# ---------------------------------------------------------------------------
+
+
+def _tool_call(item_name, is_error, latency_ms):
+    return {"item_name": item_name, "is_error": is_error, "latency_ms": latency_ms}
+
+
+def test_tool_reliability_percentiles_and_error_rates_match_fixture():
+    # search: 4 calls (1 error), latencies [10, 20, 30, 40] → p50 = 25.0, error_rate = 0.25
+    # write:  2 calls (2 errors), latencies [100, 300]      → p50 = 200.0, error_rate = 1.0
+    rows = [
+        _tool_call("search", False, 10),
+        _tool_call("search", False, 20),
+        _tool_call("search", True, 30),
+        _tool_call("search", False, 40),
+        _tool_call("write", True, 100),
+        _tool_call("write", True, 300),
+    ]
+    rel = compute_tool_reliability(rows, window_days=7)
+
+    assert rel.window_days == 7
+    assert rel.tool_count == 2
+    assert rel.call_count == 6
+    assert rel.error_count == 3
+    assert rel.success_count == 3
+    assert rel.error_rate == pytest.approx(0.5)
+
+    # Busiest tool first (search has 4 calls, write has 2).
+    by_name = {tool.tool_name: tool for tool in rel.tools}
+    assert [tool.tool_name for tool in rel.tools] == ["search", "write"]
+
+    search = by_name["search"]
+    assert search.call_count == 4
+    assert search.error_count == 1
+    assert search.error_rate == pytest.approx(0.25)
+    assert search.latency.p50_ms == pytest.approx(25.0)  # rank 1.5 → 20 + .5*(30-20)
+    assert search.latency.min_ms == 10.0
+    assert search.latency.max_ms == 40.0
+
+    write = by_name["write"]
+    assert write.error_rate == pytest.approx(1.0)
+    assert write.latency.p50_ms == pytest.approx(200.0)
+
+
+def test_tool_reliability_empty_is_no_data():
+    rel = compute_tool_reliability([])
+    assert rel.tools == []
+    assert rel.tool_count == 0
+    assert rel.call_count == 0
+    assert rel.error_rate == 0.0
+    assert rel.window_days == TOOL_LATENCY_WINDOW_DAYS
+    # The distribution is still the full, all-zero bucket set (a stable chart shape).
+    assert [bucket.count for bucket in rel.latency_distribution] == [0] * len(
+        rel.latency_distribution
+    )
+    assert rel.as_dict()["tools"] == []
+
+
+def test_tool_reliability_single_call_tool_has_no_divide_by_zero():
+    rel = compute_tool_reliability([_tool_call("solo", False, 42)])
+    assert rel.tool_count == 1
+    solo = rel.tools[0]
+    assert solo.call_count == 1
+    assert solo.error_rate == 0.0
+    # A one-sample percentile is that sample; no ZeroDivisionError anywhere.
+    assert solo.latency.count == 1
+    assert solo.latency.p50_ms == pytest.approx(42.0)
+    assert solo.latency.p95_ms == pytest.approx(42.0)
+    assert solo.latency.p99_ms == pytest.approx(42.0)
+
+
+def test_tool_reliability_latency_distribution_buckets_by_range():
+    # Boundaries are exclusive uppers: 40→[0-50), 50→[50-100), 250→[250-500), 3000→[2.5s+].
+    rows = [
+        _tool_call("t", False, 40),
+        _tool_call("t", False, 50),
+        _tool_call("t", False, 250),
+        _tool_call("t", False, 3000),
+        _tool_call("t", True, None),  # no latency → not in the distribution
+    ]
+    rel = compute_tool_reliability(rows)
+    dist = {bucket.label: bucket.count for bucket in rel.latency_distribution}
+    assert dist["0–50 ms"] == 1  # 40
+    assert dist["50–100 ms"] == 1  # 50 (upper of the previous bucket is exclusive)
+    assert dist["250–500 ms"] == 1  # 250
+    assert dist["2.5 s+"] == 1  # 3000
+    # Only the four calls with a recorded latency are bucketed.
+    assert sum(dist.values()) == 4
+
+
+def test_tool_reliability_missing_item_name_bucketed_as_unknown():
+    rel = compute_tool_reliability([_tool_call(None, False, 5), _tool_call("", True, 6)])
+    assert rel.tool_count == 1
+    assert rel.tools[0].tool_name == "(unknown)"
+    assert rel.tools[0].call_count == 2
+    assert rel.call_count == 2  # totals never disagree with the per-tool breakdown

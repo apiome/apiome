@@ -31,9 +31,12 @@ import type { McpEvolutionPoint } from '@/app/components/ade/dashboard/mcp/mcpEv
 import { CapabilityPresenceMatrixPanel } from '@/app/components/ui/mcp/CapabilityPresenceMatrixPanel';
 import { ChangedSinceDigestPanel } from '@/app/components/ui/mcp/ChangedSinceDigestPanel';
 import { DiscoveryHealthPanel } from '@/app/components/ui/mcp/DiscoveryHealthPanel';
+import { ToolLatencyPanel } from '@/app/components/ui/mcp/ToolLatencyPanel';
 import {
   mcpReliabilityHealthFromPayload,
+  mcpToolReliabilityFromPayload,
   type McpDiscoveryHealth,
+  type McpToolReliability,
 } from '@/app/components/ade/dashboard/mcp/mcpReliabilityUi';
 import {
   mcpDigestFromPayload,
@@ -430,6 +433,52 @@ const HEALTH_QUARANTINED_SAMPLE: McpDiscoveryHealth = mcpReliabilityHealthFromPa
 /** A never-discovered endpoint: empty timeline → the panel's empty state. */
 const HEALTH_EMPTY_SAMPLE: McpDiscoveryHealth = mcpReliabilityHealthFromPayload({
   health: { timeline: [], window: 50 },
+})!;
+
+/** One per-tool reliability row for the tool-latency demos (V2-MCP-31.2). */
+function toolStat(
+  name: string,
+  callCount: number,
+  errorCount: number,
+  p50: number,
+  p95: number,
+  p99: number,
+): Record<string, unknown> {
+  return {
+    tool_name: name,
+    call_count: callCount,
+    error_count: errorCount,
+    success_count: callCount - errorCount,
+    error_rate: callCount ? errorCount / callCount : 0,
+    latency: { count: callCount, avg_ms: p50, min_ms: p50, max_ms: p99, p50_ms: p50, p95_ms: p95, p99_ms: p99 },
+  };
+}
+
+/** A tested server with a fast, reliable tool and a slow, flaky one. */
+const TOOLS_POPULATED_SAMPLE: McpToolReliability = mcpToolReliabilityFromPayload({
+  tools: {
+    tools: [
+      toolStat('search', 42, 1, 45, 120, 180),
+      toolStat('geocode', 30, 0, 12, 28, 40),
+      toolStat('write_record', 8, 3, 640, 1200, 1500),
+      toolStat('summarize', 15, 2, 320, 780, 900),
+    ],
+    latency_distribution: [
+      { label: '0–50 ms', upper_ms: 50, count: 40 },
+      { label: '50–100 ms', upper_ms: 100, count: 22 },
+      { label: '100–250 ms', upper_ms: 250, count: 18 },
+      { label: '250–500 ms', upper_ms: 500, count: 9 },
+      { label: '500 ms–1 s', upper_ms: 1000, count: 4 },
+      { label: '1–2.5 s', upper_ms: 2500, count: 2 },
+      { label: '2.5 s+', upper_ms: null, count: 0 },
+    ],
+    window_days: 30,
+  },
+})!;
+
+/** A never-tested endpoint: no tool calls → the panel's empty state. */
+const TOOLS_EMPTY_SAMPLE: McpToolReliability = mcpToolReliabilityFromPayload({
+  tools: { tools: [], latency_distribution: [], window_days: 30 },
 })!;
 
 /**
@@ -868,6 +917,29 @@ export default function McpPrimitivesShowcase() {
           No discovery history yet
         </div>
         <DiscoveryHealthPanel health={HEALTH_EMPTY_SAMPLE} loading={false} error={null} />
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            ToolLatencyPanel (V2-MCP-31.2)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            How fast and how reliable is each tool? From the <code>tools</code> block of{' '}
+            <code>insight/reliability</code>: an <strong>error-rate</strong> headline over the
+            window, a <code>BarSeries</code> <strong>latency distribution</strong>, and a{' '}
+            <strong>slowest</strong> (by p95) and <strong>flakiest</strong> (by error rate) tool
+            ranking with each tool&apos;s p50/p95/p99. Has populated and empty (never-tested) states.
+          </p>
+        </div>
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Populated (a fast tool and a slow, flaky one)
+        </div>
+        <ToolLatencyPanel reliability={TOOLS_POPULATED_SAMPLE} loading={false} error={null} />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          No tool calls yet
+        </div>
+        <ToolLatencyPanel reliability={TOOLS_EMPTY_SAMPLE} loading={false} error={null} />
       </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">

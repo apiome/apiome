@@ -16,6 +16,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Sparkles,
+  Timer,
 } from "lucide-react";
 import { Badge } from "@/app/components/ui/Badge";
 import { LoadingState } from "@/app/components/ui/LoadingState";
@@ -30,6 +31,7 @@ import { CapabilityPresenceMatrixPanel } from "@/app/components/ui/mcp/Capabilit
 import { GradeSurfaceTrendPanel } from "@/app/components/ui/mcp/GradeSurfaceTrendPanel";
 import { ChangedSinceDigestPanel } from "@/app/components/ui/mcp/ChangedSinceDigestPanel";
 import { DiscoveryHealthPanel } from "@/app/components/ui/mcp/DiscoveryHealthPanel";
+import { ToolLatencyPanel } from "@/app/components/ui/mcp/ToolLatencyPanel";
 import { dashboardPanelPaddedClass } from "@/app/components/ade/dashboard/dashboardScreenClasses";
 import {
   mcpVersionDetailFromPayload,
@@ -63,7 +65,9 @@ import {
 } from "@/app/components/ade/dashboard/mcp/mcpDigestUi";
 import {
   mcpReliabilityHealthFromPayload,
+  mcpToolReliabilityFromPayload,
   type McpDiscoveryHealth,
+  type McpToolReliability,
 } from "@/app/components/ade/dashboard/mcp/mcpReliabilityUi";
 
 interface Props {
@@ -145,10 +149,10 @@ const INSIGHT_SECTIONS: InsightSectionDef[] = [
     title: "Reliability & trust",
     subtitle: "Whether the server is healthy, fast, and trustworthy.",
     icon: ShieldCheck,
-    // "Discovery health & availability timeline" (MCAT-17.1) now lands as a live panel in this
-    // section's body; the latency and trust-radar panels are still reserved for 17.2 / 17.4.
+    // "Discovery health & availability timeline" (MCAT-17.1) and the "Tool latency & error-rate
+    // panel" (MCAT-17.2) now both land as live panels in this section's body; the trust-radar panel
+    // is still reserved for 17.4.
     reserved: [
-      { key: "latency", title: "Latency & error-rate panel", hint: "p50/p95/p99 latency and error ratio per tool." },
       { key: "trust", title: "Composite trust radar", hint: "Quality, safety, docs, stability, responsiveness." },
     ],
   },
@@ -381,6 +385,11 @@ export default function McpEndpointInsight({
   const [health, setHealth] = useState<McpDiscoveryHealth | null>(null);
   const [healthLoading, setHealthLoading] = useState(true);
   const [healthError, setHealthError] = useState<string | null>(null);
+  /**
+   * The endpoint's per-tool latency & error-rate breakdown (MCAT-17.2), parsed from the *same*
+   * reliability fetch as the discovery health above — it shares that fetch's loading / error state.
+   */
+  const [tools, setTools] = useState<McpToolReliability | null>(null);
   /** Guards the one-time seen-marker advance so it fires once per load, after the digest is read. */
   const viewRecordedRef = useRef(false);
   const mountedRef = useRef(true);
@@ -654,9 +663,11 @@ export default function McpEndpointInsight({
     };
   }, [endpointId]);
 
-  // Fetch the endpoint's discovery health & availability timeline once (it is endpoint-level, not
-  // per-snapshot) for the reliability section. A never-discovered endpoint yields an empty timeline
-  // (a 200), which the panel renders as its "no history yet" state rather than an error.
+  // Fetch the endpoint's reliability aggregates once (endpoint-level, not per-snapshot) for the
+  // reliability section — it feeds both the discovery health timeline (MCAT-17.1) and the per-tool
+  // latency & error-rate panel (MCAT-17.2) from a single read. A never-discovered / never-tested
+  // endpoint yields an empty timeline and empty tool list (a 200), which each panel renders as its
+  // own "no data yet" state rather than an error.
   useEffect(() => {
     let active = true;
     setHealthLoading(true);
@@ -673,10 +684,12 @@ export default function McpEndpointInsight({
         }
         if (!active) return;
         setHealth(mcpReliabilityHealthFromPayload(data));
+        setTools(mcpToolReliabilityFromPayload(data));
       } catch (e) {
         if (!active) return;
         setHealth(null);
-        setHealthError(e instanceof Error ? e.message : "Could not load discovery health.");
+        setTools(null);
+        setHealthError(e instanceof Error ? e.message : "Could not load reliability.");
       } finally {
         if (active) setHealthLoading(false);
       }
@@ -995,6 +1008,26 @@ export default function McpEndpointInsight({
                 </div>
                 <DiscoveryHealthPanel
                   health={health}
+                  loading={healthLoading}
+                  error={healthError}
+                />
+              </div>
+              {/* Tool latency & error-rate panel (MCAT-17.2) — per-tool p50/p95/p99 latency and
+                  error ratio, a latency distribution, and the slowest / flakiest tool rankings over
+                  a recent window. Parsed from the same insight/reliability read as the health panel. */}
+              <div className={dashboardPanelPaddedClass}>
+                <div className="mb-3">
+                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+                    <Timer className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+                    Tool latency &amp; error rate
+                  </h4>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    How fast and how reliable each tool is when called — p50/p95/p99 latency and
+                    error ratio per tool, a latency distribution, and the slowest and flakiest tools.
+                  </p>
+                </div>
+                <ToolLatencyPanel
+                  reliability={tools}
                   loading={healthLoading}
                   error={healthError}
                 />

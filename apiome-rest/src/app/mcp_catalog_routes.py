@@ -50,9 +50,11 @@ from .mcp_discovery_engine import (
 )
 from .mcp_insight_aggregation import (
     DISCOVERY_TIMELINE_WINDOW,
+    TOOL_LATENCY_WINDOW_DAYS,
     compute_discovery_reliability,
     compute_discovery_timeline,
     compute_invocation_reliability,
+    compute_tool_reliability,
 )
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
 from .mcp_score import score_mcp_surface
@@ -89,6 +91,7 @@ from .models import (
     McpSearchResponse,
     McpSearchScope,
     McpSearchVisibility,
+    McpToolInvocationReliabilityOut,
     McpTypeCountsOut,
     McpVersionChangesResponse,
     McpVersionCompareResponse,
@@ -1727,9 +1730,12 @@ async def get_mcp_endpoint_insight_reliability(
     jobs, and run-latency statistics; ``invocation`` folds ``mcp_test_invocations`` into call/error
     tallies, an error rate, and latency percentiles (p50/p95/p99). ``health`` (MCAT-17.1) adds the
     recent per-job outcome timeline (newest-first, capped at the timeline window), a windowed
-    availability percentage, and the endpoint's live quarantine / backoff state. An endpoint with no
-    discovery or test history returns zero counts, an empty timeline, and empty (``None``) statistics
-    — a ``200``, never a ``500``. Returns ``404`` when the endpoint is not the caller's tenant's.
+    availability percentage, and the endpoint's live quarantine / backoff state. ``tools``
+    (MCAT-17.2) adds a per-tool latency & error-rate breakdown over the recent
+    :data:`TOOL_LATENCY_WINDOW_DAYS`-day window — p50/p95/p99 and error rate per tool, a latency
+    distribution, and the endpoint-wide totals. An endpoint with no discovery or test history returns
+    zero counts, an empty timeline, an empty tool list, and empty (``None``) statistics — a ``200``,
+    never a ``500``. Returns ``404`` when the endpoint is not the caller's tenant's.
     """
     _ = tenant_slug
     endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
@@ -1740,11 +1746,16 @@ async def get_mcp_endpoint_insight_reliability(
         db.list_mcp_discovery_job_timeline(str(endpoint_id), DISCOVERY_TIMELINE_WINDOW),
         window=DISCOVERY_TIMELINE_WINDOW,
     )
+    tools = compute_tool_reliability(
+        db.list_mcp_tool_invocation_stats(str(endpoint_id), TOOL_LATENCY_WINDOW_DAYS),
+        window_days=TOOL_LATENCY_WINDOW_DAYS,
+    )
     return McpInsightReliabilityResponse(
         endpoint_id=str(endpoint_id),
         discovery=McpDiscoveryReliabilityOut.model_validate(discovery.as_dict()),
         invocation=McpInvocationReliabilityOut.model_validate(invocation.as_dict()),
         health=mcp_discovery_health_out(timeline.as_dict(), endpoint),
+        tools=McpToolInvocationReliabilityOut.model_validate(tools.as_dict()),
     )
 
 

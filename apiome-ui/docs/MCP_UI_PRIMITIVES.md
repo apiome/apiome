@@ -15,7 +15,7 @@ keeps a central dark theme (10.10) addable in one place.
 | Layer | Path | What |
 | --- | --- | --- |
 | Pure helpers (React-free, unit-tested) | `src/app/components/ade/dashboard/mcp/mcpUiPrimitives.ts` | Grade styles, badge-tone resolvers, health/recency, tab definitions |
-| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `CapabilityPresenceMatrixPanel`, `GradeSurfaceTrendPanel`, `ChangedSinceDigestPanel`, `DiscoveryHealthPanel`, `FindingSeverity`, `DetailTabs` |
+| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `CapabilityPresenceMatrixPanel`, `GradeSurfaceTrendPanel`, `ChangedSinceDigestPanel`, `DiscoveryHealthPanel`, `ToolLatencyPanel`, `FindingSeverity`, `DetailTabs` |
 | Shared states | `src/app/components/ui/{EmptyState,LoadingState,ErrorState}.tsx` | empty / loading / error placeholders |
 | Barrel | `@/app/components/ui/mcp` (also re-exported from `@/app/components/ui`) | one import for all MCP primitives |
 
@@ -278,6 +278,26 @@ payload-shaping and tallies live in the React-free, unit-tested `mcpReliabilityU
 
 ```tsx
 <DiscoveryHealthPanel health={health} loading={loading} error={error} />
+```
+
+### `<ToolLatencyPanel>` (V2-MCP-31.2 / MCAT-17.2)
+
+The **tool latency & error-rate panel** in the endpoint **Insight** tab's *Reliability & trust* section —
+"how fast and how reliable is each tool?". From the `tools` block of `insight/reliability` (the test
+console records a `latency_ms` / `is_error` per call, aggregated per tool over a recent window) it renders
+an **error-rate headline** and call/tool totals, a `BarSeries` **latency distribution** of every tool
+call, and a **slowest** (by p95) and **flakiest** (by error rate) tool ranking — each row showing that
+tool's p50/p95/p99 latency and error rate. It owns its loading / error / empty states — a never-tested
+endpoint shows a "no tool calls yet" empty state, and a single-call tool renders its one sample as all
+three percentiles without dividing by zero.
+
+The panel is presentational: the Insight tab parses it from the *same* `/insight/reliability` fetch as the
+discovery health panel. All payload-shaping, ranking, and formatting live in the React-free, unit-tested
+`mcpReliabilityUi` module (`mcpToolReliabilityFromPayload`, `mcpSlowestTools`, `mcpFlakiestTools`,
+`mcpErrorRateKind`, `mcpFormatMs`, `mcpFormatErrorRate`), so the rows can never disagree with the totals.
+
+```tsx
+<ToolLatencyPanel reliability={tools} loading={loading} error={error} />
 ```
 
 ### `<FindingSeverity>`

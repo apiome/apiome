@@ -11469,6 +11469,35 @@ class Database:
         """
         return self.execute_query(q, (endpoint_id,))
 
+    def list_mcp_tool_invocation_stats(
+        self, endpoint_id: str, window_days: int
+    ) -> List[Dict[str, Any]]:
+        """Return an endpoint's recent *tool* test invocations for the per-tool latency panel.
+
+        One row per recorded tool call within the trailing ``window_days`` window: the tool's
+        ``item_name``, whether it errored, and its round-trip ``latency_ms`` (NULL when the call
+        never completed). Only ``item_type = 'tool'`` rows are returned — the panel (MCAT-17.2) ranks
+        tool latency and error rate — and only those recorded within the window, so the panel is
+        time-windowed. The pure :func:`~app.mcp_insight_aggregation.compute_tool_reliability` groups
+        these by tool into per-tool percentiles, error rates, and a latency distribution.
+
+        Args:
+            endpoint_id: The owning endpoint (already tenant-validated by the caller).
+            window_days: The trailing window in days (clamped to at least 1).
+
+        Returns:
+            One dict per tool invocation in the window; empty when no tool has been tested recently.
+        """
+        capped = max(1, int(window_days))
+        q = """
+            SELECT item_name, is_error, latency_ms
+            FROM apiome.mcp_test_invocations
+            WHERE endpoint_id = %s::uuid
+              AND item_type = 'tool'
+              AND created_at >= CURRENT_TIMESTAMP - make_interval(days => %s)
+        """
+        return self.execute_query(q, (endpoint_id, capped))
+
     def get_mcp_catalog_insight(self, tenant_id: str) -> Dict[str, Any]:
         """Return a tenant-wide roll-up of its live MCP catalog (feeds 18.1).
 

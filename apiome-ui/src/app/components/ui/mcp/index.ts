@@ -21,6 +21,7 @@ export * from './GradeSurfaceTrendPanel';
 export * from './CapabilityPresenceMatrixPanel';
 export * from './ChangedSinceDigestPanel';
 export * from './DiscoveryHealthPanel';
+export * from './ToolLatencyPanel';
 export * from './FindingSeverity';
 export * from './DetailTabs';
 export * from './McpJsonViewer';

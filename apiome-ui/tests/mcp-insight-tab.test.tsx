@@ -280,6 +280,16 @@ function routeFetch(handlers: {
               latency: { count: 0 },
             },
             health: { timeline: [], window: 50 },
+            tools: {
+              tools: [],
+              tool_count: 0,
+              call_count: 0,
+              error_count: 0,
+              success_count: 0,
+              error_rate: 0,
+              latency_distribution: [],
+              window_days: 30,
+            },
           });
     }
     if (url.includes('/insight/evolution')) {
@@ -917,5 +927,76 @@ describe('McpEndpointInsight — scaffold', () => {
       expect(screen.getByText(/Quarantined — auto-excluded/i)).toBeInTheDocument(),
     );
     expect(screen.getByText(/connection refused/)).toBeInTheDocument();
+  });
+
+  it('renders the tool latency & error-rate panel from the reliability fetch (MCAT-17.2)', async () => {
+    routeFetch({
+      versions: () => jsonResponse(versionsPayload()),
+      surface: (vid) => jsonResponse(surfacePayload(vid ?? V3, 3, 4)),
+      reliability: () =>
+        jsonResponse({
+          success: true,
+          endpoint_id: ENDPOINT_ID,
+          discovery: {
+            job_count: 0,
+            completed_count: 0,
+            failed_count: 0,
+            running_count: 0,
+            queued_count: 0,
+            success_rate: 0,
+            latency: { count: 0 },
+          },
+          invocation: {
+            call_count: 0,
+            error_count: 0,
+            success_count: 0,
+            error_rate: 0,
+            latency: { count: 0 },
+          },
+          health: { timeline: [], window: 50 },
+          tools: {
+            tools: [
+              {
+                tool_name: 'search',
+                call_count: 4,
+                error_count: 1,
+                success_count: 3,
+                error_rate: 0.25,
+                latency: { count: 4, avg_ms: 25, min_ms: 10, max_ms: 40, p50_ms: 25, p95_ms: 40, p99_ms: 40 },
+              },
+              {
+                tool_name: 'write',
+                call_count: 2,
+                error_count: 2,
+                success_count: 0,
+                error_rate: 1,
+                latency: { count: 2, avg_ms: 200, min_ms: 100, max_ms: 300, p50_ms: 200, p95_ms: 300, p99_ms: 300 },
+              },
+            ],
+            tool_count: 2,
+            call_count: 6,
+            error_count: 3,
+            success_count: 3,
+            error_rate: 0.5,
+            latency_distribution: [
+              { label: '0–50 ms', upper_ms: 50, count: 4 },
+              { label: '250–500 ms', upper_ms: 500, count: 2 },
+            ],
+            window_days: 30,
+          },
+        }),
+    });
+
+    render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
+
+    // The reliability section renders the live tool-latency panel (its reserved slot is gone).
+    await waitFor(() =>
+      expect(screen.getByText('Tool latency & error rate')).toBeInTheDocument(),
+    );
+    // 3 errored / 6 calls = 50% endpoint-wide error rate.
+    expect(screen.getByText('50%')).toBeInTheDocument();
+    // The flakiest ranking surfaces the fully-failing tool.
+    expect(screen.getByText('Flakiest tools')).toBeInTheDocument();
+    expect(screen.getByText('Slowest tools')).toBeInTheDocument();
   });
 });

@@ -1528,7 +1528,7 @@ test-invocation logs plus the score report. **Supersedes stub 13.3.**
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
 | 17.1 ✅ | Discovery health & availability timeline | Success/failure/backoff/quarantine over time from discovery jobs | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui, apiome-rest |
-| 17.2 | Tool latency & error-rate panel | p50/p95/p99 latency + error ratio per tool from test invocations | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui, apiome-rest |
+| 17.2 ✅ | Tool latency & error-rate panel | p50/p95/p99 latency + error ratio per tool from test invocations | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui, apiome-rest |
 | 17.3 | Score & lint breakdown visualization | `mcp_version_scores.report` → category bars + findings-by-severity | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
 | 17.4 | Composite trust profile radar | Radar across quality/safety/docs/stability/responsiveness | `mcp-insights` `frontend` `backend` | N | N | ●● | apiome-ui, apiome-rest |
 
@@ -1542,7 +1542,7 @@ test-invocation logs plus the score report. **Supersedes stub 13.3.**
 - **Dependencies / Parallelism.** After 14.2/14.3/14.4. Parallel in epic. Closes 13.3.
 - **Technical Stack.** Next.js, StackedTimeline; reuse V132/V133 fields.
 
-### MCAT-17.2 — Tool latency & error-rate panel  ·  **#4642**
+### MCAT-17.2 — Tool latency & error-rate panel  ·  **#4642**  ·  ✅ Done (apiome-rest 1.88.0, apiome-ui 0.78.0)
 - **Problem.** `mcp_test_invocations` captures `latency_ms`/`is_error` per call, but nobody can see
   how fast or reliable a tool actually is.
 - **Solution / Scope.** Per-tool p50/p95/p99 latency (SQL `percentile_cont`) and error rate, a

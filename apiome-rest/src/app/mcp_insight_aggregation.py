@@ -24,6 +24,9 @@ The module provides:
   availability percentage from ``mcp_discovery_jobs`` rows (V2-MCP-31.1 / MCAT-17.1).
 * :func:`compute_invocation_reliability` — test-invocation error rate and latency stats from
   ``mcp_test_invocations`` rows.
+* :func:`compute_tool_reliability` — per-tool p50/p95/p99 latency + error rate, a latency
+  distribution, and the endpoint-wide totals from ``mcp_test_invocations`` tool rows over a
+  recent window (V2-MCP-31.2 / MCAT-17.2).
 
 Every function is total: an empty sample yields zero counts and ``None`` statistics rather than
 raising or dividing by zero, so an endpoint with no history produces an empty (not a 500) series.
@@ -33,7 +36,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 # --- Percentile / latency primitives --------------------------------------------------------
 
@@ -450,4 +453,190 @@ def compute_invocation_reliability(rows: Iterable[Dict[str, Any]]) -> Invocation
         success_count=call_count - error_count,
         error_rate=error_rate,
         latency=compute_latency_stats(latencies),
+    )
+
+
+# --- Per-tool invocation reliability (V2-MCP-31.2 / MCAT-17.2) -------------------------------
+
+#: The default trailing window (in days) the tool latency/error-rate panel aggregates over.
+TOOL_LATENCY_WINDOW_DAYS = 30
+
+#: Latency-distribution buckets as ``(label, upper_ms)`` in ascending order; the final bucket is
+#: open-ended (``upper_ms is None``). A latency ``v`` falls in the first bucket whose ``upper_ms`` it
+#: is strictly below (``v < upper_ms``), so the boundaries never double-count.
+_LATENCY_DISTRIBUTION_BUCKETS: Tuple[Tuple[str, Optional[float]], ...] = (
+    ("0–50 ms", 50.0),
+    ("50–100 ms", 100.0),
+    ("100–250 ms", 250.0),
+    ("250–500 ms", 500.0),
+    ("500 ms–1 s", 1000.0),
+    ("1–2.5 s", 2500.0),
+    ("2.5 s+", None),
+)
+
+
+@dataclass(frozen=True)
+class LatencyBucket:
+    """One bar of the latency distribution: a labelled range and how many calls fell in it.
+
+    ``upper_ms`` is the exclusive upper bound of the range in milliseconds, or ``None`` for the
+    open-ended top bucket.
+    """
+
+    label: str
+    upper_ms: Optional[float]
+    count: int
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {"label": self.label, "upper_ms": self.upper_ms, "count": self.count}
+
+
+@dataclass(frozen=True)
+class ToolReliability:
+    """One tool's reliability over the window: call/error tallies, error rate, and latency stats.
+
+    ``error_rate`` is ``error_count / call_count`` over every recorded call for this tool (``0.0``
+    when — impossibly here — there were no calls). ``latency`` spans every call that recorded a
+    round-trip latency, so a single call yields percentiles equal to that one sample (never a
+    divide-by-zero).
+    """
+
+    tool_name: str
+    call_count: int
+    error_count: int
+    success_count: int
+    error_rate: float
+    latency: LatencyStats
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "tool_name": self.tool_name,
+            "call_count": self.call_count,
+            "error_count": self.error_count,
+            "success_count": self.success_count,
+            "error_rate": self.error_rate,
+            "latency": self.latency.as_dict(),
+        }
+
+
+@dataclass(frozen=True)
+class ToolInvocationReliability:
+    """Per-tool reliability roll-up for one endpoint over a recent window (MCAT-17.2).
+
+    ``tools`` is the per-tool breakdown, sorted by call count (busiest first, ties broken by name)
+    so the list is deterministic; the panel re-ranks it for its "slowest" (by p95) and "flakiest"
+    (by error rate) views. The remaining fields are the endpoint-wide totals across every tool call
+    in the window, plus ``latency_distribution`` — a histogram of every tool call's latency for the
+    distribution chart. An endpoint with no tool calls yields an empty ``tools`` list, zero totals,
+    an all-zero distribution, and a ``0.0`` error rate (never a divide-by-zero).
+    """
+
+    tools: List[ToolReliability]
+    tool_count: int
+    call_count: int
+    error_count: int
+    success_count: int
+    error_rate: float
+    latency_distribution: List[LatencyBucket]
+    window_days: int
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "tools": [tool.as_dict() for tool in self.tools],
+            "tool_count": self.tool_count,
+            "call_count": self.call_count,
+            "error_count": self.error_count,
+            "success_count": self.success_count,
+            "error_rate": self.error_rate,
+            "latency_distribution": [bucket.as_dict() for bucket in self.latency_distribution],
+            "window_days": self.window_days,
+        }
+
+
+def _bucket_latencies(latencies: Sequence[float]) -> List[LatencyBucket]:
+    """Fold a latency sample into the fixed :data:`_LATENCY_DISTRIBUTION_BUCKETS` histogram.
+
+    Each latency lands in the first bucket whose exclusive ``upper_ms`` it is below; the open-ended
+    final bucket catches everything at or above the last boundary. Buckets with no members are still
+    returned (with ``count=0``) so the distribution chart always has the same, stable set of bars.
+    """
+    counts = [0] * len(_LATENCY_DISTRIBUTION_BUCKETS)
+    for value in latencies:
+        for index, (_label, upper) in enumerate(_LATENCY_DISTRIBUTION_BUCKETS):
+            if upper is None or value < upper:
+                counts[index] += 1
+                break
+    return [
+        LatencyBucket(label=label, upper_ms=upper, count=counts[index])
+        for index, (label, upper) in enumerate(_LATENCY_DISTRIBUTION_BUCKETS)
+    ]
+
+
+def compute_tool_reliability(
+    rows: Iterable[Dict[str, Any]], *, window_days: int = TOOL_LATENCY_WINDOW_DAYS
+) -> ToolInvocationReliability:
+    """Aggregate an endpoint's tool ``mcp_test_invocations`` rows into per-tool reliability.
+
+    Each row is one recorded *tool* call carrying an ``item_name`` (the tool), an ``is_error`` flag,
+    and a ``latency_ms`` (``None`` when the call never completed). Rows are grouped by tool; each
+    group yields call/error tallies, an error rate, and latency percentiles (over the calls that
+    recorded a latency). The endpoint-wide totals and a latency distribution over every tool call
+    accompany the per-tool list.
+
+    Args:
+        rows: The endpoint's tool test-invocation rows (any iterable; may be empty). A row missing
+            or with an empty ``item_name`` is bucketed under ``"(unknown)"`` rather than dropped, so
+            the totals never silently disagree with the per-tool breakdown.
+        window_days: The trailing window (in days) the rows were selected over, echoed back for the
+            panel's "over the last N days" caption.
+
+    Returns:
+        The rolled-up :class:`ToolInvocationReliability`; empty tools / zero totals for no calls.
+    """
+    per_tool_calls: Dict[str, int] = {}
+    per_tool_errors: Dict[str, int] = {}
+    per_tool_latencies: Dict[str, List[Optional[float]]] = {}
+    all_latencies: List[float] = []
+    total_calls = 0
+    total_errors = 0
+
+    for row in rows:
+        name = row.get("item_name") or "(unknown)"
+        latency = row.get("latency_ms")
+        errored = bool(row.get("is_error"))
+        total_calls += 1
+        if errored:
+            total_errors += 1
+        per_tool_calls[name] = per_tool_calls.get(name, 0) + 1
+        if errored:
+            per_tool_errors[name] = per_tool_errors.get(name, 0) + 1
+        per_tool_latencies.setdefault(name, []).append(latency)
+        if latency is not None:
+            all_latencies.append(float(latency))
+
+    tools: List[ToolReliability] = []
+    for name, calls in per_tool_calls.items():
+        errors = per_tool_errors.get(name, 0)
+        tools.append(
+            ToolReliability(
+                tool_name=name,
+                call_count=calls,
+                error_count=errors,
+                success_count=calls - errors,
+                error_rate=round(errors / calls, 4) if calls else 0.0,
+                latency=compute_latency_stats(per_tool_latencies[name]),
+            )
+        )
+    # Busiest tool first; ties broken alphabetically for a stable, deterministic order.
+    tools.sort(key=lambda tool: (-tool.call_count, tool.tool_name))
+
+    return ToolInvocationReliability(
+        tools=tools,
+        tool_count=len(tools),
+        call_count=total_calls,
+        error_count=total_errors,
+        success_count=total_calls - total_errors,
+        error_rate=round(total_errors / total_calls, 4) if total_calls else 0.0,
+        latency_distribution=_bucket_latencies(all_latencies),
+        window_days=window_days,
     )
