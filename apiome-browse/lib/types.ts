@@ -84,6 +84,27 @@ export interface McpPublicHostGroup {
   endpoints: McpPublicEndpoint[];
 }
 
+/** One labelled slice of a public-catalog composition breakdown (category / transport / grade). */
+export interface McpPublicCatalogBucket {
+  label: string;
+  count: number;
+}
+
+/**
+ * The public catalog analytics roll-up (V2-MCP-32.1 / MCAT-18.1). A *reduced* variant of the private
+ * dashboard: it spans only the published + public endpoints exposed by `apiome.mcp_v_public_endpoints`,
+ * so it carries just the view's own columns — how many endpoints, the average quality score, and the
+ * category / transport / grade mixes. Protocol, tool counts, change history, and discovery status are
+ * deliberately absent (the public view does not expose them).
+ */
+export interface McpPublicCatalogInsight {
+  endpoint_count: number;
+  average_score: number | null;
+  category_distribution: McpPublicCatalogBucket[];
+  transport_distribution: McpPublicCatalogBucket[];
+  grade_distribution: McpPublicCatalogBucket[];
+}
+
 /** A single capability (tool / resource / resource_template / prompt) of an endpoint's snapshot. */
 export interface McpCapabilityItem {
   id: string;

@@ -264,7 +264,7 @@ created as `V2-MCP-(E+14).N` — e.g. MCAT-7.4 → `V2-MCP-21.4`, GitHub title
 | 6.4 | OAuth 2.1 auth-code+PKCE + refresh | 13.1 | Change-notification events |
 | 6.5 | Credential REST + redaction | 13.2 | Webhook subscriptions on change |
 | | | 13.3 | Health/uptime monitoring |
-| | | 13.4 | Catalog analytics dashboard |
+| | | 13.4 ✅→18.1 | Catalog analytics dashboard |
 
 #### UI design coverage additions (this update — ✅ filed)
 
@@ -1083,7 +1083,7 @@ Consume the official registry as an upstream source of endpoints.
 - **Dependencies / Parallelism.** After Epic-5. **v2.** Parallel with 13.2.
 - **Technical Stack.** Python.
 
-### MCAT-13.4 — Catalog analytics dashboard  ·  **#3714**
+### MCAT-13.4 — Catalog analytics dashboard  ·  **#3714**  ·  ✅ Closed — superseded by 18.1 (#4645)
 - **Problem.** Operators/tenants want catalog-wide insight.
 - **Solution / Scope.** Dashboard: endpoints by category/grade, change frequency, sweep health (5.4), top searched. 
 - **Acceptance Criteria.** Dashboard renders counts/trends from real data.
@@ -1585,13 +1585,13 @@ not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 a
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
-| 18.1 | Catalog analytics dashboard | Category/transport/protocol mix, grade + tool-count distributions across the tenant catalog | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui, apiome-rest |
+| 18.1 ✅ | Catalog analytics dashboard | Category/transport/protocol mix, grade + tool-count distributions across the tenant catalog | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui, apiome-rest |
 | 18.2 | Side-by-side server comparison | Compare 2–3 endpoints: surface, grade, safety, latency | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui |
 | 18.3 | Peer percentile & category ranking | Rank a server against its category on each axis | `mcp-insights` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-ui |
 | 18.4 | Similar-servers via capability overlap + embeddings | "Servers like this" from tool-name/desc overlap + pgvector (V102) | `mcp-insights` `backend` | Y | N | ●●● | apiome-rest, apiome-db |
 | 18.5 | Natural-language server digest + usage examples | AI-generated "what can this do" summary + per-tool example calls | `mcp-insights` `backend` | Y | N | ●●● | apiome-rest |
 
-### MCAT-18.1 — Catalog analytics dashboard  ·  **#4645**
+### MCAT-18.1 — Catalog analytics dashboard  ·  **#4645**  ·  ✅ Done (apiome-rest 1.90.0, apiome-ui 0.81.0, apiome-browse 0.6.0)
 - **Problem.** No catalog-wide view; 13.4 was only a stub.
 - **Solution / Scope.** A dashboard over `insight/catalog`: endpoints by `category`/`grade`,
   transport mix, `protocol_version` adoption, tool-count distribution, change-frequency leaders,
@@ -1601,6 +1601,20 @@ not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 a
   variant respects published-only. **Closes 13.4.**
 - **Dependencies / Parallelism.** After 14.2. Parallel with 18.2.
 - **Technical Stack.** Next.js, chart kit; apiome-browse for the public variant.
+- **Implementation.** `Database.get_mcp_catalog_insight` was extended (additively) with the
+  composition breakdowns — category / transport / `protocol_version` / discovery-health mixes,
+  change-frequency leaders, and the top-capabilities aggregate — with the per-endpoint tool counts
+  folded into a fixed histogram by the pure `compute_tool_count_histogram`
+  (`app/mcp_insight_aggregation.py`); the `McpInsightCatalogResponse` model carries them. The private
+  dashboard lives at `/ade/dashboard/mcp/analytics` (new `Catalog Analytics` side-nav entry) — a
+  `CatalogAnalyticsDashboard` panel over the pure, unit-tested `mcpCatalogInsightUi` parser, reusing
+  the token-driven chart kit (`Donut`/`BarSeries`). The public variant (`apiome-browse`
+  `/mcp/analytics`) is a **reduced** dashboard aggregating over `apiome.mcp_v_public_endpoints`
+  (published + public only → the acceptance criterion holds by construction): count, average score,
+  and category / transport / grade mixes (the public view exposes no protocol / tool-count / change /
+  discovery columns). **Substitution:** "most-searched capabilities" is rendered as a real
+  *most-widely-exposed* aggregate (endpoints exposing each capability) — there is no search-query log
+  to rank by, and the acceptance criterion requires real aggregates. **Closes stub 13.4 (#3714).**
 
 ### MCAT-18.2 — Side-by-side server comparison  ·  **#4646**
 - **Problem.** Evaluators pick between servers and have no way to compare them directly.

@@ -6238,12 +6238,59 @@ class McpInsightTrustResponse(BaseModel):
     profile: McpTrustProfileOut
 
 
+class McpCatalogBucketOut(BaseModel):
+    """One labelled slice of a catalog composition breakdown — a bucket and its endpoint count.
+
+    Backs the category, transport, protocol-version, tool-count, and discovery-health distributions
+    of the catalog analytics dashboard (18.1). ``label`` is always a display string: a NULL source
+    value (uncategorized endpoint, undiscovered protocol, never-run discovery) is resolved to a
+    friendly placeholder in the projection, never emitted as ``null``.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    label: str
+    count: int = 0
+
+
+class McpCatalogLeaderOut(BaseModel):
+    """One change-frequency leader — an endpoint and how many surface changes it has recorded (18.1)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    endpoint_id: str
+    name: str
+    change_count: int = 0
+
+
+class McpCatalogCapabilityOut(BaseModel):
+    """One widely-exposed capability — its kind, name, and how many endpoints expose it (18.1).
+
+    A real aggregate that stands in for "most-searched capabilities" (there is no search-query log to
+    rank by): ``endpoint_count`` is the number of distinct live endpoints whose current surface
+    exposes a capability of this ``item_type`` / ``item_name``.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    item_type: str
+    item_name: str
+    endpoint_count: int = 0
+
+
 class McpInsightCatalogResponse(BaseModel):
     """Response envelope for the tenant-wide catalog insight roll-up (feeds 18.1).
 
     Spans every live endpoint the caller's tenant owns: how many there are, how many are published
     / discovered, the per-kind capability ``type_counts`` summed across every endpoint's current
     surface, the ``average_score`` over scored current versions, and the A-F ``grade_distribution``.
+
+    The composition breakdowns power the catalog analytics dashboard's tiles: ``category_distribution``
+    / ``transport_distribution`` / ``protocol_version_distribution`` / ``discovery_health`` (labelled
+    buckets, busiest first), ``tool_count_distribution`` (a fixed-bucket histogram of per-endpoint tool
+    counts), ``change_leaders`` (the most-churned endpoints), and ``top_capabilities`` (the most widely
+    exposed capability names). All default to empty, so an empty catalog yields an all-empty — never a
+    500 — body.
     """
 
     model_config = ConfigDict(populate_by_name=True)
@@ -6258,16 +6305,52 @@ class McpInsightCatalogResponse(BaseModel):
     average_score: Optional[float] = None
     type_counts: McpTypeCountsOut
     grade_distribution: Dict[str, int] = Field(default_factory=dict)
+    category_distribution: List[McpCatalogBucketOut] = Field(default_factory=list)
+    transport_distribution: List[McpCatalogBucketOut] = Field(default_factory=list)
+    protocol_version_distribution: List[McpCatalogBucketOut] = Field(default_factory=list)
+    tool_count_distribution: List[McpCatalogBucketOut] = Field(default_factory=list)
+    discovery_health: List[McpCatalogBucketOut] = Field(default_factory=list)
+    change_leaders: List[McpCatalogLeaderOut] = Field(default_factory=list)
+    top_capabilities: List[McpCatalogCapabilityOut] = Field(default_factory=list)
+
+
+def _catalog_buckets(
+    rows: Any, *, null_label: str
+) -> List[McpCatalogBucketOut]:
+    """Project ``{label, count}`` aggregate rows onto :class:`McpCatalogBucketOut`.
+
+    A NULL ``label`` (an uncategorized endpoint, an undiscovered protocol, a never-run discovery) is
+    resolved to ``null_label`` so the wire model never carries a ``null`` slice label. Row order is
+    preserved (the SQL already sorts busiest-first).
+    """
+    projected: List[McpCatalogBucketOut] = []
+    for row in rows or []:
+        raw = row.get("label")
+        label = str(raw) if raw is not None else null_label
+        projected.append(McpCatalogBucketOut(label=label, count=int(row.get("count") or 0)))
+    return projected
 
 
 def mcp_catalog_insight_from_row(row: Dict[str, Any]) -> McpInsightCatalogResponse:
-    """Project a ``get_mcp_catalog_insight`` aggregate onto the wire model."""
+    """Project a ``get_mcp_catalog_insight`` aggregate onto the wire model.
+
+    The scalar tallies, ``type_counts``, and ``grade_distribution`` come straight from the summary
+    row; the composition breakdowns are projected from their respective aggregate row lists, with the
+    per-endpoint ``tool_count_rows`` folded into the fixed tool-count histogram by the pure
+    :func:`~app.mcp_insight_aggregation.compute_tool_count_histogram`. Every breakdown defaults to
+    empty when its rows are absent, so an empty catalog projects cleanly.
+    """
+    from .mcp_insight_aggregation import compute_tool_count_histogram
+
     avg_score = row.get("avg_score")
     tools = int(row.get("tool_count") or 0)
     resources = int(row.get("resource_count") or 0)
     templates = int(row.get("resource_template_count") or 0)
     prompts = int(row.get("prompt_count") or 0)
     grade_distribution = row.get("grade_distribution") or {}
+    tool_count_histogram = compute_tool_count_histogram(
+        r.get("tool_count") for r in (row.get("tool_count_rows") or [])
+    )
     return McpInsightCatalogResponse(
         endpoint_count=int(row.get("endpoint_count") or 0),
         published_count=int(row.get("published_count") or 0),
@@ -6284,4 +6367,36 @@ def mcp_catalog_insight_from_row(row: Dict[str, Any]) -> McpInsightCatalogRespon
             total=tools + resources + templates + prompts,
         ),
         grade_distribution={str(k): int(v) for k, v in grade_distribution.items()},
+        category_distribution=_catalog_buckets(
+            row.get("category_rows"), null_label="Uncategorized"
+        ),
+        transport_distribution=_catalog_buckets(
+            row.get("transport_rows"), null_label="Unknown"
+        ),
+        protocol_version_distribution=_catalog_buckets(
+            row.get("protocol_rows"), null_label="Unknown"
+        ),
+        discovery_health=_catalog_buckets(
+            row.get("discovery_rows"), null_label="never"
+        ),
+        tool_count_distribution=[
+            McpCatalogBucketOut(label=bucket.label, count=bucket.count)
+            for bucket in tool_count_histogram
+        ],
+        change_leaders=[
+            McpCatalogLeaderOut(
+                endpoint_id=str(r.get("endpoint_id")),
+                name=str(r.get("name") or ""),
+                change_count=int(r.get("change_count") or 0),
+            )
+            for r in (row.get("change_leader_rows") or [])
+        ],
+        top_capabilities=[
+            McpCatalogCapabilityOut(
+                item_type=str(r.get("item_type") or ""),
+                item_name=str(r.get("item_name") or ""),
+                endpoint_count=int(r.get("endpoint_count") or 0),
+            )
+            for r in (row.get("top_capability_rows") or [])
+        ],
     )
