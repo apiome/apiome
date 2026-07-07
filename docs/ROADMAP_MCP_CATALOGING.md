@@ -1886,13 +1886,13 @@ handshake/discovery calls.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
-| 20.1 | Host & transport metadata capture | Record hostname, TLS/cert, HTTP server headers, handshake timing at discovery | `mcp-catalog` `backend` | Y | N | ●● | apiome-rest, apiome-db |
+| 20.1 ✅ | Host & transport metadata capture | Record hostname, TLS/cert, HTTP server headers, handshake timing at discovery | `mcp-catalog` `backend` | Y | N | ●● | apiome-rest, apiome-db |
 | 20.2 | Server branding capture | Persist advertised website/logo/icon/instructions for richer catalog cards | `mcp-catalog` `backend` | Y | N | ● | apiome-rest, apiome-db |
 | 20.3 | License & terms signal detection | Detect and report license/ToS hints in server metadata/instructions | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
 | 20.4 | Deprecation & lifecycle signals | Flag deprecated/experimental capabilities from annotations/description text | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
 | 20.5 | Provenance & discovery-source tracking | Record how/when each endpoint & version was found (manual/sweep/registry) and surface it | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
 
-### MCAT-20.1 — Host & transport metadata capture  ·  **#4655**
+### MCAT-20.1 — Host & transport metadata capture  ·  **#4655**  ·  ✅ Done (apiome-rest 1.99.0, apiome-db 0.27.0)
 - **Problem.** The catalog knows a server's *capabilities* but almost nothing about the *service*
   hosting them — is it on a reputable host, valid TLS, how responsive at connect time.
 - **Solution / Scope.** During discovery, capture non-invasive transport facts — hostname/host,

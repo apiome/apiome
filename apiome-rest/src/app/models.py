@@ -4208,6 +4208,10 @@ class McpEndpointOut(BaseModel):
     quarantined_at: Optional[str] = None
     quarantine_reason: Optional[str] = None
     current_version_id: Optional[str] = None
+    # Latest host/transport facts observed at discovery — host, TLS cert summary, notable response
+    # headers, connect timing (V2-MCP-34.1); null until the first successful discovery.
+    transport_metadata: Optional[Dict[str, Any]] = None
+    transport_metadata_at: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
@@ -4553,6 +4557,10 @@ def mcp_endpoint_out_from_row(row: Dict[str, Any]) -> McpEndpointOut:
         quarantined_at=_ts(row.get("quarantined_at")),
         quarantine_reason=_s(row.get("quarantine_reason")),
         current_version_id=_s(row.get("current_version_id")),
+        transport_metadata=row.get("transport_metadata")
+        if isinstance(row.get("transport_metadata"), dict)
+        else None,
+        transport_metadata_at=_ts(row.get("transport_metadata_at")),
         created_at=_ts(row.get("created_at")),
         updated_at=_ts(row.get("updated_at")),
     )

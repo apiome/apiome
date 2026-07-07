@@ -111,6 +111,40 @@ async def test_request_returns_json_result():
     assert "id" in sent
 
 
+async def test_request_captures_transport_observation(monkeypatch):
+    """The first request records host/timing on ``observed_transport`` (V2-MCP-34.1)."""
+    handler = RecordingHandler(
+        {"initialize": lambda req, body: json_response(
+            {"jsonrpc": "2.0", "id": body["id"], "result": {"ok": True}}, Server="nginx"
+        )}
+    )
+    transport = make_transport(handler)
+
+    assert transport.observed_transport is None
+    await transport.request("initialize", {})
+
+    obs = transport.observed_transport
+    assert obs is not None
+    assert obs.host == "mcp.example.com"
+    assert obs.scheme == "https"
+    # A mocked transport exposes no TLS session, so the cert is absent but capture still succeeds.
+    assert obs.certificate is None
+    assert obs.response_headers.get("server") == "nginx"
+    assert obs.connect_ms is not None
+
+
+async def test_transport_observation_captured_once(monkeypatch):
+    """Only the first response is observed; later requests do not overwrite it."""
+    handler = RecordingHandler()
+    transport = make_transport(handler)
+
+    await transport.request("initialize", {})
+    first = transport.observed_transport
+    await transport.request("tools/list", {})
+
+    assert transport.observed_transport is first
+
+
 async def test_request_omits_params_when_none():
     handler = RecordingHandler()
     transport = make_transport(handler)

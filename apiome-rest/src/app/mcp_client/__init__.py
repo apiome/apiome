@@ -80,6 +80,13 @@ from .transport_http import (
     StreamableHttpTransport,
     parse_retry_after_seconds,
 )
+from .transport_meta import (
+    NOTABLE_RESPONSE_HEADERS,
+    TlsCertificateSummary,
+    TransportMetadata,
+    capture_transport_metadata,
+    summarize_peer_cert,
+)
 
 __all__ = [
     "CHANGE_ADDED",
@@ -99,6 +106,7 @@ __all__ = [
     "ITEM_TYPE_SERVER",
     "ITEM_TYPE_TOOL",
     "LIST_METHODS",
+    "NOTABLE_RESPONSE_HEADERS",
     "SUPPORTED_PROTOCOL_VERSIONS",
     "BudgetExceededError",
     "CapabilityItem",
@@ -126,6 +134,9 @@ __all__ = [
     "StreamableHttpTransport",
     "SurfaceDiff",
     "TimeBudget",
+    "TlsCertificateSummary",
+    "TransportMetadata",
+    "capture_transport_metadata",
     "classify_exception",
     "diff_surfaces",
     "discover_listings",
@@ -133,4 +144,5 @@ __all__ = [
     "paginate",
     "parse_retry_after_seconds",
     "private_address_reason",
+    "summarize_peer_cert",
 ]
