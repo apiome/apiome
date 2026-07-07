@@ -15,7 +15,7 @@ keeps a central dark theme (10.10) addable in one place.
 | Layer | Path | What |
 | --- | --- | --- |
 | Pure helpers (React-free, unit-tested) | `src/app/components/ade/dashboard/mcp/mcpUiPrimitives.ts` | Grade styles, badge-tone resolvers, health/recency, tab definitions |
-| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `FindingSeverity`, `DetailTabs` |
+| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `CapabilityPresenceMatrixPanel`, `FindingSeverity`, `DetailTabs` |
 | Shared states | `src/app/components/ui/{EmptyState,LoadingState,ErrorState}.tsx` | empty / loading / error placeholders |
 | Barrel | `@/app/components/ui/mcp` (also re-exported from `@/app/components/ui`) | one import for all MCP primitives |
 
@@ -193,6 +193,30 @@ so the chart and its click targets can never disagree. The chart itself is the i
 
 ```tsx
 <CapabilityChurnPanel series={evolution} loading={loading} error={error} onSelectVersion={openDiff} />
+```
+
+### `<CapabilityPresenceMatrixPanel>` (V2-MCP-30.2 / MCAT-16.2)
+
+The **capability lifespan / presence matrix** on the endpoint **Insight** tab — a *"gantt of the
+surface"*: rows are every distinct capability ever seen, columns are discovery snapshots
+(oldest→newest), and each cell is **added / present / modified / absent**. It answers "is this tool
+stable, or was it added last week and might vanish?": each row carries a **lifespan badge** (stable /
+new / volatile / removed) and the headline summarizes how many capabilities are current, new,
+volatile, or removed. **Clicking a version-column header deep-links to that snapshot's diff** (same
+`onSelectVersion` → compare/diff route as the churn panel). The matrix **scrolls** (sticky header +
+sticky first column) so it scales to many capabilities and many versions.
+
+There is no server-side matrix endpoint: presence is reconstructed on the client from the same
+per-version `McpVersionDetail` snapshots the browse/insight views already load. All reconstruction and
+the added-vs-modified classification live in the React-free, unit-tested `mcpPresenceMatrixUi` module
+(`mcpPresenceMatrix`). Classification is **adjacency-based** — each cell is compared only to the
+immediately preceding snapshot, exactly as the server's diff engine does — so the matrix stays
+consistent with `mcp_version_changes`: a **rename** reads as its old name going *absent* (removed) and
+its new name *added*, because the diff engine records a rename the same way. It owns its loading /
+error / empty states.
+
+```tsx
+<CapabilityPresenceMatrixPanel versions={versionDetails} loading={loading} error={error} onSelectVersion={openDiff} />
 ```
 
 ### `<FindingSeverity>`

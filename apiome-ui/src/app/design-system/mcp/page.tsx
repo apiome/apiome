@@ -27,6 +27,8 @@ import { SafetyPosturePanel } from '@/app/components/ui/mcp/SafetyPosturePanel';
 import { DocCoveragePanel } from '@/app/components/ui/mcp/DocCoveragePanel';
 import { CapabilityChurnPanel } from '@/app/components/ui/mcp/CapabilityChurnPanel';
 import type { McpEvolutionPoint } from '@/app/components/ade/dashboard/mcp/mcpEvolutionUi';
+import { CapabilityPresenceMatrixPanel } from '@/app/components/ui/mcp/CapabilityPresenceMatrixPanel';
+import type { McpVersionDetail } from '@/app/components/ade/dashboard/mcp/mcpBrowseUi';
 // The Monaco-backed code-viewer primitives were promoted out of `ui/mcp` to the format-neutral
 // `ui/code` module (MFI-28.7); the gallery documents them under those neutral names.
 import { JsonViewer, JsonDiffViewer, Disclosure } from '@/app/components/ui/code';
@@ -293,6 +295,77 @@ const CHURN_SERIES_SAMPLE: McpEvolutionPoint[] = [
   },
 ];
 
+/** A compact capability item for the presence-matrix demo (fields the matrix ignores stay null). */
+function demoItem(
+  item_type: string,
+  name: string,
+  overrides: Partial<McpCapabilityItem> = {},
+): McpCapabilityItem {
+  return {
+    item_type,
+    name,
+    title: null,
+    description: null,
+    uri: null,
+    uri_template: null,
+    input_schema: null,
+    output_schema: null,
+    annotations: null,
+    ordinal: 0,
+    ...overrides,
+  };
+}
+
+/** A compact version snapshot carrying only the fields the presence matrix reads. */
+function demoVersion(id: string, seq: number, isCurrent: boolean, items: McpCapabilityItem[]): McpVersionDetail {
+  return {
+    id,
+    version_seq: seq,
+    version_tag: null,
+    server_name: null,
+    server_version: null,
+    server_title: null,
+    protocol_version: null,
+    instructions: null,
+    score: null,
+    grade: null,
+    is_current: isCurrent,
+    discovered_at: null,
+    items,
+  };
+}
+
+/**
+ * A four-snapshot surface for the CapabilityPresenceMatrixPanel demo (V2-MCP-30.2): a stable tool
+ * present throughout, a tool whose schema is modified midway, a tool removed after v2, a volatile tool
+ * that disappears then returns, a resource, and a brand-new prompt in the current snapshot.
+ */
+const PRESENCE_MATRIX_SAMPLE: McpVersionDetail[] = [
+  demoVersion('demo-v1', 1, false, [
+    demoItem('tool', 'search', { input_schema: { q: 'string' } }),
+    demoItem('tool', 'legacy_export'),
+    demoItem('tool', 'flaky_beta'),
+    demoItem('resource', 'catalog', { uri: 'res://catalog' }),
+  ]),
+  demoVersion('demo-v2', 2, false, [
+    demoItem('tool', 'search', { input_schema: { q: 'string' } }),
+    demoItem('tool', 'legacy_export'),
+    demoItem('resource', 'catalog', { uri: 'res://catalog' }),
+  ]),
+  demoVersion('demo-v3', 3, false, [
+    // search's schema changes → modified; flaky_beta returns after a gap → volatile.
+    demoItem('tool', 'search', { input_schema: { q: 'string', limit: 'number' } }),
+    demoItem('tool', 'flaky_beta'),
+    demoItem('resource', 'catalog', { uri: 'res://catalog' }),
+  ]),
+  demoVersion('demo-v4', 4, true, [
+    demoItem('tool', 'search', { input_schema: { q: 'string', limit: 'number' } }),
+    demoItem('tool', 'flaky_beta'),
+    demoItem('resource', 'catalog', { uri: 'res://catalog' }),
+    demoItem('prompt', 'summarize'),
+  ]),
+];
+
 export default function McpPrimitivesShowcase() {
   return (
     <main className="mx-auto max-w-4xl space-y-6 p-8">
@@ -460,6 +533,39 @@ export default function McpPrimitivesShowcase() {
           No history yet
         </div>
         <CapabilityChurnPanel series={[]} loading={false} error={null} onSelectVersion={() => {}} />
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            CapabilityPresenceMatrixPanel (V2-MCP-30.2)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            A &quot;gantt of the surface&quot;: rows are every capability ever seen, columns are
+            discovery snapshots, and each cell is added / present / modified / absent. Reveals volatile
+            vs long-lived tools at a glance, badges each row&apos;s lifespan, and deep-links a column to
+            its diff. Presence is reconstructed from the per-version capability items; the matrix
+            scrolls (sticky header + first column) for many items.
+          </p>
+        </div>
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Four snapshots (a stable, a modified, a removed, a volatile, and a new capability)
+        </div>
+        <CapabilityPresenceMatrixPanel
+          versions={PRESENCE_MATRIX_SAMPLE}
+          loading={false}
+          error={null}
+          onSelectVersion={() => {}}
+        />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          No capabilities to chart
+        </div>
+        <CapabilityPresenceMatrixPanel
+          versions={[]}
+          loading={false}
+          error={null}
+          onSelectVersion={() => {}}
+        />
       </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">

@@ -6,7 +6,7 @@
  * version selector re-fetching insight for a different snapshot.
  */
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import McpEndpointInsight from '../src/app/ade/dashboard/mcp/[endpointId]/McpEndpointInsight';
@@ -552,5 +552,84 @@ describe('McpEndpointInsight — scaffold', () => {
     // split (+1 −0 ~3) so we select the column, not the busiest-release callout that shares its date.
     fireEvent.click(screen.getByRole('button', { name: /\+1 −0 ~3/ }));
     expect(onOpenVersionDiff).toHaveBeenCalledWith(V3);
+  });
+
+  it('reconstructs the capability presence matrix from every snapshot and deep-links a column', async () => {
+    const onOpenVersionDiff = jest.fn();
+    // Per-version detail: v2 has only `search`; v3 (current) adds `summarize`.
+    const matrixDetail = (vid: string) => {
+      const seq = vid === V3 ? 3 : 2;
+      const items =
+        vid === V3
+          ? [
+              { item_type: 'tool', name: 'search', ordinal: 0 },
+              { item_type: 'tool', name: 'summarize', ordinal: 1 },
+            ]
+          : [{ item_type: 'tool', name: 'search', ordinal: 0 }];
+      return jsonResponse({
+        success: true,
+        version: {
+          id: vid,
+          version_seq: seq,
+          version_tag: null,
+          server_name: 'acme-search',
+          server_version: '1.4.0',
+          server_title: 'Acme Search',
+          protocol_version: '2025-06-18',
+          instructions: null,
+          score: 90,
+          grade: 'A',
+          is_current: vid === V3,
+          discovered_at: '2026-07-06T10:00:00Z',
+          items,
+        },
+      });
+    };
+    routeFetch({
+      versions: () => jsonResponse(versionsPayload()),
+      surface: (vid) => jsonResponse(surfacePayload(vid ?? V3, 3, 4)),
+      detail: matrixDetail,
+    });
+
+    render(
+      <McpEndpointInsight
+        endpointId={ENDPOINT_ID}
+        currentVersionId={V3}
+        onOpenVersionDiff={onOpenVersionDiff}
+      />,
+    );
+
+    // The lifespan panel renders a row per capability once every snapshot's items resolve. Scope to
+    // the presence-matrix table by its caption, since the safety panel also renders tool rowheaders.
+    await waitFor(() =>
+      expect(screen.getByText('Capability lifespan & presence')).toBeInTheDocument(),
+    );
+    const matrixTable = await screen.findByRole('table', {
+      name: /Capability presence across discovery snapshots/i,
+    });
+    await waitFor(() =>
+      expect(within(matrixTable).getByRole('rowheader', { name: /summarize/ })).toBeInTheDocument(),
+    );
+    // `summarize` first appears in the current snapshot → New; `search` is present throughout → Stable.
+    expect(
+      within(within(matrixTable).getByRole('rowheader', { name: /summarize/ })).getByText('New'),
+    ).toBeInTheDocument();
+    expect(
+      within(within(matrixTable).getByRole('rowheader', { name: /search/ })).getByText('Stable'),
+    ).toBeInTheDocument();
+
+    // Both snapshots' details were fetched to build the matrix.
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining(`/versions/${V2}`),
+      expect.anything(),
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining(`/versions/${V3}`),
+      expect.anything(),
+    );
+
+    // Clicking a matrix column header deep-links to that snapshot's diff.
+    fireEvent.click(screen.getByRole('button', { name: /v2 .* open this snapshot's diff/ }));
+    expect(onOpenVersionDiff).toHaveBeenCalledWith(V2);
   });
 });
