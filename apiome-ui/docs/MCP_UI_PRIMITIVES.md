@@ -393,6 +393,26 @@ the trust projections) so a metric reads the same here as on the endpoint's own 
 <ServerComparisonPanel servers={servers} loading={loading} error={error} />
 ```
 
+### `<PeerPercentilePanel>` (V2-MCP-32.3 / MCAT-18.3)
+
+The **peer percentile & category ranking** panel on the endpoint Insight tab's *Reliability & trust*
+section — a *peer baseline*, not an absolute grade. From `insight/percentile` it ranks the server
+against the other live servers in its catalog **category** on four axes — **grade**, **safety**,
+**documentation**, **latency** — rendering per axis a **"top N%" badge** toned by relative standing
+(top 10% → green, top 25% → blue, top 50% → indigo, bottom half → slate), the server's own value, and
+its "rank K of N" basis. A **single-member category** is called out explicitly (rather than a
+meaningless "top 100%"), and any axis the server has not measured is a labelled **gap**, never a
+misleading zero.
+
+The panel is presentational; the projections come from the React-free, unit-tested
+`mcpPeerPercentileUi` module (`mcpPeerPercentileFromPayload`, `mcpPeerBand`, `mcpPeerBadgeLabel`,
+`mcpPeerCategoryLabel`), and the axis values are computed server-side reusing the same trust-axis
+derivations, so a rank never disagrees with the server's own Insight numbers.
+
+```tsx
+<PeerPercentilePanel profile={peerPercentile} loading={loading} error={error} />
+```
+
 ### `<FindingSeverity>`
 
 The shared MUST / SHOULD / Advisory chip used by the Lint & Score tab and inline hints. It renders
@@ -484,3 +504,5 @@ consumer hard-codes a color, a dark variant lands in one place.
 - `tests/mcp-grade-trend-panel.test.tsx` — the grade & surface-size trend panel (gaps, markers, deep-links).
 - `tests/mcp-server-compare-ui.test.ts` — the pure comparison helpers (metric alignment + differs, tool overlap fixture, protocol cross-check).
 - `tests/mcp-server-comparison-panel.test.tsx` — the comparison panel (columns, sections, overlap matrix, protocol banner, radar/gap states).
+- `tests/mcp-peer-percentile-ui.test.ts` — the pure peer-ranking helpers (parser, standing bands, "top N%" badge labels, gaps).
+- `tests/mcp-peer-percentile-panel.test.tsx` — the peer-ranking panel (per-axis badges, cohort context, single-member, gap/empty states).

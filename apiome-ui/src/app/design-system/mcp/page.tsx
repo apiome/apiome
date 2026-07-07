@@ -34,6 +34,11 @@ import { DiscoveryHealthPanel } from '@/app/components/ui/mcp/DiscoveryHealthPan
 import { ToolLatencyPanel } from '@/app/components/ui/mcp/ToolLatencyPanel';
 import { ScoreBreakdownPanel } from '@/app/components/ui/mcp/ScoreBreakdownPanel';
 import { TrustProfilePanel } from '@/app/components/ui/mcp/TrustProfilePanel';
+import { PeerPercentilePanel } from '@/app/components/ui/mcp/PeerPercentilePanel';
+import {
+  mcpPeerPercentileFromPayload,
+  type McpPeerPercentileProfile,
+} from '@/app/components/ade/dashboard/mcp/mcpPeerPercentileUi';
 import { CatalogAnalyticsDashboard } from '@/app/components/ui/mcp/CatalogAnalyticsDashboard';
 import { ServerComparisonPanel } from '@/app/components/ui/mcp/ServerComparisonPanel';
 import type { McpCompareServer } from '@/app/components/ade/dashboard/mcp/mcpServerCompareUi';
@@ -596,6 +601,34 @@ const TRUST_EMPTY_SAMPLE: McpTrustProfile = mcpTrustProfileFromPayload({
     overall: null,
     available_count: 0,
     axis_count: 5,
+  },
+})!;
+
+/** A populated peer ranking (three ranked axes + one gap) for the PeerPercentilePanel demo (32.3). */
+const PEER_POPULATED_SAMPLE: McpPeerPercentileProfile = mcpPeerPercentileFromPayload({
+  profile: {
+    category: 'finance',
+    cohort_size: 8,
+    axes: [
+      { key: 'grade', label: 'Grade', value: 88, percentile: 87.5, rank: 2, top_percent: 25, cohort_size: 8, available: true, detail: 'Rank 2 of 8 · top 25%' },
+      { key: 'safety', label: 'Safety', value: 92, percentile: 100, rank: 1, top_percent: 13, cohort_size: 8, available: true, detail: 'Rank 1 of 8 · top 13%' },
+      { key: 'documentation', label: 'Documentation', value: 74, percentile: 100, rank: 1, top_percent: 13, cohort_size: 8, available: true, detail: 'Rank 1 of 8 · top 13%' },
+      { key: 'latency', label: 'Latency', value: null, percentile: null, rank: null, top_percent: null, cohort_size: 5, available: false, detail: 'Not measured' },
+    ],
+  },
+})!;
+
+/** A lone server in its category — the single-member acceptance case for the PeerPercentilePanel. */
+const PEER_SINGLE_SAMPLE: McpPeerPercentileProfile = mcpPeerPercentileFromPayload({
+  profile: {
+    category: 'niche',
+    cohort_size: 1,
+    axes: [
+      { key: 'grade', label: 'Grade', value: 73, percentile: 100, rank: 1, top_percent: 100, cohort_size: 1, available: true, detail: 'Only server with a grade score in this category' },
+      { key: 'safety', label: 'Safety', value: null, percentile: null, rank: null, top_percent: null, cohort_size: 0, available: false, detail: 'Not measured' },
+      { key: 'documentation', label: 'Documentation', value: 40, percentile: 100, rank: 1, top_percent: 100, cohort_size: 1, available: true, detail: 'Only server with a documentation score in this category' },
+      { key: 'latency', label: 'Latency', value: null, percentile: null, rank: null, top_percent: null, cohort_size: 0, available: false, detail: 'Not measured' },
+    ],
   },
 })!;
 
@@ -1246,6 +1279,31 @@ export default function McpPrimitivesShowcase() {
           Nothing measured yet
         </div>
         <TrustProfilePanel profile={TRUST_EMPTY_SAMPLE} loading={false} error={null} />
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            PeerPercentilePanel (V2-MCP-32.3)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Peer percentile &amp; category ranking on the Insight tab&apos;s <em>Reliability &amp;
+            trust</em> section: from <code>insight/percentile</code> it ranks the server against the
+            other live servers in its catalog <strong>category</strong> on <strong>grade</strong>,{' '}
+            <strong>safety</strong>, <strong>documentation</strong>, and <strong>latency</strong>,
+            rendering a <strong>&ldquo;top N%&rdquo; badge</strong> toned by standing plus its
+            &ldquo;rank K of N&rdquo; basis — a peer baseline, not an absolute grade. A single-member
+            category is called out explicitly and unmeasured axes render as labelled gaps.
+          </p>
+        </div>
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Populated (three axes ranked, one gap)
+        </div>
+        <PeerPercentilePanel profile={PEER_POPULATED_SAMPLE} loading={false} error={null} />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Single-member category
+        </div>
+        <PeerPercentilePanel profile={PEER_SINGLE_SAMPLE} loading={false} error={null} />
       </section>
 
       <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">

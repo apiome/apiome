@@ -17,11 +17,14 @@ from app.mcp_insight_aggregation import (
     compute_discovery_timeline,
     compute_invocation_reliability,
     compute_latency_stats,
+    compute_endpoint_percentile_axes,
+    compute_peer_percentiles,
     compute_tool_count_histogram,
     compute_tool_reliability,
     compute_trust_profile,
     mcp_auth_posture,
     percentile_cont,
+    percentile_rank,
 )
 
 # ---------------------------------------------------------------------------
@@ -620,3 +623,205 @@ def test_tool_count_histogram_none_counts_as_zero():
 def test_tool_count_histogram_as_dict_shape():
     hist = compute_tool_count_histogram([7])
     assert hist[2].as_dict() == {"label": "6–20", "count": 1}
+
+
+# ---------------------------------------------------------------------------
+# percentile_rank (peer percentile & category ranking — MCAT-18.3)
+# ---------------------------------------------------------------------------
+
+
+def test_percentile_rank_matches_hand_computed_cohort():
+    # cohort of 5, sorted → [40, 55, 70, 80, 90]; each target's "share at or below".
+    values = [70, 40, 90, 55, 80]
+    assert percentile_rank(values, 90) == 100.0  # all 5 at or below → leader
+    assert percentile_rank(values, 70) == 60.0  # 3 of 5 (40,55,70) at or below
+    assert percentile_rank(values, 40) == 20.0  # 1 of 5 at or below → bottom
+
+
+def test_percentile_rank_single_member_is_leader():
+    # A one-member cohort: the sole server is trivially the top of its category.
+    assert percentile_rank([73.0], 73.0) == 100.0
+
+
+def test_percentile_rank_ties_count_toward_the_share():
+    # Equal-valued peers all count as "at or below", so tied leaders both read 100.
+    assert percentile_rank([80, 80, 80], 80) == 100.0
+    assert percentile_rank([50, 80, 80], 80) == 100.0
+    assert percentile_rank([50, 80, 80], 50) == pytest.approx(33.3, abs=0.05)
+
+
+def test_percentile_rank_empty_cohort_is_none():
+    assert percentile_rank([], 10.0) is None
+
+
+# ---------------------------------------------------------------------------
+# compute_endpoint_percentile_axes — reuses the trust axis derivations
+# ---------------------------------------------------------------------------
+
+
+def _annotation_coverage(tool_count, annotated_tools):
+    return {"tool_count": tool_count, "annotated_tools": annotated_tools}
+
+
+def _documentation_coverage(item_count, description_pct, title_pct, tool_param_count=0, tool_param_description_pct=0.0):
+    return {
+        "item_count": item_count,
+        "description_pct": description_pct,
+        "title_pct": title_pct,
+        "tool_param_count": tool_param_count,
+        "tool_param_description_pct": tool_param_description_pct,
+    }
+
+
+def test_endpoint_percentile_axes_all_measured():
+    axes = compute_endpoint_percentile_axes(
+        score=82,
+        grade="B",
+        annotation_coverage=_annotation_coverage(4, 4),  # fully annotated
+        documentation_coverage=_documentation_coverage(10, 80.0, 60.0),  # mean 70
+        destructive_tool_count=0,
+        auth_posture="authenticated",
+        invocation={"call_count": 5, "error_rate": 0.0, "latency": {"p95_ms": 200.0}},
+    )
+    assert axes["grade"] == 82.0
+    # safety: transparency 1.0, guardedness 1.0 (authenticated) → 100
+    assert axes["safety"] == 100.0
+    # documentation: mean(80, 60) = 70 (no tool params)
+    assert axes["documentation"] == 70.0
+    # latency: p95 at the 200ms floor → full marks
+    assert axes["latency"] == 100.0
+
+
+def test_endpoint_percentile_axes_gaps_when_inputs_missing():
+    # Never scored, no tools, no capabilities, never tested → every axis is a gap.
+    axes = compute_endpoint_percentile_axes(
+        score=None,
+        grade=None,
+        annotation_coverage={},
+        documentation_coverage={},
+        destructive_tool_count=0,
+        auth_posture="anonymous",
+        invocation={"call_count": 0, "error_rate": 0.0, "latency": {}},
+    )
+    assert axes == {"grade": None, "safety": None, "documentation": None, "latency": None}
+
+
+def test_endpoint_percentile_axes_latency_gap_without_p95():
+    axes = compute_endpoint_percentile_axes(
+        score=50,
+        grade="C",
+        annotation_coverage={},
+        documentation_coverage={},
+        destructive_tool_count=0,
+        auth_posture="authenticated",
+        invocation={"call_count": 3, "error_rate": 0.0, "latency": {"p95_ms": None}},
+    )
+    assert axes["latency"] is None  # a call recorded but no completed latency → latency gap
+
+
+# ---------------------------------------------------------------------------
+# compute_peer_percentiles — the seeded-cohort acceptance criterion
+# ---------------------------------------------------------------------------
+
+
+def test_peer_percentiles_rank_target_within_seeded_cohort():
+    # A four-member cohort; the target ("finance-a") leads on documentation, mid on grade.
+    cohort_axis_values = {
+        "grade": [90.0, 70.0, 60.0, 80.0],
+        "safety": [100.0, 50.0, 75.0, 25.0],
+        "documentation": [95.0, 40.0, 55.0, 70.0],
+        "latency": [100.0, 20.0, 60.0, 80.0],
+    }
+    target = {"grade": 80.0, "safety": 100.0, "documentation": 95.0, "latency": 100.0}
+    profile = compute_peer_percentiles(
+        category="finance",
+        cohort_size=4,
+        target_axis_values=target,
+        cohort_axis_values=cohort_axis_values,
+    )
+    assert profile.category == "finance"
+    assert profile.cohort_size == 4
+    by_key = {axis.key: axis for axis in profile.axes}
+
+    # documentation: target 95 is the max of the cohort → rank 1, percentile 100, top 25%.
+    docs = by_key["documentation"]
+    assert docs.available is True
+    assert docs.value == 95.0
+    assert docs.rank == 1
+    assert docs.percentile == 100.0
+    assert docs.top_percent == 25  # ceil(100 * 1 / 4)
+    assert docs.cohort_size == 4
+    assert "top 25%" in docs.detail
+
+    # grade: target 80 has 2 of 4 (70,80... actually {60,70,80} at or below) → percentile 75, rank 2.
+    grade = by_key["grade"]
+    assert grade.percentile == 75.0  # 3 of 4 (60,70,80) at or below
+    assert grade.rank == 2  # only 90 is strictly above
+    assert grade.top_percent == 50  # ceil(100 * 2 / 4)
+
+
+def test_peer_percentiles_single_member_category():
+    # A lone server in its category is trivially the leader on every measured axis.
+    target = {"grade": 73.0, "safety": None, "documentation": 40.0, "latency": None}
+    cohort_axis_values = {"grade": [73.0], "documentation": [40.0]}
+    profile = compute_peer_percentiles(
+        category="niche",
+        cohort_size=1,
+        target_axis_values=target,
+        cohort_axis_values=cohort_axis_values,
+    )
+    by_key = {axis.key: axis for axis in profile.axes}
+    assert by_key["grade"].percentile == 100.0
+    assert by_key["grade"].rank == 1
+    assert by_key["grade"].top_percent == 100
+    assert "Only server" in by_key["grade"].detail
+    # unmeasured axes are explicit gaps, not zeros.
+    assert by_key["safety"].available is False
+    assert by_key["safety"].value is None
+    assert by_key["safety"].percentile is None
+
+
+def test_peer_percentiles_gap_axis_when_target_missing_value():
+    # The cohort has documentation values but the target itself was never measured on it → gap.
+    profile = compute_peer_percentiles(
+        category="weather",
+        cohort_size=3,
+        target_axis_values={"grade": 60.0, "documentation": None},
+        cohort_axis_values={"grade": [60.0, 80.0], "documentation": [70.0, 90.0]},
+    )
+    by_key = {axis.key: axis for axis in profile.axes}
+    assert by_key["documentation"].available is False
+    assert by_key["documentation"].percentile is None
+    # cohort_size on the axis still reflects the peers that DO have it measured.
+    assert by_key["documentation"].cohort_size == 2
+    assert by_key["documentation"].detail == "Not measured"
+
+
+def test_peer_percentiles_as_dict_shape():
+    profile = compute_peer_percentiles(
+        category=None,
+        cohort_size=1,
+        target_axis_values={"grade": 50.0},
+        cohort_axis_values={"grade": [50.0]},
+    )
+    payload = profile.as_dict()
+    assert payload["category"] is None
+    assert payload["cohort_size"] == 1
+    assert [axis["key"] for axis in payload["axes"]] == [
+        "grade",
+        "safety",
+        "documentation",
+        "latency",
+    ]
+    grade_axis = payload["axes"][0]
+    assert set(grade_axis) == {
+        "key",
+        "label",
+        "value",
+        "percentile",
+        "rank",
+        "top_percent",
+        "cohort_size",
+        "available",
+        "detail",
+    }

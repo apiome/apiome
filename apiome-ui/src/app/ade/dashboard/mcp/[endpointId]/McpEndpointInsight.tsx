@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Sparkles,
   Timer,
+  Trophy,
 } from "lucide-react";
 import { Badge } from "@/app/components/ui/Badge";
 import { LoadingState } from "@/app/components/ui/LoadingState";
@@ -38,6 +39,7 @@ import {
   type McpScoreNavigateToItem,
 } from "@/app/components/ui/mcp/ScoreBreakdownPanel";
 import { TrustProfilePanel } from "@/app/components/ui/mcp/TrustProfilePanel";
+import { PeerPercentilePanel } from "@/app/components/ui/mcp/PeerPercentilePanel";
 import { dashboardPanelPaddedClass } from "@/app/components/ade/dashboard/dashboardScreenClasses";
 import {
   mcpVersionDetailFromPayload,
@@ -83,6 +85,10 @@ import {
   mcpTrustProfileFromPayload,
   type McpTrustProfile,
 } from "@/app/components/ade/dashboard/mcp/mcpTrustUi";
+import {
+  mcpPeerPercentileFromPayload,
+  type McpPeerPercentileProfile,
+} from "@/app/components/ade/dashboard/mcp/mcpPeerPercentileUi";
 
 interface Props {
   endpointId: string;
@@ -428,6 +434,14 @@ export default function McpEndpointInsight({
   const [trust, setTrust] = useState<McpTrustProfile | null>(null);
   const [trustLoading, setTrustLoading] = useState(true);
   const [trustError, setTrustError] = useState<string | null>(null);
+  /**
+   * The endpoint's peer percentile & category ranking (MCAT-18.3) — where it stands against the
+   * other live servers in its catalog category on grade / safety / documentation / latency.
+   * Endpoint-level (not per-snapshot), loaded once alongside the trust profile.
+   */
+  const [peerPercentile, setPeerPercentile] = useState<McpPeerPercentileProfile | null>(null);
+  const [peerLoading, setPeerLoading] = useState(true);
+  const [peerError, setPeerError] = useState<string | null>(null);
   /** Guards the one-time seen-marker advance so it fires once per load, after the digest is read. */
   const viewRecordedRef = useRef(false);
   const mountedRef = useRef(true);
@@ -810,6 +824,39 @@ export default function McpEndpointInsight({
     };
   }, [endpointId]);
 
+  // Fetch the endpoint's peer percentile & category ranking once (endpoint-level; the server ranks it
+  // against its category cohort on grade / safety / documentation / latency in a single read). A
+  // single-member category or an undiscovered endpoint yields a coherent profile (a 200), which the
+  // panel renders as its "not enough peers yet" empty state rather than an error.
+  useEffect(() => {
+    let active = true;
+    setPeerLoading(true);
+    setPeerError(null);
+    (async () => {
+      try {
+        const res = await fetch(`/api/mcp/endpoints/${endpointId}/insight/percentile`, {
+          credentials: "include",
+          cache: "no-store",
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(typeof data.error === "string" ? data.error : res.statusText);
+        }
+        if (!active) return;
+        setPeerPercentile(mcpPeerPercentileFromPayload(data));
+      } catch (e) {
+        if (!active) return;
+        setPeerPercentile(null);
+        setPeerError(e instanceof Error ? e.message : "Could not load the peer ranking.");
+      } finally {
+        if (active) setPeerLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [endpointId]);
+
   // Fetch every snapshot's full surface once the version list is known — the presence matrix
   // reconstructs each capability's lifespan from the per-version capability items, which the list
   // summary omits. The reads run in parallel; a snapshot whose detail fails to load is dropped so the
@@ -1184,6 +1231,29 @@ export default function McpEndpointInsight({
                   </p>
                 </div>
                 <TrustProfilePanel profile={trust} loading={trustLoading} error={trustError} />
+              </div>
+              {/* Peer percentile & category ranking (MCAT-18.3) — a peer baseline, not an absolute
+                  grade. Ranks this server against the other live servers in its catalog category on
+                  grade / safety / documentation / latency, so an evaluator sees "top 10% for
+                  documentation in finance"-style standing. Loaded endpoint-level from
+                  insight/percentile; single-member categories and unmeasured axes are handled. */}
+              <div className={dashboardPanelPaddedClass}>
+                <div className="mb-3">
+                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+                    <Trophy className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+                    Peer ranking in category
+                  </h4>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    Where this server stands against its category peers — a &ldquo;top 10% for
+                    documentation&rdquo;-style baseline across grade, safety, documentation, and
+                    latency, not an absolute grade. Unmeasured axes are shown as gaps.
+                  </p>
+                </div>
+                <PeerPercentilePanel
+                  profile={peerPercentile}
+                  loading={peerLoading}
+                  error={peerError}
+                />
               </div>
             </div>
           );
