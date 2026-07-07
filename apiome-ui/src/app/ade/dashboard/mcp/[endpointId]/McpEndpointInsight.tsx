@@ -37,6 +37,7 @@ import {
   ScoreBreakdownPanel,
   type McpScoreNavigateToItem,
 } from "@/app/components/ui/mcp/ScoreBreakdownPanel";
+import { TrustProfilePanel } from "@/app/components/ui/mcp/TrustProfilePanel";
 import { dashboardPanelPaddedClass } from "@/app/components/ade/dashboard/dashboardScreenClasses";
 import {
   mcpVersionDetailFromPayload,
@@ -78,6 +79,10 @@ import {
   mcpLintReportFromPayload,
   type McpLintReport,
 } from "@/app/components/ade/dashboard/mcp/mcpLintUi";
+import {
+  mcpTrustProfileFromPayload,
+  type McpTrustProfile,
+} from "@/app/components/ade/dashboard/mcp/mcpTrustUi";
 
 interface Props {
   endpointId: string;
@@ -165,12 +170,11 @@ const INSIGHT_SECTIONS: InsightSectionDef[] = [
     title: "Reliability & trust",
     subtitle: "Whether the server is healthy, fast, and trustworthy.",
     icon: ShieldCheck,
-    // "Discovery health & availability timeline" (MCAT-17.1) and the "Tool latency & error-rate
-    // panel" (MCAT-17.2) now both land as live panels in this section's body; the trust-radar panel
-    // is still reserved for 17.4.
-    reserved: [
-      { key: "trust", title: "Composite trust radar", hint: "Quality, safety, docs, stability, responsiveness." },
-    ],
+    // "Discovery health & availability timeline" (MCAT-17.1), the "Tool latency & error-rate panel"
+    // (MCAT-17.2), the "Score & lint breakdown" (MCAT-17.3), and the "Composite trust profile radar"
+    // (MCAT-17.4) now all land as live panels in this section's body — the capstone of the
+    // single-server view — so this section has no reserved slots left.
+    reserved: [],
   },
 ];
 
@@ -416,6 +420,14 @@ export default function McpEndpointInsight({
   const [report, setReport] = useState<McpLintReport | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
+  /**
+   * The endpoint's composite trust profile (MCAT-17.4) — five normalized axes synthesized
+   * server-side from the quality / safety / documentation / stability / responsiveness signals.
+   * Endpoint-level (not per-snapshot), loaded once; the capstone panel of the reliability section.
+   */
+  const [trust, setTrust] = useState<McpTrustProfile | null>(null);
+  const [trustLoading, setTrustLoading] = useState(true);
+  const [trustError, setTrustError] = useState<string | null>(null);
   /** Guards the one-time seen-marker advance so it fires once per load, after the digest is read. */
   const viewRecordedRef = useRef(false);
   const mountedRef = useRef(true);
@@ -758,6 +770,39 @@ export default function McpEndpointInsight({
         setHealthError(e instanceof Error ? e.message : "Could not load reliability.");
       } finally {
         if (active) setHealthLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [endpointId]);
+
+  // Fetch the endpoint's composite trust profile once (endpoint-level; the server synthesizes all
+  // five axes across the surface, evolution, and invocation history in a single read). A
+  // never-discovered / never-measured endpoint yields an all-gap profile (a 200), which the panel
+  // renders as its "not enough signal yet" empty state rather than an error.
+  useEffect(() => {
+    let active = true;
+    setTrustLoading(true);
+    setTrustError(null);
+    (async () => {
+      try {
+        const res = await fetch(`/api/mcp/endpoints/${endpointId}/insight/trust`, {
+          credentials: "include",
+          cache: "no-store",
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(typeof data.error === "string" ? data.error : res.statusText);
+        }
+        if (!active) return;
+        setTrust(mcpTrustProfileFromPayload(data));
+      } catch (e) {
+        if (!active) return;
+        setTrust(null);
+        setTrustError(e instanceof Error ? e.message : "Could not load the trust profile.");
+      } finally {
+        if (active) setTrustLoading(false);
       }
     })();
     return () => {
@@ -1120,6 +1165,25 @@ export default function McpEndpointInsight({
                   error={reportError}
                   onNavigateToItem={onNavigateToItem}
                 />
+              </div>
+              {/* Composite trust profile radar (MCAT-17.4) — the capstone of the single-server view.
+                  Synthesizes the section's scattered signals (quality, safety, documentation,
+                  stability, responsiveness) into one five-axis glance, each axis 0–100 or an explicit
+                  gap. Loaded endpoint-level from insight/trust; explicitly a heuristic composite. */}
+              <div className={dashboardPanelPaddedClass}>
+                <div className="mb-3">
+                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+                    <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+                    Composite trust profile
+                  </h4>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    A synthesized trust glance across five normalized axes — quality, safety,
+                    documentation, stability, and responsiveness — each with its methodology on
+                    hover. A heuristic composite, not an official rating; unmeasured axes show as
+                    gaps, never zeros.
+                  </p>
+                </div>
+                <TrustProfilePanel profile={trust} loading={trustLoading} error={trustError} />
               </div>
             </div>
           );

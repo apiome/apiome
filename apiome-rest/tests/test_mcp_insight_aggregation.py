@@ -10,12 +10,16 @@ import pytest
 
 from app.mcp_insight_aggregation import (
     DISCOVERY_TIMELINE_WINDOW,
+    RESPONSIVENESS_LATENCY_CEILING_MS,
+    RESPONSIVENESS_LATENCY_FLOOR_MS,
     TOOL_LATENCY_WINDOW_DAYS,
     compute_discovery_reliability,
     compute_discovery_timeline,
     compute_invocation_reliability,
     compute_latency_stats,
     compute_tool_reliability,
+    compute_trust_profile,
+    mcp_auth_posture,
     percentile_cont,
 )
 
@@ -384,3 +388,196 @@ def test_tool_reliability_missing_item_name_bucketed_as_unknown():
     assert rel.tools[0].tool_name == "(unknown)"
     assert rel.tools[0].call_count == 2
     assert rel.call_count == 2  # totals never disagree with the per-tool breakdown
+
+
+# ---------------------------------------------------------------------------
+# compute_trust_profile — composite five-axis radar (V2-MCP-31.4 / MCAT-17.4)
+# ---------------------------------------------------------------------------
+
+# A fully-measured server: every axis has its input, so no axis is a gap.
+_FULL_TRUST_INPUTS = dict(
+    quality_score=84,
+    quality_grade="B",
+    annotation_coverage={"tool_count": 4, "annotated_tools": 3},
+    documentation_coverage={
+        "item_count": 5,
+        "description_pct": 80.0,
+        "title_pct": 60.0,
+        "tool_param_count": 0,
+        "tool_param_description_pct": 0.0,
+    },
+    destructive_tool_count=1,
+    auth_posture="authenticated",
+    change_severities=[{"breaking": 0}, {"breaking": 1}, {"breaking": 0}],
+    invocation={"call_count": 20, "error_rate": 0.1, "latency": {"p95_ms": 200.0}},
+)
+
+
+def _trust(**overrides):
+    """Compute a trust profile from the full-inputs baseline with per-test overrides."""
+    inputs = {**_FULL_TRUST_INPUTS, **overrides}
+    profile = compute_trust_profile(**inputs)
+    return profile, {axis.key: axis for axis in profile.axes}
+
+
+def test_trust_profile_all_axes_available_averages_the_five():
+    profile, axes = _trust()
+    assert profile.axis_count == 5
+    assert profile.available_count == 5
+    # quality 84, safety 87.5, documentation 70, stability 66.7, responsiveness 95.0
+    assert axes["quality"].value == pytest.approx(84.0)
+    assert axes["safety"].value == pytest.approx(87.5)
+    assert axes["documentation"].value == pytest.approx(70.0)
+    assert axes["stability"].value == pytest.approx(66.7)
+    assert axes["responsiveness"].value == pytest.approx(95.0)
+    assert all(axis.available for axis in profile.axes)
+    # overall is the mean of the five available axes.
+    assert profile.overall == pytest.approx(round((84.0 + 87.5 + 70.0 + 66.7 + 95.0) / 5, 1))
+    # canonical clockwise order is stable.
+    assert [axis.key for axis in profile.axes] == [
+        "quality",
+        "safety",
+        "documentation",
+        "stability",
+        "responsiveness",
+    ]
+    # every axis carries a non-empty methodology (shown on hover) and a detail line.
+    assert all(axis.methodology and axis.detail for axis in profile.axes)
+
+
+def test_trust_profile_quality_reads_score_and_grade():
+    _, axes = _trust(quality_score=91, quality_grade="A")
+    assert axes["quality"].value == pytest.approx(91.0)
+    assert axes["quality"].detail == "Grade A · 91/100"
+
+
+def test_trust_profile_missing_quality_is_a_gap_not_a_zero():
+    profile, axes = _trust(quality_score=None, quality_grade=None)
+    assert axes["quality"].available is False
+    assert axes["quality"].value is None
+    assert axes["quality"].detail == "Not yet scored"
+    # the gap is excluded from the composite (four axes remain).
+    assert profile.available_count == 4
+
+
+def test_trust_profile_safety_penalizes_destructive_without_auth():
+    # 3/4 annotated → transparency 0.75; anonymous + 1 destructive → guardedness 0.75.
+    _, axes = _trust(auth_posture="anonymous", destructive_tool_count=1)
+    assert axes["safety"].value == pytest.approx(75.0)
+    assert "destructive with no auth" in axes["safety"].detail
+
+
+def test_trust_profile_safety_authenticated_ignores_destructive():
+    # Same surface but authenticated → guardedness 1.0 regardless of destructive tools.
+    _, axes = _trust(auth_posture="authenticated", destructive_tool_count=3)
+    assert axes["safety"].value == pytest.approx(87.5)
+
+
+def test_trust_profile_safety_gap_when_no_tools():
+    _, axes = _trust(annotation_coverage={"tool_count": 0, "annotated_tools": 0})
+    assert axes["safety"].available is False
+    assert axes["safety"].value is None
+    assert axes["safety"].detail == "No tools to assess"
+
+
+def test_trust_profile_documentation_includes_params_only_when_present():
+    # No params → mean of description/title only.
+    _, axes = _trust()
+    assert axes["documentation"].value == pytest.approx(70.0)
+    # With params → the third component pulls the mean down.
+    _, axes_params = _trust(
+        documentation_coverage={
+            "item_count": 5,
+            "description_pct": 80.0,
+            "title_pct": 60.0,
+            "tool_param_count": 3,
+            "tool_param_description_pct": 40.0,
+        }
+    )
+    assert axes_params["documentation"].value == pytest.approx(60.0)
+
+
+def test_trust_profile_documentation_gap_when_no_items():
+    _, axes = _trust(documentation_coverage={"item_count": 0})
+    assert axes["documentation"].available is False
+    assert axes["documentation"].value is None
+
+
+def test_trust_profile_stability_is_non_breaking_transition_rate():
+    # 1 of 3 transitions breaking → 2/3 non-breaking.
+    _, axes = _trust(change_severities=[{"breaking": 0}, {"breaking": 2}, {"breaking": 0}])
+    assert axes["stability"].value == pytest.approx(66.7)
+    assert axes["stability"].detail == "2/3 snapshot changes non-breaking"
+
+
+def test_trust_profile_stability_gap_when_no_transitions():
+    profile, axes = _trust(change_severities=[])
+    assert axes["stability"].available is False
+    assert axes["stability"].value is None
+    assert axes["stability"].detail == "Not enough history"
+
+
+def test_trust_profile_responsiveness_blends_error_rate_and_latency():
+    # error_rate 0.1 → reliability 90; p95 200ms → latency 100; mean → 95.
+    _, axes = _trust(invocation={"call_count": 5, "error_rate": 0.1, "latency": {"p95_ms": 200.0}})
+    assert axes["responsiveness"].value == pytest.approx(95.0)
+    assert "p95 200 ms" in axes["responsiveness"].detail
+
+
+def test_trust_profile_responsiveness_without_latency_is_reliability_only():
+    _, axes = _trust(invocation={"call_count": 5, "error_rate": 0.2, "latency": {"p95_ms": None}})
+    assert axes["responsiveness"].value == pytest.approx(80.0)
+    assert axes["responsiveness"].detail == "20.0% errors"
+
+
+def test_trust_profile_responsiveness_gap_when_never_tested():
+    profile, axes = _trust(invocation={"call_count": 0, "error_rate": 0.0, "latency": {}})
+    assert axes["responsiveness"].available is False
+    assert axes["responsiveness"].value is None
+    assert axes["responsiveness"].detail == "Never tested"
+
+
+def test_trust_profile_all_gaps_yields_none_overall():
+    profile = compute_trust_profile(
+        quality_score=None,
+        quality_grade=None,
+        annotation_coverage={},
+        documentation_coverage={},
+        destructive_tool_count=0,
+        auth_posture="anonymous",
+        change_severities=[],
+        invocation={"call_count": 0, "error_rate": 0.0, "latency": {}},
+    )
+    assert profile.available_count == 0
+    assert profile.overall is None
+    assert all(axis.value is None and not axis.available for axis in profile.axes)
+
+
+def test_trust_profile_latency_floor_and_ceiling():
+    # p95 at/below the floor scores full; at/above the ceiling scores zero (reliability held at 100).
+    _, fast = _trust(
+        invocation={
+            "call_count": 5,
+            "error_rate": 0.0,
+            "latency": {"p95_ms": RESPONSIVENESS_LATENCY_FLOOR_MS},
+        }
+    )
+    assert fast["responsiveness"].value == pytest.approx(100.0)
+    _, slow = _trust(
+        invocation={
+            "call_count": 5,
+            "error_rate": 0.0,
+            "latency": {"p95_ms": RESPONSIVENESS_LATENCY_CEILING_MS},
+        }
+    )
+    # reliability 100 * 0.5 + latency 0 * 0.5 → 50.
+    assert slow["responsiveness"].value == pytest.approx(50.0)
+
+
+def test_mcp_auth_posture_bands():
+    assert mcp_auth_posture(None) == "anonymous"
+    assert mcp_auth_posture("") == "anonymous"
+    assert mcp_auth_posture("none") == "anonymous"
+    assert mcp_auth_posture("None") == "anonymous"
+    assert mcp_auth_posture("bearer") == "authenticated"
+    assert mcp_auth_posture("oauth2") == "authenticated"

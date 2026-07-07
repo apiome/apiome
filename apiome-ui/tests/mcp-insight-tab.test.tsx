@@ -221,8 +221,41 @@ function routeFetch(handlers: {
   views?: () => Response;
   reliability?: () => Response;
   lint?: (versionId: string) => Response;
+  trust?: () => Response;
 }) {
   (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
+    if (url.includes('/insight/trust')) {
+      // The composite trust profile (MCAT-17.4) loads endpoint-level; default to an all-gap profile
+      // so tests that don't care about it render the panel's "not enough signal yet" empty state.
+      const gap = (key: string, label: string) => ({
+        key,
+        label,
+        value: null,
+        available: false,
+        detail: 'Not measured',
+        methodology: `How ${label} is computed.`,
+      });
+      return handlers.trust
+        ? handlers.trust()
+        : jsonResponse({
+            success: true,
+            endpoint_id: ENDPOINT_ID,
+            version_id: V3,
+            auth_type: 'none',
+            profile: {
+              axes: [
+                gap('quality', 'Quality'),
+                gap('safety', 'Safety'),
+                gap('documentation', 'Documentation'),
+                gap('stability', 'Stability'),
+                gap('responsiveness', 'Responsiveness'),
+              ],
+              overall: null,
+              available_count: 0,
+              axis_count: 5,
+            },
+          });
+    }
     if (url.includes('/insight/digest')) {
       // The "changed since last view" digest (MCAT-16.5) loads per-user; default to an up-to-date
       // digest so tests that don't care about it render the calm "up to date" state.
@@ -392,8 +425,12 @@ describe('McpEndpointInsight — scaffold', () => {
     expect(screen.getByText('Surface evolution')).toBeInTheDocument();
     expect(screen.getByText('Reliability & trust')).toBeInTheDocument();
 
-    // Reserved placeholder panels are laid out.
-    expect(screen.getAllByText('Coming soon').length).toBeGreaterThan(0);
+    // Every section is now filled with live panels — no reserved "Coming soon" placeholders remain
+    // (the reliability section's final slot became the composite trust radar, MCAT-17.4).
+    expect(screen.queryByText('Coming soon')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByText('Composite trust profile')).toBeInTheDocument(),
+    );
 
     // Surface was fetched for the current version by default.
     expect(global.fetch).toHaveBeenCalledWith(
@@ -1074,5 +1111,56 @@ describe('McpEndpointInsight — scaffold', () => {
     // A finding deep-links to its offending capability item.
     fireEvent.click(screen.getByRole('button', { name: /tools\.write_record/i }));
     expect(onNavigateToItem).toHaveBeenCalledWith('tool', 'write_record');
+  });
+
+  it('renders the composite trust profile radar from insight/trust (MCAT-17.4)', async () => {
+    const axis = (
+      key: string,
+      label: string,
+      value: number | null,
+      available: boolean,
+      detail: string,
+    ) => ({ key, label, value, available, detail, methodology: `How ${label} is computed.` });
+    routeFetch({
+      versions: () => jsonResponse(versionsPayload()),
+      surface: (vid) => jsonResponse(surfacePayload(vid ?? V3, 3, 4)),
+      trust: () =>
+        jsonResponse({
+          success: true,
+          endpoint_id: ENDPOINT_ID,
+          version_id: V3,
+          auth_type: 'none',
+          profile: {
+            axes: [
+              axis('quality', 'Quality', 90, true, 'Grade A · 90/100'),
+              axis('safety', 'Safety', 75, true, '2/2 tools annotated · anonymous'),
+              axis('documentation', 'Documentation', 50, true, '100% described · 0% titled'),
+              axis('stability', 'Stability', null, false, 'Not enough history'),
+              axis('responsiveness', 'Responsiveness', null, false, 'Never tested'),
+            ],
+            overall: 72,
+            available_count: 3,
+            axis_count: 5,
+          },
+        }),
+    });
+
+    render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
+
+    // The reliability section renders the live trust-profile panel (its reserved slot is gone).
+    await waitFor(() =>
+      expect(screen.getByText('Composite trust profile')).toBeInTheDocument(),
+    );
+    // The overall composite headline + "3 of 5 signals measured" caption.
+    expect(screen.getByText('72')).toBeInTheDocument();
+    expect(screen.getByText(/signals measured/i)).toBeInTheDocument();
+    // A measured axis shows its score; the gaps show "Not measured", never a zero.
+    expect(screen.getByText('Grade A · 90/100')).toBeInTheDocument();
+    expect(screen.getAllByText('Not measured').length).toBeGreaterThanOrEqual(2);
+    // The trust profile was fetched endpoint-level.
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/insight/trust'),
+      expect.anything(),
+    );
   });
 });

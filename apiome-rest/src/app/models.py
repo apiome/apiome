@@ -6182,6 +6182,62 @@ def mcp_discovery_health_out(
     )
 
 
+class McpTrustAxisOut(BaseModel):
+    """One normalized 0-100 axis of the composite trust profile (V2-MCP-31.4 / MCAT-17.4).
+
+    ``value`` is the axis score in ``[0, 100]`` when ``available``; ``None`` when the input the axis
+    needs is missing — an explicit *gap* the radar renders as such, never a misleading zero.
+    ``detail`` is the always-shown one-line basis for the score; ``methodology`` is the longer
+    "how this is computed" text the panel reveals on hover.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    key: str
+    label: str
+    value: Optional[float] = None
+    available: bool = False
+    detail: str = ""
+    methodology: str = ""
+
+
+class McpTrustProfileOut(BaseModel):
+    """The five-axis composite trust profile — a heuristic glance, not an official rating.
+
+    ``axes`` are the five normalized dimensions in canonical (clockwise) radar order — quality,
+    safety, documentation, stability, responsiveness — some of which may be gaps. ``overall`` is the
+    mean of only the *available* axes (gaps excluded), or ``None`` when none could be computed;
+    ``available_count`` / ``axis_count`` back the panel's "N of 5 signals measured" caption.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    axes: List[McpTrustAxisOut] = Field(default_factory=list)
+    overall: Optional[float] = None
+    available_count: int = 0
+    axis_count: int = 0
+
+
+class McpInsightTrustResponse(BaseModel):
+    """Response envelope for an endpoint's composite trust profile radar (MCAT-17.4).
+
+    ``profile`` carries the five normalized axes (quality, safety, documentation, stability,
+    responsiveness), each 0-100 or an explicit gap, plus the mean of the available axes. It is an
+    explicitly heuristic composite — a synthesized "trust glance", not an official rating.
+    ``version_id`` is the current snapshot the surface-derived axes (quality / safety /
+    documentation) were read from, or ``None`` when the endpoint has never been discovered;
+    ``auth_type`` is the endpoint's configured scheme the safety axis cross-references.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    version_id: Optional[str] = None
+    auth_type: Optional[str] = None
+    profile: McpTrustProfileOut
+
+
 class McpInsightCatalogResponse(BaseModel):
     """Response envelope for the tenant-wide catalog insight roll-up (feeds 18.1).
 

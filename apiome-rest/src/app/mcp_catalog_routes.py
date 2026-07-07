@@ -21,7 +21,7 @@ import logging
 import re
 import time
 import uuid
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import jsonschema
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -36,6 +36,7 @@ from .mcp_auth import (
     validate_credential_payload,
 )
 from .mcp_capability_graph import compute_capability_graph
+from .mcp_change_severity import severity_counts
 from .mcp_client.normalize import (
     ITEM_TYPE_PROMPT,
     ITEM_TYPE_RESOURCE,
@@ -55,6 +56,8 @@ from .mcp_insight_aggregation import (
     compute_discovery_timeline,
     compute_invocation_reliability,
     compute_tool_reliability,
+    compute_trust_profile,
+    mcp_auth_posture,
 )
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
 from .mcp_score import score_mcp_surface
@@ -86,12 +89,14 @@ from .models import (
     McpInsightGraphResponse,
     McpInsightReliabilityResponse,
     McpInsightSurfaceResponse,
+    McpInsightTrustResponse,
     McpInvocationReliabilityOut,
     McpLintReportResponse,
     McpSearchResponse,
     McpSearchScope,
     McpSearchVisibility,
     McpToolInvocationReliabilityOut,
+    McpTrustProfileOut,
     McpTypeCountsOut,
     McpVersionChangesResponse,
     McpVersionCompareResponse,
@@ -1756,6 +1761,104 @@ async def get_mcp_endpoint_insight_reliability(
         invocation=McpInvocationReliabilityOut.model_validate(invocation.as_dict()),
         health=mcp_discovery_health_out(timeline.as_dict(), endpoint),
         tools=McpToolInvocationReliabilityOut.model_validate(tools.as_dict()),
+    )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/insight/trust",
+    response_model=McpInsightTrustResponse,
+)
+async def get_mcp_endpoint_insight_trust(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpInsightTrustResponse:
+    """Return the endpoint's composite trust profile — five normalized 0-100 axes (MCAT-17.4).
+
+    The capstone of the single-server insight view: a synthesized "trust glance" across five axes,
+    each reading one already-computed metric layer —
+
+    * **quality** — the current snapshot's stored lint score;
+    * **safety** — behavioural-annotation coverage crossed with the endpoint's auth posture and its
+      destructive-tool count;
+    * **documentation** — the snapshot's documentation coverage;
+    * **stability** — the breaking-change rate across the evolution series' snapshot transitions;
+    * **responsiveness** — the test-invocation error rate and p95 latency.
+
+    Every axis whose input is missing (a never-scored, never-changed, or never-tested server) is
+    returned as an explicit *gap* — ``value: null`` with ``available: false`` — never a zero, and the
+    ``overall`` composite averages only the available axes. This is deliberately a **heuristic**
+    composite the panel labels as such, not an official rating. A never-discovered endpoint yields an
+    all-gap profile (a ``200``), never a ``500``. Returns ``404`` when the endpoint is not the
+    caller's tenant's. A GET stays read-only.
+    """
+    _ = tenant_slug
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+
+    # Quality / safety / documentation all read the current snapshot's surface. A never-discovered
+    # endpoint simply leaves these inputs empty, so those axes come back as gaps (a 200), not a 500.
+    current_version_id = endpoint.get("current_version_id")
+    quality_score: Optional[int] = None
+    quality_grade: Optional[str] = None
+    annotation_coverage: Dict[str, Any] = {}
+    documentation_coverage: Dict[str, Any] = {}
+    destructive_tool_count = 0
+    version_id: Optional[str] = None
+    if current_version_id:
+        version = db.get_mcp_endpoint_version(str(endpoint_id), str(current_version_id))
+        if version is not None:
+            version_id = str(version["id"])
+            quality_score = version.get("score")
+            quality_grade = version.get("grade")
+            items = db.get_mcp_capability_items(version_id)
+            surface = reconstruct_surface(version, items)
+            metrics = compute_surface_metrics(surface)
+            annotation_coverage = metrics.annotation_coverage.as_dict()
+            documentation_coverage = metrics.documentation_coverage.as_dict()
+            # A tool is "destructive" when it asserts ``destructiveHint: true`` as a JSON boolean —
+            # the same strict definition the surface metrics / UI safety matrix use.
+            destructive_tool_count = sum(
+                1
+                for tool in surface.tools
+                if isinstance(tool.annotations, Mapping)
+                and tool.annotations.get("destructiveHint") is True
+            )
+
+    # Safety cross-references the endpoint's auth posture (anonymous when it has no credential, i.e.
+    # is reachable with no secret). The redacted credential read never exposes the secret itself.
+    credential = db.get_mcp_endpoint_credentials(str(endpoint_id))
+    auth_type = credential.get("auth_type") if credential else None
+    auth_posture = mcp_auth_posture(auth_type)
+
+    # Stability reads the per-snapshot breaking-change classification across the evolution series;
+    # one classification per *transition* (every snapshot after the first). The change rows are
+    # bucketed by version in a single query, mirroring the evolution route.
+    series = db.get_mcp_evolution_series(str(endpoint_id))
+    changes_by_version: Dict[str, List[Dict[str, Any]]] = {}
+    for change in db.get_mcp_version_changes_for_endpoint(str(endpoint_id)):
+        changes_by_version.setdefault(str(change["version_id"]), []).append(change)
+    change_severities = [
+        severity_counts(changes_by_version.get(str(row["id"]), [])) for row in series[1:]
+    ]
+
+    # Responsiveness reads the test-invocation reliability (error rate + latency percentiles).
+    invocation = compute_invocation_reliability(db.list_mcp_invocation_stats(str(endpoint_id)))
+
+    profile = compute_trust_profile(
+        quality_score=quality_score,
+        quality_grade=quality_grade,
+        annotation_coverage=annotation_coverage,
+        documentation_coverage=documentation_coverage,
+        destructive_tool_count=destructive_tool_count,
+        auth_posture=auth_posture,
+        change_severities=change_severities,
+        invocation=invocation.as_dict(),
+    )
+    return McpInsightTrustResponse(
+        endpoint_id=str(endpoint_id),
+        version_id=version_id,
+        auth_type=auth_type,
+        profile=McpTrustProfileOut.model_validate(profile.as_dict()),
     )
 
 

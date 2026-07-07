@@ -15,7 +15,7 @@ keeps a central dark theme (10.10) addable in one place.
 | Layer | Path | What |
 | --- | --- | --- |
 | Pure helpers (React-free, unit-tested) | `src/app/components/ade/dashboard/mcp/mcpUiPrimitives.ts` | Grade styles, badge-tone resolvers, health/recency, tab definitions |
-| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `CapabilityPresenceMatrixPanel`, `GradeSurfaceTrendPanel`, `ChangedSinceDigestPanel`, `DiscoveryHealthPanel`, `ToolLatencyPanel`, `ScoreBreakdownPanel`, `FindingSeverity`, `DetailTabs` |
+| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `CapabilityPresenceMatrixPanel`, `GradeSurfaceTrendPanel`, `ChangedSinceDigestPanel`, `DiscoveryHealthPanel`, `ToolLatencyPanel`, `ScoreBreakdownPanel`, `TrustProfilePanel`, `FindingSeverity`, `DetailTabs` |
 | Shared states | `src/app/components/ui/{EmptyState,LoadingState,ErrorState}.tsx` | empty / loading / error placeholders |
 | Barrel | `@/app/components/ui/mcp` (also re-exported from `@/app/components/ui`) | one import for all MCP primitives |
 
@@ -322,6 +322,30 @@ bars, the tallies, and the reconstructed score can never disagree with the findi
 
 ```tsx
 <ScoreBreakdownPanel report={report} loading={loading} error={error} onNavigateToItem={navigateToItem} />
+```
+
+### `<TrustProfilePanel>` (V2-MCP-31.4 / MCAT-17.4)
+
+The **composite trust profile radar** — the capstone of the endpoint **Insight** tab's *Reliability &
+trust* section. It collapses the section's many scattered signals into one five-axis glance so an
+evaluator can size up a server at a look. From the endpoint-level `insight/trust` payload it renders a
+`Radar` across five normalized 0–100 axes — **quality** (grade), **safety** (annotation coverage +
+destructive/auth posture), **documentation** (coverage), **stability** (inverse breaking-change rate),
+and **responsiveness** (latency/error) — beside an **overall composite** headline ("N of 5 signals
+measured") and a per-axis breakdown, each axis exposing its **methodology on hover**. Every axis whose
+input is missing renders as an explicit **gap** (an em dash / "Not measured"), never a zero, so a
+never-tested server reads as "not measured" rather than "scored zero"; gaps are excluded from the
+overall. It is deliberately a **heuristic composite** — a synthesized glance, not an official rating —
+and says so. The panel owns its loading / error / not-enough-signal states.
+
+The panel is presentational: the Insight tab fetches the profile endpoint-level. The five axes are
+computed **server-side** (apiome-rest `compute_trust_profile`); the React-free, unit-tested `mcpTrustUi`
+module (`mcpTrustProfileFromPayload`, `mcpTrustBand`, `mcpTrustRadarAxes`, `mcpTrustFormatValue`)
+parses the payload and re-derives the overall / measured-count from the axes, so the headline, the
+radar, and the list can never disagree.
+
+```tsx
+<TrustProfilePanel profile={trust} loading={loading} error={error} />
 ```
 
 ### `<FindingSeverity>`
