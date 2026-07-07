@@ -26,6 +26,10 @@ function versionsPayload() {
         version_seq: 3,
         version_tag: '2026-07-06',
         is_current: true,
+        server_name: 'acme-search',
+        server_title: 'Acme Search',
+        server_version: '1.4.0',
+        protocol_version: '2025-06-18',
         score: 90,
         grade: 'A',
         change_counts: { added: 1, removed: 0, modified: 0 },
@@ -36,11 +40,35 @@ function versionsPayload() {
         version_seq: 2,
         version_tag: '2026-06-01',
         is_current: false,
+        server_name: 'acme-search',
+        server_title: 'Acme Search',
+        server_version: '1.3.0',
+        protocol_version: '2025-03-26',
         score: 80,
         grade: 'B',
         change_counts: { added: 2, removed: 1, modified: 0 },
       },
     ],
+  };
+}
+
+/** A minimal endpoint record as threaded from the detail page for the profile-card header. */
+function endpointRecord() {
+  return {
+    id: ENDPOINT_ID,
+    name: 'acme-search-prod',
+    slug: 'acme',
+    endpoint_url: 'https://mcp.acme.dev/search',
+    transport: 'streamable_http',
+    description: null,
+    category: null,
+    visibility: 'public',
+    published: true,
+    enabled: true,
+    discovery_cadence_seconds: null,
+    current_version_id: V3,
+    last_discovered_at: '2026-07-06T10:00:00Z',
+    last_discovery_status: 'changed',
   };
 }
 
@@ -193,6 +221,41 @@ describe('McpEndpointInsight — scaffold', () => {
     expect(screen.getByText('metrics engine down')).toBeInTheDocument();
     // The section framework still renders around the error.
     expect(screen.getByText('Capability surface')).toBeInTheDocument();
+  });
+
+  it('renders the server-profile header and shows instructions only for the current snapshot', async () => {
+    routeFetch({
+      versions: () => jsonResponse(versionsPayload()),
+      surface: (vid) =>
+        vid === V2 ? jsonResponse(surfacePayload(V2, 2, 9)) : jsonResponse(surfacePayload(V3, 3, 4)),
+    });
+
+    render(
+      <McpEndpointInsight
+        endpointId={ENDPOINT_ID}
+        currentVersionId={V3}
+        endpoint={endpointRecord()}
+        currentInstructions="Use search for queries."
+      />,
+    );
+
+    // The profile card leads with the server identity from the selected (current) snapshot.
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: /Acme Search/ })).toBeInTheDocument(),
+    );
+    expect(screen.getByText('MCP 2025-06-18')).toBeInTheDocument();
+    expect(screen.getByText('streamable_http')).toBeInTheDocument();
+    // Instructions render for the current snapshot.
+    expect(screen.getByText('Use search for queries.')).toBeInTheDocument();
+
+    // Switching to a historical snapshot drops the (current-only) instructions.
+    const select = screen.getByLabelText('Snapshot') as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: V2 } });
+    await waitFor(() =>
+      expect(screen.queryByText('Use search for queries.')).not.toBeInTheDocument(),
+    );
+    // The older snapshot negotiated the 2025-03-26 protocol.
+    expect(screen.getByText('MCP 2025-03-26')).toBeInTheDocument();
   });
 
   it('re-fetches insight when the version selector changes snapshot', async () => {

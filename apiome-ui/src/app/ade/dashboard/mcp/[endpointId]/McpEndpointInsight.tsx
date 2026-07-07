@@ -12,7 +12,9 @@ import {
 import { Badge } from "@/app/components/ui/Badge";
 import { LoadingState } from "@/app/components/ui/LoadingState";
 import { EmptyState } from "@/app/components/ui/EmptyState";
+import { ServerProfileCard } from "@/app/components/ui/mcp/ServerProfileCard";
 import { dashboardPanelPaddedClass } from "@/app/components/ade/dashboard/dashboardScreenClasses";
+import type { McpEndpointDetail } from "@/app/components/ade/dashboard/mcp/mcpBrowseUi";
 import {
   mcpVersionDateTag,
   mcpVersionListFromPayload,
@@ -22,6 +24,7 @@ import {
 import {
   mcpCoverageStats,
   mcpInsightSurfaceFromPayload,
+  mcpServerProfileFrom,
   mcpTypeCountTiles,
   type McpInsightSurface,
 } from "@/app/components/ade/dashboard/mcp/mcpInsightUi";
@@ -30,6 +33,18 @@ interface Props {
   endpointId: string;
   /** The endpoint's current snapshot, used as the version selector's default when present. */
   currentVersionId: string | null;
+  /**
+   * The loaded endpoint record, threaded from the detail page so the profile-card header can show
+   * endpoint-level facts (transport, discovery health, catalog name) the version summary lacks.
+   * Optional so the tab still renders (with a degraded card) when it is not supplied.
+   */
+  endpoint?: McpEndpointDetail | null;
+  /**
+   * The current version's server `instructions`, threaded from the detail page. Rendered by the
+   * profile card only while the current snapshot is selected (instructions are snapshot-specific and
+   * the version summary does not carry historical ones).
+   */
+  currentInstructions?: string | null;
 }
 
 /**
@@ -66,7 +81,7 @@ const INSIGHT_SECTIONS: InsightSectionDef[] = [
     subtitle: "What this snapshot exposes and how well it is documented.",
     icon: Layers,
     reserved: [
-      { key: "profile", title: "Server profile", hint: "Identity, protocol, and trust at a glance." },
+      // "Server profile" (MCAT-15.1) now lands as the ServerProfileCard header above the sections.
       { key: "graph", title: "Capability relationship graph", hint: "How tools, resources, and prompts relate." },
       { key: "safety", title: "Safety & annotation posture", hint: "Read-only vs destructive tools, cross-referenced with auth." },
     ],
@@ -294,7 +309,7 @@ function InsightSection({
 }) {
   const Icon = section.icon;
   return (
-    <section>
+    <section id={`insight-${section.key}`} className="scroll-mt-24">
       <div className="mb-3">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
           <Icon className="h-4 w-4 text-indigo-500" aria-hidden />
@@ -321,10 +336,17 @@ function InsightSection({
  * proving the plumbing before the rich charts land. Because it is rendered inside a Radix tab that
  * unmounts when inactive, its data fetch is naturally lazy: nothing loads until the tab is opened.
  *
- * @param endpointId        The MCP endpoint whose insight to show.
- * @param currentVersionId  The endpoint's current snapshot id, used as the selector's default.
+ * @param endpointId          The MCP endpoint whose insight to show.
+ * @param currentVersionId    The endpoint's current snapshot id, used as the selector's default.
+ * @param endpoint            The loaded endpoint record, for the profile-card header (optional).
+ * @param currentInstructions The current version's server instructions, for the profile card.
  */
-export default function McpEndpointInsight({ endpointId, currentVersionId }: Props) {
+export default function McpEndpointInsight({
+  endpointId,
+  currentVersionId,
+  endpoint = null,
+  currentInstructions = null,
+}: Props) {
   const [versions, setVersions] = useState<McpVersionSummary[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(true);
   const [versionsError, setVersionsError] = useState<string | null>(null);
@@ -425,6 +447,20 @@ export default function McpEndpointInsight({ endpointId, currentVersionId }: Pro
     [versions, selectedVersionId],
   );
 
+  // Assemble the at-a-glance server profile (MCAT-15.1) for the selected snapshot. Instructions are
+  // snapshot-specific and the version summary omits them, so we only surface the threaded current
+  // instructions while the current snapshot is selected.
+  const profile = useMemo(
+    () =>
+      mcpServerProfileFrom({
+        endpoint,
+        version: selectedVersion,
+        surface,
+        instructions: selectedVersion?.is_current ? currentInstructions : null,
+      }),
+    [endpoint, selectedVersion, surface, currentInstructions],
+  );
+
   if (versionsLoading) {
     return <LoadingState minHeightClassName="min-h-[220px]" message="Loading insight…" />;
   }
@@ -468,6 +504,9 @@ export default function McpEndpointInsight({ endpointId, currentVersionId }: Pro
           onChange={setSelectedVersionId}
         />
       </div>
+
+      {/* At-a-glance server identity (MCAT-15.1) — the Insight tab header. */}
+      <ServerProfileCard profile={profile} trustHref="#insight-reliability" />
 
       {INSIGHT_SECTIONS.map((section) => (
         <InsightSection key={section.key} section={section}>

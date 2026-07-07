@@ -10,9 +10,12 @@
 import {
   mcpCoverageStats,
   mcpInsightSurfaceFromPayload,
+  mcpServerProfileFrom,
   mcpTypeCountTiles,
   type McpSurfaceMetrics,
 } from '../src/app/components/ade/dashboard/mcp/mcpInsightUi';
+import type { McpEndpointDetail } from '../src/app/components/ade/dashboard/mcp/mcpBrowseUi';
+import { mcpVersionSummaryFromPayload } from '../src/app/components/ade/dashboard/mcp/mcpVersionsUi';
 
 const VERSION_ID = '22222222-2222-4222-8222-222222222222';
 const ENDPOINT_ID = '11111111-1111-4111-8111-111111111111';
@@ -167,5 +170,123 @@ describe('mcpCoverageStats', () => {
     // Zero tools → 0%, not NaN.
     expect(byKey['output-schema'].pct).toBe(0);
     expect(Number.isNaN(byKey['output-schema'].pct)).toBe(false);
+  });
+});
+
+describe('mcpServerProfileFrom', () => {
+  const endpoint: McpEndpointDetail = {
+    id: ENDPOINT_ID,
+    name: 'acme-search-prod',
+    slug: 'acme',
+    endpoint_url: 'https://mcp.acme.dev/search',
+    transport: 'streamable_http',
+    description: null,
+    category: null,
+    visibility: 'public',
+    published: true,
+    enabled: true,
+    discovery_cadence_seconds: null,
+    current_version_id: VERSION_ID,
+    last_discovered_at: '2026-07-06T10:00:00Z',
+    last_discovery_status: 'changed',
+  };
+
+  const version = mcpVersionSummaryFromPayload({
+    id: VERSION_ID,
+    endpoint_id: ENDPOINT_ID,
+    version_seq: 7,
+    version_tag: '2026-07-06',
+    protocol_version: '2025-06-18',
+    server_name: 'acme-search',
+    server_title: 'Acme Search',
+    server_version: '1.4.0',
+    score: 92,
+    grade: 'A',
+    is_current: true,
+    discovered_at: '2026-07-06T10:00:00Z',
+  });
+
+  it('assembles a full profile from endpoint + version + surface', () => {
+    const surface = mcpInsightSurfaceFromPayload(surfacePayload())!;
+    const profile = mcpServerProfileFrom({
+      endpoint,
+      version,
+      surface,
+      instructions: '  Use search carefully.  ',
+    });
+    // Server title wins as the display name; catalog name is kept as the subtitle source.
+    expect(profile.displayName).toBe('Acme Search');
+    expect(profile.endpointName).toBe('acme-search-prod');
+    expect(profile.endpointUrl).toBe('https://mcp.acme.dev/search');
+    expect(profile.serverVersion).toBe('1.4.0');
+    expect(profile.protocolVersion).toBe('2025-06-18');
+    expect(profile.transport).toBe('streamable_http');
+    expect(profile.versionSeq).toBe(7);
+    expect(profile.isCurrent).toBe(true);
+    expect(profile.score).toBe(92);
+    expect(profile.grade).toBe('A');
+    expect(profile.capabilityCounts?.total).toBe(8);
+    expect(profile.discoveryStatus).toBe('changed');
+    expect(profile.lastChangedAt).toBe('2026-07-06T10:00:00Z');
+    // Instructions are trimmed.
+    expect(profile.instructions).toBe('Use search carefully.');
+  });
+
+  it('falls back through title → name → endpoint name → generic label', () => {
+    const noTitle = mcpVersionSummaryFromPayload({
+      id: VERSION_ID,
+      version_seq: 2,
+      server_title: null,
+      server_name: 'raw-server',
+    });
+    expect(mcpServerProfileFrom({ endpoint, version: noTitle }).displayName).toBe('raw-server');
+
+    const noServerNames = mcpVersionSummaryFromPayload({ id: VERSION_ID, version_seq: 2 });
+    expect(mcpServerProfileFrom({ endpoint, version: noServerNames }).displayName).toBe(
+      'acme-search-prod',
+    );
+
+    // Nothing at all → a generic, non-empty label rather than a blank card.
+    expect(mcpServerProfileFrom({}).displayName).toBe('MCP server');
+  });
+
+  it('degrades gracefully for an older server missing title/protocol and no surface', () => {
+    const legacy = mcpVersionSummaryFromPayload({
+      id: VERSION_ID,
+      version_seq: 2,
+      server_name: 'legacy-notes',
+      // no server_title, no server_version, no protocol_version
+      score: null,
+      grade: null,
+      is_current: false,
+    });
+    const profile = mcpServerProfileFrom({
+      endpoint: { ...endpoint, name: 'legacy-notes', last_discovery_status: null },
+      version: legacy,
+      surface: null,
+      instructions: null,
+    });
+    expect(profile.displayName).toBe('legacy-notes');
+    expect(profile.protocolVersion).toBeNull();
+    expect(profile.serverVersion).toBeNull();
+    expect(profile.score).toBeNull();
+    expect(profile.grade).toBeNull();
+    expect(profile.capabilityCounts).toBeNull();
+    expect(profile.discoveryStatus).toBeNull();
+    expect(profile.instructions).toBeNull();
+  });
+
+  it('handles an unscored / never-resolved snapshot with no version', () => {
+    const profile = mcpServerProfileFrom({ endpoint });
+    expect(profile.displayName).toBe('acme-search-prod');
+    expect(profile.versionSeq).toBeNull();
+    expect(profile.isCurrent).toBe(false);
+    expect(profile.grade).toBeNull();
+    expect(profile.lastChangedAt).toBeNull();
+  });
+
+  it('treats blank instructions as absent', () => {
+    expect(mcpServerProfileFrom({ instructions: '   ' }).instructions).toBeNull();
+    expect(mcpServerProfileFrom({ instructions: '' }).instructions).toBeNull();
   });
 });

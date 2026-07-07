@@ -101,6 +101,9 @@ export interface McpEndpointDetail {
   discovery_cadence_seconds: number | null;
   current_version_id: string | null;
   last_discovered_at: string | null;
+  /** Outcome of the most recent discovery run (e.g. `changed` / `unchanged` / `failed`), or `null`
+   *  before the first discovery — drives the profile card's health pill. */
+  last_discovery_status: string | null;
 }
 
 /** The display label and grouping order for each capability kind. */
@@ -260,6 +263,7 @@ export function mcpEndpointDetailFromPayload(data: unknown): McpEndpointDetail |
     discovery_cadence_seconds: asScore(e.discovery_cadence_seconds),
     current_version_id: asString(e.current_version_id),
     last_discovered_at: asString(e.last_discovered_at),
+    last_discovery_status: asString(e.last_discovery_status),
   };
 }
 

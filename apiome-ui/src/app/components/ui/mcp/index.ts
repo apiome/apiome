@@ -11,6 +11,7 @@ export * from './GradeGlyph';
 export * from './McpBadge';
 export * from './HealthPill';
 export * from './RecencyPill';
+export * from './ServerProfileCard';
 export * from './FindingSeverity';
 export * from './DetailTabs';
 export * from './McpJsonViewer';
