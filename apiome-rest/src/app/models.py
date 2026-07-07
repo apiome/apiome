@@ -5821,6 +5821,145 @@ def mcp_evolution_point_from_row(
     )
 
 
+# ===========================================================================
+# "Changed since last view" digest — per-user seen-marker (V2-MCP-30.5 / MCAT-16.5, #4640)
+# ===========================================================================
+
+
+class McpEndpointDigestResponse(BaseModel):
+    """The "changed since last view" digest for one user + endpoint (V2-MCP-30.5 / MCAT-16.5).
+
+    Summarizes what changed on the endpoint's surface between the version the user *last saw*
+    (their ``mcp_endpoint_views`` seen-marker) and its *current* version, and how breaking that
+    change is:
+
+    * ``new_to_you`` — the user has no recorded marker (first visit), or the version they last saw
+      has since been pruned (a ``NULL`` pointer). There is no "since" point to diff from, so
+      ``changes`` is empty and ``current_type_counts`` describes the surface they are seeing fresh.
+    * ``has_changes`` — a marker exists and points at an older snapshot than the current one, so
+      ``changes`` / ``change_counts`` / ``severity_counts`` describe the delta since it.
+    * Neither flag set — the user has already seen the current version; the endpoint is up to date.
+
+    Reading the digest does **not** advance the marker; a separate view-record call
+    (``POST …/views``) does, so the digest reflects the pre-advance state on load.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    new_to_you: bool = False
+    has_changes: bool = False
+    last_seen_version_id: Optional[str] = None
+    last_seen_version_seq: Optional[int] = None
+    last_seen_at: Optional[str] = None
+    current_version_id: Optional[str] = None
+    current_version_seq: Optional[int] = None
+    current_version_tag: Optional[str] = None
+    current_type_counts: McpTypeCountsOut = Field(default_factory=McpTypeCountsOut)
+    change_counts: McpVersionChangeCounts = Field(default_factory=McpVersionChangeCounts)
+    severity_counts: McpChangeSeverityCounts = Field(default_factory=McpChangeSeverityCounts)
+    changes: List[McpVersionChangeOut] = Field(default_factory=list)
+
+
+def mcp_endpoint_digest_response(
+    *,
+    endpoint_id: str,
+    current_version: Optional[Dict[str, Any]],
+    current_type_counts: McpTypeCountsOut,
+    view_row: Optional[Dict[str, Any]],
+    change_rows: List[Dict[str, Any]],
+) -> McpEndpointDigestResponse:
+    """Assemble the digest from the current version, the user's marker, and the computed delta.
+
+    Pure shaping — the ``change_rows`` diff is computed by the route (it needs DB access to
+    reconstruct both surfaces); this only tallies and projects. ``change_counts`` is tallied
+    from ``change_rows`` by direction, so it can never disagree with the ``changes`` list.
+
+    Args:
+        endpoint_id: The endpoint the digest is for.
+        current_version: The endpoint's current ``mcp_endpoint_versions`` row, or ``None`` when it
+            has never been discovered (no current surface to summarize).
+        current_type_counts: Per-kind counts of the current surface (for the "new to you" summary).
+        view_row: The user's seen-marker row (:meth:`Database.get_mcp_endpoint_view`), or ``None``
+            when the user has never viewed the endpoint.
+        change_rows: The changes between the last-seen and current version
+            (:meth:`SurfaceDiff.to_change_rows`); empty when there is nothing to diff (first
+            visit, up to date, or no current version).
+
+    Returns:
+        The populated :class:`McpEndpointDigestResponse`.
+    """
+    last_seen_version_id = (
+        _mcp_str(view_row.get("last_seen_version_id")) if view_row else None
+    )
+    # "New to you": no marker at all, or a marker whose remembered version was pruned (NULL pointer).
+    new_to_you = view_row is None or last_seen_version_id is None
+    has_changes = bool(change_rows)
+
+    added = sum(1 for r in change_rows if r.get("change_type") == "added")
+    removed = sum(1 for r in change_rows if r.get("change_type") == "removed")
+    modified = sum(1 for r in change_rows if r.get("change_type") == "modified")
+
+    return McpEndpointDigestResponse(
+        endpoint_id=str(endpoint_id),
+        new_to_you=new_to_you,
+        has_changes=has_changes,
+        last_seen_version_id=last_seen_version_id,
+        last_seen_version_seq=(
+            _mcp_int(view_row.get("last_seen_version_seq")) if view_row else None
+        ),
+        last_seen_at=_mcp_ts(view_row.get("seen_at")) if view_row else None,
+        current_version_id=_mcp_str(current_version.get("id")) if current_version else None,
+        current_version_seq=(
+            _mcp_int(current_version.get("version_seq")) if current_version else None
+        ),
+        current_version_tag=(
+            _mcp_str(current_version.get("version_tag")) if current_version else None
+        ),
+        current_type_counts=current_type_counts,
+        change_counts=mcp_change_counts(added, removed, modified),
+        severity_counts=_mcp_severity_counts(change_rows),
+        changes=[mcp_version_change_out_from_row(r) for r in change_rows],
+    )
+
+
+class McpEndpointViewMarkRequest(BaseModel):
+    """Body for advancing a user's seen-marker (V2-MCP-30.5 / MCAT-16.5).
+
+    ``version_id`` is the snapshot the client acknowledges having seen — normally the endpoint's
+    current version, passed explicitly so the marker records exactly what the user saw even if a
+    discovery advances "current" between the digest read and this call. When omitted the server
+    marks the endpoint's current version.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    version_id: Optional[str] = None
+
+
+class McpEndpointViewResponse(BaseModel):
+    """Response for a recorded view: the advanced seen-marker (V2-MCP-30.5 / MCAT-16.5)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    last_seen_version_id: Optional[str] = None
+    seen_at: Optional[str] = None
+
+
+def mcp_endpoint_view_response(
+    endpoint_id: str, row: Dict[str, Any]
+) -> McpEndpointViewResponse:
+    """Project a recorded-view row (:meth:`Database.record_mcp_endpoint_view`) onto the wire model."""
+    return McpEndpointViewResponse(
+        endpoint_id=str(endpoint_id),
+        last_seen_version_id=_mcp_str(row.get("last_seen_version_id")),
+        seen_at=_mcp_ts(row.get("seen_at")),
+    )
+
+
 class McpLatencyStatsOut(BaseModel):
     """Summary latency statistics over a sample of millisecond durations.
 

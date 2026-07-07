@@ -29,6 +29,11 @@ import { CapabilityChurnPanel } from '@/app/components/ui/mcp/CapabilityChurnPan
 import { GradeSurfaceTrendPanel } from '@/app/components/ui/mcp/GradeSurfaceTrendPanel';
 import type { McpEvolutionPoint } from '@/app/components/ade/dashboard/mcp/mcpEvolutionUi';
 import { CapabilityPresenceMatrixPanel } from '@/app/components/ui/mcp/CapabilityPresenceMatrixPanel';
+import { ChangedSinceDigestPanel } from '@/app/components/ui/mcp/ChangedSinceDigestPanel';
+import {
+  mcpDigestFromPayload,
+  type McpEndpointDigest,
+} from '@/app/components/ade/dashboard/mcp/mcpDigestUi';
 import type { McpVersionDetail } from '@/app/components/ade/dashboard/mcp/mcpBrowseUi';
 // The Monaco-backed code-viewer primitives were promoted out of `ui/mcp` to the format-neutral
 // `ui/code` module (MFI-28.7); the gallery documents them under those neutral names.
@@ -300,6 +305,64 @@ const CHURN_SERIES_SAMPLE: McpEvolutionPoint[] = [
     severity_counts: { breaking: 0, additive: 6, review: 0, total: 6 },
   },
 ];
+
+/** Sample digests for the ChangedSinceDigestPanel demo (V2-MCP-30.5): the three display states. */
+const DIGEST_CHANGED_SAMPLE: McpEndpointDigest = mcpDigestFromPayload({
+  success: true,
+  endpoint_id: 'digest-ep',
+  new_to_you: false,
+  has_changes: true,
+  last_seen_version_id: 'digest-v2',
+  last_seen_version_seq: 2,
+  last_seen_at: '2026-06-01T10:00:00Z',
+  current_version_id: 'digest-v4',
+  current_version_seq: 4,
+  current_version_tag: '2026-07-06',
+  current_type_counts: { tools: 9, resources: 3, resource_templates: 0, prompts: 2, total: 14 },
+  change_counts: { added: 2, removed: 1, modified: 2, total: 5 },
+  severity_counts: { breaking: 1, additive: 2, review: 2, total: 5 },
+  changes: [
+    { change_type: 'removed', item_type: 'tool', item_name: 'legacy_search', severity: 'breaking' },
+    { change_type: 'added', item_type: 'tool', item_name: 'summarize', severity: 'additive' },
+    { change_type: 'added', item_type: 'resource', item_name: 'docs://guide', severity: 'additive' },
+    { change_type: 'modified', item_type: 'tool', item_name: 'forecast', severity: 'review' },
+    { change_type: 'modified', item_type: 'prompt', item_name: 'triage', severity: 'review' },
+  ],
+})!;
+
+const DIGEST_NEW_SAMPLE: McpEndpointDigest = mcpDigestFromPayload({
+  success: true,
+  endpoint_id: 'digest-ep',
+  new_to_you: true,
+  has_changes: false,
+  last_seen_version_id: null,
+  last_seen_version_seq: null,
+  last_seen_at: null,
+  current_version_id: 'digest-v4',
+  current_version_seq: 4,
+  current_version_tag: '2026-07-06',
+  current_type_counts: { tools: 9, resources: 3, resource_templates: 0, prompts: 2, total: 14 },
+  change_counts: { added: 0, removed: 0, modified: 0, total: 0 },
+  severity_counts: { breaking: 0, additive: 0, review: 0, total: 0 },
+  changes: [],
+})!;
+
+const DIGEST_CURRENT_SAMPLE: McpEndpointDigest = mcpDigestFromPayload({
+  success: true,
+  endpoint_id: 'digest-ep',
+  new_to_you: false,
+  has_changes: false,
+  last_seen_version_id: 'digest-v4',
+  last_seen_version_seq: 4,
+  last_seen_at: '2026-07-06T10:00:00Z',
+  current_version_id: 'digest-v4',
+  current_version_seq: 4,
+  current_version_tag: '2026-07-06',
+  current_type_counts: { tools: 9, resources: 3, resource_templates: 0, prompts: 2, total: 14 },
+  change_counts: { added: 0, removed: 0, modified: 0, total: 0 },
+  severity_counts: { breaking: 0, additive: 0, review: 0, total: 0 },
+  changes: [],
+})!;
 
 /**
  * A five-snapshot series for the GradeSurfaceTrendPanel demo (V2-MCP-30.4): a rising score, one
@@ -672,6 +735,43 @@ export default function McpPrimitivesShowcase() {
           loading={false}
           error={null}
           onSelectVersion={() => {}}
+        />
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            ChangedSinceDigestPanel (V2-MCP-30.5)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            A per-user &ldquo;changed since last view&rdquo; digest at the top of the Insight tab. Diffs the
+            version the user last saw against the current one and classifies the delta by breaking
+            severity (MCAT-16.3): a breaking-change callout, per-severity / per-direction tallies, the
+            changed items, and a <code>Review changes</code> deep-link. Has three states.
+          </p>
+        </div>
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Changed (one breaking removal, two additive, two review)
+        </div>
+        <ChangedSinceDigestPanel
+          digest={DIGEST_CHANGED_SAMPLE}
+          loading={false}
+          error={null}
+          onReviewChanges={() => {}}
+        />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">New to you</div>
+        <ChangedSinceDigestPanel
+          digest={DIGEST_NEW_SAMPLE}
+          loading={false}
+          error={null}
+          onReviewChanges={() => {}}
+        />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">Up to date</div>
+        <ChangedSinceDigestPanel
+          digest={DIGEST_CURRENT_SAMPLE}
+          loading={false}
+          error={null}
+          onReviewChanges={() => {}}
         />
       </section>
 

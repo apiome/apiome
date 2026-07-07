@@ -10629,6 +10629,74 @@ class Database:
         """
         return self.execute_query(q, (endpoint_id,))
 
+    def get_mcp_endpoint_view(
+        self, user_id: str, endpoint_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch a user's seen-marker for an endpoint (V2-MCP-30.5, #4640).
+
+        Returns the ``mcp_endpoint_views`` row recording which version snapshot the user last
+        saw, joined to that snapshot's ``version_seq`` / ``version_tag`` for the digest header.
+        A ``None`` result means the user has never viewed the endpoint (the digest then reads as
+        "new to you"); a row whose ``last_seen_version_id`` is ``NULL`` means the version they
+        last saw has since been pruned (also "new to you").
+
+        Scoping is by ``user_id`` + ``endpoint_id``; the caller has already validated the
+        endpoint against the token tenant, so this never leaks another user's or tenant's marker.
+
+        Args:
+            user_id: The viewing user.
+            endpoint_id: The endpoint the marker is for.
+
+        Returns:
+            The seen-marker row (``last_seen_version_id``, ``seen_at``, ``last_seen_version_seq``,
+            ``last_seen_version_tag``), or ``None`` when no marker exists.
+        """
+        q = """
+            SELECT vw.last_seen_version_id, vw.seen_at, vw.created_at,
+                   v.version_seq AS last_seen_version_seq,
+                   v.version_tag AS last_seen_version_tag
+            FROM apiome.mcp_endpoint_views vw
+            LEFT JOIN apiome.mcp_endpoint_versions v ON v.id = vw.last_seen_version_id
+            WHERE vw.user_id = %s::uuid AND vw.endpoint_id = %s::uuid
+            LIMIT 1
+        """
+        rows = self.execute_query(q, (user_id, endpoint_id))
+        return dict(rows[0]) if rows else None
+
+    def record_mcp_endpoint_view(
+        self, user_id: str, endpoint_id: str, last_seen_version_id: Optional[str]
+    ) -> Dict[str, Any]:
+        """Upsert a user's seen-marker, advancing it to the version they just saw (#4640).
+
+        One marker per ``(user, endpoint)``: the first view inserts it, every later view advances
+        ``last_seen_version_id`` to the newly-seen snapshot and moves ``seen_at`` to now (the
+        ``ON CONFLICT`` path). ``created_at`` is set once and never moved. This is what "the marker
+        advances on view" means — after this call the digest for the same version reads as
+        up-to-date until the endpoint is re-discovered.
+
+        Args:
+            user_id: The viewing user (already resolved by the caller; NOT NULL on the table).
+            endpoint_id: The endpoint being viewed.
+            last_seen_version_id: The snapshot the user saw (the endpoint's current version, or an
+                explicitly acknowledged one). ``None`` is allowed by the column but the route only
+                records a view when there is a concrete version to mark.
+
+        Returns:
+            The upserted marker row (``last_seen_version_id``, ``seen_at``).
+        """
+        query = """
+            INSERT INTO apiome.mcp_endpoint_views (user_id, endpoint_id, last_seen_version_id)
+            VALUES (%s::uuid, %s::uuid, %s::uuid)
+            ON CONFLICT (user_id, endpoint_id) DO UPDATE SET
+                last_seen_version_id = EXCLUDED.last_seen_version_id,
+                seen_at = CURRENT_TIMESTAMP
+            RETURNING last_seen_version_id, seen_at
+        """
+        rows = self.execute_query(
+            query, (user_id, endpoint_id, last_seen_version_id)
+        )
+        return dict(rows[0]) if rows else {}
+
     def _next_mcp_version_tag(self, cursor: Any, endpoint_id: str, base_tag: str) -> str:
         """Resolve a per-endpoint-unique date/time tag, disambiguating same-minute collisions.
 

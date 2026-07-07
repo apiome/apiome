@@ -15,7 +15,7 @@ keeps a central dark theme (10.10) addable in one place.
 | Layer | Path | What |
 | --- | --- | --- |
 | Pure helpers (React-free, unit-tested) | `src/app/components/ade/dashboard/mcp/mcpUiPrimitives.ts` | Grade styles, badge-tone resolvers, health/recency, tab definitions |
-| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `CapabilityPresenceMatrixPanel`, `GradeSurfaceTrendPanel`, `FindingSeverity`, `DetailTabs` |
+| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `CapabilityPresenceMatrixPanel`, `GradeSurfaceTrendPanel`, `ChangedSinceDigestPanel`, `FindingSeverity`, `DetailTabs` |
 | Shared states | `src/app/components/ui/{EmptyState,LoadingState,ErrorState}.tsx` | empty / loading / error placeholders |
 | Barrel | `@/app/components/ui/mcp` (also re-exported from `@/app/components/ui`) | one import for all MCP primitives |
 
@@ -238,6 +238,26 @@ error / no-history states.
 
 ```tsx
 <GradeSurfaceTrendPanel series={evolution} loading={loading} error={error} onSelectVersion={openDiff} />
+```
+
+### `<ChangedSinceDigestPanel>` (V2-MCP-30.5 / MCAT-16.5)
+
+The **"changed since last view" digest** at the top of the endpoint **Insight** tab — a *per-user*
+welcome-back summary of what changed on the server's surface since the viewer last looked. It diffs the
+version they last saw (a server-side seen-marker, `mcp_endpoint_views`) against the current version and
+classifies the delta by breaking severity (MCAT-16.3). Three states, from the pure `mcpDigestState`
+projection: **new to you** (first visit / pruned marker — shows the current surface size), **changed** (a
+breaking-change callout when any are breaking, per-severity and per-direction tallies, the changed items
+capped with a "+N more" note, and a `Review changes` button that deep-links to the current version's
+diff), and **up to date** (a calm acknowledgement). It owns its loading / error states.
+
+The panel is presentational: the Insight tab fetches the digest (`/insight/digest`) and, *after* reading
+it, advances the marker (`POST /views`) so the digest always reflects the pre-advance "since your last
+visit" delta and the next visit reads relative to now. All payload-shaping lives in the React-free,
+unit-tested `mcpDigestUi` module (`mcpDigestFromPayload`, `mcpDigestState`).
+
+```tsx
+<ChangedSinceDigestPanel digest={digest} loading={loading} error={error} onReviewChanges={openDiff} />
 ```
 
 ### `<FindingSeverity>`

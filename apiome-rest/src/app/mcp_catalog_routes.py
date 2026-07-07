@@ -67,6 +67,7 @@ from .models import (
     McpDiscoveryReliabilityOut,
     McpEndpointCreate,
     McpEndpointDeleteResponse,
+    McpEndpointDigestResponse,
     McpEndpointListResponse,
     McpEndpointResponse,
     McpEndpointTestRequest,
@@ -74,6 +75,8 @@ from .models import (
     McpEndpointUpdate,
     McpEndpointVersionListResponse,
     McpEndpointVersionResponse,
+    McpEndpointViewMarkRequest,
+    McpEndpointViewResponse,
     McpInsightCatalogResponse,
     McpInsightEvolutionResponse,
     McpInsightGraphResponse,
@@ -84,6 +87,7 @@ from .models import (
     McpSearchResponse,
     McpSearchScope,
     McpSearchVisibility,
+    McpTypeCountsOut,
     McpVersionChangesResponse,
     McpVersionCompareResponse,
     McpVersionRef,
@@ -94,8 +98,10 @@ from .models import (
     mcp_credential_status_from_row,
     mcp_discovery_job_out_from_row,
     mcp_discovery_job_status_from_row,
+    mcp_endpoint_digest_response,
     mcp_endpoint_out_from_row,
     mcp_endpoint_test_response_from_result,
+    mcp_endpoint_view_response,
     mcp_evolution_point_from_row,
     mcp_lint_report_from_report,
     mcp_search_hit_from_row,
@@ -1573,6 +1579,134 @@ async def get_mcp_endpoint_insight_evolution(
             for r in rows
         ],
     )
+
+
+# ---------------------------------------------------------------------------------------------------
+# "Changed since last view" digest — per-user seen-marker (V2-MCP-30.5 / MCAT-16.5, #4640).
+#
+# A lightweight per-user, per-endpoint marker (``mcp_endpoint_views``) remembers which version a
+# user last saw; the digest diffs that snapshot against the endpoint's current version and classifies
+# the delta's breaking severity (reusing the compare engine + MCAT-16.3 classifier). The read
+# (``GET …/insight/digest``) is pure and never advances the marker; the acknowledge
+# (``POST …/views``) advances it — so the digest always reflects the pre-advance state on load.
+# ---------------------------------------------------------------------------------------------------
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/insight/digest",
+    response_model=McpEndpointDigestResponse,
+)
+async def get_mcp_endpoint_digest(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpEndpointDigestResponse:
+    """Return the caller's "changed since last view" digest for the endpoint (MCAT-16.5).
+
+    Compares the version the caller last saw (their per-user ``mcp_endpoint_views`` seen-marker)
+    against the endpoint's current version and summarizes the delta and its breaking severity:
+    ``new_to_you`` on a first visit (or when the last-seen snapshot has been pruned),
+    ``has_changes`` with the classified diff when the surface moved on since, or neither flag when
+    the caller is already up to date. A GET stays read-only — it does **not** advance the marker
+    (``POST …/views`` does), so the digest reflects the pre-advance state. An endpoint that was
+    never discovered yields a digest with no changes (a ``200``). Returns ``404`` when the endpoint
+    is not the caller's tenant's.
+    """
+    _ = tenant_slug
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+    user_id = get_authenticated_user_id(auth_data)
+
+    # The caller's marker — only when a user can be attributed. An unresolvable (legacy API-key)
+    # caller has no personal seen-state, so the whole surface reads as "new to you".
+    view_row = db.get_mcp_endpoint_view(user_id, str(endpoint_id)) if user_id else None
+
+    current_version_id = endpoint.get("current_version_id")
+    current_version = (
+        db.get_mcp_endpoint_version(str(endpoint_id), str(current_version_id))
+        if current_version_id
+        else None
+    )
+
+    # Per-kind counts of the current surface (for the "new to you" summary) and the change delta
+    # since the last-seen snapshot. Both derive from the current surface, reconstructed once.
+    current_type_counts = McpTypeCountsOut()
+    change_rows: List[Dict[str, Any]] = []
+    if current_version is not None:
+        current_items = db.get_mcp_capability_items(str(current_version["id"]))
+        current_surface = reconstruct_surface(current_version, current_items)
+        current_type_counts = McpTypeCountsOut(
+            **compute_surface_metrics(current_surface).type_counts.as_dict()
+        )
+
+        last_seen_version_id = view_row.get("last_seen_version_id") if view_row else None
+        if last_seen_version_id and str(last_seen_version_id) != str(current_version["id"]):
+            last_seen_version = db.get_mcp_endpoint_version(
+                str(endpoint_id), str(last_seen_version_id)
+            )
+            if last_seen_version is not None:
+                # Normalize older→newer so "added"/"removed" read from the last-seen surface toward
+                # current (the marker is normally the older side; normalize defensively regardless).
+                base, target = last_seen_version, current_version
+                if int(base["version_seq"]) > int(target["version_seq"]):
+                    base, target = target, base
+                change_rows = compare_endpoint_versions(base, target).to_change_rows(None)
+
+    return mcp_endpoint_digest_response(
+        endpoint_id=str(endpoint_id),
+        current_version=current_version,
+        current_type_counts=current_type_counts,
+        view_row=view_row,
+        change_rows=change_rows,
+    )
+
+
+@mcp_endpoints_router.post(
+    "/{tenant_slug}/endpoints/{endpoint_id}/views",
+    response_model=McpEndpointViewResponse,
+)
+async def record_mcp_endpoint_view(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    body: Optional[McpEndpointViewMarkRequest] = None,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpEndpointViewResponse:
+    """Record that the caller viewed the endpoint, advancing their seen-marker (MCAT-16.5).
+
+    Upserts the caller's per-user ``mcp_endpoint_views`` marker to the snapshot they saw — the
+    ``version_id`` they acknowledge in the body, or the endpoint's current version when omitted —
+    so the next "changed since last view" digest reads relative to it ("the marker advances on
+    view"). Requires a resolvable user (``403`` otherwise, as the marker is per-user). Returns
+    ``404`` when the endpoint — or an explicitly named version under it — is not the caller's
+    tenant's, and ``400`` when the endpoint has no discovered version to mark.
+    """
+    _ = tenant_slug
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+
+    user_id = get_authenticated_user_id(auth_data)
+    if not user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="a resolvable user is required to record a view",
+        )
+
+    # The version the caller acknowledges seeing: an explicit, endpoint-validated body value or,
+    # by default, the endpoint's current snapshot.
+    requested = body.version_id if body else None
+    if requested:
+        version = db.get_mcp_endpoint_version(str(endpoint_id), str(requested))
+        if version is None:
+            raise HTTPException(status_code=404, detail="MCP endpoint version not found")
+        target_version_id = str(version["id"])
+    else:
+        target_version_id = endpoint.get("current_version_id")
+        if not target_version_id:
+            raise HTTPException(
+                status_code=400,
+                detail="endpoint has no discovered version to mark as seen",
+            )
+
+    row = db.record_mcp_endpoint_view(user_id, str(endpoint_id), str(target_version_id))
+    return mcp_endpoint_view_response(str(endpoint_id), row)
 
 
 @mcp_endpoints_router.get(
