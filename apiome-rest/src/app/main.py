@@ -59,6 +59,7 @@ from .mock_routes import router as mock_router, data_router as mock_data_router
 from .mcp_catalog_routes import mcp_endpoints_router
 from .mcp_badge_routes import router as mcp_badge_router
 from .mcp_feed_routes import router as mcp_feed_router
+from .mcp_catalog_digest_routes import router as mcp_catalog_digest_router
 
 # Configure structured JSON logging before anything else logs, so every line (including library
 # loggers) is emitted in the consistent observability shape (RC1-3.2, #3617).
@@ -240,6 +241,7 @@ app.include_router(mock_router)
 app.include_router(mock_data_router)
 # MCP Catalog (#3663): tenant-scoped CRUD over registered external MCP endpoints.
 app.include_router(mcp_endpoints_router)
+app.include_router(mcp_catalog_digest_router)
 # Observability & ops (#3617): liveness/readiness probes + platform-admin ops dashboard.
 app.include_router(health_router)
 app.include_router(ops_router)
@@ -249,6 +251,7 @@ _webhook_delivery_task: asyncio.Task | None = None
 _repository_file_scan_task: asyncio.Task | None = None
 _repository_refresh_task: asyncio.Task | None = None
 _mcp_discovery_task: asyncio.Task | None = None
+_mcp_catalog_digest_task: asyncio.Task | None = None
 
 
 @app.on_event("startup")
@@ -395,6 +398,40 @@ async def startup_event():
             except Exception:
                 log.exception("mcp discovery sweep")
 
+    async def _mcp_catalog_digest_sweep() -> None:
+        """Periodically compile and deliver per-tenant catalog digests (MCAT-19.5).
+
+        Ticks on the configured floor (``APIOME_MCP_DIGEST_MIN_INTERVAL``, default 300s) and lets
+        the per-tenant cadence + due-selection in ``list_due_mcp_catalog_digests`` decide which
+        tenants actually receive a digest each tick, so the cheap floor cadence here never sends a
+        tenant a digest more often than its own cadence allows. Runs on a dedicated DB connection
+        (like the other sweeps) so its advisory locks and reads never contend with request handlers.
+        """
+        from .config import settings
+
+        log = logging.getLogger(__name__)
+        tick_seconds = max(1, int(settings.mcp_digest_min_interval_seconds))
+        while True:
+            await asyncio.sleep(tick_seconds)
+            try:
+
+                def _run_digest() -> int:
+                    thread_db = Database()
+                    try:
+                        from .mcp_catalog_digest_sweep import (
+                            process_mcp_catalog_digest_sweep,
+                        )
+
+                        return process_mcp_catalog_digest_sweep(thread_db)
+                    finally:
+                        thread_db.close()
+
+                await asyncio.to_thread(_run_digest)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("mcp catalog digest sweep")
+
     global _webhook_delivery_task
     _webhook_delivery_task = asyncio.create_task(_webhook_delivery_sweep())
     global _repository_file_scan_task
@@ -403,6 +440,8 @@ async def startup_event():
     _repository_refresh_task = asyncio.create_task(_repository_refresh_sweep())
     global _mcp_discovery_task
     _mcp_discovery_task = asyncio.create_task(_mcp_discovery_sweep())
+    global _mcp_catalog_digest_task
+    _mcp_catalog_digest_task = asyncio.create_task(_mcp_catalog_digest_sweep())
 
 
 @app.on_event("shutdown")
@@ -440,6 +479,14 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _mcp_discovery_task = None
+    global _mcp_catalog_digest_task
+    if _mcp_catalog_digest_task is not None:
+        _mcp_catalog_digest_task.cancel()
+        try:
+            await _mcp_catalog_digest_task
+        except asyncio.CancelledError:
+            pass
+        _mcp_catalog_digest_task = None
     db.close()
 
 

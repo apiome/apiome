@@ -1745,7 +1745,7 @@ change feed, a scheduled digest. Nothing here consumes a server; it reports on o
 | 19.2 ✅ | Catalog inventory export | CSV/JSON export of endpoints + key metrics for offline analysis | `mcp-insights` `backend` | Y | N | ● | apiome-rest |
 | 19.3 ✅ | Embeddable status badges | Shields-style SVG grade/health/version badge for READMEs, served from a public endpoint | `mcp-insights` `backend` | Y | N | ●● | apiome-rest, apiome-browse |
 | 19.4 ✅ | Catalog change feed (RSS/Atom/JSON) | Subscribable feed of endpoint/catalog changes | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
-| 19.5 | Scheduled catalog digest reports | Periodic summary of catalog state + changes, delivered via the notification channel | `mcp-insights` `backend` | N | N | ●● | apiome-rest |
+| 19.5 ✅ | Scheduled catalog digest reports | Periodic summary of catalog state + changes, delivered via the notification channel | `mcp-insights` `backend` | N | N | ●● | apiome-rest |
 
 ### MCAT-19.1 — Server report-card export  ·  **#4650**  ·  ✅ Done (apiome-rest 1.94.0, apiome-ui 0.84.0)
 - **Problem.** The Insight tab is great in-app, but people need to **share** a server's assessment
@@ -1841,7 +1841,7 @@ change feed, a scheduled digest. Nothing here consumes a server; it reports on o
   Caching: a content-addressed `ETag` (hash of the rendered feed) and `public, max-age=300`
   `Cache-Control`, with `If-None-Match` → `304`.
 
-### MCAT-19.5 — Scheduled catalog digest reports  ·  **#4654**
+### MCAT-19.5 — Scheduled catalog digest reports  ·  **#4654**  ·  ✅ Done (apiome-rest 1.98.0)
 - **Problem.** Operators want a recurring "here's your catalog this week" without opening the app.
 - **Solution / Scope.** A scheduled job (reusing the sweep/notification infra from Epic-5/13) that
   compiles a periodic **digest** — new endpoints, grade movements, breaking changes, discovery-health
@@ -1851,6 +1851,29 @@ change feed, a scheduled digest. Nothing here consumes a server; it reports on o
   (or an explicit "no changes"); respects tenant scoping; opt-in.
 - **Dependencies / Parallelism.** After 19.4 + Epic-13 delivery. Last in Epic-19.
 - **Technical Stack.** Python scheduled task (reuse `repository_refresh_sweep.py` pattern).
+- **Delivered.** A per-tenant, opt-in scheduled digest driven by a background sweep
+  (`app.mcp_catalog_digest_sweep.process_mcp_catalog_digest_sweep`), wired into `app.main` on the
+  `APIOME_MCP_DIGEST_MIN_INTERVAL` floor (default 300s) exactly like the RAR-3.2 refresh sweep and
+  the MCAT-5.1 discovery sweep, with a global `APIOME_MCP_DIGEST_ENABLED` kill switch. Per-tenant
+  config lives in a new table `apiome.mcp_catalog_digest_configs` (V145): `enabled` (opt-in,
+  **default off** — a tenant that never opts in is never selected and sends nothing), `cadence_seconds`
+  (NULL = the global `APIOME_MCP_DIGEST_DEFAULT_CADENCE`, default weekly), `send_empty` (empty-window
+  policy) and `last_digest_at` (the window/cadence anchor). Due-selection
+  (`Database.list_due_mcp_catalog_digests`) computes each due tenant's window bounds in one DB `now()`
+  (no clock skew); the window is `(last_digest_at, now]`, bounded to one cadence back on the first
+  send. Each due tenant is serialized behind a per-tenant advisory lock (single-flight), its window's
+  real activity read tenant-scoped — new endpoints, all changes, grade movements (a `LAG`-over-
+  `version_seq` comparison of `mcp_version_scores.grade`), and discovery-health problems (MCAT-5.3
+  quarantine / consecutive-failure signals) — and folded by the **pure** `app.mcp_catalog_digest`
+  compiler, which classifies breaking changes with the same `mcp_change_severity.classify_change` the
+  change feed uses. An **empty window sends nothing** unless `send_empty` is set (then an explicit "no
+  changes" digest); the anchor advances every tick (success, empty-skip, or failure) so a broken
+  tenant cannot monopolize the sweep. Delivery reuses the RAR-5.4 push-webhook fan-out
+  (`list_active_push_webhook_subscription_ids` / `enqueue_push_webhook_delivery`), tagged
+  `mcp.catalog.digest`; the payload carries only catalog identity/activity (no `endpoint_url`, no
+  credential). Tenant-scoped routes (`app.mcp_catalog_digest_routes`) manage the config
+  (`GET`/`PUT /v1/mcp/{tenant}/digest/config`) and preview the current window without sending
+  (`POST /v1/mcp/{tenant}/digest/preview`); every route scopes by the token tenant, not the URL slug.
 
 ---
 

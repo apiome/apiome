@@ -570,6 +570,41 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Scheduled catalog digest reports (V2-MCP-33.5 / MCAT-19.5, #4654). A background async loop
+    # (app.mcp_catalog_digest_sweep) compiles a periodic per-tenant digest — new endpoints, grade
+    # movements, breaking changes, discovery-health problems — over the window since the tenant's
+    # last digest and delivers it over the tenant's push-webhook subscriptions. The feature is
+    # opt-in per tenant (apiome.mcp_catalog_digest_configs.enabled); these settings govern the loop.
+    #
+    # mcp_digest_enabled               Global kill switch. When False the sweep halts entirely for a
+    #                                  tick (no selection, no compile, no delivery), for incident
+    #                                  response — independent of per-tenant opt-in.
+    # mcp_digest_default_cadence_seconds  Cadence applied to a tenant whose config has no explicit
+    #                                  cadence_seconds override. Defaults to weekly.
+    # mcp_digest_min_interval_seconds  The sweep's tick floor: how often the loop wakes to look for
+    #                                  due tenants. Cheap; the per-tenant cadence gates actual sends.
+    mcp_digest_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_DIGEST_ENABLED",
+            "mcp_digest_enabled",
+        ),
+    )
+    mcp_digest_default_cadence_seconds: int = Field(
+        default=604800,  # 7 days
+        validation_alias=AliasChoices(
+            "APIOME_MCP_DIGEST_DEFAULT_CADENCE",
+            "mcp_digest_default_cadence_seconds",
+        ),
+    )
+    mcp_digest_min_interval_seconds: int = Field(
+        default=300,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_DIGEST_MIN_INTERVAL",
+            "mcp_digest_min_interval_seconds",
+        ),
+    )
+
     # Observability & error handling (RC1-3.2, #3617). Structured JSON logs, request-id
     # propagation, in-process request metrics, and an ops dashboard that surfaces backup status.
     #
