@@ -20,7 +20,8 @@ import {
   DetailTabsList,
   DetailTabsContent,
 } from '@/app/components/ui/mcp';
-import type { McpServerProfile } from '@/app/components/ade/dashboard/mcp/mcpInsightUi';
+import type { McpServerProfile, McpToolComplexity } from '@/app/components/ade/dashboard/mcp/mcpInsightUi';
+import { ToolComplexityPanel } from '@/app/components/ui/mcp/ToolComplexityPanel';
 // The Monaco-backed code-viewer primitives were promoted out of `ui/mcp` to the format-neutral
 // `ui/code` module (MFI-28.7); the gallery documents them under those neutral names.
 import { JsonViewer, JsonDiffViewer, Disclosure } from '@/app/components/ui/code';
@@ -112,6 +113,54 @@ const PROFILE_UNSCORED: McpServerProfile = {
   instructions: null,
 };
 
+/** A representative tool-complexity set spanning the tiers, incl. a bare tool and a deep polymorphic one. */
+const TOOL_COMPLEXITY_SAMPLE: McpToolComplexity[] = [
+  {
+    name: 'ping',
+    property_count: 0,
+    required_count: 0,
+    optional_count: 0,
+    documented_property_count: 0,
+    max_nesting_depth: 0,
+    uses_enum: false,
+    uses_one_of: false,
+    has_output_schema: false,
+  },
+  {
+    name: 'search',
+    property_count: 3,
+    required_count: 1,
+    optional_count: 2,
+    documented_property_count: 3,
+    max_nesting_depth: 1,
+    uses_enum: true,
+    uses_one_of: false,
+    has_output_schema: true,
+  },
+  {
+    name: 'update_record',
+    property_count: 7,
+    required_count: 3,
+    optional_count: 4,
+    documented_property_count: 4,
+    max_nesting_depth: 2,
+    uses_enum: false,
+    uses_one_of: false,
+    has_output_schema: false,
+  },
+  {
+    name: 'orchestrate_workflow',
+    property_count: 12,
+    required_count: 4,
+    optional_count: 8,
+    documented_property_count: 6,
+    max_nesting_depth: 5,
+    uses_enum: true,
+    uses_one_of: true,
+    has_output_schema: true,
+  },
+];
+
 export default function McpPrimitivesShowcase() {
   return (
     <main className="mx-auto max-w-4xl space-y-6 p-8">
@@ -192,6 +241,22 @@ export default function McpPrimitivesShowcase() {
         <ServerProfileCard profile={PROFILE_FULL} trustHref="#insight-reliability" nowMs={NOW} />
         <ServerProfileCard profile={PROFILE_LEGACY} nowMs={NOW} />
         <ServerProfileCard profile={PROFILE_UNSCORED} nowMs={NOW} />
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            ToolComplexityPanel (V2-MCP-29.3)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Per-tool schema &ldquo;shape&rdquo; cards driven by the 14.1 metrics — parameter count,
+            required/optional split (mini bar), nesting depth, <code>enum</code>/<code>oneOf</code>
+            presence, and output-schema declaration — plus a tier-distribution histogram and a
+            sortable/filterable most-vs-least-complex view. A no-parameter tool and a deep polymorphic
+            one both render sanely.
+          </p>
+        </div>
+        <ToolComplexityPanel tools={TOOL_COMPLEXITY_SAMPLE} loading={false} error={null} />
       </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">

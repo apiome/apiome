@@ -1344,7 +1344,6 @@ documentation quality** — not just its list of offerings.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
-| 15.3 | Tool schema "shape" & complexity cards | Per-tool card: param count, required/optional, depth, enums, output-schema presence | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
 | 15.4 | Safety & annotation posture panel | Heatmap of read-only/destructive/idempotent/open-world hints × tools, cross-referenced with auth | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
 | 15.5 | Documentation & schema coverage meters | Gauges: % described, % titled, % params documented, output-schema adoption | `mcp-insights` `frontend` | Y | Y | ● | apiome-ui |
 
@@ -1380,11 +1379,22 @@ documentation quality** — not just its list of offerings.
 - **Dependencies / Parallelism.** After 14.2. Parallel with 15.3–15.5. Highest-complexity item.
 - **Technical Stack.** Mermaid (or 14.3 force graph), Python edge-inference helper.
 
-### MCAT-15.3 — Tool schema "shape" & complexity cards  ·  **#4633**
+### MCAT-15.3 — Tool schema "shape" & complexity cards  ·  **#4633**  ·  ✅ Done (apiome-ui 0.70.0)
 - **Problem.** Two servers can both expose "10 tools" yet differ wildly in how hard they are to call.
 - **Solution / Scope.** Per-tool cards driven by 14.1 metrics: parameter count, required vs optional
   split (mini bar), max nesting depth, enum/`oneOf` presence, whether an `output_schema` is declared.
   A sortable "most/least complex tool" view; a distribution histogram across the server's tools.
+- **Delivered.** UI-only (the 14.1 `tool_complexity` metrics were already returned by
+  `insight/surface`). New pure, React-free `mcpToolComplexityUi` module: a deterministic composite
+  complexity **score** (params + nesting·2 + oneOf·3 + enum·1), five fixed **tiers**
+  (None→Very high), per-tool view models (required/optional split, unnamed fallback, clamping), total
+  **sort** (most/least complex, name, params, depth — stable tie-breaks) and **filter** (has/no
+  params, nested, enum, oneOf, output-schema) projections, and a tier-**distribution histogram**. New
+  `ToolComplexityPanel` client component renders the cards (mini split-bar + schema-feature chips),
+  the histogram (via `BarSeries`), and the sort/filter toolbar, wired into the Insight tab's
+  capability-surface section. Unit-tested (`mcp-tool-complexity-ui.test.ts`), component-tested
+  (`mcp-tool-complexity-panel.test.tsx`), plus an Insight-tab wiring test; design-system gallery
+  section + `MCP_UI_PRIMITIVES.md` entry.
 - **Acceptance Criteria.** Cards match fixture metrics; sort/filter works; tools with no params or
   huge schemas both render sanely.
 - **Dependencies / Parallelism.** After 14.1/14.3/14.4. Parallel with 15.2/15.4/15.5.

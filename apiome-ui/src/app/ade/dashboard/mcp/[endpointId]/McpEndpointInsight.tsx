@@ -5,6 +5,7 @@ import {
   Activity,
   BarChart3,
   Layers,
+  ListTree,
   Loader2,
   Share2,
   ShieldCheck,
@@ -15,6 +16,7 @@ import { LoadingState } from "@/app/components/ui/LoadingState";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { ServerProfileCard } from "@/app/components/ui/mcp/ServerProfileCard";
 import { CapabilityGraphPanel } from "@/app/components/ui/mcp/CapabilityGraphPanel";
+import { ToolComplexityPanel } from "@/app/components/ui/mcp/ToolComplexityPanel";
 import { dashboardPanelPaddedClass } from "@/app/components/ade/dashboard/dashboardScreenClasses";
 import type { McpEndpointDetail } from "@/app/components/ade/dashboard/mcp/mcpBrowseUi";
 import {
@@ -88,7 +90,8 @@ const INSIGHT_SECTIONS: InsightSectionDef[] = [
     icon: Layers,
     reserved: [
       // "Server profile" (MCAT-15.1) lands as the ServerProfileCard header above the sections; the
-      // "Capability relationship graph" (MCAT-15.2) now lands as a live panel in this section's body.
+      // "Capability relationship graph" (MCAT-15.2) and "Tool schema shape & complexity" (MCAT-15.3)
+      // now land as live panels in this section's body.
       { key: "safety", title: "Safety & annotation posture", hint: "Read-only vs destructive tools, cross-referenced with auth." },
     ],
   },
@@ -574,6 +577,29 @@ export default function McpEndpointInsight({
                 </div>
                 <CapabilityGraphPanel graph={graph} loading={graphLoading} error={graphError} />
               </div>
+              {/* Tool schema "shape" & complexity cards (MCAT-15.3) — a live panel in the surface section
+                  body. It reads the same surface fetch as the baseline above, which already owns the
+                  surface loading/error surfacing, so the whole sub-panel is hidden on a surface error to
+                  avoid showing the same message twice. */}
+              {surfaceError ? null : (
+                <div className={dashboardPanelPaddedClass}>
+                  <div className="mb-3">
+                    <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+                      <ListTree className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+                      Tool schema shape &amp; complexity
+                    </h4>
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                      How hard each tool is to call — parameters, required/optional split, nesting, and
+                      schema features — with a distribution across the server&apos;s tools.
+                    </p>
+                  </div>
+                  <ToolComplexityPanel
+                    tools={surface ? surface.metrics.tool_complexity : null}
+                    loading={surfaceLoading}
+                    error={null}
+                  />
+                </div>
+              )}
             </div>
           ) : null}
         </InsightSection>
