@@ -15,7 +15,7 @@ keeps a central dark theme (10.10) addable in one place.
 | Layer | Path | What |
 | --- | --- | --- |
 | Pure helpers (React-free, unit-tested) | `src/app/components/ade/dashboard/mcp/mcpUiPrimitives.ts` | Grade styles, badge-tone resolvers, health/recency, tab definitions |
-| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `FindingSeverity`, `DetailTabs` |
+| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `FindingSeverity`, `DetailTabs` |
 | Shared states | `src/app/components/ui/{EmptyState,LoadingState,ErrorState}.tsx` | empty / loading / error placeholders |
 | Barrel | `@/app/components/ui/mcp` (also re-exported from `@/app/components/ui`) | one import for all MCP primitives |
 
@@ -125,6 +125,33 @@ sort/filter selection state, and handles its own loading / error / no-tools / fi
   tools={surface ? surface.metrics.tool_complexity : null}
   loading={surfaceLoading}
   error={surfaceError}
+/>
+```
+
+### `<SafetyPosturePanel>` (V2-MCP-29.4 / MCAT-15.4)
+
+The **safety & annotation posture** panel on the endpoint **Insight** tab. It hoists the single most
+important safety signal — read-only vs destructive — out of each tool's per-item `annotations` into a
+per-tool **matrix** of the four behavioural hints (`readOnlyHint`, `destructiveHint`, `idempotentHint`,
+`openWorldHint`). Each matrix cell is a **tri-state** (asserted / declared-false / not-declared), so an
+explicit `false` reads differently from an omitted hint. Above the matrix it shows a **posture
+headline** ("3 destructive, 1 open-world, 8 read-only") and the endpoint's **auth badge**, and it
+cross-references the two: on an **anonymous** endpoint (`auth_type: none`) the destructive tools are
+flagged as **reachable with no auth**. A surface whose tools declare no hints at all renders an explicit
+**"unannotated — treat with caution"** state, since absence of a hint is not a guarantee of safety.
+
+It is purely presentational — it reads the snapshot's capability `items` (for per-tool annotations) and
+the endpoint's `auth_type`, both threaded from the Insight tab's fetches. All counting, tri-state
+resolution, auth-posture derivation, and the destructive-without-auth cross-reference live in the
+React-free, unit-tested `mcpSafetyPostureUi` module, reusing `mcpAnnotationHints` (hint extraction) and
+`mcpAuthBadge` (auth tone/label). It handles its own loading / error / no-tools states.
+
+```tsx
+<SafetyPosturePanel
+  items={items}
+  authType={authType}
+  loading={itemsLoading}
+  error={itemsError}
 />
 ```
 

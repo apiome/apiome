@@ -8,6 +8,7 @@ import {
   ListTree,
   Loader2,
   Share2,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -17,8 +18,13 @@ import { EmptyState } from "@/app/components/ui/EmptyState";
 import { ServerProfileCard } from "@/app/components/ui/mcp/ServerProfileCard";
 import { CapabilityGraphPanel } from "@/app/components/ui/mcp/CapabilityGraphPanel";
 import { ToolComplexityPanel } from "@/app/components/ui/mcp/ToolComplexityPanel";
+import { SafetyPosturePanel } from "@/app/components/ui/mcp/SafetyPosturePanel";
 import { dashboardPanelPaddedClass } from "@/app/components/ade/dashboard/dashboardScreenClasses";
-import type { McpEndpointDetail } from "@/app/components/ade/dashboard/mcp/mcpBrowseUi";
+import {
+  mcpVersionDetailFromPayload,
+  type McpCapabilityItem,
+  type McpEndpointDetail,
+} from "@/app/components/ade/dashboard/mcp/mcpBrowseUi";
 import {
   mcpVersionDateTag,
   mcpVersionListFromPayload,
@@ -88,12 +94,11 @@ const INSIGHT_SECTIONS: InsightSectionDef[] = [
     title: "Capability surface",
     subtitle: "What this snapshot exposes and how well it is documented.",
     icon: Layers,
-    reserved: [
-      // "Server profile" (MCAT-15.1) lands as the ServerProfileCard header above the sections; the
-      // "Capability relationship graph" (MCAT-15.2) and "Tool schema shape & complexity" (MCAT-15.3)
-      // now land as live panels in this section's body.
-      { key: "safety", title: "Safety & annotation posture", hint: "Read-only vs destructive tools, cross-referenced with auth." },
-    ],
+    // "Server profile" (MCAT-15.1) lands as the ServerProfileCard header above the sections; the
+    // "Capability relationship graph" (MCAT-15.2), "Tool schema shape & complexity" (MCAT-15.3), and
+    // "Safety & annotation posture" (MCAT-15.4) now all land as live panels in this section's body,
+    // so this section has no reserved slots left.
+    reserved: [],
   },
   {
     key: "evolution",
@@ -327,11 +332,13 @@ function InsightSection({
         <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{section.subtitle}</p>
       </div>
       {children ? <div className="mb-4">{children}</div> : null}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {section.reserved.map((panel) => (
-          <ReservedPanel key={panel.key} panel={panel} />
-        ))}
-      </div>
+      {section.reserved.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {section.reserved.map((panel) => (
+            <ReservedPanel key={panel.key} panel={panel} />
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -367,6 +374,12 @@ export default function McpEndpointInsight({
   const [graph, setGraph] = useState<McpCapabilityGraph | null>(null);
   const [graphLoading, setGraphLoading] = useState(false);
   const [graphError, setGraphError] = useState<string | null>(null);
+  /** The selected snapshot's capability items, for the safety panel's per-tool annotation matrix. */
+  const [items, setItems] = useState<McpCapabilityItem[] | null>(null);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [itemsError, setItemsError] = useState<string | null>(null);
+  /** The endpoint's configured `auth_type` (endpoint-level, loaded once), for the safety cross-reference. */
+  const [authType, setAuthType] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -493,6 +506,73 @@ export default function McpEndpointInsight({
     void loadGraph(selectedVersionId);
   }, [selectedVersionId, loadGraph]);
 
+  // Fetch the selected snapshot's full capability items (MCAT-15.4) — the safety panel needs the
+  // per-tool `annotations` the surface metrics roll up but do not itemize. Re-runs on selector change.
+  const loadItems = useCallback(
+    async (versionId: string) => {
+      setItemsLoading(true);
+      setItemsError(null);
+      try {
+        const res = await fetch(
+          `/api/mcp/endpoints/${endpointId}/versions/${encodeURIComponent(versionId)}`,
+          { credentials: "include", cache: "no-store" },
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(typeof data.error === "string" ? data.error : res.statusText);
+        }
+        const detail = mcpVersionDetailFromPayload(data);
+        if (!mountedRef.current) return;
+        if (!detail) throw new Error("Malformed version response.");
+        setItems(detail.items);
+      } catch (e) {
+        if (!mountedRef.current) return;
+        setItems(null);
+        setItemsError(e instanceof Error ? e.message : "Could not load capabilities.");
+      } finally {
+        if (mountedRef.current) setItemsLoading(false);
+      }
+    },
+    [endpointId],
+  );
+
+  useEffect(() => {
+    if (!selectedVersionId) {
+      setItems(null);
+      setItemsError(null);
+      return;
+    }
+    void loadItems(selectedVersionId);
+  }, [selectedVersionId, loadItems]);
+
+  // Fetch the endpoint's redacted credential status once (auth is endpoint-level, not per-snapshot)
+  // so the safety panel can flag destructive tools reachable with no auth. A failed/absent status
+  // leaves `authType` null, which the panel treats as "auth unknown" (never a false no-auth alarm).
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/mcp/endpoints/${endpointId}/credentials`, {
+          credentials: "include",
+          cache: "no-store",
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!active) return;
+        const credential = (data && typeof data === "object" ? data.credential : null) as
+          | { auth_type?: unknown }
+          | null;
+        const resolved =
+          credential && typeof credential.auth_type === "string" ? credential.auth_type : null;
+        setAuthType(res.ok ? resolved : null);
+      } catch {
+        if (active) setAuthType(null);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [endpointId]);
+
   const selectedVersion = useMemo(
     () => versions.find((v) => v.id === selectedVersionId) ?? null,
     [versions, selectedVersionId],
@@ -600,6 +680,27 @@ export default function McpEndpointInsight({
                   />
                 </div>
               )}
+              {/* Safety & annotation posture (MCAT-15.4) — the read-only vs destructive matrix, its
+                  posture summary, and the destructive+no-auth cross-reference. It reads the snapshot's
+                  full capability items (its own fetch) and the endpoint's auth type. */}
+              <div className={dashboardPanelPaddedClass}>
+                <div className="mb-3">
+                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+                    <ShieldAlert className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+                    Safety &amp; annotation posture
+                  </h4>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    Read-only vs destructive tools from their behavioural hints, cross-referenced with
+                    whether the endpoint requires auth.
+                  </p>
+                </div>
+                <SafetyPosturePanel
+                  items={items}
+                  authType={authType}
+                  loading={itemsLoading}
+                  error={itemsError}
+                />
+              </div>
             </div>
           ) : null}
         </InsightSection>

@@ -21,7 +21,9 @@ import {
   DetailTabsContent,
 } from '@/app/components/ui/mcp';
 import type { McpServerProfile, McpToolComplexity } from '@/app/components/ade/dashboard/mcp/mcpInsightUi';
+import type { McpCapabilityItem } from '@/app/components/ade/dashboard/mcp/mcpBrowseUi';
 import { ToolComplexityPanel } from '@/app/components/ui/mcp/ToolComplexityPanel';
+import { SafetyPosturePanel } from '@/app/components/ui/mcp/SafetyPosturePanel';
 // The Monaco-backed code-viewer primitives were promoted out of `ui/mcp` to the format-neutral
 // `ui/code` module (MFI-28.7); the gallery documents them under those neutral names.
 import { JsonViewer, JsonDiffViewer, Disclosure } from '@/app/components/ui/code';
@@ -161,6 +163,37 @@ const TOOL_COMPLEXITY_SAMPLE: McpToolComplexity[] = [
   },
 ];
 
+/** A helper to build a `tool` capability item for the safety-panel gallery samples. */
+function galleryTool(name: string, annotations: Record<string, unknown> | null): McpCapabilityItem {
+  return {
+    item_type: 'tool',
+    name,
+    title: null,
+    description: null,
+    uri: null,
+    uri_template: null,
+    input_schema: null,
+    output_schema: null,
+    annotations,
+    ordinal: 0,
+  };
+}
+
+/** A representative surface spanning read-only, destructive, open-world, and unannotated tools. */
+const SAFETY_TOOLS_SAMPLE: McpCapabilityItem[] = [
+  galleryTool('search', { readOnlyHint: true, destructiveHint: false }),
+  galleryTool('read_file', { readOnlyHint: true, idempotentHint: true }),
+  galleryTool('sync_index', { idempotentHint: true }),
+  galleryTool('delete_record', { destructiveHint: true, openWorldHint: true }),
+  galleryTool('run_query', null),
+];
+
+/** A surface whose tools declare no hints at all — the "treat with caution" state. */
+const SAFETY_TOOLS_UNANNOTATED: McpCapabilityItem[] = [
+  galleryTool('do_thing', null),
+  galleryTool('do_other', {}),
+];
+
 export default function McpPrimitivesShowcase() {
   return (
     <main className="mx-auto max-w-4xl space-y-6 p-8">
@@ -257,6 +290,32 @@ export default function McpPrimitivesShowcase() {
           </p>
         </div>
         <ToolComplexityPanel tools={TOOL_COMPLEXITY_SAMPLE} loading={false} error={null} />
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            SafetyPosturePanel (V2-MCP-29.4)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            The per-tool behavioural-hint matrix (read-only / destructive / idempotent / open-world),
+            a posture headline, and the auth cross-reference. On an anonymous endpoint the destructive
+            tool is flagged as reachable with no auth; a hint-less surface renders an explicit
+            &ldquo;unannotated — treat with caution&rdquo; state.
+          </p>
+        </div>
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Anonymous endpoint (destructive + no-auth flagged)
+        </div>
+        <SafetyPosturePanel items={SAFETY_TOOLS_SAMPLE} authType="none" loading={false} error={null} />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Authenticated endpoint (bearer)
+        </div>
+        <SafetyPosturePanel items={SAFETY_TOOLS_SAMPLE} authType="bearer" loading={false} error={null} />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Fully unannotated surface
+        </div>
+        <SafetyPosturePanel items={SAFETY_TOOLS_UNANNOTATED} authType="bearer" loading={false} error={null} />
       </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
