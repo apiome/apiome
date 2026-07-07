@@ -49,7 +49,9 @@ from .mcp_discovery_engine import (
     trigger_discovery,
 )
 from .mcp_insight_aggregation import (
+    DISCOVERY_TIMELINE_WINDOW,
     compute_discovery_reliability,
+    compute_discovery_timeline,
     compute_invocation_reliability,
 )
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
@@ -96,6 +98,7 @@ from .models import (
     mcp_catalog_insight_from_row,
     mcp_change_counts,
     mcp_credential_status_from_row,
+    mcp_discovery_health_out,
     mcp_discovery_job_out_from_row,
     mcp_discovery_job_status_from_row,
     mcp_endpoint_digest_response,
@@ -1718,23 +1721,30 @@ async def get_mcp_endpoint_insight_reliability(
     endpoint_id: uuid.UUID,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpInsightReliabilityResponse:
-    """Return the endpoint's discovery and test-invocation reliability aggregates.
+    """Return the endpoint's discovery and test-invocation reliability aggregates + health timeline.
 
     ``discovery`` folds ``mcp_discovery_jobs`` into per-state tallies, a success rate over terminal
     jobs, and run-latency statistics; ``invocation`` folds ``mcp_test_invocations`` into call/error
-    tallies, an error rate, and latency percentiles (p50/p95/p99). An endpoint with no discovery or
-    test history returns zero counts and empty (``None``) latency statistics — a ``200``, never a
-    ``500``. Returns ``404`` when the endpoint is not the caller's tenant's.
+    tallies, an error rate, and latency percentiles (p50/p95/p99). ``health`` (MCAT-17.1) adds the
+    recent per-job outcome timeline (newest-first, capped at the timeline window), a windowed
+    availability percentage, and the endpoint's live quarantine / backoff state. An endpoint with no
+    discovery or test history returns zero counts, an empty timeline, and empty (``None``) statistics
+    — a ``200``, never a ``500``. Returns ``404`` when the endpoint is not the caller's tenant's.
     """
     _ = tenant_slug
-    _require_tenant_endpoint(auth_data, endpoint_id)
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
 
     discovery = compute_discovery_reliability(db.list_mcp_discovery_job_stats(str(endpoint_id)))
     invocation = compute_invocation_reliability(db.list_mcp_invocation_stats(str(endpoint_id)))
+    timeline = compute_discovery_timeline(
+        db.list_mcp_discovery_job_timeline(str(endpoint_id), DISCOVERY_TIMELINE_WINDOW),
+        window=DISCOVERY_TIMELINE_WINDOW,
+    )
     return McpInsightReliabilityResponse(
         endpoint_id=str(endpoint_id),
         discovery=McpDiscoveryReliabilityOut.model_validate(discovery.as_dict()),
         invocation=McpInvocationReliabilityOut.model_validate(invocation.as_dict()),
+        health=mcp_discovery_health_out(timeline.as_dict(), endpoint),
     )
 
 

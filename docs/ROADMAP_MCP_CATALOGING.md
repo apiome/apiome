@@ -1527,12 +1527,12 @@ test-invocation logs plus the score report. **Supersedes stub 13.3.**
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
-| 17.1 | Discovery health & availability timeline | Success/failure/backoff/quarantine over time from discovery jobs | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui, apiome-rest |
+| 17.1 ✅ | Discovery health & availability timeline | Success/failure/backoff/quarantine over time from discovery jobs | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui, apiome-rest |
 | 17.2 | Tool latency & error-rate panel | p50/p95/p99 latency + error ratio per tool from test invocations | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui, apiome-rest |
 | 17.3 | Score & lint breakdown visualization | `mcp_version_scores.report` → category bars + findings-by-severity | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
 | 17.4 | Composite trust profile radar | Radar across quality/safety/docs/stability/responsiveness | `mcp-insights` `frontend` `backend` | N | N | ●● | apiome-ui, apiome-rest |
 
-### MCAT-17.1 — Discovery health & availability timeline  ·  **#4641**
+### MCAT-17.1 — Discovery health & availability timeline  ·  **#4641**  ·  ✅ Done (apiome-rest 1.87.0, apiome-ui 0.77.0)
 - **Problem.** Discovery already records outcomes (`last_discovery_status`, per-job `state`/`error`,
   backoff/quarantine from V133) but there's no view of a server's **reliability over time**.
 - **Solution / Scope.** A timeline of `mcp_discovery_jobs` outcomes (ok/unreachable/auth_error/…),

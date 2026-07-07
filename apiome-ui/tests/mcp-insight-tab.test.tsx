@@ -219,6 +219,7 @@ function routeFetch(handlers: {
   evolution?: () => Response;
   digest?: () => Response;
   views?: () => Response;
+  reliability?: () => Response;
 }) {
   (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
     if (url.includes('/insight/digest')) {
@@ -252,6 +253,33 @@ function routeFetch(handlers: {
             endpoint_id: ENDPOINT_ID,
             last_seen_version_id: V3,
             seen_at: '2026-07-06T10:00:00Z',
+          });
+    }
+    if (url.includes('/insight/reliability')) {
+      // The discovery health timeline (MCAT-17.1) loads endpoint-level; default to an empty history
+      // so tests that don't care about it render the panel's "no history yet" state.
+      return handlers.reliability
+        ? handlers.reliability()
+        : jsonResponse({
+            success: true,
+            endpoint_id: ENDPOINT_ID,
+            discovery: {
+              job_count: 0,
+              completed_count: 0,
+              failed_count: 0,
+              running_count: 0,
+              queued_count: 0,
+              success_rate: 0,
+              latency: { count: 0 },
+            },
+            invocation: {
+              call_count: 0,
+              error_count: 0,
+              success_count: 0,
+              error_rate: 0,
+              latency: { count: 0 },
+            },
+            health: { timeline: [], window: 50 },
           });
     }
     if (url.includes('/insight/evolution')) {
@@ -788,5 +816,106 @@ describe('McpEndpointInsight — scaffold', () => {
 
     await waitFor(() => expect(screen.getByText('New to you')).toBeInTheDocument());
     expect(screen.getByText(/haven't viewed this endpoint before/i)).toBeInTheDocument();
+  });
+
+  it('renders the discovery health timeline with availability from the reliability fetch', async () => {
+    routeFetch({
+      versions: () => jsonResponse(versionsPayload()),
+      surface: (vid) => jsonResponse(surfacePayload(vid ?? V3, 3, 4)),
+      reliability: () =>
+        jsonResponse({
+          success: true,
+          endpoint_id: ENDPOINT_ID,
+          discovery: {
+            job_count: 4,
+            completed_count: 3,
+            failed_count: 1,
+            running_count: 0,
+            queued_count: 0,
+            success_rate: 0.75,
+            latency: { count: 0 },
+          },
+          invocation: {
+            call_count: 0,
+            error_count: 0,
+            success_count: 0,
+            error_rate: 0,
+            latency: { count: 0 },
+          },
+          health: {
+            timeline: [
+              { job_id: 'j4', state: 'completed', trigger: 'sweep', outcome: 'ok', created_at: '2026-07-06T12:00:00Z' },
+              { job_id: 'j3', state: 'failed', trigger: 'sweep', outcome: 'connect_error', error_code: 'connect_error', created_at: '2026-07-06T06:00:00Z' },
+              { job_id: 'j2', state: 'completed', trigger: 'sweep', outcome: 'ok', created_at: '2026-07-06T00:00:00Z' },
+              { job_id: 'j1', state: 'completed', trigger: 'sweep', outcome: 'ok', created_at: '2026-07-05T18:00:00Z' },
+            ],
+            window: 50,
+            last_status: 'unchanged',
+            last_discovered_at: '2026-07-06T12:00:00Z',
+          },
+        }),
+    });
+
+    render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
+
+    // The reliability section renders the live discovery-health panel (not its reserved placeholder).
+    await waitFor(() =>
+      expect(screen.getByText('Discovery health & availability')).toBeInTheDocument(),
+    );
+    // 3 ok / (3 ok + 1 failed) = 75% availability, and the failure breakdown names the code.
+    expect(screen.getByText('75%')).toBeInTheDocument();
+    expect(screen.getByText('Unreachable')).toBeInTheDocument();
+    // The endpoint-level reliability endpoint was fetched.
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/insight/reliability'),
+      expect.anything(),
+    );
+  });
+
+  it('flags a quarantined endpoint in the discovery health panel', async () => {
+    routeFetch({
+      versions: () => jsonResponse(versionsPayload()),
+      surface: (vid) => jsonResponse(surfacePayload(vid ?? V3, 3, 4)),
+      reliability: () =>
+        jsonResponse({
+          success: true,
+          endpoint_id: ENDPOINT_ID,
+          discovery: {
+            job_count: 1,
+            completed_count: 0,
+            failed_count: 1,
+            running_count: 0,
+            queued_count: 0,
+            success_rate: 0,
+            latency: { count: 0 },
+          },
+          invocation: {
+            call_count: 0,
+            error_count: 0,
+            success_count: 0,
+            error_rate: 0,
+            latency: { count: 0 },
+          },
+          health: {
+            timeline: [
+              { job_id: 'q1', state: 'failed', trigger: 'sweep', outcome: 'connect_error', error_code: 'connect_error', created_at: '2026-07-06T12:00:00Z' },
+            ],
+            window: 50,
+            quarantined: true,
+            quarantined_at: '2026-07-06T12:00:00Z',
+            quarantine_reason: 'connect_error: connection refused',
+            consecutive_failures: 5,
+            last_status: 'connect_error',
+            last_discovered_at: '2026-07-06T12:00:00Z',
+          },
+        }),
+    });
+
+    render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/Quarantined — auto-excluded/i)).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/connection refused/)).toBeInTheDocument();
   });
 });

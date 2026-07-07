@@ -6004,8 +6004,68 @@ class McpInvocationReliabilityOut(BaseModel):
     latency: McpLatencyStatsOut
 
 
+class McpDiscoveryEventOut(BaseModel):
+    """One discovery-job outcome on the health timeline (MCAT-17.1).
+
+    ``outcome`` is the single value the timeline colours by — ``ok`` for a completed run, the
+    specific discovery error code (``connect_error`` / ``auth_required`` / …) for a failed one, or
+    ``pending`` while still in flight. ``error_code`` is the raw failure classification (``None``
+    unless the job failed with a recorded code). Timestamps are ISO-8601 strings.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    job_id: str
+    state: str
+    trigger: str
+    outcome: str
+    error_code: Optional[str] = None
+    created_at: Optional[str] = None
+    started_at: Optional[str] = None
+    finished_at: Optional[str] = None
+    duration_ms: Optional[float] = None
+
+
+class McpDiscoveryHealthOut(BaseModel):
+    """Discovery health over a recent window: the outcome timeline, availability %, and quarantine.
+
+    ``timeline`` is the recent per-job outcomes (newest-first, capped at ``window``);
+    ``availability_pct`` is ``ok / (ok + failed)`` over the *terminal* jobs in that window as a
+    ``0``–``100`` percentage, or ``None`` when the window holds no terminal job. The quarantine /
+    backoff block mirrors the endpoint's live failure-handling state (V133): ``quarantined`` and its
+    ``quarantined_at`` / ``quarantine_reason`` when the endpoint tripped the consecutive-failure
+    threshold, the current ``consecutive_failures`` streak, and ``next_discovery_after`` (the backoff
+    anchor the sweep is holding off until). ``last_status`` / ``last_discovered_at`` are the most
+    recent attempt's outcome and time.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    timeline: List[McpDiscoveryEventOut] = Field(default_factory=list)
+    window: int = 0
+    event_count: int = 0
+    ok_count: int = 0
+    failed_count: int = 0
+    pending_count: int = 0
+    terminal_count: int = 0
+    availability_pct: Optional[float] = None
+    truncated: bool = False
+    quarantined: bool = False
+    quarantined_at: Optional[str] = None
+    quarantine_reason: Optional[str] = None
+    consecutive_failures: int = 0
+    next_discovery_after: Optional[str] = None
+    last_status: Optional[str] = None
+    last_discovered_at: Optional[str] = None
+
+
 class McpInsightReliabilityResponse(BaseModel):
-    """Response envelope folding an endpoint's discovery and invocation reliability together."""
+    """Response envelope folding an endpoint's discovery and invocation reliability together.
+
+    ``discovery`` / ``invocation`` are the aggregate roll-ups (state tallies, success/error rates,
+    latency); ``health`` adds the MCAT-17.1 discovery health timeline — the recent per-job outcome
+    events, a windowed availability percentage, and the endpoint's quarantine / backoff state.
+    """
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -6013,6 +6073,56 @@ class McpInsightReliabilityResponse(BaseModel):
     endpoint_id: str
     discovery: McpDiscoveryReliabilityOut
     invocation: McpInvocationReliabilityOut
+    health: McpDiscoveryHealthOut
+
+
+def mcp_discovery_health_out(
+    timeline: Dict[str, Any], endpoint: Dict[str, Any]
+) -> McpDiscoveryHealthOut:
+    """Fold a discovery-timeline aggregate + the endpoint's failure-handling state into the model.
+
+    ``timeline`` is the ``as_dict()`` of a
+    :class:`~app.mcp_insight_aggregation.DiscoveryTimeline` (its per-job events and windowed
+    availability tallies); ``endpoint`` is the tenant-scoped endpoint row, which carries the live
+    quarantine / backoff columns (V133) and the last-attempt outcome. The two are merged here so the
+    route stays declarative and the projection is unit-testable without a database.
+
+    Args:
+        timeline: The discovery-timeline aggregate dict (events + availability window).
+        endpoint: The endpoint row (quarantine, backoff, and last-discovery fields).
+
+    Returns:
+        The combined :class:`McpDiscoveryHealthOut` the reliability response embeds.
+    """
+
+    def _ts(value: Any) -> Optional[str]:
+        if value is None:
+            return None
+        if hasattr(value, "isoformat"):
+            return value.isoformat()
+        return str(value)
+
+    def _s(value: Any) -> Optional[str]:
+        return str(value) if value is not None else None
+
+    return McpDiscoveryHealthOut(
+        timeline=[McpDiscoveryEventOut.model_validate(e) for e in timeline.get("events", [])],
+        window=int(timeline.get("window", 0)),
+        event_count=int(timeline.get("event_count", 0)),
+        ok_count=int(timeline.get("ok_count", 0)),
+        failed_count=int(timeline.get("failed_count", 0)),
+        pending_count=int(timeline.get("pending_count", 0)),
+        terminal_count=int(timeline.get("terminal_count", 0)),
+        availability_pct=timeline.get("availability_pct"),
+        truncated=bool(timeline.get("truncated", False)),
+        quarantined=endpoint.get("quarantined_at") is not None,
+        quarantined_at=_ts(endpoint.get("quarantined_at")),
+        quarantine_reason=_s(endpoint.get("quarantine_reason")),
+        consecutive_failures=int(endpoint.get("consecutive_failures") or 0),
+        next_discovery_after=_ts(endpoint.get("next_discovery_after")),
+        last_status=_s(endpoint.get("last_discovery_status")),
+        last_discovered_at=_ts(endpoint.get("last_discovered_at")),
+    )
 
 
 class McpInsightCatalogResponse(BaseModel):

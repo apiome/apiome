@@ -11404,6 +11404,51 @@ class Database:
         """
         return self.execute_query(q, (endpoint_id,))
 
+    def list_mcp_discovery_job_timeline(
+        self, endpoint_id: str, limit: int
+    ) -> List[Dict[str, Any]]:
+        """Return an endpoint's most-recent discovery jobs for the health timeline (MCAT-17.1).
+
+        One row per job, **newest-first** (by enqueue time, ties broken by id for a stable order),
+        capped at ``limit`` so a long-lived endpoint's timeline stays bounded. Each row carries the
+        job's ``id`` / ``state`` / ``trigger``, its ``created_at`` / ``started_at`` / ``finished_at``
+        timestamps, the wall-clock ``duration_ms`` (``finished_at - started_at`` in milliseconds, or
+        NULL when the job never both started and finished), and ``error_code`` — the stable discovery
+        failure classification (``connect_error`` / ``auth_required`` / …) lifted out of the failed
+        job's stored ``result`` JSON, NULL for a non-failed job. The pure
+        :func:`~app.mcp_insight_aggregation.compute_discovery_timeline` turns these into the outcome
+        timeline and a windowed availability percentage.
+
+        Args:
+            endpoint_id: The owning endpoint (already tenant-validated by the caller).
+            limit: The maximum number of most-recent jobs to return (clamped to at least 1).
+
+        Returns:
+            One dict per discovery job, newest-first; empty when the endpoint has no discovery
+            history.
+        """
+        capped = max(1, int(limit))
+        q = """
+            SELECT
+                id,
+                state,
+                trigger,
+                created_at,
+                started_at,
+                finished_at,
+                CASE
+                    WHEN started_at IS NOT NULL AND finished_at IS NOT NULL
+                    THEN EXTRACT(EPOCH FROM (finished_at - started_at)) * 1000.0
+                    ELSE NULL
+                END AS duration_ms,
+                result -> 'error' ->> 'code' AS error_code
+            FROM apiome.mcp_discovery_jobs
+            WHERE endpoint_id = %s::uuid
+            ORDER BY created_at DESC, id DESC
+            LIMIT %s
+        """
+        return self.execute_query(q, (endpoint_id, capped))
+
     def list_mcp_invocation_stats(self, endpoint_id: str) -> List[Dict[str, Any]]:
         """Return an endpoint's test invocations as ``(is_error, latency_ms)`` rows for reliability.
 
