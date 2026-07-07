@@ -116,7 +116,7 @@ describe('FindingSeverity', () => {
 });
 
 describe('DetailTabs', () => {
-  it('auto-renders the canonical seven-tab strip and switches panels', async () => {
+  it('auto-renders the canonical detail tab strip and switches panels', async () => {
     const user = userEvent.setup();
     render(
       <DetailTabs defaultValue="overview">
@@ -126,7 +126,7 @@ describe('DetailTabs', () => {
       </DetailTabs>,
     );
 
-    // All seven labels render in the strip.
+    // Every canonical tab label renders in the strip.
     for (const tab of MCP_DETAIL_TABS) {
       expect(screen.getByRole('tab', { name: tab.label })).toBeInTheDocument();
     }

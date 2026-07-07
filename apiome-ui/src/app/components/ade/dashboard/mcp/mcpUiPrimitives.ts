@@ -4,7 +4,7 @@
  * Every MCP catalog screen (browse grid, endpoint detail, lint & score, import flow) reuses the
  * same visual atoms the mockup defines — the A–F grade glyph, the transport / visibility / auth /
  * capability-annotation badges, the health & "last discovered" pills, the MUST/SHOULD finding
- * severity styling, and the seven-tab detail strip. This module holds the *pure*, React-free
+ * severity styling, and the detail tab strip. This module holds the *pure*, React-free
  * mappings those primitives render from, so they can be unit-tested directly and so the React
  * components stay free of color/branching literals.
  *
@@ -325,7 +325,7 @@ export const MCP_LINT_TIER_LABEL: Record<McpLintTier, string> = {
 };
 
 // --- Detail tabs ----------------------------------------------------------------------------
-// The seven-tab detail shell. The constant is the single definition of the tab set + order +
+// The detail tab shell. The constant is the single definition of the tab set + order +
 // labels; a screen renders the full set or any subset it has content for.
 
 /** One tab in the endpoint detail shell. */
@@ -336,10 +336,15 @@ export interface McpDetailTab {
   label: string;
 }
 
-/** The canonical seven-tab MCP endpoint detail strip, in display order (matches the mockup). */
+/**
+ * The canonical MCP endpoint detail strip, in display order (matches the mockup). The `insight` tab
+ * (V2-MCP-28.4) sits after Capabilities as the home for the server-profile / evolution / reliability
+ * visualizations; a screen renders the full set or any subset it has content for.
+ */
 export const MCP_DETAIL_TABS: readonly McpDetailTab[] = [
   { value: 'overview', label: 'Overview' },
   { value: 'capabilities', label: 'Capabilities' },
+  { value: 'insight', label: 'Insight' },
   { value: 'versions', label: 'Versions' },
   { value: 'lint', label: 'Lint & Score' },
   { value: 'test', label: 'Test' },

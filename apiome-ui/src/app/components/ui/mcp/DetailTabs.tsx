@@ -9,8 +9,8 @@ import type { McpDetailTab } from '../../ade/dashboard/mcp/mcpUiPrimitives';
  * `<DetailTabs>` — the endpoint detail tab shell. Unlike the segmented {@link Tabs} primitive, this
  * is the mockup's underline strip: a bottom border with each tab as an underline-on-active link,
  * the active tab inked in brand indigo. Built on Radix tabs so it stays keyboard-accessible and
- * controllable. The canonical seven-tab set lives in {@link MCP_DETAIL_TABS}; a screen may render
- * the full set or any subset it has content for.
+ * controllable. The canonical tab set lives in {@link MCP_DETAIL_TABS}; a screen may render the
+ * full set or any subset it has content for.
  */
 const DetailTabs = TabsPrimitive.Root;
 

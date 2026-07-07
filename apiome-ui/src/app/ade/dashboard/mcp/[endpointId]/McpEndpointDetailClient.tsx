@@ -30,6 +30,7 @@ import {
   DetailTabsList,
 } from "@/app/components/ui/mcp/DetailTabs";
 import McpVersionHistory from "./McpVersionHistory";
+import McpEndpointInsight from "./McpEndpointInsight";
 import McpLintReport, { McpGradeSummary } from "./McpLintReport";
 import McpEndpointSettings from "./McpEndpointSettings";
 import {
@@ -592,7 +593,7 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
                 <DetailTabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                   <DetailTabsList
                     items={MCP_DETAIL_TABS}
-                    only={["capabilities", "lint", "versions", "settings"]}
+                    only={["capabilities", "insight", "versions", "lint", "settings"]}
                   />
 
                   <DetailTabsContent value="capabilities" className="space-y-6">
@@ -655,6 +656,13 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
                     </section>
                   ))
                 )}
+                  </DetailTabsContent>
+
+                  <DetailTabsContent value="insight">
+                    <McpEndpointInsight
+                      endpointId={endpointId}
+                      currentVersionId={endpoint.current_version_id ?? null}
+                    />
                   </DetailTabsContent>
 
                   <DetailTabsContent value="lint">

@@ -184,10 +184,11 @@ describe('mcpRelativeTime', () => {
 });
 
 describe('detail tab + tier constants', () => {
-  it('defines the canonical seven-tab strip in mockup order', () => {
+  it('defines the canonical detail tab strip in mockup order', () => {
     expect(MCP_DETAIL_TABS.map((t) => t.value)).toEqual([
       'overview',
       'capabilities',
+      'insight',
       'versions',
       'lint',
       'test',
@@ -195,6 +196,7 @@ describe('detail tab + tier constants', () => {
       'settings',
     ]);
     expect(MCP_DETAIL_TABS.find((t) => t.value === 'lint')?.label).toBe('Lint & Score');
+    expect(MCP_DETAIL_TABS.find((t) => t.value === 'insight')?.label).toBe('Insight');
   });
 
   it('labels the requirement tiers MUST / SHOULD / Advisory', () => {

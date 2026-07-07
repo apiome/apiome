@@ -206,7 +206,7 @@ is document-local only.
 | **V2-MCP-EPIC-25** | MCAT-EPIC-11 | CLI | 11.1–11.4 | ●● MVP |
 | **V2-MCP-EPIC-26** | MCAT-EPIC-12 | Official MCP Registry Integration | 12.1–12.4 | ○ v2 |
 | **V2-MCP-EPIC-27** | MCAT-EPIC-13 | Notifications, Webhooks & Observability | 13.1–13.4 | ○ v2 |
-| **V2-MCP-EPIC-28** | MCAT-EPIC-14 | Insight Data Layer & Visualization Foundation | 14.1–14.4 | ◐ next (§10) |
+| **V2-MCP-EPIC-28** | MCAT-EPIC-14 | Insight Data Layer & Visualization Foundation | 14.1–14.4 | ✅ done |
 | **V2-MCP-EPIC-29** | MCAT-EPIC-15 | Server Profile & Capability-Surface Visualization | 15.1–15.5 | ◐ next (§10) |
 | **V2-MCP-EPIC-30** | MCAT-EPIC-16 | Surface Evolution & Change Analytics | 16.1–16.5 | ◐ next (§10) |
 | **V2-MCP-EPIC-31** | MCAT-EPIC-17 | Reliability, Latency & Trust Signals | 17.1–17.4 | ◐ next (§10) |
@@ -1221,7 +1221,7 @@ small, token-driven SVG chart kit rather than pulling a heavyweight dependency.
 
 | Created as | Local | Theme | Issues | Weight |
 |---|---|---|---|---|
-| **V2-MCP-EPIC-28** | MCAT-EPIC-14 | Insight Data Layer & Visualization Foundation | 14.1–14.4 | ◐ prerequisite |
+| **V2-MCP-EPIC-28** | MCAT-EPIC-14 | Insight Data Layer & Visualization Foundation | 14.1–14.4 | ✅ done |
 | **V2-MCP-EPIC-29** | MCAT-EPIC-15 | Server Profile & Capability-Surface Visualization | 15.1–15.5 | ◐ next |
 | **V2-MCP-EPIC-30** | MCAT-EPIC-16 | Surface Evolution & Change Analytics | 16.1–16.5 | ◐ next |
 | **V2-MCP-EPIC-31** | MCAT-EPIC-17 | Reliability, Latency & Trust Signals | 17.1–17.4 | ◐ next |
@@ -1275,9 +1275,7 @@ over the already-persisted tables, the **read APIs** the browser calls, a **toke
 kit** (the missing primitive), and the **Insight tab shell** that hosts the visualizations. Nothing
 here is user-visible on its own — it exists so 15–18 never re-derive metrics or scatter chart code.
 
-| Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
-|---|---|---|---|:--:|:--:|---|---|
-| 14.4 | "Insight" detail tab + page scaffold | New tab in the ADE endpoint-detail shell (`DetailTabs`) that lays out the viz panels 15–17 fill | `mcp-insights` `frontend` | N | Y | ● | apiome-ui |
+_All Epic-14 items are complete (14.1–14.4); the render-side epics 15–17 build on this foundation._
 
 ### MCAT-14.1 — Capability-surface metrics service  ·  **#4627**  ·  ✅ Done (apiome-rest 1.82.0)
 - **Problem.** Every visualization needs the same derived numbers (how many tools, how complex,
@@ -1326,7 +1324,7 @@ here is user-visible on its own — it exists so 15–18 never re-derive metrics
 - **Dependencies / Parallelism.** Parallel with 14.1/14.2 (pure frontend). Extends MCAT-10.7 kit.
 - **Technical Stack.** React, SVG, Tailwind tokens, Vitest/RTL.
 
-### MCAT-14.4 — "Insight" detail tab + page scaffold  ·  **#4630**
+### MCAT-14.4 — "Insight" detail tab + page scaffold  ·  **#4630**  ·  ✅ Done (apiome-ui 0.67.0)
 - **Problem.** The visualizations need a home; the current tabs are Overview / Capabilities /
   Versions / Lint & Score / Test / Credentials / Settings.
 - **Solution / Scope.** Add an **Insight** tab to the `DetailTabs` shell with a responsive panel
