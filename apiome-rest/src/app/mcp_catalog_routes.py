@@ -47,8 +47,13 @@ from .mcp_discovery_engine import (
     reconstruct_surface,
     trigger_discovery,
 )
+from .mcp_insight_aggregation import (
+    compute_discovery_reliability,
+    compute_invocation_reliability,
+)
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
 from .mcp_score import score_mcp_surface
+from .mcp_surface_metrics import compute_surface_metrics
 from .models import (
     McpBrowseResponse,
     McpCredentialDeleteResponse,
@@ -58,6 +63,7 @@ from .models import (
     McpDiscoveryJobResponse,
     McpDiscoveryJobStatusListResponse,
     McpDiscoveryJobStatusResponse,
+    McpDiscoveryReliabilityOut,
     McpEndpointCreate,
     McpEndpointDeleteResponse,
     McpEndpointListResponse,
@@ -67,6 +73,11 @@ from .models import (
     McpEndpointUpdate,
     McpEndpointVersionListResponse,
     McpEndpointVersionResponse,
+    McpInsightCatalogResponse,
+    McpInsightEvolutionResponse,
+    McpInsightReliabilityResponse,
+    McpInsightSurfaceResponse,
+    McpInvocationReliabilityOut,
     McpLintReportResponse,
     McpSearchResponse,
     McpSearchScope,
@@ -75,14 +86,17 @@ from .models import (
     McpVersionCompareResponse,
     McpVersionRef,
     group_mcp_browse_endpoints,
+    mcp_catalog_insight_from_row,
     mcp_change_counts,
     mcp_credential_status_from_row,
     mcp_discovery_job_out_from_row,
     mcp_discovery_job_status_from_row,
     mcp_endpoint_out_from_row,
     mcp_endpoint_test_response_from_result,
+    mcp_evolution_point_from_row,
     mcp_lint_report_from_report,
     mcp_search_hit_from_row,
+    mcp_surface_metrics_out,
     mcp_version_change_out_from_row,
     mcp_version_detail_from_row,
     mcp_version_summary_from_row,
@@ -1397,3 +1411,147 @@ async def test_mcp_endpoint_capability(
         auth_override_applied=override_applied,
         invocation_id=invocation_id,
     )
+
+
+# ===========================================================================
+# Insight aggregation — pre-aggregated read APIs (V2-MCP-28.2 / MCAT-14.2, #4628)
+# ===========================================================================
+#
+# Read-only, cache-friendly aggregates the Insight tab (14.4) and the 15–22 visualization panels
+# render, so the browser never runs N queries per panel nor holds raw item rows. Three endpoint-
+# scoped surfaces — capability-surface metrics for any version, the per-version evolution series,
+# and discovery/invocation reliability — plus one tenant-scoped catalog roll-up (18.1). Each
+# endpoint route first re-validates the endpoint against the caller's token tenant via
+# :func:`_require_tenant_endpoint`, so a cross-tenant id reads as ``404``; the catalog route scopes
+# on the token tenant directly. The roll-up math is the pure :mod:`app.mcp_surface_metrics` /
+# :mod:`app.mcp_insight_aggregation` layer; these routes only fetch and shape.
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/insight/surface",
+    response_model=McpInsightSurfaceResponse,
+)
+async def get_mcp_endpoint_insight_surface(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    version_id: Optional[uuid.UUID] = Query(
+        None,
+        description="Which snapshot to summarize; omit to summarize the endpoint's current surface.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpInsightSurfaceResponse:
+    """Return the capability-surface metrics for a version snapshot (defaults to the current one).
+
+    Resolves the target snapshot — the supplied ``version_id`` or, when omitted, the endpoint's
+    ``current_version_id`` — reconstructs its normalized surface from the persisted rows, and runs
+    the deterministic :func:`app.mcp_surface_metrics.compute_surface_metrics` roll-up (per-type
+    counts, per-tool schema complexity, annotation and documentation coverage) the 15.x panels
+    render. A GET stays read-only: nothing is written. Returns ``404`` when the endpoint — or the
+    named version under it — is not the caller's tenant's, or when no ``version_id`` was given and
+    the endpoint has never been discovered (no current surface to summarize).
+    """
+    _ = tenant_slug
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+
+    target_version_id = (
+        str(version_id) if version_id is not None else endpoint.get("current_version_id")
+    )
+    if not target_version_id:
+        raise HTTPException(
+            status_code=404,
+            detail="endpoint has no discovered surface yet; run discovery before requesting insight",
+        )
+
+    version = db.get_mcp_endpoint_version(str(endpoint_id), str(target_version_id))
+    if version is None:
+        raise HTTPException(status_code=404, detail="MCP endpoint version not found")
+
+    items = db.get_mcp_capability_items(str(version["id"]))
+    surface = reconstruct_surface(version, items)
+    metrics = compute_surface_metrics(surface)
+    return McpInsightSurfaceResponse(
+        endpoint_id=str(endpoint_id),
+        version_id=str(version["id"]),
+        version_seq=int(version["version_seq"]),
+        version_tag=version.get("version_tag"),
+        is_current=str(version["id"]) == str(endpoint.get("current_version_id")),
+        metrics=mcp_surface_metrics_out(metrics.as_dict()),
+    )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/insight/evolution",
+    response_model=McpInsightEvolutionResponse,
+)
+async def get_mcp_endpoint_insight_evolution(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpInsightEvolutionResponse:
+    """Return the endpoint's per-version evolution series (oldest snapshot first).
+
+    One point per discovery snapshot carrying its capability ``type_counts``, quality
+    ``score`` / ``grade``, and the ``change_counts`` (churn) it introduced — the time series a
+    "how has this server evolved" chart plots. An endpoint that was never discovered returns an
+    empty ``series`` (a ``200`` with ``[]``, never a ``500``). Returns ``404`` when the endpoint is
+    not the caller's tenant's.
+    """
+    _ = tenant_slug
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+    current_version_id = endpoint.get("current_version_id")
+    rows = db.get_mcp_evolution_series(str(endpoint_id))
+    return McpInsightEvolutionResponse(
+        endpoint_id=str(endpoint_id),
+        series=[mcp_evolution_point_from_row(r, current_version_id) for r in rows],
+    )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/insight/reliability",
+    response_model=McpInsightReliabilityResponse,
+)
+async def get_mcp_endpoint_insight_reliability(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpInsightReliabilityResponse:
+    """Return the endpoint's discovery and test-invocation reliability aggregates.
+
+    ``discovery`` folds ``mcp_discovery_jobs`` into per-state tallies, a success rate over terminal
+    jobs, and run-latency statistics; ``invocation`` folds ``mcp_test_invocations`` into call/error
+    tallies, an error rate, and latency percentiles (p50/p95/p99). An endpoint with no discovery or
+    test history returns zero counts and empty (``None``) latency statistics — a ``200``, never a
+    ``500``. Returns ``404`` when the endpoint is not the caller's tenant's.
+    """
+    _ = tenant_slug
+    _require_tenant_endpoint(auth_data, endpoint_id)
+
+    discovery = compute_discovery_reliability(db.list_mcp_discovery_job_stats(str(endpoint_id)))
+    invocation = compute_invocation_reliability(db.list_mcp_invocation_stats(str(endpoint_id)))
+    return McpInsightReliabilityResponse(
+        endpoint_id=str(endpoint_id),
+        discovery=McpDiscoveryReliabilityOut.model_validate(discovery.as_dict()),
+        invocation=McpInvocationReliabilityOut.model_validate(invocation.as_dict()),
+    )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/insight/catalog",
+    response_model=McpInsightCatalogResponse,
+)
+async def get_mcp_catalog_insight(
+    tenant_slug: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpInsightCatalogResponse:
+    """Return a tenant-wide roll-up of the caller's live MCP catalog (feeds 18.1).
+
+    Aggregates every live endpoint the caller's tenant owns: total / published / discovered counts,
+    the per-kind capability ``type_counts`` summed across each endpoint's current surface, the
+    average quality score, and the A-F ``grade_distribution``. Like every catalog route, scoping
+    comes from the token's ``tenant_id`` — never the URL slug — so the aggregate only ever spans the
+    caller's own catalog (an empty catalog returns zeroes, not a ``404``).
+    """
+    _ = tenant_slug  # scoping comes from the token, not the URL slug
+    tenant_id = str(auth_data["tenant_id"])
+    row = db.get_mcp_catalog_insight(tenant_id)
+    return mcp_catalog_insight_from_row(row)

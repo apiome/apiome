@@ -11216,6 +11216,171 @@ class Database:
             conn.rollback()
             raise e
 
+    # -----------------------------------------------------------------------------------------
+    # Insight aggregation reads (V2-MCP-28.2 / MCAT-14.2, #4628)
+    # -----------------------------------------------------------------------------------------
+    #
+    # The data-fetch half of the insight endpoints: tenant-scoped SQL that returns the minimal
+    # rows each pre-aggregated series is rolled up from. The roll-up math (percentiles, rates,
+    # per-type counts) lives in the pure :mod:`app.mcp_insight_aggregation` layer so it is
+    # unit-testable without a live database. Every method here is called only after the owning
+    # endpoint has been re-validated against the caller's token tenant, so no method re-checks
+    # tenancy; the catalog aggregate scopes on ``tenant_id`` directly.
+
+    def get_mcp_evolution_series(self, endpoint_id: str) -> List[Dict[str, Any]]:
+        """Return an endpoint's per-version evolution series, oldest snapshot first.
+
+        One row per ``mcp_endpoint_versions`` snapshot carrying the fields an evolution chart
+        renders as a time series: the snapshot identity (``version_seq`` / ``version_tag`` /
+        ``discovered_at``), the per-kind capability counts on that surface (from
+        ``mcp_capability_items``), the quality ``score`` / ``grade`` (from ``mcp_version_scores``,
+        NULL until scored), and the churn — the per-direction ``mcp_version_changes`` tally the
+        snapshot introduced. Ordered by ``version_seq`` ascending so the series reads left-to-right
+        in chronological order.
+
+        The two child tallies are computed with correlated subqueries rather than a join-and-group,
+        so a snapshot with many capability items and many change rows cannot fan the two counts into
+        each other (a GROUP BY over both children would multiply them).
+
+        Args:
+            endpoint_id: The owning endpoint (already tenant-validated by the caller).
+
+        Returns:
+            One dict per snapshot, oldest first; empty when the endpoint was never discovered.
+        """
+        q = """
+            SELECT
+                v.id, v.endpoint_id, v.version_seq, v.version_tag,
+                v.discovered_at, v.created_at, v.surface_fingerprint,
+                s.score, s.grade,
+                (SELECT COUNT(*) FROM apiome.mcp_capability_items i
+                   WHERE i.version_id = v.id AND i.item_type = 'tool')              AS tool_count,
+                (SELECT COUNT(*) FROM apiome.mcp_capability_items i
+                   WHERE i.version_id = v.id AND i.item_type = 'resource')          AS resource_count,
+                (SELECT COUNT(*) FROM apiome.mcp_capability_items i
+                   WHERE i.version_id = v.id AND i.item_type = 'resource_template') AS resource_template_count,
+                (SELECT COUNT(*) FROM apiome.mcp_capability_items i
+                   WHERE i.version_id = v.id AND i.item_type = 'prompt')            AS prompt_count,
+                (SELECT COUNT(*) FROM apiome.mcp_version_changes c
+                   WHERE c.version_id = v.id AND c.change_type = 'added')           AS added_count,
+                (SELECT COUNT(*) FROM apiome.mcp_version_changes c
+                   WHERE c.version_id = v.id AND c.change_type = 'removed')         AS removed_count,
+                (SELECT COUNT(*) FROM apiome.mcp_version_changes c
+                   WHERE c.version_id = v.id AND c.change_type = 'modified')        AS modified_count
+            FROM apiome.mcp_endpoint_versions v
+            LEFT JOIN apiome.mcp_version_scores s ON s.version_id = v.id
+            WHERE v.endpoint_id = %s::uuid
+            ORDER BY v.version_seq ASC
+        """
+        return self.execute_query(q, (endpoint_id,))
+
+    def list_mcp_discovery_job_stats(self, endpoint_id: str) -> List[Dict[str, Any]]:
+        """Return an endpoint's discovery jobs as ``(state, duration_ms)`` rows for reliability.
+
+        Each row is a discovery job's lifecycle ``state`` plus its wall-clock ``duration_ms`` —
+        ``finished_at - started_at`` converted to milliseconds in SQL, or NULL when the job never
+        both started and finished (still queued/running, or a failure before it began). The pure
+        aggregator turns these into success rate and run-latency statistics.
+
+        Args:
+            endpoint_id: The owning endpoint (already tenant-validated by the caller).
+
+        Returns:
+            One dict per discovery job; empty when the endpoint has no discovery history.
+        """
+        q = """
+            SELECT
+                state,
+                CASE
+                    WHEN started_at IS NOT NULL AND finished_at IS NOT NULL
+                    THEN EXTRACT(EPOCH FROM (finished_at - started_at)) * 1000.0
+                    ELSE NULL
+                END AS duration_ms
+            FROM apiome.mcp_discovery_jobs
+            WHERE endpoint_id = %s::uuid
+        """
+        return self.execute_query(q, (endpoint_id,))
+
+    def list_mcp_invocation_stats(self, endpoint_id: str) -> List[Dict[str, Any]]:
+        """Return an endpoint's test invocations as ``(is_error, latency_ms)`` rows for reliability.
+
+        Each row is one recorded test-console call: whether it errored and its round-trip
+        ``latency_ms`` (NULL when the call never completed). The pure aggregator turns these into an
+        error rate and latency statistics.
+
+        Args:
+            endpoint_id: The owning endpoint (already tenant-validated by the caller).
+
+        Returns:
+            One dict per test invocation; empty when the endpoint has never been tested.
+        """
+        q = """
+            SELECT is_error, latency_ms
+            FROM apiome.mcp_test_invocations
+            WHERE endpoint_id = %s::uuid
+        """
+        return self.execute_query(q, (endpoint_id,))
+
+    def get_mcp_catalog_insight(self, tenant_id: str) -> Dict[str, Any]:
+        """Return a tenant-wide roll-up of its live MCP catalog (feeds 18.1).
+
+        Aggregates every live (non-deleted) endpoint the tenant owns into a single row: the total
+        endpoint count, how many are published / discovered (have a current surface), the per-kind
+        capability totals across every endpoint's *current* version, the average quality score and
+        the A-F grade distribution over those current versions. Everything is scoped by
+        ``tenant_id`` directly, so the aggregate only ever spans the caller's own catalog.
+
+        The capability totals and the grade distribution both hang off each endpoint's
+        ``current_version_id`` (its latest surface), so an endpoint that was never discovered
+        contributes to ``endpoint_count`` but not to the surface totals or the grade histogram.
+
+        Args:
+            tenant_id: The owning tenant whose catalog to summarize.
+
+        Returns:
+            A dict with the scalar tallies plus ``grade_distribution`` (a ``grade → count`` map).
+        """
+        # Count each endpoint's current-surface items by kind via a correlated subquery, so an
+        # endpoint with many items does not fan the tenant-level aggregate.
+        def _kind_total(kind: str) -> str:
+            return (
+                "COALESCE(SUM((SELECT COUNT(*) FROM apiome.mcp_capability_items i "
+                f"WHERE i.version_id = e.current_version_id AND i.item_type = '{kind}')), 0)"
+            )
+
+        summary_q = f"""
+            SELECT
+                COUNT(*)                                                 AS endpoint_count,
+                COUNT(*) FILTER (WHERE e.published)                      AS published_count,
+                COUNT(*) FILTER (WHERE e.visibility = 'public')          AS public_count,
+                COUNT(*) FILTER (WHERE e.visibility = 'private')         AS private_count,
+                COUNT(*) FILTER (WHERE e.current_version_id IS NOT NULL) AS discovered_count,
+                {_kind_total('tool')}              AS tool_count,
+                {_kind_total('resource')}          AS resource_count,
+                {_kind_total('resource_template')} AS resource_template_count,
+                {_kind_total('prompt')}            AS prompt_count,
+                AVG(s.score)                                             AS avg_score,
+                COUNT(s.score)                                           AS scored_count
+            FROM apiome.mcp_endpoints e
+            LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+        """
+        grade_q = """
+            SELECT s.grade AS grade, COUNT(*) AS count
+            FROM apiome.mcp_endpoints e
+            JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL AND s.grade IS NOT NULL
+            GROUP BY s.grade
+            ORDER BY s.grade ASC
+        """
+        summary_rows = self.execute_query(summary_q, (tenant_id,))
+        grade_rows = self.execute_query(grade_q, (tenant_id,))
+        summary = dict(summary_rows[0]) if summary_rows else {}
+        summary["grade_distribution"] = {
+            str(r["grade"]): int(r["count"]) for r in grade_rows
+        }
+        return summary
+
     def upsert_repository_import_spec(
         self,
         tenant_id: str,

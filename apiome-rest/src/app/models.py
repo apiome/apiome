@@ -5520,3 +5520,284 @@ def mcp_endpoint_test_response_from_result(
         auth_override_applied=auth_override_applied,
         invocation_id=str(invocation_id) if invocation_id is not None else None,
     )
+
+
+# ===========================================================================
+# MCP Catalog — insight aggregation endpoints (V2-MCP-28.2 / MCAT-14.2, #4628)
+# ===========================================================================
+#
+# Typed, pre-aggregated response models for the read-only insight surfaces the browser renders
+# without running N queries or holding raw rows. `surface` projects the deterministic
+# `app.mcp_surface_metrics` roll-up for a version; `evolution` is the per-version time series;
+# `reliability` folds discovery-job and test-invocation telemetry (aggregated by the pure
+# `app.mcp_insight_aggregation` layer) into rates and latency percentiles; `catalog` is the
+# tenant-wide roll-up that feeds 18.1.
+
+
+def _mcp_insight_iso(value: Any) -> Optional[str]:
+    """Normalize a timestamp (datetime or string) to an ISO-8601 string, or ``None``."""
+    if value is None:
+        return None
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    return str(value)
+
+
+class McpTypeCountsOut(BaseModel):
+    """Per-kind capability item counts of a surface (tools/resources/templates/prompts + total)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    tools: int = 0
+    resources: int = 0
+    resource_templates: int = 0
+    prompts: int = 0
+    total: int = 0
+
+
+class McpToolComplexityOut(BaseModel):
+    """One tool's ``input_schema`` complexity profile (mirrors ``mcp_surface_metrics.ToolComplexity``)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str
+    property_count: int = 0
+    required_count: int = 0
+    optional_count: int = 0
+    documented_property_count: int = 0
+    max_nesting_depth: int = 0
+    uses_enum: bool = False
+    uses_one_of: bool = False
+    has_output_schema: bool = False
+
+
+class McpAnnotationCoverageOut(BaseModel):
+    """Per-hint behavioural-annotation coverage over a surface's tools."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    tool_count: int = 0
+    annotated_tools: int = 0
+    read_only_hint: int = 0
+    destructive_hint: int = 0
+    idempotent_hint: int = 0
+    open_world_hint: int = 0
+
+
+class McpDocumentationCoverageOut(BaseModel):
+    """Item- and parameter-level documentation coverage of a surface (counts + 0-100 percentages)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    item_count: int = 0
+    described_items: int = 0
+    titled_items: int = 0
+    description_pct: float = 0.0
+    title_pct: float = 0.0
+    tool_param_count: int = 0
+    documented_tool_params: int = 0
+    tool_param_description_pct: float = 0.0
+
+
+class McpSurfaceMetricsOut(BaseModel):
+    """The full :class:`app.mcp_surface_metrics.SurfaceMetrics` roll-up as a typed response body."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    type_counts: McpTypeCountsOut
+    tool_complexity: List[McpToolComplexityOut] = Field(default_factory=list)
+    output_schema_count: int = 0
+    annotation_coverage: McpAnnotationCoverageOut
+    documentation_coverage: McpDocumentationCoverageOut
+    metrics_fingerprint: str
+
+
+def mcp_surface_metrics_out(metrics: Dict[str, Any]) -> McpSurfaceMetricsOut:
+    """Build :class:`McpSurfaceMetricsOut` from a ``SurfaceMetrics.as_dict()`` payload.
+
+    Takes the plain dict the pure metrics engine emits (rather than the dataclass) so ``models``
+    stays free of a hard import on the metrics module; the field names line up one-to-one.
+    """
+    return McpSurfaceMetricsOut.model_validate(metrics)
+
+
+class McpInsightSurfaceResponse(BaseModel):
+    """Response envelope for the capability-surface metrics of one version snapshot.
+
+    Carries the resolved snapshot identity (``version_id`` / ``version_seq`` / ``version_tag`` and
+    whether it is the endpoint's ``is_current`` surface) alongside the deterministic ``metrics``
+    roll-up for that surface.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    version_id: str
+    version_seq: int
+    version_tag: Optional[str] = None
+    is_current: bool = False
+    metrics: McpSurfaceMetricsOut
+
+
+class McpEvolutionPoint(BaseModel):
+    """One point of an endpoint's per-version evolution series.
+
+    Carries the snapshot identity, its per-kind capability ``type_counts``, the quality
+    ``score`` / ``grade`` (NULL until scored), and the ``change_counts`` (churn) the snapshot
+    introduced relative to the prior version.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    version_id: str
+    version_seq: int
+    version_tag: Optional[str] = None
+    discovered_at: Optional[str] = None
+    is_current: bool = False
+    type_counts: McpTypeCountsOut
+    score: Optional[int] = None
+    grade: Optional[str] = None
+    change_counts: McpVersionChangeCounts
+
+
+class McpInsightEvolutionResponse(BaseModel):
+    """Response envelope for an endpoint's evolution series (oldest snapshot first)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    series: List[McpEvolutionPoint] = Field(default_factory=list)
+
+
+def mcp_evolution_point_from_row(
+    row: Dict[str, Any], current_version_id: Optional[str]
+) -> McpEvolutionPoint:
+    """Project a ``get_mcp_evolution_series`` row onto a :class:`McpEvolutionPoint`."""
+    version_id = str(row["id"])
+    score = row.get("score")
+    return McpEvolutionPoint(
+        version_id=version_id,
+        version_seq=int(row["version_seq"]),
+        version_tag=row.get("version_tag"),
+        discovered_at=_mcp_insight_iso(row.get("discovered_at")),
+        is_current=current_version_id is not None and version_id == str(current_version_id),
+        type_counts=McpTypeCountsOut(
+            tools=int(row.get("tool_count") or 0),
+            resources=int(row.get("resource_count") or 0),
+            resource_templates=int(row.get("resource_template_count") or 0),
+            prompts=int(row.get("prompt_count") or 0),
+            total=int(row.get("tool_count") or 0)
+            + int(row.get("resource_count") or 0)
+            + int(row.get("resource_template_count") or 0)
+            + int(row.get("prompt_count") or 0),
+        ),
+        score=int(score) if score is not None else None,
+        grade=row.get("grade"),
+        change_counts=_mcp_change_counts_from_row(row),
+    )
+
+
+class McpLatencyStatsOut(BaseModel):
+    """Summary latency statistics over a sample of millisecond durations.
+
+    All statistics are ``None`` for an empty sample (nothing to average or rank); ``count`` is the
+    number of non-null latencies the statistics were computed from.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    count: int = 0
+    avg_ms: Optional[float] = None
+    min_ms: Optional[float] = None
+    max_ms: Optional[float] = None
+    p50_ms: Optional[float] = None
+    p95_ms: Optional[float] = None
+    p99_ms: Optional[float] = None
+
+
+class McpDiscoveryReliabilityOut(BaseModel):
+    """Discovery-job reliability: state tallies, success rate, and run-latency statistics."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    job_count: int = 0
+    completed_count: int = 0
+    failed_count: int = 0
+    running_count: int = 0
+    queued_count: int = 0
+    success_rate: float = 0.0
+    latency: McpLatencyStatsOut
+
+
+class McpInvocationReliabilityOut(BaseModel):
+    """Test-invocation reliability: call/error tallies, error rate, and latency statistics."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    call_count: int = 0
+    error_count: int = 0
+    success_count: int = 0
+    error_rate: float = 0.0
+    latency: McpLatencyStatsOut
+
+
+class McpInsightReliabilityResponse(BaseModel):
+    """Response envelope folding an endpoint's discovery and invocation reliability together."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    discovery: McpDiscoveryReliabilityOut
+    invocation: McpInvocationReliabilityOut
+
+
+class McpInsightCatalogResponse(BaseModel):
+    """Response envelope for the tenant-wide catalog insight roll-up (feeds 18.1).
+
+    Spans every live endpoint the caller's tenant owns: how many there are, how many are published
+    / discovered, the per-kind capability ``type_counts`` summed across every endpoint's current
+    surface, the ``average_score`` over scored current versions, and the A-F ``grade_distribution``.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_count: int = 0
+    published_count: int = 0
+    public_count: int = 0
+    private_count: int = 0
+    discovered_count: int = 0
+    scored_count: int = 0
+    average_score: Optional[float] = None
+    type_counts: McpTypeCountsOut
+    grade_distribution: Dict[str, int] = Field(default_factory=dict)
+
+
+def mcp_catalog_insight_from_row(row: Dict[str, Any]) -> McpInsightCatalogResponse:
+    """Project a ``get_mcp_catalog_insight`` aggregate onto the wire model."""
+    avg_score = row.get("avg_score")
+    tools = int(row.get("tool_count") or 0)
+    resources = int(row.get("resource_count") or 0)
+    templates = int(row.get("resource_template_count") or 0)
+    prompts = int(row.get("prompt_count") or 0)
+    grade_distribution = row.get("grade_distribution") or {}
+    return McpInsightCatalogResponse(
+        endpoint_count=int(row.get("endpoint_count") or 0),
+        published_count=int(row.get("published_count") or 0),
+        public_count=int(row.get("public_count") or 0),
+        private_count=int(row.get("private_count") or 0),
+        discovered_count=int(row.get("discovered_count") or 0),
+        scored_count=int(row.get("scored_count") or 0),
+        average_score=round(float(avg_score), 2) if avg_score is not None else None,
+        type_counts=McpTypeCountsOut(
+            tools=tools,
+            resources=resources,
+            resource_templates=templates,
+            prompts=prompts,
+            total=tools + resources + templates + prompts,
+        ),
+        grade_distribution={str(k): int(v) for k, v in grade_distribution.items()},
+    )

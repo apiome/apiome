@@ -5,6 +5,36 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.83.0] - 2026-07-06
+
+### Added
+- **Insight aggregation REST endpoints (#4628, V2-MCP-28.2)** — read-only, pre-aggregated,
+  cache-friendly series over an endpoint's discovery/invocation history so the browser never runs
+  N queries per panel nor holds raw item rows. Four new tenant-scoped routes on the MCP catalog
+  router:
+  - `GET /v1/mcp/{tenant_slug}/endpoints/{id}/insight/surface?version_id=` — the deterministic
+    `app.mcp_surface_metrics` (28.1) roll-up for a snapshot (defaults to the endpoint's current
+    surface): per-type counts, per-tool `input_schema` complexity, annotation and documentation
+    coverage.
+  - `GET …/insight/evolution` — the per-version time series (oldest first): capability counts,
+    quality score/grade, and the churn (added/removed/modified) each snapshot introduced.
+  - `GET …/insight/reliability` — discovery-job success rate + run-latency stats from
+    `mcp_discovery_jobs`, and test-invocation error rate + latency percentiles (p50/p95/p99) from
+    `mcp_test_invocations`.
+  - `GET /v1/mcp/{tenant_slug}/insight/catalog` — a tenant-wide roll-up (endpoint/published/
+    discovered counts, per-kind capability totals, average score, A-F grade distribution) that
+    feeds 18.1.
+
+  New pure module `app.mcp_insight_aggregation` holds the roll-up math — a faithful Python port of
+  PostgreSQL's continuous `percentile_cont`, latency statistics, and the discovery/invocation
+  reliability aggregators — so percentiles are unit-testable against a hand-computed fixture and the
+  route and its tests share one source of truth. New `Database` reads
+  (`get_mcp_evolution_series`, `list_mcp_discovery_job_stats`, `list_mcp_invocation_stats`,
+  `get_mcp_catalog_insight`) fetch the minimal tenant-scoped rows each series aggregates. Every
+  route respects tenant scoping (a cross-tenant id reads as `404`) and returns an empty/zero series
+  (never a `500`) for an endpoint with no history. New Pydantic response models under
+  `McpInsight*`. Feeds the 15–22 visualization panels.
+
 ## [1.82.0] - 2026-07-06
 
 ### Added
