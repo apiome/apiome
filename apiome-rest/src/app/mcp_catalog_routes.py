@@ -1547,18 +1547,31 @@ async def get_mcp_endpoint_insight_evolution(
     """Return the endpoint's per-version evolution series (oldest snapshot first).
 
     One point per discovery snapshot carrying its capability ``type_counts``, quality
-    ``score`` / ``grade``, and the ``change_counts`` (churn) it introduced — the time series a
-    "how has this server evolved" chart plots. An endpoint that was never discovered returns an
-    empty ``series`` (a ``200`` with ``[]``, never a ``500``). Returns ``404`` when the endpoint is
-    not the caller's tenant's.
+    ``score`` / ``grade``, the ``change_counts`` (churn by direction) it introduced, and the
+    ``severity_counts`` (V2-MCP-30.3) classifying that churn as breaking / additive / review —
+    the time series a "how has this server evolved" chart plots, with breaking-change markers.
+    An endpoint that was never discovered returns an empty ``series`` (a ``200`` with ``[]``,
+    never a ``500``). Returns ``404`` when the endpoint is not the caller's tenant's.
     """
     _ = tenant_slug
     endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
     current_version_id = endpoint.get("current_version_id")
     rows = db.get_mcp_evolution_series(str(endpoint_id))
+
+    # Bucket every snapshot's change rows by version so each point can classify its own
+    # churn severity — one query for the whole endpoint rather than one per snapshot.
+    changes_by_version: Dict[str, List[Dict[str, Any]]] = {}
+    for change in db.get_mcp_version_changes_for_endpoint(str(endpoint_id)):
+        changes_by_version.setdefault(str(change["version_id"]), []).append(change)
+
     return McpInsightEvolutionResponse(
         endpoint_id=str(endpoint_id),
-        series=[mcp_evolution_point_from_row(r, current_version_id) for r in rows],
+        series=[
+            mcp_evolution_point_from_row(
+                r, current_version_id, changes_by_version.get(str(r["id"]), [])
+            )
+            for r in rows
+        ],
     )
 
 

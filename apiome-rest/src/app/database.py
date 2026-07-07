@@ -10594,6 +10594,41 @@ class Database:
         """
         return self.execute_query(q, (version_id,))
 
+    def get_mcp_version_changes_for_endpoint(self, endpoint_id: str) -> List[Dict[str, Any]]:
+        """Fetch every ``mcp_version_changes`` row across all of an endpoint's snapshots.
+
+        The per-endpoint analogue of :meth:`get_mcp_version_changes`: one flat list spanning
+        every version the endpoint owns, each row carrying its ``version_id`` so the caller
+        can bucket the changes by snapshot (e.g. to classify each snapshot's churn severity
+        for the evolution series) without issuing one query per version. Ordered by
+        ``version_seq`` then the same stable item order a single-version fetch uses, so a
+        given snapshot's rows are contiguous and deterministically ordered.
+
+        Args:
+            endpoint_id: The owning endpoint (already tenant-validated by the caller).
+
+        Returns:
+            One dict per change row across all snapshots; empty when the endpoint has none.
+        """
+        q = """
+            SELECT c.version_id, c.change_type, c.item_type, c.item_name, c.detail
+            FROM apiome.mcp_version_changes c
+            JOIN apiome.mcp_endpoint_versions v ON v.id = c.version_id
+            WHERE v.endpoint_id = %s::uuid
+            ORDER BY
+                v.version_seq ASC,
+                CASE c.item_type
+                    WHEN 'server' THEN 0
+                    WHEN 'tool' THEN 1
+                    WHEN 'resource' THEN 2
+                    WHEN 'resource_template' THEN 3
+                    WHEN 'prompt' THEN 4
+                    ELSE 5
+                END ASC,
+                c.item_name ASC
+        """
+        return self.execute_query(q, (endpoint_id,))
+
     def _next_mcp_version_tag(self, cursor: Any, endpoint_id: str, base_tag: str) -> str:
         """Resolve a per-endpoint-unique date/time tag, disambiguating same-minute collisions.
 

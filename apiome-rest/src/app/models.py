@@ -6,6 +6,13 @@ from urllib.parse import urlsplit, urlunsplit
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 from .config import settings
+from .mcp_change_severity import (
+    SEVERITY_ADDITIVE,
+    SEVERITY_BREAKING,
+    SEVERITY_REVIEW,
+    classify_change,
+    severity_counts,
+)
 from .repository_refresh_status import RefreshStatus, compute_refresh_status
 
 
@@ -4997,6 +5004,34 @@ def _mcp_change_counts_from_row(row: Dict[str, Any]) -> McpVersionChangeCounts:
     )
 
 
+class McpChangeSeverityCounts(BaseModel):
+    """Per-severity tally of surface changes (V2-MCP-30.3 / MCAT-16.3).
+
+    The breaking-change classification of a set of ``mcp_version_changes`` — the churn a
+    snapshot introduced, split by how disruptive it is rather than by direction.
+    ``total`` is always ``breaking + additive + review`` and equals the tally's
+    :class:`McpVersionChangeCounts` ``total`` for the same set of changes.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    breaking: int = 0
+    additive: int = 0
+    review: int = 0
+    total: int = 0
+
+
+def _mcp_severity_counts(changes: List[Dict[str, Any]]) -> McpChangeSeverityCounts:
+    """Classify each change row and roll the verdicts up into a :class:`McpChangeSeverityCounts`."""
+    counts = severity_counts(changes)
+    return McpChangeSeverityCounts(
+        breaking=counts[SEVERITY_BREAKING],
+        additive=counts[SEVERITY_ADDITIVE],
+        review=counts[SEVERITY_REVIEW],
+        total=counts["total"],
+    )
+
+
 class McpEndpointVersionSummary(BaseModel):
     """One row of an endpoint's version history (the timeline / "what changed when" view).
 
@@ -5180,7 +5215,10 @@ class McpVersionChangeOut(BaseModel):
     Mirrors an ``mcp_version_changes`` row (and the dicts produced by the diff engine's
     :meth:`SurfaceDiff.to_change_rows`): ``detail`` carries the before/after payload (a
     removal has ``before``, an addition ``after``, a modification both plus a per-field
-    ``fields`` breakdown for capability items).
+    ``fields`` breakdown for capability items). ``severity`` is the deterministic
+    breaking-change classification (V2-MCP-30.3) of this change: ``breaking`` /
+    ``additive`` / ``review``, computed purely from the row by
+    :func:`app.mcp_change_severity.classify_change`.
     """
 
     model_config = ConfigDict(populate_by_name=True)
@@ -5189,6 +5227,7 @@ class McpVersionChangeOut(BaseModel):
     item_type: str
     item_name: str
     detail: Dict[str, Any] = Field(default_factory=dict)
+    severity: str = SEVERITY_REVIEW
 
 
 class McpVersionChangesResponse(BaseModel):
@@ -5317,6 +5356,7 @@ def mcp_version_change_out_from_row(row: Dict[str, Any]) -> McpVersionChangeOut:
         item_type=str(row["item_type"]),
         item_name=str(row["item_name"]),
         detail=detail if isinstance(detail, dict) else {},
+        severity=classify_change(row),
     )
 
 
@@ -5711,8 +5751,10 @@ class McpEvolutionPoint(BaseModel):
     """One point of an endpoint's per-version evolution series.
 
     Carries the snapshot identity, its per-kind capability ``type_counts``, the quality
-    ``score`` / ``grade`` (NULL until scored), and the ``change_counts`` (churn) the snapshot
-    introduced relative to the prior version.
+    ``score`` / ``grade`` (NULL until scored), the ``change_counts`` (churn by direction)
+    the snapshot introduced relative to the prior version, and — classifying that same
+    churn by disruptiveness — the ``severity_counts`` (V2-MCP-30.3): how many of those
+    changes are ``breaking`` / ``additive`` / ``review``.
     """
 
     model_config = ConfigDict(populate_by_name=True)
@@ -5726,6 +5768,7 @@ class McpEvolutionPoint(BaseModel):
     score: Optional[int] = None
     grade: Optional[str] = None
     change_counts: McpVersionChangeCounts
+    severity_counts: McpChangeSeverityCounts = Field(default_factory=McpChangeSeverityCounts)
 
 
 class McpInsightEvolutionResponse(BaseModel):
@@ -5739,9 +5782,20 @@ class McpInsightEvolutionResponse(BaseModel):
 
 
 def mcp_evolution_point_from_row(
-    row: Dict[str, Any], current_version_id: Optional[str]
+    row: Dict[str, Any],
+    current_version_id: Optional[str],
+    change_rows: Optional[List[Dict[str, Any]]] = None,
 ) -> McpEvolutionPoint:
-    """Project a ``get_mcp_evolution_series`` row onto a :class:`McpEvolutionPoint`."""
+    """Project a ``get_mcp_evolution_series`` row onto a :class:`McpEvolutionPoint`.
+
+    Args:
+        row: One evolution-series row (snapshot identity, capability ``*_count`` columns,
+            score/grade, and per-direction change ``*_count`` aggregates).
+        current_version_id: The endpoint's ``current_version_id`` (sets ``is_current``).
+        change_rows: This snapshot's ``mcp_version_changes`` rows, used to classify the
+            churn into ``severity_counts``. When ``None`` (or empty) the severity tally is
+            all-zero — the first snapshot introduces no diff, so an empty list is correct.
+    """
     version_id = str(row["id"])
     score = row.get("score")
     return McpEvolutionPoint(
@@ -5763,6 +5817,7 @@ def mcp_evolution_point_from_row(
         score=int(score) if score is not None else None,
         grade=row.get("grade"),
         change_counts=_mcp_change_counts_from_row(row),
+        severity_counts=_mcp_severity_counts(change_rows or []),
     )
 
 

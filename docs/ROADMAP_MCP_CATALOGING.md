@@ -1461,7 +1461,7 @@ those changes are safe.
 |---|---|---|---|:--:|:--:|---|---|
 | 16.1 ✅ | Capability churn timeline | Stacked timeline of added/removed/modified per version | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
 | 16.2 ✅ | Capability lifespan / presence matrix | Per-item rows showing when each tool/resource existed across versions | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui |
-| 16.3 | Breaking-change classification | Backend classifier: additive vs breaking (removed item, tightened input schema) from change `detail` | `mcp-insights` `backend` | N | Y | ●●● | apiome-rest |
+| 16.3 ✅ | Breaking-change classification | Backend classifier: additive vs breaking (removed item, tightened input schema) from change `detail` | `mcp-insights` `backend` | N | Y | ●●● | apiome-rest |
 | 16.4 | Grade & surface-size trend | Sparkline/area of grade + counts across versions | `mcp-insights` `frontend` | Y | Y | ● | apiome-ui |
 | 16.5 | "Changed since last view" digest | Per-user seen-marker + a summarized diff since last visit | `mcp-insights` `frontend` `backend` | N | N | ●● | apiome-ui, apiome-rest, apiome-db |
 
@@ -1485,7 +1485,7 @@ those changes are safe.
 - **Dependencies / Parallelism.** After 14.2/14.3/14.4. Parallel across Epic-16.
 - **Technical Stack.** Next.js, Heatmap primitive.
 
-### MCAT-16.3 — Breaking-change classification  ·  **#4638**
+### MCAT-16.3 — Breaking-change classification  ·  **#4638**  ·  ✅ Done (apiome-rest 1.85.0)
 - **Problem.** A "modified" tool could be a harmless doc tweak or a **breaking** input-schema change;
   the raw diff does not say which.
 - **Solution / Scope.** A **pure classifier** over each `mcp_version_changes.detail` (before/after):
