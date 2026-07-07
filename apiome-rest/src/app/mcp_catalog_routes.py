@@ -45,6 +45,7 @@ from .mcp_client.normalize import (
 )
 from .mcp_credential_crypto import CredentialEncryptionError, seal_credential_payload
 from .mcp_credentials import load_endpoint_auth_headers
+from .mcp_digest_service import generate_server_digest
 from .mcp_discovery_engine import (
     compare_endpoint_versions,
     reconstruct_surface,
@@ -54,6 +55,7 @@ from .mcp_insight_aggregation import (
     DISCOVERY_TIMELINE_WINDOW,
     TOOL_LATENCY_WINDOW_DAYS,
     build_capability_embedding_text,
+    build_tool_examples,
     capability_name_set,
     compute_capability_overlap,
     compute_discovery_reliability,
@@ -104,10 +106,13 @@ from .models import (
     McpSearchResponse,
     McpSearchScope,
     McpSearchVisibility,
+    McpServerDigestGenerateResponse,
+    McpServerDigestResponse,
     McpSimilarEmbeddingNeighborOut,
     McpSimilarOverlapNeighborOut,
     McpSimilarReindexResponse,
     McpSimilarServersResponse,
+    McpToolExampleOut,
     McpToolInvocationReliabilityOut,
     McpTrustProfileOut,
     McpTypeCountsOut,
@@ -2135,6 +2140,190 @@ async def reindex_mcp_endpoint_similar(
             if stored
             else "pgvector unavailable; embedding computed but not stored"
         ),
+    )
+
+
+# ---------------------------------------------------------------------------------------------------
+# Natural-language server digest + usage examples (V2-MCP-32.5 / MCAT-18.5, #4649).
+#
+# Pairs an opt-in, AI-written "this server lets you …" summary of a cataloged server with one
+# deterministic, schema-derived example call per tool. The examples are pure offline synthesis
+# (:func:`build_tool_examples`) — no tool is ever executed to build them — and are always returned. The
+# digest is a gated Claude API step (:func:`generate_server_digest`) cached per ``surface_fingerprint``
+# so it is computed once per surface and regenerated only when the surface (and thus the fingerprint)
+# changes. GET reads (examples always, digest if cached); POST generates behind the feature flag.
+# ---------------------------------------------------------------------------------------------------
+
+
+def _mcp_digest_current_surface(
+    endpoint: Dict[str, Any]
+) -> Tuple[Optional[Dict[str, Any]], List[Any]]:
+    """Load the endpoint's current version snapshot and its tool example calls.
+
+    Returns ``(version_row, tool_examples)`` for the endpoint's ``current_version_id``. When the endpoint
+    was never discovered (no current version, or the version read comes back empty) both are the empty
+    case — ``(None, [])`` — so the digest routes yield a coherent "nothing to summarize yet" response
+    rather than a 500. The examples are synthesized deterministically from the surface's tool schemas.
+    """
+    current_version_id = endpoint.get("current_version_id")
+    if not current_version_id:
+        return None, []
+    version = db.get_mcp_endpoint_version(str(endpoint["id"]), str(current_version_id))
+    if version is None:
+        return None, []
+    items = db.get_mcp_capability_items(str(version["id"]))
+    return version, build_tool_examples(items)
+
+
+def _mcp_digest_response(
+    response_cls,
+    endpoint_id: uuid.UUID,
+    version: Optional[Dict[str, Any]],
+    tool_examples: List[Any],
+    cached: Optional[Dict[str, Any]],
+    **extra: Any,
+):
+    """Shape a digest response envelope from the current surface + any cached digest row.
+
+    Shared by the GET and POST routes: ``examples`` and ``tool_count`` come from the (always-present)
+    schema-derived examples; the digest text / model / timestamp come from the cached row when one exists
+    for the current surface. ``response_cls`` selects the read vs generate envelope; ``extra`` carries the
+    generate-only fields (``generated`` / ``from_cache`` / ``detail``).
+    """
+    examples_out = [McpToolExampleOut.model_validate(e.as_dict()) for e in tool_examples]
+    generated_at = cached.get("generated_at") if cached else None
+    return response_cls(
+        endpoint_id=str(endpoint_id),
+        version_id=str(version["id"]) if version else None,
+        surface_fingerprint=version.get("surface_fingerprint") if version else None,
+        ai_digest_enabled=bool(settings.mcp_ai_digest_enabled),
+        digest=cached.get("digest") if cached else None,
+        model=cached.get("model") if cached else None,
+        generated_at=generated_at.isoformat() if generated_at is not None else None,
+        tool_count=len(examples_out),
+        examples=examples_out,
+        **extra,
+    )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/insight/summary",
+    response_model=McpServerDigestResponse,
+)
+async def get_mcp_endpoint_summary(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpServerDigestResponse:
+    """Return the endpoint's usage examples and its cached AI digest, if any (MCAT-18.5).
+
+    Two things in one read. ``examples`` — one **schema-derived example call per tool** of the current
+    surface — is always present: it is synthesized deterministically from each tool's ``input_schema``
+    with no model call and no tool execution, so it needs neither the feature flag nor an API key. The
+    AI-written ``digest`` ("this server lets you …") is returned only when one has already been generated
+    and cached for the current ``surface_fingerprint`` (``null`` otherwise); ``ai_digest_enabled`` tells
+    the UI whether the gated ``…/insight/summary/generate`` action is available. Because the cache is keyed
+    on the fingerprint, a surface change automatically presents as "no digest yet" until regenerated. A
+    never-discovered endpoint yields empty ``examples`` and a ``null`` digest (a ``200``, never a ``500``).
+    Scoping comes from the token's tenant; ``404`` when the endpoint is not the caller's tenant's. Read-only.
+    """
+    _ = tenant_slug  # scoping comes from the token, not the URL slug
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+    version, tool_examples = _mcp_digest_current_surface(endpoint)
+
+    fingerprint = version.get("surface_fingerprint") if version else None
+    cached = db.get_mcp_server_digest(fingerprint) if fingerprint else None
+    return _mcp_digest_response(
+        McpServerDigestResponse, endpoint_id, version, tool_examples, cached
+    )
+
+
+@mcp_endpoints_router.post(
+    "/{tenant_slug}/endpoints/{endpoint_id}/insight/summary/generate",
+    response_model=McpServerDigestGenerateResponse,
+)
+async def generate_mcp_endpoint_summary(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpServerDigestGenerateResponse:
+    """(Re)generate and cache the endpoint's AI digest for its current surface (MCAT-18.5).
+
+    The gated AI step. It (re)computes the schema-derived example calls (always), and — when
+    ``APIOME_MCP_AI_DIGEST_ENABLED`` is on and an API key is configured — writes a short natural-language
+    digest of the server via the Claude API and caches it under the current ``surface_fingerprint`` so it
+    is computed once per surface. If a digest is already cached for this exact surface, it is returned as
+    is without calling the model (``from_cache=true``). Every non-success is a labelled no-op, not an
+    error (always a ``200``): the feature flag being off, no API key, the endpoint having no discovered
+    surface, or the model being unreachable / declining each return ``generated=false`` with a ``detail``.
+    No tool is executed — the examples are pure schema synthesis and the model is told the surface is
+    descriptive only. ``404`` when the endpoint is not the caller's tenant's.
+    """
+    _ = tenant_slug  # scoping comes from the token, not the URL slug
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+    version, tool_examples = _mcp_digest_current_surface(endpoint)
+
+    def result(cached, *, generated, from_cache, detail):
+        return _mcp_digest_response(
+            McpServerDigestGenerateResponse,
+            endpoint_id,
+            version,
+            tool_examples,
+            cached,
+            generated=generated,
+            from_cache=from_cache,
+            detail=detail,
+        )
+
+    if version is None:
+        return result(
+            None,
+            generated=False,
+            from_cache=False,
+            detail="endpoint has no discovered surface to summarize; run discovery first",
+        )
+
+    fingerprint = version.get("surface_fingerprint")
+
+    if not settings.mcp_ai_digest_enabled:
+        cached = db.get_mcp_server_digest(fingerprint) if fingerprint else None
+        return result(
+            cached,
+            generated=False,
+            from_cache=cached is not None,
+            detail="AI digest is disabled (APIOME_MCP_AI_DIGEST_ENABLED is off)",
+        )
+
+    # Computed once per surface: a digest already cached for this fingerprint is reused, never re-billed.
+    cached = db.get_mcp_server_digest(fingerprint) if fingerprint else None
+    if cached is not None:
+        return result(
+            cached,
+            generated=False,
+            from_cache=True,
+            detail="digest already generated for this surface",
+        )
+
+    digest = generate_server_digest(version, tool_examples)
+    if not digest:
+        return result(
+            None,
+            generated=False,
+            from_cache=False,
+            detail="digest model unavailable or declined; try again later",
+        )
+
+    stored = db.store_mcp_server_digest(
+        fingerprint,
+        digest,
+        [e.as_dict() for e in tool_examples],
+        settings.mcp_ai_digest_model,
+    )
+    return result(
+        stored,
+        generated=True,
+        from_cache=False,
+        detail="digest generated",
     )
 
 

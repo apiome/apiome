@@ -1152,3 +1152,178 @@ def test_reindex_embedding_service_unavailable_is_no_op():
     assert body["reindexed"] is False
     assert "embedding service unavailable" in body["detail"]
     mdb.store_mcp_capability_embedding.assert_not_called()
+
+
+# ===========================================================================
+# summary / digest (V2-MCP-32.5 / MCAT-18.5)
+# ===========================================================================
+
+from unittest.mock import patch as _patch  # noqa: E402
+
+from app import mcp_catalog_routes  # noqa: E402
+
+
+def _digest_row(fp, digest="This server lets you check the weather.", model="claude-sonnet-5"):
+    return {
+        "surface_fingerprint": fp,
+        "digest": digest,
+        "examples": [],
+        "model": model,
+        "generated_at": _NOW,
+    }
+
+
+def test_summary_returns_examples_and_null_digest_when_uncached():
+    with _patch("app.mcp_catalog_routes.db") as mdb, _patch.object(
+        mcp_catalog_routes.settings, "mcp_ai_digest_enabled", False
+    ):
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = _version_row(_V2, 2)
+        mdb.get_mcp_capability_items.return_value = [
+            _tool_row("forecast", required=["city"], ordinal=0),
+            _tool_row("current", ordinal=1),
+        ]
+        mdb.get_mcp_server_digest.return_value = None
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/summary")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ai_digest_enabled"] is False
+    assert body["digest"] is None
+    assert body["tool_count"] == 2
+    assert [e["name"] for e in body["examples"]] == ["forecast", "current"]
+    # deterministic schema-derived arguments — no model, no tool execution
+    assert body["examples"][0]["arguments"] == {"city": "example", "units": "c"}
+    mdb.get_mcp_server_digest.assert_called_once_with("fp2")
+
+
+def test_summary_returns_cached_digest_with_provenance():
+    with _patch("app.mcp_catalog_routes.db") as mdb, _patch.object(
+        mcp_catalog_routes.settings, "mcp_ai_digest_enabled", True
+    ):
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = _version_row(_V2, 2)
+        mdb.get_mcp_capability_items.return_value = [_tool_row("forecast", ordinal=0)]
+        mdb.get_mcp_server_digest.return_value = _digest_row("fp2")
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/summary")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ai_digest_enabled"] is True
+    assert body["digest"] == "This server lets you check the weather."
+    assert body["model"] == "claude-sonnet-5"
+    assert body["generated_at"] is not None
+    assert body["surface_fingerprint"] == "fp2"
+
+
+def test_summary_never_discovered_endpoint_is_empty_200():
+    endpoint = dict(_ENDPOINT_ROW, current_version_id=None)
+    with _patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = endpoint
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/summary")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["examples"] == []
+    assert body["digest"] is None
+    assert body["version_id"] is None
+    mdb.get_mcp_server_digest.assert_not_called()
+
+
+def test_summary_cross_tenant_is_404():
+    with _patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = None
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/summary")
+    assert r.status_code == 404
+
+
+def test_generate_disabled_flag_is_labelled_no_op():
+    with _patch("app.mcp_catalog_routes.db") as mdb, _patch.object(
+        mcp_catalog_routes.settings, "mcp_ai_digest_enabled", False
+    ):
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = _version_row(_V2, 2)
+        mdb.get_mcp_capability_items.return_value = [_tool_row("forecast", ordinal=0)]
+        mdb.get_mcp_server_digest.return_value = None
+        r = client.post(f"/v1/mcp/acme/endpoints/{_EP}/insight/summary/generate")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["generated"] is False
+    assert body["from_cache"] is False
+    assert "disabled" in body["detail"]
+    assert body["tool_count"] == 1  # examples still returned
+    mdb.store_mcp_server_digest.assert_not_called()
+
+
+def test_generate_no_surface_is_labelled_no_op():
+    endpoint = dict(_ENDPOINT_ROW, current_version_id=None)
+    with _patch("app.mcp_catalog_routes.db") as mdb, _patch.object(
+        mcp_catalog_routes.settings, "mcp_ai_digest_enabled", True
+    ):
+        mdb.get_mcp_endpoint.return_value = endpoint
+        r = client.post(f"/v1/mcp/acme/endpoints/{_EP}/insight/summary/generate")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["generated"] is False
+    assert "run discovery" in body["detail"]
+
+
+def test_generate_calls_model_and_caches_when_enabled():
+    with _patch("app.mcp_catalog_routes.db") as mdb, _patch.object(
+        mcp_catalog_routes.settings, "mcp_ai_digest_enabled", True
+    ), _patch.object(
+        mcp_catalog_routes.settings, "mcp_ai_digest_model", "claude-sonnet-5"
+    ), _patch(
+        "app.mcp_catalog_routes.generate_server_digest",
+        return_value="This server lets you fetch forecasts.",
+    ) as gen:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = _version_row(_V2, 2)
+        mdb.get_mcp_capability_items.return_value = [_tool_row("forecast", ordinal=0)]
+        mdb.get_mcp_server_digest.return_value = None  # cache miss
+        mdb.store_mcp_server_digest.return_value = _digest_row(
+            "fp2", digest="This server lets you fetch forecasts."
+        )
+        r = client.post(f"/v1/mcp/acme/endpoints/{_EP}/insight/summary/generate")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["generated"] is True
+    assert body["from_cache"] is False
+    assert body["digest"] == "This server lets you fetch forecasts."
+    gen.assert_called_once()
+    # cached with the fingerprint, the digest, the schema examples, and the model
+    args = mdb.store_mcp_server_digest.call_args[0]
+    assert args[0] == "fp2"
+    assert args[3] == "claude-sonnet-5"
+    assert isinstance(args[2], list) and args[2][0]["name"] == "forecast"
+
+
+def test_generate_reuses_cached_digest_without_calling_model():
+    with _patch("app.mcp_catalog_routes.db") as mdb, _patch.object(
+        mcp_catalog_routes.settings, "mcp_ai_digest_enabled", True
+    ), _patch("app.mcp_catalog_routes.generate_server_digest") as gen:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = _version_row(_V2, 2)
+        mdb.get_mcp_capability_items.return_value = [_tool_row("forecast", ordinal=0)]
+        mdb.get_mcp_server_digest.return_value = _digest_row("fp2")
+        r = client.post(f"/v1/mcp/acme/endpoints/{_EP}/insight/summary/generate")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["generated"] is False
+    assert body["from_cache"] is True
+    assert body["digest"] == "This server lets you check the weather."
+    gen.assert_not_called()
+    mdb.store_mcp_server_digest.assert_not_called()
+
+
+def test_generate_model_unavailable_is_labelled_no_op():
+    with _patch("app.mcp_catalog_routes.db") as mdb, _patch.object(
+        mcp_catalog_routes.settings, "mcp_ai_digest_enabled", True
+    ), _patch("app.mcp_catalog_routes.generate_server_digest", return_value=None):
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = _version_row(_V2, 2)
+        mdb.get_mcp_capability_items.return_value = [_tool_row("forecast", ordinal=0)]
+        mdb.get_mcp_server_digest.return_value = None
+        r = client.post(f"/v1/mcp/acme/endpoints/{_EP}/insight/summary/generate")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["generated"] is False
+    assert "unavailable" in body["detail"]
+    mdb.store_mcp_server_digest.assert_not_called()

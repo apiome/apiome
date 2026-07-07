@@ -49,6 +49,8 @@ import math
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
+from .mcp_client.normalize import ITEM_TYPE_TOOL
+
 # --- Percentile / latency primitives --------------------------------------------------------
 
 #: The three latency percentiles every reliability panel renders, as continuous fractions.
@@ -1510,3 +1512,193 @@ def rank_embedding_neighbors(
 
     neighbors.sort(key=lambda n: (-n.similarity, n.name.lower()))
     return neighbors[: max(0, limit)]
+
+
+# ===================================================================================================
+# Schema-driven example synthesis for the natural-language server digest (V2-MCP-32.5 / MCAT-18.5).
+#
+# The digest feature pairs a short AI-written summary of a server ("this server lets you …") with one
+# *example call per tool*. The example arguments are synthesized **deterministically from each tool's
+# ``input_schema``** — never by executing the tool and never by asking the model to invent values — so
+# the "no tool is executed to produce examples" acceptance criterion holds by construction, and the
+# examples are pure, unit-testable, and stable across regenerations of the same surface. The AI step
+# (the prose digest) lives in :mod:`app.mcp_digest_service`; everything below is plain, offline data
+# shaping over the already-normalized ``mcp_capability_items`` rows.
+# ===================================================================================================
+
+#: Recursion ceiling for :func:`synthesize_example_value` — guards against a pathologically deep or
+#: self-referential ``input_schema`` producing unbounded nesting. Beyond it, a placeholder is emitted.
+_EXAMPLE_MAX_DEPTH = 6
+
+#: Per-``format`` sample strings, so an example argument reads like a plausible value of that format
+#: rather than a bare placeholder. Only formats an MCP tool schema realistically declares are listed.
+_EXAMPLE_FORMAT_SAMPLES: Dict[str, str] = {
+    "date-time": "2026-01-01T00:00:00Z",
+    "date": "2026-01-01",
+    "time": "00:00:00",
+    "duration": "PT1H",
+    "email": "user@example.com",
+    "hostname": "example.com",
+    "uri": "https://example.com",
+    "url": "https://example.com",
+    "uuid": "00000000-0000-0000-0000-000000000000",
+    "ipv4": "192.0.2.1",
+    "ipv6": "2001:db8::1",
+}
+
+
+def synthesize_example_value(schema: Any, *, _depth: int = 0) -> Any:
+    """Deterministically synthesize a sample value for a JSON-Schema fragment.
+
+    Produces a single plausible example value for the given schema, used to fill in the arguments of a
+    tool's example call in the server digest (MCAT-18.5). The synthesis is **schema-driven and offline**
+    — it inspects the declared shape (``type``, ``enum``, ``const``, ``default``, ``examples``, string
+    ``format``, object ``properties`` / ``required``, array ``items``) and returns a matching literal.
+    It never calls the tool or the network, so it can be exercised in isolation and can never trigger a
+    side effect.
+
+    Resolution order for each node: an explicit ``const`` or first ``examples`` / ``default`` wins; then
+    a declared ``enum``'s first member; then the first branch of a ``oneOf`` / ``anyOf`` / ``allOf``;
+    otherwise a value shaped by ``type`` (objects recurse over ``required`` first then remaining declared
+    ``properties``; arrays yield a single synthesized element; strings honour ``format``). An unknown or
+    missing type falls back to a ``"string"`` placeholder. Recursion is bounded by
+    :data:`_EXAMPLE_MAX_DEPTH` so a cyclic ``$ref``-style schema (already de-referenced upstream) or a
+    deeply nested object cannot loop forever.
+
+    Args:
+        schema: A JSON-Schema fragment (typically a Python ``dict`` decoded from ``input_schema`` JSONB);
+            a non-mapping ``schema`` yields the generic string placeholder.
+
+    Returns:
+        A JSON-serializable sample value (``str`` / ``int`` / ``float`` / ``bool`` / ``list`` / ``dict``
+        / ``None``) consistent with ``schema``.
+    """
+    if _depth > _EXAMPLE_MAX_DEPTH or not isinstance(schema, Mapping):
+        return "example"
+
+    # An explicit constant or author-provided sample is always the most faithful example.
+    if "const" in schema:
+        return schema["const"]
+    examples = schema.get("examples")
+    if isinstance(examples, (list, tuple)) and examples:
+        return examples[0]
+    if "default" in schema:
+        return schema["default"]
+
+    enum = schema.get("enum")
+    if isinstance(enum, (list, tuple)) and enum:
+        return enum[0]
+
+    for combiner in ("oneOf", "anyOf", "allOf"):
+        branches = schema.get(combiner)
+        if isinstance(branches, (list, tuple)) and branches:
+            return synthesize_example_value(branches[0], _depth=_depth + 1)
+
+    schema_type = schema.get("type")
+    if isinstance(schema_type, (list, tuple)):
+        # A union type (e.g. ["string", "null"]) — use the first non-null member.
+        schema_type = next((t for t in schema_type if t != "null"), None)
+
+    if schema_type == "object" or (schema_type is None and "properties" in schema):
+        return _synthesize_example_object(schema, _depth=_depth)
+    if schema_type == "array":
+        items = schema.get("items")
+        if isinstance(items, Mapping):
+            return [synthesize_example_value(items, _depth=_depth + 1)]
+        return []
+    if schema_type == "boolean":
+        return True
+    if schema_type == "integer":
+        return 1
+    if schema_type == "number":
+        return 1.0
+    if schema_type == "null":
+        return None
+
+    # Strings and anything untyped: honour a declared format, else a titled/named placeholder.
+    fmt = schema.get("format")
+    if isinstance(fmt, str) and fmt in _EXAMPLE_FORMAT_SAMPLES:
+        return _EXAMPLE_FORMAT_SAMPLES[fmt]
+    return "example"
+
+
+def _synthesize_example_object(schema: Mapping[str, Any], *, _depth: int) -> Dict[str, Any]:
+    """Synthesize a sample object, emitting ``required`` properties first then remaining declared ones.
+
+    Ordering ``required`` fields ahead of optional ones keeps the example focused on what a caller must
+    supply, and preserves declaration order within each group so the output is deterministic.
+    """
+    properties = schema.get("properties")
+    if not isinstance(properties, Mapping) or not properties:
+        return {}
+
+    required = schema.get("required")
+    required_names = [r for r in required if r in properties] if isinstance(required, (list, tuple)) else []
+    ordered = list(required_names) + [name for name in properties if name not in required_names]
+
+    result: Dict[str, Any] = {}
+    for name in ordered:
+        result[str(name)] = synthesize_example_value(properties[name], _depth=_depth + 1)
+    return result
+
+
+@dataclass(frozen=True)
+class ToolExample:
+    """One tool's schema-derived example call for the server digest (MCAT-18.5).
+
+    ``arguments`` is the deterministic sample-argument object synthesized from the tool's ``input_schema``
+    by :func:`synthesize_example_value` — a suggested payload a caller *could* send, never the result of
+    actually invoking the tool. ``arguments`` is ``{}`` for a tool that declares no input schema (or a
+    non-object one), which is a valid "no arguments" example.
+    """
+
+    name: str
+    title: Optional[str]
+    description: Optional[str]
+    arguments: Dict[str, Any]
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "title": self.title,
+            "description": self.description,
+            "arguments": self.arguments,
+        }
+
+
+def build_tool_examples(items: Iterable[Mapping[str, Any]]) -> List[ToolExample]:
+    """Build one schema-derived example call per **tool** in a capability-item set (MCAT-18.5).
+
+    Filters the version snapshot's capability items to tools (resources and prompts are not "called" with
+    arguments) and, preserving their discovery order, synthesizes a deterministic example-argument object
+    for each from its ``input_schema``. Tools without a name are skipped; a tool whose ``input_schema`` is
+    absent or not an object yields an empty ``arguments`` (a legitimate no-argument call). No tool is
+    executed — the arguments are pure schema shaping, satisfying the "no tool is executed to produce
+    examples" acceptance criterion.
+
+    Args:
+        items: The version's normalized ``mcp_capability_items`` rows (each a mapping with ``item_type``,
+            ``name``, optional ``title`` / ``description`` / ``input_schema``).
+
+    Returns:
+        One :class:`ToolExample` per named tool, in discovery order; empty when the surface has no tools.
+    """
+    examples: List[ToolExample] = []
+    for item in items:
+        if item.get("item_type") != ITEM_TYPE_TOOL:
+            continue
+        name = item.get("name")
+        if not name:
+            continue
+        arguments = synthesize_example_value(item.get("input_schema"))
+        if not isinstance(arguments, dict):
+            arguments = {}
+        examples.append(
+            ToolExample(
+                name=str(name),
+                title=item.get("title"),
+                description=item.get("description"),
+                arguments=arguments,
+            )
+        )
+    return examples

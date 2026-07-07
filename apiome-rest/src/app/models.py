@@ -6375,6 +6375,66 @@ class McpSimilarReindexResponse(BaseModel):
     detail: str = ""
 
 
+class McpToolExampleOut(BaseModel):
+    """One tool's schema-derived example call for the server digest (MCAT-18.5).
+
+    ``arguments`` is a sample argument object synthesized deterministically from the tool's
+    ``input_schema`` — a payload a caller *could* send, never the result of invoking the tool (no tool is
+    executed to build it). ``arguments`` is ``{}`` for a tool that declares no input schema.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    arguments: Dict[str, Any] = Field(default_factory=dict)
+
+
+class McpServerDigestResponse(BaseModel):
+    """Response envelope for an endpoint's natural-language digest + usage examples (MCAT-18.5).
+
+    Pairs an **AI-generated** plain-language summary of the server (``digest`` — clearly labelled AI
+    content, ``null`` until generated) with one **deterministic, schema-derived example call per tool**
+    (``examples`` — always present, computed offline from the current surface, never requiring the model
+    or tool execution). ``ai_digest_enabled`` reflects the ``APIOME_MCP_AI_DIGEST_ENABLED`` feature flag
+    so the UI knows whether a "generate" action is available. The digest is cached per
+    ``surface_fingerprint`` and regenerated when the surface changes; ``model`` / ``generated_at`` record
+    the provenance of a cached digest. A never-discovered endpoint yields empty ``examples`` and a ``null``
+    digest — a ``200``, never a ``500``.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    version_id: Optional[str] = None
+    surface_fingerprint: Optional[str] = None
+    ai_digest_enabled: bool = False
+    ai_generated: bool = True
+    digest: Optional[str] = None
+    model: Optional[str] = None
+    generated_at: Optional[str] = None
+    tool_count: int = 0
+    examples: List[McpToolExampleOut] = Field(default_factory=list)
+
+
+class McpServerDigestGenerateResponse(McpServerDigestResponse):
+    """Response envelope for the gated digest generation step (MCAT-18.5).
+
+    Extends :class:`McpServerDigestResponse` with the outcome of a ``POST …/insight/digest/generate``:
+    ``generated`` is true only when the model actually produced (and cached) a digest on this call;
+    ``from_cache`` is true when an already-cached digest for the current surface was returned without
+    calling the model. When the feature flag is off, no API key is configured, the surface has nothing to
+    summarize, or the model call fails, ``generated`` is false and ``detail`` explains why — always a
+    ``200`` describing the no-op, never an error.
+    """
+
+    generated: bool = False
+    from_cache: bool = False
+    detail: str = ""
+
+
 class McpCatalogBucketOut(BaseModel):
     """One labelled slice of a catalog composition breakdown — a bucket and its endpoint count.
 

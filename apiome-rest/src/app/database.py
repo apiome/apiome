@@ -11956,6 +11956,72 @@ class Database:
                 return False
             raise
 
+    def get_mcp_server_digest(self, surface_fingerprint: str) -> Optional[Dict[str, Any]]:
+        """Fetch the cached natural-language digest for a surface, keyed by fingerprint (18.5).
+
+        The digest + schema-derived examples are computed once per ``surface_fingerprint`` and stored in
+        ``mcp_server_digests`` (V144). Because a surface change mints a new version with a new fingerprint,
+        keying the cache on the fingerprint gives the "regenerated on surface change" behaviour for free:
+        the new surface simply misses the cache. The digest is derived entirely from a server's *declared*
+        public surface (no tenant secrets), so the cache is global — two tenants cataloging the same server
+        snapshot share one entry.
+
+        Args:
+            surface_fingerprint: The snapshot's stable ``surface_fingerprint``.
+
+        Returns:
+            The cached row (``digest``, ``examples``, ``model``, ``generated_at``), or ``None`` on a miss.
+        """
+        if not surface_fingerprint:
+            return None
+        q = """
+            SELECT surface_fingerprint, digest, examples, model, generated_at
+            FROM apiome.mcp_server_digests
+            WHERE surface_fingerprint = %s
+        """
+        rows = self.execute_query(q, (surface_fingerprint,))
+        return rows[0] if rows else None
+
+    def store_mcp_server_digest(
+        self,
+        surface_fingerprint: str,
+        digest: str,
+        examples: List[Dict[str, Any]],
+        model: str,
+    ) -> Dict[str, Any]:
+        """Cache a generated digest + examples for a surface, upserting by fingerprint (18.5).
+
+        Writes (or refreshes) the ``mcp_server_digests`` row for ``surface_fingerprint`` so a later read
+        for the same surface is served from cache and the model is not called again. ``examples`` is the
+        schema-derived per-tool example list (stored as JSONB); ``generated_at`` is stamped ``now()`` by
+        the database. A repeat generation for the same fingerprint (e.g. after a model change) overwrites
+        the prior row in place.
+
+        Args:
+            surface_fingerprint: The snapshot's stable ``surface_fingerprint`` (the cache key).
+            digest: The natural-language digest text.
+            examples: The per-tool example calls to cache alongside the digest.
+            model: The Claude model that produced the digest, recorded as provenance.
+
+        Returns:
+            The stored row (``surface_fingerprint``, ``digest``, ``examples``, ``model``, ``generated_at``).
+        """
+        q = """
+            INSERT INTO apiome.mcp_server_digests
+                (surface_fingerprint, digest, examples, model, generated_at)
+            VALUES (%s, %s, %s::jsonb, %s, now())
+            ON CONFLICT (surface_fingerprint) DO UPDATE
+              SET digest = EXCLUDED.digest,
+                  examples = EXCLUDED.examples,
+                  model = EXCLUDED.model,
+                  generated_at = now()
+            RETURNING surface_fingerprint, digest, examples, model, generated_at
+        """
+        rows = self.execute_query(
+            q, (surface_fingerprint, digest, json.dumps(examples), model)
+        )
+        return rows[0]
+
     def upsert_repository_import_spec(
         self,
         tenant_id: str,

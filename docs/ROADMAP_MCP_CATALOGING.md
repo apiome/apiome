@@ -1589,7 +1589,7 @@ not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 a
 | 18.2 ✅ | Side-by-side server comparison | Compare 2–3 endpoints: surface, grade, safety, latency | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui |
 | 18.3 ✅ | Peer percentile & category ranking | Rank a server against its category on each axis | `mcp-insights` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-ui |
 | 18.4 ✅ | Similar-servers via capability overlap + embeddings | "Servers like this" from tool-name/desc overlap + pgvector (V102) | `mcp-insights` `backend` | Y | N | ●●● | apiome-rest, apiome-db |
-| 18.5 | Natural-language server digest + usage examples | AI-generated "what can this do" summary + per-tool example calls | `mcp-insights` `backend` | Y | N | ●●● | apiome-rest |
+| 18.5 ✅ | Natural-language server digest + usage examples | AI-generated "what can this do" summary + per-tool example calls | `mcp-insights` `backend` | Y | N | ●●● | apiome-rest, apiome-db |
 
 ### MCAT-18.1 — Catalog analytics dashboard  ·  **#4645**  ·  ✅ Done (apiome-rest 1.90.0, apiome-ui 0.81.0, apiome-browse 0.6.0)
 - **Problem.** No catalog-wide view; 13.4 was only a stub.
@@ -1692,7 +1692,7 @@ not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 a
   surface for a later `frontend` follow-up; this backend ticket (labels `mcp-insights` `backend`;
   modules apiome-rest, apiome-db) delivers the ranking API + storage they consume.
 
-### MCAT-18.5 — Natural-language server digest + usage examples  ·  **#4649**
+### MCAT-18.5 — Natural-language server digest + usage examples  ·  **#4649**  ·  ✅ Done (apiome-rest 1.93.0, apiome-db 0.25.0)
 - **Problem.** Even a well-visualized surface still asks the reader to synthesize "so what can this
   actually do for me?"
 - **Solution / Scope.** An **opt-in, gated** AI step that produces a short natural-language digest of
@@ -1704,6 +1704,32 @@ not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 a
 - **Dependencies / Parallelism.** After 14.1 (schemas/metrics). Parallel with 18.4. Latest item.
 - **Technical Stack.** Python, Claude API (latest model), schema-driven example synthesis, cache
   keyed on `surface_fingerprint`.
+- **Delivered.** New `GET …/endpoints/{id}/insight/summary` (read) and flag-gated
+  `POST …/endpoints/{id}/insight/summary/generate` routes on `mcp_endpoints_router`. The **per-tool
+  example calls** are synthesized **deterministically from each tool's `input_schema`** by the pure,
+  unit-tested `mcp_insight_aggregation` layer (`synthesize_example_value`, `build_tool_examples` →
+  `ToolExample`) — no tool is ever executed, satisfying the "no tool is executed to produce examples"
+  criterion by construction, and the examples are always returned regardless of the flag or an API key.
+  The **AI digest** is written by the Claude API in `mcp_digest_service` (`build_digest_prompt` +
+  `generate_server_digest`, a stdlib-`urllib` client mirroring `app.embedding`, telling the model the
+  surface is descriptive only). It is **off by default** (`APIOME_MCP_AI_DIGEST_ENABLED`, plus
+  `APIOME_ANTHROPIC_API_KEY` / `APIOME_MCP_AI_DIGEST_MODEL` defaulting to `claude-sonnet-5`): when the
+  flag is off, no key is set, the surface is undiscovered, or the model is unreachable/declines, the
+  generate route returns a labelled `generated=false` no-op (a `200`, never a `500`) and the model is
+  never called. The digest is **cached per `surface_fingerprint`** in **apiome-db V144**
+  (`apiome.mcp_server_digests`, a fingerprint-keyed global table — no tenant scope, no FK to a version
+  row, since the digest derives only from a server's declared public surface); because a surface change
+  mints a new fingerprint, the "regenerated on surface change" criterion holds for free (the new surface
+  misses the cache), and a re-generate for an already-cached surface is reused (`from_cache=true`), never
+  re-billed. Wire models `McpServerDigestResponse` / `McpServerDigestGenerateResponse` / `McpToolExampleOut`.
+  Tests: `test_mcp_insight_aggregation.py` (example synthesis over schema fixtures, depth bound, tool
+  filtering), `test_mcp_digest_service.py` (gating, prompt construction, refusal / transport / parse →
+  `None`, mocked HTTP), `test_mcp_insight_routes.py` (examples-always, cached-digest provenance,
+  undiscovered→empty, cross-tenant 404, flag-off/no-surface/model-unavailable no-ops, generate-caches,
+  reuse-cache-without-model), and `mcp-server-digest-cache.test.ts` (V144 structural contract).
+  **Note:** the digest panel + "labeled AI-generated" affordance are the UI surface for a later
+  `frontend` follow-up; this backend ticket (labels `mcp-insights` `backend`; modules apiome-rest,
+  apiome-db) delivers the digest/examples API + cache they consume.
 
 ---
 
