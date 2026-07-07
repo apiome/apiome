@@ -195,7 +195,7 @@ export default function McpPrimitivesShowcase() {
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">DetailTabs</h2>
         <p className="mb-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
-          The seven-tab underline detail shell. The canonical set lives in MCP_DETAIL_TABS.
+          The underline detail-tab shell. The canonical set lives in MCP_DETAIL_TABS.
         </p>
         <DetailTabs defaultValue="overview">
           <DetailTabsList items={MCP_DETAIL_TABS} />
