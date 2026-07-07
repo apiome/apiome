@@ -40,6 +40,7 @@ function makeVersion(overrides: Partial<McpVersionSummary> = {}): McpVersionSumm
     server_title: null,
     server_version: null,
     surface_fingerprint: overrides.surface_fingerprint ?? null,
+    server_branding: overrides.server_branding ?? null,
     score: overrides.score ?? null,
     grade: overrides.grade ?? null,
     scored_at: null,

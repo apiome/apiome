@@ -1887,7 +1887,7 @@ handshake/discovery calls.
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
 | 20.1 ✅ | Host & transport metadata capture | Record hostname, TLS/cert, HTTP server headers, handshake timing at discovery | `mcp-catalog` `backend` | Y | N | ●● | apiome-rest, apiome-db |
-| 20.2 | Server branding capture | Persist advertised website/logo/icon/instructions for richer catalog cards | `mcp-catalog` `backend` | Y | N | ● | apiome-rest, apiome-db |
+| 20.2 ✅ | Server branding capture | Persist advertised website/logo/icon/instructions for richer catalog cards | `mcp-catalog` `backend` | Y | N | ● | apiome-rest, apiome-db |
 | 20.3 | License & terms signal detection | Detect and report license/ToS hints in server metadata/instructions | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
 | 20.4 | Deprecation & lifecycle signals | Flag deprecated/experimental capabilities from annotations/description text | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
 | 20.5 | Provenance & discovery-source tracking | Record how/when each endpoint & version was found (manual/sweep/registry) and surface it | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
@@ -1904,7 +1904,7 @@ handshake/discovery calls.
 - **Dependencies / Parallelism.** Extends Epic-2 discovery. Parallel across Epic-20. Needs migration.
 - **Technical Stack.** Python (TLS/HTTP introspection at connect), Flyway migration.
 
-### MCAT-20.2 — Server branding capture  ·  **#4656**
+### MCAT-20.2 — Server branding capture  ·  **#4656**  ·  ✅ Done (apiome-rest 1.100.0, apiome-db 0.28.0, apiome-ui 0.85.0)
 - **Problem.** Catalog cards are text-only; servers often advertise a title/description and sometimes
   a site/icon that would make the catalog far more recognizable.
 - **Solution / Scope.** Persist the server's advertised `title`/`instructions` (already captured) plus

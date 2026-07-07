@@ -15,6 +15,12 @@ Modules:
     errors: Stable error taxonomy persisted on ``mcp_discovery_jobs.error``.
 """
 
+from .branding import (
+    MAX_BRANDING_URL_LENGTH,
+    ServerBranding,
+    extract_server_branding,
+    safe_branding_url,
+)
 from .diff import (
     CHANGE_ADDED,
     CHANGE_MODIFIED,
@@ -106,6 +112,7 @@ __all__ = [
     "ITEM_TYPE_SERVER",
     "ITEM_TYPE_TOOL",
     "LIST_METHODS",
+    "MAX_BRANDING_URL_LENGTH",
     "NOTABLE_RESPONSE_HEADERS",
     "SUPPORTED_PROTOCOL_VERSIONS",
     "BudgetExceededError",
@@ -130,6 +137,7 @@ __all__ = [
     "McpSsrfError",
     "McpTransportError",
     "McpVersionNegotiationError",
+    "ServerBranding",
     "ServerInfo",
     "StreamableHttpTransport",
     "SurfaceDiff",
@@ -140,7 +148,9 @@ __all__ = [
     "classify_exception",
     "diff_surfaces",
     "discover_listings",
+    "extract_server_branding",
     "initialize_session",
+    "safe_branding_url",
     "paginate",
     "parse_retry_after_seconds",
     "private_address_reason",

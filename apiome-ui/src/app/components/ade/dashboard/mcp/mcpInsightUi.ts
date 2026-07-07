@@ -318,6 +318,14 @@ export interface McpServerProfile {
   lastChangedAt: string | null;
   /** The server's `instructions`, rendered prominently when present (trimmed; `null` when empty). */
   instructions: string | null;
+  /**
+   * A validated `https` URL for the server's advertised logo/icon, rendered as the card's identity
+   * glyph when present (V2-MCP-34.2); `null` falls back to the generic server icon. Guarded and
+   * *referenced* by the REST side, never fetched here.
+   */
+  iconUrl: string | null;
+  /** A validated `https` URL for the server's advertised website, shown as a link; `null` when absent. */
+  websiteUrl: string | null;
 }
 
 /** Trim a string to `null` when it is absent or only whitespace. */
@@ -350,6 +358,7 @@ export function mcpServerProfileFrom(sources: {
   const endpointName = trimmedOrNull(endpoint?.name);
   const serverTitle = trimmedOrNull(version?.server_title);
   const serverName = trimmedOrNull(version?.server_name);
+  const branding = version?.server_branding ?? null;
   return {
     displayName: serverTitle ?? serverName ?? endpointName ?? 'MCP server',
     endpointName,
@@ -366,5 +375,7 @@ export function mcpServerProfileFrom(sources: {
     discoveryStatus: trimmedOrNull(endpoint?.last_discovery_status),
     lastChangedAt: version?.discovered_at ?? version?.created_at ?? null,
     instructions: trimmedOrNull(instructions),
+    iconUrl: trimmedOrNull(branding?.icon_url),
+    websiteUrl: trimmedOrNull(branding?.website_url),
   };
 }

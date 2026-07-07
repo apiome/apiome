@@ -26,6 +26,33 @@ export interface McpCatalogCardProps {
   changed?: boolean;
 }
 
+/**
+ * The server's advertised logo (V2-MCP-34.2), rendered as a small glyph beside the endpoint name
+ * when the current snapshot advertised a usable icon; renders nothing otherwise (the grade glyph
+ * remains the card's lead). The URL is a *referenced* `https` link the REST side already validated;
+ * `referrerPolicy="no-referrer"` leaks nothing on load, and any failure removes the image so the
+ * card is never broken. Decorative (`alt=""`) — the adjacent name is the accessible label.
+ */
+function CardLogo({ endpoint }: { endpoint: McpBrowseEndpoint }): React.ReactElement | null {
+  const [failed, setFailed] = React.useState(false);
+  const iconUrl = endpoint.server_branding?.icon_url ?? null;
+  if (iconUrl === null || failed) return null;
+  // A remote, per-server logo URL is not a build-time asset and must not go through the Next image
+  // optimizer (which would proxy-fetch it) — so a plain <img> referencing the validated URL is intended.
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- see note above
+    <img
+      src={iconUrl}
+      alt=""
+      aria-hidden
+      className="h-4 w-4 shrink-0 rounded object-contain"
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 /** The transport / visibility / auth badges an endpoint shows; auth only when the catalog has it. */
 function EndpointBadges({ endpoint }: { endpoint: McpBrowseEndpoint }): React.ReactElement {
   const transport = mcpTransportBadge(endpoint.transport);
@@ -106,6 +133,7 @@ export const McpCatalogCard = React.forwardRef<HTMLAnchorElement, McpCatalogCard
           <GradeGlyph grade={endpoint.grade} score={endpoint.score} size="sm" showScore={false} />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
+              <CardLogo endpoint={endpoint} />
               <span className="truncate font-medium text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
                 {endpoint.name}
               </span>
@@ -150,9 +178,12 @@ export const McpCatalogCard = React.forwardRef<HTMLAnchorElement, McpCatalogCard
           <GradeGlyph grade={endpoint.grade} score={endpoint.score} size="md" />
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
-              <h4 className="truncate font-semibold text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
-                {endpoint.name}
-              </h4>
+              <div className="flex min-w-0 items-center gap-1.5">
+                <CardLogo endpoint={endpoint} />
+                <h4 className="truncate font-semibold text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
+                  {endpoint.name}
+                </h4>
+              </div>
               <ArrowRight
                 className="mt-0.5 h-4 w-4 shrink-0 text-gray-300 transition-colors group-hover:text-indigo-600 dark:group-hover:text-indigo-400"
                 aria-hidden

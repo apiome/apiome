@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { FileText, Server, ShieldCheck } from 'lucide-react';
+import { ExternalLink, FileText, Server, ShieldCheck } from 'lucide-react';
 import { cn } from '../../../../../lib/utils';
 import { GradeGlyph } from './GradeGlyph';
 import { HealthPill } from './HealthPill';
@@ -24,6 +24,35 @@ export interface ServerProfileCardProps extends React.HTMLAttributes<HTMLElement
   trustHref?: string;
   /** Current time in epoch ms, injected for deterministic recency in tests. Defaults to "now". */
   nowMs?: number;
+}
+
+/**
+ * The card's leading identity glyph: the server's advertised logo when it has one (V2-MCP-34.2),
+ * otherwise the generic server icon. The logo is a *referenced* `https` URL the REST side already
+ * validated (SSRF-safe, length-bounded); it is rendered with `referrerPolicy="no-referrer"` so
+ * browsing it leaks nothing, and any load failure (dead link, non-image) falls back to the generic
+ * glyph so the card is never broken.
+ */
+function ServerIdentityGlyph({ iconUrl, name }: { iconUrl: string | null; name: string }) {
+  const [failed, setFailed] = React.useState(false);
+  if (iconUrl !== null && !failed) {
+    // A remote, per-server logo URL is not a build-time asset and must not go through the Next image
+    // optimizer (which would proxy-fetch it) — so a plain <img> referencing the validated URL is intended.
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- see note above
+      <img
+        src={iconUrl}
+        alt={`${name} logo`}
+        className="h-5 w-5 shrink-0 rounded object-contain"
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+  return (
+    <Server className="h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-400" aria-hidden />
+  );
 }
 
 /** One compact capability-count chip (kind → count), rendered from the surface metrics. */
@@ -81,7 +110,7 @@ export const ServerProfileCard = React.forwardRef<HTMLElement, ServerProfileCard
             />
             <div className="min-w-0">
               <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
-                <Server className="h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-400" aria-hidden />
+                <ServerIdentityGlyph iconUrl={profile.iconUrl} name={profile.displayName} />
                 <span className="truncate">{profile.displayName}</span>
                 {profile.serverVersion ? (
                   <span className="shrink-0 text-sm font-medium text-gray-400 dark:text-gray-500">
@@ -98,6 +127,18 @@ export const ServerProfileCard = React.forwardRef<HTMLElement, ServerProfileCard
                 <div className="mt-0.5 truncate font-mono text-xs text-gray-500 dark:text-gray-400">
                   {profile.endpointUrl}
                 </div>
+              ) : null}
+              {profile.websiteUrl ? (
+                <a
+                  href={profile.websiteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  referrerPolicy="no-referrer"
+                  className="mt-0.5 inline-flex max-w-full items-center gap-1 text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                >
+                  <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
+                  <span className="truncate">{profile.websiteUrl}</span>
+                </a>
               ) : null}
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <McpBadge tone={transport.tone}>{transport.label}</McpBadge>

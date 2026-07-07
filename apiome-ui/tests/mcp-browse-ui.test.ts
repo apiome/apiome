@@ -96,6 +96,25 @@ describe('mcpBrowseEndpointFromPayload', () => {
     expect(ep.published).toBe(false);
     expect(ep.score).toBeNull();
     expect(ep.capability_count).toBe(0);
+    // No branding advertised → null, so the card falls back to its text form (#4656).
+    expect(ep.server_branding).toBeNull();
+  });
+
+  it('parses advertised server_branding, and null for an empty block', () => {
+    const branded = mcpBrowseEndpointFromPayload({
+      id: 'x',
+      server_branding: { icon_url: 'https://cdn.acme.dev/logo.png', website_url: 'https://acme.dev' },
+    });
+    expect(branded.server_branding).toEqual({
+      icon_url: 'https://cdn.acme.dev/logo.png',
+      website_url: 'https://acme.dev',
+      icon_mime_type: null,
+    });
+    // An all-empty / non-object block reads back as null (never a broken image).
+    expect(mcpBrowseEndpointFromPayload({ id: 'x', server_branding: {} }).server_branding).toBeNull();
+    expect(
+      mcpBrowseEndpointFromPayload({ id: 'x', server_branding: 'nope' }).server_branding,
+    ).toBeNull();
   });
 });
 

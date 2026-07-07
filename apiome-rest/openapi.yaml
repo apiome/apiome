@@ -15686,6 +15686,35 @@ components:
         * ``oauth2`` — ``{"access_token": "<token>", "token_type": "Bearer"?}``
 
         * ``env``    — ``{"vars": {"NAME": "value", ...}}`` (contributes no HTTP headers)'
+    McpServerBranding:
+      properties:
+        website_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Website Url
+        icon_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Icon Url
+        icon_mime_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Icon Mime Type
+      type: object
+      title: McpServerBranding
+      description: 'The validated branding a server advertised in its ``initialize``
+        ``serverInfo`` (#4656).
+
+
+        A recognizable-catalog aid (V2-MCP-34.2): the server''s website and a display
+        icon, if any. Every field is optional and independently present — the capture
+        layer (:mod:`app.mcp_client.branding`) drops any value that fails its guards
+        (https-only, SSRF-safe host, length-bounded), so a field here is always a safe,
+        *referenceable* URL. The whole object is ``None`` on a snapshot when the server
+        advertised no usable branding, and the card falls back to its text form.'
     McpBrowseEndpointOut:
       properties:
         id:
@@ -15774,6 +15803,10 @@ components:
           type: integer
           title: Capability Count
           default: 0
+        server_branding:
+          anyOf:
+          - $ref: '#/components/schemas/McpServerBranding'
+          - type: 'null'
       type: object
       required:
       - id
@@ -16861,6 +16894,10 @@ components:
             $ref: '#/components/schemas/McpCapabilityItemOut'
           type: array
           title: Items
+        server_branding:
+          anyOf:
+          - $ref: '#/components/schemas/McpServerBranding'
+          - type: 'null'
       type: object
       required:
       - id
@@ -16980,6 +17017,10 @@ components:
           - type: string
           - type: 'null'
           title: Created At
+        server_branding:
+          anyOf:
+          - $ref: '#/components/schemas/McpServerBranding'
+          - type: 'null'
       type: object
       required:
       - id

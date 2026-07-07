@@ -23919,6 +23919,46 @@
         "title": "McpAuthOverride",
         "description": "An ephemeral credential to use for a single test call, in place of the stored one.\n\nLets a tenant try an endpoint with a *throwaway* secret \u2014 a personal token, a not-yet-saved\ncredential \u2014 without ever persisting it. The shape mirrors :class:`McpCredentialUpsert`\n(``auth_type`` + plaintext ``payload``), is validated against the same auth-type model at the\nroute, and is used only to build request headers for this one invocation. It is **never** written\nto ``mcp_endpoint_credentials`` and never echoed back in any response.\n\nUnlike the stored-credential model, ``auth_type`` ``none`` is accepted here: it means \"test this\ncall anonymously\", explicitly overriding any stored credential for this one request.\n\nExpected ``payload`` shape per ``auth_type`` (same as :class:`McpCredentialUpsert`):\n\n* ``none``   \u2014 payload ignored (anonymous test call)\n* ``bearer`` \u2014 ``{\"token\": \"<secret>\"}``\n* ``header`` \u2014 ``{\"name\": \"<Header-Name>\", \"value\": \"<secret>\"}``\n* ``oauth2`` \u2014 ``{\"access_token\": \"<token>\", \"token_type\": \"Bearer\"?}``\n* ``env``    \u2014 ``{\"vars\": {\"NAME\": \"value\", ...}}`` (contributes no HTTP headers)"
       },
+      "McpServerBranding": {
+        "properties": {
+          "website_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website Url"
+          },
+          "icon_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon Url"
+          },
+          "icon_mime_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon Mime Type"
+          }
+        },
+        "type": "object",
+        "title": "McpServerBranding",
+        "description": "The validated branding a server advertised in its ``initialize`` ``serverInfo`` (#4656).\n\nA recognizable-catalog aid (V2-MCP-34.2): the server's website and a display icon, if any.\nEvery field is optional and independently present — the capture layer\n(:mod:`app.mcp_client.branding`) drops any value that fails its guards (https-only,\nSSRF-safe host, length-bounded), so a field here is always a safe, *referenceable* URL. The\nwhole object is ``None`` on a snapshot when the server advertised no usable branding, and the\ncard falls back to its text form."
+      },
       "McpBrowseEndpointOut": {
         "properties": {
           "id": {
@@ -24063,6 +24103,16 @@
             "type": "integer",
             "title": "Capability Count",
             "default": 0
+          },
+          "server_branding": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/McpServerBranding"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -25532,6 +25582,16 @@
             },
             "type": "array",
             "title": "Items"
+          },
+          "server_branding": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/McpServerBranding"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -25726,6 +25786,16 @@
               }
             ],
             "title": "Created At"
+          },
+          "server_branding": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/McpServerBranding"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
