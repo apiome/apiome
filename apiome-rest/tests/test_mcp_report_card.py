@@ -19,6 +19,7 @@ from fastapi.testclient import TestClient
 
 from app.auth import validate_authentication
 from app.main import app
+from app.mcp_license_signals import detect_license_signals
 from app.mcp_report_card import (
     MAX_REPORT_CHANGES,
     MAX_REPORT_FINDINGS,
@@ -188,12 +189,16 @@ def _full_card():
         {"change_type": "added", "item_type": "tool", "item_name": "forecast"},
         {"change_type": "removed", "item_type": "prompt", "item_name": "old_prompt"},
     ]
+    license_signals = detect_license_signals(
+        instructions="Licensed under Apache-2.0. See https://acme.example/legal/terms.",
+    ).as_dict()
     return build_report_card(
         endpoint=_ENDPOINT_ROW,
         version=_version_row(),
         is_current=True,
         score_report=score_report,
         surface_metrics=surface_metrics,
+        license_signals=license_signals,
         trust_profile=trust,
         change_rows=change_rows,
         change_severity={"breaking": 1, "additive": 1, "review": 0, "total": 2},
@@ -212,11 +217,15 @@ def test_markdown_full_report_has_every_section():
         "## Capability Surface",
         "## Safety Posture",
         "## Documentation Coverage",
+        "## License & Terms",
         "## Trust Profile",
         "## Change Since Previous Version",
     ):
         assert heading in md
     assert "Grade B" in md and "88/100" in md
+    # License signals itemize with their human kind labels.
+    assert "| SPDX id | instructions | `Apache-2.0` |" in md
+    assert "| Terms URL | instructions | `https://acme.example/legal/terms` |" in md
     # Pipes inside a cell are escaped so the table row stays intact.
     assert "name too long \\| has pipe" in md
     # Surface roll-up.
@@ -264,8 +273,9 @@ def test_never_discovered_renders_graceful_partial():
     assert "Not yet scored." in md
     assert "No discovered surface." in md
     assert "No trust signals available yet." in md
-    # Still a complete document, every one of the seven H2 sections present.
-    assert md.count("\n## ") == 7
+    assert "Not scanned — no discovered snapshot." in md
+    # Still a complete document, every one of the eight H2 sections present.
+    assert md.count("\n## ") == 8
     assert html.startswith("<!doctype html>") and "never been discovered" in html
 
 
@@ -304,6 +314,45 @@ def test_findings_and_changes_are_capped_with_explicit_overflow():
     md = render_report_markdown(card)
     assert "and 5 more finding(s) not shown" in md
     assert "and 7 more change(s) not shown" in md
+
+
+def test_license_not_stated_renders_carefully_worded_absence():
+    # A discovered snapshot whose text states nothing must render "not stated" — an explicit
+    # result with a disclaimer — never a "no license" verdict (AC of V2-MCP-34.3).
+    card = build_report_card(
+        endpoint=_ENDPOINT_ROW,
+        version=_version_row(),
+        is_current=True,
+        score_report=None,
+        surface_metrics=None,
+        license_signals=detect_license_signals(
+            instructions="Use the forecast tool for weather."
+        ).as_dict(),
+        trust_profile=None,
+        change_rows=[],
+        change_severity=None,
+        auth_posture="anonymous",
+        auth_type=None,
+        generated_at=_GEN,
+    )
+    assert card.license is not None
+    assert card.license.status == "not_stated"
+    md = render_report_markdown(card)
+    html = render_report_html(card)
+    for body in (md, html):
+        assert "Not stated" in body
+        assert "This is not a claim that the server has no license or terms." in body
+        assert "not a compliance verdict" in body
+    # The "never scanned" wording is reserved for a missing snapshot, not an empty result.
+    assert "Not scanned — no discovered snapshot." not in md
+
+
+def test_license_signals_render_in_html_table():
+    html = render_report_html(_full_card())
+    assert "<h2>License &amp; Terms</h2>" in html
+    assert "<code>Apache-2.0</code>" in html
+    assert "<td>SPDX id</td>" in html
+    assert "informational" in html
 
 
 def test_renderers_never_emit_a_credential_secret():
@@ -448,6 +497,39 @@ def test_report_discovered_but_unscored_partial():
     # Surface present, but the grade section degrades gracefully.
     assert "## Capability Surface" in body
     assert "Not yet scored." in body
+
+
+def test_report_flags_seeded_license_hints_end_to_end():
+    version = _version_row()
+    version["instructions"] = (
+        "This server is licensed under the MIT license. "
+        "Terms of service: https://acme.example/tos."
+    )
+    version["server_branding"] = {"website_url": "https://acme.example/legal"}
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        _mock_full_endpoint(mdb)
+        mdb.get_mcp_endpoint_version.return_value = version
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/report")
+    assert r.status_code == 200
+    body = r.text
+    assert "## License & Terms" in body
+    assert "`MIT`" in body
+    assert "`https://acme.example/tos`" in body
+    # The branding website URL is classified too (a /legal page is a terms pointer).
+    assert "| Terms URL | website_url | `https://acme.example/legal` |" in body
+    assert "not a compliance verdict" in body
+
+
+def test_report_license_absence_is_not_stated_never_no_license():
+    # The default mocked version row advertises no instructions/title/branding at all.
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        _mock_full_endpoint(mdb)
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/report")
+    assert r.status_code == 200
+    body = r.text
+    assert "## License & Terms" in body
+    assert "Not stated" in body
+    assert "This is not a claim that the server has no license or terms." in body
 
 
 def test_report_never_leaks_the_credential_secret():

@@ -4,9 +4,10 @@ The Insight tab is only useful behind auth and inside the app. This module rende
 **self-contained one-page report** for a single endpoint version so a human can drop the
 assessment into a ticket, a review, or a wiki. It serializes exactly the panels the in-app
 Insight view already shows — identity (15.1), grade + score breakdown (17.3), capability
-surface + safety posture (15.3/15.4), documentation coverage (15.5), the composite trust radar
-(17.4), and the change-since-previous summary — into **Markdown** and **HTML** (the HTML carries
-a print stylesheet, so "PDF" is the browser's print-to-PDF of the same document).
+surface + safety posture (15.3/15.4), documentation coverage (15.5), license & terms signals
+(20.3), the composite trust radar (17.4), and the change-since-previous summary — into
+**Markdown** and **HTML** (the HTML carries a print stylesheet, so "PDF" is the browser's
+print-to-PDF of the same document).
 
 Design rules:
 
@@ -75,6 +76,9 @@ class ReportCard:
         safety: The safety/annotation posture (annotation coverage, destructive-tool count, auth
             posture) or ``None`` when there is no discovered surface.
         documentation: The documentation & schema coverage meters or ``None`` when undiscovered.
+        license: The license & terms signal report (V2-MCP-34.3) or ``None`` when undiscovered.
+            Note the asymmetry with the other sections: a discovered snapshot with *no* signal
+            still has a section — its status is "not stated", which is a result, not missing data.
         trust: The five-axis composite trust profile or ``None`` when undiscovered.
         change: The change-since-previous summary (severity roll-up + itemized rows) or ``None``
             when the snapshot introduced no diff (the first version, or an unchanged re-discovery).
@@ -87,6 +91,7 @@ class ReportCard:
     surface: Optional["ReportSurface"] = None
     safety: Optional["ReportSafety"] = None
     documentation: Optional[Dict[str, Any]] = None
+    license: Optional["ReportLicense"] = None
     trust: Optional["ReportTrust"] = None
     change: Optional["ReportChange"] = None
 
@@ -160,6 +165,24 @@ class ReportSafety:
 
 
 @dataclass(frozen=True)
+class ReportLicense:
+    """The license & terms signal report (serializes the 20.3 detector result).
+
+    ``status`` is ``"detected"`` or ``"not_stated"`` — the latter is the careful wording for
+    "the server's text states nothing", never a claim that no license exists. ``statement``
+    carries the detector's pre-worded one-line summary so every renderer states absence the
+    same way. Signal rows are the detector's JSON-ready dicts (``kind`` / ``source`` /
+    ``matched`` / ``excerpt``), already bounded and deterministically ordered upstream.
+    """
+
+    status: str
+    statement: str
+    signals: List[Dict[str, str]]
+    signals_truncated: int
+    sources_scanned: List[str]
+
+
+@dataclass(frozen=True)
 class ReportTrust:
     """The composite trust profile (serializes the 17.4 radar)."""
 
@@ -190,6 +213,7 @@ def build_report_card(
     is_current: bool,
     score_report: Optional[Mapping[str, Any]],
     surface_metrics: Optional[Mapping[str, Any]],
+    license_signals: Optional[Mapping[str, Any]] = None,
     trust_profile: Optional[Mapping[str, Any]],
     change_rows: Sequence[Mapping[str, Any]],
     change_severity: Optional[Mapping[str, int]],
@@ -214,6 +238,10 @@ def build_report_card(
         score_report: The persisted lint report dict (``score``/``grade``/``severity_counts``/
             ``rule_hits``/``findings``), or ``None`` when the snapshot is unscored.
         surface_metrics: The ``compute_surface_metrics`` ``as_dict()`` for the snapshot, or ``None``.
+        license_signals: The :func:`app.mcp_license_signals.detect_license_signals`
+            ``as_dict()`` for the snapshot, or ``None`` when never discovered. A "nothing
+            found" result is *not* ``None`` — it is a report with status ``"not_stated"``,
+            and it renders as a section (absence of a statement is itself reportable).
         trust_profile: The ``compute_trust_profile`` ``as_dict()``, or ``None``.
         change_rows: The stored ``previous → this`` change rows (empty for a first/unchanged version).
         change_severity: The ``severity_counts`` roll-up over ``change_rows``, or ``None``.
@@ -237,6 +265,9 @@ def build_report_card(
         if surface_metrics and surface_metrics.get("documentation_coverage")
         else None
     )
+    # Unlike the other sections, an *empty* license report still renders — "not stated" is a
+    # result the reader needs, not missing data — so only a missing report yields None.
+    license = _license(license_signals) if license_signals is not None else None
     trust = _trust(trust_profile) if trust_profile else None
     change = _change(change_rows, change_severity) if change_rows else None
 
@@ -248,6 +279,7 @@ def build_report_card(
         surface=surface,
         safety=safety,
         documentation=documentation,
+        license=license,
         trust=trust,
         change=change,
     )
@@ -365,6 +397,45 @@ def _safety(
         auth_posture=auth_posture,
         auth_type=auth_type,
     )
+
+
+#: Human labels for the license-signal ``kind`` values (unknown kinds fall back verbatim).
+_LICENSE_KIND_LABELS: Mapping[str, str] = {
+    "spdx_id": "SPDX id",
+    "license_mention": "License mention",
+    "terms_mention": "Terms mention",
+    "usage_restriction": "Usage restriction",
+    "license_url": "License URL",
+    "terms_url": "Terms URL",
+}
+
+
+def _license(report: Mapping[str, Any]) -> ReportLicense:
+    """Shape the license & terms detector report into its section (values pass through).
+
+    The detector already bounds, orders, and words everything — including the "not stated"
+    phrasing that must never read as a "no license" claim — so this only normalizes shapes.
+    """
+    return ReportLicense(
+        status=str(report.get("status") or "not_stated"),
+        statement=str(report.get("statement") or ""),
+        signals=[
+            {
+                "kind": str(s.get("kind", "")),
+                "source": str(s.get("source", "")),
+                "matched": str(s.get("matched", "")),
+                "excerpt": str(s.get("excerpt", "")),
+            }
+            for s in (report.get("signals") or [])
+        ],
+        signals_truncated=int(report.get("signals_truncated") or 0),
+        sources_scanned=[str(s) for s in (report.get("sources_scanned") or [])],
+    )
+
+
+def _license_kind_label(kind: str) -> str:
+    """Return the human label for a signal ``kind`` (verbatim when unknown)."""
+    return _LICENSE_KIND_LABELS.get(kind, kind)
 
 
 def _trust(profile: Mapping[str, Any]) -> ReportTrust:
@@ -602,6 +673,31 @@ def render_report_markdown(card: ReportCard) -> str:
         )
     else:
         lines.append("_No discovered surface._")
+    lines.append("")
+
+    # --- License & terms signals --------------------------------------------------------------
+    lines.append("## License & Terms")
+    lines.append("")
+    lines.append("_Signals the server's own text mentions — informational, not a compliance"
+                 " verdict._")
+    lines.append("")
+    if card.license is not None:
+        lic = card.license
+        lines.append(lic.statement)
+        if lic.signals:
+            lines.append("")
+            lines.append("| Signal | Source | Matched | Context |")
+            lines.append("| --- | --- | --- | --- |")
+            for s in lic.signals:
+                lines.append(
+                    f"| {_license_kind_label(s['kind'])} | {_md_cell(s['source'])}"
+                    f" | `{_md_cell(s['matched'])}` | {_md_cell(s['excerpt'])} |"
+                )
+            if lic.signals_truncated:
+                lines.append("")
+                lines.append(f"_…and {lic.signals_truncated} more signal(s) not shown._")
+    else:
+        lines.append("_Not scanned — no discovered snapshot._")
     lines.append("")
 
     # --- Trust radar ------------------------------------------------------------------------
@@ -893,6 +989,30 @@ def render_report_html(card: ReportCard) -> str:
         p.append("</table>")
     else:
         p.append("<p class='note'>No discovered surface.</p>")
+
+    # --- License & terms signals --------------------------------------------------------------
+    p.append("<h2>License &amp; Terms</h2>")
+    p.append("<p class='note'>Signals the server's own text mentions — informational,"
+             " not a compliance verdict.</p>")
+    if card.license is not None:
+        lic = card.license
+        p.append(f"<p>{_e(lic.statement)}</p>")
+        if lic.signals:
+            p.append("<table><tr><th>Signal</th><th>Source</th><th>Matched</th>"
+                     "<th>Context</th></tr>")
+            for s in lic.signals:
+                p.append(
+                    f"<tr><td>{_e(_license_kind_label(s['kind']))}</td>"
+                    f"<td>{_e(s['source'])}</td>"
+                    f"<td><code>{_e(s['matched'])}</code></td>"
+                    f"<td>{_e(s['excerpt'])}</td></tr>"
+                )
+            p.append("</table>")
+            if lic.signals_truncated:
+                p.append(f"<p class='note'>…and {lic.signals_truncated} more signal(s)"
+                         " not shown.</p>")
+    else:
+        p.append("<p class='note'>Not scanned — no discovered snapshot.</p>")
 
     # --- Trust radar ------------------------------------------------------------------------
     p.append("<h2>Trust Profile</h2>")

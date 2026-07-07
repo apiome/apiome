@@ -5,6 +5,32 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.101.0] - 2026-07-07
+
+### Added
+- **License & terms signal detection (#4657, V2-MCP-34.3 / MCAT-20.3)** — whether a server may be
+  used, and under what terms, is often buried in its `instructions` text; the report card now
+  surfaces it as informational findings.
+  - New pure module `app.mcp_license_signals`: a deterministic detector
+    (`detect_license_signals`) that scans a snapshot's advertised text — `instructions`, the
+    server title, and the validated branding `website_url` — for **SPDX license identifiers**
+    (curated common ids; short collision-prone ids like `MIT` matched case-sensitively so German
+    "mit" never reads as a license), **license/terms/usage-restriction phrases** ("licensed
+    under", "terms of service", "non-commercial", …), and **license/terms-pointing URLs** (an
+    ordinary link is not a signal). Signals carry a stable id, the source, the verbatim match,
+    and a bounded context excerpt; scanning and itemization are bounded
+    (`MAX_SCANNED_CHARS`/`MAX_SIGNALS`) with overflow stated, never silently dropped.
+  - **Informational only, no enforcement** — a signal means "the text mentions this", never
+    "this is the server's license"; nothing gates cataloging or invocation. When nothing matches,
+    the status is **`not_stated`** with a pre-worded statement that explicitly disclaims any "no
+    license" verdict (the AC's "absence reported as 'not stated'"), and the report names which
+    sources were actually scanned so "nothing to scan" reads differently from "nothing found".
+  - The report card (MCAT-19.1) gains a **License & Terms** section: the export route runs the
+    detector over the reported snapshot (no persistence — computed on the fly, per the pure/
+    informational scope) and `build_report_card` shapes it via the new optional
+    `license_signals` input; both the Markdown and HTML renderers itemize the signals and render
+    the careful "not stated" wording, with "Not scanned" reserved for a never-discovered endpoint.
+
 ## [1.100.0] - 2026-07-07
 
 ### Added

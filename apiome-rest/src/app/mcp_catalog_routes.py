@@ -72,6 +72,7 @@ from .mcp_insight_aggregation import (
     rank_embedding_neighbors,
 )
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
+from .mcp_license_signals import detect_license_signals
 from .mcp_report_card import (
     build_report_card,
     render_report_html,
@@ -1983,8 +1984,9 @@ async def export_mcp_endpoint_report(
     """Export a self-contained one-page report card for an endpoint version (MCAT-19.1).
 
     Serializes the same panels the in-app Insight view shows — identity, grade + score breakdown,
-    capability surface, safety posture, documentation coverage, the composite trust radar, and the
-    change-since-previous summary — into a shareable **Markdown** or **HTML** document (the HTML
+    capability surface, safety posture, documentation coverage, license & terms signals, the
+    composite trust radar, and the change-since-previous summary — into a shareable **Markdown**
+    or **HTML** document (the HTML
     carries a print stylesheet, so "PDF" is the browser's print-to-PDF of the same file). No new
     metric is computed: the route fetches the values the Insight endpoints already produce and the
     pure :mod:`app.mcp_report_card` layer renders them.
@@ -2050,6 +2052,18 @@ async def export_mcp_endpoint_report(
         str(endpoint_id), version, surface_metrics_obj, auth_posture
     )
 
+    # License & terms signals (V2-MCP-34.3) — the pure detector over the snapshot's advertised
+    # text. Runs whenever a snapshot exists: a "nothing found" result is a real section (status
+    # "not stated"), not a missing one; only a never-discovered endpoint has no report.
+    license_signals: Optional[Dict[str, Any]] = None
+    if version is not None:
+        branding = version.get("server_branding") or {}
+        license_signals = detect_license_signals(
+            instructions=version.get("instructions"),
+            server_title=version.get("server_title"),
+            website_url=branding.get("website_url") if isinstance(branding, dict) else None,
+        ).as_dict()
+
     # Change-since-previous — the stored previous → this diff rows and their severity roll-up.
     change_rows: List[Dict[str, Any]] = (
         db.get_mcp_version_changes(str(version["id"])) if version is not None else []
@@ -2063,6 +2077,7 @@ async def export_mcp_endpoint_report(
         and str(version["id"]) == str(endpoint.get("current_version_id")),
         score_report=score_report,
         surface_metrics=surface_metrics_dict,
+        license_signals=license_signals,
         trust_profile=trust_profile,
         change_rows=change_rows,
         change_severity=change_severity,
