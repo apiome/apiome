@@ -294,6 +294,124 @@ export function mcpLintCategoryBars(findings: McpLintFinding[]): McpLintCategory
     .sort((a, b) => b.count - a.count || a.category.localeCompare(b.category));
 }
 
+// --- Score breakdown (point-cost reconstruction) --------------------------------------------
+// The Lint & Score tab shows a single grade; the Insight tab's score-breakdown panel (MCAT-17.3)
+// reconstructs *how* that score was reached by replaying the scorer's model (apiome-rest
+// `mcp_score.py`) in the browser: each finding costs its severity's penalty, the penalties are
+// summed per rule and capped, and the capped per-rule penalties are grouped by rule category so an
+// evaluator can see which rule groups cost the most points. Mirroring the server constants keeps the
+// reconstruction faithful — for any current report the summed point cost equals `100 - score`.
+
+/** Penalty each finding severity contributes to the score. Mirrors apiome-rest `SEVERITY_PENALTY`. */
+export const MCP_LINT_SEVERITY_PENALTY: Record<string, number> = {
+  error: 10,
+  warning: 4,
+  info: 1,
+};
+
+/** Max total penalty a single rule may contribute. Mirrors apiome-rest `PER_RULE_PENALTY_CAP`. */
+export const MCP_LINT_PER_RULE_PENALTY_CAP = 20;
+
+/** One rule group's contribution to the score deduction. */
+export interface McpLintScoreCategory {
+  category: string;
+  label: string;
+  /** Points this group deducted from the score (per-rule penalties, each capped, then summed). */
+  points: number;
+  /** The uncapped penalty before the per-rule cap is applied; always `>= points`. */
+  rawPoints: number;
+  /** True when at least one rule in this group hit the per-rule penalty cap. */
+  capped: boolean;
+  /** How many findings fall in this group. */
+  findingCount: number;
+  /** The most severe finding severity present in the group. */
+  severity: McpLintSeverity;
+  /** Tailwind background class for the bar, keyed off {@link severity}. */
+  barClass: string;
+  /** Bar width 0-100, scaled to the costliest group so the widest bar is full. */
+  percent: number;
+}
+
+/** The full score-cost decomposition for a report's findings. */
+export interface McpLintScoreBreakdown {
+  /** Rule groups that cost points, ordered by cost descending (then category name). */
+  categories: McpLintScoreCategory[];
+  /** Total points deducted across all groups (equals `100 - reconstructedScore`). */
+  totalPenalty: number;
+  /** The 0-100 score reconstructed from the findings (`100 - totalPenalty`, clamped). */
+  reconstructedScore: number;
+}
+
+/**
+ * Reconstruct the per-category score deduction for a report's findings by replaying the scorer's
+ * model: sum each severity's penalty per rule, cap each rule's contribution at
+ * {@link MCP_LINT_PER_RULE_PENALTY_CAP}, then group the capped per-rule penalties by rule category.
+ * Because every finding of a rule shares that rule's category, summing the capped per-rule penalties
+ * by category reproduces the scorer's total deduction exactly, so `totalPenalty === 100 - score` for
+ * a current report. A category's `rawPoints` exposes the pre-cap penalty so the panel can flag when a
+ * chatty rule group's cost was capped. Returns an empty breakdown (no categories, zero penalty,
+ * score 100) when the findings cost nothing.
+ *
+ * @param findings The report's findings (any order; the result is order-independent).
+ * @returns The ordered per-group point costs, the total deduction, and the reconstructed score.
+ */
+export function mcpLintScoreBreakdown(findings: McpLintFinding[]): McpLintScoreBreakdown {
+  // Fold findings into per-rule accumulators — the scorer caps each *rule's* penalty, not each
+  // category's, so the cap has to be applied at rule granularity before rolling up by category.
+  const byRule = new Map<string, { category: string; raw: number; worst: string; count: number }>();
+  for (const finding of findings) {
+    const ruleKey = finding.rule || finding.category || 'other';
+    const entry =
+      byRule.get(ruleKey) ?? { category: finding.category || 'other', raw: 0, worst: 'info', count: 0 };
+    entry.raw += MCP_LINT_SEVERITY_PENALTY[finding.severity] ?? 0;
+    entry.count += 1;
+    if ((MCP_SEVERITY_RANK[finding.severity] ?? 0) > (MCP_SEVERITY_RANK[entry.worst] ?? 0)) {
+      entry.worst = finding.severity;
+    }
+    byRule.set(ruleKey, entry);
+  }
+
+  // Roll the capped per-rule penalties up by category.
+  const byCategory = new Map<
+    string,
+    { points: number; raw: number; worst: string; count: number; capped: boolean }
+  >();
+  for (const rule of byRule.values()) {
+    const capped = Math.min(rule.raw, MCP_LINT_PER_RULE_PENALTY_CAP);
+    const key = rule.category || 'other';
+    const entry =
+      byCategory.get(key) ?? { points: 0, raw: 0, worst: 'info', count: 0, capped: false };
+    entry.points += capped;
+    entry.raw += rule.raw;
+    entry.count += rule.count;
+    entry.capped = entry.capped || rule.raw > MCP_LINT_PER_RULE_PENALTY_CAP;
+    if ((MCP_SEVERITY_RANK[rule.worst] ?? 0) > (MCP_SEVERITY_RANK[entry.worst] ?? 0)) {
+      entry.worst = rule.worst;
+    }
+    byCategory.set(key, entry);
+  }
+
+  const maxPoints = Math.max(0, ...Array.from(byCategory.values(), (e) => e.points));
+  const categories: McpLintScoreCategory[] = Array.from(byCategory.entries())
+    .map(([category, e]) => ({
+      category,
+      label: mcpLintCategoryLabel(category),
+      points: e.points,
+      rawPoints: e.raw,
+      capped: e.capped,
+      findingCount: e.count,
+      severity: (MCP_LINT_SEVERITY_TIER[e.worst] ? e.worst : 'info') as McpLintSeverity,
+      barClass: mcpLintSeverityBarClass(e.worst),
+      percent: maxPoints > 0 ? Math.round((e.points / maxPoints) * 100) : 0,
+    }))
+    .sort((a, b) => b.points - a.points || a.category.localeCompare(b.category));
+
+  const totalPenalty = categories.reduce((sum, c) => sum + c.points, 0);
+  const reconstructedScore = Math.max(0, Math.min(100, Math.round(100 - totalPenalty)));
+
+  return { categories, totalPenalty, reconstructedScore };
+}
+
 // --- Offending-item resolution & deep-linking -----------------------------------------------
 // A finding's `path` is `<collection>.<name>` (e.g. `tools.search`); surface-level findings use
 // the bare path `surface`. We resolve the collection segment back to a capability item_type so a

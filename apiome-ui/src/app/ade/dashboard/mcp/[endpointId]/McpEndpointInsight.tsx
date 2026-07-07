@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   LineChart,
   ListTree,
+  Gauge,
   Loader2,
   Share2,
   ShieldAlert,
@@ -32,6 +33,10 @@ import { GradeSurfaceTrendPanel } from "@/app/components/ui/mcp/GradeSurfaceTren
 import { ChangedSinceDigestPanel } from "@/app/components/ui/mcp/ChangedSinceDigestPanel";
 import { DiscoveryHealthPanel } from "@/app/components/ui/mcp/DiscoveryHealthPanel";
 import { ToolLatencyPanel } from "@/app/components/ui/mcp/ToolLatencyPanel";
+import {
+  ScoreBreakdownPanel,
+  type McpScoreNavigateToItem,
+} from "@/app/components/ui/mcp/ScoreBreakdownPanel";
 import { dashboardPanelPaddedClass } from "@/app/components/ade/dashboard/dashboardScreenClasses";
 import {
   mcpVersionDetailFromPayload,
@@ -69,6 +74,10 @@ import {
   type McpDiscoveryHealth,
   type McpToolReliability,
 } from "@/app/components/ade/dashboard/mcp/mcpReliabilityUi";
+import {
+  mcpLintReportFromPayload,
+  type McpLintReport,
+} from "@/app/components/ade/dashboard/mcp/mcpLintUi";
 
 interface Props {
   endpointId: string;
@@ -93,6 +102,13 @@ interface Props {
    * works standalone (the columns simply become inert when no handler is supplied).
    */
   onOpenVersionDiff?: (versionId: string) => void;
+  /**
+   * Deep-link a lint finding (from the score-breakdown panel) to its offending capability item on the
+   * Capabilities tab. The detail page handles it by switching to the Capabilities tab and scrolling to
+   * the item (the same handler the Lint & Score tab uses). Optional so the tab still works standalone
+   * (the finding paths simply render as inert text when no handler is supplied).
+   */
+  onNavigateToItem?: McpScoreNavigateToItem;
 }
 
 /**
@@ -340,6 +356,7 @@ function InsightSection({
  * @param endpoint            The loaded endpoint record, for the profile-card header (optional).
  * @param currentInstructions The current version's server instructions, for the profile card.
  * @param onOpenVersionDiff   Deep-link a churn column to its diff in the Versions tab (optional).
+ * @param onNavigateToItem    Deep-link a lint finding to its capability item (optional).
  */
 export default function McpEndpointInsight({
   endpointId,
@@ -347,6 +364,7 @@ export default function McpEndpointInsight({
   endpoint = null,
   currentInstructions = null,
   onOpenVersionDiff,
+  onNavigateToItem,
 }: Props) {
   const [versions, setVersions] = useState<McpVersionSummary[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(true);
@@ -390,6 +408,14 @@ export default function McpEndpointInsight({
    * reliability fetch as the discovery health above — it shares that fetch's loading / error state.
    */
   const [tools, setTools] = useState<McpToolReliability | null>(null);
+  /**
+   * The selected snapshot's lint report (MCAT-17.3), fetched per-snapshot from the same lint route the
+   * Lint & Score tab uses, so the score-breakdown panel decomposes the grade of whichever version the
+   * selector shows. Re-fetched on selector change like the surface / graph / items reads.
+   */
+  const [report, setReport] = useState<McpLintReport | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
   /** Guards the one-time seen-marker advance so it fires once per load, after the digest is read. */
   const viewRecordedRef = useRef(false);
   const mountedRef = useRef(true);
@@ -556,6 +582,46 @@ export default function McpEndpointInsight({
     }
     void loadItems(selectedVersionId);
   }, [selectedVersionId, loadItems]);
+
+  // Fetch the selected snapshot's lint report (MCAT-17.3) for the score-breakdown panel. This is the
+  // same read the Lint & Score tab uses; the panel reconstructs the grade's point breakdown from the
+  // report's findings. Re-runs on selector change so switching snapshots re-scores the breakdown.
+  const loadReport = useCallback(
+    async (versionId: string) => {
+      setReportLoading(true);
+      setReportError(null);
+      try {
+        const res = await fetch(
+          `/api/mcp/endpoints/${endpointId}/versions/${encodeURIComponent(versionId)}/lint`,
+          { credentials: "include", cache: "no-store" },
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(typeof data.error === "string" ? data.error : res.statusText);
+        }
+        const parsed = mcpLintReportFromPayload(data);
+        if (!mountedRef.current) return;
+        if (!parsed) throw new Error("Malformed lint report.");
+        setReport(parsed);
+      } catch (e) {
+        if (!mountedRef.current) return;
+        setReport(null);
+        setReportError(e instanceof Error ? e.message : "Could not load the score breakdown.");
+      } finally {
+        if (mountedRef.current) setReportLoading(false);
+      }
+    },
+    [endpointId],
+  );
+
+  useEffect(() => {
+    if (!selectedVersionId) {
+      setReport(null);
+      setReportError(null);
+      return;
+    }
+    void loadReport(selectedVersionId);
+  }, [selectedVersionId, loadReport]);
 
   // Fetch the endpoint's redacted credential status once (auth is endpoint-level, not per-snapshot)
   // so the safety panel can flag destructive tools reachable with no auth. A failed/absent status
@@ -1030,6 +1096,29 @@ export default function McpEndpointInsight({
                   reliability={tools}
                   loading={healthLoading}
                   error={healthError}
+                />
+              </div>
+              {/* Score & lint breakdown (MCAT-17.3) — decomposes the selected snapshot's quality grade
+                  into the points each rule group deducted and the findings behind them, each finding
+                  deep-linking to the offending capability. Reads the same per-version lint report the
+                  Lint & Score tab uses; complements that tab rather than replacing it. */}
+              <div className={dashboardPanelPaddedClass}>
+                <div className="mb-3">
+                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+                    <Gauge className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+                    Score &amp; lint breakdown
+                  </h4>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    Where this snapshot&apos;s quality grade comes from — the points each rule group
+                    (naming, structure, annotations, security, hygiene) deducted and the findings
+                    behind them, each linking to the capability it flags.
+                  </p>
+                </div>
+                <ScoreBreakdownPanel
+                  report={report}
+                  loading={reportLoading}
+                  error={reportError}
+                  onNavigateToItem={onNavigateToItem}
                 />
               </div>
             </div>
