@@ -5640,6 +5640,73 @@ class McpInsightSurfaceResponse(BaseModel):
     metrics: McpSurfaceMetricsOut
 
 
+class McpGraphNodeOut(BaseModel):
+    """One capability rendered as a node in the relationship graph (V2-MCP-29.2)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    item_type: str
+    name: str
+    title: Optional[str] = None
+    label: str
+    degree: int = 0
+
+
+class McpGraphEdgeOut(BaseModel):
+    """One inferred relationship edge between two graph nodes (V2-MCP-29.2)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    source: str
+    target: str
+    kind: str
+    directed: bool = True
+    label: str = ""
+    signals: List[str] = Field(default_factory=list)
+
+
+class McpCapabilityGraphOut(BaseModel):
+    """The full :class:`app.mcp_capability_graph.CapabilityGraph` as a typed response body."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    nodes: List[McpGraphNodeOut] = Field(default_factory=list)
+    edges: List[McpGraphEdgeOut] = Field(default_factory=list)
+    node_count: int = 0
+    edge_count: int = 0
+    isolated_count: int = 0
+    graph_fingerprint: str
+
+
+def mcp_capability_graph_out(graph: Dict[str, Any]) -> McpCapabilityGraphOut:
+    """Build :class:`McpCapabilityGraphOut` from a ``CapabilityGraph.as_dict()`` payload.
+
+    Takes the plain dict the pure graph engine emits (rather than the dataclass) so ``models`` stays
+    free of a hard import on the graph module; the field names line up one-to-one.
+    """
+    return McpCapabilityGraphOut.model_validate(graph)
+
+
+class McpInsightGraphResponse(BaseModel):
+    """Response envelope for the capability relationship graph of one version snapshot.
+
+    Carries the resolved snapshot identity (``version_id`` / ``version_seq`` / ``version_tag`` and
+    whether it is the endpoint's ``is_current`` surface) alongside the inferred ``graph`` (nodes and
+    concrete-signal edges) for that surface.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    version_id: str
+    version_seq: int
+    version_tag: Optional[str] = None
+    is_current: bool = False
+    graph: McpCapabilityGraphOut
+
+
 class McpEvolutionPoint(BaseModel):
     """One point of an endpoint's per-version evolution series.
 

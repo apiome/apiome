@@ -1344,7 +1344,6 @@ documentation quality** — not just its list of offerings.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
-| 15.2 | Capability relationship graph | Node-link map of tools/resources/prompts + schema-derived links (resource URIs, shared types) | `mcp-insights` `frontend` | Y | N | ●●● | apiome-ui, apiome-rest |
 | 15.3 | Tool schema "shape" & complexity cards | Per-tool card: param count, required/optional, depth, enums, output-schema presence | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
 | 15.4 | Safety & annotation posture panel | Heatmap of read-only/destructive/idempotent/open-world hints × tools, cross-referenced with auth | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
 | 15.5 | Documentation & schema coverage meters | Gauges: % described, % titled, % params documented, output-schema adoption | `mcp-insights` `frontend` | Y | Y | ● | apiome-ui |
@@ -1360,7 +1359,7 @@ documentation quality** — not just its list of offerings.
 - **Dependencies / Parallelism.** After 14.4. Foundation for the Insight tab header.
 - **Technical Stack.** Next.js, MCP primitives.
 
-### MCAT-15.2 — Capability relationship graph  ·  **#4632**
+### MCAT-15.2 — Capability relationship graph  ·  **#4632**  ·  ✅ Done (apiome-rest 1.84.0, apiome-ui 0.69.0)
 - **Problem.** A flat list hides how a server's pieces relate; a graph reveals structure
   (which prompts drive which tools, which tools touch which resources).
 - **Solution / Scope.** A node-link diagram (nodes = tools/resources/resource_templates/prompts,
@@ -1369,6 +1368,13 @@ documentation quality** — not just its list of offerings.
   output types** (schema `$ref`/`title` overlap). Start with **Mermaid** (already a dependency) for
   a static graph; upgrade to an interactive force layout (14.3) if needed. Edge inference lives in a
   small backend helper so it is testable.
+- **Delivered.** Pure, deterministic edge-inference helper `app.mcp_capability_graph`
+  (`compute_capability_graph` over a `DiscoverySurface`) with the three concrete signals above
+  (precision > recall; isolated nodes retained), exposed at
+  `GET …/endpoints/{id}/insight/graph`. Front-end renders a theme-aware **Mermaid** `flowchart` in a
+  new `CapabilityGraphPanel` (pure source builder in `mcpCapabilityGraphUi`), wired into the Insight
+  tab's capability-surface section. Unit-tested on both sides (`test_mcp_capability_graph.py`,
+  route tests, `mcp-capability-graph-ui.test.ts`).
 - **Acceptance Criteria.** Graph renders for a multi-capability server; isolated nodes shown; edge
   inference documented + unit-tested; no edges invented without a concrete signal (precision > recall).
 - **Dependencies / Parallelism.** After 14.2. Parallel with 15.3–15.5. Highest-complexity item.

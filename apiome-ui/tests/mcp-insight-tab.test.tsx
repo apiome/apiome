@@ -142,8 +142,32 @@ function jsonResponse(body: unknown, ok = true, status = 200) {
 function routeFetch(handlers: {
   versions: () => Response;
   surface: (versionId: string | null) => Response;
+  graph?: (versionId: string | null) => Response;
 }) {
   (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
+    if (url.includes('/insight/graph')) {
+      const versionId = new URL(url, 'http://test').searchParams.get('version_id');
+      // The capability graph (MCAT-15.2) loads in parallel with the surface; default to an empty graph
+      // so the scaffold assertions stay focused on the surface baseline unless a test opts in.
+      return handlers.graph
+        ? handlers.graph(versionId)
+        : jsonResponse({
+            success: true,
+            endpoint_id: ENDPOINT_ID,
+            version_id: versionId ?? V3,
+            version_seq: 3,
+            version_tag: '2026-07-06',
+            is_current: true,
+            graph: {
+              nodes: [],
+              edges: [],
+              node_count: 0,
+              edge_count: 0,
+              isolated_count: 0,
+              graph_fingerprint: 'empty',
+            },
+          });
+    }
     if (url.includes('/insight/surface')) {
       const versionId = new URL(url, 'http://test').searchParams.get('version_id');
       return handlers.surface(versionId);
