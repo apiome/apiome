@@ -32,12 +32,17 @@ import { CapabilityPresenceMatrixPanel } from '@/app/components/ui/mcp/Capabilit
 import { ChangedSinceDigestPanel } from '@/app/components/ui/mcp/ChangedSinceDigestPanel';
 import { DiscoveryHealthPanel } from '@/app/components/ui/mcp/DiscoveryHealthPanel';
 import { ToolLatencyPanel } from '@/app/components/ui/mcp/ToolLatencyPanel';
+import { ScoreBreakdownPanel } from '@/app/components/ui/mcp/ScoreBreakdownPanel';
 import {
   mcpReliabilityHealthFromPayload,
   mcpToolReliabilityFromPayload,
   type McpDiscoveryHealth,
   type McpToolReliability,
 } from '@/app/components/ade/dashboard/mcp/mcpReliabilityUi';
+import {
+  mcpLintReportFromPayload,
+  type McpLintReport,
+} from '@/app/components/ade/dashboard/mcp/mcpLintUi';
 import {
   mcpDigestFromPayload,
   type McpEndpointDigest,
@@ -479,6 +484,63 @@ const TOOLS_POPULATED_SAMPLE: McpToolReliability = mcpToolReliabilityFromPayload
 /** A never-tested endpoint: no tool calls → the panel's empty state. */
 const TOOLS_EMPTY_SAMPLE: McpToolReliability = mcpToolReliabilityFromPayload({
   tools: { tools: [], latency_distribution: [], window_days: 30 },
+})!;
+
+/** One lint finding for the score-breakdown demo. */
+function lintFinding(
+  id: string,
+  path: string,
+  category: string,
+  rule: string,
+  severity: string,
+  message: string,
+) {
+  return { id, path, category, rule, severity, message };
+}
+
+/** A scored snapshot with a spread of findings across rule groups — the populated breakdown demo. */
+const REPORT_POPULATED_SAMPLE: McpLintReport = mcpLintReportFromPayload({
+  endpointId: 'ep-demo',
+  versionId: 'v-demo',
+  versionSeq: 7,
+  versionTag: '2026-07-01',
+  score: 72,
+  grade: 'C',
+  findings: [
+    lintFinding('f1', 'tools.write_record', 'security', 'security.destructive-no-auth', 'error', 'Destructive tool reachable with no authentication.'),
+    lintFinding('f2', 'tools.search', 'annotation', 'annotation.missing-read-only-hint', 'warning', 'Read-only tool is missing its readOnlyHint annotation.'),
+    lintFinding('f3', 'tools.geocode', 'annotation', 'annotation.missing-read-only-hint', 'warning', 'Read-only tool is missing its readOnlyHint annotation.'),
+    lintFinding('f4', 'tools.SearchRecords', 'naming', 'naming.item-name-not-snake-case', 'warning', 'Tool name is not snake_case.'),
+    lintFinding('f5', 'resources.data', 'structure', 'structure.missing-description', 'info', 'Resource has no description.'),
+    lintFinding('f6', 'tools.summarize', 'hygiene', 'hygiene.trailing-whitespace', 'info', 'Description has trailing whitespace.'),
+  ],
+  ruleHits: {
+    'security.destructive-no-auth': 1,
+    'annotation.missing-read-only-hint': 2,
+    'naming.item-name-not-snake-case': 1,
+    'structure.missing-description': 1,
+    'hygiene.trailing-whitespace': 1,
+  },
+  severityCounts: { error: 1, warning: 3, info: 2 },
+  reportFingerprint: 'demo-fingerprint',
+  source: 'stored',
+  scoredAt: '2026-07-01T00:00:00Z',
+})!;
+
+/** A clean snapshot: full marks, no findings → the panel's "clean bill of health" state. */
+const REPORT_CLEAN_SAMPLE: McpLintReport = mcpLintReportFromPayload({
+  endpointId: 'ep-demo',
+  versionId: 'v-clean',
+  versionSeq: 8,
+  versionTag: '2026-07-05',
+  score: 100,
+  grade: 'A',
+  findings: [],
+  ruleHits: {},
+  severityCounts: { error: 0, warning: 0, info: 0 },
+  reportFingerprint: 'demo-clean',
+  source: 'stored',
+  scoredAt: '2026-07-05T00:00:00Z',
 })!;
 
 /**
@@ -940,6 +1002,31 @@ export default function McpPrimitivesShowcase() {
           No tool calls yet
         </div>
         <ToolLatencyPanel reliability={TOOLS_EMPTY_SAMPLE} loading={false} error={null} />
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            ScoreBreakdownPanel (V2-MCP-31.3)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Where did the quality grade come from? Decomposes the version&apos;s{' '}
+            <code>mcp_version_scores.report</code> into a <strong>score reconstruction</strong>{' '}
+            headline (grade gauge + the points the findings deducted, replayed from the scorer&apos;s
+            model), <strong>points lost by rule group</strong> (a severity-tinted bar per category),
+            a <code>BarSeries</code> <strong>findings-by-severity</strong> distribution, and a
+            drill-down list of the findings — each linking to the capability it flags. Complements the
+            Lint &amp; Score tab. Has populated and clean (no findings) states.
+          </p>
+        </div>
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Populated (a C grade across five rule groups)
+        </div>
+        <ScoreBreakdownPanel report={REPORT_POPULATED_SAMPLE} loading={false} error={null} />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Clean (full marks, no findings)
+        </div>
+        <ScoreBreakdownPanel report={REPORT_CLEAN_SAMPLE} loading={false} error={null} />
       </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">

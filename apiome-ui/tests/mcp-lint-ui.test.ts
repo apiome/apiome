@@ -8,6 +8,7 @@
  */
 
 import {
+  MCP_LINT_PER_RULE_PENALTY_CAP,
   MCP_LINT_SEVERITY_TIER,
   mcpCapabilityAnchorId,
   mcpLintCategoryBars,
@@ -16,6 +17,7 @@ import {
   mcpLintFindingTier,
   mcpLintGroupByTier,
   mcpLintReportFromPayload,
+  mcpLintScoreBreakdown,
   mcpLintSeverityBarClass,
   mcpLintTierCounts,
   mcpLintTierMeta,
@@ -224,5 +226,95 @@ describe('mcpCapabilityAnchorId', () => {
   it('collapses non-id-safe characters in the name to hyphens', () => {
     expect(mcpCapabilityAnchorId('resource', 'file://path to/x')).toBe('mcp-cap-resource-file-path-to-x');
     expect(mcpCapabilityAnchorId('tool', '')).toBe('mcp-cap-tool-unnamed');
+  });
+});
+
+describe('mcpLintScoreBreakdown', () => {
+  it('reconstructs the score faithfully from the findings (100 − Σ penalties)', () => {
+    // 1 error (10) + 2 warnings (4 each) + 1 info (1), each on a distinct rule so none is capped.
+    const findings = [
+      makeFinding({ id: '1', category: 'security', rule: 'security.a', severity: 'error' }),
+      makeFinding({ id: '2', category: 'naming', rule: 'naming.a', severity: 'warning' }),
+      makeFinding({ id: '3', category: 'annotation', rule: 'annotation.a', severity: 'warning' }),
+      makeFinding({ id: '4', category: 'hygiene', rule: 'hygiene.a', severity: 'info' }),
+    ];
+    const breakdown = mcpLintScoreBreakdown(findings);
+    expect(breakdown.totalPenalty).toBe(10 + 4 + 4 + 1); // 19
+    expect(breakdown.reconstructedScore).toBe(100 - 19); // 81
+    // The per-category points sum to the total deduction.
+    const summed = breakdown.categories.reduce((s, c) => s + c.points, 0);
+    expect(summed).toBe(breakdown.totalPenalty);
+  });
+
+  it('groups the point cost by category and orders by cost descending', () => {
+    const findings = [
+      makeFinding({ id: '1', category: 'security', rule: 'security.a', severity: 'error' }), // 10
+      makeFinding({ id: '2', category: 'naming', rule: 'naming.a', severity: 'warning' }), // 4
+      makeFinding({ id: '3', category: 'naming', rule: 'naming.b', severity: 'warning' }), // 4 → naming = 8
+    ];
+    const breakdown = mcpLintScoreBreakdown(findings);
+    expect(breakdown.categories.map((c) => c.category)).toEqual(['security', 'naming']);
+    const naming = breakdown.categories.find((c) => c.category === 'naming')!;
+    expect(naming.points).toBe(8);
+    expect(naming.findingCount).toBe(2);
+    expect(naming.label).toBe('Naming');
+    // The costliest category is full width; the others scale to it.
+    expect(breakdown.categories[0].percent).toBe(100);
+  });
+
+  it('caps a single chatty rule at the per-rule penalty cap and flags it', () => {
+    // 5 errors on ONE rule = 50 raw, capped to 20.
+    const findings = Array.from({ length: 5 }, (_, i) =>
+      makeFinding({ id: `e${i}`, category: 'structure', rule: 'structure.dupe', severity: 'error' }),
+    );
+    const breakdown = mcpLintScoreBreakdown(findings);
+    const structure = breakdown.categories[0];
+    expect(structure.rawPoints).toBe(50);
+    expect(structure.points).toBe(MCP_LINT_PER_RULE_PENALTY_CAP); // 20
+    expect(structure.capped).toBe(true);
+    expect(breakdown.totalPenalty).toBe(20);
+    expect(breakdown.reconstructedScore).toBe(80);
+  });
+
+  it('applies the cap per rule, not per category', () => {
+    // Two rules in one category, each 30 raw → each capped to 20 → category = 40.
+    const findings = [
+      ...Array.from({ length: 3 }, (_, i) =>
+        makeFinding({ id: `a${i}`, category: 'security', rule: 'security.a', severity: 'error' }),
+      ),
+      ...Array.from({ length: 3 }, (_, i) =>
+        makeFinding({ id: `b${i}`, category: 'security', rule: 'security.b', severity: 'error' }),
+      ),
+    ];
+    const breakdown = mcpLintScoreBreakdown(findings);
+    expect(breakdown.categories[0].points).toBe(40); // 20 + 20, not min(60, 20)
+    expect(breakdown.categories[0].rawPoints).toBe(60);
+  });
+
+  it('clamps the reconstructed score to zero when deductions exceed 100', () => {
+    // Ten distinct error rules → 100 penalty; add one more → still clamps at 0, never negative.
+    const findings = Array.from({ length: 11 }, (_, i) =>
+      makeFinding({ id: `r${i}`, category: 'security', rule: `security.r${i}`, severity: 'error' }),
+    );
+    const breakdown = mcpLintScoreBreakdown(findings);
+    expect(breakdown.totalPenalty).toBe(110);
+    expect(breakdown.reconstructedScore).toBe(0);
+  });
+
+  it('returns an empty breakdown (score 100) for a clean report', () => {
+    const breakdown = mcpLintScoreBreakdown([]);
+    expect(breakdown.categories).toEqual([]);
+    expect(breakdown.totalPenalty).toBe(0);
+    expect(breakdown.reconstructedScore).toBe(100);
+  });
+
+  it('degrades gracefully for legacy findings missing a category', () => {
+    const breakdown = mcpLintScoreBreakdown([
+      makeFinding({ id: '1', category: '', rule: '', severity: 'warning' }),
+    ]);
+    expect(breakdown.categories).toHaveLength(1);
+    expect(breakdown.categories[0].category).toBe('other');
+    expect(breakdown.categories[0].label).toBe('Other');
+    expect(breakdown.categories[0].points).toBe(4);
   });
 });

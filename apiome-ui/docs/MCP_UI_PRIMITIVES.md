@@ -15,7 +15,7 @@ keeps a central dark theme (10.10) addable in one place.
 | Layer | Path | What |
 | --- | --- | --- |
 | Pure helpers (React-free, unit-tested) | `src/app/components/ade/dashboard/mcp/mcpUiPrimitives.ts` | Grade styles, badge-tone resolvers, health/recency, tab definitions |
-| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `CapabilityPresenceMatrixPanel`, `GradeSurfaceTrendPanel`, `ChangedSinceDigestPanel`, `DiscoveryHealthPanel`, `ToolLatencyPanel`, `FindingSeverity`, `DetailTabs` |
+| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `CapabilityPresenceMatrixPanel`, `GradeSurfaceTrendPanel`, `ChangedSinceDigestPanel`, `DiscoveryHealthPanel`, `ToolLatencyPanel`, `ScoreBreakdownPanel`, `FindingSeverity`, `DetailTabs` |
 | Shared states | `src/app/components/ui/{EmptyState,LoadingState,ErrorState}.tsx` | empty / loading / error placeholders |
 | Barrel | `@/app/components/ui/mcp` (also re-exported from `@/app/components/ui`) | one import for all MCP primitives |
 
@@ -298,6 +298,30 @@ discovery health panel. All payload-shaping, ranking, and formatting live in the
 
 ```tsx
 <ToolLatencyPanel reliability={tools} loading={loading} error={error} />
+```
+
+### `<ScoreBreakdownPanel>` (V2-MCP-31.3 / MCAT-17.3)
+
+The **score & lint breakdown panel** in the endpoint **Insight** tab's *Reliability & trust* section —
+"where did this server's quality grade come from?". The Lint & Score tab (MCAT-10.4) shows the single
+grade; this decomposes it. From the version's `mcp_version_scores.report` (fetched through the same
+per-version lint route the Lint tab uses) it renders a **score reconstruction** headline (the grade
+gauge plus the point total the findings deducted, replayed from the scorer's model so the breakdown
+agrees with the grade), **points lost by rule group** (a severity-tinted bar per rule category —
+naming / structure / annotations / security / hygiene — showing which groups cost the most, with a `*`
+when a chatty rule's cost was capped), a `BarSeries` **findings-by-severity** distribution, and a
+drill-down list of the findings grouped by severity, each linking to the offending capability item. It
+owns its loading / error / empty states — an unscored snapshot shows an "unavailable" state and a clean
+report (no findings) shows a "clean bill of health" state; a legacy report whose stored grade predates
+the current scorer still renders (the stored grade leads).
+
+The panel is presentational: the Insight tab fetches the selected snapshot's lint report and re-fetches
+on selector change. All arithmetic lives in the React-free, unit-tested `mcpLintUi` module
+(`mcpLintScoreBreakdown`, `mcpLintTierCounts`, `mcpLintGroupByTier`, `mcpLintFindingTarget`), so the
+bars, the tallies, and the reconstructed score can never disagree with the findings the list shows.
+
+```tsx
+<ScoreBreakdownPanel report={report} loading={loading} error={error} onNavigateToItem={navigateToItem} />
 ```
 
 ### `<FindingSeverity>`

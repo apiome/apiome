@@ -679,6 +679,7 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
                       endpoint={endpoint}
                       currentInstructions={version?.instructions ?? null}
                       onOpenVersionDiff={openVersionDiff}
+                      onNavigateToItem={navigateToItem}
                     />
                   </DetailTabsContent>
 

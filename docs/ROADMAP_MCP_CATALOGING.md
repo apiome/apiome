@@ -1529,7 +1529,7 @@ test-invocation logs plus the score report. **Supersedes stub 13.3.**
 |---|---|---|---|:--:|:--:|---|---|
 | 17.1 ✅ | Discovery health & availability timeline | Success/failure/backoff/quarantine over time from discovery jobs | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui, apiome-rest |
 | 17.2 ✅ | Tool latency & error-rate panel | p50/p95/p99 latency + error ratio per tool from test invocations | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui, apiome-rest |
-| 17.3 | Score & lint breakdown visualization | `mcp_version_scores.report` → category bars + findings-by-severity | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
+| 17.3 ✅ | Score & lint breakdown visualization | `mcp_version_scores.report` → category bars + findings-by-severity | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
 | 17.4 | Composite trust profile radar | Radar across quality/safety/docs/stability/responsiveness | `mcp-insights` `frontend` `backend` | N | N | ●● | apiome-ui, apiome-rest |
 
 ### MCAT-17.1 — Discovery health & availability timeline  ·  **#4641**  ·  ✅ Done (apiome-rest 1.87.0, apiome-ui 0.77.0)
@@ -1553,7 +1553,7 @@ test-invocation logs plus the score report. **Supersedes stub 13.3.**
 - **Dependencies / Parallelism.** After 14.2/14.3/14.4. Parallel in epic.
 - **Technical Stack.** Next.js, BarSeries/Sparkline; asyncpg percentile query.
 
-### MCAT-17.3 — Score & lint breakdown visualization  ·  **#4643**
+### MCAT-17.3 — Score & lint breakdown visualization  ·  **#4643**  ·  ✅ Done (apiome-ui 0.79.0)
 - **Problem.** The Lint & Score tab shows a single grade; the **`report` JSONB** already holds the
   category/finding breakdown behind it, unvisualized.
 - **Solution / Scope.** Parse `mcp_version_scores.report` into category bars (which rule groups cost

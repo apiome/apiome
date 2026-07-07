@@ -220,6 +220,7 @@ function routeFetch(handlers: {
   digest?: () => Response;
   views?: () => Response;
   reliability?: () => Response;
+  lint?: (versionId: string) => Response;
 }) {
   (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
     if (url.includes('/insight/digest')) {
@@ -329,6 +330,28 @@ function routeFetch(handlers: {
     if (url.includes('/credentials')) {
       // Auth is endpoint-level; default to anonymous so a destructive tool with no auth would flag.
       return handlers.credentials ? handlers.credentials() : jsonResponse(credentialsPayload('none'));
+    }
+    if (url.includes('/lint')) {
+      // Version lint report (`/versions/{id}/lint`) — the score-breakdown panel (MCAT-17.3). Default
+      // to a clean, fully-scored report so tests that don't care render its "clean bill" state.
+      const versionId = url.split('/versions/')[1].split('/')[0];
+      return handlers.lint
+        ? handlers.lint(versionId)
+        : jsonResponse({
+            success: true,
+            endpointId: ENDPOINT_ID,
+            versionId,
+            versionSeq: 3,
+            versionTag: '2026-07-06',
+            score: 100,
+            grade: 'A',
+            findings: [],
+            ruleHits: {},
+            severityCounts: { error: 0, warning: 0, info: 0 },
+            reportFingerprint: 'clean',
+            source: 'stored',
+            scoredAt: '2026-07-06T00:00:00Z',
+          });
     }
     if (url.includes('/versions/')) {
       // Version *detail* (`/versions/{id}`) — the safety panel's per-tool items. Default: no items.
@@ -998,5 +1021,58 @@ describe('McpEndpointInsight — scaffold', () => {
     // The flakiest ranking surfaces the fully-failing tool.
     expect(screen.getByText('Flakiest tools')).toBeInTheDocument();
     expect(screen.getByText('Slowest tools')).toBeInTheDocument();
+  });
+
+  it('renders the score & lint breakdown from the selected snapshot lint report (MCAT-17.3)', async () => {
+    const onNavigateToItem = jest.fn();
+    routeFetch({
+      versions: () => jsonResponse(versionsPayload()),
+      surface: (vid) => jsonResponse(surfacePayload(vid ?? V3, 3, 4)),
+      lint: (versionId) =>
+        jsonResponse({
+          success: true,
+          endpointId: ENDPOINT_ID,
+          versionId,
+          versionSeq: 3,
+          versionTag: '2026-07-06',
+          score: 86,
+          grade: 'B',
+          findings: [
+            { id: 'f1', path: 'tools.write_record', category: 'security', rule: 'security.no-auth', severity: 'error', message: 'Destructive tool reachable with no auth.' },
+            { id: 'f2', path: 'tools.search', category: 'annotation', rule: 'annotation.hint', severity: 'warning', message: 'Missing readOnlyHint.' },
+          ],
+          ruleHits: { 'security.no-auth': 1, 'annotation.hint': 1 },
+          severityCounts: { error: 1, warning: 1, info: 0 },
+          reportFingerprint: 'fp',
+          source: 'stored',
+          scoredAt: '2026-07-06T00:00:00Z',
+        }),
+    });
+
+    render(
+      <McpEndpointInsight
+        endpointId={ENDPOINT_ID}
+        currentVersionId={V3}
+        onNavigateToItem={onNavigateToItem}
+      />,
+    );
+
+    // The reliability section renders the live score-breakdown panel from the version's lint report.
+    await waitFor(() =>
+      expect(screen.getByText('Score & lint breakdown')).toBeInTheDocument(),
+    );
+    // 10 (error) + 4 (warning) = 14 points deducted across 2 rule groups; security leads.
+    await waitFor(() => expect(screen.getByText('−14')).toBeInTheDocument());
+    expect(screen.getByText('Points lost by rule group')).toBeInTheDocument();
+    expect(screen.getByText('Security')).toBeInTheDocument();
+    // The lint report was fetched for the selected snapshot.
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining(`/versions/${V3}/lint`),
+      expect.anything(),
+    );
+
+    // A finding deep-links to its offending capability item.
+    fireEvent.click(screen.getByRole('button', { name: /tools\.write_record/i }));
+    expect(onNavigateToItem).toHaveBeenCalledWith('tool', 'write_record');
   });
 });
