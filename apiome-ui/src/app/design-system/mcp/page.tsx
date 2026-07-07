@@ -33,6 +33,7 @@ import { ChangedSinceDigestPanel } from '@/app/components/ui/mcp/ChangedSinceDig
 import { DiscoveryHealthPanel } from '@/app/components/ui/mcp/DiscoveryHealthPanel';
 import { ToolLatencyPanel } from '@/app/components/ui/mcp/ToolLatencyPanel';
 import { ScoreBreakdownPanel } from '@/app/components/ui/mcp/ScoreBreakdownPanel';
+import { TrustProfilePanel } from '@/app/components/ui/mcp/TrustProfilePanel';
 import {
   mcpReliabilityHealthFromPayload,
   mcpToolReliabilityFromPayload,
@@ -43,6 +44,10 @@ import {
   mcpLintReportFromPayload,
   type McpLintReport,
 } from '@/app/components/ade/dashboard/mcp/mcpLintUi';
+import {
+  mcpTrustProfileFromPayload,
+  type McpTrustProfile,
+} from '@/app/components/ade/dashboard/mcp/mcpTrustUi';
 import {
   mcpDigestFromPayload,
   type McpEndpointDigest,
@@ -544,6 +549,50 @@ const REPORT_CLEAN_SAMPLE: McpLintReport = mcpLintReportFromPayload({
 })!;
 
 /**
+ * A partially-measured composite trust profile (V2-MCP-31.4): three axes scored across the bands
+ * (a strong quality, a fair safety, a weak documentation) and two **gaps** — a never-changed server
+ * (stability) and a never-tested one (responsiveness) — that render as explicit gaps, not zeros.
+ */
+const TRUST_POPULATED_SAMPLE: McpTrustProfile = mcpTrustProfileFromPayload({
+  success: true,
+  endpoint_id: 'ep-demo',
+  version_id: 'v-demo',
+  auth_type: 'none',
+  profile: {
+    axes: [
+      { key: 'quality', label: 'Quality', value: 88, available: true, detail: 'Grade B · 88/100', methodology: "The server's latest automated quality grade (0–100) from the MCP lint scorer." },
+      { key: 'safety', label: 'Safety', value: 62, available: true, detail: '3/5 tools annotated · 1 destructive with no auth', methodology: 'Half from behavioural-annotation coverage, half from guardedness against destructive tools reachable with no auth.' },
+      { key: 'documentation', label: 'Documentation', value: 40, available: true, detail: '40% described · 20% titled', methodology: 'The average of how documented the surface is: descriptions, titles, and tool-parameter docs.' },
+      { key: 'stability', label: 'Stability', value: null, available: false, detail: 'Not enough history', methodology: 'The share of surface changes across snapshots that were non-breaking. Needs at least two snapshots.' },
+      { key: 'responsiveness', label: 'Responsiveness', value: null, available: false, detail: 'Never tested', methodology: 'Half from the test-invocation success rate, half from p95 latency. Needs the server to have been tested.' },
+    ],
+    overall: 63,
+    available_count: 3,
+    axis_count: 5,
+  },
+})!;
+
+/** A never-measured endpoint: every axis is a gap → the panel's "not enough signal yet" state. */
+const TRUST_EMPTY_SAMPLE: McpTrustProfile = mcpTrustProfileFromPayload({
+  success: true,
+  endpoint_id: 'ep-demo',
+  version_id: null,
+  auth_type: null,
+  profile: {
+    axes: [
+      { key: 'quality', label: 'Quality', value: null, available: false, detail: 'Not yet scored', methodology: 'The server’s latest automated quality grade.' },
+      { key: 'safety', label: 'Safety', value: null, available: false, detail: 'No tools to assess', methodology: 'Annotation coverage crossed with the destructive/auth posture.' },
+      { key: 'documentation', label: 'Documentation', value: null, available: false, detail: 'No capabilities to assess', methodology: 'How documented the surface is.' },
+      { key: 'stability', label: 'Stability', value: null, available: false, detail: 'Not enough history', methodology: 'The non-breaking-change rate across snapshots.' },
+      { key: 'responsiveness', label: 'Responsiveness', value: null, available: false, detail: 'Never tested', methodology: 'Test-invocation success rate + latency.' },
+    ],
+    overall: null,
+    available_count: 0,
+    axis_count: 5,
+  },
+})!;
+
+/**
  * A five-snapshot series for the GradeSurfaceTrendPanel demo (V2-MCP-30.4): a rising score, one
  * **unscored** snapshot (v3 — its score gaps, is not zeroed), and one breaking release (v4).
  */
@@ -1027,6 +1076,32 @@ export default function McpPrimitivesShowcase() {
           Clean (full marks, no findings)
         </div>
         <ScoreBreakdownPanel report={REPORT_CLEAN_SAMPLE} loading={false} error={null} />
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            TrustProfilePanel (V2-MCP-31.4)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            The capstone of the Insight tab&apos;s <em>Reliability &amp; trust</em> section: from{' '}
+            <code>insight/trust</code> it collapses the scattered signals into one five-axis{' '}
+            <code>Radar</code> — <strong>quality</strong>, <strong>safety</strong>,{' '}
+            <strong>documentation</strong>, <strong>stability</strong>, and{' '}
+            <strong>responsiveness</strong> — with an overall composite headline, a per-axis
+            breakdown (each axis&apos;s <strong>methodology on hover</strong>), and unmeasured axes
+            shown as explicit <strong>gaps</strong> rather than zeros. An explicitly heuristic
+            composite, not an official rating. Has populated (with gaps) and not-enough-signal states.
+          </p>
+        </div>
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Populated (three axes scored, two gaps)
+        </div>
+        <TrustProfilePanel profile={TRUST_POPULATED_SAMPLE} loading={false} error={null} />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Nothing measured yet
+        </div>
+        <TrustProfilePanel profile={TRUST_EMPTY_SAMPLE} loading={false} error={null} />
       </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">

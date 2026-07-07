@@ -1530,7 +1530,7 @@ test-invocation logs plus the score report. **Supersedes stub 13.3.**
 | 17.1 ✅ | Discovery health & availability timeline | Success/failure/backoff/quarantine over time from discovery jobs | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui, apiome-rest |
 | 17.2 ✅ | Tool latency & error-rate panel | p50/p95/p99 latency + error ratio per tool from test invocations | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui, apiome-rest |
 | 17.3 ✅ | Score & lint breakdown visualization | `mcp_version_scores.report` → category bars + findings-by-severity | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
-| 17.4 | Composite trust profile radar | Radar across quality/safety/docs/stability/responsiveness | `mcp-insights` `frontend` `backend` | N | N | ●● | apiome-ui, apiome-rest |
+| 17.4 ✅ | Composite trust profile radar | Radar across quality/safety/docs/stability/responsiveness | `mcp-insights` `frontend` `backend` | N | N | ●● | apiome-ui, apiome-rest |
 
 ### MCAT-17.1 — Discovery health & availability timeline  ·  **#4641**  ·  ✅ Done (apiome-rest 1.87.0, apiome-ui 0.77.0)
 - **Problem.** Discovery already records outcomes (`last_discovery_status`, per-job `state`/`error`,
@@ -1564,7 +1564,7 @@ test-invocation logs plus the score report. **Supersedes stub 13.3.**
 - **Dependencies / Parallelism.** After 14.3/14.4. Parallel in epic. Reuses `FindingSeverity` chip.
 - **Technical Stack.** Next.js, BarSeries; existing lint primitives.
 
-### MCAT-17.4 — Composite trust profile radar  ·  **#4644**
+### MCAT-17.4 — Composite trust profile radar  ·  **#4644**  ·  ✅ Done (apiome-rest 1.89.0, apiome-ui 0.80.0)
 - **Problem.** The many signals above are scattered; evaluators want one synthesized "trust" glance.
 - **Solution / Scope.** A **radar** across five normalized axes — **quality** (grade),
   **safety** (annotation coverage + destructive/auth posture, 15.4), **documentation** (coverage,

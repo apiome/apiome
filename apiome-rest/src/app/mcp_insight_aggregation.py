@@ -27,6 +27,9 @@ The module provides:
 * :func:`compute_tool_reliability` — per-tool p50/p95/p99 latency + error rate, a latency
   distribution, and the endpoint-wide totals from ``mcp_test_invocations`` tool rows over a
   recent window (V2-MCP-31.2 / MCAT-17.2).
+* :func:`compute_trust_profile` — the five-axis composite "trust profile" (quality, safety,
+  documentation, stability, responsiveness), each normalized to 0-100 (or an explicit *gap* when
+  its input is missing), synthesized from the metric layers above (V2-MCP-31.4 / MCAT-17.4).
 
 Every function is total: an empty sample yields zero counts and ``None`` statistics rather than
 raising or dividing by zero, so an endpoint with no history produces an empty (not a 500) series.
@@ -36,7 +39,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 # --- Percentile / latency primitives --------------------------------------------------------
 
@@ -639,4 +642,328 @@ def compute_tool_reliability(
         error_rate=round(total_errors / total_calls, 4) if total_calls else 0.0,
         latency_distribution=_bucket_latencies(all_latencies),
         window_days=window_days,
+    )
+
+
+# --- Composite trust profile (V2-MCP-31.4 / MCAT-17.4) --------------------------------------
+#
+# The capstone of the single-server insight view: a radar across five normalized 0-100 axes that
+# synthesizes the scattered reliability/safety signals into one "trust" glance. It is deliberately a
+# *heuristic composite* — a synthesized glance, not an official rating — and the panel labels it so.
+#
+# Each axis reads one already-computed metric layer:
+#   * quality        — the snapshot's stored lint score (:mod:`app.mcp_score`).
+#   * safety         — behavioural-annotation coverage (:mod:`app.mcp_surface_metrics`) crossed with
+#                      the endpoint's auth posture and its destructive-tool count.
+#   * documentation  — documentation coverage (:mod:`app.mcp_surface_metrics`).
+#   * stability      — the breaking-change rate across the evolution series' snapshot transitions.
+#   * responsiveness — test-invocation error rate + p95 latency (:func:`compute_invocation_reliability`).
+#
+# The single hard rule (the ticket's acceptance criterion): a *missing* input renders as an explicit
+# gap (``value is None``, ``available is False``), never a zero — a never-tested server has no
+# responsiveness score, not a responsiveness score of zero.
+
+#: The safety axis is half behavioural-annotation transparency, half guardedness against
+#: destructive-and-unauthenticated tools.
+_SAFETY_TRANSPARENCY_WEIGHT = 0.5
+_SAFETY_GUARDEDNESS_WEIGHT = 0.5
+
+#: The responsiveness axis blends the invocation success rate with a p95-latency score, evenly.
+_RESPONSIVENESS_RELIABILITY_WEIGHT = 0.5
+_RESPONSIVENESS_LATENCY_WEIGHT = 0.5
+
+#: p95 latency at or below the floor scores a full latency component; at or above the ceiling it
+#: scores zero, interpolating linearly between. Chosen so a snappy tool (≤200 ms) is "full marks"
+#: and a multi-second one (≥5 s) is "poor".
+RESPONSIVENESS_LATENCY_FLOOR_MS = 200.0
+RESPONSIVENESS_LATENCY_CEILING_MS = 5000.0
+
+
+def _clamp_score(value: float) -> float:
+    """Clamp a raw axis value into ``[0, 100]`` and round to one decimal (deterministic output)."""
+    return round(max(0.0, min(100.0, value)), 1)
+
+
+def mcp_auth_posture(auth_type: Optional[str]) -> str:
+    """Resolve an endpoint ``auth_type`` to a coarse posture: ``anonymous`` or ``authenticated``.
+
+    Mirrors the UI ``mcpSafetyAuth`` bands over what the server can actually know: a blank or
+    ``none`` auth type is ``anonymous`` (the server is reachable with no credential); any other
+    scheme (``bearer`` / ``header`` / ``oauth2`` / ``env``) is ``authenticated``. The UI's third
+    ``unknown`` band models a *failed credential fetch* and has no server-side analogue — the
+    aggregator always reads the stored credential, so the posture is never unknown here.
+
+    Args:
+        auth_type: The endpoint's configured auth scheme, or ``None`` when it has no credential.
+
+    Returns:
+        ``"anonymous"`` for a no-auth surface, else ``"authenticated"``.
+    """
+    value = (auth_type or "").strip().lower()
+    return "anonymous" if value in ("", "none") else "authenticated"
+
+
+def _latency_score(p95_ms: float) -> float:
+    """Map a p95 latency (ms) to a 0-100 responsiveness component (fast → 100, slow → 0).
+
+    A p95 at or below :data:`RESPONSIVENESS_LATENCY_FLOOR_MS` scores ``100.0``; at or above
+    :data:`RESPONSIVENESS_LATENCY_CEILING_MS` scores ``0.0``; between the two it interpolates
+    linearly. The mapping is monotone and total (no divide-by-zero, since floor < ceiling).
+    """
+    if p95_ms <= RESPONSIVENESS_LATENCY_FLOOR_MS:
+        return 100.0
+    if p95_ms >= RESPONSIVENESS_LATENCY_CEILING_MS:
+        return 0.0
+    span = RESPONSIVENESS_LATENCY_CEILING_MS - RESPONSIVENESS_LATENCY_FLOOR_MS
+    return 100.0 * (RESPONSIVENESS_LATENCY_CEILING_MS - p95_ms) / span
+
+
+@dataclass(frozen=True)
+class TrustAxis:
+    """One normalized 0-100 axis of the composite trust profile.
+
+    ``value`` is the axis score in ``[0, 100]`` when ``available`` is true, or ``None`` when the
+    input the axis needs is missing — a never-scored server has no quality axis, a never-tested one
+    has no responsiveness axis, and so on. A missing axis is an explicit *gap* the radar renders as
+    such, never a zero (which would read as "measured, and bad"). ``detail`` is the always-shown
+    one-line basis for the score; ``methodology`` is the longer "how this is computed" text the panel
+    reveals on hover (the ticket's "methodology shown on hover").
+    """
+
+    key: str
+    label: str
+    value: Optional[float]
+    available: bool
+    detail: str
+    methodology: str
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "key": self.key,
+            "label": self.label,
+            "value": self.value,
+            "available": self.available,
+            "detail": self.detail,
+            "methodology": self.methodology,
+        }
+
+
+@dataclass(frozen=True)
+class TrustProfile:
+    """The five-axis composite trust profile for one MCP endpoint (a heuristic, not a rating).
+
+    ``axes`` are the five normalized dimensions in canonical (clockwise) radar order: quality,
+    safety, documentation, stability, responsiveness. ``overall`` is the mean of the *available*
+    axis values (the gaps are excluded, so a partially-measured server is not dragged down by the
+    signals it is simply missing), or ``None`` when no axis could be computed at all.
+    ``available_count`` / ``axis_count`` let the panel say "3 of 5 signals measured".
+    """
+
+    axes: List[TrustAxis]
+    overall: Optional[float]
+    available_count: int
+    axis_count: int
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "axes": [axis.as_dict() for axis in self.axes],
+            "overall": self.overall,
+            "available_count": self.available_count,
+            "axis_count": self.axis_count,
+        }
+
+
+def _quality_axis(score: Optional[float], grade: Optional[str]) -> TrustAxis:
+    """Build the quality axis from the snapshot's stored lint score (a gap when never scored)."""
+    methodology = (
+        "The server's latest automated quality grade (0–100) from the MCP lint scorer, which "
+        "checks naming, structure, annotations, security, and hygiene."
+    )
+    if score is None:
+        return TrustAxis("quality", "Quality", None, False, "Not yet scored", methodology)
+    value = _clamp_score(float(score))
+    shown = int(round(value))
+    detail = f"Grade {grade} · {shown}/100" if grade else f"{shown}/100"
+    return TrustAxis("quality", "Quality", value, True, detail, methodology)
+
+
+def _safety_axis(
+    annotation_coverage: Mapping[str, Any], destructive_tool_count: int, auth_posture: str
+) -> TrustAxis:
+    """Build the safety axis from annotation coverage crossed with the destructive/auth posture.
+
+    Half the score is *transparency* — the share of tools that declare any behavioural hint — and
+    half is *guardedness* — full unless destructive tools are reachable with no auth, in which case
+    it drops in proportion to how many. Authenticated (or any non-anonymous) access never triggers
+    the unguarded-destructive penalty, mirroring the UI's conservative cross-reference. A surface
+    with no tools has nothing to assess, so the axis is a gap rather than a misleading score.
+    """
+    methodology = (
+        "Half from behavioural-annotation coverage (the share of tools that declare their "
+        "read-only / destructive / idempotent / open-world hints), half from guardedness — "
+        "destructive tools reachable with no auth lower the score. Required auth never triggers "
+        "the unguarded-destructive penalty."
+    )
+    tool_count = int(annotation_coverage.get("tool_count", 0) or 0)
+    if tool_count <= 0:
+        return TrustAxis("safety", "Safety", None, False, "No tools to assess", methodology)
+
+    annotated = int(annotation_coverage.get("annotated_tools", 0) or 0)
+    transparency = annotated / tool_count
+    if auth_posture == "anonymous":
+        guardedness = 1.0 - (max(0, destructive_tool_count) / tool_count)
+    else:
+        guardedness = 1.0
+    value = _clamp_score(
+        100.0
+        * (transparency * _SAFETY_TRANSPARENCY_WEIGHT + guardedness * _SAFETY_GUARDEDNESS_WEIGHT)
+    )
+    if auth_posture == "anonymous" and destructive_tool_count > 0:
+        detail = (
+            f"{annotated}/{tool_count} tools annotated · "
+            f"{destructive_tool_count} destructive with no auth"
+        )
+    else:
+        detail = f"{annotated}/{tool_count} tools annotated · {auth_posture}"
+    return TrustAxis("safety", "Safety", value, True, detail, methodology)
+
+
+def _documentation_axis(documentation_coverage: Mapping[str, Any]) -> TrustAxis:
+    """Build the documentation axis from item- and parameter-level documentation coverage.
+
+    Averages the item-description and item-title coverage percentages, plus — only when the tools
+    take parameters — the tool-parameter documentation percentage, so a parameter-less resource
+    server is not unfairly dragged down by a vacuous 0% parameter-doc figure. A surface with no
+    capabilities is a gap.
+    """
+    methodology = (
+        "The average of how documented the surface is: the share of items with a description, the "
+        "share with a title, and (when the tools take parameters) the share of tool parameters "
+        "that are documented."
+    )
+    item_count = int(documentation_coverage.get("item_count", 0) or 0)
+    if item_count <= 0:
+        return TrustAxis(
+            "documentation", "Documentation", None, False, "No capabilities to assess", methodology
+        )
+
+    description_pct = float(documentation_coverage.get("description_pct", 0.0) or 0.0)
+    title_pct = float(documentation_coverage.get("title_pct", 0.0) or 0.0)
+    components = [description_pct, title_pct]
+    if int(documentation_coverage.get("tool_param_count", 0) or 0) > 0:
+        components.append(float(documentation_coverage.get("tool_param_description_pct", 0.0) or 0.0))
+    value = _clamp_score(sum(components) / len(components))
+    detail = f"{round(description_pct)}% described · {round(title_pct)}% titled"
+    return TrustAxis("documentation", "Documentation", value, True, detail, methodology)
+
+
+def _stability_axis(change_severities: Sequence[Mapping[str, Any]]) -> TrustAxis:
+    """Build the stability axis from the breaking-change rate across snapshot transitions.
+
+    Each entry in ``change_severities`` is the ``{breaking, additive, review, total}`` classification
+    of one snapshot transition (V2-MCP-30.3). Stability is the share of transitions that carried no
+    breaking change; a single breaking release in a short history therefore weighs heavily, as it
+    should. Fewer than one transition (a brand-new endpoint with one snapshot) is a gap — there is no
+    change history to judge yet.
+    """
+    methodology = (
+        "The share of surface changes across discovery snapshots that were non-breaking. Breaking "
+        "changes (removed or incompatibly-changed capabilities) lower stability; purely additive "
+        "changes do not. Needs at least two snapshots to assess."
+    )
+    total = len(change_severities)
+    if total <= 0:
+        return TrustAxis("stability", "Stability", None, False, "Not enough history", methodology)
+
+    breaking = sum(1 for sev in change_severities if int(sev.get("breaking", 0) or 0) > 0)
+    value = _clamp_score(100.0 * (1.0 - breaking / total))
+    noun = "change" if total == 1 else "changes"
+    detail = f"{total - breaking}/{total} snapshot {noun} non-breaking"
+    return TrustAxis("stability", "Stability", value, True, detail, methodology)
+
+
+def _responsiveness_axis(invocation: Mapping[str, Any]) -> TrustAxis:
+    """Build the responsiveness axis from test-invocation error rate + p95 latency (a gap if never tested).
+
+    Half the score is the invocation success rate (``1 - error_rate``); half is a p95-latency score
+    (see :func:`_latency_score`). When no call recorded a latency the latency half is dropped and the
+    axis is the success rate alone. A never-tested endpoint (no calls) is the canonical gap.
+    """
+    methodology = (
+        "Half from the test-invocation success rate, half from p95 latency "
+        f"(≤{int(RESPONSIVENESS_LATENCY_FLOOR_MS)} ms scores full, "
+        f"≥{RESPONSIVENESS_LATENCY_CEILING_MS / 1000:.0f} s scores zero). Needs the server to have "
+        "been tested at least once."
+    )
+    call_count = int(invocation.get("call_count", 0) or 0)
+    if call_count <= 0:
+        return TrustAxis(
+            "responsiveness", "Responsiveness", None, False, "Never tested", methodology
+        )
+
+    error_rate = float(invocation.get("error_rate", 0.0) or 0.0)
+    reliability_component = (1.0 - error_rate) * 100.0
+    latency = invocation.get("latency") or {}
+    p95 = latency.get("p95_ms")
+    if p95 is not None:
+        value = _clamp_score(
+            reliability_component * _RESPONSIVENESS_RELIABILITY_WEIGHT
+            + _latency_score(float(p95)) * _RESPONSIVENESS_LATENCY_WEIGHT
+        )
+        detail = f"{round(error_rate * 100, 1)}% errors · p95 {int(round(float(p95)))} ms"
+    else:
+        value = _clamp_score(reliability_component)
+        detail = f"{round(error_rate * 100, 1)}% errors"
+    return TrustAxis("responsiveness", "Responsiveness", value, True, detail, methodology)
+
+
+def compute_trust_profile(
+    *,
+    quality_score: Optional[float],
+    quality_grade: Optional[str],
+    annotation_coverage: Mapping[str, Any],
+    documentation_coverage: Mapping[str, Any],
+    destructive_tool_count: int,
+    auth_posture: str,
+    change_severities: Sequence[Mapping[str, Any]],
+    invocation: Mapping[str, Any],
+) -> TrustProfile:
+    """Synthesize the five-axis composite :class:`TrustProfile` from the metric layers.
+
+    Pure and total: every axis is computed independently, and any missing input yields an explicit
+    *gap* (``value is None``) rather than a zero. The ``overall`` composite is the mean of only the
+    available axes, so it never conflates "not measured" with "measured poorly".
+
+    Args:
+        quality_score: The current snapshot's stored 0-100 lint score, or ``None`` when unscored.
+        quality_grade: The score's A-F letter (for the axis detail line), or ``None``.
+        annotation_coverage: An :class:`~app.mcp_surface_metrics.AnnotationCoverage` ``as_dict()``
+            (needs ``tool_count`` / ``annotated_tools``); ``{}`` when there is no surface.
+        documentation_coverage: A :class:`~app.mcp_surface_metrics.DocumentationCoverage`
+            ``as_dict()`` (needs ``item_count`` and the coverage percentages); ``{}`` when none.
+        destructive_tool_count: How many tools assert ``destructiveHint: true`` on the surface.
+        auth_posture: ``"anonymous"`` or ``"authenticated"`` (see :func:`mcp_auth_posture`).
+        change_severities: One ``{breaking, additive, review, total}`` classification per snapshot
+            *transition* (i.e. every snapshot after the first); empty for ≤1 snapshot.
+        invocation: An :class:`InvocationReliability` ``as_dict()`` (needs ``call_count`` /
+            ``error_rate`` / ``latency.p95_ms``).
+
+    Returns:
+        The rolled-up :class:`TrustProfile` — five axes (some possibly gaps) plus the mean of the
+        available ones.
+    """
+    axes = [
+        _quality_axis(quality_score, quality_grade),
+        _safety_axis(annotation_coverage, destructive_tool_count, auth_posture),
+        _documentation_axis(documentation_coverage),
+        _stability_axis(change_severities),
+        _responsiveness_axis(invocation),
+    ]
+    available = [axis.value for axis in axes if axis.available and axis.value is not None]
+    overall = round(sum(available) / len(available), 1) if available else None
+    return TrustProfile(
+        axes=axes,
+        overall=overall,
+        available_count=len(available),
+        axis_count=len(axes),
     )

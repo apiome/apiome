@@ -541,6 +541,123 @@ def test_reliability_tools_empty_history_is_no_data_not_500():
 
 
 # ===========================================================================
+# trust profile (V2-MCP-31.4 / MCAT-17.4)
+# ===========================================================================
+
+
+def _trust_tool_row(name, annotations, *, ordinal=0):
+    """A tool row with caller-supplied annotations, for the trust route's safety cross-reference."""
+    row = _tool_row(name, required=["city"], ordinal=ordinal)
+    row["annotations"] = annotations
+    return row
+
+
+def test_trust_profile_computes_all_five_axes():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = _version_row(_V2, 2)  # score 90, grade A
+        mdb.get_mcp_capability_items.return_value = [
+            _trust_tool_row("read", {"readOnlyHint": True}, ordinal=0),
+            _trust_tool_row("wipe", {"destructiveHint": True}, ordinal=1),
+        ]
+        # Anonymous (no credential) + a destructive tool → the safety guardedness penalty applies.
+        mdb.get_mcp_endpoint_credentials.return_value = {"auth_type": "none"}
+        mdb.get_mcp_evolution_series.return_value = [
+            _evolution_row(_V1, 1, tools=2),
+            _evolution_row(_V2, 2, tools=2),
+        ]
+        # One additive transition on the current snapshot → non-breaking → full stability.
+        mdb.get_mcp_version_changes_for_endpoint.return_value = [
+            {"version_id": _V2, "change_type": "added", "item_type": "tool", "item_name": "wipe"},
+        ]
+        mdb.list_mcp_invocation_stats.return_value = [
+            {"is_error": False, "latency_ms": 100},
+            {"is_error": True, "latency_ms": 200},
+            {"is_error": False, "latency_ms": 150},
+        ]
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/trust")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["version_id"] == _V2
+    assert body["auth_type"] == "none"
+    profile = body["profile"]
+    axes = {a["key"]: a for a in profile["axes"]}
+    assert [a["key"] for a in profile["axes"]] == [
+        "quality",
+        "safety",
+        "documentation",
+        "stability",
+        "responsiveness",
+    ]
+    assert profile["axis_count"] == 5
+    assert profile["available_count"] == 5
+    assert axes["quality"]["value"] == pytest.approx(90.0)
+    # 2/2 annotated (transparency 1.0); anonymous + 1 of 2 destructive (guardedness 0.5) → 75.
+    assert axes["safety"]["value"] == pytest.approx(75.0)
+    # description 100% + title 0% + params 50% → mean 50.
+    assert axes["documentation"]["value"] == pytest.approx(50.0)
+    assert axes["stability"]["value"] == pytest.approx(100.0)
+    assert axes["responsiveness"]["available"] is True
+    assert axes["responsiveness"]["value"] > 0
+    assert profile["overall"] is not None
+    # every axis carries the hover methodology + a detail line.
+    assert all(a["methodology"] and a["detail"] for a in profile["axes"])
+    mdb.get_mcp_endpoint_version.assert_called_once_with(_EP, _V2)
+
+
+def test_trust_profile_partial_gaps_excluded_from_overall():
+    # An unscored current snapshot → the quality axis is a gap, not a zero.
+    unscored = dict(_version_row(_V2, 2), score=None, grade=None)
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = unscored
+        mdb.get_mcp_capability_items.return_value = [
+            _trust_tool_row("read", {"readOnlyHint": True}, ordinal=0),
+        ]
+        mdb.get_mcp_endpoint_credentials.return_value = {"auth_type": "bearer"}
+        mdb.get_mcp_evolution_series.return_value = []
+        mdb.get_mcp_version_changes_for_endpoint.return_value = []
+        mdb.list_mcp_invocation_stats.return_value = []
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/trust")
+    assert r.status_code == 200
+    axes = {a["key"]: a for a in r.json()["profile"]["axes"]}
+    assert axes["quality"]["available"] is False
+    assert axes["quality"]["value"] is None
+    # never-tested → responsiveness gap; single snapshot → stability gap.
+    assert axes["responsiveness"]["available"] is False
+    assert axes["stability"]["available"] is False
+    # safety/documentation are still present (there is a surface).
+    assert axes["safety"]["available"] is True
+    assert axes["documentation"]["available"] is True
+
+
+def test_trust_profile_never_discovered_is_all_gaps_not_500():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = dict(_ENDPOINT_ROW, current_version_id=None)
+        mdb.get_mcp_endpoint_credentials.return_value = None
+        mdb.get_mcp_evolution_series.return_value = []
+        mdb.get_mcp_version_changes_for_endpoint.return_value = []
+        mdb.list_mcp_invocation_stats.return_value = []
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/trust")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["version_id"] is None
+    profile = body["profile"]
+    assert profile["available_count"] == 0
+    assert profile["overall"] is None
+    assert all(a["available"] is False and a["value"] is None for a in profile["axes"])
+    # a never-discovered endpoint never reads a version surface.
+    mdb.get_mcp_endpoint_version.assert_not_called()
+
+
+def test_trust_profile_cross_tenant_endpoint_is_404():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = None
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/trust")
+    assert r.status_code == 404
+
+
+# ===========================================================================
 # catalog
 # ===========================================================================
 
