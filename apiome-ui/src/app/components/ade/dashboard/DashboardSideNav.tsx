@@ -22,6 +22,7 @@ import {
   Network,
   Library,
   BarChart3,
+  GitCompareArrows,
 } from 'lucide-react';
 import { useDarkMode } from '@/app/hooks/useDarkMode';
 
@@ -111,6 +112,13 @@ const DashboardSideNav: React.FC = () => {
           disabled: !hasTenant,
           pill: 'Preview',
         },
+        {
+          label: 'Server Comparison',
+          href: '/ade/dashboard/mcp/compare',
+          icon: GitCompareArrows,
+          disabled: !hasTenant,
+          pill: 'Preview',
+        },
         { label: 'Sunset timeline', href: '/ade/dashboard/versions/sunset-timeline', icon: Sun, disabled: !hasTenant },
         { label: 'Published', href: '/ade/dashboard/published', icon: Eye, disabled: !hasTenant },
       ],
@@ -135,12 +143,17 @@ const DashboardSideNav: React.FC = () => {
     if (href === '/ade/dashboard/mcp/analytics') {
       return pathname === '/ade/dashboard/mcp/analytics';
     }
+    if (href === '/ade/dashboard/mcp/compare') {
+      return pathname === '/ade/dashboard/mcp/compare';
+    }
     if (href === '/ade/dashboard/mcp') {
-      // "MCP Servers" owns the catalog + endpoint detail, but not the sibling analytics route, which
-      // has its own nav entry.
+      // "MCP Servers" owns the catalog + endpoint detail, but not the sibling analytics / comparison
+      // routes, which each have their own nav entry.
       return (
         pathname === '/ade/dashboard/mcp' ||
-        (pathname.startsWith('/ade/dashboard/mcp/') && pathname !== '/ade/dashboard/mcp/analytics')
+        (pathname.startsWith('/ade/dashboard/mcp/') &&
+          pathname !== '/ade/dashboard/mcp/analytics' &&
+          pathname !== '/ade/dashboard/mcp/compare')
       );
     }
     if (href === '/ade/dashboard/catalog') {

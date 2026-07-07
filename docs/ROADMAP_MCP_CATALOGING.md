@@ -1586,7 +1586,7 @@ not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 a
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
 | 18.1 ✅ | Catalog analytics dashboard | Category/transport/protocol mix, grade + tool-count distributions across the tenant catalog | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui, apiome-rest |
-| 18.2 | Side-by-side server comparison | Compare 2–3 endpoints: surface, grade, safety, latency | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui |
+| 18.2 ✅ | Side-by-side server comparison | Compare 2–3 endpoints: surface, grade, safety, latency | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui |
 | 18.3 | Peer percentile & category ranking | Rank a server against its category on each axis | `mcp-insights` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-ui |
 | 18.4 | Similar-servers via capability overlap + embeddings | "Servers like this" from tool-name/desc overlap + pgvector (V102) | `mcp-insights` `backend` | Y | N | ●●● | apiome-rest, apiome-db |
 | 18.5 | Natural-language server digest + usage examples | AI-generated "what can this do" summary + per-tool example calls | `mcp-insights` `backend` | Y | N | ●●● | apiome-rest |
@@ -1616,7 +1616,7 @@ not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 a
   *most-widely-exposed* aggregate (endpoints exposing each capability) — there is no search-query log
   to rank by, and the acceptance criterion requires real aggregates. **Closes stub 13.4 (#3714).**
 
-### MCAT-18.2 — Side-by-side server comparison  ·  **#4646**
+### MCAT-18.2 — Side-by-side server comparison  ·  **#4646**  ·  ✅ Done (apiome-ui 0.82.0)
 - **Problem.** Evaluators pick between servers and have no way to compare them directly.
 - **Solution / Scope.** Select 2–3 endpoints → a comparison view aligning surface counts, grade,
   safety posture (15.4), coverage (15.5), latency (17.2), and trust radar (17.4) column-by-column,
@@ -1625,6 +1625,16 @@ not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 a
   set correct against a fixture.
 - **Dependencies / Parallelism.** After 15.x/17.x. Parallel with 18.1.
 - **Technical Stack.** Next.js, chart kit.
+- **Delivered.** New `/ade/dashboard/mcp/compare` page + "Server Comparison" nav entry. The page
+  reuses the existing per-endpoint reads (current-version surface for `items`/protocol/grade,
+  `insight/trust`, `insight/reliability`) — no new backend — and assembles one `McpCompareServer`
+  per column. The React-free `mcpServerCompareUi` (`mcpCompareModel`, `mcpToolOverlap`,
+  `mcpCompareProtocolVersions`) builds the six aligned metric sections (surface / quality / safety /
+  coverage / latency / trust), the shared-vs-unique tool overlap, and the protocol cross-check,
+  reusing the 15.4 / 15.5 / 17.2 / 17.4 single-server helpers. `<ServerComparisonPanel>` renders the
+  aligned table (differing rows highlighted), a per-column trust radar, the overlap presence matrix,
+  and a protocol-mismatch banner. Tests: `mcp-server-compare-ui.test.ts` (overlap fixture, metric
+  alignment, protocol cross-check) + `mcp-server-comparison-panel.test.tsx` (render).
 
 ### MCAT-18.3 — Peer percentile & category ranking  ·  **#4647**
 - **Problem.** "Is this a good weather server?" needs a peer baseline, not an absolute grade.
