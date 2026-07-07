@@ -72,6 +72,58 @@ export function pointsToPath(points: readonly Point[]): string {
     .join(' ');
 }
 
+/**
+ * Like {@link sparklinePoints}, but a series entry may be `null` — a **gap** (e.g. a version that was
+ * never scored). Gaps produce a `null` in the returned array at the same index, so the caller can
+ * break the line there rather than plotting the value as `0` (which would misread a missing score as
+ * a crash to zero — see V2-MCP-30.4's "gapped, not zeroed" criterion). Real values are laid out on
+ * the same evenly-spaced x-grid as `sparklinePoints`, so a gapped and an ungapped series of the same
+ * length share an x-axis. A single real value renders at the horizontal centre.
+ */
+export function trendLinePoints(
+  values: readonly (number | null)[],
+  width: number,
+  height: number,
+  padding: number,
+  domainMax?: number,
+): (Point | null)[] {
+  if (values.length === 0) return [];
+  const innerW = Math.max(1, width - padding * 2);
+  const innerH = Math.max(1, height - padding * 2);
+  // Scale to the max of the *present* values only; a series that is all gaps has no domain, so any
+  // stray value would clamp to the fallback `1` — but an all-gap series plots nothing anyway.
+  const present = values.filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+  const max = domainMax && domainMax > 0 ? domainMax : maxValue(present) || 1;
+  const stepX = values.length === 1 ? 0 : innerW / (values.length - 1);
+  return values.map((raw, i) => {
+    if (!(typeof raw === 'number' && Number.isFinite(raw))) return null;
+    const v = clamp(raw, 0, max);
+    const x = values.length === 1 ? padding + innerW / 2 : padding + stepX * i;
+    const y = padding + innerH * (1 - v / max);
+    return { x, y };
+  });
+}
+
+/**
+ * Split a `(Point | null)[]` into the maximal runs of consecutive non-null points — the line/area
+ * segments a gapped trend draws (one `<path>` per run). An isolated real point between two gaps
+ * becomes a single-point run the caller can render as a dot. Empty input yields `[]`.
+ */
+export function pointsToSegments(points: readonly (Point | null)[]): Point[][] {
+  const segments: Point[][] = [];
+  let current: Point[] = [];
+  for (const p of points) {
+    if (p === null) {
+      if (current.length) segments.push(current);
+      current = [];
+    } else {
+      current.push(p);
+    }
+  }
+  if (current.length) segments.push(current);
+  return segments;
+}
+
 /** Point on the circle of radius `r` about (`cx`,`cy`) at `angleDeg` clockwise from the top. */
 export function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number): Point {
   const rad = ((angleDeg - 90) * Math.PI) / 180;

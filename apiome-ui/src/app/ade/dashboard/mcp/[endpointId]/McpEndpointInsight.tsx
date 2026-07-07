@@ -8,6 +8,7 @@ import {
   GitCompareArrows,
   Layers,
   LayoutGrid,
+  LineChart,
   ListTree,
   Loader2,
   Share2,
@@ -25,6 +26,7 @@ import { SafetyPosturePanel } from "@/app/components/ui/mcp/SafetyPosturePanel";
 import { DocCoveragePanel } from "@/app/components/ui/mcp/DocCoveragePanel";
 import { CapabilityChurnPanel } from "@/app/components/ui/mcp/CapabilityChurnPanel";
 import { CapabilityPresenceMatrixPanel } from "@/app/components/ui/mcp/CapabilityPresenceMatrixPanel";
+import { GradeSurfaceTrendPanel } from "@/app/components/ui/mcp/GradeSurfaceTrendPanel";
 import { dashboardPanelPaddedClass } from "@/app/components/ade/dashboard/dashboardScreenClasses";
 import {
   mcpVersionDetailFromPayload,
@@ -122,12 +124,10 @@ const INSIGHT_SECTIONS: InsightSectionDef[] = [
     title: "Surface evolution",
     subtitle: "How the server has changed across discovery snapshots.",
     icon: Activity,
-    // "Capability churn timeline" (MCAT-16.1) and "Capability lifespan / presence matrix" (MCAT-16.2)
-    // now land as live panels in this section's body; the "Grade & surface-size trend" (MCAT-16.4)
-    // slot remains reserved for its downstream ticket.
-    reserved: [
-      { key: "trend", title: "Grade & surface-size trend", hint: "Quality and capability counts over time." },
-    ],
+    // "Capability churn timeline" (MCAT-16.1), "Capability lifespan / presence matrix" (MCAT-16.2),
+    // and "Grade & surface-size trend" (MCAT-16.4) now all land as live panels in this section's
+    // body, so this section has no reserved slots left.
+    reserved: [],
   },
   {
     key: "reliability",
@@ -827,6 +827,28 @@ export default function McpEndpointInsight({
                   versions={matrixVersions}
                   loading={matrixLoading}
                   error={matrixError}
+                  onSelectVersion={(versionId) => onOpenVersionDiff?.(versionId)}
+                />
+              </div>
+              {/* Grade & surface-size trend (MCAT-16.4) — the quality-score and capability-count trends
+                  across snapshots, with breaking-change markers (MCAT-16.3) overlaid and each breaking
+                  release deep-linking to its diff. Reads the same evolution series as the churn chart. */}
+              <div className={dashboardPanelPaddedClass}>
+                <div className="mb-3">
+                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+                    <LineChart className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+                    Grade &amp; surface-size trend
+                  </h4>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    Whether the server is improving — its quality score and capability count over
+                    snapshots, with breaking-change releases marked. Unscored snapshots are gapped, not
+                    zeroed.
+                  </p>
+                </div>
+                <GradeSurfaceTrendPanel
+                  series={evolution}
+                  loading={evolutionLoading}
+                  error={evolutionError}
                   onSelectVersion={(versionId) => onOpenVersionDiff?.(versionId)}
                 />
               </div>

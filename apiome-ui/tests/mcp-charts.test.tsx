@@ -12,6 +12,7 @@ import '@testing-library/jest-dom';
 
 import {
   Sparkline,
+  TrendLine,
   BarSeries,
   Donut,
   StackedTimeline,
@@ -35,6 +36,50 @@ describe('Sparkline', () => {
 
   it('matches its snapshot', () => {
     const { container } = render(<Sparkline data={[62, 65, 61, 70, 80]} tone="emerald" title="snap" />);
+    expect(container.firstChild).toMatchSnapshot();
+  });
+});
+
+describe('TrendLine', () => {
+  it('renders an accessible figure with a data table from fixture data', () => {
+    render(<TrendLine data={[62, 74, 80, 91]} title="Score trend" />);
+    expect(screen.getByRole('img', { name: 'Score trend' })).toBeInTheDocument();
+    const table = screen.getByRole('table');
+    expect(within(table).getByRole('cell', { name: '91' })).toBeInTheDocument();
+  });
+
+  it('gaps a null value ("no data") rather than plotting it, and breaks the line into segments', () => {
+    const { container } = render(<TrendLine data={[10, null, 20]} title="Gapped" area={false} />);
+    // The gap surfaces as a "no data" cell in the table…
+    expect(screen.getByRole('cell', { name: 'no data' })).toBeInTheDocument();
+    // …and the line is drawn as two separate <path> segments (one per side of the gap), each a
+    // single point → so there are 2 dots and the two flanking values are not joined by a line.
+    expect(container.querySelectorAll('circle')).toHaveLength(2);
+  });
+
+  it('overlays a marker at the given index and reports it in the table', () => {
+    const { container } = render(
+      <TrendLine data={[62, 74, 80, 91]} markers={[2]} title="Marked" />,
+    );
+    expect(screen.getByRole('cell', { name: 'marker' })).toBeInTheDocument();
+    // A marker draws a vertical <line> + a diamond <path>; at least one line is present.
+    expect(container.querySelectorAll('line').length).toBeGreaterThan(0);
+  });
+
+  it('renders an empty state when every entry is a gap (no crash, not a flat zero line)', () => {
+    render(<TrendLine data={[null, null]} />);
+    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+  });
+
+  it('renders an empty state for no data', () => {
+    render(<TrendLine data={[]} />);
+    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+  });
+
+  it('matches its snapshot', () => {
+    const { container } = render(
+      <TrendLine data={[62, 74, null, 91]} tone="emerald" domainMax={100} markers={[3]} title="snap" />,
+    );
     expect(container.firstChild).toMatchSnapshot();
   });
 });

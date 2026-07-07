@@ -18,6 +18,7 @@ export * from './chartTokens';
 export * from './chartGeometry';
 export * from './ChartFrame';
 export * from './Sparkline';
+export * from './TrendLine';
 export * from './BarSeries';
 export * from './Donut';
 export * from './StackedTimeline';

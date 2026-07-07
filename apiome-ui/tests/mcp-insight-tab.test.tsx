@@ -173,6 +173,7 @@ function evolutionPayload() {
         score: 80,
         grade: 'B',
         change_counts: { added: 2, removed: 1, modified: 0, total: 3 },
+        severity_counts: { breaking: 1, additive: 2, review: 0, total: 3 },
       },
       {
         version_id: V3,
@@ -184,6 +185,7 @@ function evolutionPayload() {
         score: 90,
         grade: 'A',
         change_counts: { added: 1, removed: 0, modified: 3, total: 4 },
+        severity_counts: { breaking: 0, additive: 4, review: 0, total: 4 },
       },
     ],
   };
@@ -552,6 +554,35 @@ describe('McpEndpointInsight — scaffold', () => {
     // split (+1 −0 ~3) so we select the column, not the busiest-release callout that shares its date.
     fireEvent.click(screen.getByRole('button', { name: /\+1 −0 ~3/ }));
     expect(onOpenVersionDiff).toHaveBeenCalledWith(V3);
+  });
+
+  it('renders the grade & surface-size trend and deep-links a breaking-change release to its diff', async () => {
+    const onOpenVersionDiff = jest.fn();
+    routeFetch({
+      versions: () => jsonResponse(versionsPayload()),
+      surface: (vid) => jsonResponse(surfacePayload(vid ?? V3, 3, 4)),
+      evolution: () => jsonResponse(evolutionPayload()),
+    });
+
+    render(
+      <McpEndpointInsight
+        endpointId={ENDPOINT_ID}
+        currentVersionId={V3}
+        onOpenVersionDiff={onOpenVersionDiff}
+      />,
+    );
+
+    // The trend panel renders both trends once the shared evolution series loads.
+    await waitFor(() =>
+      expect(screen.getByText('Grade & surface-size trend')).toBeInTheDocument(),
+    );
+    expect(screen.getByText('Quality score')).toBeInTheDocument();
+    expect(screen.getByText('Surface size')).toBeInTheDocument();
+
+    // v2 introduced a breaking change → a clickable chip deep-links to its diff.
+    const chip = await screen.findByRole('button', { name: /v2.*1 breaking/ });
+    fireEvent.click(chip);
+    expect(onOpenVersionDiff).toHaveBeenCalledWith(V2);
   });
 
   it('reconstructs the capability presence matrix from every snapshot and deep-links a column', async () => {
