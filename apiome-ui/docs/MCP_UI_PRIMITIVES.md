@@ -372,6 +372,27 @@ percentages can never disagree.
 <CatalogAnalyticsDashboard data={insight} loading={loading} error={error} />
 ```
 
+### `<ServerComparisonPanel>` (V2-MCP-32.2 / MCAT-18.2)
+
+The **side-by-side server comparison** screen, rendered on `/ade/dashboard/mcp/compare`. The
+evaluator picks 2–3 discovered servers; the page fetches each one's current-version surface (`items`,
+protocol, grade), its `insight/trust`, and its `insight/reliability`, and hands one `McpCompareServer`
+per column to the panel. From that bundle it renders an **aligned metric table** — **surface counts**,
+**quality** (grade/score), **safety posture** (destructive / unannotated / no-auth / auth), **doc
+coverage**, **tool latency** (slowest p95 / error rate / calls), and **composite trust** (overall +
+per-axis) — with every **differing row highlighted**, a **trust radar** per column, a
+**capability-overlap** presence matrix (shared vs unique tools), and a **protocol banner** when the
+servers negotiated different MCP protocol versions. Owns its loading / error / too-few-selected states.
+
+The panel is presentational; all logic lives in the React-free, unit-tested `mcpServerCompareUi`
+module (`mcpCompareModel`, `mcpToolOverlap`, `mcpCompareProtocolVersions`, `mcpCompareSurfaceCounts`),
+which reuses the single-server helpers (`mcpSafetyPosture`, `mcpDocCoverageMeters`, `mcpSlowestTools`,
+the trust projections) so a metric reads the same here as on the endpoint's own Insight tab.
+
+```tsx
+<ServerComparisonPanel servers={servers} loading={loading} error={error} />
+```
+
 ### `<FindingSeverity>`
 
 The shared MUST / SHOULD / Advisory chip used by the Lint & Score tab and inline hints. It renders
@@ -461,3 +482,5 @@ consumer hard-codes a color, a dark variant lands in one place.
 - `tests/mcp-charts.test.tsx` — render + snapshot coverage for every chart, incl. empty states.
 - `tests/mcp-evolution-ui.test.ts` — the pure evolution helpers (churn timeline + grade/surface-size trend projections).
 - `tests/mcp-grade-trend-panel.test.tsx` — the grade & surface-size trend panel (gaps, markers, deep-links).
+- `tests/mcp-server-compare-ui.test.ts` — the pure comparison helpers (metric alignment + differs, tool overlap fixture, protocol cross-check).
+- `tests/mcp-server-comparison-panel.test.tsx` — the comparison panel (columns, sections, overlap matrix, protocol banner, radar/gap states).

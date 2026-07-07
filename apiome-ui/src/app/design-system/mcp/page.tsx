@@ -35,6 +35,8 @@ import { ToolLatencyPanel } from '@/app/components/ui/mcp/ToolLatencyPanel';
 import { ScoreBreakdownPanel } from '@/app/components/ui/mcp/ScoreBreakdownPanel';
 import { TrustProfilePanel } from '@/app/components/ui/mcp/TrustProfilePanel';
 import { CatalogAnalyticsDashboard } from '@/app/components/ui/mcp/CatalogAnalyticsDashboard';
+import { ServerComparisonPanel } from '@/app/components/ui/mcp/ServerComparisonPanel';
+import type { McpCompareServer } from '@/app/components/ade/dashboard/mcp/mcpServerCompareUi';
 import {
   mcpReliabilityHealthFromPayload,
   mcpToolReliabilityFromPayload,
@@ -676,6 +678,64 @@ const CATALOG_EMPTY_SAMPLE: McpCatalogInsight = mcpCatalogInsightFromPayload({
   top_capabilities: [],
 })!;
 
+// Two servers with a deliberately-differing topology for the comparison showcase: overlapping and
+// unique tools, differing grades, and — for the second — a different (older) protocol version and no
+// trust/reliability, so the panel's gaps and protocol banner are both visible.
+const COMPARE_SAMPLE: McpCompareServer[] = [
+  {
+    endpointId: 'cmp-a',
+    endpointName: 'acme-search',
+    displayName: 'Acme Search',
+    transport: 'streamable_http',
+    category: 'search',
+    protocolVersion: '2025-06-18',
+    grade: 'A',
+    score: 91,
+    authType: 'bearer',
+    items: [
+      { item_type: 'tool', name: 'vector_search', title: 'Vector search', description: 'Semantic search', uri: null, uri_template: null, input_schema: { properties: { query: { description: 'q' } } }, output_schema: { type: 'object' }, annotations: { readOnlyHint: true }, ordinal: 0 },
+      { item_type: 'tool', name: 'fetch_doc', title: null, description: null, uri: null, uri_template: null, input_schema: null, output_schema: null, annotations: null, ordinal: 1 },
+      { item_type: 'resource', name: 'index', title: null, description: 'The index', uri: 'idx://', uri_template: null, input_schema: null, output_schema: null, annotations: null, ordinal: 2 },
+    ],
+    trust: mcpTrustProfileFromPayload({
+      version_id: 'va',
+      auth_type: 'bearer',
+      profile: {
+        axes: [
+          { key: 'quality', label: 'Quality', value: 90, available: true, detail: '', methodology: '' },
+          { key: 'safety', label: 'Safety', value: 78, available: true, detail: '', methodology: '' },
+          { key: 'documentation', label: 'Documentation', value: 66, available: true, detail: '', methodology: '' },
+          { key: 'stability', label: 'Stability', value: 84, available: true, detail: '', methodology: '' },
+          { key: 'responsiveness', label: 'Responsiveness', value: 72, available: true, detail: '', methodology: '' },
+        ],
+      },
+    }),
+    reliability: mcpToolReliabilityFromPayload({
+      tools: {
+        tools: [{ tool_name: 'vector_search', call_count: 240, error_count: 4, success_count: 236, latency: { count: 240, p50_ms: 180, p95_ms: 420, p99_ms: 700 } }],
+        window_days: 7,
+      },
+    }),
+  },
+  {
+    endpointId: 'cmp-b',
+    endpointName: 'globex-retrieval',
+    displayName: 'Globex Retrieval',
+    transport: 'http+sse',
+    category: 'search',
+    protocolVersion: '2025-03-26',
+    grade: 'C',
+    score: 63,
+    authType: 'none',
+    items: [
+      { item_type: 'tool', name: 'vector_search', title: null, description: null, uri: null, uri_template: null, input_schema: null, output_schema: null, annotations: { destructiveHint: true }, ordinal: 0 },
+      { item_type: 'tool', name: 'delete_index', title: null, description: null, uri: null, uri_template: null, input_schema: null, output_schema: null, annotations: { destructiveHint: true }, ordinal: 1 },
+    ],
+    trust: null,
+    reliability: null,
+  },
+];
+
 /**
  * A five-snapshot series for the GradeSurfaceTrendPanel demo (V2-MCP-30.4): a rising score, one
  * **unscored** snapshot (v3 — its score gaps, is not zeroed), and one breaking release (v4).
@@ -1211,6 +1271,31 @@ export default function McpPrimitivesShowcase() {
           Empty catalog
         </div>
         <CatalogAnalyticsDashboard data={CATALOG_EMPTY_SAMPLE} loading={false} error={null} />
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            ServerComparisonPanel (V2-MCP-32.2)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            The evaluator&apos;s side-by-side view: 2–3 servers aligned column-by-column over{' '}
+            <strong>surface counts</strong>, <strong>grade</strong>, <strong>safety posture</strong>,{' '}
+            <strong>documentation coverage</strong>, <strong>tool latency</strong>, and the{' '}
+            <strong>composite trust</strong> radar — with every differing row highlighted, a{' '}
+            <strong>capability-overlap</strong> matrix (shared vs unique tools), and a banner when the
+            servers negotiated different MCP protocol versions. Owns its loading / error /
+            too-few-selected states.
+          </p>
+        </div>
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Two servers (differing protocol versions)
+        </div>
+        <ServerComparisonPanel servers={COMPARE_SAMPLE} loading={false} error={null} />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Too few selected
+        </div>
+        <ServerComparisonPanel servers={[COMPARE_SAMPLE[0]]} loading={false} error={null} />
       </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">

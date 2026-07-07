@@ -24,6 +24,7 @@ export * from './DiscoveryHealthPanel';
 export * from './ToolLatencyPanel';
 export * from './TrustProfilePanel';
 export * from './CatalogAnalyticsDashboard';
+export * from './ServerComparisonPanel';
 export * from './FindingSeverity';
 export * from './DetailTabs';
 export * from './McpJsonViewer';
