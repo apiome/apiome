@@ -10263,6 +10263,353 @@ class Database:
         """
         return self.execute_query(q, (tenant_slug, int(limit)))
 
+    # --- Scheduled catalog digest (MCAT-19.5, #4654) -------------------------------------------
+
+    def get_mcp_catalog_digest_config(self, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Read a tenant's scheduled catalog digest configuration (MCAT-19.5).
+
+        Args:
+            tenant_id: The owning tenant id.
+
+        Returns:
+            ``{tenant_id, enabled, cadence_seconds, send_empty, last_digest_at, created_at,
+            updated_at}`` for a configured tenant, or ``None`` when the tenant has never opted in
+            (the reader treats absence as ``enabled = False``).
+        """
+        q = """
+            SELECT tenant_id, enabled, cadence_seconds, send_empty, last_digest_at,
+                   created_at, updated_at
+            FROM apiome.mcp_catalog_digest_configs
+            WHERE tenant_id = %s::uuid
+        """
+        rows = self.execute_query(q, (tenant_id,))
+        return dict(rows[0]) if rows else None
+
+    def upsert_mcp_catalog_digest_config(
+        self,
+        tenant_id: str,
+        *,
+        enabled: bool,
+        cadence_seconds: Optional[int],
+        send_empty: bool,
+    ) -> Dict[str, Any]:
+        """Create or update a tenant's scheduled catalog digest configuration (MCAT-19.5).
+
+        Upserts the per-tenant row (PK ``tenant_id``); ``last_digest_at`` is never touched here (only
+        the sweep advances it), so re-configuring cadence/opt-in does not reset the window anchor.
+
+        Args:
+            tenant_id: The owning tenant id.
+            enabled: Opt-in switch.
+            cadence_seconds: Per-tenant cadence in seconds, or ``None`` to use the global default.
+                A non-positive value is rejected by the CHECK constraint.
+            send_empty: Whether an empty window still sends an explicit "no changes" digest.
+
+        Returns:
+            The stored row (same shape as :meth:`get_mcp_catalog_digest_config`).
+        """
+        q = """
+            INSERT INTO apiome.mcp_catalog_digest_configs
+                (tenant_id, enabled, cadence_seconds, send_empty)
+            VALUES (%s::uuid, %s, %s, %s)
+            ON CONFLICT (tenant_id) DO UPDATE
+              SET enabled = EXCLUDED.enabled,
+                  cadence_seconds = EXCLUDED.cadence_seconds,
+                  send_empty = EXCLUDED.send_empty,
+                  updated_at = CURRENT_TIMESTAMP
+            RETURNING tenant_id, enabled, cadence_seconds, send_empty, last_digest_at,
+                      created_at, updated_at
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(q, (tenant_id, bool(enabled), cadence_seconds, bool(send_empty)))
+                row = cursor.fetchone()
+                conn.commit()
+                return dict(row)
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def list_due_mcp_catalog_digests(
+        self, *, default_cadence_seconds: int
+    ) -> List[Dict[str, Any]]:
+        """Return tenants due for a scheduled catalog digest, with their window bounds (MCAT-19.5).
+
+        A tenant is *due* when its digest is opted in (``enabled = TRUE``), its tenant is live, and
+        it has either never sent a digest (``last_digest_at IS NULL``) or its effective cadence has
+        elapsed. The effective cadence is the per-tenant ``cadence_seconds`` when set, otherwise the
+        global ``default_cadence_seconds`` (the "global default + per-tenant override" model). The
+        recency comparison and both window bounds are evaluated in the database against a single
+        ``now()`` so the window is consistent and free of application clock skew.
+
+        Each returned row carries the digest **window**: ``window_start`` (exclusive) is the last
+        digest time, or — for a never-sent tenant — one cadence back from now, so the first digest
+        cannot scan the entire history; ``window_end`` (inclusive) is ``now()``. The sweep passes
+        these bounds to the window reads and marks ``last_digest_at = window_end`` after delivery, so
+        successive windows abut with neither gap nor overlap.
+
+        Args:
+            default_cadence_seconds: Global fallback cadence (seconds) for tenants with no explicit
+                ``cadence_seconds``.
+
+        Returns:
+            ``{tenant_id, tenant_slug, window_start, window_end, send_empty}`` rows, oldest anchor
+            first (never-sent tenants first) for fair scheduling.
+        """
+        cadence = int(default_cadence_seconds)
+        if cadence < 1:
+            cadence = 1
+        q = """
+            SELECT c.tenant_id,
+                   t.slug AS tenant_slug,
+                   COALESCE(
+                     c.last_digest_at,
+                     now() - make_interval(secs => COALESCE(c.cadence_seconds, %s))
+                   ) AS window_start,
+                   now() AS window_end,
+                   c.send_empty
+            FROM apiome.mcp_catalog_digest_configs c
+            JOIN apiome.tenants t ON t.id = c.tenant_id
+            WHERE c.enabled = TRUE
+              AND t.deleted_at IS NULL
+              AND (
+                c.last_digest_at IS NULL
+                OR c.last_digest_at <= now() - make_interval(
+                     secs => COALESCE(c.cadence_seconds, %s)
+                   )
+              )
+            ORDER BY c.last_digest_at ASC NULLS FIRST, c.created_at ASC
+        """
+        return self.execute_query(q, (cadence, cadence))
+
+    def mark_mcp_catalog_digest_sent(self, tenant_id: str, sent_at: Any) -> bool:
+        """Advance a tenant's digest anchor to the window end after a digest is processed (MCAT-19.5).
+
+        Called by the sweep once a due tenant's digest has been delivered (or intentionally skipped
+        for an empty window), so the next window starts exactly where this one ended and the cadence
+        due-check is measured from ``sent_at``. Using the ``window_end`` captured by
+        :meth:`list_due_mcp_catalog_digests` keeps the windows contiguous.
+
+        Args:
+            tenant_id: The tenant whose anchor to advance.
+            sent_at: The window end to record (the ``window_end`` from the due row).
+
+        Returns:
+            ``True`` when the config row was updated.
+        """
+        q = """
+            UPDATE apiome.mcp_catalog_digest_configs
+            SET last_digest_at = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE tenant_id = %s::uuid
+            RETURNING tenant_id
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(q, (sent_at, tenant_id))
+                row = cursor.fetchone()
+                conn.commit()
+                return bool(row)
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def try_acquire_mcp_catalog_digest_lock(self, tenant_id: str) -> bool:
+        """Try to take the per-tenant catalog-digest advisory lock (MCAT-19.5).
+
+        Per-tenant single-flight for the digest sweep, mirroring
+        :meth:`try_acquire_repository_refresh_lock`: a Postgres **session** advisory lock keyed on
+        the tenant id ensures two workers / overlapping ticks never compile and deliver a digest for
+        the same tenant at once (which would double-send). Non-blocking — returns ``False`` at once
+        when another session holds it. Acquire/release must run on the same connection (the sweep
+        uses one ``Database`` per tick).
+
+        Args:
+            tenant_id: The tenant to serialize digests for.
+
+        Returns:
+            ``True`` when the lock was acquired, ``False`` when another session holds it.
+        """
+        rows = self.execute_query(
+            "SELECT pg_try_advisory_lock(hashtext(%s)) AS locked",
+            (f"mcp-digest:{tenant_id}",),
+        )
+        return bool(rows and rows[0].get("locked"))
+
+    def release_mcp_catalog_digest_lock(self, tenant_id: str) -> None:
+        """Release the per-tenant catalog-digest advisory lock (MCAT-19.5).
+
+        Counterpart to :meth:`try_acquire_mcp_catalog_digest_lock`; must run on the same connection
+        that acquired it. Safe to call even if the lock was not held.
+
+        Args:
+            tenant_id: The tenant whose lock to release.
+        """
+        self.execute_query(
+            "SELECT pg_advisory_unlock(hashtext(%s)) AS unlocked",
+            (f"mcp-digest:{tenant_id}",),
+        )
+
+    def list_mcp_new_endpoints_in_window(
+        self, tenant_id: str, since: Any, until: Any
+    ) -> List[Dict[str, Any]]:
+        """Endpoints a tenant registered within ``(since, until]`` (MCAT-19.5).
+
+        Tenant-scoped and live-only (``deleted_at IS NULL``); no ``endpoint_url`` is selected. Feeds
+        the digest's "new endpoints" section. Ordered newest first.
+
+        Args:
+            tenant_id: The owning tenant id (scopes the read for isolation).
+            since: Window start (exclusive).
+            until: Window end (inclusive).
+
+        Returns:
+            ``{id, name, slug, visibility, created_at}`` rows.
+        """
+        q = """
+            SELECT id, name, slug, visibility, created_at
+            FROM apiome.mcp_endpoints
+            WHERE tenant_id = %s::uuid
+              AND deleted_at IS NULL
+              AND created_at > %s
+              AND created_at <= %s
+            ORDER BY created_at DESC
+        """
+        return self.execute_query(q, (tenant_id, since, until))
+
+    def list_mcp_grade_movements_in_window(
+        self, tenant_id: str, since: Any, until: Any
+    ) -> List[Dict[str, Any]]:
+        """Endpoints whose quality grade changed between consecutive snapshots in ``(since, until]`` (MCAT-19.5).
+
+        Uses a window function over every scored snapshot of each of the tenant's live endpoints to
+        pair each snapshot's grade with the previous scored snapshot's grade (``LAG`` over
+        ``version_seq``), then keeps only transitions whose *newer* snapshot was discovered within
+        the window and whose grade actually differs. Computing ``LAG`` over the full history (not just
+        the window) is what makes "the previous grade" correct even when the prior snapshot predates
+        the window. Feeds the digest's "grade movements" section.
+
+        Args:
+            tenant_id: The owning tenant id (scopes the read for isolation).
+            since: Window start (exclusive).
+            until: Window end (inclusive).
+
+        Returns:
+            ``{endpoint_id, endpoint_name, endpoint_slug, version_seq, version_tag, moved_at,
+            prev_grade, new_grade}`` rows, newest movement first.
+        """
+        q = """
+            WITH graded AS (
+                SELECT v.endpoint_id,
+                       v.version_seq,
+                       v.version_tag,
+                       COALESCE(v.discovered_at, v.created_at) AS moved_at,
+                       s.grade AS grade,
+                       LAG(s.grade) OVER (
+                         PARTITION BY v.endpoint_id ORDER BY v.version_seq
+                       ) AS prev_grade
+                FROM apiome.mcp_endpoint_versions v
+                JOIN apiome.mcp_version_scores s ON s.version_id = v.id
+                JOIN apiome.mcp_endpoints e ON e.id = v.endpoint_id
+                WHERE e.tenant_id = %s::uuid
+                  AND e.deleted_at IS NULL
+            )
+            SELECT g.endpoint_id,
+                   e.name AS endpoint_name,
+                   e.slug AS endpoint_slug,
+                   g.version_seq,
+                   g.version_tag,
+                   g.moved_at,
+                   g.prev_grade,
+                   g.grade AS new_grade
+            FROM graded g
+            JOIN apiome.mcp_endpoints e ON e.id = g.endpoint_id
+            WHERE g.prev_grade IS NOT NULL
+              AND g.grade IS DISTINCT FROM g.prev_grade
+              AND g.moved_at > %s
+              AND g.moved_at <= %s
+            ORDER BY g.moved_at DESC, e.slug ASC
+        """
+        return self.execute_query(q, (tenant_id, since, until))
+
+    def list_mcp_catalog_changes_in_window(
+        self, tenant_id: str, since: Any, until: Any, *, limit: int = 500
+    ) -> List[Dict[str, Any]]:
+        """A tenant's capability changes across its whole catalog within ``(since, until]`` (MCAT-19.5).
+
+        Tenant-scoped (every live endpoint, private included — the digest is a private operator
+        report, unlike the public change feed) projection over ``mcp_version_changes`` joined to the
+        introducing snapshot, carrying everything :func:`app.mcp_change_severity.classify_change`
+        needs plus the owning endpoint's identity and snapshot context. The digest compiler runs the
+        shared severity classifier over these rows and keeps the breaking ones, so severity is not
+        re-implemented in SQL. Ordered newest first and bounded by ``limit``.
+
+        Args:
+            tenant_id: The owning tenant id (scopes the read for isolation).
+            since: Window start (exclusive).
+            until: Window end (inclusive).
+            limit: Maximum change rows to return.
+
+        Returns:
+            Change rows with endpoint identity + snapshot context, newest first.
+        """
+        q = f"""
+            SELECT e.id AS endpoint_id, e.name AS endpoint_name, e.slug AS endpoint_slug,
+                   c.version_id, c.change_type, c.item_type, c.item_name, c.detail,
+                   c.created_at,
+                   v.version_seq, v.version_tag, v.discovered_at,
+                   v.created_at AS version_created_at
+            FROM apiome.mcp_version_changes c
+            JOIN apiome.mcp_endpoint_versions v ON v.id = c.version_id
+            JOIN apiome.mcp_endpoints e ON e.id = v.endpoint_id
+            WHERE e.tenant_id = %s::uuid
+              AND e.deleted_at IS NULL
+              AND COALESCE(v.discovered_at, v.created_at) > %s
+              AND COALESCE(v.discovered_at, v.created_at) <= %s
+            ORDER BY COALESCE(v.discovered_at, v.created_at) DESC,
+                     e.slug ASC, v.version_seq DESC, {self._MCP_CHANGE_ITEM_ORDER}
+            LIMIT %s
+        """
+        return self.execute_query(q, (tenant_id, since, until, int(limit)))
+
+    def list_mcp_health_problems_in_window(
+        self, tenant_id: str, since: Any, until: Any
+    ) -> List[Dict[str, Any]]:
+        """A tenant's endpoints with a discovery-health problem observed in ``(since, until]`` (MCAT-19.5).
+
+        Returns live endpoints that either became **quarantined** within the window
+        (``quarantined_at`` in range — the MCAT-5.3 failure-threshold trip) or are currently
+        **failing** discovery with their last attempt in the window (``consecutive_failures > 0`` and
+        ``last_discovered_at`` in range). Feeds the digest's "discovery-health problems" section. No
+        ``endpoint_url`` is selected.
+
+        Args:
+            tenant_id: The owning tenant id (scopes the read for isolation).
+            since: Window start (exclusive).
+            until: Window end (inclusive).
+
+        Returns:
+            ``{id, name, slug, visibility, quarantined_at, quarantine_reason, consecutive_failures,
+            last_discovery_status, last_discovered_at}`` rows.
+        """
+        q = """
+            SELECT id, name, slug, visibility,
+                   quarantined_at, quarantine_reason, consecutive_failures,
+                   last_discovery_status, last_discovered_at
+            FROM apiome.mcp_endpoints
+            WHERE tenant_id = %s::uuid
+              AND deleted_at IS NULL
+              AND (
+                (quarantined_at IS NOT NULL AND quarantined_at > %s AND quarantined_at <= %s)
+                OR (consecutive_failures > 0
+                    AND last_discovered_at IS NOT NULL
+                    AND last_discovered_at > %s AND last_discovered_at <= %s)
+              )
+            ORDER BY quarantined_at DESC NULLS LAST, last_discovered_at DESC NULLS LAST
+        """
+        return self.execute_query(q, (tenant_id, since, until, since, until))
+
     def list_due_mcp_endpoints(
         self,
         *,

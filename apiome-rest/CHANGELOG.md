@@ -5,6 +5,36 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.98.0] - 2026-07-07
+
+### Added
+- **Scheduled catalog digest reports (#4654, V2-MCP-33.5 / MCAT-19.5)** — an opt-in, per-tenant
+  recurring "here's your catalog this window" delivered without opening the app. A background sweep
+  (`app.mcp_catalog_digest_sweep`) is wired into `app.main` on the `APIOME_MCP_DIGEST_MIN_INTERVAL`
+  floor (default 300s), mirroring the RAR-3.2 refresh and MCAT-5.1 discovery sweeps, with a global
+  `APIOME_MCP_DIGEST_ENABLED` kill switch.
+  - New table `apiome.mcp_catalog_digest_configs` (apiome-db V145): per-tenant `enabled` (opt-in,
+    **default off**), `cadence_seconds` (NULL = the global `APIOME_MCP_DIGEST_DEFAULT_CADENCE`,
+    default weekly), `send_empty` (empty-window policy) and `last_digest_at` (window/cadence anchor).
+  - Due-selection (`Database.list_due_mcp_catalog_digests`) computes each due tenant's window bounds
+    in one DB `now()` (no clock skew); the window is `(last_digest_at, now]`, bounded to one cadence
+    back on the first send. Each tenant is serialized behind a per-tenant advisory lock (single-flight)
+    and its anchor advances every tick — success, empty-skip, or failure — so a broken tenant cannot
+    monopolize the sweep.
+  - The digest compiles from **real window data**, tenant-scoped: new endpoints, all changes, grade
+    movements (a `LAG`-over-`version_seq` comparison of `mcp_version_scores.grade`), and
+    discovery-health problems (MCAT-5.3 quarantine / consecutive-failure signals). The **pure**
+    `app.mcp_catalog_digest` compiler classifies breaking changes with the same
+    `mcp_change_severity.classify_change` the change feed uses.
+  - **Empty window sends nothing** unless the tenant set `send_empty` (then an explicit "no changes"
+    digest). Delivery reuses the RAR-5.4 push-webhook fan-out, tagged `mcp.catalog.digest`; the
+    payload carries only catalog identity/activity (never an `endpoint_url` or credential).
+  - New tenant-scoped routes: `GET`/`PUT /v1/mcp/{tenant}/digest/config` (manage opt-in/cadence/
+    empty-window policy) and `POST /v1/mcp/{tenant}/digest/preview` (compile the current window
+    without sending). Every route scopes by the token tenant, not the URL slug.
+  - New settings: `APIOME_MCP_DIGEST_ENABLED`, `APIOME_MCP_DIGEST_DEFAULT_CADENCE`,
+    `APIOME_MCP_DIGEST_MIN_INTERVAL`.
+
 ## [1.97.0] - 2026-07-07
 
 ### Added
