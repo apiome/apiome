@@ -13,6 +13,7 @@ export * from './HealthPill';
 export * from './RecencyPill';
 export * from './ServerProfileCard';
 export * from './CapabilityGraphPanel';
+export * from './ToolComplexityPanel';
 export * from './FindingSeverity';
 export * from './DetailTabs';
 export * from './McpJsonViewer';

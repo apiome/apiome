@@ -308,4 +308,52 @@ describe('McpEndpointInsight — scaffold', () => {
       expect.anything(),
     );
   });
+
+  it('renders the tool schema-shape & complexity cards from the surface metrics', async () => {
+    const withTools = () => {
+      const payload = surfacePayload(V3, 3, 2);
+      payload.metrics.tool_complexity = [
+        {
+          name: 'ping',
+          property_count: 0,
+          required_count: 0,
+          optional_count: 0,
+          documented_property_count: 0,
+          max_nesting_depth: 0,
+          uses_enum: false,
+          uses_one_of: false,
+          has_output_schema: false,
+        },
+        {
+          name: 'orchestrate',
+          property_count: 12,
+          required_count: 4,
+          optional_count: 8,
+          documented_property_count: 6,
+          max_nesting_depth: 5,
+          uses_enum: true,
+          uses_one_of: true,
+          has_output_schema: true,
+        },
+      ];
+      return jsonResponse(payload);
+    };
+    routeFetch({
+      versions: () => jsonResponse(versionsPayload()),
+      surface: withTools,
+    });
+
+    render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
+
+    // The 15.3 panel heading and its per-tool cards render (most complex first).
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 5, name: 'orchestrate' })).toBeInTheDocument(),
+    );
+    expect(screen.getByText('Tool schema shape & complexity')).toBeInTheDocument();
+    const toolCards = screen.getAllByRole('heading', { level: 5 });
+    expect(toolCards.map((h) => h.textContent)).toEqual(['orchestrate', 'ping']);
+    // The sort/filter toolbar is wired.
+    expect(screen.getByLabelText('Sort')).toBeInTheDocument();
+    expect(screen.getByLabelText('Filter')).toBeInTheDocument();
+  });
 });

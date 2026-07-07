@@ -15,7 +15,7 @@ keeps a central dark theme (10.10) addable in one place.
 | Layer | Path | What |
 | --- | --- | --- |
 | Pure helpers (React-free, unit-tested) | `src/app/components/ade/dashboard/mcp/mcpUiPrimitives.ts` | Grade styles, badge-tone resolvers, health/recency, tab definitions |
-| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `FindingSeverity`, `DetailTabs` |
+| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `FindingSeverity`, `DetailTabs` |
 | Shared states | `src/app/components/ui/{EmptyState,LoadingState,ErrorState}.tsx` | empty / loading / error placeholders |
 | Barrel | `@/app/components/ui/mcp` (also re-exported from `@/app/components/ui`) | one import for all MCP primitives |
 
@@ -103,6 +103,29 @@ missing a title/protocol, an unscored snapshot, or an unavailable surface all re
 ```tsx
 const profile = mcpServerProfileFrom({ endpoint, version: selectedVersion, surface, instructions });
 <ServerProfileCard profile={profile} trustHref="#insight-reliability" />
+```
+
+### `<ToolComplexityPanel>` (V2-MCP-29.3 / MCAT-15.3)
+
+The tool schema **"shape" & complexity** cards on the endpoint **Insight** tab. Each card profiles one
+tool's `input_schema` from the 14.1 metrics — parameter count with a required-vs-optional split
+mini-bar, max nesting depth, `enum` / `oneOf` presence, and whether an `output_schema` is declared —
+tagged with a coarse complexity **tier** (None → Very high). Above the cards it draws a tier
+**distribution histogram** (via `BarSeries`) and a **sort** (most/least complex, name, params, depth)
+and **filter** (has/no params, nested, enum, oneOf, output-schema) toolbar. A no-parameter tool and a
+huge nested/polymorphic schema both render sanely.
+
+It is purely presentational — it reads the `tool_complexity[]` the surface fetch already returns; all
+scoring, tier bucketing, sorting, filtering, and binning live in the React-free, unit-tested
+`mcpToolComplexityUi` module (a tier carries a *tone token*, never a color literal). It owns only the
+sort/filter selection state, and handles its own loading / error / no-tools / filtered-to-empty states.
+
+```tsx
+<ToolComplexityPanel
+  tools={surface ? surface.metrics.tool_complexity : null}
+  loading={surfaceLoading}
+  error={surfaceError}
+/>
 ```
 
 ### `<FindingSeverity>`
