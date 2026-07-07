@@ -17,6 +17,7 @@ export * from './ToolComplexityPanel';
 export * from './SafetyPosturePanel';
 export * from './DocCoveragePanel';
 export * from './CapabilityChurnPanel';
+export * from './GradeSurfaceTrendPanel';
 export * from './CapabilityPresenceMatrixPanel';
 export * from './FindingSeverity';
 export * from './DetailTabs';

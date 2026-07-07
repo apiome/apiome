@@ -10,6 +10,8 @@ import {
   maxValue,
   sumValues,
   sparklinePoints,
+  trendLinePoints,
+  pointsToSegments,
   pointsToPath,
   polarToCartesian,
   describeAnnularArc,
@@ -75,6 +77,65 @@ describe('sparklinePoints', () => {
     const [p] = sparklinePoints([50], 120, 40, 3, 100);
     // 50 of 100 → halfway: y = 3 + 34 * 0.5 = 20
     expect(p.y).toBeCloseTo(20);
+  });
+});
+
+describe('trendLinePoints', () => {
+  it('returns no points for an empty series', () => {
+    expect(trendLinePoints([], 240, 64, 6)).toEqual([]);
+  });
+
+  it('lays real values on the same x-grid as sparklinePoints', () => {
+    const pts = trendLinePoints([0, 10], 120, 40, 3);
+    expect(pts[0]).not.toBeNull();
+    expect(pts[1]).not.toBeNull();
+    expect(pts[0]!.x).toBeCloseTo(3);
+    expect(pts[1]!.x).toBeCloseTo(117);
+    // 0 sits lower (larger y) than 10.
+    expect(pts[0]!.y).toBeGreaterThan(pts[1]!.y);
+  });
+
+  it('gaps a null value (returns null at its index) without shifting the x-grid', () => {
+    const pts = trendLinePoints([10, null, 20], 120, 40, 3);
+    expect(pts[1]).toBeNull();
+    // The third point still sits at the rightmost slot — the gap did not collapse the axis.
+    expect(pts[2]!.x).toBeCloseTo(117);
+  });
+
+  it('treats a non-finite value as a gap too', () => {
+    const pts = trendLinePoints([Number.NaN, 5], 120, 40, 3);
+    expect(pts[0]).toBeNull();
+    expect(pts[1]).not.toBeNull();
+  });
+
+  it('scales to the max of the present values, ignoring gaps', () => {
+    // domain derives from [40, 80] → 80; 80 sits at the top (y == padding).
+    const pts = trendLinePoints([40, null, 80], 120, 40, 3);
+    expect(pts[2]!.y).toBeCloseTo(3);
+  });
+
+  it('honors a pinned domainMax', () => {
+    const pts = trendLinePoints([50], 120, 40, 3, 100);
+    expect(pts[0]!.y).toBeCloseTo(20);
+  });
+});
+
+describe('pointsToSegments', () => {
+  it('returns one run for a gap-free series', () => {
+    const segs = pointsToSegments([{ x: 0, y: 0 }, { x: 1, y: 1 }]);
+    expect(segs).toHaveLength(1);
+    expect(segs[0]).toHaveLength(2);
+  });
+
+  it('splits into runs around each gap', () => {
+    const segs = pointsToSegments([{ x: 0, y: 0 }, null, { x: 2, y: 2 }, { x: 3, y: 3 }]);
+    expect(segs.map((s) => s.length)).toEqual([1, 2]);
+  });
+
+  it('drops leading/trailing gaps and returns [] for all-null / empty input', () => {
+    expect(pointsToSegments([null, { x: 1, y: 1 }, null])).toEqual([[{ x: 1, y: 1 }]]);
+    expect(pointsToSegments([null, null])).toEqual([]);
+    expect(pointsToSegments([])).toEqual([]);
   });
 });
 

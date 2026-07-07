@@ -746,3 +746,176 @@ exports[`StackedTimeline matches its snapshot 1`] = `
   </div>
 </figure>
 `;
+
+exports[`TrendLine matches its snapshot 1`] = `
+<figure
+  class="relative m-0 h-24 w-full"
+>
+  <svg
+    aria-label="snap"
+    class="h-full w-full overflow-visible"
+    preserveAspectRatio="none"
+    role="img"
+    viewBox="0 0 240 64"
+  >
+    <title>
+      snap
+    </title>
+    <desc>
+      3 of 4 points measured, latest 91, max 91, 1 gap, 1 marker
+    </desc>
+    <g
+      class="text-red-500 dark:text-red-400"
+    >
+      <g>
+        <line
+          stroke="currentColor"
+          stroke-dasharray="3 2"
+          stroke-opacity="0.7"
+          stroke-width="1.5"
+          vector-effect="non-scaling-stroke"
+          x1="234"
+          x2="234"
+          y1="6"
+          y2="58"
+        />
+        <path
+          d="M 234.00 3.00 l 3 3 l -3 3 l -3 -3 Z"
+          fill="currentColor"
+        />
+      </g>
+    </g>
+    <g
+      class="text-emerald-500 dark:text-emerald-400"
+    >
+      <defs>
+        <lineargradient
+          id="trendline-r8"
+          x1="0"
+          x2="0"
+          y1="0"
+          y2="1"
+        >
+          <stop
+            offset="0%"
+            stop-color="currentColor"
+            stop-opacity="0.22"
+          />
+          <stop
+            offset="100%"
+            stop-color="currentColor"
+            stop-opacity="0"
+          />
+        </lineargradient>
+      </defs>
+      <path
+        d="M 6.00 25.76 L 82.00 19.52 L 82.00 58 L 6.00 58 Z"
+        fill="url(#trendline-r8)"
+        stroke="none"
+      />
+      <path
+        d="M 6.00 25.76 L 82.00 19.52"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        vector-effect="non-scaling-stroke"
+      />
+      <path
+        d="M 234.00 10.68"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        vector-effect="non-scaling-stroke"
+      />
+      <circle
+        cx="6"
+        cy="25.76"
+        fill="currentColor"
+        r="2.5"
+      />
+      <circle
+        cx="82"
+        cy="19.52"
+        fill="currentColor"
+        r="2.5"
+      />
+      <circle
+        cx="234"
+        cy="10.679999999999998"
+        fill="currentColor"
+        r="2.5"
+      />
+    </g>
+    <line
+      class="stroke-gray-200 dark:stroke-gray-700"
+      stroke-width="1"
+      vector-effect="non-scaling-stroke"
+      x1="6"
+      x2="234"
+      y1="58"
+      y2="58"
+    />
+  </svg>
+  <div
+    class="sr-only"
+  >
+    <table>
+      <caption>
+        snap
+      </caption>
+      <tbody>
+        <tr>
+          <th
+            scope="row"
+          >
+            1
+          </th>
+          <td>
+            62
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <th
+            scope="row"
+          >
+            2
+          </th>
+          <td>
+            74
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <th
+            scope="row"
+          >
+            3
+          </th>
+          <td>
+            no data
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <th
+            scope="row"
+          >
+            4
+          </th>
+          <td>
+            91
+          </td>
+          <td>
+            marker
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</figure>
+`;

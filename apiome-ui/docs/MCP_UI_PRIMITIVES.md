@@ -15,7 +15,7 @@ keeps a central dark theme (10.10) addable in one place.
 | Layer | Path | What |
 | --- | --- | --- |
 | Pure helpers (React-free, unit-tested) | `src/app/components/ade/dashboard/mcp/mcpUiPrimitives.ts` | Grade styles, badge-tone resolvers, health/recency, tab definitions |
-| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `CapabilityPresenceMatrixPanel`, `FindingSeverity`, `DetailTabs` |
+| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `CapabilityPresenceMatrixPanel`, `GradeSurfaceTrendPanel`, `FindingSeverity`, `DetailTabs` |
 | Shared states | `src/app/components/ui/{EmptyState,LoadingState,ErrorState}.tsx` | empty / loading / error placeholders |
 | Barrel | `@/app/components/ui/mcp` (also re-exported from `@/app/components/ui`) | one import for all MCP primitives |
 
@@ -219,6 +219,27 @@ error / empty states.
 <CapabilityPresenceMatrixPanel versions={versionDetails} loading={loading} error={error} onSelectVersion={openDiff} />
 ```
 
+### `<GradeSurfaceTrendPanel>` (V2-MCP-30.4 / MCAT-16.4)
+
+The **grade & surface-size trend** on the endpoint **Insight** tab — answers *"is this server getting
+better or worse over time?"* with two `<TrendLine>` charts across discovery snapshots (oldest→newest):
+the **quality score** (0–100 / A–F) and the **capability count**. An **unscored snapshot is gapped, not
+zeroed** — the score line breaks across it (a hollow tick) rather than crashing to zero. The snapshots
+that introduced a **breaking change** (`severity_counts.breaking > 0`, from MCAT-16.3) are overlaid as
+**vertical markers aligned to the version that broke**, and listed as chips that **deep-link to that
+version's diff** (same `onSelectVersion` → compare/diff route as the churn panel). The headline leads
+with the latest grade glyph and the current capability count; each chart shows its delta since the
+start of history.
+
+It reads the same per-version `insight/evolution` series as the churn panel; all series-shaping, the
+marker indices, and the deltas come from the React-free, unit-tested `mcpEvolutionUi` module
+(`mcpGradeSurfaceTrend`), so the charts, markers, and summary can never disagree. It owns its loading /
+error / no-history states.
+
+```tsx
+<GradeSurfaceTrendPanel series={evolution} loading={loading} error={error} onSelectVersion={openDiff} />
+```
+
 ### `<FindingSeverity>`
 
 The shared MUST / SHOULD / Advisory chip used by the Lint & Score tab and inline hints. It renders
@@ -270,6 +291,7 @@ picks the color from Tailwind tokens** — and is:
 | Component | Shape | Typical use |
 | --- | --- | --- |
 | `<Sparkline data tone domainMax area />` | axis-free trend line + area | grade/latency over time (inline) |
+| `<TrendLine data tone domainMax markers area />` | gapped line + area, optional index markers | score/capability count over versions; a `null` gaps the line (not zeroed), markers flag breaking releases |
 | `<BarSeries data tone domainMax />` | vertical bars (per-bar `tone` override) | capability counts by type, findings by severity |
 | `<Donut segments centerLabel />` | proportional ring | transport / auth-scheme share |
 | `<StackedTimeline series periods onSelectPeriod? activeIndex? />` | stacked bars over an ordered axis (columns optionally clickable) | per-version churn (added/removed/modified), deep-linked to the diff |
@@ -303,5 +325,7 @@ consumer hard-codes a color, a dark variant lands in one place.
 - `tests/mcp-ui-primitives.test.ts` — the pure mappings (grade, badge tones, health, recency, tabs).
 - `tests/mcp-primitives-components.test.tsx` — render coverage for every component variant.
 - `tests/mcp-chart-tokens.test.ts` — chart tone → class mapping (no color literals, cyclic palette).
-- `tests/mcp-chart-geometry.test.ts` — the pure chart coordinate math (arcs, points, intensity).
+- `tests/mcp-chart-geometry.test.ts` — the pure chart coordinate math (arcs, points, intensity, gapped trend segments).
 - `tests/mcp-charts.test.tsx` — render + snapshot coverage for every chart, incl. empty states.
+- `tests/mcp-evolution-ui.test.ts` — the pure evolution helpers (churn timeline + grade/surface-size trend projections).
+- `tests/mcp-grade-trend-panel.test.tsx` — the grade & surface-size trend panel (gaps, markers, deep-links).

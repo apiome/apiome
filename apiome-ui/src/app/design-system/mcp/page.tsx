@@ -26,6 +26,7 @@ import { ToolComplexityPanel } from '@/app/components/ui/mcp/ToolComplexityPanel
 import { SafetyPosturePanel } from '@/app/components/ui/mcp/SafetyPosturePanel';
 import { DocCoveragePanel } from '@/app/components/ui/mcp/DocCoveragePanel';
 import { CapabilityChurnPanel } from '@/app/components/ui/mcp/CapabilityChurnPanel';
+import { GradeSurfaceTrendPanel } from '@/app/components/ui/mcp/GradeSurfaceTrendPanel';
 import type { McpEvolutionPoint } from '@/app/components/ade/dashboard/mcp/mcpEvolutionUi';
 import { CapabilityPresenceMatrixPanel } from '@/app/components/ui/mcp/CapabilityPresenceMatrixPanel';
 import type { McpVersionDetail } from '@/app/components/ade/dashboard/mcp/mcpBrowseUi';
@@ -35,6 +36,7 @@ import { JsonViewer, JsonDiffViewer, Disclosure } from '@/app/components/ui/code
 // Token-driven SVG chart kit (V2-MCP-28.3).
 import {
   Sparkline,
+  TrendLine,
   BarSeries,
   Donut,
   StackedTimeline,
@@ -257,6 +259,7 @@ const CHURN_SERIES_SAMPLE: McpEvolutionPoint[] = [
     score: 70,
     grade: 'C',
     change_counts: { added: 8, removed: 0, modified: 0, total: 8 },
+    severity_counts: { breaking: 0, additive: 8, review: 0, total: 8 },
   },
   {
     // A quiet release — no churn, but still a column on the axis.
@@ -269,9 +272,10 @@ const CHURN_SERIES_SAMPLE: McpEvolutionPoint[] = [
     score: 72,
     grade: 'C',
     change_counts: { added: 0, removed: 0, modified: 0, total: 0 },
+    severity_counts: { breaking: 0, additive: 0, review: 0, total: 0 },
   },
   {
-    // The busiest release.
+    // The busiest release — and a breaking one (2 removed capabilities).
     version_id: 'demo-v3',
     version_seq: 3,
     version_tag: '2026-06-15',
@@ -281,6 +285,7 @@ const CHURN_SERIES_SAMPLE: McpEvolutionPoint[] = [
     score: 84,
     grade: 'B',
     change_counts: { added: 3, removed: 2, modified: 4, total: 9 },
+    severity_counts: { breaking: 2, additive: 5, review: 2, total: 9 },
   },
   {
     version_id: 'demo-v4',
@@ -292,6 +297,76 @@ const CHURN_SERIES_SAMPLE: McpEvolutionPoint[] = [
     score: 90,
     grade: 'A',
     change_counts: { added: 5, removed: 0, modified: 1, total: 6 },
+    severity_counts: { breaking: 0, additive: 6, review: 0, total: 6 },
+  },
+];
+
+/**
+ * A five-snapshot series for the GradeSurfaceTrendPanel demo (V2-MCP-30.4): a rising score, one
+ * **unscored** snapshot (v3 — its score gaps, is not zeroed), and one breaking release (v4).
+ */
+const TREND_SERIES_SAMPLE: McpEvolutionPoint[] = [
+  {
+    version_id: 'trend-v1',
+    version_seq: 1,
+    version_tag: '2026-04-01',
+    discovered_at: '2026-04-01T10:00:00Z',
+    is_current: false,
+    type_counts: { tools: 6, resources: 0, resource_templates: 0, prompts: 0, total: 6 },
+    score: 62,
+    grade: 'D',
+    change_counts: { added: 6, removed: 0, modified: 0, total: 6 },
+    severity_counts: { breaking: 0, additive: 6, review: 0, total: 6 },
+  },
+  {
+    version_id: 'trend-v2',
+    version_seq: 2,
+    version_tag: '2026-04-20',
+    discovered_at: '2026-04-20T10:00:00Z',
+    is_current: false,
+    type_counts: { tools: 8, resources: 1, resource_templates: 0, prompts: 0, total: 9 },
+    score: 74,
+    grade: 'C',
+    change_counts: { added: 3, removed: 0, modified: 1, total: 4 },
+    severity_counts: { breaking: 0, additive: 3, review: 1, total: 4 },
+  },
+  {
+    // An unscored snapshot — the score line gaps across it rather than dropping to zero.
+    version_id: 'trend-v3',
+    version_seq: 3,
+    version_tag: '2026-05-10',
+    discovered_at: '2026-05-10T10:00:00Z',
+    is_current: false,
+    type_counts: { tools: 8, resources: 1, resource_templates: 0, prompts: 0, total: 9 },
+    score: null,
+    grade: null,
+    change_counts: { added: 0, removed: 0, modified: 0, total: 0 },
+    severity_counts: { breaking: 0, additive: 0, review: 0, total: 0 },
+  },
+  {
+    // A breaking release — two capabilities removed (marker overlaid on the timeline).
+    version_id: 'trend-v4',
+    version_seq: 4,
+    version_tag: '2026-06-01',
+    discovered_at: '2026-06-01T10:00:00Z',
+    is_current: false,
+    type_counts: { tools: 7, resources: 1, resource_templates: 0, prompts: 1, total: 9 },
+    score: 80,
+    grade: 'B',
+    change_counts: { added: 2, removed: 2, modified: 1, total: 5 },
+    severity_counts: { breaking: 2, additive: 2, review: 1, total: 5 },
+  },
+  {
+    version_id: 'trend-v5',
+    version_seq: 5,
+    version_tag: '2026-07-06',
+    discovered_at: '2026-07-06T10:00:00Z',
+    is_current: true,
+    type_counts: { tools: 9, resources: 2, resource_templates: 1, prompts: 1, total: 13 },
+    score: 91,
+    grade: 'A',
+    change_counts: { added: 4, removed: 0, modified: 0, total: 4 },
+    severity_counts: { breaking: 0, additive: 4, review: 0, total: 4 },
   },
 ];
 
@@ -568,6 +643,38 @@ export default function McpPrimitivesShowcase() {
         />
       </section>
 
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            GradeSurfaceTrendPanel (V2-MCP-30.4)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Is the server improving? Two <code>TrendLine</code> charts across discovery snapshots — the
+            quality score (0–100 / A–F) and the capability count — with breaking-change releases
+            (MCAT-16.3) overlaid as markers and listed as chips that deep-link to their diff. An{' '}
+            <strong>unscored</strong> snapshot is gapped, not zeroed.
+          </p>
+        </div>
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Five snapshots (one unscored gap, one breaking release)
+        </div>
+        <GradeSurfaceTrendPanel
+          series={TREND_SERIES_SAMPLE}
+          loading={false}
+          error={null}
+          onSelectVersion={() => {}}
+        />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          No history yet
+        </div>
+        <GradeSurfaceTrendPanel
+          series={[]}
+          loading={false}
+          error={null}
+          onSelectVersion={() => {}}
+        />
+      </section>
+
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">JsonViewer</h2>
         <p className="mb-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -679,6 +786,25 @@ export default function McpPrimitivesShowcase() {
               <Sparkline data={[80, 74, 60, 52, 40, 38, 30]} tone="red" />
               <Sparkline data={[50]} tone="emerald" />
               <Sparkline data={[]} />
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">TrendLine</h3>
+            <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">
+              A gapped line/area: a <code>null</code> entry breaks the line (a hollow tick), and
+              optional markers pin an index. Left → a score trend with an unscored gap and a
+              breaking-change marker; right → an empty state.
+            </p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <TrendLine
+                data={[62, 74, null, 80, 91]}
+                tone="emerald"
+                domainMax={100}
+                markers={[3]}
+                title="Quality score with a gap and a breaking-change marker"
+              />
+              <TrendLine data={[]} title="Empty trend" />
             </div>
           </div>
 

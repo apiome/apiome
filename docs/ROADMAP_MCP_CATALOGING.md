@@ -1462,7 +1462,7 @@ those changes are safe.
 | 16.1 ✅ | Capability churn timeline | Stacked timeline of added/removed/modified per version | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
 | 16.2 ✅ | Capability lifespan / presence matrix | Per-item rows showing when each tool/resource existed across versions | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui |
 | 16.3 ✅ | Breaking-change classification | Backend classifier: additive vs breaking (removed item, tightened input schema) from change `detail` | `mcp-insights` `backend` | N | Y | ●●● | apiome-rest |
-| 16.4 | Grade & surface-size trend | Sparkline/area of grade + counts across versions | `mcp-insights` `frontend` | Y | Y | ● | apiome-ui |
+| 16.4 ✅ | Grade & surface-size trend | Sparkline/area of grade + counts across versions | `mcp-insights` `frontend` | Y | Y | ● | apiome-ui |
 | 16.5 | "Changed since last view" digest | Per-user seen-marker + a summarized diff since last visit | `mcp-insights` `frontend` `backend` | N | N | ●● | apiome-ui, apiome-rest, apiome-db |
 
 ### MCAT-16.1 — Capability churn timeline  ·  **#4636**  ·  ✅ Done (apiome-ui 0.73.0)
@@ -1498,7 +1498,7 @@ those changes are safe.
 - **Dependencies / Parallelism.** After 14.1; feeds 16.1/16.4 markers. Backend-first in this epic.
 - **Technical Stack.** Python, pytest; reuse JSON-Schema compare helpers.
 
-### MCAT-16.4 — Grade & surface-size trend  ·  **#4639**
+### MCAT-16.4 — Grade & surface-size trend  ·  **#4639**  ·  ✅ Done (apiome-ui 0.75.0)
 - **Problem.** Is the server getting better or worse over time? No trend view exists.
 - **Solution / Scope.** Sparkline/area of `mcp_version_scores.score`/`grade` and capability counts
   across versions, with breaking-change markers (16.3) overlaid on the timeline.
