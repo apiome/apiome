@@ -9807,15 +9807,17 @@ class Database:
                    e.last_discovered_at, e.last_discovery_status, e.quarantined_at,
                    e.current_version_id,
                    s.score, s.grade, s.scored_at,
+                   cv.server_branding,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'tool')              AS tool_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource')          AS resource_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource_template') AS resource_template_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'prompt')            AS prompt_count
             FROM apiome.mcp_endpoints e
             LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
+            LEFT JOIN apiome.mcp_endpoint_versions cv ON cv.id = e.current_version_id
             LEFT JOIN apiome.mcp_capability_items ci ON ci.version_id = e.current_version_id
             WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
-            GROUP BY e.id, s.score, s.grade, s.scored_at
+            GROUP BY e.id, s.score, s.grade, s.scored_at, cv.server_branding
             ORDER BY e.name ASC
         """
         return self.execute_query(q, (tenant_id,))
@@ -11079,7 +11081,7 @@ class Database:
         q = """
             SELECT id, endpoint_id, version_seq, version_tag, protocol_version,
                    server_name, server_title, server_version, instructions,
-                   capabilities, surface_fingerprint, discovered_at, created_at
+                   capabilities, surface_fingerprint, server_branding, discovered_at, created_at
             FROM apiome.mcp_endpoint_versions
             WHERE endpoint_id = %s::uuid
             ORDER BY version_seq DESC
@@ -11129,7 +11131,7 @@ class Database:
         q = f"""
             SELECT v.id, v.endpoint_id, v.version_seq, v.version_tag, v.protocol_version,
                    v.server_name, v.server_title, v.server_version, v.surface_fingerprint,
-                   v.discovered_at, v.created_at,
+                   v.server_branding, v.discovered_at, v.created_at,
                    s.score, s.grade, s.scored_at,
                    {self._MCP_VERSION_CHANGE_COUNTS}
             FROM apiome.mcp_endpoint_versions v
@@ -11162,7 +11164,8 @@ class Database:
         q = f"""
             SELECT v.id, v.endpoint_id, v.version_seq, v.version_tag, v.protocol_version,
                    v.server_name, v.server_title, v.server_version, v.instructions,
-                   v.capabilities, v.surface_fingerprint, v.discovered_at, v.created_at,
+                   v.capabilities, v.surface_fingerprint, v.server_branding,
+                   v.discovered_at, v.created_at,
                    s.score, s.grade, s.scored_at,
                    {self._MCP_VERSION_CHANGE_COUNTS}
             FROM apiome.mcp_endpoint_versions v
@@ -11402,9 +11405,9 @@ class Database:
                     INSERT INTO apiome.mcp_endpoint_versions (
                         endpoint_id, version_seq, version_tag, protocol_version, server_name,
                         server_title, server_version, instructions, capabilities,
-                        surface_fingerprint, discovered_at
+                        surface_fingerprint, server_branding, discovered_at
                     ) VALUES (
-                        %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                     )
                     RETURNING id
                     """,
@@ -11421,6 +11424,9 @@ class Database:
                         if version_row.get("capabilities") is not None
                         else None,
                         version_row.get("surface_fingerprint"),
+                        Json(version_row.get("server_branding"))
+                        if version_row.get("server_branding") is not None
+                        else None,
                         discovered_at,
                     ),
                 )

@@ -10,7 +10,14 @@
  * shared with the capability view via {@link mcpFormatJson}.
  */
 
-import { mcpFormatJson, type McpBadgeVariant } from './mcpBrowseUi';
+import {
+  mcpFormatJson,
+  mcpServerBrandingFromPayload,
+  type McpBadgeVariant,
+  type McpServerBranding,
+} from './mcpBrowseUi';
+
+export type { McpServerBranding } from './mcpBrowseUi';
 
 /** Per-direction tally of surface changes (a version's diff, or a compare result). */
 export interface McpVersionChangeCounts {
@@ -32,6 +39,8 @@ export interface McpVersionSummary {
   server_title: string | null;
   server_version: string | null;
   surface_fingerprint: string | null;
+  /** The server's advertised branding for this snapshot, or `null` when none was advertised. */
+  server_branding: McpServerBranding | null;
   score: number | null;
   grade: string | null;
   scored_at: string | null;
@@ -125,6 +134,7 @@ export function mcpVersionSummaryFromPayload(raw: unknown): McpVersionSummary {
     server_title: asString(r.server_title),
     server_version: asString(r.server_version),
     surface_fingerprint: asString(r.surface_fingerprint),
+    server_branding: mcpServerBrandingFromPayload(r.server_branding),
     score: asScore(r.score),
     grade: asString(r.grade),
     scored_at: asString(r.scored_at),

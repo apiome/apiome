@@ -114,17 +114,28 @@ class ServerInfo:
     """Identity of the MCP server, parsed from the ``initialize`` result.
 
     Every field is optional on the wire and across revisions: ``title`` was added
-    in 2025-06-18, so a 2025-03-26 server leaves it ``None``.
+    in 2025-06-18, so a 2025-03-26 server leaves it ``None``. The ``website_url`` and
+    ``icons`` *branding* fields (V2-MCP-34.2) are likewise advertised only by newer
+    servers and are carried here **verbatim** — unvalidated — because validation
+    (scheme / SSRF / length) is a separate concern owned by
+    :mod:`app.mcp_client.branding`, which turns them into the storage-ready branding.
 
     Attributes:
         name: Programmatic server name (e.g. ``"example-server"``).
         title: Human-facing display title (2025-06-18+); ``None`` on older servers.
         version: Server implementation version string.
+        website_url: The server's advertised website URL (``serverInfo.websiteUrl``),
+            verbatim and unvalidated; ``None`` when not advertised.
+        icons: The advertised icon descriptors (``serverInfo.icons``) as plain dicts
+            (each an object with a ``src`` URL and optional ``mimeType``/``sizes``), in
+            the server's declared preference order; empty when none are advertised.
     """
 
     name: Optional[str] = None
     title: Optional[str] = None
     version: Optional[str] = None
+    website_url: Optional[str] = None
+    icons: Tuple[Dict[str, Any], ...] = ()
 
     @classmethod
     def from_dict(cls, payload: Optional[Mapping[str, Any]]) -> "ServerInfo":
@@ -135,6 +146,8 @@ class ServerInfo:
             name=_optional_str(payload.get("name")),
             title=_optional_str(payload.get("title")),
             version=_optional_str(payload.get("version")),
+            website_url=_optional_str(payload.get("websiteUrl")),
+            icons=_optional_icons(payload.get("icons")),
         )
 
 
@@ -337,3 +350,17 @@ def _build_result(negotiated: str, result_obj: Mapping[str, Any]) -> InitializeR
 def _optional_str(value: Any) -> Optional[str]:
     """Return ``value`` as a string when it is a non-empty string, else ``None``."""
     return value if isinstance(value, str) and value != "" else None
+
+
+def _optional_icons(value: Any) -> Tuple[Dict[str, Any], ...]:
+    """Return ``serverInfo.icons`` as a tuple of plain dicts, dropping non-object entries.
+
+    ``icons`` (2025-06-18+) is a list of icon descriptors, each an object with a ``src``
+    URL and optional ``mimeType``/``sizes``. Anything that is not a list — or a non-object
+    entry within it — is ignored, so a malformed or partial advertisement degrades to fewer
+    (or zero) icons rather than raising. The server's declared order is preserved, since it
+    expresses the server's icon preference (the first usable icon wins downstream).
+    """
+    if not isinstance(value, list):
+        return ()
+    return tuple(dict(entry) for entry in value if isinstance(entry, Mapping))

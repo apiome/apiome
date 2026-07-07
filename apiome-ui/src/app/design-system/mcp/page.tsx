@@ -117,6 +117,8 @@ const PROFILE_FULL: McpServerProfile = {
   instructions:
     'Use `search` for free-text queries and `fetch` to retrieve a document by id. Prefer narrow ' +
     'filters; results are capped at 100.',
+  iconUrl: 'https://cdn.acme.dev/logo.png',
+  websiteUrl: 'https://acme.dev',
 };
 
 /** An older (2025-03-26) server missing title/protocol/output-schema — the graceful-degrade path. */
@@ -136,6 +138,8 @@ const PROFILE_LEGACY: McpServerProfile = {
   discoveryStatus: 'unchanged',
   lastChangedAt: '2026-05-20T09:00:00Z',
   instructions: null,
+  iconUrl: null,
+  websiteUrl: null,
 };
 
 /** An unscored, never-discovered endpoint — no grade, no counts, unknown health. */
@@ -155,6 +159,8 @@ const PROFILE_UNSCORED: McpServerProfile = {
   discoveryStatus: null,
   lastChangedAt: null,
   instructions: null,
+  iconUrl: null,
+  websiteUrl: null,
 };
 
 /** A representative tool-complexity set spanning the tiers, incl. a bare tool and a deep polymorphic one. */

@@ -10,6 +10,23 @@
 /** Badge variants available from the shared UI Badge component. */
 export type McpBadgeVariant = 'default' | 'secondary' | 'success' | 'warning' | 'error' | 'outline';
 
+/**
+ * Validated branding a server advertised in its `initialize` `serverInfo` (V2-MCP-34.2, #4656).
+ *
+ * Every field is an already-guarded (https-only, SSRF-safe, length-bounded) *reference* the card
+ * renders directly — the icon as an `<img>`, the website as a link. The whole object is `null` on a
+ * snapshot when the server advertised no usable branding, and the card falls back to its text form.
+ * Defined here (the lowest-level MCP UI module) so both the browse and version views can share it.
+ */
+export interface McpServerBranding {
+  /** The server's advertised website URL, or `null`. */
+  website_url: string | null;
+  /** A URL for the server's display icon/logo, or `null`. */
+  icon_url: string | null;
+  /** The declared MIME type of {@link icon_url} (e.g. `image/png`), or `null`; descriptive only. */
+  icon_mime_type: string | null;
+}
+
 /** One endpoint as returned by `GET /v1/mcp/{slug}/browse`. */
 export interface McpBrowseEndpoint {
   id: string;
@@ -35,6 +52,8 @@ export interface McpBrowseEndpoint {
   current_version_id: string | null;
   score: number | null;
   grade: string | null;
+  /** The current snapshot's advertised branding (logo/site), or `null` when none was advertised. */
+  server_branding: McpServerBranding | null;
   tool_count: number;
   resource_count: number;
   resource_template_count: number;
@@ -134,6 +153,24 @@ function asObject(value: unknown): Record<string, unknown> | null {
 }
 
 /** Parse one browse-endpoint object defensively (missing/invalid fields fall back to safe defaults). */
+/**
+ * Parse a `server_branding` block defensively into {@link McpServerBranding}, or `null`.
+ *
+ * A non-object payload, or one whose fields are all absent/blank, yields `null` so the card falls
+ * back to its text form. The REST side has already validated each URL (https-only, SSRF-safe), so
+ * this is a shape guard, not a security boundary — but it stays strict (only non-empty strings) so a
+ * malformed payload never produces a broken `<img>`/link.
+ */
+export function mcpServerBrandingFromPayload(raw: unknown): McpServerBranding | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const r = raw as Record<string, unknown>;
+  const website_url = asString(r.website_url);
+  const icon_url = asString(r.icon_url);
+  const icon_mime_type = asString(r.icon_mime_type);
+  if (website_url === null && icon_url === null && icon_mime_type === null) return null;
+  return { website_url, icon_url, icon_mime_type };
+}
+
 export function mcpBrowseEndpointFromPayload(raw: unknown): McpBrowseEndpoint {
   const r = (raw ?? {}) as Record<string, unknown>;
   return {
@@ -155,6 +192,7 @@ export function mcpBrowseEndpointFromPayload(raw: unknown): McpBrowseEndpoint {
     current_version_id: asString(r.current_version_id),
     score: asScore(r.score),
     grade: asString(r.grade),
+    server_branding: mcpServerBrandingFromPayload(r.server_branding),
     tool_count: asInt(r.tool_count),
     resource_count: asInt(r.resource_count),
     resource_template_count: asInt(r.resource_template_count),

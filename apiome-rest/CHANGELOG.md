@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.100.0] - 2026-07-07
+
+### Added
+- **Server branding capture (#4656, V2-MCP-34.2 / MCAT-20.2)** — a text-only catalog card can now
+  show a server's advertised logo and website, making it far more recognizable, while a server that
+  advertises nothing falls back unchanged.
+  - New pure module `app.mcp_client.branding`: turns the verbatim `serverInfo` branding
+    (`websiteUrl` + `icons[]`, now parsed onto `ServerInfo`) into a small, storage-ready
+    `ServerBranding` — a website URL and the first usable display icon (with its MIME type). Every
+    URL is validated first: **`https`-only** (plaintext, `data:`/`file:` and other schemes dropped),
+    host must **not** be a private/non-globally-routable IP literal (the transport's SSRF class, via
+    `resilience.private_address_reason`), and length-bounded. Any value failing a guard is omitted.
+  - Assets are **referenced, never fetched or executed** server-side (the card renders the icon as an
+    `<img>` with `referrer-policy: no-referrer` and the site as a `nofollow` link) — the acceptance
+    criteria's "fetched within guards or omitted".
+  - `DiscoverySurface.to_version_row` persists the validated branding to a new
+    `apiome.mcp_endpoint_versions.server_branding` (JSONB) column (apiome-db **V147**). It is
+    **descriptive metadata on the immutable snapshot and deliberately excluded from the surface
+    fingerprint**, so a purely cosmetic rebrand never mints a spurious version and existing
+    fingerprints are unchanged (no re-snapshot churn); branding is captured whenever a real surface
+    change mints a snapshot.
+  - Surfaced on `McpEndpointVersionSummary`/`Detail` (`server_branding` → `McpServerBranding`) and on
+    the browse projection `McpBrowseEndpointOut`, so both the identity card and the catalog card can
+    render a logo/site.
+
 ## [1.99.0] - 2026-07-07
 
 ### Added

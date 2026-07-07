@@ -4244,6 +4244,24 @@ def mcp_endpoint_host(url: Optional[str]) -> str:
     return host.lower() if host else "(local)"
 
 
+class McpServerBranding(BaseModel):
+    """The validated branding a server advertised in its ``initialize`` ``serverInfo`` (#4656).
+
+    A recognizable-catalog aid (V2-MCP-34.2): the server's website and a display icon, if any.
+    Every field is optional and independently present — the capture layer
+    (:mod:`app.mcp_client.branding`) drops any value that fails its guards (https-only,
+    SSRF-safe host, length-bounded), so a field here is always a safe, *referenceable* URL. The
+    whole object is ``None`` on a snapshot when the server advertised no usable branding, and the
+    card falls back to its text form.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    website_url: Optional[str] = None
+    icon_url: Optional[str] = None
+    icon_mime_type: Optional[str] = None
+
+
 class McpBrowseEndpointOut(BaseModel):
     """One endpoint as it appears in the private browse view (V2-MCP-23.1 / MCAT-9.1).
 
@@ -4274,6 +4292,7 @@ class McpBrowseEndpointOut(BaseModel):
     current_version_id: Optional[str] = None
     score: Optional[int] = None
     grade: Optional[str] = None
+    server_branding: Optional[McpServerBranding] = None
     tool_count: int = 0
     resource_count: int = 0
     resource_template_count: int = 0
@@ -4346,6 +4365,7 @@ def mcp_browse_endpoint_out_from_row(row: Dict[str, Any]) -> McpBrowseEndpointOu
         current_version_id=_s(row.get("current_version_id")),
         score=int(score) if score is not None else None,
         grade=_s(row.get("grade")),
+        server_branding=_mcp_server_branding(row.get("server_branding")),
         tool_count=tool,
         resource_count=resource,
         resource_template_count=resource_template,
@@ -5040,14 +5060,37 @@ def _mcp_severity_counts(changes: List[Dict[str, Any]]) -> McpChangeSeverityCoun
     )
 
 
+def _mcp_server_branding(value: Any) -> Optional[McpServerBranding]:
+    """Project a stored ``server_branding`` JSON object onto the wire model, or ``None``.
+
+    The column is written by :mod:`app.mcp_client.branding` as a dict of already-validated,
+    safe URLs (or SQL ``NULL``). A non-dict/empty value — or one with no recognized field —
+    reads back as ``None`` so the card falls back to its text form; unknown keys are ignored.
+    """
+    if not isinstance(value, dict):
+        return None
+    branding = McpServerBranding(
+        website_url=_mcp_str(value.get("website_url")),
+        icon_url=_mcp_str(value.get("icon_url")),
+        icon_mime_type=_mcp_str(value.get("icon_mime_type")),
+    )
+    if (
+        branding.website_url is None
+        and branding.icon_url is None
+        and branding.icon_mime_type is None
+    ):
+        return None
+    return branding
+
+
 class McpEndpointVersionSummary(BaseModel):
     """One row of an endpoint's version history (the timeline / "what changed when" view).
 
     Carries the snapshot's sequence and human-readable date/time ``version_tag``, its server
-    identity and ``surface_fingerprint``, the quality ``score`` / ``grade`` (NULL until the
-    snapshot is scored), and the per-direction ``change_counts`` it introduced relative to the
-    prior version. ``is_current`` flags the snapshot the endpoint's ``current_version_id``
-    points at.
+    identity, ``surface_fingerprint`` and advertised ``server_branding``, the quality ``score`` /
+    ``grade`` (NULL until the snapshot is scored), and the per-direction ``change_counts`` it
+    introduced relative to the prior version. ``is_current`` flags the snapshot the endpoint's
+    ``current_version_id`` points at.
     """
 
     model_config = ConfigDict(populate_by_name=True)
@@ -5061,6 +5104,7 @@ class McpEndpointVersionSummary(BaseModel):
     server_title: Optional[str] = None
     server_version: Optional[str] = None
     surface_fingerprint: Optional[str] = None
+    server_branding: Optional[McpServerBranding] = None
     score: Optional[int] = None
     grade: Optional[str] = None
     scored_at: Optional[str] = None
@@ -5305,6 +5349,7 @@ def mcp_version_summary_from_row(
         server_title=_mcp_str(row.get("server_title")),
         server_version=_mcp_str(row.get("server_version")),
         surface_fingerprint=_mcp_str(row.get("surface_fingerprint")),
+        server_branding=_mcp_server_branding(row.get("server_branding")),
         score=_mcp_int(row.get("score")),
         grade=_mcp_str(row.get("grade")),
         scored_at=_mcp_ts(row.get("scored_at")),

@@ -137,6 +137,29 @@ def test_browse_row_projection_quarantined_flag():
     assert mcp_browse_endpoint_out_from_row(_browse_row(quarantined_at=None)).quarantined is False
 
 
+def test_browse_row_projection_branding_present():
+    """The current snapshot's ``server_branding`` JSON projects onto the card model (#4656)."""
+    out = mcp_browse_endpoint_out_from_row(
+        _browse_row(
+            server_branding={
+                "website_url": "https://acme.example/",
+                "icon_url": "https://acme.example/logo.png",
+                "icon_mime_type": "image/png",
+            }
+        )
+    )
+    assert out.server_branding is not None
+    assert out.server_branding.icon_url == "https://acme.example/logo.png"
+    assert out.server_branding.website_url == "https://acme.example/"
+
+
+def test_browse_row_projection_branding_absent_is_none():
+    """A missing/empty ``server_branding`` reads back as ``None`` so the card falls back to text."""
+    assert mcp_browse_endpoint_out_from_row(_browse_row()).server_branding is None
+    assert mcp_browse_endpoint_out_from_row(_browse_row(server_branding=None)).server_branding is None
+    assert mcp_browse_endpoint_out_from_row(_browse_row(server_branding={})).server_branding is None
+
+
 # ===========================================================================
 # Grouping helper
 # ===========================================================================

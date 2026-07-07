@@ -47,6 +47,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
+from .branding import extract_server_branding
 from .discovery import DiscoveryListings
 from .handshake import InitializeResult, ServerInfo
 
@@ -481,9 +482,19 @@ class DiscoverySurface:
         """Map the surface identity to ``mcp_endpoint_versions`` snapshot columns.
 
         Covers the columns derived from the surface itself (server identity,
-        capabilities, instructions, protocol version, and the surface fingerprint);
-        the caller supplies the remaining columns (``endpoint_id``, ``version_seq``,
-        ``discovered_at``).
+        capabilities, instructions, protocol version, the surface fingerprint, and the
+        validated server ``branding``); the caller supplies the remaining columns
+        (``endpoint_id``, ``version_seq``, ``discovered_at``).
+
+        ``server_branding`` is the storage-ready branding
+        (:func:`~app.mcp_client.branding.extract_server_branding` → ``to_row_value``): a
+        JSON object of the validated website/icon URLs, or ``None`` when the server
+        advertised no usable branding. It is *descriptive* metadata on the snapshot and
+        is deliberately **not** part of the surface fingerprint (see :meth:`canonical_dict`),
+        so a purely cosmetic rebrand does not mint a spurious version — branding is captured
+        as of whenever a snapshot is minted by a real surface change. Extraction runs only on
+        a live surface (the raw advertised icons are unavailable to :meth:`from_rows`), which is
+        the only path that persists a version.
         """
         return {
             "protocol_version": self.protocol_version,
@@ -493,6 +504,7 @@ class DiscoverySurface:
             "instructions": self.instructions,
             "capabilities": self.capabilities,
             "surface_fingerprint": self.fingerprint(),
+            "server_branding": extract_server_branding(self.server_info).to_row_value(),
         }
 
     @classmethod

@@ -232,6 +232,28 @@ describe('mcpServerProfileFrom', () => {
     expect(profile.instructions).toBe('Use search carefully.');
   });
 
+  it('threads the snapshot server_branding into iconUrl / websiteUrl (#4656)', () => {
+    const branded = mcpVersionSummaryFromPayload({
+      id: VERSION_ID,
+      version_seq: 8,
+      server_name: 'acme-search',
+      server_branding: {
+        website_url: 'https://acme.dev',
+        icon_url: 'https://cdn.acme.dev/logo.png',
+        icon_mime_type: 'image/png',
+      },
+    });
+    const profile = mcpServerProfileFrom({ endpoint, version: branded });
+    expect(profile.iconUrl).toBe('https://cdn.acme.dev/logo.png');
+    expect(profile.websiteUrl).toBe('https://acme.dev');
+
+    // Absent branding degrades both to null so the card falls back to its text form.
+    const plain = mcpVersionSummaryFromPayload({ id: VERSION_ID, version_seq: 9 });
+    const plainProfile = mcpServerProfileFrom({ endpoint, version: plain });
+    expect(plainProfile.iconUrl).toBeNull();
+    expect(plainProfile.websiteUrl).toBeNull();
+  });
+
   it('falls back through title → name → endpoint name → generic label', () => {
     const noTitle = mcpVersionSummaryFromPayload({
       id: VERSION_ID,

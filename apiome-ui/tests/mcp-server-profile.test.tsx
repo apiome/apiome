@@ -30,6 +30,8 @@ const FULL: McpServerProfile = {
   discoveryStatus: 'changed',
   lastChangedAt: '2026-07-06T10:00:00Z',
   instructions: 'Use search for queries.',
+  iconUrl: 'https://cdn.acme.dev/logo.png',
+  websiteUrl: 'https://acme.dev',
 };
 
 describe('ServerProfileCard', () => {
@@ -66,6 +68,17 @@ describe('ServerProfileCard', () => {
     // Trust snapshot links to the composite trust radar (17.4).
     const trustLink = screen.getByRole('link', { name: /Composite trust radar/ });
     expect(trustLink).toHaveAttribute('href', '#insight-reliability');
+
+    // Branding (#4656): the advertised logo replaces the generic glyph and is referenced safely.
+    const logo = screen.getByRole('img', { name: 'Acme Search logo' });
+    expect(logo).toHaveAttribute('src', 'https://cdn.acme.dev/logo.png');
+    expect(logo).toHaveAttribute('referrerpolicy', 'no-referrer');
+    // The advertised website renders as an external, no-referrer, nofollow link.
+    const site = screen.getByRole('link', { name: /acme\.dev/ });
+    expect(site).toHaveAttribute('href', 'https://acme.dev');
+    expect(site).toHaveAttribute('rel', expect.stringContaining('noopener'));
+    expect(site).toHaveAttribute('rel', expect.stringContaining('nofollow'));
+    expect(site).toHaveAttribute('target', '_blank');
   });
 
   it('degrades gracefully for an older server missing title/protocol', () => {
@@ -78,10 +91,15 @@ describe('ServerProfileCard', () => {
       transport: 'http+sse',
       isCurrent: false,
       instructions: null,
+      iconUrl: null,
+      websiteUrl: null,
     };
     render(<ServerProfileCard profile={legacy} nowMs={NOW} />);
 
     expect(screen.getByRole('heading', { name: /legacy-notes/ })).toBeInTheDocument();
+    // No advertised branding → no logo image and no website link (text-only fallback).
+    expect(screen.queryByRole('img', { name: /logo/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /legacy-notes|http/ })).not.toBeInTheDocument();
     // Missing protocol reads as an explicit note, not a broken chip.
     expect(screen.getByText('protocol unknown')).toBeInTheDocument();
     expect(screen.getByText('http+sse (legacy)')).toBeInTheDocument();
@@ -111,6 +129,8 @@ describe('ServerProfileCard', () => {
       discoveryStatus: null,
       lastChangedAt: null,
       instructions: null,
+      iconUrl: null,
+      websiteUrl: null,
     };
     render(<ServerProfileCard profile={unscored} nowMs={NOW} />);
 
