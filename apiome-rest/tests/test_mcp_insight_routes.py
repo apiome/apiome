@@ -961,3 +961,194 @@ def test_percentile_cross_tenant_endpoint_is_404():
         mdb.get_mcp_endpoint.return_value = None
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/percentile")
     assert r.status_code == 404
+
+
+# ===========================================================================
+# similar servers (capability overlap + semantic embeddings — MCAT-18.4)
+# ===========================================================================
+
+
+def _similar_candidate(endpoint_id, *, name, capability_names, embedding=None, category="weather"):
+    """A row shaped like one entry of ``get_mcp_similar_candidates``."""
+    return {
+        "endpoint_id": endpoint_id,
+        "name": name,
+        "slug": name.lower().replace(" ", "-"),
+        "category": category,
+        "current_version_id": f"ver-{endpoint_id}",
+        "capability_names": capability_names,
+        "embedding": embedding,
+    }
+
+
+def test_similar_overlap_ranks_peers_by_capability_overlap():
+    # Target shares 2/3 tools with EP_B and 1/3 with EP_C; EP_C's finance server shares nothing.
+    candidates = [
+        _similar_candidate(_EP, name="Acme Weather", capability_names=["get_weather", "get_forecast", "list_cities"]),
+        _similar_candidate(_EP_B, name="Near Weather", capability_names=["get_weather", "get_forecast", "get_alerts"]),
+        _similar_candidate(_EP_C, name="Mid Weather", capability_names=["get_weather", "a", "b", "c"]),
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
+        mdb.get_mcp_similar_candidates.return_value = candidates
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["endpoint_id"] == _EP
+    assert body["target_capability_count"] == 3
+    # Overlap ranked descending; the target itself is never its own neighbour.
+    assert [n["endpoint_id"] for n in body["overlap"]] == [_EP_B, _EP_C]
+    near = body["overlap"][0]
+    assert near["similarity"] == pytest.approx(0.5)
+    assert near["shared_count"] == 2
+    assert near["shared_capabilities"] == ["get_forecast", "get_weather"]
+    # Embeddings off by default → semantic is an empty no-op.
+    assert body["embeddings_enabled"] is False
+    assert body["semantic"] == []
+    mdb.get_mcp_similar_candidates.assert_called_once_with("t1")
+
+
+def test_similar_no_op_semantic_when_embeddings_disabled_even_with_vectors():
+    # Vectors are present on both sides, but the feature flag is off → semantic stays empty.
+    candidates = [
+        _similar_candidate(_EP, name="Acme", capability_names=["a", "b"], embedding=[1.0, 0.0]),
+        _similar_candidate(_EP_B, name="Peer", capability_names=["a", "c"], embedding=[0.9, 0.1]),
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb, patch(
+        "app.mcp_catalog_routes.settings.mcp_similarity_embeddings_enabled", False
+    ):
+        mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
+        mdb.get_mcp_similar_candidates.return_value = candidates
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["embeddings_enabled"] is False
+    assert body["semantic"] == []
+    # Overlap still works regardless of the embedding flag.
+    assert [n["endpoint_id"] for n in body["overlap"]] == [_EP_B]
+
+
+def test_similar_semantic_neighbors_returned_when_enabled_and_backfilled():
+    candidates = [
+        _similar_candidate(_EP, name="Acme", capability_names=["a"], embedding=[1.0, 0.0, 0.0]),
+        _similar_candidate(_EP_B, name="Near", capability_names=["a"], embedding=[0.99, 0.14, 0.0]),
+        _similar_candidate(_EP_C, name="Mid", capability_names=["a"], embedding=[0.6, 0.8, 0.0]),
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb, patch(
+        "app.mcp_catalog_routes.settings.mcp_similarity_embeddings_enabled", True
+    ):
+        mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
+        mdb.get_mcp_similar_candidates.return_value = candidates
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["embeddings_enabled"] is True
+    # Cosine nearest-first: Near (~0.99) before Mid (0.6).
+    assert [n["endpoint_id"] for n in body["semantic"]] == [_EP_B, _EP_C]
+    assert body["semantic"][0]["similarity"] == pytest.approx(0.99, abs=0.005)
+
+
+def test_similar_enabled_but_no_peer_vectors_is_no_op():
+    # Flag on and the target has a vector, but no peer is backfilled → embeddings_enabled False, empty.
+    candidates = [
+        _similar_candidate(_EP, name="Acme", capability_names=["a", "b"], embedding=[1.0, 0.0]),
+        _similar_candidate(_EP_B, name="Peer", capability_names=["a", "c"], embedding=None),
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb, patch(
+        "app.mcp_catalog_routes.settings.mcp_similarity_embeddings_enabled", True
+    ):
+        mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
+        mdb.get_mcp_similar_candidates.return_value = candidates
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["embeddings_enabled"] is False
+    assert body["semantic"] == []
+
+
+def test_similar_never_discovered_target_is_empty_not_500():
+    # Target carries no capabilities and no vector → both lists empty, count 0, a 200.
+    candidates = [
+        _similar_candidate(_EP, name="Acme", capability_names=[], embedding=None),
+        _similar_candidate(_EP_B, name="Peer", capability_names=["a", "b"], embedding=None),
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
+        mdb.get_mcp_similar_candidates.return_value = candidates
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["target_capability_count"] == 0
+    assert body["overlap"] == []
+    assert body["semantic"] == []
+
+
+def test_similar_cross_tenant_endpoint_is_404():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = None
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar")
+    assert r.status_code == 404
+
+
+def test_reindex_is_labeled_no_op_when_embeddings_disabled():
+    with patch("app.mcp_catalog_routes.db") as mdb, patch(
+        "app.mcp_catalog_routes.settings.mcp_similarity_embeddings_enabled", False
+    ):
+        mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
+        r = client.post(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar/reindex")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["embeddings_enabled"] is False
+    assert body["reindexed"] is False
+    assert "disabled" in body["detail"]
+    # A disabled reindex must not touch the embedding service or store.
+    mdb.store_mcp_capability_embedding.assert_not_called()
+
+
+def test_reindex_stores_current_surface_embedding_when_enabled():
+    items = [
+        {"name": "get_weather", "description": "Current weather"},
+        {"name": "list_cities", "description": None},
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb, patch(
+        "app.mcp_catalog_routes.settings.mcp_similarity_embeddings_enabled", True
+    ), patch("app.mcp_catalog_routes.get_embedding", return_value=[0.1, 0.2, 0.3]) as mget:
+        mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
+        mdb.get_mcp_endpoint_version.return_value = {"id": _V2}
+        mdb.get_mcp_capability_items.return_value = items
+        mdb.store_mcp_capability_embedding.return_value = True
+        r = client.post(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar/reindex")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["reindexed"] is True
+    assert body["version_id"] == _V2
+    # The deterministic capability text was embedded and stored on the current snapshot.
+    mget.assert_called_once_with("get_weather: Current weather\nlist_cities")
+    mdb.store_mcp_capability_embedding.assert_called_once_with(_V2, [0.1, 0.2, 0.3])
+
+
+def test_reindex_no_surface_is_no_op():
+    with patch("app.mcp_catalog_routes.db") as mdb, patch(
+        "app.mcp_catalog_routes.settings.mcp_similarity_embeddings_enabled", True
+    ):
+        mdb.get_mcp_endpoint.return_value = dict(_WEATHER_ENDPOINT, current_version_id=None)
+        r = client.post(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar/reindex")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["reindexed"] is False
+    assert "no discovered surface" in body["detail"]
+
+
+def test_reindex_embedding_service_unavailable_is_no_op():
+    with patch("app.mcp_catalog_routes.db") as mdb, patch(
+        "app.mcp_catalog_routes.settings.mcp_similarity_embeddings_enabled", True
+    ), patch("app.mcp_catalog_routes.get_embedding", return_value=None):
+        mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
+        mdb.get_mcp_endpoint_version.return_value = {"id": _V2}
+        mdb.get_mcp_capability_items.return_value = [{"name": "get_weather", "description": "x"}]
+        r = client.post(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar/reindex")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["reindexed"] is False
+    assert "embedding service unavailable" in body["detail"]
+    mdb.store_mcp_capability_embedding.assert_not_called()

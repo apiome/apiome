@@ -6293,6 +6293,88 @@ class McpInsightPercentileResponse(BaseModel):
     profile: McpPeerPercentileOut
 
 
+class McpSimilarOverlapNeighborOut(BaseModel):
+    """One capability-overlap similar server — a peer ranked by shared capability names (MCAT-18.4).
+
+    ``similarity`` is the Jaccard index (``0``-``1``) of the two servers' capability-name sets;
+    ``shared_capabilities`` lists the names in common (normalized, sorted), ``shared_count`` its size;
+    ``target_capability_count`` / ``candidate_capability_count`` are the two servers' distinct-name
+    counts, so the UI can render "8 of 12 capabilities shared".
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    endpoint_id: str
+    name: str
+    slug: Optional[str] = None
+    category: Optional[str] = None
+    similarity: float = 0.0
+    shared_count: int = 0
+    target_capability_count: int = 0
+    candidate_capability_count: int = 0
+    shared_capabilities: List[str] = Field(default_factory=list)
+
+
+class McpSimilarEmbeddingNeighborOut(BaseModel):
+    """One semantic-embedding similar server — a peer ranked by cosine similarity (MCAT-18.4).
+
+    ``similarity`` is the cosine similarity (``-1``-``1``, higher = nearer) of the two snapshots'
+    capability embeddings. Only present when semantic embeddings are enabled and backfilled.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    endpoint_id: str
+    name: str
+    slug: Optional[str] = None
+    category: Optional[str] = None
+    similarity: float = 0.0
+
+
+class McpSimilarServersResponse(BaseModel):
+    """Response envelope for an endpoint's "similar servers" discovery (MCAT-18.4).
+
+    Surfaces "servers like this one" from two independent signals, each ranked against the caller's own
+    live catalog: ``overlap`` — always present — ranks peers by capability-name Jaccard overlap;
+    ``semantic`` ranks peers by cosine nearest-neighbour over a capability embedding, and is only
+    populated when ``embeddings_enabled`` is true (the flag is on and both this endpoint and at least one
+    peer have a backfilled embedding). When embeddings are disabled or unbackfilled, ``embeddings_enabled``
+    is false and ``semantic`` is empty — the feature gracefully falls back to overlap-only, never a
+    ``500``. ``target_capability_count`` is this endpoint's own distinct capability-name count (``0`` when
+    it was never discovered, in which case ``overlap`` is empty too).
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    embeddings_enabled: bool = False
+    target_capability_count: int = 0
+    overlap: List[McpSimilarOverlapNeighborOut] = Field(default_factory=list)
+    semantic: List[McpSimilarEmbeddingNeighborOut] = Field(default_factory=list)
+
+
+class McpSimilarReindexResponse(BaseModel):
+    """Response envelope for the similar-servers embedding backfill (MCAT-18.4).
+
+    Records the outcome of (re)computing and storing this endpoint's current-snapshot capability
+    embedding for the semantic similarity signal. ``embeddings_enabled`` reflects the feature flag;
+    ``reindexed`` is true only when an embedding was actually generated and stored. When the flag is off,
+    the endpoint has no discovered surface, or the embedding service / pgvector is unavailable,
+    ``reindexed`` is false and ``detail`` explains why — always a ``200`` describing the no-op, never an
+    error.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    embeddings_enabled: bool = False
+    reindexed: bool = False
+    version_id: Optional[str] = None
+    detail: str = ""
+
+
 class McpCatalogBucketOut(BaseModel):
     """One labelled slice of a catalog composition breakdown — a bucket and its endpoint count.
 

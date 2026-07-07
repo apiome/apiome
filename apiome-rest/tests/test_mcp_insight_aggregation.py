@@ -13,6 +13,9 @@ from app.mcp_insight_aggregation import (
     RESPONSIVENESS_LATENCY_CEILING_MS,
     RESPONSIVENESS_LATENCY_FLOOR_MS,
     TOOL_LATENCY_WINDOW_DAYS,
+    build_capability_embedding_text,
+    capability_name_set,
+    compute_capability_overlap,
     compute_discovery_reliability,
     compute_discovery_timeline,
     compute_invocation_reliability,
@@ -22,9 +25,13 @@ from app.mcp_insight_aggregation import (
     compute_tool_count_histogram,
     compute_tool_reliability,
     compute_trust_profile,
+    cosine_similarity,
+    jaccard_similarity,
     mcp_auth_posture,
+    normalize_capability_name,
     percentile_cont,
     percentile_rank,
+    rank_embedding_neighbors,
 )
 
 # ---------------------------------------------------------------------------
@@ -825,3 +832,203 @@ def test_peer_percentiles_as_dict_shape():
         "available",
         "detail",
     }
+
+
+# ---------------------------------------------------------------------------
+# Similar servers: capability overlap (Jaccard) — MCAT-18.4
+# ---------------------------------------------------------------------------
+
+
+def test_normalize_and_capability_name_set_fold_case_and_blanks():
+    assert normalize_capability_name("  Get_Weather ") == "get_weather"
+    assert normalize_capability_name(None) == ""
+    # Case-folded, blank-dropped, de-duplicated into a set.
+    assert capability_name_set(["Get", "get", " ", None, "List"]) == {"get", "list"}
+
+
+def test_jaccard_similarity_matches_hand_computed_fixture():
+    a = {"get_weather", "get_forecast", "list_cities"}
+    b = {"get_weather", "get_forecast", "get_alerts"}
+    # intersection {get_weather, get_forecast} = 2; union = 4 → 0.5.
+    assert jaccard_similarity(a, b) == pytest.approx(0.5)
+    # No overlap → 0; identical → 1; both empty → 0 (never a divide-by-zero).
+    assert jaccard_similarity({"x"}, {"y"}) == 0.0
+    assert jaccard_similarity(a, set(a)) == 1.0
+    assert jaccard_similarity(set(), set()) == 0.0
+
+
+# A small seeded catalog: the target shares 2 of its 3 tools with "near", 1 with "mid", 0 with "far".
+_TARGET_NAMES = ["get_weather", "get_forecast", "list_cities"]
+_OVERLAP_CANDIDATES = [
+    {
+        "endpoint_id": "near",
+        "name": "Near Weather",
+        "slug": "near-weather",
+        "category": "weather",
+        "capability_names": ["Get_Weather", "get_forecast", "get_alerts"],
+    },
+    {
+        "endpoint_id": "mid",
+        "name": "Mid Weather",
+        "slug": "mid-weather",
+        "category": "weather",
+        "capability_names": ["get_weather", "unrelated_a", "unrelated_b", "unrelated_c"],
+    },
+    {
+        "endpoint_id": "far",
+        "name": "Far Finance",
+        "slug": "far-finance",
+        "category": "finance",
+        "capability_names": ["pay_invoice", "list_accounts"],
+    },
+]
+
+
+def test_capability_overlap_ranks_and_matches_fixture():
+    result = compute_capability_overlap(_TARGET_NAMES, _OVERLAP_CANDIDATES, limit=10)
+    # "far" shares nothing → excluded; ranked by descending Jaccard.
+    assert [n.endpoint_id for n in result] == ["near", "mid"]
+
+    near = result[0]
+    # near: intersection {get_weather, get_forecast} = 2; union {get_weather, get_forecast,
+    # list_cities, get_alerts} = 4 → 0.5. Name-match is case-insensitive ("Get_Weather").
+    assert near.similarity == pytest.approx(0.5)
+    assert near.shared_count == 2
+    assert near.shared_capabilities == ["get_forecast", "get_weather"]
+    assert near.target_capability_count == 3
+    assert near.candidate_capability_count == 3
+
+    mid = result[1]
+    # mid: intersection {get_weather} = 1; union = 6 → 0.1667.
+    assert mid.similarity == pytest.approx(0.1667, abs=0.0005)
+    assert mid.shared_count == 1
+
+
+def test_capability_overlap_empty_target_yields_no_neighbours():
+    assert compute_capability_overlap([], _OVERLAP_CANDIDATES) == []
+    assert compute_capability_overlap(["  ", None], _OVERLAP_CANDIDATES) == []
+
+
+def test_capability_overlap_respects_limit_and_stable_tie_order():
+    # Two candidates with identical overlap (0.5) tie on similarity and shared_count; ordered by name.
+    cands = [
+        {"endpoint_id": "b", "name": "Bravo", "capability_names": ["get_weather", "get_forecast"]},
+        {"endpoint_id": "a", "name": "Alpha", "capability_names": ["get_weather", "get_forecast"]},
+    ]
+    ranked = compute_capability_overlap(_TARGET_NAMES, cands, limit=1)
+    assert len(ranked) == 1
+    assert ranked[0].endpoint_id == "a"  # "Alpha" < "Bravo"
+
+
+def test_capability_overlap_as_dict_shape():
+    neighbor = compute_capability_overlap(_TARGET_NAMES, _OVERLAP_CANDIDATES)[0]
+    assert set(neighbor.as_dict()) == {
+        "endpoint_id",
+        "name",
+        "slug",
+        "category",
+        "similarity",
+        "shared_count",
+        "target_capability_count",
+        "candidate_capability_count",
+        "shared_capabilities",
+    }
+
+
+# ---------------------------------------------------------------------------
+# Similar servers: semantic embeddings (cosine NN) — MCAT-18.4
+# ---------------------------------------------------------------------------
+
+
+def test_cosine_similarity_matches_hand_computed_values():
+    assert cosine_similarity([1.0, 0.0], [1.0, 0.0]) == pytest.approx(1.0)  # identical direction
+    assert cosine_similarity([1.0, 0.0], [0.0, 1.0]) == pytest.approx(0.0)  # orthogonal
+    assert cosine_similarity([1.0, 0.0], [-1.0, 0.0]) == pytest.approx(-1.0)  # opposite
+    # Undefined cases → None (never a divide-by-zero): zero vector or mismatched dimensions.
+    assert cosine_similarity([0.0, 0.0], [1.0, 1.0]) is None
+    assert cosine_similarity([1.0, 2.0, 3.0], [1.0, 2.0]) is None
+    assert cosine_similarity([], []) is None
+
+
+# Seeded vectors: "near" points almost exactly along the target, "mid" is off-axis, "far" is opposite.
+_TARGET_VEC = [1.0, 0.0, 0.0]
+_EMBEDDING_CANDIDATES = [
+    {"endpoint_id": "mid", "name": "Mid", "embedding": [0.6, 0.8, 0.0]},
+    {"endpoint_id": "near", "name": "Near", "embedding": [0.99, 0.14, 0.0]},
+    {"endpoint_id": "far", "name": "Far", "embedding": [-1.0, 0.0, 0.0]},
+    {"endpoint_id": "novec", "name": "NoVec", "embedding": None},
+]
+
+
+def test_rank_embedding_neighbors_orders_by_cosine_on_seeded_data():
+    # A negative floor includes the opposite-direction vector so the full ordering is exercised.
+    ranked = rank_embedding_neighbors(
+        _TARGET_VEC, _EMBEDDING_CANDIDATES, limit=10, min_similarity=-1.0
+    )
+    # "novec" has no embedding → dropped. Ordered nearest-first: near > mid > far.
+    assert [n.endpoint_id for n in ranked] == ["near", "mid", "far"]
+    assert ranked[0].similarity == pytest.approx(0.99, abs=0.005)
+    assert ranked[-1].similarity == pytest.approx(-1.0)
+
+
+def test_rank_embedding_neighbors_default_floor_drops_dissimilar_neighbours():
+    # The default 0.0 floor keeps only same-hemisphere (non-negative cosine) peers, so an
+    # opposite-direction server ("far", cosine -1) is not surfaced as "similar".
+    ranked = rank_embedding_neighbors(_TARGET_VEC, _EMBEDDING_CANDIDATES, limit=10)
+    assert [n.endpoint_id for n in ranked] == ["near", "mid"]
+
+
+def test_rank_embedding_neighbors_min_similarity_floor_and_limit():
+    ranked = rank_embedding_neighbors(
+        _TARGET_VEC, _EMBEDDING_CANDIDATES, limit=1, min_similarity=0.0
+    )
+    # far (-1.0) is below the 0.0 floor and would be dropped anyway; limit=1 keeps only the nearest.
+    assert [n.endpoint_id for n in ranked] == ["near"]
+
+
+def test_rank_embedding_neighbors_no_op_without_target_or_candidate_vectors():
+    # No target embedding → empty (the embeddings-disabled path), never an error.
+    assert rank_embedding_neighbors(None, _EMBEDDING_CANDIDATES) == []
+    assert rank_embedding_neighbors([], _EMBEDDING_CANDIDATES) == []
+    # Target present but no candidate carries a vector → empty (unbackfilled peers).
+    assert rank_embedding_neighbors(_TARGET_VEC, [{"endpoint_id": "x", "name": "X", "embedding": None}]) == []
+
+
+def test_rank_embedding_neighbors_skips_mismatched_dimensions():
+    ranked = rank_embedding_neighbors(
+        _TARGET_VEC,
+        [
+            {"endpoint_id": "good", "name": "Good", "embedding": [1.0, 0.0, 0.0]},
+            {"endpoint_id": "wrongdim", "name": "WrongDim", "embedding": [1.0, 0.0]},
+        ],
+    )
+    assert [n.endpoint_id for n in ranked] == ["good"]
+
+
+# ---------------------------------------------------------------------------
+# Similar servers: embedding text builder — MCAT-18.4
+# ---------------------------------------------------------------------------
+
+
+def test_build_capability_embedding_text_is_deterministic_and_order_independent():
+    a = build_capability_embedding_text(
+        [("get_weather", "Current weather"), ("list_cities", "Known cities")]
+    )
+    b = build_capability_embedding_text(
+        [("list_cities", "Known cities"), ("get_weather", "Current weather")]
+    )
+    assert a == b  # sorted → order-independent
+    assert a == "get_weather: Current weather\nlist_cities: Known cities"
+
+
+def test_build_capability_embedding_text_drops_blank_names_and_dedupes():
+    text = build_capability_embedding_text(
+        [("", "no name"), (None, "still none"), ("solo", None), ("solo", None)]
+    )
+    # Blank/None names dropped; a missing description contributes just the name; duplicates collapse.
+    assert text == "solo"
+
+
+def test_build_capability_embedding_text_empty_when_no_named_capabilities():
+    assert build_capability_embedding_text([]) == ""
+    assert build_capability_embedding_text([("", ""), (None, "x")]) == ""

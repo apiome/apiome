@@ -30,6 +30,7 @@ from psycopg2 import errors as pg_errors
 from .auth import get_authenticated_user_id, validate_authentication
 from .config import settings
 from .database import db
+from .embedding import get_embedding
 from .mcp_auth import (
     CredentialPayloadError,
     build_auth_headers,
@@ -52,6 +53,9 @@ from .mcp_discovery_engine import (
 from .mcp_insight_aggregation import (
     DISCOVERY_TIMELINE_WINDOW,
     TOOL_LATENCY_WINDOW_DAYS,
+    build_capability_embedding_text,
+    capability_name_set,
+    compute_capability_overlap,
     compute_discovery_reliability,
     compute_discovery_timeline,
     compute_endpoint_percentile_axes,
@@ -60,6 +64,7 @@ from .mcp_insight_aggregation import (
     compute_tool_reliability,
     compute_trust_profile,
     mcp_auth_posture,
+    rank_embedding_neighbors,
 )
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
 from .mcp_score import score_mcp_surface
@@ -99,6 +104,10 @@ from .models import (
     McpSearchResponse,
     McpSearchScope,
     McpSearchVisibility,
+    McpSimilarEmbeddingNeighborOut,
+    McpSimilarOverlapNeighborOut,
+    McpSimilarReindexResponse,
+    McpSimilarServersResponse,
     McpToolInvocationReliabilityOut,
     McpTrustProfileOut,
     McpTypeCountsOut,
@@ -1966,6 +1975,166 @@ async def get_mcp_endpoint_insight_percentile(
     return McpInsightPercentileResponse(
         endpoint_id=str(endpoint_id),
         profile=McpPeerPercentileOut.model_validate(profile.as_dict()),
+    )
+
+
+# ---------------------------------------------------------------------------------------------------
+# "Similar servers" — capability overlap + semantic embeddings (V2-MCP-32.4 / MCAT-18.4, #4648).
+#
+# "Servers like this one" from two independent signals ranked against the caller's own live catalog:
+# capability-name Jaccard *overlap* (always available — it reads the normalized capability items) and a
+# *semantic* cosine nearest-neighbour over an optional per-snapshot capability embedding. The overlap
+# math and the NN ranking live in the pure :mod:`app.mcp_insight_aggregation` layer; this route only
+# fetches the candidate pool and shapes the result. When embeddings are disabled/unbackfilled the
+# semantic list is simply empty and the feature falls back to overlap-only (never a 500).
+# ---------------------------------------------------------------------------------------------------
+
+#: How many similar servers each signal returns at most — the "similar servers" rail's top-N.
+SIMILAR_SERVERS_LIMIT = 10
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/insight/similar",
+    response_model=McpSimilarServersResponse,
+)
+async def get_mcp_endpoint_similar(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpSimilarServersResponse:
+    """Return "servers like this one" from capability overlap + optional semantic embeddings (MCAT-18.4).
+
+    Ranks the caller's other live endpoints against this one by two independent signals. **overlap** —
+    always present — is the capability-name Jaccard overlap: peers sharing this server's tool / resource /
+    prompt names, ranked by set-overlap, with the shared names surfaced (a server with nothing in common
+    is not returned). **semantic** is a cosine nearest-neighbour over a per-snapshot capability embedding
+    and is populated only when ``embeddings_enabled`` — the feature flag is on *and* both this endpoint
+    and at least one peer carry a backfilled embedding. When embeddings are disabled or unbackfilled,
+    ``semantic`` is empty and the endpoint page falls back to overlap-only (the "gracefully no-ops if
+    embeddings are disabled" acceptance criterion). A never-discovered endpoint has no capabilities, so
+    both lists are empty (a ``200``, never a ``500``). Scoping comes from the token's tenant, so neighbours
+    never span another tenant's catalog; returns ``404`` when the endpoint is not the caller's tenant's. A
+    GET stays read-only, recomputed live as the catalog grows.
+    """
+    _ = tenant_slug  # scoping comes from the token, not the URL slug
+    _require_tenant_endpoint(auth_data, endpoint_id)
+    tenant_id = str(auth_data["tenant_id"])
+
+    candidates = db.get_mcp_similar_candidates(tenant_id)
+    target_id = str(endpoint_id)
+    target = next((c for c in candidates if c["endpoint_id"] == target_id), None)
+    peers = [c for c in candidates if c["endpoint_id"] != target_id]
+
+    target_names = (target or {}).get("capability_names") or []
+    target_embedding = (target or {}).get("embedding")
+    target_capability_count = len(capability_name_set(target_names))
+
+    overlap = compute_capability_overlap(target_names, peers, limit=SIMILAR_SERVERS_LIMIT)
+
+    # The semantic signal is active only when the flag is on and there are vectors on both sides to
+    # compare — otherwise it is an explicit no-op (empty, embeddings_enabled=False), never an error.
+    peer_has_embedding = any(c.get("embedding") for c in peers)
+    embeddings_enabled = bool(
+        settings.mcp_similarity_embeddings_enabled and target_embedding and peer_has_embedding
+    )
+    semantic = (
+        rank_embedding_neighbors(target_embedding, peers, limit=SIMILAR_SERVERS_LIMIT)
+        if embeddings_enabled
+        else []
+    )
+
+    return McpSimilarServersResponse(
+        endpoint_id=target_id,
+        embeddings_enabled=embeddings_enabled,
+        target_capability_count=target_capability_count,
+        overlap=[McpSimilarOverlapNeighborOut.model_validate(n.as_dict()) for n in overlap],
+        semantic=[McpSimilarEmbeddingNeighborOut.model_validate(n.as_dict()) for n in semantic],
+    )
+
+
+@mcp_endpoints_router.post(
+    "/{tenant_slug}/endpoints/{endpoint_id}/insight/similar/reindex",
+    response_model=McpSimilarReindexResponse,
+)
+async def reindex_mcp_endpoint_similar(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpSimilarReindexResponse:
+    """(Re)compute and store this endpoint's current-snapshot capability embedding (MCAT-18.4).
+
+    The backfill step behind the semantic similarity signal: it derives the deterministic capability text
+    of the endpoint's current surface (its tool/resource/prompt names + descriptions), embeds it via the
+    Ollama embedding service, and stores the vector on the snapshot (V143) so the ``insight/similar``
+    semantic list can find it. Every non-success is a labelled no-op, not an error (always a ``200``): the
+    feature flag being off, the endpoint having no discovered surface or no capabilities to embed, the
+    embedding service being unreachable, or pgvector being unavailable each return ``reindexed=false`` with
+    a ``detail`` explaining why. Returns ``404`` when the endpoint is not the caller's tenant's.
+    """
+    _ = tenant_slug  # scoping comes from the token, not the URL slug
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+
+    if not settings.mcp_similarity_embeddings_enabled:
+        return McpSimilarReindexResponse(
+            endpoint_id=str(endpoint_id),
+            embeddings_enabled=False,
+            reindexed=False,
+            detail="semantic embeddings are disabled (APIOME_MCP_SIMILARITY_EMBEDDINGS_ENABLED is off)",
+        )
+
+    current_version_id = endpoint.get("current_version_id")
+    if not current_version_id:
+        return McpSimilarReindexResponse(
+            endpoint_id=str(endpoint_id),
+            embeddings_enabled=True,
+            reindexed=False,
+            detail="endpoint has no discovered surface to embed; run discovery first",
+        )
+
+    version = db.get_mcp_endpoint_version(str(endpoint_id), str(current_version_id))
+    if version is None:
+        return McpSimilarReindexResponse(
+            endpoint_id=str(endpoint_id),
+            embeddings_enabled=True,
+            reindexed=False,
+            detail="endpoint has no current version to embed",
+        )
+
+    version_id = str(version["id"])
+    items = db.get_mcp_capability_items(version_id)
+    text = build_capability_embedding_text(
+        (item.get("name"), item.get("description")) for item in items
+    )
+    if not text:
+        return McpSimilarReindexResponse(
+            endpoint_id=str(endpoint_id),
+            embeddings_enabled=True,
+            reindexed=False,
+            version_id=version_id,
+            detail="endpoint's current surface has no capabilities to embed",
+        )
+
+    embedding = get_embedding(text)
+    if not embedding:
+        return McpSimilarReindexResponse(
+            endpoint_id=str(endpoint_id),
+            embeddings_enabled=True,
+            reindexed=False,
+            version_id=version_id,
+            detail="embedding service unavailable; try again once Ollama is reachable",
+        )
+
+    stored = db.store_mcp_capability_embedding(version_id, embedding)
+    return McpSimilarReindexResponse(
+        endpoint_id=str(endpoint_id),
+        embeddings_enabled=True,
+        reindexed=bool(stored),
+        version_id=version_id,
+        detail=(
+            "capability embedding stored"
+            if stored
+            else "pgvector unavailable; embedding computed but not stored"
+        ),
     )
 
 

@@ -33,6 +33,11 @@ The module provides:
 * :func:`compute_tool_count_histogram` — fold a tenant catalog's per-endpoint tool counts into the
   fixed tool-count distribution buckets the catalog analytics dashboard renders (V2-MCP-32.1 /
   MCAT-18.1).
+* :func:`compute_peer_percentiles` — rank one endpoint against its category cohort on four axes,
+  reusing the trust-axis derivations (V2-MCP-32.3 / MCAT-18.3).
+* :func:`compute_capability_overlap` / :func:`rank_embedding_neighbors` — "similar servers" from
+  capability-name Jaccard overlap and semantic-embedding cosine nearest-neighbour, the latter
+  no-opping to an empty list when embeddings are absent (V2-MCP-32.4 / MCAT-18.4).
 
 Every function is total: an empty sample yields zero counts and ``None`` statistics rather than
 raising or dividing by zero, so an endpoint with no history produces an empty (not a 500) series.
@@ -1250,3 +1255,258 @@ def compute_peer_percentiles(
             )
         )
     return PeerPercentileProfile(category=category, cohort_size=cohort_size, axes=axes)
+
+
+# --- Similar servers: capability overlap + semantic embeddings (V2-MCP-32.4 / MCAT-18.4) ---------
+#
+# "Servers like this one" from two independent signals, both computed here as pure functions so each
+# is unit-testable against a hand-built fixture without a live database:
+#
+# * **Capability overlap** — a Jaccard set-overlap over an endpoint's capability *names* (its tools,
+#   resources, resource-templates, and prompts). Two servers that expose the same-named capabilities
+#   are similar regardless of any embedding model; this signal is always available (it reads the
+#   already-normalized ``mcp_capability_items``), which is why it is the fallback when embeddings are
+#   off. :func:`compute_capability_overlap` ranks candidates by Jaccard (the acceptance fixture).
+# * **Semantic embeddings** — a cosine nearest-neighbour over a per-snapshot capability embedding
+#   (reusing the pgvector setup, V102/V060). :func:`rank_embedding_neighbors` ranks candidates by
+#   cosine similarity to the target's vector; an absent target vector (or no candidate vectors — the
+#   embeddings-disabled / not-yet-backfilled case) yields an empty list, never an error, so the route
+#   falls back to overlap only.
+#
+# :func:`build_capability_embedding_text` derives the deterministic text a snapshot's embedding is
+# computed from, so the backfill step and any test seed agree on the input.
+
+
+def normalize_capability_name(name: Optional[str]) -> str:
+    """Fold a capability name to its comparison form (trimmed, lower-cased); ``""`` when empty."""
+    return (name or "").strip().lower()
+
+
+def capability_name_set(names: Iterable[Optional[str]]) -> frozenset:
+    """The set of non-empty, normalized capability names — the unit the Jaccard overlap compares."""
+    return frozenset(n for n in (normalize_capability_name(x) for x in names) if n)
+
+
+def jaccard_similarity(a: "frozenset | set", b: "frozenset | set") -> float:
+    """The Jaccard index of two sets: ``|a ∩ b| / |a ∪ b|``, in ``[0, 1]`` (``0`` when both empty)."""
+    if not a and not b:
+        return 0.0
+    union = len(a | b)
+    if union == 0:
+        return 0.0
+    return len(a & b) / union
+
+
+def build_capability_embedding_text(
+    items: Iterable[Tuple[Optional[str], Optional[str]]],
+) -> str:
+    """Build the deterministic text a snapshot's capability embedding is computed from.
+
+    Folds the surface's ``(name, description)`` pairs into a stable, de-duplicated, sorted document
+    (one ``"name: description"`` line per distinct capability) so re-embedding an unchanged surface
+    yields identical input — the backfill step and any test seed derive the same text. Order-independent
+    by construction (sorted), so two discoveries that list the same capabilities in a different order
+    embed to the same text.
+
+    Args:
+        items: The surface's capabilities as ``(name, description)`` pairs; blank names are dropped and
+            a missing description contributes just the name.
+
+    Returns:
+        A newline-joined document, or ``""`` when there are no named capabilities.
+    """
+    lines = set()
+    for name, description in items:
+        clean_name = (name or "").strip()
+        if not clean_name:
+            continue
+        clean_desc = (description or "").strip()
+        lines.add(f"{clean_name}: {clean_desc}" if clean_desc else clean_name)
+    return "\n".join(sorted(lines))
+
+
+@dataclass(frozen=True)
+class OverlapNeighbor:
+    """One capability-overlap similar server — a peer ranked by shared capability names.
+
+    ``similarity`` is the Jaccard index (``|shared| / |union|``, ``0``-``1``) of the two servers'
+    capability-name sets; ``shared_capabilities`` lists the names in common (normalized, sorted), with
+    ``shared_count`` its length; ``target_capability_count`` / ``candidate_capability_count`` are the
+    two servers' distinct-name counts, so the UI can render "8 of 12 shared".
+    """
+
+    endpoint_id: str
+    name: str
+    slug: Optional[str]
+    category: Optional[str]
+    similarity: float
+    shared_count: int
+    target_capability_count: int
+    candidate_capability_count: int
+    shared_capabilities: List[str]
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "endpoint_id": self.endpoint_id,
+            "name": self.name,
+            "slug": self.slug,
+            "category": self.category,
+            "similarity": self.similarity,
+            "shared_count": self.shared_count,
+            "target_capability_count": self.target_capability_count,
+            "candidate_capability_count": self.candidate_capability_count,
+            "shared_capabilities": list(self.shared_capabilities),
+        }
+
+
+@dataclass(frozen=True)
+class EmbeddingNeighbor:
+    """One semantic-embedding similar server — a peer ranked by cosine similarity of capability text.
+
+    ``similarity`` is the cosine similarity (``-1``-``1``, higher = nearer) of the two snapshots'
+    capability embeddings.
+    """
+
+    endpoint_id: str
+    name: str
+    slug: Optional[str]
+    category: Optional[str]
+    similarity: float
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "endpoint_id": self.endpoint_id,
+            "name": self.name,
+            "slug": self.slug,
+            "category": self.category,
+            "similarity": self.similarity,
+        }
+
+
+def compute_capability_overlap(
+    target_names: Iterable[Optional[str]],
+    candidates: Sequence[Mapping[str, Any]],
+    *,
+    limit: int = 10,
+) -> List[OverlapNeighbor]:
+    """Rank ``candidates`` by capability-name overlap (Jaccard) with the target server.
+
+    The target's and each candidate's capability names are folded to normalized sets
+    (:func:`capability_name_set`); a candidate's similarity is the :func:`jaccard_similarity` of the two
+    sets. Only candidates that actually share a capability (``similarity > 0``) are returned — a server
+    with nothing in common is not "similar" — ordered by similarity (descending), then by the number of
+    shared capabilities, then by name, so ties are stable. A target with no capabilities yields an empty
+    list (there is nothing to be similar to).
+
+    Args:
+        target_names: The target server's capability names (any item type).
+        candidates: Peer servers, each a mapping with ``endpoint_id``, ``name``, optional ``slug`` /
+            ``category``, and ``capability_names`` (an iterable of names). Callers exclude the target
+            itself upstream, so a server is never ranked as its own neighbour.
+        limit: Maximum neighbours to return (the highest-similarity ``limit``).
+
+    Returns:
+        The ranked :class:`OverlapNeighbor` list (at most ``limit``), possibly empty.
+    """
+    target_set = capability_name_set(target_names)
+    if not target_set:
+        return []
+
+    neighbors: List[OverlapNeighbor] = []
+    for candidate in candidates:
+        candidate_set = capability_name_set(candidate.get("capability_names") or [])
+        similarity = jaccard_similarity(target_set, candidate_set)
+        if similarity <= 0.0:
+            continue
+        shared = sorted(target_set & candidate_set)
+        neighbors.append(
+            OverlapNeighbor(
+                endpoint_id=str(candidate["endpoint_id"]),
+                name=str(candidate.get("name") or ""),
+                slug=candidate.get("slug"),
+                category=candidate.get("category"),
+                similarity=round(similarity, 4),
+                shared_count=len(shared),
+                target_capability_count=len(target_set),
+                candidate_capability_count=len(candidate_set),
+                shared_capabilities=shared,
+            )
+        )
+
+    neighbors.sort(key=lambda n: (-n.similarity, -n.shared_count, n.name.lower()))
+    return neighbors[: max(0, limit)]
+
+
+def cosine_similarity(a: Sequence[float], b: Sequence[float]) -> Optional[float]:
+    """Cosine similarity of two equal-length vectors, or ``None`` when it is undefined.
+
+    Returns ``dot(a, b) / (‖a‖·‖b‖)``. ``None`` when the vectors differ in length or either is a zero
+    vector (an undefined direction), so the caller drops that candidate rather than dividing by zero.
+    """
+    if len(a) != len(b) or not a:
+        return None
+    dot = 0.0
+    norm_a = 0.0
+    norm_b = 0.0
+    for x, y in zip(a, b):
+        fx = float(x)
+        fy = float(y)
+        dot += fx * fy
+        norm_a += fx * fx
+        norm_b += fy * fy
+    if norm_a <= 0.0 or norm_b <= 0.0:
+        return None
+    return dot / math.sqrt(norm_a * norm_b)
+
+
+def rank_embedding_neighbors(
+    target_embedding: Optional[Sequence[float]],
+    candidates: Sequence[Mapping[str, Any]],
+    *,
+    limit: int = 10,
+    min_similarity: float = 0.0,
+) -> List[EmbeddingNeighbor]:
+    """Rank ``candidates`` by cosine nearest-neighbour to the target's capability embedding.
+
+    Each candidate carrying an ``embedding`` of the same dimension as ``target_embedding`` is scored by
+    :func:`cosine_similarity`; results are ordered by similarity (descending), then by name, and capped
+    at ``limit``. Candidates below ``min_similarity``, of a mismatched dimension, or with an undefined
+    similarity (a zero vector) are dropped. An absent ``target_embedding`` — or simply no candidate
+    vectors, which is the embeddings-disabled / not-yet-backfilled state — yields an empty list, so the
+    route falls back to overlap-only without erroring (the "gracefully no-ops if embeddings are disabled"
+    acceptance criterion).
+
+    Args:
+        target_embedding: The target snapshot's capability embedding, or ``None`` when it has none.
+        candidates: Peer servers, each a mapping with ``endpoint_id``, ``name``, optional ``slug`` /
+            ``category``, and ``embedding`` (a vector, or ``None`` when that peer has none).
+        limit: Maximum neighbours to return.
+        min_similarity: Drop neighbours whose cosine similarity is strictly below this floor.
+
+    Returns:
+        The ranked :class:`EmbeddingNeighbor` list (at most ``limit``), empty when embeddings are absent.
+    """
+    if not target_embedding:
+        return []
+    target_vec = [float(x) for x in target_embedding]
+
+    neighbors: List[EmbeddingNeighbor] = []
+    for candidate in candidates:
+        embedding = candidate.get("embedding")
+        if not embedding:
+            continue
+        similarity = cosine_similarity(target_vec, [float(x) for x in embedding])
+        if similarity is None or similarity < min_similarity:
+            continue
+        neighbors.append(
+            EmbeddingNeighbor(
+                endpoint_id=str(candidate["endpoint_id"]),
+                name=str(candidate.get("name") or ""),
+                slug=candidate.get("slug"),
+                category=candidate.get("category"),
+                similarity=round(similarity, 4),
+            )
+        )
+
+    neighbors.sort(key=lambda n: (-n.similarity, n.name.lower()))
+    return neighbors[: max(0, limit)]
