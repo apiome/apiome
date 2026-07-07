@@ -1,0 +1,356 @@
+"""API tests for the MCP insight aggregation endpoints (V2-MCP-28.2 / MCAT-14.2, #4628).
+
+Covers the four read routes:
+
+- ``GET …/endpoints/{id}/insight/surface``      — 28.1 metrics for a version (default: current)
+- ``GET …/endpoints/{id}/insight/evolution``    — per-version series (counts, grade, churn)
+- ``GET …/endpoints/{id}/insight/reliability``  — discovery + invocation reliability aggregates
+- ``GET …/insight/catalog``                     — tenant-wide catalog roll-up
+
+The ``db`` module is mocked, so these assert route wiring, tenant-scoped ``404`` behaviour, and the
+empty-history → empty/zero (never ``500``) contract. The surface route runs the *real*
+``reconstruct_surface`` + ``compute_surface_metrics`` (28.1) over mocked capability rows, and the
+reliability route runs the real ``mcp_insight_aggregation`` roll-up over mocked telemetry rows, so
+the numbers — including latency percentiles — are verified end-to-end without a database.
+"""
+
+from datetime import datetime, timezone
+from unittest.mock import patch
+
+import pytest
+from fastapi.testclient import TestClient
+
+from app.auth import validate_authentication
+from app.main import app
+
+client = TestClient(app)
+
+_JWT_T1 = {"tenant_id": "t1", "user_id": "user-1", "auth_method": "jwt"}
+_NOW = datetime(2026, 7, 6, 12, 0, 0, tzinfo=timezone.utc)
+
+_EP = "11111111-1111-1111-1111-111111111111"
+_V1 = "22222222-2222-2222-2222-222222222222"
+_V2 = "33333333-3333-3333-3333-333333333333"
+
+_ENDPOINT_ROW = {
+    "id": _EP,
+    "tenant_id": "t1",
+    "name": "Acme Weather",
+    "slug": "acme-weather",
+    "endpoint_url": "https://mcp.acme.example/mcp",
+    "transport": "streamable_http",
+    "visibility": "private",
+    "published": False,
+    "enabled": True,
+    "current_version_id": _V2,
+}
+
+
+def _version_row(version_id, seq):
+    """A row shaped like ``get_mcp_endpoint_version`` returns."""
+    return {
+        "id": version_id,
+        "endpoint_id": _EP,
+        "version_seq": seq,
+        "version_tag": f"2026-07-06T{seq:02d}:00Z",
+        "protocol_version": "2025-06-18",
+        "server_name": "acme",
+        "server_title": None,
+        "server_version": "1.0.0",
+        "instructions": None,
+        "capabilities": {"tools": {"listChanged": True}},
+        "surface_fingerprint": f"fp{seq}",
+        "discovered_at": _NOW,
+        "created_at": _NOW,
+        "score": 90,
+        "grade": "A",
+        "scored_at": _NOW,
+        "added_count": 0,
+        "removed_count": 0,
+        "modified_count": 0,
+        "total_count": 0,
+    }
+
+
+def _tool_row(name, *, required=None, ordinal=0):
+    """A minimal ``mcp_capability_items`` tool row with a two-property input schema."""
+    return {
+        "version_id": _V2,
+        "item_type": "tool",
+        "name": name,
+        "title": None,
+        "description": "does a thing",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "city": {"type": "string", "description": "city name"},
+                "units": {"type": "string", "enum": ["c", "f"]},
+            },
+            "required": required or [],
+        },
+        "output_schema": None,
+        "annotations": {"readOnlyHint": True},
+        "uri": None,
+        "uri_template": None,
+        "raw": {},
+        "ordinal": ordinal,
+    }
+
+
+@pytest.fixture(autouse=True)
+def _default_auth():
+    app.dependency_overrides[validate_authentication] = lambda: _JWT_T1
+    yield
+    app.dependency_overrides.pop(validate_authentication, None)
+
+
+# ===========================================================================
+# surface
+# ===========================================================================
+
+
+def test_surface_defaults_to_current_version_and_computes_metrics():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = _version_row(_V2, 2)
+        mdb.get_mcp_capability_items.return_value = [
+            _tool_row("forecast", required=["city"], ordinal=0),
+            _tool_row("current", ordinal=1),
+        ]
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/surface")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["version_id"] == _V2
+    assert body["is_current"] is True
+    metrics = body["metrics"]
+    assert metrics["type_counts"]["tools"] == 2
+    assert metrics["type_counts"]["total"] == 2
+    assert len(metrics["tool_complexity"]) == 2
+    assert metrics["tool_complexity"][0]["property_count"] == 2
+    assert metrics["tool_complexity"][0]["required_count"] == 1
+    assert metrics["tool_complexity"][0]["uses_enum"] is True
+    assert metrics["annotation_coverage"]["read_only_hint"] == 2
+    assert metrics["metrics_fingerprint"]
+    # Default path resolves the endpoint's current_version_id.
+    mdb.get_mcp_endpoint_version.assert_called_once_with(_EP, _V2)
+
+
+def test_surface_explicit_version_id_is_used():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = _version_row(_V1, 1)
+        mdb.get_mcp_capability_items.return_value = []
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/surface?version_id={_V1}")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["version_id"] == _V1
+    assert body["is_current"] is False  # V1 is not the endpoint's current (V2)
+    assert body["metrics"]["type_counts"]["total"] == 0
+    mdb.get_mcp_endpoint_version.assert_called_once_with(_EP, _V1)
+
+
+def test_surface_unknown_version_is_404():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = None
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/surface?version_id={_V1}")
+    assert r.status_code == 404
+
+
+def test_surface_no_current_version_is_404():
+    endpoint = dict(_ENDPOINT_ROW, current_version_id=None)
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = endpoint
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/surface")
+    assert r.status_code == 404
+
+
+def test_surface_cross_tenant_endpoint_is_404():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = None
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/surface")
+    assert r.status_code == 404
+
+
+# ===========================================================================
+# evolution
+# ===========================================================================
+
+
+def _evolution_row(version_id, seq, *, tools, added=0, removed=0, modified=0, score=90, grade="A"):
+    return {
+        "id": version_id,
+        "endpoint_id": _EP,
+        "version_seq": seq,
+        "version_tag": f"2026-07-06T{seq:02d}:00Z",
+        "discovered_at": _NOW,
+        "created_at": _NOW,
+        "surface_fingerprint": f"fp{seq}",
+        "score": score,
+        "grade": grade,
+        "tool_count": tools,
+        "resource_count": 1,
+        "resource_template_count": 0,
+        "prompt_count": 0,
+        "added_count": added,
+        "removed_count": removed,
+        "modified_count": modified,
+    }
+
+
+def test_evolution_series_oldest_first_with_counts_and_current_flag():
+    rows = [
+        _evolution_row(_V1, 1, tools=2, added=3),
+        _evolution_row(_V2, 2, tools=4, added=2, modified=1),
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_evolution_series.return_value = rows
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/evolution")
+    assert r.status_code == 200
+    series = r.json()["series"]
+    assert [p["version_seq"] for p in series] == [1, 2]
+    first, second = series
+    assert first["type_counts"]["tools"] == 2
+    assert first["type_counts"]["total"] == 3  # 2 tools + 1 resource
+    assert first["change_counts"]["added"] == 3
+    assert first["change_counts"]["total"] == 3
+    assert first["is_current"] is False
+    assert second["is_current"] is True  # V2 is current
+    assert second["change_counts"]["total"] == 3  # 2 added + 1 modified
+
+
+def test_evolution_empty_history_returns_empty_series():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = dict(_ENDPOINT_ROW, current_version_id=None)
+        mdb.get_mcp_evolution_series.return_value = []
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/evolution")
+    assert r.status_code == 200
+    assert r.json()["series"] == []
+
+
+def test_evolution_cross_tenant_endpoint_is_404():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = None
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/evolution")
+    assert r.status_code == 404
+
+
+# ===========================================================================
+# reliability
+# ===========================================================================
+
+
+def test_reliability_aggregates_discovery_and_invocation():
+    job_rows = [
+        {"state": "completed", "duration_ms": 100.0},
+        {"state": "completed", "duration_ms": 200.0},
+        {"state": "failed", "duration_ms": 50.0},
+    ]
+    call_rows = [
+        {"is_error": False, "latency_ms": 10},
+        {"is_error": True, "latency_ms": 20},
+        {"is_error": False, "latency_ms": 40},
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.list_mcp_discovery_job_stats.return_value = job_rows
+        mdb.list_mcp_invocation_stats.return_value = call_rows
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
+    assert r.status_code == 200
+    body = r.json()
+    disc = body["discovery"]
+    assert disc["job_count"] == 3
+    assert disc["completed_count"] == 2
+    assert disc["failed_count"] == 1
+    assert disc["success_rate"] == pytest.approx(0.6667, abs=0.0001)
+    assert disc["latency"]["min_ms"] == 50.0
+    assert disc["latency"]["max_ms"] == 200.0
+    inv = body["invocation"]
+    assert inv["call_count"] == 3
+    assert inv["error_count"] == 1
+    assert inv["error_rate"] == pytest.approx(0.3333, abs=0.0001)
+    assert inv["latency"]["p50_ms"] == pytest.approx(20.0)
+
+
+def test_reliability_empty_history_is_zeroes_not_500():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.list_mcp_discovery_job_stats.return_value = []
+        mdb.list_mcp_invocation_stats.return_value = []
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["discovery"]["job_count"] == 0
+    assert body["discovery"]["success_rate"] == 0.0
+    assert body["discovery"]["latency"]["p50_ms"] is None
+    assert body["invocation"]["call_count"] == 0
+    assert body["invocation"]["error_rate"] == 0.0
+    assert body["invocation"]["latency"]["avg_ms"] is None
+
+
+def test_reliability_cross_tenant_endpoint_is_404():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = None
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
+    assert r.status_code == 404
+
+
+# ===========================================================================
+# catalog
+# ===========================================================================
+
+
+def test_catalog_insight_rolls_up_tenant_catalog():
+    aggregate = {
+        "endpoint_count": 5,
+        "published_count": 2,
+        "public_count": 2,
+        "private_count": 3,
+        "discovered_count": 4,
+        "scored_count": 4,
+        "avg_score": 82.5,
+        "tool_count": 20,
+        "resource_count": 7,
+        "resource_template_count": 1,
+        "prompt_count": 2,
+        "grade_distribution": {"A": 2, "B": 1, "C": 1},
+    }
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_catalog_insight.return_value = aggregate
+        r = client.get("/v1/mcp/acme/insight/catalog")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["endpoint_count"] == 5
+    assert body["discovered_count"] == 4
+    assert body["average_score"] == 82.5
+    assert body["type_counts"]["tools"] == 20
+    assert body["type_counts"]["total"] == 30  # 20 + 7 + 1 + 2
+    assert body["grade_distribution"] == {"A": 2, "B": 1, "C": 1}
+    mdb.get_mcp_catalog_insight.assert_called_once_with("t1")
+
+
+def test_catalog_insight_empty_tenant():
+    aggregate = {
+        "endpoint_count": 0,
+        "published_count": 0,
+        "public_count": 0,
+        "private_count": 0,
+        "discovered_count": 0,
+        "scored_count": 0,
+        "avg_score": None,
+        "tool_count": 0,
+        "resource_count": 0,
+        "resource_template_count": 0,
+        "prompt_count": 0,
+        "grade_distribution": {},
+    }
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_catalog_insight.return_value = aggregate
+        r = client.get("/v1/mcp/acme/insight/catalog")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["endpoint_count"] == 0
+    assert body["average_score"] is None
+    assert body["type_counts"]["total"] == 0
+    assert body["grade_distribution"] == {}
