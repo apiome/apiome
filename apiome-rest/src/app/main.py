@@ -57,6 +57,7 @@ from .export_job_routes import router as export_job_router
 from .access_routes import router as access_router, platform_router as access_platform_router
 from .mock_routes import router as mock_router, data_router as mock_data_router
 from .mcp_catalog_routes import mcp_endpoints_router
+from .mcp_badge_routes import router as mcp_badge_router
 
 # Configure structured JSON logging before anything else logs, so every line (including library
 # loggers) is emitted in the consistent observability shape (RC1-3.2, #3617).
@@ -194,6 +195,8 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 # Include routers (browse_public_router first for unauthenticated /v1/browse/* routes;
 # data_router next so /v1/data/* is matched before any generic patterns)
 app.include_router(browse_public_router)
+# mcp_badge_router: anonymous public SVG status badges at /mcp/badge/* (unauthenticated, like browse).
+app.include_router(mcp_badge_router)
 app.include_router(browse_export_router)
 app.include_router(data_router)
 # registry_audit_router before primitives_router so its literal /{tenant_slug}/audit route is
