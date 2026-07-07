@@ -14,11 +14,13 @@ import {
   McpBadge,
   HealthPill,
   RecencyPill,
+  ServerProfileCard,
   FindingSeverity,
   DetailTabs,
   DetailTabsList,
   DetailTabsContent,
 } from '@/app/components/ui/mcp';
+import type { McpServerProfile } from '@/app/components/ade/dashboard/mcp/mcpInsightUi';
 // The Monaco-backed code-viewer primitives were promoted out of `ui/mcp` to the format-neutral
 // `ui/code` module (MFI-28.7); the gallery documents them under those neutral names.
 import { JsonViewer, JsonDiffViewer, Disclosure } from '@/app/components/ui/code';
@@ -50,6 +52,65 @@ function Section({ title, description, children }: { title: string; description:
 }
 
 const NOW = Date.parse('2026-06-27T12:00:00Z');
+
+/** A fully-populated modern server (title, protocol, grade, counts, instructions). */
+const PROFILE_FULL: McpServerProfile = {
+  displayName: 'Acme Search',
+  endpointName: 'acme-search-prod',
+  endpointUrl: 'https://mcp.acme.dev/search',
+  serverVersion: '1.4.0',
+  protocolVersion: '2025-06-18',
+  transport: 'streamable_http',
+  versionSeq: 7,
+  versionTag: '2026-06-27',
+  isCurrent: true,
+  score: 92,
+  grade: 'A',
+  capabilityCounts: { tools: 8, resources: 3, resource_templates: 1, prompts: 2, total: 14 },
+  discoveryStatus: 'changed',
+  lastChangedAt: '2026-06-27T10:00:00Z',
+  instructions:
+    'Use `search` for free-text queries and `fetch` to retrieve a document by id. Prefer narrow ' +
+    'filters; results are capped at 100.',
+};
+
+/** An older (2025-03-26) server missing title/protocol/output-schema — the graceful-degrade path. */
+const PROFILE_LEGACY: McpServerProfile = {
+  displayName: 'legacy-notes',
+  endpointName: 'legacy-notes',
+  endpointUrl: 'https://old.example.com/mcp',
+  serverVersion: null,
+  protocolVersion: null,
+  transport: 'http+sse',
+  versionSeq: 2,
+  versionTag: null,
+  isCurrent: false,
+  score: 58,
+  grade: 'D',
+  capabilityCounts: { tools: 3, resources: 0, resource_templates: 0, prompts: 0, total: 3 },
+  discoveryStatus: 'unchanged',
+  lastChangedAt: '2026-05-20T09:00:00Z',
+  instructions: null,
+};
+
+/** An unscored, never-discovered endpoint — no grade, no counts, unknown health. */
+const PROFILE_UNSCORED: McpServerProfile = {
+  displayName: 'staging-gateway',
+  endpointName: 'staging-gateway',
+  endpointUrl: 'https://staging.example.com/mcp',
+  serverVersion: null,
+  protocolVersion: null,
+  transport: 'streamable_http',
+  versionSeq: null,
+  versionTag: null,
+  isCurrent: false,
+  score: null,
+  grade: null,
+  capabilityCounts: null,
+  discoveryStatus: null,
+  lastChangedAt: null,
+  instructions: null,
+};
 
 export default function McpPrimitivesShowcase() {
   return (
@@ -114,6 +175,24 @@ export default function McpPrimitivesShowcase() {
         <RecencyPill timestamp="2026-06-24T12:00:00Z" nowMs={NOW} />
         <RecencyPill timestamp={null} nowMs={NOW} />
       </Section>
+
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            ServerProfileCard (V2-MCP-29.1)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            The at-a-glance server identity that heads the endpoint Insight tab: name/title/version,
+            protocol, transport, grade, capability counts, discovery health, a
+            &ldquo;surface changed&rdquo; recency, a compact trust snapshot, and instructions when
+            present. Shown fully populated,
+            degraded for an older server missing title/protocol, and unscored/never-discovered.
+          </p>
+        </div>
+        <ServerProfileCard profile={PROFILE_FULL} trustHref="#insight-reliability" nowMs={NOW} />
+        <ServerProfileCard profile={PROFILE_LEGACY} nowMs={NOW} />
+        <ServerProfileCard profile={PROFILE_UNSCORED} nowMs={NOW} />
+      </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">JsonViewer</h2>

@@ -1344,13 +1344,12 @@ documentation quality** — not just its list of offerings.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
-| 15.1 | Server identity / at-a-glance profile card | Header card: protocol, transport, counts, grade, health, last-change, trust snapshot | `mcp-insights` `frontend` | N | Y | ● | apiome-ui |
 | 15.2 | Capability relationship graph | Node-link map of tools/resources/prompts + schema-derived links (resource URIs, shared types) | `mcp-insights` `frontend` | Y | N | ●●● | apiome-ui, apiome-rest |
 | 15.3 | Tool schema "shape" & complexity cards | Per-tool card: param count, required/optional, depth, enums, output-schema presence | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
 | 15.4 | Safety & annotation posture panel | Heatmap of read-only/destructive/idempotent/open-world hints × tools, cross-referenced with auth | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
 | 15.5 | Documentation & schema coverage meters | Gauges: % described, % titled, % params documented, output-schema adoption | `mcp-insights` `frontend` | Y | Y | ● | apiome-ui |
 
-### MCAT-15.1 — Server identity / at-a-glance profile card  ·  **#4631**
+### MCAT-15.1 — Server identity / at-a-glance profile card  ·  **#4631**  ·  ✅ Done (apiome-ui 0.68.0)
 - **Problem.** The Overview tab lists offerings but there is no single "who is this server" summary.
 - **Solution / Scope.** A header **identity card**: server name/title/version, negotiated
   `protocol_version`, transport, capability counts, current grade (`GradeGlyph`), discovery health

@@ -662,6 +662,8 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
                     <McpEndpointInsight
                       endpointId={endpointId}
                       currentVersionId={endpoint.current_version_id ?? null}
+                      endpoint={endpoint}
+                      currentInstructions={version?.instructions ?? null}
                     />
                   </DetailTabsContent>
 

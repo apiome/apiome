@@ -13,6 +13,9 @@
  * domain values and receive plain data.
  */
 
+import type { McpEndpointDetail } from './mcpBrowseUi';
+import type { McpVersionSummary } from './mcpVersionsUi';
+
 // --- Defensive scalar coercion ---------------------------------------------------------------
 // Each MCP UI module carries its own tiny coercers (mirrors mcpVersionsUi) so a malformed field
 // degrades to a safe default rather than throwing while a panel renders.
@@ -273,4 +276,95 @@ function clampPct(pct: number): number {
 function pctOf(have: number, of: number): number {
   if (of <= 0) return 0;
   return clampPct((have / of) * 100);
+}
+
+// --- Server profile (V2-MCP-29.1 / MCAT-15.1) ------------------------------------------------
+// The at-a-glance "who is this server" identity card that heads the Insight tab. It is assembled
+// from three sources the tab already holds — the endpoint record (transport, health, name), the
+// selected snapshot's version summary (server identity, protocol, grade), and its capability-surface
+// metrics (counts) — into one flat, React-free shape the <ServerProfileCard> renders. Every field
+// degrades to `null` so an older (2025-03-26) server missing a title/output-schema, an unscored
+// snapshot, or a surface that failed to load still produces a coherent card rather than throwing.
+
+/** The flat, presentation-ready identity of an MCP server for one snapshot. */
+export interface McpServerProfile {
+  /** Best available display name: server `title` → server `name` → catalog endpoint name → fallback. */
+  displayName: string;
+  /** The catalog endpoint name, shown as a subtitle when it differs from {@link displayName}. */
+  endpointName: string | null;
+  /** The endpoint's connection URL, or `null` when unknown. */
+  endpointUrl: string | null;
+  /** The server's self-reported `version` string (e.g. `1.4.0`), or `null`. */
+  serverVersion: string | null;
+  /** The negotiated MCP `protocol_version` (e.g. `2025-06-18`), or `null` for older servers. */
+  protocolVersion: string | null;
+  /** The endpoint transport (e.g. `streamable_http`), or `null` when unknown. */
+  transport: string | null;
+  /** The summarized snapshot's sequence number, or `null` when no snapshot is resolved. */
+  versionSeq: number | null;
+  /** The snapshot's tag/date label, or `null`. */
+  versionTag: string | null;
+  /** True when the summarized snapshot is the endpoint's current one. */
+  isCurrent: boolean;
+  /** 0-100 quality score of the snapshot, or `null` when unscored. */
+  score: number | null;
+  /** A-F quality grade of the snapshot, or `null` when unscored. */
+  grade: string | null;
+  /** Per-kind capability counts from the surface, or `null` when the surface is unavailable. */
+  capabilityCounts: McpTypeCounts | null;
+  /** Raw last-discovery status the health pill resolves (e.g. `changed`/`failed`), or `null`. */
+  discoveryStatus: string | null;
+  /** ISO instant the surface last changed (this snapshot's discovery), for the recency pill. */
+  lastChangedAt: string | null;
+  /** The server's `instructions`, rendered prominently when present (trimmed; `null` when empty). */
+  instructions: string | null;
+}
+
+/** Trim a string to `null` when it is absent or only whitespace. */
+function trimmedOrNull(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+/**
+ * Assemble the {@link McpServerProfile} the identity card renders from the sources the Insight tab
+ * already holds. All inputs are optional and every derived field degrades to `null` (or the endpoint
+ * fallback name) so a never-scored, partially-discovered, or older server still yields a coherent
+ * card. Snapshot-level identity (name/title/version, protocol, grade, "last changed") comes from the
+ * selected {@link McpVersionSummary}; endpoint-level facts (transport, discovery health) come from
+ * the {@link McpEndpointDetail}; capability counts come from the {@link McpInsightSurface}.
+ *
+ * @param sources.endpoint      The endpoint record (transport, health, catalog name), if loaded.
+ * @param sources.version       The selected snapshot's version-history summary, if resolved.
+ * @param sources.surface       The snapshot's capability-surface metrics, if loaded.
+ * @param sources.instructions  The server's instructions for the snapshot, when available.
+ */
+export function mcpServerProfileFrom(sources: {
+  endpoint?: McpEndpointDetail | null;
+  version?: McpVersionSummary | null;
+  surface?: McpInsightSurface | null;
+  instructions?: string | null;
+}): McpServerProfile {
+  const { endpoint, version, surface, instructions } = sources;
+  const endpointName = trimmedOrNull(endpoint?.name);
+  const serverTitle = trimmedOrNull(version?.server_title);
+  const serverName = trimmedOrNull(version?.server_name);
+  return {
+    displayName: serverTitle ?? serverName ?? endpointName ?? 'MCP server',
+    endpointName,
+    endpointUrl: trimmedOrNull(endpoint?.endpoint_url),
+    serverVersion: trimmedOrNull(version?.server_version),
+    protocolVersion: trimmedOrNull(version?.protocol_version),
+    transport: trimmedOrNull(endpoint?.transport),
+    versionSeq: version ? version.version_seq : null,
+    versionTag: trimmedOrNull(version?.version_tag),
+    isCurrent: version?.is_current ?? false,
+    score: version?.score ?? null,
+    grade: trimmedOrNull(version?.grade),
+    capabilityCounts: surface ? surface.metrics.type_counts : null,
+    discoveryStatus: trimmedOrNull(endpoint?.last_discovery_status),
+    lastChangedAt: version?.discovered_at ?? version?.created_at ?? null,
+    instructions: trimmedOrNull(instructions),
+  };
 }

@@ -15,7 +15,7 @@ keeps a central dark theme (10.10) addable in one place.
 | Layer | Path | What |
 | --- | --- | --- |
 | Pure helpers (React-free, unit-tested) | `src/app/components/ade/dashboard/mcp/mcpUiPrimitives.ts` | Grade styles, badge-tone resolvers, health/recency, tab definitions |
-| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `FindingSeverity`, `DetailTabs` |
+| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `FindingSeverity`, `DetailTabs` |
 | Shared states | `src/app/components/ui/{EmptyState,LoadingState,ErrorState}.tsx` | empty / loading / error placeholders |
 | Barrel | `@/app/components/ui/mcp` (also re-exported from `@/app/components/ui`) | one import for all MCP primitives |
 
@@ -85,6 +85,24 @@ unit-tested `mcpRelativeTime(iso, nowMs)` helper.
 ```tsx
 <RecencyPill timestamp={endpoint.last_discovered_at} />
 <RecencyPill timestamp={ts} prefix="Discovered" hideIcon />
+```
+
+### `<ServerProfileCard>` (V2-MCP-29.1 / MCAT-15.1)
+
+The at-a-glance "who is this server" identity card that heads the endpoint **Insight** tab. It
+composes the primitives above (grade glyph, transport badge, health & recency pills) into one
+header: the server's name/title/version, negotiated `protocol_version`, transport, quality grade,
+capability counts, discovery health, the "surface changed" recency, a compact trust snapshot that
+links to the composite trust radar (17.4), and the server's `instructions` when present.
+
+It is purely presentational — it reads a pre-assembled `McpServerProfile`, built (React-free,
+unit-tested) by `mcpServerProfileFrom({ endpoint, version, surface, instructions })` from the sources
+the Insight tab already holds. Every field degrades to `null`, so an older (2025-03-26) server
+missing a title/protocol, an unscored snapshot, or an unavailable surface all render a coherent card.
+
+```tsx
+const profile = mcpServerProfileFrom({ endpoint, version: selectedVersion, surface, instructions });
+<ServerProfileCard profile={profile} trustHref="#insight-reliability" />
 ```
 
 ### `<FindingSeverity>`
