@@ -20,6 +20,8 @@ The module provides:
 * :func:`compute_latency_stats` — count / avg / min / max / p50 / p95 / p99 over a latency sample.
 * :func:`compute_discovery_reliability` — discovery-job success rate and run-latency stats from
   ``mcp_discovery_jobs`` rows.
+* :func:`compute_discovery_timeline` — the recent per-job outcome timeline + a windowed
+  availability percentage from ``mcp_discovery_jobs`` rows (V2-MCP-31.1 / MCAT-17.1).
 * :func:`compute_invocation_reliability` — test-invocation error rate and latency stats from
   ``mcp_test_invocations`` rows.
 
@@ -215,6 +217,178 @@ def compute_discovery_reliability(rows: Iterable[Dict[str, Any]]) -> DiscoveryRe
         queued_count=per_state["queued"],
         success_rate=success_rate,
         latency=compute_latency_stats(durations),
+    )
+
+
+# --- Discovery health timeline (V2-MCP-31.1 / MCAT-17.1) ------------------------------------
+
+#: The default number of most-recent discovery jobs the health timeline spans. The caller's SQL
+#: limits to this same bound, so the availability percentage is computed over one coherent window.
+DISCOVERY_TIMELINE_WINDOW = 50
+
+
+def _iso(value: Any) -> Optional[str]:
+    """Return an ISO-8601 string for a datetime-like value, or ``None`` for a null.
+
+    Discovery-job timestamps arrive as ``datetime`` objects from asyncpg; the wire wants strings.
+    Anything already stringlike is returned unchanged so the function is safe over pre-serialized
+    fixtures too.
+    """
+    if value is None:
+        return None
+    isoformat = getattr(value, "isoformat", None)
+    return isoformat() if callable(isoformat) else str(value)
+
+
+def _event_outcome(state: str, error_code: Optional[str]) -> str:
+    """Collapse a job's ``state`` + failure ``error_code`` into a single timeline outcome.
+
+    ``completed`` → ``ok``; ``failed`` → its specific discovery error code (``connect_error`` /
+    ``auth_required`` / …) or a bare ``failed`` when no code was recorded; anything still in flight
+    (``queued`` / ``running``) or otherwise non-terminal → ``pending``.
+    """
+    if state == "completed":
+        return "ok"
+    if state == "failed":
+        return error_code or "failed"
+    return "pending"
+
+
+@dataclass(frozen=True)
+class DiscoveryEvent:
+    """One discovery-job outcome on the health timeline.
+
+    ``outcome`` is what the timeline colours by (see :func:`_event_outcome`): ``ok`` for a completed
+    run, the specific discovery error code for a failed one, or ``pending`` while the job has not
+    reached a terminal state. ``error_code`` is the raw failure classification (``None`` unless the
+    job failed with a recorded code). Timestamps are ISO-8601 strings (or ``None``); ``duration_ms``
+    is the run's wall-clock duration when the job both started and finished.
+    """
+
+    job_id: str
+    state: str
+    trigger: str
+    outcome: str
+    error_code: Optional[str]
+    created_at: Optional[str]
+    started_at: Optional[str]
+    finished_at: Optional[str]
+    duration_ms: Optional[float]
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "job_id": self.job_id,
+            "state": self.state,
+            "trigger": self.trigger,
+            "outcome": self.outcome,
+            "error_code": self.error_code,
+            "created_at": self.created_at,
+            "started_at": self.started_at,
+            "finished_at": self.finished_at,
+            "duration_ms": self.duration_ms,
+        }
+
+
+@dataclass(frozen=True)
+class DiscoveryTimeline:
+    """An endpoint's discovery health over a recent window: per-job events + an availability %.
+
+    ``events`` are newest-first (as the caller's SQL returns them), capped at ``window`` jobs.
+    ``availability_pct`` is ``ok / (ok + failed)`` over the *terminal* jobs in the window, as a
+    ``0``–``100`` percentage rounded to one decimal, or ``None`` when the window holds no terminal
+    job (there is nothing to be "available" or not yet). ``pending_count`` covers still-in-flight
+    jobs, which are excluded from availability. ``truncated`` is true when the window filled, so
+    older jobs may exist beyond it.
+    """
+
+    events: List[DiscoveryEvent]
+    window: int
+    event_count: int
+    ok_count: int
+    failed_count: int
+    pending_count: int
+    terminal_count: int
+    availability_pct: Optional[float]
+    truncated: bool
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "events": [event.as_dict() for event in self.events],
+            "window": self.window,
+            "event_count": self.event_count,
+            "ok_count": self.ok_count,
+            "failed_count": self.failed_count,
+            "pending_count": self.pending_count,
+            "terminal_count": self.terminal_count,
+            "availability_pct": self.availability_pct,
+            "truncated": self.truncated,
+        }
+
+
+def compute_discovery_timeline(
+    rows: Iterable[Dict[str, Any]], *, window: int = DISCOVERY_TIMELINE_WINDOW
+) -> DiscoveryTimeline:
+    """Fold recent ``mcp_discovery_jobs`` rows into a :class:`DiscoveryTimeline`.
+
+    Each row is expected to carry the job ``id``, ``state``, ``trigger``, the ``created_at`` /
+    ``started_at`` / ``finished_at`` timestamps, a ``duration_ms`` (or ``None``), and an
+    ``error_code`` (the discovery failure classification pulled from the job's stored error, or
+    ``None`` for a non-failed job). Rows must arrive **newest-first**; the function keeps only the
+    first ``window`` of them and computes availability over that same window so the percentage
+    always matches the events shown.
+
+    Args:
+        rows: The endpoint's recent discovery-job rows, newest-first (any iterable; may be empty).
+        window: The maximum number of jobs the timeline spans (defaults to
+            :data:`DISCOVERY_TIMELINE_WINDOW`; clamped to at least 1).
+
+    Returns:
+        The rolled-up :class:`DiscoveryTimeline` (empty events / ``None`` availability for no jobs).
+    """
+    limit = max(1, int(window))
+    events: List[DiscoveryEvent] = []
+    ok_count = 0
+    failed_count = 0
+    pending_count = 0
+    for row in rows:
+        if len(events) >= limit:
+            break
+        state = str(row.get("state"))
+        raw_code = row.get("error_code")
+        error_code = str(raw_code) if raw_code else None
+        outcome = _event_outcome(state, error_code)
+        if outcome == "ok":
+            ok_count += 1
+        elif state == "failed":
+            failed_count += 1
+        else:
+            pending_count += 1
+        events.append(
+            DiscoveryEvent(
+                job_id=str(row.get("id") or row.get("job_id") or ""),
+                state=state,
+                trigger=str(row.get("trigger") or ""),
+                outcome=outcome,
+                error_code=error_code,
+                created_at=_iso(row.get("created_at")),
+                started_at=_iso(row.get("started_at")),
+                finished_at=_iso(row.get("finished_at")),
+                duration_ms=_round(row.get("duration_ms")),
+            )
+        )
+
+    terminal = ok_count + failed_count
+    availability = round(ok_count / terminal * 100, 1) if terminal else None
+    return DiscoveryTimeline(
+        events=events,
+        window=limit,
+        event_count=len(events),
+        ok_count=ok_count,
+        failed_count=failed_count,
+        pending_count=pending_count,
+        terminal_count=terminal,
+        availability_pct=availability,
+        truncated=len(events) >= limit,
     )
 
 

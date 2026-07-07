@@ -29,6 +29,7 @@ import { CapabilityChurnPanel } from "@/app/components/ui/mcp/CapabilityChurnPan
 import { CapabilityPresenceMatrixPanel } from "@/app/components/ui/mcp/CapabilityPresenceMatrixPanel";
 import { GradeSurfaceTrendPanel } from "@/app/components/ui/mcp/GradeSurfaceTrendPanel";
 import { ChangedSinceDigestPanel } from "@/app/components/ui/mcp/ChangedSinceDigestPanel";
+import { DiscoveryHealthPanel } from "@/app/components/ui/mcp/DiscoveryHealthPanel";
 import { dashboardPanelPaddedClass } from "@/app/components/ade/dashboard/dashboardScreenClasses";
 import {
   mcpVersionDetailFromPayload,
@@ -60,6 +61,10 @@ import {
   mcpDigestFromPayload,
   type McpEndpointDigest,
 } from "@/app/components/ade/dashboard/mcp/mcpDigestUi";
+import {
+  mcpReliabilityHealthFromPayload,
+  type McpDiscoveryHealth,
+} from "@/app/components/ade/dashboard/mcp/mcpReliabilityUi";
 
 interface Props {
   endpointId: string;
@@ -140,8 +145,9 @@ const INSIGHT_SECTIONS: InsightSectionDef[] = [
     title: "Reliability & trust",
     subtitle: "Whether the server is healthy, fast, and trustworthy.",
     icon: ShieldCheck,
+    // "Discovery health & availability timeline" (MCAT-17.1) now lands as a live panel in this
+    // section's body; the latency and trust-radar panels are still reserved for 17.2 / 17.4.
     reserved: [
-      { key: "health", title: "Discovery health timeline", hint: "Success, failure, and backoff over time." },
       { key: "latency", title: "Latency & error-rate panel", hint: "p50/p95/p99 latency and error ratio per tool." },
       { key: "trust", title: "Composite trust radar", hint: "Quality, safety, docs, stability, responsiveness." },
     ],
@@ -371,6 +377,10 @@ export default function McpEndpointInsight({
   const [digest, setDigest] = useState<McpEndpointDigest | null>(null);
   const [digestLoading, setDigestLoading] = useState(true);
   const [digestError, setDigestError] = useState<string | null>(null);
+  /** The endpoint's discovery health & availability timeline (endpoint-level, loaded once). */
+  const [health, setHealth] = useState<McpDiscoveryHealth | null>(null);
+  const [healthLoading, setHealthLoading] = useState(true);
+  const [healthError, setHealthError] = useState<string | null>(null);
   /** Guards the one-time seen-marker advance so it fires once per load, after the digest is read. */
   const viewRecordedRef = useRef(false);
   const mountedRef = useRef(true);
@@ -637,6 +647,38 @@ export default function McpEndpointInsight({
         setDigestError(e instanceof Error ? e.message : "Could not load the digest.");
       } finally {
         if (active) setDigestLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [endpointId]);
+
+  // Fetch the endpoint's discovery health & availability timeline once (it is endpoint-level, not
+  // per-snapshot) for the reliability section. A never-discovered endpoint yields an empty timeline
+  // (a 200), which the panel renders as its "no history yet" state rather than an error.
+  useEffect(() => {
+    let active = true;
+    setHealthLoading(true);
+    setHealthError(null);
+    (async () => {
+      try {
+        const res = await fetch(`/api/mcp/endpoints/${endpointId}/insight/reliability`, {
+          credentials: "include",
+          cache: "no-store",
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(typeof data.error === "string" ? data.error : res.statusText);
+        }
+        if (!active) return;
+        setHealth(mcpReliabilityHealthFromPayload(data));
+      } catch (e) {
+        if (!active) return;
+        setHealth(null);
+        setHealthError(e instanceof Error ? e.message : "Could not load discovery health.");
+      } finally {
+        if (active) setHealthLoading(false);
       }
     })();
     return () => {
@@ -929,6 +971,32 @@ export default function McpEndpointInsight({
                   loading={evolutionLoading}
                   error={evolutionError}
                   onSelectVersion={(versionId) => onOpenVersionDiff?.(versionId)}
+                />
+              </div>
+            </div>
+          );
+        } else if (section.key === "reliability") {
+          body = (
+            <div className="space-y-4">
+              {/* Discovery health & availability timeline (MCAT-17.1) — the recent discovery-job
+                  outcomes over time, a windowed availability %, and the endpoint's backoff /
+                  quarantine state. Loaded endpoint-level from insight/reliability. */}
+              <div className={dashboardPanelPaddedClass}>
+                <div className="mb-3">
+                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+                    <Activity className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+                    Discovery health &amp; availability
+                  </h4>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    Whether the server has been reachable over time — each recent discovery
+                    attempt&apos;s outcome, an availability percentage, and whether it is currently
+                    quarantined after repeated failures.
+                  </p>
+                </div>
+                <DiscoveryHealthPanel
+                  health={health}
+                  loading={healthLoading}
+                  error={healthError}
                 />
               </div>
             </div>

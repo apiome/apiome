@@ -347,6 +347,7 @@ def test_reliability_aggregates_discovery_and_invocation():
         mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
         mdb.list_mcp_discovery_job_stats.return_value = job_rows
         mdb.list_mcp_invocation_stats.return_value = call_rows
+        mdb.list_mcp_discovery_job_timeline.return_value = []
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
     assert r.status_code == 200
     body = r.json()
@@ -369,6 +370,7 @@ def test_reliability_empty_history_is_zeroes_not_500():
         mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
         mdb.list_mcp_discovery_job_stats.return_value = []
         mdb.list_mcp_invocation_stats.return_value = []
+        mdb.list_mcp_discovery_job_timeline.return_value = []
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
     assert r.status_code == 200
     body = r.json()
@@ -385,6 +387,94 @@ def test_reliability_cross_tenant_endpoint_is_404():
         mdb.get_mcp_endpoint.return_value = None
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
     assert r.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# reliability — discovery health timeline (V2-MCP-31.1 / MCAT-17.1)
+# ---------------------------------------------------------------------------
+
+
+def _timeline_row(job_id, state, *, trigger="sweep", error_code=None):
+    return {
+        "id": job_id,
+        "state": state,
+        "trigger": trigger,
+        "error_code": error_code,
+        "duration_ms": None,
+        "created_at": _NOW,
+        "started_at": None,
+        "finished_at": None,
+    }
+
+
+def test_reliability_health_timeline_and_availability_match_seeded_jobs():
+    timeline_rows = [
+        _timeline_row("j4", "completed"),
+        _timeline_row("j3", "failed", error_code="auth_required"),
+        _timeline_row("j2", "completed"),
+        _timeline_row("j1", "completed"),
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.list_mcp_discovery_job_stats.return_value = []
+        mdb.list_mcp_invocation_stats.return_value = []
+        mdb.list_mcp_discovery_job_timeline.return_value = timeline_rows
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
+    assert r.status_code == 200
+    health = r.json()["health"]
+    assert health["event_count"] == 4
+    assert health["ok_count"] == 3
+    assert health["failed_count"] == 1
+    # hand count: 3 ok / (3 ok + 1 failed) = 75%
+    assert health["availability_pct"] == pytest.approx(75.0)
+    assert [e["outcome"] for e in health["timeline"]] == [
+        "ok",
+        "auth_required",
+        "ok",
+        "ok",
+    ]
+    assert health["quarantined"] is False
+
+
+def test_reliability_health_flags_quarantined_endpoint():
+    quarantined = {
+        **_ENDPOINT_ROW,
+        "quarantined_at": _NOW,
+        "quarantine_reason": "connect_error: connection refused",
+        "consecutive_failures": 5,
+        "last_discovery_status": "connect_error",
+        "last_discovered_at": _NOW,
+    }
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = quarantined
+        mdb.list_mcp_discovery_job_stats.return_value = []
+        mdb.list_mcp_invocation_stats.return_value = []
+        mdb.list_mcp_discovery_job_timeline.return_value = [
+            _timeline_row("j1", "failed", error_code="connect_error"),
+        ]
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
+    assert r.status_code == 200
+    health = r.json()["health"]
+    assert health["quarantined"] is True
+    assert health["quarantine_reason"].startswith("connect_error")
+    assert health["consecutive_failures"] == 5
+    assert health["last_status"] == "connect_error"
+    assert health["availability_pct"] == pytest.approx(0.0)
+
+
+def test_reliability_health_empty_history_is_empty_timeline_not_500():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.list_mcp_discovery_job_stats.return_value = []
+        mdb.list_mcp_invocation_stats.return_value = []
+        mdb.list_mcp_discovery_job_timeline.return_value = []
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/reliability")
+    assert r.status_code == 200
+    health = r.json()["health"]
+    assert health["timeline"] == []
+    assert health["event_count"] == 0
+    assert health["availability_pct"] is None
+    assert health["quarantined"] is False
 
 
 # ===========================================================================

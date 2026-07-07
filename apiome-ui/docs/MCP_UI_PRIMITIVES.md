@@ -15,7 +15,7 @@ keeps a central dark theme (10.10) addable in one place.
 | Layer | Path | What |
 | --- | --- | --- |
 | Pure helpers (React-free, unit-tested) | `src/app/components/ade/dashboard/mcp/mcpUiPrimitives.ts` | Grade styles, badge-tone resolvers, health/recency, tab definitions |
-| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `CapabilityPresenceMatrixPanel`, `GradeSurfaceTrendPanel`, `ChangedSinceDigestPanel`, `FindingSeverity`, `DetailTabs` |
+| React components | `src/app/components/ui/mcp/` | `GradeGlyph`, `McpBadge`, `HealthPill`, `RecencyPill`, `ServerProfileCard`, `CapabilityGraphPanel`, `ToolComplexityPanel`, `SafetyPosturePanel`, `DocCoveragePanel`, `CapabilityChurnPanel`, `CapabilityPresenceMatrixPanel`, `GradeSurfaceTrendPanel`, `ChangedSinceDigestPanel`, `DiscoveryHealthPanel`, `FindingSeverity`, `DetailTabs` |
 | Shared states | `src/app/components/ui/{EmptyState,LoadingState,ErrorState}.tsx` | empty / loading / error placeholders |
 | Barrel | `@/app/components/ui/mcp` (also re-exported from `@/app/components/ui`) | one import for all MCP primitives |
 
@@ -258,6 +258,26 @@ unit-tested `mcpDigestUi` module (`mcpDigestFromPayload`, `mcpDigestState`).
 
 ```tsx
 <ChangedSinceDigestPanel digest={digest} loading={loading} error={error} onReviewChanges={openDiff} />
+```
+
+### `<DiscoveryHealthPanel>` (V2-MCP-31.1 / MCAT-17.1)
+
+The **discovery health & availability timeline** in the endpoint **Insight** tab's *Reliability & trust*
+section — "has this server been reachable over time?". From the `health` block of `insight/reliability`
+it renders an **availability %** over the recent discovery window (ok / (ok + failed) terminal jobs), a
+`StackedTimeline` **status strip** of each recent discovery job's outcome (ok / unreachable / auth_error /
+…, one uniform-height column per job coloured by outcome), a **per-code failure breakdown**, and a
+prominent **quarantine banner** when the endpoint has tripped the consecutive-failure threshold and been
+auto-excluded from the discovery sweep (V133). It owns its loading / error / empty states — a
+never-discovered endpoint shows a "no history yet" empty state.
+
+The panel is presentational: the Insight tab fetches `/insight/reliability` once (endpoint-level). All
+payload-shaping and tallies live in the React-free, unit-tested `mcpReliabilityUi` module
+(`mcpReliabilityHealthFromPayload`, `mcpDiscoveryHealthTimeline`, `mcpDiscoveryOutcomeLabel`,
+`mcpAvailabilityKind`), so the strip, the counts, and the availability figure can never disagree.
+
+```tsx
+<DiscoveryHealthPanel health={health} loading={loading} error={error} />
 ```
 
 ### `<FindingSeverity>`

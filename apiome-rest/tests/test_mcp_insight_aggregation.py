@@ -9,7 +9,9 @@ empty-sample paths that must yield zero counts and ``None`` statistics rather th
 import pytest
 
 from app.mcp_insight_aggregation import (
+    DISCOVERY_TIMELINE_WINDOW,
     compute_discovery_reliability,
+    compute_discovery_timeline,
     compute_invocation_reliability,
     compute_latency_stats,
     percentile_cont,
@@ -190,3 +192,93 @@ def test_invocation_reliability_empty():
     assert rel.error_rate == 0.0
     assert rel.latency.count == 0
     assert rel.as_dict()["latency"]["p99_ms"] is None
+
+
+# ---------------------------------------------------------------------------
+# compute_discovery_timeline (V2-MCP-31.1 / MCAT-17.1)
+# ---------------------------------------------------------------------------
+
+
+def _timeline_job(
+    job_id,
+    state,
+    *,
+    trigger="sweep",
+    error_code=None,
+    duration_ms=None,
+    created_at="2026-07-06T12:00:00+00:00",
+):
+    return {
+        "id": job_id,
+        "state": state,
+        "trigger": trigger,
+        "error_code": error_code,
+        "duration_ms": duration_ms,
+        "created_at": created_at,
+        "started_at": None,
+        "finished_at": None,
+    }
+
+
+def test_discovery_timeline_outcomes_and_availability():
+    # 3 ok, 1 failed → availability 3 / (3 + 1) = 75%; the running job is pending, not counted.
+    rows = [
+        _timeline_job("j5", "running"),
+        _timeline_job("j4", "completed", duration_ms=120.0),
+        _timeline_job("j3", "failed", error_code="connect_error"),
+        _timeline_job("j2", "completed"),
+        _timeline_job("j1", "completed"),
+    ]
+    tl = compute_discovery_timeline(rows)
+    assert tl.event_count == 5
+    assert tl.ok_count == 3
+    assert tl.failed_count == 1
+    assert tl.pending_count == 1
+    assert tl.terminal_count == 4
+    assert tl.availability_pct == pytest.approx(75.0)
+    # Newest-first order is preserved and outcomes are derived per job.
+    assert [e.outcome for e in tl.events] == ["pending", "ok", "connect_error", "ok", "ok"]
+    assert tl.events[1].duration_ms == 120.0
+    assert tl.events[2].error_code == "connect_error"
+    assert tl.truncated is False
+
+
+def test_discovery_timeline_failed_without_code_is_bare_failed():
+    tl = compute_discovery_timeline([_timeline_job("j1", "failed", error_code=None)])
+    assert tl.events[0].outcome == "failed"
+    assert tl.events[0].error_code is None
+    assert tl.failed_count == 1
+    # A single failed terminal job → 0% availability, not None.
+    assert tl.availability_pct == pytest.approx(0.0)
+
+
+def test_discovery_timeline_empty_has_none_availability():
+    tl = compute_discovery_timeline([])
+    assert tl.event_count == 0
+    assert tl.terminal_count == 0
+    assert tl.availability_pct is None
+    assert tl.as_dict()["events"] == []
+
+
+def test_discovery_timeline_all_pending_has_none_availability():
+    tl = compute_discovery_timeline(
+        [_timeline_job("j2", "running"), _timeline_job("j1", "queued")]
+    )
+    assert tl.pending_count == 2
+    assert tl.terminal_count == 0
+    assert tl.availability_pct is None
+
+
+def test_discovery_timeline_caps_to_window_and_flags_truncation():
+    rows = [_timeline_job(f"j{i}", "completed") for i in range(5)]
+    tl = compute_discovery_timeline(rows, window=3)
+    assert tl.window == 3
+    assert tl.event_count == 3
+    assert tl.truncated is True
+    # Availability is computed over the window only, not the dropped older jobs.
+    assert tl.availability_pct == pytest.approx(100.0)
+
+
+def test_discovery_timeline_default_window_is_the_module_constant():
+    tl = compute_discovery_timeline([])
+    assert tl.window == DISCOVERY_TIMELINE_WINDOW

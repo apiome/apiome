@@ -20,6 +20,7 @@ export * from './CapabilityChurnPanel';
 export * from './GradeSurfaceTrendPanel';
 export * from './CapabilityPresenceMatrixPanel';
 export * from './ChangedSinceDigestPanel';
+export * from './DiscoveryHealthPanel';
 export * from './FindingSeverity';
 export * from './DetailTabs';
 export * from './McpJsonViewer';

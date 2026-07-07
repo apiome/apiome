@@ -30,6 +30,11 @@ import { GradeSurfaceTrendPanel } from '@/app/components/ui/mcp/GradeSurfaceTren
 import type { McpEvolutionPoint } from '@/app/components/ade/dashboard/mcp/mcpEvolutionUi';
 import { CapabilityPresenceMatrixPanel } from '@/app/components/ui/mcp/CapabilityPresenceMatrixPanel';
 import { ChangedSinceDigestPanel } from '@/app/components/ui/mcp/ChangedSinceDigestPanel';
+import { DiscoveryHealthPanel } from '@/app/components/ui/mcp/DiscoveryHealthPanel';
+import {
+  mcpReliabilityHealthFromPayload,
+  type McpDiscoveryHealth,
+} from '@/app/components/ade/dashboard/mcp/mcpReliabilityUi';
 import {
   mcpDigestFromPayload,
   type McpEndpointDigest,
@@ -362,6 +367,69 @@ const DIGEST_CURRENT_SAMPLE: McpEndpointDigest = mcpDigestFromPayload({
   change_counts: { added: 0, removed: 0, modified: 0, total: 0 },
   severity_counts: { breaking: 0, additive: 0, review: 0, total: 0 },
   changes: [],
+})!;
+
+/** A discovery-job for the health-timeline demos (V2-MCP-31.1). */
+function healthJob(
+  jobId: string,
+  state: string,
+  outcome: string,
+  createdAt: string,
+  errorCode: string | null = null,
+): Record<string, unknown> {
+  return {
+    job_id: jobId,
+    state,
+    trigger: 'sweep',
+    outcome,
+    error_code: errorCode,
+    created_at: createdAt,
+    started_at: createdAt,
+    finished_at: createdAt,
+    duration_ms: state === 'failed' ? null : 420,
+  };
+}
+
+/** A mostly-healthy endpoint (one auth blip): timeline newest-first, ~86% available. */
+const HEALTH_HEALTHY_SAMPLE: McpDiscoveryHealth = mcpReliabilityHealthFromPayload({
+  health: {
+    timeline: [
+      healthJob('h7', 'completed', 'ok', '2026-07-06T12:00:00Z'),
+      healthJob('h6', 'completed', 'ok', '2026-07-06T06:00:00Z'),
+      healthJob('h5', 'failed', 'auth_required', '2026-07-06T00:00:00Z', 'auth_required'),
+      healthJob('h4', 'completed', 'ok', '2026-07-05T18:00:00Z'),
+      healthJob('h3', 'completed', 'ok', '2026-07-05T12:00:00Z'),
+      healthJob('h2', 'completed', 'ok', '2026-07-05T06:00:00Z'),
+      healthJob('h1', 'completed', 'ok', '2026-07-05T00:00:00Z'),
+    ],
+    window: 50,
+    last_status: 'unchanged',
+    last_discovered_at: '2026-07-06T12:00:00Z',
+  },
+})!;
+
+/** A quarantined endpoint (repeated connect failures): the panel flags the auto-disable banner. */
+const HEALTH_QUARANTINED_SAMPLE: McpDiscoveryHealth = mcpReliabilityHealthFromPayload({
+  health: {
+    timeline: [
+      healthJob('q4', 'failed', 'connect_error', '2026-07-06T12:00:00Z', 'connect_error'),
+      healthJob('q3', 'failed', 'connect_error', '2026-07-06T06:00:00Z', 'connect_error'),
+      healthJob('q2', 'failed', 'timeout', '2026-07-06T00:00:00Z', 'timeout'),
+      healthJob('q1', 'completed', 'ok', '2026-07-05T18:00:00Z'),
+    ],
+    window: 50,
+    quarantined: true,
+    quarantined_at: '2026-07-06T12:00:00Z',
+    quarantine_reason: 'connect_error: connection refused',
+    consecutive_failures: 3,
+    last_status: 'connect_error',
+    last_discovered_at: '2026-07-06T12:00:00Z',
+  },
+})!;
+
+/** A never-discovered endpoint: empty timeline → the panel's empty state. */
+const HEALTH_EMPTY_SAMPLE: McpDiscoveryHealth = mcpReliabilityHealthFromPayload({
+  health: { timeline: [], window: 50 },
 })!;
 
 /**
@@ -773,6 +841,33 @@ export default function McpPrimitivesShowcase() {
           error={null}
           onReviewChanges={() => {}}
         />
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            DiscoveryHealthPanel (V2-MCP-31.1)
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Has the server been reachable over time? A <code>StackedTimeline</code> status strip of
+            each recent discovery attempt&apos;s outcome (ok / unreachable / auth_error / …), an{' '}
+            <strong>availability %</strong> over the window, a per-code failure breakdown, and a
+            prominent banner when the endpoint is <strong>quarantined</strong> after repeated
+            failures. Has healthy, quarantined, and empty states.
+          </p>
+        </div>
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Healthy (one auth blip)
+        </div>
+        <DiscoveryHealthPanel health={HEALTH_HEALTHY_SAMPLE} loading={false} error={null} />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          Quarantined (repeated connect failures)
+        </div>
+        <DiscoveryHealthPanel health={HEALTH_QUARANTINED_SAMPLE} loading={false} error={null} />
+        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          No discovery history yet
+        </div>
+        <DiscoveryHealthPanel health={HEALTH_EMPTY_SAMPLE} loading={false} error={null} />
       </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
