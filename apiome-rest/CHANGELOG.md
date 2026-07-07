@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.96.0] - 2026-07-07
+
+### Added
+- **Embeddable status badges (#4652, V2-MCP-33.3 / MCAT-19.3)** — a public, cacheable **SVG badge**
+  a server author can drop into a README to advertise the catalog's assessment of a **published**
+  endpoint (like a CI badge).
+  - New **anonymous** route `GET /mcp/badge/{tenant}/{slug}.svg?metric=grade|health|version&theme=light|dark`
+    renders a shields-style flat badge. `metric` selects the signal — `grade` (A–F lint grade),
+    `health` (the derived operational label), or `version` (the server-reported version); `theme`
+    selects the light/dark **label variant**. Unrecognized `metric`/`theme` values normalize to
+    `grade`/`light` so a badge URL always renders.
+  - **Never a data leak.** The endpoint is resolved through the same public gate the
+    `mcp_v_public_endpoints` view enforces (`Database.get_published_mcp_endpoint_badge`: tenant live,
+    endpoint not deleted, enabled, published, public-visible). An unpublished, private, or unknown
+    target renders the neutral `unknown` badge with a `200` — never a `404` — so the response never
+    discloses whether such an endpoint exists. No credential (the raw `endpoint_url`) is ever read.
+  - **Cacheable.** A content-addressed `ETag` (a hash of the rendered SVG) and a `public, max-age`
+    `Cache-Control` (300s for a resolved badge, 60s for `unknown` so a freshly published endpoint's
+    real badge appears promptly). A matching `If-None-Match` yields `304 Not Modified`.
+  - Rendering is a pure, database-free layer (`app.mcp_badge`): deterministic, XML-escaped against
+    hostile server-reported values, and self-contained (no external fonts or images).
+
 ## [1.95.0] - 2026-07-07
 
 ### Added

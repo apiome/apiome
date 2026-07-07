@@ -1743,7 +1743,7 @@ change feed, a scheduled digest. Nothing here consumes a server; it reports on o
 |---|---|---|---|:--:|:--:|---|---|
 | 19.1 ✅ | Server report-card export | One-page Markdown/HTML/PDF report per endpoint (identity, grade, surface, safety, coverage, trust) | `mcp-insights` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
 | 19.2 ✅ | Catalog inventory export | CSV/JSON export of endpoints + key metrics for offline analysis | `mcp-insights` `backend` | Y | N | ● | apiome-rest |
-| 19.3 | Embeddable status badges | Shields-style SVG grade/health/version badge for READMEs, served from a public endpoint | `mcp-insights` `backend` | Y | N | ●● | apiome-rest, apiome-browse |
+| 19.3 ✅ | Embeddable status badges | Shields-style SVG grade/health/version badge for READMEs, served from a public endpoint | `mcp-insights` `backend` | Y | N | ●● | apiome-rest, apiome-browse |
 | 19.4 | Catalog change feed (RSS/Atom/JSON) | Subscribable feed of endpoint/catalog changes | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
 | 19.5 | Scheduled catalog digest reports | Periodic summary of catalog state + changes, delivered via the notification channel | `mcp-insights` `backend` | N | N | ●● | apiome-rest |
 
@@ -1792,7 +1792,7 @@ change feed, a scheduled digest. Nothing here consumes a server; it reports on o
   (matching the repo's `imports:batch`/`:manifest` convention) avoids colliding with the
   `endpoints/{id}` route.
 
-### MCAT-19.3 — Embeddable status badges  ·  **#4652**
+### MCAT-19.3 — Embeddable status badges  ·  **#4652**  ·  ✅ Done (apiome-rest 1.96.0, apiome-browse 0.7.0)
 - **Problem.** Server authors and catalogers want a visible signal (like a CI badge) they can drop
   into a README pointing at the catalog's assessment.
 - **Solution / Scope.** A public, cacheable **SVG badge** endpoint (`/mcp/badge/{tenant}/{slug}.svg`)
@@ -1802,6 +1802,18 @@ change feed, a scheduled digest. Nothing here consumes a server; it reports on o
   neutral "unknown" badge, never a data leak; cache headers set; light/dark label variants.
 - **Dependencies / Parallelism.** After 14.2 (grade/health source). Parallel across Epic-19.
 - **Technical Stack.** FastAPI SVG response; apiome-browse copy snippet.
+- **Delivered.** Anonymous `GET /mcp/badge/{tenant}/{slug}.svg?metric=grade|health|version&theme=light|dark`
+  renders a shields-style flat SVG. The endpoint resolves through the same public gate the
+  `mcp_v_public_endpoints` view enforces (`Database.get_published_mcp_endpoint_badge`: tenant live,
+  endpoint not deleted, enabled, published, public-visible); an unpublished/private/unknown target
+  renders the neutral `unknown` badge with a `200` (never a `404`, never a credential read), so the
+  response never discloses whether such an endpoint exists. Rendering is a pure, database-free layer
+  (`app.mcp_badge`) — deterministic, XML-escaped, self-contained (no external fonts/images), with a
+  light/dark **label variant**. Caching: a content-addressed `ETag` (hash of the rendered SVG) and
+  `public, max-age` `Cache-Control` (300s resolved / 60s `unknown`), with `If-None-Match` → `304`.
+  apiome-browse's public endpoint detail page adds a **Status badge** panel (`McpBadgeSnippet`) with a
+  live preview and copyable Markdown / HTML / URL snippets (metric + theme selectable); the pure URL
+  and snippet builders live in `lib/mcp/badge.ts`.
 
 ### MCAT-19.4 — Catalog change feed (RSS/Atom/JSON)  ·  **#4653**
 - **Problem.** People tracking a server (or a whole catalog) want to be **told what changed** without

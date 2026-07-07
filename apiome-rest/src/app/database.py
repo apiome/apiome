@@ -10079,6 +10079,52 @@ class Database:
         rows = self.execute_query(q, (endpoint_id, tenant_id))
         return dict(rows[0]) if rows else None
 
+    def get_published_mcp_endpoint_badge(
+        self, tenant_slug: str, endpoint_slug: str
+    ) -> Optional[Dict[str, Any]]:
+        """Resolve a single **published, public** endpoint by slugs for the public status badge (MCAT-19.3).
+
+        The read source behind the anonymous ``GET /mcp/badge/{tenant}/{slug}.svg`` route (#4652).
+        The ``WHERE`` clause is the same public predicate the ``apiome.mcp_v_public_endpoints`` view
+        (V134) enforces — the owning tenant is live, and the endpoint is not deleted, is enabled, is
+        published, and is public-visible — so an unpublished, private, disabled, or unknown target is
+        indistinguishable from a missing one (``None``), and the badge route renders a neutral
+        ``unknown`` badge with no data leak. The row is enriched with exactly what the three badge
+        metrics need: the current snapshot's ``score`` / ``grade`` (the *grade* metric), the
+        server-reported ``server_version`` / ``version_seq`` (the *version* metric), and the
+        operational columns :func:`app.mcp_catalog_inventory.derive_health` reads (the *health*
+        metric). No credential is selected — the raw ``endpoint_url`` never leaves the database.
+
+        Args:
+            tenant_slug: The owning tenant's URL slug.
+            endpoint_slug: The endpoint's tenant-unique catalog slug.
+
+        Returns:
+            The enriched endpoint row, or ``None`` when no published public endpoint matches the
+            slugs (the case the badge route renders as ``unknown``).
+        """
+        q = """
+            SELECT e.id, e.name, e.slug, e.enabled,
+                   e.last_discovered_at, e.last_discovery_status,
+                   e.consecutive_failures, e.quarantined_at, e.current_version_id,
+                   s.score, s.grade,
+                   v.server_version, v.version_seq
+            FROM apiome.mcp_endpoints e
+            JOIN apiome.tenants t ON t.id = e.tenant_id
+            LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
+            LEFT JOIN apiome.mcp_endpoint_versions v ON v.id = e.current_version_id
+            WHERE t.slug = %s
+              AND e.slug = %s
+              AND t.deleted_at IS NULL
+              AND e.deleted_at IS NULL
+              AND e.enabled IS TRUE
+              AND e.published IS TRUE
+              AND e.visibility = 'public'::apiome.visibility_type
+            LIMIT 1
+        """
+        rows = self.execute_query(q, (tenant_slug, endpoint_slug))
+        return dict(rows[0]) if rows else None
+
     def list_due_mcp_endpoints(
         self,
         *,

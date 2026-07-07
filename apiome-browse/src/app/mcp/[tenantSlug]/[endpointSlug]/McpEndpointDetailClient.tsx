@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AppShell } from '../../../components/AppShell';
 import type { McpCapabilityItem, McpPublicEndpointDetail } from '../../../../../lib/types';
 import { GradeBadge, TransportBadge } from '../../McpShared';
+import { McpBadgeSnippet } from './McpBadgeSnippet';
 
 type ItemType = McpCapabilityItem['item_type'];
 
@@ -27,7 +28,17 @@ function formatDate(value: Date | null): string | null {
  * Public MCP endpoint detail (MCAT-9.6): the grade/score/transport/host header and the endpoint's
  * current-snapshot capabilities split into tabs (tools / resources / resource templates / prompts).
  */
-export function McpEndpointDetailClient({ detail }: { detail: McpPublicEndpointDetail }) {
+export function McpEndpointDetailClient({
+  detail,
+  tenantSlug,
+  endpointSlug,
+  restApiBaseUrl,
+}: {
+  detail: McpPublicEndpointDetail;
+  tenantSlug: string;
+  endpointSlug: string;
+  restApiBaseUrl: string;
+}) {
   const { endpoint, items } = detail;
 
   const byType = useMemo(() => {
@@ -147,6 +158,13 @@ export function McpEndpointDetailClient({ detail }: { detail: McpPublicEndpointD
           </ul>
         </div>
       )}
+
+      <McpBadgeSnippet
+        restApiBaseUrl={restApiBaseUrl}
+        tenantSlug={tenantSlug}
+        endpointSlug={endpointSlug}
+        endpointName={endpoint.name}
+      />
     </AppShell>
   );
 }
