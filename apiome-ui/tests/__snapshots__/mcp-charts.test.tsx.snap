@@ -1,0 +1,748 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`BarSeries matches its snapshot 1`] = `
+<figure
+  class="relative m-0 h-32 w-full"
+>
+  <svg
+    aria-label="snap"
+    class="h-full w-full overflow-visible"
+    preserveAspectRatio="none"
+    role="img"
+    viewBox="0 0 100 100"
+  >
+    <title>
+      snap
+    </title>
+    <desc>
+      tools: 18, prompts: 3
+    </desc>
+    <rect
+      class="fill-indigo-500 dark:fill-indigo-400 transition-all duration-500"
+      height="100"
+      rx="1.5"
+      width="41"
+      x="6"
+      y="0"
+    >
+      <title>
+        tools: 18
+      </title>
+    </rect>
+    <rect
+      class="fill-indigo-500 dark:fill-indigo-400 transition-all duration-500"
+      height="16.666666666666664"
+      rx="1.5"
+      width="41"
+      x="53"
+      y="83.33333333333334"
+    >
+      <title>
+        prompts: 3
+      </title>
+    </rect>
+    <line
+      class="stroke-gray-200 dark:stroke-gray-700"
+      stroke-width="0.5"
+      vector-effect="non-scaling-stroke"
+      x1="0"
+      x2="100"
+      y1="100"
+      y2="100"
+    />
+  </svg>
+  <div
+    class="sr-only"
+  >
+    <table>
+      <caption>
+        snap
+      </caption>
+      <tbody>
+        <tr>
+          <th
+            scope="row"
+          >
+            tools
+          </th>
+          <td>
+            18
+          </td>
+        </tr>
+        <tr>
+          <th
+            scope="row"
+          >
+            prompts
+          </th>
+          <td>
+            3
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</figure>
+`;
+
+exports[`Donut matches its snapshot 1`] = `
+<figure
+  class="relative m-0 h-32 w-32"
+>
+  <svg
+    aria-label="snap"
+    class="h-full w-full overflow-visible"
+    preserveAspectRatio="xMidYMid meet"
+    role="img"
+    viewBox="0 0 120 120"
+  >
+    <title>
+      snap
+    </title>
+    <desc>
+      http: 12 (60%), sse: 8 (40%)
+    </desc>
+    <circle
+      class="stroke-gray-200 dark:stroke-gray-700"
+      cx="60"
+      cy="60"
+      fill="none"
+      r="44"
+      stroke-width="20"
+    />
+    <path
+      class="fill-indigo-500 dark:fill-indigo-400"
+      d="M 60.00 6.00 A 54 54 0 1 1 28.26 103.69 L 40.02 87.51 A 34 34 0 1 0 60.00 26.00 Z"
+    >
+      <title>
+        http: 12
+      </title>
+    </path>
+    <path
+      class="fill-emerald-500 dark:fill-emerald-400"
+      d="M 28.26 103.69 A 54 54 0 0 1 60.00 6.00 L 60.00 26.00 A 34 34 0 0 0 40.02 87.51 Z"
+    >
+      <title>
+        sse: 8
+      </title>
+    </path>
+  </svg>
+  <div
+    class="sr-only"
+  >
+    <table>
+      <caption>
+        snap
+      </caption>
+      <tbody>
+        <tr>
+          <th
+            scope="row"
+          >
+            http
+          </th>
+          <td>
+            12
+          </td>
+        </tr>
+        <tr>
+          <th
+            scope="row"
+          >
+            sse
+          </th>
+          <td>
+            8
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</figure>
+`;
+
+exports[`Gauge matches its snapshot 1`] = `
+<figure
+  class="relative m-0 h-28 w-28"
+>
+  <svg
+    aria-label="snap"
+    class="h-full w-full overflow-visible"
+    preserveAspectRatio="xMidYMid meet"
+    role="img"
+    viewBox="0 0 120 120"
+  >
+    <title>
+      snap
+    </title>
+    <desc>
+      61 of 0–100
+    </desc>
+    <path
+      class="stroke-gray-200 dark:stroke-gray-700"
+      d="M 27.47 92.53 A 46 46 0 1 1 92.53 92.53"
+      fill="none"
+      stroke-linecap="round"
+      stroke-width="10"
+    />
+    <path
+      class="text-orange-500 dark:text-orange-400 transition-all duration-500"
+      d="M 27.47 92.53 A 46 46 0 0 1 82.79 20.04"
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-width="10"
+    />
+    <text
+      class="text-[22px] font-bold fill-gray-700 dark:fill-gray-200"
+      dominant-baseline="central"
+      text-anchor="middle"
+      x="60"
+      y="60"
+    >
+      61
+    </text>
+  </svg>
+  <div
+    class="sr-only"
+  >
+    <table>
+      <caption>
+        snap
+      </caption>
+      <tbody>
+        <tr>
+          <th
+            scope="row"
+          >
+            Value
+          </th>
+          <td>
+            61
+          </td>
+        </tr>
+        <tr>
+          <th
+            scope="row"
+          >
+            Range
+          </th>
+          <td>
+            0
+            –
+            100
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</figure>
+`;
+
+exports[`Heatmap matches its snapshot 1`] = `
+<figure
+  class="relative m-0 h-40 w-full"
+>
+  <svg
+    aria-label="snap"
+    class="h-full w-full overflow-visible"
+    preserveAspectRatio="xMidYMid meet"
+    role="img"
+    viewBox="0 0 56 38"
+  >
+    <title>
+      snap
+    </title>
+    <desc>
+      2×3 grid, max 5
+    </desc>
+    <rect
+      class="fill-gray-100 dark:fill-gray-800"
+      height="16"
+      rx="2"
+      width="16"
+      x="2"
+      y="2"
+    >
+      <title>
+        Row 1 × Col 1: 0
+      </title>
+    </rect>
+    <rect
+      class="fill-indigo-500 dark:fill-indigo-400"
+      fill-opacity="0.44800000000000006"
+      height="16"
+      rx="2"
+      width="16"
+      x="20"
+      y="2"
+    >
+      <title>
+        Row 1 × Col 2: 2
+      </title>
+    </rect>
+    <rect
+      class="fill-indigo-500 dark:fill-indigo-400"
+      fill-opacity="0.8160000000000001"
+      height="16"
+      rx="2"
+      width="16"
+      x="38"
+      y="2"
+    >
+      <title>
+        Row 1 × Col 3: 4
+      </title>
+    </rect>
+    <rect
+      class="fill-indigo-500 dark:fill-indigo-400"
+      fill-opacity="0.264"
+      height="16"
+      rx="2"
+      width="16"
+      x="2"
+      y="20"
+    >
+      <title>
+        Row 2 × Col 1: 1
+      </title>
+    </rect>
+    <rect
+      class="fill-indigo-500 dark:fill-indigo-400"
+      fill-opacity="0.632"
+      height="16"
+      rx="2"
+      width="16"
+      x="20"
+      y="20"
+    >
+      <title>
+        Row 2 × Col 2: 3
+      </title>
+    </rect>
+    <rect
+      class="fill-indigo-500 dark:fill-indigo-400"
+      fill-opacity="1"
+      height="16"
+      rx="2"
+      width="16"
+      x="38"
+      y="20"
+    >
+      <title>
+        Row 2 × Col 3: 5
+      </title>
+    </rect>
+  </svg>
+  <div
+    class="sr-only"
+  >
+    <table>
+      <caption>
+        snap
+      </caption>
+      <tbody>
+        <tr>
+          <th
+            scope="row"
+          >
+            Row 1
+          </th>
+          <td>
+            0
+          </td>
+          <td>
+            2
+          </td>
+          <td>
+            4
+          </td>
+        </tr>
+        <tr>
+          <th
+            scope="row"
+          >
+            Row 2
+          </th>
+          <td>
+            1
+          </td>
+          <td>
+            3
+          </td>
+          <td>
+            5
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</figure>
+`;
+
+exports[`Radar matches its snapshot 1`] = `
+<figure
+  class="relative m-0 h-36 w-36"
+>
+  <svg
+    aria-label="snap"
+    class="h-full w-full overflow-visible"
+    preserveAspectRatio="xMidYMid meet"
+    role="img"
+    viewBox="0 0 140 140"
+  >
+    <title>
+      snap
+    </title>
+    <desc>
+      Docs: 82, Safety: 90, Simplicity: 70
+    </desc>
+    <polygon
+      class="stroke-gray-200 dark:stroke-gray-700"
+      fill="none"
+      points="70.00,57.00 81.26,76.50 58.74,76.50"
+      stroke-width="0.5"
+      vector-effect="non-scaling-stroke"
+    />
+    <polygon
+      class="stroke-gray-200 dark:stroke-gray-700"
+      fill="none"
+      points="70.00,44.00 92.52,83.00 47.48,83.00"
+      stroke-width="0.5"
+      vector-effect="non-scaling-stroke"
+    />
+    <polygon
+      class="stroke-gray-200 dark:stroke-gray-700"
+      fill="none"
+      points="70.00,31.00 103.77,89.50 36.23,89.50"
+      stroke-width="0.5"
+      vector-effect="non-scaling-stroke"
+    />
+    <polygon
+      class="stroke-gray-200 dark:stroke-gray-700"
+      fill="none"
+      points="70.00,18.00 115.03,96.00 24.97,96.00"
+      stroke-width="0.5"
+      vector-effect="non-scaling-stroke"
+    />
+    <line
+      class="stroke-gray-200 dark:stroke-gray-700"
+      stroke-width="0.5"
+      vector-effect="non-scaling-stroke"
+      x1="70"
+      x2="70"
+      y1="70"
+      y2="18"
+    />
+    <line
+      class="stroke-gray-200 dark:stroke-gray-700"
+      stroke-width="0.5"
+      vector-effect="non-scaling-stroke"
+      x1="70"
+      x2="115.03332099679082"
+      y1="70"
+      y2="96"
+    />
+    <line
+      class="stroke-gray-200 dark:stroke-gray-700"
+      stroke-width="0.5"
+      vector-effect="non-scaling-stroke"
+      x1="70"
+      x2="24.966679003209187"
+      y1="70"
+      y2="96"
+    />
+    <polygon
+      class="fill-indigo-500 dark:fill-indigo-400 stroke-indigo-500 dark:stroke-indigo-400"
+      fill-opacity="0.25"
+      points="70.00,27.36 110.53,93.40 38.48,88.20"
+      stroke-width="1.5"
+      vector-effect="non-scaling-stroke"
+    />
+  </svg>
+  <div
+    class="sr-only"
+  >
+    <table>
+      <caption>
+        snap
+      </caption>
+      <tbody>
+        <tr>
+          <th
+            scope="row"
+          >
+            Docs
+          </th>
+          <td>
+            82
+          </td>
+        </tr>
+        <tr>
+          <th
+            scope="row"
+          >
+            Safety
+          </th>
+          <td>
+            90
+          </td>
+        </tr>
+        <tr>
+          <th
+            scope="row"
+          >
+            Simplicity
+          </th>
+          <td>
+            70
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</figure>
+`;
+
+exports[`Sparkline matches its snapshot 1`] = `
+<figure
+  class="relative m-0 h-10 w-32"
+>
+  <svg
+    aria-label="snap"
+    class="h-full w-full overflow-visible"
+    preserveAspectRatio="none"
+    role="img"
+    viewBox="0 0 120 40"
+  >
+    <title>
+      snap
+    </title>
+    <desc>
+      5 points, latest 80, max 80
+    </desc>
+    <g
+      class="text-emerald-500 dark:text-emerald-400"
+    >
+      <defs>
+        <lineargradient
+          id="sparkline-r2"
+          x1="0"
+          x2="0"
+          y1="0"
+          y2="1"
+        >
+          <stop
+            offset="0%"
+            stop-color="currentColor"
+            stop-opacity="0.22"
+          />
+          <stop
+            offset="100%"
+            stop-color="currentColor"
+            stop-opacity="0"
+          />
+        </lineargradient>
+      </defs>
+      <path
+        d="M 3.00 10.65 L 31.50 9.38 L 60.00 11.08 L 88.50 7.25 L 117.00 3.00 L 117.00 40 L 3.00 40 Z"
+        fill="url(#sparkline-r2)"
+        stroke="none"
+      />
+      <path
+        d="M 3.00 10.65 L 31.50 9.38 L 60.00 11.08 L 88.50 7.25 L 117.00 3.00"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        vector-effect="non-scaling-stroke"
+      />
+    </g>
+  </svg>
+  <div
+    class="sr-only"
+  >
+    <table>
+      <caption>
+        snap
+      </caption>
+      <tbody>
+        <tr>
+          <th
+            scope="row"
+          >
+            1
+          </th>
+          <td>
+            62
+          </td>
+        </tr>
+        <tr>
+          <th
+            scope="row"
+          >
+            2
+          </th>
+          <td>
+            65
+          </td>
+        </tr>
+        <tr>
+          <th
+            scope="row"
+          >
+            3
+          </th>
+          <td>
+            61
+          </td>
+        </tr>
+        <tr>
+          <th
+            scope="row"
+          >
+            4
+          </th>
+          <td>
+            70
+          </td>
+        </tr>
+        <tr>
+          <th
+            scope="row"
+          >
+            5
+          </th>
+          <td>
+            80
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</figure>
+`;
+
+exports[`StackedTimeline matches its snapshot 1`] = `
+<figure
+  class="relative m-0 h-40 w-full"
+>
+  <svg
+    aria-label="snap"
+    class="h-full w-full overflow-visible"
+    preserveAspectRatio="none"
+    role="img"
+    viewBox="0 0 100 100"
+  >
+    <title>
+      snap
+    </title>
+    <desc>
+      v1: 4, v2: 5
+    </desc>
+    <g>
+      <rect
+        class="fill-indigo-500 dark:fill-indigo-400"
+        height="80"
+        width="44"
+        x="4"
+        y="20"
+      >
+        <title>
+          v1 — Added: 4
+        </title>
+      </rect>
+    </g>
+    <g>
+      <rect
+        class="fill-indigo-500 dark:fill-indigo-400"
+        height="40"
+        width="44"
+        x="52"
+        y="60"
+      >
+        <title>
+          v2 — Added: 2
+        </title>
+      </rect>
+      <rect
+        class="fill-emerald-500 dark:fill-emerald-400"
+        height="60"
+        width="44"
+        x="52"
+        y="0"
+      >
+        <title>
+          v2 — Removed: 3
+        </title>
+      </rect>
+    </g>
+    <line
+      class="stroke-gray-200 dark:stroke-gray-700"
+      stroke-width="0.5"
+      vector-effect="non-scaling-stroke"
+      x1="0"
+      x2="100"
+      y1="100"
+      y2="100"
+    />
+  </svg>
+  <div
+    class="sr-only"
+  >
+    <table>
+      <caption>
+        snap
+      </caption>
+      <thead>
+        <tr>
+          <th
+            scope="col"
+          >
+            Period
+          </th>
+          <th
+            scope="col"
+          >
+            Added
+          </th>
+          <th
+            scope="col"
+          >
+            Removed
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th
+            scope="row"
+          >
+            v1
+          </th>
+          <td>
+            4
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <th
+            scope="row"
+          >
+            v2
+          </th>
+          <td>
+            2
+          </td>
+          <td>
+            3
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</figure>
+`;

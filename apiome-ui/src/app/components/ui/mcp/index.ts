@@ -16,3 +16,6 @@ export * from './DetailTabs';
 export * from './McpJsonViewer';
 export * from './McpJsonDiffViewer';
 export * from './McpDisclosure';
+// Token-driven SVG chart kit (V2-MCP-28.3): Sparkline, BarSeries, Donut, StackedTimeline, Radar,
+// Heatmap, Gauge + their pure token/geometry helpers.
+export * from './charts';
