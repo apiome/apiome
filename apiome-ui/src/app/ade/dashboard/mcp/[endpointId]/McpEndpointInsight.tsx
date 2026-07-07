@@ -5,8 +5,12 @@ import {
   Activity,
   BarChart3,
   BookOpen,
+  Download,
+  FileCode2,
+  FileText,
   GitCompareArrows,
   History,
+  Printer,
   Layers,
   LayoutGrid,
   LineChart,
@@ -224,6 +228,160 @@ function VersionSelector({
         ))}
       </select>
     </div>
+  );
+}
+
+/** Parse the download filename from a `Content-Disposition` header, or fall back to a default. */
+function reportFilename(headers: Headers, fallback: string): string {
+  const disposition = headers.get("content-disposition") ?? "";
+  const match = /filename="?([^"]+)"?/i.exec(disposition);
+  return match?.[1] ?? fallback;
+}
+
+/**
+ * Report-card export control (V2-MCP-33.1 / MCAT-19.1) — a small dropdown that downloads the
+ * selected snapshot's shareable report as Markdown or HTML, or opens the HTML in a print window so
+ * the browser can save it as PDF ("PDF via the same HTML / print stylesheet"). It proxies
+ * `GET /api/mcp/endpoints/{id}/report?format=…&version_id=…`, which streams the rendered document.
+ */
+function ReportExportMenu({
+  endpointId,
+  versionId,
+  disabled,
+}: {
+  endpointId: string;
+  versionId: string | null;
+  disabled: boolean;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+
+  const reportUrl = useCallback(
+    (format: "markdown" | "html") => {
+      const query = new URLSearchParams({ format });
+      if (versionId) query.set("version_id", versionId);
+      return `/api/mcp/endpoints/${endpointId}/report?${query.toString()}`;
+    },
+    [endpointId, versionId],
+  );
+
+  const closeMenu = useCallback(() => {
+    if (detailsRef.current) detailsRef.current.open = false;
+  }, []);
+
+  /** Fetch one format's document, surfacing a normalized error on failure. */
+  const fetchReport = useCallback(
+    async (format: "markdown" | "html"): Promise<Response | null> => {
+      const res = await fetch(reportUrl(format), { cache: "no-store" });
+      if (!res.ok) {
+        let detail = "Report export failed";
+        try {
+          const body = await res.json();
+          if (typeof body?.error === "string") detail = body.error;
+        } catch {
+          // Non-JSON error body — keep the generic message.
+        }
+        setError(detail);
+        return null;
+      }
+      return res;
+    },
+    [reportUrl],
+  );
+
+  const download = useCallback(
+    async (format: "markdown" | "html") => {
+      setBusy(true);
+      setError(null);
+      try {
+        const res = await fetchReport(format);
+        if (!res) return;
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = reportFilename(
+          res.headers,
+          `report-card.${format === "html" ? "html" : "md"}`,
+        );
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
+        closeMenu();
+      } catch {
+        setError("Report export failed");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [fetchReport, closeMenu],
+  );
+
+  const printPdf = useCallback(async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetchReport("html");
+      if (!res) return;
+      const html = await res.text();
+      // Render the print-styled HTML in a fresh window and invoke the browser's print dialog, from
+      // which the user saves a PDF. A blocked popup falls back to an explanatory error.
+      const printWindow = window.open("", "_blank", "noopener,noreferrer");
+      if (!printWindow) {
+        setError("Allow pop-ups to print or save the report as PDF.");
+        return;
+      }
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      closeMenu();
+    } catch {
+      setError("Report export failed");
+    } finally {
+      setBusy(false);
+    }
+  }, [fetchReport, closeMenu]);
+
+  const itemClass =
+    "flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-200 dark:hover:bg-gray-700";
+
+  return (
+    <details ref={detailsRef} className="relative">
+      <summary
+        className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:border-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-indigo-700 [&::-webkit-details-marker]:hidden"
+        aria-label="Export report card"
+        aria-disabled={disabled}
+      >
+        {busy ? (
+          <Loader2 className="h-4 w-4 animate-spin text-indigo-500" aria-hidden />
+        ) : (
+          <Download className="h-4 w-4 text-indigo-500" aria-hidden />
+        )}
+        Export report
+      </summary>
+      <div className="absolute right-0 z-10 mt-1 w-56 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+        <button type="button" className={itemClass} disabled={busy} onClick={() => download("markdown")}>
+          <FileText className="h-4 w-4 text-gray-400" aria-hidden />
+          Download Markdown
+        </button>
+        <button type="button" className={itemClass} disabled={busy} onClick={() => download("html")}>
+          <FileCode2 className="h-4 w-4 text-gray-400" aria-hidden />
+          Download HTML
+        </button>
+        <button type="button" className={itemClass} disabled={busy} onClick={() => void printPdf()}>
+          <Printer className="h-4 w-4 text-gray-400" aria-hidden />
+          Print / Save as PDF
+        </button>
+        {error ? (
+          <p className="border-t border-gray-100 px-3 py-2 text-xs text-red-600 dark:border-gray-700 dark:text-red-400">
+            {error}
+          </p>
+        ) : null}
+      </div>
+    </details>
   );
 }
 
@@ -965,12 +1123,19 @@ export default function McpEndpointInsight({
             </span>
           </span>
         </div>
-        <VersionSelector
-          versions={versions}
-          value={selectedVersionId}
-          disabled={surfaceLoading}
-          onChange={setSelectedVersionId}
-        />
+        <div className="flex items-center gap-2">
+          <VersionSelector
+            versions={versions}
+            value={selectedVersionId}
+            disabled={surfaceLoading}
+            onChange={setSelectedVersionId}
+          />
+          <ReportExportMenu
+            endpointId={endpointId}
+            versionId={selectedVersionId}
+            disabled={surfaceLoading}
+          />
+        </div>
       </div>
 
       {/* "Changed since last view" digest (MCAT-16.5) — a per-user welcome-back summary at the top of

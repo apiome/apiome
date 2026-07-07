@@ -21,10 +21,11 @@ import logging
 import re
 import time
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import jsonschema
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from psycopg2 import errors as pg_errors
 
 from .auth import get_authenticated_user_id, validate_authentication
@@ -69,6 +70,11 @@ from .mcp_insight_aggregation import (
     rank_embedding_neighbors,
 )
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
+from .mcp_report_card import (
+    build_report_card,
+    render_report_html,
+    render_report_markdown,
+)
 from .mcp_score import score_mcp_surface
 from .mcp_surface_metrics import compute_surface_metrics
 from .models import (
@@ -1877,6 +1883,201 @@ async def get_mcp_endpoint_insight_trust(
         version_id=version_id,
         auth_type=auth_type,
         profile=McpTrustProfileOut.model_validate(profile.as_dict()),
+    )
+
+
+# ---------------------------------------------------------------------------------------------------
+# Server report-card export (V2-MCP-33.1 / MCAT-19.1, #4650).
+#
+# Serializes the single-server Insight assessment — identity (15.1), grade + score breakdown (17.3),
+# capability surface + safety posture (15.3/15.4), documentation coverage (15.5), the composite trust
+# radar (17.4), and the change-since-previous summary — into a self-contained Markdown or HTML
+# document the caller can share outside the app. It reuses the exact metrics the Insight endpoints
+# already compute (:mod:`app.mcp_surface_metrics`, :mod:`app.mcp_insight_aggregation`, the persisted
+# ``mcp_version_scores.report`` and change rows); the pure :mod:`app.mcp_report_card` layer only
+# shapes and renders. Visibility is honoured by the same token-tenant scoping as every other endpoint
+# route (a private endpoint's report is 404 to a non-tenant caller), and no secret ever reaches the
+# report — only the auth *posture* and ``auth_type`` label. "PDF" is the browser's print-to-PDF of
+# the HTML variant, whose embedded ``@media print`` stylesheet makes it a one-page document.
+# ---------------------------------------------------------------------------------------------------
+
+#: MIME type + file extension per supported report format (the query ``format`` selects one).
+_REPORT_FORMATS = {
+    "markdown": ("text/markdown; charset=utf-8", "md"),
+    "md": ("text/markdown; charset=utf-8", "md"),
+    "html": ("text/html; charset=utf-8", "html"),
+}
+
+
+def _report_trust_profile(
+    endpoint_id: str,
+    version: Optional[Dict[str, Any]],
+    surface_metrics_obj: Optional[Any],
+    auth_posture: str,
+) -> Optional[Dict[str, Any]]:
+    """Compute the endpoint's composite trust profile for the reported version (MCAT-17.4).
+
+    Mirrors the ``…/insight/trust`` route's assembly, but keyed on the *reported* snapshot rather
+    than always the current one: quality/safety/documentation read that snapshot's surface, while
+    stability (breaking-change rate across the evolution series) and responsiveness (test-invocation
+    error rate + latency) are endpoint-level. Returns the profile ``as_dict()``, or ``None`` when
+    there is no discovered version to anchor it.
+
+    Args:
+        endpoint_id: The owning endpoint.
+        version: The reported version row, or ``None`` (never discovered → no profile).
+        surface_metrics_obj: The already-computed :class:`SurfaceMetrics` for that version (reused
+            so the surface is reconstructed once), or ``None``.
+        auth_posture: The endpoint's ``anonymous`` / ``authenticated`` posture.
+
+    Returns:
+        The trust-profile dict, or ``None`` when undiscovered.
+    """
+    if version is None or surface_metrics_obj is None:
+        return None
+
+    annotation_coverage = surface_metrics_obj.annotation_coverage.as_dict()
+    documentation_coverage = surface_metrics_obj.documentation_coverage.as_dict()
+    destructive_tool_count = int(annotation_coverage.get("destructive_hint") or 0)
+
+    # Stability: one breaking-change classification per snapshot transition across the series.
+    series = db.get_mcp_evolution_series(endpoint_id)
+    changes_by_version: Dict[str, List[Dict[str, Any]]] = {}
+    for change in db.get_mcp_version_changes_for_endpoint(endpoint_id):
+        changes_by_version.setdefault(str(change["version_id"]), []).append(change)
+    change_severities = [
+        severity_counts(changes_by_version.get(str(row["id"]), [])) for row in series[1:]
+    ]
+
+    invocation = compute_invocation_reliability(db.list_mcp_invocation_stats(endpoint_id))
+
+    profile = compute_trust_profile(
+        quality_score=version.get("score"),
+        quality_grade=version.get("grade"),
+        annotation_coverage=annotation_coverage,
+        documentation_coverage=documentation_coverage,
+        destructive_tool_count=destructive_tool_count,
+        auth_posture=auth_posture,
+        change_severities=change_severities,
+        invocation=invocation.as_dict(),
+    )
+    return profile.as_dict()
+
+
+@mcp_endpoints_router.get("/{tenant_slug}/endpoints/{endpoint_id}/report")
+async def export_mcp_endpoint_report(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    format: str = Query(
+        "markdown",
+        description="Report format: 'markdown' (alias 'md') or 'html'.",
+    ),
+    version_id: Optional[uuid.UUID] = Query(
+        None,
+        description="Which snapshot to report; omit to report the endpoint's current surface.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Response:
+    """Export a self-contained one-page report card for an endpoint version (MCAT-19.1).
+
+    Serializes the same panels the in-app Insight view shows — identity, grade + score breakdown,
+    capability surface, safety posture, documentation coverage, the composite trust radar, and the
+    change-since-previous summary — into a shareable **Markdown** or **HTML** document (the HTML
+    carries a print stylesheet, so "PDF" is the browser's print-to-PDF of the same file). No new
+    metric is computed: the route fetches the values the Insight endpoints already produce and the
+    pure :mod:`app.mcp_report_card` layer renders them.
+
+    Visibility is honoured by the standard token-tenant scoping — a cross-tenant (or private,
+    non-tenant) endpoint id reads as ``404``. A **never-discovered or never-scored** endpoint yields
+    a graceful *partial* report (identity present; the unavailable sections say so) rather than an
+    error. No credential secret ever reaches the report — only the auth posture and ``auth_type``.
+
+    Args:
+        tenant_slug: Informational; scoping comes from the validated token's tenant.
+        endpoint_id: The endpoint to report on.
+        format: ``markdown`` / ``md`` / ``html`` (``400`` on anything else).
+        version_id: The snapshot to report; defaults to the endpoint's current surface.
+        auth_data: The validated caller identity (also what enforces visibility).
+
+    Returns:
+        A ``Response`` carrying the rendered document with the right ``Content-Type`` and an
+        ``attachment`` ``Content-Disposition`` filename.
+    """
+    _ = tenant_slug
+    fmt = (format or "markdown").strip().lower()
+    if fmt not in _REPORT_FORMATS:
+        raise HTTPException(
+            status_code=400,
+            detail="unsupported report format; use 'markdown' or 'html'",
+        )
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+
+    # Resolve the reported snapshot. An explicit version_id that is not this endpoint's is a 404;
+    # an omitted one with no current version simply yields a partial (never-discovered) report.
+    target_version_id = (
+        str(version_id) if version_id is not None else endpoint.get("current_version_id")
+    )
+    version: Optional[Dict[str, Any]] = None
+    if target_version_id:
+        version = db.get_mcp_endpoint_version(str(endpoint_id), str(target_version_id))
+        if version is None:
+            raise HTTPException(status_code=404, detail="MCP endpoint version not found")
+
+    # Surface-derived sections (surface / safety / documentation / trust) — reconstructed once.
+    surface_metrics_obj = None
+    surface_metrics_dict: Optional[Dict[str, Any]] = None
+    if version is not None:
+        items = db.get_mcp_capability_items(str(version["id"]))
+        surface = reconstruct_surface(version, items)
+        surface_metrics_obj = compute_surface_metrics(surface)
+        surface_metrics_dict = surface_metrics_obj.as_dict()
+
+    # Score breakdown — the persisted lint report (None until the snapshot is scored).
+    score_report: Optional[Dict[str, Any]] = None
+    if version is not None:
+        score_row = db.get_mcp_version_score(str(version["id"]))
+        if score_row is not None:
+            score_report = score_row.get("report")
+
+    # Auth posture (never the secret) — anonymous when the endpoint has no stored credential.
+    credential = db.get_mcp_endpoint_credentials(str(endpoint_id))
+    auth_type = credential.get("auth_type") if credential else None
+    auth_posture = mcp_auth_posture(auth_type)
+
+    trust_profile = _report_trust_profile(
+        str(endpoint_id), version, surface_metrics_obj, auth_posture
+    )
+
+    # Change-since-previous — the stored previous → this diff rows and their severity roll-up.
+    change_rows: List[Dict[str, Any]] = (
+        db.get_mcp_version_changes(str(version["id"])) if version is not None else []
+    )
+    change_severity = severity_counts(change_rows) if change_rows else None
+
+    card = build_report_card(
+        endpoint=endpoint,
+        version=version,
+        is_current=bool(version)
+        and str(version["id"]) == str(endpoint.get("current_version_id")),
+        score_report=score_report,
+        surface_metrics=surface_metrics_dict,
+        trust_profile=trust_profile,
+        change_rows=change_rows,
+        change_severity=change_severity,
+        auth_posture=auth_posture,
+        auth_type=auth_type,
+        generated_at=datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+    )
+
+    body = render_report_html(card) if fmt == "html" else render_report_markdown(card)
+    media_type, ext = _REPORT_FORMATS[fmt]
+    slug = endpoint.get("slug") or "endpoint"
+    seq = version.get("version_seq") if version else None
+    filename = f"report-card-{slug}" + (f"-v{seq}" if seq is not None else "") + f".{ext}"
+    return Response(
+        content=body,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 

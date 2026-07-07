@@ -1741,13 +1741,13 @@ change feed, a scheduled digest. Nothing here consumes a server; it reports on o
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
-| 19.1 | Server report-card export | One-page Markdown/HTML/PDF report per endpoint (identity, grade, surface, safety, coverage, trust) | `mcp-insights` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
+| 19.1 ✅ | Server report-card export | One-page Markdown/HTML/PDF report per endpoint (identity, grade, surface, safety, coverage, trust) | `mcp-insights` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
 | 19.2 | Catalog inventory export | CSV/JSON export of endpoints + key metrics for offline analysis | `mcp-insights` `backend` | Y | N | ● | apiome-rest |
 | 19.3 | Embeddable status badges | Shields-style SVG grade/health/version badge for READMEs, served from a public endpoint | `mcp-insights` `backend` | Y | N | ●● | apiome-rest, apiome-browse |
 | 19.4 | Catalog change feed (RSS/Atom/JSON) | Subscribable feed of endpoint/catalog changes | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
 | 19.5 | Scheduled catalog digest reports | Periodic summary of catalog state + changes, delivered via the notification channel | `mcp-insights` `backend` | N | N | ●● | apiome-rest |
 
-### MCAT-19.1 — Server report-card export  ·  **#4650**
+### MCAT-19.1 — Server report-card export  ·  **#4650**  ·  ✅ Done (apiome-rest 1.94.0, apiome-ui 0.84.0)
 - **Problem.** The Insight tab is great in-app, but people need to **share** a server's assessment
   (in a ticket, a review, a wiki) without sending a link behind auth.
 - **Solution / Scope.** Render a self-contained **one-page report** for an endpoint version —
@@ -1760,6 +1760,14 @@ change feed, a scheduled digest. Nothing here consumes a server; it reports on o
   credentials/secrets never appear.
 - **Dependencies / Parallelism.** After 15.x/17.x (the panels it serializes). Parallel with 19.2–19.4.
 - **Technical Stack.** Python (template render), print CSS, headless HTML→PDF; Next.js download button.
+- **Delivered.** `GET /v1/mcp/{tenant}/endpoints/{id}/report?format=markdown|html[&version_id=]`
+  reuses the Insight metrics (surface, trust, persisted lint report, change rows) and renders via the
+  pure `app.mcp_report_card` layer — no new computation, no secret ever emitted (auth *posture* only),
+  and a graceful partial for never-discovered/unscored endpoints. **PDF is the browser's print-to-PDF
+  of the HTML variant** (its embedded `@media print` stylesheet makes it a one-page document), which is
+  exactly the ticket's "PDF via the same HTML (print stylesheet)"; no headless renderer was added to
+  the REST service. The Insight tab's "Export report" menu (Markdown / HTML / Print-Save-as-PDF)
+  proxies it via `/api/mcp/endpoints/{id}/report`.
 
 ### MCAT-19.2 — Catalog inventory export  ·  **#4651**
 - **Problem.** Analysts want the whole catalog as data (a spreadsheet, a notebook), not a UI.
