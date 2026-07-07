@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.85.0] - 2026-07-07
+
+### Added
+- **Breaking-change classification (#4638, V2-MCP-30.3 / MCAT-16.3)** — a pure, deterministic
+  classifier `app.mcp_change_severity.classify_change(change)` that assigns each surface change
+  (an `mcp_version_changes` row, or the equivalent diff-engine dict) one of three severities:
+  - `breaking` — a removed capability, or a modification that adds a required parameter, removes a
+    parameter, narrows an enum, or changes a type (a client aligned to the *before* surface breaks);
+  - `additive` — a new capability, a new optional parameter, a loosened constraint, or a purely
+    descriptive (title/description) edit;
+  - `review` — a real change whose impact is not deterministically decidable (annotation flip,
+    resource URI/`mimeType` move, reshaped schema keyword, protocol/capabilities shift, or a schema
+    that appeared/vanished/arrived in an unexpected shape) — unknown/edge shapes land here rather
+    than being silently called additive.
+  JSON-Schema comparison is delegated to a new shared `app.schema_compatibility.classify_schema_change`
+  helper, so the MCP and OpenAPI surfaces judge "breaking" the same way; prompt `arguments` are judged
+  param-style. A companion `severity_counts(changes)` rolls a collection up.
+- **Severity surfaced on the API** — every `McpVersionChangeOut` (the version-changes and on-demand
+  compare endpoints) now carries a `severity`, and each `insight/evolution` point carries a
+  `severity_counts` (`breaking`/`additive`/`review`/`total`) classifying the churn that snapshot
+  introduced — the breaking-change markers the churn timeline (16.1) and grade/surface trend (16.4)
+  overlay. Computed on read from the persisted change `detail`, so no migration/backfill is needed.
+
 ## [1.84.0] - 2026-07-06
 
 ### Added

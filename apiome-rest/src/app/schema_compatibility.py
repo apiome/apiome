@@ -384,6 +384,32 @@ def _compare_json_schema(
     return findings
 
 
+def classify_schema_change(base: Any, head: Any) -> Category:
+    """Classify a single ``base → head`` JSON-Schema pair as breaking / safe / unknown.
+
+    A convenience wrapper over the internal :func:`_compare_json_schema` walk for callers
+    that hold two already-isolated schemas (e.g. an MCP tool's ``inputSchema`` before and
+    after a version bump) and want one verdict rather than the full finding list. The
+    verdict folds every field-level finding via :func:`_overall`: **breaking** if any
+    change would break a client aligned to ``base`` (a removed / newly-required property, a
+    narrowed enum, a tightened numeric/length constraint, a changed type or ``$ref``);
+    **unknown** if some change needs manual review (a changed pattern, a reshaped
+    composition/conditional keyword) but none is outright breaking; **safe** otherwise
+    (identical, or only additive/loosening edits such as a new optional property).
+
+    The comparison uses the default :class:`CompatibilityRules` and is pure and
+    deterministic — the same pair always yields the same verdict.
+
+    Args:
+        base: The earlier ("before") JSON Schema (any JSON value; typically an object).
+        head: The later ("after") JSON Schema.
+
+    Returns:
+        ``"breaking"``, ``"unknown"``, or ``"safe"``.
+    """
+    return _overall(_compare_json_schema(base, head, "$", CompatibilityRules()))
+
+
 def _compare_operations(
     base_path_item: Dict[str, Any],
     head_path_item: Dict[str, Any],
