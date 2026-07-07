@@ -1587,7 +1587,7 @@ not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 a
 |---|---|---|---|:--:|:--:|---|---|
 | 18.1 ✅ | Catalog analytics dashboard | Category/transport/protocol mix, grade + tool-count distributions across the tenant catalog | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui, apiome-rest |
 | 18.2 ✅ | Side-by-side server comparison | Compare 2–3 endpoints: surface, grade, safety, latency | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui |
-| 18.3 | Peer percentile & category ranking | Rank a server against its category on each axis | `mcp-insights` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-ui |
+| 18.3 ✅ | Peer percentile & category ranking | Rank a server against its category on each axis | `mcp-insights` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-ui |
 | 18.4 | Similar-servers via capability overlap + embeddings | "Servers like this" from tool-name/desc overlap + pgvector (V102) | `mcp-insights` `backend` | Y | N | ●●● | apiome-rest, apiome-db |
 | 18.5 | Natural-language server digest + usage examples | AI-generated "what can this do" summary + per-tool example calls | `mcp-insights` `backend` | Y | N | ●●● | apiome-rest |
 
@@ -1636,7 +1636,7 @@ not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 a
   and a protocol-mismatch banner. Tests: `mcp-server-compare-ui.test.ts` (overlap fixture, metric
   alignment, protocol cross-check) + `mcp-server-comparison-panel.test.tsx` (render).
 
-### MCAT-18.3 — Peer percentile & category ranking  ·  **#4647**
+### MCAT-18.3 — Peer percentile & category ranking  ·  **#4647**  ·  ✅ Done (apiome-rest 1.91.0, apiome-ui 0.83.0)
 - **Problem.** "Is this a good weather server?" needs a peer baseline, not an absolute grade.
 - **Solution / Scope.** Backend computes, per axis (grade, safety, docs, latency), a server's
   **percentile within its category**; UI shows "top 10% for documentation in *finance*"-style badges.
@@ -1644,6 +1644,20 @@ not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 a
   handled; recomputed as the catalog grows.
 - **Dependencies / Parallelism.** After 18.1 aggregates. Backend-first.
 - **Technical Stack.** FastAPI, asyncpg window functions; Next.js badges.
+- **Delivered.** New `GET …/endpoints/{id}/insight/percentile` route on `mcp_endpoints_router`. A
+  single bulk `Database.get_mcp_category_cohort(tenant_id, category)` fetches the whole category cohort
+  (endpoints, current-version surfaces, credentials, invocations) in a fixed handful of queries — so
+  the ranking is recomputed live as the catalog grows, no stored table. The pure, unit-tested
+  `mcp_insight_aggregation` gains `percentile_rank`, `compute_endpoint_percentile_axes` (reusing the
+  17.4 trust-axis derivations, so a rank matches the server's own Insight numbers), and
+  `compute_peer_percentiles`; a blank category forms its own uncategorized cohort, a single-member
+  category makes the sole server the leader, and any unmeasured axis is an explicit gap (a 200, never a
+  500). Wire models `McpPeerAxisPercentileOut` / `McpPeerPercentileOut` / `McpInsightPercentileResponse`.
+  UI: `mcpPeerPercentileUi` parser + `<PeerPercentilePanel>` rendering per-axis "top N%" badges on the
+  endpoint Insight tab's *Reliability & trust* section, plus the `insight/percentile` proxy route.
+  Tests: `test_mcp_insight_aggregation.py` (percentile fixtures + seeded-cohort ranking + single-member),
+  `test_mcp_insight_routes.py` (route wiring, single-member, uncategorized, undiscovered→gaps,
+  cross-tenant 404), `mcp-peer-percentile-ui.test.ts`, and `mcp-peer-percentile-panel.test.tsx`.
 
 ### MCAT-18.4 — Similar-servers via capability overlap + embeddings  ·  **#4648**
 - **Problem.** Discovery is keyword-only; users want "servers like this one".

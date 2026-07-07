@@ -6238,6 +6238,61 @@ class McpInsightTrustResponse(BaseModel):
     profile: McpTrustProfileOut
 
 
+class McpPeerAxisPercentileOut(BaseModel):
+    """One axis of a server's peer ranking within its category (V2-MCP-32.3 / MCAT-18.3).
+
+    ``value`` is the server's own 0-100 axis value; ``percentile`` is the share of the category cohort
+    at or below it (higher = better, ``100`` = category leader); ``rank`` is its position (``1`` = best)
+    of ``cohort_size`` peers measured on this axis; ``top_percent`` is the "top N%" the badge renders.
+    An axis the server does not have measured is a *gap*: ``available`` is false and the ranked fields
+    are ``null``, while ``cohort_size`` still reports how many peers *do* have it.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    key: str
+    label: str
+    value: Optional[float] = None
+    percentile: Optional[float] = None
+    rank: Optional[int] = None
+    top_percent: Optional[int] = None
+    cohort_size: int = 0
+    available: bool = False
+    detail: str = ""
+
+
+class McpPeerPercentileOut(BaseModel):
+    """A server's peer ranking across the four axes within its catalog category (MCAT-18.3).
+
+    ``category`` is the cohort's category (``None`` for the uncategorized cohort); ``cohort_size`` is
+    the total number of live endpoints in the category (including this one). ``axes`` are the four
+    rankings — grade, safety, documentation, latency — some of which may be gaps.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    category: Optional[str] = None
+    cohort_size: int = 0
+    axes: List[McpPeerAxisPercentileOut] = Field(default_factory=list)
+
+
+class McpInsightPercentileResponse(BaseModel):
+    """Response envelope for an endpoint's peer percentile & category ranking (MCAT-18.3).
+
+    Ranks the endpoint against the other live endpoints in its catalog ``category`` on four axes
+    (grade, safety, documentation, latency), so the UI can render "top 10% for documentation"-style
+    badges — a *peer baseline*, not an absolute grade. A single-member category yields a coherent
+    profile (the sole server is the category leader), and any axis the server has not measured is an
+    explicit gap, so an undiscovered or never-tested endpoint returns a ``200``, never a ``500``.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    profile: McpPeerPercentileOut
+
+
 class McpCatalogBucketOut(BaseModel):
     """One labelled slice of a catalog composition breakdown — a bucket and its endpoint count.
 

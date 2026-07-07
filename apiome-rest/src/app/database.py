@@ -11645,6 +11645,133 @@ class Database:
         summary["tool_count_rows"] = self.execute_query(tool_count_q, (tenant_id,))
         return summary
 
+    def get_mcp_category_cohort(
+        self, tenant_id: str, category: Optional[str]
+    ) -> List[Dict[str, Any]]:
+        """Return every live endpoint sharing a category, with the materials to rank its peer axes (18.3).
+
+        The cohort for the peer-percentile ranking: all of the tenant's live (non-deleted) endpoints in
+        the same catalog ``category`` as the endpoint being ranked (including it). A ``NULL`` / blank
+        category forms its own "uncategorized" cohort, so those servers are still ranked against each
+        other rather than against the whole catalog. Everything needed to compute each member's four
+        ranked axes (grade / safety / documentation / latency) is fetched here in a fixed handful of
+        bulk queries — independent of cohort size — so the route can compute the ranking in one pass
+        with no per-member round-trips:
+
+        * ``score`` / ``grade`` from the member's current version's ``mcp_version_scores`` (grade axis);
+        * ``auth_type`` from its stored credential (safety axis cross-reference);
+        * ``version`` + ``items`` — the current snapshot's ``mcp_endpoint_versions`` row and its
+          ``mcp_capability_items`` — to reconstruct the surface for the safety & documentation axes;
+        * ``invocation_stats`` — its ``mcp_test_invocations`` ``(is_error, latency_ms)`` rows for the
+          latency axis.
+
+        A member that was never discovered (no ``current_version_id``) carries ``version=None`` and an
+        empty ``items`` list, so it simply contributes gaps on the surface-derived axes rather than
+        being dropped. Scoping is by ``tenant_id`` directly, so the cohort never leaks across tenants.
+
+        Args:
+            tenant_id: The owning tenant whose catalog the cohort is drawn from.
+            category: The category to match; ``None`` / blank selects the uncategorized cohort.
+
+        Returns:
+            One dict per cohort member with keys ``endpoint_id``, ``current_version_id``, ``score``,
+            ``grade``, ``auth_type``, ``version``, ``items``, and ``invocation_stats``. Empty when the
+            tenant has no live endpoint in the category.
+        """
+        normalized = (category or "").strip()
+        # Members of the cohort. A blank/NULL category selects the uncategorized bucket so those
+        # servers rank against each other, not the whole catalog.
+        base_select = """
+            SELECT e.id AS endpoint_id, e.current_version_id,
+                   s.score, s.grade, cr.auth_type
+            FROM apiome.mcp_endpoints e
+            LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
+            LEFT JOIN apiome.mcp_endpoint_credentials cr ON cr.endpoint_id = e.id
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+        """
+        if normalized:
+            members = self.execute_query(
+                base_select + " AND e.category = %s", (tenant_id, normalized)
+            )
+        else:
+            members = self.execute_query(
+                base_select + " AND (e.category IS NULL OR e.category = '')", (tenant_id,)
+            )
+        if not members:
+            return []
+
+        version_ids = [
+            str(m["current_version_id"]) for m in members if m.get("current_version_id")
+        ]
+        endpoint_ids = [str(m["endpoint_id"]) for m in members]
+
+        # Current-version surface-identity rows (for reconstruct_surface), keyed by version id.
+        versions_by_id: Dict[str, Dict[str, Any]] = {}
+        if version_ids:
+            version_rows = self.execute_query(
+                """
+                SELECT v.id, v.endpoint_id, v.protocol_version, v.server_name, v.server_title,
+                       v.server_version, v.instructions, v.capabilities
+                FROM apiome.mcp_endpoint_versions v
+                WHERE v.id = ANY(%s::uuid[])
+                """,
+                (version_ids,),
+            )
+            versions_by_id = {str(r["id"]): dict(r) for r in version_rows}
+
+        # Capability items for every cohort current version, grouped by version id in discovery order
+        # (matching :meth:`get_mcp_capability_items`).
+        items_by_version: Dict[str, List[Dict[str, Any]]] = {}
+        if version_ids:
+            item_rows = self.execute_query(
+                """
+                SELECT version_id, item_type, name, title, description, input_schema,
+                       output_schema, annotations, uri, uri_template, raw, ordinal
+                FROM apiome.mcp_capability_items
+                WHERE version_id = ANY(%s::uuid[])
+                ORDER BY item_type ASC, ordinal ASC
+                """,
+                (version_ids,),
+            )
+            for row in item_rows:
+                items_by_version.setdefault(str(row["version_id"]), []).append(dict(row))
+
+        # Test-invocation reliability rows for every cohort endpoint, grouped by endpoint id.
+        invocations_by_endpoint: Dict[str, List[Dict[str, Any]]] = {}
+        if endpoint_ids:
+            invocation_rows = self.execute_query(
+                """
+                SELECT endpoint_id, is_error, latency_ms
+                FROM apiome.mcp_test_invocations
+                WHERE endpoint_id = ANY(%s::uuid[])
+                """,
+                (endpoint_ids,),
+            )
+            for row in invocation_rows:
+                invocations_by_endpoint.setdefault(str(row["endpoint_id"]), []).append(
+                    {"is_error": row["is_error"], "latency_ms": row["latency_ms"]}
+                )
+
+        cohort: List[Dict[str, Any]] = []
+        for member in members:
+            endpoint_id = str(member["endpoint_id"])
+            version_id = (
+                str(member["current_version_id"]) if member.get("current_version_id") else None
+            )
+            cohort.append(
+                {
+                    "endpoint_id": endpoint_id,
+                    "current_version_id": version_id,
+                    "score": member.get("score"),
+                    "grade": member.get("grade"),
+                    "auth_type": member.get("auth_type"),
+                    "version": versions_by_id.get(version_id) if version_id else None,
+                    "items": items_by_version.get(version_id, []) if version_id else [],
+                    "invocation_stats": invocations_by_endpoint.get(endpoint_id, []),
+                }
+            )
+        return cohort
+
     def upsert_repository_import_spec(
         self,
         tenant_id: str,

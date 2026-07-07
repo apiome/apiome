@@ -788,3 +788,176 @@ def test_catalog_insight_empty_tenant():
         {"label": "21–50", "count": 0},
         {"label": "50+", "count": 0},
     ]
+
+
+# ===========================================================================
+# percentile (peer percentile & category ranking — MCAT-18.3)
+# ===========================================================================
+
+_EP_B = "44444444-4444-4444-4444-444444444444"
+_EP_C = "55555555-5555-5555-5555-555555555555"
+_VB = "66666666-6666-6666-6666-666666666666"
+_VC = "77777777-7777-7777-7777-777777777777"
+
+_WEATHER_ENDPOINT = dict(_ENDPOINT_ROW, category="weather")
+
+
+def _cohort_member(endpoint_id, version_id, *, score, grade, auth_type, tools, invocations):
+    """A row shaped like one entry of ``get_mcp_category_cohort``.
+
+    ``version`` + ``items`` reconstruct the surface for the safety/documentation axes; ``score`` /
+    ``grade`` drive the grade axis; ``invocation_stats`` drive the latency axis. A ``version_id`` of
+    ``None`` models a never-discovered member (surface-derived axes become gaps).
+    """
+    version = _version_row(version_id, 1) if version_id else None
+    if version is not None:
+        version["id"] = version_id
+    items = [_trust_tool_row(name, ann, ordinal=i) for i, (name, ann) in enumerate(tools)]
+    return {
+        "endpoint_id": endpoint_id,
+        "current_version_id": version_id,
+        "score": score,
+        "grade": grade,
+        "auth_type": auth_type,
+        "version": version,
+        "items": items if version_id else [],
+        "invocation_stats": invocations,
+    }
+
+
+def test_percentile_ranks_target_within_category_cohort():
+    # Three weather servers; the target (_EP) leads on grade (90 vs 75 vs 60).
+    cohort = [
+        _cohort_member(
+            _EP,
+            _V2,
+            score=90,
+            grade="A",
+            auth_type="bearer",
+            tools=[("read", {"readOnlyHint": True}), ("forecast", {"readOnlyHint": True})],
+            invocations=[{"is_error": False, "latency_ms": 120}],
+        ),
+        _cohort_member(
+            _EP_B,
+            _VB,
+            score=60,
+            grade="C",
+            auth_type="none",
+            tools=[("wipe", {"destructiveHint": True})],
+            invocations=[{"is_error": True, "latency_ms": 4000}],
+        ),
+        _cohort_member(
+            _EP_C,
+            _VC,
+            score=75,
+            grade="B",
+            auth_type="bearer",
+            tools=[("lookup", {})],
+            invocations=[{"is_error": False, "latency_ms": 900}],
+        ),
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
+        mdb.get_mcp_category_cohort.return_value = cohort
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/percentile")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["endpoint_id"] == _EP
+    profile = body["profile"]
+    assert profile["category"] == "weather"
+    assert profile["cohort_size"] == 3
+    axes = {a["key"]: a for a in profile["axes"]}
+    assert [a["key"] for a in profile["axes"]] == ["grade", "safety", "documentation", "latency"]
+
+    # grade: target 90 is the cohort max → rank 1, percentile 100, top 34% (ceil(100/3)).
+    grade = axes["grade"]
+    assert grade["available"] is True
+    assert grade["value"] == pytest.approx(90.0)
+    assert grade["rank"] == 1
+    assert grade["percentile"] == 100.0
+    assert grade["top_percent"] == 34
+    assert grade["cohort_size"] == 3
+    assert "top 34%" in grade["detail"]
+
+    # latency: the target (p95 120ms, at the fast floor) is the snappiest → rank 1.
+    assert axes["latency"]["available"] is True
+    assert axes["latency"]["rank"] == 1
+    # the cohort is read once, scoped to the token's tenant + the endpoint's category.
+    mdb.get_mcp_category_cohort.assert_called_once_with("t1", "weather")
+
+
+def test_percentile_single_member_category_is_leader():
+    cohort = [
+        _cohort_member(
+            _EP,
+            _V2,
+            score=73,
+            grade="B",
+            auth_type="bearer",
+            tools=[("read", {"readOnlyHint": True})],
+            invocations=[{"is_error": False, "latency_ms": 300}],
+        ),
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
+        mdb.get_mcp_category_cohort.return_value = cohort
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/percentile")
+    assert r.status_code == 200
+    profile = r.json()["profile"]
+    assert profile["cohort_size"] == 1
+    grade = {a["key"]: a for a in profile["axes"]}["grade"]
+    assert grade["rank"] == 1
+    assert grade["percentile"] == 100.0
+    assert grade["top_percent"] == 100
+    assert "Only server" in grade["detail"]
+
+
+def test_percentile_uncategorized_endpoint_uses_uncategorized_cohort():
+    uncategorized = dict(_ENDPOINT_ROW, category=None)
+    cohort = [
+        _cohort_member(
+            _EP,
+            _V2,
+            score=80,
+            grade="B",
+            auth_type="bearer",
+            tools=[("read", {"readOnlyHint": True})],
+            invocations=[],
+        ),
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = uncategorized
+        mdb.get_mcp_category_cohort.return_value = cohort
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/percentile")
+    assert r.status_code == 200
+    assert r.json()["profile"]["category"] is None
+    mdb.get_mcp_category_cohort.assert_called_once_with("t1", None)
+
+
+def test_percentile_never_discovered_target_is_all_gaps_not_500():
+    # The target has never been discovered or tested → every axis is an explicit gap, but a 200.
+    cohort = [
+        _cohort_member(
+            _EP,
+            None,  # never discovered → no surface, no grade
+            score=None,
+            grade=None,
+            auth_type=None,
+            tools=[],
+            invocations=[],
+        ),
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = dict(_WEATHER_ENDPOINT, current_version_id=None)
+        mdb.get_mcp_category_cohort.return_value = cohort
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/percentile")
+    assert r.status_code == 200
+    profile = r.json()["profile"]
+    assert all(a["available"] is False and a["value"] is None for a in profile["axes"])
+
+
+def test_percentile_cross_tenant_endpoint_is_404():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = None
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/percentile")
+    assert r.status_code == 404

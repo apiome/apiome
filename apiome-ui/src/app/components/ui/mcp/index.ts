@@ -23,6 +23,7 @@ export * from './ChangedSinceDigestPanel';
 export * from './DiscoveryHealthPanel';
 export * from './ToolLatencyPanel';
 export * from './TrustProfilePanel';
+export * from './PeerPercentilePanel';
 export * from './CatalogAnalyticsDashboard';
 export * from './ServerComparisonPanel';
 export * from './FindingSeverity';

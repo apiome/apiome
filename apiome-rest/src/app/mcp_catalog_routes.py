@@ -54,7 +54,9 @@ from .mcp_insight_aggregation import (
     TOOL_LATENCY_WINDOW_DAYS,
     compute_discovery_reliability,
     compute_discovery_timeline,
+    compute_endpoint_percentile_axes,
     compute_invocation_reliability,
+    compute_peer_percentiles,
     compute_tool_reliability,
     compute_trust_profile,
     mcp_auth_posture,
@@ -87,11 +89,13 @@ from .models import (
     McpInsightCatalogResponse,
     McpInsightEvolutionResponse,
     McpInsightGraphResponse,
+    McpInsightPercentileResponse,
     McpInsightReliabilityResponse,
     McpInsightSurfaceResponse,
     McpInsightTrustResponse,
     McpInvocationReliabilityOut,
     McpLintReportResponse,
+    McpPeerPercentileOut,
     McpSearchResponse,
     McpSearchScope,
     McpSearchVisibility,
@@ -1859,6 +1863,109 @@ async def get_mcp_endpoint_insight_trust(
         version_id=version_id,
         auth_type=auth_type,
         profile=McpTrustProfileOut.model_validate(profile.as_dict()),
+    )
+
+
+def _cohort_member_axis_values(member: Dict[str, Any]) -> Dict[str, Optional[float]]:
+    """Compute one cohort member's four ranked axis values (grade / safety / documentation / latency).
+
+    Reuses the exact surface-metric and invocation derivations the trust route uses — the safety and
+    documentation axes read a reconstructed surface's annotation & documentation coverage, and the
+    latency axis reads the test-invocation p95 — then folds them through the pure
+    :func:`compute_endpoint_percentile_axes`. A member with no current version (never discovered)
+    simply yields gaps on the surface-derived axes rather than raising.
+
+    Args:
+        member: One entry from :meth:`Database.get_mcp_category_cohort` (its ``version`` / ``items`` /
+            ``invocation_stats`` / ``score`` / ``grade`` / ``auth_type`` fields).
+
+    Returns:
+        A ``{axis_key: value_or_None}`` map over the four ranked axes for this member.
+    """
+    auth_posture = mcp_auth_posture(member.get("auth_type"))
+    annotation_coverage: Dict[str, Any] = {}
+    documentation_coverage: Dict[str, Any] = {}
+    destructive_tool_count = 0
+    version = member.get("version")
+    if version:
+        surface = reconstruct_surface(version, member.get("items") or [])
+        metrics = compute_surface_metrics(surface)
+        annotation_coverage = metrics.annotation_coverage.as_dict()
+        documentation_coverage = metrics.documentation_coverage.as_dict()
+        destructive_tool_count = sum(
+            1
+            for tool in surface.tools
+            if isinstance(tool.annotations, Mapping)
+            and tool.annotations.get("destructiveHint") is True
+        )
+    invocation = compute_invocation_reliability(member.get("invocation_stats") or [])
+    return compute_endpoint_percentile_axes(
+        score=member.get("score"),
+        grade=member.get("grade"),
+        annotation_coverage=annotation_coverage,
+        documentation_coverage=documentation_coverage,
+        destructive_tool_count=destructive_tool_count,
+        auth_posture=auth_posture,
+        invocation=invocation.as_dict(),
+    )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/insight/percentile",
+    response_model=McpInsightPercentileResponse,
+)
+async def get_mcp_endpoint_insight_percentile(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpInsightPercentileResponse:
+    """Return the endpoint's peer percentile & category ranking across four axes (MCAT-18.3).
+
+    "Is this a good weather server?" needs a *peer baseline*, not an absolute grade. This ranks the
+    endpoint against the other live endpoints in its catalog **category** — the *cohort* — on four
+    axes: **grade** (the stored lint score), **safety** (annotation coverage crossed with the
+    destructive/auth posture), **documentation** (documentation coverage), and **latency** (p95
+    responsiveness). Each axis reuses the same derivation the endpoint's own trust profile shows, so a
+    rank never disagrees with the numbers on its Insight tab, and each carries the server's percentile
+    (share of the cohort at or below it), its rank, and the "top N%" the UI badges render.
+
+    A blank/uncategorized endpoint is ranked within the uncategorized cohort. A **single-member**
+    category is handled — the sole server is trivially the category leader. Any axis the endpoint has
+    not measured (never scored, no tools, never tested) is an explicit *gap*, never a zero, so an
+    undiscovered endpoint yields a coherent all-gap profile (a ``200``, never a ``500``). Scoping comes
+    from the token's tenant, so the cohort never spans another tenant's catalog; returns ``404`` when
+    the endpoint is not the caller's tenant's. A GET stays read-only, recomputed live as the catalog
+    grows.
+    """
+    _ = tenant_slug  # scoping comes from the token, not the URL slug
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+    category = endpoint.get("category")
+    tenant_id = str(auth_data["tenant_id"])
+
+    cohort = db.get_mcp_category_cohort(tenant_id, category)
+
+    # Compute every cohort member's four axis values once, then rank the target within them. The
+    # target is always a member of its own category cohort; the fallback keeps the response coherent
+    # (all gaps) in the unlikely event the cohort read returns without it.
+    axis_values_by_endpoint: Dict[str, Dict[str, Optional[float]]] = {
+        str(member["endpoint_id"]): _cohort_member_axis_values(member) for member in cohort
+    }
+    target_axis_values = axis_values_by_endpoint.get(str(endpoint_id), {})
+    cohort_axis_values: Dict[str, List[float]] = {}
+    for values in axis_values_by_endpoint.values():
+        for key, value in values.items():
+            if value is not None:
+                cohort_axis_values.setdefault(key, []).append(value)
+
+    profile = compute_peer_percentiles(
+        category=category,
+        cohort_size=len(cohort),
+        target_axis_values=target_axis_values,
+        cohort_axis_values=cohort_axis_values,
+    )
+    return McpInsightPercentileResponse(
+        endpoint_id=str(endpoint_id),
+        profile=McpPeerPercentileOut.model_validate(profile.as_dict()),
     )
 
 

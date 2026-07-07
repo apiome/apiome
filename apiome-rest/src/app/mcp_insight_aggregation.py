@@ -1027,3 +1027,226 @@ def compute_tool_count_histogram(
         CatalogCountBucket(label=label, count=counts[index])
         for index, (label, _upper) in enumerate(_TOOL_COUNT_BUCKETS)
     ]
+
+
+# --- Peer percentile & category ranking (V2-MCP-32.3 / MCAT-18.3) -------------------------------
+#
+# "Is this a good weather server?" needs a *peer baseline*, not an absolute grade — a documentation
+# score of 70 means one thing in a category where everyone documents thoroughly and another where no
+# one does. This section ranks one endpoint against the other live endpoints in its **category** on
+# four axes (grade, safety, documentation, latency), so the UI can render "top 10% for documentation"
+# badges.
+#
+# The axis *values* reuse the exact single-server derivations the composite trust profile uses
+# (:func:`_quality_axis`, :func:`_safety_axis`, :func:`_documentation_axis`, :func:`_latency_score`),
+# so a server's rank is computed from the same numbers its own Insight tab shows. The ranking itself
+# is a pure, deterministic percentile over the cohort's values — computed in Python (mirroring the
+# rest of this module) so it is unit-testable against a hand-seeded cohort without a live database.
+#
+# Two hard rules (the ticket's acceptance criteria): a **single-member** category is handled (the sole
+# server is trivially the category leader, ``percentile=100``), and an axis a server does not have
+# measured (never scored, no tools, never tested) is an explicit *gap* (``value=None``), never ranked.
+
+#: The four ranked axes, in display order, as ``(key, label)``. ``grade`` is the stored lint score,
+#: ``latency`` is the p95-latency component of responsiveness (fast → high). Each maps to a value the
+#: trust axes already derive, so a rank never disagrees with the server's own Insight numbers.
+_PEER_AXES: Tuple[Tuple[str, str], ...] = (
+    ("grade", "Grade"),
+    ("safety", "Safety"),
+    ("documentation", "Documentation"),
+    ("latency", "Latency"),
+)
+
+
+def percentile_rank(values: Sequence[float], target: float) -> Optional[float]:
+    """The percentile rank of ``target`` within ``values`` — the share at or below it, as 0-100.
+
+    Defined as ``100 * (count of values <= target) / n`` over the cohort ``values`` (which must
+    *include* the target's own value), rounded to one decimal. Higher is better: the category leader
+    scores ``100`` (every peer is at or below it), and a lone member scores ``100`` (it is trivially
+    the top of its one-member cohort — the single-member acceptance case). Ties count toward the
+    rank, so equally-good servers share the same percentile.
+
+    Args:
+        values: The cohort's axis values, *including* the target's own; must be non-empty.
+        target: The target server's value on this axis.
+
+    Returns:
+        The percentile in ``[0, 100]``, or ``None`` when ``values`` is empty.
+    """
+    if not values:
+        return None
+    at_or_below = sum(1 for v in values if float(v) <= target)
+    return round(100.0 * at_or_below / len(values), 1)
+
+
+def compute_endpoint_percentile_axes(
+    *,
+    score: Optional[float],
+    grade: Optional[str],
+    annotation_coverage: Mapping[str, Any],
+    documentation_coverage: Mapping[str, Any],
+    destructive_tool_count: int,
+    auth_posture: str,
+    invocation: Mapping[str, Any],
+) -> Dict[str, Optional[float]]:
+    """Compute one endpoint's four ranked axis values (``grade`` / ``safety`` / ``documentation`` /
+    ``latency``), reusing the trust-profile axis derivations.
+
+    Each value is the same 0-100 number the corresponding trust axis carries, or ``None`` when the
+    input is missing (never scored → no grade, no tools → no safety, no capabilities → no docs, never
+    tested → no latency). ``latency`` is the p95-latency component alone (fast → 100), so the axis
+    ranks *speed* specifically, as the ticket names it.
+
+    Args:
+        score: The current snapshot's stored 0-100 lint score, or ``None``.
+        grade: The score's A-F letter (unused in the value, kept for signature parity), or ``None``.
+        annotation_coverage: An ``AnnotationCoverage.as_dict()`` (``{}`` when there is no surface).
+        documentation_coverage: A ``DocumentationCoverage.as_dict()`` (``{}`` when none).
+        destructive_tool_count: How many tools assert ``destructiveHint: true``.
+        auth_posture: ``"anonymous"`` or ``"authenticated"`` (see :func:`mcp_auth_posture`).
+        invocation: An ``InvocationReliability.as_dict()`` (needs ``latency.p95_ms``).
+
+    Returns:
+        A ``{axis_key: value_or_None}`` map over the four :data:`_PEER_AXES` keys.
+    """
+    latency = invocation.get("latency") or {}
+    p95 = latency.get("p95_ms")
+    return {
+        "grade": _quality_axis(score, grade).value,
+        "safety": _safety_axis(annotation_coverage, destructive_tool_count, auth_posture).value,
+        "documentation": _documentation_axis(documentation_coverage).value,
+        "latency": _latency_score(float(p95)) if p95 is not None else None,
+    }
+
+
+@dataclass(frozen=True)
+class PeerAxisPercentile:
+    """One axis of a server's peer ranking within its category.
+
+    ``value`` is the server's own 0-100 axis value; ``percentile`` is its :func:`percentile_rank`
+    within the cohort (higher = better); ``rank`` is its ordinal position (``1`` = best); ``top_percent``
+    is the "top N%" the badge renders (``ceil(100 * rank / cohort_size)``); ``cohort_size`` is how many
+    servers in the category have this axis measured (so a rank reads "3 of 8"). An axis the server does
+    not have measured is a *gap*: ``available`` is false, ``value`` / ``percentile`` / ``rank`` /
+    ``top_percent`` are ``None``, and ``cohort_size`` counts the peers that *do* have it.
+    """
+
+    key: str
+    label: str
+    value: Optional[float]
+    percentile: Optional[float]
+    rank: Optional[int]
+    top_percent: Optional[int]
+    cohort_size: int
+    available: bool
+    detail: str
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "key": self.key,
+            "label": self.label,
+            "value": self.value,
+            "percentile": self.percentile,
+            "rank": self.rank,
+            "top_percent": self.top_percent,
+            "cohort_size": self.cohort_size,
+            "available": self.available,
+            "detail": self.detail,
+        }
+
+
+@dataclass(frozen=True)
+class PeerPercentileProfile:
+    """A server's peer ranking across the four axes within its catalog category.
+
+    ``category`` is the cohort's category (``None`` for the uncategorized cohort); ``cohort_size`` is
+    the total number of live endpoints in the category (including this one), independent of how many
+    have any given axis measured. ``axes`` are the four rankings in :data:`_PEER_AXES` order, some of
+    which may be gaps.
+    """
+
+    category: Optional[str]
+    cohort_size: int
+    axes: List[PeerAxisPercentile]
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "category": self.category,
+            "cohort_size": self.cohort_size,
+            "axes": [axis.as_dict() for axis in self.axes],
+        }
+
+
+def _peer_axis_detail(*, label: str, rank: int, cohort_size: int, top_percent: int) -> str:
+    """The one-line basis a ranked axis shows (e.g. "Rank 2 of 8 · top 25%")."""
+    if cohort_size <= 1:
+        return f"Only server with a {label.lower()} score in this category"
+    return f"Rank {rank} of {cohort_size} · top {top_percent}%"
+
+
+def compute_peer_percentiles(
+    *,
+    category: Optional[str],
+    cohort_size: int,
+    target_axis_values: Mapping[str, Optional[float]],
+    cohort_axis_values: Mapping[str, Sequence[float]],
+) -> PeerPercentileProfile:
+    """Rank one server against its category cohort on each of the four :data:`_PEER_AXES`.
+
+    For every axis, the server's percentile is its :func:`percentile_rank` within the cohort's values
+    on that axis (which must include the server's own). ``rank`` counts how many peers score strictly
+    higher, plus one (so ties share a rank and ``1`` is best); ``top_percent`` is
+    ``ceil(100 * rank / n)`` — the "top N%" badge. An axis with no target value, or an empty cohort on
+    that axis, is an explicit gap. Pure and deterministic: identical cohorts yield identical output.
+
+    Args:
+        category: The cohort's category (``None`` / blank for the uncategorized cohort).
+        cohort_size: Total live endpoints in the category, including the target.
+        target_axis_values: The target server's ``{axis_key: value_or_None}`` map.
+        cohort_axis_values: Per axis, the list of *all* cohort members' non-``None`` values on that
+            axis (including the target's). Missing/short lists simply yield gaps.
+
+    Returns:
+        The :class:`PeerPercentileProfile` — four rankings (some possibly gaps) within the category.
+    """
+    axes: List[PeerAxisPercentile] = []
+    for key, label in _PEER_AXES:
+        target = target_axis_values.get(key)
+        values = [float(v) for v in cohort_axis_values.get(key, []) if v is not None]
+        if target is None or not values:
+            axes.append(
+                PeerAxisPercentile(
+                    key=key,
+                    label=label,
+                    value=None,
+                    percentile=None,
+                    rank=None,
+                    top_percent=None,
+                    cohort_size=len(values),
+                    available=False,
+                    detail="Not measured",
+                )
+            )
+            continue
+        target_value = float(target)
+        percentile = percentile_rank(values, target_value)
+        rank = 1 + sum(1 for v in values if v > target_value)
+        axis_cohort = len(values)
+        top_percent = math.ceil(100.0 * rank / axis_cohort)
+        axes.append(
+            PeerAxisPercentile(
+                key=key,
+                label=label,
+                value=round(target_value, 1),
+                percentile=percentile,
+                rank=rank,
+                top_percent=top_percent,
+                cohort_size=axis_cohort,
+                available=True,
+                detail=_peer_axis_detail(
+                    label=label, rank=rank, cohort_size=axis_cohort, top_percent=top_percent
+                ),
+            )
+        )
+    return PeerPercentileProfile(category=category, cohort_size=cohort_size, axes=axes)
