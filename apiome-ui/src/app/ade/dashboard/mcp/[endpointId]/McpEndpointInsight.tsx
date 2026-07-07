@@ -5,7 +5,9 @@ import {
   Activity,
   BarChart3,
   BookOpen,
+  GitCompareArrows,
   Layers,
+  LayoutGrid,
   ListTree,
   Loader2,
   Share2,
@@ -22,11 +24,13 @@ import { ToolComplexityPanel } from "@/app/components/ui/mcp/ToolComplexityPanel
 import { SafetyPosturePanel } from "@/app/components/ui/mcp/SafetyPosturePanel";
 import { DocCoveragePanel } from "@/app/components/ui/mcp/DocCoveragePanel";
 import { CapabilityChurnPanel } from "@/app/components/ui/mcp/CapabilityChurnPanel";
+import { CapabilityPresenceMatrixPanel } from "@/app/components/ui/mcp/CapabilityPresenceMatrixPanel";
 import { dashboardPanelPaddedClass } from "@/app/components/ade/dashboard/dashboardScreenClasses";
 import {
   mcpVersionDetailFromPayload,
   type McpCapabilityItem,
   type McpEndpointDetail,
+  type McpVersionDetail,
 } from "@/app/components/ade/dashboard/mcp/mcpBrowseUi";
 import {
   mcpVersionDateTag,
@@ -118,8 +122,9 @@ const INSIGHT_SECTIONS: InsightSectionDef[] = [
     title: "Surface evolution",
     subtitle: "How the server has changed across discovery snapshots.",
     icon: Activity,
-    // "Capability churn timeline" (MCAT-16.1) now lands as a live panel in this section's body; the
-    // "Grade & surface-size trend" (MCAT-16.4) slot remains reserved for its downstream ticket.
+    // "Capability churn timeline" (MCAT-16.1) and "Capability lifespan / presence matrix" (MCAT-16.2)
+    // now land as live panels in this section's body; the "Grade & surface-size trend" (MCAT-16.4)
+    // slot remains reserved for its downstream ticket.
     reserved: [
       { key: "trend", title: "Grade & surface-size trend", hint: "Quality and capability counts over time." },
     ],
@@ -348,6 +353,14 @@ export default function McpEndpointInsight({
   const [evolution, setEvolution] = useState<McpEvolutionPoint[] | null>(null);
   const [evolutionLoading, setEvolutionLoading] = useState(true);
   const [evolutionError, setEvolutionError] = useState<string | null>(null);
+  /**
+   * Every snapshot's full surface (endpoint-level, loaded once after the version list), for the
+   * presence matrix — it reconstructs each capability's lifespan from the per-version capability
+   * items, which only the version-detail read carries.
+   */
+  const [matrixVersions, setMatrixVersions] = useState<McpVersionDetail[] | null>(null);
+  const [matrixLoading, setMatrixLoading] = useState(true);
+  const [matrixError, setMatrixError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -573,6 +586,59 @@ export default function McpEndpointInsight({
     };
   }, [endpointId]);
 
+  // Fetch every snapshot's full surface once the version list is known — the presence matrix
+  // reconstructs each capability's lifespan from the per-version capability items, which the list
+  // summary omits. The reads run in parallel; a snapshot whose detail fails to load is dropped so the
+  // matrix still renders from the snapshots that did load rather than blanking on a single failure.
+  useEffect(() => {
+    if (versionsLoading) return;
+    if (versions.length === 0) {
+      setMatrixVersions([]);
+      setMatrixLoading(false);
+      setMatrixError(null);
+      return;
+    }
+    let active = true;
+    setMatrixLoading(true);
+    setMatrixError(null);
+    (async () => {
+      try {
+        const results = await Promise.all(
+          versions.map(async (v) => {
+            try {
+              const res = await fetch(
+                `/api/mcp/endpoints/${endpointId}/versions/${encodeURIComponent(v.id)}`,
+                { credentials: "include", cache: "no-store" },
+              );
+              if (!res.ok) return null;
+              const data = await res.json().catch(() => ({}));
+              return mcpVersionDetailFromPayload(data);
+            } catch {
+              return null;
+            }
+          }),
+        );
+        if (!active) return;
+        const details = results.filter((d): d is McpVersionDetail => d !== null);
+        if (details.length === 0) {
+          setMatrixVersions(null);
+          setMatrixError("Could not load any version snapshots for the presence matrix.");
+        } else {
+          setMatrixVersions(details);
+        }
+      } catch (e) {
+        if (!active) return;
+        setMatrixVersions(null);
+        setMatrixError(e instanceof Error ? e.message : "Could not load presence matrix.");
+      } finally {
+        if (active) setMatrixLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [endpointId, versions, versionsLoading]);
+
   const selectedVersion = useMemo(
     () => versions.find((v) => v.id === selectedVersionId) ?? null,
     [versions, selectedVersionId],
@@ -721,16 +787,49 @@ export default function McpEndpointInsight({
             </div>
           );
         } else if (section.key === "evolution") {
-          // Capability churn timeline (MCAT-16.1) — the stacked added/removed/modified-per-version
-          // chart. Each column deep-links to that snapshot's diff via the detail page's handler.
           body = (
-            <div className={dashboardPanelPaddedClass}>
-              <CapabilityChurnPanel
-                series={evolution}
-                loading={evolutionLoading}
-                error={evolutionError}
-                onSelectVersion={(versionId) => onOpenVersionDiff?.(versionId)}
-              />
+            <div className="space-y-4">
+              {/* Capability churn timeline (MCAT-16.1) — the stacked added/removed/modified-per-version
+                  chart. Each column deep-links to that snapshot's diff via the detail page's handler. */}
+              <div className={dashboardPanelPaddedClass}>
+                <div className="mb-3">
+                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+                    <GitCompareArrows className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+                    Capability churn timeline
+                  </h4>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    How much the surface changed per snapshot — added, removed, and modified
+                    capabilities over time, each column linking to that release&apos;s diff.
+                  </p>
+                </div>
+                <CapabilityChurnPanel
+                  series={evolution}
+                  loading={evolutionLoading}
+                  error={evolutionError}
+                  onSelectVersion={(versionId) => onOpenVersionDiff?.(versionId)}
+                />
+              </div>
+              {/* Capability lifespan / presence matrix (MCAT-16.2) — the per-capability "gantt of the
+                  surface": which tools/resources existed in which snapshot, and whether they are
+                  stable, new, volatile, or removed. Columns deep-link to the diff like the churn chart. */}
+              <div className={dashboardPanelPaddedClass}>
+                <div className="mb-3">
+                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+                    <LayoutGrid className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+                    Capability lifespan &amp; presence
+                  </h4>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    When each capability existed across snapshots — a presence matrix revealing
+                    volatile vs long-lived tools, resources, and prompts.
+                  </p>
+                </div>
+                <CapabilityPresenceMatrixPanel
+                  versions={matrixVersions}
+                  loading={matrixLoading}
+                  error={matrixError}
+                  onSelectVersion={(versionId) => onOpenVersionDiff?.(versionId)}
+                />
+              </div>
             </div>
           );
         }
