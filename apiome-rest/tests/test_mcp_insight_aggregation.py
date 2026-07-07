@@ -14,13 +14,14 @@ from app.mcp_insight_aggregation import (
     RESPONSIVENESS_LATENCY_FLOOR_MS,
     TOOL_LATENCY_WINDOW_DAYS,
     build_capability_embedding_text,
+    build_tool_examples,
     capability_name_set,
     compute_capability_overlap,
     compute_discovery_reliability,
     compute_discovery_timeline,
+    compute_endpoint_percentile_axes,
     compute_invocation_reliability,
     compute_latency_stats,
-    compute_endpoint_percentile_axes,
     compute_peer_percentiles,
     compute_tool_count_histogram,
     compute_tool_reliability,
@@ -32,6 +33,7 @@ from app.mcp_insight_aggregation import (
     percentile_cont,
     percentile_rank,
     rank_embedding_neighbors,
+    synthesize_example_value,
 )
 
 # ---------------------------------------------------------------------------
@@ -1032,3 +1034,112 @@ def test_build_capability_embedding_text_drops_blank_names_and_dedupes():
 def test_build_capability_embedding_text_empty_when_no_named_capabilities():
     assert build_capability_embedding_text([]) == ""
     assert build_capability_embedding_text([("", ""), (None, "x")]) == ""
+
+
+# ---------------------------------------------------------------------------
+# Schema-driven example synthesis (V2-MCP-32.5 / MCAT-18.5)
+# ---------------------------------------------------------------------------
+
+
+def test_synthesize_example_object_orders_required_then_declared():
+    schema = {
+        "type": "object",
+        "properties": {
+            "units": {"type": "string", "enum": ["c", "f"]},
+            "city": {"type": "string"},
+            "days": {"type": "integer"},
+        },
+        "required": ["city"],
+    }
+    value = synthesize_example_value(schema)
+    # required field first, then remaining properties in declaration order
+    assert list(value.keys()) == ["city", "units", "days"]
+    assert value["city"] == "example"
+    assert value["units"] == "c"  # enum's first member
+    assert value["days"] == 1
+
+
+def test_synthesize_example_prefers_const_examples_and_default():
+    assert synthesize_example_value({"const": 42}) == 42
+    assert synthesize_example_value({"type": "string", "examples": ["hi"]}) == "hi"
+    assert synthesize_example_value({"type": "integer", "default": 7}) == 7
+
+
+def test_synthesize_example_scalars_and_formats():
+    assert synthesize_example_value({"type": "boolean"}) is True
+    assert synthesize_example_value({"type": "number"}) == 1.0
+    assert synthesize_example_value({"type": "null"}) is None
+    assert synthesize_example_value({"type": "string", "format": "date"}) == "2026-01-01"
+    assert synthesize_example_value({"type": "string", "format": "email"}) == "user@example.com"
+    # unknown format falls back to the generic placeholder
+    assert synthesize_example_value({"type": "string", "format": "color"}) == "example"
+
+
+def test_synthesize_example_arrays_and_union_types():
+    assert synthesize_example_value({"type": "array", "items": {"type": "integer"}}) == [1]
+    assert synthesize_example_value({"type": "array"}) == []
+    # a ["string", "null"] union uses the first non-null member
+    assert synthesize_example_value({"type": ["string", "null"]}) == "example"
+
+
+def test_synthesize_example_nested_object_and_anyof():
+    schema = {
+        "type": "object",
+        "properties": {
+            "filter": {"anyOf": [{"type": "object", "properties": {"q": {"type": "string"}}}]},
+        },
+    }
+    value = synthesize_example_value(schema)
+    assert value == {"filter": {"q": "example"}}
+
+
+def test_synthesize_example_non_mapping_is_placeholder():
+    assert synthesize_example_value(None) == "example"
+    assert synthesize_example_value("nope") == "example"
+
+
+def test_synthesize_example_depth_is_bounded():
+    # A self-referential-ish deeply nested schema must terminate rather than recurse forever.
+    schema = {"type": "object", "properties": {"self": {}}}
+    node = schema
+    for _ in range(20):
+        node = node["properties"]["self"]
+        node["type"] = "object"
+        node["properties"] = {"self": {}}
+    # Does not raise; produces a bounded structure.
+    assert isinstance(synthesize_example_value(schema), dict)
+
+
+def _cap_item(item_type, name, *, input_schema=None, description="d", title=None, ordinal=0):
+    return {
+        "item_type": item_type,
+        "name": name,
+        "title": title,
+        "description": description,
+        "input_schema": input_schema,
+        "ordinal": ordinal,
+    }
+
+
+def test_build_tool_examples_filters_to_named_tools_in_order():
+    items = [
+        _cap_item("tool", "forecast", input_schema={
+            "type": "object",
+            "properties": {"city": {"type": "string"}},
+            "required": ["city"],
+        }, ordinal=0),
+        _cap_item("resource", "doc", ordinal=1),  # not a tool → excluded
+        _cap_item("prompt", "greet", ordinal=2),  # not a tool → excluded
+        _cap_item("tool", "current", input_schema=None, ordinal=3),  # no schema → {} args
+        _cap_item("tool", "", ordinal=4),  # unnamed → skipped
+    ]
+    examples = build_tool_examples(items)
+    assert [e.name for e in examples] == ["forecast", "current"]
+    assert examples[0].arguments == {"city": "example"}
+    assert examples[1].arguments == {}  # a legitimate no-argument example
+    assert examples[0].as_dict()["description"] == "d"
+
+
+def test_build_tool_examples_empty_surface():
+    assert build_tool_examples([]) == []
+    assert build_tool_examples([_cap_item("resource", "r")]) == []

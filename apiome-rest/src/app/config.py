@@ -88,6 +88,41 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Natural-language server digest + usage examples (MCAT-18.5, #4649). An opt-in, gated AI step that
+    # writes a short "this server lets you …" summary of a cataloged MCP server via the Claude API and
+    # caches it per surface_fingerprint. OFF by default: when disabled (or when no API key is set), the
+    # generate route no-ops with a labelled reason and never calls the model, and the read route simply
+    # returns whatever is already cached (usually nothing). The per-tool example calls are synthesized
+    # deterministically from each tool's input_schema and never require the model or tool execution, so
+    # they are unaffected by this flag. See app.mcp_digest_service.
+    mcp_ai_digest_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_AI_DIGEST_ENABLED",
+            "mcp_ai_digest_enabled",
+        ),
+    )
+    # Claude API key used only for the server-digest generation above. Read from the environment; never
+    # logged. When unset the feature stays a no-op even if the flag is on.
+    anthropic_api_key: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_ANTHROPIC_API_KEY",
+            "ANTHROPIC_API_KEY",
+            "anthropic_api_key",
+        ),
+    )
+    # Which Claude model produces the digest. Defaults to the latest cost-effective summarization model;
+    # override to trade cost for capability. Recorded alongside each cached digest so a model change is
+    # visible in the stored provenance.
+    mcp_ai_digest_model: str = Field(
+        default="claude-sonnet-5",
+        validation_alias=AliasChoices(
+            "APIOME_MCP_AI_DIGEST_MODEL",
+            "mcp_ai_digest_model",
+        ),
+    )
+
     # Pre-commit policy default when project metadata omits maxCommitPayloadBytes (#2565)
     commit_policy_max_payload_bytes_default: int = 5_242_880
 
