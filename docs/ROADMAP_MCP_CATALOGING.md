@@ -1744,7 +1744,7 @@ change feed, a scheduled digest. Nothing here consumes a server; it reports on o
 | 19.1 ✅ | Server report-card export | One-page Markdown/HTML/PDF report per endpoint (identity, grade, surface, safety, coverage, trust) | `mcp-insights` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
 | 19.2 ✅ | Catalog inventory export | CSV/JSON export of endpoints + key metrics for offline analysis | `mcp-insights` `backend` | Y | N | ● | apiome-rest |
 | 19.3 ✅ | Embeddable status badges | Shields-style SVG grade/health/version badge for READMEs, served from a public endpoint | `mcp-insights` `backend` | Y | N | ●● | apiome-rest, apiome-browse |
-| 19.4 | Catalog change feed (RSS/Atom/JSON) | Subscribable feed of endpoint/catalog changes | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
+| 19.4 ✅ | Catalog change feed (RSS/Atom/JSON) | Subscribable feed of endpoint/catalog changes | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
 | 19.5 | Scheduled catalog digest reports | Periodic summary of catalog state + changes, delivered via the notification channel | `mcp-insights` `backend` | N | N | ●● | apiome-rest |
 
 ### MCAT-19.1 — Server report-card export  ·  **#4650**  ·  ✅ Done (apiome-rest 1.94.0, apiome-ui 0.84.0)
@@ -1815,7 +1815,7 @@ change feed, a scheduled digest. Nothing here consumes a server; it reports on o
   live preview and copyable Markdown / HTML / URL snippets (metric + theme selectable); the pure URL
   and snippet builders live in `lib/mcp/badge.ts`.
 
-### MCAT-19.4 — Catalog change feed (RSS/Atom/JSON)  ·  **#4653**
+### MCAT-19.4 — Catalog change feed (RSS/Atom/JSON)  ·  **#4653**  ·  ✅ Done (apiome-rest 1.97.0)
 - **Problem.** People tracking a server (or a whole catalog) want to be **told what changed** without
   polling the UI; the data (`mcp_version_changes`) exists but isn't subscribable.
 - **Solution / Scope.** A feed per endpoint and per (published) catalog emitting new-version /
@@ -1825,6 +1825,21 @@ change feed, a scheduled digest. Nothing here consumes a server; it reports on o
   endpoints excluded from public feeds; breaking-change entries flagged.
 - **Dependencies / Parallelism.** After 16.3 (severity). Parallel across Epic-19. Complements Epic-13.
 - **Technical Stack.** FastAPI, feedgen; reuse Epic-13 change events if built.
+- **Delivered.** Two anonymous routes — `GET /mcp/feed/{tenant}/{slug}` (one endpoint) and
+  `GET /mcp/feed/{tenant}` (the whole published catalog) — each taking `?format=rss|atom|json`
+  (default `rss`; unknown → `400`) and emitting added / removed / modified change entries newest
+  snapshot first, as a read-only projection over `mcp_endpoint_versions` + `mcp_version_changes`.
+  Each entry's severity comes from the same `app.mcp_change_severity.classify_change` (MCAT-16.3) the
+  rest of the product uses, and a **breaking** change is flagged with both a `breaking` category/tag
+  and a `[breaking]` title suffix. The endpoint feed resolves its subject through the same public
+  gate the `mcp_v_public_endpoints` view enforces (`Database.get_public_mcp_endpoint_feed_head`), and
+  an unpublished / private / unknown target renders an identical **empty** feed with a `200` (never a
+  `404`, never a credential read) — so a private endpoint's changes are never disclosed; the catalog
+  feed (`Database.get_public_catalog_changes`) enforces the same predicate in SQL. Rendering is a
+  pure, database-free layer (`app.mcp_change_feed`) — deterministic, XML built with `ElementTree`
+  (escaping hostile server-reported names), validated as `rss20` / `atom10` (feedparser `bozo=0`).
+  Caching: a content-addressed `ETag` (hash of the rendered feed) and `public, max-age=300`
+  `Cache-Control`, with `If-None-Match` → `304`.
 
 ### MCAT-19.5 — Scheduled catalog digest reports  ·  **#4654**
 - **Problem.** Operators want a recurring "here's your catalog this week" without opening the app.

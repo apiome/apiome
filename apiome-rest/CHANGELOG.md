@@ -5,6 +5,33 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.97.0] - 2026-07-07
+
+### Added
+- **Catalog change feed (#4653, V2-MCP-33.4 / MCAT-19.4)** — subscribable **RSS / Atom / JSON Feed**
+  so people tracking a server (or a whole published catalog) are *told* what changed without polling
+  the UI. A read-only projection over `mcp_endpoint_versions` + `mcp_version_changes`.
+  - Two new **anonymous** routes: `GET /mcp/feed/{tenant}/{slug}?format=rss|atom|json` (one endpoint's
+    change history) and `GET /mcp/feed/{tenant}?format=…` (the whole published catalog's history).
+    `format` defaults to `rss`; an unrecognized value is a `400`. Entries emit added / removed /
+    modified changes, newest snapshot first.
+  - **Breaking changes are flagged.** Each entry's severity comes from the same
+    `app.mcp_change_severity.classify_change` the churn timeline and evolution series use; a breaking
+    change carries a `breaking` category/tag *and* a `[breaking]` title suffix, so even a title-only
+    reader surfaces it.
+  - **Private endpoints excluded; never a data leak.** The endpoint feed resolves its subject through
+    the same public gate the `mcp_v_public_endpoints` view enforces (`Database.get_public_mcp_endpoint_feed_head`:
+    tenant live, endpoint not deleted, enabled, published, public-visible); an unpublished / private /
+    unknown target renders an identical **empty** feed with a `200` — never a `404` — so existence is
+    never disclosed and a private endpoint's changes never appear. The catalog feed
+    (`Database.get_public_catalog_changes`) enforces the same predicate in SQL. No credential (the raw
+    `endpoint_url`) is ever read.
+  - **Cacheable.** A content-addressed `ETag` (a hash of the rendered feed) and a `public, max-age=300`
+    `Cache-Control`; a matching `If-None-Match` yields `304 Not Modified`, so a polling reader pays
+    almost nothing until the catalog moves.
+  - Rendering is a pure, database-free layer (`app.mcp_change_feed`): deterministic, XML built with
+    `ElementTree` (escaping hostile server-reported names), and validated as `rss20` / `atom10`.
+
 ## [1.96.0] - 2026-07-07
 
 ### Added

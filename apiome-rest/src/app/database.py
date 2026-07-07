@@ -10125,6 +10125,144 @@ class Database:
         rows = self.execute_query(q, (tenant_slug, endpoint_slug))
         return dict(rows[0]) if rows else None
 
+    #: The shared public gate for the catalog change feed (MCAT-19.4): the owning tenant is live and
+    #: the endpoint is not deleted, is enabled, is published, and is public-visible — identical to the
+    #: predicate the ``mcp_v_public_endpoints`` view (V134) and the status badge enforce. Feed queries
+    #: splice this in so a private, unpublished, disabled, or unknown endpoint is invisible to public
+    #: feeds (an acceptance criterion), exactly as it is to public browse.
+    _MCP_PUBLIC_ENDPOINT_PREDICATE = (
+        "t.deleted_at IS NULL "
+        "AND e.deleted_at IS NULL "
+        "AND e.enabled IS TRUE "
+        "AND e.published IS TRUE "
+        "AND e.visibility = 'public'::apiome.visibility_type"
+    )
+
+    #: Stable per-snapshot item ordering shared by the change-history reads (server metadata first,
+    #: then tools, resources, resource templates, prompts, each by name), matching the compare
+    #: engine's emission order so a feed lists a snapshot's changes deterministically.
+    _MCP_CHANGE_ITEM_ORDER = (
+        "CASE c.item_type "
+        "WHEN 'server' THEN 0 "
+        "WHEN 'tool' THEN 1 "
+        "WHEN 'resource' THEN 2 "
+        "WHEN 'resource_template' THEN 3 "
+        "WHEN 'prompt' THEN 4 "
+        "ELSE 5 END ASC, c.item_name ASC"
+    )
+
+    def get_public_mcp_endpoint_feed_head(
+        self, tenant_slug: str, endpoint_slug: str
+    ) -> Optional[Dict[str, Any]]:
+        """Resolve a single **published, public** endpoint by slugs for its change feed (MCAT-19.4).
+
+        The public gate behind the anonymous ``GET /mcp/feed/{tenant}/{slug}`` route (#4653): it
+        returns just the endpoint's public identity (id / name / slug / description) when the target
+        passes the same predicate the ``mcp_v_public_endpoints`` view enforces, and ``None`` for a
+        private, unpublished, disabled, or unknown target — so those are indistinguishable and the
+        feed route renders an identical empty feed for all of them, disclosing nothing (a private
+        endpoint is excluded from public feeds, an acceptance criterion). No credential (the raw
+        ``endpoint_url``) is selected. The change rows themselves are fetched separately by
+        :meth:`get_public_mcp_endpoint_changes`, keyed on the ``id`` returned here.
+
+        Args:
+            tenant_slug: The owning tenant's URL slug.
+            endpoint_slug: The endpoint's tenant-unique catalog slug.
+
+        Returns:
+            ``{id, name, slug, description}`` for a resolvable public endpoint, else ``None``.
+        """
+        q = f"""
+            SELECT e.id, e.name, e.slug, e.description
+            FROM apiome.mcp_endpoints e
+            JOIN apiome.tenants t ON t.id = e.tenant_id
+            WHERE t.slug = %s
+              AND e.slug = %s
+              AND {self._MCP_PUBLIC_ENDPOINT_PREDICATE}
+            LIMIT 1
+        """
+        rows = self.execute_query(q, (tenant_slug, endpoint_slug))
+        return dict(rows[0]) if rows else None
+
+    def get_public_mcp_endpoint_changes(
+        self, endpoint_id: str, *, limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """Fetch a public endpoint's recent change history for its feed, newest snapshot first (MCAT-19.4).
+
+        A read-only projection over ``mcp_version_changes`` joined to the introducing
+        ``mcp_endpoint_versions`` snapshot: each row carries the change (``change_type`` / ``item_type``
+        / ``item_name`` / ``detail`` — everything :func:`app.mcp_change_severity.classify_change`
+        needs) plus the snapshot's ``version_seq`` / ``version_tag`` and its discovery time. Ordered
+        newest snapshot first (``version_seq`` desc — the monotonic per-endpoint counter) then the
+        stable per-snapshot item order, so the feed lists the latest changes first and deterministically.
+
+        The caller has already resolved ``endpoint_id`` through the public gate
+        (:meth:`get_public_mcp_endpoint_feed_head`), so this read is not itself gated — it is only
+        ever handed a published, public endpoint's id.
+
+        Args:
+            endpoint_id: The public endpoint whose change history to read.
+            limit: Maximum change rows to return (the feed's entry cap).
+
+        Returns:
+            Up to ``limit`` change rows, newest snapshot first; empty when the endpoint has no
+            recorded changes.
+        """
+        q = f"""
+            SELECT c.version_id, c.change_type, c.item_type, c.item_name, c.detail,
+                   c.created_at,
+                   v.version_seq, v.version_tag, v.discovered_at,
+                   v.created_at AS version_created_at
+            FROM apiome.mcp_version_changes c
+            JOIN apiome.mcp_endpoint_versions v ON v.id = c.version_id
+            WHERE v.endpoint_id = %s::uuid
+            ORDER BY v.version_seq DESC, {self._MCP_CHANGE_ITEM_ORDER}
+            LIMIT %s
+        """
+        return self.execute_query(q, (endpoint_id, int(limit)))
+
+    def get_public_catalog_changes(
+        self, tenant_slug: str, *, limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """Fetch a tenant's recent public change history across its whole catalog (MCAT-19.4).
+
+        The catalog-wide analogue behind ``GET /mcp/feed/{tenant}``: recent ``mcp_version_changes``
+        across **every published, public endpoint** the tenant owns, each row carrying its owning
+        endpoint's public identity (``endpoint_id`` / ``endpoint_name`` / ``endpoint_slug``) alongside
+        the change and its snapshot context, so the feed can attribute each entry. The public
+        predicate is enforced in SQL, so a private or unpublished endpoint's changes can never leak
+        into the catalog feed (an acceptance criterion). No credential is selected.
+
+        Ordered by change recency — the snapshot's discovery time (falling back to its persist time)
+        desc — so the feed reads as a catalog-wide activity stream, with endpoint slug and snapshot
+        sequence as deterministic tie-breakers.
+
+        Args:
+            tenant_slug: The catalog's tenant slug.
+            limit: Maximum change rows to return (the feed's entry cap).
+
+        Returns:
+            Up to ``limit`` change rows across the tenant's public catalog, most recent first; empty
+            when the tenant is unknown, fully private, or has no recorded changes.
+        """
+        q = f"""
+            SELECT e.id AS endpoint_id, e.name AS endpoint_name, e.slug AS endpoint_slug,
+                   c.version_id, c.change_type, c.item_type, c.item_name, c.detail,
+                   c.created_at,
+                   v.version_seq, v.version_tag, v.discovered_at,
+                   v.created_at AS version_created_at
+            FROM apiome.mcp_version_changes c
+            JOIN apiome.mcp_endpoint_versions v ON v.id = c.version_id
+            JOIN apiome.mcp_endpoints e ON e.id = v.endpoint_id
+            JOIN apiome.tenants t ON t.id = e.tenant_id
+            WHERE {self._MCP_PUBLIC_ENDPOINT_PREDICATE}
+              AND t.slug = %s
+            ORDER BY COALESCE(v.discovered_at, v.created_at) DESC,
+                     e.slug ASC, v.version_seq DESC, {self._MCP_CHANGE_ITEM_ORDER}
+            LIMIT %s
+        """
+        return self.execute_query(q, (tenant_slug, int(limit)))
+
     def list_due_mcp_endpoints(
         self,
         *,
