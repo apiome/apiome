@@ -1344,7 +1344,6 @@ documentation quality** — not just its list of offerings.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
-| 15.4 | Safety & annotation posture panel | Heatmap of read-only/destructive/idempotent/open-world hints × tools, cross-referenced with auth | `mcp-insights` `frontend` | Y | Y | ●● | apiome-ui |
 | 15.5 | Documentation & schema coverage meters | Gauges: % described, % titled, % params documented, output-schema adoption | `mcp-insights` `frontend` | Y | Y | ● | apiome-ui |
 
 ### MCAT-15.1 — Server identity / at-a-glance profile card  ·  **#4631**  ·  ✅ Done (apiome-ui 0.68.0)
@@ -1400,17 +1399,29 @@ documentation quality** — not just its list of offerings.
 - **Dependencies / Parallelism.** After 14.1/14.3/14.4. Parallel with 15.2/15.4/15.5.
 - **Technical Stack.** Next.js, chart kit.
 
-### MCAT-15.4 — Safety & annotation posture panel  ·  **#4634**
+### MCAT-15.4 — Safety & annotation posture panel  ·  **#4634**  ·  ✅ Done (apiome-ui 0.71.0)
 - **Problem.** Whether a server's tools are read-only or **destructive** is the single most important
   safety signal, and it is buried in per-item `annotations`.
 - **Solution / Scope.** A **heatmap / matrix** of tools × hints (`readOnlyHint`, `destructiveHint`,
   `idempotentHint`, `openWorldHint`), with a headline "safety posture" summary (e.g. "3 destructive,
   1 open-world, 8 read-only") and a cross-reference to the endpoint's `auth_type` — flagging
   destructive tools reachable with no auth. Reuses `mcpAnnotationHints`/`mcpCapabilityAnnotationBadge`.
+- **Delivered.** UI-only. New pure, React-free `mcpSafetyPostureUi` module: a per-tool **tri-state
+  matrix** (asserted / declared-false / not-declared, reusing `mcpAnnotationHints`), the **auth
+  posture** resolution (anonymous / authenticated / unknown, reusing `mcpAuthBadge`), a roll-up
+  (per-hint counts, annotated tallies, a `fullyUnannotated` flag, and the **destructive-without-auth**
+  cross-reference computed only on an anonymous endpoint), and the ordered headline chips. New
+  `SafetyPosturePanel` client component renders the semantic per-hint matrix, the posture headline +
+  auth badge, the destructive+no-auth **alert**, and the explicit "unannotated — treat with caution"
+  state. The Insight tab now also fetches the snapshot's capability `items` (for per-tool annotations)
+  and the endpoint's redacted credential status (for `auth_type`, via a new UI `GET` on the existing
+  credentials proxy). Unit-tested (`mcp-safety-posture-ui.test.ts`), component-tested
+  (`mcp-safety-posture-panel.test.tsx`), plus an Insight-tab wiring test; design-system gallery
+  section + `MCP_UI_PRIMITIVES.md` entry.
 - **Acceptance Criteria.** Matrix reflects fixture annotations; servers that assert **no** hints show
   an explicit "unannotated — treat with caution" state; destructive+no-auth combination is surfaced.
 - **Dependencies / Parallelism.** After 14.1/14.3/14.4. Parallel with 15.2/15.3/15.5.
-- **Technical Stack.** Next.js, Heatmap primitive, MCP annotation helpers.
+- **Technical Stack.** Next.js, MCP annotation helpers.
 
 ### MCAT-15.5 — Documentation & schema coverage meters  ·  **#4635**
 - **Problem.** Poorly documented tools are hard for both humans and agents to use well; coverage is

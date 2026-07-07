@@ -135,14 +135,52 @@ function jsonResponse(body: unknown, ok = true, status = 200) {
   } as Response;
 }
 
+/** A version-detail payload carrying the given capability items, for the safety panel (MCAT-15.4). */
+function detailPayload(versionId: string, items: Array<Record<string, unknown>>) {
+  return {
+    success: true,
+    version: {
+      id: versionId,
+      version_seq: 3,
+      version_tag: '2026-07-06',
+      server_name: 'acme-search',
+      server_version: '1.4.0',
+      server_title: 'Acme Search',
+      protocol_version: '2025-06-18',
+      instructions: null,
+      score: 90,
+      grade: 'A',
+      is_current: true,
+      discovered_at: '2026-07-06T10:00:00Z',
+      items,
+    },
+  };
+}
+
+/** A redacted credential-status payload with the given `auth_type` (MCAT-15.4 auth cross-reference). */
+function credentialsPayload(authType: string) {
+  return {
+    success: true,
+    credential: {
+      endpoint_id: ENDPOINT_ID,
+      auth_type: authType,
+      configured: authType !== 'none',
+    },
+  };
+}
+
 /**
- * Route the mocked `fetch` by URL so the two lazy requests (versions, then surface) resolve
- * independently regardless of call order. The `surface` handler receives the requested version id.
+ * Route the mocked `fetch` by URL so each lazy request resolves independently regardless of call
+ * order. Beyond `versions` + `surface`, the safety panel (MCAT-15.4) also fetches the version
+ * *detail* (`/versions/{id}`) and the endpoint's redacted `credentials` status; both default to an
+ * empty/anonymous shape so scaffold tests need not care about them.
  */
 function routeFetch(handlers: {
   versions: () => Response;
   surface: (versionId: string | null) => Response;
   graph?: (versionId: string | null) => Response;
+  detail?: (versionId: string) => Response;
+  credentials?: () => Response;
 }) {
   (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
     if (url.includes('/insight/graph')) {
@@ -171,6 +209,15 @@ function routeFetch(handlers: {
     if (url.includes('/insight/surface')) {
       const versionId = new URL(url, 'http://test').searchParams.get('version_id');
       return handlers.surface(versionId);
+    }
+    if (url.includes('/credentials')) {
+      // Auth is endpoint-level; default to anonymous so a destructive tool with no auth would flag.
+      return handlers.credentials ? handlers.credentials() : jsonResponse(credentialsPayload('none'));
+    }
+    if (url.includes('/versions/')) {
+      // Version *detail* (`/versions/{id}`) — the safety panel's per-tool items. Default: no items.
+      const versionId = url.split('/versions/')[1].split('?')[0];
+      return handlers.detail ? handlers.detail(versionId) : jsonResponse(detailPayload(versionId, []));
     }
     if (url.includes('/versions')) {
       return handlers.versions();
@@ -355,5 +402,49 @@ describe('McpEndpointInsight — scaffold', () => {
     // The sort/filter toolbar is wired.
     expect(screen.getByLabelText('Sort')).toBeInTheDocument();
     expect(screen.getByLabelText('Filter')).toBeInTheDocument();
+  });
+
+  it('renders the safety posture panel and flags destructive tools reachable with no auth', async () => {
+    routeFetch({
+      versions: () => jsonResponse(versionsPayload()),
+      surface: (vid) => jsonResponse(surfacePayload(vid ?? V3, 3, 2)),
+      // Two tools: a read-only search and a destructive delete.
+      detail: (vid) =>
+        jsonResponse(
+          detailPayload(vid, [
+            { item_type: 'tool', name: 'search', ordinal: 0, annotations: { readOnlyHint: true } },
+            {
+              item_type: 'tool',
+              name: 'delete_record',
+              ordinal: 1,
+              annotations: { destructiveHint: true },
+            },
+          ]),
+        ),
+      // Anonymous endpoint → the destructive tool is reachable with no auth.
+      credentials: () => jsonResponse(credentialsPayload('none')),
+    });
+
+    render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
+
+    // The 15.4 panel heading renders, and the destructive+no-auth alert names the destructive tool.
+    await waitFor(() =>
+      expect(screen.getByText('Safety & annotation posture')).toBeInTheDocument(),
+    );
+    await waitFor(() =>
+      expect(screen.getByText(/reachable with no auth/i)).toBeInTheDocument(),
+    );
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('delete_record');
+
+    // The version-detail items and credential status were both fetched.
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining(`/versions/${V3}`),
+      expect.anything(),
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/credentials'),
+      expect.anything(),
+    );
   });
 });
