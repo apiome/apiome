@@ -1742,7 +1742,7 @@ change feed, a scheduled digest. Nothing here consumes a server; it reports on o
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
 | 19.1 ✅ | Server report-card export | One-page Markdown/HTML/PDF report per endpoint (identity, grade, surface, safety, coverage, trust) | `mcp-insights` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
-| 19.2 | Catalog inventory export | CSV/JSON export of endpoints + key metrics for offline analysis | `mcp-insights` `backend` | Y | N | ● | apiome-rest |
+| 19.2 ✅ | Catalog inventory export | CSV/JSON export of endpoints + key metrics for offline analysis | `mcp-insights` `backend` | Y | N | ● | apiome-rest |
 | 19.3 | Embeddable status badges | Shields-style SVG grade/health/version badge for READMEs, served from a public endpoint | `mcp-insights` `backend` | Y | N | ●● | apiome-rest, apiome-browse |
 | 19.4 | Catalog change feed (RSS/Atom/JSON) | Subscribable feed of endpoint/catalog changes | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
 | 19.5 | Scheduled catalog digest reports | Periodic summary of catalog state + changes, delivered via the notification channel | `mcp-insights` `backend` | N | N | ●● | apiome-rest |
@@ -1769,7 +1769,7 @@ change feed, a scheduled digest. Nothing here consumes a server; it reports on o
   the REST service. The Insight tab's "Export report" menu (Markdown / HTML / Print-Save-as-PDF)
   proxies it via `/api/mcp/endpoints/{id}/report`.
 
-### MCAT-19.2 — Catalog inventory export  ·  **#4651**
+### MCAT-19.2 — Catalog inventory export  ·  **#4651**  ·  ✅ Done (apiome-rest 1.95.0)
 - **Problem.** Analysts want the whole catalog as data (a spreadsheet, a notebook), not a UI.
 - **Solution / Scope.** Tenant-scoped **CSV** and **JSON** export of all endpoints with key columns
   (name, host, transport, category, visibility, current grade/score, capability counts, last
@@ -1778,6 +1778,19 @@ change feed, a scheduled digest. Nothing here consumes a server; it reports on o
   large catalog streams without loading all rows in memory; visibility respected.
 - **Dependencies / Parallelism.** After 14.2. Parallel across Epic-19.
 - **Technical Stack.** FastAPI streaming response, csv/json.
+- **Delivered.** `GET /v1/mcp/{tenant}/endpoints:export?format=csv|json&scope=all|public` streams a
+  tenant-scoped inventory of every cataloged endpoint — id, name, host, transport, category,
+  visibility, published flag, current grade/score, per-kind capability counts (+ total), last
+  discovery status/time, and a derived **health** label (`healthy`/`failing`/`undiscovered`/
+  `disabled`/`quarantined`). The catalog is walked one bounded **keyset page** at a time
+  (`Database.list_mcp_endpoints_export_page`) and serialized incrementally by the pure
+  `app.mcp_catalog_inventory` layer, so a large catalog streams without ever holding every row in
+  memory. CSV goes through the stdlib `csv` writer (**RFC-4180 escaping**); JSON is a streamed
+  `{success, tenant_slug, scope, generated_at, endpoints[], count}` wrapper. Scoping comes from the
+  token tenant (never the URL slug); **only the host is exported** (never the stored URL, which may
+  embed a credential); `scope=public` is the published-only variant. The action-style `:export` path
+  (matching the repo's `imports:batch`/`:manifest` convention) avoids colliding with the
+  `endpoints/{id}` route.
 
 ### MCAT-19.3 — Embeddable status badges  ·  **#4652**
 - **Problem.** Server authors and catalogers want a visible signal (like a CI badge) they can drop
