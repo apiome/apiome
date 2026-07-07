@@ -40,6 +40,25 @@ def _deep_equal(a: Any, b: Any) -> bool:
     return False
 
 
+def _parse_pgvector_text(text: Optional[str]) -> Optional[List[float]]:
+    """Parse a pgvector column read as text (``"[0.1,0.2,...]"``) into a float list.
+
+    Reading a ``vector`` column with ``::text`` avoids needing the ``pgvector`` psycopg2 adapter
+    (``register_vector``) just to fetch stored embeddings for in-process nearest-neighbour ranking.
+    Returns ``None`` for a NULL / blank / unparseable value so the caller can simply skip that row and
+    fall back to the non-embedding path rather than raising.
+    """
+    if not text:
+        return None
+    inner = text.strip().strip("[]")
+    if not inner:
+        return None
+    try:
+        return [float(part) for part in inner.split(",")]
+    except (TypeError, ValueError):
+        return None
+
+
 def format_mcp_version_tag(discovered_at: datetime) -> str:
     """Build the human-readable UTC date/time tag for an MCP version snapshot (#3671).
 
@@ -11771,6 +11790,171 @@ class Database:
                 }
             )
         return cohort
+
+    def get_mcp_similar_candidates(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """Return every live endpoint in the tenant with the materials to rank capability similarity (18.4).
+
+        The candidate pool for the "similar servers" feature: all of the tenant's live (non-deleted)
+        endpoints, each carrying what both similarity signals need, fetched in a fixed handful of bulk
+        queries (independent of catalog size) so the route ranks in one pass with no per-endpoint
+        round-trips:
+
+        * ``capability_names`` — the current snapshot's ``mcp_capability_items`` names (every item type),
+          the set the Jaccard capability-overlap signal compares;
+        * ``embedding`` — the current snapshot's optional ``mcp_capability_embedding`` (V143), parsed to a
+          float list, for the semantic cosine nearest-neighbour signal; ``None`` when the snapshot has no
+          stored embedding, and empty across the board whenever pgvector embeddings are disabled or simply
+          not yet backfilled (the feature then falls back to overlap-only — a graceful no-op).
+
+        The target endpoint itself is included in the returned list (a caller filters it out of its own
+        neighbour list); a never-discovered endpoint (no ``current_version_id``) carries an empty
+        ``capability_names`` and a ``None`` ``embedding``, so it simply never ranks as a neighbour rather
+        than being dropped. Scoping is by ``tenant_id`` directly, so the pool never leaks across tenants.
+
+        Args:
+            tenant_id: The owning tenant whose catalog the candidate pool is drawn from.
+
+        Returns:
+            One dict per live endpoint with keys ``endpoint_id``, ``name``, ``slug``, ``category``,
+            ``current_version_id``, ``capability_names``, and ``embedding``. Empty when the tenant has no
+            live endpoint.
+        """
+        endpoints = self.execute_query(
+            """
+            SELECT e.id AS endpoint_id, e.name, e.slug, e.category, e.current_version_id
+            FROM apiome.mcp_endpoints e
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+            """,
+            (tenant_id,),
+        )
+        if not endpoints:
+            return []
+
+        version_ids = [
+            str(e["current_version_id"]) for e in endpoints if e.get("current_version_id")
+        ]
+
+        # Capability names for every current version (all item types), grouped by version id.
+        names_by_version: Dict[str, List[str]] = {}
+        if version_ids:
+            name_rows = self.execute_query(
+                """
+                SELECT version_id, name
+                FROM apiome.mcp_capability_items
+                WHERE version_id = ANY(%s::uuid[])
+                """,
+                (version_ids,),
+            )
+            for row in name_rows:
+                if row.get("name"):
+                    names_by_version.setdefault(str(row["version_id"]), []).append(row["name"])
+
+        # Capability embeddings for every current version — optional (pgvector, V143). Read as text and
+        # parsed so no register_vector adapter is needed. Wrapped defensively: if the pgvector type is
+        # unavailable (extension/column missing on an un-migrated database), degrade to overlap-only
+        # rather than failing the whole request — execute_query already rolled the failed read back.
+        embeddings_by_version: Dict[str, List[float]] = {}
+        if version_ids:
+            try:
+                embedding_rows = self.execute_query(
+                    """
+                    SELECT id, mcp_capability_embedding::text AS embedding
+                    FROM apiome.mcp_endpoint_versions
+                    WHERE id = ANY(%s::uuid[]) AND mcp_capability_embedding IS NOT NULL
+                    """,
+                    (version_ids,),
+                )
+                for row in embedding_rows:
+                    parsed = _parse_pgvector_text(row.get("embedding"))
+                    if parsed is not None:
+                        embeddings_by_version[str(row["id"])] = parsed
+            except Exception as exc:  # pragma: no cover - only on an un-migrated / no-pgvector database
+                _logger.warning(
+                    "[mcp-similar] capability-embedding read failed (%s); falling back to overlap-only",
+                    exc,
+                )
+
+        candidates: List[Dict[str, Any]] = []
+        for endpoint in endpoints:
+            version_id = (
+                str(endpoint["current_version_id"]) if endpoint.get("current_version_id") else None
+            )
+            candidates.append(
+                {
+                    "endpoint_id": str(endpoint["endpoint_id"]),
+                    "name": endpoint.get("name"),
+                    "slug": endpoint.get("slug"),
+                    "category": endpoint.get("category"),
+                    "current_version_id": version_id,
+                    "capability_names": names_by_version.get(version_id, []) if version_id else [],
+                    "embedding": embeddings_by_version.get(version_id) if version_id else None,
+                }
+            )
+        return candidates
+
+    def store_mcp_capability_embedding(
+        self, version_id: str, embedding: List[float]
+    ) -> bool:
+        """Persist a version snapshot's capability embedding for semantic similarity (18.4).
+
+        Writes the ``mcp_capability_embedding`` (V143) of one ``mcp_endpoint_versions`` snapshot — the
+        backfill step behind the flag-gated similar-servers reindex. Mirrors
+        :meth:`update_data_snapshot_embedding`: the vector is registered via the ``pgvector`` psycopg2
+        adapter and, if that adapter or the ``vector`` type is unavailable (an un-migrated / no-pgvector
+        database), the write is skipped and ``False`` returned rather than raising — the feature simply
+        stays in overlap-only mode.
+
+        Args:
+            version_id: The snapshot whose embedding to store.
+            embedding: The capability embedding vector; an empty vector is a no-op (returns ``False``).
+
+        Returns:
+            ``True`` when the embedding was written, ``False`` when it was skipped (empty vector or
+            pgvector unavailable).
+        """
+        if not embedding:
+            return False
+
+        vector = np.array(embedding, dtype=np.float32)
+        conn = self.connect()
+        try:
+            from pgvector.psycopg2 import register_vector
+
+            register_vector(conn)
+        except Exception as exc:
+            _logger.warning(
+                "[mcp-similar] pgvector adapter unavailable (%s); capability embedding not stored for "
+                "version_id=%s",
+                exc,
+                version_id,
+            )
+            return False
+
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE apiome.mcp_endpoint_versions
+                    SET mcp_capability_embedding = %s
+                    WHERE id = %s::uuid
+                    """,
+                    (vector, version_id),
+                )
+            conn.commit()
+            return True
+        except Exception as exc:
+            conn.rollback()
+            code = getattr(exc, "pgcode", None) or getattr(exc, "code", None)
+            msg = str(getattr(exc, "message", exc) or exc)
+            if code == "42704" or ("vector" in msg.lower() and "does not exist" in msg.lower()):
+                _logger.warning(
+                    "[mcp-similar] pgvector type unavailable (%s); capability embedding not stored for "
+                    "version_id=%s",
+                    msg,
+                    version_id,
+                )
+                return False
+            raise
 
     def upsert_repository_import_spec(
         self,

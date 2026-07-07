@@ -1588,7 +1588,7 @@ not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 a
 | 18.1 ✅ | Catalog analytics dashboard | Category/transport/protocol mix, grade + tool-count distributions across the tenant catalog | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui, apiome-rest |
 | 18.2 ✅ | Side-by-side server comparison | Compare 2–3 endpoints: surface, grade, safety, latency | `mcp-insights` `frontend` | Y | N | ●● | apiome-ui |
 | 18.3 ✅ | Peer percentile & category ranking | Rank a server against its category on each axis | `mcp-insights` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-ui |
-| 18.4 | Similar-servers via capability overlap + embeddings | "Servers like this" from tool-name/desc overlap + pgvector (V102) | `mcp-insights` `backend` | Y | N | ●●● | apiome-rest, apiome-db |
+| 18.4 ✅ | Similar-servers via capability overlap + embeddings | "Servers like this" from tool-name/desc overlap + pgvector (V102) | `mcp-insights` `backend` | Y | N | ●●● | apiome-rest, apiome-db |
 | 18.5 | Natural-language server digest + usage examples | AI-generated "what can this do" summary + per-tool example calls | `mcp-insights` `backend` | Y | N | ●●● | apiome-rest |
 
 ### MCAT-18.1 — Catalog analytics dashboard  ·  **#4645**  ·  ✅ Done (apiome-rest 1.90.0, apiome-ui 0.81.0, apiome-browse 0.6.0)
@@ -1659,7 +1659,7 @@ not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 a
   `test_mcp_insight_routes.py` (route wiring, single-member, uncategorized, undiscovered→gaps,
   cross-tenant 404), `mcp-peer-percentile-ui.test.ts`, and `mcp-peer-percentile-panel.test.tsx`.
 
-### MCAT-18.4 — Similar-servers via capability overlap + embeddings  ·  **#4648**
+### MCAT-18.4 — Similar-servers via capability overlap + embeddings  ·  **#4648**  ·  ✅ Done (apiome-rest 1.92.0, apiome-db 0.24.0)
 - **Problem.** Discovery is keyword-only; users want "servers like this one".
 - **Solution / Scope.** Similarity from (a) **capability-name/description overlap** (Jaccard over
   tool/resource names) and (b) **semantic embeddings** reusing the existing **pgvector** setup
@@ -1669,6 +1669,28 @@ not just inspecting one. **Supersedes stub 13.4.** Largely later-v2; 18.4/18.5 a
   on seeded data; gracefully no-ops if embeddings are disabled.
 - **Dependencies / Parallelism.** After 14.2. Reuses V101/V102 FTS/pgvector. Parallel with 18.5.
 - **Technical Stack.** Python, pgvector, embeddings; FastAPI.
+- **Delivered.** New `GET …/endpoints/{id}/insight/similar` route on `mcp_endpoints_router` returns
+  "servers like this one" from two independent signals, ranked against the caller's own live catalog.
+  **overlap** (always present) is a capability-name Jaccard over tools/resources/prompts; **semantic**
+  is a cosine nearest-neighbour over an optional per-snapshot capability embedding. The math lives in
+  the pure, unit-tested `mcp_insight_aggregation` layer (`compute_capability_overlap`,
+  `rank_embedding_neighbors`, `cosine_similarity`, `jaccard_similarity`,
+  `build_capability_embedding_text`); one bulk `Database.get_mcp_similar_candidates(tenant_id)` fetches
+  every live endpoint's capability names + stored embedding in a fixed handful of queries, so ranking is
+  recomputed live as the catalog grows. **apiome-db V143** adds a nullable `vector(2000)`
+  `mcp_capability_embedding` column (+ partial cosine-HNSW index) on `mcp_endpoint_versions`, reusing
+  the V102 pgvector / V060-V063 Ollama-2000-dim conventions. Embeddings are **off by default**
+  (`APIOME_MCP_SIMILARITY_EMBEDDINGS_ENABLED`): when disabled or unbackfilled, the semantic list is a
+  labelled empty no-op and the feature falls back to overlap-only (never a 500) — the "gracefully
+  no-ops if embeddings are disabled" criterion. A flag-gated `POST …/insight/similar/reindex` backfills
+  the current snapshot's embedding via the Ollama embedding service (`store_mcp_capability_embedding`,
+  degrading to a labelled no-op when pgvector/the service is unavailable). Tests:
+  `test_mcp_insight_aggregation.py` (overlap fixture + cosine-NN on seeded vectors + text builder),
+  `test_mcp_insight_routes.py` (overlap ranking, embeddings-disabled/unbackfilled no-op, seeded semantic
+  NN, never-discovered empty, cross-tenant 404, reindex paths), and `mcp-similar-servers-embeddings.test.ts`
+  (V143 structural contract). **Note:** the "similar servers" *rail* and *catalog cluster map* are the UI
+  surface for a later `frontend` follow-up; this backend ticket (labels `mcp-insights` `backend`;
+  modules apiome-rest, apiome-db) delivers the ranking API + storage they consume.
 
 ### MCAT-18.5 — Natural-language server digest + usage examples  ·  **#4649**
 - **Problem.** Even a well-visualized surface still asks the reader to synthesize "so what can this

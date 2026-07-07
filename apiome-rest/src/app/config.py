@@ -75,6 +75,19 @@ class Settings(BaseSettings):
     # Embedding (Ollama) for data_snapshot vectorization
     ollama_base_url: str = "http://localhost:11434"
 
+    # "Similar servers" semantic-embedding signal (MCAT-18.4, #4648). Off by default: the feature's
+    # always-available signal is capability-name overlap (Jaccard), which needs no embedding. When this
+    # flag is off, the semantic cosine nearest-neighbour signal is skipped entirely (no vectors are read
+    # or ranked) and the reindex/backfill step no-ops — so the endpoint page shows overlap-only similar
+    # servers. Enable it (with the Ollama embedding service reachable) to add the semantic signal.
+    mcp_similarity_embeddings_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_SIMILARITY_EMBEDDINGS_ENABLED",
+            "mcp_similarity_embeddings_enabled",
+        ),
+    )
+
     # Pre-commit policy default when project metadata omits maxCommitPayloadBytes (#2565)
     commit_policy_max_payload_bytes_default: int = 5_242_880
 
