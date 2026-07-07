@@ -25005,6 +25005,29 @@
             ],
             "title": "Current Version Id"
           },
+          "transport_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transport Metadata"
+          },
+          "transport_metadata_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transport Metadata At"
+          },
           "created_at": {
             "anyOf": [
               {

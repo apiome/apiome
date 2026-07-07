@@ -26,6 +26,7 @@ from app.mcp_client import (
     DiscoverySurface,
     InitializeResult,
     ServerInfo,
+    TransportMetadata,
 )
 
 client = TestClient(app)
@@ -490,6 +491,145 @@ def test_capture_helper_persists_score_directly():
         mcp_discovery_engine._capture_mcp_version_score("ver-9", surface)
     mdb.set_mcp_version_score.assert_called_once()
     assert mdb.set_mcp_version_score.call_args.args[0] == "ver-9"
+
+
+# ===========================================================================
+# ENGINE — host & transport metadata capture (V2-MCP-34.1, #4655)
+# ===========================================================================
+
+
+def _transport_meta() -> TransportMetadata:
+    return TransportMetadata(
+        host="mcp.acme.example",
+        port=443,
+        scheme="https",
+        tls=True,
+        tls_protocol="TLSv1.3",
+        response_headers={"server": "nginx"},
+        connect_ms=42.0,
+    )
+
+
+def test_persist_stores_transport_metadata_on_changed_run():
+    """A changed run refreshes the endpoint's latest transport observation."""
+    surface = _surface([_tool("alpha")])
+    mdb = MagicMock()
+    mdb.get_latest_mcp_endpoint_version.return_value = None
+    mdb.record_mcp_discovery_version.return_value = {
+        "version_id": "ver-1",
+        "version_seq": 1,
+        "version_tag": "2026-06-26T12:00Z",
+    }
+    with patch.object(mcp_discovery_engine, "db", mdb):
+        mcp_discovery_engine._persist_outcome(
+            _JOB_UUID, _ENDPOINT_ROW, surface, _NOW, _transport_meta()
+        )
+    mdb.set_mcp_endpoint_transport_metadata.assert_called_once()
+    call = mdb.set_mcp_endpoint_transport_metadata.call_args
+    assert call.args[0] == _EP_UUID
+    stored = call.args[1]
+    assert stored["host"] == "mcp.acme.example"
+    assert stored["tls"] is True
+    assert stored["response_headers"] == {"server": "nginx"}
+    assert call.kwargs["observed_at"] == _NOW
+
+
+def test_persist_stores_transport_metadata_on_unchanged_run():
+    """An unchanged run (no new version) still refreshes the volatile transport observation."""
+    surface = _surface([_tool("alpha")])
+    mdb = MagicMock()
+    mdb.get_latest_mcp_endpoint_version.return_value = {
+        "id": "ver-7",
+        "version_seq": 7,
+        "version_tag": "2026-06-26T11:07Z",
+        "surface_fingerprint": surface.fingerprint(),
+    }
+    with patch.object(mcp_discovery_engine, "db", mdb):
+        result = mcp_discovery_engine._persist_outcome(
+            _JOB_UUID, _ENDPOINT_ROW, surface, _NOW, _transport_meta()
+        )
+    assert result["changed"] is False
+    mdb.record_mcp_discovery_version.assert_not_called()
+    mdb.set_mcp_endpoint_transport_metadata.assert_called_once_with(
+        _EP_UUID, _transport_meta().to_dict(), observed_at=_NOW
+    )
+
+
+def test_persist_without_transport_metadata_skips_the_write():
+    """No observation (legacy path / stdio) means no transport-metadata write at all."""
+    surface = _surface([_tool("alpha")])
+    mdb = MagicMock()
+    mdb.get_latest_mcp_endpoint_version.return_value = None
+    mdb.record_mcp_discovery_version.return_value = {"version_id": "ver-1", "version_seq": 1}
+    with patch.object(mcp_discovery_engine, "db", mdb):
+        mcp_discovery_engine._persist_outcome(_JOB_UUID, _ENDPOINT_ROW, surface, _NOW, None)
+    mdb.set_mcp_endpoint_transport_metadata.assert_not_called()
+
+
+def test_transport_metadata_persist_is_best_effort():
+    """A failure storing transport metadata never breaks the committed discovery/job."""
+    surface = _surface([_tool("alpha")])
+    mdb = MagicMock()
+    mdb.get_latest_mcp_endpoint_version.return_value = None
+    mdb.record_mcp_discovery_version.return_value = {"version_id": "ver-1", "version_seq": 1}
+    mdb.set_mcp_endpoint_transport_metadata.side_effect = RuntimeError("column missing")
+    with patch.object(mcp_discovery_engine, "db", mdb):
+        result = mcp_discovery_engine._persist_outcome(
+            _JOB_UUID, _ENDPOINT_ROW, surface, _NOW, _transport_meta()
+        )
+    assert result["changed"] is True
+    mdb.finish_mcp_discovery_job.assert_called_once()
+
+
+async def test_invoke_discovery_normalizes_bare_surface_runner(monkeypatch):
+    """A legacy runner returning just a surface is paired with ``None`` transport metadata."""
+    surface = _surface([_tool("alpha")])
+
+    async def _runner(_endpoint, _headers):
+        return surface
+
+    monkeypatch.setattr(mcp_discovery_engine, "_discovery_runner", _runner)
+    out_surface, out_meta = await mcp_discovery_engine._invoke_discovery(_ENDPOINT_ROW, {})
+    assert out_surface is surface
+    assert out_meta is None
+
+
+async def test_invoke_discovery_passes_through_outcome_tuple(monkeypatch):
+    """A runner returning an ``(surface, transport_meta)`` pair is returned unchanged."""
+    surface = _surface([_tool("alpha")])
+    meta = _transport_meta()
+
+    async def _runner(_endpoint, _headers):
+        return surface, meta
+
+    monkeypatch.setattr(mcp_discovery_engine, "_discovery_runner", _runner)
+    out_surface, out_meta = await mcp_discovery_engine._invoke_discovery(_ENDPOINT_ROW, {})
+    assert out_surface is surface
+    assert out_meta is meta
+
+
+async def test_drive_job_persists_transport_metadata_end_to_end(monkeypatch):
+    """The end-to-end driver threads the observed transport metadata into persistence."""
+    surface = _surface([_tool("alpha")])
+    meta = _transport_meta()
+
+    async def _runner(_endpoint, _headers):
+        return surface, meta
+
+    monkeypatch.setattr(mcp_discovery_engine, "_discovery_runner", _runner)
+    monkeypatch.setattr(
+        mcp_discovery_engine, "load_endpoint_auth_headers", lambda _eid: {}
+    )
+    mdb = MagicMock()
+    mdb.mark_mcp_discovery_job_running.return_value = {**_JOB_ROW, "state": "running"}
+    mdb.get_latest_mcp_endpoint_version.return_value = None
+    mdb.record_mcp_discovery_version.return_value = {"version_id": "ver-1", "version_seq": 1}
+    monkeypatch.setattr(mcp_discovery_engine, "db", mdb)
+
+    await mcp_discovery_engine._drive_discovery_job(_JOB_UUID, _ENDPOINT_ROW)
+
+    mdb.set_mcp_endpoint_transport_metadata.assert_called_once()
+    assert mdb.set_mcp_endpoint_transport_metadata.call_args.args[1]["host"] == "mcp.acme.example"
 
 
 # ===========================================================================

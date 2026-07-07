@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.99.0] - 2026-07-07
+
+### Added
+- **Host & transport metadata capture (#4655, V2-MCP-34.1 / MCAT-20.1)** — the catalog now records
+  what it can learn about the *service* hosting a server, not just its capability surface. During the
+  discovery handshake — **reusing the connection it already opens, no extra calls** — the client
+  observes non-invasive transport facts and persists them as the endpoint's latest observation.
+  - New pure module `app.mcp_client.transport_meta`: extracts host/port/scheme, a TLS certificate
+    summary (issuer, validity window, subject CN, DNS SANs, serial) from the negotiated session's
+    peer certificate, negotiated TLS protocol/cipher, an allow-list of notable response headers
+    (`server`, rate-limit hints, HSTS, `via`, `x-powered-by`), and connect/handshake timing.
+  - `StreamableHttpTransport` observes the first response (the `initialize` handshake) once into
+    `observed_transport`; `app.mcp_discovery_engine` threads it through and refreshes it on the
+    endpoint on **every** successful run (changed or unchanged), since the facts are volatile.
+  - Persisted to `apiome.mcp_endpoints.transport_metadata` (JSONB) + `transport_metadata_at`
+    (apiome-db **V146**) — on the mutable endpoint, not the immutable version snapshot, so it never
+    feeds the surface fingerprint. Surfaced on `McpEndpointOut` for the identity card / report.
+  - **Best-effort and never fatal:** a plain-`http` endpoint, a missing/invalid/unparseable
+    certificate, an absent network stream, or a persistence error all degrade to empty fields /
+    a skipped write rather than failing discovery. Existing SSRF/transport-security guards are
+    unchanged (no new connections are made).
+
 ## [1.98.0] - 2026-07-07
 
 ### Added

@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from dataclasses import dataclass, field
 from ipaddress import ip_address
 from itertools import count
@@ -51,6 +52,7 @@ from typing import Any, AsyncIterator, Awaitable, Callable, Dict, Optional, Unio
 import httpx
 
 from .resilience import private_address_reason
+from .transport_meta import TransportMetadata, capture_transport_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -328,6 +330,10 @@ class StreamableHttpTransport:
     _initialized: bool = field(default=False, init=False)
     _owns_client: bool = field(default=False, init=False)
     _id_counter: "count[int]" = field(default_factory=lambda: count(1), init=False)
+    # Host/transport facts observed from the *first* request (the initialize handshake) — host,
+    # TLS certificate summary, notable response headers, connect timing (V2-MCP-34.1, #4655).
+    # Captured once, reusing the connection the handshake already opened (no extra calls).
+    observed_transport: Optional[TransportMetadata] = field(default=None, init=False)
 
     def __post_init__(self) -> None:
         parsed = httpx.URL(self.url)
@@ -409,9 +415,11 @@ class StreamableHttpTransport:
         if params is not None:
             payload["params"] = params
 
+        started = time.monotonic()
         response = await self._post(payload, is_request=True)
         try:
             self._capture_session(response)
+            self._maybe_capture_transport(response, time.monotonic() - started)
             if response.status_code == 202:
                 # 202 is for bodies with no request; a request must get a response.
                 raise McpProtocolError(
@@ -524,6 +532,23 @@ class StreamableHttpTransport:
         if assigned and assigned != self._session_id:
             logger.debug("MCP session established: %s", assigned)
             self._session_id = assigned
+
+    def _maybe_capture_transport(self, response: httpx.Response, elapsed_seconds: float) -> None:
+        """Observe host/TLS/header/timing facts from the first response (best-effort, once).
+
+        Captured from the first request — the ``initialize`` handshake — reusing its already-open
+        connection so no extra network call is made (V2-MCP-34.1, #4655). Strictly best-effort: a
+        missing peer certificate or an odd transport degrades to empty fields and never interrupts
+        the request, per the "not fatal to discovery" acceptance criterion.
+        """
+        if self.observed_transport is not None:
+            return
+        try:
+            self.observed_transport = capture_transport_metadata(
+                self.url, response, connect_seconds=elapsed_seconds
+            )
+        except Exception:  # noqa: BLE001 - transport observation must never break a request
+            logger.debug("failed to capture MCP transport metadata", exc_info=True)
 
     async def _raise_for_status(self, response: httpx.Response) -> None:
         """Translate spec-relevant error statuses into transport exceptions.

@@ -9769,7 +9769,8 @@ class Database:
         "id, tenant_id, name, slug, endpoint_url, transport, description, category, "
         "visibility, published, enabled, discovery_cadence_seconds, last_discovered_at, "
         "last_discovery_status, consecutive_failures, next_discovery_after, quarantined_at, "
-        "quarantine_reason, current_version_id, created_at, updated_at"
+        "quarantine_reason, current_version_id, transport_metadata, transport_metadata_at, "
+        "created_at, updated_at"
     )
 
     def list_mcp_endpoints(self, tenant_id: str) -> List[Dict[str, Any]]:
@@ -11692,6 +11693,42 @@ class Database:
         try:
             with conn.cursor() as cursor:
                 cursor.execute(q, (discovered_at, status, endpoint_id))
+                conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def set_mcp_endpoint_transport_metadata(
+        self,
+        endpoint_id: str,
+        metadata: Dict[str, Any],
+        *,
+        observed_at: Any,
+    ) -> None:
+        """Store the latest observed host/transport facts on an endpoint (V2-MCP-34.1, #4655).
+
+        Writes the JSON document captured from the discovery handshake (host, TLS certificate
+        summary, notable response headers, connect timing) into ``transport_metadata`` and stamps
+        ``transport_metadata_at``. This is a *latest observation* refreshed by every successful
+        discovery (changed or unchanged), which is why it lives on the mutable endpoint row rather
+        than the immutable version snapshot. A no-op ``UPDATE`` (endpoint already gone) is harmless.
+
+        Args:
+            endpoint_id: The endpoint whose transport observation is being stored.
+            metadata: The JSON-ready document (see :meth:`TransportMetadata.to_dict`).
+            observed_at: When the observation was taken (the discovery run time).
+        """
+        q = """
+            UPDATE apiome.mcp_endpoints
+            SET transport_metadata = %s,
+                transport_metadata_at = %s,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(q, (Json(metadata), observed_at, endpoint_id))
                 conn.commit()
         except Exception as e:
             conn.rollback()

@@ -53,6 +53,7 @@ from .mcp_client import (
 )
 from .mcp_client.diff import ITEM_TYPE_SERVER, SurfaceDiff
 from .mcp_client.resilience import BudgetExceededError, TimeBudget
+from .mcp_client.transport_meta import TransportMetadata
 from .mcp_credentials import load_endpoint_auth_headers
 
 logger = logging.getLogger(__name__)
@@ -61,10 +62,18 @@ logger = logging.getLogger(__name__)
 # bounded so a slow/hostile server cannot pin the task forever.
 _DISCOVERY_BUDGET_SECONDS = 120.0
 
-# Test seam: monkeypatch to an async callable(endpoint_row, headers) -> DiscoverySurface to
-# bypass the real network. When None, :func:`_run_mcp_client` performs the live discovery.
+# The result of one discovery run: the normalized surface plus the host/transport metadata observed
+# from the handshake connection (``None`` when unavailable — e.g. a legacy test runner). Kept as a
+# pair rather than folded into the surface because transport facts are volatile (they must not feed
+# the surface fingerprint) and persist to the *endpoint*, not the immutable version snapshot.
+DiscoveryOutcome = Tuple[DiscoverySurface, Optional[TransportMetadata]]
+
+# Test seam: monkeypatch to an async callable(endpoint_row, headers) -> DiscoverySurface | outcome
+# to bypass the real network. When None, :func:`_run_mcp_client` performs the live discovery. A
+# runner may return either a bare :class:`DiscoverySurface` (legacy) or a ``DiscoveryOutcome`` pair;
+# :func:`_invoke_discovery` normalizes both.
 _discovery_runner: Optional[
-    Callable[[Dict[str, Any], Dict[str, str]], Awaitable[DiscoverySurface]]
+    Callable[[Dict[str, Any], Dict[str, str]], Awaitable[Any]]
 ] = None
 
 
@@ -75,8 +84,13 @@ def _utcnow() -> datetime:
 
 async def _run_mcp_client(
     endpoint: Dict[str, Any], headers: Dict[str, str]
-) -> DiscoverySurface:
+) -> DiscoveryOutcome:
     """Connect to the endpoint, run the handshake + discovery, and normalize the surface.
+
+    Alongside the capability surface, the host/transport facts the handshake connection reveals —
+    host, TLS certificate summary, notable response headers, connect timing — are read off the
+    transport (:attr:`StreamableHttpTransport.observed_transport`, V2-MCP-34.1) without any extra
+    network call, and returned for the caller to persist on the endpoint.
 
     Args:
         endpoint: The ``mcp_endpoints`` row (``endpoint_url`` is used as the target).
@@ -84,7 +98,8 @@ async def _run_mcp_client(
             no usable credentials).
 
     Returns:
-        The canonical :class:`DiscoverySurface` for the endpoint's current capabilities.
+        ``(surface, transport_metadata)``: the canonical :class:`DiscoverySurface` and the observed
+        :class:`TransportMetadata` (``None`` when the transport captured nothing).
     """
     url = str(endpoint["endpoint_url"])
     budget = TimeBudget(total_seconds=_DISCOVERY_BUDGET_SECONDS)
@@ -92,18 +107,27 @@ async def _run_mcp_client(
     try:
         initialize = await initialize_session(transport)
         listings = await discover_listings(transport, initialize.capabilities, budget=budget)
+        transport_meta = transport.observed_transport
     finally:
         await transport.aclose()
-    return DiscoverySurface.from_discovery(initialize, listings)
+    return DiscoverySurface.from_discovery(initialize, listings), transport_meta
 
 
 async def _invoke_discovery(
     endpoint: Dict[str, Any], headers: Dict[str, str]
-) -> DiscoverySurface:
-    """Dispatch to the test runner when installed, else the live MCP client."""
+) -> DiscoveryOutcome:
+    """Dispatch to the test runner when installed, else the live MCP client.
+
+    Normalizes both runner shapes: a live/tuple result is returned as-is, while a legacy runner
+    that yields a bare :class:`DiscoverySurface` is paired with ``None`` transport metadata.
+    """
     if _discovery_runner is not None:
-        return await _discovery_runner(endpoint, headers)
-    return await _run_mcp_client(endpoint, headers)
+        outcome = await _discovery_runner(endpoint, headers)
+    else:
+        outcome = await _run_mcp_client(endpoint, headers)
+    if isinstance(outcome, tuple):
+        return outcome
+    return outcome, None
 
 
 # ---------------------------------------------------------------------------
@@ -250,6 +274,38 @@ def _capture_mcp_version_score(version_id: str, surface: DiscoverySurface) -> No
         )
 
 
+def _persist_transport_metadata(
+    endpoint_id: str,
+    transport_meta: Optional[TransportMetadata],
+    observed_at: datetime,
+) -> None:
+    """Best-effort: store the latest observed host/transport facts on the endpoint (V2-MCP-34.1).
+
+    Recorded on every successful discovery — changed *or* unchanged — because the facts are volatile
+    (connect timing, a rotated cert or header) and endpoint-level, so they refresh independently of
+    whether the capability surface produced a new immutable version snapshot. Strictly best-effort:
+    a missing observation (``None``) is skipped, and a write failure is logged and swallowed so it
+    never turns a completed discovery into a failure (mirrors :func:`_capture_mcp_version_score`).
+
+    Args:
+        endpoint_id: The endpoint whose latest transport observation is being stored.
+        transport_meta: The captured metadata, or ``None`` when the transport observed nothing.
+        observed_at: When the observation was taken (the discovery run time).
+    """
+    if transport_meta is None:
+        return
+    try:
+        db.set_mcp_endpoint_transport_metadata(
+            endpoint_id, transport_meta.to_dict(), observed_at=observed_at
+        )
+    except Exception:  # noqa: BLE001 - capture is strictly best-effort, never blocks the job
+        logger.warning(
+            "Failed to persist MCP transport metadata for endpoint %s",
+            endpoint_id,
+            exc_info=True,
+        )
+
+
 def _surface_counts(surface: DiscoverySurface) -> Dict[str, int]:
     """Per-kind capability tallies for a discovered surface.
 
@@ -274,14 +330,20 @@ def _persist_outcome(
     endpoint: Dict[str, Any],
     surface: DiscoverySurface,
     discovered_at: datetime,
+    transport_meta: Optional[TransportMetadata] = None,
 ) -> Dict[str, Any]:
     """Fingerprint/diff the surface, persist a version when changed, and finish the job.
 
     Synchronous (DB-bound); invoked via :func:`asyncio.to_thread`. Returns the job's
-    ``result`` payload (also written to the job row) so the caller can log it.
+    ``result`` payload (also written to the job row) so the caller can log it. The observed
+    host/transport metadata (V2-MCP-34.1), when present, is refreshed on the endpoint on every
+    successful run regardless of whether the surface changed.
     """
     endpoint_id = str(endpoint["id"])
     fingerprint = surface.fingerprint()
+
+    # Refresh the endpoint's latest host/transport observation (best-effort; changed or not).
+    _persist_transport_metadata(endpoint_id, transport_meta, discovered_at)
 
     # Per-kind capability tallies for the job result, so the UI can show a small
     # "what was discovered" summary on completion (e.g. "3 tools · 2 resources").
@@ -440,7 +502,7 @@ async def _drive_discovery_job(job_id: str, endpoint: Dict[str, Any]) -> None:
 
     try:
         headers = await asyncio.to_thread(load_endpoint_auth_headers, endpoint_id)
-        surface = await _invoke_discovery(endpoint, headers)
+        surface, transport_meta = await _invoke_discovery(endpoint, headers)
     except Exception as exc:  # noqa: BLE001 - mapped to the stable error taxonomy below
         error = classify_exception(exc)
         logger.warning(
@@ -456,7 +518,7 @@ async def _drive_discovery_job(job_id: str, endpoint: Dict[str, Any]) -> None:
 
     try:
         result = await asyncio.to_thread(
-            _persist_outcome, job_id, endpoint, surface, _utcnow()
+            _persist_outcome, job_id, endpoint, surface, _utcnow(), transport_meta
         )
         logger.info(
             "discovery job=%s endpoint=%s completed: %s",
