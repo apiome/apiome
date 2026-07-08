@@ -11,9 +11,7 @@ import {
   HelpCircle,
   LayoutDashboard,
   LogOut,
-  Palette,
   PaletteIcon,
-  Route,
   Shield,
   Sparkles,
   Store,
@@ -22,6 +20,11 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import packageJson from '../../../../package.json';
 import { BROWSE_APP_URL } from '../../../../lib/app-urls';
+import {
+  getSuiteHomeCards,
+  resolveSuiteHomeCardIcon,
+  type SuiteHomeCard,
+} from '../../../../lib/suite-host';
 import { cn } from '../../../../lib/utils';
 import ThemeSelector from './ThemeSelector';
 import WhatsNewDialog from './WhatsNewDialog';
@@ -43,7 +46,7 @@ type AppCardConfig = {
   glow: string;
 };
 
-const PRIMARY_APPS: AppCardConfig[] = [
+const CORE_PRIMARY_APPS: AppCardConfig[] = [
   {
     id: 'control-panel',
     name: 'Control Panel',
@@ -54,28 +57,6 @@ const PRIMARY_APPS: AppCardConfig[] = [
     icon: LayoutDashboard,
     accent: 'from-indigo-500 to-violet-600',
     glow: 'group-hover:shadow-indigo-500/20',
-  },
-  {
-    id: 'studio',
-    name: 'Data Designer',
-    tagline: 'Schema design',
-    description: 'Model classes, relationships, and constraints on an interactive canvas.',
-    href: '/ade/studio',
-    enabled: true,
-    icon: Palette,
-    accent: 'from-violet-500 to-fuchsia-600',
-    glow: 'group-hover:shadow-fuchsia-500/20',
-  },
-  {
-    id: 'paths',
-    name: 'Paths',
-    tagline: 'API surface',
-    description: 'Author OpenAPI paths, operations, and request/response contracts.',
-    href: '/ade/studio/paths',
-    enabled: true,
-    icon: Route,
-    accent: 'from-amber-500 to-orange-600',
-    glow: 'group-hover:shadow-amber-500/20',
   },
   {
     id: 'browser',
@@ -89,6 +70,27 @@ const PRIMARY_APPS: AppCardConfig[] = [
     accent: 'from-cyan-500 to-blue-600',
     glow: 'group-hover:shadow-cyan-500/20',
   },
+];
+
+function suiteHomeCardToAppCard(card: SuiteHomeCard): AppCardConfig {
+  return {
+    id: card.id,
+    name: card.name,
+    tagline: card.tagline,
+    description: card.description,
+    href: card.href,
+    enabled: card.enabled,
+    external: card.external,
+    icon: resolveSuiteHomeCardIcon(card.icon),
+    accent: card.accent,
+    glow: card.glow,
+  };
+}
+
+const PRIMARY_APPS: AppCardConfig[] = [
+  CORE_PRIMARY_APPS[0],
+  ...getSuiteHomeCards().map(suiteHomeCardToAppCard),
+  CORE_PRIMARY_APPS[1],
 ];
 
 type ResourceLink = {
@@ -387,8 +389,8 @@ export default function AdeHome() {
             </span>
           </h1>
           <p className="mt-4 max-w-2xl text-pretty text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
-            Design schemas, shape OpenAPI paths, publish versions, and explore the public catalog —
-            everything you need to turn data models into living API documentation.
+            Govern projects and versions, publish to the public catalog, and manage your API
+            specification workspace from one place.
           </p>
         </section>
 
@@ -404,7 +406,7 @@ export default function AdeHome() {
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {PRIMARY_APPS.map((app) => (
               <AppLaunchCard key={app.id} app={app} onLaunch={launchApp} />
             ))}

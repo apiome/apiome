@@ -12,7 +12,7 @@ import { useTheme } from '../../providers/ThemeProvider';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { getTenantsForUser, getTenantsAdministratedByUser } from '../../../../lib/db/helper';
 import packageJson from '../../../../package.json';
-import { isDesignerStudioNavActive, isPathsStudioNavActive } from '../../../../lib/ade-studio-nav';
+import { getSuiteNavItems, type SuiteNavItem } from '../../../../lib/suite-host';
 
 /** Optional CI/build stamp (e.g. `2026.05.05-84a231c`). Otherwise badge uses semver from package.json. */
 const APP_BUILD_LABEL = process.env.NEXT_PUBLIC_APP_BUILD_LABEL?.trim();
@@ -21,14 +21,7 @@ const APP_VERSION_BADGE =
     ? APP_BUILD_LABEL
     : `v${packageJson.version} RC`;
 
-type NavItem = {
-  label: string;
-  href: string;
-  enabled?: boolean;
-  opensNewBrowser?: boolean;
-  /** When set, overrides default prefix matching (e.g. Designer vs Paths under `/ade/studio`). */
-  isActive?: (pathname: string) => boolean;
-};
+type NavItem = SuiteNavItem;
 
 function navItemIsActive(item: NavItem, pathname: string | null): boolean {
   if (!pathname) return false;
@@ -43,24 +36,12 @@ type TenantRow = { id: string; name: string };
 
 type TenantAdminRow = { tenant_id: string; user_id: string };
 
-const NAV_ITEMS: NavItem[] = [
+const CORE_NAV_ITEMS: NavItem[] = [
   { label: "Home", href: "/ade" },
   { label: "Control Panel", href: "/ade/dashboard" },
-  {
-    label: "Designer",
-    href: "/ade/studio",
-    isActive: isDesignerStudioNavActive,
-  },
-  {
-    label: "Paths",
-    href: "/ade/studio/paths",
-    isActive: isPathsStudioNavActive,
-  },
-  // { label: "Database", href: "/ade/database", enabled: false },
-  // { label: "Migration", href: "/ade/migration", enabled: false },
-  // { label: "ETL", href: "/ade/etl", enabled: false },
-  // { label: "Explorer", href: "/ade/database/explorer", enabled: false },
 ];
+
+const NAV_ITEMS: NavItem[] = [...CORE_NAV_ITEMS, ...getSuiteNavItems()];
 
 const TopHeader = () => {
   const [open, setOpen] = useState(false);

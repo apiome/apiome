@@ -30,6 +30,8 @@ const config: Config = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@lib/(.*)$': '<rootDir>/lib/$1',
+    '^@apiome/suite-contract$': '<rootDir>/lib/suite-contract.ts',
+    '^@suite/host$': '<rootDir>/lib/suite-stub/index.ts',
     '^react-markdown$': '<rootDir>/tests/__mocks__/react-markdown.tsx',
     '^remark-gfm$': '<rootDir>/tests/__mocks__/remark-gfm.ts',
     '^rehype-raw$': '<rootDir>/tests/__mocks__/rehype-raw.ts',
