@@ -2015,12 +2015,11 @@ only; it never changes what a server does.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
-| 22.1 | Duplicate / near-duplicate detection | Flag endpoints sharing URL/host/surface fingerprint | `mcp-catalog` `backend` | Y | N | ●● | apiome-rest |
 | 22.2 | Staleness & freshness reporting | Report endpoints overdue for discovery or persistently failing | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
 | 22.3 | Cataloger notes & annotations | Human notes on an endpoint, kept separate from server-reported data | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-db, apiome-ui |
 | 22.4 | Collections / curated lists | Group endpoints into named, shareable collections | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
 
-### MCAT-22.1 — Duplicate / near-duplicate detection  ·  **#4664**
+### MCAT-22.1 — Duplicate / near-duplicate detection  ·  **#4664**  ·  ✅ Done (apiome-rest 1.108.0)
 - **Problem.** As catalogs grow, the same server gets registered twice (different names, same URL) or
   two servers expose an identical surface; nothing flags it.
 - **Solution / Scope.** Detect duplicates by normalized `endpoint_url`/host and by identical

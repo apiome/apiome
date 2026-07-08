@@ -54,6 +54,7 @@ from .mcp_discovery_engine import (
     reconstruct_surface,
     trigger_discovery,
 )
+from .mcp_duplicate_detection import mcp_duplicate_report_from_rows
 from .mcp_facets import FacetValidationError, normalize_catalog_facet_filters
 from .mcp_insight_aggregation import (
     DISCOVERY_TIMELINE_WINDOW,
@@ -122,6 +123,7 @@ from .models import (
     McpCapabilityDirectoryResponse,
     McpCapabilityDirectorySort,
     McpCapabilityDirectoryType,
+    McpDuplicateReportResponse,
     McpSearchResponse,
     McpSearchScope,
     McpSearchVisibility,
@@ -223,6 +225,32 @@ async def browse_mcp_endpoints(
     tenant_id = str(auth_data["tenant_id"])
     rows = db.browse_mcp_endpoints(tenant_id)
     return group_mcp_browse_endpoints(rows)
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/data-quality/duplicates",
+    response_model=McpDuplicateReportResponse,
+)
+async def list_mcp_duplicate_report(
+    tenant_slug: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpDuplicateReportResponse:
+    """Advisory duplicate review list for the caller's catalog (V2-MCP-36.1 / MCAT-22.1).
+
+    Flags endpoints that share a normalized ``endpoint_url``, the same network host (when
+    fingerprints do not prove they are distinct), or an identical current ``surface_fingerprint``.
+    Published endpoints in other tenants that match the same keys are returned as cross-tenant hints.
+    The report is advisory only — nothing is merged automatically.
+    """
+    _ = tenant_slug
+    tenant_id = str(auth_data["tenant_id"])
+    candidates = db.list_mcp_duplicate_candidates(tenant_id)
+    foreign = db.list_published_mcp_duplicate_hints(tenant_id)
+    return mcp_duplicate_report_from_rows(
+        tenant_id=tenant_id,
+        candidates=candidates,
+        foreign_published=foreign,
+    )
 
 
 @mcp_endpoints_router.get(

@@ -7096,6 +7096,86 @@ def mcp_capability_directory_response_from_rows(
 
 
 # ===========================================================================
+# MCP Catalog — duplicate / near-duplicate detection (V2-MCP-36.1 / MCAT-22.1, #4664)
+# ===========================================================================
+
+
+McpDuplicateKind = Literal["exact_url", "same_host", "identical_surface"]
+
+
+class McpDuplicateEndpointOut(BaseModel):
+    """One endpoint in a duplicate review group — advisory context only."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    name: str
+    slug: str
+    host: str
+    endpoint_url: str
+    transport: str
+    published: bool
+    visibility: str
+    surface_fingerprint: Optional[str] = None
+
+
+class McpDuplicateGroup(BaseModel):
+    """Endpoints that likely describe the same MCP server (advisory; no auto-merge)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    kind: McpDuplicateKind
+    match_key: str
+    reason: str
+    endpoint_count: int
+    endpoints: List[McpDuplicateEndpointOut]
+
+
+class McpDuplicateCrossTenantHint(BaseModel):
+    """Published endpoint elsewhere that matches a local duplicate key."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    kind: McpDuplicateKind
+    match_key: str
+    local_endpoint_ids: List[str]
+    foreign_tenant_slug: str
+    foreign_endpoint_slug: str
+    foreign_endpoint_name: str
+
+
+class McpDuplicateReportResponse(BaseModel):
+    """Advisory duplicate review list for the caller's catalog."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    advisory: bool = True
+    group_count: int
+    flagged_endpoint_count: int
+    groups: List[McpDuplicateGroup]
+    cross_tenant_hints: List[McpDuplicateCrossTenantHint] = Field(default_factory=list)
+
+
+def mcp_duplicate_endpoint_out_from_row(row: Dict[str, Any]) -> McpDuplicateEndpointOut:
+    """Project a duplicate-candidate row onto the wire model."""
+    raw_url = str(row["endpoint_url"])
+    return McpDuplicateEndpointOut(
+        id=str(row["id"]),
+        name=str(row["name"]),
+        slug=str(row["slug"]),
+        host=mcp_endpoint_host(raw_url),
+        endpoint_url=redact_url_credentials(raw_url) or "",
+        transport=str(row["transport"]),
+        published=bool(row.get("published", False)),
+        visibility=str(row["visibility"]),
+        surface_fingerprint=(
+            str(row["surface_fingerprint"]) if row.get("surface_fingerprint") is not None else None
+        ),
+    )
+
+
+# ===========================================================================
 # MCP Catalog — saved searches (V2-MCP-35.3 / MCAT-21.3, #4662)
 # ===========================================================================
 #

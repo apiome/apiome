@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.108.0] - 2026-07-07
+
+### Added
+- **Duplicate / near-duplicate detection (#4664, V2-MCP-36.1 / MCAT-22.1)** — advisory review list
+  for catalog endpoints that likely describe the same MCP server.
+  - New route `GET /v1/mcp/{tenant_slug}/data-quality/duplicates`: groups tenant endpoints sharing a
+    normalized `endpoint_url`, the same network host (when fingerprints do not prove distinct
+    servers), or an identical current `surface_fingerprint`. Published endpoints in other tenants
+    that match the same keys are returned as cross-tenant hints. Nothing is auto-merged.
+
 ## [1.107.0] - 2026-07-07
 
 ### Added

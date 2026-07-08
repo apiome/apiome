@@ -9843,6 +9843,43 @@ class Database:
         """
         return self.execute_query(q, (tenant_id,))
 
+    def list_mcp_duplicate_candidates(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """Live endpoints in a tenant with fields needed for duplicate detection (MCAT-22.1).
+
+        Each row is an endpoint joined to its current snapshot's ``surface_fingerprint`` (NULL when
+        never discovered). Scoping is by ``tenant_id`` only.
+        """
+        q = """
+            SELECT e.id, e.tenant_id, e.name, e.slug, e.endpoint_url, e.transport,
+                   e.visibility, e.published,
+                   v.surface_fingerprint
+            FROM apiome.mcp_endpoints e
+            LEFT JOIN apiome.mcp_endpoint_versions v ON v.id = e.current_version_id
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+            ORDER BY e.name ASC
+        """
+        return self.execute_query(q, (tenant_id,))
+
+    def list_published_mcp_duplicate_hints(self, exclude_tenant_id: str) -> List[Dict[str, Any]]:
+        """Published endpoints in other tenants for cross-tenant duplicate hints (MCAT-22.1).
+
+        Returns only ``published = true`` live rows outside ``exclude_tenant_id``, with each
+        owning tenant's slug for display.
+        """
+        q = """
+            SELECT e.id, e.tenant_id, e.name, e.slug, e.endpoint_url, e.transport,
+                   t.slug AS tenant_slug,
+                   v.surface_fingerprint
+            FROM apiome.mcp_endpoints e
+            JOIN apiome.tenants t ON t.id = e.tenant_id
+            LEFT JOIN apiome.mcp_endpoint_versions v ON v.id = e.current_version_id
+            WHERE e.deleted_at IS NULL
+              AND e.published = true
+              AND e.tenant_id <> %s::uuid
+            ORDER BY t.slug ASC, e.name ASC
+        """
+        return self.execute_query(q, (exclude_tenant_id,))
+
     def list_mcp_endpoints_export_page(
         self,
         tenant_id: str,
