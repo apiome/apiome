@@ -11,6 +11,7 @@ import {
   Workflow,
 } from 'lucide-react';
 import rawConfig from '../config/external-links.json';
+import { UI_STUDIO_ROUTES } from './studio-routes';
 
 /** One commercial or partner application surfaced in nav and/or the ADE home grid. */
 export type ExternalLinkEntry = {
@@ -155,21 +156,29 @@ export function getExternalHomeCards(): ExternalHomeCard[] {
 /** Home/checklist entry for the designer app, when configured. */
 export function getDesignerHomeHref(): string | null {
   const designer = getExternalLinkById('designer');
-  return designer?.href ?? null;
+  if (designer?.href) return designer.href;
+  if (process.env.NEXT_PUBLIC_STUDIO_URL?.trim()) {
+    return UI_STUDIO_ROUTES.editor;
+  }
+  return null;
 }
 
 /** Deep link into a commercial studio editor after import completes. */
 export function buildDesignerEditorHref(projectId: string, versionId: string): string | null {
   const designer = getExternalLinkById('designer');
-  const base = designer?.editorHref ?? designer?.href;
+  const base = designer?.editorHref ?? designer?.href ?? (process.env.NEXT_PUBLIC_STUDIO_URL?.trim() ? UI_STUDIO_ROUTES.editor : null);
   if (!base) {
     return null;
   }
   try {
-    const url = new URL(base);
+    const url = base.startsWith('http://') || base.startsWith('https://')
+      ? new URL(base)
+      : new URL(base, 'http://local.invalid');
     url.searchParams.set('projectId', projectId);
     url.searchParams.set('versionId', versionId);
-    return url.toString();
+    return base.startsWith('http://') || base.startsWith('https://')
+      ? url.toString()
+      : `${url.pathname}${url.search}`;
   } catch {
     return null;
   }
