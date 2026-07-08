@@ -69,6 +69,10 @@ export interface McpBrowseEndpoint {
   read_only_only: boolean;
   /** Server-derived complexity band: `simple` / `moderate` / `complex` / `unknown` (35.1). */
   complexity_band: string;
+  /** Catalog freshness: `fresh` / `stale` / `failing` / `backoff` / `quarantined` (36.2). */
+  freshness: string;
+  /** Last successful discovery snapshot time, when known (36.2). */
+  last_known_good_at: string | null;
 }
 
 /** A host bucket: every cataloged endpoint that shares one host. */
@@ -245,6 +249,8 @@ export function mcpBrowseEndpointFromPayload(raw: unknown): McpBrowseEndpoint {
     has_destructive: r.has_destructive === true,
     read_only_only: r.read_only_only === true,
     complexity_band: asString(r.complexity_band) ?? 'unknown',
+    freshness: asString(r.freshness) ?? 'fresh',
+    last_known_good_at: asString(r.last_known_good_at),
   };
 }
 

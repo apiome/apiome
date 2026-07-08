@@ -349,6 +349,56 @@ export function mcpHealthFromDiscoveryStatus(status: string | null | undefined):
   return 'unreachable';
 }
 
+// --- Freshness pill -------------------------------------------------------------------------
+// Catalog staleness: cadence overdue, failing streak, backoff hold, or quarantine. Healthy endpoints
+// stay unbadged (`fresh`).
+
+/** Freshness labels returned by the catalog freshness report and browse cards. */
+export type McpFreshnessStatus = 'fresh' | 'stale' | 'failing' | 'backoff' | 'quarantined';
+
+export interface McpFreshnessMeta {
+  status: McpFreshnessStatus;
+  label: string;
+  dotClass: string;
+  textClass: string;
+}
+
+const FRESHNESS_META: Record<Exclude<McpFreshnessStatus, 'fresh'>, McpFreshnessMeta> = {
+  stale: {
+    status: 'stale',
+    label: 'Stale',
+    dotClass: 'bg-amber-500',
+    textClass: 'text-amber-700 dark:text-amber-300',
+  },
+  failing: {
+    status: 'failing',
+    label: 'Failing',
+    dotClass: 'bg-red-500',
+    textClass: 'text-red-700 dark:text-red-300',
+  },
+  backoff: {
+    status: 'backoff',
+    label: 'Backoff',
+    dotClass: 'bg-amber-500',
+    textClass: 'text-amber-700 dark:text-amber-300',
+  },
+  quarantined: {
+    status: 'quarantined',
+    label: 'Quarantined',
+    dotClass: 'bg-red-500',
+    textClass: 'text-red-700 dark:text-red-300',
+  },
+};
+
+export function mcpFreshnessMeta(status: string | null | undefined): McpFreshnessMeta | null {
+  const value = (status ?? '').trim().toLowerCase();
+  if (!value || value === 'fresh') return null;
+  if (value in FRESHNESS_META) {
+    return FRESHNESS_META[value as Exclude<McpFreshnessStatus, 'fresh'>];
+  }
+  return FRESHNESS_META.stale;
+}
+
 // --- Recency --------------------------------------------------------------------------------
 // "Last discovered …" recency, rendered as a compact relative span (just now / 5m / 2h / 3d), and
 // falling back to an absolute date for anything older than ~30 days or when the timestamp is

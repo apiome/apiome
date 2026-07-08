@@ -2,11 +2,12 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { ArrowRight, ShieldAlert, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { GradeGlyph } from '../../../ui/mcp/GradeGlyph';
 import { McpBadge } from '../../../ui/mcp/McpBadge';
 import { HealthPill } from '../../../ui/mcp/HealthPill';
+import { FreshnessPill } from '../../../ui/mcp/FreshnessPill';
 import { RecencyPill } from '../../../ui/mcp/RecencyPill';
 import {
   mcpAuthBadge,
@@ -99,13 +100,13 @@ function ChangedMarker(): React.ReactElement {
   );
 }
 
-/** The quarantined warning chip an endpoint shows when it is held back from discovery. */
-function QuarantinedChip(): React.ReactElement {
+/** Freshness badge when catalog data is stale, failing, in backoff, or quarantined. */
+function FreshnessBadge({ endpoint }: { endpoint: McpBrowseEndpoint }): React.ReactElement | null {
   return (
-    <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
-      <ShieldAlert className="h-3.5 w-3.5 shrink-0" aria-hidden />
-      Quarantined
-    </span>
+    <FreshnessPill
+      freshness={endpoint.freshness}
+      lastKnownGoodAt={endpoint.last_known_good_at}
+    />
   );
 }
 
@@ -138,7 +139,7 @@ export const McpCatalogCard = React.forwardRef<HTMLAnchorElement, McpCatalogCard
                 {endpoint.name}
               </span>
               {changed ? <ChangedMarker /> : null}
-              {endpoint.quarantined ? <QuarantinedChip /> : null}
+              <FreshnessBadge endpoint={endpoint} />
             </div>
             <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
               <CapabilityCounts endpoint={endpoint} className="text-xs" />
@@ -205,7 +206,7 @@ export const McpCatalogCard = React.forwardRef<HTMLAnchorElement, McpCatalogCard
         <div className="flex items-center justify-between gap-2">
           <RecencyPill timestamp={endpoint.last_discovered_at} />
           <div className="flex items-center gap-2">
-            {endpoint.quarantined ? <QuarantinedChip /> : null}
+            <FreshnessBadge endpoint={endpoint} />
             {changed ? <ChangedMarker /> : null}
           </div>
         </div>

@@ -2015,7 +2015,7 @@ only; it never changes what a server does.
 
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
-| 22.2 | Staleness & freshness reporting | Report endpoints overdue for discovery or persistently failing | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
+| 22.2 ✅ | Staleness & freshness reporting | Report endpoints overdue for discovery or persistently failing | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
 | 22.3 | Cataloger notes & annotations | Human notes on an endpoint, kept separate from server-reported data | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-db, apiome-ui |
 | 22.4 | Collections / curated lists | Group endpoints into named, shareable collections | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
 
@@ -2030,7 +2030,7 @@ only; it never changes what a server does.
 - **Dependencies / Parallelism.** After 14.2. Parallel across Epic-22.
 - **Technical Stack.** FastAPI, SQL grouping over existing columns.
 
-### MCAT-22.2 — Staleness & freshness reporting  ·  **#4665**
+### MCAT-22.2 — Staleness & freshness reporting  ·  **#4665**  ·  ✅ Done (apiome-rest 1.109.0, apiome-ui 0.91.0)
 - **Problem.** Endpoints silently go stale (cadence lapsed, discovery persistently failing); the
   catalog keeps showing old data as if current.
 - **Solution / Scope.** A freshness report: endpoints past their `discovery_cadence_seconds` without a
