@@ -12,7 +12,7 @@ import { useTheme } from '../../providers/ThemeProvider';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { getTenantsForUser, getTenantsAdministratedByUser } from '../../../../lib/db/helper';
 import packageJson from '../../../../package.json';
-import { getSuiteNavItems, type SuiteNavItem } from '../../../../lib/suite-host';
+import { getExternalNavItems, type ExternalNavItem } from '../../../../lib/external-links';
 
 /** Optional CI/build stamp (e.g. `2026.05.05-84a231c`). Otherwise badge uses semver from package.json. */
 const APP_BUILD_LABEL = process.env.NEXT_PUBLIC_APP_BUILD_LABEL?.trim();
@@ -21,10 +21,15 @@ const APP_VERSION_BADGE =
     ? APP_BUILD_LABEL
     : `v${packageJson.version} RC`;
 
-type NavItem = SuiteNavItem;
+type NavItem = ExternalNavItem;
+
+function isExternalHref(href: string): boolean {
+  return href.startsWith('http://') || href.startsWith('https://');
+}
 
 function navItemIsActive(item: NavItem, pathname: string | null): boolean {
   if (!pathname) return false;
+  if (item.external || isExternalHref(item.href)) return false;
   if (item.isActive) return item.isActive(pathname);
   return (
     pathname === item.href ||
@@ -37,11 +42,11 @@ type TenantRow = { id: string; name: string };
 type TenantAdminRow = { tenant_id: string; user_id: string };
 
 const CORE_NAV_ITEMS: NavItem[] = [
-  { label: "Home", href: "/ade" },
-  { label: "Control Panel", href: "/ade/dashboard" },
+  { id: 'home', label: "Home", href: "/ade" },
+  { id: 'control-panel', label: "Control Panel", href: "/ade/dashboard" },
 ];
 
-const NAV_ITEMS: NavItem[] = [...CORE_NAV_ITEMS, ...getSuiteNavItems()];
+const NAV_ITEMS: NavItem[] = [...CORE_NAV_ITEMS, ...getExternalNavItems()];
 
 const TopHeader = () => {
   const [open, setOpen] = useState(false);
@@ -170,7 +175,7 @@ const TopHeader = () => {
             const isActive = navItemIsActive(item, pathname);
 
             return (
-              <li key={item.href}>
+              <li key={item.id}>
                 {item.enabled === false ? (
                   <span
                     className="cursor-not-allowed rounded-md px-2 py-1 text-[13px] text-slate-400 dark:text-slate-500"
@@ -178,6 +183,15 @@ const TopHeader = () => {
                   >
                     {item.label}
                   </span>
+                ) : item.external || isExternalHref(item.href) ? (
+                  <a
+                    href={item.href}
+                    target={item.opensNewBrowser ? '_blank' : undefined}
+                    rel={item.opensNewBrowser ? 'noopener noreferrer' : undefined}
+                    className="rounded-md px-2 py-1 text-[13px] text-slate-700 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-indigo-400"
+                  >
+                    {item.label}
+                  </a>
                 ) : (
                   <Link
                     href={item.href}

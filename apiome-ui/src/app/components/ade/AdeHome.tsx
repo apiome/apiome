@@ -20,11 +20,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import packageJson from '../../../../package.json';
 import { BROWSE_APP_URL } from '../../../../lib/app-urls';
-import {
-  getSuiteHomeCards,
-  resolveSuiteHomeCardIcon,
-  type SuiteHomeCard,
-} from '../../../../lib/suite-host';
+import { getExternalHomeCards, type ExternalHomeCard } from '../../../../lib/external-links';
 import { cn } from '../../../../lib/utils';
 import ThemeSelector from './ThemeSelector';
 import WhatsNewDialog from './WhatsNewDialog';
@@ -72,7 +68,7 @@ const CORE_PRIMARY_APPS: AppCardConfig[] = [
   },
 ];
 
-function suiteHomeCardToAppCard(card: SuiteHomeCard): AppCardConfig {
+function externalHomeCardToAppCard(card: ExternalHomeCard): AppCardConfig {
   return {
     id: card.id,
     name: card.name,
@@ -81,7 +77,7 @@ function suiteHomeCardToAppCard(card: SuiteHomeCard): AppCardConfig {
     href: card.href,
     enabled: card.enabled,
     external: card.external,
-    icon: resolveSuiteHomeCardIcon(card.icon),
+    icon: card.icon,
     accent: card.accent,
     glow: card.glow,
   };
@@ -89,7 +85,7 @@ function suiteHomeCardToAppCard(card: SuiteHomeCard): AppCardConfig {
 
 const PRIMARY_APPS: AppCardConfig[] = [
   CORE_PRIMARY_APPS[0],
-  ...getSuiteHomeCards().map(suiteHomeCardToAppCard),
+  ...getExternalHomeCards().map(externalHomeCardToAppCard),
   CORE_PRIMARY_APPS[1],
 ];
 

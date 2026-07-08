@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 import { testUsers } from './fixtures/test-fixtures';
-import { commercialSuiteOnly } from './helpers/suite';
 
 /**
  * Authenticated E2E Tests
@@ -32,7 +31,7 @@ async function loginAndVerify(page: any): Promise<boolean> {
 
     // Check if we got redirected to dashboard
     const url = page.url();
-    return url.includes('/ade/dashboard') || (commercialSuiteOnly() && url.includes('/ade/studio'));
+    return url.includes('/ade/dashboard');
   } catch (error) {
     return false;
   }
@@ -123,126 +122,6 @@ test.describe('Authenticated User Flows', () => {
     });
   });
 
-  test.describe('Studio Access', () => {
-    test.beforeEach(() => {
-      test.skip(!commercialSuiteOnly(), 'Studio routes require APIOME_BUILD_PROFILE=commercial');
-    });
-
-    test('should access studio page', async ({ page }) => {
-      if (page.url().includes('/login')) {
-        test.skip(true, 'Login failed - skipping authenticated test');
-        return;
-      }
-
-      await page.goto('/ade/studio');
-      await page.waitForLoadState('networkidle');
-
-      expect(page.url()).toContain('/studio');
-    });
-
-    test('should access studio editor', async ({ page }) => {
-      if (page.url().includes('/login')) {
-        test.skip(true, 'Login failed - skipping authenticated test');
-        return;
-      }
-
-      await page.goto('/ade/studio/editor');
-      await page.waitForLoadState('networkidle');
-
-      expect(page.url()).toContain('/editor');
-    });
-
-    test('should access studio paths', async ({ page }) => {
-      if (page.url().includes('/login')) {
-        test.skip(true, 'Login failed - skipping authenticated test');
-        return;
-      }
-
-      await page.goto('/ade/studio/paths');
-      await page.waitForLoadState('networkidle');
-
-      expect(page.url()).toContain('/paths');
-    });
-
-    test('should access studio code', async ({ page }) => {
-      if (page.url().includes('/login')) {
-        test.skip(true, 'Login failed - skipping authenticated test');
-        return;
-      }
-
-      await page.goto('/ade/studio/code');
-      await page.waitForLoadState('networkidle');
-
-      expect(page.url()).toContain('/code');
-    });
-  });
-
-  test.describe('Studio Editor Canvas', () => {
-    test.beforeEach(() => {
-      test.skip(!commercialSuiteOnly(), 'Studio routes require APIOME_BUILD_PROFILE=commercial');
-    });
-
-    test('should display canvas when project/version selected', async ({ page }) => {
-      if (page.url().includes('/login')) {
-        test.skip(true, 'Login failed - skipping authenticated test');
-        return;
-      }
-
-      await page.goto('/ade/studio/editor');
-      await page.waitForLoadState('networkidle');
-
-      // Check for ReactFlow canvas or "No Project Selected" message
-      const canvas = page.locator('.react-flow');
-      const noProjectMessage = page.getByText(/no project selected/i);
-
-      // One of these should be visible
-      const hasCanvas = await canvas.isVisible().catch(() => false);
-      const hasNoProjectMessage = await noProjectMessage.isVisible().catch(() => false);
-
-      expect(hasCanvas || hasNoProjectMessage).toBeTruthy();
-    });
-
-    test('should display project selector', async ({ page }) => {
-      if (page.url().includes('/login')) {
-        test.skip(true, 'Login failed - skipping authenticated test');
-        return;
-      }
-
-      await page.goto('/ade/studio/editor');
-      await page.waitForLoadState('networkidle');
-
-      // Look for project dropdown/select
-      const projectSelector = page.locator('button, [role="combobox"]').filter({ hasText: /select project|project/i });
-
-      // Should have some project selection UI
-      const hasProjectSelector = await projectSelector.first().isVisible().catch(() => false);
-
-      // Either has selector or page loads correctly
-      expect(hasProjectSelector || page.url().includes('/editor')).toBeTruthy();
-    });
-
-    test('should display view mode toggle (Canvas/Code)', async ({ page }) => {
-      if (page.url().includes('/login')) {
-        test.skip(true, 'Login failed - skipping authenticated test');
-        return;
-      }
-
-      await page.goto('/ade/studio/editor');
-      await page.waitForLoadState('networkidle');
-
-      // Look for Canvas button
-      const canvasButton = page.getByRole('button', { name: /canvas/i });
-      const codeButton = page.getByRole('button', { name: /code/i });
-
-      // These may be visible if a project is selected
-      const hasToggle = await canvasButton.isVisible().catch(() => false) ||
-                        await codeButton.isVisible().catch(() => false);
-
-      // Page should load successfully even if toggle not visible without project
-      expect(hasToggle || page.url().includes('/editor')).toBeTruthy();
-    });
-  });
-
   test.describe('User Session', () => {
     test('should maintain session across page navigations', async ({ page }) => {
       if (page.url().includes('/login')) {
@@ -254,12 +133,6 @@ test.describe('Authenticated User Flows', () => {
       await page.goto('/ade/dashboard');
       await page.waitForLoadState('networkidle');
       expect(page.url()).toContain('/dashboard');
-
-      if (commercialSuiteOnly()) {
-        await page.goto('/ade/studio');
-        await page.waitForLoadState('networkidle');
-        expect(page.url()).toContain('/studio');
-      }
 
       // Should still be logged in, not redirected to login
       expect(page.url()).not.toContain('/login');

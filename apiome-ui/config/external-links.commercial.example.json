@@ -1,0 +1,39 @@
+{
+  "links": [
+    {
+      "id": "designer",
+      "navLabel": "Designer",
+      "name": "Data Designer",
+      "tagline": "Schema design",
+      "description": "Model classes, relationships, and constraints on an interactive canvas.",
+      "href": "https://studio.apiome.app",
+      "editorHref": "https://studio.apiome.app/editor",
+      "icon": "Palette",
+      "accent": "from-violet-500 to-fuchsia-600",
+      "glow": "group-hover:shadow-fuchsia-500/20",
+      "enabled": true,
+      "external": true,
+      "opensNewBrowser": false,
+      "showInNav": true,
+      "showOnHome": true,
+      "featureFlag": "designer"
+    },
+    {
+      "id": "paths",
+      "navLabel": "Paths",
+      "name": "Paths",
+      "tagline": "API surface",
+      "description": "Author OpenAPI paths, operations, and request/response contracts.",
+      "href": "https://studio.apiome.app/paths",
+      "icon": "Route",
+      "accent": "from-amber-500 to-orange-600",
+      "glow": "group-hover:shadow-amber-500/20",
+      "enabled": true,
+      "external": true,
+      "opensNewBrowser": false,
+      "showInNav": true,
+      "showOnHome": true,
+      "featureFlag": "paths"
+    }
+  ]
+}

@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { commercialSuiteOnly } from './helpers/suite';
 
 /**
  * Navigation E2E Tests
@@ -38,46 +37,6 @@ test.describe('Application Navigation', () => {
   test.describe('Protected Routes (without auth)', () => {
     test('dashboard should redirect to login when not authenticated', async ({ page }) => {
       await page.goto('/ade/dashboard');
-
-      // Should redirect to login
-      await page.waitForURL(/login/, { timeout: 10000 });
-      expect(page.url()).toContain('login');
-    });
-
-    test('studio should redirect to login when not authenticated', async ({ page }) => {
-      test.skip(!commercialSuiteOnly(), 'Studio routes require APIOME_BUILD_PROFILE=commercial');
-
-      await page.goto('/ade/studio');
-
-      // Should redirect to login
-      await page.waitForURL(/login/, { timeout: 10000 });
-      expect(page.url()).toContain('login');
-    });
-
-    test('studio editor should redirect to login when not authenticated', async ({ page }) => {
-      test.skip(!commercialSuiteOnly(), 'Studio routes require APIOME_BUILD_PROFILE=commercial');
-
-      await page.goto('/ade/studio/editor');
-
-      // Should redirect to login
-      await page.waitForURL(/login/, { timeout: 10000 });
-      expect(page.url()).toContain('login');
-    });
-
-    test('studio paths should redirect to login when not authenticated', async ({ page }) => {
-      test.skip(!commercialSuiteOnly(), 'Studio routes require APIOME_BUILD_PROFILE=commercial');
-
-      await page.goto('/ade/studio/paths');
-
-      // Should redirect to login
-      await page.waitForURL(/login/, { timeout: 10000 });
-      expect(page.url()).toContain('login');
-    });
-
-    test('studio code should redirect to login when not authenticated', async ({ page }) => {
-      test.skip(!commercialSuiteOnly(), 'Studio routes require APIOME_BUILD_PROFILE=commercial');
-
-      await page.goto('/ade/studio/code');
 
       // Should redirect to login
       await page.waitForURL(/login/, { timeout: 10000 });

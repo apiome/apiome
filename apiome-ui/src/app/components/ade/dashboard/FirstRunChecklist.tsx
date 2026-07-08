@@ -17,7 +17,7 @@ import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
 import { cn } from '../../../../../lib/utils';
 import { BROWSE_APP_URL } from '../../../../../lib/app-urls';
-import { getSuiteDesignerHref } from '../../../../../lib/suite-host';
+import { getDesignerHomeHref } from '../../../../../lib/external-links';
 import {
   type ChecklistSignal,
   type StepId,
@@ -41,7 +41,7 @@ const CORE_STEPS: StepDef[] = [
 ];
 
 function buildSteps(): StepDef[] {
-  const designerHref = getSuiteDesignerHref();
+  const designerHref = getDesignerHomeHref();
   const designerSteps: StepDef[] = designerHref
     ? [
         { id: 'project', label: 'Create your first project', hint: 'Open the Designer to start a project.', href: designerHref },

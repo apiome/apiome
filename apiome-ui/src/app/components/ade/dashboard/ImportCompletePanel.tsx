@@ -18,7 +18,7 @@ import {
   Undo2
 } from 'lucide-react';
 import { getImportStatus, rollbackCompletedImport } from '../../../../../lib/db/import-actions';
-import { getSuiteEditorHref } from '../../../../../lib/suite-host';
+import { buildDesignerEditorHref } from '../../../../../lib/external-links';
 import { buildImportErrorReport, getImportErrorReportFilename, type ImportErrorReport, type ImportStatusForReport } from '../../../../../lib/db/import-error-report';
 
 interface ImportCompletePanelProps {
@@ -150,7 +150,7 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
 
   const handleViewInCanvas = () => {
     if (summary?.projectId && summary?.versionId) {
-      const href = getSuiteEditorHref(summary.projectId, summary.versionId);
+      const href = buildDesignerEditorHref(summary.projectId, summary.versionId);
       if (href) {
         router.push(href);
       }
