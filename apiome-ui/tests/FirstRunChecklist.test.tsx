@@ -22,29 +22,32 @@ import { FIRST_RUN_DISMISS_KEY } from '@/app/components/ade/dashboard/firstRunCh
 const EMPTY = { total_projects: 0, total_classes: 0, total_versions: 0, published_versions: 0 };
 const SEEDED = { total_projects: 1, total_classes: 3, total_versions: 1, published_versions: 1 };
 
+/** OSS build omits commercial Designer checklist steps. */
+const OSS_STEP_COUNT = 3;
+
 beforeEach(() => {
   window.localStorage.clear();
 });
 
 describe('FirstRunChecklist', () => {
-  it('renders all five guided steps', () => {
+  it('renders core guided steps in OSS build', () => {
     render(<FirstRunChecklist stats={EMPTY} />);
-    expect(screen.getByText(/Create your first project/)).toBeInTheDocument();
-    expect(screen.getByText(/Add a class from a starter template/)).toBeInTheDocument();
+    expect(screen.queryByText(/Create your first project/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Add a class from a starter template/)).not.toBeInTheDocument();
     expect(screen.getByText(/Cut a version/)).toBeInTheDocument();
     expect(screen.getByText(/Publish it/)).toBeInTheDocument();
     expect(screen.getByText(/View it in Browse/)).toBeInTheDocument();
   });
 
-  it('shows 0/5 progress for an empty tenant', () => {
+  it('shows 0/N progress for an empty tenant', () => {
     render(<FirstRunChecklist stats={EMPTY} />);
-    expect(screen.getByText('0/5 done')).toBeInTheDocument();
+    expect(screen.getByText(`0/${OSS_STEP_COUNT} done`)).toBeInTheDocument();
     expect(screen.getByText('Get started')).toBeInTheDocument();
   });
 
-  it('shows 5/5 and the completed header for a seeded tenant', () => {
+  it('shows N/N and the completed header for a seeded tenant', () => {
     render(<FirstRunChecklist stats={SEEDED} />);
-    expect(screen.getByText('5/5 done')).toBeInTheDocument();
+    expect(screen.getByText(`${OSS_STEP_COUNT}/${OSS_STEP_COUNT} done`)).toBeInTheDocument();
     expect(screen.getByText("You're all set")).toBeInTheDocument();
   });
 

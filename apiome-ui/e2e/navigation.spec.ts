@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { commercialSuiteOnly } from './helpers/suite';
 
 /**
  * Navigation E2E Tests
@@ -44,6 +45,8 @@ test.describe('Application Navigation', () => {
     });
 
     test('studio should redirect to login when not authenticated', async ({ page }) => {
+      test.skip(!commercialSuiteOnly(), 'Studio routes require APIOME_BUILD_PROFILE=commercial');
+
       await page.goto('/ade/studio');
 
       // Should redirect to login
@@ -52,6 +55,8 @@ test.describe('Application Navigation', () => {
     });
 
     test('studio editor should redirect to login when not authenticated', async ({ page }) => {
+      test.skip(!commercialSuiteOnly(), 'Studio routes require APIOME_BUILD_PROFILE=commercial');
+
       await page.goto('/ade/studio/editor');
 
       // Should redirect to login
@@ -60,6 +65,8 @@ test.describe('Application Navigation', () => {
     });
 
     test('studio paths should redirect to login when not authenticated', async ({ page }) => {
+      test.skip(!commercialSuiteOnly(), 'Studio routes require APIOME_BUILD_PROFILE=commercial');
+
       await page.goto('/ade/studio/paths');
 
       // Should redirect to login
@@ -68,6 +75,8 @@ test.describe('Application Navigation', () => {
     });
 
     test('studio code should redirect to login when not authenticated', async ({ page }) => {
+      test.skip(!commercialSuiteOnly(), 'Studio routes require APIOME_BUILD_PROFILE=commercial');
+
       await page.goto('/ade/studio/code');
 
       // Should redirect to login

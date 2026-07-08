@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { testUsers } from './fixtures/test-fixtures';
+import { commercialSuiteOnly } from './helpers/suite';
 
 /**
  * Authenticated E2E Tests
@@ -31,7 +32,7 @@ async function loginAndVerify(page: any): Promise<boolean> {
 
     // Check if we got redirected to dashboard
     const url = page.url();
-    return url.includes('/ade/dashboard') || url.includes('/ade/studio');
+    return url.includes('/ade/dashboard') || (commercialSuiteOnly() && url.includes('/ade/studio'));
   } catch (error) {
     return false;
   }
@@ -123,6 +124,10 @@ test.describe('Authenticated User Flows', () => {
   });
 
   test.describe('Studio Access', () => {
+    test.beforeEach(() => {
+      test.skip(!commercialSuiteOnly(), 'Studio routes require APIOME_BUILD_PROFILE=commercial');
+    });
+
     test('should access studio page', async ({ page }) => {
       if (page.url().includes('/login')) {
         test.skip(true, 'Login failed - skipping authenticated test');
@@ -173,6 +178,10 @@ test.describe('Authenticated User Flows', () => {
   });
 
   test.describe('Studio Editor Canvas', () => {
+    test.beforeEach(() => {
+      test.skip(!commercialSuiteOnly(), 'Studio routes require APIOME_BUILD_PROFILE=commercial');
+    });
+
     test('should display canvas when project/version selected', async ({ page }) => {
       if (page.url().includes('/login')) {
         test.skip(true, 'Login failed - skipping authenticated test');
@@ -246,9 +255,11 @@ test.describe('Authenticated User Flows', () => {
       await page.waitForLoadState('networkidle');
       expect(page.url()).toContain('/dashboard');
 
-      await page.goto('/ade/studio');
-      await page.waitForLoadState('networkidle');
-      expect(page.url()).toContain('/studio');
+      if (commercialSuiteOnly()) {
+        await page.goto('/ade/studio');
+        await page.waitForLoadState('networkidle');
+        expect(page.url()).toContain('/studio');
+      }
 
       // Should still be logged in, not redirected to login
       expect(page.url()).not.toContain('/login');
