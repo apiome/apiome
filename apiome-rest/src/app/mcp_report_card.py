@@ -5,9 +5,9 @@ The Insight tab is only useful behind auth and inside the app. This module rende
 assessment into a ticket, a review, or a wiki. It serializes exactly the panels the in-app
 Insight view already shows — identity (15.1), grade + score breakdown (17.3), capability
 surface + safety posture (15.3/15.4), documentation coverage (15.5), license & terms signals
-(20.3), the composite trust radar (17.4), and the change-since-previous summary — into
-**Markdown** and **HTML** (the HTML carries a print stylesheet, so "PDF" is the browser's
-print-to-PDF of the same document).
+(20.3), deprecation & lifecycle signals (20.4), the composite trust radar (17.4), and the
+change-since-previous summary — into **Markdown** and **HTML** (the HTML carries a print
+stylesheet, so "PDF" is the browser's print-to-PDF of the same document).
 
 Design rules:
 
@@ -79,6 +79,10 @@ class ReportCard:
         license: The license & terms signal report (V2-MCP-34.3) or ``None`` when undiscovered.
             Note the asymmetry with the other sections: a discovered snapshot with *no* signal
             still has a section — its status is "not stated", which is a result, not missing data.
+        lifecycle: The deprecation & lifecycle signal report (V2-MCP-34.4) or ``None`` when
+            undiscovered. Same asymmetry as ``license``: a discovered snapshot with no flagged
+            capability still has a section — "no signals" is a result, and it is deliberately
+            never worded as a "stable" claim.
         trust: The five-axis composite trust profile or ``None`` when undiscovered.
         change: The change-since-previous summary (severity roll-up + itemized rows) or ``None``
             when the snapshot introduced no diff (the first version, or an unchanged re-discovery).
@@ -92,6 +96,7 @@ class ReportCard:
     safety: Optional["ReportSafety"] = None
     documentation: Optional[Dict[str, Any]] = None
     license: Optional["ReportLicense"] = None
+    lifecycle: Optional["ReportLifecycle"] = None
     trust: Optional["ReportTrust"] = None
     change: Optional["ReportChange"] = None
 
@@ -183,6 +188,27 @@ class ReportLicense:
 
 
 @dataclass(frozen=True)
+class ReportLifecycle:
+    """The deprecation & lifecycle signal report (serializes the 20.4 detector result).
+
+    ``status`` is ``"detected"`` or ``"none_detected"`` — the latter is the careful wording
+    for "no capability said anything about its lifecycle", never a claim that the surface is
+    stable. ``statement`` carries the detector's pre-worded one-line summary so every
+    renderer states absence the same way. ``stage_counts`` covers **all** capabilities;
+    ``flagged`` rows are the detector's JSON-ready per-capability dicts (``item_type`` /
+    ``name`` / ``stage`` / ``signals``), already bounded and deterministically ordered
+    upstream.
+    """
+
+    status: str
+    statement: str
+    stage_counts: Dict[str, int]
+    flagged: List[Dict[str, Any]]
+    flagged_truncated: int
+    capabilities_scanned: int
+
+
+@dataclass(frozen=True)
 class ReportTrust:
     """The composite trust profile (serializes the 17.4 radar)."""
 
@@ -214,6 +240,7 @@ def build_report_card(
     score_report: Optional[Mapping[str, Any]],
     surface_metrics: Optional[Mapping[str, Any]],
     license_signals: Optional[Mapping[str, Any]] = None,
+    lifecycle_signals: Optional[Mapping[str, Any]] = None,
     trust_profile: Optional[Mapping[str, Any]],
     change_rows: Sequence[Mapping[str, Any]],
     change_severity: Optional[Mapping[str, int]],
@@ -242,6 +269,10 @@ def build_report_card(
             ``as_dict()`` for the snapshot, or ``None`` when never discovered. A "nothing
             found" result is *not* ``None`` — it is a report with status ``"not_stated"``,
             and it renders as a section (absence of a statement is itself reportable).
+        lifecycle_signals: The :func:`app.mcp_lifecycle_signals.detect_lifecycle_signals`
+            ``as_dict()`` for the snapshot's capability items, or ``None`` when never
+            discovered. As with ``license_signals``, a "nothing found" result is *not*
+            ``None`` — it renders as a section whose wording is never a "stable" claim.
         trust_profile: The ``compute_trust_profile`` ``as_dict()``, or ``None``.
         change_rows: The stored ``previous → this`` change rows (empty for a first/unchanged version).
         change_severity: The ``severity_counts`` roll-up over ``change_rows``, or ``None``.
@@ -268,6 +299,7 @@ def build_report_card(
     # Unlike the other sections, an *empty* license report still renders — "not stated" is a
     # result the reader needs, not missing data — so only a missing report yields None.
     license = _license(license_signals) if license_signals is not None else None
+    lifecycle = _lifecycle(lifecycle_signals) if lifecycle_signals is not None else None
     trust = _trust(trust_profile) if trust_profile else None
     change = _change(change_rows, change_severity) if change_rows else None
 
@@ -280,6 +312,7 @@ def build_report_card(
         safety=safety,
         documentation=documentation,
         license=license,
+        lifecycle=lifecycle,
         trust=trust,
         change=change,
     )
@@ -436,6 +469,78 @@ def _license(report: Mapping[str, Any]) -> ReportLicense:
 def _license_kind_label(kind: str) -> str:
     """Return the human label for a signal ``kind`` (verbatim when unknown)."""
     return _LICENSE_KIND_LABELS.get(kind, kind)
+
+
+#: Human labels for the lifecycle ``stage`` values (unknown stages fall back verbatim).
+_LIFECYCLE_STAGE_LABELS: Mapping[str, str] = {
+    "deprecated": "Deprecated",
+    "experimental": "Experimental",
+    "beta": "Beta",
+    "stable": "Stable (declared)",
+    "unspecified": "Unspecified",
+}
+
+#: Human labels for the lifecycle signal ``kind`` values (unknown kinds fall back verbatim).
+_LIFECYCLE_KIND_LABELS: Mapping[str, str] = {
+    "annotation_flag": "Annotation flag",
+    "annotation_status": "Annotation status",
+    "name_token": "Name token",
+    "description_phrase": "Description phrase",
+}
+
+
+def _lifecycle(report: Mapping[str, Any]) -> ReportLifecycle:
+    """Shape the lifecycle detector report into its section (values pass through).
+
+    The detector already bounds, orders, and words everything — including the "no signals"
+    phrasing that must never read as a "stable" claim — so this only normalizes shapes.
+    """
+    return ReportLifecycle(
+        status=str(report.get("status") or "none_detected"),
+        statement=str(report.get("statement") or ""),
+        stage_counts={
+            str(stage): int(count or 0)
+            for stage, count in (report.get("stage_counts") or {}).items()
+        },
+        flagged=[
+            {
+                "item_type": str(capability.get("item_type", "")),
+                "name": str(capability.get("name", "")),
+                "stage": str(capability.get("stage", "")),
+                "signals": list(capability.get("signals") or []),
+                "signals_truncated": int(capability.get("signals_truncated") or 0),
+            }
+            for capability in (report.get("flagged") or [])
+        ],
+        flagged_truncated=int(report.get("flagged_truncated") or 0),
+        capabilities_scanned=int(report.get("capabilities_scanned") or 0),
+    )
+
+
+def _lifecycle_stage_label(stage: str) -> str:
+    """Return the human label for a lifecycle ``stage`` (verbatim when unknown)."""
+    return _LIFECYCLE_STAGE_LABELS.get(stage, stage)
+
+
+def _lifecycle_kind_label(kind: str) -> str:
+    """Return the human label for a lifecycle signal ``kind`` (verbatim when unknown)."""
+    return _LIFECYCLE_KIND_LABELS.get(kind, kind)
+
+
+def _lifecycle_signal_summary(capability: Mapping[str, Any]) -> str:
+    """Summarize one flagged capability's signals as a single human-readable cell.
+
+    Each signal reads "<kind label>: <matched>"; signals are joined with "; " and an
+    overflow note is appended when the detector truncated the itemization.
+    """
+    parts = [
+        f"{_lifecycle_kind_label(str(signal.get('kind', '')))}: {signal.get('matched', '')}"
+        for signal in (capability.get("signals") or [])
+    ]
+    truncated = int(capability.get("signals_truncated") or 0)
+    if truncated:
+        parts.append(f"…and {truncated} more")
+    return "; ".join(parts)
 
 
 def _trust(profile: Mapping[str, Any]) -> ReportTrust:
@@ -696,6 +801,34 @@ def render_report_markdown(card: ReportCard) -> str:
             if lic.signals_truncated:
                 lines.append("")
                 lines.append(f"_…and {lic.signals_truncated} more signal(s) not shown._")
+    else:
+        lines.append("_Not scanned — no discovered snapshot._")
+    lines.append("")
+
+    # --- Deprecation & lifecycle signals ------------------------------------------------------
+    lines.append("## Lifecycle Signals")
+    lines.append("")
+    lines.append("_Deprecated / experimental / beta markers the capabilities' own text and"
+                 " annotations carry — absence of a signal is not a stability claim._")
+    lines.append("")
+    if card.lifecycle is not None:
+        lc = card.lifecycle
+        lines.append(lc.statement)
+        if lc.flagged:
+            lines.append("")
+            lines.append("| Capability | Kind | Stage | Signals |")
+            lines.append("| --- | --- | --- | --- |")
+            for capability in lc.flagged:
+                lines.append(
+                    f"| `{_md_cell(capability['name'])}` | {_md_cell(capability['item_type'])}"
+                    f" | {_lifecycle_stage_label(capability['stage'])}"
+                    f" | {_md_cell(_lifecycle_signal_summary(capability))} |"
+                )
+            if lc.flagged_truncated:
+                lines.append("")
+                lines.append(
+                    f"_…and {lc.flagged_truncated} more flagged capability(ies) not shown._"
+                )
     else:
         lines.append("_Not scanned — no discovered snapshot._")
     lines.append("")
@@ -1011,6 +1144,31 @@ def render_report_html(card: ReportCard) -> str:
             if lic.signals_truncated:
                 p.append(f"<p class='note'>…and {lic.signals_truncated} more signal(s)"
                          " not shown.</p>")
+    else:
+        p.append("<p class='note'>Not scanned — no discovered snapshot.</p>")
+
+    # --- Deprecation & lifecycle signals ------------------------------------------------------
+    p.append("<h2>Lifecycle Signals</h2>")
+    p.append("<p class='note'>Deprecated / experimental / beta markers the capabilities'"
+             " own text and annotations carry — absence of a signal is not a stability"
+             " claim.</p>")
+    if card.lifecycle is not None:
+        lc = card.lifecycle
+        p.append(f"<p>{_e(lc.statement)}</p>")
+        if lc.flagged:
+            p.append("<table><tr><th>Capability</th><th>Kind</th><th>Stage</th>"
+                     "<th>Signals</th></tr>")
+            for capability in lc.flagged:
+                p.append(
+                    f"<tr><td><code>{_e(capability['name'])}</code></td>"
+                    f"<td>{_e(capability['item_type'])}</td>"
+                    f"<td>{_e(_lifecycle_stage_label(capability['stage']))}</td>"
+                    f"<td>{_e(_lifecycle_signal_summary(capability))}</td></tr>"
+                )
+            p.append("</table>")
+            if lc.flagged_truncated:
+                p.append(f"<p class='note'>…and {lc.flagged_truncated} more flagged"
+                         " capability(ies) not shown.</p>")
     else:
         p.append("<p class='note'>Not scanned — no discovered snapshot.</p>")
 

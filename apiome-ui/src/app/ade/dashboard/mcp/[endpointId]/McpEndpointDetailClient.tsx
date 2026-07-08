@@ -51,6 +51,7 @@ import {
 import {
   MCP_DETAIL_TABS,
   mcpCapabilityAnnotationBadge,
+  mcpLifecycleBadge,
   mcpTransportBadge,
   mcpVisibilityBadge,
 } from "@/app/components/ade/dashboard/mcp/mcpUiPrimitives";
@@ -113,6 +114,12 @@ function CapabilityItemCard({
 }) {
   const hints = mcpAnnotationHints(item);
   const sections = mcpItemDetailSections(item);
+  // Lifecycle badge (34.4): only a detected stage renders a chip — "unspecified" shows
+  // nothing, because a server that says nothing has made no stability statement.
+  const lifecycleBadge = mcpLifecycleBadge(item.lifecycle?.stage);
+  const lifecycleTitle = (item.lifecycle?.signals ?? [])
+    .map((signal) => `${signal.source}: ${signal.matched}`)
+    .join("; ");
   return (
     <div
       id={anchorId}
@@ -126,6 +133,14 @@ function CapabilityItemCard({
         <span className="font-medium text-gray-900 dark:text-white">
           {item.title ?? item.name}
         </span>
+        {lifecycleBadge ? (
+          <McpBadge
+            tone={lifecycleBadge.tone}
+            title={lifecycleTitle || `lifecycle: ${lifecycleBadge.label}`}
+          >
+            {lifecycleBadge.label}
+          </McpBadge>
+        ) : null}
         {/* Only assert behavioural hints the server set to true, as tone-coded capability badges
             (readOnly green / idempotent blue / destructive red / openWorld amber). */}
         {hints.map((hint) => {

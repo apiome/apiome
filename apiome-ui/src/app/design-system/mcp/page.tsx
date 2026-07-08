@@ -224,6 +224,7 @@ function galleryTool(name: string, annotations: Record<string, unknown> | null):
     output_schema: null,
     annotations,
     ordinal: 0,
+    lifecycle: null,
   };
 }
 
@@ -261,6 +262,7 @@ const DOC_COVERAGE_SAMPLE: McpCapabilityItem[] = [
     output_schema: { type: 'object' },
     annotations: null,
     ordinal: 0,
+    lifecycle: null,
   },
   {
     item_type: 'tool',
@@ -273,6 +275,7 @@ const DOC_COVERAGE_SAMPLE: McpCapabilityItem[] = [
     output_schema: null,
     annotations: null,
     ordinal: 1,
+    lifecycle: null,
   },
   {
     item_type: 'resource',
@@ -285,6 +288,7 @@ const DOC_COVERAGE_SAMPLE: McpCapabilityItem[] = [
     output_schema: null,
     annotations: null,
     ordinal: 2,
+    lifecycle: null,
   },
 ];
 
@@ -732,9 +736,9 @@ const COMPARE_SAMPLE: McpCompareServer[] = [
     score: 91,
     authType: 'bearer',
     items: [
-      { item_type: 'tool', name: 'vector_search', title: 'Vector search', description: 'Semantic search', uri: null, uri_template: null, input_schema: { properties: { query: { description: 'q' } } }, output_schema: { type: 'object' }, annotations: { readOnlyHint: true }, ordinal: 0 },
-      { item_type: 'tool', name: 'fetch_doc', title: null, description: null, uri: null, uri_template: null, input_schema: null, output_schema: null, annotations: null, ordinal: 1 },
-      { item_type: 'resource', name: 'index', title: null, description: 'The index', uri: 'idx://', uri_template: null, input_schema: null, output_schema: null, annotations: null, ordinal: 2 },
+      { item_type: 'tool', name: 'vector_search', title: 'Vector search', description: 'Semantic search', uri: null, uri_template: null, input_schema: { properties: { query: { description: 'q' } } }, output_schema: { type: 'object' }, annotations: { readOnlyHint: true }, ordinal: 0, lifecycle: null },
+      { item_type: 'tool', name: 'fetch_doc', title: null, description: null, uri: null, uri_template: null, input_schema: null, output_schema: null, annotations: null, ordinal: 1, lifecycle: null },
+      { item_type: 'resource', name: 'index', title: null, description: 'The index', uri: 'idx://', uri_template: null, input_schema: null, output_schema: null, annotations: null, ordinal: 2, lifecycle: null },
     ],
     trust: mcpTrustProfileFromPayload({
       version_id: 'va',
@@ -767,8 +771,8 @@ const COMPARE_SAMPLE: McpCompareServer[] = [
     score: 63,
     authType: 'none',
     items: [
-      { item_type: 'tool', name: 'vector_search', title: null, description: null, uri: null, uri_template: null, input_schema: null, output_schema: null, annotations: { destructiveHint: true }, ordinal: 0 },
-      { item_type: 'tool', name: 'delete_index', title: null, description: null, uri: null, uri_template: null, input_schema: null, output_schema: null, annotations: { destructiveHint: true }, ordinal: 1 },
+      { item_type: 'tool', name: 'vector_search', title: null, description: null, uri: null, uri_template: null, input_schema: null, output_schema: null, annotations: { destructiveHint: true }, ordinal: 0, lifecycle: null },
+      { item_type: 'tool', name: 'delete_index', title: null, description: null, uri: null, uri_template: null, input_schema: null, output_schema: null, annotations: { destructiveHint: true }, ordinal: 1, lifecycle: null },
     ],
     trust: null,
     reliability: null,
@@ -861,6 +865,7 @@ function demoItem(
     output_schema: null,
     annotations: null,
     ordinal: 0,
+    lifecycle: null,
     ...overrides,
   };
 }

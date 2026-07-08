@@ -12,6 +12,7 @@ import {
   mcpVisibilityBadge,
   mcpAuthBadge,
   mcpCapabilityAnnotationBadge,
+  mcpLifecycleBadge,
   MCP_CAPABILITY_ANNOTATION_ORDER,
   mcpHealthFromDiscoveryStatus,
   mcpHealthMeta,
@@ -126,6 +127,27 @@ describe('mcpCapabilityAnnotationBadge', () => {
       'destructiveHint',
       'openWorldHint',
     ]);
+  });
+});
+
+describe('mcpLifecycleBadge', () => {
+  it('maps each detected lifecycle stage to its tone + label (V2-MCP-34.4)', () => {
+    expect(mcpLifecycleBadge('deprecated')).toEqual({ tone: 'red', label: 'deprecated' });
+    expect(mcpLifecycleBadge('experimental')).toEqual({ tone: 'amber', label: 'experimental' });
+    expect(mcpLifecycleBadge('beta')).toEqual({ tone: 'violet', label: 'beta' });
+    expect(mcpLifecycleBadge('stable')).toEqual({ tone: 'green', label: 'stable (declared)' });
+  });
+
+  it('normalizes case and whitespace before resolving', () => {
+    expect(mcpLifecycleBadge('  Deprecated ')).toEqual({ tone: 'red', label: 'deprecated' });
+  });
+
+  it('renders no badge for "unspecified" — silence must never read as stable', () => {
+    expect(mcpLifecycleBadge('unspecified')).toBeNull();
+    expect(mcpLifecycleBadge(null)).toBeNull();
+    expect(mcpLifecycleBadge(undefined)).toBeNull();
+    expect(mcpLifecycleBadge('')).toBeNull();
+    expect(mcpLifecycleBadge('mystery-stage')).toBeNull();
   });
 });
 

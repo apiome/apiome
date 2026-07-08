@@ -13,6 +13,7 @@ from .mcp_change_severity import (
     classify_change,
     severity_counts,
 )
+from .mcp_lifecycle_signals import STAGE_UNSPECIFIED, assess_capability_lifecycle
 from .repository_refresh_status import RefreshStatus, compute_refresh_status
 
 
@@ -5114,6 +5115,39 @@ class McpEndpointVersionSummary(BaseModel):
     created_at: Optional[str] = None
 
 
+class McpLifecycleSignalOut(BaseModel):
+    """One lifecycle signal a capability's own text or annotations carry (V2-MCP-34.4).
+
+    Mirrors :meth:`app.mcp_lifecycle_signals.LifecycleSignal.as_dict`: the asserted
+    ``stage``, what kind of match it was, where it was found, the verbatim match, and a
+    bounded context excerpt. ``id`` is the detector's stable hash for the signal.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    stage: str
+    kind: str
+    source: str
+    matched: str
+    excerpt: str = ""
+
+
+class McpCapabilityLifecycleOut(BaseModel):
+    """A capability's lifecycle assessment — what the capability-list badge renders.
+
+    ``stage`` is the detector's roll-up: ``deprecated`` / ``experimental`` / ``beta`` /
+    ``stable`` (explicitly declared only) / ``unspecified``. ``unspecified`` means the
+    server said nothing — deliberately never presented as "stable" (V2-MCP-34.4 AC).
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    stage: str = STAGE_UNSPECIFIED
+    signals: List[McpLifecycleSignalOut] = Field(default_factory=list)
+    signals_truncated: int = 0
+
+
 class McpCapabilityItemOut(BaseModel):
     """One normalized capability item (tool/resource/resource_template/prompt) of a surface."""
 
@@ -5129,6 +5163,7 @@ class McpCapabilityItemOut(BaseModel):
     uri: Optional[str] = None
     uri_template: Optional[str] = None
     ordinal: int = 0
+    lifecycle: Optional[McpCapabilityLifecycleOut] = None
 
 
 class McpEndpointVersionDetail(McpEndpointVersionSummary):
@@ -5362,22 +5397,44 @@ def mcp_version_summary_from_row(
 
 
 def mcp_capability_item_out_from_row(row: Dict[str, Any]) -> McpCapabilityItemOut:
-    """Project an ``apiome.mcp_capability_items`` row onto the wire model."""
+    """Project an ``apiome.mcp_capability_items`` row onto the wire model.
+
+    The ``lifecycle`` assessment (V2-MCP-34.4) is computed here by the pure detector — it
+    is derived entirely from the row's own fields, so it needs no persistence and every
+    consumer of the item wire model gets the same badges for the same stored surface.
+    """
 
     def _obj(value: Any) -> Optional[Dict[str, Any]]:
         return value if isinstance(value, dict) else None
 
+    item_type = str(row["item_type"])
+    name = str(row["name"])
+    title = _mcp_str(row.get("title"))
+    description = _mcp_str(row.get("description"))
+    annotations = _obj(row.get("annotations"))
+    lifecycle = assess_capability_lifecycle(
+        item_type=item_type,
+        name=name,
+        title=title,
+        description=description,
+        annotations=annotations,
+    )
     return McpCapabilityItemOut(
-        item_type=str(row["item_type"]),
-        name=str(row["name"]),
-        title=_mcp_str(row.get("title")),
-        description=_mcp_str(row.get("description")),
+        item_type=item_type,
+        name=name,
+        title=title,
+        description=description,
         input_schema=_obj(row.get("input_schema")),
         output_schema=_obj(row.get("output_schema")),
-        annotations=_obj(row.get("annotations")),
+        annotations=annotations,
         uri=_mcp_str(row.get("uri")),
         uri_template=_mcp_str(row.get("uri_template")),
         ordinal=int(row.get("ordinal") or 0),
+        lifecycle=McpCapabilityLifecycleOut(
+            stage=lifecycle.stage,
+            signals=[McpLifecycleSignalOut(**s.as_dict()) for s in lifecycle.signals],
+            signals_truncated=lifecycle.signals_truncated,
+        ),
     )
 
 

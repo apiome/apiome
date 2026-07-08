@@ -181,6 +181,29 @@ export function mcpCapabilityAnnotationBadge(
   return CAPABILITY_ANNOTATION_BADGES[hintKey] ?? null;
 }
 
+/**
+ * The lifecycle stages the server-side detector rolls a capability up to (V2-MCP-34.4), with the
+ * tone + label a capability card shows: deprecated → red, experimental → amber, beta → violet,
+ * and an *explicitly declared* stable → green.
+ */
+const CAPABILITY_LIFECYCLE_BADGES: Record<string, McpBadgeSpec> = {
+  deprecated: { tone: 'red', label: 'deprecated' },
+  experimental: { tone: 'amber', label: 'experimental' },
+  beta: { tone: 'violet', label: 'beta' },
+  stable: { tone: 'green', label: 'stable (declared)' },
+};
+
+/**
+ * Resolve a capability's rolled-up lifecycle stage to a badge, or `null` when there is nothing to
+ * show. `unspecified` (and any unknown stage) deliberately renders **no** badge — a capability the
+ * server says nothing about must never read as "stable"; only an explicit annotation declaration
+ * earns the green chip.
+ */
+export function mcpLifecycleBadge(stage: string | null | undefined): McpBadgeSpec | null {
+  const value = (stage ?? '').trim().toLowerCase();
+  return CAPABILITY_LIFECYCLE_BADGES[value] ?? null;
+}
+
 // --- Health pill ----------------------------------------------------------------------------
 // An endpoint's reachability, distilled from its last discovery status into three signal states
 // (plus an "unknown" fallback before the first discovery). The dot color follows the mockup's
