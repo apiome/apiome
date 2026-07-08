@@ -119,6 +119,8 @@ const PROFILE_FULL: McpServerProfile = {
     'filters; results are capped at 100.',
   iconUrl: 'https://cdn.acme.dev/logo.png',
   websiteUrl: 'https://acme.dev',
+  addedVia: 'manual',
+  versionOrigin: 'sweep',
 };
 
 /** An older (2025-03-26) server missing title/protocol/output-schema — the graceful-degrade path. */
@@ -140,6 +142,9 @@ const PROFILE_LEGACY: McpServerProfile = {
   instructions: null,
   iconUrl: null,
   websiteUrl: null,
+  // A pre-provenance snapshot: the strip reads "unrecorded", never a concrete origin.
+  addedVia: 'manual',
+  versionOrigin: null,
 };
 
 /** An unscored, never-discovered endpoint — no grade, no counts, unknown health. */
@@ -161,6 +166,8 @@ const PROFILE_UNSCORED: McpServerProfile = {
   instructions: null,
   iconUrl: null,
   websiteUrl: null,
+  addedVia: 'manual',
+  versionOrigin: null,
 };
 
 /** A representative tool-complexity set spanning the tiers, incl. a bare tool and a deep polymorphic one. */

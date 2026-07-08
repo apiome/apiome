@@ -74,6 +74,7 @@ from .mcp_insight_aggregation import (
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
 from .mcp_license_signals import detect_license_signals
 from .mcp_lifecycle_signals import detect_lifecycle_signals
+from .mcp_provenance import build_endpoint_provenance
 from .mcp_report_card import (
     build_report_card,
     render_report_html,
@@ -2075,6 +2076,16 @@ async def export_mcp_endpoint_report(
     if version is not None:
         lifecycle_signals = detect_lifecycle_signals(items).as_dict()
 
+    # Provenance (V2-MCP-34.5) — how the endpoint was added and which run produced each
+    # snapshot, assembled by the pure layer from the stored version history and the
+    # per-trigger job tallies. Always present: added_via is a fact from registration,
+    # so even a never-discovered endpoint has a provenance section.
+    provenance = build_endpoint_provenance(
+        endpoint,
+        db.list_mcp_endpoint_versions(str(endpoint_id)),
+        db.list_mcp_discovery_trigger_stats(str(endpoint_id)),
+    ).as_dict()
+
     # Change-since-previous — the stored previous → this diff rows and their severity roll-up.
     change_rows: List[Dict[str, Any]] = (
         db.get_mcp_version_changes(str(version["id"])) if version is not None else []
@@ -2090,6 +2101,7 @@ async def export_mcp_endpoint_report(
         surface_metrics=surface_metrics_dict,
         license_signals=license_signals,
         lifecycle_signals=lifecycle_signals,
+        provenance=provenance,
         trust_profile=trust_profile,
         change_rows=change_rows,
         change_severity=change_severity,

@@ -4213,6 +4213,8 @@ class McpEndpointOut(BaseModel):
     # headers, connect timing (V2-MCP-34.1); null until the first successful discovery.
     transport_metadata: Optional[Dict[str, Any]] = None
     transport_metadata_at: Optional[str] = None
+    # How the endpoint entered the catalog — manual / registry / import (V2-MCP-34.5).
+    added_via: str = "manual"
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
@@ -4582,6 +4584,7 @@ def mcp_endpoint_out_from_row(row: Dict[str, Any]) -> McpEndpointOut:
         if isinstance(row.get("transport_metadata"), dict)
         else None,
         transport_metadata_at=_ts(row.get("transport_metadata_at")),
+        added_via=str(row.get("added_via") or "manual"),
         created_at=_ts(row.get("created_at")),
         updated_at=_ts(row.get("updated_at")),
     )
@@ -5091,7 +5094,9 @@ class McpEndpointVersionSummary(BaseModel):
     identity, ``surface_fingerprint`` and advertised ``server_branding``, the quality ``score`` /
     ``grade`` (NULL until the snapshot is scored), and the per-direction ``change_counts`` it
     introduced relative to the prior version. ``is_current`` flags the snapshot the endpoint's
-    ``current_version_id`` points at.
+    ``current_version_id`` points at. ``discovery_trigger`` / ``discovery_job_id`` are the
+    snapshot's provenance — what enqueued the run that produced it (V2-MCP-34.5); ``None`` means
+    unrecorded (a pre-provenance snapshot), never any concrete origin.
     """
 
     model_config = ConfigDict(populate_by_name=True)
@@ -5111,6 +5116,8 @@ class McpEndpointVersionSummary(BaseModel):
     scored_at: Optional[str] = None
     change_counts: McpVersionChangeCounts
     is_current: bool = False
+    discovery_trigger: Optional[str] = None
+    discovery_job_id: Optional[str] = None
     discovered_at: Optional[str] = None
     created_at: Optional[str] = None
 
@@ -5391,6 +5398,8 @@ def mcp_version_summary_from_row(
         change_counts=_mcp_change_counts_from_row(row),
         is_current=current_version_id is not None
         and str(current_version_id) == version_id,
+        discovery_trigger=_mcp_str(row.get("discovery_trigger")),
+        discovery_job_id=_mcp_str(row.get("discovery_job_id")),
         discovered_at=_mcp_ts(row.get("discovered_at")),
         created_at=_mcp_ts(row.get("created_at")),
     )

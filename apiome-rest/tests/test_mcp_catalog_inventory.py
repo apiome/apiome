@@ -89,6 +89,30 @@ def test_inventory_record_projects_every_column():
     assert rec["health"] == "healthy"
 
 
+def test_inventory_record_carries_provenance_columns():
+    """added_via and the current snapshot's origin export per V2-MCP-34.5."""
+    rec = inventory_record(_row(added_via="registry", discovery_trigger="sweep"))
+    assert rec["added_via"] == "registry"
+    assert rec["current_version_origin"] == "sweep"
+
+
+def test_inventory_added_via_defaults_to_manual():
+    # Rows predating V148 (or a mocked row without the column) read as manual — the only
+    # creation path that has ever existed, so the default is exact, not a guess.
+    assert inventory_record(_row())["added_via"] == "manual"
+
+
+def test_inventory_version_origin_unrecorded_when_snapshot_predates_tracking():
+    # A current snapshot with no stored trigger is "unrecorded" — never a concrete origin.
+    rec = inventory_record(_row(discovery_trigger=None))
+    assert rec["current_version_origin"] == "unrecorded"
+
+
+def test_inventory_version_origin_empty_when_never_discovered():
+    rec = inventory_record(_row(current_version_id=None, discovery_trigger=None))
+    assert rec["current_version_origin"] is None
+
+
 def test_host_extraction_strips_embedded_credentials_and_port():
     # A credential embedded in the URL (and the port) must never survive into the host column.
     rec = inventory_record(_row(endpoint_url="https://user:secret@host.example:8443/mcp"))

@@ -5,6 +5,32 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.103.0] - 2026-07-07
+
+### Added
+- **Provenance & discovery-source tracking (#4659, V2-MCP-34.5 / MCAT-20.5)** — the catalog now
+  records and surfaces *how it knows things*: how each endpoint was added and which discovery run
+  (manual / sweep / registry) produced each version snapshot.
+  - Discovery persistence stamps provenance at write time: `record_mcp_discovery_version` stores
+    the producing job's `trigger` and id on the new `mcp_endpoint_versions.discovery_trigger` /
+    `discovery_job_id` columns (V148), threaded from the running job row by the discovery engine.
+    Endpoint reads carry the new `mcp_endpoints.added_via` column.
+  - New pure module `app.mcp_provenance`: `build_endpoint_provenance` deterministically assembles
+    the full picture — how the endpoint was added, first/last discovery, per-version origins
+    (newest-first, capped with overflow counted), per-origin version counts, and completed-run
+    tallies per trigger. A snapshot with no attributable run reads **`unrecorded`**, never any
+    concrete origin, and the assembly handles `registry` alongside the two implemented triggers.
+  - Wire models: `McpEndpointOut.added_via`; `McpEndpointVersionSummary.discovery_trigger` /
+    `discovery_job_id` on the version list/detail reads.
+  - The report card (MCAT-19.1) gains a **Provenance** section (identity-adjacent): added-via,
+    the current snapshot's origin, completed-run tallies, and a per-version origin table in both
+    Markdown and HTML — present even for a never-discovered endpoint (how it was added is a fact
+    from registration).
+  - The catalog inventory export (MCAT-19.2) gains `added_via` and `current_version_origin`
+    columns (CSV + JSON), with `unrecorded` distinguished from never-discovered (empty).
+  - New `Database.list_mcp_discovery_trigger_stats` per-trigger job tallies for the provenance
+    assembly.
+
 ## [1.102.0] - 2026-07-07
 
 ### Added

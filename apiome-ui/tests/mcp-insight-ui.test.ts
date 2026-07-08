@@ -189,6 +189,7 @@ describe('mcpServerProfileFrom', () => {
     current_version_id: VERSION_ID,
     last_discovered_at: '2026-07-06T10:00:00Z',
     last_discovery_status: 'changed',
+    added_via: 'manual',
   };
 
   const version = mcpVersionSummaryFromPayload({
@@ -310,5 +311,24 @@ describe('mcpServerProfileFrom', () => {
   it('treats blank instructions as absent', () => {
     expect(mcpServerProfileFrom({ instructions: '   ' }).instructions).toBeNull();
     expect(mcpServerProfileFrom({ instructions: '' }).instructions).toBeNull();
+  });
+
+  it('threads provenance into addedVia / versionOrigin (V2-MCP-34.5)', () => {
+    const swept = mcpVersionSummaryFromPayload({
+      id: VERSION_ID,
+      version_seq: 7,
+      discovery_trigger: 'sweep',
+      discovery_job_id: 'job-1',
+    });
+    const profile = mcpServerProfileFrom({ endpoint, version: swept });
+    expect(profile.addedVia).toBe('manual');
+    expect(profile.versionOrigin).toBe('sweep');
+
+    // A pre-provenance snapshot stays null (renders as "unrecorded", never a concrete origin).
+    const unrecorded = mcpVersionSummaryFromPayload({ id: VERSION_ID, version_seq: 1 });
+    expect(mcpServerProfileFrom({ endpoint, version: unrecorded }).versionOrigin).toBeNull();
+
+    // No endpoint record → no provenance strip at all.
+    expect(mcpServerProfileFrom({ version: swept }).addedVia).toBeNull();
   });
 });

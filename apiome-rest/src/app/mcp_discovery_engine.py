@@ -331,13 +331,16 @@ def _persist_outcome(
     surface: DiscoverySurface,
     discovered_at: datetime,
     transport_meta: Optional[TransportMetadata] = None,
+    trigger: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Fingerprint/diff the surface, persist a version when changed, and finish the job.
 
     Synchronous (DB-bound); invoked via :func:`asyncio.to_thread`. Returns the job's
     ``result`` payload (also written to the job row) so the caller can log it. The observed
     host/transport metadata (V2-MCP-34.1), when present, is refreshed on the endpoint on every
-    successful run regardless of whether the surface changed.
+    successful run regardless of whether the surface changed. ``trigger`` — the job's V130
+    enqueue source — is stamped onto any new snapshot as its provenance
+    (``discovery_trigger`` / ``discovery_job_id``, V2-MCP-34.5).
     """
     endpoint_id = str(endpoint["id"])
     fingerprint = surface.fingerprint()
@@ -379,6 +382,8 @@ def _persist_outcome(
         capability_rows=surface.to_capability_rows(None),
         change_rows=change_rows,
         discovered_at=discovered_at,
+        discovery_trigger=trigger,
+        discovery_job_id=job_id,
     )
     # Auto-capture the lint score for the new snapshot (best-effort; never blocks the job).
     _capture_mcp_version_score(persisted["version_id"], surface)
@@ -518,7 +523,15 @@ async def _drive_discovery_job(job_id: str, endpoint: Dict[str, Any]) -> None:
 
     try:
         result = await asyncio.to_thread(
-            _persist_outcome, job_id, endpoint, surface, _utcnow(), transport_meta
+            _persist_outcome,
+            job_id,
+            endpoint,
+            surface,
+            _utcnow(),
+            transport_meta,
+            # The job row is the provenance source of truth; its trigger is stamped
+            # onto any snapshot this run produces (V2-MCP-34.5).
+            running.get("trigger"),
         )
         logger.info(
             "discovery job=%s endpoint=%s completed: %s",

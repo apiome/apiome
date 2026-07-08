@@ -21,6 +21,7 @@ from app.auth import validate_authentication
 from app.main import app
 from app.mcp_license_signals import detect_license_signals
 from app.mcp_lifecycle_signals import detect_lifecycle_signals
+from app.mcp_provenance import build_endpoint_provenance
 from app.mcp_report_card import (
     MAX_REPORT_CHANGES,
     MAX_REPORT_FINDINGS,
@@ -203,6 +204,41 @@ def _full_card():
             {"item_type": "tool", "name": "forecast", "description": "Current forecast."},
         ]
     ).as_dict()
+    # Provenance across all three origins plus one pre-provenance snapshot (V2-MCP-34.5).
+    provenance = build_endpoint_provenance(
+        {**_ENDPOINT_ROW, "added_via": "manual", "created_at": _NOW},
+        [
+            {
+                "id": "aaaa4444-0000-0000-0000-000000000001",
+                "version_seq": 1,
+                "version_tag": "2026-07-01T09:00Z",
+                "discovery_trigger": None,
+                "discovery_job_id": None,
+                "discovered_at": _NOW,
+            },
+            {
+                "id": _V1,
+                "version_seq": 2,
+                "version_tag": "2026-07-02T10:00Z",
+                "discovery_trigger": "registry",
+                "discovery_job_id": "job-r",
+                "discovered_at": _NOW,
+            },
+            {
+                "id": _V2,
+                "version_seq": 3,
+                "version_tag": "2026-07-06T02:00Z",
+                "discovery_trigger": "sweep",
+                "discovery_job_id": "job-s",
+                "discovered_at": _NOW,
+            },
+        ],
+        [
+            {"trigger": "manual", "total": 1, "completed": 1},
+            {"trigger": "registry", "total": 1, "completed": 1},
+            {"trigger": "sweep", "total": 4, "completed": 4},
+        ],
+    ).as_dict()
     return build_report_card(
         endpoint=_ENDPOINT_ROW,
         version=_version_row(),
@@ -211,6 +247,7 @@ def _full_card():
         surface_metrics=surface_metrics,
         license_signals=license_signals,
         lifecycle_signals=lifecycle_signals,
+        provenance=provenance,
         trust_profile=trust,
         change_rows=change_rows,
         change_severity={"breaking": 1, "additive": 1, "review": 0, "total": 2},
@@ -225,6 +262,7 @@ def test_markdown_full_report_has_every_section():
     for heading in (
         "# MCP Server Report Card — Acme Weather",
         "## Identity",
+        "## Provenance",
         "## Grade & Score",
         "## Capability Surface",
         "## Safety Posture",
@@ -292,8 +330,8 @@ def test_never_discovered_renders_graceful_partial():
     assert "Not scanned — no discovered snapshot." in md
     # Both text-signal sections (license & lifecycle) reserve that wording for a missing snapshot.
     assert md.count("Not scanned — no discovered snapshot.") == 2
-    # Still a complete document, every one of the nine H2 sections present.
-    assert md.count("\n## ") == 9
+    # Still a complete document, every one of the ten H2 sections present.
+    assert md.count("\n## ") == 10
     assert html.startswith("<!doctype html>") and "never been discovered" in html
 
 
@@ -413,6 +451,76 @@ def test_lifecycle_signals_render_in_html_table():
     assert "Description phrase: deprecated" in html
 
 
+def test_provenance_renders_origins_and_run_counts_in_markdown():
+    md = render_report_markdown(_full_card())
+    assert "## Provenance" in md
+    assert "Added: **Registered manually**" in md
+    # Current snapshot attribution (v3 is _V2, the endpoint's current version).
+    assert "Current snapshot: version 3 via **Scheduled sweep**" in md
+    # Run tallies across every trigger.
+    assert "Completed discovery runs: **6** total · 1 manual · 4 sweep · 1 registry" in md
+    # Per-version origin rows, newest first, with the current one flagged.
+    assert "| 3 (current) | 2026-07-06T02:00Z | Scheduled sweep |" in md
+    assert "| 2 | 2026-07-02T10:00Z | Registry refresh |" in md
+    # The pre-provenance snapshot reads unrecorded — never any concrete origin.
+    assert "| 1 | 2026-07-01T09:00Z | Unrecorded |" in md
+    assert "1 version(s) predate provenance tracking" in md
+
+
+def test_provenance_renders_in_html_table():
+    html = render_report_html(_full_card())
+    assert "<h2>Provenance</h2>" in html
+    assert "Registered manually" in html
+    assert "<td>Scheduled sweep</td>" in html
+    assert "<td>Registry refresh</td>" in html
+    assert "<td>Unrecorded</td>" in html
+    assert "predate provenance tracking" in html
+
+
+def test_provenance_absent_renders_not_available():
+    card = build_report_card(
+        endpoint=_ENDPOINT_ROW,
+        version=None,
+        is_current=False,
+        score_report=None,
+        surface_metrics=None,
+        trust_profile=None,
+        change_rows=[],
+        change_severity=None,
+        auth_posture="anonymous",
+        auth_type=None,
+        generated_at=_GEN,
+    )
+    md = render_report_markdown(card)
+    assert "## Provenance" in md
+    assert "_Not available._" in md
+
+
+def test_provenance_never_discovered_still_states_added_via():
+    provenance = build_endpoint_provenance(
+        {**_ENDPOINT_ROW, "current_version_id": None, "last_discovered_at": None},
+        [],
+        [],
+    ).as_dict()
+    card = build_report_card(
+        endpoint=_ENDPOINT_ROW,
+        version=None,
+        is_current=False,
+        score_report=None,
+        surface_metrics=None,
+        provenance=provenance,
+        trust_profile=None,
+        change_rows=[],
+        change_severity=None,
+        auth_posture="anonymous",
+        auth_type=None,
+        generated_at=_GEN,
+    )
+    md = render_report_markdown(card)
+    assert "Added: **Registered manually**" in md
+    assert "Never discovered — no snapshot provenance yet." in md
+
+
 def test_renderers_never_emit_a_credential_secret():
     # The report only ever receives an auth *posture* + auth_type label. Even if a caller passed a
     # secret-shaped auth_type, it is only rendered as a label, never as a secret; and there is no
@@ -473,6 +581,15 @@ def _mock_full_endpoint(mdb, *, score_report=True):
     mdb.list_mcp_invocation_stats.return_value = []
     mdb.get_mcp_version_changes.return_value = [
         {"change_type": "added", "item_type": "tool", "item_name": "wipe"},
+    ]
+    # Provenance inputs (V2-MCP-34.5): version history spans manual + sweep origins.
+    mdb.list_mcp_endpoint_versions.return_value = [
+        {**_version_row(_V2, 2), "discovery_trigger": "sweep", "discovery_job_id": "job-s"},
+        {**_version_row(_V1, 1), "discovery_trigger": "manual", "discovery_job_id": "job-m"},
+    ]
+    mdb.list_mcp_discovery_trigger_stats.return_value = [
+        {"trigger": "manual", "total": 1, "completed": 1},
+        {"trigger": "sweep", "total": 3, "completed": 3},
     ]
 
 
@@ -623,6 +740,23 @@ def test_report_lifecycle_absence_is_never_a_stable_claim():
     assert "## Lifecycle Signals" in body
     assert "No lifecycle signals detected across 2 scanned capabilities." in body
     assert "not a claim that these capabilities are stable" in body
+
+
+def test_report_provenance_section_end_to_end():
+    """The route assembles provenance from the stored history + job tallies (V2-MCP-34.5)."""
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        _mock_full_endpoint(mdb)
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/report")
+    assert r.status_code == 200
+    body = r.text
+    assert "## Provenance" in body
+    assert "Added: **Registered manually**" in body
+    # The current snapshot (v2) is attributed to its sweep run.
+    assert "Current snapshot: version 2 via **Scheduled sweep**" in body
+    assert "Completed discovery runs: **4** total · 1 manual · 3 sweep · 0 registry" in body
+    # Both version origins itemize.
+    assert "| 2 (current) |" in body and "| Scheduled sweep |" in body
+    assert "| 1 |" in body and "| Manual run |" in body
 
 
 def test_report_never_leaks_the_credential_secret():

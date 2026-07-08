@@ -212,7 +212,7 @@ is document-local only.
 | **V2-MCP-EPIC-31** | MCAT-EPIC-17 | Reliability, Latency & Trust Signals | 17.1–17.4 | ◐ next (§10) |
 | **V2-MCP-EPIC-32** | MCAT-EPIC-18 | Catalog-wide Analytics, Comparison & Semantic Discovery | 18.1–18.5 | ○ v2 (§10) |
 | **V2-MCP-EPIC-33** | MCAT-EPIC-19 | Reporting, Export & Shareable Artifacts | 19.1–19.5 | ○ v2 (§10) |
-| **V2-MCP-EPIC-34** | MCAT-EPIC-20 | Discovery Enrichment & Provenance | 20.1–20.5 | ○ v2 (§10) |
+| **V2-MCP-EPIC-34** | MCAT-EPIC-20 | Discovery Enrichment & Provenance | 20.1–20.5 | ✅ done |
 | **V2-MCP-EPIC-35** | MCAT-EPIC-21 | Advanced Search, Facets & Cross-Server Discovery | 21.1–21.4 | ○ v2 (§10) |
 | **V2-MCP-EPIC-36** | MCAT-EPIC-22 | Catalog Data Quality & Curation | 22.1–22.4 | ○ v2 (§10) |
 
@@ -1227,7 +1227,7 @@ small, token-driven SVG chart kit rather than pulling a heavyweight dependency.
 | **V2-MCP-EPIC-31** | MCAT-EPIC-17 | Reliability, Latency & Trust Signals | 17.1–17.4 | ◐ next |
 | **V2-MCP-EPIC-32** | MCAT-EPIC-18 | Catalog-wide Analytics, Comparison & Semantic Discovery | 18.1–18.5 | ○ v2 |
 | **V2-MCP-EPIC-33** | MCAT-EPIC-19 | Reporting, Export & Shareable Artifacts | 19.1–19.5 | ○ v2 |
-| **V2-MCP-EPIC-34** | MCAT-EPIC-20 | Discovery Enrichment & Provenance | 20.1–20.5 | ○ v2 |
+| **V2-MCP-EPIC-34** | MCAT-EPIC-20 | Discovery Enrichment & Provenance | 20.1–20.5 | ✅ done |
 | **V2-MCP-EPIC-35** | MCAT-EPIC-21 | Advanced Search, Facets & Cross-Server Discovery | 21.1–21.4 | ○ v2 |
 | **V2-MCP-EPIC-36** | MCAT-EPIC-22 | Catalog Data Quality & Curation | 22.1–22.4 | ○ v2 |
 
@@ -1890,7 +1890,7 @@ handshake/discovery calls.
 | 20.2 ✅ | Server branding capture | Persist advertised website/logo/icon/instructions for richer catalog cards | `mcp-catalog` `backend` | Y | N | ● | apiome-rest, apiome-db |
 | 20.3 ✅ | License & terms signal detection | Detect and report license/ToS hints in server metadata/instructions | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
 | 20.4 ✅ | Deprecation & lifecycle signals | Flag deprecated/experimental capabilities from annotations/description text | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
-| 20.5 | Provenance & discovery-source tracking | Record how/when each endpoint & version was found (manual/sweep/registry) and surface it | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
+| 20.5 ✅ | Provenance & discovery-source tracking | Record how/when each endpoint & version was found (manual/sweep/registry) and surface it | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
 
 ### MCAT-20.1 — Host & transport metadata capture  ·  **#4655**  ·  ✅ Done (apiome-rest 1.99.0, apiome-db 0.27.0)
 - **Problem.** The catalog knows a server's *capabilities* but almost nothing about the *service*
@@ -1937,7 +1937,7 @@ handshake/discovery calls.
 - **Dependencies / Parallelism.** After 14.1. Parallel across Epic-20.
 - **Technical Stack.** Python detector; Next.js badge.
 
-### MCAT-20.5 — Provenance & discovery-source tracking  ·  **#4659**
+### MCAT-20.5 — Provenance & discovery-source tracking  ·  **#4659**  ·  ✅ Done (apiome-rest 1.103.0, apiome-db 0.29.0, apiome-ui 0.87.0)
 - **Problem.** `mcp_discovery_jobs.trigger` records manual/sweep/registry per job, but the catalog
   never shows **how a server (or a given version) came to be known** — important for trust and audit.
 - **Solution / Scope.** Persist and surface **provenance**: how each endpoint was added and how/when

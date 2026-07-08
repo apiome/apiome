@@ -9770,7 +9770,7 @@ class Database:
         "visibility, published, enabled, discovery_cadence_seconds, last_discovered_at, "
         "last_discovery_status, consecutive_failures, next_discovery_after, quarantined_at, "
         "quarantine_reason, current_version_id, transport_metadata, transport_metadata_at, "
-        "created_at, updated_at"
+        "added_via, created_at, updated_at"
     )
 
     def list_mcp_endpoints(self, tenant_id: str) -> List[Dict[str, Any]]:
@@ -9868,16 +9868,19 @@ class Database:
                    e.visibility, e.published, e.enabled,
                    e.last_discovered_at, e.last_discovery_status,
                    e.consecutive_failures, e.quarantined_at, e.current_version_id,
+                   e.added_via,
+                   cv.discovery_trigger,
                    s.score, s.grade,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'tool')              AS tool_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource')          AS resource_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource_template') AS resource_template_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'prompt')            AS prompt_count
             FROM apiome.mcp_endpoints e
+            LEFT JOIN apiome.mcp_endpoint_versions cv ON cv.id = e.current_version_id
             LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
             LEFT JOIN apiome.mcp_capability_items ci ON ci.version_id = e.current_version_id
             WHERE {where}
-            GROUP BY e.id, s.score, s.grade
+            GROUP BY e.id, cv.discovery_trigger, s.score, s.grade
             ORDER BY e.id ASC
             LIMIT %s
         """
@@ -11081,7 +11084,8 @@ class Database:
         q = """
             SELECT id, endpoint_id, version_seq, version_tag, protocol_version,
                    server_name, server_title, server_version, instructions,
-                   capabilities, surface_fingerprint, server_branding, discovered_at, created_at
+                   capabilities, surface_fingerprint, server_branding,
+                   discovery_trigger, discovery_job_id, discovered_at, created_at
             FROM apiome.mcp_endpoint_versions
             WHERE endpoint_id = %s::uuid
             ORDER BY version_seq DESC
@@ -11131,7 +11135,8 @@ class Database:
         q = f"""
             SELECT v.id, v.endpoint_id, v.version_seq, v.version_tag, v.protocol_version,
                    v.server_name, v.server_title, v.server_version, v.surface_fingerprint,
-                   v.server_branding, v.discovered_at, v.created_at,
+                   v.server_branding, v.discovery_trigger, v.discovery_job_id,
+                   v.discovered_at, v.created_at,
                    s.score, s.grade, s.scored_at,
                    {self._MCP_VERSION_CHANGE_COUNTS}
             FROM apiome.mcp_endpoint_versions v
@@ -11165,6 +11170,7 @@ class Database:
             SELECT v.id, v.endpoint_id, v.version_seq, v.version_tag, v.protocol_version,
                    v.server_name, v.server_title, v.server_version, v.instructions,
                    v.capabilities, v.surface_fingerprint, v.server_branding,
+                   v.discovery_trigger, v.discovery_job_id,
                    v.discovered_at, v.created_at,
                    s.score, s.grade, s.scored_at,
                    {self._MCP_VERSION_CHANGE_COUNTS}
@@ -11354,6 +11360,8 @@ class Database:
         capability_rows: List[Dict[str, Any]],
         change_rows: List[Dict[str, Any]],
         discovered_at: Any,
+        discovery_trigger: Optional[str] = None,
+        discovery_job_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Persist a new version snapshot atomically and point the endpoint at it.
 
@@ -11372,6 +11380,11 @@ class Database:
                 ``detail``) relative to the previous version; empty for a first run.
             discovered_at: When the discovery that produced this snapshot ran; also the source
                 of the ``version_tag`` date/time label.
+            discovery_trigger: Provenance of the producing run (``manual`` / ``sweep`` /
+                ``registry``, the job's V130 ``trigger``); ``None`` records "unrecorded"
+                (V2-MCP-34.5).
+            discovery_job_id: The producing ``mcp_discovery_jobs`` id, stored as a plain
+                audit pointer (deliberately no FK — see V148).
 
         Returns:
             ``{"version_id": str, "version_seq": int, "version_tag": str}`` for the new snapshot.
@@ -11405,9 +11418,10 @@ class Database:
                     INSERT INTO apiome.mcp_endpoint_versions (
                         endpoint_id, version_seq, version_tag, protocol_version, server_name,
                         server_title, server_version, instructions, capabilities,
-                        surface_fingerprint, server_branding, discovered_at
+                        surface_fingerprint, server_branding, discovery_trigger,
+                        discovery_job_id, discovered_at
                     ) VALUES (
-                        %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::uuid, %s
                     )
                     RETURNING id
                     """,
@@ -11427,6 +11441,8 @@ class Database:
                         Json(version_row.get("server_branding"))
                         if version_row.get("server_branding") is not None
                         else None,
+                        discovery_trigger,
+                        discovery_job_id,
                         discovered_at,
                     ),
                 )
@@ -12028,6 +12044,35 @@ class Database:
             LEFT JOIN apiome.mcp_version_scores s ON s.version_id = v.id
             WHERE v.endpoint_id = %s::uuid
             ORDER BY v.version_seq ASC
+        """
+        return self.execute_query(q, (endpoint_id,))
+
+    def list_mcp_discovery_trigger_stats(self, endpoint_id: str) -> List[Dict[str, Any]]:
+        """Tally an endpoint's discovery jobs per ``trigger`` for provenance (MCAT-20.5).
+
+        One row per trigger value present in the endpoint's job log, with the total number
+        of jobs, how many of them completed, and the enqueue-time span. The pure
+        :func:`~app.mcp_provenance.build_endpoint_provenance` turns these into the
+        "how often has each origin run" counts on the provenance strip / report section.
+
+        Args:
+            endpoint_id: The owning endpoint (already tenant-validated by the caller).
+
+        Returns:
+            One dict per trigger (``trigger`` / ``total`` / ``completed`` / ``first_at`` /
+            ``last_at``), ordered by trigger; empty when the endpoint has no job history.
+        """
+        q = """
+            SELECT
+                trigger,
+                COUNT(*) AS total,
+                COUNT(*) FILTER (WHERE state = 'completed') AS completed,
+                MIN(created_at) AS first_at,
+                MAX(created_at) AS last_at
+            FROM apiome.mcp_discovery_jobs
+            WHERE endpoint_id = %s::uuid
+            GROUP BY trigger
+            ORDER BY trigger ASC
         """
         return self.execute_query(q, (endpoint_id,))
 
