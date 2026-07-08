@@ -3696,6 +3696,7 @@ class TenantRepositoryFileContentResponse(BaseModel):
 class TenantMembershipSchema(BaseModel):
     """One tenant the authenticated user may access."""
 
+    id: str
     slug: str
     name: str
     role: str

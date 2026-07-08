@@ -20624,6 +20624,9 @@ components:
       description: Tenant summary for ``GET /v1/tenants/{slug}``.
     TenantMembershipSchema:
       properties:
+        id:
+          type: string
+          title: Id
         slug:
           type: string
           title: Slug
@@ -20635,6 +20638,7 @@ components:
           title: Role
       type: object
       required:
+      - id
       - slug
       - name
       - role

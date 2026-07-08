@@ -38,6 +38,7 @@ def test_list_my_tenants_jwt():
     assert body["total"] == 2
     assert len(body["items"]) == 2
     assert body["items"][0]["slug"] == "acme"
+    assert body["items"][0]["id"] == _TENANT_ID
 
 
 def test_list_my_tenants_pagination_query():
