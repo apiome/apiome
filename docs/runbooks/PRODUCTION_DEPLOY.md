@@ -24,14 +24,18 @@ The production stack is the base [`docker-compose.yml`](../../docker-compose.yml
                             │  :80 (ACME + redirect) · :443 (HTTPS / HTTP-3)
                      ┌──────▼──────┐
                      │    caddy    │  automatic Let's Encrypt TLS
-                     └──┬───────┬──┘
-            api.<domain>│       │mcp.<domain>
-                  ┌─────▼─┐   ┌─▼─────┐
-                  │ rest  │   │  mcp  │      (NOT published on the host)
-                  └─────┬─┘   └─┬─────┘
+                     └──┬───┬───┬──┘
+            api.<domain>│   │   │studio.<domain>
+                  ┌─────▼─┐ │ ┌─▼──────┐
+                  │ rest  │ │ │ studio │      (designer — NOT published on host)
+                  └─────┬─┘ │ └────────┘
+        mcp.<domain>    │   │
+                  ┌─────▼─┐ │
+                  │  mcp  │ │
+                  └─────┬─┘ │
                         └───┬───┘
                       ┌─────▼─────┐
-                      │ postgres  │  persistent volume (NOT published on the host)
+                      │ postgres  │
                       └───────────┘
    migrate (gated, `migrate` profile)   backup (scheduled, `ops` profile)   seed (`dev-only`, never in prod)
 ```
@@ -47,7 +51,7 @@ enumerates every change versus the dev base.
 | Requirement | Notes |
 |-------------|-------|
 | Linux host with **Docker Engine** + **Docker Compose v2.24+** | v2.24 is required for the `!override` / `!reset` merge tags used by the overlay. Check: `docker compose version`. |
-| Public **DNS** records | `A`/`AAAA` for `DEPLOY_API_DOMAIN` and `DEPLOY_MCP_DOMAIN` pointing at this host **before** first boot — Caddy needs them resolvable to pass the ACME challenge. |
+| Public **DNS** records | `A`/`AAAA` for `DEPLOY_API_DOMAIN`, `DEPLOY_MCP_DOMAIN`, and `DEPLOY_STUDIO_DOMAIN` pointing at this host **before** first boot — Caddy needs them resolvable to pass the ACME challenge. |
 | Inbound **firewall** | Allow **80/tcp** and **443/tcp** (+ **443/udp** for HTTP/3). Block everything else; the app and DB ports are intentionally not published. |
 | Outbound 443 | For Let's Encrypt + pulling images. |
 | A **secret manager** | To hold the values in §3 and especially the backup encryption key. |
@@ -130,10 +134,16 @@ dc exec rest python -c "import urllib.request;print(urllib.request.urlopen('http
 curl -fsS https://$DEPLOY_API_DOMAIN/livez && echo               # process liveness
 curl -fsS https://$DEPLOY_API_DOMAIN/readyz && echo              # DB-checked readiness
 curl -fsS https://$DEPLOY_MCP_DOMAIN/health && echo              # MCP health
+curl -fsS -o /dev/null -w "%{http_code}\n" https://$DEPLOY_STUDIO_DOMAIN/  # Studio (expect 307/200)
 ```
 
 `/readyz` returns 200 only once REST can reach a **migrated** database; a 503 means migrations
-have not been applied (re-check §4.4). The deploy is "working" when all three return 200 over HTTPS.
+have not been applied (re-check §4.4). The deploy is "working" when REST, MCP, and Studio respond over HTTPS.
+
+Set `APIOME_CORS_ALLOWED_ORIGINS` to include both the main app and Studio origins (e.g.
+`https://app.apiome.app,https://studio.apiome.app`). The default regex also allows
+`https://*.apiome.app` when `APIOME_CORS_ALLOWED_ORIGIN_REGEX` is unset. Credentials are
+enabled (`allow_credentials=True`) for session cookies from Studio.
 
 ---
 

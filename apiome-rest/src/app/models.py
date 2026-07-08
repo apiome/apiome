@@ -39,6 +39,34 @@ class TagSchema(BaseModel):
         from_attributes = True
 
 
+class TagCreateRequest(BaseModel):
+    """Request model for creating a project class tag."""
+    name: str
+    color: str = "default"
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class TagUpdateRequest(BaseModel):
+    """Request model for updating a project class tag."""
+    name: Optional[str] = None
+    color: Optional[str] = None
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ClassTagAssignRequest(BaseModel):
+    """Request model for assigning a tag to a class."""
+    tag_id: str
+
+    class Config:
+        from_attributes = True
+
+
 class ClassTagSchema(BaseModel):
     """Pydantic model for a class-tag relationship."""
     id: str
@@ -1936,6 +1964,19 @@ class VersionBranchFromRevisionRequest(BaseModel):
         ...,
         validation_alias=AliasChoices("branchName", "branch_name"),
         description="New branch name; unique per project.",
+    )
+
+
+class VersionBranchCreateRequest(BaseModel):
+    """Create a named branch whose tip is an existing revision."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str = Field(..., description="Branch name; unique per project.")
+    from_version_id: str = Field(
+        ...,
+        validation_alias=AliasChoices("fromVersionId", "from_version_id"),
+        description="Existing revision (version row id) to use as the branch tip.",
     )
 
 

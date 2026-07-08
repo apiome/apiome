@@ -938,6 +938,16 @@ class Database:
             }
         return dict(rows[0])
 
+    def get_tag_by_id(self, tag_id: str) -> Optional[Dict[str, Any]]:
+        """Get a single project tag by ID."""
+        query = """
+            SELECT id, project_id, name, color, description, created_at, updated_at
+            FROM apiome.tags
+            WHERE id = %s
+        """
+        rows = self.execute_query(query, (tag_id,))
+        return dict(rows[0]) if rows else None
+
     def get_tags_for_project(self, project_id: str) -> List[Dict[str, Any]]:
         """Get all tags for a specific project."""
         query = """
@@ -6816,11 +6826,28 @@ class Database:
         """Named branches for a project (tenant-scoped)."""
         q = """
             SELECT b.id, b.project_id, b.name, b.tip_version_id, b.branched_from_revision_id,
-                   b.protected, b.is_default, b.require_merge_path, b.created_by
+                   b.protected, b.is_default, b.require_merge_path, b.created_by,
+                   b.created_at, b.updated_at
             FROM apiome.version_branches b
             JOIN apiome.projects p ON b.project_id = p.id
             WHERE b.project_id = %s AND p.tenant_id = %s
             ORDER BY b.is_default DESC, b.name ASC
+        """
+        return self.execute_query(q, (project_id, tenant_id))
+
+    def list_version_branches_detailed_for_project(
+        self, project_id: str, tenant_id: str
+    ) -> List[Dict[str, Any]]:
+        """Named branches with tip version string (for Studio / UI BFF consumers)."""
+        q = """
+            SELECT b.id, b.project_id, b.name, b.tip_version_id, b.is_default, b.protected,
+                   b.require_merge_path, b.created_by, b.created_at, b.updated_at,
+                   v.version_id AS tip_version_string
+            FROM apiome.version_branches b
+            JOIN apiome.versions v ON v.id = b.tip_version_id AND v.project_id = b.project_id
+            JOIN apiome.projects p ON b.project_id = p.id
+            WHERE b.project_id = %s AND p.tenant_id = %s AND v.deleted_at IS NULL
+            ORDER BY b.name ASC
         """
         return self.execute_query(q, (project_id, tenant_id))
 

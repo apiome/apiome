@@ -58,6 +58,7 @@ def test_cors_origins_parsed_and_trimmed():
 def test_cors_origin_regex_default_when_unset():
     s = Settings(cors_allowed_origin_regex=None)
     assert s.effective_cors_origin_regex == DEFAULT_CORS_ORIGIN_REGEX
+    assert "apiome\\.app" in DEFAULT_CORS_ORIGIN_REGEX
 
 
 def test_cors_origin_regex_custom_value():

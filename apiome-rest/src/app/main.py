@@ -32,6 +32,7 @@ from .workflow_audit_routes import router as workflow_audit_router
 from .versions_routes import router as versions_router
 from .version_merge_routes import router as version_merge_router
 from .properties_routes import router as properties_router
+from .project_tags_routes import router as project_tags_router
 from .paths_routes import router as paths_router
 from .data_routes import router as data_router
 from .migration_plans_routes import router as migration_plans_router
@@ -221,6 +222,7 @@ app.include_router(version_merge_router)
 app.include_router(workflow_audit_router)
 app.include_router(versions_router)
 app.include_router(properties_router)
+app.include_router(project_tags_router)
 app.include_router(paths_router)
 app.include_router(migration_plans_router)
 app.include_router(version_tags_router)

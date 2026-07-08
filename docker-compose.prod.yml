@@ -89,6 +89,47 @@ services:
     ports: !override []
     restart: unless-stopped
 
+  studio:
+    build:
+      context: .
+      dockerfile: private-suite/suite/designer/Dockerfile
+    environment:
+      NODE_ENV: production
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?set NEXTAUTH_SECRET in your .env}
+      NEXTAUTH_URL: https://${DEPLOY_STUDIO_DOMAIN:?set DEPLOY_STUDIO_DOMAIN}
+      NEXTAUTH_COOKIE_DOMAIN: ${NEXTAUTH_COOKIE_DOMAIN:-.apiome.app}
+      NEXT_PUBLIC_MAIN_APP_URL: https://${DEPLOY_APP_DOMAIN:-app.apiome.app}
+      NEXT_PUBLIC_STUDIO_URL: https://${DEPLOY_STUDIO_DOMAIN}
+      NEXT_PUBLIC_API_URL: https://${DEPLOY_API_DOMAIN}
+      NEXT_PUBLIC_REST_API_BASE_URL: http://rest:8000/v1
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in your .env}@postgres:5432/${POSTGRES_DB:-apiome}
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGDATABASE: ${POSTGRES_DB:-apiome}
+      PGUSER: ${POSTGRES_USER:-postgres}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in your .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rest:
+        condition: service_healthy
+    ports: !override []
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3003/').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
+    restart: unless-stopped
+    networks:
+      - apiome-mcp
+
   # ── TLS terminator / reverse proxy ────────────────────────────────────────────────────────────
   # Automatic Let's Encrypt certificates. The only host-exposed ports in production.
   caddy:
@@ -101,6 +142,7 @@ services:
     environment:
       DEPLOY_API_DOMAIN: ${DEPLOY_API_DOMAIN:?set DEPLOY_API_DOMAIN to the REST API hostname, e.g. api.example.com}
       DEPLOY_MCP_DOMAIN: ${DEPLOY_MCP_DOMAIN:?set DEPLOY_MCP_DOMAIN to the MCP hostname, e.g. mcp.example.com}
+      DEPLOY_STUDIO_DOMAIN: ${DEPLOY_STUDIO_DOMAIN:?set DEPLOY_STUDIO_DOMAIN to the Studio hostname, e.g. studio.example.com}
       ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL for Let's Encrypt expiry notices}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
@@ -110,6 +152,8 @@ services:
       rest:
         condition: service_healthy
       mcp:
+        condition: service_healthy
+      studio:
         condition: service_healthy
     networks:
       - apiome-mcp

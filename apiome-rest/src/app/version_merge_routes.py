@@ -25,6 +25,7 @@ from .models import (
     CompatibilityFindingOut,
     MergeSessionStatusPatchRequest,
     RevisionDeprecationWarningOut,
+    VersionBranchCreateRequest,
     VersionBranchFromRevisionRequest,
     VersionBranchFromRevisionResponse,
     VersionBranchDivergenceBranchOut,
@@ -413,6 +414,54 @@ def _merge_session_conflict_json(r: Dict[str, Any]) -> Dict[str, Any]:
         "sortOrder": r.get("sort_order", 0),
         "createdAt": r.get("created_at"),
     }
+
+
+@router.get("/{tenant_slug}/{project_id}/version-branches")
+async def list_version_branches(
+    tenant_slug: str,
+    project_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> List[Dict[str, Any]]:
+    """List named version branches for a project (Studio BFF / git menu)."""
+    tenant_id = auth_data["tenant_id"]
+    project = db.get_project_by_id(project_id, tenant_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return db.list_version_branches_detailed_for_project(project_id, tenant_id)
+
+
+@router.post("/{tenant_slug}/{project_id}/version-branches")
+async def create_version_branch(
+    tenant_slug: str,
+    project_id: str,
+    body: VersionBranchCreateRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Dict[str, Any]:
+    """Create a branch whose tip is an existing revision."""
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.CREATE)
+    tenant_id = auth_data["tenant_id"]
+    uid = get_authenticated_user_id(auth_data)
+    name = (body.name or "").strip()
+    from_vid = (body.from_version_id or "").strip()
+    if not name or not from_vid:
+        raise HTTPException(status_code=400, detail="name and fromVersionId are required")
+    if not _is_valid_version_branch_name(name):
+        raise HTTPException(
+            status_code=400,
+            detail="Branch name must start with a letter and contain only letters, digits, . _ - / (max 255 chars)",
+        )
+    result = db.create_version_branch_from_revision(
+        project_id, tenant_id, name, from_vid, uid
+    )
+    if result.get("success") is False:
+        code = str(result.get("code", ""))
+        err = str(result.get("error", "Failed to create branch"))
+        status = 404 if code == "NOT_FOUND" else 409 if "exists" in err.lower() else 400
+        raise HTTPException(status_code=status, detail=err)
+    branch = result.get("branch")
+    if not isinstance(branch, dict):
+        raise HTTPException(status_code=500, detail="Branch created but response was invalid")
+    return dict(branch)
 
 
 @router.post("/{tenant_slug}/{project_id}/version-branches/from-revision")

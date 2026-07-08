@@ -12,12 +12,13 @@ INSECURE_JWT_SECRET_FALLBACK = "your-secret-key-here"
 
 # Default CORS allow-list applied when APIOME_CORS_ALLOWED_ORIGINS is unset.
 DEFAULT_CORS_ORIGINS = [
-    "http://localhost:3000",  # Next.js default port
-    "http://localhost:3001",  # Next.js when 3000 is taken
+    "http://localhost:3000",  # apiome-ui (main app)
+    "http://localhost:3001",  # alternate Next.js port
+    "http://localhost:3003",  # studio (designer)
 ]
 
 # Default CORS origin regex applied when APIOME_CORS_ALLOWED_ORIGIN_REGEX is unset.
-DEFAULT_CORS_ORIGIN_REGEX = r"https://.*\.apiome\.dev"
+DEFAULT_CORS_ORIGIN_REGEX = r"https://.*\.apiome\.app"
 
 
 class Settings(BaseSettings):
