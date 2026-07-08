@@ -73,6 +73,7 @@ from .mcp_insight_aggregation import (
 )
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
 from .mcp_license_signals import detect_license_signals
+from .mcp_lifecycle_signals import detect_lifecycle_signals
 from .mcp_report_card import (
     build_report_card,
     render_report_html,
@@ -1984,8 +1985,9 @@ async def export_mcp_endpoint_report(
     """Export a self-contained one-page report card for an endpoint version (MCAT-19.1).
 
     Serializes the same panels the in-app Insight view shows — identity, grade + score breakdown,
-    capability surface, safety posture, documentation coverage, license & terms signals, the
-    composite trust radar, and the change-since-previous summary — into a shareable **Markdown**
+    capability surface, safety posture, documentation coverage, license & terms signals,
+    deprecation & lifecycle signals, the composite trust radar, and the change-since-previous
+    summary — into a shareable **Markdown**
     or **HTML** document (the HTML
     carries a print stylesheet, so "PDF" is the browser's print-to-PDF of the same file). No new
     metric is computed: the route fetches the values the Insight endpoints already produce and the
@@ -2030,6 +2032,7 @@ async def export_mcp_endpoint_report(
     # Surface-derived sections (surface / safety / documentation / trust) — reconstructed once.
     surface_metrics_obj = None
     surface_metrics_dict: Optional[Dict[str, Any]] = None
+    items: List[Dict[str, Any]] = []
     if version is not None:
         items = db.get_mcp_capability_items(str(version["id"]))
         surface = reconstruct_surface(version, items)
@@ -2064,6 +2067,14 @@ async def export_mcp_endpoint_report(
             website_url=branding.get("website_url") if isinstance(branding, dict) else None,
         ).as_dict()
 
+    # Deprecation & lifecycle signals (V2-MCP-34.4) — the pure detector over the snapshot's
+    # capability items (already fetched above for the surface metrics). Same asymmetry as the
+    # license section: "no signals" is a real section whose wording is never a "stable" claim;
+    # only a never-discovered endpoint has no report.
+    lifecycle_signals: Optional[Dict[str, Any]] = None
+    if version is not None:
+        lifecycle_signals = detect_lifecycle_signals(items).as_dict()
+
     # Change-since-previous — the stored previous → this diff rows and their severity roll-up.
     change_rows: List[Dict[str, Any]] = (
         db.get_mcp_version_changes(str(version["id"])) if version is not None else []
@@ -2078,6 +2089,7 @@ async def export_mcp_endpoint_report(
         score_report=score_report,
         surface_metrics=surface_metrics_dict,
         license_signals=license_signals,
+        lifecycle_signals=lifecycle_signals,
         trust_profile=trust_profile,
         change_rows=change_rows,
         change_severity=change_severity,

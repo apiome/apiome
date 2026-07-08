@@ -69,6 +69,34 @@ export interface McpBrowseHostGroup {
   endpoints: McpBrowseEndpoint[];
 }
 
+/** One lifecycle signal the server's own text or annotations carry for a capability (34.4). */
+export interface McpLifecycleSignal {
+  id: string;
+  /** The stage this signal asserts: `deprecated` / `experimental` / `beta` / `stable`. */
+  stage: string;
+  /** What matched: `annotation_flag` / `annotation_status` / `name_token` / `description_phrase`. */
+  kind: string;
+  /** Where it matched: `annotations` / `name` / `title` / `description`. */
+  source: string;
+  /** The verbatim matched annotation (`key=value`), token, or phrase. */
+  matched: string;
+  /** Bounded context excerpt around the match (may be empty for annotation matches). */
+  excerpt: string;
+}
+
+/**
+ * A capability's lifecycle assessment, computed server-side by the pure detector (34.4).
+ *
+ * `stage` is the roll-up a badge renders: `deprecated` / `experimental` / `beta` /
+ * `stable` (explicitly declared by an annotation only) / `unspecified`. `unspecified`
+ * means the server said nothing — deliberately never rendered as "stable".
+ */
+export interface McpCapabilityLifecycle {
+  stage: string;
+  signals: McpLifecycleSignal[];
+  signals_truncated: number;
+}
+
 /** One normalized capability item (tool / resource / resource_template / prompt). */
 export interface McpCapabilityItem {
   item_type: string;
@@ -85,6 +113,8 @@ export interface McpCapabilityItem {
   annotations: Record<string, unknown> | null;
   /** Stable position within its kind, as returned by the catalog. */
   ordinal: number;
+  /** Server-computed lifecycle assessment, or `null` when the API predates it. */
+  lifecycle: McpCapabilityLifecycle | null;
 }
 
 /** A version snapshot's full surface as returned by the version-detail read. */
@@ -223,6 +253,35 @@ export function mcpBrowseGroupsFromPayload(data: unknown): McpBrowseHostGroup[] 
   });
 }
 
+/**
+ * Parse a capability's `lifecycle` block defensively into {@link McpCapabilityLifecycle}.
+ *
+ * A non-object payload (older API) yields `null` — the card simply renders no lifecycle
+ * badge. A malformed signal entry is dropped rather than producing a broken badge tooltip.
+ */
+export function mcpCapabilityLifecycleFromPayload(raw: unknown): McpCapabilityLifecycle | null {
+  const r = asObject(raw);
+  if (r === null) return null;
+  const stage = asString(r.stage);
+  if (stage === null) return null;
+  const signals = (Array.isArray(r.signals) ? r.signals : [])
+    .map((s) => asObject(s))
+    .filter((s): s is Record<string, unknown> => s !== null)
+    .map((s) => ({
+      id: String(s.id ?? ''),
+      stage: String(s.stage ?? ''),
+      kind: String(s.kind ?? ''),
+      source: String(s.source ?? ''),
+      matched: String(s.matched ?? ''),
+      excerpt: typeof s.excerpt === 'string' ? s.excerpt : '',
+    }));
+  return {
+    stage,
+    signals,
+    signals_truncated: asInt(r.signals_truncated),
+  };
+}
+
 /** Parse one capability item defensively. */
 export function mcpCapabilityItemFromPayload(raw: unknown): McpCapabilityItem {
   const r = (raw ?? {}) as Record<string, unknown>;
@@ -237,6 +296,7 @@ export function mcpCapabilityItemFromPayload(raw: unknown): McpCapabilityItem {
     output_schema: asObject(r.output_schema),
     annotations: asObject(r.annotations),
     ordinal: asInt(r.ordinal),
+    lifecycle: mcpCapabilityLifecycleFromPayload(r.lifecycle),
   };
 }
 

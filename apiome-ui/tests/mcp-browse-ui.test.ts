@@ -12,6 +12,7 @@ import {
   mcpBrowseEndpointFromPayload,
   mcpBrowseGroupsFromPayload,
   mcpCapabilityItemFromPayload,
+  mcpCapabilityLifecycleFromPayload,
   mcpEndpointDetailFromPayload,
   mcpEndpointMatchesQuery,
   mcpFilterGroups,
@@ -268,6 +269,84 @@ describe('mcpCapabilityItemFromPayload', () => {
     expect(item.output_schema).toBeNull();
     expect(item.annotations).toBeNull();
     expect(item.ordinal).toBe(0);
+  });
+
+  it('parses the server-computed lifecycle block onto the item (V2-MCP-34.4)', () => {
+    const item = mcpCapabilityItemFromPayload({
+      item_type: 'tool',
+      name: 'old_search',
+      lifecycle: {
+        stage: 'deprecated',
+        signals: [
+          {
+            id: 'mcp-lifecycle-abc',
+            stage: 'deprecated',
+            kind: 'annotation_flag',
+            source: 'annotations',
+            matched: 'deprecated=true',
+            excerpt: '',
+          },
+        ],
+        signals_truncated: 0,
+      },
+    });
+    expect(item.lifecycle?.stage).toBe('deprecated');
+    expect(item.lifecycle?.signals).toHaveLength(1);
+    expect(item.lifecycle?.signals[0].matched).toBe('deprecated=true');
+  });
+
+  it('yields a null lifecycle when the API predates the field', () => {
+    const item = mcpCapabilityItemFromPayload({ item_type: 'tool', name: 'search' });
+    expect(item.lifecycle).toBeNull();
+  });
+});
+
+describe('mcpCapabilityLifecycleFromPayload', () => {
+  it('parses a full lifecycle block with signals', () => {
+    const lifecycle = mcpCapabilityLifecycleFromPayload({
+      stage: 'beta',
+      signals: [
+        {
+          id: 'mcp-lifecycle-1',
+          stage: 'beta',
+          kind: 'name_token',
+          source: 'name',
+          matched: 'beta',
+          excerpt: 'search_beta',
+        },
+      ],
+      signals_truncated: 2,
+    });
+    expect(lifecycle).toEqual({
+      stage: 'beta',
+      signals: [
+        {
+          id: 'mcp-lifecycle-1',
+          stage: 'beta',
+          kind: 'name_token',
+          source: 'name',
+          matched: 'beta',
+          excerpt: 'search_beta',
+        },
+      ],
+      signals_truncated: 2,
+    });
+  });
+
+  it('returns null for a missing/non-object payload or an absent stage', () => {
+    expect(mcpCapabilityLifecycleFromPayload(undefined)).toBeNull();
+    expect(mcpCapabilityLifecycleFromPayload(null)).toBeNull();
+    expect(mcpCapabilityLifecycleFromPayload('deprecated')).toBeNull();
+    expect(mcpCapabilityLifecycleFromPayload({ signals: [] })).toBeNull();
+  });
+
+  it('drops malformed signal entries instead of producing broken badges', () => {
+    const lifecycle = mcpCapabilityLifecycleFromPayload({
+      stage: 'unspecified',
+      signals: ['bogus', 42, null],
+      signals_truncated: 'not-a-number',
+    });
+    expect(lifecycle).toEqual({ stage: 'unspecified', signals: [], signals_truncated: 0 });
   });
 });
 

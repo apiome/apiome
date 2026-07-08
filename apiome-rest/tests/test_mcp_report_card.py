@@ -20,6 +20,7 @@ from fastapi.testclient import TestClient
 from app.auth import validate_authentication
 from app.main import app
 from app.mcp_license_signals import detect_license_signals
+from app.mcp_lifecycle_signals import detect_lifecycle_signals
 from app.mcp_report_card import (
     MAX_REPORT_CHANGES,
     MAX_REPORT_FINDINGS,
@@ -192,6 +193,16 @@ def _full_card():
     license_signals = detect_license_signals(
         instructions="Licensed under Apache-2.0. See https://acme.example/legal/terms.",
     ).as_dict()
+    lifecycle_signals = detect_lifecycle_signals(
+        [
+            {
+                "item_type": "tool",
+                "name": "old_forecast",
+                "description": "Deprecated — superseded by forecast.",
+            },
+            {"item_type": "tool", "name": "forecast", "description": "Current forecast."},
+        ]
+    ).as_dict()
     return build_report_card(
         endpoint=_ENDPOINT_ROW,
         version=_version_row(),
@@ -199,6 +210,7 @@ def _full_card():
         score_report=score_report,
         surface_metrics=surface_metrics,
         license_signals=license_signals,
+        lifecycle_signals=lifecycle_signals,
         trust_profile=trust,
         change_rows=change_rows,
         change_severity={"breaking": 1, "additive": 1, "review": 0, "total": 2},
@@ -218,6 +230,7 @@ def test_markdown_full_report_has_every_section():
         "## Safety Posture",
         "## Documentation Coverage",
         "## License & Terms",
+        "## Lifecycle Signals",
         "## Trust Profile",
         "## Change Since Previous Version",
     ):
@@ -226,6 +239,9 @@ def test_markdown_full_report_has_every_section():
     # License signals itemize with their human kind labels.
     assert "| SPDX id | instructions | `Apache-2.0` |" in md
     assert "| Terms URL | instructions | `https://acme.example/legal/terms` |" in md
+    # Lifecycle signals itemize the flagged capability with its stage and signal summary.
+    assert "| `old_forecast` | tool | Deprecated |" in md
+    assert "Description phrase: deprecated" in md
     # Pipes inside a cell are escaped so the table row stays intact.
     assert "name too long \\| has pipe" in md
     # Surface roll-up.
@@ -274,8 +290,10 @@ def test_never_discovered_renders_graceful_partial():
     assert "No discovered surface." in md
     assert "No trust signals available yet." in md
     assert "Not scanned — no discovered snapshot." in md
-    # Still a complete document, every one of the eight H2 sections present.
-    assert md.count("\n## ") == 8
+    # Both text-signal sections (license & lifecycle) reserve that wording for a missing snapshot.
+    assert md.count("Not scanned — no discovered snapshot.") == 2
+    # Still a complete document, every one of the nine H2 sections present.
+    assert md.count("\n## ") == 9
     assert html.startswith("<!doctype html>") and "never been discovered" in html
 
 
@@ -328,6 +346,7 @@ def test_license_not_stated_renders_carefully_worded_absence():
         license_signals=detect_license_signals(
             instructions="Use the forecast tool for weather."
         ).as_dict(),
+        lifecycle_signals=detect_lifecycle_signals([]).as_dict(),
         trust_profile=None,
         change_rows=[],
         change_severity=None,
@@ -353,6 +372,45 @@ def test_license_signals_render_in_html_table():
     assert "<code>Apache-2.0</code>" in html
     assert "<td>SPDX id</td>" in html
     assert "informational" in html
+
+
+def test_lifecycle_no_signals_renders_carefully_worded_absence():
+    # A discovered snapshot with unmarked capabilities must render "no signals detected" with
+    # an explicit disclaimer — never a "stable" verdict (AC of V2-MCP-34.4).
+    card = build_report_card(
+        endpoint=_ENDPOINT_ROW,
+        version=_version_row(),
+        is_current=True,
+        score_report=None,
+        surface_metrics=None,
+        lifecycle_signals=detect_lifecycle_signals(
+            [{"item_type": "tool", "name": "forecast", "description": "Plain tool."}]
+        ).as_dict(),
+        trust_profile=None,
+        change_rows=[],
+        change_severity=None,
+        auth_posture="anonymous",
+        auth_type=None,
+        generated_at=_GEN,
+    )
+    assert card.lifecycle is not None
+    assert card.lifecycle.status == "none_detected"
+    md = render_report_markdown(card)
+    html = render_report_html(card)
+    for body in (md, html):
+        assert "No lifecycle signals detected" in body
+        assert "not a claim that these capabilities are stable" in body
+        assert "absence of a signal is not a stability claim" in body.lower()
+    # The "never scanned" wording is reserved for a missing snapshot, not an empty result.
+    assert md.count("Not scanned — no discovered snapshot.") == 1  # license section only
+
+
+def test_lifecycle_signals_render_in_html_table():
+    html = render_report_html(_full_card())
+    assert "<h2>Lifecycle Signals</h2>" in html
+    assert "<code>old_forecast</code>" in html
+    assert "<td>Deprecated</td>" in html
+    assert "Description phrase: deprecated" in html
 
 
 def test_renderers_never_emit_a_credential_secret():
@@ -530,6 +588,41 @@ def test_report_license_absence_is_not_stated_never_no_license():
     assert "## License & Terms" in body
     assert "Not stated" in body
     assert "This is not a claim that the server has no license or terms." in body
+
+
+def test_report_flags_seeded_lifecycle_signals_end_to_end():
+    deprecated_tool = _tool_row("old_forecast", ordinal=2)
+    deprecated_tool["description"] = "Deprecated — superseded by forecast. Will be removed."
+    beta_tool = _tool_row("forecast_beta", ordinal=3)
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        _mock_full_endpoint(mdb)
+        mdb.get_mcp_capability_items.return_value = [
+            _tool_row("forecast", required=["city"], ordinal=0),
+            _tool_row("wipe", destructive=True, ordinal=1),
+            deprecated_tool,
+            beta_tool,
+        ]
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/report")
+    assert r.status_code == 200
+    body = r.text
+    assert "## Lifecycle Signals" in body
+    assert "2 of 4 capabilities carry lifecycle signals (1 deprecated, 1 beta)" in body
+    assert "| `old_forecast` | tool | Deprecated |" in body
+    assert "| `forecast_beta` | tool | Beta |" in body
+    assert "Name token: beta" in body
+    assert "not a verified lifecycle fact" in body
+
+
+def test_report_lifecycle_absence_is_never_a_stable_claim():
+    # The default mocked capability items carry no lifecycle markers at all.
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        _mock_full_endpoint(mdb)
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/report")
+    assert r.status_code == 200
+    body = r.text
+    assert "## Lifecycle Signals" in body
+    assert "No lifecycle signals detected across 2 scanned capabilities." in body
+    assert "not a claim that these capabilities are stable" in body
 
 
 def test_report_never_leaks_the_credential_secret():

@@ -5,6 +5,33 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.102.0] - 2026-07-07
+
+### Added
+- **Deprecation & lifecycle signal detection (#4658, V2-MCP-34.4 / MCAT-20.4)** — servers mark
+  tools "deprecated"/"experimental"/"beta" informally in descriptions, annotations, and naming;
+  the catalog now aggregates those markers per capability.
+  - New pure module `app.mcp_lifecycle_signals`: a deterministic detector
+    (`assess_capability_lifecycle` per item, `detect_lifecycle_signals` per snapshot) over each
+    capability's **annotations** (boolean flags like `deprecated: true`, status keys like
+    `stability: "beta"`), **name/title tokens** (whole tokens only — `search_beta` counts,
+    `alphabet` never does), and **description phrases** (a curated table; verb-like bare words
+    such as "preview"/"sunset" are deliberately excluded so "previews a document" is not a
+    signal). Each capability rolls up to a single stage (deprecated > experimental > beta >
+    stable), signals carry stable ids, sources, verbatim matches, and bounded excerpts, and all
+    itemization is capped with overflow counted, never silently dropped. Pure: no DB, no network.
+  - **No signal is never a "stable" claim** (the AC's wording): an unmarked capability's stage is
+    `unspecified`, the aggregate absence statement carries an explicit disclaimer, and `stable`
+    is reported **only** when an annotation explicitly declares it.
+  - The capability-list API (`GET …/versions/{id}`) now serializes a `lifecycle` block on every
+    item — computed on the fly from the item's own stored fields, no persistence — so the UI can
+    render per-capability badges.
+  - The report card (MCAT-19.1) gains a **Lifecycle Signals** section: the export route runs the
+    detector over the reported snapshot's capability items and `build_report_card` shapes it via
+    the new optional `lifecycle_signals` input; both renderers itemize flagged capabilities with
+    stage labels and per-signal summaries, with "Not scanned" reserved for a never-discovered
+    endpoint.
+
 ## [1.101.0] - 2026-07-07
 
 ### Added

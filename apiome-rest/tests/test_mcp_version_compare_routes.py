@@ -171,6 +171,32 @@ def test_get_version_detail_ok():
     assert v["items"][0]["input_schema"] == {"type": "object"}
 
 
+def test_get_version_detail_items_carry_lifecycle_assessment():
+    """Every item carries the server-computed lifecycle block (V2-MCP-34.4) — a marked
+    capability rolls up to its stage; an unmarked one is `unspecified`, never `stable`."""
+    version = _version_row(_V2, 2, tag="t2", fingerprint="fp2", added=1)
+    deprecated = _tool_row("old_forecast", "Deprecated — superseded by forecast.", 0)
+    plain = _tool_row("forecast", "Get forecast", 1)
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.get_mcp_endpoint_version.return_value = version
+        mdb.get_mcp_capability_items.return_value = [deprecated, plain]
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/versions/{_V2}")
+    assert r.status_code == 200
+    items = r.json()["version"]["items"]
+    flagged = items[0]["lifecycle"]
+    assert flagged["stage"] == "deprecated"
+    assert flagged["signals_truncated"] == 0
+    assert [s["matched"] for s in flagged["signals"]] == ["deprecated", "superseded by"]
+    assert all(
+        set(s) == {"id", "stage", "kind", "source", "matched", "excerpt"}
+        for s in flagged["signals"]
+    )
+    unmarked = items[1]["lifecycle"]
+    assert unmarked["stage"] == "unspecified"
+    assert unmarked["signals"] == []
+
+
 def test_get_version_404_when_not_under_endpoint():
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
