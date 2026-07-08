@@ -38,6 +38,7 @@ import {
 } from "@/app/components/ade/dashboard/mcp/mcpCatalogUi";
 import { McpCatalogCard } from "@/app/components/ade/dashboard/mcp/McpCatalogCard";
 import { McpCatalogToolbar } from "@/app/components/ade/dashboard/mcp/McpCatalogToolbar";
+import { McpSavedSearchesPanel } from "@/app/components/ade/dashboard/mcp/McpSavedSearchesPanel";
 
 export default function McpBrowsePage() {
   const { data: session } = useSession();
@@ -178,17 +179,31 @@ export default function McpBrowsePage() {
       <main className={dashboardMainClass} aria-busy={loading}>
         <div className={dashboardContentStackClass}>
           {hasAnyEndpoints && !error ? (
-            <McpCatalogToolbar
-              search={search}
-              onSearchChange={setSearch}
-              sort={sort}
-              onSortChange={setSort}
-              density={density}
-              onDensityChange={onDensityChange}
-              facets={facets}
-              filters={filters}
-              onFiltersChange={setFilters}
-            />
+            <>
+              <McpCatalogToolbar
+                search={search}
+                onSearchChange={setSearch}
+                sort={sort}
+                onSortChange={setSort}
+                density={density}
+                onDensityChange={onDensityChange}
+                facets={facets}
+                filters={filters}
+                onFiltersChange={setFilters}
+              />
+              <div className="border-b border-gray-200 bg-white px-6 py-3 dark:border-gray-700 dark:bg-gray-800">
+                <McpSavedSearchesPanel
+                  filters={filters}
+                  query={search}
+                  sort={sort}
+                  onApply={({ filters: nextFilters, query: nextQuery, sort: nextSort }) => {
+                    setFilters(nextFilters);
+                    setSearch(nextQuery);
+                    setSort(nextSort);
+                  }}
+                />
+              </div>
+            </>
           ) : null}
 
           {hasAnyEndpoints && !error ? (

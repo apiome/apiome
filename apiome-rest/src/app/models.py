@@ -7000,3 +7000,103 @@ def mcp_cross_server_capability_search_response_from_groups(
         count=len(wire_groups),
         groups=wire_groups,
     )
+
+
+# ===========================================================================
+# MCP Catalog — saved searches (V2-MCP-35.3 / MCAT-21.3, #4662)
+# ===========================================================================
+#
+# Named filter bundles per user/tenant: save, list, run, and delete catalog searches; optionally
+# pin as catalog "views". Filters mirror the ADE catalog toolbar (``McpCatalogFilters``).
+
+
+class McpSavedSearchFiltersOut(BaseModel):
+    """Composable catalog filter state persisted with a saved search."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    hosts: List[str] = Field(default_factory=list)
+    grades: List[str] = Field(default_factory=list)
+    transports: List[str] = Field(default_factory=list)
+    visibilities: List[str] = Field(default_factory=list)
+    auths: List[str] = Field(default_factory=list)
+    categories: List[str] = Field(default_factory=list)
+    safeties: List[str] = Field(default_factory=list)
+    complexities: List[str] = Field(default_factory=list)
+    protocols: List[str] = Field(default_factory=list)
+    healths: List[str] = Field(default_factory=list)
+
+
+class McpSavedSearchOut(BaseModel):
+    """One saved catalog search owned by the caller."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    name: str
+    filters: McpSavedSearchFiltersOut
+    query: str = ""
+    sort: str = "grade"
+    is_pinned: bool = Field(default=False, alias="isPinned")
+    created_at: datetime = Field(alias="createdAt")
+    updated_at: datetime = Field(alias="updatedAt")
+
+
+class McpSavedSearchListResponse(BaseModel):
+    """Envelope for listing saved searches."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    searches: List[McpSavedSearchOut] = Field(default_factory=list)
+
+
+class McpSavedSearchCreate(BaseModel):
+    """Request body for creating a saved search."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    name: str
+    filters: McpSavedSearchFiltersOut = Field(default_factory=McpSavedSearchFiltersOut)
+    query: str = ""
+    sort: str = "grade"
+    is_pinned: bool = Field(default=False, alias="isPinned")
+
+
+class McpSavedSearchUpdate(BaseModel):
+    """Request body for patching a saved search (all fields optional)."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    name: Optional[str] = None
+    filters: Optional[McpSavedSearchFiltersOut] = None
+    query: Optional[str] = None
+    sort: Optional[str] = None
+    is_pinned: Optional[bool] = Field(default=None, alias="isPinned")
+
+
+class McpSavedSearchRunResponse(BaseModel):
+    """Saved search definition plus the faceted result of running its facet-compatible filters."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    search: McpSavedSearchOut
+    result: McpFacetedSearchResponse
+
+
+def mcp_saved_search_out_from_row(row: Dict[str, Any]) -> McpSavedSearchOut:
+    """Project a ``mcp_saved_searches`` row onto the wire model."""
+    raw_filters = row.get("filters") or {}
+    if not isinstance(raw_filters, dict):
+        raw_filters = {}
+    return McpSavedSearchOut(
+        id=str(row["id"]),
+        name=str(row["name"]),
+        filters=McpSavedSearchFiltersOut.model_validate(raw_filters),
+        query=str(row.get("query") or ""),
+        sort=str(row.get("sort") or "grade"),
+        is_pinned=bool(row.get("is_pinned")),
+        created_at=row["created_at"],
+        updated_at=row["updated_at"],
+    )

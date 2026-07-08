@@ -10534,6 +10534,122 @@ class Database:
             ),
         }
 
+    # -----------------------------------------------------------------------
+    # MCP Catalog — saved searches (V2-MCP-35.3 / MCAT-21.3, #4662)
+    # -----------------------------------------------------------------------
+
+    _MCP_SAVED_SEARCH_COLUMNS = (
+        "id, tenant_id, user_id, name, filters, query, sort, is_pinned, created_at, updated_at"
+    )
+
+    def list_mcp_saved_searches(
+        self, tenant_id: str, user_id: str
+    ) -> List[Dict[str, Any]]:
+        """List a user's saved catalog searches, pinned first then newest (MCAT-21.3)."""
+        q = f"""
+            SELECT {self._MCP_SAVED_SEARCH_COLUMNS}
+            FROM apiome.mcp_saved_searches
+            WHERE tenant_id = %s::uuid AND user_id = %s::uuid
+            ORDER BY is_pinned DESC, updated_at DESC, name ASC
+        """
+        return [dict(r) for r in self.execute_query(q, (tenant_id, user_id))]
+
+    def get_mcp_saved_search(
+        self, tenant_id: str, user_id: str, search_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch one saved search scoped to tenant + owner (MCAT-21.3)."""
+        q = f"""
+            SELECT {self._MCP_SAVED_SEARCH_COLUMNS}
+            FROM apiome.mcp_saved_searches
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND user_id = %s::uuid
+            LIMIT 1
+        """
+        rows = self.execute_query(q, (search_id, tenant_id, user_id))
+        return dict(rows[0]) if rows else None
+
+    def create_mcp_saved_search(
+        self,
+        tenant_id: str,
+        user_id: str,
+        *,
+        name: str,
+        filters: Dict[str, Any],
+        query: str,
+        sort: str,
+        is_pinned: bool,
+    ) -> Dict[str, Any]:
+        """Insert a saved catalog search for the owner (MCAT-21.3)."""
+        q = f"""
+            INSERT INTO apiome.mcp_saved_searches
+                (tenant_id, user_id, name, filters, query, sort, is_pinned)
+            VALUES (%s::uuid, %s::uuid, %s, %s::jsonb, %s, %s, %s)
+            RETURNING {self._MCP_SAVED_SEARCH_COLUMNS}
+        """
+        rows = self.execute_query(
+            q,
+            (tenant_id, user_id, name, filters, query, sort, is_pinned),
+        )
+        return dict(rows[0]) if rows else {}
+
+    def update_mcp_saved_search(
+        self,
+        tenant_id: str,
+        user_id: str,
+        search_id: str,
+        *,
+        name: Optional[str] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        query: Optional[str] = None,
+        sort: Optional[str] = None,
+        is_pinned: Optional[bool] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Patch a saved search owned by the caller (MCAT-21.3)."""
+        sets: List[str] = ["updated_at = CURRENT_TIMESTAMP"]
+        params: List[Any] = []
+        if name is not None:
+            sets.append("name = %s")
+            params.append(name)
+        if filters is not None:
+            sets.append("filters = %s::jsonb")
+            params.append(filters)
+        if query is not None:
+            sets.append("query = %s")
+            params.append(query)
+        if sort is not None:
+            sets.append("sort = %s")
+            params.append(sort)
+        if is_pinned is not None:
+            sets.append("is_pinned = %s")
+            params.append(is_pinned)
+        params.extend([search_id, tenant_id, user_id])
+        q = f"""
+            UPDATE apiome.mcp_saved_searches
+            SET {", ".join(sets)}
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND user_id = %s::uuid
+            RETURNING {self._MCP_SAVED_SEARCH_COLUMNS}
+        """
+        rows = self.execute_query(q, tuple(params))
+        return dict(rows[0]) if rows else None
+
+    def delete_mcp_saved_search(
+        self, tenant_id: str, user_id: str, search_id: str
+    ) -> bool:
+        """Delete a saved search owned by the caller (MCAT-21.3)."""
+        q = """
+            DELETE FROM apiome.mcp_saved_searches
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND user_id = %s::uuid
+        """
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(q, (search_id, tenant_id, user_id))
+                deleted = cur.rowcount > 0
+            conn.commit()
+            return deleted
+        except Exception:
+            conn.rollback()
+            raise
+
     def get_mcp_endpoint(self, tenant_id: str, endpoint_id: str) -> Optional[Dict[str, Any]]:
         """Fetch one live catalog endpoint scoped to ``tenant_id`` (MCAT-3.1).
 

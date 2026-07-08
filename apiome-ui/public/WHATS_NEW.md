@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- MCP Catalog: saved searches & catalog views — persist named filter sets per user/tenant, re-run them from the catalog toolbar, and optionally pin as quick-access catalog views (`mcp_saved_searches`, MCAT-21.3)
 - MCP Catalog: cross-server capability search — `GET /v1/mcp/{tenant}/capabilities/search` merges keyword (V127 FTS) and semantic (V149 pgvector) matches across the tenant catalog, grouped by owning server and ranked relevance→grade (MCAT-21.2)
 - Export: Protobuf multi-file packaging — the proto3 emitter emits one `.proto` per package with cross-package `import` lines; the full bundle is validated via `buf build` (MFX-12.4)
 - Export: `apiome export <format> <artifact>` — generic CLI export via the async job pipeline (submit, poll, download); writes a single file or unpacks a zip bundle to `--out`; supports `--option`, `--force`, `--confirm`, and `--json` (MFX-8.1)
