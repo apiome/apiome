@@ -249,7 +249,7 @@ export function mcpBrowseEndpointFromPayload(raw: unknown): McpBrowseEndpoint {
     has_destructive: r.has_destructive === true,
     read_only_only: r.read_only_only === true,
     complexity_band: asString(r.complexity_band) ?? 'unknown',
-    freshness: asString(r.freshness) ?? 'fresh',
+    freshness: r.quarantined === true ? 'quarantined' : asString(r.freshness) ?? 'fresh',
     last_known_good_at: asString(r.last_known_good_at),
   };
 }

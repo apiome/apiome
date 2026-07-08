@@ -23,4 +23,14 @@ describe('mcp freshness UI helpers', () => {
     expect(endpoint.freshness).toBe('stale');
     expect(endpoint.last_known_good_at).toBe('2026-07-06T10:00:00Z');
   });
+
+  it('gives quarantined endpoints freshness precedence', () => {
+    const endpoint = mcpBrowseEndpointFromPayload({
+      id: 'ep-1',
+      name: 'Weather',
+      quarantined: true,
+      freshness: 'stale',
+    });
+    expect(endpoint.freshness).toBe('quarantined');
+  });
 });
