@@ -1888,7 +1888,7 @@ handshake/discovery calls.
 |---|---|---|---|:--:|:--:|---|---|
 | 20.1 ✅ | Host & transport metadata capture | Record hostname, TLS/cert, HTTP server headers, handshake timing at discovery | `mcp-catalog` `backend` | Y | N | ●● | apiome-rest, apiome-db |
 | 20.2 ✅ | Server branding capture | Persist advertised website/logo/icon/instructions for richer catalog cards | `mcp-catalog` `backend` | Y | N | ● | apiome-rest, apiome-db |
-| 20.3 | License & terms signal detection | Detect and report license/ToS hints in server metadata/instructions | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
+| 20.3 ✅ | License & terms signal detection | Detect and report license/ToS hints in server metadata/instructions | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
 | 20.4 | Deprecation & lifecycle signals | Flag deprecated/experimental capabilities from annotations/description text | `mcp-insights` `backend` | Y | N | ●● | apiome-rest |
 | 20.5 | Provenance & discovery-source tracking | Record how/when each endpoint & version was found (manual/sweep/registry) and surface it | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
 
@@ -1915,7 +1915,7 @@ handshake/discovery calls.
 - **Dependencies / Parallelism.** Extends Epic-2. Parallel across Epic-20.
 - **Technical Stack.** Python, guarded fetch; Next.js card update.
 
-### MCAT-20.3 — License & terms signal detection  ·  **#4657**
+### MCAT-20.3 — License & terms signal detection  ·  **#4657**  ·  ✅ Done (apiome-rest 1.101.0)
 - **Problem.** Whether a server may be used, and under what terms, is often buried in its instructions
   text and never surfaced.
 - **Solution / Scope.** A **pure detector** that scans `instructions`/metadata for license/ToS/usage
