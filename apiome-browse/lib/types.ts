@@ -84,6 +84,18 @@ export interface McpPublicHostGroup {
   endpoints: McpPublicEndpoint[];
 }
 
+/** A published curated collection and its public-visible endpoints (MCAT-22.4). */
+export interface McpPublicCollection {
+  id: string;
+  tenant_id: string;
+  tenant_slug: string;
+  tenant_name: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  endpoints: McpPublicEndpoint[];
+}
+
 /** One labelled slice of a public-catalog composition breakdown (category / transport / grade). */
 export interface McpPublicCatalogBucket {
   label: string;

@@ -39,6 +39,8 @@ import {
 import { McpCatalogCard } from "@/app/components/ade/dashboard/mcp/McpCatalogCard";
 import { McpCatalogToolbar } from "@/app/components/ade/dashboard/mcp/McpCatalogToolbar";
 import { McpSavedSearchesPanel } from "@/app/components/ade/dashboard/mcp/McpSavedSearchesPanel";
+import { McpCollectionsPanel } from "@/app/components/ade/dashboard/mcp/McpCollectionsPanel";
+import { mcpVisibleEndpointIds } from "@/app/components/ade/dashboard/mcp/mcpCollectionUi";
 
 export default function McpBrowsePage() {
   const { data: session } = useSession();
@@ -124,6 +126,11 @@ export default function McpBrowsePage() {
     [groups, filters, search, sort],
   );
 
+  const visibleEndpointIds = useMemo(
+    () => mcpVisibleEndpointIds(visibleGroups),
+    [visibleGroups],
+  );
+
   const totals = useMemo(() => {
     const endpointCount = groups.reduce((sum, g) => sum + g.endpoints.length, 0);
     const capabilityCount = groups.reduce((sum, g) => sum + g.capability_count, 0);
@@ -202,6 +209,9 @@ export default function McpBrowsePage() {
                     setSort(nextSort);
                   }}
                 />
+              </div>
+              <div className="border-b border-gray-200 bg-white px-6 py-3 dark:border-gray-700 dark:bg-gray-800">
+                <McpCollectionsPanel selectedEndpointIds={visibleEndpointIds} />
               </div>
             </>
           ) : null}

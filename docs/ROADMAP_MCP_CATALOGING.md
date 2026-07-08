@@ -2017,7 +2017,7 @@ only; it never changes what a server does.
 |---|---|---|---|:--:|:--:|---|---|
 | 22.2 ✅ | Staleness & freshness reporting | Report endpoints overdue for discovery or persistently failing | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
 | 22.3 ✅ | Cataloger notes & annotations | Human notes on an endpoint, kept separate from server-reported data | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-db, apiome-ui |
-| 22.4 | Collections / curated lists | Group endpoints into named, shareable collections | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
+| 22.4 ✅ | Collections / curated lists | Group endpoints into named, shareable collections | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
 
 ### MCAT-22.1 — Duplicate / near-duplicate detection  ·  **#4664**  ·  ✅ Done (apiome-rest 1.108.0)
 - **Problem.** As catalogs grow, the same server gets registered twice (different names, same URL) or
@@ -2052,7 +2052,7 @@ only; it never changes what a server does.
 - **Dependencies / Parallelism.** New table. Parallel across Epic-22.
 - **Technical Stack.** FastAPI, Flyway migration, Next.js.
 
-### MCAT-22.4 — Collections / curated lists  ·  **#4667**
+### MCAT-22.4 — Collections / curated lists  ·  **#4667**  ·  ✅ Done (apiome-rest 1.111.0, apiome-ui 0.93.0, apiome-browse 0.8.0)
 - **Problem.** Users want to group related servers ("our approved MCP servers", "geo tools") for
   navigation and sharing; the catalog is a flat list per tenant.
 - **Solution / Scope.** Named **collections** of endpoints (many-to-many), browsable and optionally

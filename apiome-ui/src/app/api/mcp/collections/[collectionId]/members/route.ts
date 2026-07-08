@@ -1,0 +1,61 @@
+/**
+ * MCP collection membership — PUT/POST on /members (V2-MCP-36.4 / MCAT-22.4, #4667).
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import {
+  getAuthenticatedTenantContext,
+  proxyRestPost,
+  proxyRestPut,
+} from '@lib/primitives-api-proxy';
+
+export const dynamic = 'force-dynamic';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function membersPath(ctx: { tenantSlug: string }, collectionId: string): string {
+  return (
+    `/mcp/${encodeURIComponent(ctx.tenantSlug)}` +
+    `/collections/${encodeURIComponent(collectionId)}/members`
+  );
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ collectionId: string }> },
+) {
+  const { collectionId } = await params;
+  if (!collectionId || !UUID_RE.test(collectionId)) {
+    return NextResponse.json({ success: false, error: 'Invalid collection id' }, { status: 400 });
+  }
+  const ctx = await getAuthenticatedTenantContext();
+  if (!ctx.ok) {
+    return NextResponse.json({ success: false, error: ctx.error }, { status: ctx.status });
+  }
+  const body = await request.json().catch(() => ({}));
+  const { data, error, status } = await proxyRestPut(ctx.user, membersPath(ctx, collectionId), body);
+  if (error) {
+    return NextResponse.json({ success: false, error }, { status: status >= 400 ? status : 502 });
+  }
+  return NextResponse.json(data, { status: status || 200 });
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ collectionId: string }> },
+) {
+  const { collectionId } = await params;
+  if (!collectionId || !UUID_RE.test(collectionId)) {
+    return NextResponse.json({ success: false, error: 'Invalid collection id' }, { status: 400 });
+  }
+  const ctx = await getAuthenticatedTenantContext();
+  if (!ctx.ok) {
+    return NextResponse.json({ success: false, error: ctx.error }, { status: ctx.status });
+  }
+  const body = await request.json().catch(() => ({}));
+  const { data, error, status } = await proxyRestPost(ctx.user, membersPath(ctx, collectionId), body);
+  if (error) {
+    return NextResponse.json({ success: false, error }, { status: status >= 400 ? status : 502 });
+  }
+  return NextResponse.json(data, { status: status || 200 });
+}

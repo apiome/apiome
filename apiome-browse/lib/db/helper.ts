@@ -6,6 +6,7 @@ import { mcpSortOrderSql, type McpSortMode } from '../mcpSort';
 import type {
   McpPublicEndpoint,
   McpPublicHostGroup,
+  McpPublicCollection,
   McpPublicCatalogBucket,
   McpPublicCatalogInsight,
   McpCapabilityItem,
@@ -817,6 +818,65 @@ export async function getPublicMcpEndpointDetail(
     return { endpoint, items: itemsResult.rows as McpCapabilityItem[] };
   } catch (err) {
     logError('getPublicMcpEndpointDetail', err);
+    return null;
+  }
+}
+
+/**
+ * One published curated collection for a tenant, listing only endpoints that pass the public
+ * visibility gate (`mcp_v_public_endpoints`). Private or unpublished endpoints in the collection are
+ * omitted rather than leaking into anonymous browse (MCAT-22.4).
+ */
+export async function getPublicMcpCollection(
+  tenantSlug: string,
+  collectionSlug: string
+): Promise<McpPublicCollection | null> {
+  noStore();
+  try {
+    const collectionResult = await connectionPool.query(
+      `SELECT c.id, c.tenant_id, t.slug AS tenant_slug, t.name AS tenant_name,
+              c.name, c.slug, c.description
+       FROM apiome.mcp_collections c
+       JOIN apiome.tenants t ON t.id = c.tenant_id AND t.deleted_at IS NULL
+       WHERE t.slug = $1 AND c.slug = $2 AND c.is_published IS TRUE
+       LIMIT 1`,
+      [tenantSlug, collectionSlug]
+    );
+    if (collectionResult.rows.length === 0) return null;
+    const collection = collectionResult.rows[0] as {
+      id: string;
+      tenant_id: string;
+      tenant_slug: string;
+      tenant_name: string;
+      name: string;
+      slug: string;
+      description: string | null;
+    };
+
+    const endpointsResult = await connectionPool.query(
+      `SELECT e.id, e.tenant_id, t.slug AS tenant_slug, e.name, e.slug, e.category, e.transport,
+              e.description, e.current_version_id, e.host, e.score, e.grade, e.scored_at,
+              e.last_discovered_at, e.updated_at,
+              ${MCP_CAPABILITY_COUNTS}
+       FROM apiome.mcp_collection_members m
+       JOIN apiome.mcp_collections c ON c.id = m.collection_id
+       JOIN apiome.tenants t ON t.id = c.tenant_id AND t.deleted_at IS NULL
+       JOIN apiome.mcp_v_public_endpoints e ON e.id = m.endpoint_id AND e.tenant_id = m.tenant_id
+       LEFT JOIN apiome.mcp_capability_items ci ON ci.version_id = e.current_version_id
+       WHERE c.id = $1::uuid
+       GROUP BY e.id, e.tenant_id, t.slug, e.name, e.slug, e.category, e.transport, e.description,
+                e.current_version_id, e.host, e.score, e.grade, e.scored_at,
+                e.last_discovered_at, e.updated_at, m.position, m.added_at
+       ORDER BY m.position ASC, m.added_at ASC, e.name ASC`,
+      [collection.id]
+    );
+
+    return {
+      ...collection,
+      endpoints: endpointsResult.rows as McpPublicEndpoint[],
+    };
+  } catch (err) {
+    logError('getPublicMcpCollection', err);
     return null;
   }
 }
