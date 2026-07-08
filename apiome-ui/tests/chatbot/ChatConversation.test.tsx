@@ -271,16 +271,28 @@ describe('ChatConversation', () => {
   });
 
   it('falls back to a friendly error reply when the responder throws', async () => {
-    const responder: ChatSendFn = () => Promise.reject(new Error('network down'));
-    render(<ChatConversation onSendMessage={responder} />);
+    const responder: ChatSendFn = async () => {
+      throw new Error('network down');
+    };
+    render(
+      <ChatConversation
+        onSendMessage={responder}
+        restoreLastConversation={false}
+        conversationStore={makeMemoryStore()}
+      />,
+    );
 
     fireEvent.change(screen.getByTestId('studio-ai-chat-input'), { target: { value: 'q' } });
-    fireEvent.click(screen.getByTestId('studio-ai-chat-send'));
-
-    await waitFor(() => {
-      expect(screen.getByText(/the assistant could not respond/i)).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('studio-ai-chat-send'));
     });
-    expect(screen.getByTestId('studio-ai-chat-input')).not.toBeDisabled();
+
+    expect(
+      await screen.findByText(/the assistant could not respond/i, {}, { timeout: 5000 }),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('studio-ai-chat-input')).not.toBeDisabled();
+    });
   });
 
   it('does not render the context chip when no studio context is supplied', () => {
