@@ -104,6 +104,7 @@ class ReportCard:
     trust: Optional["ReportTrust"] = None
     change: Optional["ReportChange"] = None
     provenance: Optional["ReportProvenance"] = None
+    cataloger_notes: Optional[List["ReportCatalogerNote"]] = None
 
 
 @dataclass(frozen=True)
@@ -240,6 +241,19 @@ class ReportProvenance:
 
 
 @dataclass(frozen=True)
+class ReportCatalogerNote:
+    """One human cataloger note included in an opted-in report export (MCAT-22.3).
+
+    These are tenant-authored commentary kept separate from server-reported discovery data.
+    """
+
+    body: str
+    author_label: str
+    created_at: str
+    updated_at: Optional[str]
+
+
+@dataclass(frozen=True)
 class ReportTrust:
     """The composite trust profile (serializes the 17.4 radar)."""
 
@@ -279,6 +293,7 @@ def build_report_card(
     auth_posture: str,
     auth_type: Optional[str],
     generated_at: str,
+    cataloger_notes: Optional[Sequence[Mapping[str, Any]]] = None,
 ) -> ReportCard:
     """Assemble the immutable :class:`ReportCard` view model from already-computed inputs.
 
@@ -315,6 +330,10 @@ def build_report_card(
         auth_posture: ``"anonymous"`` / ``"authenticated"`` — the endpoint's reachability posture.
         auth_type: The credential's auth-type *label* (never the secret), or ``None``.
         generated_at: ISO-8601 timestamp to stamp the report with (keeps rendering pure).
+        cataloger_notes: Optional list of cataloger-note rows (from
+            :meth:`Database.list_mcp_endpoint_notes`) to include when the export was opted in.
+            ``None`` omits the section entirely; an empty list renders an explicit "none recorded"
+            note.
 
     Returns:
         A fully-populated :class:`ReportCard`; sections with no data are ``None``.
@@ -339,6 +358,9 @@ def build_report_card(
     trust = _trust(trust_profile) if trust_profile else None
     change = _change(change_rows, change_severity) if change_rows else None
     report_provenance = _provenance(provenance) if provenance is not None else None
+    notes_section = (
+        _cataloger_notes(cataloger_notes) if cataloger_notes is not None else None
+    )
 
     return ReportCard(
         generated_at=generated_at,
@@ -353,6 +375,7 @@ def build_report_card(
         trust=trust,
         change=change,
         provenance=report_provenance,
+        cataloger_notes=notes_section,
     )
 
 
@@ -609,6 +632,45 @@ def _provenance(provenance: Mapping[str, Any]) -> ReportProvenance:
     )
 
 
+def _author_label(row: Mapping[str, Any]) -> str:
+    """Build a human-readable author label from a note row's joined user columns."""
+    name = row.get("created_by_name") or row.get("updated_by_name")
+    email = row.get("created_by_email") or row.get("updated_by_email")
+    if name and email:
+        return f"{name} <{email}>"
+    if name:
+        return str(name)
+    if email:
+        return str(email)
+    author_id = row.get("created_by") or row.get("updated_by")
+    return str(author_id) if author_id else "Unknown author"
+
+
+def _cataloger_notes(rows: Sequence[Mapping[str, Any]]) -> List[ReportCatalogerNote]:
+    """Shape cataloger-note rows into the opted-in report section (MCAT-22.3)."""
+    out: List[ReportCatalogerNote] = []
+    for row in rows:
+        body = str(row.get("body") or "").strip()
+        if not body:
+            continue
+        created_at = _iso(row.get("created_at")) or ""
+        updated_at = _iso(row.get("updated_at"))
+        edited = (
+            updated_at
+            and row.get("updated_by")
+            and updated_at != created_at
+        )
+        out.append(
+            ReportCatalogerNote(
+                body=body,
+                author_label=_author_label(row),
+                created_at=created_at,
+                updated_at=updated_at if edited else None,
+            )
+        )
+    return out
+
+
 def _trust(profile: Mapping[str, Any]) -> ReportTrust:
     """Shape the trust profile, ordering axes canonically for a stable radar table."""
     axes = list(profile.get("axes") or [])
@@ -796,6 +858,30 @@ def render_report_markdown(card: ReportCard) -> str:
     else:
         lines.append("_Not available._")
     lines.append("")
+
+    # --- Cataloger commentary (opt-in; never server-reported data) -------------------------
+    if card.cataloger_notes is not None:
+        lines.append("## Cataloger Commentary")
+        lines.append("")
+        lines.append(
+            "_Human notes authored by catalog users in Apiome — **not** reported by the MCP"
+            " server._"
+        )
+        lines.append("")
+        if card.cataloger_notes:
+            for note in card.cataloger_notes:
+                edited = (
+                    f" · edited {note.updated_at}" if note.updated_at else ""
+                )
+                lines.append(
+                    f"**{note.author_label}** · {note.created_at}{edited}"
+                )
+                lines.append("")
+                lines.append(note.body)
+                lines.append("")
+        else:
+            lines.append("_No cataloger notes recorded._")
+            lines.append("")
 
     # --- Grade & score ----------------------------------------------------------------------
     lines.append("## Grade & Score")
@@ -1043,6 +1129,12 @@ body.report { color: var(--ink); background: var(--bg); font: 15px/1.5 -apple-sy
 .report h3 { font-size: 1rem; margin: 1rem 0 .4rem; }
 .report .subtitle { color: var(--muted); margin: 0 0 1rem; font-size: .9rem; }
 .report .note { color: var(--muted); font-style: italic; }
+.report .note.cataloger { border-left: 3px solid #d97706; padding-left: .75rem; }
+.report .cataloger-note { border: 1px solid #fcd34d; background: #fffbeb; border-radius: 8px;
+        padding: .75rem 1rem; margin: .75rem 0; }
+.report .cataloger-note .meta { font-size: .85rem; color: var(--muted); margin: 0 0 .5rem;
+        font-style: normal; }
+.report .cataloger-note p { white-space: pre-wrap; margin: 0; }
 .report .desc { border-left: 3px solid var(--line); padding: .25rem .75rem; color: var(--muted); }
 .report table { border-collapse: collapse; width: 100%; margin: .5rem 0; }
 .report th, .report td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid var(--line);
@@ -1196,6 +1288,26 @@ def render_report_html(card: ReportCard) -> str:
                      " — their origin is unrecorded, not manual.</p>")
     else:
         p.append("<p class='note'>Not available.</p>")
+
+    # --- Cataloger commentary (opt-in; never server-reported data) -------------------------
+    if card.cataloger_notes is not None:
+        p.append("<h2>Cataloger Commentary</h2>")
+        p.append(
+            "<p class='note cataloger'>Human notes authored by catalog users in Apiome"
+            " — <strong>not</strong> reported by the MCP server.</p>"
+        )
+        if card.cataloger_notes:
+            for note in card.cataloger_notes:
+                edited = (
+                    f" · edited {_e(note.updated_at)}" if note.updated_at else ""
+                )
+                p.append(
+                    f"<div class='cataloger-note'><p class='meta'><strong>"
+                    f"{_e(note.author_label)}</strong> · {_e(note.created_at)}{edited}</p>"
+                    f"<p>{_e(note.body)}</p></div>"
+                )
+        else:
+            p.append("<p class='note'>No cataloger notes recorded.</p>")
 
     # --- Grade & score ----------------------------------------------------------------------
     p.append("<h2>Grade &amp; Score</h2>")

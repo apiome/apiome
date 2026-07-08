@@ -33,6 +33,7 @@ import McpVersionHistory from "./McpVersionHistory";
 import McpEndpointInsight from "./McpEndpointInsight";
 import McpLintReport, { McpGradeSummary } from "./McpLintReport";
 import McpEndpointSettings from "./McpEndpointSettings";
+import { McpEndpointNotesPanel } from "@/app/components/ade/dashboard/mcp/McpEndpointNotesPanel";
 import {
   formatTeardownSummary,
   type McpTeardownSummary,
@@ -618,6 +619,8 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
                     </div>
                   </div>
                 </div>
+
+                <McpEndpointNotesPanel endpointId={endpointId} />
 
                 <DetailTabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                   <DetailTabsList

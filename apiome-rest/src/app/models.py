@@ -7340,3 +7340,63 @@ def mcp_saved_search_out_from_row(row: Dict[str, Any]) -> McpSavedSearchOut:
         created_at=row["created_at"],
         updated_at=row["updated_at"],
     )
+
+
+class McpEndpointNoteOut(BaseModel):
+    """One cataloger note on an MCP endpoint (human commentary, not server-reported data)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    endpoint_id: str = Field(serialization_alias="endpointId")
+    body: str
+    created_by: str = Field(serialization_alias="createdBy")
+    created_by_name: Optional[str] = Field(default=None, serialization_alias="createdByName")
+    created_by_email: Optional[str] = Field(default=None, serialization_alias="createdByEmail")
+    updated_by: Optional[str] = Field(default=None, serialization_alias="updatedBy")
+    updated_by_name: Optional[str] = Field(default=None, serialization_alias="updatedByName")
+    updated_by_email: Optional[str] = Field(default=None, serialization_alias="updatedByEmail")
+    created_at: datetime = Field(serialization_alias="createdAt")
+    updated_at: datetime = Field(serialization_alias="updatedAt")
+
+
+class McpEndpointNoteListResponse(BaseModel):
+    """Envelope for a cataloger-notes list."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    notes: List[McpEndpointNoteOut] = Field(default_factory=list)
+
+
+class McpEndpointNoteCreate(BaseModel):
+    """Body for creating a cataloger note."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    body: str
+
+
+class McpEndpointNoteUpdate(BaseModel):
+    """Patch body for updating a cataloger note."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    body: Optional[str] = None
+
+
+def mcp_endpoint_note_out_from_row(row: Dict[str, Any]) -> McpEndpointNoteOut:
+    """Project a ``mcp_endpoint_notes`` row (with author joins) onto the wire model."""
+    return McpEndpointNoteOut(
+        id=str(row["id"]),
+        endpoint_id=str(row["endpoint_id"]),
+        body=str(row["body"]),
+        created_by=str(row["created_by"]),
+        created_by_name=row.get("created_by_name"),
+        created_by_email=row.get("created_by_email"),
+        updated_by=str(row["updated_by"]) if row.get("updated_by") else None,
+        updated_by_name=row.get("updated_by_name"),
+        updated_by_email=row.get("updated_by_email"),
+        created_at=row["created_at"],
+        updated_at=row["updated_at"],
+    )

@@ -255,15 +255,17 @@ function ReportExportMenu({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [includeCatalogerNotes, setIncludeCatalogerNotes] = useState(false);
   const detailsRef = useRef<HTMLDetailsElement>(null);
 
   const reportUrl = useCallback(
     (format: "markdown" | "html") => {
       const query = new URLSearchParams({ format });
       if (versionId) query.set("version_id", versionId);
+      if (includeCatalogerNotes) query.set("include_cataloger_notes", "true");
       return `/api/mcp/endpoints/${endpointId}/report?${query.toString()}`;
     },
-    [endpointId, versionId],
+    [endpointId, versionId, includeCatalogerNotes],
   );
 
   const closeMenu = useCallback(() => {
@@ -363,6 +365,16 @@ function ReportExportMenu({
         Export report
       </summary>
       <div className="absolute right-0 z-10 mt-1 w-56 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+        <label className="flex cursor-pointer items-start gap-2 border-b border-gray-100 px-3 py-2 text-left text-xs text-gray-600 dark:border-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={includeCatalogerNotes}
+            onChange={(e) => setIncludeCatalogerNotes(e.target.checked)}
+            disabled={busy}
+          />
+          <span>Include cataloger commentary (human notes, not from the server)</span>
+        </label>
         <button type="button" className={itemClass} disabled={busy} onClick={() => download("markdown")}>
           <FileText className="h-4 w-4 text-gray-400" aria-hidden />
           Download Markdown

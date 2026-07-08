@@ -2016,7 +2016,7 @@ only; it never changes what a server does.
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
 | 22.2 ✅ | Staleness & freshness reporting | Report endpoints overdue for discovery or persistently failing | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
-| 22.3 | Cataloger notes & annotations | Human notes on an endpoint, kept separate from server-reported data | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-db, apiome-ui |
+| 22.3 ✅ | Cataloger notes & annotations | Human notes on an endpoint, kept separate from server-reported data | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-db, apiome-ui |
 | 22.4 | Collections / curated lists | Group endpoints into named, shareable collections | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
 
 ### MCAT-22.1 — Duplicate / near-duplicate detection  ·  **#4664**  ·  ✅ Done (apiome-rest 1.108.0)
@@ -2041,7 +2041,7 @@ only; it never changes what a server does.
 - **Dependencies / Parallelism.** After 17.1 (health data). Parallel across Epic-22.
 - **Technical Stack.** FastAPI; Next.js badge.
 
-### MCAT-22.3 — Cataloger notes & annotations  ·  **#4666**
+### MCAT-22.3 — Cataloger notes & annotations  ·  **#4666**  ·  ✅ Done (apiome-rest 1.110.0, apiome-ui 0.92.0)
 - **Problem.** Catalogers learn things about a server (context, caveats, "use the other one instead")
   that have nowhere to live and get lost.
 - **Solution / Scope.** Per-endpoint **human notes/annotations**, authored by tenant users, stored

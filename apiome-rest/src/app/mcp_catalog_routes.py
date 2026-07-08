@@ -2342,6 +2342,10 @@ async def export_mcp_endpoint_report(
         None,
         description="Which snapshot to report; omit to report the endpoint's current surface.",
     ),
+    include_cataloger_notes: bool = Query(
+        False,
+        description="When true, include tenant cataloger commentary (not server-reported data).",
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Response:
     """Export a self-contained one-page report card for an endpoint version (MCAT-19.1).
@@ -2453,6 +2457,12 @@ async def export_mcp_endpoint_report(
     )
     change_severity = severity_counts(change_rows) if change_rows else None
 
+    cataloger_note_rows: Optional[List[Dict[str, Any]]] = None
+    if include_cataloger_notes:
+        cataloger_note_rows = db.list_mcp_endpoint_notes(
+            str(auth_data["tenant_id"]), str(endpoint_id)
+        )
+
     card = build_report_card(
         endpoint=endpoint,
         version=version,
@@ -2469,6 +2479,7 @@ async def export_mcp_endpoint_report(
         auth_posture=auth_posture,
         auth_type=auth_type,
         generated_at=datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        cataloger_notes=cataloger_note_rows,
     )
 
     body = render_report_html(card) if fmt == "html" else render_report_markdown(card)

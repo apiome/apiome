@@ -43,6 +43,9 @@ export async function GET(
     return NextResponse.json({ success: false, error: 'Invalid version id' }, { status: 400 });
   }
 
+  const includeCatalogerNotes =
+    request.nextUrl.searchParams.get('include_cataloger_notes') === 'true';
+
   const ctx = await getAuthenticatedTenantContext();
   if (!ctx.ok) {
     return NextResponse.json({ success: false, error: ctx.error }, { status: ctx.status });
@@ -50,6 +53,7 @@ export async function GET(
 
   const query = new URLSearchParams({ format });
   if (versionId) query.set('version_id', versionId);
+  if (includeCatalogerNotes) query.set('include_cataloger_notes', 'true');
   const url =
     `${REST_API_BASE_URL}/mcp/${encodeURIComponent(ctx.tenantSlug)}` +
     `/endpoints/${encodeURIComponent(endpointId)}/report?${query.toString()}`;
