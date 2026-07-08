@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.107.0] - 2026-07-07
+
+### Added
+- **Capability directory (#4663, V2-MCP-35.4 / MCAT-21.4)** — browsable, paginated index of every live
+  tool/resource/prompt across the caller's catalog.
+  - New route `GET /v1/mcp/{tenant_slug}/capabilities`: lists capability items from each endpoint's
+    current snapshot with owning-server context (links back without a second read). Filter by name
+    substring, capability type, endpoint id, host, category, grade, and visibility; sort by server,
+    name, or type. Tenant scoping matches every other catalog route.
+
 ## [1.105.0] - 2026-07-07
 
 ### Added

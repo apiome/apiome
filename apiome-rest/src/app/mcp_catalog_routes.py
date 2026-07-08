@@ -119,6 +119,9 @@ from .models import (
     McpLintReportResponse,
     McpPeerPercentileOut,
     McpCrossServerCapabilitySearchResponse,
+    McpCapabilityDirectoryResponse,
+    McpCapabilityDirectorySort,
+    McpCapabilityDirectoryType,
     McpSearchResponse,
     McpSearchScope,
     McpSearchVisibility,
@@ -140,6 +143,7 @@ from .models import (
     mcp_catalog_insight_from_row,
     mcp_change_counts,
     mcp_cross_server_capability_search_response_from_groups,
+    mcp_capability_directory_response_from_rows,
     mcp_credential_status_from_row,
     mcp_discovery_health_out,
     mcp_discovery_job_out_from_row,
@@ -322,6 +326,82 @@ async def search_mcp_catalog(
 #: Raw capability hits to gather from each search channel before grouping. Large enough that
 #: server-level pagination still finds matches when many capabilities share one endpoint.
 _CROSS_SERVER_CAPABILITY_RAW_LIMIT = 200
+
+_MCP_CAPABILITY_DIRECTORY_SORTS = frozenset({"server", "name", "type"})
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/capabilities",
+    response_model=McpCapabilityDirectoryResponse,
+)
+async def list_mcp_capability_directory(
+    tenant_slug: str,
+    name: Optional[str] = Query(
+        None,
+        description="Case-insensitive substring match on capability name or title.",
+    ),
+    capability_type: Optional[McpCapabilityDirectoryType] = Query(
+        None,
+        alias="type",
+        description="Restrict to one capability kind (tool/resource/resource_template/prompt).",
+    ),
+    endpoint_id: Optional[str] = Query(
+        None, description="Restrict to capabilities from one cataloged server."
+    ),
+    host: Optional[str] = Query(None, description="Filter to endpoints on this host (case-insensitive)."),
+    category: Optional[str] = Query(
+        None, description="Filter to endpoints in this category (case-insensitive)."
+    ),
+    grade: Optional[str] = Query(
+        None, description="Filter to endpoints whose current snapshot earned this A-F grade."
+    ),
+    visibility: Optional[McpSearchVisibility] = Query(
+        None,
+        description="Filter to 'private' or 'public' endpoints within the caller's own catalog.",
+    ),
+    sort: McpCapabilityDirectorySort = Query(
+        "server",
+        description="Sort order: server (default), name, or type.",
+    ),
+    limit: int = Query(50, ge=1, le=200, description="Maximum items to return."),
+    offset: int = Query(0, ge=0, description="Items to skip (pagination)."),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpCapabilityDirectoryResponse:
+    """Capability directory — paginated index of every live tool/resource/prompt (MCAT-21.4).
+
+    A browsable "what can be done" index across the caller's catalog: every capability item from
+    each endpoint's *current* snapshot, with enough owning-server context to link back without a
+    second read. ``name`` matches item name or title case-insensitively (substring); ``type``,
+    ``endpoint_id``, and the usual host/category/grade/visibility filters compose (ANDed). Like
+    every catalog route, scoping comes from the token's ``tenant_id`` — never the URL slug.
+    """
+    _ = tenant_slug
+    tenant_id = str(auth_data["tenant_id"])
+
+    if sort not in _MCP_CAPABILITY_DIRECTORY_SORTS:
+        raise HTTPException(status_code=422, detail=f"invalid sort: {sort}")
+
+    name_pattern = name.strip() if name and name.strip() else None
+    host_filter = host.strip() if host and host.strip() else None
+    category_filter = category.strip() if category and category.strip() else None
+    grade_filter = grade.strip() if grade and grade.strip() else None
+
+    rows, total = db.list_mcp_capability_directory(
+        tenant_id,
+        name_pattern=name_pattern,
+        item_type=capability_type,
+        endpoint_id=endpoint_id,
+        host=host_filter,
+        category=category_filter,
+        grade=grade_filter,
+        visibility=visibility,
+        sort=sort,
+        limit=limit,
+        offset=offset,
+    )
+    return mcp_capability_directory_response_from_rows(
+        rows=rows, total=total, limit=limit, offset=offset
+    )
 
 
 @mcp_endpoints_router.get(

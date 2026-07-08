@@ -23,6 +23,7 @@ import {
   Library,
   BarChart3,
   GitCompareArrows,
+  Layers,
 } from 'lucide-react';
 import { useDarkMode } from '@/app/hooks/useDarkMode';
 
@@ -106,6 +107,13 @@ const DashboardSideNav: React.FC = () => {
           pill: 'Preview',
         },
         {
+          label: 'Capability Directory',
+          href: '/ade/dashboard/mcp/capabilities',
+          icon: Layers,
+          disabled: !hasTenant,
+          pill: 'Preview',
+        },
+        {
           label: 'Catalog Analytics',
           href: '/ade/dashboard/mcp/analytics',
           icon: BarChart3,
@@ -143,6 +151,9 @@ const DashboardSideNav: React.FC = () => {
     if (href === '/ade/dashboard/mcp/analytics') {
       return pathname === '/ade/dashboard/mcp/analytics';
     }
+    if (href === '/ade/dashboard/mcp/capabilities') {
+      return pathname === '/ade/dashboard/mcp/capabilities';
+    }
     if (href === '/ade/dashboard/mcp/compare') {
       return pathname === '/ade/dashboard/mcp/compare';
     }
@@ -153,6 +164,7 @@ const DashboardSideNav: React.FC = () => {
         pathname === '/ade/dashboard/mcp' ||
         (pathname.startsWith('/ade/dashboard/mcp/') &&
           pathname !== '/ade/dashboard/mcp/analytics' &&
+          pathname !== '/ade/dashboard/mcp/capabilities' &&
           pathname !== '/ade/dashboard/mcp/compare')
       );
     }
