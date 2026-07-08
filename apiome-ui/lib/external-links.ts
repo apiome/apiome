@@ -10,10 +10,9 @@ import {
   PenTool,
   Workflow,
 } from 'lucide-react';
-import rawConfig from '../config/external-links.json';
-import { UI_STUDIO_ROUTES } from './studio-routes';
+import { getBuiltinCommercialProducts } from './commercial-products';
 
-/** One commercial or partner application surfaced in nav and/or the ADE home grid. */
+/** One commercial application surfaced in nav and/or the ADE home grid. */
 export type ExternalLinkEntry = {
   id: string;
   /** Label in the top platform bar (TopHeader). */
@@ -37,10 +36,6 @@ export type ExternalLinkEntry = {
   featureFlag?: string;
 };
 
-export type ExternalLinksConfig = {
-  links: ExternalLinkEntry[];
-};
-
 export type ExternalNavItem = {
   id: string;
   label: string;
@@ -49,7 +44,6 @@ export type ExternalNavItem = {
   external?: boolean;
   opensNewBrowser?: boolean;
   featureFlag?: string;
-  isActive?: (pathname: string) => boolean;
 };
 
 export type ExternalHomeCard = {
@@ -61,7 +55,8 @@ export type ExternalHomeCard = {
   enabled: boolean;
   external?: boolean;
   opensNewBrowser?: boolean;
-  icon: LucideIcon;
+  /** Lucide icon name — resolved to a component on the client. */
+  icon: string;
   accent: string;
   glow: string;
   featureFlag?: string;
@@ -90,21 +85,9 @@ function normalizeEntry(entry: ExternalLinkEntry): ExternalLinkEntry {
 }
 
 function loadLinks(): ExternalLinkEntry[] {
-  if (process.env.NODE_ENV === 'test' && testLinkOverride !== null) {
-    return testLinkOverride.map(normalizeEntry).filter((link) => link.enabled);
-  }
-  const config = rawConfig as ExternalLinksConfig;
-  if (!config?.links || !Array.isArray(config.links)) {
-    return [];
-  }
-  return config.links.map(normalizeEntry).filter((link) => link.enabled);
-}
-
-/** @internal Jest-only override for config/external-links.json */
-let testLinkOverride: ExternalLinkEntry[] | null = null;
-
-export function __setExternalLinksForTests(links: ExternalLinkEntry[] | null): void {
-  testLinkOverride = links;
+  return getBuiltinCommercialProducts()
+    .map(normalizeEntry)
+    .filter((link) => link.enabled !== false);
 }
 
 export function resolveExternalLinkIcon(iconName: string): LucideIcon {
@@ -130,7 +113,6 @@ export function getExternalNavItems(): ExternalNavItem[] {
       external: link.external,
       opensNewBrowser: link.opensNewBrowser,
       featureFlag: link.featureFlag,
-      isActive: () => false,
     }));
 }
 
@@ -146,27 +128,50 @@ export function getExternalHomeCards(): ExternalHomeCard[] {
       enabled: link.enabled ?? true,
       external: link.external,
       opensNewBrowser: link.opensNewBrowser,
-      icon: resolveExternalLinkIcon(link.icon),
+      icon: link.icon,
       accent: link.accent,
       glow: link.glow,
       featureFlag: link.featureFlag,
     }));
 }
 
-/** Home/checklist entry for the designer app, when configured. */
-export function getDesignerHomeHref(): string | null {
+/** Home cards limited to flags the user is entitled to via license/admin overrides. */
+export function getCommercialHomeCards(entitledFlags: Set<string>): ExternalHomeCard[] {
+  return getExternalHomeCards().filter((card) => {
+    if (!card.featureFlag) return true;
+    return entitledFlags.has(card.featureFlag);
+  });
+}
+
+/** Nav items limited to flags the user is entitled to via license/admin overrides. */
+export function getCommercialNavItems(entitledFlags: Set<string>): ExternalNavItem[] {
+  return getExternalNavItems().filter((item) => {
+    if (!item.featureFlag) return true;
+    return entitledFlags.has(item.featureFlag);
+  });
+}
+
+/** Home/checklist entry for the designer app when the user has designer access. */
+export function getDesignerHomeHref(entitledFlags?: Set<string>): string | null {
+  if (entitledFlags && !entitledFlags.has('designer')) {
+    return null;
+  }
   const designer = getExternalLinkById('designer');
   if (designer?.href) return designer.href;
-  if (process.env.NEXT_PUBLIC_STUDIO_URL?.trim()) {
-    return UI_STUDIO_ROUTES.editor;
-  }
   return null;
 }
 
 /** Deep link into a commercial studio editor after import completes. */
-export function buildDesignerEditorHref(projectId: string, versionId: string): string | null {
+export function buildDesignerEditorHref(
+  projectId: string,
+  versionId: string,
+  entitledFlags?: Set<string>
+): string | null {
+  if (entitledFlags && !entitledFlags.has('designer')) {
+    return null;
+  }
   const designer = getExternalLinkById('designer');
-  const base = designer?.editorHref ?? designer?.href ?? (process.env.NEXT_PUBLIC_STUDIO_URL?.trim() ? UI_STUDIO_ROUTES.editor : null);
+  const base = designer?.editorHref ?? designer?.href ?? null;
   if (!base) {
     return null;
   }

@@ -11,23 +11,43 @@ describe('platform-nav', () => {
 
   afterEach(() => {
     process.env.NEXT_PUBLIC_APP_SURFACE = originalSurface;
-    process.env.NEXT_PUBLIC_STUDIO_URL = originalStudioUrl;
+    if (originalStudioUrl === undefined) {
+      delete process.env.NEXT_PUBLIC_STUDIO_URL;
+    } else {
+      process.env.NEXT_PUBLIC_STUDIO_URL = originalStudioUrl;
+    }
   });
 
-  it('exposes designer and paths through UI redirect routes on the main app', () => {
+  it('uses configured commercial hrefs from external links', () => {
     delete process.env.NEXT_PUBLIC_APP_SURFACE;
     process.env.NEXT_PUBLIC_STUDIO_URL = 'http://localhost:3003';
 
     const items = getPlatformNavItems();
-    expect(items.map((item) => item.id)).toEqual(['home', 'control-panel', 'designer', 'paths']);
-    expect(resolvePlatformNavHref(items[2]!)).toBe('/ade/studio/editor');
-    expect(platformNavItemIsActive(items[2]!, '/ade/studio/editor')).toBe(true);
+    expect(items.map((item) => item.id)).toEqual(['home', 'control-panel']);
+
+    const designer = {
+      id: 'designer',
+      label: 'Designer',
+      href: 'http://localhost:3003/editor',
+      external: true,
+    };
+    expect(resolvePlatformNavHref(designer)).toBe('http://localhost:3003/editor');
+    expect(
+      platformNavItemIsActive({ id: 'designer', label: 'Designer', href: '/ade/studio/editor' }, '/ade/studio/editor')
+    ).toBe(true);
   });
 
-  it('uses direct studio routes and marks the active tab on the studio surface', () => {
+  it('uses direct studio routes when commercial items are passed in', () => {
     process.env.NEXT_PUBLIC_APP_SURFACE = 'studio';
+    process.env.NEXT_PUBLIC_MAIN_APP_URL = 'http://localhost:3000';
 
-    const items = getPlatformNavItems();
+    const commercial = [
+      { id: 'designer', label: 'Designer', href: '/editor' },
+      { id: 'paths', label: 'Paths', href: '/paths' },
+    ];
+    const items = getPlatformNavItems(commercial);
+    expect(items[0]?.href).toBe('http://localhost:3000/ade');
+    expect(items[2]?.href).toBe('/editor');
     expect(resolvePlatformNavHref(items[2]!)).toBe('/editor');
     expect(platformNavItemIsActive(items[2]!, '/editor')).toBe(true);
     expect(isStudioSurface()).toBe(true);

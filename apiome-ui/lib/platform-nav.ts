@@ -1,4 +1,4 @@
-import { getExternalNavItems, type ExternalNavItem } from './external-links';
+import { getCommercialNavItems, type ExternalNavItem } from './external-links';
 import { STUDIO_APP_ROUTES, UI_STUDIO_ROUTES } from './studio-routes';
 
 const DEFAULT_MAIN_APP_URL = 'https://app.apiome.app';
@@ -9,19 +9,24 @@ export function normalizeAppOrigin(url: string, fallback: string): string {
   return trimmed.replace(/\/+$/, '');
 }
 
-export const MAIN_APP_URL = normalizeAppOrigin(
-  process.env.NEXT_PUBLIC_MAIN_APP_URL || '',
-  DEFAULT_MAIN_APP_URL
-);
-
 /** True when this Next.js app is the standalone studio surface. */
 export function isStudioSurface(): boolean {
   return process.env.NEXT_PUBLIC_APP_SURFACE === 'studio';
 }
 
+export function getMainAppUrl(): string {
+  return normalizeAppOrigin(
+    process.env.NEXT_PUBLIC_MAIN_APP_URL || '',
+    DEFAULT_MAIN_APP_URL
+  );
+}
+
+/** @deprecated Prefer getMainAppUrl() — resolved at call time for correct env in tests and SSR. */
+export const MAIN_APP_URL = getMainAppUrl();
+
 export function mainAppPath(path: string): string {
   const suffix = path.startsWith('/') ? path : `/${path}`;
-  return `${MAIN_APP_URL}${suffix}`;
+  return `${getMainAppUrl()}${suffix}`;
 }
 
 export function getPlatformCoreNavItems(): ExternalNavItem[] {
@@ -42,41 +47,17 @@ export function getPlatformCoreNavItems(): ExternalNavItem[] {
   ];
 }
 
-/** Designer / Paths entries when commercial studio is enabled but external-links.json is empty. */
-export function getStudioCommercialNavItems(): ExternalNavItem[] {
-  const configured = getExternalNavItems();
-  if (configured.length > 0) return configured;
-  if (!isStudioSurface() && !process.env.NEXT_PUBLIC_STUDIO_URL?.trim()) {
-    return [];
-  }
-  return [
-    {
-      id: 'designer',
-      label: 'Designer',
-      href: UI_STUDIO_ROUTES.editor,
-      external: false,
-    },
-    {
-      id: 'paths',
-      label: 'Paths',
-      href: UI_STUDIO_ROUTES.paths,
-      external: false,
-    },
-  ];
+/** Commercial app tabs (Designer, Paths) — pass items filtered by license entitlements. */
+export function getStudioCommercialNavItems(entitledFlags: Set<string>): ExternalNavItem[] {
+  return getCommercialNavItems(entitledFlags);
 }
 
-export function getPlatformNavItems(): ExternalNavItem[] {
-  return [...getPlatformCoreNavItems(), ...getStudioCommercialNavItems()];
+export function getPlatformNavItems(commercialNavItems: ExternalNavItem[] = []): ExternalNavItem[] {
+  return [...getPlatformCoreNavItems(), ...commercialNavItems];
 }
 
+/** Nav href comes from commercial product config (NEXT_PUBLIC_STUDIO_URL). */
 export function resolvePlatformNavHref(item: ExternalNavItem): string {
-  if (isStudioSurface()) {
-    if (item.id === 'designer') return STUDIO_APP_ROUTES.editor;
-    if (item.id === 'paths') return STUDIO_APP_ROUTES.paths;
-    return item.href;
-  }
-  if (item.id === 'designer') return UI_STUDIO_ROUTES.editor;
-  if (item.id === 'paths') return UI_STUDIO_ROUTES.paths;
   return item.href;
 }
 
@@ -115,7 +96,6 @@ export function platformNavItemIsActive(item: ExternalNavItem, pathname: string 
   if (item.external || item.href.startsWith('http://') || item.href.startsWith('https://')) {
     return false;
   }
-  if (item.isActive) return item.isActive(pathname);
   return (
     pathname === item.href ||
     (item.href !== '/ade' && pathname.startsWith(`${item.href}/`))

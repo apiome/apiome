@@ -1,74 +1,69 @@
 import { Palette } from 'lucide-react';
 import {
-  __setExternalLinksForTests,
   buildDesignerEditorHref,
+  getCommercialHomeCards,
+  getCommercialNavItems,
   getDesignerHomeHref,
   getExternalHomeCards,
   getExternalNavItems,
   resolveExternalLinkIcon,
-  type ExternalLinkEntry,
 } from '../../lib/external-links';
 
-const COMMERCIAL_LINKS: ExternalLinkEntry[] = [
-  {
-    id: 'designer',
-    navLabel: 'Designer',
-    name: 'Data Designer',
-    tagline: 'Schema design',
-    description: 'Model classes on an interactive canvas.',
-    href: 'https://studio.apiome.app',
-    editorHref: 'https://studio.apiome.app/editor',
-    icon: 'Palette',
-    accent: 'from-violet-500 to-fuchsia-600',
-    glow: 'group-hover:shadow-fuchsia-500/20',
-  },
-];
+describe('external-links (commercial products)', () => {
+  const originalStudioUrl = process.env.NEXT_PUBLIC_STUDIO_URL;
+  const originalSurface = process.env.NEXT_PUBLIC_APP_SURFACE;
 
-describe('external-links (OSS default config)', () => {
   afterEach(() => {
-    __setExternalLinksForTests(null);
+    if (originalStudioUrl === undefined) {
+      delete process.env.NEXT_PUBLIC_STUDIO_URL;
+    } else {
+      process.env.NEXT_PUBLIC_STUDIO_URL = originalStudioUrl;
+    }
+    process.env.NEXT_PUBLIC_APP_SURFACE = originalSurface;
   });
 
-  it('returns no nav items when config is empty', () => {
-    expect(getExternalNavItems()).toEqual([]);
+  it('includes designer and paths from built-in commercial catalog', () => {
+    process.env.NEXT_PUBLIC_STUDIO_URL = 'https://studio.example.com';
+
+    const cards = getExternalHomeCards();
+    expect(cards.map((card) => card.id)).toEqual(['designer', 'paths']);
+    expect(cards[0]).toEqual(
+      expect.objectContaining({
+        id: 'designer',
+        name: 'Data Designer',
+        featureFlag: 'designer',
+        href: 'https://studio.example.com/editor',
+        external: true,
+      })
+    );
   });
 
-  it('returns no home cards when config is empty', () => {
-    expect(getExternalHomeCards()).toEqual([]);
+  it('filters home cards and nav by license entitlements', () => {
+    const entitled = new Set(['designer']);
+    expect(getCommercialHomeCards(entitled).map((card) => card.id)).toEqual(['designer']);
+    expect(getCommercialNavItems(entitled).map((item) => item.id)).toEqual(['designer']);
   });
 
-  it('returns null designer helpers when designer is not configured', () => {
-    expect(getDesignerHomeHref()).toBeNull();
-    expect(buildDesignerEditorHref('p', 'v')).toBeNull();
+  it('hides designer helpers when entitlement is missing', () => {
+    expect(getDesignerHomeHref(new Set())).toBeNull();
+    expect(buildDesignerEditorHref('p', 'v', new Set())).toBeNull();
+  });
+
+  it('builds designer deep links from NEXT_PUBLIC_STUDIO_URL when entitled', () => {
+    process.env.NEXT_PUBLIC_STUDIO_URL = 'https://studio.example.com';
+    const flags = new Set(['designer']);
+
+    expect(getDesignerHomeHref(flags)).toBe('https://studio.example.com/editor');
+    expect(getExternalNavItems()).toEqual([
+      expect.objectContaining({ id: 'designer', label: 'Designer', href: 'https://studio.example.com/editor' }),
+      expect.objectContaining({ id: 'paths', href: 'https://studio.example.com/paths' }),
+    ]);
+    expect(buildDesignerEditorHref('proj-1', 'ver-2', flags)).toBe(
+      'https://studio.example.com/editor?projectId=proj-1&versionId=ver-2'
+    );
   });
 
   it('resolves known lucide icon names', () => {
     expect(resolveExternalLinkIcon('Palette')).toBe(Palette);
-  });
-});
-
-describe('external-links (configured commercial links)', () => {
-  beforeEach(() => {
-    __setExternalLinksForTests(COMMERCIAL_LINKS);
-  });
-
-  afterEach(() => {
-    __setExternalLinksForTests(null);
-  });
-
-  it('exposes nav and home cards from config', () => {
-    expect(getExternalNavItems()).toEqual([
-      expect.objectContaining({ id: 'designer', label: 'Designer', href: 'https://studio.apiome.app', external: true }),
-    ]);
-    expect(getExternalHomeCards()[0]).toEqual(
-      expect.objectContaining({ id: 'designer', name: 'Data Designer' })
-    );
-  });
-
-  it('builds designer deep links with query params', () => {
-    expect(getDesignerHomeHref()).toBe('https://studio.apiome.app');
-    expect(buildDesignerEditorHref('proj-1', 'ver-2')).toBe(
-      'https://studio.apiome.app/editor?projectId=proj-1&versionId=ver-2'
-    );
   });
 });

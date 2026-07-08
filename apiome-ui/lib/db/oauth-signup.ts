@@ -93,8 +93,11 @@ export async function consumeAuthOneTimeCode(code: string): Promise<ConsumedOneT
 
 export async function insertFreeTierEntitlements(userId: string): Promise<void> {
   await connectionPool.query(
-    `INSERT INTO apiome.user_entitlements (user_id, plan_code, max_tenants, max_projects, max_versions)
-     VALUES ($1, 'free', 1, 1, 3)
+    `INSERT INTO apiome.user_entitlements (user_id, plan_code, max_tenants, max_projects, max_versions, license_id)
+     SELECT $1, l.license_type, 1, 1, 3, l.id
+     FROM apiome.licenses l
+     WHERE l.name = 'Free' AND l.license_type = 'free'
+     LIMIT 1
      ON CONFLICT (user_id) DO NOTHING`,
     [userId]
   );

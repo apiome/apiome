@@ -20,6 +20,8 @@ import {
   platformProfilePath,
   resolvePlatformNavHref,
 } from '../../../../lib/platform-nav';
+import { getCommercialAccessForSession } from '../../../../lib/db/commercial-access';
+import type { ExternalNavItem } from '../../../../lib/external-links';
 import { getTenantsAdministratedByUser, getTenantsForUser } from '../../../../lib/db/helper';
 
 /** Optional CI/build stamp (e.g. `2026.05.05-84a231c`). Otherwise badge uses semver from package.json. */
@@ -105,6 +107,7 @@ function TopHeaderView({
   );
   const [isSwitchingTenant, setIsSwitchingTenant] = useState(false);
   const [tenantSearchQuery, setTenantSearchQuery] = useState('');
+  const [commercialNavItems, setCommercialNavItems] = useState<ExternalNavItem[]>([]);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const tenantMenuRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
@@ -114,7 +117,7 @@ function TopHeaderView({
     (session?.user as { id?: string })?.id;
   const { currentTheme, isSystemTheme } = useTheme();
   const isDark = useDarkMode();
-  const navItems = getPlatformNavItems();
+  const navItems = getPlatformNavItems(commercialNavItems);
   const profileHref = platformProfilePath();
 
   // Get display name for current theme (shows effective theme when system is selected)
@@ -137,6 +140,25 @@ function TopHeaderView({
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
   }, []);
+
+  useEffect(() => {
+    if (!session?.user) {
+      setCommercialNavItems([]);
+      return;
+    }
+    let cancelled = false;
+    getCommercialAccessForSession()
+      .then(({ navItems }) => {
+        if (!cancelled) setCommercialNavItems(navItems);
+      })
+      .catch((error) => {
+        console.error('Failed to load commercial nav entitlements:', error);
+        if (!cancelled) setCommercialNavItems([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
 
   useEffect(() => {
     const loadTenants = async () => {

@@ -20,7 +20,10 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import packageJson from '../../../../package.json';
 import { BROWSE_APP_URL } from '../../../../lib/app-urls';
-import { getExternalHomeCards, type ExternalHomeCard } from '../../../../lib/external-links';
+import {
+  resolveExternalLinkIcon,
+  type ExternalHomeCard,
+} from '../../../../lib/external-links';
 import { cn } from '../../../../lib/utils';
 import ThemeSelector from './ThemeSelector';
 import WhatsNewDialog from './WhatsNewDialog';
@@ -40,6 +43,7 @@ type AppCardConfig = {
   icon: LucideIcon;
   accent: string;
   glow: string;
+  footerLabel?: string;
 };
 
 const CORE_PRIMARY_APPS: AppCardConfig[] = [
@@ -77,17 +81,17 @@ function externalHomeCardToAppCard(card: ExternalHomeCard): AppCardConfig {
     href: card.href,
     enabled: card.enabled,
     external: card.external,
-    icon: card.icon,
+    icon: resolveExternalLinkIcon(card.icon),
     accent: card.accent,
     glow: card.glow,
+    footerLabel: 'Commercial',
   };
 }
 
-const PRIMARY_APPS: AppCardConfig[] = [
-  CORE_PRIMARY_APPS[0],
-  ...getExternalHomeCards().map(externalHomeCardToAppCard),
-  CORE_PRIMARY_APPS[1],
-];
+type AdeHomeProps = {
+  commercialHomeCards?: ExternalHomeCard[];
+  entitledFeatureFlags?: string[];
+};
 
 type ResourceLink = {
   id: string;
@@ -220,6 +224,20 @@ function AppLaunchCard({
           </p>
         )}
       </div>
+      {app.footerLabel && (
+        <div
+          className={cn(
+            'relative border-t px-5 py-2.5',
+            app.enabled
+              ? 'border-zinc-200/70 bg-zinc-50/80 dark:border-zinc-800/70 dark:bg-zinc-950/40'
+              : 'border-zinc-200/50 bg-zinc-100/60 dark:border-zinc-800/40 dark:bg-zinc-950/25'
+          )}
+        >
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
+            {app.footerLabel}
+          </span>
+        </div>
+      )}
     </button>
   );
 }
@@ -265,11 +283,20 @@ function ResourceRow({
   );
 }
 
-export default function AdeHome() {
+export default function AdeHome({
+  commercialHomeCards = [],
+  entitledFeatureFlags: _entitledFeatureFlags = [],
+}: AdeHomeProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+
+  const primaryApps: AppCardConfig[] = [
+    CORE_PRIMARY_APPS[0],
+    ...commercialHomeCards.map(externalHomeCardToAppCard),
+    CORE_PRIMARY_APPS[1],
+  ];
 
   const firstName = session?.user?.name?.split(' ')[0] || 'there';
   const greeting = getGreeting();
@@ -403,7 +430,7 @@ export default function AdeHome() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {PRIMARY_APPS.map((app) => (
+            {primaryApps.map((app) => (
               <AppLaunchCard key={app.id} app={app} onLaunch={launchApp} />
             ))}
           </div>

@@ -38,6 +38,7 @@ import {
   assignLicenseToUser,
   removeUserLicense,
 } from '../../../../../lib/db/admin-helper';
+import { isCommercialProductFlag } from '../../../../../lib/commercial-products';
 import { FeatureFlagUserOverridesPanel } from '../components/FeatureFlagUserOverridesPanel';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -453,35 +454,55 @@ function LicenseForm({ existing, allFlags, onSave, onCancel }: LicenseFormProps)
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Included Feature Flags</label>
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          Commercial products &amp; features
+        </label>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Toggle which applications appear on the home page and top navigation for users assigned this license.
+        </p>
         {allFlags.length === 0 ? (
           <p className="text-xs text-gray-500 italic">No feature flags defined yet.</p>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
-            {allFlags.map(ff => (
-              <label
-                key={ff.id}
-                className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-colors ${
-                  selectedFlags.has(ff.id)
-                    ? 'bg-indigo-900/30 border-indigo-600'
-                    : 'bg-slate-50 dark:bg-slate-900/60 border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedFlags.has(ff.id)}
-                  onChange={() => toggleFlag(ff.id)}
-                  className="mt-0.5 accent-indigo-500"
-                />
-                <span className="flex flex-col min-w-0">
-                  <span className="text-sm text-gray-900 dark:text-white font-medium flex items-center gap-1.5">
-                    {ff.label}
-                    {ff.is_preview && <PreviewBadge />}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{ff.name}</span>
-                </span>
-              </label>
-            ))}
+          <div className="space-y-4">
+            {(['products', 'features'] as const).map((section) => {
+              const sectionFlags = allFlags.filter((ff) =>
+                section === 'products' ? isCommercialProductFlag(ff.name) : !isCommercialProductFlag(ff.name)
+              );
+              if (sectionFlags.length === 0) return null;
+              return (
+                <div key={section} className="space-y-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {section === 'products' ? 'Commercial applications' : 'Additional platform features'}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {sectionFlags.map((ff) => (
+                      <label
+                        key={ff.id}
+                        className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                          selectedFlags.has(ff.id)
+                            ? 'bg-indigo-900/30 border-indigo-600'
+                            : 'bg-slate-50 dark:bg-slate-900/60 border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedFlags.has(ff.id)}
+                          onChange={() => toggleFlag(ff.id)}
+                          className="mt-0.5 accent-indigo-500"
+                        />
+                        <span className="flex flex-col min-w-0">
+                          <span className="text-sm text-gray-900 dark:text-white font-medium flex items-center gap-1.5">
+                            {ff.label}
+                            {ff.is_preview && <PreviewBadge />}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{ff.name}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -1353,46 +1374,13 @@ export default function LicenseManagementClient({
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-1">
-                            <div className="relative">
-                              <button
-                                onClick={() => setAssigningUser(assigningUser?.id === user.id ? null : user)}
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-indigo-700/40 text-indigo-300 hover:bg-indigo-700/60 border border-indigo-700/60 transition-colors"
-                              >
-                                <ShieldCheck className="w-3.5 h-3.5" />
-                                Assign
-                              </button>
-                              {assigningUser?.id === user.id && (
-                                <div className="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-2 min-w-[200px]">
-                                  {licenses.filter(l => l.enabled).map(lic => (
-                                    <button
-                                      key={lic.id}
-                                      onClick={() => handleAssignLicense(user.id, lic.id)}
-                                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left hover:bg-slate-50 dark:hover:bg-slate-800 text-gray-900 dark:text-white transition-colors"
-                                    >
-                                      <Badge type={lic.license_type} />
-                                      {lic.name}
-                                      {lic.id === user.license_id && <CheckCircle className="w-3.5 h-3.5 text-green-400 ml-auto" />}
-                                    </button>
-                                  ))}
-                                  <div className="border-t border-slate-200 dark:border-slate-800 mt-1 pt-1">
-                                    <button
-                                      onClick={() => { setOverrideUser(user); setAssigningUser(null); }}
-                                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left hover:bg-slate-50 dark:hover:bg-slate-800 text-indigo-300 transition-colors"
-                                    >
-                                      <Flag className="w-3.5 h-3.5" /> Override Flags…
-                                    </button>
-                                  </div>
-                                  {user.license_id && (
-                                    <button
-                                      onClick={() => { handleRemoveLicense(user); setAssigningUser(null); }}
-                                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left hover:bg-slate-50 dark:hover:bg-slate-800 text-red-400 transition-colors"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" /> Remove License
-                                    </button>
-                                  )}
-                                </div>
-                              )}
-                            </div>
+                            <button
+                              onClick={() => setAssigningUser(user)}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-indigo-700/40 text-indigo-300 hover:bg-indigo-700/60 border border-indigo-700/60 transition-colors"
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                              Assign
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -1453,6 +1441,59 @@ export default function LicenseManagementClient({
         </Modal>
       )}
 
+      {/* ── Assign license Modal ───────────────────────────────────────────── */}
+      {assigningUser && (
+        <Modal
+          title={`Assign license — ${assigningUser.name}`}
+          onClose={() => setAssigningUser(null)}
+          panelClassName="max-w-md"
+        >
+          <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">{assigningUser.email}</p>
+          <div className="space-y-1">
+            {licenses.filter((lic) => lic.enabled).map((lic) => (
+              <button
+                key={lic.id}
+                type="button"
+                onClick={() => handleAssignLicense(assigningUser.id, lic.id)}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-gray-900 transition-colors hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800"
+              >
+                <Badge type={lic.license_type} />
+                <span className="flex-1">{lic.name}</span>
+                {lic.id === assigningUser.license_id && (
+                  <CheckCircle className="ml-auto h-4 w-4 shrink-0 text-green-400" />
+                )}
+              </button>
+            ))}
+          </div>
+          <div className="mt-4 space-y-1 border-t border-slate-200 pt-3 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => {
+                setOverrideUser(assigningUser);
+                setAssigningUser(null);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-indigo-600 transition-colors hover:bg-slate-50 dark:text-indigo-300 dark:hover:bg-slate-800"
+            >
+              <Flag className="h-4 w-4" />
+              Override feature flags…
+            </button>
+            {assigningUser.license_id && (
+              <button
+                type="button"
+                onClick={() => {
+                  handleRemoveLicense(assigningUser);
+                  setAssigningUser(null);
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-red-500 transition-colors hover:bg-slate-50 dark:text-red-400 dark:hover:bg-slate-800"
+              >
+                <Trash2 className="h-4 w-4" />
+                Remove license
+              </button>
+            )}
+          </div>
+        </Modal>
+      )}
+
       {/* ── Per-user flag override Modal ───────────────────────────────────── */}
       {overrideUser && (
         <Modal
@@ -1473,10 +1514,6 @@ export default function LicenseManagementClient({
         </Modal>
       )}
 
-      {/* Click-outside to close assign dropdown */}
-      {assigningUser && (
-        <div className="fixed inset-0 z-10" onClick={() => setAssigningUser(null)} />
-      )}
     </>
   );
 }
