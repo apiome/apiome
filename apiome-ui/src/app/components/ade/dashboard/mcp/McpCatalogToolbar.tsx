@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '../../../ui/Select';
 import {
+  MCP_CATALOG_EMPTY_FILTERS,
   MCP_CATALOG_SORTS,
   mcpCatalogActiveFilterCount,
   type McpCatalogDensity,
@@ -126,7 +127,7 @@ function FacetGroup({
                   : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700',
               )}
             >
-              <span className="truncate">{fv.value}</span>
+              <span className="truncate">{fv.label ?? fv.value}</span>
               <span className="tabular-nums text-gray-400 dark:text-gray-500">{fv.count}</span>
             </button>
           );
@@ -139,7 +140,8 @@ function FacetGroup({
 /**
  * `<McpCatalogToolbar>` — the catalog controls strip: a search box (wired to the private search),
  * a sort `<select>` (default `Grade ▾`), a grid ↔ dense-list density toggle, and a collapsible
- * filter panel whose facet chips compose (host / grade / transport / visibility / auth / category).
+ * filter panel whose facet chips compose (host / grade / transport / safety / complexity /
+ * protocol / health / visibility / auth / category).
  * Faceting is data-driven — only facets and values present in the catalog render. All state is
  * controlled by the parent so it can persist density and reflect filters in one place.
  */
@@ -239,16 +241,7 @@ export function McpCatalogToolbar({
                 variant="ghost"
                 size="sm"
                 className="h-8 text-gray-500"
-                onClick={() =>
-                  onFiltersChange({
-                    hosts: [],
-                    grades: [],
-                    transports: [],
-                    visibilities: [],
-                    auths: [],
-                    categories: [],
-                  })
-                }
+                onClick={() => onFiltersChange({ ...MCP_CATALOG_EMPTY_FILTERS })}
               >
                 <X className="h-4 w-4" aria-hidden />
                 Clear all filters

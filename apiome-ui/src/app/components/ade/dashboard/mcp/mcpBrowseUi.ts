@@ -59,6 +59,16 @@ export interface McpBrowseEndpoint {
   resource_template_count: number;
   prompt_count: number;
   capability_count: number;
+  /** The current snapshot's reported MCP protocol version, or `null` when unreported (35.1). */
+  protocol_version: string | null;
+  /** Server-derived discovery health: `healthy` / `failing` / `undiscovered` / `disabled` / `quarantined`. */
+  health: string;
+  /** True when the current surface has a tool asserting `destructiveHint: true` (35.1). */
+  has_destructive: boolean;
+  /** True when the current surface has tools and every one asserts `readOnlyHint: true` (35.1). */
+  read_only_only: boolean;
+  /** Server-derived complexity band: `simple` / `moderate` / `complex` / `unknown` (35.1). */
+  complexity_band: string;
 }
 
 /** A host bucket: every cataloged endpoint that shares one host. */
@@ -230,6 +240,11 @@ export function mcpBrowseEndpointFromPayload(raw: unknown): McpBrowseEndpoint {
     resource_template_count: asInt(r.resource_template_count),
     prompt_count: asInt(r.prompt_count),
     capability_count: asInt(r.capability_count),
+    protocol_version: asString(r.protocol_version),
+    health: asString(r.health) ?? 'undiscovered',
+    has_destructive: r.has_destructive === true,
+    read_only_only: r.read_only_only === true,
+    complexity_band: asString(r.complexity_band) ?? 'unknown',
   };
 }
 

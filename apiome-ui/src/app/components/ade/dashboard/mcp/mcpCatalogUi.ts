@@ -3,8 +3,9 @@
  *
  * The catalog landing renders the private browse payload (9.1) as a grade-led card grid grouped by
  * site/host, with a sort control (default `Grade ▾`), composable filters (host, grade, transport,
- * visibility, auth, category), a grid ↔ dense-list density toggle, and a "changed since last view"
- * marker. This module holds the *pure*, React-free logic those controls drive — faceting, filtering,
+ * visibility, auth, category — plus the 35.1 facet dimensions: safety posture, complexity band,
+ * protocol version, discovery health), a grid ↔ dense-list density toggle, and a "changed since
+ * last view" marker. This module holds the *pure*, React-free logic those controls drive — faceting, filtering,
  * sorting, the per-host health rollup, and the small localStorage helpers for the persisted density
  * preference and the per-endpoint "last seen" snapshot — so they can be unit-tested directly and the
  * page component stays declarative.
@@ -197,6 +198,14 @@ export interface McpCatalogFilters {
   visibilities: string[];
   auths: string[];
   categories: string[];
+  /** Safety postures (35.1): `has_destructive` and/or `read_only_only`. */
+  safeties: string[];
+  /** Complexity bands (35.1): `simple` / `moderate` / `complex` / `unknown`. */
+  complexities: string[];
+  /** Reported protocol versions (35.1); `unknown` selects endpoints with none reported. */
+  protocols: string[];
+  /** Derived discovery-health labels (35.1). */
+  healths: string[];
 }
 
 /** An empty filter state (everything passes). */
@@ -207,6 +216,19 @@ export const MCP_CATALOG_EMPTY_FILTERS: McpCatalogFilters = {
   visibilities: [],
   auths: [],
   categories: [],
+  safeties: [],
+  complexities: [],
+  protocols: [],
+  healths: [],
+};
+
+/** The facet value an endpoint with no reported protocol version files/filters under (35.1). */
+export const MCP_CATALOG_UNKNOWN_PROTOCOL = 'unknown';
+
+/** Human labels for the machine-named facet values the 35.1 facets introduce. */
+const MCP_CATALOG_FACET_VALUE_LABELS: Record<string, string> = {
+  has_destructive: 'Has destructive',
+  read_only_only: 'Read-only only',
 };
 
 /** The facet dimensions the catalog exposes, in the order their controls render. */
@@ -216,6 +238,8 @@ export type McpCatalogFacetKey = keyof McpCatalogFilters;
 export interface McpCatalogFacetValue {
   value: string;
   count: number;
+  /** Optional human label for a machine-named value (chips render `label ?? value`). */
+  label?: string;
 }
 
 /** A facet dimension: its key, a human label, and the values present in the data. */
@@ -245,31 +269,36 @@ export function mcpCatalogEndpointMatchesFilters(
   if (filters.categories.length && (!endpoint.category || !filters.categories.includes(endpoint.category))) {
     return false;
   }
+  if (filters.safeties.length) {
+    // Within-facet OR: the endpoint passes when it carries any selected posture flag.
+    const matchesSafety =
+      (filters.safeties.includes('has_destructive') && endpoint.has_destructive) ||
+      (filters.safeties.includes('read_only_only') && endpoint.read_only_only);
+    if (!matchesSafety) return false;
+  }
+  if (filters.complexities.length && !filters.complexities.includes(endpoint.complexity_band)) {
+    return false;
+  }
+  if (
+    filters.protocols.length &&
+    !filters.protocols.includes(endpoint.protocol_version ?? MCP_CATALOG_UNKNOWN_PROTOCOL)
+  ) {
+    return false;
+  }
+  if (filters.healths.length && !filters.healths.includes(endpoint.health)) {
+    return false;
+  }
   return true;
 }
 
 /** True when no filter constraint is set (every endpoint passes). */
 export function mcpCatalogFiltersAreEmpty(filters: McpCatalogFilters): boolean {
-  return (
-    filters.hosts.length === 0 &&
-    filters.grades.length === 0 &&
-    filters.transports.length === 0 &&
-    filters.visibilities.length === 0 &&
-    filters.auths.length === 0 &&
-    filters.categories.length === 0
-  );
+  return Object.values(filters).every((values) => values.length === 0);
 }
 
 /** Count of active filter constraints across every facet (for the "Filters (N)" affordance). */
 export function mcpCatalogActiveFilterCount(filters: McpCatalogFilters): number {
-  return (
-    filters.hosts.length +
-    filters.grades.length +
-    filters.transports.length +
-    filters.visibilities.length +
-    filters.auths.length +
-    filters.categories.length
-  );
+  return Object.values(filters).reduce((sum, values) => sum + values.length, 0);
 }
 
 /** Tally one value into a facet's running count map. */
@@ -282,7 +311,11 @@ function tally(map: Map<string, number>, value: string | null | undefined): void
 /** Turn a count map into sorted facet values (descending count, then value ascending). */
 function facetValues(map: Map<string, number>): McpCatalogFacetValue[] {
   return [...map.entries()]
-    .map(([value, count]) => ({ value, count }))
+    .map(([value, count]) => ({
+      value,
+      count,
+      label: MCP_CATALOG_FACET_VALUE_LABELS[value],
+    }))
     .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
 }
 
@@ -300,6 +333,10 @@ export function mcpCatalogFacets(groups: McpBrowseHostGroup[]): McpCatalogFacet[
   const visibilities = new Map<string, number>();
   const auths = new Map<string, number>();
   const categories = new Map<string, number>();
+  const safeties = new Map<string, number>();
+  const complexities = new Map<string, number>();
+  const protocols = new Map<string, number>();
+  const healths = new Map<string, number>();
 
   for (const group of groups) {
     for (const ep of group.endpoints) {
@@ -309,6 +346,12 @@ export function mcpCatalogFacets(groups: McpBrowseHostGroup[]): McpCatalogFacet[
       tally(visibilities, ep.visibility);
       tally(auths, ep.auth_scheme);
       tally(categories, ep.category);
+      // Safety postures are independent flags: an endpoint tallies into each it carries (0-2).
+      if (ep.has_destructive) tally(safeties, 'has_destructive');
+      if (ep.read_only_only) tally(safeties, 'read_only_only');
+      tally(complexities, ep.complexity_band);
+      tally(protocols, ep.protocol_version ?? MCP_CATALOG_UNKNOWN_PROTOCOL);
+      tally(healths, ep.health);
     }
   }
 
@@ -316,6 +359,10 @@ export function mcpCatalogFacets(groups: McpBrowseHostGroup[]): McpCatalogFacet[
     { key: 'hosts', label: 'Host', values: facetValues(hosts) },
     { key: 'grades', label: 'Grade', values: facetValues(grades) },
     { key: 'transports', label: 'Transport', values: facetValues(transports) },
+    { key: 'safeties', label: 'Safety', values: facetValues(safeties) },
+    { key: 'complexities', label: 'Complexity', values: facetValues(complexities) },
+    { key: 'protocols', label: 'Protocol', values: facetValues(protocols) },
+    { key: 'healths', label: 'Health', values: facetValues(healths) },
     { key: 'visibilities', label: 'Visibility', values: facetValues(visibilities) },
     { key: 'auths', label: 'Auth', values: facetValues(auths) },
     { key: 'categories', label: 'Category', values: facetValues(categories) },

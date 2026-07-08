@@ -167,3 +167,64 @@ describe('McpCatalogToolbar', () => {
     expect(screen.getByRole('button', { name: /^A 1$/i })).toHaveAttribute('aria-pressed', 'false');
   });
 });
+
+describe('McpCatalogToolbar (35.1 facet dimensions, #4660)', () => {
+  const groups = [
+    {
+      host: 'acme.example',
+      endpoint_count: 2,
+      capability_count: 5,
+      endpoints: [
+        ep({
+          id: 'risky',
+          grade: 'C',
+          has_destructive: true,
+          health: 'failing',
+          complexity_band: 'complex',
+          protocol_version: '2025-06-18',
+        }),
+        ep({ id: 'quiet', grade: 'A', read_only_only: true, health: 'healthy', complexity_band: 'simple' }),
+      ],
+    },
+  ];
+  const facets = mcpCatalogFacets(groups);
+
+  function Harness() {
+    const [filters, setFilters] = React.useState<McpCatalogFilters>(MCP_CATALOG_EMPTY_FILTERS);
+    return (
+      <McpCatalogToolbar
+        search=""
+        onSearchChange={() => undefined}
+        sort="grade"
+        onSortChange={() => undefined}
+        density="grid"
+        onDensityChange={() => undefined}
+        facets={facets}
+        filters={filters}
+        onFiltersChange={setFilters}
+      />
+    );
+  }
+
+  it('renders the new facet groups with human-labelled safety chips and counts', () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole('button', { name: /^Filters/i }));
+    expect(screen.getByText('Safety')).toBeInTheDocument();
+    expect(screen.getByText('Complexity')).toBeInTheDocument();
+    expect(screen.getByText('Protocol')).toBeInTheDocument();
+    expect(screen.getByText('Health')).toBeInTheDocument();
+    // Machine-named safety values render their human labels.
+    expect(screen.getByRole('button', { name: /^Has destructive 1$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Read-only only 1$/i })).toBeInTheDocument();
+  });
+
+  it('toggles a safety chip into the active filter count', () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole('button', { name: /^Filters/i }));
+    const chip = screen.getByRole('button', { name: /^Has destructive 1$/i });
+    fireEvent.click(chip);
+    expect(chip).toHaveAttribute('aria-pressed', 'true');
+    const filtersButton = screen.getByRole('button', { name: /^Filters/i });
+    expect(within(filtersButton).getByText('1')).toBeInTheDocument();
+  });
+});

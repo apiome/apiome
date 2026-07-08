@@ -117,6 +117,31 @@ describe('mcpBrowseEndpointFromPayload', () => {
       mcpBrowseEndpointFromPayload({ id: 'x', server_branding: 'nope' }).server_branding,
     ).toBeNull();
   });
+
+  it('parses the 35.1 facet fields, defaulting to their NULL buckets (#4660)', () => {
+    const bare = mcpBrowseEndpointFromPayload({ id: 'x' });
+    expect(bare.protocol_version).toBeNull();
+    expect(bare.health).toBe('undiscovered');
+    expect(bare.has_destructive).toBe(false);
+    expect(bare.read_only_only).toBe(false);
+    expect(bare.complexity_band).toBe('unknown');
+
+    const faceted = mcpBrowseEndpointFromPayload({
+      id: 'x',
+      protocol_version: '2025-06-18',
+      health: 'failing',
+      has_destructive: true,
+      read_only_only: true,
+      complexity_band: 'moderate',
+    });
+    expect(faceted.protocol_version).toBe('2025-06-18');
+    expect(faceted.health).toBe('failing');
+    expect(faceted.has_destructive).toBe(true);
+    expect(faceted.read_only_only).toBe(true);
+    expect(faceted.complexity_band).toBe('moderate');
+    // Non-boolean flag payloads never read as asserted.
+    expect(mcpBrowseEndpointFromPayload({ id: 'x', has_destructive: 'yes' }).has_destructive).toBe(false);
+  });
 });
 
 describe('mcpScoreVariant / mcpScoreLabel', () => {

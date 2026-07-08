@@ -6,12 +6,20 @@ from urllib.parse import urlsplit, urlunsplit
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 from .config import settings
+from .mcp_catalog_inventory import derive_health as derive_mcp_endpoint_health
 from .mcp_change_severity import (
     SEVERITY_ADDITIVE,
     SEVERITY_BREAKING,
     SEVERITY_REVIEW,
     classify_change,
     severity_counts,
+)
+from .mcp_facets import (
+    SAFETY_HAS_DESTRUCTIVE,
+    SAFETY_READ_ONLY_ONLY,
+    UNCATEGORIZED_VALUE,
+    UNGRADED_VALUE,
+    UNKNOWN_VALUE,
 )
 from .mcp_lifecycle_signals import STAGE_UNSPECIFIED, assess_capability_lifecycle
 from .repository_refresh_status import RefreshStatus, compute_refresh_status
@@ -4301,6 +4309,15 @@ class McpBrowseEndpointOut(BaseModel):
     resource_template_count: int = 0
     prompt_count: int = 0
     capability_count: int = 0
+    # Facet fields (V2-MCP-35.1 / MCAT-21.1): the current snapshot's protocol version, the
+    # derived discovery-health label, the safety-posture flags, and the complexity band — the
+    # queryable dimensions of the faceted catalog search, carried on every browse/faceted row so
+    # the grid can facet without a second read.
+    protocol_version: Optional[str] = None
+    health: str = "undiscovered"
+    has_destructive: bool = False
+    read_only_only: bool = False
+    complexity_band: str = "unknown"
 
 
 class McpBrowseHostGroup(BaseModel):
@@ -4374,6 +4391,14 @@ def mcp_browse_endpoint_out_from_row(row: Dict[str, Any]) -> McpBrowseEndpointOu
         resource_template_count=resource_template,
         prompt_count=prompt,
         capability_count=tool + resource + resource_template + prompt,
+        protocol_version=_s(row.get("protocol_version")),
+        # Rows from the enriched queries carry the derived facet fields; older row shapes fall
+        # back to deriving health from the columns present (same labels/precedence) and to the
+        # facet NULL buckets, so the projection is total over both.
+        health=str(row.get("health") or derive_mcp_endpoint_health(row)),
+        has_destructive=bool(row.get("has_destructive") or False),
+        read_only_only=bool(row.get("read_only_only") or False),
+        complexity_band=str(row.get("complexity_band") or "unknown"),
     )
 
 
@@ -6715,4 +6740,128 @@ def mcp_catalog_insight_from_row(row: Dict[str, Any]) -> McpInsightCatalogRespon
             )
             for r in (row.get("top_capability_rows") or [])
         ],
+    )
+
+
+# ===========================================================================
+# MCP Catalog — faceted catalog search (V2-MCP-35.1 / MCAT-21.1, #4660)
+# ===========================================================================
+#
+# The catalog's rich metrics become queryable facets: ``GET /v1/mcp/{tenant}/facets`` filters
+# endpoints by grade / transport / category / safety posture / complexity band / protocol version
+# / discovery health (multi-facet AND, within-facet OR) and returns the matching page together
+# with live per-dimension bucket counts aggregated over the same filtered set. Bucket labels
+# double as filter values — the NULL buckets surface under their sentinel labels (``ungraded`` /
+# ``uncategorized`` / ``unknown``), so any bucket a count reports can be clicked back into a
+# filter.
+
+
+class McpCatalogFacetsOut(BaseModel):
+    """Live bucket counts per facet dimension, over the current filtered result set (MCAT-21.1).
+
+    Each dimension is a busiest-first list of :class:`McpCatalogBucketOut`; every ``label`` is a
+    valid filter value for that dimension (NULL buckets use their sentinel labels). ``safety``
+    always lists both postures — ``has_destructive`` and ``read_only_only`` — even at zero, so a
+    client can render the full control; the postures are independent flags, so their counts can
+    overlap and need not sum to the endpoint total. All dimensions default to empty, so an empty
+    result projects cleanly.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    grade: List[McpCatalogBucketOut] = Field(default_factory=list)
+    transport: List[McpCatalogBucketOut] = Field(default_factory=list)
+    category: List[McpCatalogBucketOut] = Field(default_factory=list)
+    safety: List[McpCatalogBucketOut] = Field(default_factory=list)
+    complexity: List[McpCatalogBucketOut] = Field(default_factory=list)
+    protocol_version: List[McpCatalogBucketOut] = Field(default_factory=list)
+    health: List[McpCatalogBucketOut] = Field(default_factory=list)
+
+
+class McpFacetedSearchResponse(BaseModel):
+    """Response envelope of the faceted catalog search (MCAT-21.1).
+
+    ``endpoints`` is the requested page of matches (browse-shaped rows, each carrying its facet
+    fields), ``count`` its length, and ``total`` the full match count across pages. ``facets``
+    holds the live bucket counts over the same filtered set, so the counts always describe
+    exactly the result the filters produced. An empty match is a valid response — empty page,
+    zero total, empty buckets — never an error.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    total: int = 0
+    count: int = 0
+    limit: int
+    offset: int
+    endpoints: List[McpBrowseEndpointOut] = Field(default_factory=list)
+    facets: McpCatalogFacetsOut = Field(default_factory=McpCatalogFacetsOut)
+
+
+def _facet_buckets(rows: Any, *, null_label: str) -> List[McpCatalogBucketOut]:
+    """Project ``{label, count}`` facet rows, folding the NULL bucket into ``null_label``.
+
+    Like :func:`_catalog_buckets`, but merging: SQL emits the NULL bucket as a separate row, and
+    a raw label equal to the sentinel could in principle coexist with it, so rows folding to the
+    same label are summed rather than duplicated. Row order (busiest first) is preserved.
+    """
+    projected: List[McpCatalogBucketOut] = []
+    index: Dict[str, int] = {}
+    for row in rows or []:
+        raw = row.get("label")
+        label = str(raw) if raw is not None and str(raw) != "" else null_label
+        count = int(row.get("count") or 0)
+        if label in index:
+            projected[index[label]].count += count
+        else:
+            index[label] = len(projected)
+            projected.append(McpCatalogBucketOut(label=label, count=count))
+    return projected
+
+
+def mcp_faceted_search_response_from_bundle(
+    bundle: Dict[str, Any], *, limit: int, offset: int
+) -> McpFacetedSearchResponse:
+    """Project a :meth:`Database.search_mcp_catalog_faceted` bundle onto the wire model.
+
+    Endpoint rows reuse the browse projection (host derivation, credential redaction, facet
+    fields); the per-dimension bucket rows are projected with their NULL buckets folded into the
+    matching sentinel filter values, and the safety tallies become the two fixed posture buckets
+    (always present, ordered ``has_destructive`` then ``read_only_only``).
+    """
+    endpoints = [
+        mcp_browse_endpoint_out_from_row(r) for r in (bundle.get("endpoints") or [])
+    ]
+    safety_counts = bundle.get("safety_counts") or {}
+    facets = McpCatalogFacetsOut(
+        grade=_facet_buckets(bundle.get("grade_rows"), null_label=UNGRADED_VALUE),
+        transport=_facet_buckets(bundle.get("transport_rows"), null_label=UNKNOWN_VALUE),
+        category=_facet_buckets(
+            bundle.get("category_rows"), null_label=UNCATEGORIZED_VALUE
+        ),
+        safety=[
+            McpCatalogBucketOut(
+                label=SAFETY_HAS_DESTRUCTIVE,
+                count=int(safety_counts.get("has_destructive") or 0),
+            ),
+            McpCatalogBucketOut(
+                label=SAFETY_READ_ONLY_ONLY,
+                count=int(safety_counts.get("read_only_only") or 0),
+            ),
+        ],
+        complexity=_facet_buckets(bundle.get("complexity_rows"), null_label=UNKNOWN_VALUE),
+        protocol_version=_facet_buckets(
+            bundle.get("protocol_rows"), null_label=UNKNOWN_VALUE
+        ),
+        health=_facet_buckets(bundle.get("health_rows"), null_label="undiscovered"),
+    )
+    return McpFacetedSearchResponse(
+        success=True,
+        total=int(bundle.get("total") or 0),
+        count=len(endpoints),
+        limit=limit,
+        offset=offset,
+        endpoints=endpoints,
+        facets=facets,
     )

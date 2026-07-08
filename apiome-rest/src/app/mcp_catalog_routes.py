@@ -54,6 +54,7 @@ from .mcp_discovery_engine import (
     reconstruct_surface,
     trigger_discovery,
 )
+from .mcp_facets import FacetValidationError, normalize_catalog_facet_filters
 from .mcp_insight_aggregation import (
     DISCOVERY_TIMELINE_WINDOW,
     TOOL_LATENCY_WINDOW_DAYS,
@@ -104,6 +105,7 @@ from .models import (
     McpEndpointVersionResponse,
     McpEndpointViewMarkRequest,
     McpEndpointViewResponse,
+    McpFacetedSearchResponse,
     McpInsightCatalogResponse,
     McpInsightEvolutionResponse,
     McpInsightGraphResponse,
@@ -143,6 +145,7 @@ from .models import (
     mcp_endpoint_test_response_from_result,
     mcp_endpoint_view_response,
     mcp_evolution_point_from_row,
+    mcp_faceted_search_response_from_bundle,
     mcp_lint_report_from_report,
     mcp_search_hit_from_row,
     mcp_surface_metrics_out,
@@ -310,6 +313,103 @@ async def search_mcp_catalog(
         count=len(hits),
         hits=hits,
     )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/facets",
+    response_model=McpFacetedSearchResponse,
+)
+async def faceted_mcp_catalog_search(
+    tenant_slug: str,
+    grade: Optional[List[str]] = Query(
+        None, description="Grade facet: A-F letters (any case) and/or 'ungraded'. Repeatable."
+    ),
+    transport: Optional[List[str]] = Query(
+        None, description="Transport facet: streamable_http / sse / stdio. Repeatable."
+    ),
+    category: Optional[List[str]] = Query(
+        None,
+        description=(
+            "Category facet: category names (case-insensitive) and/or 'uncategorized'. Repeatable."
+        ),
+    ),
+    safety: Optional[List[str]] = Query(
+        None,
+        description=(
+            "Safety-posture facet: 'has_destructive' (a tool asserts destructiveHint) and/or "
+            "'read_only_only' (every tool asserts readOnlyHint). Repeatable."
+        ),
+    ),
+    complexity: Optional[List[str]] = Query(
+        None,
+        description="Complexity-band facet: simple / moderate / complex / unknown. Repeatable.",
+    ),
+    protocol: Optional[List[str]] = Query(
+        None,
+        description=(
+            "Protocol-version facet: exact reported versions (e.g. 2025-06-18) and/or 'unknown'. "
+            "Repeatable."
+        ),
+    ),
+    health: Optional[List[str]] = Query(
+        None,
+        description=(
+            "Discovery-health facet: healthy / failing / undiscovered / disabled / quarantined. "
+            "Repeatable."
+        ),
+    ),
+    visibility: Optional[McpSearchVisibility] = Query(
+        None,
+        description="Filter to 'private' or 'public' endpoints within the caller's own catalog.",
+    ),
+    limit: int = Query(100, ge=1, le=500, description="Maximum endpoints to return."),
+    offset: int = Query(0, ge=0, description="Endpoints to skip (pagination)."),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpFacetedSearchResponse:
+    """Faceted search over the caller's MCP catalog with live facet counts (V2-MCP-35.1 / MCAT-21.1).
+
+    The catalog's rich metrics as queryable facets: filter by grade band, transport, category,
+    safety posture, complexity band, protocol version, and discovery health. Filters **AND across
+    facets** and **OR within a facet**; the response carries the matching endpoint page (browse-
+    shaped rows, each with its facet fields) plus per-dimension bucket counts aggregated over the
+    same filtered set, so the counts are live. Every bucket label — including the NULL-bucket
+    sentinels ``ungraded`` / ``uncategorized`` / ``unknown`` — is itself a valid filter value.
+
+    Like every catalog route, scoping comes from the token's ``tenant_id`` — never the URL slug —
+    so the search only ever spans the caller's own catalog, and ``visibility`` narrows the
+    caller's *own* private/public endpoints. A filter combination matching nothing returns an
+    empty page with zeroed counts, not an error; an invalid facet value is a ``422``.
+    """
+    _ = tenant_slug  # scoping comes from the token, not the URL slug
+    tenant_id = str(auth_data["tenant_id"])
+
+    try:
+        filters = normalize_catalog_facet_filters(
+            grade=grade,
+            transport=transport,
+            category=category,
+            safety=safety,
+            complexity=complexity,
+            protocol=protocol,
+            health=health,
+        )
+    except FacetValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    bundle = db.search_mcp_catalog_faceted(
+        tenant_id,
+        grades=filters.grades,
+        transports=filters.transports,
+        categories=filters.categories,
+        safety=filters.safety,
+        complexity=filters.complexity,
+        protocols=filters.protocols,
+        health=filters.health,
+        visibility=visibility,
+        limit=limit,
+        offset=offset,
+    )
+    return mcp_faceted_search_response_from_bundle(bundle, limit=limit, offset=offset)
 
 
 @mcp_endpoints_router.get(

@@ -272,6 +272,99 @@ describe('mcpCatalogEndpointMatchesFilters / mcpApplyCatalog', () => {
   });
 });
 
+// --- Faceted search dimensions (V2-MCP-35.1 / MCAT-21.1, #4660) ------------------------------
+
+describe('35.1 facet dimensions (safety / complexity / protocol / health)', () => {
+  const groups = [
+    group('acme.example', [
+      ep({
+        id: 'safe',
+        health: 'healthy',
+        complexity_band: 'simple',
+        protocol_version: '2025-06-18',
+        read_only_only: true,
+      }),
+      ep({
+        id: 'risky',
+        health: 'failing',
+        complexity_band: 'complex',
+        protocol_version: '2025-03-26',
+        has_destructive: true,
+      }),
+      ep({ id: 'new' }), // undiscovered: unknown complexity/protocol, no safety flags
+    ]),
+  ];
+
+  it('tallies the new facet dimensions with counts and human labels for safety', () => {
+    const facets = mcpCatalogFacets(groups);
+    const byKey = Object.fromEntries(facets.map((f) => [f.key, f]));
+    expect(byKey.safeties.values).toEqual([
+      { value: 'has_destructive', count: 1, label: 'Has destructive' },
+      { value: 'read_only_only', count: 1, label: 'Read-only only' },
+    ]);
+    expect(byKey.complexities.values).toEqual([
+      { value: 'complex', count: 1 },
+      { value: 'simple', count: 1 },
+      { value: 'unknown', count: 1 },
+    ]);
+    expect(byKey.protocols.values).toEqual([
+      { value: '2025-03-26', count: 1 },
+      { value: '2025-06-18', count: 1 },
+      { value: 'unknown', count: 1 },
+    ]);
+    expect(byKey.healths.values).toEqual([
+      { value: 'failing', count: 1 },
+      { value: 'healthy', count: 1 },
+      { value: 'undiscovered', count: 1 },
+    ]);
+  });
+
+  it('safety filter ORs within the facet and matches only flagged endpoints', () => {
+    const only = (filters: McpCatalogFilters) =>
+      mcpApplyCatalog(groups, filters, '').flatMap((g) => g.endpoints.map((e) => e.id));
+    expect(only({ ...MCP_CATALOG_EMPTY_FILTERS, safeties: ['has_destructive'] })).toEqual(['risky']);
+    expect(only({ ...MCP_CATALOG_EMPTY_FILTERS, safeties: ['read_only_only'] })).toEqual(['safe']);
+    expect(
+      only({ ...MCP_CATALOG_EMPTY_FILTERS, safeties: ['has_destructive', 'read_only_only'] }),
+    ).toEqual(['safe', 'risky']);
+  });
+
+  it('complexity and health filters match the derived bands/labels', () => {
+    const only = (filters: McpCatalogFilters) =>
+      mcpApplyCatalog(groups, filters, '').flatMap((g) => g.endpoints.map((e) => e.id));
+    expect(only({ ...MCP_CATALOG_EMPTY_FILTERS, complexities: ['simple'] })).toEqual(['safe']);
+    expect(only({ ...MCP_CATALOG_EMPTY_FILTERS, complexities: ['unknown'] })).toEqual(['new']);
+    expect(only({ ...MCP_CATALOG_EMPTY_FILTERS, healths: ['failing'] })).toEqual(['risky']);
+  });
+
+  it("protocol filter matches exactly, with 'unknown' selecting unreported protocols", () => {
+    const only = (filters: McpCatalogFilters) =>
+      mcpApplyCatalog(groups, filters, '').flatMap((g) => g.endpoints.map((e) => e.id));
+    expect(only({ ...MCP_CATALOG_EMPTY_FILTERS, protocols: ['2025-06-18'] })).toEqual(['safe']);
+    expect(only({ ...MCP_CATALOG_EMPTY_FILTERS, protocols: ['unknown'] })).toEqual(['new']);
+  });
+
+  it('new dimensions AND with the existing ones', () => {
+    const filters: McpCatalogFilters = {
+      ...MCP_CATALOG_EMPTY_FILTERS,
+      healths: ['healthy', 'failing'],
+      safeties: ['has_destructive'],
+    };
+    const result = mcpApplyCatalog(groups, filters, '');
+    expect(result.flatMap((g) => g.endpoints.map((e) => e.id))).toEqual(['risky']);
+  });
+
+  it('new dimensions count toward emptiness and the active-filter tally', () => {
+    const filters: McpCatalogFilters = {
+      ...MCP_CATALOG_EMPTY_FILTERS,
+      safeties: ['read_only_only'],
+      healths: ['healthy'],
+    };
+    expect(mcpCatalogFiltersAreEmpty(filters)).toBe(false);
+    expect(mcpCatalogActiveFilterCount(filters)).toBe(2);
+  });
+});
+
 describe('mcpCatalogFiltersAreEmpty / mcpCatalogActiveFilterCount', () => {
   it('reports emptiness and the active constraint count', () => {
     expect(mcpCatalogFiltersAreEmpty(MCP_CATALOG_EMPTY_FILTERS)).toBe(true);
