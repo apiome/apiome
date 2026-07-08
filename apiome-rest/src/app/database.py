@@ -11,6 +11,15 @@ from psycopg2.extras import Json, RealDictCursor
 
 from .config import WEBHOOK_MAX_DELIVERY_ATTEMPTS, settings
 from .jsonschema_generator import generate_class_jsonschema_spec
+from .mcp_facets import (
+    COMPLEXITY_MODERATE_MAX_PROPERTIES,
+    COMPLEXITY_SIMPLE_MAX_PROPERTIES,
+    SAFETY_HAS_DESTRUCTIVE,
+    SAFETY_READ_ONLY_ONLY,
+    UNCATEGORIZED_VALUE,
+    UNGRADED_VALUE,
+    UNKNOWN_VALUE,
+)
 from .push_webhook_crypto import encrypt_signing_secret
 from .revision_deprecation import (
     coerce_metadata,
@@ -9794,20 +9803,30 @@ class Database:
         with zero counts and a NULL score, so the catalog is shown in full. Ordered by name so
         the per-host grouping the route performs lists endpoints predictably.
 
+        Each row also carries the endpoint's facet fields (V2-MCP-35.1): the current snapshot's
+        ``protocol_version``, the derived ``health`` label, the safety-posture flags
+        (``has_destructive`` / ``read_only_only``), and the ``complexity_band`` — so the catalog
+        grid can filter on every facet dimension without a second read.
+
         Args:
             tenant_id: The caller's token tenant; the sole scoping predicate, so an endpoint
                 never leaks across tenants.
 
         Returns:
-            One dict per live endpoint with its score/grade and capability counts.
+            One dict per live endpoint with its score/grade, capability counts, and facet fields.
         """
-        q = """
+        q = f"""
             SELECT e.id, e.tenant_id, e.name, e.slug, e.endpoint_url, e.transport,
                    e.description, e.category, e.visibility, e.published, e.enabled,
                    e.last_discovered_at, e.last_discovery_status, e.quarantined_at,
                    e.current_version_id,
                    s.score, s.grade, s.scored_at,
                    cv.server_branding,
+                   cv.protocol_version,
+                   {self._MCP_ENDPOINT_HEALTH_EXPR} AS health,
+                   {self._MCP_HAS_DESTRUCTIVE_EXPR} AS has_destructive,
+                   {self._MCP_READ_ONLY_ONLY_EXPR} AS read_only_only,
+                   {self._MCP_COMPLEXITY_BAND_EXPR} AS complexity_band,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'tool')              AS tool_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource')          AS resource_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource_template') AS resource_template_count,
@@ -9816,8 +9835,10 @@ class Database:
             LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
             LEFT JOIN apiome.mcp_endpoint_versions cv ON cv.id = e.current_version_id
             LEFT JOIN apiome.mcp_capability_items ci ON ci.version_id = e.current_version_id
+            CROSS JOIN LATERAL (SELECT {self._MCP_MAX_TOOL_PROPS_EXPR} AS max_tool_props) mtp
             WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
-            GROUP BY e.id, s.score, s.grade, s.scored_at, cv.server_branding
+            GROUP BY e.id, s.score, s.grade, s.scored_at, cv.server_branding,
+                     cv.protocol_version, mtp.max_tool_props
             ORDER BY e.name ASC
         """
         return self.execute_query(q, (tenant_id,))
@@ -9909,6 +9930,73 @@ class Database:
     #: ``/`` / ``?`` / ``#``. NULL for hostless targets (e.g. stdio commands), which a host filter
     #: then excludes — those are the ``(local)`` bucket in browse and have no host to match on.
     _MCP_ENDPOINT_HOST_EXPR = "substring(e.endpoint_url from '://(?:[^@/]*@)?([^:/?#]+)')"
+
+    # --- Faceted catalog search expressions (V2-MCP-35.1 / MCAT-21.1, #4660) ---------------
+    # Each derived facet dimension is one SQL expression over the endpoint row (alias ``e``),
+    # its current version (alias ``cv``), and its capability items — used identically in the
+    # facet WHERE clauses, the endpoint projections, and the GROUP BY count queries, so a
+    # filter and its bucket count can never disagree.
+
+    #: The endpoint's derived discovery-health label. The SQL mirror of
+    #: :func:`app.mcp_catalog_inventory.derive_health` — same five labels, same precedence
+    #: (quarantined → disabled → undiscovered → failing → healthy).
+    _MCP_ENDPOINT_HEALTH_EXPR = (
+        "CASE WHEN e.quarantined_at IS NOT NULL THEN 'quarantined' "
+        "WHEN NOT e.enabled THEN 'disabled' "
+        "WHEN e.current_version_id IS NULL OR e.last_discovered_at IS NULL THEN 'undiscovered' "
+        "WHEN e.consecutive_failures > 0 THEN 'failing' "
+        "ELSE 'healthy' END"
+    )
+
+    #: TRUE when the endpoint's current surface has at least one tool asserting
+    #: ``destructiveHint: true`` as a JSON boolean (the strict-boolean reading the 28.1 surface
+    #: metrics use — a string ``"true"`` does not count as asserted).
+    _MCP_HAS_DESTRUCTIVE_EXPR = (
+        "EXISTS (SELECT 1 FROM apiome.mcp_capability_items sd "
+        "WHERE sd.version_id = e.current_version_id AND sd.item_type = 'tool' "
+        "AND sd.annotations -> 'destructiveHint' = 'true'::jsonb)"
+    )
+
+    #: TRUE when the endpoint's current surface has at least one tool and *every* tool asserts
+    #: ``readOnlyHint: true`` — the server declares the whole surface read-only. A tool with no
+    #: annotations (or a non-boolean hint) breaks the claim, so unannotated surfaces never pass.
+    _MCP_READ_ONLY_ONLY_EXPR = (
+        "(EXISTS (SELECT 1 FROM apiome.mcp_capability_items sr "
+        "WHERE sr.version_id = e.current_version_id AND sr.item_type = 'tool') "
+        "AND NOT EXISTS (SELECT 1 FROM apiome.mcp_capability_items sr "
+        "WHERE sr.version_id = e.current_version_id AND sr.item_type = 'tool' "
+        "AND sr.annotations -> 'readOnlyHint' IS DISTINCT FROM 'true'::jsonb))"
+    )
+
+    #: The maximum top-level ``input_schema`` property count across the endpoint's current tools
+    #: (NULL when the endpoint has no tools / no surface). Spliced into a LATERAL alias
+    #: (``mtp.max_tool_props``) so the banding CASE evaluates it once per endpoint.
+    _MCP_MAX_TOOL_PROPS_EXPR = (
+        "(SELECT MAX(CASE WHEN jsonb_typeof(tc.input_schema -> 'properties') = 'object' "
+        "THEN (SELECT COUNT(*) FROM jsonb_object_keys(tc.input_schema -> 'properties')) "
+        "ELSE 0 END) "
+        "FROM apiome.mcp_capability_items tc "
+        "WHERE tc.version_id = e.current_version_id AND tc.item_type = 'tool')"
+    )
+
+    #: Band ``mtp.max_tool_props`` into the complexity facet value — the SQL mirror of
+    #: :func:`app.mcp_facets.complexity_band`, sharing its thresholds so the two never drift.
+    _MCP_COMPLEXITY_BAND_EXPR = (
+        "CASE WHEN mtp.max_tool_props IS NULL THEN 'unknown' "
+        f"WHEN mtp.max_tool_props <= {COMPLEXITY_SIMPLE_MAX_PROPERTIES} THEN 'simple' "
+        f"WHEN mtp.max_tool_props <= {COMPLEXITY_MODERATE_MAX_PROPERTIES} THEN 'moderate' "
+        "ELSE 'complex' END"
+    )
+
+    #: The shared FROM block of every faceted-search query: the endpoint, its current snapshot's
+    #: score and version rows, and the LATERAL max-tool-properties scalar the complexity band
+    #: reads. LEFT JOINs keep never-discovered endpoints in scope (they band as ``unknown``).
+    _MCP_FACETED_FROM = (
+        "FROM apiome.mcp_endpoints e "
+        "LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id "
+        "LEFT JOIN apiome.mcp_endpoint_versions cv ON cv.id = e.current_version_id "
+        f"CROSS JOIN LATERAL (SELECT {_MCP_MAX_TOOL_PROPS_EXPR} AS max_tool_props) mtp"
+    )
 
     def _mcp_search_filter_clauses(
         self,
@@ -10068,6 +10156,226 @@ class Database:
         """
         params = (query, tenant_id, query, *fparams, int(limit), int(offset))
         return self.execute_query(q, params)
+
+    # -----------------------------------------------------------------------
+    # MCP Catalog — faceted catalog search (V2-MCP-35.1 / MCAT-21.1, #4660)
+    # -----------------------------------------------------------------------
+
+    def _mcp_facet_filter_clauses(
+        self,
+        *,
+        grades: Optional[List[str]] = None,
+        transports: Optional[List[str]] = None,
+        categories: Optional[List[str]] = None,
+        safety: Optional[List[str]] = None,
+        complexity: Optional[List[str]] = None,
+        protocols: Optional[List[str]] = None,
+        health: Optional[List[str]] = None,
+        visibility: Optional[str] = None,
+    ) -> Tuple[List[str], List[Any]]:
+        """Build the composable facet WHERE clauses of the faceted catalog search (MCAT-21.1).
+
+        Multi-facet **AND** semantics: each supplied dimension contributes exactly one clause and
+        the caller ANDs them all in. Within a dimension, values **OR** (an ``IN``-style match), so
+        ``grades=[A, B]`` matches endpoints graded A *or* B. The NULL-bucket sentinels
+        (``ungraded`` / ``uncategorized`` / ``unknown``) OR an ``IS NULL`` predicate into their
+        dimension's clause, so every bucket a facet count reports is filterable.
+
+        The clauses reference the ``e`` / ``s`` / ``cv`` / ``mtp`` aliases the shared
+        :data:`_MCP_FACETED_FROM` block (and the browse query) expose. Values are assumed already
+        canonicalized by :func:`app.mcp_facets.normalize_catalog_facet_filters`.
+
+        Args:
+            grades: Letter grades (uppercase) and/or ``ungraded``.
+            transports: Transport kinds (``streamable_http`` / ``sse`` / ``stdio``).
+            categories: Category names (matched case-insensitively) and/or ``uncategorized``.
+            safety: Safety postures (``has_destructive`` / ``read_only_only``).
+            complexity: Complexity bands (``simple`` / ``moderate`` / ``complex`` / ``unknown``).
+            protocols: Protocol versions (matched exactly) and/or ``unknown``.
+            health: Derived health labels (the five :data:`app.mcp_facets.HEALTH_VALUES`).
+            visibility: ``private`` or ``public`` (single-valued, like the 9.2 search filter).
+
+        Returns:
+            A ``(clauses, params)`` pair for the caller to AND into its WHERE.
+        """
+        clauses: List[str] = []
+        params: List[Any] = []
+
+        if grades:
+            parts: List[str] = []
+            letters = [g for g in grades if g != UNGRADED_VALUE]
+            if letters:
+                parts.append("upper(s.grade) = ANY(%s)")
+                params.append(letters)
+            if UNGRADED_VALUE in grades:
+                parts.append("s.grade IS NULL")
+            clauses.append("(" + " OR ".join(parts) + ")")
+
+        if transports:
+            clauses.append("e.transport = ANY(%s)")
+            params.append(list(transports))
+
+        if categories:
+            parts = []
+            named = [c for c in categories if c != UNCATEGORIZED_VALUE]
+            if named:
+                parts.append("lower(e.category) = ANY(%s)")
+                params.append([c.lower() for c in named])
+            if UNCATEGORIZED_VALUE in categories:
+                parts.append("(e.category IS NULL OR e.category = '')")
+            clauses.append("(" + " OR ".join(parts) + ")")
+
+        if safety:
+            parts = []
+            if SAFETY_HAS_DESTRUCTIVE in safety:
+                parts.append(self._MCP_HAS_DESTRUCTIVE_EXPR)
+            if SAFETY_READ_ONLY_ONLY in safety:
+                parts.append(self._MCP_READ_ONLY_ONLY_EXPR)
+            clauses.append("(" + " OR ".join(parts) + ")")
+
+        if complexity:
+            clauses.append(f"{self._MCP_COMPLEXITY_BAND_EXPR} = ANY(%s)")
+            params.append(list(complexity))
+
+        if protocols:
+            parts = []
+            named = [p for p in protocols if p != UNKNOWN_VALUE]
+            if named:
+                parts.append("cv.protocol_version = ANY(%s)")
+                params.append(named)
+            if UNKNOWN_VALUE in protocols:
+                parts.append("cv.protocol_version IS NULL")
+            clauses.append("(" + " OR ".join(parts) + ")")
+
+        if health:
+            clauses.append(f"({self._MCP_ENDPOINT_HEALTH_EXPR}) = ANY(%s)")
+            params.append(list(health))
+
+        if visibility:
+            clauses.append("e.visibility = %s")
+            params.append(visibility)
+
+        return clauses, params
+
+    def search_mcp_catalog_faceted(
+        self,
+        tenant_id: str,
+        *,
+        grades: Optional[List[str]] = None,
+        transports: Optional[List[str]] = None,
+        categories: Optional[List[str]] = None,
+        safety: Optional[List[str]] = None,
+        complexity: Optional[List[str]] = None,
+        protocols: Optional[List[str]] = None,
+        health: Optional[List[str]] = None,
+        visibility: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> Dict[str, Any]:
+        """Faceted search over a tenant's live catalog: filtered endpoints + live facet counts (MCAT-21.1).
+
+        One bundle backing ``GET /v1/mcp/{tenant}/facets``: the page of endpoints matching every
+        supplied facet filter (multi-facet AND, within-facet OR — see
+        :meth:`_mcp_facet_filter_clauses`), the total match count, and per-dimension bucket counts
+        aggregated over the *same filtered set* — so the counts are live: they always describe
+        exactly the result the filters produced. Scoping is by ``tenant_id`` (live rows only), and
+        the ``visibility`` filter composes on top within the caller's own catalog, so the search
+        never crosses tenants.
+
+        Endpoint rows carry the same enrichment browse rows do (score/grade, per-kind capability
+        tallies, protocol, health, safety flags, complexity band), ordered by name for a stable
+        page. An empty match yields an empty page, zero total, and empty bucket lists — never an
+        error.
+
+        Args:
+            tenant_id: The caller's token tenant; the sole cross-tenant scoping predicate.
+            grades / transports / categories / safety / complexity / protocols / health:
+                Canonical facet selections (see :meth:`_mcp_facet_filter_clauses`); ``None`` or
+                empty means no constraint on that dimension.
+            visibility: Restrict to ``private`` or ``public`` endpoints within the tenant.
+            limit: Maximum endpoint rows in the page.
+            offset: Endpoint rows to skip (pagination).
+
+        Returns:
+            A dict with ``endpoints`` (the page rows), ``total`` (the full match count), the
+            ``{label, count}`` row lists ``grade_rows`` / ``transport_rows`` / ``category_rows`` /
+            ``complexity_rows`` / ``protocol_rows`` / ``health_rows``, and ``safety_counts``
+            (``has_destructive`` / ``read_only_only`` tallies).
+        """
+        clauses, fparams = self._mcp_facet_filter_clauses(
+            grades=grades,
+            transports=transports,
+            categories=categories,
+            safety=safety,
+            complexity=complexity,
+            protocols=protocols,
+            health=health,
+            visibility=visibility,
+        )
+        where = "WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL"
+        if clauses:
+            where += "".join(f" AND {c}" for c in clauses)
+        base = f"{self._MCP_FACETED_FROM} {where}"
+        params = (tenant_id, *fparams)
+
+        def _kind_count(kind: str) -> str:
+            return (
+                "(SELECT COUNT(*) FROM apiome.mcp_capability_items i "
+                f"WHERE i.version_id = e.current_version_id AND i.item_type = '{kind}')"
+            )
+
+        endpoints_q = f"""
+            SELECT e.id, e.name, e.slug, e.endpoint_url, e.transport, e.description,
+                   e.category, e.visibility, e.published, e.enabled, e.last_discovered_at,
+                   e.last_discovery_status, e.quarantined_at, e.current_version_id,
+                   s.score, s.grade,
+                   cv.server_branding, cv.protocol_version,
+                   {self._MCP_ENDPOINT_HEALTH_EXPR} AS health,
+                   {self._MCP_HAS_DESTRUCTIVE_EXPR} AS has_destructive,
+                   {self._MCP_READ_ONLY_ONLY_EXPR} AS read_only_only,
+                   {self._MCP_COMPLEXITY_BAND_EXPR} AS complexity_band,
+                   {_kind_count('tool')}              AS tool_count,
+                   {_kind_count('resource')}          AS resource_count,
+                   {_kind_count('resource_template')} AS resource_template_count,
+                   {_kind_count('prompt')}            AS prompt_count
+            {base}
+            ORDER BY e.name ASC, e.id ASC
+            LIMIT %s OFFSET %s
+        """
+        total_q = f"SELECT COUNT(*) AS total {base}"
+
+        # Per-dimension bucket counts over the same filtered set (GROUP BY the facet expression,
+        # busiest bucket first, stable label tiebreak). NULL labels are preserved here and mapped
+        # to their sentinel bucket in the wire projection.
+        def _bucket_q(label_expr: str) -> str:
+            return (
+                f"SELECT {label_expr} AS label, COUNT(*) AS count {base} "
+                "GROUP BY 1 ORDER BY count DESC, label ASC NULLS LAST"
+            )
+
+        safety_q = f"""
+            SELECT COUNT(*) FILTER (WHERE {self._MCP_HAS_DESTRUCTIVE_EXPR}) AS has_destructive,
+                   COUNT(*) FILTER (WHERE {self._MCP_READ_ONLY_ONLY_EXPR})  AS read_only_only
+            {base}
+        """
+
+        total_rows = self.execute_query(total_q, params)
+        safety_rows = self.execute_query(safety_q, params)
+        return {
+            "endpoints": self.execute_query(endpoints_q, (*params, int(limit), int(offset))),
+            "total": int(total_rows[0]["total"]) if total_rows else 0,
+            "grade_rows": self.execute_query(_bucket_q("upper(s.grade)"), params),
+            "transport_rows": self.execute_query(_bucket_q("e.transport"), params),
+            "category_rows": self.execute_query(_bucket_q("e.category"), params),
+            "safety_counts": dict(safety_rows[0]) if safety_rows else {},
+            "complexity_rows": self.execute_query(
+                _bucket_q(self._MCP_COMPLEXITY_BAND_EXPR), params
+            ),
+            "protocol_rows": self.execute_query(_bucket_q("cv.protocol_version"), params),
+            "health_rows": self.execute_query(
+                _bucket_q(self._MCP_ENDPOINT_HEALTH_EXPR), params
+            ),
+        }
 
     def get_mcp_endpoint(self, tenant_id: str, endpoint_id: str) -> Optional[Dict[str, Any]]:
         """Fetch one live catalog endpoint scoped to ``tenant_id`` (MCAT-3.1).

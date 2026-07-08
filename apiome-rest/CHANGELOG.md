@@ -5,6 +5,32 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.104.0] - 2026-07-07
+
+### Added
+- **Faceted catalog search (#4660, V2-MCP-35.1 / MCAT-21.1)** — the catalog's rich metrics become
+  queryable facets: filter and aggregate endpoints by grade band, transport, category, safety
+  posture, complexity band, protocol version, and discovery health, with live facet counts.
+  - New route `GET /v1/mcp/{tenant_slug}/facets`: repeatable per-dimension filter params with
+    multi-facet **AND** / within-facet **OR** semantics, plus `visibility` and `limit`/`offset`
+    paging. The response carries the matching endpoint page (browse-shaped rows) and per-dimension
+    `{label, count}` buckets aggregated over the *same filtered set*, so counts are always live.
+    Every bucket label — including the NULL-bucket sentinels `ungraded` / `uncategorized` /
+    `unknown` — is itself a valid filter value; an invalid vocabulary value is a `422`, and an
+    empty match returns an empty page with zeroed counts. Tenant-scoped from the token like every
+    catalog route.
+  - New pure module `app.mcp_facets`: the facet vocabulary (grades, transports, safety postures,
+    complexity bands, health labels, sentinels), the complexity banding thresholds shared with the
+    SQL mirror, and request-side normalization (`normalize_catalog_facet_filters`).
+  - DB layer: composable facet WHERE-clause builder plus derived-facet SQL expressions — health
+    (the inventory `derive_health` precedence in SQL), safety posture from strict-boolean
+    `destructiveHint` / `readOnlyHint` annotations, and a complexity band over each surface's
+    busiest tool's top-level `input_schema` property count. No migration: every facet derives from
+    existing columns/JSONB.
+  - Browse enrichment: browse rows (and `McpBrowseEndpointOut`) now carry `protocol_version`,
+    `health`, `has_destructive`, `read_only_only`, and `complexity_band`, so the catalog grid
+    facets on every dimension without a second read.
+
 ## [1.103.0] - 2026-07-07
 
 ### Added
