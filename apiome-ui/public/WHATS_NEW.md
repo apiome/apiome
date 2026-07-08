@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- MCP Catalog: cataloger notes & annotations — per-endpoint human commentary authored by tenant users, stored separately from server-reported data, with full CRUD on the endpoint page and optional inclusion in report exports (`mcp_endpoint_notes`, MCAT-22.3)
 - MCP Catalog: staleness & freshness reporting — flags endpoints overdue for re-discovery, in backoff/quarantine, or on a failing streak, with a last-known-good timestamp and freshness badge on catalog cards (`GET /v1/mcp/{tenant}/data-quality/freshness`, MCAT-22.2)
 - MCP Catalog: duplicate / near-duplicate detection — advisory review list flags endpoints sharing a normalized URL, host (when not proven distinct by fingerprint), or identical capability surface; cross-tenant hints for matching published servers (`GET /v1/mcp/{tenant}/data-quality/duplicates`, MCAT-22.1)
 - MCP Catalog: capability directory — browse every tool/resource/prompt across your catalog with filters for name, type, host, and visibility, paginated with links back to each owning server (`GET /v1/mcp/{tenant}/capabilities`, MCAT-21.4)

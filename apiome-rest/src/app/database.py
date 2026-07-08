@@ -10808,6 +10808,115 @@ class Database:
             conn.rollback()
             raise
 
+    # -----------------------------------------------------------------------
+    # MCP Catalog — cataloger notes (V2-MCP-36.3 / MCAT-22.3, #4666)
+    # -----------------------------------------------------------------------
+
+    _MCP_ENDPOINT_NOTE_COLUMNS = """
+        n.id, n.tenant_id, n.endpoint_id, n.body,
+        n.created_by, n.updated_by, n.created_at, n.updated_at,
+        cu.name AS created_by_name, cu.email AS created_by_email,
+        uu.name AS updated_by_name, uu.email AS updated_by_email
+    """
+
+    _MCP_ENDPOINT_NOTE_FROM = """
+        FROM apiome.mcp_endpoint_notes n
+        LEFT JOIN apiome.users cu ON cu.id = n.created_by
+        LEFT JOIN apiome.users uu ON uu.id = n.updated_by
+    """
+
+    def list_mcp_endpoint_notes(
+        self, tenant_id: str, endpoint_id: str
+    ) -> List[Dict[str, Any]]:
+        """List cataloger notes for an endpoint, newest first (MCAT-22.3)."""
+        q = f"""
+            SELECT {self._MCP_ENDPOINT_NOTE_COLUMNS}
+            {self._MCP_ENDPOINT_NOTE_FROM}
+            WHERE n.tenant_id = %s::uuid AND n.endpoint_id = %s::uuid
+            ORDER BY n.created_at DESC, n.id DESC
+        """
+        return [dict(r) for r in self.execute_query(q, (tenant_id, endpoint_id))]
+
+    def get_mcp_endpoint_note(
+        self, tenant_id: str, endpoint_id: str, note_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch one cataloger note scoped to tenant + endpoint (MCAT-22.3)."""
+        q = f"""
+            SELECT {self._MCP_ENDPOINT_NOTE_COLUMNS}
+            {self._MCP_ENDPOINT_NOTE_FROM}
+            WHERE n.id = %s::uuid AND n.tenant_id = %s::uuid AND n.endpoint_id = %s::uuid
+            LIMIT 1
+        """
+        rows = self.execute_query(q, (note_id, tenant_id, endpoint_id))
+        return dict(rows[0]) if rows else None
+
+    def create_mcp_endpoint_note(
+        self,
+        tenant_id: str,
+        endpoint_id: str,
+        user_id: str,
+        *,
+        body: str,
+    ) -> Dict[str, Any]:
+        """Insert a cataloger note on an endpoint (MCAT-22.3)."""
+        q = f"""
+            INSERT INTO apiome.mcp_endpoint_notes
+                (tenant_id, endpoint_id, body, created_by)
+            VALUES (%s::uuid, %s::uuid, %s, %s::uuid)
+            RETURNING id
+        """
+        rows = self.execute_query(q, (tenant_id, endpoint_id, body, user_id))
+        note_id = str(rows[0]["id"]) if rows else ""
+        row = self.get_mcp_endpoint_note(tenant_id, endpoint_id, note_id)
+        return row if row is not None else {}
+
+    def update_mcp_endpoint_note(
+        self,
+        tenant_id: str,
+        endpoint_id: str,
+        note_id: str,
+        user_id: str,
+        *,
+        body: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Update a cataloger note and record the editor (MCAT-22.3)."""
+        q = """
+            UPDATE apiome.mcp_endpoint_notes
+            SET body = %s, updated_by = %s::uuid, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND endpoint_id = %s::uuid
+        """
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(q, (body, user_id, note_id, tenant_id, endpoint_id))
+                updated = cur.rowcount > 0
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        if not updated:
+            return None
+        return self.get_mcp_endpoint_note(tenant_id, endpoint_id, note_id)
+
+    def delete_mcp_endpoint_note(
+        self, tenant_id: str, endpoint_id: str, note_id: str
+    ) -> bool:
+        """Delete a cataloger note from an endpoint (MCAT-22.3)."""
+        q = """
+            DELETE FROM apiome.mcp_endpoint_notes
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND endpoint_id = %s::uuid
+        """
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(q, (note_id, tenant_id, endpoint_id))
+                deleted = cur.rowcount > 0
+            conn.commit()
+            return deleted
+        except Exception:
+            conn.rollback()
+            raise
+
     def get_mcp_endpoint(self, tenant_id: str, endpoint_id: str) -> Optional[Dict[str, Any]]:
         """Fetch one live catalog endpoint scoped to ``tenant_id`` (MCAT-3.1).
 

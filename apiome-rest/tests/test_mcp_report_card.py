@@ -521,6 +521,58 @@ def test_provenance_never_discovered_still_states_added_via():
     assert "Never discovered — no snapshot provenance yet." in md
 
 
+def test_cataloger_notes_opt_in_renders_section():
+    rows = [
+        {
+            "body": "Use the staging endpoint for QA.",
+            "created_by": "user-1",
+            "created_by_name": "Ada",
+            "created_by_email": "ada@example.com",
+            "created_at": "2026-07-07T12:00:00+00:00",
+            "updated_at": "2026-07-07T12:00:00+00:00",
+            "updated_by": None,
+        }
+    ]
+    card = build_report_card(
+        endpoint=_ENDPOINT_ROW,
+        version=None,
+        is_current=False,
+        score_report=None,
+        surface_metrics=None,
+        trust_profile=None,
+        change_rows=[],
+        change_severity=None,
+        auth_posture="anonymous",
+        auth_type=None,
+        generated_at=_GEN,
+        cataloger_notes=rows,
+    )
+    md = render_report_markdown(card)
+    assert "## Cataloger Commentary" in md
+    assert "not** reported by the MCP server" in md or "not reported by the MCP" in md
+    assert "Use the staging endpoint for QA." in md
+    assert "Ada" in md
+
+
+def test_cataloger_notes_opt_out_omits_section():
+    card = build_report_card(
+        endpoint=_ENDPOINT_ROW,
+        version=None,
+        is_current=False,
+        score_report=None,
+        surface_metrics=None,
+        trust_profile=None,
+        change_rows=[],
+        change_severity=None,
+        auth_posture="anonymous",
+        auth_type=None,
+        generated_at=_GEN,
+        cataloger_notes=None,
+    )
+    md = render_report_markdown(card)
+    assert "## Cataloger Commentary" not in md
+
+
 def test_renderers_never_emit_a_credential_secret():
     # The report only ever receives an auth *posture* + auth_type label. Even if a caller passed a
     # secret-shaped auth_type, it is only rendered as a label, never as a secret; and there is no
