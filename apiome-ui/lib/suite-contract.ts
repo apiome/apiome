@@ -34,4 +34,8 @@ export type SuiteHomeCard = {
 export type SuiteHostApi = {
   getSuiteNavItems: () => SuiteNavItem[];
   getSuiteHomeCards: () => SuiteHomeCard[];
+  /** Primary designer entry path, or null when suite is not installed. */
+  getSuiteDesignerHref: () => string | null;
+  /** Deep link into the schema editor after import, or null when suite is not installed. */
+  getSuiteEditorHref: (projectId: string, versionId: string) => string | null;
 };

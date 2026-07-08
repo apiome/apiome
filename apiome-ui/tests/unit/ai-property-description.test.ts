@@ -5,7 +5,7 @@ import {
   buildClassDescriptionAiPayload,
   parseGeneratedOperationDocs,
   parseGeneratedPropertyExample,
-} from '../../lib/ai-property-description';
+} from '@suite/designer/lib/ai-property-description';
 import type { PropertyFormData } from '../../src/app/components/ade/studio/PropertyFormFields';
 
 describe('ai-property-description (#619)', () => {

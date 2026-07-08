@@ -29,7 +29,7 @@ import {
   COMMIT_EXTERNAL_REF_MAX_CHARS,
   validateVersionNotesClient,
 } from '@lib/version-notes';
-import { sortBranchesForPicker } from '@/app/ade/studio/lib/studio-branch-resolve';
+import { sortBranchesForPicker } from '@lib/studio-branch-resolve';
 import { parseStaleHeadFromVersionsPostJson } from '@/app/utils/push-conflict';
 import type { VersionBranchRow, CreatedRevisionResult, DialogRevisionRef } from './types';
 

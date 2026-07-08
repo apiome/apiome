@@ -13,7 +13,7 @@ import { getTenantById, listVersionBranches } from '@lib/db/helper';
 import {
   collectRecentRevisionsOnLineage,
   type VersionLineageRow,
-} from '@/app/ade/studio/lib/studio-branch-status-recent';
+} from '@lib/version-lineage';
 
 const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
 

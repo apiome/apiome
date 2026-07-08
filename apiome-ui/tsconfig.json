@@ -22,7 +22,8 @@
       "@/*": ["./src/*"],
       "@lib/*": ["./lib/*"],
       "@apiome/suite-contract": ["./lib/suite-contract.ts"],
-      "@suite/host": ["./lib/suite-stub/index.ts"]
+      "@suite/host": ["./lib/suite-stub/index.ts"],
+      "@suite/designer/routes": ["./lib/suite-designer-stub/routes.ts"]
     }
   },
   "include": [

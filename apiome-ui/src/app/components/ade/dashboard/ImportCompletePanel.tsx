@@ -18,6 +18,7 @@ import {
   Undo2
 } from 'lucide-react';
 import { getImportStatus, rollbackCompletedImport } from '../../../../../lib/db/import-actions';
+import { getSuiteEditorHref } from '../../../../../lib/suite-host';
 import { buildImportErrorReport, getImportErrorReportFilename, type ImportErrorReport, type ImportStatusForReport } from '../../../../../lib/db/import-error-report';
 
 interface ImportCompletePanelProps {
@@ -149,7 +150,10 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
 
   const handleViewInCanvas = () => {
     if (summary?.projectId && summary?.versionId) {
-      router.push(`/ade/studio/editor?projectId=${encodeURIComponent(summary.projectId)}&versionId=${encodeURIComponent(summary.versionId)}`);
+      const href = getSuiteEditorHref(summary.projectId, summary.versionId);
+      if (href) {
+        router.push(href);
+      }
     }
   };
 

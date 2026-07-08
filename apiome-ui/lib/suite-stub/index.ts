@@ -12,9 +12,19 @@ export function getSuiteHomeCards(): SuiteHomeCard[] {
   return [];
 }
 
+export function getSuiteDesignerHref(): string | null {
+  return null;
+}
+
+export function getSuiteEditorHref(_projectId: string, _versionId: string): string | null {
+  return null;
+}
+
 const suiteHostStub: SuiteHostApi = {
   getSuiteNavItems,
   getSuiteHomeCards,
+  getSuiteDesignerHref,
+  getSuiteEditorHref,
 };
 
 export default suiteHostStub;

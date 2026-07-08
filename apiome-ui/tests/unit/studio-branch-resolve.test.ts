@@ -2,7 +2,7 @@ import { describe, it, expect } from '@jest/globals';
 import {
   resolveActiveBranchForRevision,
   sortBranchesForPicker,
-} from '@/app/ade/studio/lib/studio-branch-resolve';
+} from '@lib/studio-branch-resolve';
 import type { VersionBranchRow } from '@/app/components/ade/version-dialogs/types';
 
 describe('resolveActiveBranchForRevision', () => {

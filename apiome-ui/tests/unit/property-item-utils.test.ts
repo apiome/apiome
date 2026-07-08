@@ -1,7 +1,7 @@
 import {
   parseJsonSchemaObjectText,
   buildPropertyItemFromAiSeedForm,
-} from '../../lib/property-item-utils';
+} from '@suite/designer/lib/property-item-utils';
 
 describe('parseJsonSchemaObjectText', () => {
   it('accepts a valid object', () => {

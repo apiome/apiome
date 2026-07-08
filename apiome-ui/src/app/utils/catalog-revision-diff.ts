@@ -14,7 +14,7 @@
  */
 
 import { buildOpenApiSpecJsonForVersion } from '@lib/db/helper';
-import { coerceProjectMetadataRecord } from '@/app/ade/studio/lib/coerce-project-metadata';
+import { coerceProjectMetadataRecord } from '@lib/project-metadata';
 import type { CatalogVersionRevision } from '@/app/utils/catalog-versions-timeline';
 
 /**

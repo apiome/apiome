@@ -17,12 +17,10 @@ import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
 import { cn } from '../../../../../lib/utils';
 import { BROWSE_APP_URL } from '../../../../../lib/app-urls';
+import { getSuiteDesignerHref } from '../../../../../lib/suite-host';
 import {
   type ChecklistSignal,
   type StepId,
-  TOTAL_STEPS,
-  allComplete,
-  completedCount,
   deriveCompletion,
   isDismissed,
   setDismissed,
@@ -36,13 +34,22 @@ interface StepDef {
   external?: boolean;
 }
 
-const STEPS: StepDef[] = [
-  { id: 'project', label: 'Create your first project', hint: 'Open the Designer to start a project.', href: '/ade/studio' },
-  { id: 'class', label: 'Add a class from a starter template', hint: 'Browse the built-in templates to add a class.', href: '/ade/studio' },
+const CORE_STEPS: StepDef[] = [
   { id: 'version', label: 'Cut a version', hint: 'Snapshot your schema as a version.', href: '/ade/dashboard/versions' },
   { id: 'publish', label: 'Publish it', hint: 'Publish the version so it becomes browsable.', href: '/ade/dashboard/versions' },
   { id: 'browse', label: 'View it in Browse', hint: 'See your published spec render publicly.', href: BROWSE_APP_URL, external: true },
 ];
+
+function buildSteps(): StepDef[] {
+  const designerHref = getSuiteDesignerHref();
+  const designerSteps: StepDef[] = designerHref
+    ? [
+        { id: 'project', label: 'Create your first project', hint: 'Open the Designer to start a project.', href: designerHref },
+        { id: 'class', label: 'Add a class from a starter template', hint: 'Browse the built-in templates to add a class.', href: designerHref },
+      ]
+    : [];
+  return [...designerSteps, ...CORE_STEPS];
+}
 
 interface FirstRunChecklistProps {
   stats: ChecklistSignal;
@@ -56,9 +63,10 @@ export function FirstRunChecklist({ stats }: FirstRunChecklistProps) {
 
   if (dismissed) return null;
 
+  const steps = buildSteps();
   const done = deriveCompletion(stats);
-  const completed = completedCount(stats);
-  const finished = allComplete(stats);
+  const completed = steps.filter((step) => done[step.id]).length;
+  const finished = steps.every((step) => done[step.id]);
 
   const handleDismiss = () => {
     setDismissed();
@@ -83,7 +91,7 @@ export function FirstRunChecklist({ stats }: FirstRunChecklistProps) {
         </div>
         <div className="flex items-center gap-3">
           <Badge variant={finished ? 'success' : 'secondary'} className="text-xs">
-            {completed}/{TOTAL_STEPS} done
+            {completed}/{steps.length} done
           </Badge>
           <Button
             variant="ghost"
@@ -97,7 +105,7 @@ export function FirstRunChecklist({ stats }: FirstRunChecklistProps) {
       </div>
 
       <ol className="p-3 sm:p-4 space-y-1">
-        {STEPS.map((step, index) => {
+        {steps.map((step, index) => {
           const isDone = done[step.id];
           const rowInner = (
             <div

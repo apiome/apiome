@@ -1,8 +1,8 @@
-import type { ChatStudioContext } from '@/app/ade/studio/components/chatbot/chat-context';
+import type { ChatStudioContext } from '@suite/designer/studio/components/chatbot/chat-context';
 import {
   canonicalStudioSchemaState,
   computeStudioSchemaFingerprint,
-} from '../../lib/studio-schema-fingerprint';
+} from '@suite/designer/lib/studio-schema-fingerprint';
 
 function baseCtx(overrides: Partial<ChatStudioContext> = {}): ChatStudioContext {
   return {

@@ -2,7 +2,7 @@ import { describe, it, expect } from '@jest/globals';
 import {
   collectRecentRevisionsOnLineage,
   type VersionLineageRow,
-} from '@/app/ade/studio/lib/studio-branch-status-recent';
+} from '@lib/version-lineage';
 
 describe('collectRecentRevisionsOnLineage', () => {
   const versions: VersionLineageRow[] = [

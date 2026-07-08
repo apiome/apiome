@@ -4,7 +4,7 @@
 
 import { NextRequest } from 'next/server';
 import { getEmbedding } from '@lib/embedding';
-import { isAbortError } from '../../../ade/studio/components/chatbot/abort-errors';
+import { isAbortError } from '@lib/abort-errors';
 import {
   findSemanticallySimilarCachedResponse,
   getCachedOllamaChatResponse,

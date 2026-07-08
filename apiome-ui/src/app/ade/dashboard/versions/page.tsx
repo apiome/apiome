@@ -71,7 +71,7 @@ import {
   getPropertiesForClass,
   getTenantsAdministratedByUser
 } from '../../../../../lib/db/helper';
-import { coerceProjectMetadataRecord } from '@/app/ade/studio/lib/coerce-project-metadata';
+import { coerceProjectMetadataRecord } from '@lib/project-metadata';
 import YAML from 'yaml';
 import { Markdown } from '@/app/components/ui/Markdown';
 import { diffLines, Change } from 'diff';
