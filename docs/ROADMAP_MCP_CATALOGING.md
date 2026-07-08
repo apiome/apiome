@@ -1960,7 +1960,7 @@ and the 14.1 metrics; strictly navigation/discovery over what's cataloged.
 |---|---|---|---|:--:|:--:|---|---|
 | 21.1 ✅ | Faceted catalog search | Filter endpoints by grade, transport, category, safety, complexity, protocol, health | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
 | 21.2 ✅ | Cross-server capability search | "Which servers offer a tool like X" over capability FTS + embeddings | `mcp-catalog` `backend` | Y | N | ●● | apiome-rest, apiome-db |
-| 21.3 | Saved searches & catalog views | Persist and re-run filter sets | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
+| 21.3 ✅ | Saved searches & catalog views | Persist and re-run filter sets | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
 | 21.4 | Capability directory / index | Browsable index of every tool/resource/prompt across the catalog | `mcp-catalog` `frontend` | Y | N | ●● | apiome-ui, apiome-rest |
 
 ### MCAT-21.1 — Faceted catalog search  ·  **#4660**  ·  ✅ Done (apiome-rest 1.104.0, apiome-ui 0.88.0)
@@ -1985,7 +1985,7 @@ and the 14.1 metrics; strictly navigation/discovery over what's cataloged.
 - **Dependencies / Parallelism.** After V101/V102 + 14.2. Parallel with 21.1. Shares infra with 18.4.
 - **Technical Stack.** FastAPI, Postgres FTS + pgvector.
 
-### MCAT-21.3 — Saved searches & catalog views  ·  **#4662**
+### MCAT-21.3 — Saved searches & catalog views  ·  **#4662**  ·  ✅ Done (apiome-rest 1.106.0, apiome-db 0.31.0, apiome-ui 0.89.0)
 - **Problem.** Users re-apply the same filters repeatedly (e.g. "ungraded servers with destructive
   tools") with no way to save them.
 - **Solution / Scope.** Persist named filter sets per user/tenant and re-run them; optionally pin as
