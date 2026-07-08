@@ -1514,6 +1514,199 @@ def rank_embedding_neighbors(
     return neighbors[: max(0, limit)]
 
 
+# --- Cross-server capability search (V2-MCP-35.2 / MCAT-21.2, #4661) ------------------------------
+
+#: Letter-grade ordering for MCAT-9.7 tie-breaks (A first, ungraded last).
+_GRADE_SORT_KEY: Dict[Optional[str], int] = {
+    None: 99,
+    "A": 0,
+    "B": 1,
+    "C": 2,
+    "D": 3,
+    "E": 4,
+    "F": 5,
+}
+
+
+def build_capability_item_embedding_text(
+    name: Optional[str],
+    description: Optional[str],
+    *,
+    title: Optional[str] = None,
+) -> str:
+    """Build the deterministic text a single capability item's embedding is computed from.
+
+    One item's ``name``, optional distinct ``title``, and ``description`` are folded into a stable
+    document so re-embedding an unchanged row yields identical input. Blank names yield ``""`` (the
+    backfill step treats that as a no-op).
+
+    Args:
+        name: The item's programmatic identifier.
+        description: Optional free-text description.
+        title: Optional human-facing label (included when it adds signal beyond ``name``).
+
+    Returns:
+        The embedding input text, or ``""`` when ``name`` is blank.
+    """
+    clean_name = (name or "").strip()
+    if not clean_name:
+        return ""
+    parts = [clean_name]
+    clean_title = (title or "").strip()
+    if clean_title and clean_title.lower() != clean_name.lower():
+        parts.append(clean_title)
+    clean_desc = (description or "").strip()
+    if clean_desc:
+        parts.append(clean_desc)
+    if len(parts) == 1:
+        return parts[0]
+    return f"{parts[0]}: {' '.join(parts[1:])}"
+
+
+def _cross_server_hit_key(row: Mapping[str, Any]) -> Tuple[str, str]:
+    return (str(row["endpoint_id"]), str(row["item_id"]))
+
+
+def _float_or_zero(value: Any) -> float:
+    if value is None:
+        return 0.0
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def merge_cross_server_capability_hits(
+    keyword_rows: Sequence[Mapping[str, Any]],
+    semantic_rows: Sequence[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Merge FTS and semantic capability hits into one de-duplicated, relevance-scored list (MCAT-21.2).
+
+    Rows from both channels share the column shape of
+    :meth:`Database.search_mcp_capability_items` / :meth:`Database.search_mcp_capability_items_semantic`.
+    Each distinct ``(endpoint_id, item_id)`` appears once. **Ranking** (documented for MCAT-9.7 /
+    MCAT-21.2):
+
+    * ``relevance`` — ``max(fts_relevance, semantic_similarity)`` so the stronger signal leads;
+    * within a server group, capabilities sort by ``relevance`` desc, then ``ordinal`` asc;
+    * server groups sort by their best capability ``relevance`` desc, then letter ``grade`` asc
+      (A first, ungraded last), then ``score`` desc, then endpoint name asc.
+
+    ``match_source`` is ``both`` when both channels matched, else ``keyword`` or ``semantic``.
+
+    Args:
+        keyword_rows: FTS matches (each row carries a ``relevance`` rank).
+        semantic_rows: Semantic matches (each row carries ``semantic_similarity``).
+
+    Returns:
+        Merged rows sorted for grouping — endpoint-major order is applied by
+        :func:`group_cross_server_capability_hits`.
+    """
+    merged: Dict[Tuple[str, str], Dict[str, Any]] = {}
+
+    for row in keyword_rows:
+        key = _cross_server_hit_key(row)
+        fts = _float_or_zero(row.get("relevance"))
+        entry = dict(row)
+        entry["fts_relevance"] = fts
+        entry["semantic_similarity"] = 0.0
+        entry["relevance"] = fts
+        entry["match_source"] = "keyword"
+        merged[key] = entry
+
+    for row in semantic_rows:
+        key = _cross_server_hit_key(row)
+        semantic = _float_or_zero(row.get("semantic_similarity"))
+        existing = merged.get(key)
+        if existing:
+            existing["semantic_similarity"] = semantic
+            existing["relevance"] = max(existing["fts_relevance"], semantic)
+            existing["match_source"] = "both" if existing["fts_relevance"] > 0.0 else "semantic"
+        else:
+            entry = dict(row)
+            entry["fts_relevance"] = 0.0
+            entry["semantic_similarity"] = semantic
+            entry["relevance"] = semantic
+            entry["match_source"] = "semantic"
+            merged[key] = entry
+
+    return list(merged.values())
+
+
+def group_cross_server_capability_hits(
+    merged_rows: Sequence[Mapping[str, Any]],
+    *,
+    limit: int,
+    offset: int,
+) -> Tuple[List[Dict[str, Any]], int]:
+    """Group merged capability hits by owning server and apply server-level pagination (MCAT-21.2).
+
+    Each returned group carries the endpoint browse context plus its matching capabilities (already
+    ordered by relevance desc, ordinal asc within the group). Groups themselves follow the MCAT-9.7
+    relevance→grade ordering documented on :func:`merge_cross_server_capability_hits`.
+
+    Args:
+        merged_rows: Output of :func:`merge_cross_server_capability_hits`.
+        limit: Maximum server groups to return.
+        offset: Server groups to skip.
+
+    Returns:
+        ``(groups, total_group_count)`` where ``total_group_count`` is the full match count before
+        pagination.
+    """
+    by_endpoint: Dict[str, Dict[str, Any]] = {}
+    for row in merged_rows:
+        endpoint_id = str(row["endpoint_id"])
+        bucket = by_endpoint.get(endpoint_id)
+        if bucket is None:
+            bucket = {
+                "endpoint_id": endpoint_id,
+                "endpoint_name": row.get("endpoint_name"),
+                "endpoint_slug": row.get("endpoint_slug"),
+                "endpoint_url": row.get("endpoint_url"),
+                "host": row.get("host"),
+                "category": row.get("category"),
+                "visibility": row.get("visibility"),
+                "current_version_id": row.get("current_version_id"),
+                "last_discovered_at": row.get("last_discovered_at"),
+                "score": row.get("score"),
+                "grade": row.get("grade"),
+                "capabilities": [],
+                "max_relevance": 0.0,
+            }
+            by_endpoint[endpoint_id] = bucket
+        relevance = _float_or_zero(row.get("relevance"))
+        bucket["max_relevance"] = max(bucket["max_relevance"], relevance)
+        bucket["capabilities"].append(dict(row))
+
+    groups = list(by_endpoint.values())
+    for group in groups:
+        group["capabilities"].sort(
+            key=lambda cap: (
+                -_float_or_zero(cap.get("relevance")),
+                int(cap.get("ordinal") or 0),
+                str(cap.get("item_name") or "").lower(),
+            )
+        )
+
+    def _group_sort_key(group: Mapping[str, Any]) -> Tuple[float, int, int, str]:
+        grade = group.get("grade")
+        grade_key = _GRADE_SORT_KEY.get(str(grade).upper() if grade else None, 99)
+        score = group.get("score")
+        score_key = -int(score) if score is not None else 0
+        return (
+            -_float_or_zero(group.get("max_relevance")),
+            grade_key,
+            score_key,
+            str(group.get("endpoint_name") or "").lower(),
+        )
+
+    groups.sort(key=_group_sort_key)
+    total = len(groups)
+    page = groups[offset : offset + limit]
+    return page, total
+
+
 # ===================================================================================================
 # Schema-driven example synthesis for the natural-language server digest (V2-MCP-32.5 / MCAT-18.5).
 #

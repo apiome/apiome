@@ -1,6 +1,6 @@
 import ipaddress
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Literal, Mapping, Optional, Union
+from typing import Any, Callable, Dict, List, Literal, Mapping, Optional, Sequence, Union
 from urllib.parse import urlsplit, urlunsplit
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
@@ -6864,4 +6864,139 @@ def mcp_faceted_search_response_from_bundle(
         offset=offset,
         endpoints=endpoints,
         facets=facets,
+    )
+
+
+# ===========================================================================
+# MCP Catalog — cross-server capability search (V2-MCP-35.2 / MCAT-21.2, #4661)
+# ===========================================================================
+#
+# Keyword (V127 FTS) + semantic (V149 pgvector) search across every capability item in the caller's
+# accessible catalog, with matches grouped by owning server. Ranking follows the MCAT-9.7 decision:
+# relevance-first (``max(fts_rank, cosine_similarity)`` per item), grade-led tie-break (A first,
+# ungraded last), then score, then endpoint name. Server groups paginate via ``limit``/``offset``;
+# capabilities within a group are ordered by relevance desc, then ordinal.
+
+McpCrossServerCapabilityMatchSource = Literal["keyword", "semantic", "both"]
+
+
+class McpCrossServerCapabilityHit(BaseModel):
+    """One matched capability inside a cross-server search server group (MCAT-21.2)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    kind: str
+    item_id: str
+    item_name: str
+    item_title: Optional[str] = None
+    description: Optional[str] = None
+    relevance: float = 0.0
+    fts_relevance: float = 0.0
+    semantic_similarity: float = 0.0
+    match_source: McpCrossServerCapabilityMatchSource
+
+
+class McpCrossServerCapabilityServerGroup(BaseModel):
+    """Matching capabilities from one cataloged server (MCAT-21.2)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    endpoint_id: str
+    endpoint_name: str
+    endpoint_slug: str
+    host: str
+    endpoint_url: str
+    category: Optional[str] = None
+    visibility: str
+    current_version_id: Optional[str] = None
+    score: Optional[int] = None
+    grade: Optional[str] = None
+    max_relevance: float = 0.0
+    capabilities: List[McpCrossServerCapabilityHit] = Field(default_factory=list)
+
+
+class McpCrossServerCapabilitySearchResponse(BaseModel):
+    """Grouped cross-server capability search results (MCAT-21.2)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    query: str
+    scope: Optional[str] = None
+    semantic_enabled: bool = False
+    limit: int
+    offset: int
+    total: int
+    count: int
+    groups: List[McpCrossServerCapabilityServerGroup] = Field(default_factory=list)
+
+
+def mcp_cross_server_capability_hit_from_row(row: Dict[str, Any]) -> McpCrossServerCapabilityHit:
+    """Project a merged capability row onto :class:`McpCrossServerCapabilityHit`."""
+    fts = row.get("fts_relevance", row.get("relevance"))
+    semantic = row.get("semantic_similarity", 0.0)
+    source = str(row.get("match_source") or "keyword")
+    if source not in ("keyword", "semantic", "both"):
+        source = "keyword"
+    return McpCrossServerCapabilityHit(
+        kind=str(row["kind"]),
+        item_id=str(row["item_id"]),
+        item_name=str(row["item_name"]),
+        item_title=str(row["item_title"]) if row.get("item_title") is not None else None,
+        description=str(row["description"]) if row.get("description") is not None else None,
+        relevance=float(row.get("relevance") or 0.0),
+        fts_relevance=float(fts or 0.0),
+        semantic_similarity=float(semantic or 0.0),
+        match_source=source,  # type: ignore[arg-type]
+    )
+
+
+def mcp_cross_server_capability_search_response_from_groups(
+    *,
+    query: str,
+    scope: Optional[str],
+    semantic_enabled: bool,
+    limit: int,
+    offset: int,
+    total: int,
+    groups: Sequence[Dict[str, Any]],
+) -> McpCrossServerCapabilitySearchResponse:
+    """Project grouped DB/aggregation rows onto the cross-server search wire model."""
+    wire_groups: List[McpCrossServerCapabilityServerGroup] = []
+    for group in groups:
+        raw_url = str(group.get("endpoint_url") or "")
+        score = group.get("score")
+        wire_groups.append(
+            McpCrossServerCapabilityServerGroup(
+                endpoint_id=str(group["endpoint_id"]),
+                endpoint_name=str(group.get("endpoint_name") or ""),
+                endpoint_slug=str(group.get("endpoint_slug") or ""),
+                host=mcp_endpoint_host(raw_url),
+                endpoint_url=redact_url_credentials(raw_url),
+                category=str(group["category"]) if group.get("category") is not None else None,
+                visibility=str(group.get("visibility") or "private"),
+                current_version_id=(
+                    str(group["current_version_id"])
+                    if group.get("current_version_id") is not None
+                    else None
+                ),
+                score=int(score) if score is not None else None,
+                grade=str(group["grade"]) if group.get("grade") is not None else None,
+                max_relevance=float(group.get("max_relevance") or 0.0),
+                capabilities=[
+                    mcp_cross_server_capability_hit_from_row(cap)
+                    for cap in (group.get("capabilities") or [])
+                ],
+            )
+        )
+    return McpCrossServerCapabilitySearchResponse(
+        success=True,
+        query=query,
+        scope=scope,
+        semantic_enabled=semantic_enabled,
+        limit=limit,
+        offset=offset,
+        total=total,
+        count=len(wire_groups),
+        groups=wire_groups,
     )
