@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.105.0] - 2026-07-07
+
+### Added
+- **Cross-server capability search (#4661, V2-MCP-35.2 / MCAT-21.2)** — find capabilities ("who
+  offers a geocoding tool?") across the tenant catalog with keyword + semantic matches grouped by
+  owning server.
+  - New route `GET /v1/mcp/{tenant_slug}/capabilities/search`: merges V127 FTS hits with optional
+    V149 per-item pgvector nearest-neighbour matches (when
+    `APIOME_MCP_SIMILARITY_EMBEDDINGS_ENABLED` is on). Each capability carries `match_source`
+    (`keyword` / `semantic` / `both`) and a documented relevance→grade ranking (MCAT-9.7).
+    Results paginate at the server-group level; visibility and composable host/category/grade
+    filters match the flat search route. Empty queries and no-match queries return `groups: []`.
+  - DB: `search_mcp_capability_items_semantic`, `store_mcp_capability_item_embedding`; V149 adds
+    optional `mcp_capability_items.embedding vector(2000)` with a partial cosine-HNSW index
+    (apiome-db 0.30.0).
+  - Pure aggregation: `merge_cross_server_capability_hits`, `group_cross_server_capability_hits`,
+    `build_capability_item_embedding_text`.
+
 ## [1.104.0] - 2026-07-07
 
 ### Added

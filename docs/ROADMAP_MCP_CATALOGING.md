@@ -1959,7 +1959,7 @@ and the 14.1 metrics; strictly navigation/discovery over what's cataloged.
 | Issue | Title | Summary | Labels | Parallel | MVP | Complexity | Modules |
 |---|---|---|---|:--:|:--:|---|---|
 | 21.1 ✅ | Faceted catalog search | Filter endpoints by grade, transport, category, safety, complexity, protocol, health | `mcp-catalog` `backend` `frontend` | Y | N | ●● | apiome-rest, apiome-ui |
-| 21.2 | Cross-server capability search | "Which servers offer a tool like X" over capability FTS + embeddings | `mcp-catalog` `backend` | Y | N | ●● | apiome-rest, apiome-db |
+| 21.2 ✅ | Cross-server capability search | "Which servers offer a tool like X" over capability FTS + embeddings | `mcp-catalog` `backend` | Y | N | ●● | apiome-rest, apiome-db |
 | 21.3 | Saved searches & catalog views | Persist and re-run filter sets | `mcp-catalog` `backend` `frontend` | N | N | ●● | apiome-rest, apiome-db, apiome-ui |
 | 21.4 | Capability directory / index | Browsable index of every tool/resource/prompt across the catalog | `mcp-catalog` `frontend` | Y | N | ●● | apiome-ui, apiome-rest |
 
@@ -1974,7 +1974,7 @@ and the 14.1 metrics; strictly navigation/discovery over what's cataloged.
 - **Dependencies / Parallelism.** After 14.2. Parallel with 21.2/21.4.
 - **Technical Stack.** FastAPI, asyncpg aggregates; Next.js facet UI.
 
-### MCAT-21.2 — Cross-server capability search  ·  **#4661**
+### MCAT-21.2 — Cross-server capability search  ·  **#4661**  ·  ✅ Done (apiome-rest 1.105.0, apiome-db 0.30.0)
 - **Problem.** Search today finds *servers*; users increasingly want to find a *capability* ("who
   offers a geocoding tool?") across every cataloged server.
 - **Solution / Scope.** Query `mcp_capability_items` by FTS (V101) and semantic similarity (V102

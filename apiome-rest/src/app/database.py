@@ -10081,7 +10081,7 @@ class Database:
         q = f"""
             SELECT ci.item_type AS kind,
                    ci.id AS item_id, ci.name AS item_name, ci.title AS item_title,
-                   ci.description AS description,
+                   ci.description AS description, ci.ordinal AS ordinal,
                    e.id AS endpoint_id, e.name AS endpoint_name, e.slug AS endpoint_slug,
                    e.endpoint_url, e.category, e.visibility, e.current_version_id,
                    e.last_discovered_at, s.score, s.grade,
@@ -10156,6 +10156,163 @@ class Database:
         """
         params = (query, tenant_id, query, *fparams, int(limit), int(offset))
         return self.execute_query(q, params)
+
+    def search_mcp_capability_items_semantic(
+        self,
+        tenant_id: str,
+        query_embedding: List[float],
+        *,
+        item_type: Optional[str] = None,
+        host: Optional[str] = None,
+        category: Optional[str] = None,
+        grade: Optional[str] = None,
+        visibility: Optional[str] = None,
+        limit: int = 50,
+        min_similarity: float = 0.0,
+    ) -> List[Dict[str, Any]]:
+        """Semantic nearest-neighbour search over a tenant's current capability items (MCAT-21.2).
+
+        Matches ``query_embedding`` against stored per-item ``embedding`` vectors (V149) on every
+        capability item that belongs to an endpoint's *current* version snapshot. Scoped by
+        ``tenant_id`` and the same composable host/category/grade/visibility filters as the FTS
+        search. Returns cosine **similarity** (``1 - distance``) as ``semantic_similarity``.
+
+        When pgvector is unavailable or no items are embedded, returns an empty list so the route
+        falls back to keyword matches only.
+
+        Args:
+            tenant_id: The caller's token tenant.
+            query_embedding: The query vector (same dimension as stored embeddings).
+            item_type: Restrict to one capability kind; ``None`` searches all four.
+            host: Restrict to endpoints on this host (case-insensitive).
+            category: Restrict to endpoints in this category (case-insensitive).
+            grade: Restrict to endpoints whose current snapshot earned this A-F grade.
+            visibility: Restrict to ``private`` or ``public`` endpoints within the tenant.
+            limit: Maximum rows to return.
+            min_similarity: Drop items whose cosine similarity is strictly below this floor.
+
+        Returns:
+            Capability-item rows with endpoint browse context and ``semantic_similarity``.
+        """
+        if not query_embedding:
+            return []
+
+        clauses, fparams = self._mcp_search_filter_clauses(
+            host=host, category=category, grade=grade, visibility=visibility
+        )
+        if item_type:
+            clauses.append("ci.item_type = %s")
+            fparams.append(item_type)
+        clauses.append("ci.embedding IS NOT NULL")
+        where_extra = ("\n              AND " + "\n              AND ".join(clauses)) if clauses else ""
+
+        vector = np.array(query_embedding, dtype=np.float32)
+        conn = self.connect()
+        try:
+            from pgvector.psycopg2 import register_vector
+
+            register_vector(conn)
+        except Exception as exc:
+            _logger.warning(
+                "[mcp-cap-search] pgvector adapter unavailable (%s); semantic search skipped",
+                exc,
+            )
+            return []
+
+        q = f"""
+            SELECT ci.item_type AS kind,
+                   ci.id AS item_id, ci.name AS item_name, ci.title AS item_title,
+                   ci.description AS description, ci.ordinal AS ordinal,
+                   e.id AS endpoint_id, e.name AS endpoint_name, e.slug AS endpoint_slug,
+                   e.endpoint_url, e.category, e.visibility, e.current_version_id,
+                   e.last_discovered_at, s.score, s.grade,
+                   (1 - (ci.embedding <=> %s))::double precision AS semantic_similarity
+            FROM apiome.mcp_capability_items ci
+            JOIN apiome.mcp_endpoints e ON e.current_version_id = ci.version_id
+            LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
+            WHERE e.tenant_id = %s::uuid
+              AND e.deleted_at IS NULL
+              AND (1 - (ci.embedding <=> %s)) >= %s{where_extra}
+            ORDER BY ci.embedding <=> %s ASC, s.score DESC NULLS LAST, e.name ASC, ci.ordinal ASC
+            LIMIT %s
+        """
+        params = (vector, tenant_id, vector, float(min_similarity), *fparams, vector, int(limit))
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(q, params)
+                columns = [desc[0] for desc in cursor.description]
+                return [dict(zip(columns, row)) for row in cursor.fetchall()]
+        except Exception as exc:
+            conn.rollback()
+            code = getattr(exc, "pgcode", None) or getattr(exc, "code", None)
+            msg = str(getattr(exc, "message", exc) or exc)
+            if code == "42704" or ("vector" in msg.lower() and "does not exist" in msg.lower()):
+                _logger.warning(
+                    "[mcp-cap-search] pgvector type unavailable (%s); semantic search skipped",
+                    msg,
+                )
+                return []
+            raise
+
+    def store_mcp_capability_item_embedding(
+        self, item_id: str, embedding: List[float]
+    ) -> bool:
+        """Persist one capability item's embedding for cross-server semantic search (MCAT-21.2).
+
+        Writes the ``embedding`` (V149) of one ``mcp_capability_items`` row. Mirrors
+        :meth:`store_mcp_capability_embedding`: pgvector adapter / type unavailability is a
+        labelled no-op (returns ``False``) rather than raising.
+
+        Args:
+            item_id: The capability item whose embedding to store.
+            embedding: The item embedding vector; an empty vector is a no-op (returns ``False``).
+
+        Returns:
+            ``True`` when the embedding was written, ``False`` when skipped.
+        """
+        if not embedding:
+            return False
+
+        vector = np.array(embedding, dtype=np.float32)
+        conn = self.connect()
+        try:
+            from pgvector.psycopg2 import register_vector
+
+            register_vector(conn)
+        except Exception as exc:
+            _logger.warning(
+                "[mcp-cap-search] pgvector adapter unavailable (%s); item embedding not stored for "
+                "item_id=%s",
+                exc,
+                item_id,
+            )
+            return False
+
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE apiome.mcp_capability_items
+                    SET embedding = %s
+                    WHERE id = %s::uuid
+                    """,
+                    (vector, item_id),
+                )
+            conn.commit()
+            return True
+        except Exception as exc:
+            conn.rollback()
+            code = getattr(exc, "pgcode", None) or getattr(exc, "code", None)
+            msg = str(getattr(exc, "message", exc) or exc)
+            if code == "42704" or ("vector" in msg.lower() and "does not exist" in msg.lower()):
+                _logger.warning(
+                    "[mcp-cap-search] pgvector type unavailable (%s); item embedding not stored for "
+                    "item_id=%s",
+                    msg,
+                    item_id,
+                )
+                return False
+            raise
 
     # -----------------------------------------------------------------------
     # MCP Catalog — faceted catalog search (V2-MCP-35.1 / MCAT-21.1, #4660)

@@ -69,7 +69,9 @@ from .mcp_insight_aggregation import (
     compute_peer_percentiles,
     compute_tool_reliability,
     compute_trust_profile,
+    group_cross_server_capability_hits,
     mcp_auth_posture,
+    merge_cross_server_capability_hits,
     rank_embedding_neighbors,
 )
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
@@ -116,6 +118,7 @@ from .models import (
     McpInvocationReliabilityOut,
     McpLintReportResponse,
     McpPeerPercentileOut,
+    McpCrossServerCapabilitySearchResponse,
     McpSearchResponse,
     McpSearchScope,
     McpSearchVisibility,
@@ -136,6 +139,7 @@ from .models import (
     mcp_capability_graph_out,
     mcp_catalog_insight_from_row,
     mcp_change_counts,
+    mcp_cross_server_capability_search_response_from_groups,
     mcp_credential_status_from_row,
     mcp_discovery_health_out,
     mcp_discovery_job_out_from_row,
@@ -312,6 +316,129 @@ async def search_mcp_catalog(
         offset=offset,
         count=len(hits),
         hits=hits,
+    )
+
+
+#: Raw capability hits to gather from each search channel before grouping. Large enough that
+#: server-level pagination still finds matches when many capabilities share one endpoint.
+_CROSS_SERVER_CAPABILITY_RAW_LIMIT = 200
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/capabilities/search",
+    response_model=McpCrossServerCapabilitySearchResponse,
+)
+async def cross_server_capability_search(
+    tenant_slug: str,
+    q: str = Query(
+        ...,
+        min_length=1,
+        description="Free-text query (websearch syntax for keyword matches; also embedded for semantic).",
+    ),
+    scope: Optional[McpSearchScope] = Query(
+        None,
+        description=(
+            "Restrict to one capability kind (tool/resource/resource_template/prompt). "
+            "Omit to search all capability kinds."
+        ),
+    ),
+    host: Optional[str] = Query(None, description="Filter to endpoints on this host (case-insensitive)."),
+    category: Optional[str] = Query(
+        None, description="Filter to endpoints in this category (case-insensitive)."
+    ),
+    grade: Optional[str] = Query(
+        None, description="Filter to endpoints whose current snapshot earned this A-F grade."
+    ),
+    visibility: Optional[McpSearchVisibility] = Query(
+        None,
+        description="Filter to 'private' or 'public' endpoints within the caller's own catalog.",
+    ),
+    limit: int = Query(20, ge=1, le=100, description="Maximum server groups to return."),
+    offset: int = Query(0, ge=0, description="Server groups to skip (pagination)."),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpCrossServerCapabilitySearchResponse:
+    """Cross-server capability search — keyword + semantic, grouped by owning server (MCAT-21.2).
+
+    Answers "which servers offer a capability like X?" across the caller's catalog. **Keyword**
+    matches use the V127 capability-item ``tsvector`` GIN index (``websearch_to_tsquery``). When
+    ``APIOME_MCP_SIMILARITY_EMBEDDINGS_ENABLED`` is on and the Ollama embedding service is
+    reachable, **semantic** matches also rank stored per-item embeddings (V149) by cosine
+    similarity. Each distinct capability appears once with ``match_source`` ``keyword``,
+    ``semantic``, or ``both``.
+
+    **Ranking** (MCAT-9.7 / MCAT-21.2): per-item ``relevance`` is ``max(fts_rank,
+    cosine_similarity)``; server groups sort by their best item relevance, then letter grade (A
+    first, ungraded last), then score, then endpoint name; capabilities within a group sort by
+    relevance desc, then ordinal. ``visibility`` and tenant scoping are enforced like the flat
+    search route — only the caller's own catalog is searched. An empty or whitespace-only query, or
+    a query that matches nothing, returns ``groups: []`` (not an error).
+    """
+    _ = tenant_slug
+    tenant_id = str(auth_data["tenant_id"])
+
+    if scope == "endpoint":
+        raise HTTPException(
+            status_code=422,
+            detail="scope=endpoint is not supported for cross-server capability search",
+        )
+
+    query = q.strip()
+    host_filter = host.strip() if host and host.strip() else None
+    category_filter = category.strip() if category and category.strip() else None
+    grade_filter = grade.strip() if grade and grade.strip() else None
+
+    if not query:
+        return mcp_cross_server_capability_search_response_from_groups(
+            query=q,
+            scope=scope,
+            semantic_enabled=settings.mcp_similarity_embeddings_enabled,
+            limit=limit,
+            offset=offset,
+            total=0,
+            groups=[],
+        )
+
+    item_type = scope  # None → all capability kinds
+    keyword_rows = db.search_mcp_capability_items(
+        tenant_id,
+        query,
+        item_type=item_type,
+        host=host_filter,
+        category=category_filter,
+        grade=grade_filter,
+        visibility=visibility,
+        limit=_CROSS_SERVER_CAPABILITY_RAW_LIMIT,
+        offset=0,
+    )
+
+    semantic_rows: List[Dict[str, Any]] = []
+    semantic_enabled = settings.mcp_similarity_embeddings_enabled
+    if semantic_enabled:
+        query_embedding = get_embedding(query)
+        if query_embedding:
+            semantic_rows = db.search_mcp_capability_items_semantic(
+                tenant_id,
+                query_embedding,
+                item_type=item_type,
+                host=host_filter,
+                category=category_filter,
+                grade=grade_filter,
+                visibility=visibility,
+                limit=_CROSS_SERVER_CAPABILITY_RAW_LIMIT,
+            )
+
+    merged = merge_cross_server_capability_hits(keyword_rows, semantic_rows)
+    page_groups, total = group_cross_server_capability_hits(
+        merged, limit=limit, offset=offset
+    )
+    return mcp_cross_server_capability_search_response_from_groups(
+        query=q,
+        scope=scope,
+        semantic_enabled=semantic_enabled,
+        limit=limit,
+        offset=offset,
+        total=total,
+        groups=page_groups,
     )
 
 
