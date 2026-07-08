@@ -7400,3 +7400,119 @@ def mcp_endpoint_note_out_from_row(row: Dict[str, Any]) -> McpEndpointNoteOut:
         created_at=row["created_at"],
         updated_at=row["updated_at"],
     )
+
+
+class McpCollectionMemberOut(BaseModel):
+    """One endpoint membership row in a curated collection."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    endpoint_id: str = Field(serialization_alias="endpointId")
+    position: int = 0
+    name: str
+    slug: str
+    host: str
+    grade: Optional[str] = None
+    visibility: str
+    published: bool
+    added_at: datetime = Field(serialization_alias="addedAt")
+
+
+class McpCollectionOut(BaseModel):
+    """One tenant-scoped curated collection of MCP endpoints."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    name: str
+    slug: str
+    description: Optional[str] = None
+    is_published: bool = Field(default=False, serialization_alias="isPublished")
+    member_count: int = Field(default=0, serialization_alias="memberCount")
+    created_by: str = Field(serialization_alias="createdBy")
+    created_at: datetime = Field(serialization_alias="createdAt")
+    updated_at: datetime = Field(serialization_alias="updatedAt")
+    members: Optional[List[McpCollectionMemberOut]] = None
+
+
+class McpCollectionListResponse(BaseModel):
+    """Envelope for listing curated collections."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    collections: List[McpCollectionOut] = Field(default_factory=list)
+
+
+class McpCollectionCreate(BaseModel):
+    """Body for creating a curated collection."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    name: str
+    slug: Optional[str] = None
+    description: Optional[str] = None
+    is_published: bool = Field(default=False, alias="isPublished")
+    endpoint_ids: List[str] = Field(default_factory=list, alias="endpointIds")
+
+
+class McpCollectionUpdate(BaseModel):
+    """Patch body for updating a curated collection."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    description: Optional[str] = None
+    is_published: Optional[bool] = Field(default=None, alias="isPublished")
+
+
+class McpCollectionMembersReplace(BaseModel):
+    """Replace the full membership list for a collection."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    endpoint_ids: List[str] = Field(default_factory=list, alias="endpointIds")
+
+
+class McpCollectionMembersAdd(BaseModel):
+    """Append endpoints to a collection."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    endpoint_ids: List[str] = Field(alias="endpointIds")
+
+
+def mcp_collection_member_out_from_row(row: Dict[str, Any]) -> McpCollectionMemberOut:
+    """Project a collection-member join row onto the wire model."""
+    return McpCollectionMemberOut(
+        endpoint_id=str(row["endpoint_id"]),
+        position=int(row.get("position") or 0),
+        name=str(row["name"]),
+        slug=str(row["slug"]),
+        host=str(row.get("host") or ""),
+        grade=row.get("grade"),
+        visibility=str(row.get("visibility") or "private"),
+        published=bool(row.get("published")),
+        added_at=row["added_at"],
+    )
+
+
+def mcp_collection_out_from_row(
+    row: Dict[str, Any],
+    *,
+    members: Optional[List[McpCollectionMemberOut]] = None,
+) -> McpCollectionOut:
+    """Project a ``mcp_collections`` row onto the wire model."""
+    return McpCollectionOut(
+        id=str(row["id"]),
+        name=str(row["name"]),
+        slug=str(row["slug"]),
+        description=row.get("description"),
+        is_published=bool(row.get("is_published")),
+        member_count=int(row.get("member_count") or 0),
+        created_by=str(row["created_by"]),
+        created_at=row["created_at"],
+        updated_at=row["updated_at"],
+        members=members,
+    )

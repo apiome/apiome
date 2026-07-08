@@ -10917,6 +10917,345 @@ class Database:
             conn.rollback()
             raise
 
+    # MCP Catalog — curated collections (V2-MCP-36.4 / MCAT-22.4, #4667)
+
+    _MCP_COLLECTION_COLUMNS = """
+        c.id, c.tenant_id, c.name, c.slug, c.description, c.is_published,
+        c.created_by, c.created_at, c.updated_at
+    """
+
+    _MCP_COLLECTION_MEMBER_SELECT = """
+        m.collection_id, m.tenant_id, m.endpoint_id, m.position, m.added_at,
+        e.name, e.slug, e.visibility, e.published,
+        substring(e.endpoint_url from '://(?:[^@/]*@)?([^:/?#]+)') AS host,
+        s.grade
+    """
+
+    def list_mcp_collections(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """List a tenant's curated collections, newest first (MCAT-22.4)."""
+        q = f"""
+            SELECT {self._MCP_COLLECTION_COLUMNS},
+                   COUNT(m.endpoint_id)::int AS member_count
+            FROM apiome.mcp_collections c
+            LEFT JOIN apiome.mcp_collection_members m ON m.collection_id = c.id
+            WHERE c.tenant_id = %s::uuid
+            GROUP BY c.id, c.tenant_id, c.name, c.slug, c.description, c.is_published,
+                     c.created_by, c.created_at, c.updated_at
+            ORDER BY c.updated_at DESC, c.name ASC
+        """
+        return [dict(r) for r in self.execute_query(q, (tenant_id,))]
+
+    def get_mcp_collection(
+        self, tenant_id: str, collection_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch one curated collection scoped to tenant (MCAT-22.4)."""
+        q = f"""
+            SELECT {self._MCP_COLLECTION_COLUMNS},
+                   COUNT(m.endpoint_id)::int AS member_count
+            FROM apiome.mcp_collections c
+            LEFT JOIN apiome.mcp_collection_members m ON m.collection_id = c.id
+            WHERE c.id = %s::uuid AND c.tenant_id = %s::uuid
+            GROUP BY c.id, c.tenant_id, c.name, c.slug, c.description, c.is_published,
+                     c.created_by, c.created_at, c.updated_at
+            LIMIT 1
+        """
+        rows = self.execute_query(q, (collection_id, tenant_id))
+        return dict(rows[0]) if rows else None
+
+    def list_mcp_collection_members(
+        self, tenant_id: str, collection_id: str
+    ) -> List[Dict[str, Any]]:
+        """List endpoints in a collection with browse-oriented fields (MCAT-22.4)."""
+        q = f"""
+            SELECT {self._MCP_COLLECTION_MEMBER_SELECT}
+            FROM apiome.mcp_collection_members m
+            JOIN apiome.mcp_collections c ON c.id = m.collection_id
+            JOIN apiome.mcp_endpoints e
+              ON e.id = m.endpoint_id AND e.tenant_id = m.tenant_id AND e.deleted_at IS NULL
+            LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
+            WHERE c.id = %s::uuid AND c.tenant_id = %s::uuid
+            ORDER BY m.position ASC, m.added_at ASC, e.name ASC
+        """
+        return [dict(r) for r in self.execute_query(q, (collection_id, tenant_id))]
+
+    def _next_available_collection_slug(
+        self, cursor, tenant_id: str, base_slug: str
+    ) -> str:
+        """Pick a tenant-unique collection slug derived from ``base_slug``."""
+        cursor.execute(
+            """
+            SELECT slug FROM apiome.mcp_collections
+            WHERE tenant_id = %s::uuid AND (slug = %s OR slug LIKE %s)
+            """,
+            (tenant_id, base_slug, f"{base_slug}-%"),
+        )
+        taken = {str(r["slug"]) for r in cursor.fetchall()}
+        if base_slug not in taken:
+            return base_slug
+        suffix = 2
+        while f"{base_slug}-{suffix}" in taken:
+            suffix += 1
+        return f"{base_slug}-{suffix}"
+
+    def _validate_collection_endpoint_ids(
+        self, cursor, tenant_id: str, endpoint_ids: List[str]
+    ) -> None:
+        """Ensure every endpoint id exists live in the tenant."""
+        if not endpoint_ids:
+            return
+        cursor.execute(
+            """
+            SELECT id::text FROM apiome.mcp_endpoints
+            WHERE tenant_id = %s::uuid AND deleted_at IS NULL AND id = ANY(%s::uuid[])
+            """,
+            (tenant_id, endpoint_ids),
+        )
+        found = {str(r["id"]) for r in cursor.fetchall()}
+        missing = [eid for eid in endpoint_ids if eid not in found]
+        if missing:
+            raise ValueError(f"Unknown endpoint id(s): {', '.join(missing)}")
+
+    def create_mcp_collection(
+        self,
+        tenant_id: str,
+        creator_id: str,
+        *,
+        name: str,
+        slug: str,
+        description: Optional[str],
+        is_published: bool,
+        endpoint_ids: List[str],
+    ) -> Dict[str, Any]:
+        """Insert a curated collection and optional initial members (MCAT-22.4)."""
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                unique_slug = self._next_available_collection_slug(cur, tenant_id, slug)
+                self._validate_collection_endpoint_ids(cur, tenant_id, endpoint_ids)
+                cur.execute(
+                    f"""
+                    INSERT INTO apiome.mcp_collections
+                        (tenant_id, name, slug, description, is_published, created_by)
+                    VALUES (%s::uuid, %s, %s, %s, %s, %s::uuid)
+                    RETURNING {self._MCP_COLLECTION_COLUMNS}
+                    """,
+                    (tenant_id, name, unique_slug, description, is_published, creator_id),
+                )
+                row = dict(cur.fetchone())
+                collection_id = str(row["id"])
+                for position, endpoint_id in enumerate(endpoint_ids):
+                    cur.execute(
+                        """
+                        INSERT INTO apiome.mcp_collection_members
+                            (collection_id, tenant_id, endpoint_id, position)
+                        VALUES (%s::uuid, %s::uuid, %s::uuid, %s)
+                        """,
+                        (collection_id, tenant_id, endpoint_id, position),
+                    )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        enriched = self.get_mcp_collection(tenant_id, collection_id)
+        return enriched if enriched is not None else row
+
+    def update_mcp_collection(
+        self,
+        tenant_id: str,
+        collection_id: str,
+        *,
+        name: Optional[str] = None,
+        slug: Optional[str] = None,
+        description: Optional[str] = None,
+        is_published: Optional[bool] = None,
+        clear_description: bool = False,
+    ) -> Optional[Dict[str, Any]]:
+        """Update mutable collection fields (MCAT-22.4)."""
+        fields: List[str] = []
+        params: List[Any] = []
+        if name is not None:
+            fields.append("name = %s")
+            params.append(name)
+        if slug is not None:
+            fields.append("slug = %s")
+            params.append(slug)
+        if clear_description:
+            fields.append("description = NULL")
+        elif description is not None:
+            fields.append("description = %s")
+            params.append(description)
+        if is_published is not None:
+            fields.append("is_published = %s")
+            params.append(is_published)
+        if not fields:
+            return self.get_mcp_collection(tenant_id, collection_id)
+        fields.append("updated_at = CURRENT_TIMESTAMP")
+        params.extend([collection_id, tenant_id])
+        q = f"""
+            UPDATE apiome.mcp_collections
+            SET {", ".join(fields)}
+            WHERE id = %s::uuid AND tenant_id = %s::uuid
+            RETURNING {self._MCP_COLLECTION_COLUMNS}
+        """
+        rows = self.execute_query(q, tuple(params))
+        if not rows:
+            return None
+        return self.get_mcp_collection(tenant_id, collection_id)
+
+    def delete_mcp_collection(self, tenant_id: str, collection_id: str) -> bool:
+        """Delete a curated collection and its memberships (MCAT-22.4)."""
+        q = """
+            DELETE FROM apiome.mcp_collections
+            WHERE id = %s::uuid AND tenant_id = %s::uuid
+        """
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(q, (collection_id, tenant_id))
+                deleted = cur.rowcount > 0
+            conn.commit()
+            return deleted
+        except Exception:
+            conn.rollback()
+            raise
+
+    def replace_mcp_collection_members(
+        self, tenant_id: str, collection_id: str, endpoint_ids: List[str]
+    ) -> List[Dict[str, Any]]:
+        """Replace the full membership list for a collection (MCAT-22.4)."""
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT 1 FROM apiome.mcp_collections
+                    WHERE id = %s::uuid AND tenant_id = %s::uuid
+                    LIMIT 1
+                    """,
+                    (collection_id, tenant_id),
+                )
+                if cur.fetchone() is None:
+                    conn.rollback()
+                    return []
+                self._validate_collection_endpoint_ids(cur, tenant_id, endpoint_ids)
+                cur.execute(
+                    """
+                    DELETE FROM apiome.mcp_collection_members
+                    WHERE collection_id = %s::uuid
+                    """,
+                    (collection_id,),
+                )
+                for position, endpoint_id in enumerate(endpoint_ids):
+                    cur.execute(
+                        """
+                        INSERT INTO apiome.mcp_collection_members
+                            (collection_id, tenant_id, endpoint_id, position)
+                        VALUES (%s::uuid, %s::uuid, %s::uuid, %s)
+                        """,
+                        (collection_id, tenant_id, endpoint_id, position),
+                    )
+                cur.execute(
+                    """
+                    UPDATE apiome.mcp_collections
+                    SET updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s::uuid
+                    """,
+                    (collection_id,),
+                )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        return self.list_mcp_collection_members(tenant_id, collection_id)
+
+    def add_mcp_collection_members(
+        self, tenant_id: str, collection_id: str, endpoint_ids: List[str]
+    ) -> List[Dict[str, Any]]:
+        """Append endpoints to a collection, preserving existing order (MCAT-22.4)."""
+        if not endpoint_ids:
+            return self.list_mcp_collection_members(tenant_id, collection_id)
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT 1 FROM apiome.mcp_collections
+                    WHERE id = %s::uuid AND tenant_id = %s::uuid
+                    LIMIT 1
+                    """,
+                    (collection_id, tenant_id),
+                )
+                if cur.fetchone() is None:
+                    conn.rollback()
+                    return []
+                self._validate_collection_endpoint_ids(cur, tenant_id, endpoint_ids)
+                cur.execute(
+                    """
+                    SELECT COALESCE(MAX(position), -1) AS max_pos
+                    FROM apiome.mcp_collection_members
+                    WHERE collection_id = %s::uuid
+                    """,
+                    (collection_id,),
+                )
+                start = int(dict(cur.fetchone())["max_pos"]) + 1
+                for offset, endpoint_id in enumerate(endpoint_ids):
+                    cur.execute(
+                        """
+                        INSERT INTO apiome.mcp_collection_members
+                            (collection_id, tenant_id, endpoint_id, position)
+                        VALUES (%s::uuid, %s::uuid, %s::uuid, %s)
+                        ON CONFLICT (collection_id, endpoint_id) DO NOTHING
+                        """,
+                        (collection_id, tenant_id, endpoint_id, start + offset),
+                    )
+                cur.execute(
+                    """
+                    UPDATE apiome.mcp_collections
+                    SET updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s::uuid
+                    """,
+                    (collection_id,),
+                )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        return self.list_mcp_collection_members(tenant_id, collection_id)
+
+    def remove_mcp_collection_member(
+        self, tenant_id: str, collection_id: str, endpoint_id: str
+    ) -> bool:
+        """Remove one endpoint from a collection (MCAT-22.4)."""
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    DELETE FROM apiome.mcp_collection_members m
+                    USING apiome.mcp_collections c
+                    WHERE m.collection_id = c.id
+                      AND c.id = %s::uuid
+                      AND c.tenant_id = %s::uuid
+                      AND m.endpoint_id = %s::uuid
+                    """,
+                    (collection_id, tenant_id, endpoint_id),
+                )
+                deleted = cur.rowcount > 0
+                if deleted:
+                    cur.execute(
+                        """
+                        UPDATE apiome.mcp_collections
+                        SET updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s::uuid
+                        """,
+                        (collection_id,),
+                    )
+            conn.commit()
+            return deleted
+        except Exception:
+            conn.rollback()
+            raise
+
     def get_mcp_endpoint(self, tenant_id: str, endpoint_id: str) -> Optional[Dict[str, Any]]:
         """Fetch one live catalog endpoint scoped to ``tenant_id`` (MCAT-3.1).
 

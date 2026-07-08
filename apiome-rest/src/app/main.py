@@ -62,6 +62,7 @@ from .mcp_feed_routes import router as mcp_feed_router
 from .mcp_catalog_digest_routes import router as mcp_catalog_digest_router
 from .mcp_saved_search_routes import router as mcp_saved_search_router
 from .mcp_endpoint_note_routes import router as mcp_endpoint_note_router
+from .mcp_collection_routes import router as mcp_collection_router
 
 # Configure structured JSON logging before anything else logs, so every line (including library
 # loggers) is emitted in the consistent observability shape (RC1-3.2, #3617).
@@ -246,6 +247,7 @@ app.include_router(mcp_endpoints_router)
 app.include_router(mcp_catalog_digest_router)
 app.include_router(mcp_saved_search_router)
 app.include_router(mcp_endpoint_note_router)
+app.include_router(mcp_collection_router)
 # Observability & ops (#3617): liveness/readiness probes + platform-admin ops dashboard.
 app.include_router(health_router)
 app.include_router(ops_router)
