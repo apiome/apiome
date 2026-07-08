@@ -4318,6 +4318,9 @@ class McpBrowseEndpointOut(BaseModel):
     has_destructive: bool = False
     read_only_only: bool = False
     complexity_band: str = "unknown"
+    # Freshness (V2-MCP-36.2 / MCAT-22.2): cadence/backoff/quarantine/failure staleness for cards.
+    freshness: str = "fresh"
+    last_known_good_at: Optional[str] = None
 
 
 class McpBrowseHostGroup(BaseModel):
@@ -4367,6 +4370,16 @@ def mcp_browse_endpoint_out_from_row(row: Dict[str, Any]) -> McpBrowseEndpointOu
     resource_template = int(row.get("resource_template_count") or 0)
     prompt = int(row.get("prompt_count") or 0)
     score = row.get("score")
+    from .mcp_freshness_report import derive_freshness_status, resolve_last_known_good_at
+
+    last_known = row.get("last_known_good_at")
+    if last_known is not None and hasattr(last_known, "isoformat"):
+        last_known_good_at = last_known.isoformat()
+    elif last_known is not None:
+        last_known_good_at = str(last_known)
+    else:
+        last_known_good_at = resolve_last_known_good_at(row)
+
     return McpBrowseEndpointOut(
         id=str(row["id"]),
         name=str(row["name"]),
@@ -4399,6 +4412,16 @@ def mcp_browse_endpoint_out_from_row(row: Dict[str, Any]) -> McpBrowseEndpointOu
         has_destructive=bool(row.get("has_destructive") or False),
         read_only_only=bool(row.get("read_only_only") or False),
         complexity_band=str(row.get("complexity_band") or "unknown"),
+        freshness=str(
+            row.get("freshness")
+            or derive_freshness_status(
+                row,
+                default_cadence_seconds=int(
+                    row.get("_default_cadence_seconds") or settings.mcp_discovery_default_cadence_seconds
+                ),
+            )
+        ),
+        last_known_good_at=last_known_good_at,
     )
 
 
@@ -7173,6 +7196,50 @@ def mcp_duplicate_endpoint_out_from_row(row: Dict[str, Any]) -> McpDuplicateEndp
             str(row["surface_fingerprint"]) if row.get("surface_fingerprint") is not None else None
         ),
     )
+
+
+# ===========================================================================
+# MCP Catalog — staleness & freshness reporting (V2-MCP-36.2 / MCAT-22.2, #4665)
+# ===========================================================================
+
+McpFreshnessStatus = Literal["fresh", "stale", "failing", "backoff", "quarantined"]
+
+
+class McpFreshnessEndpointOut(BaseModel):
+    """One endpoint flagged by the freshness report."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    name: str
+    slug: str
+    host: str
+    endpoint_url: str
+    transport: str
+    published: bool
+    visibility: str
+    enabled: bool
+    freshness: McpFreshnessStatus
+    reason: str
+    last_known_good_at: Optional[str] = None
+    last_discovered_at: Optional[str] = None
+    last_discovery_status: Optional[str] = None
+    discovery_cadence_seconds: Optional[int] = None
+    consecutive_failures: int = 0
+    next_discovery_after: Optional[str] = None
+    quarantined: bool = False
+    quarantine_reason: Optional[str] = None
+
+
+class McpFreshnessReportResponse(BaseModel):
+    """Freshness report over the caller's catalog — only non-fresh endpoints are listed."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    default_cadence_seconds: int
+    flagged_endpoint_count: int
+    endpoints: List[McpFreshnessEndpointOut]
 
 
 # ===========================================================================

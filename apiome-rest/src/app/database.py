@@ -9818,8 +9818,10 @@ class Database:
         q = f"""
             SELECT e.id, e.tenant_id, e.name, e.slug, e.endpoint_url, e.transport,
                    e.description, e.category, e.visibility, e.published, e.enabled,
-                   e.last_discovered_at, e.last_discovery_status, e.quarantined_at,
-                   e.current_version_id,
+                   e.discovery_cadence_seconds, e.last_discovered_at, e.last_discovery_status,
+                   e.consecutive_failures, e.next_discovery_after,
+                   e.quarantined_at, e.quarantine_reason, e.current_version_id,
+                   cv.discovered_at AS last_known_good_at,
                    s.score, s.grade, s.scored_at,
                    cv.server_branding,
                    cv.protocol_version,
@@ -9838,7 +9840,7 @@ class Database:
             CROSS JOIN LATERAL (SELECT {self._MCP_MAX_TOOL_PROPS_EXPR} AS max_tool_props) mtp
             WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
             GROUP BY e.id, s.score, s.grade, s.scored_at, cv.server_branding,
-                     cv.protocol_version, mtp.max_tool_props
+                     cv.protocol_version, cv.discovered_at, mtp.max_tool_props
             ORDER BY e.name ASC
         """
         return self.execute_query(q, (tenant_id,))
@@ -9879,6 +9881,27 @@ class Database:
             ORDER BY t.slug ASC, e.name ASC
         """
         return self.execute_query(q, (exclude_tenant_id,))
+
+    def list_mcp_freshness_candidates(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """Live endpoints with fields needed for staleness/freshness reporting (MCAT-22.2).
+
+        Each row joins the current snapshot's ``discovered_at`` as ``last_known_good_at`` (the last
+        successful discovery anchor) and carries cadence/backoff/quarantine columns from
+        ``mcp_endpoints``.
+        """
+        q = """
+            SELECT e.id, e.tenant_id, e.name, e.slug, e.endpoint_url, e.transport,
+                   e.visibility, e.published, e.enabled,
+                   e.discovery_cadence_seconds, e.last_discovered_at, e.last_discovery_status,
+                   e.consecutive_failures, e.next_discovery_after,
+                   e.quarantined_at, e.quarantine_reason, e.current_version_id,
+                   cv.discovered_at AS last_known_good_at
+            FROM apiome.mcp_endpoints e
+            LEFT JOIN apiome.mcp_endpoint_versions cv ON cv.id = e.current_version_id
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+            ORDER BY e.name ASC
+        """
+        return self.execute_query(q, (tenant_id,))
 
     def list_mcp_endpoints_export_page(
         self,
@@ -10615,8 +10638,11 @@ class Database:
 
         endpoints_q = f"""
             SELECT e.id, e.name, e.slug, e.endpoint_url, e.transport, e.description,
-                   e.category, e.visibility, e.published, e.enabled, e.last_discovered_at,
-                   e.last_discovery_status, e.quarantined_at, e.current_version_id,
+                   e.category, e.visibility, e.published, e.enabled,
+                   e.discovery_cadence_seconds, e.last_discovered_at, e.last_discovery_status,
+                   e.consecutive_failures, e.next_discovery_after,
+                   e.quarantined_at, e.quarantine_reason, e.current_version_id,
+                   cv.discovered_at AS last_known_good_at,
                    s.score, s.grade,
                    cv.server_branding, cv.protocol_version,
                    {self._MCP_ENDPOINT_HEALTH_EXPR} AS health,

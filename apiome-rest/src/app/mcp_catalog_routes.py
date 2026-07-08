@@ -55,6 +55,7 @@ from .mcp_discovery_engine import (
     trigger_discovery,
 )
 from .mcp_duplicate_detection import mcp_duplicate_report_from_rows
+from .mcp_freshness_report import mcp_freshness_report_from_rows
 from .mcp_facets import FacetValidationError, normalize_catalog_facet_filters
 from .mcp_insight_aggregation import (
     DISCOVERY_TIMELINE_WINDOW,
@@ -124,6 +125,7 @@ from .models import (
     McpCapabilityDirectorySort,
     McpCapabilityDirectoryType,
     McpDuplicateReportResponse,
+    McpFreshnessReportResponse,
     McpSearchResponse,
     McpSearchScope,
     McpSearchVisibility,
@@ -250,6 +252,30 @@ async def list_mcp_duplicate_report(
         tenant_id=tenant_id,
         candidates=candidates,
         foreign_published=foreign,
+    )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/data-quality/freshness",
+    response_model=McpFreshnessReportResponse,
+)
+async def list_mcp_freshness_report(
+    tenant_slug: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpFreshnessReportResponse:
+    """Freshness report for the caller's catalog (V2-MCP-36.2 / MCAT-22.2).
+
+    Flags endpoints that are overdue for re-discovery, in failure backoff/quarantine, or on a
+    failing streak. Each flagged row carries a ``last_known_good_at`` anchor from the current
+    snapshot (when one exists) plus the live cadence/backoff fields from ``mcp_endpoints``.
+    Healthy, in-cadence endpoints are omitted.
+    """
+    _ = tenant_slug
+    tenant_id = str(auth_data["tenant_id"])
+    candidates = db.list_mcp_freshness_candidates(tenant_id)
+    return mcp_freshness_report_from_rows(
+        default_cadence_seconds=int(settings.mcp_discovery_default_cadence_seconds),
+        candidates=candidates,
     )
 
 
