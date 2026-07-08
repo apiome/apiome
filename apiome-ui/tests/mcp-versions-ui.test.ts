@@ -46,6 +46,8 @@ function makeVersion(overrides: Partial<McpVersionSummary> = {}): McpVersionSumm
     scored_at: null,
     change_counts: overrides.change_counts ?? { added: 0, removed: 0, modified: 0, total: 0 },
     is_current: overrides.is_current ?? false,
+    discovery_trigger: overrides.discovery_trigger ?? null,
+    discovery_job_id: overrides.discovery_job_id ?? null,
     discovered_at: overrides.discovered_at ?? null,
     created_at: overrides.created_at ?? null,
   };
@@ -93,6 +95,22 @@ describe('mcpVersionSummaryFromPayload', () => {
     expect(summary.is_current).toBe(false);
     expect(summary.version_tag).toBeNull();
     expect(summary.score).toBeNull();
+  });
+
+  it('parses the snapshot provenance fields, defaulting an unrecorded origin to null (V2-MCP-34.5)', () => {
+    const attributed = mcpVersionSummaryFromPayload({
+      id: 'ver-7',
+      version_seq: 7,
+      discovery_trigger: 'sweep',
+      discovery_job_id: 'job-1',
+    });
+    expect(attributed.discovery_trigger).toBe('sweep');
+    expect(attributed.discovery_job_id).toBe('job-1');
+
+    // A pre-provenance snapshot (or an empty string) stays null — unrecorded, never an origin.
+    const unrecorded = mcpVersionSummaryFromPayload({ id: 'ver-1', version_seq: 1, discovery_trigger: '' });
+    expect(unrecorded.discovery_trigger).toBeNull();
+    expect(unrecorded.discovery_job_id).toBeNull();
   });
 });
 

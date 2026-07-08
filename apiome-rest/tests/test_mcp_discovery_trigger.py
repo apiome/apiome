@@ -667,6 +667,44 @@ async def test_drive_job_happy_path_completes(monkeypatch):
     assert finish.kwargs["result"]["version_id"] == "ver-1"
 
 
+async def test_drive_job_stamps_provenance_from_the_job_trigger(monkeypatch):
+    """A new snapshot records which run produced it (V2-MCP-34.5).
+
+    The driver reads the trigger off the running job row and the persist layer stamps it —
+    with the job id — onto the version, so provenance survives independent of the job log.
+    """
+    surface = _surface([_tool("alpha")])
+    _install_runner(monkeypatch, surface=surface)
+    mdb = MagicMock()
+    mdb.mark_mcp_discovery_job_running.return_value = {
+        **_JOB_ROW,
+        "state": "running",
+        "trigger": "sweep",
+    }
+    mdb.get_latest_mcp_endpoint_version.return_value = None
+    mdb.record_mcp_discovery_version.return_value = {"version_id": "ver-1", "version_seq": 1}
+    monkeypatch.setattr(mcp_discovery_engine, "db", mdb)
+
+    await mcp_discovery_engine._drive_discovery_job(_JOB_UUID, _ENDPOINT_ROW)
+
+    kwargs = mdb.record_mcp_discovery_version.call_args.kwargs
+    assert kwargs["discovery_trigger"] == "sweep"
+    assert kwargs["discovery_job_id"] == _JOB_UUID
+
+
+def test_persist_outcome_defaults_provenance_to_unrecorded():
+    """Without a trigger, the snapshot's provenance columns stay NULL — unrecorded, not manual."""
+    surface = _surface([_tool("alpha")])
+    mdb = MagicMock()
+    mdb.get_latest_mcp_endpoint_version.return_value = None
+    mdb.record_mcp_discovery_version.return_value = {"version_id": "ver-1", "version_seq": 1}
+    with patch.object(mcp_discovery_engine, "db", mdb):
+        mcp_discovery_engine._persist_outcome(_JOB_UUID, _ENDPOINT_ROW, surface, _NOW)
+    kwargs = mdb.record_mcp_discovery_version.call_args.kwargs
+    assert kwargs["discovery_trigger"] is None
+    assert kwargs["discovery_job_id"] == _JOB_UUID
+
+
 async def test_drive_job_classifies_client_failure(monkeypatch):
     _install_runner(monkeypatch, exc=RuntimeError("boom"))
     mdb = MagicMock()
@@ -920,6 +958,35 @@ def test_record_version_disambiguates_same_minute_tag_collision(monkeypatch):
     ]
     assert [p[1] for p in probes] == ["2026-06-26T12:00Z", "2026-06-26T12:00Z-2"]
     assert conn.committed is True
+
+
+def test_record_version_persists_provenance_columns(monkeypatch):
+    """The version INSERT carries the producing job's trigger and id (V2-MCP-34.5)."""
+    surface = _surface([_tool("alpha")])
+    cur = _FakeCursor(fetchone_results=[{"next_seq": 1}, None, {"id": "ver-1"}])
+    conn = _FakeConn(cur)
+    db = Database()
+    monkeypatch.setattr(db, "connect", lambda: conn)
+
+    db.record_mcp_discovery_version(
+        _EP_UUID,
+        version_row=surface.to_version_row(),
+        capability_rows=[],
+        change_rows=[],
+        discovered_at=_NOW,
+        discovery_trigger="sweep",
+        discovery_job_id=_JOB_UUID,
+    )
+
+    insert_sql, insert_params = next(
+        (sql, params)
+        for sql, params in cur.executed
+        if "INSERT INTO apiome.mcp_endpoint_versions" in sql
+    )
+    assert "discovery_trigger" in insert_sql
+    assert "discovery_job_id" in insert_sql
+    assert "sweep" in insert_params
+    assert _JOB_UUID in insert_params
 
 
 def test_set_mcp_version_score_upserts_on_version(monkeypatch):

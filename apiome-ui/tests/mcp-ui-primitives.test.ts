@@ -13,6 +13,8 @@ import {
   mcpAuthBadge,
   mcpCapabilityAnnotationBadge,
   mcpLifecycleBadge,
+  mcpProvenanceAddedViaBadge,
+  mcpProvenanceTriggerBadge,
   MCP_CAPABILITY_ANNOTATION_ORDER,
   mcpHealthFromDiscoveryStatus,
   mcpHealthMeta,
@@ -148,6 +150,55 @@ describe('mcpLifecycleBadge', () => {
     expect(mcpLifecycleBadge(undefined)).toBeNull();
     expect(mcpLifecycleBadge('')).toBeNull();
     expect(mcpLifecycleBadge('mystery-stage')).toBeNull();
+  });
+});
+
+describe('mcpProvenanceTriggerBadge', () => {
+  it('maps each discovery-run origin to its tone + label (V2-MCP-34.5)', () => {
+    expect(mcpProvenanceTriggerBadge('manual')).toEqual({ tone: 'blue', label: 'manual run' });
+    expect(mcpProvenanceTriggerBadge('sweep')).toEqual({ tone: 'indigo', label: 'scheduled sweep' });
+    expect(mcpProvenanceTriggerBadge('registry')).toEqual({
+      tone: 'violet',
+      label: 'registry refresh',
+    });
+  });
+
+  it('normalizes case and whitespace before resolving', () => {
+    expect(mcpProvenanceTriggerBadge('  Sweep ')).toEqual({
+      tone: 'indigo',
+      label: 'scheduled sweep',
+    });
+  });
+
+  it('resolves missing/unknown origins to the neutral "unrecorded" chip, never a concrete one', () => {
+    const unrecorded = { tone: 'slate', label: 'unrecorded' };
+    expect(mcpProvenanceTriggerBadge(null)).toEqual(unrecorded);
+    expect(mcpProvenanceTriggerBadge(undefined)).toEqual(unrecorded);
+    expect(mcpProvenanceTriggerBadge('')).toEqual(unrecorded);
+    expect(mcpProvenanceTriggerBadge('mystery-source')).toEqual(unrecorded);
+  });
+});
+
+describe('mcpProvenanceAddedViaBadge', () => {
+  it('maps each catalog-entry origin to its tone + label (V2-MCP-34.5)', () => {
+    expect(mcpProvenanceAddedViaBadge('manual')).toEqual({ tone: 'blue', label: 'added manually' });
+    expect(mcpProvenanceAddedViaBadge('registry')).toEqual({
+      tone: 'violet',
+      label: 'added from registry',
+    });
+    expect(mcpProvenanceAddedViaBadge('import')).toEqual({
+      tone: 'indigo',
+      label: 'added via import',
+    });
+  });
+
+  it('defaults an absent value to manual (the DB default) and shows an unknown one verbatim', () => {
+    expect(mcpProvenanceAddedViaBadge(null)).toEqual({ tone: 'blue', label: 'added manually' });
+    expect(mcpProvenanceAddedViaBadge(undefined)).toEqual({ tone: 'blue', label: 'added manually' });
+    expect(mcpProvenanceAddedViaBadge('federation')).toEqual({
+      tone: 'slate',
+      label: 'added via federation',
+    });
   });
 });
 

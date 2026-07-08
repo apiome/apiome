@@ -86,6 +86,10 @@ class ReportCard:
         trust: The five-axis composite trust profile or ``None`` when undiscovered.
         change: The change-since-previous summary (severity roll-up + itemized rows) or ``None``
             when the snapshot introduced no diff (the first version, or an unchanged re-discovery).
+        provenance: How the catalog knows the server (V2-MCP-34.5) — how the endpoint was added
+            and which discovery runs produced its versions — or ``None`` when the route did not
+            supply it. A never-discovered endpoint still has a section (its ``added_via`` is a
+            fact even before any snapshot exists).
     """
 
     generated_at: str
@@ -99,6 +103,7 @@ class ReportCard:
     lifecycle: Optional["ReportLifecycle"] = None
     trust: Optional["ReportTrust"] = None
     change: Optional["ReportChange"] = None
+    provenance: Optional["ReportProvenance"] = None
 
 
 @dataclass(frozen=True)
@@ -209,6 +214,32 @@ class ReportLifecycle:
 
 
 @dataclass(frozen=True)
+class ReportProvenance:
+    """The discovery-provenance report (serializes the 20.5 assembly result).
+
+    Mirrors :meth:`app.mcp_provenance.EndpointProvenance.as_dict`: how the endpoint entered
+    the catalog (``added_via`` + its label), when it was first/last discovered, the number of
+    snapshots per origin (``origin_counts`` always carries every bucket, including
+    ``unrecorded`` — an unattributed snapshot is stated, never hidden), the completed
+    discovery runs per trigger (``run_counts``, including unchanged re-runs), the current
+    snapshot's origin, and the newest-first per-version origin rows (already bounded and
+    labeled upstream; ``origins_truncated`` counts the overflow).
+    """
+
+    added_via: str
+    added_via_label: str
+    added_at: Optional[str]
+    first_discovered_at: Optional[str]
+    last_discovered_at: Optional[str]
+    version_count: int
+    origin_counts: Dict[str, int]
+    run_counts: Dict[str, int]
+    current_origin: Optional[Dict[str, Any]]
+    origins: List[Dict[str, Any]]
+    origins_truncated: int
+
+
+@dataclass(frozen=True)
 class ReportTrust:
     """The composite trust profile (serializes the 17.4 radar)."""
 
@@ -241,6 +272,7 @@ def build_report_card(
     surface_metrics: Optional[Mapping[str, Any]],
     license_signals: Optional[Mapping[str, Any]] = None,
     lifecycle_signals: Optional[Mapping[str, Any]] = None,
+    provenance: Optional[Mapping[str, Any]] = None,
     trust_profile: Optional[Mapping[str, Any]],
     change_rows: Sequence[Mapping[str, Any]],
     change_severity: Optional[Mapping[str, int]],
@@ -273,6 +305,10 @@ def build_report_card(
             ``as_dict()`` for the snapshot's capability items, or ``None`` when never
             discovered. As with ``license_signals``, a "nothing found" result is *not*
             ``None`` — it renders as a section whose wording is never a "stable" claim.
+        provenance: The :func:`app.mcp_provenance.build_endpoint_provenance` ``as_dict()``
+            for the endpoint, or ``None`` when the caller did not assemble one. Unlike the
+            surface sections it does not require a discovered snapshot — how the endpoint
+            was added is a fact from registration.
         trust_profile: The ``compute_trust_profile`` ``as_dict()``, or ``None``.
         change_rows: The stored ``previous → this`` change rows (empty for a first/unchanged version).
         change_severity: The ``severity_counts`` roll-up over ``change_rows``, or ``None``.
@@ -302,6 +338,7 @@ def build_report_card(
     lifecycle = _lifecycle(lifecycle_signals) if lifecycle_signals is not None else None
     trust = _trust(trust_profile) if trust_profile else None
     change = _change(change_rows, change_severity) if change_rows else None
+    report_provenance = _provenance(provenance) if provenance is not None else None
 
     return ReportCard(
         generated_at=generated_at,
@@ -315,6 +352,7 @@ def build_report_card(
         lifecycle=lifecycle,
         trust=trust,
         change=change,
+        provenance=report_provenance,
     )
 
 
@@ -543,6 +581,34 @@ def _lifecycle_signal_summary(capability: Mapping[str, Any]) -> str:
     return "; ".join(parts)
 
 
+def _provenance(provenance: Mapping[str, Any]) -> ReportProvenance:
+    """Shape the 20.5 provenance ``as_dict()`` into the report section.
+
+    The upstream :func:`app.mcp_provenance.build_endpoint_provenance` already labels,
+    bounds and orders everything; this only normalizes types for rendering.
+    """
+    current = provenance.get("current_origin")
+    return ReportProvenance(
+        added_via=str(provenance.get("added_via") or "manual"),
+        added_via_label=str(provenance.get("added_via_label") or ""),
+        added_at=provenance.get("added_at"),
+        first_discovered_at=provenance.get("first_discovered_at"),
+        last_discovered_at=provenance.get("last_discovered_at"),
+        version_count=int(provenance.get("version_count") or 0),
+        origin_counts={
+            str(k): int(v or 0)
+            for k, v in dict(provenance.get("origin_counts") or {}).items()
+        },
+        run_counts={
+            str(k): int(v or 0)
+            for k, v in dict(provenance.get("run_counts") or {}).items()
+        },
+        current_origin=dict(current) if isinstance(current, Mapping) else None,
+        origins=[dict(origin) for origin in provenance.get("origins") or []],
+        origins_truncated=int(provenance.get("origins_truncated") or 0),
+    )
+
+
 def _trust(profile: Mapping[str, Any]) -> ReportTrust:
     """Shape the trust profile, ordering axes canonically for a stable radar table."""
     axes = list(profile.get("axes") or [])
@@ -669,6 +735,67 @@ def render_report_markdown(card: ReportCard) -> str:
         lines.append("_This endpoint has never been discovered — the sections below are"
                      " unavailable until a discovery run completes._")
         lines.append("")
+
+    # --- Provenance ---------------------------------------------------------------------------
+    lines.append("## Provenance")
+    lines.append("")
+    lines.append("_How the catalog knows this server — how the endpoint was added and which"
+                 " discovery runs produced its version snapshots._")
+    lines.append("")
+    if card.provenance is not None:
+        pv = card.provenance
+        added = f"Added: **{pv.added_via_label}**"
+        if pv.added_at:
+            added += f" on {pv.added_at}"
+        lines.append(added)
+        lines.append("")
+        if pv.current_origin is not None:
+            co = pv.current_origin
+            current_line = (
+                f"Current snapshot: version {_or_dash(co.get('version_seq'))}"
+                f" via **{_or_dash(co.get('trigger_label'))}**"
+            )
+            if co.get("discovered_at"):
+                current_line += f" on {co['discovered_at']}"
+            lines.append(current_line)
+        else:
+            lines.append("_Never discovered — no snapshot provenance yet._")
+        lines.append("")
+        rc = pv.run_counts
+        lines.append(
+            f"Completed discovery runs: **{int(rc.get('total', 0))}** total · "
+            f"{int(rc.get('manual', 0))} manual · "
+            f"{int(rc.get('sweep', 0))} sweep · "
+            f"{int(rc.get('registry', 0))} registry"
+        )
+        if pv.origins:
+            lines.append("")
+            lines.append("| Version | Tag | Origin | Discovered |")
+            lines.append("| --- | --- | --- | --- |")
+            for origin in pv.origins:
+                seq = _or_dash(origin.get("version_seq"))
+                if origin.get("is_current"):
+                    seq += " (current)"
+                lines.append(
+                    f"| {seq} | {_md_cell(origin.get('version_tag'))}"
+                    f" | {_md_cell(origin.get('trigger_label'))}"
+                    f" | {_md_cell(origin.get('discovered_at'))} |"
+                )
+            if pv.origins_truncated:
+                lines.append("")
+                lines.append(
+                    f"_…and {pv.origins_truncated} earlier version(s) not shown._"
+                )
+        unrecorded = int(pv.origin_counts.get("unrecorded", 0))
+        if unrecorded:
+            lines.append("")
+            lines.append(
+                f"_{unrecorded} version(s) predate provenance tracking — their origin is"
+                " unrecorded, not manual._"
+            )
+    else:
+        lines.append("_Not available._")
+    lines.append("")
 
     # --- Grade & score ----------------------------------------------------------------------
     lines.append("## Grade & Score")
@@ -1018,6 +1145,57 @@ def render_report_html(card: ReportCard) -> str:
     else:
         p.append('<p class="note">This endpoint has never been discovered — the sections'
                  " below are unavailable until a discovery run completes.</p>")
+
+    # --- Provenance ---------------------------------------------------------------------------
+    p.append("<h2>Provenance</h2>")
+    p.append("<p class='note'>How the catalog knows this server — how the endpoint was added"
+             " and which discovery runs produced its version snapshots.</p>")
+    if card.provenance is not None:
+        pv = card.provenance
+        added = f"Added: <span class='metric'>{_e(pv.added_via_label)}</span>"
+        if pv.added_at:
+            added += f" on {_e(pv.added_at)}"
+        p.append(f"<p>{added}</p>")
+        if pv.current_origin is not None:
+            co = pv.current_origin
+            current_bits = (
+                f"Current snapshot: version <span class='metric'>"
+                f"{_e(co.get('version_seq'))}</span> via"
+                f" <span class='metric'>{_e(co.get('trigger_label'))}</span>"
+            )
+            if co.get("discovered_at"):
+                current_bits += f" on {_e(co['discovered_at'])}"
+            p.append(f"<p>{current_bits}</p>")
+        else:
+            p.append("<p class='note'>Never discovered — no snapshot provenance yet.</p>")
+        rc = pv.run_counts
+        p.append(
+            f"<p>Completed discovery runs: <span class='metric'>{int(rc.get('total', 0))}"
+            f"</span> total · {int(rc.get('manual', 0))} manual ·"
+            f" {int(rc.get('sweep', 0))} sweep · {int(rc.get('registry', 0))} registry</p>"
+        )
+        if pv.origins:
+            p.append("<table><tr><th>Version</th><th>Tag</th><th>Origin</th>"
+                     "<th>Discovered</th></tr>")
+            for origin in pv.origins:
+                seq = _e(origin.get("version_seq"))
+                if origin.get("is_current"):
+                    seq += " <span class='chip'>current</span>"
+                p.append(
+                    f"<tr><td>{seq}</td><td>{_e(origin.get('version_tag'))}</td>"
+                    f"<td>{_e(origin.get('trigger_label'))}</td>"
+                    f"<td>{_e(origin.get('discovered_at'))}</td></tr>"
+                )
+            p.append("</table>")
+            if pv.origins_truncated:
+                p.append(f"<p class='note'>…and {pv.origins_truncated} earlier version(s)"
+                         " not shown.</p>")
+        unrecorded = int(pv.origin_counts.get("unrecorded", 0))
+        if unrecorded:
+            p.append(f"<p class='note'>{unrecorded} version(s) predate provenance tracking"
+                     " — their origin is unrecorded, not manual.</p>")
+    else:
+        p.append("<p class='note'>Not available.</p>")
 
     # --- Grade & score ----------------------------------------------------------------------
     p.append("<h2>Grade &amp; Score</h2>")

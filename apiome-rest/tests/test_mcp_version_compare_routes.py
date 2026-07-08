@@ -125,6 +125,29 @@ def test_list_versions_newest_first_with_counts_and_current_flag():
     assert body["versions"][1]["change_counts"]["total"] == 2
 
 
+def test_list_versions_serializes_provenance_fields():
+    """Each history row carries its discovery provenance on the wire (V2-MCP-34.5)."""
+    rows = [
+        {
+            **_version_row(_V2, 2, tag="2026-06-26T12:00Z", fingerprint="fp2"),
+            "discovery_trigger": "sweep",
+            "discovery_job_id": "99999999-9999-9999-9999-999999999999",
+        },
+        # A pre-provenance snapshot serializes explicit nulls — unrecorded, not manual.
+        _version_row(_V1, 1, tag="2026-06-26T11:00Z", fingerprint="fp1"),
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
+        mdb.list_mcp_endpoint_versions.return_value = rows
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/versions")
+    assert r.status_code == 200
+    versions = r.json()["versions"]
+    assert versions[0]["discovery_trigger"] == "sweep"
+    assert versions[0]["discovery_job_id"] == "99999999-9999-9999-9999-999999999999"
+    assert versions[1]["discovery_trigger"] is None
+    assert versions[1]["discovery_job_id"] is None
+
+
 def test_list_versions_scoped_to_token_tenant():
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW

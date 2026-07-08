@@ -48,6 +48,13 @@ export interface McpVersionSummary {
   change_counts: McpVersionChangeCounts;
   /** True when the endpoint's `current_version_id` points at this snapshot. */
   is_current: boolean;
+  /**
+   * Which discovery run produced this snapshot (`manual` / `sweep` / `registry`, V2-MCP-34.5),
+   * or `null` when unrecorded (a pre-provenance snapshot) — never any concrete origin.
+   */
+  discovery_trigger: string | null;
+  /** The producing discovery job's id (an audit pointer), or `null` when unrecorded. */
+  discovery_job_id: string | null;
   discovered_at: string | null;
   created_at: string | null;
 }
@@ -140,6 +147,8 @@ export function mcpVersionSummaryFromPayload(raw: unknown): McpVersionSummary {
     scored_at: asString(r.scored_at),
     change_counts: mcpChangeCountsFromPayload(r.change_counts),
     is_current: r.is_current === true,
+    discovery_trigger: asString(r.discovery_trigger),
+    discovery_job_id: asString(r.discovery_job_id),
     discovered_at: asString(r.discovered_at),
     created_at: asString(r.created_at),
   };

@@ -444,6 +444,15 @@ describe('mcpEndpointDetailFromPayload', () => {
     });
     expect(ep?.id).toBe('ep-1');
     expect(ep?.current_version_id).toBe('v1');
+    // added_via (V2-MCP-34.5) defaults to manual when the payload predates the column.
+    expect(ep?.added_via).toBe('manual');
+  });
+
+  it('parses added_via when the record carries it (V2-MCP-34.5)', () => {
+    const ep = mcpEndpointDetailFromPayload({
+      endpoint: { id: 'ep-1', name: 'Acme', added_via: 'registry' },
+    });
+    expect(ep?.added_via).toBe('registry');
   });
 
   it('returns null when the payload has no endpoint', () => {

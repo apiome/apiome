@@ -1,13 +1,17 @@
 'use client';
 
 import * as React from 'react';
-import { ExternalLink, FileText, Server, ShieldCheck } from 'lucide-react';
+import { ExternalLink, FileText, GitBranch, Server, ShieldCheck } from 'lucide-react';
 import { cn } from '../../../../../lib/utils';
 import { GradeGlyph } from './GradeGlyph';
 import { HealthPill } from './HealthPill';
 import { RecencyPill } from './RecencyPill';
 import { McpBadge } from './McpBadge';
-import { mcpTransportBadge } from '../../ade/dashboard/mcp/mcpUiPrimitives';
+import {
+  mcpProvenanceAddedViaBadge,
+  mcpProvenanceTriggerBadge,
+  mcpTransportBadge,
+} from '../../ade/dashboard/mcp/mcpUiPrimitives';
 import { mcpVersionSeqLabel } from '../../ade/dashboard/mcp/mcpVersionsUi';
 import {
   mcpTypeCountTiles,
@@ -182,6 +186,40 @@ export const ServerProfileCard = React.forwardRef<HTMLElement, ServerProfileCard
             {countTiles.map((tile) => (
               <CountChip key={tile.key} label={tile.label.toLowerCase()} value={tile.value} />
             ))}
+          </div>
+        ) : null}
+
+        {/* Provenance strip (V2-MCP-34.5) — how the catalog knows this server: how the endpoint
+            was added, and which discovery run produced the shown snapshot. Rendered whenever the
+            endpoint record resolved; an unattributed snapshot reads "unrecorded", never a
+            concrete origin. */}
+        {profile.addedVia !== null ? (
+          <div
+            data-testid="provenance-strip"
+            className="mt-4 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3 text-xs text-gray-500 dark:border-gray-700/60 dark:text-gray-400"
+          >
+            <GitBranch className="h-3.5 w-3.5 text-indigo-400" aria-hidden />
+            <span className="font-medium text-gray-600 dark:text-gray-300">Provenance</span>
+            <McpBadge
+              tone={mcpProvenanceAddedViaBadge(profile.addedVia).tone}
+              title="How this endpoint entered the catalog"
+            >
+              {mcpProvenanceAddedViaBadge(profile.addedVia).label}
+            </McpBadge>
+            {profile.versionSeq !== null ? (
+              <>
+                <span className="text-gray-300 dark:text-gray-600" aria-hidden>
+                  ·
+                </span>
+                <span>this snapshot via</span>
+                <McpBadge
+                  tone={mcpProvenanceTriggerBadge(profile.versionOrigin).tone}
+                  title="Which discovery run produced the shown snapshot"
+                >
+                  {mcpProvenanceTriggerBadge(profile.versionOrigin).label}
+                </McpBadge>
+              </>
+            ) : null}
           </div>
         ) : null}
 

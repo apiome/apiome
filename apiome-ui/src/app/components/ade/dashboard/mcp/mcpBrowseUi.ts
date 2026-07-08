@@ -153,6 +153,8 @@ export interface McpEndpointDetail {
   /** Outcome of the most recent discovery run (e.g. `changed` / `unchanged` / `failed`), or `null`
    *  before the first discovery — drives the profile card's health pill. */
   last_discovery_status: string | null;
+  /** How the endpoint entered the catalog (`manual` / `registry` / `import`, V2-MCP-34.5). */
+  added_via: string;
 }
 
 /** The display label and grouping order for each capability kind. */
@@ -362,6 +364,7 @@ export function mcpEndpointDetailFromPayload(data: unknown): McpEndpointDetail |
     current_version_id: asString(e.current_version_id),
     last_discovered_at: asString(e.last_discovered_at),
     last_discovery_status: asString(e.last_discovery_status),
+    added_via: asString(e.added_via) ?? 'manual',
   };
 }
 

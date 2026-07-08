@@ -204,6 +204,51 @@ export function mcpLifecycleBadge(stage: string | null | undefined): McpBadgeSpe
   return CAPABILITY_LIFECYCLE_BADGES[value] ?? null;
 }
 
+/**
+ * The discovery-run origins provenance records (V2-MCP-34.5), with the tone + label the identity
+ * card's provenance strip shows: manual → blue, sweep → indigo, registry → violet. `unrecorded`
+ * (a pre-provenance snapshot) renders a neutral slate chip — stated plainly, never presented as
+ * any concrete origin.
+ */
+const PROVENANCE_TRIGGER_BADGES: Record<string, McpBadgeSpec> = {
+  manual: { tone: 'blue', label: 'manual run' },
+  sweep: { tone: 'indigo', label: 'scheduled sweep' },
+  registry: { tone: 'violet', label: 'registry refresh' },
+  unrecorded: { tone: 'slate', label: 'unrecorded' },
+};
+
+/**
+ * Resolve which discovery run produced a snapshot to a badge. A missing or unknown trigger
+ * resolves to the neutral `unrecorded` chip rather than `null`: on a provenance strip, "we don't
+ * know" is itself the information to show.
+ */
+export function mcpProvenanceTriggerBadge(trigger: string | null | undefined): McpBadgeSpec {
+  const value = (trigger ?? '').trim().toLowerCase();
+  return PROVENANCE_TRIGGER_BADGES[value] ?? PROVENANCE_TRIGGER_BADGES.unrecorded;
+}
+
+/**
+ * The ways an endpoint can enter the catalog (`mcp_endpoints.added_via`, V2-MCP-34.5), labelled
+ * for the provenance strip: manual registration → blue, registry import → violet, bulk import →
+ * indigo.
+ */
+const PROVENANCE_ADDED_VIA_BADGES: Record<string, McpBadgeSpec> = {
+  manual: { tone: 'blue', label: 'added manually' },
+  registry: { tone: 'violet', label: 'added from registry' },
+  import: { tone: 'indigo', label: 'added via import' },
+};
+
+/**
+ * Resolve how an endpoint entered the catalog to a badge. An unknown stored value falls back to a
+ * neutral slate chip carrying the raw value, so a future origin is shown verbatim rather than
+ * mislabeled.
+ */
+export function mcpProvenanceAddedViaBadge(addedVia: string | null | undefined): McpBadgeSpec {
+  const value = (addedVia ?? '').trim().toLowerCase();
+  if (value === '') return PROVENANCE_ADDED_VIA_BADGES.manual;
+  return PROVENANCE_ADDED_VIA_BADGES[value] ?? { tone: 'slate', label: `added via ${value}` };
+}
+
 // --- Health pill ----------------------------------------------------------------------------
 // An endpoint's reachability, distilled from its last discovery status into three signal states
 // (plus an "unknown" fallback before the first discovery). The dot color follows the mockup's

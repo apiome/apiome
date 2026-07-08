@@ -53,6 +53,11 @@ INVENTORY_COLUMNS: Tuple[Tuple[str, str], ...] = (
     ("last_discovery_status", "last_discovery_status"),
     ("last_discovered_at", "last_discovered_at"),
     ("health", "health"),
+    # Provenance (V2-MCP-34.5): how the endpoint entered the catalog, and what enqueued
+    # the run that produced its current snapshot ("unrecorded" when the snapshot predates
+    # provenance tracking; empty when never discovered).
+    ("added_via", "added_via"),
+    ("current_version_origin", "current_version_origin"),
 )
 
 #: The ordered record keys (derived once from the column contract).
@@ -130,6 +135,19 @@ def _int_or_none(value: Any) -> Optional[int]:
     return int(value) if value is not None else None
 
 
+def _current_version_origin(row: Mapping[str, Any]) -> Optional[str]:
+    """Provenance of the endpoint's current snapshot for the export (V2-MCP-34.5).
+
+    The current version's ``discovery_trigger`` (``manual`` / ``sweep`` / ``registry``);
+    ``"unrecorded"`` when a snapshot exists but predates provenance tracking — deliberately
+    never presented as any concrete origin — and ``None`` when never discovered.
+    """
+    if row.get("current_version_id") is None:
+        return None
+    trigger = row.get("discovery_trigger")
+    return str(trigger) if trigger is not None else "unrecorded"
+
+
 def inventory_record(row: Mapping[str, Any]) -> Dict[str, Any]:
     """Project one enriched endpoint row onto the flat, typed inventory record (MCAT-19.2).
 
@@ -169,6 +187,8 @@ def inventory_record(row: Mapping[str, Any]) -> Dict[str, Any]:
         "last_discovery_status": row.get("last_discovery_status"),
         "last_discovered_at": _isoformat(row.get("last_discovered_at")),
         "health": derive_health(row),
+        "added_via": str(row.get("added_via") or "manual"),
+        "current_version_origin": _current_version_origin(row),
     }
 
 

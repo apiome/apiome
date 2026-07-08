@@ -32,6 +32,8 @@ const FULL: McpServerProfile = {
   instructions: 'Use search for queries.',
   iconUrl: 'https://cdn.acme.dev/logo.png',
   websiteUrl: 'https://acme.dev',
+  addedVia: 'manual',
+  versionOrigin: 'sweep',
 };
 
 describe('ServerProfileCard', () => {
@@ -131,6 +133,8 @@ describe('ServerProfileCard', () => {
       instructions: null,
       iconUrl: null,
       websiteUrl: null,
+      addedVia: 'manual',
+      versionOrigin: null,
     };
     render(<ServerProfileCard profile={unscored} nowMs={NOW} />);
 
@@ -143,5 +147,33 @@ describe('ServerProfileCard', () => {
     // The trust snapshot shows an em-dash grade rather than crashing.
     const trust = screen.getByText('Trust').closest('div') as HTMLElement;
     expect(within(trust).getByText('—')).toBeInTheDocument();
+    // Never discovered → the strip states how the endpoint was added, but no snapshot origin.
+    const strip = screen.getByTestId('provenance-strip');
+    expect(within(strip).getByText('added manually')).toBeInTheDocument();
+    expect(within(strip).queryByText(/this snapshot via/)).not.toBeInTheDocument();
+  });
+
+  it('renders the provenance strip with the added-via and snapshot-origin chips (V2-MCP-34.5)', () => {
+    render(<ServerProfileCard profile={FULL} nowMs={NOW} />);
+    const strip = screen.getByTestId('provenance-strip');
+    expect(within(strip).getByText('Provenance')).toBeInTheDocument();
+    expect(within(strip).getByText('added manually')).toBeInTheDocument();
+    expect(within(strip).getByText('this snapshot via')).toBeInTheDocument();
+    expect(within(strip).getByText('scheduled sweep')).toBeInTheDocument();
+  });
+
+  it('shows an unrecorded snapshot origin plainly, never a concrete one', () => {
+    render(
+      <ServerProfileCard profile={{ ...FULL, versionOrigin: null }} nowMs={NOW} />,
+    );
+    const strip = screen.getByTestId('provenance-strip');
+    expect(within(strip).getByText('unrecorded')).toBeInTheDocument();
+    expect(within(strip).queryByText('scheduled sweep')).not.toBeInTheDocument();
+    expect(within(strip).queryByText('manual run')).not.toBeInTheDocument();
+  });
+
+  it('omits the provenance strip entirely when the endpoint record is not loaded', () => {
+    render(<ServerProfileCard profile={{ ...FULL, addedVia: null }} nowMs={NOW} />);
+    expect(screen.queryByTestId('provenance-strip')).not.toBeInTheDocument();
   });
 });

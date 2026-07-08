@@ -326,6 +326,16 @@ export interface McpServerProfile {
   iconUrl: string | null;
   /** A validated `https` URL for the server's advertised website, shown as a link; `null` when absent. */
   websiteUrl: string | null;
+  /**
+   * How the endpoint entered the catalog (`manual` / `registry` / `import`, V2-MCP-34.5), for the
+   * provenance strip; `null` when the endpoint record is not loaded.
+   */
+  addedVia: string | null;
+  /**
+   * Which discovery run produced the summarized snapshot (`manual` / `sweep` / `registry`), or
+   * `null` when unrecorded — the strip then shows "unrecorded", never a concrete origin.
+   */
+  versionOrigin: string | null;
 }
 
 /** Trim a string to `null` when it is absent or only whitespace. */
@@ -377,5 +387,7 @@ export function mcpServerProfileFrom(sources: {
     instructions: trimmedOrNull(instructions),
     iconUrl: trimmedOrNull(branding?.icon_url),
     websiteUrl: trimmedOrNull(branding?.website_url),
+    addedVia: trimmedOrNull(endpoint?.added_via),
+    versionOrigin: version ? trimmedOrNull(version.discovery_trigger) : null,
   };
 }
