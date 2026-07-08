@@ -10098,6 +10098,101 @@ class Database:
         params = (query, tenant_id, query, *fparams, int(limit), int(offset))
         return self.execute_query(q, params)
 
+    @staticmethod
+    def _escape_ilike_pattern(value: str) -> str:
+        """Escape ``%``, ``_``, and ``\\`` for use in an ``ILIKE ... ESCAPE E'\\\\'`` predicate."""
+        return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+    def _mcp_capability_directory_where(
+        self,
+        *,
+        name_pattern: Optional[str],
+        item_type: Optional[str],
+        endpoint_id: Optional[str],
+        host: Optional[str],
+        category: Optional[str],
+        grade: Optional[str],
+        visibility: Optional[str],
+    ) -> Tuple[str, List[Any]]:
+        """Build the composable WHERE suffix for the capability directory (MCAT-21.4)."""
+        clauses, params = self._mcp_search_filter_clauses(
+            host=host, category=category, grade=grade, visibility=visibility
+        )
+        if item_type:
+            clauses.append("ci.item_type = %s")
+            params.append(item_type)
+        if endpoint_id:
+            clauses.append("e.id = %s::uuid")
+            params.append(endpoint_id)
+        if name_pattern:
+            escaped = self._escape_ilike_pattern(name_pattern)
+            like = f"%{escaped}%"
+            clauses.append(
+                "(ci.name ILIKE %s ESCAPE E'\\\\' OR COALESCE(ci.title, '') ILIKE %s ESCAPE E'\\\\')"
+            )
+            params.extend([like, like])
+        where_extra = ("\n              AND " + "\n              AND ".join(clauses)) if clauses else ""
+        return where_extra, params
+
+    def list_mcp_capability_directory(
+        self,
+        tenant_id: str,
+        *,
+        name_pattern: Optional[str] = None,
+        item_type: Optional[str] = None,
+        endpoint_id: Optional[str] = None,
+        host: Optional[str] = None,
+        category: Optional[str] = None,
+        grade: Optional[str] = None,
+        visibility: Optional[str] = None,
+        sort: str = "server",
+        limit: int = 50,
+        offset: int = 0,
+    ) -> Tuple[List[Dict[str, Any]], int]:
+        """Paginated directory of every live capability item in the caller's catalog (MCAT-21.4).
+
+        Lists tools/resources/resource templates/prompts from each endpoint's *current* snapshot,
+        scoped by ``tenant_id`` with the same composable host/category/grade/visibility filters as
+        catalog search. Optional ``name_pattern`` matches item ``name`` or ``title`` case-
+        insensitively (substring); ``item_type`` and ``endpoint_id`` narrow to one kind or server.
+        """
+        where_extra, fparams = self._mcp_capability_directory_where(
+            name_pattern=name_pattern,
+            item_type=item_type,
+            endpoint_id=endpoint_id,
+            host=host,
+            category=category,
+            grade=grade,
+            visibility=visibility,
+        )
+        order_by = {
+            "name": "ci.item_type ASC, ci.name ASC, e.name ASC",
+            "type": "ci.item_type ASC, ci.name ASC, e.name ASC",
+            "server": "e.name ASC, ci.ordinal ASC",
+        }.get(sort, "e.name ASC, ci.ordinal ASC")
+        base_from = """
+            FROM apiome.mcp_capability_items ci
+            JOIN apiome.mcp_endpoints e ON e.current_version_id = ci.version_id
+            LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
+            WHERE e.tenant_id = %s::uuid
+              AND e.deleted_at IS NULL"""
+        count_q = f"SELECT COUNT(*) AS total {base_from}{where_extra}"
+        count_row = self.execute_query(count_q, (tenant_id, *fparams))
+        total = int(count_row[0]["total"]) if count_row else 0
+        list_q = f"""
+            SELECT ci.item_type AS kind,
+                   ci.id AS item_id, ci.name AS item_name, ci.title AS item_title,
+                   ci.description AS description, ci.ordinal AS ordinal,
+                   e.id AS endpoint_id, e.name AS endpoint_name, e.slug AS endpoint_slug,
+                   e.endpoint_url, e.category, e.visibility, e.current_version_id,
+                   s.score, s.grade
+            {base_from}{where_extra}
+            ORDER BY {order_by}
+            LIMIT %s OFFSET %s
+        """
+        rows = self.execute_query(list_q, (tenant_id, *fparams, int(limit), int(offset)))
+        return rows, total
+
     def search_mcp_endpoints_fts(
         self,
         tenant_id: str,

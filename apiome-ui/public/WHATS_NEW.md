@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- MCP Catalog: capability directory — browse every tool/resource/prompt across your catalog with filters for name, type, host, and visibility, paginated with links back to each owning server (`GET /v1/mcp/{tenant}/capabilities`, MCAT-21.4)
 - MCP Catalog: saved searches & catalog views — persist named filter sets per user/tenant, re-run them from the catalog toolbar, and optionally pin as quick-access catalog views (`mcp_saved_searches`, MCAT-21.3)
 - MCP Catalog: cross-server capability search — `GET /v1/mcp/{tenant}/capabilities/search` merges keyword (V127 FTS) and semantic (V149 pgvector) matches across the tenant catalog, grouped by owning server and ranked relevance→grade (MCAT-21.2)
 - Export: Protobuf multi-file packaging — the proto3 emitter emits one `.proto` per package with cross-package `import` lines; the full bundle is validated via `buf build` (MFX-12.4)

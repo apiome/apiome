@@ -7003,6 +7003,99 @@ def mcp_cross_server_capability_search_response_from_groups(
 
 
 # ===========================================================================
+# MCP Catalog — capability directory (V2-MCP-35.4 / MCAT-21.4, #4663)
+# ===========================================================================
+#
+# Browsable, paginated index of every live capability item across the caller's accessible catalog,
+# filterable by name pattern, type, and owning server. Each row carries enough endpoint context to
+# link back to the server without a second read.
+
+McpCapabilityDirectorySort = Literal["server", "name", "type"]
+McpCapabilityDirectoryType = Literal["tool", "resource", "resource_template", "prompt"]
+
+
+class McpCapabilityDirectoryEntry(BaseModel):
+    """One capability in the cross-server directory (MCAT-21.4)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    kind: str
+    item_id: str
+    item_name: str
+    item_title: Optional[str] = None
+    description: Optional[str] = None
+    endpoint_id: str
+    endpoint_name: str
+    endpoint_slug: str
+    host: str
+    endpoint_url: str
+    category: Optional[str] = None
+    visibility: str
+    current_version_id: Optional[str] = None
+    score: Optional[int] = None
+    grade: Optional[str] = None
+
+
+class McpCapabilityDirectoryResponse(BaseModel):
+    """Paginated capability directory envelope (MCAT-21.4)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    limit: int
+    offset: int
+    total: int
+    count: int
+    items: List[McpCapabilityDirectoryEntry] = Field(default_factory=list)
+
+
+def mcp_capability_directory_entry_from_row(row: Dict[str, Any]) -> McpCapabilityDirectoryEntry:
+    """Project a directory row onto :class:`McpCapabilityDirectoryEntry`."""
+
+    def _s(value: Any) -> Optional[str]:
+        return str(value) if value is not None else None
+
+    raw_url = str(row["endpoint_url"])
+    score = row.get("score")
+    return McpCapabilityDirectoryEntry(
+        kind=str(row["kind"]),
+        item_id=str(row["item_id"]),
+        item_name=str(row["item_name"]),
+        item_title=_s(row.get("item_title")),
+        description=_s(row.get("description")),
+        endpoint_id=str(row["endpoint_id"]),
+        endpoint_name=str(row["endpoint_name"]),
+        endpoint_slug=str(row["endpoint_slug"]),
+        host=mcp_endpoint_host(raw_url),
+        endpoint_url=redact_url_credentials(raw_url),
+        category=_s(row.get("category")),
+        visibility=str(row["visibility"]),
+        current_version_id=_s(row.get("current_version_id")),
+        score=int(score) if score is not None else None,
+        grade=_s(row.get("grade")),
+    )
+
+
+def mcp_capability_directory_response_from_rows(
+    *,
+    rows: Sequence[Dict[str, Any]],
+    total: int,
+    limit: int,
+    offset: int,
+) -> McpCapabilityDirectoryResponse:
+    """Project directory DB rows onto the wire envelope."""
+    items = [mcp_capability_directory_entry_from_row(r) for r in rows]
+    return McpCapabilityDirectoryResponse(
+        success=True,
+        limit=limit,
+        offset=offset,
+        total=total,
+        count=len(items),
+        items=items,
+    )
+
+
+# ===========================================================================
 # MCP Catalog — saved searches (V2-MCP-35.3 / MCAT-21.3, #4662)
 # ===========================================================================
 #
