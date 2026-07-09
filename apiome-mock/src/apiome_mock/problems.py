@@ -101,6 +101,26 @@ def undefined_response_status(
     )
 
 
+def too_many_requests(
+    detail: str,
+    *,
+    instance: str | None = None,
+    retry_after: int,
+    limit_type: str,
+) -> JSONResponse:
+    headers = {"Retry-After": str(max(1, retry_after))}
+    response = problem_response(
+        status=429,
+        title="Too Many Requests",
+        detail=detail,
+        problem_type="rate-limited",
+        instance=instance,
+        extra={"limitType": limit_type},
+    )
+    response.headers.update(headers)
+    return response
+
+
 def method_not_allowed(
     detail: str,
     *,

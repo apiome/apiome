@@ -14777,6 +14777,98 @@ class Database:
         except Exception as exc:  # pragma: no cover - accounting must never raise
             _logger.warning("Failed to update mock instance activity for %s: %s", mock_id, exc)
 
+    def get_mock_license_limits_for_tenant(self, tenant_id: str) -> Dict[str, Any]:
+        """Return mock RPS/monthly quota from the tenant admin's license seats (#4420)."""
+        query = """
+            SELECT COALESCE(
+              (
+                SELECT l.seats
+                FROM apiome.tenant_administrators ta
+                INNER JOIN apiome.user_entitlements ue ON ue.user_id = ta.user_id
+                INNER JOIN apiome.licenses l ON l.id = ue.license_id AND l.enabled IS TRUE
+                WHERE ta.tenant_id = %s::uuid
+                ORDER BY
+                  CASE l.license_type
+                    WHEN 'sponsor' THEN 3
+                    WHEN 'paid' THEN 2
+                    WHEN 'free' THEN 1
+                    ELSE 0
+                  END DESC,
+                  l.created_at ASC
+                LIMIT 1
+              ),
+              (
+                SELECT l.seats
+                FROM apiome.licenses l
+                WHERE l.license_type = 'free' AND l.enabled IS TRUE
+                ORDER BY l.created_at ASC
+                LIMIT 1
+              ),
+              '{}'::jsonb
+            ) AS seats
+        """
+        rows = self.execute_query(query, (tenant_id,))
+        seats = rows[0]["seats"] if rows else {}
+        if not isinstance(seats, dict):
+            seats = {}
+        mock_rps = seats.get("mock_rps", 5)
+        mock_requests_per_month = seats.get("mock_requests_per_month", 10_000)
+        try:
+            mock_rps = float(mock_rps)
+        except (TypeError, ValueError):
+            mock_rps = 5.0
+        try:
+            mock_requests_per_month = int(mock_requests_per_month)
+        except (TypeError, ValueError):
+            mock_requests_per_month = 10_000
+        return {
+            "mock_rps": max(0.0, mock_rps),
+            "mock_requests_per_month": max(0, mock_requests_per_month),
+        }
+
+    def get_mock_monthly_usage(self, tenant_id: str) -> int:
+        """Sum mock_usage rows for the current UTC calendar month (#4420)."""
+        query = """
+            SELECT COALESCE(SUM(request_count), 0)::bigint AS monthly_count
+            FROM apiome.mock_usage
+            WHERE tenant_id = %s::uuid
+              AND usage_date >= date_trunc('month', (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'))::date
+              AND usage_date < (
+                date_trunc('month', (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')) + interval '1 month'
+              )::date
+        """
+        rows = self.execute_query(query, (tenant_id,))
+        return int(rows[0]["monthly_count"]) if rows else 0
+
+    def list_mock_usage_rollups(
+        self,
+        tenant_id: str,
+        *,
+        days: int = 30,
+        project_slug: Optional[str] = None,
+        version_label: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Daily mock usage rollups for a tenant, newest first (#4420)."""
+        days = max(1, min(int(days), 366))
+        clauses = [
+            "tenant_id = %s::uuid",
+            "usage_date >= ((CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date - %s)",
+        ]
+        params: List[Any] = [tenant_id, days - 1]
+        if project_slug:
+            clauses.append("project_slug = %s")
+            params.append(project_slug)
+        if version_label:
+            clauses.append("version_label = %s")
+            params.append(version_label)
+        query = f"""
+            SELECT usage_date, project_slug, version_label, request_count
+            FROM apiome.mock_usage
+            WHERE {' AND '.join(clauses)}
+            ORDER BY usage_date DESC, project_slug ASC, version_label ASC
+        """
+        return self.execute_query(query, tuple(params))
+
     def list_export_field_identities(
         self, tenant_id: str, project_id: str, target: str
     ) -> list[Dict[str, Any]]:
