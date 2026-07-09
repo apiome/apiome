@@ -5183,6 +5183,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"apiome-mock@workspace:apiome-mock":
+  version: 0.0.0-use.local
+  resolution: "apiome-mock@workspace:apiome-mock"
+  languageName: unknown
+  linkType: soft
+
 "apiome-rest@workspace:apiome-rest":
   version: 0.0.0-use.local
   resolution: "apiome-rest@workspace:apiome-rest"

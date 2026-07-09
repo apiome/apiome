@@ -12,6 +12,9 @@
     "apiome-mcp#build": {
       "outputs": []
     },
+    "apiome-mock#build": {
+      "outputs": []
+    },
     "@suite/designer#build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],

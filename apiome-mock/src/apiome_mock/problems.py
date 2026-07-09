@@ -1,0 +1,63 @@
+"""RFC 7807 problem+json helpers for mock infrastructure errors."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from fastapi.responses import JSONResponse
+
+PROBLEM_CONTENT_TYPE = "application/problem+json"
+PROBLEM_BASE = "https://apiome.dev/problems"
+
+
+def problem_response(
+    *,
+    status: int,
+    title: str,
+    detail: str,
+    problem_type: str,
+    instance: str | None = None,
+    extra: dict[str, Any] | None = None,
+) -> JSONResponse:
+    """Return a problem+json response for mock infrastructure errors."""
+    body: dict[str, Any] = {
+        "type": f"{PROBLEM_BASE}/{problem_type}",
+        "title": title,
+        "status": status,
+        "detail": detail,
+    }
+    if instance is not None:
+        body["instance"] = instance
+    if extra:
+        body.update(extra)
+    return JSONResponse(status_code=status, content=body, media_type=PROBLEM_CONTENT_TYPE)
+
+
+def not_found(detail: str, *, instance: str | None = None) -> JSONResponse:
+    return problem_response(
+        status=404,
+        title="Not Found",
+        detail=detail,
+        problem_type="not-found",
+        instance=instance,
+    )
+
+
+def method_not_allowed(
+    detail: str,
+    *,
+    instance: str | None = None,
+    allow: list[str] | None = None,
+) -> JSONResponse:
+    headers: dict[str, str] = {}
+    if allow:
+        headers["Allow"] = ", ".join(sorted(allow))
+    response = problem_response(
+        status=405,
+        title="Method Not Allowed",
+        detail=detail,
+        problem_type="method-not-allowed",
+        instance=instance,
+    )
+    response.headers.update(headers)
+    return response

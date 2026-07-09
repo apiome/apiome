@@ -6,7 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
-- MCP Catalog: curated collections — named, tenant-scoped endpoint lists with many-to-many membership, full CRUD in the catalog UI, optional publishing, and a shareable public browse view that respects per-endpoint visibility (`mcp_collections`, `mcp_collection_members`, MCAT-22.4)
+- Mock server: new `apiome-mock` FastAPI runtime with `/{tenant}/{project}/{version}/{path}` routing, published-spec resolution via Postgres, LRU caching with publish NOTIFY invalidation, and RFC 7807 problem+json infrastructure errors (SIM-1.1, #4416)
 - MCP Catalog: cataloger notes & annotations — per-endpoint human commentary authored by tenant users, stored separately from server-reported data, with full CRUD on the endpoint page and optional inclusion in report exports (`mcp_endpoint_notes`, MCAT-22.3)
 - MCP Catalog: staleness & freshness reporting — flags endpoints overdue for re-discovery, in backoff/quarantine, or on a failing streak, with a last-known-good timestamp and freshness badge on catalog cards (`GET /v1/mcp/{tenant}/data-quality/freshness`, MCAT-22.2)
 - MCP Catalog: duplicate / near-duplicate detection — advisory review list flags endpoints sharing a normalized URL, host (when not proven distinct by fingerprint), or identical capability surface; cross-tenant hints for matching published servers (`GET /v1/mcp/{tenant}/data-quality/duplicates`, MCAT-22.1)
