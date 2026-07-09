@@ -141,6 +141,25 @@ def test_probe_all_returns_one_entry_per_tool():
     assert all(isinstance(p, ToolAvailability) for p in probes)
 
 
+def test_resolve_executable_finds_dev_tools_bin_buf(tmp_path, monkeypatch):
+    """Local dev installs land in apiome-rest/.tools/bin (run.sh / install_dev_toolchain.sh)."""
+    from app.toolchain_runner import ToolSpec, resolve_executable
+
+    tools_bin = tmp_path / ".tools" / "bin"
+    tools_bin.mkdir(parents=True)
+    buf = tools_bin / "buf"
+    buf.write_text("#!/bin/sh\necho buf\n", encoding="utf-8")
+    buf.chmod(0o755)
+
+    fake_root = tmp_path
+    monkeypatch.setattr("app.toolchain_runner._apiome_rest_root", lambda: fake_root)
+    monkeypatch.delenv("APIOME_BUF_BIN", raising=False)
+
+    spec = ToolSpec(key="buf", executable="buf", description="test")
+    assert resolve_executable(spec) == str(buf)
+    assert probe_tool("buf").available is True
+
+
 # --- verification (optional, real subprocess) ------------------------------
 
 

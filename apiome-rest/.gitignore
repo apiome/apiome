@@ -44,6 +44,9 @@ ENV/
 .DS_Store
 Thumbs.db
 
+# Local dev toolchain binaries (scripts/install_dev_toolchain.sh)
+.tools/
+
 
 # Coverage
 .coverage

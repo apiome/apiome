@@ -47,6 +47,7 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -383,12 +384,37 @@ def _descriptor_for(spec: ToolSpec) -> ToolDescriptor:
 # ===========================================================================
 
 
+def _apiome_rest_root() -> Optional[Path]:
+    """Return the apiome-rest package root (``src/app`` → ``apiome-rest``), when layout matches."""
+    try:
+        return Path(__file__).resolve().parents[2]
+    except IndexError:
+        return None
+
+
+def _dev_tools_executable(executable: str) -> Optional[str]:
+    """Resolve a bundled tool from ``apiome-rest/.tools/bin`` for local development (MFI-5.2).
+
+    The Docker image installs tools under ``/opt/apiome-tools/bin``; local ``run.sh`` mirrors that
+    with ``scripts/install_dev_toolchain.sh`` so gRPC/Protobuf catalog import can use ``buf`` without
+    a manual ``PATH`` tweak.
+    """
+    root = _apiome_rest_root()
+    if root is None:
+        return None
+    candidate = root / ".tools" / "bin" / executable
+    if candidate.is_file() and os.access(candidate, os.X_OK):
+        return str(candidate)
+    return None
+
+
 def resolve_executable(spec: ToolSpec) -> Optional[str]:
     """Resolve a tool's executable to a runnable path, or ``None`` if not resolvable.
 
     An ``env_override_keys`` value wins (a deployment can point at a bundled binary);
     otherwise an absolute/existing path is used as-is, else the name is resolved on
-    ``PATH``. This is the **non-raising** resolver behind both the runner's strict
+    ``PATH``, then under ``apiome-rest/.tools/bin`` for local dev installs. This is the
+    **non-raising** resolver behind both the runner's strict
     :func:`_resolve_executable` and the MFI-5.2 availability probe (which needs to report
     "unavailable" without raising).
     """
@@ -401,7 +427,11 @@ def resolve_executable(spec: ToolSpec) -> Optional[str]:
     if os.path.isabs(candidate) and os.path.isfile(candidate):
         return candidate
 
-    return shutil.which(candidate)
+    found = shutil.which(candidate)
+    if found:
+        return found
+
+    return _dev_tools_executable(candidate)
 
 
 def _resolve_executable(spec: ToolSpec) -> str:
