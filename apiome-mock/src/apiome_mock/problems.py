@@ -53,6 +53,54 @@ def not_acceptable(detail: str, *, instance: str | None = None) -> JSONResponse:
     )
 
 
+def bad_request(
+    detail: str,
+    *,
+    instance: str | None = None,
+    extra: dict[str, Any] | None = None,
+) -> JSONResponse:
+    return problem_response(
+        status=400,
+        title="Bad Request",
+        detail=detail,
+        problem_type="bad-request",
+        instance=instance,
+        extra=extra,
+    )
+
+
+def unsupported_media_type(
+    detail: str,
+    *,
+    instance: str | None = None,
+    extra: dict[str, Any] | None = None,
+) -> JSONResponse:
+    return problem_response(
+        status=415,
+        title="Unsupported Media Type",
+        detail=detail,
+        problem_type="unsupported-media-type",
+        instance=instance,
+        extra=extra,
+    )
+
+
+def undefined_response_status(
+    detail: str,
+    *,
+    instance: str | None = None,
+    requested_status: int,
+) -> JSONResponse:
+    return problem_response(
+        status=400,
+        title="Undefined Response Status",
+        detail=detail,
+        problem_type="undefined-response-status",
+        instance=instance,
+        extra={"requestedStatus": requested_status},
+    )
+
+
 def method_not_allowed(
     detail: str,
     *,

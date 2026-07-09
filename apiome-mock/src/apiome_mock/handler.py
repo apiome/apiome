@@ -5,14 +5,25 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from app.mock_engine import MockOperation
 from fastapi import Request
 from fastapi.responses import JSONResponse, Response
 from psycopg_pool import AsyncConnectionPool
 
-from apiome_mock.problems import method_not_allowed, not_acceptable, not_found
+from apiome_mock.problems import (
+    bad_request,
+    method_not_allowed,
+    not_acceptable,
+    not_found,
+    undefined_response_status,
+    unsupported_media_type,
+)
+from apiome_mock.request_validator import ValidationFailure, validate_operation_request
 from apiome_mock.response_resolver import (
+    parse_forced_status,
     resolve_response_body,
     select_default_success_status,
+    select_response_by_status,
 )
 from apiome_mock.routing import match_request
 from apiome_mock.schema_synthesizer import parse_mock_seed
@@ -44,6 +55,75 @@ def _response_for_body(
         payload = json.dumps(body)
         media_type = "application/json"
     return Response(content=payload, status_code=status, media_type=media_type)
+
+
+def _resolve_operation_response(
+    *,
+    status: int,
+    operation: MockOperation,
+    spec: dict[str, Any],
+    accept: str | None,
+    prefer_header: str | None,
+    seed: int,
+    instance: str,
+) -> Response:
+    """Resolve and return the mock response for a concrete operation status code."""
+    _, response_obj = select_response_by_status(operation.operation, status)
+    if response_obj is None:
+        return undefined_response_status(
+            f"Status {status} is not defined for {operation.key}.",
+            instance=instance,
+            requested_status=status,
+        )
+
+    resolved = resolve_response_body(
+        response_obj,
+        spec,
+        accept=accept,
+        prefer_header=prefer_header,
+        seed=seed,
+        op_key=operation.key,
+    )
+    if resolved.not_acceptable:
+        return not_acceptable(
+            "No response content type satisfies the request Accept header.",
+            instance=instance,
+        )
+    return _response_for_body(status=status, body=resolved.body, media_type=resolved.media_type)
+
+
+def _validation_problem_response(
+    failure: ValidationFailure,
+    *,
+    operation: MockOperation,
+    spec: dict[str, Any],
+    accept: str | None,
+    prefer_header: str | None,
+    seed: int,
+    instance: str,
+) -> Response:
+    """Return a spec-true 400/415 body when defined, else problem+json."""
+    _, response_obj = select_response_by_status(operation.operation, failure.status)
+    if response_obj is not None:
+        resolved = resolve_response_body(
+            response_obj,
+            spec,
+            accept=accept,
+            prefer_header=prefer_header,
+            seed=seed,
+            op_key=operation.key,
+        )
+        if not resolved.not_acceptable:
+            return _response_for_body(
+                status=failure.status,
+                body=resolved.body,
+                media_type=resolved.media_type,
+            )
+
+    extra = {"violations": list(failure.violations)} if failure.violations else None
+    if failure.status == 415:
+        return unsupported_media_type(failure.detail, instance=instance, extra=extra)
+    return bad_request(failure.detail, instance=instance, extra=extra)
 
 
 async def resolve_compiled_spec(
@@ -85,7 +165,7 @@ async def handle_mock_request(
             instance=instance,
         )
 
-    operation, _params, allowed_methods = match_request(compiled.operations, request.method, relative_path)
+    operation, path_params, allowed_methods = match_request(compiled.operations, request.method, relative_path)
     if operation is None:
         if allowed_methods:
             return method_not_allowed(
@@ -98,13 +178,39 @@ async def handle_mock_request(
             instance=instance,
         )
 
-    status, response_obj = select_default_success_status(operation.operation)
+    prefer_header = request.headers.get("prefer")
+    accept = request.headers.get("accept")
     seed = parse_mock_seed(request.query_params.get("__seed"))
+    forced_status = parse_forced_status(prefer_header, request.query_params)
+    if forced_status is not None:
+        return _resolve_operation_response(
+            status=forced_status,
+            operation=operation,
+            spec=compiled.spec,
+            accept=accept,
+            prefer_header=prefer_header,
+            seed=seed,
+            instance=instance,
+        )
+
+    failure = await validate_operation_request(request, operation, path_params, compiled.spec)
+    if failure is not None:
+        return _validation_problem_response(
+            failure,
+            operation=operation,
+            spec=compiled.spec,
+            accept=accept,
+            prefer_header=prefer_header,
+            seed=seed,
+            instance=instance,
+        )
+
+    status, response_obj = select_default_success_status(operation.operation)
     resolved = resolve_response_body(
         response_obj,
         compiled.spec,
-        accept=request.headers.get("accept"),
-        prefer_header=request.headers.get("prefer"),
+        accept=accept,
+        prefer_header=prefer_header,
         seed=seed,
         op_key=operation.key,
     )

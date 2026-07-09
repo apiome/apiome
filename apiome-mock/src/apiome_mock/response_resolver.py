@@ -25,6 +25,72 @@ class ResolvedResponseBody:
     not_acceptable: bool = False
 
 
+def parse_prefer_code(prefer_header: str | None) -> int | None:
+    """Return the ``code=<status>`` token from an RFC 7240 ``Prefer`` header."""
+    if not prefer_header or not prefer_header.strip():
+        return None
+    for token in prefer_header.split(","):
+        part = token.strip()
+        if not part.lower().startswith("code="):
+            continue
+        raw = part.split("=", 1)[1].strip()
+        if raw.startswith('"') and raw.endswith('"') and len(raw) >= 2:
+            raw = raw[1:-1]
+        try:
+            return int(raw)
+        except ValueError:
+            return None
+    return None
+
+
+def parse_forced_status(prefer_header: str | None, query_params: Any) -> int | None:
+    """Return a forced HTTP status from ``Prefer: code=`` or ``?__status=``."""
+    code = parse_prefer_code(prefer_header)
+    if code is not None:
+        return code
+    raw = query_params.get("__status")
+    if raw is None:
+        return None
+    try:
+        return int(str(raw).strip())
+    except ValueError:
+        return None
+
+
+def select_response_by_status(
+    operation: dict[str, Any],
+    status: int,
+) -> tuple[int, dict[str, Any] | None]:
+    """Locate the response object for ``status`` (exact code, then ``default``)."""
+    responses = operation.get("responses")
+    if not isinstance(responses, dict):
+        return status, None
+    if str(status) in responses:
+        response_obj = responses[str(status)]
+        return status, response_obj if isinstance(response_obj, dict) else None
+    if status in responses:
+        response_obj = responses[status]
+        return status, response_obj if isinstance(response_obj, dict) else None
+    default_obj = responses.get("default")
+    return status, default_obj if isinstance(default_obj, dict) else None
+
+
+def match_request_content_type(
+    request_content_type: str | None,
+    allowed_types: list[str],
+) -> str | None:
+    """Return the declared request media type that matches ``Content-Type``, if any."""
+    if not allowed_types:
+        return None
+    if not request_content_type or not request_content_type.strip():
+        return None
+    primary = request_content_type.split(";", 1)[0].strip().lower()
+    for media_type in allowed_types:
+        if primary == media_type.strip().lower() or _media_type_matches(primary, media_type):
+            return media_type
+    return None
+
+
 def parse_prefer_example(prefer_header: str | None) -> str | None:
     """Return the ``example=<name>`` token from an RFC 7240 ``Prefer`` header."""
     if not prefer_header or not prefer_header.strip():

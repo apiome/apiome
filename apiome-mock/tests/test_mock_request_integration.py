@@ -348,3 +348,179 @@ def test_schema_synthesis_when_no_examples(mock_client: TestClient) -> None:
     assert first.status_code == 200
     assert first.json() == second.json()
     assert "@" in first.json()["email"]
+
+
+VALIDATION_INTEGRATION_SPEC = {
+    "openapi": "3.1.0",
+    "info": {"title": "Validation", "version": "1.0.0"},
+    "paths": {
+        "/pets/{petId}": {
+            "get": {
+                "parameters": [
+                    {
+                        "name": "petId",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "integer"},
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": True,
+                        "schema": {"type": "string", "enum": ["available", "pending", "sold"]},
+                    },
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "content": {
+                            "application/json": {
+                                "example": {"id": 1, "status": "available"},
+                            }
+                        },
+                    },
+                    "400": {
+                        "description": "bad input",
+                        "content": {
+                            "application/json": {
+                                "example": {"code": "INVALID_STATUS", "message": "status is invalid"},
+                            }
+                        },
+                    },
+                    "404": {
+                        "description": "missing",
+                        "content": {
+                            "application/json": {
+                                "example": {"code": "NOT_FOUND", "message": "pet not found"},
+                            }
+                        },
+                    },
+                },
+            },
+            "post": {
+                "parameters": [
+                    {
+                        "name": "petId",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "integer"},
+                    }
+                ],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["name"],
+                                "properties": {"name": {"type": "string"}},
+                            }
+                        }
+                    },
+                },
+                "responses": {
+                    "201": {"description": "created"},
+                    "415": {
+                        "description": "unsupported media type",
+                        "content": {
+                            "application/json": {
+                                "example": {"code": "UNSUPPORTED_MEDIA_TYPE"},
+                            }
+                        },
+                    },
+                },
+            },
+        }
+    },
+}
+
+
+def _validation_compiled() -> CompiledSpec:
+    return CompiledSpec(
+        revision_id=uuid4(),
+        tenant_slug="demo",
+        project_slug="petstore",
+        version_label="1.0.0",
+        updated_at=datetime.now(timezone.utc),
+        spec=VALIDATION_INTEGRATION_SPEC,
+        operations=tuple(extract_operations(VALIDATION_INTEGRATION_SPEC)),
+    )
+
+
+def test_invalid_enum_returns_spec_400_body(mock_client: TestClient) -> None:
+    compiled = _validation_compiled()
+    with patch(
+        "apiome_mock.handler.load_compiled_spec",
+        new=AsyncMock(return_value=compiled),
+    ):
+        response = mock_client.get("/demo/petstore/1.0.0/pets/7?status=invalid")
+    assert response.status_code == 400
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json() == {"code": "INVALID_STATUS", "message": "status is invalid"}
+
+
+def test_forced_status_query_returns_operation_example(mock_client: TestClient) -> None:
+    compiled = _validation_compiled()
+    with patch(
+        "apiome_mock.handler.load_compiled_spec",
+        new=AsyncMock(return_value=compiled),
+    ):
+        response = mock_client.get("/demo/petstore/1.0.0/pets/7?status=available&__status=404")
+    assert response.status_code == 404
+    assert response.json() == {"code": "NOT_FOUND", "message": "pet not found"}
+
+
+def test_forced_status_prefer_header_overrides_query(mock_client: TestClient) -> None:
+    compiled = _validation_compiled()
+    with patch(
+        "apiome_mock.handler.load_compiled_spec",
+        new=AsyncMock(return_value=compiled),
+    ):
+        response = mock_client.get(
+            "/demo/petstore/1.0.0/pets/7?status=available&__status=404",
+            headers={"Prefer": "code=400"},
+        )
+    assert response.status_code == 400
+    assert response.json() == {"code": "INVALID_STATUS", "message": "status is invalid"}
+
+
+def test_wrong_content_type_returns_spec_415_body(mock_client: TestClient) -> None:
+    compiled = _validation_compiled()
+    with patch(
+        "apiome_mock.handler.load_compiled_spec",
+        new=AsyncMock(return_value=compiled),
+    ):
+        response = mock_client.post(
+            "/demo/petstore/1.0.0/pets/7",
+            content="plain",
+            headers={"Content-Type": "text/plain"},
+        )
+    assert response.status_code == 415
+    assert response.json() == {"code": "UNSUPPORTED_MEDIA_TYPE"}
+
+
+def test_undefined_forced_status_returns_problem_json(mock_client: TestClient) -> None:
+    compiled = _validation_compiled()
+    with patch(
+        "apiome_mock.handler.load_compiled_spec",
+        new=AsyncMock(return_value=compiled),
+    ):
+        response = mock_client.get(
+            "/demo/petstore/1.0.0/pets/7?status=available&__status=418",
+        )
+    assert response.status_code == 400
+    assert response.headers["content-type"] == "application/problem+json"
+    body = response.json()
+    assert body["requestedStatus"] == 418
+    assert "418" in body["detail"]
+
+
+def test_valid_request_still_returns_success(mock_client: TestClient) -> None:
+    compiled = _validation_compiled()
+    with patch(
+        "apiome_mock.handler.load_compiled_spec",
+        new=AsyncMock(return_value=compiled),
+    ):
+        response = mock_client.get("/demo/petstore/1.0.0/pets/7?status=available")
+    assert response.status_code == 200
+    assert response.json() == {"id": 1, "status": "available"}

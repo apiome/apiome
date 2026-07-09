@@ -5,10 +5,14 @@ from __future__ import annotations
 import pytest
 
 from apiome_mock.response_resolver import (
+    match_request_content_type,
     negotiate_media_type,
+    parse_forced_status,
+    parse_prefer_code,
     parse_prefer_example,
     resolve_response_body,
     select_default_success_status,
+    select_response_by_status,
 )
 
 MULTI_EXAMPLE_SPEC = {
@@ -312,3 +316,42 @@ def test_negotiate_media_type(accept: str | None, available: list[str], expected
 
 def test_negotiate_media_type_rejects_q_zero_ranges() -> None:
     assert negotiate_media_type("application/json;q=0", ["application/json"]) is None
+
+
+def test_parse_prefer_code() -> None:
+    assert parse_prefer_code("code=404") == 404
+    assert parse_prefer_code('example=alpha, code="418"') == 418
+    assert parse_prefer_code("example=alpha") is None
+
+
+def test_parse_forced_status_prefers_prefer_header() -> None:
+    class _Params:
+        def get(self, key: str) -> str | None:
+            return "404" if key == "__status" else None
+
+    assert parse_forced_status("code=400", _Params()) == 400
+    assert parse_forced_status(None, _Params()) == 404
+
+
+def test_select_response_by_status() -> None:
+    operation = {
+        "responses": {
+            "200": {"description": "ok"},
+            "404": {"description": "missing"},
+            "default": {"description": "fallback"},
+        }
+    }
+    status, response_obj = select_response_by_status(operation, 404)
+    assert status == 404
+    assert response_obj == {"description": "missing"}
+
+    status, response_obj = select_response_by_status(operation, 500)
+    assert status == 500
+    assert response_obj == {"description": "fallback"}
+
+
+def test_match_request_content_type() -> None:
+    allowed = ["application/json", "application/xml"]
+    assert match_request_content_type("application/json", allowed) == "application/json"
+    assert match_request_content_type("application/json; charset=utf-8", allowed) == "application/json"
+    assert match_request_content_type("text/plain", allowed) is None
