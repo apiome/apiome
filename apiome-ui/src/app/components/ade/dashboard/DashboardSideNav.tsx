@@ -104,14 +104,12 @@ const DashboardSideNav: React.FC = () => {
           href: '/ade/dashboard/mcp',
           icon: Network,
           disabled: !hasTenant,
-          pill: 'Preview',
         },
         {
           label: 'Capability Directory',
           href: '/ade/dashboard/mcp/capabilities',
           icon: Layers,
           disabled: !hasTenant,
-          pill: 'Preview',
         },
         {
           label: 'Catalog Analytics',

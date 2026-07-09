@@ -13527,13 +13527,13 @@ class Database:
         # for "most-searched", which has no backing search-query log). item_type is carried so the
         # panel can badge tool vs resource vs prompt.
         top_capability_q = """
-            SELECT i.item_type AS item_type, i.item_name AS item_name,
+            SELECT i.item_type AS item_type, i.name AS item_name,
                    COUNT(DISTINCT e.id) AS endpoint_count
             FROM apiome.mcp_endpoints e
             JOIN apiome.mcp_capability_items i ON i.version_id = e.current_version_id
             WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
-            GROUP BY i.item_type, i.item_name
-            ORDER BY endpoint_count DESC, i.item_name ASC
+            GROUP BY i.item_type, i.name
+            ORDER BY endpoint_count DESC, i.name ASC
             LIMIT 8
         """
         # Per-endpoint tool counts feed the pure tool-count histogram (compute_tool_count_histogram):
