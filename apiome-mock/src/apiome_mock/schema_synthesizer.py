@@ -627,6 +627,9 @@ def _gen_object(
             else:
                 first_pattern, first_schema = next(iter(pattern_props.items()))
                 key = _string_for_pattern(first_pattern, f"key{index}", rng)
+                names_schema = schema.get("propertyNames")
+                if isinstance(names_schema, dict) and not _instance_satisfies(key, names_schema, root):
+                    key = _property_names_key(schema, rng, index)
                 result[key] = generate_example(first_schema, root, seed=seed, field=key, _depth=depth + 1)
 
     if not properties and isinstance(schema.get("additionalProperties"), dict):
@@ -646,14 +649,15 @@ def _apply_applicators(
     depth: int,
 ) -> None:
     if_block = schema.get("if")
-    if isinstance(if_block, dict) and _instance_satisfies(result, if_block, root):
-        then = schema.get("then")
-        if isinstance(then, dict):
-            _merge_generated_properties(result, then, root, seed, depth)
-    else:
-        otherwise = schema.get("else")
-        if isinstance(otherwise, dict):
-            _merge_generated_properties(result, otherwise, root, seed, depth)
+    if isinstance(if_block, dict):
+        if _instance_satisfies(result, if_block, root):
+            then = schema.get("then")
+            if isinstance(then, dict):
+                _merge_generated_properties(result, then, root, seed, depth)
+        else:
+            otherwise = schema.get("else")
+            if isinstance(otherwise, dict):
+                _merge_generated_properties(result, otherwise, root, seed, depth)
 
     dependent = schema.get("dependentSchemas")
     if isinstance(dependent, dict):
