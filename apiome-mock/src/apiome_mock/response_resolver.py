@@ -48,12 +48,14 @@ def select_default_success_status(operation: dict[str, Any]) -> tuple[int, dict[
     success_codes = sorted(int(code) for code in responses if str(code).isdigit() and 200 <= int(code) < 300)
     if success_codes:
         code = success_codes[0]
-        response_obj = responses.get(str(code))
+        response_obj = responses.get(code)
+        if response_obj is None:
+            response_obj = responses.get(str(code))
         return code, response_obj if isinstance(response_obj, dict) else None
     if "default" in responses:
         default_obj = responses.get("default")
         return 200, default_obj if isinstance(default_obj, dict) else None
-    first = sorted(responses.keys())[0]
+    first = sorted(responses.keys(), key=str)[0]
     status = int(first) if str(first).isdigit() else 200
     response_obj = responses[first]
     return status, response_obj if isinstance(response_obj, dict) else None
@@ -79,9 +81,10 @@ def _parse_accept_header(accept: str | None) -> list[tuple[str, float]]:
                         quality = float(param[2:].strip())
                     except ValueError:
                         quality = 1.0
+        if quality <= 0:
+            continue
         ranges.append((media.lower(), quality))
-    ranges.sort(key=lambda item: (-item[1], item[0]))
-    return ranges or [("*/*", 1.0)]
+    return ranges
 
 
 def _media_type_matches(accept_range: str, media_type: str) -> bool:
@@ -115,7 +118,7 @@ def negotiate_media_type(accept: str | None, content_types: list[str]) -> str | 
 
     scored: list[tuple[float, int, int, str]] = []
     for index, media_type in enumerate(content_types):
-        for accept_range, quality in _parse_accept_header(accept):
+        for accept_index, (accept_range, quality) in enumerate(_parse_accept_header(accept)):
             if not _media_type_matches(accept_range, media_type):
                 continue
             if accept_range == "*/*":
@@ -124,12 +127,12 @@ def negotiate_media_type(accept: str | None, content_types: list[str]) -> str | 
                 specificity = 1
             else:
                 specificity = 2
-            scored.append((quality, specificity, -index, media_type))
+            scored.append((quality, specificity, -accept_index, -index, media_type))
             break
     if not scored:
         return None
     scored.sort(reverse=True)
-    return scored[0][3]
+    return scored[0][4]
 
 
 def _example_value(entry: Any) -> Any:

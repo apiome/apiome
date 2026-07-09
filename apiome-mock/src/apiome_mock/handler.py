@@ -41,8 +41,7 @@ def _response_for_body(
         payload = body
     else:
         payload = json.dumps(body)
-        if media_type.endswith("json") or "+json" in media_type:
-            media_type = "application/json"
+        media_type = "application/json"
     return Response(content=payload, status_code=status, media_type=media_type)
 
 

@@ -227,6 +227,47 @@ def test_unacceptable_accept_returns_406_problem_json(mock_client: TestClient) -
     assert response.headers["content-type"] == "application/problem+json"
 
 
+def test_structured_xml_example_returns_json_content_type(mock_client: TestClient) -> None:
+    compiled = _compiled()
+    spec = {
+        **PETSTORE_SPEC,
+        "paths": {
+            "/pets": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "ok",
+                            "content": {
+                                "application/xml": {"example": {"pets": []}},
+                            },
+                        }
+                    }
+                }
+            }
+        },
+    }
+    compiled = CompiledSpec(
+        revision_id=compiled.revision_id,
+        tenant_slug=compiled.tenant_slug,
+        project_slug=compiled.project_slug,
+        version_label=compiled.version_label,
+        updated_at=compiled.updated_at,
+        spec=spec,
+        operations=tuple(extract_operations(spec)),
+    )
+    with patch(
+        "apiome_mock.handler.load_compiled_spec",
+        new=AsyncMock(return_value=compiled),
+    ):
+        response = mock_client.get(
+            "/demo/petstore/1.0.0/pets",
+            headers={"Accept": "application/xml"},
+        )
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json() == {"pets": []}
+
+
 def test_unknown_spec_returns_problem_json(mock_client: TestClient) -> None:
     with patch(
         "apiome_mock.handler.load_compiled_spec",

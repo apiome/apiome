@@ -280,13 +280,35 @@ def test_select_default_success_status_uses_lowest_2xx() -> None:
     assert response_obj == {"description": "ok"}
 
 
+def test_select_default_success_status_supports_integer_response_keys() -> None:
+    operation = {
+        "responses": {
+            201: {"description": "created"},
+            200: {"description": "ok"},
+            404: {"description": "missing"},
+        }
+    }
+    status, response_obj = select_default_success_status(operation)
+    assert status == 200
+    assert response_obj == {"description": "ok"}
+
+
 @pytest.mark.parametrize(
     ("accept", "available", "expected"),
     [
         ("application/xml", ["application/json", "application/xml"], "application/xml"),
         ("application/json", ["application/json", "application/xml"], "application/json"),
         (None, ["text/plain", "application/json"], "application/json"),
+        (
+            "application/xml, application/json",
+            ["application/json", "application/xml"],
+            "application/xml",
+        ),
     ],
 )
 def test_negotiate_media_type(accept: str | None, available: list[str], expected: str) -> None:
     assert negotiate_media_type(accept, available) == expected
+
+
+def test_negotiate_media_type_rejects_q_zero_ranges() -> None:
+    assert negotiate_media_type("application/json;q=0", ["application/json"]) is None
