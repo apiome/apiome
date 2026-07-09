@@ -31,6 +31,20 @@ export const MCP_VISIBILITY_OPTIONS: { value: McpVisibility; label: string }[] =
 export const MCP_CADENCE_MIN_SECONDS = 60;
 export const MCP_CADENCE_MAX_SECONDS = 30 * 24 * 60 * 60; // 2_592_000 (30 days)
 
+/** One day in seconds — cadences below this are considered "frequent" and need a save confirm. */
+export const MCP_CADENCE_DAILY_SECONDS = 24 * 60 * 60;
+
+/**
+ * Radix Select cannot use an empty string as an item value, so the "Default cadence" option uses
+ * this sentinel. Always normalize through {@link normalizeCadenceSelectValue} on change and
+ * {@link cadenceSelectValueFromForm} when binding the control.
+ */
+export const MCP_CADENCE_DEFAULT_SELECT_VALUE = 'default';
+
+/** Warning shown before saving a sub-daily discovery cadence. */
+export const MCP_SUB_DAILY_CADENCE_CONFIRM_MESSAGE =
+  'Additional traffic could cause the MCP server to rate limit your requests, causing an unnecessary load on the server.';
+
 /** A selectable cadence preset: its value in seconds and the human label shown in the select. */
 export interface McpCadencePreset {
   seconds: number;
@@ -91,6 +105,39 @@ export function mcpCadenceOptions(currentSeconds: number | null): McpCadenceOpti
   ];
 }
 
+/** Map the Select's sentinel back to the form's empty-string "use server default" value. */
+export function normalizeCadenceSelectValue(value: string): string {
+  return value === MCP_CADENCE_DEFAULT_SELECT_VALUE ? '' : value;
+}
+
+/** Map the form value to the Select control value (empty → sentinel). */
+export function cadenceSelectValueFromForm(cadence: string): string {
+  return cadence || MCP_CADENCE_DEFAULT_SELECT_VALUE;
+}
+
+/** Parse a cadence select/form value into seconds, or `null` for the server default. */
+export function parseCadenceSecondsFromForm(cadence: string): number | null {
+  const normalized = normalizeCadenceSelectValue(cadence);
+  if (!normalized) return null;
+  const seconds = Number(normalized);
+  if (!Number.isFinite(seconds) || seconds <= 0) return null;
+  return Math.trunc(seconds);
+}
+
+/** True when a cadence in seconds is strictly shorter than one day. */
+export function isSubDailyCadenceSeconds(seconds: number): boolean {
+  return Number.isFinite(seconds) && seconds > 0 && seconds < MCP_CADENCE_DAILY_SECONDS;
+}
+
+/**
+ * True when a built settings patch sets a new discovery cadence shorter than daily — the save path
+ * should confirm with the user before persisting.
+ */
+export function settingsPatchNeedsSubDailyCadenceConfirm(patch: McpSettingsPatchBody): boolean {
+  const cadence = patch.discovery_cadence_seconds;
+  return cadence != null && isSubDailyCadenceSeconds(cadence);
+}
+
 // --- Form state -----------------------------------------------------------------------------
 
 /** Editable identity/connection fields of the Settings form (all rendered as text/select inputs). */
@@ -147,15 +194,16 @@ export interface McpSettingsPatchBody {
   endpoint_url?: string;
   transport?: McpTransport;
   visibility?: McpVisibility;
-  discovery_cadence_seconds?: number;
+  /** Explicit seconds, or `null` to revert to the tenant/server default cadence. */
+  discovery_cadence_seconds?: number | null;
 }
 
 /**
  * Build a change-only PATCH body by diffing the edited form against the endpoint it was seeded
  * from. Only fields whose (trimmed/normalized) value differs from the original are included, so a
- * no-op save sends nothing. The cadence is omitted when left on "Default" (`''`) and unchanged —
- * clearing a previously-set cadence back to the default is not expressible through PATCH (which
- * only sets values), so the select offers presets, not an "unset".
+ * no-op save sends nothing. Selecting "Default cadence" on an endpoint that already uses the
+ * server default is a no-op; reverting from an explicit cadence emits `discovery_cadence_seconds:
+ * null`.
  *
  * @returns The minimal patch body; an empty object means nothing changed.
  */
@@ -175,12 +223,12 @@ export function buildSettingsPatchBody(
 
   if (form.visibility !== asVisibility(original.visibility)) patch.visibility = form.visibility;
 
-  const cadence = form.cadence ? Number(form.cadence) : null;
+  const cadence = parseCadenceSecondsFromForm(form.cadence);
   const originalCadence =
     original.discovery_cadence_seconds != null && original.discovery_cadence_seconds > 0
       ? original.discovery_cadence_seconds
       : null;
-  if (cadence != null && cadence !== originalCadence) {
+  if (cadence !== originalCadence) {
     patch.discovery_cadence_seconds = cadence;
   }
 

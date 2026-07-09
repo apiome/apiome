@@ -8,15 +8,22 @@
 import {
   MCP_CADENCE_PRESETS,
   MCP_DELETE_CONFIRM_WORD,
+  MCP_SUB_DAILY_CADENCE_CONFIRM_MESSAGE,
   buildSettingsPatchBody,
+  cadenceSelectValueFromForm,
   formatTeardownSummary,
   hasSettingsChanges,
   isDeleteConfirmed,
+  isSubDailyCadenceSeconds,
   mcpCadenceLabel,
   mcpCadenceOptions,
   mcpSettingsFormFromEndpoint,
   mcpTeardownSummaryFromPayload,
+  normalizeCadenceSelectValue,
+  parseCadenceSecondsFromForm,
+  settingsPatchNeedsSubDailyCadenceConfirm,
   validateMcpSettingsForm,
+  MCP_CADENCE_DEFAULT_SELECT_VALUE,
   type McpSettingsForm,
 } from '../src/app/components/ade/dashboard/mcp/mcpSettingsForm';
 import {
@@ -69,6 +76,62 @@ describe('mcpCadenceLabel', () => {
     expect(mcpCadenceLabel(3 * DAY)).toBe('Every 3 days');
     expect(mcpCadenceLabel(2 * HOUR)).toBe('Every 2 hours');
     expect(mcpCadenceLabel(90 * 60)).toBe('Every 90 minutes');
+  });
+});
+
+describe('cadence select normalization', () => {
+  it('maps the Radix sentinel to and from the form empty-string default', () => {
+    expect(normalizeCadenceSelectValue(MCP_CADENCE_DEFAULT_SELECT_VALUE)).toBe('');
+    expect(cadenceSelectValueFromForm('')).toBe(MCP_CADENCE_DEFAULT_SELECT_VALUE);
+    expect(cadenceSelectValueFromForm(String(HOUR))).toBe(String(HOUR));
+  });
+
+  it('parses preset seconds and treats default/invalid values as null', () => {
+    expect(parseCadenceSecondsFromForm(String(HOUR))).toBe(HOUR);
+    expect(parseCadenceSecondsFromForm('')).toBeNull();
+    expect(parseCadenceSecondsFromForm(MCP_CADENCE_DEFAULT_SELECT_VALUE)).toBeNull();
+    expect(parseCadenceSecondsFromForm('default')).toBeNull();
+    expect(parseCadenceSecondsFromForm('not-a-number')).toBeNull();
+  });
+});
+
+describe('isSubDailyCadenceSeconds / settingsPatchNeedsSubDailyCadenceConfirm', () => {
+  it('treats cadences below one day as sub-daily', () => {
+    expect(isSubDailyCadenceSeconds(HOUR)).toBe(true);
+    expect(isSubDailyCadenceSeconds(6 * HOUR)).toBe(true);
+    expect(isSubDailyCadenceSeconds(12 * HOUR)).toBe(true);
+    expect(isSubDailyCadenceSeconds(DAY)).toBe(false);
+    expect(isSubDailyCadenceSeconds(7 * DAY)).toBe(false);
+  });
+
+  it('flags a patch that sets a sub-daily cadence', () => {
+    const patch = buildSettingsPatchBody(form({ cadence: String(HOUR) }), endpoint());
+    expect(settingsPatchNeedsSubDailyCadenceConfirm(patch)).toBe(true);
+    expect(MCP_SUB_DAILY_CADENCE_CONFIRM_MESSAGE).toMatch(/rate limit/i);
+  });
+
+  it('does not flag daily-or-longer cadence changes or unrelated patches', () => {
+    expect(
+      settingsPatchNeedsSubDailyCadenceConfirm(
+        buildSettingsPatchBody(form({ cadence: String(DAY) }), endpoint({ discovery_cadence_seconds: HOUR })),
+      ),
+    ).toBe(false);
+    expect(settingsPatchNeedsSubDailyCadenceConfirm(buildSettingsPatchBody(form({ name: 'New' }), endpoint()))).toBe(
+      false,
+    );
+    expect(
+      settingsPatchNeedsSubDailyCadenceConfirm(
+        buildSettingsPatchBody(form({ cadence: '' }), endpoint({ discovery_cadence_seconds: HOUR })),
+      ),
+    ).toBe(false);
+  });
+
+  it('emits null when reverting an explicit cadence back to the server default', () => {
+    const patch = buildSettingsPatchBody(
+      form({ cadence: MCP_CADENCE_DEFAULT_SELECT_VALUE }),
+      endpoint({ discovery_cadence_seconds: DAY }),
+    );
+    expect(patch).toEqual({ discovery_cadence_seconds: null });
   });
 });
 
@@ -179,10 +242,17 @@ describe('buildSettingsPatchBody', () => {
     expect(patch).toEqual({ discovery_cadence_seconds: HOUR });
   });
 
-  it('does not emit a cadence when it is unchanged or cleared to default', () => {
+  it('does not emit a cadence when it is unchanged', () => {
     expect(buildSettingsPatchBody(form({ cadence: String(DAY) }), endpoint())).toEqual({});
-    // Cleared back to default ('') — PATCH only sets values, so nothing is sent.
-    expect(buildSettingsPatchBody(form({ cadence: '' }), endpoint())).toEqual({});
+    expect(
+      buildSettingsPatchBody(form({ cadence: '' }), endpoint({ discovery_cadence_seconds: null })),
+    ).toEqual({});
+  });
+
+  it('emits null when clearing an explicit cadence back to the server default', () => {
+    expect(buildSettingsPatchBody(form({ cadence: '' }), endpoint())).toEqual({
+      discovery_cadence_seconds: null,
+    });
   });
 
   it('does not emit a blank name even when the field was emptied', () => {

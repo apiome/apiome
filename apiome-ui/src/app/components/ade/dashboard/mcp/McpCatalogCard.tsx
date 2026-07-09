@@ -11,6 +11,7 @@ import { FreshnessPill } from '../../../ui/mcp/FreshnessPill';
 import { RecencyPill } from '../../../ui/mcp/RecencyPill';
 import {
   mcpAuthBadge,
+  mcpPublishedBadge,
   mcpTransportBadge,
   mcpVisibilityBadge,
 } from './mcpUiPrimitives';
@@ -54,13 +55,15 @@ function CardLogo({ endpoint }: { endpoint: McpBrowseEndpoint }): React.ReactEle
   );
 }
 
-/** The transport / visibility / auth badges an endpoint shows; auth only when the catalog has it. */
+/** The published / transport / visibility / auth badges an endpoint shows; auth only when present. */
 function EndpointBadges({ endpoint }: { endpoint: McpBrowseEndpoint }): React.ReactElement {
+  const published = mcpPublishedBadge(endpoint.published);
   const transport = mcpTransportBadge(endpoint.transport);
   const visibility = mcpVisibilityBadge(endpoint.visibility);
   const auth = endpoint.auth_scheme ? mcpAuthBadge(endpoint.auth_scheme) : null;
   return (
     <div className="flex flex-wrap items-center gap-1.5">
+      <McpBadge tone={published.tone}>{published.label}</McpBadge>
       <McpBadge tone={transport.tone}>{transport.label}</McpBadge>
       <McpBadge tone={visibility.tone}>{visibility.label}</McpBadge>
       {auth ? <McpBadge tone={auth.tone}>{auth.label}</McpBadge> : null}
@@ -83,6 +86,26 @@ function CapabilityCounts({
     >
       {endpoint.tool_count}t · {endpoint.resource_count}r · {endpoint.resource_template_count}rt ·{' '}
       {endpoint.prompt_count}p
+    </span>
+  );
+}
+
+/** Compact version-history count, e.g. `3 versions`. */
+function VersionCount({
+  endpoint,
+  className,
+}: {
+  endpoint: McpBrowseEndpoint;
+  className?: string;
+}): React.ReactElement {
+  const count = endpoint.version_count;
+  const label = count === 1 ? '1 version' : `${count} versions`;
+  return (
+    <span
+      className={cn('tabular-nums text-gray-600 dark:text-gray-300', className)}
+      title="Discovery snapshots retained for this server"
+    >
+      {label}
     </span>
   );
 }
@@ -144,6 +167,8 @@ export const McpCatalogCard = React.forwardRef<HTMLAnchorElement, McpCatalogCard
             <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
               <CapabilityCounts endpoint={endpoint} className="text-xs" />
               <span aria-hidden>·</span>
+              <VersionCount endpoint={endpoint} className="text-xs" />
+              <span aria-hidden>·</span>
               <HealthPill discoveryStatus={endpoint.last_discovery_status} dotOnly />
             </div>
           </div>
@@ -199,7 +224,13 @@ export const McpCatalogCard = React.forwardRef<HTMLAnchorElement, McpCatalogCard
         <EndpointBadges endpoint={endpoint} />
 
         <div className="mt-auto flex items-center justify-between gap-2 text-xs">
-          <CapabilityCounts endpoint={endpoint} className="text-xs" />
+          <div className="flex items-center gap-2">
+            <CapabilityCounts endpoint={endpoint} className="text-xs" />
+            <span aria-hidden className="text-gray-300 dark:text-gray-600">
+              ·
+            </span>
+            <VersionCount endpoint={endpoint} className="text-xs" />
+          </div>
           <HealthPill discoveryStatus={endpoint.last_discovery_status} />
         </div>
 

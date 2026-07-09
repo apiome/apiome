@@ -811,7 +811,7 @@ async def update_mcp_endpoint(
         fields["published"] = body.published
     if body.enabled is not None:
         fields["enabled"] = body.enabled
-    if body.discovery_cadence_seconds is not None:
+    if "discovery_cadence_seconds" in body.model_fields_set:
         fields["discovery_cadence_seconds"] = body.discovery_cadence_seconds
 
     updated = db.update_mcp_endpoint(tenant_id, eid, fields)

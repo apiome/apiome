@@ -9856,6 +9856,7 @@ class Database:
                    {self._MCP_HAS_DESTRUCTIVE_EXPR} AS has_destructive,
                    {self._MCP_READ_ONLY_ONLY_EXPR} AS read_only_only,
                    {self._MCP_COMPLEXITY_BAND_EXPR} AS complexity_band,
+                   {self._MCP_VERSION_COUNT_EXPR} AS version_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'tool')              AS tool_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource')          AS resource_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource_template') AS resource_template_count,
@@ -10073,6 +10074,13 @@ class Database:
         f"WHEN mtp.max_tool_props <= {COMPLEXITY_SIMPLE_MAX_PROPERTIES} THEN 'simple' "
         f"WHEN mtp.max_tool_props <= {COMPLEXITY_MODERATE_MAX_PROPERTIES} THEN 'moderate' "
         "ELSE 'complex' END"
+    )
+
+    #: Total discovery snapshots retained for an endpoint — the version-history count browse cards
+    #: render. A scalar subquery keeps browse/faceted queries free of an extra GROUP BY.
+    _MCP_VERSION_COUNT_EXPR = (
+        "(SELECT COUNT(*)::int FROM apiome.mcp_endpoint_versions vc "
+        "WHERE vc.endpoint_id = e.id)"
     )
 
     #: The shared FROM block of every faceted-search query: the endpoint, its current snapshot's
@@ -10680,6 +10688,7 @@ class Database:
                    {self._MCP_HAS_DESTRUCTIVE_EXPR} AS has_destructive,
                    {self._MCP_READ_ONLY_ONLY_EXPR} AS read_only_only,
                    {self._MCP_COMPLEXITY_BAND_EXPR} AS complexity_band,
+                   {self._MCP_VERSION_COUNT_EXPR} AS version_count,
                    {_kind_count('tool')}              AS tool_count,
                    {_kind_count('resource')}          AS resource_count,
                    {_kind_count('resource_template')} AS resource_template_count,

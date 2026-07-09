@@ -110,7 +110,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (typeof body.endpoint_url === 'string') patch.endpoint_url = body.endpoint_url;
   if (typeof body.transport === 'string') patch.transport = body.transport;
   if (typeof body.visibility === 'string') patch.visibility = body.visibility;
-  if (typeof body.discovery_cadence_seconds === 'number') {
+  if (body.discovery_cadence_seconds === null) {
+    patch.discovery_cadence_seconds = null;
+  } else if (
+    typeof body.discovery_cadence_seconds === 'number' &&
+    Number.isFinite(body.discovery_cadence_seconds)
+  ) {
     patch.discovery_cadence_seconds = body.discovery_cadence_seconds;
   }
   if (Object.keys(patch).length === 0) {

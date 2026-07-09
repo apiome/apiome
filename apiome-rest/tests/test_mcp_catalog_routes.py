@@ -274,6 +274,18 @@ def test_patch_endpoint_blank_description_becomes_null():
     assert mdb.update_mcp_endpoint.call_args.args[2] == {"description": None}
 
 
+def test_patch_endpoint_clears_discovery_cadence_to_default():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.update_mcp_endpoint.return_value = _ENDPOINT_ROW
+        client.patch(
+            "/v1/mcp/acme/endpoints/11111111-1111-1111-1111-111111111111",
+            json={"discovery_cadence_seconds": None},
+        )
+    assert mdb.update_mcp_endpoint.call_args.args[2] == {
+        "discovery_cadence_seconds": None
+    }
+
+
 def test_patch_endpoint_cross_tenant_404():
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.update_mcp_endpoint.return_value = None

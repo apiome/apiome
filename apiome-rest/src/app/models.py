@@ -4351,6 +4351,7 @@ class McpBrowseEndpointOut(BaseModel):
     resource_template_count: int = 0
     prompt_count: int = 0
     capability_count: int = 0
+    version_count: int = 0
     # Facet fields (V2-MCP-35.1 / MCAT-21.1): the current snapshot's protocol version, the
     # derived discovery-health label, the safety-posture flags, and the complexity band — the
     # queryable dimensions of the faceted catalog search, carried on every browse/faceted row so
@@ -4446,6 +4447,7 @@ def mcp_browse_endpoint_out_from_row(row: Dict[str, Any]) -> McpBrowseEndpointOu
         resource_template_count=resource_template,
         prompt_count=prompt,
         capability_count=tool + resource + resource_template + prompt,
+        version_count=int(row.get("version_count") or 0),
         protocol_version=_s(row.get("protocol_version")),
         # Rows from the enriched queries carry the derived facet fields; older row shapes fall
         # back to deriving health from the columns present (same labels/precedence) and to the

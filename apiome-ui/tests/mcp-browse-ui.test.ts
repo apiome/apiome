@@ -97,6 +97,7 @@ describe('mcpBrowseEndpointFromPayload', () => {
     expect(ep.published).toBe(false);
     expect(ep.score).toBeNull();
     expect(ep.capability_count).toBe(0);
+    expect(ep.version_count).toBe(0);
     // No branding advertised → null, so the card falls back to its text form (#4656).
     expect(ep.server_branding).toBeNull();
   });
@@ -141,6 +142,11 @@ describe('mcpBrowseEndpointFromPayload', () => {
     expect(faceted.complexity_band).toBe('moderate');
     // Non-boolean flag payloads never read as asserted.
     expect(mcpBrowseEndpointFromPayload({ id: 'x', has_destructive: 'yes' }).has_destructive).toBe(false);
+  });
+
+  it('parses version_count, defaulting to zero when absent', () => {
+    expect(mcpBrowseEndpointFromPayload({ id: 'x', version_count: 4 }).version_count).toBe(4);
+    expect(mcpBrowseEndpointFromPayload({ id: 'x' }).version_count).toBe(0);
   });
 });
 

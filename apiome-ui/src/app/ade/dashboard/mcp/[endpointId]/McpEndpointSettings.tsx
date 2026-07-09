@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, Power, PowerOff, Save, Server, Trash2, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
+import { useDialog } from "@/app/components/providers/DialogProvider";
 import { Button } from "@/app/components/ui/Button";
 import { Input } from "@/app/components/ui/Input";
 import { Label } from "@/app/components/ui/Label";
@@ -47,13 +48,18 @@ import {
 } from "@/app/components/ade/dashboard/mcp/mcpBrowseUi";
 import {
   MCP_DELETE_CONFIRM_WORD,
+  MCP_CADENCE_DEFAULT_SELECT_VALUE,
+  MCP_SUB_DAILY_CADENCE_CONFIRM_MESSAGE,
   MCP_VISIBILITY_OPTIONS,
   buildSettingsPatchBody,
+  cadenceSelectValueFromForm,
   hasSettingsChanges,
   isDeleteConfirmed,
   mcpCadenceOptions,
   mcpSettingsFormFromEndpoint,
   mcpTeardownSummaryFromPayload,
+  normalizeCadenceSelectValue,
+  settingsPatchNeedsSubDailyCadenceConfirm,
   validateMcpSettingsForm,
   type McpSettingsForm,
   type McpTeardownSummary,
@@ -85,6 +91,7 @@ export default function McpEndpointSettings({
   onSaved,
   onDeleted,
 }: McpEndpointSettingsProps) {
+  const { confirm: confirmDialog } = useDialog();
   const [form, setForm] = useState<McpSettingsForm>(() => mcpSettingsFormFromEndpoint(endpoint));
   /** Which mutation is in flight ("save" | "enabled" | "delete"), or null when idle. */
   const [busy, setBusy] = useState<string | null>(null);
@@ -149,6 +156,16 @@ export default function McpEndpointSettings({
     if (!hasSettingsChanges(patchBody)) {
       toast.info("No changes to save.");
       return;
+    }
+    if (settingsPatchNeedsSubDailyCadenceConfirm(patchBody)) {
+      const confirmed = await confirmDialog({
+        title: "Are you sure?",
+        message: MCP_SUB_DAILY_CADENCE_CONFIRM_MESSAGE,
+        variant: "warning",
+        confirmLabel: "Save changes",
+        cancelLabel: "Cancel",
+      });
+      if (!confirmed) return;
     }
     setBusy("save");
     try {
@@ -291,13 +308,19 @@ export default function McpEndpointSettings({
               <Label htmlFor="mcp-settings-cadence" className={fieldLabelClass}>
                 Discovery cadence
               </Label>
-              <Select value={form.cadence} onValueChange={(v) => set("cadence", v)}>
+              <Select
+                value={cadenceSelectValueFromForm(form.cadence)}
+                onValueChange={(v) => set("cadence", normalizeCadenceSelectValue(v))}
+              >
                 <SelectTrigger id="mcp-settings-cadence">
                   <SelectValue placeholder="Default cadence" />
                 </SelectTrigger>
                 <SelectContent>
                   {cadenceOptions.map((opt) => (
-                    <SelectItem key={opt.value || "default"} value={opt.value || "default"}>
+                    <SelectItem
+                      key={opt.value || MCP_CADENCE_DEFAULT_SELECT_VALUE}
+                      value={opt.value || MCP_CADENCE_DEFAULT_SELECT_VALUE}
+                    >
                       {opt.label}
                     </SelectItem>
                   ))}

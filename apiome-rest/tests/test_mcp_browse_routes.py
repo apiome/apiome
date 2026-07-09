@@ -101,6 +101,7 @@ def test_browse_row_projection_rolls_up_counts_and_redacts():
     )
     # Capability total is the sum of the four per-kind counts.
     assert out.capability_count == 3 + 2 + 1 + 4
+    assert out.version_count == 0
     assert out.tool_count == 3
     assert out.resource_template_count == 1
     # Host is derived; userinfo is redacted out of the wire URL but the host is kept.
@@ -130,6 +131,12 @@ def test_browse_row_projection_unscored_undiscovered():
     assert out.capability_count == 0
     assert out.current_version_id is None
     assert out.last_discovered_at is None
+
+
+def test_browse_row_projection_version_count():
+    out = mcp_browse_endpoint_out_from_row(_browse_row(version_count=5))
+    assert out.version_count == 5
+    assert mcp_browse_endpoint_out_from_row(_browse_row()).version_count == 0
 
 
 def test_browse_row_projection_quarantined_flag():

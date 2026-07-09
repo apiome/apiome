@@ -45,6 +45,7 @@ describe('McpCatalogCard (grid)', () => {
     resource_count: 2,
     resource_template_count: 1,
     prompt_count: 4,
+    version_count: 3,
     last_discovery_status: 'ok',
     last_discovered_at: '2026-06-26T12:00:00Z',
   });
@@ -56,7 +57,9 @@ describe('McpCatalogCard (grid)', () => {
     expect(screen.getByRole('img', { name: /Grade B/i })).toBeInTheDocument();
     expect(screen.getByText('Acme Weather')).toBeInTheDocument();
     expect(within(link).getByText(/3t · 2r · 1rt · 4p/)).toBeInTheDocument();
+    expect(within(link).getByText('3 versions')).toBeInTheDocument();
     expect(within(link).getByText('streamable_http')).toBeInTheDocument();
+    expect(within(link).getByText('Unpublished')).toBeInTheDocument();
     expect(within(link).getByText('Private')).toBeInTheDocument();
     expect(within(link).getByText('bearer')).toBeInTheDocument();
     expect(within(link).getByText('Healthy')).toBeInTheDocument();
@@ -80,16 +83,28 @@ describe('McpCatalogCard (grid)', () => {
     render(<McpCatalogCard endpoint={ep({ id: 'q', quarantined: true })} href="/x" />);
     expect(screen.getByText('Quarantined')).toBeInTheDocument();
   });
+
+  it('shows Published when the endpoint is published', () => {
+    render(
+      <McpCatalogCard
+        endpoint={ep({ id: 'pub', name: 'Public Svc', published: true, visibility: 'public' })}
+        href="/x"
+      />,
+    );
+    expect(screen.getByText('Published')).toBeInTheDocument();
+    expect(screen.queryByText('Unpublished')).not.toBeInTheDocument();
+  });
 });
 
 describe('McpCatalogCard (dense list)', () => {
   it('renders a compact row that still links and shows the name + counts', () => {
-    const endpoint = ep({ id: 'ep-2', name: 'Calendar', grade: 'A', score: 95, tool_count: 5 });
+    const endpoint = ep({ id: 'ep-2', name: 'Calendar', grade: 'A', score: 95, tool_count: 5, version_count: 1 });
     render(<McpCatalogCard endpoint={endpoint} href="/ade/dashboard/mcp/ep-2" density="list" changed />);
     const link = screen.getByRole('link', { name: /Open Calendar/i });
     expect(link).toHaveAttribute('href', '/ade/dashboard/mcp/ep-2');
     expect(screen.getByText('Calendar')).toBeInTheDocument();
     expect(screen.getByText('Changed')).toBeInTheDocument();
+    expect(screen.getByText('1 version')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /Grade A/i })).toBeInTheDocument();
   });
 });

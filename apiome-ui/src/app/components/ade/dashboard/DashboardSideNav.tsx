@@ -123,7 +123,6 @@ const DashboardSideNav: React.FC = () => {
           href: '/ade/dashboard/mcp/compare',
           icon: GitCompareArrows,
           disabled: !hasTenant,
-          pill: 'Preview',
         },
         { label: 'Sunset timeline', href: '/ade/dashboard/versions/sunset-timeline', icon: Sun, disabled: !hasTenant },
         { label: 'Published', href: '/ade/dashboard/published', icon: Eye, disabled: !hasTenant },

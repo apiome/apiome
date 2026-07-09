@@ -19,7 +19,18 @@ jest.mock('sonner', () => ({
   toast: { success: jest.fn(), error: jest.fn(), info: jest.fn() },
 }));
 
+const confirmDialog = jest.fn().mockResolvedValue(true);
+
+jest.mock('@/app/components/providers/DialogProvider', () => ({
+  useDialog: () => ({ confirm: confirmDialog, alert: jest.fn() }),
+}));
+
 const ENDPOINT_ID = '11111111-1111-1111-8111-111111111111';
+
+async function selectCadenceOption(optionLabel: RegExp | string): Promise<void> {
+  fireEvent.click(screen.getByLabelText(/Discovery cadence/i));
+  fireEvent.click(await screen.findByRole('option', { name: optionLabel }));
+}
 
 function endpoint(overrides: Record<string, unknown> = {}): McpEndpointDetail {
   const parsed = mcpEndpointDetailFromPayload({
@@ -52,6 +63,9 @@ function mockFetchOnce(body: unknown, ok = true, status = 200) {
 
 beforeEach(() => {
   global.fetch = jest.fn();
+  confirmDialog.mockReset();
+  confirmDialog.mockResolvedValue(true);
+  Element.prototype.scrollIntoView = jest.fn();
 });
 
 afterEach(() => {
@@ -96,6 +110,68 @@ describe('McpEndpointSettings — identity form', () => {
     fireEvent.click(screen.getByRole('button', { name: /Save changes/i }));
     expect(screen.getByRole('alert')).toHaveTextContent(/valid URL/i);
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('confirms before saving a sub-daily cadence and cancels when declined', async () => {
+    const onSaved = jest.fn();
+    render(<McpEndpointSettings endpoint={endpoint()} onSaved={onSaved} onDeleted={jest.fn()} />);
+
+    await selectCadenceOption(/Every hour/i);
+    const save = screen.getByRole('button', { name: /Save changes/i });
+    expect(save).toBeEnabled();
+
+    confirmDialog.mockResolvedValueOnce(false);
+    fireEvent.click(save);
+    await waitFor(() => expect(confirmDialog).toHaveBeenCalledTimes(1));
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it('saves a sub-daily cadence after the user confirms', async () => {
+    const onSaved = jest.fn();
+    render(<McpEndpointSettings endpoint={endpoint()} onSaved={onSaved} onDeleted={jest.fn()} />);
+
+    await selectCadenceOption(/Every hour/i);
+    mockFetchOnce({ endpoint: { ...endpoint(), discovery_cadence_seconds: 3600 } });
+    fireEvent.click(screen.getByRole('button', { name: /Save changes/i }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+    expect(confirmDialog).toHaveBeenCalledTimes(1);
+    expect(JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body)).toEqual({
+      discovery_cadence_seconds: 3600,
+    });
+  });
+
+  it('does not confirm when saving a daily cadence', async () => {
+    const onSaved = jest.fn();
+    render(
+      <McpEndpointSettings
+        endpoint={endpoint({ discovery_cadence_seconds: 3600 })}
+        onSaved={onSaved}
+        onDeleted={jest.fn()}
+      />,
+    );
+
+    await selectCadenceOption(/^Daily$/i);
+    mockFetchOnce({ endpoint: { ...endpoint(), discovery_cadence_seconds: 86400 } });
+    fireEvent.click(screen.getByRole('button', { name: /Save changes/i }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+    expect(confirmDialog).not.toHaveBeenCalled();
+  });
+
+  it('can revert an explicit cadence to the server default', async () => {
+    const onSaved = jest.fn();
+    render(<McpEndpointSettings endpoint={endpoint()} onSaved={onSaved} onDeleted={jest.fn()} />);
+
+    await selectCadenceOption(/Default cadence/i);
+    mockFetchOnce({ endpoint: { ...endpoint(), discovery_cadence_seconds: null } });
+    fireEvent.click(screen.getByRole('button', { name: /Save changes/i }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+    expect(JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body)).toEqual({
+      discovery_cadence_seconds: null,
+    });
   });
 });
 

@@ -126,6 +126,13 @@ export function mcpTransportBadge(transport: string | null | undefined): McpBadg
   return { tone: 'slate', label: transport && transport.trim() ? transport : 'unknown transport' };
 }
 
+/** Resolve an endpoint's published flag to a badge: published → green, unpublished → slate. */
+export function mcpPublishedBadge(published: boolean): McpBadgeSpec {
+  return published
+    ? { tone: 'green', label: 'Published' }
+    : { tone: 'slate', label: 'Unpublished' };
+}
+
 /** Resolve an endpoint's visibility to a badge: private → indigo, public → green. */
 export function mcpVisibilityBadge(visibility: string | null | undefined): McpBadgeSpec {
   const value = (visibility ?? '').trim().toLowerCase();

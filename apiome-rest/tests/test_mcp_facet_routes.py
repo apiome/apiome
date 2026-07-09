@@ -190,6 +190,12 @@ def test_browse_projection_carries_facet_fields():
     assert out.has_destructive is True
     assert out.read_only_only is False
     assert out.complexity_band == "moderate"
+    assert out.version_count == 0
+
+
+def test_browse_projection_carries_version_count():
+    out = mcp_browse_endpoint_out_from_row(_endpoint_row(version_count=4))
+    assert out.version_count == 4
 
 
 def test_browse_projection_facet_fields_default_on_older_rows():

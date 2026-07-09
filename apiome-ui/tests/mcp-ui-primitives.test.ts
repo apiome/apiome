@@ -9,6 +9,7 @@ import {
   mcpNormalizeGrade,
   mcpGradeGlyphStyle,
   mcpTransportBadge,
+  mcpPublishedBadge,
   mcpVisibilityBadge,
   mcpAuthBadge,
   mcpCapabilityAnnotationBadge,
@@ -77,6 +78,13 @@ describe('mcpTransportBadge', () => {
     expect(mcpTransportBadge('quic').label).toBe('quic');
     expect(mcpTransportBadge('').label).toBe('unknown transport');
     expect(mcpTransportBadge(null).tone).toBe('slate');
+  });
+});
+
+describe('mcpPublishedBadge', () => {
+  it('maps published and unpublished endpoints to distinct badges', () => {
+    expect(mcpPublishedBadge(true)).toEqual({ tone: 'green', label: 'Published' });
+    expect(mcpPublishedBadge(false)).toEqual({ tone: 'slate', label: 'Unpublished' });
   });
 });
 
