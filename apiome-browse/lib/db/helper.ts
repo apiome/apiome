@@ -114,7 +114,7 @@ export async function getPublicVersionDetails(
   try {
     const result = await connectionPool.query(
       `SELECT v.id, v.version_id, v.description, v.change_log, v.published, v.visibility,
-              v.created_at, v.updated_at, v.published_at,
+              v.created_at, v.updated_at, v.published_at, v.mock_enabled,
               p.name as project_name, p.slug as project_slug, p.description as project_description,
               t.name as tenant_name, t.slug as tenant_slug, t.description as tenant_description
        FROM apiome.versions v

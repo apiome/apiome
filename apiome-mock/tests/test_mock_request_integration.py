@@ -79,12 +79,17 @@ def mock_client(monkeypatch: pytest.MonkeyPatch, mock_pool: object) -> TestClien
     get_settings.cache_clear()
     from apiome_mock.server import create_app
 
-    with patch("apiome_mock.server.create_async_pool", return_value=mock_pool), patch(
-        "apiome_mock.server.resolve_limits_for_tenant",
-        new=AsyncMock(return_value=None),
-    ), patch("apiome_mock.server.record_mock_request"), patch(
-        "apiome_mock.handler.get_mock_access_status",
-        new=AsyncMock(return_value="ok"),
+    with (
+        patch("apiome_mock.server.create_async_pool", return_value=mock_pool),
+        patch(
+            "apiome_mock.server.resolve_limits_for_tenant",
+            new=AsyncMock(return_value=None),
+        ),
+        patch("apiome_mock.server.record_mock_request"),
+        patch(
+            "apiome_mock.handler.get_mock_access_status",
+            new=AsyncMock(return_value="ok"),
+        ),
     ):
         app = create_app()
         app.state.db_pool = mock_pool

@@ -35,6 +35,12 @@ interface SpecViewerProps {
   projectSlug: string;
   versionSlug: string;
   restApiBaseUrl: string;
+  /**
+   * Public mock base URL for the browsed version; null/undefined when its mock is disabled.
+   * Surfaced in the overview's server list and the prop surface the try-it server picker
+   * (SIM-3.1) will consume (SIM-2.3, #4444).
+   */
+  mockBaseUrl?: string | null;
   /** Notify parent (e.g. sidebar) of spec + format changes. */
   onSpecChange?: (spec: unknown, format: SpecFormat) => void;
 }
@@ -82,6 +88,7 @@ export function SpecViewer({
   projectSlug,
   versionSlug,
   restApiBaseUrl,
+  mockBaseUrl,
   onSpecChange,
 }: SpecViewerProps) {
   const { specTheme, setSpecTheme, resolvedTheme } = useTheme();
@@ -367,7 +374,7 @@ export function SpecViewer({
       )}
 
       {!loading && !error && spec != null && viewMode === 'overview' && (
-        <SpecOverview spec={spec} format={format} />
+        <SpecOverview spec={spec} format={format} mockBaseUrl={mockBaseUrl} />
       )}
 
       {!loading && !error && spec != null && viewMode === 'visual' && (
@@ -432,7 +439,15 @@ function SpecMetaSummary({ spec, format }: { spec: unknown; format: SpecFormat }
   return null;
 }
 
-function SpecOverview({ spec, format }: { spec: unknown; format: SpecFormat }) {
+function SpecOverview({
+  spec,
+  format,
+  mockBaseUrl,
+}: {
+  spec: unknown;
+  format: SpecFormat;
+  mockBaseUrl?: string | null;
+}) {
   if (!isObject(spec)) return null;
 
   if (format === 'openapi') {
@@ -517,12 +532,34 @@ function SpecOverview({ spec, format }: { spec: unknown; format: SpecFormat }) {
         </div>
 
         {/* Servers */}
-        {servers.length > 0 && (
+        {(servers.length > 0 || mockBaseUrl) && (
           <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
             <h4 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               Servers
             </h4>
             <ul className="space-y-2">
+              {mockBaseUrl && (
+                <li className="flex items-start gap-3">
+                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                    <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <code className="block break-all rounded bg-zinc-50 px-2 py-1 font-mono text-[12px] text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
+                        {mockBaseUrl}
+                      </code>
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                        Mock
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[12px] text-zinc-500 dark:text-zinc-400">
+                      Mock server — responses generated from this specification.
+                    </p>
+                  </div>
+                </li>
+              )}
               {servers.map((s, i) => {
                 if (!isObject(s)) return null;
                 const url = typeof s.url === 'string' ? s.url : '';

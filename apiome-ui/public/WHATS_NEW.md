@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Browser: "Mock available" badge on public version pages when a version's mock is enabled, with the mock base URL, a copyable curl one-liner, and a Mock entry in the spec overview's server list; the URL is exposed in spec-viewer props for the upcoming try-it server picker (SIM-2.3, #4444)
 - Mock server: `apiome-mock` wired into docker-compose (dev + production overlay with Caddy TLS), healthchecks, and the golden-path smoke step — publish → enable mock → GET /pets → assert 200/shape (SIM-1.6, #4421)
 - Mock server: per-version enable/disable toggle (`PUT /v1/versions/{tenant}/{project}/{version}/mock`) with `mockEnabled` + computed `mockBaseUrl` on version GET; apiome-mock returns 404 problem+json when mock is disabled (SIM-2.1, #4422)
 - Mock server: per-tenant rate limiting and monthly quotas keyed by license tier (free tier 5 rps / 10k req/mo), sampled mock hits in the tenant access audit trail, daily `mock_usage` rollups, and `GET /v1/mocks/{tenant}/usage` for Control Panel stats (SIM-1.5, #4420)

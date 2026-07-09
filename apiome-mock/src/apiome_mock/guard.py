@@ -53,10 +53,7 @@ async def enforce_mock_limits(
         return None
 
     monthly_count = await resolve_monthly_usage(pool, tenant_id=limits.tenant_id, settings=cfg)
-    if (
-        limits.mock_requests_per_month > 0
-        and monthly_count >= limits.mock_requests_per_month
-    ):
+    if limits.mock_requests_per_month > 0 and monthly_count >= limits.mock_requests_per_month:
         return too_many_requests(
             "Monthly mock request quota exceeded for this tenant.",
             instance=f"/{tenant}/{project}/{version}",
