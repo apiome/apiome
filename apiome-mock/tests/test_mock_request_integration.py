@@ -82,7 +82,10 @@ def mock_client(monkeypatch: pytest.MonkeyPatch, mock_pool: object) -> TestClien
     with patch("apiome_mock.server.create_async_pool", return_value=mock_pool), patch(
         "apiome_mock.server.resolve_limits_for_tenant",
         new=AsyncMock(return_value=None),
-    ), patch("apiome_mock.server.record_mock_request"):
+    ), patch("apiome_mock.server.record_mock_request"), patch(
+        "apiome_mock.handler.get_mock_access_status",
+        new=AsyncMock(return_value="ok"),
+    ):
         app = create_app()
         app.state.db_pool = mock_pool
         app.state.spec_cache = SpecCache(max_entries=8, ttl_seconds=300.0)
@@ -102,6 +105,18 @@ def test_get_pets_returns_200_json(mock_client: TestClient) -> None:
     assert response.headers["content-type"].startswith("application/json")
     body = response.json()
     assert body == [{"id": 7, "name": "Rex"}]
+
+
+def test_mock_disabled_returns_problem_json(mock_client: TestClient) -> None:
+    with patch(
+        "apiome_mock.handler.get_mock_access_status",
+        new=AsyncMock(return_value="disabled"),
+    ):
+        response = mock_client.get("/demo/petstore/1.0.0/pets")
+    assert response.status_code == 404
+    assert response.headers["content-type"] == "application/problem+json"
+    assert "mock-disabled" in response.text
+    assert "disabled" in response.text.lower()
 
 
 def test_prefer_example_header_selects_named_example(mock_client: TestClient) -> None:

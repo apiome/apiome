@@ -18,12 +18,14 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from .auth import get_authenticated_user_id, validate_authentication
 from .branch_push_policy import effective_require_merge_path
 from .compatibility_engine import CompatibilityCheckEngine, compat_audit_detail, openapi_for_revision
+from .config import settings
 from .database import BranchNotFoundError, StaleHeadPushError, db
 from .models import (
     SunsetTimelineEntryOut,
     SunsetTimelineResponse,
     VersionCreateRequest,
     VersionForkRequest,
+    VersionMockToggleRequest,
     VersionPublishRequest,
     VersionSchema,
     VersionUpdateRequest,
@@ -64,6 +66,31 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_COMMIT_METADATA_MAX_CHARS = 10_000
 _AUTHOR_OR_REF_MAX_CHARS = 500
+
+
+def _mock_base_url(
+    tenant_slug: str,
+    project_slug: Optional[str],
+    version_label: Optional[str],
+    *,
+    mock_enabled: bool,
+    published: bool,
+) -> Optional[str]:
+    if not mock_enabled or not published or not project_slug or not version_label:
+        return None
+    return f"{settings.mock_public_base_url.rstrip('/')}/{tenant_slug}/{project_slug}/{version_label}"
+
+
+def _version_schema_response(version_row: Dict[str, Any], tenant_slug: str) -> VersionSchema:
+    row = dict(version_row)
+    row["mock_base_url"] = _mock_base_url(
+        tenant_slug,
+        row.get("project_slug"),
+        row.get("version_id"),
+        mock_enabled=bool(row.get("mock_enabled")),
+        published=bool(row.get("published")),
+    )
+    return VersionSchema(**row)
 
 
 def _optional_commit_metadata_str(
@@ -260,6 +287,7 @@ def _schema_pull_delta_for_head(
 def _version_pull_http_response(
     version_row: Dict[str, Any],
     *,
+    tenant_slug: str,
     include_sections: Optional[str],
     exclude_sections: Optional[str],
     response: Response,
@@ -277,7 +305,7 @@ def _version_pull_http_response(
         inc, exc = resolve_pull_sections(include_sections, exclude_sections)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    vs = VersionSchema(**version_row)
+    vs = _version_schema_response(version_row, tenant_slug)
     etag = _strong_etag_for_revision(etag_revision_id)
     response.headers["ETag"] = etag
     if schema_pull_delta is None and inc is None and exc is None:
@@ -603,7 +631,7 @@ async def list_versions(
         created_before=created_before,
     )
 
-    return [VersionSchema(**v) for v in versions]
+    return [_version_schema_response(v, tenant_slug) for v in versions]
 
 
 @router.get(
@@ -770,6 +798,7 @@ async def get_version(
         )
         return _version_pull_http_response(
             version,
+            tenant_slug=tenant_slug,
             include_sections=include_sections,
             exclude_sections=exclude_sections,
             response=response,
@@ -869,6 +898,7 @@ async def get_version(
             )
             return _version_pull_http_response(
                 version,
+                tenant_slug=tenant_slug,
                 include_sections=include_sections,
                 exclude_sections=exclude_sections,
                 response=response,
@@ -913,6 +943,7 @@ async def get_version(
     )
     return _version_pull_http_response(
         final_row,
+        tenant_slug=tenant_slug,
         include_sections=include_sections,
         exclude_sections=exclude_sections,
         response=response,
@@ -1063,6 +1094,7 @@ async def get_version_by_version_id(
         )
         return _version_pull_http_response(
             version,
+            tenant_slug=tenant_slug,
             include_sections=include_sections,
             exclude_sections=exclude_sections,
             response=response,
@@ -1162,6 +1194,7 @@ async def get_version_by_version_id(
             )
             return _version_pull_http_response(
                 version,
+                tenant_slug=tenant_slug,
                 include_sections=include_sections,
                 exclude_sections=exclude_sections,
                 response=response,
@@ -1209,6 +1242,7 @@ async def get_version_by_version_id(
     )
     return _version_pull_http_response(
         final_row,
+        tenant_slug=tenant_slug,
         include_sections=include_sections,
         exclude_sections=exclude_sections,
         response=response,
@@ -1991,6 +2025,48 @@ async def publish_version(
     )
 
     return VersionSchema(**version)
+
+
+@router.put("/{tenant_slug}/{project_id}/{version_record_id}/mock")
+async def set_version_mock(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    request: VersionMockToggleRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> VersionSchema:
+    """Enable or disable the hosted mock for a published version (#4422, SIM-2.1)."""
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
+    existing = db.get_version_by_id(version_record_id, auth_data["tenant_id"])
+    if not existing:
+        raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
+    if existing["project_id"] != project_id:
+        raise HTTPException(status_code=404, detail=f"Version not found in project: {project_id}")
+    if request.enabled and not existing.get("published"):
+        raise HTTPException(
+            status_code=400,
+            detail="Mock can only be enabled on a published version.",
+        )
+
+    user_id = get_authenticated_user_id(auth_data)
+    if not user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Mock settings require user authentication (JWT token or API key with attribution)",
+        )
+
+    updated = db.set_version_mock_enabled(
+        version_record_id,
+        auth_data["tenant_id"],
+        user_id,
+        enabled=request.enabled,
+    )
+    if not updated:
+        raise HTTPException(
+            status_code=403,
+            detail="Only the version creator or a tenant administrator can change mock settings",
+        )
+    return _version_schema_response(updated, tenant_slug)
 
 
 @router.post("/{tenant_slug}/{project_id}/{version_record_id}/unpublish")

@@ -8440,6 +8440,109 @@
         }
       }
     },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/mock": {
+      "put": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Set Version Mock",
+        "description": "Enable or disable the hosted mock for a published version (#4422, SIM-2.1).",
+        "operationId": "set_version_mock_v1_versions__tenant_slug___project_id___version_record_id__mock_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionMockToggleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/freeze-schema": {
       "post": {
         "tags": [
@@ -47305,6 +47408,21 @@
         "title": "VersionPublishRequest",
         "description": "Publish: optional last-minute revision note / changelog applied before freeze."
       },
+      "VersionMockToggleRequest": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "When true, apiome-mock serves this published version."
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled"
+        ],
+        "title": "VersionMockToggleRequest",
+        "description": "Enable or disable the hosted mock for a published version (#4422, SIM-2.1)."
+      },
       "VersionSchema": {
         "properties": {
           "id": {
@@ -47420,6 +47538,24 @@
             "title": "Publishedimmutable",
             "description": "When published: if true, git-like writes require tenant-admin override (#2586).",
             "default": false
+          },
+          "mockEnabled": {
+            "type": "boolean",
+            "title": "Mockenabled",
+            "description": "When true on a published version, the hosted mock runtime serves this revision (#4422).",
+            "default": false
+          },
+          "mockBaseUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mockbaseurl",
+            "description": "Stable mock URL when mockEnabled is true (computed by REST)."
           },
           "enabled": {
             "type": "boolean",

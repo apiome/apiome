@@ -43,6 +43,16 @@ def not_found(detail: str, *, instance: str | None = None) -> JSONResponse:
     )
 
 
+def mock_disabled(detail: str, *, instance: str | None = None) -> JSONResponse:
+    return problem_response(
+        status=404,
+        title="Mock Disabled",
+        detail=detail,
+        problem_type="mock-disabled",
+        instance=instance,
+    )
+
+
 def not_acceptable(detail: str, *, instance: str | None = None) -> JSONResponse:
     return problem_response(
         status=406,

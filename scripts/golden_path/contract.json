@@ -40,6 +40,13 @@
       "ui": true
     },
     {
+      "step": "enable mock",
+      "method": "PUT",
+      "path": "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/mock",
+      "ui": false,
+      "notes": "SIM-2.1 hosted mock toggle; exercised by scripts/golden_path/smoke.py (#4421)."
+    },
+    {
       "step": "view in browse",
       "method": "GET",
       "path": "/v1/browse/tenants/{tenant_slug}/projects/{project_slug}/versions",
