@@ -1,0 +1,10 @@
+{
+  "name": "apiome-mock",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Yarn workspace anchor for the apiome-mock Python package (uv + pyproject.toml).",
+  "scripts": {
+    "build": "uv sync --frozen",
+    "test": "uv sync --frozen && uv run ruff check . && uv run ruff format --check . && uv run mypy -p apiome_mock && uv run pytest"
+  }
+}

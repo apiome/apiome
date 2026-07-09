@@ -1,0 +1,20 @@
+"""RFC 7807 problem+json response tests."""
+
+from __future__ import annotations
+
+from apiome_mock.problems import PROBLEM_CONTENT_TYPE, method_not_allowed, not_found
+
+
+def test_not_found_problem_json() -> None:
+    response = not_found("missing spec", instance="/acme/demo/1.0.0/pets")
+    assert response.status_code == 404
+    assert response.media_type == PROBLEM_CONTENT_TYPE
+    body = response.body.decode()
+    assert "not-found" in body
+    assert "missing spec" in body
+
+
+def test_method_not_allowed_includes_allow_header() -> None:
+    response = method_not_allowed("nope", allow=["GET", "POST"])
+    assert response.status_code == 405
+    assert response.headers["Allow"] == "GET, POST"
