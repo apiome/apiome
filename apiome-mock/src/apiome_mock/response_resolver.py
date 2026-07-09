@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from app.mock_data_generator import generate_example, validate_value
+from apiome_mock.schema_synthesizer import generate_example, validate_value
 
 _NOT_FOUND = object()
 
@@ -116,7 +116,7 @@ def negotiate_media_type(accept: str | None, content_types: list[str]) -> str | 
             return "application/json"
         return content_types[0]
 
-    scored: list[tuple[float, int, int, str]] = []
+    scored: list[tuple[float, int, int, int, str]] = []
     for index, media_type in enumerate(content_types):
         for accept_index, (accept_range, quality) in enumerate(_parse_accept_header(accept)):
             if not _media_type_matches(accept_range, media_type):
