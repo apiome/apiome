@@ -1233,6 +1233,7 @@ export async function getPublishedVersionsForTenant(tenantId: string) {
         v.visibility,
         v.published_at,
         v.created_at,
+        v.mock_enabled,
         p.id as project_id,
         p.name as project_name,
         p.slug as project_slug,

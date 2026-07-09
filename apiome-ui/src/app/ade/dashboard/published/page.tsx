@@ -12,5 +12,9 @@ export const dynamic = 'force-dynamic';
 export default function PublishedVersionsPage() {
   const restApiBaseUrl =
     process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
-  return <PublishedVersions restApiBaseUrl={restApiBaseUrl} />;
+  // Same env var and default the REST service uses to compute mock URLs (#4422, SIM-2.1),
+  // so the published page can show each row's stable mock base URL without extra REST calls.
+  const mockApiBaseUrl =
+    process.env.APIOME_MOCK_PUBLIC_BASE_URL || 'http://localhost:8775';
+  return <PublishedVersions restApiBaseUrl={restApiBaseUrl} mockApiBaseUrl={mockApiBaseUrl} />;
 }

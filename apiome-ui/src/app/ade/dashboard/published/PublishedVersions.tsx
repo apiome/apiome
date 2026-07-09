@@ -41,6 +41,9 @@ import {
   setStoredPreviewApiKey,
 } from '@/app/utils/preview-api-key-storage';
 import { formatVersionWithPrefix } from '@/app/utils/version-display';
+import { VersionMockCell, type VersionMockChange } from '@/app/components/ade/dashboard/VersionMockCell';
+import { useMockUsage } from '@/app/hooks/useMockUsage';
+import { mockUsageSeriesKey } from '@/app/utils/mock-usage-series';
 
 interface PublishedVersion {
   id: string;
@@ -57,6 +60,8 @@ interface PublishedVersion {
   tenant_slug: string;
   creator_name: string;
   creator_email: string;
+  /** Hosted mock toggle state (#4422, SIM-2.1) */
+  mock_enabled: boolean;
 }
 
 interface ApiKeySummary {
@@ -65,7 +70,14 @@ interface ApiKeySummary {
   expires_at: string | null;
 }
 
-const PublishedVersions = ({ restApiBaseUrl }: { restApiBaseUrl: string }) => {
+const PublishedVersions = ({
+  restApiBaseUrl,
+  mockApiBaseUrl,
+}: {
+  restApiBaseUrl: string;
+  /** Public base URL of the hosted mock runtime (#4443, SIM-2.2), e.g. https://mock.example.com */
+  mockApiBaseUrl: string;
+}) => {
   const { data: session } = useSession();
   const { confirm: confirmDialog, alert: alertDialog } = useDialog();
   const [versions, setVersions] = useState<PublishedVersion[]>([]);
@@ -82,6 +94,16 @@ const PublishedVersions = ({ restApiBaseUrl }: { restApiBaseUrl: string }) => {
   const [apiKeys, setApiKeys] = useState<ApiKeySummary[]>([]);
 
   const currentTenantId = (session?.user as any)?.current_tenant_id;
+
+  // 30-day mock usage series across the tenant's published versions (#4443, SIM-2.2).
+  const { seriesByVersion: mockUsageByVersion } = useMockUsage({ enabled: Boolean(currentTenantId) });
+
+  /** Fold a successful mock toggle round-trip back into the table state (#4443). */
+  const handleVersionMockChanged = (versionRecordId: string, change: VersionMockChange) => {
+    setVersions((prev) =>
+      prev.map((v) => (v.id === versionRecordId ? { ...v, mock_enabled: change.mockEnabled } : v))
+    );
+  };
 
   const isApiKeyExpired = (expiresAt: string | null) => {
     if (!expiresAt) return false;
@@ -124,6 +146,8 @@ const PublishedVersions = ({ restApiBaseUrl }: { restApiBaseUrl: string }) => {
 
   const getAccessUrl = (version: PublishedVersion) => `${version.tenant_slug}/${version.project_slug}/${version.version_id}`;
   const getFullAccessUrl = (version: PublishedVersion) => `${restApiBaseUrl}/schema/${getAccessUrl(version)}`;
+  // Mirrors the REST `_mock_base_url` shape: {mockHost}/{tenant}/{project}/{version} (#4422).
+  const getMockUrl = (version: PublishedVersion) => `${mockApiBaseUrl.replace(/\/+$/, '')}/${getAccessUrl(version)}`;
   const getSwaggerUrl = (version: PublishedVersion) => `${restApiBaseUrl}/swagger/${getAccessUrl(version)}`;
   const getArazzoUrl = (version: PublishedVersion) => `${restApiBaseUrl}/arazzo/${getAccessUrl(version)}`;
   const getJsonUrl = (version: PublishedVersion) => `${restApiBaseUrl}/json/${getAccessUrl(version)}`;
@@ -359,6 +383,7 @@ const PublishedVersions = ({ restApiBaseUrl }: { restApiBaseUrl: string }) => {
                     <th className={dashboardThClass}>Project / Version</th>
                     <th className={dashboardThClass}>Visibility</th>
                     <th className={dashboardThClass}>Access URL</th>
+                    <th className={dashboardThClass}>Mock</th>
                     <th className={dashboardThClass}>Published</th>
                     <th className={dashboardThRightClass}>Actions</th>
                   </tr>
@@ -394,6 +419,22 @@ const PublishedVersions = ({ restApiBaseUrl }: { restApiBaseUrl: string }) => {
                         <code className="text-xs bg-gray-50 dark:bg-gray-900 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-mono max-w-md truncate block">
                           schema/{getAccessUrl(version)}
                         </code>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <VersionMockCell
+                          versionRecordId={version.id}
+                          projectId={version.project_id}
+                          versionLabel={version.version_id}
+                          published
+                          mockEnabled={Boolean(version.mock_enabled)}
+                          mockBaseUrl={version.mock_enabled ? getMockUrl(version) : null}
+                          usageSeries={
+                            mockUsageByVersion === null
+                              ? undefined
+                              : mockUsageByVersion.get(mockUsageSeriesKey(version.project_slug, version.version_id)) ?? []
+                          }
+                          onMockChanged={(change) => handleVersionMockChanged(version.id, change)}
+                        />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900 dark:text-gray-100">{formatDate(version.published_at)}</div>
