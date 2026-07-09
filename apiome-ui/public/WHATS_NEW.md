@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Mock server: request validation and 4xx simulation validate path/query/header params and request bodies against the operation spec, return spec-declared 400/415 bodies when defined (otherwise problem+json), and support forced error paths via `Prefer: code=<status>` or `?__status=<status>` (SIM-1.4, #4419)
 - Mock server: new `apiome-mock` FastAPI runtime with `/{tenant}/{project}/{version}/{path}` routing, published-spec resolution via Postgres, LRU caching with publish NOTIFY invalidation, and RFC 7807 problem+json infrastructure errors (SIM-1.1, #4416)
 - Mock server: example-first response resolver returns author-written OpenAPI examples before schema synthesis, with `Prefer: example=<name>` selection and `Accept` media-type negotiation (SIM-1.2, #4417)
 - Mock server: schema-driven data synthesis generates JSON-Schema-valid mock bodies with name heuristics, pattern support, deterministic `?__seed=` output, and depth/size caps as the resolver fallback tier (SIM-1.3, #4418)

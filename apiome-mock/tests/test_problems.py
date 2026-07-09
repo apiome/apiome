@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from apiome_mock.problems import PROBLEM_CONTENT_TYPE, method_not_allowed, not_found
+from apiome_mock.problems import PROBLEM_CONTENT_TYPE, bad_request, method_not_allowed, not_found
 
 
 def test_not_found_problem_json() -> None:
@@ -18,3 +18,10 @@ def test_method_not_allowed_includes_allow_header() -> None:
     response = method_not_allowed("nope", allow=["GET", "POST"])
     assert response.status_code == 405
     assert response.headers["Allow"] == "GET, POST"
+
+
+def test_bad_request_problem_json() -> None:
+    response = bad_request("invalid", instance="/demo/pets", extra={"violations": []})
+    assert response.status_code == 400
+    assert response.media_type == PROBLEM_CONTENT_TYPE
+    assert "bad-request" in response.body.decode()
