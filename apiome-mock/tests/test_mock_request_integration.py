@@ -24,11 +24,18 @@ PETSTORE_SPEC = {
                         "description": "ok",
                         "content": {
                             "application/json": {
+                                "examples": {
+                                    "sample": {
+                                        "value": [
+                                            {"id": 7, "name": "Rex"},
+                                        ]
+                                    }
+                                },
                                 "schema": {
                                     "type": "array",
                                     "items": {"$ref": "#/components/schemas/Pet"},
                                     "minItems": 1,
-                                }
+                                },
                             }
                         },
                     }
@@ -90,10 +97,175 @@ def test_get_pets_returns_200_json(mock_client: TestClient) -> None:
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/json")
     body = response.json()
-    assert isinstance(body, list)
-    assert len(body) >= 1
-    assert "id" in body[0]
-    assert "name" in body[0]
+    assert body == [{"id": 7, "name": "Rex"}]
+
+
+def test_prefer_example_header_selects_named_example(mock_client: TestClient) -> None:
+    compiled = _compiled()
+    spec = {
+        **PETSTORE_SPEC,
+        "paths": {
+            "/pets": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "ok",
+                            "content": {
+                                "application/json": {
+                                    "examples": {
+                                        "a": {"value": [{"id": 1, "name": "A"}]},
+                                        "b": {"value": [{"id": 2, "name": "B"}]},
+                                    }
+                                }
+                            },
+                        }
+                    }
+                }
+            }
+        },
+    }
+    compiled = CompiledSpec(
+        revision_id=compiled.revision_id,
+        tenant_slug=compiled.tenant_slug,
+        project_slug=compiled.project_slug,
+        version_label=compiled.version_label,
+        updated_at=compiled.updated_at,
+        spec=spec,
+        operations=tuple(extract_operations(spec)),
+    )
+    with patch(
+        "apiome_mock.handler.load_compiled_spec",
+        new=AsyncMock(return_value=compiled),
+    ):
+        response = mock_client.get(
+            "/demo/petstore/1.0.0/pets",
+            headers={"Prefer": "example=b"},
+        )
+    assert response.status_code == 200
+    assert response.json() == [{"id": 2, "name": "B"}]
+
+
+def test_accept_xml_returns_xml_example(mock_client: TestClient) -> None:
+    compiled = _compiled()
+    spec = {
+        **PETSTORE_SPEC,
+        "paths": {
+            "/pets": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "ok",
+                            "content": {
+                                "application/json": {"example": {"pets": []}},
+                                "application/xml": {"example": "<pets/>"},
+                            },
+                        }
+                    }
+                }
+            }
+        },
+    }
+    compiled = CompiledSpec(
+        revision_id=compiled.revision_id,
+        tenant_slug=compiled.tenant_slug,
+        project_slug=compiled.project_slug,
+        version_label=compiled.version_label,
+        updated_at=compiled.updated_at,
+        spec=spec,
+        operations=tuple(extract_operations(spec)),
+    )
+    with patch(
+        "apiome_mock.handler.load_compiled_spec",
+        new=AsyncMock(return_value=compiled),
+    ):
+        response = mock_client.get(
+            "/demo/petstore/1.0.0/pets",
+            headers={"Accept": "application/xml"},
+        )
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/xml")
+    assert response.text == "<pets/>"
+
+
+def test_unacceptable_accept_returns_406_problem_json(mock_client: TestClient) -> None:
+    compiled = _compiled()
+    spec = {
+        **PETSTORE_SPEC,
+        "paths": {
+            "/pets": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "ok",
+                            "content": {
+                                "application/json": {"example": {"pets": []}},
+                            },
+                        }
+                    }
+                }
+            }
+        },
+    }
+    compiled = CompiledSpec(
+        revision_id=compiled.revision_id,
+        tenant_slug=compiled.tenant_slug,
+        project_slug=compiled.project_slug,
+        version_label=compiled.version_label,
+        updated_at=compiled.updated_at,
+        spec=spec,
+        operations=tuple(extract_operations(spec)),
+    )
+    with patch(
+        "apiome_mock.handler.load_compiled_spec",
+        new=AsyncMock(return_value=compiled),
+    ):
+        response = mock_client.get(
+            "/demo/petstore/1.0.0/pets",
+            headers={"Accept": "application/pdf"},
+        )
+    assert response.status_code == 406
+    assert response.headers["content-type"] == "application/problem+json"
+
+
+def test_structured_xml_example_returns_json_content_type(mock_client: TestClient) -> None:
+    compiled = _compiled()
+    spec = {
+        **PETSTORE_SPEC,
+        "paths": {
+            "/pets": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "ok",
+                            "content": {
+                                "application/xml": {"example": {"pets": []}},
+                            },
+                        }
+                    }
+                }
+            }
+        },
+    }
+    compiled = CompiledSpec(
+        revision_id=compiled.revision_id,
+        tenant_slug=compiled.tenant_slug,
+        project_slug=compiled.project_slug,
+        version_label=compiled.version_label,
+        updated_at=compiled.updated_at,
+        spec=spec,
+        operations=tuple(extract_operations(spec)),
+    )
+    with patch(
+        "apiome_mock.handler.load_compiled_spec",
+        new=AsyncMock(return_value=compiled),
+    ):
+        response = mock_client.get(
+            "/demo/petstore/1.0.0/pets",
+            headers={"Accept": "application/xml"},
+        )
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json() == {"pets": []}
 
 
 def test_unknown_spec_returns_problem_json(mock_client: TestClient) -> None:

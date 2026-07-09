@@ -43,6 +43,16 @@ def not_found(detail: str, *, instance: str | None = None) -> JSONResponse:
     )
 
 
+def not_acceptable(detail: str, *, instance: str | None = None) -> JSONResponse:
+    return problem_response(
+        status=406,
+        title="Not Acceptable",
+        detail=detail,
+        problem_type="not-acceptable",
+        instance=instance,
+    )
+
+
 def method_not_allowed(
     detail: str,
     *,
