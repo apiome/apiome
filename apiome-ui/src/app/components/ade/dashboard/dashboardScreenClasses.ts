@@ -1,6 +1,9 @@
 /** Shared layout tokens aligned with the Primitives dashboard screen.
- *  Scrolls inside the dashboard content pane (not the document / sidebar). */
-export const dashboardMainClass = 'min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-6';
+ *  Scrolls inside the dashboard content pane (not the document / sidebar).
+ *  `relative` is load-bearing: it makes the pane the containing block for absolutely
+ *  positioned descendants (e.g. Tailwind `sr-only` elements deep in tall content), which
+ *  otherwise anchor to the page root at their flow position and stretch the whole document. */
+export const dashboardMainClass = 'relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-6';
 export const dashboardContentStackClass = 'space-y-6';
 
 export const dashboardPanelClass =

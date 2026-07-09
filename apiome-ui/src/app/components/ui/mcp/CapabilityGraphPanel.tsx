@@ -67,6 +67,11 @@ export function CapabilityGraphPanel({ graph, loading, error }: Props) {
   const [isDark, setIsDark] = React.useState(false);
   const [svg, setSvg] = React.useState<string>('');
   const [renderError, setRenderError] = React.useState<string | null>(null);
+  // Scratch element handed to `mermaid.render` below. Without it, Mermaid appends its full-size
+  // measurement div to <body> — outside the dashboard's overflow-hidden shell — and any leaked
+  // scratch div makes the whole document scroll. Zero-height + overflow-hidden keeps it invisible
+  // while still rendered (Mermaid needs a live element for text measurement).
+  const scratchRef = React.useRef<HTMLDivElement | null>(null);
 
   // Follow the app theme switch (the `.dark` class on <html>) so the diagram re-themes live.
   React.useEffect(() => {
@@ -103,7 +108,11 @@ export function CapabilityGraphPanel({ graph, loading, error }: Props) {
           fontFamily: 'var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
         });
         mermaidSeq += 1;
-        const { svg: rendered } = await mermaid.render(`mcp-cap-graph-${mermaidSeq}`, source);
+        const { svg: rendered } = await mermaid.render(
+          `mcp-cap-graph-${mermaidSeq}`,
+          source,
+          scratchRef.current ?? undefined,
+        );
         if (!active) return;
         setSvg(rendered);
         setRenderError(null);
@@ -184,6 +193,10 @@ export function CapabilityGraphPanel({ graph, loading, error }: Props) {
           with no edges because no concrete relationship signal was found.
         </p>
       ) : null}
+
+      {/* Mermaid's measurement scratch space — see scratchRef. Out of flow and clipped to nothing,
+          but still rendered (display:none would break Mermaid's getBBox text measurement). */}
+      <div ref={scratchRef} className="absolute h-0 w-0 overflow-hidden" aria-hidden />
     </div>
   );
 }
