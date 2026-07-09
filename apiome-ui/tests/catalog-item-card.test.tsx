@@ -173,6 +173,27 @@ describe('CatalogItemCard — orb & footer refinements (MFI-24.5)', () => {
     expect(screen.getByText('Debt')).toBeInTheDocument();
   });
 
+  it('shows the live revision count in the orb row (parity with project cards)', () => {
+    renderCard({ item: makeItem({ versionsCount: 4 }) });
+    const count = screen.getByTestId('catalog-card-versions-count');
+    expect(count).toHaveTextContent('4');
+    expect(count).toHaveTextContent('versions');
+    expect(count).toHaveAttribute('title', '4 versions');
+  });
+
+  it('uses singular "version" when the count is 1', () => {
+    renderCard({ item: makeItem({ versionsCount: 1 }) });
+    const count = screen.getByTestId('catalog-card-versions-count');
+    expect(count).toHaveTextContent('1');
+    expect(count).toHaveTextContent('version');
+    expect(count).not.toHaveTextContent('versions');
+  });
+
+  it('defaults the revision count to zero when absent', () => {
+    renderCard({ item: makeItem({ versionsCount: undefined }) });
+    expect(screen.getByTestId('catalog-card-versions-count')).toHaveTextContent('0 versions');
+  });
+
   it('shows the creator and updated-relative time in the footer, not enabled/active status', () => {
     renderCard();
     expect(screen.getByText(/imported by Dana Import/)).toBeInTheDocument();

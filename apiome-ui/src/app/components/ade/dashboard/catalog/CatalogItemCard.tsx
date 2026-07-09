@@ -59,6 +59,8 @@ export interface CatalogItemCardItem {
   /** Server-captured quality score/grade (MFI-23.2), used as the orb fallback. */
   qualityScore?: number | null;
   qualityGrade?: string | null;
+  /** Live revision count for this catalog item (parity with project cards). */
+  versionsCount?: number;
 }
 
 export interface CatalogItemCardProps {
@@ -118,6 +120,9 @@ export function CatalogItemCard({
   const scoreTier = qualityValue != null ? getNumericScoreTier(qualityValue) : null;
   const lintLetter =
     qualityValue != null ? letterGradeFromOverallPercent(qualityValue) : item.qualityGrade ?? null;
+
+  const versionsCount = typeof item.versionsCount === 'number' ? item.versionsCount : 0;
+  const versionsLabel = `${versionsCount} version${versionsCount === 1 ? '' : 's'}`;
 
   const summaryLine = item.metadata?.summary?.trim() || item.description?.trim() || 'No description yet.';
 
@@ -273,10 +278,19 @@ export function CatalogItemCard({
               <p className={orbLabel}>Debt</p>
             </div>
 
-            {/* Converted → {project} back-link (MFI-23.11) — right-aligned; rendered only when converted. */}
-            {conversionSlot ? (
-              <div className="ml-auto flex items-center self-center">{conversionSlot}</div>
-            ) : null}
+            <div className="ml-auto flex flex-col items-end gap-2 self-center">
+              <p
+                className="shrink-0 text-right text-xs text-gray-400 dark:text-gray-500"
+                data-testid="catalog-card-versions-count"
+                title={versionsLabel}
+              >
+                <span className="font-semibold font-mono tabular-nums text-gray-700 dark:text-gray-200">
+                  {versionsCount}
+                </span>{' '}
+                {versionsCount === 1 ? 'version' : 'versions'}
+              </p>
+              {conversionSlot ? <div className="flex items-center">{conversionSlot}</div> : null}
+            </div>
           </div>
         </div>
       </div>

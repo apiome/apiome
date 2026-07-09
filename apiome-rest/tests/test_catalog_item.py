@@ -59,6 +59,7 @@ _CATALOG_ROW = {
     "creator_email": "test@example.com",
     "quality_score": 82,
     "quality_grade": "B",
+    "versions_count": 3,
     "source_format": "protobuf",
     "protocol": "grpc",
     "format_metadata": {"package": "acme.v1", "edition": "2023"},
@@ -109,6 +110,7 @@ class TestCatalogProjection:
         for col in ("source_format", "protocol", "format_metadata", "tool_versions"):
             assert col in sql
         assert "quality_score" in sql and "quality_grade" in sql
+        assert "versions_count" in sql
         assert params == ("test-tenant-id",)
         assert rows[0]["source_format"] == "protobuf"
 
@@ -197,6 +199,7 @@ class TestModels:
         assert body["formatMetadata"] == {"package": "acme.v1", "edition": "2023"}
         assert body["toolVersions"] == {"protoc": "25.1"}
         assert body["qualityScore"] == 82 and body["qualityGrade"] == "B"
+        assert body["versionsCount"] == 3
         assert body["publishable"] is False
 
     def test_project_schema_defaults_publishable_true(self):

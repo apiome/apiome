@@ -52,6 +52,7 @@ _CATALOG_ACTIVE = {
     "creator_email": "test@example.com",
     "quality_score": 82,
     "quality_grade": "B",
+    "versions_count": 3,
     "source_format": "protobuf",
     "protocol": "grpc",
     "format_metadata": {"package": "acme.v1"},
@@ -174,6 +175,7 @@ def test_list_catalog_serializes_format_and_publishable():
         assert item["name"] == "Acme gRPC API"
         assert item["qualityScore"] == 82
         assert item["qualityGrade"] == "B"
+        assert item["versionsCount"] == 3
         # Catalog-only fields + the non-publishable invariant.
         assert item["publishable"] is False
         assert item["sourceFormat"] == "protobuf"

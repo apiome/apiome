@@ -12874,82 +12874,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-    patch:
-      tags:
-      - mock-server
-      summary: Serve Mock Root
-      description: Serve the mock for a request to the instance root path.
-      operationId: serve_mock_root_v1_mock__mock_id__head
-      parameters:
-      - name: mock_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Mock Id
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    post:
-      tags:
-      - mock-server
-      summary: Serve Mock Root
-      description: Serve the mock for a request to the instance root path.
-      operationId: serve_mock_root_v1_mock__mock_id__head
-      parameters:
-      - name: mock_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Mock Id
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    delete:
-      tags:
-      - mock-server
-      summary: Serve Mock Root
-      description: Serve the mock for a request to the instance root path.
-      operationId: serve_mock_root_v1_mock__mock_id__head
-      parameters:
-      - name: mock_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Mock Id
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
     get:
+      tags:
+      - mock-server
+      summary: Serve Mock Root
+      description: Serve the mock for a request to the instance root path.
+      operationId: serve_mock_root_v1_mock__mock_id__head
+      parameters:
+      - name: mock_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Mock Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
       tags:
       - mock-server
       summary: Serve Mock Root
@@ -13000,6 +12950,56 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
     options:
+      tags:
+      - mock-server
+      summary: Serve Mock Root
+      description: Serve the mock for a request to the instance root path.
+      operationId: serve_mock_root_v1_mock__mock_id__head
+      parameters:
+      - name: mock_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Mock Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - mock-server
+      summary: Serve Mock Root
+      description: Serve the mock for a request to the instance root path.
+      operationId: serve_mock_root_v1_mock__mock_id__head
+      parameters:
+      - name: mock_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Mock Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
       tags:
       - mock-server
       summary: Serve Mock Root
@@ -13056,100 +13056,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-    patch:
-      tags:
-      - mock-server
-      summary: Serve Mock Path
-      description: Serve the mock for any request path under the instance base URL.
-      operationId: serve_mock_path_v1_mock__mock_id___sub_path__head
-      parameters:
-      - name: mock_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Mock Id
-      - name: sub_path
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Sub Path
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    post:
-      tags:
-      - mock-server
-      summary: Serve Mock Path
-      description: Serve the mock for any request path under the instance base URL.
-      operationId: serve_mock_path_v1_mock__mock_id___sub_path__head
-      parameters:
-      - name: mock_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Mock Id
-      - name: sub_path
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Sub Path
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    delete:
-      tags:
-      - mock-server
-      summary: Serve Mock Path
-      description: Serve the mock for any request path under the instance base URL.
-      operationId: serve_mock_path_v1_mock__mock_id___sub_path__head
-      parameters:
-      - name: mock_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Mock Id
-      - name: sub_path
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Sub Path
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
     get:
+      tags:
+      - mock-server
+      summary: Serve Mock Path
+      description: Serve the mock for any request path under the instance base URL.
+      operationId: serve_mock_path_v1_mock__mock_id___sub_path__head
+      parameters:
+      - name: mock_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Mock Id
+      - name: sub_path
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sub Path
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
       tags:
       - mock-server
       summary: Serve Mock Path
@@ -13212,6 +13150,68 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
     options:
+      tags:
+      - mock-server
+      summary: Serve Mock Path
+      description: Serve the mock for any request path under the instance base URL.
+      operationId: serve_mock_path_v1_mock__mock_id___sub_path__head
+      parameters:
+      - name: mock_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Mock Id
+      - name: sub_path
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sub Path
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - mock-server
+      summary: Serve Mock Path
+      description: Serve the mock for any request path under the instance base URL.
+      operationId: serve_mock_path_v1_mock__mock_id___sub_path__head
+      parameters:
+      - name: mock_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Mock Id
+      - name: sub_path
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sub Path
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
       tags:
       - mock-server
       summary: Serve Mock Path
@@ -18984,6 +18984,10 @@ components:
           - type: string
           - type: 'null'
           title: Qualitygrade
+        versionsCount:
+          type: integer
+          title: Versionscount
+          default: 0
         publishable:
           type: boolean
           title: Publishable
@@ -19136,6 +19140,10 @@ components:
           - type: string
           - type: 'null'
           title: Qualitygrade
+        versionsCount:
+          type: integer
+          title: Versionscount
+          default: 0
         publishable:
           type: boolean
           title: Publishable

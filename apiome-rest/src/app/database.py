@@ -2173,6 +2173,15 @@ class Database:
             ) cv ON TRUE
     """
 
+    #: Live revision count for catalog list/detail cards (parity with projects list ``versions_count``).
+    _CATALOG_VERSIONS_COUNT_LATERAL = """
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*)::int AS versions_count
+                FROM apiome.versions v
+                WHERE v.project_id = p.id AND v.deleted_at IS NULL
+            ) vc ON TRUE
+    """
+
     #: Latest convert-to-OpenAPI provenance for a catalog item (MFI-23.11), joined to the target
     #: publishable Project for its display name/slug/deleted state. A catalog item that has been
     #: converted (apiome.conversion_provenance, MFI-22.5) carries a back-link to the Project it produced,
@@ -2246,11 +2255,13 @@ class Database:
                    u.name as creator_name, u.email as creator_email,
                    cv.quality_score, cv.quality_grade,
                    cv.source_format, cv.protocol, cv.format_metadata, cv.tool_versions,
+                   COALESCE(vc.versions_count, 0) AS versions_count,
                    aim.group_id::text AS identity_group_id,
                    {self._CATALOG_CONVERSION_COLUMNS}
             FROM apiome.projects p
             LEFT JOIN apiome.users u ON p.creator_id = u.id
             {self._CATALOG_VERSION_LATERAL}
+            {self._CATALOG_VERSIONS_COUNT_LATERAL}
             {self._CATALOG_CONVERSION_LATERAL}
             {self._CATALOG_IDENTITY_JOIN}
             WHERE p.tenant_id = %s AND p.publishable = false {deleted_filter} {identity_filter}
@@ -2279,11 +2290,13 @@ class Database:
                    u.name as creator_name, u.email as creator_email,
                    cv.quality_score, cv.quality_grade,
                    cv.source_format, cv.protocol, cv.format_metadata, cv.tool_versions,
+                   COALESCE(vc.versions_count, 0) AS versions_count,
                    aim.group_id::text AS identity_group_id,
                    {self._CATALOG_CONVERSION_COLUMNS}
             FROM apiome.projects p
             LEFT JOIN apiome.users u ON p.creator_id = u.id
             {self._CATALOG_VERSION_LATERAL}
+            {self._CATALOG_VERSIONS_COUNT_LATERAL}
             {self._CATALOG_CONVERSION_LATERAL}
             {self._CATALOG_IDENTITY_JOIN}
             WHERE p.id = %s AND p.tenant_id = %s AND p.publishable = false {deleted_clause}

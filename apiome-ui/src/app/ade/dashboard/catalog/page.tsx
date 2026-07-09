@@ -145,6 +145,8 @@ interface CatalogItem {
   metadata?: { summary?: string } & Record<string, unknown> | null;
   qualityScore?: number | null;
   qualityGrade?: string | null;
+  /** Live revision count (parity with projects list cards). */
+  versionsCount?: number;
   /** Always false for a catalog item (the non-publishable invariant, MFI-23.1). */
   publishable?: boolean;
   /** Imported source format + paradigm/protocol off the latest revision (MFI-7.1/7.2). */
@@ -932,12 +934,7 @@ const Catalog = () => {
               </Link>
             </div>
           ) : null}
-          {/* Auto-expand the gallery for an empty catalog (nothing imported yet); collapse it once
-              there are items. Keying on that boundary remounts with the right initial state. */}
-          <CatalogSupportedFormats
-            key={!listLoading && items.length === 0 ? 'formats-open' : 'formats-collapsed'}
-            defaultOpen={!listLoading && items.length === 0}
-          />
+          <CatalogSupportedFormats />
           {listLoading ? (
             <div className={dashboardTableWrapClass}>
               <LoadingState minHeightClassName="min-h-[220px]" message="Loading catalog…" />

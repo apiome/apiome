@@ -37,6 +37,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Export: Emitter SPI + capability/fidelity profile — export targets register with descriptor metadata (key/label/icon/paradigm/single-vs-multi-file/toolchain), static capability profiles for fidelity prediction, and multi-file `EmitResult` envelopes; OpenAPI 3.1 and a no-op sample target ship as reference emitters (MFX-1.1)
 - Import: OpenAPI-family conformance matrix (Swagger 2.0, OAS 3.0/3.1/3.2, Arazzo) runs in CI — detect/normalize agreement, entity counts, fingerprint stability, and Project routing are regression-gated (MFI-30.4)
 - Import: OpenAPI 3.2 documents (QUERY method, additionalOperations, hierarchical tags) now import, normalize, lint, and publish through the multi-format SPI; fidelity preview notes 3.2→3.1 conversion
+- Catalog: Shows the number of versions in each card
 
 ## Bug Fixes
 

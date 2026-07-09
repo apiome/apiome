@@ -1455,6 +1455,8 @@ class CatalogItemSchema(BaseModel):
     # Captured lint score/grade of the catalog item's latest revision (parity with ProjectSchema).
     quality_score: Optional[int] = Field(None, serialization_alias="qualityScore")
     quality_grade: Optional[str] = Field(None, serialization_alias="qualityGrade")
+    # Live revision count (parity with ProjectSchema.versions_count).
+    versions_count: int = Field(0, serialization_alias="versionsCount")
     # The non-publishable invariant: a catalog item is never a publish candidate.
     publishable: bool = False
     # Imported-file format + paradigm/protocol + format-specific metadata + tool provenance, read off
