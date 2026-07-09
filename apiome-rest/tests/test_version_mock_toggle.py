@@ -103,3 +103,28 @@ def test_disable_mock_persists(client: TestClient) -> None:
     assert resp.status_code == 200
     assert resp.json()["mockEnabled"] is False
     assert resp.json().get("mockBaseUrl") is None
+
+
+def test_list_versions_includes_mock_base_url(client: TestClient) -> None:
+    row = _version_row(published=True, mock_enabled=True)
+    with patch("app.versions_routes.db.get_project_by_id", return_value={"id": PROJECT_ID}), patch(
+        "app.versions_routes.db.get_versions_for_project",
+        return_value=[row],
+    ):
+        resp = client.get(f"/v1/versions/{TENANT}/{PROJECT_ID}")
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body[0]["mockEnabled"] is True
+    assert body[0]["mockBaseUrl"].endswith(f"/{TENANT}/petstore/1.0.0")
+
+
+def test_get_version_includes_mock_base_url(client: TestClient) -> None:
+    row = _version_row(published=True, mock_enabled=True)
+    with patch("app.versions_routes.db.get_version_by_id", return_value=row), patch(
+        "app.versions_routes.db.insert_workflow_audit"
+    ):
+        resp = client.get(f"/v1/versions/{TENANT}/{PROJECT_ID}/{VERSION_ID}")
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["mockEnabled"] is True
+    assert body["mockBaseUrl"].endswith(f"/{TENANT}/petstore/1.0.0")

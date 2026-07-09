@@ -287,6 +287,7 @@ def _schema_pull_delta_for_head(
 def _version_pull_http_response(
     version_row: Dict[str, Any],
     *,
+    tenant_slug: str,
     include_sections: Optional[str],
     exclude_sections: Optional[str],
     response: Response,
@@ -304,7 +305,7 @@ def _version_pull_http_response(
         inc, exc = resolve_pull_sections(include_sections, exclude_sections)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    vs = VersionSchema(**version_row)
+    vs = _version_schema_response(version_row, tenant_slug)
     etag = _strong_etag_for_revision(etag_revision_id)
     response.headers["ETag"] = etag
     if schema_pull_delta is None and inc is None and exc is None:
@@ -630,7 +631,7 @@ async def list_versions(
         created_before=created_before,
     )
 
-    return [VersionSchema(**v) for v in versions]
+    return [_version_schema_response(v, tenant_slug) for v in versions]
 
 
 @router.get(
@@ -797,6 +798,7 @@ async def get_version(
         )
         return _version_pull_http_response(
             version,
+            tenant_slug=tenant_slug,
             include_sections=include_sections,
             exclude_sections=exclude_sections,
             response=response,
@@ -896,6 +898,7 @@ async def get_version(
             )
             return _version_pull_http_response(
                 version,
+                tenant_slug=tenant_slug,
                 include_sections=include_sections,
                 exclude_sections=exclude_sections,
                 response=response,
@@ -940,6 +943,7 @@ async def get_version(
     )
     return _version_pull_http_response(
         final_row,
+        tenant_slug=tenant_slug,
         include_sections=include_sections,
         exclude_sections=exclude_sections,
         response=response,
@@ -1090,6 +1094,7 @@ async def get_version_by_version_id(
         )
         return _version_pull_http_response(
             version,
+            tenant_slug=tenant_slug,
             include_sections=include_sections,
             exclude_sections=exclude_sections,
             response=response,
@@ -1189,6 +1194,7 @@ async def get_version_by_version_id(
             )
             return _version_pull_http_response(
                 version,
+                tenant_slug=tenant_slug,
                 include_sections=include_sections,
                 exclude_sections=exclude_sections,
                 response=response,
@@ -1236,6 +1242,7 @@ async def get_version_by_version_id(
     )
     return _version_pull_http_response(
         final_row,
+        tenant_slug=tenant_slug,
         include_sections=include_sections,
         exclude_sections=exclude_sections,
         response=response,
