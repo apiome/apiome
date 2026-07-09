@@ -1,4 +1,4 @@
-import { STUDIO_APP_URL } from '../../lib/app-urls';
+import { STUDIO_APP_URL } from '../../../../lib/app-urls';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
