@@ -300,3 +300,51 @@ def test_unknown_path_returns_404_problem_json(mock_client: TestClient) -> None:
         response = mock_client.get("/demo/petstore/1.0.0/unknown")
     assert response.status_code == 404
     assert response.headers["content-type"] == "application/problem+json"
+
+
+def test_schema_synthesis_when_no_examples(mock_client: TestClient) -> None:
+    compiled = _compiled()
+    spec = {
+        **PETSTORE_SPEC,
+        "paths": {
+            "/pets": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "ok",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "required": ["id", "email"],
+                                        "properties": {
+                                            "id": {"type": "string", "format": "uuid"},
+                                            "email": {"type": "string", "format": "email"},
+                                        },
+                                    }
+                                }
+                            },
+                        }
+                    }
+                }
+            }
+        },
+    }
+    compiled = CompiledSpec(
+        revision_id=compiled.revision_id,
+        tenant_slug=compiled.tenant_slug,
+        project_slug=compiled.project_slug,
+        version_label=compiled.version_label,
+        updated_at=compiled.updated_at,
+        spec=spec,
+        operations=tuple(extract_operations(spec)),
+    )
+    with patch(
+        "apiome_mock.handler.load_compiled_spec",
+        new=AsyncMock(return_value=compiled),
+    ):
+        first = mock_client.get("/demo/petstore/1.0.0/pets?__seed=stable")
+        second = mock_client.get("/demo/petstore/1.0.0/pets?__seed=stable")
+    assert first.status_code == 200
+    assert first.json() == second.json()
+    assert "@" in first.json()["email"]

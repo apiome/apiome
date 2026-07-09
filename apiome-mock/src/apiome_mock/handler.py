@@ -15,6 +15,7 @@ from apiome_mock.response_resolver import (
     select_default_success_status,
 )
 from apiome_mock.routing import match_request
+from apiome_mock.schema_synthesizer import parse_mock_seed
 from apiome_mock.spec_cache import SpecCache
 from apiome_mock.spec_loader import load_compiled_spec
 
@@ -98,12 +99,13 @@ async def handle_mock_request(
         )
 
     status, response_obj = select_default_success_status(operation.operation)
+    seed = parse_mock_seed(request.query_params.get("__seed"))
     resolved = resolve_response_body(
         response_obj,
         compiled.spec,
         accept=request.headers.get("accept"),
         prefer_header=request.headers.get("prefer"),
-        seed=0,
+        seed=seed,
         op_key=operation.key,
     )
     if resolved.not_acceptable:
