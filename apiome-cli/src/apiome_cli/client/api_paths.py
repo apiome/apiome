@@ -207,6 +207,20 @@ def version_unpublish(
     return f"{version_record(tenant_slug, project_id, version_record_id)}/unpublish"
 
 
+def version_mock(
+    tenant_slug: str,
+    project_id: str | UUID,
+    version_record_id: str | UUID,
+) -> str:
+    """Hosted-mock toggle for a published version (``PUT …/mock``, SIM-2.1/#4422)."""
+    return f"{version_record(tenant_slug, project_id, version_record_id)}/mock"
+
+
+def mock_usage(tenant_slug: str) -> str:
+    """Tenant mock usage counters and daily rollups (``GET /v1/mocks/{tenant}/usage``, SIM-1.5)."""
+    return f"{V1}/mocks/{tenant_slug}/usage"
+
+
 def classes(tenant_slug: str) -> str:
     return f"{V1}/classes/{tenant_slug}"
 

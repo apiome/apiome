@@ -794,6 +794,38 @@ apiome versions unpublish 1.0.0 --project payments-api
 apiome --json versions publish <version-uuid>
 ```
 
+### Manage hosted mocks
+
+Requires an API key (Tier 2) and tenant scope (`APIOME_TENANT_ID` or
+`--tenant`). Mirrors the SIM-2.1 REST control plane: the mock can only be
+enabled on a **published** version (drafts are rejected by REST with a
+readable error and a non-zero exit), and toggling requires the version
+creator or a tenant-administrator role. `mock status` prints the enabled
+flag, the stable mock base URL, and — when the usage endpoint is available —
+a usage summary for the version.
+
+Pass the project as a UUID or slug and the version as a UUID, slug, or label.
+
+```bash
+# Show mock state, base URL, and usage for a version
+apiome mock status payments-api 1.0.0
+
+# Widen or narrow the usage rollup window (default 30 days)
+apiome mock status payments-api 1.0.0 --days 7
+
+# Enable the hosted mock (published versions only)
+apiome mock enable payments-api 1.0.0
+
+# Disable it again
+apiome mock disable payments-api 1.0.0
+
+# Machine-readable status: {"version": <VersionSchema>, "usage": <MockUsageResponse|null>}
+apiome --json mock status payments-api 1.0.0
+
+# Machine-readable toggle result (raw updated VersionSchema)
+apiome --json mock enable payments-api 1.0.0
+```
+
 ### Export reconstructed specs (CI artifacts)
 
 Requires tenant scope (`APIOME_TENANT_ID` or `--tenant`). Sends `X-API-Key` when configured so protected published versions are visible. Document bytes go to `--output`; diagnostics and metadata go to stderr. With global `--json`, metadata is JSON on stdout when `--output` is a file, and on stderr when `--output -` so stdout stays byte-safe for pipelines.

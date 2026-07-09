@@ -74,3 +74,11 @@ def test_agents_documents_testing_and_yarn_commands(agents: str) -> None:
     assert "yarn cli:test" in agents
     assert "yarn cli:build" in agents
     assert "tests/integration/" in agents
+
+
+def test_agents_documents_mock_commands(agents: str) -> None:
+    """AGENTS.md documents the mock command group and its REST surfaces."""
+    assert "`mock`" in agents
+    assert "src/apiome_cli/client/mock_settings.py" in agents
+    assert "PUT /v1/versions/{tenant}/{project}/{version_record_id}/mock" in agents
+    assert "GET /v1/mocks/{tenant}/usage" in agents

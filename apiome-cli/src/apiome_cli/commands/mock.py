@@ -1,0 +1,137 @@
+"""Hosted mock management commands: ``status``, ``enable``, ``disable`` (SIM-2.4, #4445).
+
+CLI parity with the SIM-2.1 REST control plane: the same eligibility rules and
+error surfaces as ``PUT /v1/versions/{tenant}/{project}/{version}/mock``, with
+output formatting consistent with the other version commands (human table +
+global ``--json``).
+"""
+
+from __future__ import annotations
+
+import typer
+
+from apiome_cli.client.mock_settings import (
+    emit_mock_status,
+    emit_mock_toggle_result,
+    fetch_mock_usage,
+    fetch_project_slug,
+    fetch_version_record,
+    set_version_mock,
+)
+from apiome_cli.client.version_scope import resolve_version_scope
+from apiome_cli.help_util import group_callback_without_subcommand
+from apiome_cli.output import json_mode_from_context
+
+app = typer.Typer(
+    name="mock",
+    help="Manage the hosted mock for published project versions.",
+    context_settings={"help_option_names": ["-h", "--help"]},
+    add_completion=False,
+)
+
+_PROJECT_ARGUMENT = typer.Argument(..., metavar="PROJECT", help="Project UUID or slug.")
+_VERSION_ARGUMENT = typer.Argument(
+    ...,
+    metavar="VERSION",
+    help="Version UUID, slug, or label (e.g. 1.0.0).",
+)
+
+
+@app.callback(invoke_without_command=True)
+def mock_group(ctx: typer.Context) -> None:
+    """Mock command group."""
+    group_callback_without_subcommand(ctx)
+
+
+@app.command("status")
+def mock_status(
+    ctx: typer.Context,
+    project: str = _PROJECT_ARGUMENT,
+    version: str = _VERSION_ARGUMENT,
+    days: int = typer.Option(
+        30,
+        "--days",
+        min=1,
+        help="Usage rollup window in days (only used when the mock is enabled).",
+    ),
+) -> None:
+    """Show mock state, base URL, and usage (GET …/versions/…, GET /v1/mocks/{tenant}/usage).
+
+    The usage summary is best-effort: when the usage endpoint is unavailable
+    (mock server disabled or an older REST service) the status still prints
+    without it.
+    """
+    client, tenant_slug, project_id, version_id = resolve_version_scope(
+        ctx,
+        project=project,
+        version=version,
+    )
+    record = fetch_version_record(client, tenant_slug, project_id, version_id)
+
+    usage = None
+    if record.get("mockEnabled"):
+        project_slug = fetch_project_slug(client, tenant_slug, project_id)
+        version_label = record.get("version_id")
+        if project_slug and isinstance(version_label, str) and version_label:
+            usage = fetch_mock_usage(
+                client,
+                tenant_slug,
+                project_slug=project_slug,
+                version_label=version_label,
+                days=days,
+            )
+
+    emit_mock_status(
+        record,
+        usage,
+        days=days,
+        json_mode=json_mode_from_context(ctx),
+    )
+
+
+@app.command("enable")
+def mock_enable(
+    ctx: typer.Context,
+    project: str = _PROJECT_ARGUMENT,
+    version: str = _VERSION_ARGUMENT,
+) -> None:
+    """Enable the hosted mock (PUT …/mock; published versions only).
+
+    Draft versions are rejected by REST with a readable error and a non-zero
+    exit code — the REST service is the authority on eligibility.
+    """
+    client, tenant_slug, project_id, version_id = resolve_version_scope(
+        ctx,
+        project=project,
+        version=version,
+    )
+    record = set_version_mock(
+        client,
+        tenant_slug,
+        project_id,
+        version_id,
+        enabled=True,
+    )
+    emit_mock_toggle_result(record, json_mode=json_mode_from_context(ctx))
+
+
+@app.command("disable")
+def mock_disable(
+    ctx: typer.Context,
+    project: str = _PROJECT_ARGUMENT,
+    version: str = _VERSION_ARGUMENT,
+) -> None:
+    """Disable the hosted mock (PUT …/mock with enabled=false)."""
+    client, tenant_slug, project_id, version_id = resolve_version_scope(
+        ctx,
+        project=project,
+        version=version,
+    )
+    record = set_version_mock(
+        client,
+        tenant_slug,
+        project_id,
+        version_id,
+        enabled=False,
+    )
+    emit_mock_toggle_result(record, json_mode=json_mode_from_context(ctx))

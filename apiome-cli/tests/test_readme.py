@@ -106,3 +106,21 @@ def test_readme_documents_repository_store_subcommands(readme: str) -> None:
 def test_readme_references_clig_dev(readme: str) -> None:
     """README cites clig.dev CLI guidelines."""
     assert "clig.dev" in readme
+
+
+def test_readme_documents_mock_commands(readme: str) -> None:
+    """README documents hosted-mock management with copy-pasteable examples."""
+    assert "### Manage hosted mocks" in readme
+    mock_section_start = readme.index("### Manage hosted mocks")
+    mock_section = readme[mock_section_start:]
+
+    for command in (
+        "apiome mock status payments-api 1.0.0",
+        "apiome mock enable payments-api 1.0.0",
+        "apiome mock disable payments-api 1.0.0",
+        "apiome --json mock status payments-api 1.0.0",
+    ):
+        assert command in mock_section, f"missing mock example: {command}"
+
+    assert "--days" in mock_section
+    assert "published" in mock_section
