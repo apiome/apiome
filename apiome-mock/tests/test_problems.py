@@ -25,3 +25,18 @@ def test_bad_request_problem_json() -> None:
     assert response.status_code == 400
     assert response.media_type == PROBLEM_CONTENT_TYPE
     assert "bad-request" in response.body.decode()
+
+
+def test_too_many_requests_includes_retry_after() -> None:
+    from apiome_mock.problems import too_many_requests
+
+    response = too_many_requests(
+        "slow down",
+        instance="/demo/petstore/1.0.0/pets",
+        retry_after=2,
+        limit_type="rps",
+    )
+    assert response.status_code == 429
+    assert response.media_type == PROBLEM_CONTENT_TYPE
+    assert response.headers["Retry-After"] == "2"
+    assert "rate-limited" in response.body.decode()

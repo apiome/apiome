@@ -49,6 +49,38 @@ class Settings(BaseSettings):
         min_length=1,
         description="Postgres NOTIFY channel for publish-driven cache invalidation.",
     )
+    rate_limit_enabled: bool = Field(
+        default=True,
+        description="Enforce per-tenant RPS and monthly mock quotas from license tier.",
+    )
+    default_mock_rps: float = Field(
+        default=5.0,
+        gt=0,
+        description="Fallback RPS when license seats omit mock_rps.",
+    )
+    default_mock_requests_per_month: int = Field(
+        default=10_000,
+        ge=0,
+        description="Fallback monthly quota when license seats omit mock_requests_per_month.",
+    )
+    limits_cache_ttl_seconds: float = Field(
+        default=60.0,
+        gt=0,
+        le=3600.0,
+        description="TTL for cached tenant license limits (seconds).",
+    )
+    monthly_usage_cache_ttl_seconds: float = Field(
+        default=30.0,
+        gt=0,
+        le=600.0,
+        description="TTL for cached monthly usage totals (seconds).",
+    )
+    audit_sample_rate: float = Field(
+        default=0.01,
+        ge=0.0,
+        le=1.0,
+        description="Fraction of mock hits written to access_audit (0 disables).",
+    )
 
     @model_validator(mode="after")
     def pool_size_bounds(self) -> Self:

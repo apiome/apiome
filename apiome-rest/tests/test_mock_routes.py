@@ -305,3 +305,30 @@ def test_data_plane_respects_feature_flag(monkeypatch):
     monkeypatch.setattr("app.mock_routes.settings.mock_server_enabled", False)
     r = client.get("/v1/mock/00000000-0000-0000-0000-0000000000b8/pets")
     assert r.status_code == 404
+
+
+def test_mock_usage_endpoint_returns_counters():
+    with patch(
+        "app.mock_routes.db.get_mock_license_limits_for_tenant",
+        return_value={"mock_rps": 5.0, "mock_requests_per_month": 10_000},
+    ), patch(
+        "app.mock_routes.db.get_mock_monthly_usage",
+        return_value=42,
+    ), patch(
+        "app.mock_routes.db.list_mock_usage_rollups",
+        return_value=[
+            {
+                "usage_date": datetime(2026, 7, 8, tzinfo=timezone.utc).date(),
+                "project_slug": "petstore",
+                "version_label": "1.0.0",
+                "request_count": 42,
+            }
+        ],
+    ):
+        r = client.get(f"/v1/mocks/{TENANT}/usage?days=7")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["monthlyRequestCount"] == 42
+    assert body["monthlyQuota"] == 10_000
+    assert body["mockRps"] == 5.0
+    assert body["dailyRollups"][0]["requestCount"] == 42

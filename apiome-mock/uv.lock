@@ -94,7 +94,7 @@ dev = [
 
 [[package]]
 name = "apiome-mock"
-version = "0.1.3"
+version = "0.1.4"
 source = { editable = "." }
 dependencies = [
     { name = "apiome-mcp" },
@@ -143,7 +143,7 @@ dev = [
 
 [[package]]
 name = "apiome-rest"
-version = "1.111.0"
+version = "1.111.1"
 source = { editable = "../apiome-rest" }
 dependencies = [
     { name = "bcrypt" },

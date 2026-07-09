@@ -73,12 +73,16 @@ def _compiled() -> CompiledSpec:
 @pytest.fixture
 def mock_client(monkeypatch: pytest.MonkeyPatch, mock_pool: object) -> TestClient:
     monkeypatch.setenv("APIOME_MOCK_DATABASE_URL", "postgresql://localhost/db")
+    monkeypatch.setenv("APIOME_MOCK_RATE_LIMIT_ENABLED", "false")
     from apiome_mock.settings import get_settings
 
     get_settings.cache_clear()
     from apiome_mock.server import create_app
 
-    with patch("apiome_mock.server.create_async_pool", return_value=mock_pool):
+    with patch("apiome_mock.server.create_async_pool", return_value=mock_pool), patch(
+        "apiome_mock.server.resolve_limits_for_tenant",
+        new=AsyncMock(return_value=None),
+    ), patch("apiome_mock.server.record_mock_request"):
         app = create_app()
         app.state.db_pool = mock_pool
         app.state.spec_cache = SpecCache(max_entries=8, ttl_seconds=300.0)

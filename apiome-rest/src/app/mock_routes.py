@@ -34,6 +34,8 @@ from .models import (
     MockInstanceResponse,
     MockProvisionRequest,
     MockScenarioSwitchRequest,
+    MockUsageDailyRollup,
+    MockUsageResponse,
 )
 from .openapi_generator import generate_openapi_spec
 from .rate_limit import FixedWindowRateLimiter
@@ -221,6 +223,43 @@ async def list_mocks(
     _require_enabled()
     instances = db.list_mock_instances(auth_data["tenant_id"])
     return [_instance_to_response(row, request) for row in instances]
+
+
+@router.get("/{tenant_slug}/usage", response_model=MockUsageResponse)
+async def get_mock_usage(
+    tenant_slug: str,
+    days: int = 30,
+    project_slug: Optional[str] = None,
+    version_label: Optional[str] = None,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> MockUsageResponse:
+    """Return mock usage counters and daily rollups for the tenant (#4420, SIM-1.5)."""
+    _require_enabled()
+    tenant_id = auth_data["tenant_id"]
+    limits = db.get_mock_license_limits_for_tenant(tenant_id)
+    rollups = db.list_mock_usage_rollups(
+        tenant_id,
+        days=days,
+        project_slug=project_slug,
+        version_label=version_label,
+    )
+    daily = [
+        MockUsageDailyRollup(
+            usage_date=row["usage_date"].isoformat()
+            if hasattr(row["usage_date"], "isoformat")
+            else str(row["usage_date"]),
+            project_slug=row["project_slug"],
+            version_label=row["version_label"],
+            request_count=int(row["request_count"]),
+        )
+        for row in rollups
+    ]
+    return MockUsageResponse(
+        monthly_request_count=db.get_mock_monthly_usage(tenant_id),
+        monthly_quota=int(limits["mock_requests_per_month"]),
+        mock_rps=float(limits["mock_rps"]),
+        daily_rollups=daily,
+    )
 
 
 @router.get("/{tenant_slug}/{mock_id}", response_model=MockInstanceResponse)

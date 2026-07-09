@@ -12,6 +12,11 @@ from fastapi.responses import JSONResponse, Response
 from psycopg_pool import AsyncConnectionPool
 
 from apiome_mock.database_pool import create_async_pool, ping_pool
+from apiome_mock.guard import (
+    enforce_mock_limits,
+    record_mock_request,
+    resolve_limits_for_tenant,
+)
 from apiome_mock.handler import handle_mock_request
 from apiome_mock.logging_config import configure_logging
 from apiome_mock.settings import get_settings
@@ -91,7 +96,21 @@ def create_app() -> FastAPI:
     ) -> Response:
         pool: AsyncConnectionPool = app.state.db_pool
         cache: SpecCache = app.state.spec_cache
-        return await handle_mock_request(
+        settings = get_settings()
+
+        blocked = await enforce_mock_limits(
+            request,
+            tenant=tenant,
+            project=project,
+            version=version,
+            pool=pool,
+            settings=settings,
+        )
+        if blocked is not None:
+            return blocked
+
+        limits = await resolve_limits_for_tenant(pool, tenant, settings=settings)
+        response = await handle_mock_request(
             request,
             tenant=tenant,
             project=project,
@@ -100,5 +119,18 @@ def create_app() -> FastAPI:
             pool=pool,
             cache=cache,
         )
+        if limits is not None:
+            record_mock_request(
+                pool=pool,
+                request=request,
+                tenant=tenant,
+                project=project,
+                version=version,
+                path=path,
+                status_code=response.status_code,
+                tenant_id=limits.tenant_id,
+                settings=settings,
+            )
+        return response
 
     return app

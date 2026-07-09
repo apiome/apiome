@@ -3937,6 +3937,28 @@ class MockInstanceResponse(BaseModel):
     last_activity_at: Optional[str] = Field(default=None, serialization_alias="lastActivityAt")
 
 
+class MockUsageDailyRollup(BaseModel):
+    """One daily mock usage row for a tenant/project/version coordinate (#4420)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    usage_date: str = Field(serialization_alias="usageDate")
+    project_slug: str = Field(serialization_alias="projectSlug")
+    version_label: str = Field(serialization_alias="versionLabel")
+    request_count: int = Field(serialization_alias="requestCount")
+
+
+class MockUsageResponse(BaseModel):
+    """Mock usage counters for a tenant (#4420, SIM-1.5)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    monthly_request_count: int = Field(serialization_alias="monthlyRequestCount")
+    monthly_quota: int = Field(serialization_alias="monthlyQuota")
+    mock_rps: float = Field(serialization_alias="mockRps")
+    daily_rollups: List[MockUsageDailyRollup] = Field(serialization_alias="dailyRollups")
+
+
 # ---------------------------------------------------------------------------
 # MCP Catalog — endpoint registration & management (V2-MCP-17.1 / MCAT-3.1, #3663)
 # ---------------------------------------------------------------------------
