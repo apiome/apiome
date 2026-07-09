@@ -2,7 +2,7 @@
 #
 # End-to-end golden-path smoke test (#3608) against a clean `docker compose up`.
 #
-# Brings up the full spine (postgres + migrate + seed + rest + mcp), runs the golden-path
+# Brings up the full spine (postgres + migrate + seed + rest + mcp + mock), runs the golden-path
 # harness (scripts/golden_path/smoke.py), and tears the stack down. Exits non-zero if any
 # step of the golden path fails, so it works both by hand and as a CI gate.
 #
@@ -59,5 +59,6 @@ docker compose run --rm seed
 echo "==> Running the golden-path smoke test"
 export APIOME_REST_URL="${APIOME_REST_URL:-http://localhost:8000}"
 export APIOME_MCP_URL="${APIOME_MCP_URL:-http://localhost:8765/mcp}"
+export APIOME_MOCK_URL="${APIOME_MOCK_URL:-http://localhost:8775}"
 export APIOME_CLI_CMD="${APIOME_CLI_CMD:-${CLI_RUN[*]}}"
 "${PY_RUN[@]}" "$SCRIPT_DIR/smoke.py"

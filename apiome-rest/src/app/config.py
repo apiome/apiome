@@ -270,6 +270,14 @@ class Settings(BaseSettings):
             "mock_rate_limit_per_minute",
         ),
     )
+    mock_public_base_url: str = Field(
+        default="http://localhost:8775",
+        validation_alias=AliasChoices(
+            "APIOME_MOCK_PUBLIC_BASE_URL",
+            "mock_public_base_url",
+        ),
+        description="Public base URL for hosted mock runtime (no trailing slash).",
+    )
 
     # MCP test harness (#3689, V2-MCP-22.3 / MCAT-8.3). Each live test invocation against a
     # cataloged endpoint hits a real external server, so the test console is rate limited

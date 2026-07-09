@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from apiome_mcp.spec_openapi_loaders import fetch_openapi_generation_inputs_async
@@ -12,6 +12,23 @@ from app.mock_engine import MockOperation, extract_operations
 from app.openapi_generator import generate_openapi_spec
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
+
+MockAccessStatus = Literal["ok", "disabled", "missing"]
+
+_RESOLVE_MOCK_ACCESS = """
+    SELECT
+      v.mock_enabled,
+      s.id IS NOT NULL AS is_public_spec
+    FROM apiome.versions v
+    INNER JOIN apiome.projects p ON p.id = v.project_id AND p.deleted_at IS NULL
+    INNER JOIN apiome.tenants t ON t.id = p.tenant_id AND t.deleted_at IS NULL AND t.enabled IS TRUE
+    LEFT JOIN apiome.mcp_v_public_specs s ON s.id = v.id
+    WHERE t.slug = %(tenant)s
+      AND p.slug = %(project)s
+      AND v.version_id = %(version)s
+      AND v.deleted_at IS NULL
+    LIMIT 1
+"""
 
 _RESOLVE_PUBLISHED_SPEC = """
     SELECT
@@ -29,6 +46,7 @@ _RESOLVE_PUBLISHED_SPEC = """
     WHERE t.slug = %(tenant)s
       AND p.slug = %(project)s
       AND v.version_id = %(version)s
+      AND v.mock_enabled IS TRUE
     LIMIT 1
 """
 
@@ -56,6 +74,28 @@ class CompiledSpec:
     @property
     def cache_key(self) -> tuple[str, str, str]:
         return (self.tenant_slug, self.project_slug, self.version_label)
+
+
+async def get_mock_access_status(
+    pool: AsyncConnectionPool,
+    *,
+    tenant: str,
+    project: str,
+    version: str,
+) -> MockAccessStatus:
+    """Return whether mock serving is allowed for the slug coordinates."""
+    async with pool.connection() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(
+                _RESOLVE_MOCK_ACCESS,
+                {"tenant": tenant, "project": project, "version": version},
+            )
+            row = await cur.fetchone()
+    if row is None or not row.get("is_public_spec"):
+        return "missing"
+    if not row.get("mock_enabled"):
+        return "disabled"
+    return "ok"
 
 
 async def load_compiled_spec(

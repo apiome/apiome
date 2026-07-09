@@ -1762,6 +1762,18 @@ class VersionSchema(BaseModel):
         serialization_alias="publishedImmutable",
         description="When published: if true, git-like writes require tenant-admin override (#2586).",
     )
+    mock_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("mockEnabled", "mock_enabled"),
+        serialization_alias="mockEnabled",
+        description="When true on a published version, the hosted mock runtime serves this revision (#4422).",
+    )
+    mock_base_url: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("mockBaseUrl", "mock_base_url"),
+        serialization_alias="mockBaseUrl",
+        description="Stable mock URL when mockEnabled is true (computed by REST).",
+    )
     enabled: bool = True
     parent_version_id: Optional[str] = None
     merge_parent_version_id: Optional[str] = None
@@ -2368,6 +2380,14 @@ class VersionPublishRequest(BaseModel):
                 )
             self.change_report_baseline_revision_id = bid
         return self
+
+
+class VersionMockToggleRequest(BaseModel):
+    """Enable or disable the hosted mock for a published version (#4422, SIM-2.1)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    enabled: bool = Field(description="When true, apiome-mock serves this published version.")
 
 
 class VersionPublishChangeReportPreviewRequest(BaseModel):

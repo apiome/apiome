@@ -2707,6 +2707,7 @@ class Database:
         query = f"""
             SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
                    v.change_log, v.visibility, v.published, v.published_at, v.published_immutable,
+                   v.mock_enabled,
                    v.enabled, v.parent_version_id, v.merge_parent_version_id,
                    v.forked_from_revision_id, v.upstream_project_id,
                    v.revision_locked, v.metadata,
@@ -2777,6 +2778,7 @@ class Database:
         query = """
             SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
                    v.change_log, v.visibility, v.published, v.published_at, v.published_immutable,
+                   v.mock_enabled,
                    v.enabled, v.parent_version_id, v.merge_parent_version_id,
                    v.forked_from_revision_id, v.upstream_project_id,
                    v.revision_locked, v.metadata,
@@ -2807,6 +2809,7 @@ class Database:
         query = """
             SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
                    v.change_log, v.visibility, v.published, v.published_at, v.published_immutable,
+                   v.mock_enabled,
                    v.enabled, v.parent_version_id, v.merge_parent_version_id,
                    v.forked_from_revision_id, v.upstream_project_id,
                    v.revision_locked, v.metadata,
@@ -3389,6 +3392,7 @@ class Database:
               )
             RETURNING v.id, v.project_id, v.creator_id, v.version_id, v.description,
                       v.change_log, v.visibility, v.published, v.published_at, v.published_immutable,
+                      v.mock_enabled,
                       v.enabled, v.commit_author, v.commit_message, v.external_ref,
                       v.source_commit_sha, v.source_committed_at,
                       v.created_at, v.updated_at
@@ -3439,6 +3443,50 @@ class Database:
                             """, (version_record_id, class_data['id'], schema_json))
                 conn.commit()
                 return result
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def set_version_mock_enabled(
+        self,
+        version_record_id: str,
+        tenant_id: str,
+        user_id: str,
+        *,
+        enabled: bool,
+    ) -> Optional[Dict[str, Any]]:
+        """Toggle mock_enabled on a version (creator or tenant admin only, #4422)."""
+        query = """
+            UPDATE apiome.versions v
+            SET mock_enabled = %s,
+                updated_at = CURRENT_TIMESTAMP
+            FROM apiome.projects p
+            WHERE v.id = %s
+              AND v.project_id = p.id
+              AND p.tenant_id = %s
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+              AND (
+                v.creator_id = %s
+                OR EXISTS (
+                  SELECT 1 FROM apiome.tenant_administrators ta
+                  WHERE ta.tenant_id = p.tenant_id AND ta.user_id = %s
+                )
+              )
+            RETURNING v.id
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    query,
+                    (enabled, version_record_id, tenant_id, user_id, user_id),
+                )
+                updated = cursor.fetchone()
+                conn.commit()
+                if not updated:
+                    return None
+                return self.get_version_by_id(version_record_id, tenant_id)
         except Exception as e:
             conn.rollback()
             raise e

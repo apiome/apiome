@@ -27,6 +27,15 @@ def test_bad_request_problem_json() -> None:
     assert "bad-request" in response.body.decode()
 
 
+def test_mock_disabled_problem_json() -> None:
+    from apiome_mock.problems import mock_disabled
+
+    response = mock_disabled("mock is off", instance="/demo/petstore/1.0.0/pets")
+    assert response.status_code == 404
+    assert response.media_type == PROBLEM_CONTENT_TYPE
+    assert "mock-disabled" in response.body.decode()
+
+
 def test_too_many_requests_includes_retry_after() -> None:
     from apiome_mock.problems import too_many_requests
 

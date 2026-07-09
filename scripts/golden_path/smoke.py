@@ -6,7 +6,8 @@ first failed step so it works as a CI regression net and an executable definitio
 "the product works":
 
     import OpenAPI -> edit a class & a path -> lint -> cut a version -> publish
-                  -> view in browse -> export OpenAPI + download via CLI -> query via MCP
+                  -> enable mock -> GET /pets via mock -> view in browse
+                  -> export OpenAPI + download via CLI -> query via MCP
 
 The steps hit the same REST endpoints the UI calls (so the "edit in the UI" step is
 exercised through the API), invoke the real ``apiome`` CLI for the export/download
@@ -17,6 +18,7 @@ Configuration (all optional; defaults match ``docker compose up`` + dev seed):
 
     APIOME_REST_URL   REST base URL                (default http://localhost:8000)
     APIOME_MCP_URL    MCP streamable-HTTP endpoint (default http://localhost:8765/mcp)
+    APIOME_MOCK_URL   Mock runtime base URL        (default http://localhost:8775)
     APIOME_TENANT     Seeded tenant slug           (default acme-corp)
     APIOME_API_KEY    Seeded dev API key           (default sk_devseed0000...0000)
     APIOME_CLI_CMD    Command to run the CLI       (default "apiome"; shlex-split)
@@ -46,6 +48,7 @@ from openapi_spec_validator import validate as validate_openapi  # type: ignore
 
 REST_URL = os.environ.get("APIOME_REST_URL", "http://localhost:8000").rstrip("/")
 MCP_URL = os.environ.get("APIOME_MCP_URL", "http://localhost:8765/mcp").rstrip("/")
+MOCK_URL = os.environ.get("APIOME_MOCK_URL", "http://localhost:8775").rstrip("/")
 TENANT = os.environ.get("APIOME_TENANT", "acme-corp")
 API_KEY = os.environ.get(
     "APIOME_API_KEY",
@@ -205,11 +208,11 @@ class McpClient:
 # ----------------------------------------------------------------------------- steps
 
 
-def wait_healthy(rest: Rest, mcp_base: str) -> None:
-    step("Health: REST and MCP are up")
+def wait_healthy(rest: Rest, mcp_base: str, mock_base: str) -> None:
+    step("Health: REST, MCP, and mock are up")
     deadline = time.time() + 90
-    rest_ok = mcp_ok = False
-    while time.time() < deadline and not (rest_ok and mcp_ok):
+    rest_ok = mcp_ok = mock_ok = False
+    while time.time() < deadline and not (rest_ok and mcp_ok and mock_ok):
         if not rest_ok:
             try:
                 rest_ok = rest.get("/health").status_code == 200
@@ -220,11 +223,17 @@ def wait_healthy(rest: Rest, mcp_base: str) -> None:
                 mcp_ok = httpx.get(f"{mcp_base}/health", timeout=5).status_code == 200
             except httpx.HTTPError:
                 pass
-        if not (rest_ok and mcp_ok):
+        if not mock_ok:
+            try:
+                mock_ok = httpx.get(f"{mock_base}/health", timeout=5).status_code == 200
+            except httpx.HTTPError:
+                pass
+        if not (rest_ok and mcp_ok and mock_ok):
             time.sleep(1)
     require(rest_ok, f"REST /health never became ready at {REST_URL}")
     require(mcp_ok, f"MCP /health never became ready at {mcp_base}")
-    ok("REST and MCP healthy")
+    require(mock_ok, f"Mock /health never became ready at {mock_base}")
+    ok("REST, MCP, and mock healthy")
 
 
 def import_openapi(rest: Rest) -> Dict[str, str]:
@@ -394,6 +403,33 @@ def export_via_cli(project_slug: str, version_id: str, edited_class: str) -> Non
         ok(f"CLI downloaded a valid OpenAPI document ({out.stat().st_size} bytes)")
 
 
+def enable_mock(rest: Rest, project_id: str, version_record_id: str) -> str:
+    step("Enable mock for the published version")
+    toggled = rest.ok_json(
+        rest.put(
+            f"/v1/versions/{TENANT}/{project_id}/{version_record_id}/mock",
+            json={"enabled": True},
+        )
+    )
+    require(toggled.get("mockEnabled") is True, f"mock not enabled: {toggled}")
+    mock_url = toggled.get("mockBaseUrl")
+    require(bool(mock_url), f"mock base URL missing from toggle response: {toggled}")
+    ok(f"mock enabled at {mock_url}")
+    return str(mock_url)
+
+
+def get_pets_via_mock(project_slug: str, version_id: str) -> None:
+    step("Mock: GET /pets returns 200 with Pet shape")
+    url = f"{MOCK_URL}/{TENANT}/{project_slug}/{version_id}/pets"
+    resp = httpx.get(url, timeout=TIMEOUT)
+    if resp.status_code != 200:
+        raise SmokeError(_detail(resp))
+    body = resp.json()
+    require(isinstance(body, dict), f"expected a Pet object, got {type(body).__name__}: {body!r}")
+    require("id" in body and "name" in body, f"Pet response missing id/name keys: {body!r}")
+    ok(f"GET /pets returned Pet id={body.get('id')!r} name={body.get('name')!r}")
+
+
 def query_via_mcp(client: httpx.Client, project_id: str) -> None:
     step("Query via MCP")
     mcp = McpClient(client, MCP_URL)
@@ -418,12 +454,12 @@ def query_via_mcp(client: httpx.Client, project_id: str) -> None:
 
 def main() -> int:
     print("=== apiome golden-path smoke test (#3608) ===")
-    print(f"REST: {REST_URL}   MCP: {MCP_URL}   tenant: {TENANT}")
+    print(f"REST: {REST_URL}   MCP: {MCP_URL}   Mock: {MOCK_URL}   tenant: {TENANT}")
     mcp_base = MCP_URL[: -len("/mcp")] if MCP_URL.endswith("/mcp") else MCP_URL
     try:
         with httpx.Client(timeout=TIMEOUT) as client:
             rest = Rest(client)
-            wait_healthy(rest, mcp_base)
+            wait_healthy(rest, mcp_base, MOCK_URL)
             imported = import_openapi(rest)
             edited_class = edit_class(rest, imported["version_record_id"])
             edit_path(rest, imported["version_record_id"])
@@ -433,6 +469,8 @@ def main() -> int:
             # cut, so the imported revision is the one that holds the full path set.
             cut_version(rest, imported["project_id"], imported["version_record_id"])
             publish_version(rest, imported["project_id"], imported["version_record_id"])
+            enable_mock(rest, imported["project_id"], imported["version_record_id"])
+            get_pets_via_mock(PROJECT_SLUG, IMPORT_VERSION)
             lint_published_spec(rest, PROJECT_SLUG, IMPORT_VERSION, edited_class)
             view_in_browse(rest, PROJECT_SLUG, IMPORT_VERSION)
             export_via_cli(PROJECT_SLUG, IMPORT_VERSION, edited_class)

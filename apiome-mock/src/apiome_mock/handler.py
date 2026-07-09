@@ -13,6 +13,7 @@ from psycopg_pool import AsyncConnectionPool
 from apiome_mock.problems import (
     bad_request,
     method_not_allowed,
+    mock_disabled,
     not_acceptable,
     not_found,
     undefined_response_status,
@@ -28,7 +29,7 @@ from apiome_mock.response_resolver import (
 from apiome_mock.routing import match_request
 from apiome_mock.schema_synthesizer import parse_mock_seed
 from apiome_mock.spec_cache import SpecCache
-from apiome_mock.spec_loader import load_compiled_spec
+from apiome_mock.spec_loader import get_mock_access_status, load_compiled_spec
 
 
 def _instance_path(tenant: str, project: str, version: str, path: str) -> str:
@@ -157,6 +158,18 @@ async def handle_mock_request(
     """Serve a mock response for ``/{tenant}/{project}/{version}/{path}``."""
     instance = _instance_path(tenant, project, version, path)
     relative_path = "/" + path.strip("/") if path.strip("/") else "/"
+
+    access = await get_mock_access_status(pool, tenant=tenant, project=project, version=version)
+    if access == "disabled":
+        return mock_disabled(
+            f"Mock is disabled for {tenant}/{project}/{version}.",
+            instance=instance,
+        )
+    if access == "missing":
+        return not_found(
+            f"No published spec for {tenant}/{project}/{version}.",
+            instance=instance,
+        )
 
     compiled = await resolve_compiled_spec(pool, cache, tenant=tenant, project=project, version=version)
     if compiled is None:

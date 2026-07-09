@@ -6,6 +6,8 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Mock server: `apiome-mock` wired into docker-compose (dev + production overlay with Caddy TLS), healthchecks, and the golden-path smoke step — publish → enable mock → GET /pets → assert 200/shape (SIM-1.6, #4421)
+- Mock server: per-version enable/disable toggle (`PUT /v1/versions/{tenant}/{project}/{version}/mock`) with `mockEnabled` + computed `mockBaseUrl` on version GET; apiome-mock returns 404 problem+json when mock is disabled (SIM-2.1, #4422)
 - Mock server: per-tenant rate limiting and monthly quotas keyed by license tier (free tier 5 rps / 10k req/mo), sampled mock hits in the tenant access audit trail, daily `mock_usage` rollups, and `GET /v1/mocks/{tenant}/usage` for Control Panel stats (SIM-1.5, #4420)
 - Mock server: request validation and 4xx simulation validate path/query/header params and request bodies against the operation spec, return spec-declared 400/415 bodies when defined (otherwise problem+json), and support forced error paths via `Prefer: code=<status>` or `?__status=<status>` (SIM-1.4, #4419)
 - Mock server: new `apiome-mock` FastAPI runtime with `/{tenant}/{project}/{version}/{path}` routing, published-spec resolution via Postgres, LRU caching with publish NOTIFY invalidation, and RFC 7807 problem+json infrastructure errors (SIM-1.1, #4416)

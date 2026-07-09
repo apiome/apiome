@@ -3,7 +3,7 @@ name: Golden Path
 # End-to-end spine smoke test (RC1-0.1, #3608). Brings up the full spine via the root
 # docker-compose (postgres -> migrate -> seed -> rest -> mcp) and runs the golden path:
 #   import OpenAPI -> edit a class & a path -> lint -> cut a version -> publish
-#                 -> view in browse -> export via CLI -> query via MCP
+#                 -> enable mock -> GET /pets via mock -> view in browse -> export via CLI -> query via MCP
 # This is intended to be a REQUIRED status check on `main`: a red run means the spine regressed.
 
 on:
@@ -16,6 +16,7 @@ on:
       - 'docker-compose.env.example'
       - 'apiome-rest/**'
       - 'apiome-mcp/**'
+      - 'apiome-mock/**'
       - 'apiome-db/**'
       - 'apiome-cli/**'
   pull_request:
@@ -27,6 +28,7 @@ on:
       - 'docker-compose.env.example'
       - 'apiome-rest/**'
       - 'apiome-mcp/**'
+      - 'apiome-mock/**'
       - 'apiome-db/**'
       - 'apiome-cli/**'
   workflow_dispatch:
@@ -66,6 +68,7 @@ jobs:
         env:
           APIOME_REST_URL: http://localhost:8000
           APIOME_MCP_URL: http://localhost:8765/mcp
+          APIOME_MOCK_URL: http://localhost:8775
           APIOME_CLI_CMD: uv run --project apiome-cli apiome
         run: uv run --project apiome-cli python scripts/golden_path/smoke.py
 
