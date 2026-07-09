@@ -7,6 +7,8 @@ import { EntityHeader } from '../../../../components/EntityHeader';
 import { SpecSidebar } from '../../../../components/SpecSidebar';
 import { SpecViewer, type SpecFormat } from '../../../../components/SpecViewer';
 import { PublicExportDialog } from '../../../../components/export/PublicExportDialog';
+import { mockCurlCommand, sampleMockPath } from '../../../../../../lib/mock/mockUrl';
+import { MockCallout } from './MockCallout';
 
 interface Version {
   id: string;
@@ -16,6 +18,7 @@ interface Version {
   published_at?: string;
   tenant_name?: string;
   project_name?: string;
+  mock_enabled?: boolean;
 }
 
 interface SidebarVersion {
@@ -31,6 +34,8 @@ interface VersionClientProps {
   projectSlug: string;
   versionSlug: string;
   restApiBaseUrl: string;
+  /** Public mock base URL for this version; null when its mock is disabled (SIM-2.3, #4444). */
+  mockBaseUrl: string | null;
 }
 
 export function VersionClient({
@@ -40,6 +45,7 @@ export function VersionClient({
   projectSlug,
   versionSlug,
   restApiBaseUrl,
+  mockBaseUrl,
 }: VersionClientProps) {
   const [spec, setSpec] = useState<unknown>(null);
   const [format, setFormat] = useState<SpecFormat>('openapi');
@@ -91,10 +97,18 @@ export function VersionClient({
           description={version.description}
           monogram={`v${(version.version_id.split('.')[0] || '0').slice(0, 2)}`}
           badges={
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-              Published
-            </span>
+            <>
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                Published
+              </span>
+              {mockBaseUrl && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700 dark:bg-sky-500/10 dark:text-sky-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-sky-500"></span>
+                  Mock available
+                </span>
+              )}
+            </>
           }
           meta={[
             { label: 'Project', value: version.project_name ?? projectSlug },
@@ -108,6 +122,16 @@ export function VersionClient({
             { label: 'Format', value: 'OpenAPI / Arazzo / JSON Schema' },
           ]}
         />
+
+        {mockBaseUrl && (
+          <MockCallout
+            mockBaseUrl={mockBaseUrl}
+            curlCommand={mockCurlCommand(
+              mockBaseUrl,
+              format === 'openapi' ? sampleMockPath(spec) : '/'
+            )}
+          />
+        )}
 
         {version.change_log && (
           <section className="rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
@@ -150,6 +174,7 @@ export function VersionClient({
             projectSlug={projectSlug}
             versionSlug={versionSlug}
             restApiBaseUrl={restApiBaseUrl}
+            mockBaseUrl={mockBaseUrl}
             onSpecChange={onSpecChange}
           />
         </section>

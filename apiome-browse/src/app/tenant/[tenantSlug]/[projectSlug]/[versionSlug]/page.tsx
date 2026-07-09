@@ -3,6 +3,7 @@ import {
   getPublicVersionDetails,
   getPublicVersionsForProject,
 } from '../../../../../../lib/db/helper';
+import { buildMockBaseUrl } from '../../../../../../lib/mock/mockUrl';
 import { VersionClient } from './VersionClient';
 
 export default async function VersionPage({
@@ -23,6 +24,14 @@ export default async function VersionPage({
   const restApiBaseUrl =
     process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
 
+  // Public mock base URL for this version — only when its mock is enabled (SIM-2.3, #4444).
+  // Rendered server-side into props, mirroring the Control Panel's use of the same variable.
+  const mockPublicBaseUrl =
+    process.env.APIOME_MOCK_PUBLIC_BASE_URL || 'http://localhost:8775';
+  const mockBaseUrl = version.mock_enabled
+    ? buildMockBaseUrl(mockPublicBaseUrl, tenantSlug, projectSlug, version.version_id)
+    : null;
+
   return (
     <VersionClient
       version={version}
@@ -31,6 +40,7 @@ export default async function VersionPage({
       projectSlug={projectSlug}
       versionSlug={versionSlug}
       restApiBaseUrl={restApiBaseUrl}
+      mockBaseUrl={mockBaseUrl}
     />
   );
 }
