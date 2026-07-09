@@ -87,6 +87,7 @@ def test_list_capability_directory_passes_filters(mdb):
             "host": "mcp.acme.example",
             "visibility": "private",
             "sort": "name",
+            "direction": "desc",
             "limit": 10,
             "offset": 5,
         },
@@ -99,6 +100,7 @@ def test_list_capability_directory_passes_filters(mdb):
     assert kwargs["host"] == "mcp.acme.example"
     assert kwargs["visibility"] == "private"
     assert kwargs["sort"] == "name"
+    assert kwargs["direction"] == "desc"
     assert kwargs["limit"] == 10
     assert kwargs["offset"] == 5
 
@@ -124,3 +126,16 @@ def test_list_capability_directory_empty_page(mdb):
 def test_list_capability_directory_invalid_sort():
     r = client.get("/v1/mcp/acme/capabilities", params={"sort": "bogus"})
     assert r.status_code == 422
+
+
+def test_list_capability_directory_invalid_direction():
+    r = client.get("/v1/mcp/acme/capabilities", params={"direction": "sideways"})
+    assert r.status_code == 422
+
+
+@patch("app.mcp_catalog_routes.db")
+def test_list_capability_directory_defaults_direction_asc(mdb):
+    mdb.list_mcp_capability_directory.return_value = ([], 0)
+    client.get("/v1/mcp/acme/capabilities")
+    _, kwargs = mdb.list_mcp_capability_directory.call_args
+    assert kwargs["direction"] == "asc"

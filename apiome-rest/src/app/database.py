@@ -10233,6 +10233,7 @@ class Database:
         grade: Optional[str] = None,
         visibility: Optional[str] = None,
         sort: str = "server",
+        direction: str = "asc",
         limit: int = 50,
         offset: int = 0,
     ) -> Tuple[List[Dict[str, Any]], int]:
@@ -10242,6 +10243,8 @@ class Database:
         scoped by ``tenant_id`` with the same composable host/category/grade/visibility filters as
         catalog search. Optional ``name_pattern`` matches item ``name`` or ``title`` case-
         insensitively (substring); ``item_type`` and ``endpoint_id`` narrow to one kind or server.
+        ``sort`` picks the primary column (server/name/type) and ``direction`` (asc/desc) flips it;
+        secondary tie-break columns stay ascending for a stable order.
         """
         where_extra, fparams = self._mcp_capability_directory_where(
             name_pattern=name_pattern,
@@ -10252,11 +10255,12 @@ class Database:
             grade=grade,
             visibility=visibility,
         )
+        dir_kw = "DESC" if str(direction).lower() == "desc" else "ASC"
         order_by = {
-            "name": "ci.item_type ASC, ci.name ASC, e.name ASC",
-            "type": "ci.item_type ASC, ci.name ASC, e.name ASC",
-            "server": "e.name ASC, ci.ordinal ASC",
-        }.get(sort, "e.name ASC, ci.ordinal ASC")
+            "name": f"ci.name {dir_kw}, ci.item_type ASC, e.name ASC",
+            "type": f"ci.item_type {dir_kw}, ci.name ASC, e.name ASC",
+            "server": f"e.name {dir_kw}, ci.ordinal ASC",
+        }.get(sort, f"e.name {dir_kw}, ci.ordinal ASC")
         base_from = """
             FROM apiome.mcp_capability_items ci
             JOIN apiome.mcp_endpoints e ON e.current_version_id = ci.version_id

@@ -10,7 +10,7 @@
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Layers, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronsUpDown, ChevronUp, Layers, RefreshCw } from 'lucide-react';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import { EmptyState } from '@/app/components/ui/EmptyState';
@@ -42,7 +42,54 @@ import {
   type McpCapabilityDirectoryEntry,
   type McpCapabilityDirectoryFilters,
   type McpCapabilityDirectorySort,
+  type McpCapabilityDirectorySortDirection,
 } from '@/app/components/ade/dashboard/mcp/mcpCapabilityDirectoryUi';
+
+const CAPABILITY_HEADER_CLASS =
+  'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400';
+
+function CapabilitySortHeader({
+  label,
+  sortKey,
+  activeSort,
+  direction,
+  onSort,
+  className,
+}: {
+  label: string;
+  sortKey: McpCapabilityDirectorySort;
+  activeSort: McpCapabilityDirectorySort;
+  direction: McpCapabilityDirectorySortDirection;
+  onSort: (key: McpCapabilityDirectorySort) => void;
+  className?: string;
+}) {
+  const active = activeSort === sortKey;
+  const Icon = !active ? ChevronsUpDown : direction === 'asc' ? ChevronUp : ChevronDown;
+  return (
+    <th
+      scope="col"
+      aria-sort={active ? (direction === 'asc' ? 'ascending' : 'descending') : 'none'}
+      className={`${CAPABILITY_HEADER_CLASS}${className ? ` ${className}` : ''}`}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className="group inline-flex items-center gap-1 uppercase tracking-wide hover:text-gray-700 dark:hover:text-gray-200"
+        title={`Sort by ${label.toLowerCase()}${active ? (direction === 'asc' ? ' (descending)' : ' (ascending)') : ''}`}
+      >
+        <span className={active ? 'text-indigo-600 dark:text-indigo-400' : undefined}>{label}</span>
+        <Icon
+          className={`h-3.5 w-3.5 shrink-0 ${
+            active
+              ? 'text-indigo-600 dark:text-indigo-400'
+              : 'text-gray-300 group-hover:text-gray-400 dark:text-gray-600 dark:group-hover:text-gray-500'
+          }`}
+          aria-hidden
+        />
+      </button>
+    </th>
+  );
+}
 
 export default function McpCapabilityDirectoryPage() {
   const { data: session } = useSession();
@@ -58,6 +105,7 @@ export default function McpCapabilityDirectoryPage() {
     MCP_CAPABILITY_DIRECTORY_DEFAULT_FILTERS,
   );
   const [sort, setSort] = useState<McpCapabilityDirectorySort>('server');
+  const [direction, setDirection] = useState<McpCapabilityDirectorySortDirection>('asc');
   const [nameDraft, setNameDraft] = useState('');
 
   const pageCount = Math.max(1, Math.ceil(total / MCP_CAPABILITY_DIRECTORY_PAGE_SIZE));
@@ -76,6 +124,7 @@ export default function McpCapabilityDirectoryPage() {
       const params = mcpCapabilityDirectoryQueryParams(
         filters,
         sort,
+        direction,
         offset,
         MCP_CAPABILITY_DIRECTORY_PAGE_SIZE,
       );
@@ -97,7 +146,7 @@ export default function McpCapabilityDirectoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentTenantId, filters, offset, sort]);
+  }, [currentTenantId, filters, offset, sort, direction]);
 
   useEffect(() => {
     void load();
@@ -107,6 +156,19 @@ export default function McpCapabilityDirectoryPage() {
     setOffset(0);
     setFilters((prev) => ({ ...prev, name: nameDraft.trim() }));
   }, [nameDraft]);
+
+  const handleSort = useCallback(
+    (key: McpCapabilityDirectorySort) => {
+      setOffset(0);
+      if (key === sort) {
+        setDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+      } else {
+        setSort(key);
+        setDirection('asc');
+      }
+    },
+    [sort],
+  );
 
   const summary = useMemo(() => {
     if (total === 0) return 'No capabilities';
@@ -258,6 +320,7 @@ export default function McpCapabilityDirectoryPage() {
                   onValueChange={(value) => {
                     setOffset(0);
                     setSort(value as McpCapabilityDirectorySort);
+                    setDirection('asc');
                   }}
                 >
                   <SelectTrigger id="capability-directory-sort">
@@ -325,28 +388,30 @@ export default function McpCapabilityDirectoryPage() {
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                   <thead className="bg-gray-50 dark:bg-gray-900/40">
                     <tr>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
-                      >
-                        Capability
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
-                      >
-                        Type
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
-                      >
-                        Server
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
-                      >
+                      <CapabilitySortHeader
+                        label="Capability"
+                        sortKey="name"
+                        activeSort={sort}
+                        direction={direction}
+                        onSort={handleSort}
+                      />
+                      <CapabilitySortHeader
+                        label="Type"
+                        sortKey="type"
+                        activeSort={sort}
+                        direction={direction}
+                        onSort={handleSort}
+                        className="whitespace-nowrap"
+                      />
+                      <CapabilitySortHeader
+                        label="Server"
+                        sortKey="server"
+                        activeSort={sort}
+                        direction={direction}
+                        onSort={handleSort}
+                        className="whitespace-nowrap"
+                      />
+                      <th scope="col" className={CAPABILITY_HEADER_CLASS}>
                         Host
                       </th>
                     </tr>
@@ -356,23 +421,23 @@ export default function McpCapabilityDirectoryPage() {
                       const kindBadge = mcpCapabilityDirectoryKindBadge(entry.kind);
                       return (
                         <tr key={`${entry.endpointId}:${entry.itemId}`}>
-                          <td className="px-4 py-3">
-                            <div className="font-medium text-gray-900 dark:text-white">
+                          <td className="w-full max-w-0 px-4 py-3">
+                            <div className="truncate font-medium text-gray-900 dark:text-white">
                               {mcpCapabilityDirectoryDisplayName(entry)}
                             </div>
                             {entry.description ? (
-                              <p className="mt-0.5 line-clamp-2 text-sm text-gray-500 dark:text-gray-400">
+                              <p className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">
                                 {entry.description}
                               </p>
                             ) : null}
-                            <p className="mt-1 font-mono text-xs text-gray-400 dark:text-gray-500">
+                            <p className="mt-1 truncate font-mono text-xs text-gray-400 dark:text-gray-500">
                               {entry.itemName}
                             </p>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="whitespace-nowrap px-4 py-3">
                             <Badge variant={kindBadge.variant}>{kindBadge.label}</Badge>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="whitespace-nowrap px-4 py-3">
                             <Link
                               href={mcpCapabilityDirectoryEndpointHref(entry.endpointId)}
                               className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"

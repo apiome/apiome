@@ -54,6 +54,7 @@ describe('mcpCapabilityDirectoryQueryParams', () => {
         visibility: 'private',
       },
       'name',
+      'desc',
       50,
       25,
     );
@@ -62,6 +63,7 @@ describe('mcpCapabilityDirectoryQueryParams', () => {
     expect(params.get('host')).toBe('mcp.acme.example');
     expect(params.get('visibility')).toBe('private');
     expect(params.get('sort')).toBe('name');
+    expect(params.get('direction')).toBe('desc');
     expect(params.get('offset')).toBe('50');
     expect(params.get('limit')).toBe('25');
   });

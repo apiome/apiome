@@ -123,6 +123,7 @@ from .models import (
     McpCrossServerCapabilitySearchResponse,
     McpCapabilityDirectoryResponse,
     McpCapabilityDirectorySort,
+    McpCapabilityDirectoryDirection,
     McpCapabilityDirectoryType,
     McpDuplicateReportResponse,
     McpFreshnessReportResponse,
@@ -382,6 +383,7 @@ async def search_mcp_catalog(
 _CROSS_SERVER_CAPABILITY_RAW_LIMIT = 200
 
 _MCP_CAPABILITY_DIRECTORY_SORTS = frozenset({"server", "name", "type"})
+_MCP_CAPABILITY_DIRECTORY_DIRECTIONS = frozenset({"asc", "desc"})
 
 
 @mcp_endpoints_router.get(
@@ -415,7 +417,11 @@ async def list_mcp_capability_directory(
     ),
     sort: McpCapabilityDirectorySort = Query(
         "server",
-        description="Sort order: server (default), name, or type.",
+        description="Sort column: server (default), name, or type.",
+    ),
+    direction: McpCapabilityDirectoryDirection = Query(
+        "asc",
+        description="Sort direction: asc (default) or desc.",
     ),
     limit: int = Query(50, ge=1, le=200, description="Maximum items to return."),
     offset: int = Query(0, ge=0, description="Items to skip (pagination)."),
@@ -434,6 +440,8 @@ async def list_mcp_capability_directory(
 
     if sort not in _MCP_CAPABILITY_DIRECTORY_SORTS:
         raise HTTPException(status_code=422, detail=f"invalid sort: {sort}")
+    if direction not in _MCP_CAPABILITY_DIRECTORY_DIRECTIONS:
+        raise HTTPException(status_code=422, detail=f"invalid direction: {direction}")
 
     name_pattern = name.strip() if name and name.strip() else None
     host_filter = host.strip() if host and host.strip() else None
@@ -450,6 +458,7 @@ async def list_mcp_capability_directory(
         grade=grade_filter,
         visibility=visibility,
         sort=sort,
+        direction=direction,
         limit=limit,
         offset=offset,
     )

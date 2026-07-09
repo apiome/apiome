@@ -7076,6 +7076,7 @@ def mcp_cross_server_capability_search_response_from_groups(
 # link back to the server without a second read.
 
 McpCapabilityDirectorySort = Literal["server", "name", "type"]
+McpCapabilityDirectoryDirection = Literal["asc", "desc"]
 McpCapabilityDirectoryType = Literal["tool", "resource", "resource_template", "prompt"]
 
 

@@ -11,6 +11,8 @@ export type McpCapabilityDirectoryKind = 'tool' | 'resource' | 'resource_templat
 
 export type McpCapabilityDirectorySort = 'server' | 'name' | 'type';
 
+export type McpCapabilityDirectorySortDirection = 'asc' | 'desc';
+
 export interface McpCapabilityDirectoryEntry {
   kind: McpCapabilityDirectoryKind;
   itemId: string;
@@ -149,11 +151,13 @@ export function mcpCapabilityDirectoryFromPayload(payload: unknown): McpCapabili
 export function mcpCapabilityDirectoryQueryParams(
   filters: McpCapabilityDirectoryFilters,
   sort: McpCapabilityDirectorySort,
+  direction: McpCapabilityDirectorySortDirection,
   offset: number,
   limit = MCP_CAPABILITY_DIRECTORY_PAGE_SIZE,
 ): URLSearchParams {
   const params = new URLSearchParams();
   params.set('sort', sort);
+  params.set('direction', direction);
   params.set('limit', String(limit));
   params.set('offset', String(offset));
   const name = filters.name.trim();
