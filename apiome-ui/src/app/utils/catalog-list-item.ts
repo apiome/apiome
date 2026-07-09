@@ -38,13 +38,16 @@ function pick<T>(raw: Record<string, unknown>, camel: string, snake: string): T 
 
 /** Coerce one catalog list row to the camelCase shape the dashboard expects. */
 export function normalizeCatalogListItem(raw: Record<string, unknown>): NormalizedCatalogListItem {
+  const base = raw as unknown as NormalizedCatalogListItem;
   return {
-    ...(raw as NormalizedCatalogListItem),
-    qualityScore: pick(raw, 'qualityScore', 'quality_score'),
-    qualityGrade: pick(raw, 'qualityGrade', 'quality_grade'),
-    versionsCount: pick(raw, 'versionsCount', 'versions_count'),
-    sourceFormat: pick(raw, 'sourceFormat', 'source_format'),
-    formatMetadata: pick(raw, 'formatMetadata', 'format_metadata'),
-    identityGroupId: pick(raw, 'identityGroupId', 'identity_group_id'),
+    ...base,
+    qualityScore: pick<number | null>(raw, 'qualityScore', 'quality_score') ?? base.qualityScore,
+    qualityGrade: pick<string | null>(raw, 'qualityGrade', 'quality_grade') ?? base.qualityGrade,
+    versionsCount: pick<number>(raw, 'versionsCount', 'versions_count') ?? base.versionsCount,
+    sourceFormat: pick<string | null>(raw, 'sourceFormat', 'source_format') ?? base.sourceFormat,
+    formatMetadata:
+      pick<Record<string, unknown>>(raw, 'formatMetadata', 'format_metadata') ?? base.formatMetadata,
+    identityGroupId:
+      pick<string | null>(raw, 'identityGroupId', 'identity_group_id') ?? base.identityGroupId,
   };
 }
