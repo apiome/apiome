@@ -16,6 +16,7 @@ from apiome_cli.commands import (
     health,
     lint,
     mcp,
+    mock,
     operations,
     paths,
     projects,
@@ -67,6 +68,7 @@ app.add_typer(lint.app, name="lint")
 app.add_typer(spec.app, name="spec")
 app.add_typer(operations.app, name="operations")
 app.add_typer(mcp.app, name="mcp")
+app.add_typer(mock.app, name="mock")
 app.add_typer(import_commands.app, name="import")
 app.add_typer(export.app, name="export")
 app.command("convert")(convert.convert)
