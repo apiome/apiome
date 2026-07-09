@@ -39,7 +39,7 @@ def parse_prefer_code(prefer_header: str | None) -> int | None:
         try:
             return int(raw)
         except ValueError:
-            return None
+            continue
     return None
 
 

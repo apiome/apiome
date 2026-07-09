@@ -182,8 +182,9 @@ async def validate_operation_request(
                     violations.append(_violation(f"query.{name}", str(exc)))
                     continue
             else:
+                item_schema = schema.get("items", schema) if schema.get("type") == "array" else schema
                 try:
-                    value = [_coerce_param_value(str(item), schema, spec) for item in raw_values]
+                    value = [_coerce_param_value(str(item), item_schema, spec) for item in raw_values]
                 except (TypeError, ValueError) as exc:
                     violations.append(_violation(f"query.{name}", str(exc)))
                     continue
