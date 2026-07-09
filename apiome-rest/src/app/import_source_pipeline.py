@@ -350,20 +350,25 @@ def persist_adapter_import(
         name = str(project_meta.get("name") or source_label or "Imported source").strip()
         slug = str(project_meta.get("slug") or "").strip()
         description = project_meta.get("description")
-        project = db.create_project(
-            tenant_id,
-            creator_id,
-            name,
-            slug,
-            description,
-            None,
-            routing.publishable,
+        project_id, project_slug = _resolve_import_project(
+            db,
+            tenant_id=tenant_id,
+            creator_id=creator_id,
+            name=name,
+            slug=slug,
+            description=description,
+            routing=routing,
         )
-        project_id = str(project["id"])
-        project_slug = project.get("slug")
 
-    version = db.create_version(project_id, creator_id, version_id, version_description)
-    version_record_id = str(version["id"])
+    version_record_id, version_id = _resolve_import_version(
+        db,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        creator_id=creator_id,
+        version_id=version_id,
+        version_description=version_description,
+        routing=routing,
+    )
 
     # Store the original source verbatim so the convert flow can re-parse it later. The input kind
     # (file/url/paste) is recorded for the catalog's source-material badge when the client sends it
@@ -391,6 +396,79 @@ def persist_adapter_import(
         version_id=version_id,
         version_record_id=version_record_id,
     )
+
+
+def _normalize_import_project_slug(slug: str, name: str) -> str:
+    """Derive a lowercase project slug from an explicit slug or a display name."""
+    base = (slug or "").strip().lower()
+    if base:
+        return base
+    cleaned = "".join(ch if ch.isalnum() else "-" for ch in name.strip().lower())
+    while "--" in cleaned:
+        cleaned = cleaned.replace("--", "-")
+    return cleaned.strip("-") or "imported-source"
+
+
+def _resolve_import_project(
+    db: Any,
+    *,
+    tenant_id: str,
+    creator_id: Optional[str],
+    name: str,
+    slug: str,
+    description: Optional[str],
+    routing: ImportRoutingDecision,
+) -> tuple[str, Optional[str]]:
+    """Create or reuse the project row an adapter import persists under.
+
+    Catalog imports (``publishable=False``) reuse an existing live catalog item with the same slug
+    so a retry after a partial failure can add another revision instead of violating the unique
+    ``(tenant_id, slug)`` constraint. Publishable imports always allocate a fresh unique slug.
+    """
+    slug_base = _normalize_import_project_slug(slug, name)
+    if not routing.publishable:
+        existing = db.get_project_by_slug(slug_base, tenant_id)
+        if existing and not existing.get("publishable"):
+            return str(existing["id"]), existing.get("slug")
+
+    unique_slug = db.allocate_project_slug(tenant_id, slug_base)
+    project = db.create_project(
+        tenant_id,
+        creator_id,
+        name,
+        unique_slug,
+        description,
+        None,
+        routing.publishable,
+    )
+    return str(project["id"]), project.get("slug")
+
+
+def _resolve_import_version(
+    db: Any,
+    *,
+    tenant_id: str,
+    project_id: str,
+    creator_id: Optional[str],
+    version_id: str,
+    version_description: Optional[str],
+    routing: ImportRoutingDecision,
+) -> tuple[str, str]:
+    """Create or reuse the version row an adapter import persists under.
+
+    Catalog imports reuse an existing live revision with the same ``version_id`` so a retry after
+    a partial failure can refresh source metadata instead of violating the unique
+    ``(project_id, version_id)`` constraint. Publishable imports allocate a fresh unique label when
+    the requested one is taken.
+    """
+    if not routing.publishable:
+        existing = db.get_version_by_version_id(project_id, version_id, tenant_id)
+        if existing:
+            return str(existing["id"]), version_id
+
+    unique_version_id = db.allocate_version_id(project_id, version_id)
+    version = db.create_version(project_id, creator_id, unique_version_id, version_description)
+    return str(version["id"]), unique_version_id
 
 
 def _name_from_schema_id(schema_id: Any) -> Optional[str]:

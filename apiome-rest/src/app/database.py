@@ -2463,6 +2463,48 @@ class Database:
         results = self.execute_query(query, (slug, tenant_id))
         return results[0] if results else None
 
+    def allocate_project_slug(self, tenant_id: str, base_slug: str) -> str:
+        """Pick a tenant-unique project slug derived from ``base_slug``.
+
+        Returns ``base_slug`` when free, otherwise the first free ``base_slug-N`` (N ≥ 2).
+        Collision detection includes soft-deleted rows because ``(tenant_id, slug)`` is unique
+        across all projects.
+        """
+        base = (base_slug or "imported-source").strip().lower() or "imported-source"
+        query = """
+            SELECT slug FROM apiome.projects
+            WHERE tenant_id = %s AND (slug = %s OR slug LIKE %s)
+        """
+        rows = self.execute_query(query, (tenant_id, base, f"{base}-%"))
+        taken = {str(row["slug"]) for row in rows}
+        if base not in taken:
+            return base
+        suffix = 2
+        while f"{base}-{suffix}" in taken:
+            suffix += 1
+        return f"{base}-{suffix}"
+
+    def allocate_version_id(self, project_id: str, base_version_id: str) -> str:
+        """Pick a project-unique version label derived from ``base_version_id``.
+
+        Returns ``base_version_id`` when free, otherwise the first free ``base_version_id-N`` (N ≥ 2).
+        Collision detection includes soft-deleted rows because ``(project_id, version_id)`` is unique
+        across all versions.
+        """
+        base = (base_version_id or "1.0.0").strip() or "1.0.0"
+        query = """
+            SELECT version_id FROM apiome.versions
+            WHERE project_id = %s AND (version_id = %s OR version_id LIKE %s)
+        """
+        rows = self.execute_query(query, (project_id, base, f"{base}-%"))
+        taken = {str(row["version_id"]) for row in rows}
+        if base not in taken:
+            return base
+        suffix = 2
+        while f"{base}-{suffix}" in taken:
+            suffix += 1
+        return f"{base}-{suffix}"
+
     def create_project(
         self,
         tenant_id: str,

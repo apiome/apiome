@@ -569,6 +569,17 @@ class ImportSource(ABC):
 # UI/CLI/REST resolve and enumerate sources without importing each adapter.
 _REGISTRY: Dict[str, type[ImportSource]] = {}
 
+# Detector / client tokens that map to a registered adapter key (e.g. ``protobuf`` → ``grpc``).
+_SOURCE_KIND_ALIASES: Dict[str, str] = {
+    "protobuf": "grpc",
+}
+
+
+def resolve_import_source_key(key: str) -> str:
+    """Normalize a request ``source_kind`` to the registry key of its adapter."""
+    normalized = key.strip().lower()
+    return _SOURCE_KIND_ALIASES.get(normalized, normalized)
+
 
 def register_import_source(cls: type[ImportSource]) -> type[ImportSource]:
     """Register a concrete adapter class under its :attr:`ImportSource.key`.
@@ -602,9 +613,11 @@ def get_import_source(key: str) -> Optional[ImportSource]:
 
     Built-in adapters are loaded on demand (:func:`load_builtin_import_sources`)
     so a lookup works even if the caller never imported the adapter module.
+  Aliases such as ``protobuf`` → ``grpc`` are resolved before registry lookup.
     """
     load_builtin_import_sources()
-    cls = _REGISTRY.get(key)
+    resolved = resolve_import_source_key(key)
+    cls = _REGISTRY.get(resolved)
     return cls() if cls is not None else None
 
 

@@ -21,7 +21,12 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence
 from fastapi import HTTPException
 
 from .config import settings
-from .import_source import ImportSource, get_import_source
+from .import_source import (
+    ImportSource,
+    available_import_sources,
+    get_import_source,
+    resolve_import_source_key,
+)
 from .import_source_pipeline import ADAPTER_PHASE_EVENT_CODES, run_adapter_import_job
 from .models import (
     SpecImportCommitResponse,
@@ -490,18 +495,26 @@ def _resolve_inprocess_adapter(payload: Dict[str, Any]) -> Optional[ImportSource
     source_kind = metadata.get("source_kind")
     if not isinstance(source_kind, str) or not source_kind:
         return None
+    resolved_kind = resolve_import_source_key(source_kind)
     try:
-        adapter = get_import_source(source_kind)
+        adapter = get_import_source(resolved_kind)
     except Exception:  # noqa: BLE001 - a registry/import failure must not break the job
         logger.warning(
-            "Import-source registry lookup failed for source_kind=%r; using worker path",
+            "Import-source registry lookup failed for source_kind=%r (resolved=%r)",
             source_kind,
+            resolved_kind,
             exc_info=True,
         )
         return None
     if adapter is None or adapter.key in _WORKER_BACKED_ADAPTER_KEYS:
         return None
     return adapter
+
+
+def _requires_inprocess_adapter(source_kind: str) -> bool:
+    """True when ``source_kind`` names a registered adapter that must not use the tsx worker."""
+    resolved = resolve_import_source_key(source_kind)
+    return resolved in available_import_sources() and resolved not in _WORKER_BACKED_ADAPTER_KEYS
 
 
 async def _run_inprocess_adapter_job(
@@ -575,6 +588,22 @@ async def _drive_job(job_id: str, payload: Dict[str, Any]) -> None:
     adapter = _resolve_inprocess_adapter(payload)
     if adapter is not None:
         await _run_inprocess_adapter_job(job_id, adapter, payload)
+        return
+
+    raw_kind = (payload.get("metadata") or {}).get("source_kind")
+    if isinstance(raw_kind, str) and raw_kind.strip() and _requires_inprocess_adapter(raw_kind):
+        message = (
+            f"Import source {raw_kind!r} could not run in this runtime. "
+            "Restart the REST service after installing dev toolchains "
+            "(apiome-rest/scripts/install_dev_toolchain.sh)."
+        )
+        logger.error("in-process adapter required but unavailable job=%s source_kind=%r", job_id, raw_kind)
+        async with _jobs_lock:
+            rec = _jobs.get(job_id)
+            if rec is None:
+                return
+            rec.state = "failed"
+            rec.status = _default_result_status(job_id, message, code="ADAPTER_UNAVAILABLE")
         return
 
     try:

@@ -28,6 +28,18 @@ class _FakeDb:
         self.created_version: Optional[Dict[str, Any]] = None
         self.source_format_call: Optional[Dict[str, Any]] = None
 
+    def get_project_by_slug(self, slug: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        return None
+
+    def allocate_project_slug(self, tenant_id: str, base_slug: str) -> str:
+        return (base_slug or "imported-source").strip().lower() or "imported-source"
+
+    def get_version_by_version_id(self, project_id: str, version_id_str: str, tenant_id: str):
+        return None
+
+    def allocate_version_id(self, project_id: str, base_version_id: str) -> str:
+        return (base_version_id or "1.0.0").strip() or "1.0.0"
+
     def create_project(self, tenant_id, creator_id, name, slug, description, metadata, publishable):
         self.created_project = {
             "tenant_id": tenant_id,
@@ -191,3 +203,74 @@ def test_reuses_an_existing_project_when_targeted(monkeypatch) -> None:
     # No new project is created when attaching to an existing one.
     assert fake.created_project is None
     assert fake.created_version["project_id"] == "proj-existing"
+
+
+def test_reuses_existing_catalog_item_when_slug_collides(monkeypatch) -> None:
+    """A catalog import retry reuses the live catalog item instead of violating slug uniqueness."""
+    fake = _FakeDb()
+    fake.get_project_by_slug = lambda slug, tenant_id: (
+        {"id": "cat-existing", "slug": "orders", "publishable": False}
+        if slug == "orders"
+        else None
+    )
+    monkeypatch.setattr("app.database.db", fake)
+
+    result = persist_adapter_import(_payload(), _model(), _text_intake('syntax = "proto3";'), _catalog_routing())
+
+    assert result is not None
+    assert result.project_id == "cat-existing"
+    assert fake.created_project is None
+    assert fake.created_version["project_id"] == "cat-existing"
+
+
+def test_reuses_existing_catalog_version_when_version_collides(monkeypatch) -> None:
+    """A catalog import retry reuses the live revision instead of violating version uniqueness."""
+    fake = _FakeDb()
+    fake.get_project_by_slug = lambda slug, tenant_id: (
+        {"id": "cat-existing", "slug": "orders", "publishable": False}
+        if slug == "orders"
+        else None
+    )
+    fake.get_version_by_version_id = lambda project_id, version_id_str, tenant_id: (
+        {"id": "ver-existing", "version_id": "1.0.0"}
+        if project_id == "cat-existing" and version_id_str == "1.0.0"
+        else None
+    )
+    monkeypatch.setattr("app.database.db", fake)
+
+    result = persist_adapter_import(_payload(), _model(), _text_intake('syntax = "proto3";'), _catalog_routing())
+
+    assert result is not None
+    assert result.project_id == "cat-existing"
+    assert result.version_record_id == "ver-existing"
+    assert result.version_id == "1.0.0"
+    assert fake.created_project is None
+    assert fake.created_version is None
+    assert fake.source_format_call["version_record_id"] == "ver-existing"
+
+
+def test_allocates_a_unique_slug_when_publishable_slug_is_taken(monkeypatch) -> None:
+    fake = _FakeDb()
+    fake.allocate_project_slug = lambda tenant_id, base: f"{base}-2"
+    fake.allocate_version_id = lambda project_id, base: f"{base}-2"
+    monkeypatch.setattr("app.database.db", fake)
+    routing = ImportRoutingDecision(
+        target=ImportTarget.PROJECT,
+        publishable=True,
+        schemas_only=False,
+        reason="openapi",
+        source="openapi",
+        paradigm="rest",
+        format="openapi-3.1",
+        operation_count=1,
+        type_count=0,
+        channel_count=0,
+    )
+
+    result = persist_adapter_import(_payload(), _model(), _text_intake("openapi: 3.1.0"), routing)
+
+    assert result is not None
+    assert fake.created_project is not None
+    assert fake.created_project["slug"] == "orders-2"
+    assert fake.created_version is not None
+    assert fake.created_version["version_id"] == "1.0.0-2"

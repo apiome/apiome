@@ -68,6 +68,13 @@ def test_get_import_source_returns_instance_or_none() -> None:
     assert get_import_source("does-not-exist") is None
 
 
+def test_resolve_import_source_key_aliases_protobuf_to_grpc() -> None:
+    from app.import_source import resolve_import_source_key
+
+    assert resolve_import_source_key("protobuf") == "grpc"
+    assert resolve_import_source_key("GRPC") == "grpc"
+
+
 def test_describe_import_sources_is_sorted_by_key() -> None:
     descriptors = describe_import_sources()
     keys = [d.key for d in descriptors]

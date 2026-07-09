@@ -123,6 +123,11 @@ def test_registered_in_registry() -> None:
     assert isinstance(resolved, GrpcImportSource)
 
 
+def test_protobuf_alias_resolves_to_grpc_adapter() -> None:
+    resolved = get_import_source("protobuf")
+    assert isinstance(resolved, GrpcImportSource)
+
+
 def test_registered_source_is_an_import_source() -> None:
     assert issubclass(GrpcImportSource, ImportSource)
 
