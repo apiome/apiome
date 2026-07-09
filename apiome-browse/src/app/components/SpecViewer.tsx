@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import YAML from 'yaml';
 import { useTheme, specThemes, SpecTheme } from './ThemeProvider';
 import { operationAnchorId, schemaAnchorId } from './SpecSidebar';
+import { TryItPanel } from './tryit/TryItPanel';
 
 const Editor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
@@ -374,7 +375,14 @@ export function SpecViewer({
       )}
 
       {!loading && !error && spec != null && viewMode === 'overview' && (
-        <SpecOverview spec={spec} format={format} mockBaseUrl={mockBaseUrl} />
+        <SpecOverview
+          spec={spec}
+          format={format}
+          mockBaseUrl={mockBaseUrl}
+          tenantSlug={tenantSlug}
+          projectSlug={projectSlug}
+          versionSlug={versionSlug}
+        />
       )}
 
       {!loading && !error && spec != null && viewMode === 'visual' && (
@@ -443,10 +451,16 @@ function SpecOverview({
   spec,
   format,
   mockBaseUrl,
+  tenantSlug,
+  projectSlug,
+  versionSlug,
 }: {
   spec: unknown;
   format: SpecFormat;
   mockBaseUrl?: string | null;
+  tenantSlug: string;
+  projectSlug: string;
+  versionSlug: string;
 }) {
   if (!isObject(spec)) return null;
 
@@ -609,37 +623,17 @@ function SpecOverview({
                   </div>
                 </div>
                 <ul className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
-                  {group.ops.map((op, idx) => {
-                    const anchor = operationAnchorId(op.method, op.path);
-                    return (
-                      <li key={`${anchor}-${idx}`} id={anchor} className="scroll-mt-24">
-                        <div className="flex items-start gap-3 px-4 py-2.5">
-                          <span
-                            className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide ring-1 ring-inset ${
-                              HTTP_METHOD_TONE[op.method.toLowerCase()] ?? HTTP_METHOD_TONE.options
-                            }`}
-                          >
-                            {op.method}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <code className="break-all font-mono text-[13px] font-medium text-zinc-900 dark:text-zinc-50">
-                                {op.path}
-                              </code>
-                              {op.deprecated && (
-                                <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                                  deprecated
-                                </span>
-                              )}
-                            </div>
-                            {op.summary && (
-                              <p className="mt-0.5 text-[12px] text-zinc-600 dark:text-zinc-400">{op.summary}</p>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
+                  {group.ops.map((op, idx) => (
+                    <OperationRow
+                      key={`${operationAnchorId(op.method, op.path)}-${idx}`}
+                      op={op}
+                      spec={spec}
+                      mockBaseUrl={mockBaseUrl}
+                      tenantSlug={tenantSlug}
+                      projectSlug={projectSlug}
+                      versionSlug={versionSlug}
+                    />
+                  ))}
                 </ul>
               </div>
             ))}
@@ -759,6 +753,96 @@ function SpecOverview({
         </ul>
       )}
     </div>
+  );
+}
+
+/**
+ * One operation row in the overview list, with its inline "Try It" disclosure — SIM-3.1 (#4447).
+ *
+ * The panel itself (server picker, parameter form, body editor, send pipeline) lives in
+ * `tryit/TryItPanel`; this row only owns the expanded/collapsed state.
+ */
+function OperationRow({
+  op,
+  spec,
+  mockBaseUrl,
+  tenantSlug,
+  projectSlug,
+  versionSlug,
+}: {
+  op: { method: string; path: string; summary?: string; deprecated?: boolean };
+  spec: unknown;
+  mockBaseUrl?: string | null;
+  tenantSlug: string;
+  projectSlug: string;
+  versionSlug: string;
+}) {
+  const [tryItOpen, setTryItOpen] = useState(false);
+  const anchor = operationAnchorId(op.method, op.path);
+  const panelId = `${anchor}-tryit`;
+
+  return (
+    <li id={anchor} className="scroll-mt-24">
+      <div className="flex items-start gap-3 px-4 py-2.5">
+        <span
+          className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide ring-1 ring-inset ${
+            HTTP_METHOD_TONE[op.method.toLowerCase()] ?? HTTP_METHOD_TONE.options
+          }`}
+        >
+          {op.method}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <code className="break-all font-mono text-[13px] font-medium text-zinc-900 dark:text-zinc-50">
+              {op.path}
+            </code>
+            {op.deprecated && (
+              <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                deprecated
+              </span>
+            )}
+          </div>
+          {op.summary && (
+            <p className="mt-0.5 text-[12px] text-zinc-600 dark:text-zinc-400">{op.summary}</p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setTryItOpen((open) => !open)}
+          aria-expanded={tryItOpen}
+          aria-controls={panelId}
+          className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
+            tryItOpen
+              ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]'
+              : 'border border-zinc-200 bg-white text-zinc-700 shadow-xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'
+          }`}
+        >
+          Try It
+          <svg
+            className={`h-3 w-3 transition-transform ${tryItOpen ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+      {tryItOpen && (
+        <div id={panelId} className="px-4 pb-4">
+          <TryItPanel
+            spec={spec}
+            method={op.method}
+            path={op.path}
+            mockBaseUrl={mockBaseUrl}
+            tenantSlug={tenantSlug}
+            projectSlug={projectSlug}
+            versionSlug={versionSlug}
+          />
+        </div>
+      )}
+    </li>
   );
 }
 
