@@ -16,8 +16,7 @@
     "apiome-ui",
     "apiome-browse",
     "apiome-web",
-    "apiome-rest",
-    "private-suite/suite/designer"
+    "apiome-rest"
   ],
   "packageManager": "yarn@4.12.0",
   "resolutions": {
