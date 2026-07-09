@@ -140,6 +140,9 @@ import {
   type VersionsDashboardSortColumn,
   type VersionsDashboardSortDirection,
 } from '@/app/utils/versions-dashboard-sort';
+import { VersionMockCell, type VersionMockChange } from '../../../components/ade/dashboard/VersionMockCell';
+import { useMockUsage } from '@/app/hooks/useMockUsage';
+import { mockUsageSeriesKey } from '@/app/utils/mock-usage-series';
 
 /** Radix Select cannot use empty string as a value; maps to no successor in metadata. */
 const SUCCESSOR_SELECT_NONE = '__none__';
@@ -233,6 +236,10 @@ interface Version {
   author?: string | null;
   /** Optional full commit message body (REST: message / commit_message, #2579) */
   message?: string | null;
+  /** Hosted mock toggle state (#4422, SIM-2.1) */
+  mockEnabled?: boolean;
+  /** Stable mock base URL, set by REST when the mock is enabled (#4422) */
+  mockBaseUrl?: string | null;
 }
 
 /** Client-side history timeline filters (#2579) — matches REST list `q` / creator / date range semantics. */
@@ -621,6 +628,21 @@ const Versions = () => {
     () => projects.find((p) => p.id === selectedProjectId),
     [projects, selectedProjectId]
   );
+
+  // 30-day mock usage series for the selected project's versions (#4443, SIM-2.2).
+  const { seriesByVersion: mockUsageByVersion } = useMockUsage({
+    enabled: Boolean(selectedProject?.slug),
+    projectSlug: selectedProject?.slug ?? null,
+  });
+
+  /** Fold a successful mock toggle round-trip back into the versions table state (#4443). */
+  const handleVersionMockChanged = useCallback((versionRecordId: string, change: VersionMockChange) => {
+    setVersions((prev) =>
+      prev.map((v) =>
+        v.id === versionRecordId ? { ...v, mockEnabled: change.mockEnabled, mockBaseUrl: change.mockBaseUrl } : v
+      )
+    );
+  }, []);
 
   /**
    * Project selector options (#4587): catalog items (publishable=false) are excluded — they are
@@ -3297,6 +3319,9 @@ const Versions = () => {
                 >
                   Status
                 </VersionsSortTh>
+                <th scope="col" className={dashboardThClass} aria-sort="none">
+                  Mock
+                </th>
                 <VersionsSortTh
                   column="creator"
                   sortColumn={versionsTableSortColumn}
@@ -3327,7 +3352,7 @@ const Versions = () => {
             <tbody className={dashboardTbodyClass}>
               {versions.length === 0 && lifecycleFilter ? (
                 <tr key="versions-empty-lifecycle">
-                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-600 dark:text-gray-300">
+                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-gray-600 dark:text-gray-300">
                     <p className="mx-auto max-w-md">
                       No revisions match this lifecycle filter. Choose a different lifecycle or select{' '}
                       <span className="font-medium">All lifecycles</span> to load every revision again.
@@ -3339,7 +3364,7 @@ const Versions = () => {
                 </tr>
               ) : versions.length > 0 && tagFilteredVersions.length === 0 ? (
                 <tr key="versions-empty-tag">
-                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-600 dark:text-gray-300">
+                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-gray-600 dark:text-gray-300">
                     <p className="mx-auto max-w-md">
                       No revision matches the selected history tag. Clear the tag filter above or pick another tag.
                     </p>
@@ -3350,7 +3375,7 @@ const Versions = () => {
                 </tr>
               ) : tableDisplayVersions.length === 0 ? (
                 <tr key="versions-empty-timeline">
-                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-600 dark:text-gray-300">
+                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-gray-600 dark:text-gray-300">
                     <p className="mx-auto max-w-md">
                       No revisions match your timeline filters (search, author, or date range). Adjust the filters or
                       reset them to see the full history again.
@@ -3428,6 +3453,22 @@ const Versions = () => {
                       )}
                       {!version.enabled && <Badge variant="error">Disabled</Badge>}
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <VersionMockCell
+                      versionRecordId={version.id}
+                      projectId={version.project_id}
+                      versionLabel={version.version_id}
+                      published={version.published}
+                      mockEnabled={Boolean(version.mockEnabled)}
+                      mockBaseUrl={version.mockBaseUrl ?? null}
+                      usageSeries={
+                        mockUsageByVersion === null || !selectedProject?.slug
+                          ? undefined
+                          : mockUsageByVersion.get(mockUsageSeriesKey(selectedProject.slug, version.version_id)) ?? []
+                      }
+                      onMockChanged={(change) => handleVersionMockChanged(version.id, change)}
+                    />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">{version.creator_name}</div>
