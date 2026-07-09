@@ -12946,7 +12946,7 @@ paths:
       - mock-server
       summary: Serve Mock Root
       description: Serve the mock for a request to the instance root path.
-      operationId: serve_mock_root_v1_mock__mock_id__options
+      operationId: serve_mock_root_v1_mock__mock_id__post
       parameters:
       - name: mock_id
         in: path
@@ -12971,7 +12971,7 @@ paths:
       - mock-server
       summary: Serve Mock Root
       description: Serve the mock for a request to the instance root path.
-      operationId: serve_mock_root_v1_mock__mock_id__options
+      operationId: serve_mock_root_v1_mock__mock_id__get
       parameters:
       - name: mock_id
         in: path
@@ -12996,7 +12996,7 @@ paths:
       - mock-server
       summary: Serve Mock Root
       description: Serve the mock for a request to the instance root path.
-      operationId: serve_mock_root_v1_mock__mock_id__options
+      operationId: serve_mock_root_v1_mock__mock_id__put
       parameters:
       - name: mock_id
         in: path
@@ -13021,7 +13021,7 @@ paths:
       - mock-server
       summary: Serve Mock Root
       description: Serve the mock for a request to the instance root path.
-      operationId: serve_mock_root_v1_mock__mock_id__options
+      operationId: serve_mock_root_v1_mock__mock_id__head
       parameters:
       - name: mock_id
         in: path
@@ -13046,7 +13046,7 @@ paths:
       - mock-server
       summary: Serve Mock Root
       description: Serve the mock for a request to the instance root path.
-      operationId: serve_mock_root_v1_mock__mock_id__options
+      operationId: serve_mock_root_v1_mock__mock_id__delete
       parameters:
       - name: mock_id
         in: path
@@ -13071,7 +13071,7 @@ paths:
       - mock-server
       summary: Serve Mock Root
       description: Serve the mock for a request to the instance root path.
-      operationId: serve_mock_root_v1_mock__mock_id__options
+      operationId: serve_mock_root_v1_mock__mock_id__patch
       parameters:
       - name: mock_id
         in: path
@@ -13128,7 +13128,7 @@ paths:
       - mock-server
       summary: Serve Mock Path
       description: Serve the mock for any request path under the instance base URL.
-      operationId: serve_mock_path_v1_mock__mock_id___sub_path__options
+      operationId: serve_mock_path_v1_mock__mock_id___sub_path__post
       parameters:
       - name: mock_id
         in: path
@@ -13159,7 +13159,7 @@ paths:
       - mock-server
       summary: Serve Mock Path
       description: Serve the mock for any request path under the instance base URL.
-      operationId: serve_mock_path_v1_mock__mock_id___sub_path__options
+      operationId: serve_mock_path_v1_mock__mock_id___sub_path__get
       parameters:
       - name: mock_id
         in: path
@@ -13190,7 +13190,7 @@ paths:
       - mock-server
       summary: Serve Mock Path
       description: Serve the mock for any request path under the instance base URL.
-      operationId: serve_mock_path_v1_mock__mock_id___sub_path__options
+      operationId: serve_mock_path_v1_mock__mock_id___sub_path__put
       parameters:
       - name: mock_id
         in: path
@@ -13221,7 +13221,7 @@ paths:
       - mock-server
       summary: Serve Mock Path
       description: Serve the mock for any request path under the instance base URL.
-      operationId: serve_mock_path_v1_mock__mock_id___sub_path__options
+      operationId: serve_mock_path_v1_mock__mock_id___sub_path__head
       parameters:
       - name: mock_id
         in: path
@@ -13252,7 +13252,7 @@ paths:
       - mock-server
       summary: Serve Mock Path
       description: Serve the mock for any request path under the instance base URL.
-      operationId: serve_mock_path_v1_mock__mock_id___sub_path__options
+      operationId: serve_mock_path_v1_mock__mock_id___sub_path__delete
       parameters:
       - name: mock_id
         in: path
@@ -13283,7 +13283,7 @@ paths:
       - mock-server
       summary: Serve Mock Path
       description: Serve the mock for any request path under the instance base URL.
-      operationId: serve_mock_path_v1_mock__mock_id___sub_path__options
+      operationId: serve_mock_path_v1_mock__mock_id___sub_path__patch
       parameters:
       - name: mock_id
         in: path

@@ -22,6 +22,6 @@ def test_migration_creates_mock_usage_table(repo_root: Path) -> None:
     assert not missing, f"Migration missing expected fragments: {missing}"
 
 
-def test_migration_sets_odb_search_path(repo_root: Path) -> None:
+def test_migration_sets_db_search_path(repo_root: Path) -> None:
     text = (repo_root / _MIGRATION).read_text()
     assert "SET search_path TO apiome, public;" in text

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import Request
@@ -80,8 +81,13 @@ async def enforce_mock_limits(
 
 
 def _seconds_until_next_utc_month() -> int:
-    # Conservative fixed retry hint when monthly quota is exhausted.
-    return 3600
+    """Return seconds until 00:00:00 UTC on the first day of next month."""
+    now = datetime.now(tz=timezone.utc)
+    if now.month == 12:
+        next_month_start = datetime(now.year + 1, 1, 1, tzinfo=timezone.utc)
+    else:
+        next_month_start = datetime(now.year, now.month + 1, 1, tzinfo=timezone.utc)
+    return max(1, int((next_month_start - now).total_seconds()))
 
 
 def record_mock_request(
