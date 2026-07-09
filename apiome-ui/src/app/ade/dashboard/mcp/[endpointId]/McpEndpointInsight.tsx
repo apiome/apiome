@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import * as TabsPrimitive from "@radix-ui/react-tabs";
 import {
   Activity,
   BarChart3,
@@ -20,7 +21,6 @@ import {
   Share2,
   ShieldAlert,
   ShieldCheck,
-  Sparkles,
   Timer,
   Trophy,
 } from "lucide-react";
@@ -127,66 +127,53 @@ interface Props {
 }
 
 /**
- * A reserved panel slot in the Insight grid — a titled, dashed placeholder that a later epic's
- * visualization replaces in place. The scaffold (14.4) lays out the section framework; the 15.x /
- * 16.x / 17.x panels fill these slots, so the shape of the tab is stable before its charts land.
+ * The Insight tab's left-nav grouping. Each group heads a cluster of selectable views in the vertical
+ * navigation; a `null` label is the ungrouped lead cluster (the Overview lives there). The groups
+ * mirror the roadmap arc — capability surface (Epic 15), surface evolution (Epic 16), and reliability
+ * & trust (Epic 17) — and every insight panel is assigned to exactly one of them.
  */
-interface ReservedPanelDef {
-  key: string;
-  title: string;
-  /** One-line description of what the finished panel will show. */
-  hint: string;
-}
+const INSIGHT_GROUPS = [
+  { key: "summary", label: null },
+  { key: "surface", label: "Capability surface" },
+  { key: "evolution", label: "Surface evolution" },
+  { key: "reliability", label: "Reliability & trust" },
+] as const;
 
-/** One section of the Insight grid: an icon + heading and the panels it hosts. */
-interface InsightSectionDef {
-  key: string;
-  title: string;
-  subtitle: string;
-  icon: typeof BarChart3;
-  /** Reserved slots this section will grow; the capability-surface section also renders a live baseline. */
-  reserved: ReservedPanelDef[];
-}
+type InsightGroupKey = (typeof INSIGHT_GROUPS)[number]["key"];
 
 /**
- * The Insight tab's section framework. Titles and reserved-panel slots mirror the roadmap: capability
- * surface (Epic 15), surface evolution (Epic 16), and reliability & trust (Epic 17). Keeping the
- * layout declarative means each downstream panel lands by swapping one reserved slot for its chart.
+ * One selectable insight view: a left-nav entry (icon + label, filed under a group) and the panel it
+ * reveals on the right. The nodes are assembled in the component render because each closes over the
+ * fetched state; this type just gives the nav/content loop a stable shape to iterate.
  */
-const INSIGHT_SECTIONS: InsightSectionDef[] = [
-  {
-    key: "surface",
-    title: "Capability surface",
-    subtitle: "What this snapshot exposes and how well it is documented.",
-    icon: Layers,
-    // "Server profile" (MCAT-15.1) lands as the ServerProfileCard header above the sections; the
-    // "Capability relationship graph" (MCAT-15.2), "Tool schema shape & complexity" (MCAT-15.3), and
-    // "Safety & annotation posture" (MCAT-15.4) now all land as live panels in this section's body,
-    // so this section has no reserved slots left.
-    reserved: [],
-  },
-  {
-    key: "evolution",
-    title: "Surface evolution",
-    subtitle: "How the server has changed across discovery snapshots.",
-    icon: Activity,
-    // "Capability churn timeline" (MCAT-16.1), "Capability lifespan / presence matrix" (MCAT-16.2),
-    // and "Grade & surface-size trend" (MCAT-16.4) now all land as live panels in this section's
-    // body, so this section has no reserved slots left.
-    reserved: [],
-  },
-  {
-    key: "reliability",
-    title: "Reliability & trust",
-    subtitle: "Whether the server is healthy, fast, and trustworthy.",
-    icon: ShieldCheck,
-    // "Discovery health & availability timeline" (MCAT-17.1), the "Tool latency & error-rate panel"
-    // (MCAT-17.2), the "Score & lint breakdown" (MCAT-17.3), and the "Composite trust profile radar"
-    // (MCAT-17.4) now all land as live panels in this section's body — the capstone of the
-    // single-server view — so this section has no reserved slots left.
-    reserved: [],
-  },
-];
+interface InsightView {
+  key: string;
+  group: InsightGroupKey;
+  label: string;
+  icon: typeof BarChart3;
+  node: React.ReactNode;
+}
+
+/** The shared heading — icon, title, and a one-line description — atop each insight panel's content. */
+function PanelHeading({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: typeof BarChart3;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="mb-3">
+      <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+        <Icon className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+        {title}
+      </h4>
+      <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{description}</p>
+    </div>
+  );
+}
 
 /** Option label for a version in the selector: its sequence label plus its date/tag. */
 function versionOptionLabel(version: McpVersionSummary): string {
@@ -476,52 +463,6 @@ function SurfaceBaseline({
   );
 }
 
-/** A reserved, not-yet-filled panel slot — a dashed card naming the visualization that will land here. */
-function ReservedPanel({ panel }: { panel: ReservedPanelDef }) {
-  return (
-    <div className="flex flex-col rounded-lg border border-dashed border-gray-300 bg-gray-50/60 p-4 dark:border-gray-700 dark:bg-gray-800/40">
-      <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-200">
-        <Sparkles className="h-3.5 w-3.5 text-indigo-400" aria-hidden />
-        {panel.title}
-      </div>
-      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{panel.hint}</p>
-      <span className="mt-2 inline-flex w-fit items-center rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:bg-gray-700 dark:text-gray-300">
-        Coming soon
-      </span>
-    </div>
-  );
-}
-
-/** One section of the grid: header, an optional live baseline, and its reserved panel slots. */
-function InsightSection({
-  section,
-  children,
-}: {
-  section: InsightSectionDef;
-  children?: React.ReactNode;
-}) {
-  const Icon = section.icon;
-  return (
-    <section id={`insight-${section.key}`} className="scroll-mt-24">
-      <div className="mb-3">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
-          <Icon className="h-4 w-4 text-indigo-500" aria-hidden />
-          {section.title}
-        </h3>
-        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{section.subtitle}</p>
-      </div>
-      {children ? <div className="mb-4">{children}</div> : null}
-      {section.reserved.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {section.reserved.map((panel) => (
-            <ReservedPanel key={panel.key} panel={panel} />
-          ))}
-        </div>
-      ) : null}
-    </section>
-  );
-}
-
 /**
  * The MCP endpoint "Insight" tab (V2-MCP-28.4 / MCAT-14.4).
  *
@@ -551,6 +492,8 @@ export default function McpEndpointInsight({
   const [versionsError, setVersionsError] = useState<string | null>(null);
   /** The snapshot currently summarized; drives the surface fetch below. */
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
+  /** The active left-nav insight view. Defaults to the Overview; the version selector is independent. */
+  const [activeView, setActiveView] = useState<string>("overview");
   const [surface, setSurface] = useState<McpInsightSurface | null>(null);
   const [surfaceLoading, setSurfaceLoading] = useState(false);
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
@@ -1119,8 +1062,300 @@ export default function McpEndpointInsight({
     );
   }
 
+  // Every insight view, in nav order. Each is a left-nav entry plus the panel it reveals; only the
+  // active view's node is mounted (Radix unmounts inactive tabs), so the tab shows one panel at a time
+  // instead of the whole ~18k-px stack. The data still loads eagerly in the effects above — the panels
+  // are pure given their props — so switching views is instant and never re-fetches.
+  const views: InsightView[] = [
+    {
+      key: "overview",
+      group: "summary",
+      label: "Overview",
+      icon: BarChart3,
+      node: (
+        <div className="space-y-6">
+          {/* At-a-glance server identity (MCAT-15.1). Its trust teaser switches to the trust view. */}
+          <ServerProfileCard
+            profile={profile}
+            onNavigateTrust={() => setActiveView("trust")}
+          />
+          {/* "Changed since last view" digest (MCAT-16.5) — a per-user welcome-back summary. Loaded
+              endpoint-level; reading it advances the user's seen-marker (once) so the next visit
+              reads relative to the version they are seeing now. */}
+          <div className={dashboardPanelPaddedClass}>
+            <PanelHeading
+              icon={History}
+              title="Changed since your last view"
+              description="What changed on this server's surface since you last looked — and how breaking it is."
+            />
+            <ChangedSinceDigestPanel
+              digest={digest}
+              loading={digestLoading}
+              error={digestError}
+              onReviewChanges={(versionId) => onOpenVersionDiff?.(versionId)}
+            />
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "counts",
+      group: "surface",
+      label: "Capability counts",
+      icon: Layers,
+      node: (
+        <div className={dashboardPanelPaddedClass}>
+          <PanelHeading
+            icon={Layers}
+            title="Capability counts"
+            description="What this snapshot exposes — total capabilities and their per-kind breakdown."
+          />
+          <SurfaceBaseline surface={surface} loading={surfaceLoading} error={surfaceError} />
+        </div>
+      ),
+    },
+    {
+      key: "graph",
+      group: "surface",
+      label: "Relationship graph",
+      icon: Share2,
+      // Capability relationship graph (MCAT-15.2).
+      node: (
+        <div className={dashboardPanelPaddedClass}>
+          <PanelHeading
+            icon={Share2}
+            title="Capability relationship graph"
+            description="How tools, resources, and prompts relate — edges inferred from concrete signals."
+          />
+          <CapabilityGraphPanel graph={graph} loading={graphLoading} error={graphError} />
+        </div>
+      ),
+    },
+    {
+      key: "complexity",
+      group: "surface",
+      label: "Schema complexity",
+      icon: ListTree,
+      // Tool schema shape & complexity (MCAT-15.3). Reads the same surface fetch as the counts view;
+      // as its own view it now surfaces the surface error itself rather than hiding to avoid a dup.
+      node: (
+        <div className={dashboardPanelPaddedClass}>
+          <PanelHeading
+            icon={ListTree}
+            title="Tool schema shape & complexity"
+            description="How hard each tool is to call — parameters, required/optional split, nesting, and schema features — with a distribution across the server's tools."
+          />
+          <ToolComplexityPanel
+            tools={surface ? surface.metrics.tool_complexity : null}
+            loading={surfaceLoading}
+            error={surfaceError}
+          />
+        </div>
+      ),
+    },
+    {
+      key: "safety",
+      group: "surface",
+      label: "Safety posture",
+      icon: ShieldAlert,
+      // Safety & annotation posture (MCAT-15.4).
+      node: (
+        <div className={dashboardPanelPaddedClass}>
+          <PanelHeading
+            icon={ShieldAlert}
+            title="Safety & annotation posture"
+            description="Read-only vs destructive tools from their behavioural hints, cross-referenced with whether the endpoint requires auth."
+          />
+          <SafetyPosturePanel
+            items={items}
+            authType={authType}
+            loading={itemsLoading}
+            error={itemsError}
+          />
+        </div>
+      ),
+    },
+    {
+      key: "docs",
+      group: "surface",
+      label: "Documentation",
+      icon: BookOpen,
+      // Documentation & schema coverage (MCAT-15.5).
+      node: (
+        <div className={dashboardPanelPaddedClass}>
+          <PanelHeading
+            icon={BookOpen}
+            title="Documentation & schema coverage"
+            description="How well this snapshot is documented — descriptions, titles, parameter docs, and output-schema adoption — each meter linking to the items that fall short."
+          />
+          <DocCoveragePanel items={items} loading={itemsLoading} error={itemsError} />
+        </div>
+      ),
+    },
+    {
+      key: "churn",
+      group: "evolution",
+      label: "Churn timeline",
+      icon: GitCompareArrows,
+      // Capability churn timeline (MCAT-16.1). Each column deep-links to that snapshot's diff.
+      node: (
+        <div className={dashboardPanelPaddedClass}>
+          <PanelHeading
+            icon={GitCompareArrows}
+            title="Capability churn timeline"
+            description="How much the surface changed per snapshot — added, removed, and modified capabilities over time, each column linking to that release's diff."
+          />
+          <CapabilityChurnPanel
+            series={evolution}
+            loading={evolutionLoading}
+            error={evolutionError}
+            onSelectVersion={(versionId) => onOpenVersionDiff?.(versionId)}
+          />
+        </div>
+      ),
+    },
+    {
+      key: "presence",
+      group: "evolution",
+      label: "Lifespan & presence",
+      icon: LayoutGrid,
+      // Capability lifespan / presence matrix (MCAT-16.2).
+      node: (
+        <div className={dashboardPanelPaddedClass}>
+          <PanelHeading
+            icon={LayoutGrid}
+            title="Capability lifespan & presence"
+            description="When each capability existed across snapshots — a presence matrix revealing volatile vs long-lived tools, resources, and prompts."
+          />
+          <CapabilityPresenceMatrixPanel
+            versions={matrixVersions}
+            loading={matrixLoading}
+            error={matrixError}
+            onSelectVersion={(versionId) => onOpenVersionDiff?.(versionId)}
+          />
+        </div>
+      ),
+    },
+    {
+      key: "trend",
+      group: "evolution",
+      label: "Grade & size trend",
+      icon: LineChart,
+      // Grade & surface-size trend (MCAT-16.4), with breaking-change markers (MCAT-16.3) overlaid.
+      node: (
+        <div className={dashboardPanelPaddedClass}>
+          <PanelHeading
+            icon={LineChart}
+            title="Grade & surface-size trend"
+            description="Whether the server is improving — its quality score and capability count over snapshots, with breaking-change releases marked. Unscored snapshots are gapped, not zeroed."
+          />
+          <GradeSurfaceTrendPanel
+            series={evolution}
+            loading={evolutionLoading}
+            error={evolutionError}
+            onSelectVersion={(versionId) => onOpenVersionDiff?.(versionId)}
+          />
+        </div>
+      ),
+    },
+    {
+      key: "health",
+      group: "reliability",
+      label: "Discovery health",
+      icon: Activity,
+      // Discovery health & availability timeline (MCAT-17.1).
+      node: (
+        <div className={dashboardPanelPaddedClass}>
+          <PanelHeading
+            icon={Activity}
+            title="Discovery health & availability"
+            description="Whether the server has been reachable over time — each recent discovery attempt's outcome, an availability percentage, and whether it is currently quarantined after repeated failures."
+          />
+          <DiscoveryHealthPanel health={health} loading={healthLoading} error={healthError} />
+        </div>
+      ),
+    },
+    {
+      key: "latency",
+      group: "reliability",
+      label: "Tool latency",
+      icon: Timer,
+      // Tool latency & error-rate panel (MCAT-17.2). Same insight/reliability read as the health view.
+      node: (
+        <div className={dashboardPanelPaddedClass}>
+          <PanelHeading
+            icon={Timer}
+            title="Tool latency & error rate"
+            description="How fast and how reliable each tool is when called — p50/p95/p99 latency and error ratio per tool, a latency distribution, and the slowest and flakiest tools."
+          />
+          <ToolLatencyPanel reliability={tools} loading={healthLoading} error={healthError} />
+        </div>
+      ),
+    },
+    {
+      key: "score",
+      group: "reliability",
+      label: "Score breakdown",
+      icon: Gauge,
+      // Score & lint breakdown (MCAT-17.3). Same per-version lint report the Lint & Score tab uses.
+      node: (
+        <div className={dashboardPanelPaddedClass}>
+          <PanelHeading
+            icon={Gauge}
+            title="Score & lint breakdown"
+            description="Where this snapshot's quality grade comes from — the points each rule group (naming, structure, annotations, security, hygiene) deducted and the findings behind them, each linking to the capability it flags."
+          />
+          <ScoreBreakdownPanel
+            report={report}
+            loading={reportLoading}
+            error={reportError}
+            onNavigateToItem={onNavigateToItem}
+          />
+        </div>
+      ),
+    },
+    {
+      key: "trust",
+      group: "reliability",
+      label: "Trust profile",
+      icon: ShieldCheck,
+      // Composite trust profile radar (MCAT-17.4) — the capstone of the single-server view.
+      node: (
+        <div className={dashboardPanelPaddedClass}>
+          <PanelHeading
+            icon={ShieldCheck}
+            title="Composite trust profile"
+            description="A synthesized trust glance across five normalized axes — quality, safety, documentation, stability, and responsiveness — each with its methodology on hover. A heuristic composite, not an official rating; unmeasured axes show as gaps, never zeros."
+          />
+          <TrustProfilePanel profile={trust} loading={trustLoading} error={trustError} />
+        </div>
+      ),
+    },
+    {
+      key: "peers",
+      group: "reliability",
+      label: "Peer ranking",
+      icon: Trophy,
+      // Peer percentile & category ranking (MCAT-18.3) — a peer baseline, not an absolute grade.
+      node: (
+        <div className={dashboardPanelPaddedClass}>
+          <PanelHeading
+            icon={Trophy}
+            title="Peer ranking in category"
+            description="Where this server stands against its category peers — a “top 10% for documentation”-style baseline across grade, safety, documentation, and latency, not an absolute grade. Unmeasured axes are shown as gaps."
+          />
+          <PeerPercentilePanel
+            profile={peerPercentile}
+            loading={peerLoading}
+            error={peerError}
+          />
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
           {surfaceLoading ? (
@@ -1150,297 +1385,65 @@ export default function McpEndpointInsight({
         </div>
       </div>
 
-      {/* "Changed since last view" digest (MCAT-16.5) — a per-user welcome-back summary at the top of
-          the tab. Loaded endpoint-level; reading it advances the user's seen-marker (once) so the
-          next visit reads relative to the version they are seeing now. */}
-      <div className={dashboardPanelPaddedClass}>
-        <div className="mb-3">
-          <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
-            <History className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
-            Changed since your last view
-          </h4>
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-            What changed on this server&apos;s surface since you last looked — and how breaking it is.
-          </p>
+      {/* Left-nav insight views. A vertical, grouped tab rail (horizontal + scrollable on narrow
+          screens) drives which single panel shows on the right — so the tall stack of charts becomes
+          navigable instead of one long scroll. The rail sticks to the top of the content pane on wide
+          screens so it stays reachable while a tall panel scrolls. */}
+      <TabsPrimitive.Root
+        value={activeView}
+        onValueChange={setActiveView}
+        orientation="vertical"
+        className="flex flex-col gap-6 lg:flex-row lg:items-start"
+      >
+        <TabsPrimitive.List
+          aria-label="Insight sections"
+          className="flex shrink-0 gap-1 overflow-x-auto pb-1 lg:sticky lg:top-0 lg:w-60 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:pb-0"
+        >
+          {INSIGHT_GROUPS.map((group) => {
+            const groupViews = views.filter((view) => view.group === group.key);
+            if (groupViews.length === 0) return null;
+            return (
+              // `contents` on narrow screens so the triggers flow directly into the horizontal rail;
+              // a real block on wide screens so each group stacks under its label.
+              <div key={group.key} className="contents lg:block">
+                {group.label ? (
+                  <p className="hidden px-3 pb-1 pt-4 text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 lg:block">
+                    {group.label}
+                  </p>
+                ) : null}
+                {groupViews.map((view) => {
+                  const Icon = view.icon;
+                  return (
+                    <TabsPrimitive.Trigger
+                      key={view.key}
+                      value={view.key}
+                      className="group flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-left text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white dark:data-[state=active]:bg-indigo-950/50 dark:data-[state=active]:text-indigo-300 lg:w-full"
+                    >
+                      <Icon
+                        className="h-4 w-4 shrink-0 text-gray-400 transition-colors group-hover:text-gray-500 group-data-[state=active]:text-indigo-500"
+                        aria-hidden
+                      />
+                      {view.label}
+                    </TabsPrimitive.Trigger>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </TabsPrimitive.List>
+
+        <div className="min-w-0 flex-1">
+          {views.map((view) => (
+            <TabsPrimitive.Content
+              key={view.key}
+              value={view.key}
+              className="focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            >
+              {view.node}
+            </TabsPrimitive.Content>
+          ))}
         </div>
-        <ChangedSinceDigestPanel
-          digest={digest}
-          loading={digestLoading}
-          error={digestError}
-          onReviewChanges={(versionId) => onOpenVersionDiff?.(versionId)}
-        />
-      </div>
-
-      {/* At-a-glance server identity (MCAT-15.1) — the Insight tab header. */}
-      <ServerProfileCard profile={profile} trustHref="#insight-reliability" />
-
-      {INSIGHT_SECTIONS.map((section) => {
-        let body: React.ReactNode = null;
-        if (section.key === "surface") {
-          body = (
-            <div className="space-y-4">
-              <SurfaceBaseline surface={surface} loading={surfaceLoading} error={surfaceError} />
-              {/* Capability relationship graph (MCAT-15.2) — a live panel in the surface section body. */}
-              <div className={dashboardPanelPaddedClass}>
-                <div className="mb-3">
-                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
-                    <Share2 className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
-                    Capability relationship graph
-                  </h4>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    How tools, resources, and prompts relate — edges inferred from concrete signals.
-                  </p>
-                </div>
-                <CapabilityGraphPanel graph={graph} loading={graphLoading} error={graphError} />
-              </div>
-              {/* Tool schema "shape" & complexity cards (MCAT-15.3) — a live panel in the surface section
-                  body. It reads the same surface fetch as the baseline above, which already owns the
-                  surface loading/error surfacing, so the whole sub-panel is hidden on a surface error to
-                  avoid showing the same message twice. */}
-              {surfaceError ? null : (
-                <div className={dashboardPanelPaddedClass}>
-                  <div className="mb-3">
-                    <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
-                      <ListTree className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
-                      Tool schema shape &amp; complexity
-                    </h4>
-                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                      How hard each tool is to call — parameters, required/optional split, nesting, and
-                      schema features — with a distribution across the server&apos;s tools.
-                    </p>
-                  </div>
-                  <ToolComplexityPanel
-                    tools={surface ? surface.metrics.tool_complexity : null}
-                    loading={surfaceLoading}
-                    error={null}
-                  />
-                </div>
-              )}
-              {/* Safety & annotation posture (MCAT-15.4) — the read-only vs destructive matrix, its
-                  posture summary, and the destructive+no-auth cross-reference. It reads the snapshot's
-                  full capability items (its own fetch) and the endpoint's auth type. */}
-              <div className={dashboardPanelPaddedClass}>
-                <div className="mb-3">
-                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
-                    <ShieldAlert className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
-                    Safety &amp; annotation posture
-                  </h4>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    Read-only vs destructive tools from their behavioural hints, cross-referenced with
-                    whether the endpoint requires auth.
-                  </p>
-                </div>
-                <SafetyPosturePanel
-                  items={items}
-                  authType={authType}
-                  loading={itemsLoading}
-                  error={itemsError}
-                />
-              </div>
-              {/* Documentation & schema coverage (MCAT-15.5) — the gauge row (% described / titled /
-                  params documented / output-schema adoption), each drill-down-able to the specific
-                  under-documented items. Reads the same snapshot capability items as the safety panel. */}
-              <div className={dashboardPanelPaddedClass}>
-                <div className="mb-3">
-                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
-                    <BookOpen className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
-                    Documentation &amp; schema coverage
-                  </h4>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    How well this snapshot is documented — descriptions, titles, parameter docs, and
-                    output-schema adoption — each meter linking to the items that fall short.
-                  </p>
-                </div>
-                <DocCoveragePanel items={items} loading={itemsLoading} error={itemsError} />
-              </div>
-            </div>
-          );
-        } else if (section.key === "evolution") {
-          body = (
-            <div className="space-y-4">
-              {/* Capability churn timeline (MCAT-16.1) — the stacked added/removed/modified-per-version
-                  chart. Each column deep-links to that snapshot's diff via the detail page's handler. */}
-              <div className={dashboardPanelPaddedClass}>
-                <div className="mb-3">
-                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
-                    <GitCompareArrows className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
-                    Capability churn timeline
-                  </h4>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    How much the surface changed per snapshot — added, removed, and modified
-                    capabilities over time, each column linking to that release&apos;s diff.
-                  </p>
-                </div>
-                <CapabilityChurnPanel
-                  series={evolution}
-                  loading={evolutionLoading}
-                  error={evolutionError}
-                  onSelectVersion={(versionId) => onOpenVersionDiff?.(versionId)}
-                />
-              </div>
-              {/* Capability lifespan / presence matrix (MCAT-16.2) — the per-capability "gantt of the
-                  surface": which tools/resources existed in which snapshot, and whether they are
-                  stable, new, volatile, or removed. Columns deep-link to the diff like the churn chart. */}
-              <div className={dashboardPanelPaddedClass}>
-                <div className="mb-3">
-                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
-                    <LayoutGrid className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
-                    Capability lifespan &amp; presence
-                  </h4>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    When each capability existed across snapshots — a presence matrix revealing
-                    volatile vs long-lived tools, resources, and prompts.
-                  </p>
-                </div>
-                <CapabilityPresenceMatrixPanel
-                  versions={matrixVersions}
-                  loading={matrixLoading}
-                  error={matrixError}
-                  onSelectVersion={(versionId) => onOpenVersionDiff?.(versionId)}
-                />
-              </div>
-              {/* Grade & surface-size trend (MCAT-16.4) — the quality-score and capability-count trends
-                  across snapshots, with breaking-change markers (MCAT-16.3) overlaid and each breaking
-                  release deep-linking to its diff. Reads the same evolution series as the churn chart. */}
-              <div className={dashboardPanelPaddedClass}>
-                <div className="mb-3">
-                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
-                    <LineChart className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
-                    Grade &amp; surface-size trend
-                  </h4>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    Whether the server is improving — its quality score and capability count over
-                    snapshots, with breaking-change releases marked. Unscored snapshots are gapped, not
-                    zeroed.
-                  </p>
-                </div>
-                <GradeSurfaceTrendPanel
-                  series={evolution}
-                  loading={evolutionLoading}
-                  error={evolutionError}
-                  onSelectVersion={(versionId) => onOpenVersionDiff?.(versionId)}
-                />
-              </div>
-            </div>
-          );
-        } else if (section.key === "reliability") {
-          body = (
-            <div className="space-y-4">
-              {/* Discovery health & availability timeline (MCAT-17.1) — the recent discovery-job
-                  outcomes over time, a windowed availability %, and the endpoint's backoff /
-                  quarantine state. Loaded endpoint-level from insight/reliability. */}
-              <div className={dashboardPanelPaddedClass}>
-                <div className="mb-3">
-                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
-                    <Activity className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
-                    Discovery health &amp; availability
-                  </h4>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    Whether the server has been reachable over time — each recent discovery
-                    attempt&apos;s outcome, an availability percentage, and whether it is currently
-                    quarantined after repeated failures.
-                  </p>
-                </div>
-                <DiscoveryHealthPanel
-                  health={health}
-                  loading={healthLoading}
-                  error={healthError}
-                />
-              </div>
-              {/* Tool latency & error-rate panel (MCAT-17.2) — per-tool p50/p95/p99 latency and
-                  error ratio, a latency distribution, and the slowest / flakiest tool rankings over
-                  a recent window. Parsed from the same insight/reliability read as the health panel. */}
-              <div className={dashboardPanelPaddedClass}>
-                <div className="mb-3">
-                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
-                    <Timer className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
-                    Tool latency &amp; error rate
-                  </h4>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    How fast and how reliable each tool is when called — p50/p95/p99 latency and
-                    error ratio per tool, a latency distribution, and the slowest and flakiest tools.
-                  </p>
-                </div>
-                <ToolLatencyPanel
-                  reliability={tools}
-                  loading={healthLoading}
-                  error={healthError}
-                />
-              </div>
-              {/* Score & lint breakdown (MCAT-17.3) — decomposes the selected snapshot's quality grade
-                  into the points each rule group deducted and the findings behind them, each finding
-                  deep-linking to the offending capability. Reads the same per-version lint report the
-                  Lint & Score tab uses; complements that tab rather than replacing it. */}
-              <div className={dashboardPanelPaddedClass}>
-                <div className="mb-3">
-                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
-                    <Gauge className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
-                    Score &amp; lint breakdown
-                  </h4>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    Where this snapshot&apos;s quality grade comes from — the points each rule group
-                    (naming, structure, annotations, security, hygiene) deducted and the findings
-                    behind them, each linking to the capability it flags.
-                  </p>
-                </div>
-                <ScoreBreakdownPanel
-                  report={report}
-                  loading={reportLoading}
-                  error={reportError}
-                  onNavigateToItem={onNavigateToItem}
-                />
-              </div>
-              {/* Composite trust profile radar (MCAT-17.4) — the capstone of the single-server view.
-                  Synthesizes the section's scattered signals (quality, safety, documentation,
-                  stability, responsiveness) into one five-axis glance, each axis 0–100 or an explicit
-                  gap. Loaded endpoint-level from insight/trust; explicitly a heuristic composite. */}
-              <div className={dashboardPanelPaddedClass}>
-                <div className="mb-3">
-                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
-                    <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
-                    Composite trust profile
-                  </h4>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    A synthesized trust glance across five normalized axes — quality, safety,
-                    documentation, stability, and responsiveness — each with its methodology on
-                    hover. A heuristic composite, not an official rating; unmeasured axes show as
-                    gaps, never zeros.
-                  </p>
-                </div>
-                <TrustProfilePanel profile={trust} loading={trustLoading} error={trustError} />
-              </div>
-              {/* Peer percentile & category ranking (MCAT-18.3) — a peer baseline, not an absolute
-                  grade. Ranks this server against the other live servers in its catalog category on
-                  grade / safety / documentation / latency, so an evaluator sees "top 10% for
-                  documentation in finance"-style standing. Loaded endpoint-level from
-                  insight/percentile; single-member categories and unmeasured axes are handled. */}
-              <div className={dashboardPanelPaddedClass}>
-                <div className="mb-3">
-                  <h4 className="flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
-                    <Trophy className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
-                    Peer ranking in category
-                  </h4>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    Where this server stands against its category peers — a &ldquo;top 10% for
-                    documentation&rdquo;-style baseline across grade, safety, documentation, and
-                    latency, not an absolute grade. Unmeasured axes are shown as gaps.
-                  </p>
-                </div>
-                <PeerPercentilePanel
-                  profile={peerPercentile}
-                  loading={peerLoading}
-                  error={peerError}
-                />
-              </div>
-            </div>
-          );
-        }
-        return (
-          <InsightSection key={section.key} section={section}>
-            {body}
-          </InsightSection>
-        );
-      })}
+      </TabsPrimitive.Root>
     </div>
   );
 }

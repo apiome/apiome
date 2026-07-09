@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Loader2, MessageSquarePlus, Pencil, StickyNote, Trash2, X } from 'lucide-react';
+import { Loader2, MessageSquarePlus, Pencil, Plus, StickyNote, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../../../ui/Button';
 import { Textarea } from '../../../ui/Textarea';
@@ -51,6 +51,8 @@ export function McpEndpointNotesPanel({
   const [saving, setSaving] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [editDraft, setEditDraft] = React.useState('');
+  /** Whether the add-note composer is open. Collapsed by default so the panel leads with the notes. */
+  const [composing, setComposing] = React.useState(false);
 
   const reload = React.useCallback(async () => {
     setLoading(true);
@@ -86,6 +88,7 @@ export function McpEndpointNotesPanel({
         throw new Error(typeof data.error === 'string' ? data.error : res.statusText);
       }
       setDraft('');
+      setComposing(false);
       toast.success('Cataloger note added');
       await reload();
     } catch (e) {
@@ -95,6 +98,12 @@ export function McpEndpointNotesPanel({
     } finally {
       setSaving(false);
     }
+  };
+
+  const cancelCompose = () => {
+    setComposing(false);
+    setDraft('');
+    setError(null);
   };
 
   const startEdit = (note: McpEndpointNote) => {
@@ -164,16 +173,30 @@ export function McpEndpointNotesPanel({
       className="rounded-lg border border-amber-200 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/30"
     >
       <div className="border-b border-amber-200/80 px-4 py-3 dark:border-amber-900/50">
-        <div className="flex items-start gap-2">
-          <StickyNote className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
-          <div>
-            <h3 className="text-sm font-semibold text-amber-950 dark:text-amber-100">
-              Cataloger commentary
-            </h3>
-            <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-200/80">
-              Human notes from your team — not reported by the MCP server.
-            </p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-2">
+            <StickyNote className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+            <div>
+              <h3 className="text-sm font-semibold text-amber-950 dark:text-amber-100">
+                Cataloger commentary
+              </h3>
+              <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-200/80">
+                Human notes from your team — not reported by the MCP server.
+              </p>
+            </div>
           </div>
+          {!composing ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => setComposing(true)}
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+              Add Note
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -273,32 +296,47 @@ export function McpEndpointNotesPanel({
           </article>
         ))}
 
-        <div className="space-y-2 border-t border-amber-200/80 pt-4 dark:border-amber-900/50">
-          <label
-            htmlFor={`cataloger-note-draft-${endpointId}`}
-            className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-amber-900/80 dark:text-amber-200/80"
-          >
-            <MessageSquarePlus className="h-3.5 w-3.5" aria-hidden />
-            Add a note
-          </label>
-          <Textarea
-            id={`cataloger-note-draft-${endpointId}`}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            rows={3}
-            placeholder="e.g. Prefer the staging endpoint for QA — production is read-only."
-            className="bg-white dark:bg-gray-900"
-          />
-          <Button
-            type="button"
-            size="sm"
-            disabled={saving || !draft.trim()}
-            onClick={() => void handleCreate()}
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-            Save note
-          </Button>
-        </div>
+        {composing ? (
+          <div className="space-y-2 border-t border-amber-200/80 pt-4 dark:border-amber-900/50">
+            <label
+              htmlFor={`cataloger-note-draft-${endpointId}`}
+              className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-amber-900/80 dark:text-amber-200/80"
+            >
+              <MessageSquarePlus className="h-3.5 w-3.5" aria-hidden />
+              Add a note
+            </label>
+            <Textarea
+              id={`cataloger-note-draft-${endpointId}`}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={3}
+              autoFocus
+              placeholder="e.g. Prefer the staging endpoint for QA — production is read-only."
+              className="bg-white dark:bg-gray-900"
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                disabled={saving || !draft.trim()}
+                onClick={() => void handleCreate()}
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+                Save note
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={saving}
+                onClick={cancelCompose}
+              >
+                <X className="h-4 w-4" aria-hidden />
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );

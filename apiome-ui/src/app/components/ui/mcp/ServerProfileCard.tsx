@@ -26,6 +26,12 @@ export interface ServerProfileCardProps extends React.HTMLAttributes<HTMLElement
    * links to the full signal. When omitted, the snapshot renders as static text.
    */
   trustHref?: string;
+  /**
+   * Optional handler to reveal the composite trust view — e.g. switch to its tab when the Insight
+   * tab hosts the panels as tabs rather than one scrolling page. Takes precedence over `trustHref`:
+   * when provided, the snapshot renders a button that calls this instead of an anchor.
+   */
+  onNavigateTrust?: () => void;
   /** Current time in epoch ms, injected for deterministic recency in tests. Defaults to "now". */
   nowMs?: number;
 }
@@ -83,7 +89,7 @@ function CountChip({ label, value }: { label: string; value: number }) {
  * and spacing come from the shared tokens/primitives; no literals live here.
  */
 export const ServerProfileCard = React.forwardRef<HTMLElement, ServerProfileCardProps>(
-  ({ profile, trustHref, nowMs, className, ...props }, ref) => {
+  ({ profile, trustHref, onNavigateTrust, nowMs, className, ...props }, ref) => {
     const transport = mcpTransportBadge(profile.transport);
     // The catalog name is a useful subtitle only when it differs from the server-reported name shown
     // as the headline (otherwise it would just repeat it).
@@ -234,7 +240,15 @@ export const ServerProfileCard = React.forwardRef<HTMLElement, ServerProfileCard
             </span>
             {profile.score !== null ? ` (${Math.round(profile.score)}/100)` : ''}
           </span>
-          {trustHref ? (
+          {onNavigateTrust ? (
+            <button
+              type="button"
+              onClick={onNavigateTrust}
+              className="ml-auto font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+            >
+              Composite trust radar →
+            </button>
+          ) : trustHref ? (
             <a
               href={trustHref}
               className="ml-auto font-medium text-indigo-600 hover:underline dark:text-indigo-400"
