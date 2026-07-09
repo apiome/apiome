@@ -264,6 +264,48 @@ export function resolveCatalogFormat(format: string | null | undefined): Catalog
   return undefined;
 }
 
+/** gRPC and Protobuf share one import adapter and land as ``sourceFormat: protobuf`` in the catalog. */
+const PROTOBUF_FORMAT_FAMILY_ID = 'protobuf';
+
+/**
+ * Collapse near-duplicate format ids to a single catalog filter/stats family.
+ *
+ * gRPC imports persist ``protobuf`` as the canonical format while the registry also exposes a
+ * separate ``grpc`` entry — without this, format filtering and search for "gRPC" miss protobuf
+ * catalog items.
+ */
+export function catalogFormatFamilyId(format: string | null | undefined): string | undefined {
+  const resolved = resolveCatalogFormat(format);
+  if (!resolved) return undefined;
+  if (resolved.id === 'grpc' || resolved.id === 'protobuf') return PROTOBUF_FORMAT_FAMILY_ID;
+  return resolved.id;
+}
+
+/** Human label for a {@link catalogFormatFamilyId} value (used by the format facet). */
+export function catalogFormatFamilyLabel(familyId: string): string {
+  if (familyId === PROTOBUF_FORMAT_FAMILY_ID) return 'gRPC / Protobuf';
+  return resolveCatalogFormat(familyId)?.label ?? familyId;
+}
+
+/** Search tokens that should match a catalog format family (labels + common aliases). */
+export function catalogFormatSearchTokens(format: string | null | undefined): string[] {
+  const resolved = resolveCatalogFormat(format);
+  if (!resolved) return [];
+  const familyId = catalogFormatFamilyId(format) ?? resolved.id;
+  const tokens = new Set<string>([
+    resolved.id,
+    resolved.label.toLowerCase(),
+    catalogFormatFamilyLabel(familyId).toLowerCase(),
+  ]);
+  if (familyId === PROTOBUF_FORMAT_FAMILY_ID) {
+    tokens.add('grpc');
+    tokens.add('protobuf');
+    tokens.add('proto');
+  }
+  for (const alias of resolved.aliases ?? []) tokens.add(alias.toLowerCase());
+  return [...tokens];
+}
+
 // ==================== Protocols (paradigms) ====================
 
 /** A single API paradigm / protocol family (the canonical `ApiParadigm`, plus `agent`). */

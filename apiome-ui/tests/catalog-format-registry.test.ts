@@ -19,6 +19,9 @@ import {
   resolveCatalogFormat,
   resolveCatalogProtocol,
   resolveCatalogSource,
+  catalogFormatFamilyId,
+  catalogFormatFamilyLabel,
+  catalogFormatSearchTokens,
 } from '../src/app/utils/catalog-format-registry';
 
 describe('catalog-format-registry — formats', () => {
@@ -80,6 +83,19 @@ describe('catalog-format-registry — formats', () => {
     expect(resolveCatalogFormat('openrpc')?.label).toBe('OpenRPC');
     expect(resolveCatalogFormat('zos-connect')?.id).toBe('zosconnect');
     expect(resolveCatalogFormat('xml-rpc')?.id).toBe('xmlrpc');
+  });
+});
+
+describe('catalogFormatFamilyId', () => {
+  test('collapses gRPC and Protobuf into one catalog family', () => {
+    expect(catalogFormatFamilyId('protobuf')).toBe('protobuf');
+    expect(catalogFormatFamilyId('grpc')).toBe('protobuf');
+    expect(catalogFormatFamilyLabel('protobuf')).toBe('gRPC / Protobuf');
+  });
+
+  test('search tokens match both gRPC and Protobuf labels for a protobuf item', () => {
+    const tokens = catalogFormatSearchTokens('protobuf');
+    expect(tokens).toEqual(expect.arrayContaining(['grpc', 'protobuf', 'proto']));
   });
 });
 

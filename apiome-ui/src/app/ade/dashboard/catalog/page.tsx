@@ -81,7 +81,8 @@ import { FormatPill } from '../../../components/ui/catalog/FormatPill';
 import { ProtocolPill } from '../../../components/ui/catalog/ProtocolPill';
 import { SourceBadge } from '../../../components/ui/catalog/SourceBadge';
 import { GradeChip } from '../../../components/ui/catalog/GradeChip';
-import { resolveCatalogSource, resolveCatalogFormat } from '../../../utils/catalog-format-registry';
+import { resolveCatalogSource, resolveCatalogFormat, catalogFormatFamilyId, catalogFormatFamilyLabel, catalogFormatSearchTokens } from '../../../utils/catalog-format-registry';
+import { normalizeCatalogListItem } from '@/app/utils/catalog-list-item';
 import {
   CatalogFormatFacet,
   type CatalogFormatOption,
@@ -539,14 +540,17 @@ const Catalog = () => {
     let rows = sortedItems;
     const q = searchQuery.trim().toLowerCase();
     if (q) {
-      rows = rows.filter(
-        (i) =>
+      rows = rows.filter((i) => {
+        const formatTokens = catalogFormatSearchTokens(i.sourceFormat ?? null);
+        return (
           i.name.toLowerCase().includes(q) ||
           (i.slug ?? '').toLowerCase().includes(q) ||
           (i.description ?? '').toLowerCase().includes(q) ||
           (i.sourceFormat ?? '').toLowerCase().includes(q) ||
-          (i.protocol ?? '').toLowerCase().includes(q)
-      );
+          (i.protocol ?? '').toLowerCase().includes(q) ||
+          formatTokens.some((token) => token.includes(q))
+        );
+      });
     }
     if (filterChip === 'active') {
       rows = rows.filter((i) => i.enabled && !i.deleted_at);
@@ -561,8 +565,8 @@ const Catalog = () => {
     if (selectedFormats.length > 0) {
       const wanted = new Set(selectedFormats);
       rows = rows.filter((i) => {
-        const id = resolveCatalogFormat(i.sourceFormat)?.id;
-        return id !== undefined && wanted.has(id);
+        const familyId = catalogFormatFamilyId(i.sourceFormat);
+        return familyId !== undefined && wanted.has(familyId);
       });
     }
     return rows;
@@ -573,12 +577,14 @@ const Catalog = () => {
   // actually appear in the list. Derived from the full item set (not the filtered view) so toggling
   // one format never makes the others disappear from the menu.
   const availableFormats = useMemo<CatalogFormatOption[]>(() => {
-    const byId = new Map<string, CatalogFormatOption>();
+    const byFamily = new Map<string, CatalogFormatOption>();
     for (const item of items) {
-      const fmt = resolveCatalogFormat(item.sourceFormat);
-      if (fmt && !byId.has(fmt.id)) byId.set(fmt.id, { id: fmt.id, label: fmt.label });
+      const familyId = catalogFormatFamilyId(item.sourceFormat);
+      if (familyId && !byFamily.has(familyId)) {
+        byFamily.set(familyId, { id: familyId, label: catalogFormatFamilyLabel(familyId) });
+      }
     }
-    return [...byId.values()].sort((a, b) => a.label.localeCompare(b.label));
+    return [...byFamily.values()].sort((a, b) => a.label.localeCompare(b.label));
   }, [items]);
 
   // Card view sectioned by resolved paradigm (MFI-24.2), in fixed graph→rpc→event→rest→data-schema
@@ -632,7 +638,7 @@ const Catalog = () => {
       }
       const data = await response.json();
       if (data.success && Array.isArray(data.catalog)) {
-        setItems(data.catalog as CatalogItem[]);
+        setItems((data.catalog as Record<string, unknown>[]).map(normalizeCatalogListItem) as CatalogItem[]);
       } else {
         throw new Error(data.error || 'Failed to load catalog');
       }

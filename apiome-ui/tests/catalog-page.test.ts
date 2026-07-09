@@ -284,13 +284,13 @@ describe('unified toolbar + persisted view preferences (MFI-28.4)', () => {
     expect(src).toContain('options={availableFormats}');
     expect(src).toContain('selected={selectedFormats}');
     expect(src).toContain('onChange={setSelectedFormats}');
-    // The filter keeps only items whose resolved format id is in the selection.
-    expect(src).toContain('resolveCatalogFormat(i.sourceFormat)?.id');
+    // The filter keeps only items whose resolved format family is in the selection.
+    expect(src).toContain('catalogFormatFamilyId(i.sourceFormat)');
     expect(src).toMatch(/selectedFormats\.length > 0/);
   });
 
-  it('derives the available formats from the loaded list via the registry', () => {
+  it('derives the available formats from the loaded list via format families', () => {
     expect(src).toContain('const availableFormats = useMemo<CatalogFormatOption[]>');
-    expect(src).toContain('resolveCatalogFormat(item.sourceFormat)');
+    expect(src).toContain('catalogFormatFamilyId(item.sourceFormat)');
   });
 });

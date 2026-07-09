@@ -19,7 +19,7 @@ import {
   getNumericScoreTier,
   type NumericScoreTierStyle,
 } from './numeric-score-tier';
-import { resolveCatalogFormat } from './catalog-format-registry';
+import { catalogFormatFamilyId, catalogFormatFamilyLabel } from './catalog-format-registry';
 
 /** The minimal catalog-item shape the stats need — a subset of the page's `CatalogItem`. */
 export interface CatalogStatsItem {
@@ -83,9 +83,13 @@ export function computeCatalogStats(items: readonly CatalogStatsItem[]): Catalog
   for (const item of live) {
     const raw = item.sourceFormat?.trim();
     if (!raw) continue;
-    const resolved = resolveCatalogFormat(raw);
-    const key = resolved ? resolved.id : raw.toLowerCase();
-    if (!formatLabels.has(key)) formatLabels.set(key, resolved ? resolved.label : raw);
+    const familyId = catalogFormatFamilyId(raw);
+    if (familyId) {
+      if (!formatLabels.has(familyId)) formatLabels.set(familyId, catalogFormatFamilyLabel(familyId));
+      continue;
+    }
+    const key = raw.toLowerCase();
+    if (!formatLabels.has(key)) formatLabels.set(key, raw);
   }
 
   const converted = live.filter((i) => i.conversion != null).length;

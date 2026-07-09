@@ -100,6 +100,16 @@ describe('computeCatalogStats', () => {
     expect(stats.sampleFormats).toEqual(['madeupfmt']);
   });
 
+  it('collapses grpc and protobuf into one format in the stats row', () => {
+    const stats = computeCatalogStats([
+      item({ sourceFormat: 'protobuf' }),
+      item({ sourceFormat: 'grpc' }),
+      item({ sourceFormat: 'graphql' }),
+    ]);
+    expect(stats.formatCount).toBe(2);
+    expect(stats.sampleFormats).toEqual(expect.arrayContaining(['gRPC / Protobuf', 'GraphQL']));
+  });
+
   it('caps the sample formats but keeps the full distinct count', () => {
     const stats = computeCatalogStats([
       item({ sourceFormat: 'graphql' }),
