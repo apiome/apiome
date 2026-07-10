@@ -26,9 +26,14 @@ from apiome_mock.usage import schedule_mock_usage
 _limiter = TokenBucketRateLimiter()
 
 
+class _ClientHost(Protocol):
+    @property
+    def host(self) -> str | None: ...
+
+
 class _ClientHostSource(Protocol):
     @property
-    def client(self) -> object | None: ...
+    def client(self) -> _ClientHost | None: ...
 
 
 def _client_ip(source: Request | WebSocket | _ClientHostSource) -> str:

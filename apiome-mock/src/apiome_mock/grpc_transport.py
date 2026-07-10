@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass
 
 import grpc
@@ -69,7 +70,9 @@ class GrpcMockRuntime:
         runtime = self
 
         class _Handler(grpc.GenericRpcHandler):
-            def service(self, handler_call_details: grpc.HandlerCallDetails) -> grpc.RpcMethodHandler | None:
+            def service(
+                self, handler_call_details: grpc.HandlerCallDetails
+            ) -> grpc.RpcMethodHandler[bytes, bytes] | None:
                 method_path = handler_call_details.method or ""
                 if method_path.startswith("/grpc.reflection."):
                     return None
@@ -98,8 +101,15 @@ class GrpcMockRuntime:
 
         return _Handler()
 
+    @staticmethod
+    def _decode_metadata_value(value: str | bytes) -> str:
+        return value.decode("utf-8", "replace") if isinstance(value, bytes) else value
+
     def _metadata(self, handler_call_details: grpc.HandlerCallDetails) -> dict[str, str]:
-        return {key.lower(): value for key, value in handler_call_details.invocation_metadata or ()}
+        return {
+            key.lower(): self._decode_metadata_value(value)
+            for key, value in handler_call_details.invocation_metadata or ()
+        }
 
     def _lookup_route(
         self,
@@ -122,14 +132,18 @@ class GrpcMockRuntime:
                 return route
         return None
 
-    def _unary_unary_handler(self, service_name: str, method_name: str):
-        async def _handler(request: bytes, context: grpc.aio.ServicerContext) -> bytes:
+    def _unary_unary_handler(
+        self, service_name: str, method_name: str
+    ) -> Callable[[bytes, grpc.aio.ServicerContext[bytes, bytes]], Awaitable[bytes]]:
+        async def _handler(request: bytes, context: grpc.aio.ServicerContext[bytes, bytes]) -> bytes:
             return await self._serve_unary(request, context, service_name=service_name, method_name=method_name)
 
         return _handler
 
-    def _unary_stream_handler(self, service_name: str, method_name: str):
-        async def _handler(request: bytes, context: grpc.aio.ServicerContext):
+    def _unary_stream_handler(
+        self, service_name: str, method_name: str
+    ) -> Callable[[bytes, grpc.aio.ServicerContext[bytes, bytes]], AsyncIterator[bytes]]:
+        async def _handler(request: bytes, context: grpc.aio.ServicerContext[bytes, bytes]) -> AsyncIterator[bytes]:
             async for item in self._serve_server_stream(
                 request,
                 context,
@@ -140,8 +154,12 @@ class GrpcMockRuntime:
 
         return _handler
 
-    def _stream_unary_handler(self, service_name: str, method_name: str):
-        async def _handler(request_iterator, context: grpc.aio.ServicerContext) -> bytes:
+    def _stream_unary_handler(
+        self, service_name: str, method_name: str
+    ) -> Callable[[AsyncIterator[bytes], grpc.aio.ServicerContext[bytes, bytes]], Awaitable[bytes]]:
+        async def _handler(
+            request_iterator: AsyncIterator[bytes], context: grpc.aio.ServicerContext[bytes, bytes]
+        ) -> bytes:
             last = b""
             async for item in request_iterator:
                 last = item
@@ -149,8 +167,12 @@ class GrpcMockRuntime:
 
         return _handler
 
-    def _stream_stream_handler(self, service_name: str, method_name: str):
-        async def _handler(request_iterator, context: grpc.aio.ServicerContext):
+    def _stream_stream_handler(
+        self, service_name: str, method_name: str
+    ) -> Callable[[AsyncIterator[bytes], grpc.aio.ServicerContext[bytes, bytes]], AsyncIterator[bytes]]:
+        async def _handler(
+            request_iterator: AsyncIterator[bytes], context: grpc.aio.ServicerContext[bytes, bytes]
+        ) -> AsyncIterator[bytes]:
             count = 0
             async for _ in request_iterator:
                 if count >= _STREAM_BOUND:
@@ -162,11 +184,13 @@ class GrpcMockRuntime:
 
     async def _resolve_compiled(
         self,
-        context: grpc.aio.ServicerContext,
+        context: grpc.aio.ServicerContext[bytes, bytes],
         *,
         method_name: str,
     ) -> tuple[CompiledCanonicalSpec, GrpcMethodRoute, ValidatedApiKey | None] | None:
-        metadata = {key.lower(): value for key, value in context.invocation_metadata() or ()}
+        metadata = {
+            key.lower(): self._decode_metadata_value(value) for key, value in context.invocation_metadata() or ()
+        }
         tenant = metadata.get(_METADATA_TENANT)
         project = metadata.get(_METADATA_PROJECT)
         version = metadata.get(_METADATA_VERSION)
@@ -240,7 +264,7 @@ class GrpcMockRuntime:
                 self._server,
             )
 
-    def _peer_host(self, context: grpc.aio.ServicerContext) -> str:
+    def _peer_host(self, context: grpc.aio.ServicerContext[bytes, bytes]) -> str:
         peer = context.peer()
         if peer.startswith("ipv4:"):
             return peer.split(":", 2)[1]
@@ -260,13 +284,12 @@ class GrpcMockRuntime:
         type_name = route.response_message_key or "google.protobuf.Empty"
         short_name = type_name.rsplit(".", 1)[-1]
         descriptor = pool.FindMessageTypeByName(short_name)
-        factory = message_factory.MessageFactory(pool=pool)
-        return factory.GetPrototype(descriptor)
+        return message_factory.GetMessageClass(descriptor)
 
     async def _serve_unary(
         self,
         request: bytes,
-        context: grpc.aio.ServicerContext,
+        context: grpc.aio.ServicerContext[bytes, bytes],
         *,
         service_name: str,
         method_name: str,
@@ -311,11 +334,11 @@ class GrpcMockRuntime:
     async def _serve_server_stream(
         self,
         request: bytes,
-        context: grpc.aio.ServicerContext,
+        context: grpc.aio.ServicerContext[bytes, bytes],
         *,
         service_name: str,
         method_name: str,
-    ):
+    ) -> AsyncIterator[bytes]:
         for _ in range(_STREAM_BOUND):
             payload = await self._serve_unary(request, context, service_name=service_name, method_name=method_name)
             yield payload

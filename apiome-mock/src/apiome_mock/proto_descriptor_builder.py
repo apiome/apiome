@@ -18,7 +18,7 @@ from google.protobuf import descriptor_pb2
 
 _FD = descriptor_pb2.FieldDescriptorProto
 
-_SCALAR_MAP: Dict[str, int] = {
+_SCALAR_MAP: Dict[str, _FD.Type.ValueType] = {
     "double": _FD.TYPE_DOUBLE,
     "float": _FD.TYPE_FLOAT,
     "int32": _FD.TYPE_INT32,
