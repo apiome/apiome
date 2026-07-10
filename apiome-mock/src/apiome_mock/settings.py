@@ -81,6 +81,12 @@ class Settings(BaseSettings):
         le=1.0,
         description="Fraction of mock hits written to access_audit (0 disables).",
     )
+    grpc_enabled: bool = Field(
+        default=True,
+        description="Start the gRPC reflection mock listener alongside the HTTP server.",
+    )
+    grpc_host: str = Field(default="127.0.0.1", min_length=1)
+    grpc_port: int = Field(default=8776, ge=1, le=65535)
 
     @model_validator(mode="after")
     def pool_size_bounds(self) -> Self:

@@ -7,7 +7,7 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass
 from threading import Lock
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import structlog
 
@@ -71,6 +71,7 @@ async def run_notify_listener(
     cache: SpecCache,
     *,
     stop_event: asyncio.Event,
+    on_invalidate: Callable[[str, str, str], None] | None = None,
 ) -> None:
     """Listen for publish NOTIFY payloads and invalidate matching cache keys.
 
@@ -94,6 +95,8 @@ async def run_notify_listener(
                     _log.warning("spec_notify_invalid_payload", payload=payload)
                     continue
                 cache.invalidate(parts[0], parts[1], parts[2])
+                if on_invalidate is not None:
+                    on_invalidate(parts[0], parts[1], parts[2])
     except asyncio.CancelledError:
         raise
     except Exception as exc:
