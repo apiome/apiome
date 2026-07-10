@@ -137,6 +137,18 @@ def unknown_scenario(
     )
 
 
+def chaos_injected_error(detail: str, *, instance: str | None = None) -> JSONResponse:
+    """500 returned by chaos error injection when the spec defines no 5xx (#4455, SIM-4.3)."""
+    return problem_response(
+        status=500,
+        title="Injected Server Error",
+        detail=detail,
+        problem_type="chaos-injected-error",
+        instance=instance,
+        extra={"chaosInjected": True},
+    )
+
+
 def too_many_requests(
     detail: str,
     *,

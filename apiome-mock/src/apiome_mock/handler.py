@@ -11,8 +11,17 @@ from fastapi.responses import JSONResponse, Response
 from psycopg_pool import AsyncConnectionPool
 
 from apiome_mock.api_key import ValidatedApiKey
+from apiome_mock.chaos import (
+    CHAOS_DELAY_HEADER,
+    CHAOS_HEADER,
+    apply_chaos_delay,
+    compute_delay_ms,
+    effective_knobs,
+    should_inject_error,
+)
 from apiome_mock.problems import (
     bad_request,
+    chaos_injected_error,
     method_not_allowed,
     mock_disabled,
     not_acceptable,
@@ -97,6 +106,56 @@ def _resolve_operation_response(
             instance=instance,
         )
     return _response_for_body(status=status, body=resolved.body, media_type=resolved.media_type)
+
+
+def _select_injected_error_status(operation: MockOperation) -> int | None:
+    """Pick the 5xx status chaos injection serves: 500 when defined, else the lowest defined 5xx."""
+    responses = operation.operation.get("responses")
+    if not isinstance(responses, dict):
+        return None
+    codes = sorted(int(code) for code in responses if str(code).isdigit() and 500 <= int(code) <= 599)
+    if not codes:
+        return None
+    return 500 if 500 in codes else codes[0]
+
+
+def _injected_error_response(
+    *,
+    operation: MockOperation,
+    spec: dict[str, Any],
+    accept: str | None,
+    prefer_header: str | None,
+    seed: int,
+    instance: str,
+) -> Response:
+    """Build the chaos-injected error response (#4455, SIM-4.3).
+
+    Serves the operation's spec-defined 5xx (500 preferred, else the lowest
+    5xx) with its resolved example body; when the spec defines no 5xx (or no
+    body satisfies the Accept header) falls back to problem+json 500. The
+    response is marked with the ``X-Mock-Chaos: error`` header.
+    """
+    response: Response | None = None
+    status = _select_injected_error_status(operation)
+    if status is not None:
+        _, response_obj = select_response_by_status(operation.operation, status)
+        resolved = resolve_response_body(
+            response_obj,
+            spec,
+            accept=accept,
+            prefer_header=prefer_header,
+            seed=seed,
+            op_key=operation.key,
+        )
+        if not resolved.not_acceptable:
+            response = _response_for_body(status=status, body=resolved.body, media_type=resolved.media_type)
+    if response is None:
+        response = chaos_injected_error(
+            f"Chaos error injected for {operation.key}.",
+            instance=instance,
+        )
+    response.headers[CHAOS_HEADER] = "error"
+    return response
 
 
 def _validation_problem_response(
@@ -231,6 +290,7 @@ async def handle_mock_request(
     # curated situation authored in the Control Panel. Overridden operations
     # return their canned response(s) verbatim (highest precedence); operations
     # the scenario does not override fall through to the default flow below.
+    scenario = None
     scenario_name = parse_mock_scenario_name(request)
     if scenario_name is not None:
         scenario = compiled.scenarios.get(scenario_name)
@@ -240,19 +300,38 @@ async def handle_mock_request(
                 instance=instance,
                 available=sorted(compiled.scenarios),
             )
+
+    # Chaos injection (#4455, SIM-4.3): a scenario-scoped chaos block replaces
+    # the version-level one when that scenario is active. The configured delay
+    # applies to every matched-operation response (canned, forced, validation
+    # problem, or resolved); error injection further down replaces only the
+    # normal resolved response.
+    chaos_config = scenario.chaos if scenario is not None and scenario.chaos is not None else compiled.chaos
+    chaos_knobs = effective_knobs(chaos_config, operation.key)
+    applied_delay_ms = await apply_chaos_delay(compute_delay_ms(chaos_knobs), tenant=tenant)
+
+    def _with_chaos_delay(response: Response) -> Response:
+        """Stamp the applied injected delay on an outgoing response."""
+        if applied_delay_ms > 0:
+            response.headers[CHAOS_DELAY_HEADER] = str(applied_delay_ms)
+        return response
+
+    if scenario is not None:
         canned_responses = scenario.operations.get(operation.key)
         if canned_responses:
             client = request.client
-            return await serve_scenario_response(
-                scenario=scenario,
-                responses=canned_responses,
-                operation_key=operation.key,
-                tenant=tenant,
-                project=project,
-                version=version,
-                session_token=session_token,
-                client_ip=client.host if client and client.host else "unknown",
-                store=session_store,
+            return _with_chaos_delay(
+                await serve_scenario_response(
+                    scenario=scenario,
+                    responses=canned_responses,
+                    operation_key=operation.key,
+                    tenant=tenant,
+                    project=project,
+                    version=version,
+                    session_token=session_token,
+                    client_ip=client.host if client and client.host else "unknown",
+                    store=session_store,
+                )
             )
 
     prefer_header = request.headers.get("prefer")
@@ -260,26 +339,42 @@ async def handle_mock_request(
     seed = parse_mock_seed(request.query_params.get("__seed"))
     forced_status = parse_forced_status(prefer_header, request.query_params)
     if forced_status is not None:
-        return _resolve_operation_response(
-            status=forced_status,
-            operation=operation,
-            spec=compiled.spec,
-            accept=accept,
-            prefer_header=prefer_header,
-            seed=seed,
-            instance=instance,
+        return _with_chaos_delay(
+            _resolve_operation_response(
+                status=forced_status,
+                operation=operation,
+                spec=compiled.spec,
+                accept=accept,
+                prefer_header=prefer_header,
+                seed=seed,
+                instance=instance,
+            )
         )
 
     failure = await validate_operation_request(request, operation, path_params, compiled.spec)
     if failure is not None:
-        return _validation_problem_response(
-            failure,
-            operation=operation,
-            spec=compiled.spec,
-            accept=accept,
-            prefer_header=prefer_header,
-            seed=seed,
-            instance=instance,
+        return _with_chaos_delay(
+            _validation_problem_response(
+                failure,
+                operation=operation,
+                spec=compiled.spec,
+                accept=accept,
+                prefer_header=prefer_header,
+                seed=seed,
+                instance=instance,
+            )
+        )
+
+    if should_inject_error(chaos_knobs):
+        return _with_chaos_delay(
+            _injected_error_response(
+                operation=operation,
+                spec=compiled.spec,
+                accept=accept,
+                prefer_header=prefer_header,
+                seed=seed,
+                instance=instance,
+            )
         )
 
     if session_token is not None and session_store is not None:
@@ -298,7 +393,7 @@ async def handle_mock_request(
             session_token=session_token,
         )
         if stateful is not None:
-            return stateful
+            return _with_chaos_delay(stateful)
 
     status, response_obj = select_default_success_status(operation.operation)
     resolved = resolve_response_body(
@@ -310,9 +405,11 @@ async def handle_mock_request(
         op_key=operation.key,
     )
     if resolved.not_acceptable:
-        return not_acceptable(
-            "No response content type satisfies the request Accept header.",
-            instance=instance,
+        return _with_chaos_delay(
+            not_acceptable(
+                "No response content type satisfies the request Accept header.",
+                instance=instance,
+            )
         )
 
-    return _response_for_body(status=status, body=resolved.body, media_type=resolved.media_type)
+    return _with_chaos_delay(_response_for_body(status=status, body=resolved.body, media_type=resolved.media_type))

@@ -8547,7 +8547,7 @@
           "versions"
         ],
         "summary": "Set Version Mock Scenarios",
-        "description": "Replace the version's mock scenario definitions (#4454 SIM-4.2).\n\nCanned responses are validated against the version's generated OpenAPI\ndocument (operation exists, status defined, media type declared, body\nmatches the response schema); a response may opt out with ``offSpec``.\nDefinitions persist in ``versions.mock_settings`` alongside other mock\nknobs and survive publish/republish and mock toggles.",
+        "description": "Replace the version's mock scenario definitions (#4454 SIM-4.2).\n\nCanned responses are validated against the version's generated OpenAPI\ndocument (operation exists, status defined, media type declared, body\nmatches the response schema); a response may opt out with ``offSpec``.\nDefinitions persist in ``versions.mock_settings`` alongside other mock\nknobs and survive publish/republish and mock toggles.\n\nThe request also carries the version-level latency/chaos knobs (#4455\nSIM-4.3): ``chaos`` replaces the stored block, and omitting it (or\nsending ``null``) clears the stored block.",
         "operationId": "set_version_mock_scenarios_v1_versions__tenant_slug___project_id___version_record_id__mock_scenarios_put",
         "parameters": [
           {
@@ -39315,6 +39315,83 @@
         "title": "MergeSessionStatusPatchRequest",
         "description": "Update merge session lifecycle state (#2573)."
       },
+      "MockChaosKnobsSpec": {
+        "properties": {
+          "delayMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 30000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delayms",
+            "description": "Base delay in milliseconds applied before the mock responds (max 30000)."
+          },
+          "jitterMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 30000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jitterms",
+            "description": "Uniform jitter half-width in milliseconds; the applied delay is delayMs \u00b1 jitterMs."
+          },
+          "errorRate": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errorrate",
+            "description": "Percent probability (0-100) of returning an injected error instead of the normal response."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "MockChaosKnobsSpec",
+        "description": "Latency/error-injection knobs for one scope (#4455 SIM-4.3).\n\nUnset knobs inherit: an operation entry falls back to the chaos block's\n``default``, and an unset default means the knob is off."
+      },
+      "MockChaosSpec": {
+        "properties": {
+          "default": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MockChaosKnobsSpec"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Knobs applied to every operation that has no override of its own."
+          },
+          "operations": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MockChaosKnobsSpec"
+            },
+            "type": "object",
+            "title": "Operations",
+            "description": "Per-route overrides keyed by \"METHOD /path/{template}\" operation identifiers."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "MockChaosSpec",
+        "description": "Chaos knobs for a version or one scenario: a default plus per-operation overrides (#4455 SIM-4.3)."
+      },
       "MockInstanceResponse": {
         "properties": {
           "id": {
@@ -39707,6 +39784,17 @@
             "type": "object",
             "title": "Operations",
             "description": "Overrides keyed by \"METHOD /path/{template}\" operation identifiers."
+          },
+          "chaos": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MockChaosSpec"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Scenario-scoped chaos knobs; replaces the version-level chaos while this scenario is selected (#4455 SIM-4.3)."
           }
         },
         "additionalProperties": false,
@@ -39730,6 +39818,17 @@
             "type": "object",
             "title": "Operations",
             "description": "Overrides keyed by \"METHOD /path/{template}\" operation identifiers."
+          },
+          "chaos": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MockChaosSpec"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Scenario-scoped chaos knobs; replaces the version-level chaos while this scenario is selected (#4455 SIM-4.3)."
           }
         },
         "additionalProperties": false,
@@ -47528,6 +47627,17 @@
             "type": "object",
             "title": "Scenarios",
             "description": "Scenario definitions keyed by scenario name; an empty map clears them."
+          },
+          "chaos": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MockChaosSpec"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Version-level latency/chaos knobs; omit or send null to clear them (#4455 SIM-4.3)."
           }
         },
         "type": "object",
@@ -47543,6 +47653,17 @@
             "type": "object",
             "title": "Scenarios",
             "description": "Scenario definitions keyed by scenario name."
+          },
+          "chaos": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MockChaosSpec"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Version-level latency/chaos knobs (#4455 SIM-4.3)."
           }
         },
         "type": "object",

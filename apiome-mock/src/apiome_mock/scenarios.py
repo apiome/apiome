@@ -41,6 +41,7 @@ from typing import Any, Mapping
 from fastapi import Request
 from fastapi.responses import JSONResponse, Response
 
+from apiome_mock.chaos import ChaosConfig, parse_chaos_block
 from apiome_mock.session_store import SessionKey, SessionStore, SessionStoreError
 
 MOCK_SCENARIO_HEADER = "X-Mock-Scenario"
@@ -78,6 +79,8 @@ class Scenario:
     name: str
     description: str
     operations: Mapping[str, tuple[ScenarioResponse, ...]]
+    chaos: ChaosConfig | None = None
+    """Scenario-scoped chaos knobs (#4455, SIM-4.3); ``None`` -> version-level chaos applies."""
 
 
 def normalize_operation_key(raw: Any) -> str | None:
@@ -173,6 +176,7 @@ def _parse_scenario(name: str, raw: Any) -> Scenario | None:
         name=name,
         description=description if isinstance(description, str) else "",
         operations=operations,
+        chaos=parse_chaos_block(raw.get("chaos")),
     )
 
 

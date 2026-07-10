@@ -21,11 +21,15 @@ from .compatibility_engine import CompatibilityCheckEngine, compat_audit_detail,
 from .config import settings
 from .database import BranchNotFoundError, StaleHeadPushError, db
 from .mock_scenario_settings import (
+    chaos_from_storage,
+    chaos_to_storage,
     scenarios_from_storage,
     scenarios_to_storage,
+    validate_mock_chaos,
     validate_mock_scenarios,
 )
 from .models import (
+    MockChaosSpec,
     MockScenarioSpec,
     SunsetTimelineEntryOut,
     SunsetTimelineResponse,
@@ -2114,6 +2118,20 @@ def _get_version_for_mock_scenarios(
     return existing
 
 
+def _parse_stored_chaos(mock_settings: Any, version_record_id: str) -> Optional[MockChaosSpec]:
+    """Parse the stored chaos block for a response; malformed blobs are omitted (#4455 SIM-4.3)."""
+    stored_chaos, _ = chaos_from_storage(mock_settings)
+    if stored_chaos is None:
+        return None
+    try:
+        return MockChaosSpec.model_validate(stored_chaos)
+    except ValueError:
+        # A malformed stored entry never breaks the editor; it is simply omitted
+        # (the runtime skips it the same way).
+        logger.warning("Skipping malformed mock chaos block on version %s", version_record_id)
+        return None
+
+
 @router.get("/{tenant_slug}/{project_id}/{version_record_id}/mock/scenarios")
 async def get_version_mock_scenarios(
     tenant_slug: str,
@@ -2134,7 +2152,10 @@ async def get_version_mock_scenarios(
             # A malformed stored entry never breaks the editor; it is simply omitted
             # (the runtime skips it the same way).
             logger.warning("Skipping malformed mock scenario %r on version %s", name, version_record_id)
-    return VersionMockScenariosResponse(scenarios=scenarios)
+    return VersionMockScenariosResponse(
+        scenarios=scenarios,
+        chaos=_parse_stored_chaos(existing.get("mock_settings"), version_record_id),
+    )
 
 
 @router.put("/{tenant_slug}/{project_id}/{version_record_id}/mock/scenarios")
@@ -2152,6 +2173,10 @@ async def set_version_mock_scenarios(
     matches the response schema); a response may opt out with ``offSpec``.
     Definitions persist in ``versions.mock_settings`` alongside other mock
     knobs and survive publish/republish and mock toggles.
+
+    The request also carries the version-level latency/chaos knobs (#4455
+    SIM-4.3): ``chaos`` replaces the stored block, and omitting it (or
+    sending ``null``) clears the stored block.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     existing = _get_version_for_mock_scenarios(project_id, version_record_id, auth_data["tenant_id"])
@@ -2165,6 +2190,7 @@ async def set_version_mock_scenarios(
 
     spec = _generated_spec_for_version(existing, tenant_slug)
     errors = validate_mock_scenarios(request.scenarios, spec)
+    errors.extend(validate_mock_chaos(request.chaos, spec))
     if errors:
         raise HTTPException(
             status_code=422,
@@ -2172,11 +2198,13 @@ async def set_version_mock_scenarios(
         )
 
     storage = scenarios_to_storage(request.scenarios)
+    chaos_storage = chaos_to_storage(request.chaos) if request.chaos is not None else None
     updated = db.set_version_mock_scenarios(
         version_record_id,
         auth_data["tenant_id"],
         user_id,
         scenarios=storage,
+        chaos=chaos_storage,
     )
     if not updated:
         raise HTTPException(
@@ -2186,7 +2214,8 @@ async def set_version_mock_scenarios(
 
     stored, _ = scenarios_from_storage(updated.get("mock_settings"))
     return VersionMockScenariosResponse(
-        scenarios={name: MockScenarioSpec.model_validate(raw) for name, raw in stored.items()}
+        scenarios={name: MockScenarioSpec.model_validate(raw) for name, raw in stored.items()},
+        chaos=_parse_stored_chaos(updated.get("mock_settings"), version_record_id),
     )
 
 
