@@ -3,6 +3,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
+import { base64ToBytes } from '../body';
 import {
   checkTargetAllowed,
   deriveAllowedSpecOrigins,
@@ -365,6 +366,7 @@ describe('executeRelay', () => {
         statusText: 'OK',
         headers: { 'content-type': 'application/json' },
         body: '{"ok":true}',
+        bodyEncoding: 'text',
         durationMs: 120,
         sizeBytes: 11,
         truncated: false,
@@ -685,5 +687,101 @@ describe('statusTextFor', () => {
     expect(statusTextFor(200)).toBe('OK');
     expect(statusTextFor(504)).toBe('Gateway Timeout');
     expect(statusTextFor(299)).toBe('');
+  });
+});
+
+describe('executeRelay — body encoding (SIM-3.3)', () => {
+  it('relays text bodies as text', async () => {
+    const outcome = await executeRelay(
+      relayRequest(),
+      openPolicy,
+      fakeDeps(vi.fn(async () => httpResponse()))
+    );
+    expect(outcome).toMatchObject({
+      kind: 'response',
+      envelope: { body: '{"ok":true}', bodyEncoding: 'text' },
+    });
+  });
+
+  it('relays binary bodies base64-encoded, byte-exact', async () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0xff]);
+    const outcome = await executeRelay(
+      relayRequest(),
+      openPolicy,
+      fakeDeps(
+        vi.fn(async () =>
+          httpResponse({ headers: { 'content-type': 'image/png' }, body: bodyStream([png]) })
+        )
+      )
+    );
+    expect(outcome.kind).toBe('response');
+    if (outcome.kind === 'response') {
+      expect(outcome.envelope.bodyEncoding).toBe('base64');
+      expect(outcome.envelope.sizeBytes).toBe(png.length);
+      expect(Array.from(base64ToBytes(outcome.envelope.body))).toEqual(Array.from(png));
+    }
+  });
+
+  it('keeps a text body viewable as text when the cap cuts a codepoint in half', async () => {
+    // 'ab' + 4-byte dog emoji; a 4-byte cap slices the emoji after its second byte.
+    const bytes = new TextEncoder().encode('ab🐕');
+    const outcome = await executeRelay(
+      relayRequest(),
+      openPolicy,
+      fakeDeps(vi.fn(async () => httpResponse({ body: bodyStream([bytes]) })), {
+        maxBodyBytes: 4,
+      })
+    );
+    expect(outcome).toMatchObject({
+      kind: 'response',
+      envelope: { body: 'ab', bodyEncoding: 'text', truncated: true, sizeBytes: 4 },
+    });
+  });
+
+  it('flags synthesized gateway envelopes so the viewer can phrase them as failures', async () => {
+    const unreachable = await executeRelay(
+      relayRequest(),
+      openPolicy,
+      fakeDeps(
+        vi.fn(async () => {
+          throw new Error('ECONNREFUSED');
+        })
+      )
+    );
+    expect(unreachable).toMatchObject({
+      kind: 'response',
+      envelope: { status: 502, gateway: true, bodyEncoding: 'text' },
+    });
+
+    const timedOut = await executeRelay(
+      relayRequest(),
+      openPolicy,
+      fakeDeps(
+        vi.fn(
+          (_url, init) =>
+            new Promise((_resolve, reject) => {
+              init.signal.addEventListener('abort', () => reject(new Error('aborted')));
+            })
+        ) as unknown as RelayHttpRequest,
+        { timeoutMs: 5 }
+      )
+    );
+    expect(timedOut).toMatchObject({
+      kind: 'response',
+      envelope: { status: 504, gateway: true },
+    });
+  });
+
+  it('does not flag genuine upstream responses as gateway failures', async () => {
+    const outcome = await executeRelay(
+      relayRequest(),
+      openPolicy,
+      fakeDeps(vi.fn(async () => httpResponse({ statusCode: 502, body: bodyStream(['upstream said no']) })))
+    );
+    expect(outcome.kind).toBe('response');
+    if (outcome.kind === 'response') {
+      expect(outcome.envelope.status).toBe(502);
+      expect(outcome.envelope.gateway).toBeUndefined();
+    }
   });
 });
