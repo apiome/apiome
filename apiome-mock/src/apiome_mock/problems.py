@@ -121,6 +121,22 @@ def undefined_response_status(
     )
 
 
+def unknown_scenario(
+    detail: str,
+    *,
+    instance: str | None = None,
+    available: list[str] | None = None,
+) -> JSONResponse:
+    return problem_response(
+        status=400,
+        title="Unknown Scenario",
+        detail=detail,
+        problem_type="unknown-scenario",
+        instance=instance,
+        extra={"availableScenarios": available or []},
+    )
+
+
 def too_many_requests(
     detail: str,
     *,

@@ -2396,6 +2396,84 @@ class VersionMockToggleRequest(BaseModel):
     enabled: bool = Field(description="When true, apiome-mock serves this version (draft mocks are private/key-gated).")
 
 
+class MockScenarioResponseSpec(BaseModel):
+    """One canned response inside a scenario operation override (#4454 SIM-4.2)."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    status: int = Field(
+        ge=100,
+        le=599,
+        description="HTTP status code the mock returns for this call.",
+    )
+    headers: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Response headers set verbatim on the canned response.",
+    )
+    body: Any = Field(
+        default=None,
+        description="Canned JSON body; omit the field entirely for an empty response body.",
+    )
+    media_type: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("mediaType", "media_type"),
+        serialization_alias="mediaType",
+        description="Content type of the body (default application/json).",
+    )
+    off_spec: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("offSpec", "off_spec"),
+        serialization_alias="offSpec",
+        description="Skip spec conformance checks for this deliberately broken response.",
+    )
+
+
+class MockScenarioOperationSpec(BaseModel):
+    """Canned response(s) for one operation; 2+ responses form a sequence (#4454 SIM-4.2)."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    responses: List[MockScenarioResponseSpec] = Field(
+        min_length=1,
+        max_length=20,
+        description="One response = fixed; several = per-call sequence (sticks on the last).",
+    )
+
+
+class MockScenarioSpec(BaseModel):
+    """A named mock scenario mapping operations to canned responses (#4454 SIM-4.2)."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    description: str = Field(default="", max_length=500, description="Human summary of the situation.")
+    operations: Dict[str, MockScenarioOperationSpec] = Field(
+        default_factory=dict,
+        description='Overrides keyed by "METHOD /path/{template}" operation identifiers.',
+    )
+
+
+class VersionMockScenariosRequest(BaseModel):
+    """Replace the version's mock scenario definitions (#4454 SIM-4.2)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    scenarios: Dict[str, MockScenarioSpec] = Field(
+        default_factory=dict,
+        description="Scenario definitions keyed by scenario name; an empty map clears them.",
+    )
+
+
+class VersionMockScenariosResponse(BaseModel):
+    """The version's persisted mock scenario definitions (#4454 SIM-4.2)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    scenarios: Dict[str, MockScenarioSpec] = Field(
+        default_factory=dict,
+        description="Scenario definitions keyed by scenario name.",
+    )
+
+
 class VersionPublishChangeReportPreviewRequest(BaseModel):
     """Preview publication change report before publishing (same baseline fields as publish)."""
 

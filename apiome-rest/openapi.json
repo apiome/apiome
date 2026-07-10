@@ -8450,6 +8450,200 @@
         }
       }
     },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/mock/scenarios": {
+      "get": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Get Version Mock Scenarios",
+        "description": "Return the version's mock scenario definitions (#4454 SIM-4.2).",
+        "operationId": "get_version_mock_scenarios_v1_versions__tenant_slug___project_id___version_record_id__mock_scenarios_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionMockScenariosResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Set Version Mock Scenarios",
+        "description": "Replace the version's mock scenario definitions (#4454 SIM-4.2).\n\nCanned responses are validated against the version's generated OpenAPI\ndocument (operation exists, status defined, media type declared, body\nmatches the response schema); a response may opt out with ``offSpec``.\nDefinitions persist in ``versions.mock_settings`` alongside other mock\nknobs and survive publish/republish and mock toggles.",
+        "operationId": "set_version_mock_scenarios_v1_versions__tenant_slug___project_id___version_record_id__mock_scenarios_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionMockScenariosRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionMockScenariosResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/unpublish": {
       "post": {
         "tags": [
@@ -39352,6 +39546,75 @@
         "title": "MockScenario",
         "description": "A named, selectable set of per-operation overrides."
       },
+      "MockScenarioOperationSpec": {
+        "properties": {
+          "responses": {
+            "items": {
+              "$ref": "#/components/schemas/MockScenarioResponseSpec"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Responses",
+            "description": "One response = fixed; several = per-call sequence (sticks on the last)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "responses"
+        ],
+        "title": "MockScenarioOperationSpec",
+        "description": "Canned response(s) for one operation; 2+ responses form a sequence (#4454 SIM-4.2)."
+      },
+      "MockScenarioResponseSpec": {
+        "properties": {
+          "status": {
+            "type": "integer",
+            "maximum": 599.0,
+            "minimum": 100.0,
+            "title": "Status",
+            "description": "HTTP status code the mock returns for this call."
+          },
+          "headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Headers",
+            "description": "Response headers set verbatim on the canned response."
+          },
+          "body": {
+            "title": "Body",
+            "description": "Canned JSON body; omit the field entirely for an empty response body."
+          },
+          "mediaType": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mediatype",
+            "description": "Content type of the body (default application/json)."
+          },
+          "offSpec": {
+            "type": "boolean",
+            "title": "Offspec",
+            "description": "Skip spec conformance checks for this deliberately broken response.",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "MockScenarioResponseSpec",
+        "description": "One canned response inside a scenario operation override (#4454 SIM-4.2)."
+      },
       "MockScenarioRule": {
         "properties": {
           "operation": {
@@ -39427,6 +39690,52 @@
         "type": "object",
         "title": "MockScenarioRule",
         "description": "One per-operation override inside a scenario: status code, latency, and/or response body.\n\nA rule targets an operation by ``operation`` (\"METHOD /template\", or \"*\" for every operation) or\nby separate ``method`` / ``path`` fields. Any subset of (``status``, ``latency_ms``, ``body``)\nmay be set; unset axes fall back to the generated success response."
+      },
+      "MockScenarioSpec-Input": {
+        "properties": {
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Description",
+            "description": "Human summary of the situation.",
+            "default": ""
+          },
+          "operations": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MockScenarioOperationSpec"
+            },
+            "type": "object",
+            "title": "Operations",
+            "description": "Overrides keyed by \"METHOD /path/{template}\" operation identifiers."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "MockScenarioSpec",
+        "description": "A named mock scenario mapping operations to canned responses (#4454 SIM-4.2)."
+      },
+      "MockScenarioSpec-Output": {
+        "properties": {
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Description",
+            "description": "Human summary of the situation.",
+            "default": ""
+          },
+          "operations": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MockScenarioOperationSpec"
+            },
+            "type": "object",
+            "title": "Operations",
+            "description": "Overrides keyed by \"METHOD /path/{template}\" operation identifiers."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "MockScenarioSpec",
+        "description": "A named mock scenario mapping operations to canned responses (#4454 SIM-4.2)."
       },
       "MockScenarioSwitchRequest": {
         "properties": {
@@ -47209,6 +47518,36 @@
         ],
         "title": "VersionForkRequest",
         "description": "Fork a schema version line into another project from a source revision (cross-project sandbox)."
+      },
+      "VersionMockScenariosRequest": {
+        "properties": {
+          "scenarios": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MockScenarioSpec-Input"
+            },
+            "type": "object",
+            "title": "Scenarios",
+            "description": "Scenario definitions keyed by scenario name; an empty map clears them."
+          }
+        },
+        "type": "object",
+        "title": "VersionMockScenariosRequest",
+        "description": "Replace the version's mock scenario definitions (#4454 SIM-4.2)."
+      },
+      "VersionMockScenariosResponse": {
+        "properties": {
+          "scenarios": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MockScenarioSpec-Output"
+            },
+            "type": "object",
+            "title": "Scenarios",
+            "description": "Scenario definitions keyed by scenario name."
+          }
+        },
+        "type": "object",
+        "title": "VersionMockScenariosResponse",
+        "description": "The version's persisted mock scenario definitions (#4454 SIM-4.2)."
       },
       "VersionMockToggleRequest": {
         "properties": {

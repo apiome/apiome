@@ -19,6 +19,7 @@ from apiome_mock.problems import (
     not_found,
     unauthorized,
     undefined_response_status,
+    unknown_scenario,
     unsupported_media_type,
 )
 from apiome_mock.request_validator import ValidationFailure, validate_operation_request
@@ -29,6 +30,7 @@ from apiome_mock.response_resolver import (
     select_response_by_status,
 )
 from apiome_mock.routing import match_request
+from apiome_mock.scenarios import parse_mock_scenario_name, serve_scenario_response
 from apiome_mock.schema_synthesizer import parse_mock_seed
 from apiome_mock.session_store import SessionStore
 from apiome_mock.spec_cache import SpecCache
@@ -223,6 +225,36 @@ async def handle_mock_request(
             instance=instance,
         )
 
+    session_token = parse_mock_session_token(request)
+
+    # Scenario overrides (#4454, SIM-4.2): an X-Mock-Scenario header selects a
+    # curated situation authored in the Control Panel. Overridden operations
+    # return their canned response(s) verbatim (highest precedence); operations
+    # the scenario does not override fall through to the default flow below.
+    scenario_name = parse_mock_scenario_name(request)
+    if scenario_name is not None:
+        scenario = compiled.scenarios.get(scenario_name)
+        if scenario is None:
+            return unknown_scenario(
+                f"No scenario named '{scenario_name}' is defined for {tenant}/{project}/{version}.",
+                instance=instance,
+                available=sorted(compiled.scenarios),
+            )
+        canned_responses = scenario.operations.get(operation.key)
+        if canned_responses:
+            client = request.client
+            return await serve_scenario_response(
+                scenario=scenario,
+                responses=canned_responses,
+                operation_key=operation.key,
+                tenant=tenant,
+                project=project,
+                version=version,
+                session_token=session_token,
+                client_ip=client.host if client and client.host else "unknown",
+                store=session_store,
+            )
+
     prefer_header = request.headers.get("prefer")
     accept = request.headers.get("accept")
     seed = parse_mock_seed(request.query_params.get("__seed"))
@@ -250,7 +282,6 @@ async def handle_mock_request(
             instance=instance,
         )
 
-    session_token = parse_mock_session_token(request)
     if session_token is not None and session_store is not None:
         stateful = await try_handle_stateful_crud(
             request,

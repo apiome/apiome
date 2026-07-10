@@ -9,14 +9,16 @@
  * - Stable mock base URL with a copy-to-clipboard button (confirmation toast).
  * - 30-day usage sparkline fed by the SIM-1.5 (#4420) rollups; renders the shared
  *   chart empty state when no usage was recorded.
+ * - "Scenarios" opens the SIM-4.2 (#4454) scenario override editor.
  */
 
 import { useState } from 'react';
-import { Copy } from 'lucide-react';
+import { Copy, FlaskConical } from 'lucide-react';
 import { toast } from 'sonner';
 import { Switch } from '../../ui/Switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../ui/Tooltip';
 import { Sparkline } from '../../ui/mcp/charts/Sparkline';
+import { MockScenarioEditor } from './MockScenarioEditor';
 
 export interface VersionMockChange {
   /** New persisted toggle state reported by REST. */
@@ -69,6 +71,7 @@ export function VersionMockCell({
   onMockChanged,
 }: VersionMockCellProps) {
   const [saving, setSaving] = useState(false);
+  const [scenarioEditorOpen, setScenarioEditorOpen] = useState(false);
 
   /** Round-trip the toggle through the proxy route and report the persisted state. */
   const handleToggle = async (enabled: boolean) => {
@@ -182,6 +185,28 @@ export function VersionMockCell({
               <Copy className="h-3.5 w-3.5" />
             </button>
           </div>
+        )}
+
+        {mockEnabled && (
+          <>
+            <button
+              type="button"
+              onClick={() => setScenarioEditorOpen(true)}
+              className="inline-flex items-center gap-1 self-start text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline transition-colors"
+              aria-label={`Edit mock scenarios for version ${versionLabel}`}
+              data-testid={`version-mock-scenarios-button-${versionRecordId}`}
+            >
+              <FlaskConical className="h-3.5 w-3.5" />
+              Scenarios
+            </button>
+            <MockScenarioEditor
+              versionRecordId={versionRecordId}
+              projectId={projectId}
+              versionLabel={versionLabel}
+              open={scenarioEditorOpen}
+              onOpenChange={setScenarioEditorOpen}
+            />
+          </>
         )}
 
         {mockEnabled && usageSeries !== undefined && (
