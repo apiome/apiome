@@ -137,6 +137,43 @@ export async function getPublicVersionDetails(
   }
 }
 
+/**
+ * Get the declared OpenAPI `servers[]` rows for a published public version (SIM-3.2, #4448).
+ *
+ * Powers the Try It relay's server-side host allow-policy: only origins declared by the
+ * version's own spec may be targeted with `target.kind === 'spec'`. Returns an empty list when
+ * the version is unknown, not public, or the query fails — the relay then refuses (fail closed).
+ */
+export async function getPublicVersionServers(
+  tenantSlug: string,
+  projectSlug: string,
+  versionSlug: string
+): Promise<{ url: string; variables: unknown }[]> {
+  try {
+    const result = await connectionPool.query(
+      `SELECT vs.url, vs.variables
+       FROM apiome.version_server vs
+       JOIN apiome.versions v ON vs.version_id = v.id
+       JOIN apiome.projects p ON v.project_id = p.id
+       JOIN apiome.tenants t ON p.tenant_id = t.id
+       WHERE t.slug = $1
+         AND p.slug = $2
+         AND v.version_id = $3
+         AND v.published = true
+         AND v.visibility = 'public'
+         AND t.deleted_at IS NULL
+         AND p.deleted_at IS NULL
+         AND v.deleted_at IS NULL
+       ORDER BY vs.sort_order, vs.url`,
+      [tenantSlug, projectSlug, versionSlug]
+    );
+    return result.rows as { url: string; variables: unknown }[];
+  } catch (err) {
+    logError('getPublicVersionServers', err);
+    return [];
+  }
+}
+
 export type PublishedCatalogSearchHit = {
   hit_id: string;
   hit_type: string;

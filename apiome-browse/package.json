@@ -1,6 +1,6 @@
 {
   "name": "apiome-browse",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
@@ -30,6 +30,7 @@
     "pg": "^8.20.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "undici": "^8.7.0",
     "yaml": "^2.8.3"
   },
   "devDependencies": {
