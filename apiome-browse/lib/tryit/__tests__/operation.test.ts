@@ -47,8 +47,14 @@ const SPEC = {
         requestBody: {
           required: true,
           content: {
-            'application/json': { schema: { $ref: '#/components/schemas/Pet' } },
-            'text/plain': { schema: { type: 'string' } },
+            'application/json': {
+              schema: { $ref: '#/components/schemas/Pet' },
+              examples: {
+                minimal: { summary: 'Name only', value: { name: 'Rex' } },
+              },
+              example: { name: 'Fallback' },
+            },
+            'text/plain': { schema: { type: 'string' }, example: 'plain body' },
           },
         },
       },
@@ -132,6 +138,32 @@ describe('extractOperationModel', () => {
     expect(model!.bodyVariants).toHaveLength(2);
     const json = model!.bodyVariants.find((v) => v.contentType === 'application/json');
     expect(json!.schema).toMatchObject({ type: 'object', required: ['name'] });
+    expect(json!.examples?.minimal).toEqual({ summary: 'Name only', value: { name: 'Rex' } });
+    expect(json!.example).toEqual({ name: 'Fallback' });
+    const plain = model!.bodyVariants.find((v) => v.contentType === 'text/plain');
+    expect(plain!.example).toBe('plain body');
+  });
+
+  it('extracts parameter-level examples for prefill', () => {
+    const spec = {
+      ...SPEC,
+      paths: {
+        '/search': {
+          get: {
+            parameters: [
+              {
+                name: 'q',
+                in: 'query',
+                schema: { type: 'string' },
+                examples: { demo: { value: 'cats' } },
+              },
+            ],
+          },
+        },
+      },
+    };
+    const model = extractOperationModel(spec, 'get', '/search');
+    expect(model!.params[0].schema.examples?.demo).toEqual({ value: 'cats' });
   });
 
   it('yields no body variants for body-less operations', () => {
