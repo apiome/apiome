@@ -1,4 +1,4 @@
-"""Scenario override settings for the hosted mock (#4454, SIM-4.2).
+"""Scenario override and chaos settings for the hosted mock (#4454 SIM-4.2, #4455 SIM-4.3).
 
 Scenario definitions live in ``versions.mock_settings`` under the
 ``"scenarios"`` key and are served at runtime by apiome-mock. This module owns
@@ -10,6 +10,12 @@ the author-time contract:
   declared, body matches the response schema) unless the response opts out
   with the explicit ``offSpec`` flag (deliberately broken responses);
 * canonicalization into the storage shape read by ``apiome_mock.scenarios``.
+
+Chaos knobs (#4455, SIM-4.3) — per-route/version-default latency and error
+injection — live under the sibling ``"chaos"`` key (and optionally inside a
+scenario), validated and canonicalized here with the same rules; value
+ranges (delay/jitter <= 30s, error rate 0-100%) are enforced by the
+``MockChaosKnobsSpec`` pydantic model.
 """
 
 from __future__ import annotations
@@ -20,7 +26,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from .mock_data_generator import validate_value
 from .mock_engine import MockOperation, extract_operations
-from .models import MockScenarioResponseSpec, MockScenarioSpec
+from .models import MockChaosKnobsSpec, MockChaosSpec, MockScenarioResponseSpec, MockScenarioSpec
 
 MAX_SCENARIOS = 50
 """Maximum named scenarios per version."""
@@ -30,6 +36,9 @@ MAX_OPERATIONS_PER_SCENARIO = 100
 
 MAX_SETTINGS_BYTES = 262_144
 """Maximum serialized size (bytes) of the scenarios blob (256 KiB)."""
+
+MAX_CHAOS_OPERATIONS = 100
+"""Maximum per-route chaos overrides in one chaos block."""
 
 SCENARIO_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 """Header-safe scenario names: alphanumeric start, then ``[A-Za-z0-9._-]``, max 64 chars."""
@@ -146,6 +155,46 @@ def _validate_response_against_spec(
         )
 
 
+def validate_mock_chaos(
+    chaos: Optional[MockChaosSpec],
+    spec: Mapping[str, Any],
+    *,
+    context: str = "Chaos",
+    operations_by_key: Optional[Mapping[str, MockOperation]] = None,
+) -> List[str]:
+    """Validate one chaos block against structural limits and the OpenAPI spec.
+
+    Args:
+        chaos: The chaos block to validate; ``None`` is valid (no chaos).
+        spec: The version's generated OpenAPI document.
+        context: Prefix for error messages (e.g. ``"Scenario 'degraded' chaos"``).
+        operations_by_key: Pre-extracted operations, to avoid re-extracting
+            when validating many blocks against the same spec.
+
+    Returns:
+        A list of human-readable error strings; empty when everything is valid.
+    """
+    if chaos is None:
+        return []
+
+    errors: List[str] = []
+    if operations_by_key is None:
+        operations_by_key = {op.key: op for op in extract_operations(dict(spec))}
+
+    if len(chaos.operations) > MAX_CHAOS_OPERATIONS:
+        errors.append(f"{context}: at most {MAX_CHAOS_OPERATIONS} per-route chaos overrides are allowed.")
+
+    for op_key_raw in chaos.operations:
+        op_key = normalize_operation_key(op_key_raw)
+        if op_key is None:
+            errors.append(f"{context}, operation '{op_key_raw}': operation keys must look like 'GET /pets/{{petId}}'.")
+            continue
+        if op_key not in operations_by_key:
+            errors.append(f"{context}, operation '{op_key_raw}': no operation {op_key} exists in this version's spec.")
+
+    return errors
+
+
 def validate_mock_scenarios(
     scenarios: Mapping[str, MockScenarioSpec],
     spec: Mapping[str, Any],
@@ -197,6 +246,14 @@ def validate_mock_scenarios(
                         context=response_context,
                         errors=errors,
                     )
+        errors.extend(
+            validate_mock_chaos(
+                scenario.chaos,
+                spec,
+                context=f"Scenario '{name}' chaos",
+                operations_by_key=operations_by_key,
+            )
+        )
 
     storage = scenarios_to_storage(scenarios)
     serialized_size = len(json.dumps(storage, separators=(",", ":"), default=str).encode("utf-8"))
@@ -222,6 +279,35 @@ def _response_to_storage(response: MockScenarioResponseSpec) -> Dict[str, Any]:
     return out
 
 
+def _chaos_knobs_to_storage(knobs: MockChaosKnobsSpec) -> Dict[str, Any]:
+    """Canonicalize one knob set, omitting unset knobs so they keep inheriting."""
+    out: Dict[str, Any] = {}
+    if knobs.delay_ms is not None:
+        out["delayMs"] = knobs.delay_ms
+    if knobs.jitter_ms is not None:
+        out["jitterMs"] = knobs.jitter_ms
+    if knobs.error_rate is not None:
+        out["errorRate"] = knobs.error_rate
+    return out
+
+
+def chaos_to_storage(chaos: MockChaosSpec) -> Dict[str, Any]:
+    """Canonicalize one chaos block into the ``mock_settings.chaos`` shape.
+
+    Operation keys are normalized to ``"METHOD /template"`` so the runtime's
+    exact-match lookup always hits.
+    """
+    out: Dict[str, Any] = {}
+    if chaos.default is not None:
+        out["default"] = _chaos_knobs_to_storage(chaos.default)
+    if chaos.operations:
+        out["operations"] = {
+            (normalize_operation_key(op_key_raw) or op_key_raw): _chaos_knobs_to_storage(knobs)
+            for op_key_raw, knobs in chaos.operations.items()
+        }
+    return out
+
+
 def scenarios_to_storage(scenarios: Mapping[str, MockScenarioSpec]) -> Dict[str, Any]:
     """Canonicalize scenario definitions into the ``mock_settings.scenarios`` shape.
 
@@ -239,6 +325,8 @@ def scenarios_to_storage(scenarios: Mapping[str, MockScenarioSpec]) -> Dict[str,
         entry: Dict[str, Any] = {"operations": operations}
         if scenario.description:
             entry["description"] = scenario.description
+        if scenario.chaos is not None:
+            entry["chaos"] = chaos_to_storage(scenario.chaos)
         out[name] = entry
     return out
 
@@ -265,3 +353,28 @@ def scenarios_from_storage(mock_settings: Any) -> Tuple[Dict[str, Any], bool]:
     if not isinstance(scenarios, dict):
         return {}, False
     return scenarios, True
+
+
+def chaos_from_storage(mock_settings: Any) -> Tuple[Optional[Dict[str, Any]], bool]:
+    """Extract the stored ``chaos`` mapping from a raw ``mock_settings`` value.
+
+    Returns ``(chaos, valid)`` where ``chaos`` is ``None`` when no chaos is
+    stored and ``valid`` is ``False`` when the stored blob is not a mapping
+    (the caller should treat it as absent).
+    """
+    settings: Any = mock_settings
+    if settings is None:
+        return None, True
+    if isinstance(settings, str):
+        try:
+            settings = json.loads(settings)
+        except json.JSONDecodeError:
+            return None, False
+    if not isinstance(settings, dict):
+        return None, False
+    chaos = settings.get("chaos")
+    if chaos is None:
+        return None, True
+    if not isinstance(chaos, dict):
+        return None, False
+    return chaos, True

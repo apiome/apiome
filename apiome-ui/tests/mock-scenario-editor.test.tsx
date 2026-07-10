@@ -1,11 +1,14 @@
 /**
- * Render/interaction tests for the mock scenario override editor (#4454, SIM-4.2).
+ * Render/interaction tests for the mock scenario override editor (#4454, SIM-4.2)
+ * and the latency/chaos knobs (#4455, SIM-4.3).
  *
  * Acceptance criteria under test:
  * - Opening the editor loads persisted definitions from the scenarios proxy route.
  * - Saving round-trips the canonical payload through `PUT /api/versions/{id}/mock/scenarios`.
  * - Client-side JSON/field errors block the save and are listed inline.
  * - Server-side validation failures (REST 422) are listed inline.
+ * - Chaos knobs (delay/jitter/error rate, per version default, per route, and
+ *   per scenario) load, validate, and serialize into the same PUT payload.
  */
 
 import React from 'react';
@@ -45,7 +48,8 @@ const renderEditor = (overrides: Partial<React.ComponentProps<typeof MockScenari
 /** Mock the GET load; subsequent calls fall through to `putResponse` when given. */
 const mockFetch = (
   scenarios: unknown,
-  putResponse?: { ok: boolean; json: unknown }
+  putResponse?: { ok: boolean; json: unknown },
+  chaos: unknown = null
 ) => {
   (global.fetch as jest.Mock).mockImplementation(async (_url: string, init?: RequestInit) => {
     if (init?.method === 'PUT') {
@@ -54,8 +58,16 @@ const mockFetch = (
         json: async () => putResponse?.json ?? { success: true, scenarios: {} },
       };
     }
-    return { ok: true, json: async () => ({ success: true, scenarios }) };
+    return { ok: true, json: async () => ({ success: true, scenarios, chaos }) };
   });
+};
+
+/** Find the PUT proxy call and return its parsed JSON body. */
+const putBody = (): Record<string, unknown> | undefined => {
+  const putCall = (global.fetch as jest.Mock).mock.calls.find(
+    ([, init]) => init?.method === 'PUT'
+  );
+  return putCall ? JSON.parse(putCall[1].body as string) : undefined;
 };
 
 let consoleErrorSpy: jest.SpyInstance;
@@ -201,5 +213,138 @@ describe('MockScenarioEditor — saving', () => {
     await waitFor(() => expect(screen.getByTestId('mock-scenario-errors')).toBeInTheDocument());
     expect(screen.getByText(/no operation GET \/pets exists/)).toBeInTheDocument();
     expect(toast.success).not.toHaveBeenCalled();
+  });
+});
+
+describe('MockScenarioEditor — latency & chaos (#4455, SIM-4.3)', () => {
+  it('loads stored chaos knobs into the editor', async () => {
+    mockFetch({}, undefined, {
+      default: { delayMs: 800, jitterMs: 200, errorRate: 10 },
+      operations: { 'GET /pets': { errorRate: 50 } },
+    });
+    renderEditor();
+
+    await waitFor(() => expect(screen.getByLabelText('Chaos default delay ms')).toHaveValue('800'));
+    expect(screen.getByLabelText('Chaos default jitter ms')).toHaveValue('200');
+    expect(screen.getByLabelText('Chaos default error rate percent')).toHaveValue('10');
+    expect(screen.getByLabelText('Chaos route 1 key')).toHaveValue('GET /pets');
+    expect(screen.getByLabelText('Chaos route 1 error rate percent')).toHaveValue('50');
+  });
+
+  it('serializes version-default and per-route knobs into the PUT payload', async () => {
+    mockFetch({}, { ok: true, json: { success: true, scenarios: {}, chaos: {} } });
+    renderEditor();
+
+    await waitFor(() => expect(screen.getByTestId('mock-chaos-editor')).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText('Chaos default delay ms'), { target: { value: '800' } });
+    fireEvent.change(screen.getByLabelText('Chaos default jitter ms'), { target: { value: '200' } });
+    fireEvent.change(screen.getByLabelText('Chaos default error rate percent'), {
+      target: { value: '10' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Add chaos route override' }));
+    fireEvent.change(screen.getByLabelText('Chaos route 1 key'), {
+      target: { value: 'GET /pets' },
+    });
+    fireEvent.change(screen.getByLabelText('Chaos route 1 error rate percent'), {
+      target: { value: '50' },
+    });
+    fireEvent.click(screen.getByTestId('mock-scenario-save'));
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    const body = putBody();
+    expect(body!.chaos).toEqual({
+      default: { delayMs: 800, jitterMs: 200, errorRate: 10 },
+      operations: { 'GET /pets': { errorRate: 50 } },
+    });
+  });
+
+  it('omits the chaos key entirely when every knob is blank', async () => {
+    mockFetch(STORED_SCENARIOS, { ok: true, json: { success: true, scenarios: {} } });
+    renderEditor();
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Scenario 1 name')).toHaveValue('quota-exceeded')
+    );
+    fireEvent.click(screen.getByTestId('mock-scenario-save'));
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    expect(putBody()).not.toHaveProperty('chaos');
+  });
+
+  it('blocks the save when a knob is out of range', async () => {
+    mockFetch({});
+    renderEditor();
+
+    await waitFor(() => expect(screen.getByTestId('mock-chaos-editor')).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText('Chaos default delay ms'), {
+      target: { value: '50000' },
+    });
+    fireEvent.click(screen.getByTestId('mock-scenario-save'));
+
+    await waitFor(() => expect(screen.getByTestId('mock-scenario-errors')).toBeInTheDocument());
+    expect(screen.getByText(/delay must be a whole number between 0 and 30000/)).toBeInTheDocument();
+    expect(putBody()).toBeUndefined();
+  });
+
+  it('blocks the save when delay plus jitter exceed the 30s cap', async () => {
+    mockFetch({});
+    renderEditor();
+
+    await waitFor(() => expect(screen.getByTestId('mock-chaos-editor')).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText('Chaos default delay ms'), {
+      target: { value: '20000' },
+    });
+    fireEvent.change(screen.getByLabelText('Chaos default jitter ms'), {
+      target: { value: '15000' },
+    });
+    fireEvent.click(screen.getByTestId('mock-scenario-save'));
+
+    await waitFor(() => expect(screen.getByTestId('mock-scenario-errors')).toBeInTheDocument());
+    expect(screen.getByText(/delay \+ jitter must not exceed 30000 ms/)).toBeInTheDocument();
+    expect(putBody()).toBeUndefined();
+  });
+
+  it('serializes scenario-scoped chaos inside the scenario entry', async () => {
+    mockFetch(STORED_SCENARIOS, { ok: true, json: { success: true, scenarios: {} } });
+    renderEditor();
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Scenario 1 name')).toHaveValue('quota-exceeded')
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Add scenario 1 chaos' }));
+    fireEvent.change(screen.getByLabelText('Scenario 1 chaos default error rate percent'), {
+      target: { value: '100' },
+    });
+    fireEvent.click(screen.getByTestId('mock-scenario-save'));
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    const body = putBody();
+    const scenarios = body!.scenarios as Record<string, { chaos?: unknown }>;
+    expect(scenarios['quota-exceeded'].chaos).toEqual({ default: { errorRate: 100 } });
+    expect(body).not.toHaveProperty('chaos');
+  });
+
+  it('loads stored scenario-scoped chaos and allows removing it', async () => {
+    mockFetch(
+      {
+        degraded: {
+          operations: {},
+          chaos: { default: { delayMs: 500 } },
+        },
+      },
+      { ok: true, json: { success: true, scenarios: {} } }
+    );
+    renderEditor();
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Scenario 1 chaos default delay ms')).toHaveValue('500')
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Remove scenario 1 chaos' }));
+    fireEvent.click(screen.getByTestId('mock-scenario-save'));
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    const body = putBody();
+    const scenarios = body!.scenarios as Record<string, { chaos?: unknown }>;
+    expect(scenarios.degraded).not.toHaveProperty('chaos');
   });
 });

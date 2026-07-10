@@ -10,6 +10,12 @@
  * `mock_settings` and are served by apiome-mock when a consumer sends the
  * `X-Mock-Scenario: <name>` header.
  *
+ * The dialog also edits the latency/chaos knobs (#4455, SIM-4.3): a version
+ * default and per-route overrides for injected delay (± jitter, capped at
+ * 30s) and error rate (percent of calls answered with an injected 5xx). A
+ * scenario may carry its own chaos block that replaces the version-level one
+ * while that scenario is selected.
+ *
  * Round-trips through `/api/versions/{id}/mock/scenarios` (GET on open, PUT on
  * save). Server-side validation failures (HTTP 422 from REST) are listed
  * verbatim under the form; a response can opt out of spec conformance with the
@@ -39,12 +45,26 @@ export interface MockScenarioResponsePayload {
   offSpec?: boolean;
 }
 
+/** Latency/error-injection knobs for one scope (camelCase wire shape) (#4455, SIM-4.3). */
+export interface MockChaosKnobsPayload {
+  delayMs?: number;
+  jitterMs?: number;
+  errorRate?: number;
+}
+
+/** One chaos block: default knobs plus per-route overrides (#4455, SIM-4.3). */
+export interface MockChaosPayload {
+  default?: MockChaosKnobsPayload;
+  operations?: Record<string, MockChaosKnobsPayload>;
+}
+
 /** Scenario definitions as stored by REST, keyed by scenario name. */
 export type MockScenariosPayload = Record<
   string,
   {
     description?: string;
     operations: Record<string, { responses: MockScenarioResponsePayload[] }>;
+    chaos?: MockChaosPayload;
   }
 >;
 
@@ -63,11 +83,32 @@ interface OperationDraft {
   responses: ResponseDraft[];
 }
 
+/** Form state for one set of chaos knobs (text fields until save). */
+interface ChaosKnobsDraft {
+  delayMs: string;
+  jitterMs: string;
+  errorRate: string;
+}
+
+/** Form state for one per-route chaos override. */
+interface ChaosOperationDraft {
+  key: string;
+  knobs: ChaosKnobsDraft;
+}
+
+/** Form state for one chaos block (version-level or scenario-scoped). */
+interface ChaosDraft {
+  default: ChaosKnobsDraft;
+  operations: ChaosOperationDraft[];
+}
+
 /** Form state for one scenario. */
 interface ScenarioDraft {
   name: string;
   description: string;
   operations: OperationDraft[];
+  /** Scenario-scoped chaos; `null` means the version-level chaos applies. */
+  chaos: ChaosDraft | null;
 }
 
 export interface MockScenarioEditorProps {
@@ -91,6 +132,115 @@ const EMPTY_RESPONSE: ResponseDraft = {
   offSpec: false,
 };
 
+const EMPTY_CHAOS_KNOBS: ChaosKnobsDraft = { delayMs: '', jitterMs: '', errorRate: '' };
+
+/** Hard cap (ms) on injected delay — mirrors the apiome-mock runtime cap. */
+const MAX_CHAOS_DELAY_MS = 30_000;
+
+/** Convert one stored knob set into editable text fields (unset knobs stay blank). */
+function chaosKnobsDraftFromPayload(knobs?: MockChaosKnobsPayload): ChaosKnobsDraft {
+  return {
+    delayMs: knobs?.delayMs !== undefined ? String(knobs.delayMs) : '',
+    jitterMs: knobs?.jitterMs !== undefined ? String(knobs.jitterMs) : '',
+    errorRate: knobs?.errorRate !== undefined ? String(knobs.errorRate) : '',
+  };
+}
+
+/** Convert one stored chaos block into an editable draft. */
+function chaosDraftFromPayload(payload?: MockChaosPayload): ChaosDraft {
+  return {
+    default: chaosKnobsDraftFromPayload(payload?.default),
+    operations: Object.entries(payload?.operations ?? {}).map(([key, knobs]) => ({
+      key,
+      knobs: chaosKnobsDraftFromPayload(knobs),
+    })),
+  };
+}
+
+/** True when a chaos draft has no values at all (nothing worth persisting). */
+function chaosDraftIsEmpty(draft: ChaosDraft): boolean {
+  const blank = (knobs: ChaosKnobsDraft) =>
+    !knobs.delayMs.trim() && !knobs.jitterMs.trim() && !knobs.errorRate.trim();
+  return blank(draft.default) && draft.operations.length === 0;
+}
+
+/**
+ * Parse one chaos knob text field.
+ *
+ * @returns the numeric value, `undefined` when the field is blank (knob
+ * unset), or `null` after reporting a parse/range error.
+ */
+function parseChaosKnob(
+  raw: string,
+  context: string,
+  label: string,
+  max: number,
+  integer: boolean,
+  errors: string[]
+): number | undefined | null {
+  const text = raw.trim();
+  if (!text) return undefined;
+  const value = Number(text);
+  if (!Number.isFinite(value) || value < 0 || value > max || (integer && !Number.isInteger(value))) {
+    errors.push(
+      integer
+        ? `${context}: ${label} must be a whole number between 0 and ${max}.`
+        : `${context}: ${label} must be a number between 0 and ${max}.`
+    );
+    return null;
+  }
+  return value;
+}
+
+/** Convert one knob draft into the wire shape, reporting range errors. */
+function chaosKnobsFromDraft(
+  draft: ChaosKnobsDraft,
+  context: string,
+  errors: string[]
+): MockChaosKnobsPayload {
+  const knobs: MockChaosKnobsPayload = {};
+  const delayMs = parseChaosKnob(draft.delayMs, context, 'delay', MAX_CHAOS_DELAY_MS, true, errors);
+  const jitterMs = parseChaosKnob(draft.jitterMs, context, 'jitter', MAX_CHAOS_DELAY_MS, true, errors);
+  const errorRate = parseChaosKnob(draft.errorRate, context, 'error rate', 100, false, errors);
+  if (typeof delayMs === 'number') knobs.delayMs = delayMs;
+  if (typeof jitterMs === 'number') knobs.jitterMs = jitterMs;
+  if (typeof errorRate === 'number') knobs.errorRate = errorRate;
+  if ((knobs.delayMs ?? 0) + (knobs.jitterMs ?? 0) > MAX_CHAOS_DELAY_MS) {
+    errors.push(`${context}: delay + jitter must not exceed ${MAX_CHAOS_DELAY_MS} ms (the 30s cap).`);
+  }
+  return knobs;
+}
+
+/** Convert one chaos block draft into the wire shape, reporting errors. */
+function chaosPayloadFromDraft(
+  draft: ChaosDraft,
+  context: string,
+  errors: string[]
+): MockChaosPayload {
+  const payload: MockChaosPayload = {};
+  const defaults = chaosKnobsFromDraft(draft.default, `${context} defaults`, errors);
+  if (Object.keys(defaults).length > 0) {
+    payload.default = defaults;
+  }
+  const operations: Record<string, MockChaosKnobsPayload> = {};
+  draft.operations.forEach((operation, index) => {
+    const key = operation.key.trim();
+    if (!key) {
+      errors.push(`${context}: route override ${index + 1} needs a key like 'GET /pets'.`);
+      return;
+    }
+    if (operations[key]) {
+      errors.push(`${context}: duplicate route override '${key}'.`);
+      return;
+    }
+    operations[key] = chaosKnobsFromDraft(operation.knobs, `${context}, route '${key}'`, errors);
+  });
+  if (Object.keys(operations).length > 0) {
+    payload.operations = operations;
+  }
+  return payload;
+}
+
 /** Convert the stored wire shape into editable drafts. */
 function draftsFromPayload(payload: MockScenariosPayload): ScenarioDraft[] {
   return Object.entries(payload).map(([name, scenario]) => ({
@@ -109,6 +259,7 @@ function draftsFromPayload(payload: MockScenariosPayload): ScenarioDraft[] {
         offSpec: Boolean(response.offSpec),
       })),
     })),
+    chaos: scenario.chaos ? chaosDraftFromPayload(scenario.chaos) : null,
   }));
 }
 
@@ -201,10 +352,137 @@ function payloadFromDrafts(
     payload[name] = {
       ...(scenario.description.trim() ? { description: scenario.description.trim() } : {}),
       operations,
+      ...(scenario.chaos
+        ? { chaos: chaosPayloadFromDraft(scenario.chaos, `Scenario '${label}' chaos`, errors) }
+        : {}),
     };
   });
 
   return { payload, errors };
+}
+
+/** Props for one editable chaos block (version-level or scenario-scoped). */
+interface ChaosBlockFieldsProps {
+  /** The chaos draft being edited. */
+  draft: ChaosDraft;
+  /** Called with the replaced draft on every edit. */
+  onChange: (next: ChaosDraft) => void;
+  /** Prefix for input aria-labels (e.g. "Chaos" or "Scenario 1 chaos"). */
+  ariaPrefix: string;
+}
+
+/** Three knob inputs (delay / jitter / error rate) for one scope. */
+function ChaosKnobsFields({
+  knobs,
+  onChange,
+  ariaPrefix,
+}: {
+  knobs: ChaosKnobsDraft;
+  onChange: (next: ChaosKnobsDraft) => void;
+  ariaPrefix: string;
+}) {
+  return (
+    <>
+      <Input
+        value={knobs.delayMs}
+        onChange={(e) => onChange({ ...knobs, delayMs: e.target.value })}
+        placeholder="Delay ms"
+        aria-label={`${ariaPrefix} delay ms`}
+        className="w-24"
+        inputMode="numeric"
+      />
+      <Input
+        value={knobs.jitterMs}
+        onChange={(e) => onChange({ ...knobs, jitterMs: e.target.value })}
+        placeholder="± Jitter ms"
+        aria-label={`${ariaPrefix} jitter ms`}
+        className="w-24"
+        inputMode="numeric"
+      />
+      <Input
+        value={knobs.errorRate}
+        onChange={(e) => onChange({ ...knobs, errorRate: e.target.value })}
+        placeholder="Error rate %"
+        aria-label={`${ariaPrefix} error rate percent`}
+        className="w-28"
+        inputMode="decimal"
+      />
+    </>
+  );
+}
+
+/** Editable chaos block: default knobs plus per-route override rows (#4455, SIM-4.3). */
+function ChaosBlockFields({ draft, onChange, ariaPrefix }: ChaosBlockFieldsProps) {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 w-24">Default</span>
+        <ChaosKnobsFields
+          knobs={draft.default}
+          onChange={(next) => onChange({ ...draft, default: next })}
+          ariaPrefix={`${ariaPrefix} default`}
+        />
+      </div>
+
+      {draft.operations.map((operation, index) => (
+        <div key={index} className="flex items-center gap-2 flex-wrap">
+          <Input
+            value={operation.key}
+            onChange={(e) =>
+              onChange({
+                ...draft,
+                operations: draft.operations.map((o, i) =>
+                  i === index ? { ...o, key: e.target.value } : o
+                ),
+              })
+            }
+            placeholder="Operation (e.g. GET /pets/{petId})"
+            aria-label={`${ariaPrefix} route ${index + 1} key`}
+            className="font-mono text-xs flex-1 min-w-[12rem]"
+          />
+          <ChaosKnobsFields
+            knobs={operation.knobs}
+            onChange={(next) =>
+              onChange({
+                ...draft,
+                operations: draft.operations.map((o, i) =>
+                  i === index ? { ...o, knobs: next } : o
+                ),
+              })
+            }
+            ariaPrefix={`${ariaPrefix} route ${index + 1}`}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() =>
+              onChange({ ...draft, operations: draft.operations.filter((_, i) => i !== index) })
+            }
+            aria-label={`Remove ${ariaPrefix.toLowerCase()} route override ${index + 1}`}
+          >
+            <Trash2 className="h-4 w-4 text-red-500" />
+          </Button>
+        </div>
+      ))}
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() =>
+          onChange({
+            ...draft,
+            operations: [...draft.operations, { key: '', knobs: { ...EMPTY_CHAOS_KNOBS } }],
+          })
+        }
+        className="self-start"
+        aria-label={`Add ${ariaPrefix.toLowerCase()} route override`}
+      >
+        <Plus className="h-3.5 w-3.5" /> Add route override
+      </Button>
+    </div>
+  );
 }
 
 /**
@@ -221,6 +499,7 @@ export function MockScenarioEditor({
   onOpenChange,
 }: MockScenarioEditorProps) {
   const [drafts, setDrafts] = useState<ScenarioDraft[]>([]);
+  const [chaos, setChaos] = useState<ChaosDraft>(() => chaosDraftFromPayload());
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
@@ -239,6 +518,7 @@ export function MockScenarioEditor({
         return;
       }
       setDrafts(draftsFromPayload((payload.scenarios ?? {}) as MockScenariosPayload));
+      setChaos(chaosDraftFromPayload((payload.chaos ?? undefined) as MockChaosPayload | undefined));
     } catch (error) {
       console.error('Failed to load mock scenarios:', error);
       toast.error(`Failed to load scenarios for v${versionLabel}.`);
@@ -255,6 +535,9 @@ export function MockScenarioEditor({
   const handleSave = async () => {
     if (saving) return;
     const { payload, errors: clientErrors } = payloadFromDrafts(drafts);
+    const chaosPayload = chaosDraftIsEmpty(chaos)
+      ? undefined
+      : chaosPayloadFromDraft(chaos, 'Latency & chaos', clientErrors);
     if (clientErrors.length > 0) {
       setErrors(clientErrors);
       return;
@@ -266,7 +549,11 @@ export function MockScenarioEditor({
       const response = await fetch(`/api/versions/${versionRecordId}/mock/scenarios`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, scenarios: payload }),
+        body: JSON.stringify({
+          projectId,
+          scenarios: payload,
+          ...(chaosPayload !== undefined ? { chaos: chaosPayload } : {}),
+        }),
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.success) {
@@ -535,6 +822,49 @@ export function MockScenarioEditor({
                 >
                   <Plus className="h-3.5 w-3.5" /> Add operation override
                 </Button>
+
+                {scenario.chaos ? (
+                  <div
+                    className="rounded-md border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 p-3 flex flex-col gap-2"
+                    data-testid={`mock-scenario-${scenarioIndex}-chaos`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                        Scenario chaos — replaces the version-level knobs while this scenario is
+                        selected
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => updateScenario(scenarioIndex, { chaos: null })}
+                        aria-label={`Remove scenario ${scenarioIndex + 1} chaos`}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                    <ChaosBlockFields
+                      draft={scenario.chaos}
+                      onChange={(next) => updateScenario(scenarioIndex, { chaos: next })}
+                      ariaPrefix={`Scenario ${scenarioIndex + 1} chaos`}
+                    />
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      updateScenario(scenarioIndex, {
+                        chaos: { default: { ...EMPTY_CHAOS_KNOBS }, operations: [] },
+                      })
+                    }
+                    className="self-start"
+                    aria-label={`Add scenario ${scenarioIndex + 1} chaos`}
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Add scenario chaos
+                  </Button>
+                )}
               </fieldset>
             ))}
 
@@ -543,13 +873,31 @@ export function MockScenarioEditor({
               variant="secondary"
               size="sm"
               onClick={() =>
-                setDrafts((prev) => [...prev, { name: '', description: '', operations: [] }])
+                setDrafts((prev) => [...prev, { name: '', description: '', operations: [], chaos: null }])
               }
               className="self-start"
               data-testid="mock-scenario-add"
             >
               <Plus className="h-4 w-4" /> Add scenario
             </Button>
+
+            <fieldset
+              className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 flex flex-col gap-3"
+              data-testid="mock-chaos-editor"
+            >
+              <div>
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  Latency &amp; chaos
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Simulate a slow or flaky API: every response waits the configured delay (± jitter,
+                  capped at 30s) and the error rate answers that percentage of calls with an injected
+                  5xx. Route overrides win over the defaults; leave everything blank for an instant,
+                  reliable mock.
+                </p>
+              </div>
+              <ChaosBlockFields draft={chaos} onChange={setChaos} ariaPrefix="Chaos" />
+            </fieldset>
 
             {errors.length > 0 && (
               <div

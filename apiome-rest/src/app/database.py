@@ -3514,11 +3514,13 @@ class Database:
         user_id: str,
         *,
         scenarios: Dict[str, Any],
+        chaos: Optional[Dict[str, Any]] = None,
     ) -> Optional[Dict[str, Any]]:
-        """Replace the ``scenarios`` key of ``versions.mock_settings`` (#4454, SIM-4.2).
+        """Replace the ``scenarios`` and ``chaos`` keys of ``versions.mock_settings``.
 
-        Only the ``scenarios`` key is rewritten; every other mock knob (e.g. the
-        private-draft ``mode``) is preserved. An empty mapping removes the key.
+        Only those two keys (#4454 SIM-4.2 scenarios, #4455 SIM-4.3 chaos) are
+        rewritten; every other mock knob (e.g. the private-draft ``mode``) is
+        preserved. An empty scenarios mapping / ``None`` chaos removes the key.
         The update bumps ``updated_at`` so the mock spec-cache NOTIFY trigger
         fires and running mocks pick up the new definitions.
 
@@ -3527,14 +3529,20 @@ class Database:
             tenant_id: Tenant owning the version (scope check).
             user_id: Acting user; must be the version creator or a tenant admin.
             scenarios: Canonical scenario definitions keyed by name.
+            chaos: Canonical version-level chaos knobs, or ``None`` to clear.
 
         Returns:
             The updated version row, or ``None`` when the caller lacks ownership.
         """
-        fragment = json.dumps({"scenarios": scenarios}) if scenarios else "{}"
+        replacement: Dict[str, Any] = {}
+        if scenarios:
+            replacement["scenarios"] = scenarios
+        if chaos is not None:
+            replacement["chaos"] = chaos
+        fragment = json.dumps(replacement) if replacement else "{}"
         query = """
             UPDATE apiome.versions v
-            SET mock_settings = (COALESCE(v.mock_settings, '{}'::jsonb) - 'scenarios') || %s::jsonb,
+            SET mock_settings = (COALESCE(v.mock_settings, '{}'::jsonb) - 'scenarios' - 'chaos') || %s::jsonb,
                 updated_at = CURRENT_TIMESTAMP
             FROM apiome.projects p
             WHERE v.id = %s

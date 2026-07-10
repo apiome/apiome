@@ -1,5 +1,6 @@
 /**
  * API Proxy for Version Mock Scenario Overrides (#4454, SIM-4.2)
+ * and Latency/Chaos Injection knobs (#4455, SIM-4.3)
  *
  * Proxies the Control Panel scenario editor to the REST API with JWT authentication:
  * - `GET /v1/versions/{tenantSlug}/{projectId}/{versionId}/mock/scenarios`
@@ -98,7 +99,8 @@ async function resolveContext(): Promise<
 /**
  * GET /api/versions/[versionId]/mock/scenarios?projectId=...
  *
- * Returns `{ success, scenarios }` with the version's persisted scenario definitions.
+ * Returns `{ success, scenarios, chaos }` with the version's persisted
+ * scenario definitions and latency/chaos knobs (`chaos` is null when unset).
  */
 export async function GET(
   request: NextRequest,
@@ -128,7 +130,11 @@ export async function GET(
       return NextResponse.json({ success: false, error }, { status: response.status });
     }
 
-    return NextResponse.json({ success: true, scenarios: data?.scenarios ?? {} });
+    return NextResponse.json({
+      success: true,
+      scenarios: data?.scenarios ?? {},
+      chaos: data?.chaos ?? null,
+    });
   } catch (error) {
     console.error('Error loading mock scenarios:', error);
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';
@@ -139,9 +145,10 @@ export async function GET(
 /**
  * PUT /api/versions/[versionId]/mock/scenarios
  *
- * Replace the version's scenario definitions. Body: `{ projectId, scenarios }`.
- * Returns `{ success, scenarios }`, or `{ success: false, error, errors }` where
- * `errors` lists the per-response validation failures reported by REST (HTTP 422).
+ * Replace the version's scenario definitions and chaos knobs. Body:
+ * `{ projectId, scenarios, chaos? }` — omitting `chaos` clears the stored knobs.
+ * Returns `{ success, scenarios, chaos }`, or `{ success: false, error, errors }`
+ * where `errors` lists the validation failures reported by REST (HTTP 422).
  */
 export async function PUT(
   request: NextRequest,
@@ -150,7 +157,11 @@ export async function PUT(
   try {
     const { versionId } = await params;
     const body = await request.json();
-    const { projectId, scenarios } = body as { projectId?: string; scenarios?: unknown };
+    const { projectId, scenarios, chaos } = body as {
+      projectId?: string;
+      scenarios?: unknown;
+      chaos?: unknown;
+    };
 
     if (!projectId) {
       return NextResponse.json(
@@ -164,13 +175,23 @@ export async function PUT(
         { status: 400 }
       );
     }
+    if (chaos !== undefined && (!chaos || typeof chaos !== 'object' || Array.isArray(chaos))) {
+      return NextResponse.json(
+        { success: false, error: '`chaos` must be an object when provided' },
+        { status: 400 }
+      );
+    }
 
     const context = await resolveContext();
     if (!context.ok) return context.response;
 
     const response = await fetch(
       `${REST_API_BASE_URL}/versions/${context.tenantSlug}/${projectId}/${versionId}/mock/scenarios`,
-      { method: 'PUT', headers: context.headers, body: JSON.stringify({ scenarios }) }
+      {
+        method: 'PUT',
+        headers: context.headers,
+        body: JSON.stringify({ scenarios, ...(chaos !== undefined ? { chaos } : {}) }),
+      }
     );
     const data = await response.json().catch(() => null);
     if (!response.ok) {
@@ -187,7 +208,11 @@ export async function PUT(
       return NextResponse.json({ success: false, error }, { status: response.status });
     }
 
-    return NextResponse.json({ success: true, scenarios: data?.scenarios ?? {} });
+    return NextResponse.json({
+      success: true,
+      scenarios: data?.scenarios ?? {},
+      chaos: data?.chaos ?? null,
+    });
   } catch (error) {
     console.error('Error saving mock scenarios:', error);
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';

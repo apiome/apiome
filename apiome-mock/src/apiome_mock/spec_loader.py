@@ -14,6 +14,7 @@ from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
 from apiome_mock.api_key import ValidatedApiKey, is_private_mock_mode
+from apiome_mock.chaos import EMPTY_CHAOS, ChaosConfig, parse_chaos
 from apiome_mock.scenarios import Scenario, parse_scenarios
 
 MockAccessStatus = Literal["ok", "disabled", "missing"]
@@ -99,6 +100,8 @@ class CompiledSpec:
     operations: tuple[MockOperation, ...]
     scenarios: Mapping[str, Scenario] = field(default_factory=dict)
     """Scenario overrides parsed from ``versions.mock_settings`` (#4454, SIM-4.2)."""
+    chaos: ChaosConfig = EMPTY_CHAOS
+    """Version-level chaos knobs parsed from ``versions.mock_settings`` (#4455, SIM-4.3)."""
 
     @property
     def cache_key(self) -> tuple[str, str, str]:
@@ -186,6 +189,7 @@ async def _compile_from_row(
         spec=spec,
         operations=operations,
         scenarios=parse_scenarios(mock_settings),
+        chaos=parse_chaos(mock_settings),
     )
 
 

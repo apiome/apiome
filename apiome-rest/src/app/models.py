@@ -2440,6 +2440,62 @@ class MockScenarioOperationSpec(BaseModel):
     )
 
 
+class MockChaosKnobsSpec(BaseModel):
+    """Latency/error-injection knobs for one scope (#4455 SIM-4.3).
+
+    Unset knobs inherit: an operation entry falls back to the chaos block's
+    ``default``, and an unset default means the knob is off.
+    """
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    delay_ms: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=30_000,
+        validation_alias=AliasChoices("delayMs", "delay_ms"),
+        serialization_alias="delayMs",
+        description="Base delay in milliseconds applied before the mock responds (max 30000).",
+    )
+    jitter_ms: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=30_000,
+        validation_alias=AliasChoices("jitterMs", "jitter_ms"),
+        serialization_alias="jitterMs",
+        description="Uniform jitter half-width in milliseconds; the applied delay is delayMs ± jitterMs.",
+    )
+    error_rate: Optional[float] = Field(
+        default=None,
+        ge=0,
+        le=100,
+        validation_alias=AliasChoices("errorRate", "error_rate"),
+        serialization_alias="errorRate",
+        description="Percent probability (0-100) of returning an injected error instead of the normal response.",
+    )
+
+    @model_validator(mode="after")
+    def _validate_delay_cap(self) -> "MockChaosKnobsSpec":
+        if (self.delay_ms or 0) + (self.jitter_ms or 0) > 30_000:
+            raise ValueError("delayMs + jitterMs must not exceed 30000 (the 30s injected-delay cap)")
+        return self
+
+
+class MockChaosSpec(BaseModel):
+    """Chaos knobs for a version or one scenario: a default plus per-operation overrides (#4455 SIM-4.3)."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    default: Optional[MockChaosKnobsSpec] = Field(
+        default=None,
+        description="Knobs applied to every operation that has no override of its own.",
+    )
+    operations: Dict[str, MockChaosKnobsSpec] = Field(
+        default_factory=dict,
+        description='Per-route overrides keyed by "METHOD /path/{template}" operation identifiers.',
+    )
+
+
 class MockScenarioSpec(BaseModel):
     """A named mock scenario mapping operations to canned responses (#4454 SIM-4.2)."""
 
@@ -2449,6 +2505,10 @@ class MockScenarioSpec(BaseModel):
     operations: Dict[str, MockScenarioOperationSpec] = Field(
         default_factory=dict,
         description='Overrides keyed by "METHOD /path/{template}" operation identifiers.',
+    )
+    chaos: Optional[MockChaosSpec] = Field(
+        default=None,
+        description="Scenario-scoped chaos knobs; replaces the version-level chaos while this scenario is selected (#4455 SIM-4.3).",
     )
 
 
@@ -2461,6 +2521,10 @@ class VersionMockScenariosRequest(BaseModel):
         default_factory=dict,
         description="Scenario definitions keyed by scenario name; an empty map clears them.",
     )
+    chaos: Optional[MockChaosSpec] = Field(
+        default=None,
+        description="Version-level latency/chaos knobs; omit or send null to clear them (#4455 SIM-4.3).",
+    )
 
 
 class VersionMockScenariosResponse(BaseModel):
@@ -2471,6 +2535,10 @@ class VersionMockScenariosResponse(BaseModel):
     scenarios: Dict[str, MockScenarioSpec] = Field(
         default_factory=dict,
         description="Scenario definitions keyed by scenario name.",
+    )
+    chaos: Optional[MockChaosSpec] = Field(
+        default=None,
+        description="Version-level latency/chaos knobs (#4455 SIM-4.3).",
     )
 
 

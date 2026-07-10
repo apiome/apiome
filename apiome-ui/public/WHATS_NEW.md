@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Mock server: latency & chaos injection — configurable delay ± jitter (capped at 30s) and error rate (0-100% of calls answered with a spec-defined 5xx, else problem+json 500) per route and per version default, edited in the Control Panel scenario dialog; a scenario can carry its own chaos block (chaos only in the "degraded" scenario), injected delays are concurrency-capped per tenant and count against rate/usage accounting (SIM-4.3, #4455)
 - Mock server: scenario overrides — author named per-version scenarios ("quota-exceeded", "payment-declined") in the Control Panel, mapping operations to canned responses (status + headers + body) or per-call sequences; consumers switch with the `X-Mock-Scenario` header, sequences advance per `X-Mock-Session` (scenario+IP fallback) and reset per session; canned responses are validated against the spec's response schemas with an explicit off-spec flag, and definitions persist in `mock_settings` across republish and mock toggles (SIM-4.2, #4454)
 - Browser Try It: scheme-aware auth helpers for bearer, apiKey, and basic credentials from the operation's `securitySchemes`; values stay in sessionStorage only, with a red proxy-transit warning on custom hosts (SIM-3.6, #4452)
 - Mock server: stateful CRUD memory via `X-Mock-Session` — POST then GET/DELETE stay coherent per session with 1h sliding TTL, isolation, and size caps; in-memory default plus Postgres-backed store for multi-replica (SIM-4.1, #4453)
