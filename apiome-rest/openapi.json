@@ -8347,106 +8347,13 @@
         }
       }
     },
-    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/unpublish": {
-      "post": {
-        "tags": [
-          "versions"
-        ],
-        "summary": "Unpublish Version",
-        "description": "Unpublish a version.\n\nOnly the version creator or a tenant administrator can unpublish a version.\n\nArgs:\n    tenant_slug: The tenant slug\n    project_id: The project ID\n    version_record_id: The version record ID\n    auth_data: Authentication data (injected by dependency)\n\nReturns:\n    The unpublished version",
-        "operationId": "unpublish_version_v1_versions__tenant_slug___project_id___version_record_id__unpublish_post",
-        "parameters": [
-          {
-            "name": "tenant_slug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Tenant Slug"
-            }
-          },
-          {
-            "name": "project_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Project Id"
-            }
-          },
-          {
-            "name": "version_record_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Version Record Id"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Api-Key"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VersionSchema"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/mock": {
       "put": {
         "tags": [
           "versions"
         ],
         "summary": "Set Version Mock",
-        "description": "Enable or disable the hosted mock for a published version (#4422, SIM-2.1).",
+        "description": "Enable or disable the hosted mock for a version (#4422 SIM-2.1, #4446 SIM-2.5).",
         "operationId": "set_version_mock_v1_versions__tenant_slug___project_id___version_record_id__mock_put",
         "parameters": [
           {
@@ -8519,6 +8426,99 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/unpublish": {
+      "post": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Unpublish Version",
+        "description": "Unpublish a version.\n\nOnly the version creator or a tenant administrator can unpublish a version.\n\nArgs:\n    tenant_slug: The tenant slug\n    project_id: The project ID\n    version_record_id: The version record ID\n    auth_data: Authentication data (injected by dependency)\n\nReturns:\n    The unpublished version",
+        "operationId": "unpublish_version_v1_versions__tenant_slug___project_id___version_record_id__unpublish_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -20007,7 +20007,7 @@
           "mock-server"
         ],
         "summary": "Get Mock Usage",
-        "description": "Return mock usage counters and daily rollups for the tenant (#4420, SIM-1.5).",
+        "description": "Return mock usage counters and daily rollups for the tenant (#4420, SIM-1.5).\n\nNote: ``project_slug`` and ``version_label`` filter the ``dailyRollups`` only.\n``monthlyRequestCount``, ``monthlyQuota``, and ``mockRps`` are always tenant-wide\ntotals, regardless of any filter parameters.",
         "operationId": "get_mock_usage_v1_mocks__tenant_slug__usage_get",
         "parameters": [
           {
@@ -20372,13 +20372,13 @@
       }
     },
     "/v1/mock/{mock_id}": {
-      "options": {
+      "get": {
         "tags": [
           "mock-server"
         ],
-        "summary": "Serve Mock Root",
+        "summary": "Serve Mock Root Get",
         "description": "Serve the mock for a request to the instance root path.",
-        "operationId": "serve_mock_root_v1_mock__mock_id__options",
+        "operationId": "serve_mock_root_get_v1_mock__mock_id__get",
         "parameters": [
           {
             "name": "mock_id",
@@ -20415,48 +20415,9 @@
         "tags": [
           "mock-server"
         ],
-        "summary": "Serve Mock Root",
+        "summary": "Serve Mock Root Post",
         "description": "Serve the mock for a request to the instance root path.",
-        "operationId": "serve_mock_root_v1_mock__mock_id__post",
-        "parameters": [
-          {
-            "name": "mock_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Mock Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "mock-server"
-        ],
-        "summary": "Serve Mock Root",
-        "description": "Serve the mock for a request to the instance root path.",
-        "operationId": "serve_mock_root_v1_mock__mock_id__get",
+        "operationId": "serve_mock_root_post_v1_mock__mock_id__post",
         "parameters": [
           {
             "name": "mock_id",
@@ -20493,87 +20454,9 @@
         "tags": [
           "mock-server"
         ],
-        "summary": "Serve Mock Root",
+        "summary": "Serve Mock Root Put",
         "description": "Serve the mock for a request to the instance root path.",
-        "operationId": "serve_mock_root_v1_mock__mock_id__put",
-        "parameters": [
-          {
-            "name": "mock_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Mock Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "head": {
-        "tags": [
-          "mock-server"
-        ],
-        "summary": "Serve Mock Root",
-        "description": "Serve the mock for a request to the instance root path.",
-        "operationId": "serve_mock_root_v1_mock__mock_id__head",
-        "parameters": [
-          {
-            "name": "mock_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Mock Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "mock-server"
-        ],
-        "summary": "Serve Mock Root",
-        "description": "Serve the mock for a request to the instance root path.",
-        "operationId": "serve_mock_root_v1_mock__mock_id__delete",
+        "operationId": "serve_mock_root_put_v1_mock__mock_id__put",
         "parameters": [
           {
             "name": "mock_id",
@@ -20610,9 +20493,126 @@
         "tags": [
           "mock-server"
         ],
-        "summary": "Serve Mock Root",
+        "summary": "Serve Mock Root Patch",
         "description": "Serve the mock for a request to the instance root path.",
-        "operationId": "serve_mock_root_v1_mock__mock_id__patch",
+        "operationId": "serve_mock_root_patch_v1_mock__mock_id__patch",
+        "parameters": [
+          {
+            "name": "mock_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mock Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "mock-server"
+        ],
+        "summary": "Serve Mock Root Delete",
+        "description": "Serve the mock for a request to the instance root path.",
+        "operationId": "serve_mock_root_delete_v1_mock__mock_id__delete",
+        "parameters": [
+          {
+            "name": "mock_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mock Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "tags": [
+          "mock-server"
+        ],
+        "summary": "Serve Mock Root Options",
+        "description": "Serve the mock for a request to the instance root path.",
+        "operationId": "serve_mock_root_options_v1_mock__mock_id__options",
+        "parameters": [
+          {
+            "name": "mock_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mock Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "head": {
+        "tags": [
+          "mock-server"
+        ],
+        "summary": "Serve Mock Root Head",
+        "description": "Serve the mock for a request to the instance root path.",
+        "operationId": "serve_mock_root_head_v1_mock__mock_id__head",
         "parameters": [
           {
             "name": "mock_id",
@@ -20647,13 +20647,13 @@
       }
     },
     "/v1/mock/{mock_id}/{sub_path}": {
-      "options": {
+      "get": {
         "tags": [
           "mock-server"
         ],
-        "summary": "Serve Mock Path",
+        "summary": "Serve Mock Path Get",
         "description": "Serve the mock for any request path under the instance base URL.",
-        "operationId": "serve_mock_path_v1_mock__mock_id___sub_path__options",
+        "operationId": "serve_mock_path_get_v1_mock__mock_id___sub_path__get",
         "parameters": [
           {
             "name": "mock_id",
@@ -20699,57 +20699,9 @@
         "tags": [
           "mock-server"
         ],
-        "summary": "Serve Mock Path",
+        "summary": "Serve Mock Path Post",
         "description": "Serve the mock for any request path under the instance base URL.",
-        "operationId": "serve_mock_path_v1_mock__mock_id___sub_path__post",
-        "parameters": [
-          {
-            "name": "mock_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Mock Id"
-            }
-          },
-          {
-            "name": "sub_path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Sub Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "mock-server"
-        ],
-        "summary": "Serve Mock Path",
-        "description": "Serve the mock for any request path under the instance base URL.",
-        "operationId": "serve_mock_path_v1_mock__mock_id___sub_path__get",
+        "operationId": "serve_mock_path_post_v1_mock__mock_id___sub_path__post",
         "parameters": [
           {
             "name": "mock_id",
@@ -20795,105 +20747,9 @@
         "tags": [
           "mock-server"
         ],
-        "summary": "Serve Mock Path",
+        "summary": "Serve Mock Path Put",
         "description": "Serve the mock for any request path under the instance base URL.",
-        "operationId": "serve_mock_path_v1_mock__mock_id___sub_path__put",
-        "parameters": [
-          {
-            "name": "mock_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Mock Id"
-            }
-          },
-          {
-            "name": "sub_path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Sub Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "head": {
-        "tags": [
-          "mock-server"
-        ],
-        "summary": "Serve Mock Path",
-        "description": "Serve the mock for any request path under the instance base URL.",
-        "operationId": "serve_mock_path_v1_mock__mock_id___sub_path__head",
-        "parameters": [
-          {
-            "name": "mock_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Mock Id"
-            }
-          },
-          {
-            "name": "sub_path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Sub Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "mock-server"
-        ],
-        "summary": "Serve Mock Path",
-        "description": "Serve the mock for any request path under the instance base URL.",
-        "operationId": "serve_mock_path_v1_mock__mock_id___sub_path__delete",
+        "operationId": "serve_mock_path_put_v1_mock__mock_id___sub_path__put",
         "parameters": [
           {
             "name": "mock_id",
@@ -20939,9 +20795,153 @@
         "tags": [
           "mock-server"
         ],
-        "summary": "Serve Mock Path",
+        "summary": "Serve Mock Path Patch",
         "description": "Serve the mock for any request path under the instance base URL.",
-        "operationId": "serve_mock_path_v1_mock__mock_id___sub_path__patch",
+        "operationId": "serve_mock_path_patch_v1_mock__mock_id___sub_path__patch",
+        "parameters": [
+          {
+            "name": "mock_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mock Id"
+            }
+          },
+          {
+            "name": "sub_path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sub Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "mock-server"
+        ],
+        "summary": "Serve Mock Path Delete",
+        "description": "Serve the mock for any request path under the instance base URL.",
+        "operationId": "serve_mock_path_delete_v1_mock__mock_id___sub_path__delete",
+        "parameters": [
+          {
+            "name": "mock_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mock Id"
+            }
+          },
+          {
+            "name": "sub_path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sub Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "tags": [
+          "mock-server"
+        ],
+        "summary": "Serve Mock Path Options",
+        "description": "Serve the mock for any request path under the instance base URL.",
+        "operationId": "serve_mock_path_options_v1_mock__mock_id___sub_path__options",
+        "parameters": [
+          {
+            "name": "mock_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mock Id"
+            }
+          },
+          {
+            "name": "sub_path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sub Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "head": {
+        "tags": [
+          "mock-server"
+        ],
+        "summary": "Serve Mock Path Head",
+        "description": "Serve the mock for any request path under the instance base URL.",
+        "operationId": "serve_mock_path_head_v1_mock__mock_id___sub_path__head",
         "parameters": [
           {
             "name": "mock_id",
@@ -47210,6 +47210,21 @@
         "title": "VersionForkRequest",
         "description": "Fork a schema version line into another project from a source revision (cross-project sandbox)."
       },
+      "VersionMockToggleRequest": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "When true, apiome-mock serves this version (draft mocks are private/key-gated)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled"
+        ],
+        "title": "VersionMockToggleRequest",
+        "description": "Enable or disable the hosted mock for a version (#4422 SIM-2.1, #4446 SIM-2.5)."
+      },
       "VersionPublishChangeReportPreviewOut": {
         "properties": {
           "headerSnapshot": {
@@ -47408,21 +47423,6 @@
         "title": "VersionPublishRequest",
         "description": "Publish: optional last-minute revision note / changelog applied before freeze."
       },
-      "VersionMockToggleRequest": {
-        "properties": {
-          "enabled": {
-            "type": "boolean",
-            "title": "Enabled",
-            "description": "When true, apiome-mock serves this published version."
-          }
-        },
-        "type": "object",
-        "required": [
-          "enabled"
-        ],
-        "title": "VersionMockToggleRequest",
-        "description": "Enable or disable the hosted mock for a published version (#4422, SIM-2.1)."
-      },
       "VersionSchema": {
         "properties": {
           "id": {
@@ -47542,7 +47542,13 @@
           "mockEnabled": {
             "type": "boolean",
             "title": "Mockenabled",
-            "description": "When true on a published version, the hosted mock runtime serves this revision (#4422).",
+            "description": "When true, apiome-mock serves this revision (#4422). Draft mocks require a tenant API key (#4446).",
+            "default": false
+          },
+          "mockPrivate": {
+            "type": "boolean",
+            "title": "Mockprivate",
+            "description": "When true, the mock is key-gated for an unpublished draft (#4446, SIM-2.5).",
             "default": false
           },
           "mockBaseUrl": {
