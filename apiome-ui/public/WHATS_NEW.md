@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Browser Try It: copy the composed request as curl, JavaScript fetch, or Python httpx snippets that update live with the form; credentials are replaced with placeholders like `$API_KEY`, never emitted as raw secrets (SIM-3.5, #4451)
 - Browser Try It: example selector and "Generate sample" prefill request bodies from named OpenAPI examples or schema-driven synthesis via `POST /api/try-it/sample`, with source indication and content-type aware formatting (SIM-3.4, #4450)
 - Mock server: private draft-version mocks — enable `mockEnabled` on unpublished drafts (`mockPrivate` + same base URL); `apiome-mock` serves the in-design spec only when the caller presents a valid tenant `X-Api-Key`, while anonymous traffic still gets 404/401 without revealing the draft (SIM-2.5, #4446)
 - Browser: "Mock available" badge on public version pages when a version's mock is enabled, with the mock base URL, a copyable curl one-liner, and a Mock entry in the spec overview's server list; the URL is exposed in spec-viewer props for the upcoming try-it server picker (SIM-2.3, #4444)
