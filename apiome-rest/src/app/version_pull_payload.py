@@ -30,6 +30,7 @@ SECTION_FIELD_KEYS: dict[str, frozenset[str]] = {
             "enabled",
         }
     ),
+    "mock": frozenset({"mockEnabled", "mockPrivate", "mockBaseUrl"}),
     "lineage": frozenset(
         {
             "parent_version_id",
