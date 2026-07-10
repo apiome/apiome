@@ -123,7 +123,6 @@ def _add_message(
         _add_field(message, field, package=package, api=api)
 
 
-
 def build_descriptor_set(api: CanonicalApi) -> bytes:
     """Compile a canonical RPC model into a protobuf FileDescriptorSet."""
     package = _package_name(api)
