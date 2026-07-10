@@ -24,15 +24,20 @@
  *   headers are dropped when a redirect changes origin, and nothing here logs or persists
  *   request contents.
  *
- * The response envelope (`{ status, statusText, headers, body, durationMs, sizeBytes,
- * truncated }`) matches what `sendViaProxy` in `send.ts` unwraps; upstream network failures are
- * reported *inside* the envelope as synthesized 502/504 gateway statuses with a plain-text
- * notice body, because the relay itself replies HTTP 200 for any upstream outcome.
+ * The response envelope (`{ status, statusText, headers, body, bodyEncoding, durationMs,
+ * sizeBytes, truncated, gateway? }`) matches what `sendViaProxy` in `send.ts` unwraps; upstream
+ * network failures are reported *inside* the envelope as synthesized 502/504 gateway statuses
+ * (flagged with `gateway: true` so the SIM-3.3 viewer can phrase them as failures, not upstream
+ * responses) with a plain-text notice body, because the relay itself replies HTTP 200 for any
+ * upstream outcome. Bodies that are not valid UTF-8 text travel base64-encoded
+ * (`bodyEncoding: 'base64'`, see `body.ts`) so binary payloads survive the JSON envelope
+ * byte-exact.
  *
  * Kept free of Next.js/undici/node imports so it is unit-testable under the browse Vitest setup
  * (which only runs `lib/**` tests); the route handler injects the real network dependencies.
  */
 
+import { encodeBodyBytes, type BodyEncoding } from './body';
 import type { TargetKind } from './send';
 
 /** Maximum relayed response-body size in bytes (1 MiB); larger bodies are truncated. */
@@ -579,14 +584,18 @@ export interface RelayResult {
   statusText: string;
   /** Sanitized upstream response headers. */
   headers: Record<string, string>;
-  /** Upstream response body text (possibly truncated), or a gateway notice. */
+  /** Upstream response body (possibly truncated), or a gateway notice. */
   body: string;
+  /** How `body` is encoded: plain text, or base64 for bytes that are not valid UTF-8. */
+  bodyEncoding: BodyEncoding;
   /** Wall-clock duration of the whole exchange in milliseconds. */
   durationMs: number;
   /** Byte size of the returned body. */
   sizeBytes: number;
   /** True when the body was cut off by the size cap or the time budget. */
   truncated: boolean;
+  /** True when the status was synthesized by the relay (target unreachable / timed out). */
+  gateway?: true;
 }
 
 /** Outcome of {@link executeRelay}: an envelope to relay, or a 403 refusal. */
@@ -697,9 +706,11 @@ function gatewayEnvelope(status: 502 | 504, notice: string, durationMs: number):
     statusText: statusTextFor(status),
     headers: {},
     body: notice,
+    bodyEncoding: 'text',
     durationMs,
     sizeBytes: utf8Bytes(notice),
     truncated: false,
+    gateway: true,
   };
 }
 
@@ -751,7 +762,7 @@ async function guardTargetHost(
 async function readBodyCapped(
   body: RelayHttpResponse['body'],
   cap: number
-): Promise<{ text: string; sizeBytes: number; truncated: boolean }> {
+): Promise<{ bytes: Uint8Array; sizeBytes: number; truncated: boolean }> {
   const chunks: Uint8Array[] = [];
   let total = 0;
   let truncated = false;
@@ -777,7 +788,7 @@ async function readBodyCapped(
     merged.set(chunk, offset);
     offset += chunk.length;
   }
-  return { text: new TextDecoder().decode(merged), sizeBytes: total, truncated };
+  return { bytes: merged, sizeBytes: total, truncated };
 }
 
 /**
@@ -909,14 +920,18 @@ export async function executeRelay(
         }
       }
 
-      const { text, sizeBytes, truncated } = await readBodyCapped(response.body, maxBodyBytes);
+      const { bytes, sizeBytes, truncated } = await readBodyCapped(response.body, maxBodyBytes);
+      const { body: encodedBody, bodyEncoding } = encodeBodyBytes(bytes, {
+        trimIncompleteTrailing: truncated,
+      });
       return {
         kind: 'response',
         envelope: {
           status: response.statusCode,
           statusText: statusTextFor(response.statusCode),
           headers: sanitizeResponseHeaders(response.headers),
-          body: text,
+          body: encodedBody,
+          bodyEncoding,
           durationMs: elapsed(),
           sizeBytes,
           truncated,

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { base64ToBytes, bytesToBase64 } from '../body';
 import {
   isSameOrigin,
   sendTryIt,
@@ -73,6 +74,29 @@ describe('sendTryIt — direct path (same-origin)', () => {
     await expect(
       sendTryIt(request({ url: `${PAGE_ORIGIN}/x` }), { pageOrigin: PAGE_ORIGIN, fetchImpl: impl })
     ).rejects.toMatchObject({ name: 'TryItSendError', kind: 'network' });
+  });
+
+  it('marks text bodies as text and never as gateway failures', async () => {
+    const { impl } = fetchStub(new Response('hello', { status: 200 }));
+    const result = await sendTryIt(request({ url: `${PAGE_ORIGIN}/x` }), {
+      pageOrigin: PAGE_ORIGIN,
+      fetchImpl: impl,
+    });
+    expect(result).toMatchObject({ bodyEncoding: 'text', gateway: false });
+  });
+
+  it('base64-encodes binary bodies byte-exact (SIM-3.3)', async () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0xff]);
+    const { impl } = fetchStub(
+      new Response(png, { status: 200, headers: { 'content-type': 'image/png' } })
+    );
+    const result = await sendTryIt(request({ url: `${PAGE_ORIGIN}/logo.png` }), {
+      pageOrigin: PAGE_ORIGIN,
+      fetchImpl: impl,
+    });
+    expect(result.bodyEncoding).toBe('base64');
+    expect(result.sizeBytes).toBe(png.length);
+    expect(Array.from(base64ToBytes(result.bodyText))).toEqual(Array.from(png));
   });
 });
 
@@ -188,6 +212,38 @@ describe('sendTryIt — proxy path (cross-origin)', () => {
     expect(result.sizeBytes).toBe(5);
     expect(result.durationMs).toBeGreaterThanOrEqual(0);
     expect(result.truncated).toBe(false);
+    expect(result.bodyEncoding).toBe('text');
+    expect(result.gateway).toBe(false);
+  });
+
+  it('passes bodyEncoding and the gateway flag through from the envelope (SIM-3.3)', async () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+    const { impl } = fetchStub(
+      new Response(
+        JSON.stringify({
+          status: 200,
+          body: bytesToBase64(png),
+          bodyEncoding: 'base64',
+          sizeBytes: png.length,
+        }),
+        { status: 200 }
+      )
+    );
+    const result = await sendTryIt(request(), { pageOrigin: PAGE_ORIGIN, fetchImpl: impl });
+    expect(result.bodyEncoding).toBe('base64');
+    expect(Array.from(base64ToBytes(result.bodyText))).toEqual(Array.from(png));
+
+    const { impl: gatewayImpl } = fetchStub(
+      new Response(
+        JSON.stringify({ status: 504, body: 'Relay notice: timed out.', gateway: true }),
+        { status: 200 }
+      )
+    );
+    const gatewayResult = await sendTryIt(request(), {
+      pageOrigin: PAGE_ORIGIN,
+      fetchImpl: gatewayImpl,
+    });
+    expect(gatewayResult).toMatchObject({ status: 504, gateway: true, bodyEncoding: 'text' });
   });
 
   it('wraps relay connection failures as network errors', async () => {

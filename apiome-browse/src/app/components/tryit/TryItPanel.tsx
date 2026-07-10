@@ -15,7 +15,14 @@ import {
   type ExtraHeader,
   type ParamSpec,
 } from '../../../../lib/tryit/operation';
-import { sendTryIt, TryItSendError, type TryItResult } from '../../../../lib/tryit/send';
+import { describeSendFailure } from '../../../../lib/tryit/response';
+import {
+  sendTryIt,
+  TryItSendError,
+  type TryItResult,
+  type TryItSendErrorKind,
+} from '../../../../lib/tryit/send';
+import { ResponseViewer } from './ResponseViewer';
 
 const Editor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
@@ -52,8 +59,8 @@ interface TryItPanelProps {
  *
  * Rendered inline under an operation row: server picker (mock → spec `servers[]` → custom URL),
  * a parameter form generated from the spec, a Monaco body editor with JSON-schema validation,
- * and the send pipeline (`lib/tryit/send`). Response rendering beyond a basic status/body block
- * is SIM-3.3; example prefill is SIM-3.4; auth helpers are SIM-3.6.
+ * the send pipeline (`lib/tryit/send`), and the SIM-3.3 response viewer (`ResponseViewer`).
+ * Example prefill is SIM-3.4; auth helpers are SIM-3.6.
  */
 export function TryItPanel({
   spec,
@@ -87,7 +94,10 @@ export function TryItPanel({
   const [formError, setFormError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<TryItResult | null>(null);
-  const [sendError, setSendError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<{
+    kind: TryItSendErrorKind | null;
+    message: string;
+  } | null>(null);
 
   // Reset the server choice if the option list changes shape (e.g. spec reloads).
   useEffect(() => {
@@ -219,9 +229,12 @@ export function TryItPanel({
       setResult(response);
     } catch (err) {
       if (err instanceof TryItSendError) {
-        setSendError(err.message);
+        setSendError({ kind: err.kind, message: err.message });
       } else {
-        setSendError(err instanceof Error ? err.message : 'Request failed.');
+        setSendError({
+          kind: null,
+          message: err instanceof Error ? err.message : 'Request failed.',
+        });
       }
     } finally {
       setSending(false);
@@ -449,57 +462,24 @@ export function TryItPanel({
         )}
       </div>
 
-      {/* Outcome (basic block — the full response viewer is SIM-3.3) */}
+      {/* Outcome — the SIM-3.3 response viewer, or a distinct card per send-failure kind */}
       <div aria-live="polite">
         {sendError && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50/60 p-3 text-[12px] text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-rose-300">
-            {sendError}
-          </div>
-        )}
-        {result && (
-          <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="flex flex-wrap items-center gap-3 border-b border-zinc-100 px-3 py-2 dark:border-zinc-800/80">
-              <span
-                className={`rounded px-1.5 py-0.5 font-mono text-[11px] font-semibold ${
-                  result.status < 300
-                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
-                    : result.status < 400
-                    ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
-                    : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300'
-                }`}
-              >
-                {result.status} {result.statusText}
-              </span>
-              <span className="text-[11px] tabular-nums text-zinc-500 dark:text-zinc-400">
-                {result.durationMs} ms · {result.sizeBytes.toLocaleString()} B · via{' '}
-                {result.via === 'proxy' ? 'relay' : 'direct fetch'}
-              </span>
-              {result.truncated && (
-                <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                  body truncated
-                </span>
-              )}
-            </div>
-            {Object.keys(result.headers).length > 0 && (
-              <details className="border-b border-zinc-100 px-3 py-2 dark:border-zinc-800/80">
-                <summary className="cursor-pointer text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                  Response headers ({Object.keys(result.headers).length})
-                </summary>
-                <dl className="mt-2 space-y-1">
-                  {Object.entries(result.headers).map(([name, value]) => (
-                    <div key={name} className="flex gap-2 font-mono text-[11px]">
-                      <dt className="shrink-0 text-zinc-500 dark:text-zinc-400">{name}:</dt>
-                      <dd className="break-all text-zinc-800 dark:text-zinc-200">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </details>
+          <div className="rounded-lg border border-rose-200 bg-rose-50/60 p-3 dark:border-rose-900/50 dark:bg-rose-950/20">
+            <p className="text-[12px] font-semibold text-rose-800 dark:text-rose-300">
+              {sendError.kind ? describeSendFailure(sendError.kind).title : 'Request failed'}
+            </p>
+            <p className="mt-1 text-[12px] text-rose-800/90 dark:text-rose-300/90">
+              {sendError.message}
+            </p>
+            {sendError.kind && (
+              <p className="mt-1 text-[12px] text-rose-700/80 dark:text-rose-300/70">
+                {describeSendFailure(sendError.kind).hint}
+              </p>
             )}
-            <pre className="max-h-72 overflow-auto p-3 font-mono text-[12px] leading-relaxed text-zinc-800 dark:text-zinc-200">
-              {result.bodyText || '(empty body)'}
-            </pre>
           </div>
         )}
+        {result && <ResponseViewer result={result} operationPath={model.path} />}
       </div>
     </div>
   );

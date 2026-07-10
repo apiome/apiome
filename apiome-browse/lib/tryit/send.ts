@@ -14,11 +14,16 @@
  *     version's mock URL and spec `servers[]` server-side when enforcing the allow-policy.
  *
  * Response envelope (JSON, HTTP 200 from the relay even for upstream errors):
- *   `{ status, statusText, headers, body, durationMs, sizeBytes, truncated }`
+ *   `{ status, statusText, headers, body, bodyEncoding, durationMs, sizeBytes, truncated,
+ *   gateway? }`
+ *   `bodyEncoding` is `'base64'` when the body bytes are not valid UTF-8 text (see `body.ts`);
+ *   `gateway` marks statuses the relay synthesized itself (target unreachable / timed out).
  *   Relay refusals (allow-policy / SSRF guard) come back as HTTP 403 with a `detail` message.
  *
  * Framework-free (fetch is injectable) so it is unit-testable under the browse Vitest setup.
  */
+
+import { encodeBodyBytes, type BodyEncoding } from './body';
 
 /** Which server-picker source produced the target URL (drives the relay's allow-policy). */
 export type TargetKind = 'mock' | 'spec' | 'custom';
@@ -46,14 +51,18 @@ export interface TryItResult {
   statusText: string;
   /** Upstream response headers (name → value). */
   headers: Record<string, string>;
-  /** Upstream response body as text. */
+  /** Upstream response body: plain text, or base64 when `bodyEncoding` is `'base64'`. */
   bodyText: string;
+  /** How `bodyText` is encoded; base64 carries bodies that are not valid UTF-8 (SIM-3.3). */
+  bodyEncoding: BodyEncoding;
   /** Wall-clock request duration in milliseconds. */
   durationMs: number;
   /** Response body size in bytes. */
   sizeBytes: number;
   /** True when the relay truncated the body at its cap (SIM-3.2). */
   truncated: boolean;
+  /** True when the status was synthesized by the relay (target unreachable / timed out). */
+  gateway: boolean;
   /** Which pipeline dispatched the request. */
   via: 'direct' | 'proxy';
 }
@@ -166,15 +175,19 @@ async function sendDirect(
     const message = err instanceof Error ? err.message : String(err);
     throw new TryItSendError('network', `Request failed: ${message}`);
   }
-  const bodyText = await response.text();
+  // Read raw bytes (not text) so non-UTF-8 bodies survive for the SIM-3.3 response viewer.
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  const { body: bodyText, bodyEncoding } = encodeBodyBytes(bytes);
   return {
     status: response.status,
     statusText: response.statusText,
     headers: headersToMap(response.headers),
     bodyText,
+    bodyEncoding,
     durationMs: Math.max(0, now() - started),
-    sizeBytes: utf8Bytes(bodyText),
+    sizeBytes: bytes.length,
     truncated: false,
+    gateway: false,
     via: 'direct',
   };
 }
@@ -257,10 +270,12 @@ async function sendViaProxy(
         ? (e.headers as Record<string, string>)
         : {},
     bodyText,
+    bodyEncoding: e.bodyEncoding === 'base64' ? 'base64' : 'text',
     durationMs:
       typeof e.durationMs === 'number' ? e.durationMs : Math.max(0, now() - started),
     sizeBytes: typeof e.sizeBytes === 'number' ? e.sizeBytes : utf8Bytes(bodyText),
     truncated: e.truncated === true,
+    gateway: e.gateway === true,
     via: 'proxy',
   };
 }
