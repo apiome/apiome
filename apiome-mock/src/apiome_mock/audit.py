@@ -28,6 +28,7 @@ async def insert_mock_access_audit(
     method: str,
     path: str,
     status_code: int,
+    api_key_id: UUID | None = None,
 ) -> None:
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
@@ -51,6 +52,8 @@ async def insert_mock_access_audit(
                 "statusCode": status_code,
                 "clientIp": client_ip,
             }
+            if api_key_id is not None:
+                detail["apiKeyId"] = str(api_key_id)
             detail_json = json.dumps(detail, sort_keys=True, default=str)
             target = f"{project_slug}/{version_label} {method.upper()} {path}"
             payload = "|".join(
@@ -95,6 +98,7 @@ def schedule_mock_access_audit(
     path: str,
     status_code: int,
     sample_rate: float,
+    api_key_id: UUID | None = None,
 ) -> None:
     """Record a sampled mock hit to ``access_audit`` (best-effort, async)."""
     if sample_rate <= 0.0:
@@ -113,6 +117,7 @@ def schedule_mock_access_audit(
                 method=method,
                 path=path,
                 status_code=status_code,
+                api_key_id=api_key_id,
             )
         except Exception:
             _log.warning(

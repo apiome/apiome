@@ -5576,8 +5576,8 @@ paths:
       tags:
       - versions
       summary: Set Version Mock
-      description: Enable or disable the hosted mock for a published version (#4422,
-        SIM-2.1).
+      description: Enable or disable the hosted mock for a version (#4422 SIM-2.1, #4446
+        SIM-2.5).
       operationId: set_version_mock_v1_versions__tenant_slug___project_id___version_record_id__mock_put
       parameters:
       - name: tenant_slug
@@ -32475,8 +32475,8 @@ components:
       required:
       - enabled
       title: VersionMockToggleRequest
-      description: Enable or disable the hosted mock for a published version (#4422,
-        SIM-2.1).
+      description: Enable or disable the hosted mock for a version (#4422 SIM-2.1, #4446
+        SIM-2.5).
     VersionSchema:
       properties:
         id:
@@ -32549,8 +32549,14 @@ components:
         mockEnabled:
           type: boolean
           title: Mockenabled
-          description: When true on a published version, the hosted mock runtime serves
-            this revision (#4422).
+          description: When true, apiome-mock serves this revision (#4422). Draft mocks
+            require a tenant API key (#4446).
+          default: false
+        mockPrivate:
+          type: boolean
+          title: Mockprivate
+          description: When true, the mock is key-gated for an unpublished draft (#4446,
+            SIM-2.5).
           default: false
         mockBaseUrl:
           anyOf:

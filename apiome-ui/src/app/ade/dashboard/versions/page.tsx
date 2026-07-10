@@ -238,6 +238,8 @@ interface Version {
   message?: string | null;
   /** Hosted mock toggle state (#4422, SIM-2.1) */
   mockEnabled?: boolean;
+  /** Private draft mock flag (#4446, SIM-2.5) */
+  mockPrivate?: boolean;
   /** Stable mock base URL, set by REST when the mock is enabled (#4422) */
   mockBaseUrl?: string | null;
 }
@@ -639,7 +641,14 @@ const Versions = () => {
   const handleVersionMockChanged = useCallback((versionRecordId: string, change: VersionMockChange) => {
     setVersions((prev) =>
       prev.map((v) =>
-        v.id === versionRecordId ? { ...v, mockEnabled: change.mockEnabled, mockBaseUrl: change.mockBaseUrl } : v
+        v.id === versionRecordId
+          ? {
+              ...v,
+              mockEnabled: change.mockEnabled,
+              mockBaseUrl: change.mockBaseUrl,
+              mockPrivate: change.mockPrivate,
+            }
+          : v
       )
     );
   }, []);
@@ -3461,6 +3470,7 @@ const Versions = () => {
                       versionLabel={version.version_id}
                       published={version.published}
                       mockEnabled={Boolean(version.mockEnabled)}
+                      mockPrivate={Boolean(version.mockPrivate)}
                       mockBaseUrl={version.mockBaseUrl ?? null}
                       usageSeries={
                         mockUsageByVersion === null || !selectedProject?.slug

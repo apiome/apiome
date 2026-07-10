@@ -11,6 +11,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 from psycopg_pool import AsyncConnectionPool
 
+from apiome_mock.api_key import validate_api_key_for_tenant
 from apiome_mock.database_pool import create_async_pool, ping_pool
 from apiome_mock.guard import (
     enforce_mock_limits,
@@ -97,6 +98,12 @@ def create_app() -> FastAPI:
         pool: AsyncConnectionPool = app.state.db_pool
         cache: SpecCache = app.state.spec_cache
         settings = get_settings()
+        raw_api_key = request.headers.get("X-Api-Key") or request.headers.get("x-api-key")
+        validated_key = await validate_api_key_for_tenant(
+            pool,
+            api_key=raw_api_key,
+            tenant_slug=tenant,
+        )
 
         blocked = await enforce_mock_limits(
             request,
@@ -118,6 +125,7 @@ def create_app() -> FastAPI:
             path=path,
             pool=pool,
             cache=cache,
+            api_key=validated_key,
         )
         if limits is not None:
             record_mock_request(
@@ -129,6 +137,7 @@ def create_app() -> FastAPI:
                 path=path,
                 status_code=response.status_code,
                 tenant_id=limits.tenant_id,
+                api_key_id=validated_key.id if validated_key is not None else None,
                 settings=settings,
             )
         return response

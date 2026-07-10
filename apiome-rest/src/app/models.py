@@ -1766,7 +1766,13 @@ class VersionSchema(BaseModel):
         default=False,
         validation_alias=AliasChoices("mockEnabled", "mock_enabled"),
         serialization_alias="mockEnabled",
-        description="When true on a published version, the hosted mock runtime serves this revision (#4422).",
+        description="When true, apiome-mock serves this revision (#4422). Draft mocks require a tenant API key (#4446).",
+    )
+    mock_private: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("mockPrivate", "mock_private"),
+        serialization_alias="mockPrivate",
+        description="When true, the mock is key-gated for an unpublished draft (#4446, SIM-2.5).",
     )
     mock_base_url: Optional[str] = Field(
         default=None,
@@ -2383,11 +2389,11 @@ class VersionPublishRequest(BaseModel):
 
 
 class VersionMockToggleRequest(BaseModel):
-    """Enable or disable the hosted mock for a published version (#4422, SIM-2.1)."""
+    """Enable or disable the hosted mock for a version (#4422 SIM-2.1, #4446 SIM-2.5)."""
 
     model_config = ConfigDict(populate_by_name=True)
 
-    enabled: bool = Field(description="When true, apiome-mock serves this published version.")
+    enabled: bool = Field(description="When true, apiome-mock serves this version (draft mocks are private/key-gated).")
 
 
 class VersionPublishChangeReportPreviewRequest(BaseModel):

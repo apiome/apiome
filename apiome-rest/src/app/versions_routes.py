@@ -59,6 +59,8 @@ from .version_publish_prechecks import enforce_publish_prechecks
 from .version_pull_delta import SCHEMA_PULL_DELTA_GUARANTEE, build_schema_pull_delta
 from .version_pull_payload import filter_version_pull_dump, resolve_pull_sections
 
+from .mock_settings_util import is_private_mock_mode
+
 router = APIRouter(prefix="/v1/versions", tags=["versions"])
 
 logger = logging.getLogger(__name__)
@@ -75,20 +77,27 @@ def _mock_base_url(
     *,
     mock_enabled: bool,
     published: bool,
+    mock_private: bool = False,
 ) -> Optional[str]:
-    if not mock_enabled or not published or not project_slug or not version_label:
+    if not mock_enabled or not project_slug or not version_label:
+        return None
+    if not published and not mock_private:
         return None
     return f"{settings.mock_public_base_url.rstrip('/')}/{tenant_slug}/{project_slug}/{version_label}"
 
 
 def _version_schema_response(version_row: Dict[str, Any], tenant_slug: str) -> VersionSchema:
     row = dict(version_row)
+    published = bool(row.get("published"))
+    mock_private = is_private_mock_mode(row.get("mock_settings"), published=published)
+    row["mock_private"] = mock_private
     row["mock_base_url"] = _mock_base_url(
         tenant_slug,
         row.get("project_slug"),
         row.get("version_id"),
         mock_enabled=bool(row.get("mock_enabled")),
-        published=bool(row.get("published")),
+        published=published,
+        mock_private=mock_private,
     )
     return VersionSchema(**row)
 
@@ -2035,18 +2044,13 @@ async def set_version_mock(
     request: VersionMockToggleRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> VersionSchema:
-    """Enable or disable the hosted mock for a published version (#4422, SIM-2.1)."""
+    """Enable or disable the hosted mock for a version (#4422 SIM-2.1, #4446 SIM-2.5)."""
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     existing = db.get_version_by_id(version_record_id, auth_data["tenant_id"])
     if not existing:
         raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
     if existing["project_id"] != project_id:
         raise HTTPException(status_code=404, detail=f"Version not found in project: {project_id}")
-    if request.enabled and not existing.get("published"):
-        raise HTTPException(
-            status_code=400,
-            detail="Mock can only be enabled on a published version.",
-        )
 
     user_id = get_authenticated_user_id(auth_data)
     if not user_id:
@@ -2060,6 +2064,7 @@ async def set_version_mock(
         auth_data["tenant_id"],
         user_id,
         enabled=request.enabled,
+        published=bool(existing.get("published")),
     )
     if not updated:
         raise HTTPException(
