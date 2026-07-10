@@ -16,6 +16,15 @@ import {
   type ParamSpec,
 } from '../../../../lib/tryit/operation';
 import {
+  applyAuthToRequest,
+  authSecretPlaceholders,
+  loadAuthCredentials,
+  resolveOperationAuth,
+  saveAuthCredentials,
+  type AuthCredentialValues,
+  type AuthCredentialsMap,
+} from '../../../../lib/tryit/auth';
+import {
   bodyVariantHasPrefillSupport,
   buildInitialParamValues,
   collectBodyExamples,
@@ -32,6 +41,7 @@ import {
   type TryItResult,
   type TryItSendErrorKind,
 } from '../../../../lib/tryit/send';
+import { AuthHelpers } from './AuthHelpers';
 import { CodeSnippetPanel } from './CodeSnippetPanel';
 import { ResponseViewer } from './ResponseViewer';
 
@@ -72,7 +82,7 @@ interface TryItPanelProps {
  * a parameter form generated from the spec, a Monaco body editor with JSON-schema validation,
  * the send pipeline (`lib/tryit/send`), and the SIM-3.3 response viewer (`ResponseViewer`).
  * Example prefill and schema synthesis are SIM-3.4 (#4450); copy-as-code snippets are SIM-3.5
- * (#4451); auth helpers are SIM-3.6.
+ * (#4451); scheme-aware auth helpers are SIM-3.6 (#4452).
  */
 export function TryItPanel({
   spec,
@@ -86,6 +96,14 @@ export function TryItPanel({
   const idBase = useId();
   const model = useMemo(() => extractOperationModel(spec, method, path), [spec, method, path]);
   const servers = useMemo(() => buildServerOptions(spec, mockBaseUrl), [spec, mockBaseUrl]);
+  const operationAuth = useMemo(
+    () => resolveOperationAuth(spec, method, path),
+    [spec, method, path]
+  );
+  const authSchemeNames = useMemo(
+    () => operationAuth.schemes.map((scheme) => scheme.name),
+    [operationAuth]
+  );
 
   const [serverChoice, setServerChoice] = useState<string>(
     servers.length > 0 ? '0' : CUSTOM_SERVER
@@ -96,6 +114,7 @@ export function TryItPanel({
     buildInitialParamValues(model?.params ?? [])
   );
   const [extraHeaders, setExtraHeaders] = useState<ExtraHeader[]>([]);
+  const [authCredentials, setAuthCredentials] = useState<AuthCredentialsMap>({});
   const [contentTypeIdx, setContentTypeIdx] = useState(0);
   const [bodyText, setBodyText] = useState('');
   const [bodySource, setBodySource] = useState<BodySource>({ kind: 'empty' });
@@ -112,6 +131,11 @@ export function TryItPanel({
     kind: TryItSendErrorKind | null;
     message: string;
   } | null>(null);
+
+  // Hydrate auth credentials from sessionStorage when the operation's schemes change.
+  useEffect(() => {
+    setAuthCredentials(loadAuthCredentials(authSchemeNames));
+  }, [authSchemeNames]);
 
   // Reset the server choice if the option list changes shape (e.g. spec reloads).
   useEffect(() => {
@@ -270,6 +294,16 @@ export function TryItPanel({
     });
   }, []);
 
+  const onAuthChange = useCallback((schemeName: string, next: AuthCredentialValues) => {
+    setAuthCredentials((prev) => ({ ...prev, [schemeName]: next }));
+    saveAuthCredentials(schemeName, next);
+  }, []);
+
+  const secretPlaceholders = useMemo(
+    () => authSecretPlaceholders(operationAuth.schemes, authCredentials),
+    [operationAuth.schemes, authCredentials]
+  );
+
   const onSend = useCallback(async () => {
     if (!model) return;
     setFormError(null);
@@ -307,18 +341,27 @@ export function TryItPanel({
       return;
     }
 
+    const composedUrl = buildRequestUrl(serverUrl, model.path, model.params, values);
+    const composedHeaders = buildRequestHeaders(
+      model.params,
+      values,
+      extraHeaders,
+      body != null && bodyVariant ? bodyVariant.contentType : null
+    );
+    const withAuth = applyAuthToRequest(
+      composedUrl,
+      composedHeaders,
+      operationAuth.schemes,
+      authCredentials
+    );
+
     setSending(true);
     try {
       const response = await sendTryIt(
         {
           method: model.method,
-          url: buildRequestUrl(serverUrl, model.path, model.params, values),
-          headers: buildRequestHeaders(
-            model.params,
-            values,
-            extraHeaders,
-            body != null && bodyVariant ? bodyVariant.contentType : null
-          ),
+          url: withAuth.url,
+          headers: withAuth.headers,
           body,
           target: {
             kind: isCustom ? 'custom' : selectedServer?.kind ?? 'custom',
@@ -356,6 +399,8 @@ export function TryItPanel({
     tenantSlug,
     projectSlug,
     versionSlug,
+    operationAuth.schemes,
+    authCredentials,
   ]);
 
   if (!model) {
@@ -429,6 +474,13 @@ export function TryItPanel({
       {headerParams.length > 0 && (
         <ParamGroup label="Headers" params={headerParams} values={values} errors={errors} onChange={setValue} idBase={idBase} />
       )}
+
+      <AuthHelpers
+        auth={operationAuth}
+        credentials={authCredentials}
+        onChange={onAuthChange}
+        isCustomHost={isCustom}
+      />
 
       {/* User-added headers */}
       <div>
@@ -605,6 +657,9 @@ export function TryItPanel({
         contentType={
           hasBody && bodyText.trim() !== '' && bodyVariant ? bodyVariant.contentType : null
         }
+        authSchemes={operationAuth.schemes}
+        authCredentials={authCredentials}
+        secretPlaceholders={secretPlaceholders}
       />
 
       {/* Send */}

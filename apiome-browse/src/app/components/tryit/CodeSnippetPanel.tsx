@@ -6,6 +6,11 @@ import {
   generateSnippet,
   type SnippetTarget,
 } from '../../../../lib/tryit/snippet';
+import {
+  applyAuthToRequest,
+  type AuthCredentialsMap,
+  type SupportedAuthScheme,
+} from '../../../../lib/tryit/auth';
 import type { SecretPlaceholderMap } from '../../../../lib/tryit/secrets';
 import type { ExtraHeader, ParamSpec } from '../../../../lib/tryit/operation';
 
@@ -33,6 +38,10 @@ interface CodeSnippetPanelProps {
   bodyText: string;
   /** Selected body content type, or null when no body variant is active. */
   contentType: string | null;
+  /** SIM-3.6 schemes applied to the composed request before snippet generation. */
+  authSchemes?: SupportedAuthScheme[];
+  /** SIM-3.6 credential values keyed by scheme name. */
+  authCredentials?: AuthCredentialsMap;
   /** Optional SIM-3.6 auth-helper placeholders merged over inferred secret names. */
   secretPlaceholders?: SecretPlaceholderMap;
 }
@@ -42,7 +51,8 @@ interface CodeSnippetPanelProps {
  *
  * Renders curl / fetch / httpx samples that track the composed request as the form changes.
  * Credential values are replaced with placeholders (see `lib/tryit/secrets.ts`); actual secrets
- * never appear in generated snippets.
+ * never appear in generated snippets. SIM-3.6 auth helpers feed both the composed request and
+ * explicit placeholders.
  */
 export function CodeSnippetPanel({
   method,
@@ -53,6 +63,8 @@ export function CodeSnippetPanel({
   extraHeaders,
   bodyText,
   contentType,
+  authSchemes,
+  authCredentials,
   secretPlaceholders,
 }: CodeSnippetPanelProps) {
   const [target, setTarget] = useState<SnippetTarget>('curl');
@@ -67,22 +79,33 @@ export function CodeSnippetPanel({
     []
   );
 
-  const composed = useMemo(
-    () =>
-      serverUrl.trim()
-        ? buildSnippetRequest({
-            method,
-            serverUrl: serverUrl.trim(),
-            path,
-            params,
-            values,
-            extraHeaders,
-            body: bodyText.trim() === '' ? null : bodyText,
-            contentType,
-          })
-        : null,
-    [method, serverUrl, path, params, values, extraHeaders, bodyText, contentType]
-  );
+  const composed = useMemo(() => {
+    if (!serverUrl.trim()) return null;
+    const base = buildSnippetRequest({
+      method,
+      serverUrl: serverUrl.trim(),
+      path,
+      params,
+      values,
+      extraHeaders,
+      body: bodyText.trim() === '' ? null : bodyText,
+      contentType,
+    });
+    if (!authSchemes?.length || !authCredentials) return base;
+    const withAuth = applyAuthToRequest(base.url, base.headers, authSchemes, authCredentials);
+    return { ...base, url: withAuth.url, headers: withAuth.headers };
+  }, [
+    method,
+    serverUrl,
+    path,
+    params,
+    values,
+    extraHeaders,
+    bodyText,
+    contentType,
+    authSchemes,
+    authCredentials,
+  ]);
 
   const snippet = useMemo(
     () => (composed ? generateSnippet(target, composed, secretPlaceholders) : null),

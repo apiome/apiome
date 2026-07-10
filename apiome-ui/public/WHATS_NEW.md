@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Browser Try It: scheme-aware auth helpers for bearer, apiKey, and basic credentials from the operation's `securitySchemes`; values stay in sessionStorage only, with a red proxy-transit warning on custom hosts (SIM-3.6, #4452)
 - Mock server: stateful CRUD memory via `X-Mock-Session` — POST then GET/DELETE stay coherent per session with 1h sliding TTL, isolation, and size caps; in-memory default plus Postgres-backed store for multi-replica (SIM-4.1, #4453)
 - Mock server: multi-protocol transports for AsyncAPI and gRPC — WebSocket/SSE event mocks emit schema-valid messages from the MFI canonical model; gRPC reflection mock answers unary and bounded streaming RPCs with synthesized protobuf payloads, with rate limiting and audit on both transports (SIM-4.4, #4456)
 - Browser Try It: copy the composed request as curl, JavaScript fetch, or Python httpx snippets that update live with the form; credentials are replaced with placeholders like `$API_KEY`, never emitted as raw secrets (SIM-3.5, #4451)
