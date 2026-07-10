@@ -2,7 +2,7 @@
  * Secret placeholder helpers for Try It code snippets — SIM-3.5 (#4451), SIM-3.6 (#4452).
  *
  * Snippet generators never emit raw credential values. This module infers likely secrets from
- * header and query names (and accepts explicit placeholders from future auth helpers) so generated
+ * header and query names (and accepts explicit placeholders from SIM-3.6 auth helpers) so generated
  * curl / fetch / httpx samples use tokens like `$API_KEY` instead.
  */
 

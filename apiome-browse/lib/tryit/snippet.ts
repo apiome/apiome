@@ -3,7 +3,7 @@
  *
  * Pure functions over the composed Try It request model. Produces runnable curl, JavaScript
  * fetch, and Python httpx samples that mirror what the Send button would dispatch, with credential
- * values replaced by placeholders (see `secrets.ts` and future SIM-3.6 auth helpers).
+ * values replaced by placeholders (see `secrets.ts` and SIM-3.6 auth helpers).
  */
 
 import {
