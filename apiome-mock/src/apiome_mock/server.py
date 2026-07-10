@@ -23,6 +23,7 @@ from apiome_mock.guard import (
 )
 from apiome_mock.handler import handle_mock_request
 from apiome_mock.logging_config import configure_logging
+from apiome_mock.session_store_factory import create_session_store
 from apiome_mock.settings import get_settings
 from apiome_mock.spec_cache import SpecCache, run_notify_listener
 
@@ -31,6 +32,7 @@ _log = structlog.get_logger(__name__)
 MOCK_DB_POOL_KEY = "db_pool"
 MOCK_SPEC_CACHE_KEY = "spec_cache"
 MOCK_CANONICAL_CACHE_KEY = "canonical_spec_cache"
+MOCK_SESSION_STORE_KEY = "session_store"
 
 
 @asynccontextmanager
@@ -73,14 +75,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
     )
     await grpc_runtime.start()
 
+    session_store = create_session_store(settings, pool)
+
     app.state.db_pool = pool
     app.state.spec_cache = cache
     app.state.canonical_spec_cache = canonical_cache
+    app.state.session_store = session_store
     app.state.grpc_runtime = grpc_runtime
     yield {
         MOCK_DB_POOL_KEY: pool,
         MOCK_SPEC_CACHE_KEY: cache,
         MOCK_CANONICAL_CACHE_KEY: canonical_cache,
+        MOCK_SESSION_STORE_KEY: session_store,
     }
 
     stop_event.set()
@@ -177,6 +183,7 @@ def create_app() -> FastAPI:
     ) -> Response:
         pool: AsyncConnectionPool = app.state.db_pool
         cache: SpecCache = app.state.spec_cache
+        session_store = getattr(app.state, "session_store", None)
         settings = get_settings()
         raw_api_key = request.headers.get("X-Api-Key") or request.headers.get("x-api-key")
         validated_key = await validate_api_key_for_tenant(
@@ -206,6 +213,7 @@ def create_app() -> FastAPI:
             pool=pool,
             cache=cache,
             api_key=validated_key,
+            session_store=session_store,
         )
         if limits is not None:
             record_mock_request(

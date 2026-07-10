@@ -30,8 +30,10 @@ from apiome_mock.response_resolver import (
 )
 from apiome_mock.routing import match_request
 from apiome_mock.schema_synthesizer import parse_mock_seed
+from apiome_mock.session_store import SessionStore
 from apiome_mock.spec_cache import SpecCache
 from apiome_mock.spec_loader import get_mock_access_status, load_compiled_spec
+from apiome_mock.stateful_handler import parse_mock_session_token, try_handle_stateful_crud
 
 
 def _instance_path(tenant: str, project: str, version: str, path: str) -> str:
@@ -164,6 +166,7 @@ async def handle_mock_request(
     pool: AsyncConnectionPool,
     cache: SpecCache,
     api_key: ValidatedApiKey | None = None,
+    session_store: SessionStore | None = None,
 ) -> Response:
     """Serve a mock response for ``/{tenant}/{project}/{version}/{path}``."""
     instance = _instance_path(tenant, project, version, path)
@@ -246,6 +249,25 @@ async def handle_mock_request(
             seed=seed,
             instance=instance,
         )
+
+    session_token = parse_mock_session_token(request)
+    if session_token is not None and session_store is not None:
+        stateful = await try_handle_stateful_crud(
+            request,
+            tenant=tenant,
+            project=project,
+            version=version,
+            relative_path=relative_path,
+            instance=instance,
+            operation=operation,
+            path_params=path_params,
+            operations=compiled.operations,
+            spec=compiled.spec,
+            store=session_store,
+            session_token=session_token,
+        )
+        if stateful is not None:
+            return stateful
 
     status, response_obj = select_default_success_status(operation.operation)
     resolved = resolve_response_body(

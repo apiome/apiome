@@ -87,6 +87,34 @@ class Settings(BaseSettings):
     )
     grpc_host: str = Field(default="127.0.0.1", min_length=1)
     grpc_port: int = Field(default=8776, ge=1, le=65535)
+    session_store_backend: Literal["memory", "postgres"] = Field(
+        default="memory",
+        description="Stateful CRUD store backend (X-Mock-Session); memory for single-node, postgres for multi-replica.",
+    )
+    session_ttl_seconds: float = Field(
+        default=3600.0,
+        gt=0,
+        le=86_400.0,
+        description="Sliding TTL for mock session state (seconds).",
+    )
+    session_max_resources: int = Field(
+        default=200,
+        ge=1,
+        le=100_000,
+        description="Maximum resources stored per X-Mock-Session.",
+    )
+    session_max_bytes: int = Field(
+        default=1_048_576,
+        ge=1024,
+        le=100_000_000,
+        description="Maximum JSON byte size stored per X-Mock-Session.",
+    )
+    session_max_sessions: int = Field(
+        default=10_000,
+        ge=1,
+        le=1_000_000,
+        description="Maximum concurrent mock sessions (process-wide for memory; global for postgres).",
+    )
 
     @model_validator(mode="after")
     def pool_size_bounds(self) -> Self:
