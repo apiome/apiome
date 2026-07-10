@@ -32,6 +32,7 @@ import {
   type TryItResult,
   type TryItSendErrorKind,
 } from '../../../../lib/tryit/send';
+import { CodeSnippetPanel } from './CodeSnippetPanel';
 import { ResponseViewer } from './ResponseViewer';
 
 const Editor = dynamic(() => import('@monaco-editor/react'), {
@@ -70,7 +71,8 @@ interface TryItPanelProps {
  * Rendered inline under an operation row: server picker (mock → spec `servers[]` → custom URL),
  * a parameter form generated from the spec, a Monaco body editor with JSON-schema validation,
  * the send pipeline (`lib/tryit/send`), and the SIM-3.3 response viewer (`ResponseViewer`).
- * Example prefill and schema synthesis are SIM-3.4 (#4450); auth helpers are SIM-3.6.
+ * Example prefill and schema synthesis are SIM-3.4 (#4450); copy-as-code snippets are SIM-3.5
+ * (#4451); auth helpers are SIM-3.6.
  */
 export function TryItPanel({
   spec,
@@ -591,6 +593,19 @@ export function TryItPanel({
           </div>
         </div>
       )}
+
+      <CodeSnippetPanel
+        method={model.method}
+        serverUrl={serverUrl}
+        path={model.path}
+        params={model.params}
+        values={values}
+        extraHeaders={extraHeaders}
+        bodyText={bodyText}
+        contentType={
+          hasBody && bodyText.trim() !== '' && bodyVariant ? bodyVariant.contentType : null
+        }
+      />
 
       {/* Send */}
       <div className="flex flex-wrap items-center gap-3">
