@@ -97,6 +97,7 @@ def record_mock_request(
     path: str,
     status_code: int,
     tenant_id: UUID | None = None,
+    api_key_id: UUID | None = None,
     settings: Settings | None = None,
 ) -> None:
     """Fire-and-forget usage rollup and sampled audit for a served mock request."""
@@ -122,6 +123,7 @@ def record_mock_request(
         path="/" + path.strip("/") if path.strip("/") else "/",
         status_code=status_code,
         sample_rate=cfg.audit_sample_rate,
+        api_key_id=api_key_id,
     )
 
 

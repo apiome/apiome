@@ -2708,6 +2708,7 @@ class Database:
             SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
                    v.change_log, v.visibility, v.published, v.published_at, v.published_immutable,
                    v.mock_enabled,
+                   v.mock_settings,
                    v.enabled, v.parent_version_id, v.merge_parent_version_id,
                    v.forked_from_revision_id, v.upstream_project_id,
                    v.revision_locked, v.metadata,
@@ -2779,6 +2780,7 @@ class Database:
             SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
                    v.change_log, v.visibility, v.published, v.published_at, v.published_immutable,
                    v.mock_enabled,
+                   v.mock_settings,
                    v.enabled, v.parent_version_id, v.merge_parent_version_id,
                    v.forked_from_revision_id, v.upstream_project_id,
                    v.revision_locked, v.metadata,
@@ -2810,6 +2812,7 @@ class Database:
             SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
                    v.change_log, v.visibility, v.published, v.published_at, v.published_immutable,
                    v.mock_enabled,
+                   v.mock_settings,
                    v.enabled, v.parent_version_id, v.merge_parent_version_id,
                    v.forked_from_revision_id, v.upstream_project_id,
                    v.revision_locked, v.metadata,
@@ -3376,6 +3379,10 @@ class Database:
                 description = %s,
                 change_log = %s,
                 published_immutable = %s,
+                mock_settings = CASE
+                    WHEN v.mock_enabled THEN '{}'::jsonb
+                    ELSE v.mock_settings
+                END,
                 updated_at = CURRENT_TIMESTAMP
             FROM apiome.projects p
             WHERE v.id = %s
@@ -3454,11 +3461,16 @@ class Database:
         user_id: str,
         *,
         enabled: bool,
+        published: bool,
     ) -> Optional[Dict[str, Any]]:
-        """Toggle mock_enabled on a version (creator or tenant admin only, #4422)."""
+        """Toggle mock_enabled on a version (creator or tenant admin only, #4422, #4446)."""
+        from app.mock_settings_util import mock_settings_for_toggle
+
+        mock_settings_json = mock_settings_for_toggle(enabled=enabled, published=published)
         query = """
             UPDATE apiome.versions v
             SET mock_enabled = %s,
+                mock_settings = %s::jsonb,
                 updated_at = CURRENT_TIMESTAMP
             FROM apiome.projects p
             WHERE v.id = %s
@@ -3480,7 +3492,7 @@ class Database:
             with conn.cursor() as cursor:
                 cursor.execute(
                     query,
-                    (enabled, version_record_id, tenant_id, user_id, user_id),
+                    (enabled, mock_settings_json, version_record_id, tenant_id, user_id, user_id),
                 )
                 updated = cursor.fetchone()
                 conn.commit()

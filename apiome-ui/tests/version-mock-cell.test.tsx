@@ -5,7 +5,7 @@
  * - Toggle round-trips `PUT /api/versions/{id}/mock` and reports the persisted server state.
  * - Copying the mock URL shows a confirmation toast.
  * - The 30-day usage sparkline renders from rollup data and handles the empty state.
- * - Unpublished versions show the toggle disabled with an explanation.
+ * - Draft versions can enable a private mock (key-gated at runtime).
  */
 
 import React from 'react';
@@ -49,11 +49,31 @@ afterEach(() => {
 });
 
 describe('VersionMockCell — toggle', () => {
-  it('disables the toggle with an explanation on unpublished versions', () => {
-    renderCell({ published: false });
-    expect(getToggle()).toBeDisabled();
-    expect(screen.getByText('Publish to mock')).toBeInTheDocument();
-    expect(global.fetch).not.toHaveBeenCalled();
+  it('allows enabling a private draft mock', async () => {
+    const onMockChanged = jest.fn();
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        version: { mockEnabled: true, mockPrivate: true, mockBaseUrl: MOCK_URL },
+      }),
+    });
+    renderCell({ published: false, onMockChanged });
+
+    fireEvent.click(getToggle());
+
+    await waitFor(() =>
+      expect(onMockChanged).toHaveBeenCalledWith({
+        mockEnabled: true,
+        mockBaseUrl: MOCK_URL,
+        mockPrivate: true,
+      })
+    );
+  });
+
+  it('shows the private badge for an enabled draft mock', () => {
+    renderCell({ published: false, mockEnabled: true, mockPrivate: true, mockBaseUrl: MOCK_URL });
+    expect(screen.getByText('Private')).toBeInTheDocument();
   });
 
   it('round-trips enabling through the proxy route and reports server state', async () => {
@@ -70,7 +90,11 @@ describe('VersionMockCell — toggle', () => {
     fireEvent.click(getToggle());
 
     await waitFor(() =>
-      expect(onMockChanged).toHaveBeenCalledWith({ mockEnabled: true, mockBaseUrl: MOCK_URL })
+      expect(onMockChanged).toHaveBeenCalledWith({
+        mockEnabled: true,
+        mockBaseUrl: MOCK_URL,
+        mockPrivate: false,
+      })
     );
     expect(global.fetch).toHaveBeenCalledWith('/api/versions/rev-1/mock', {
       method: 'PUT',
@@ -94,7 +118,7 @@ describe('VersionMockCell — toggle', () => {
     fireEvent.click(getToggle());
 
     await waitFor(() =>
-      expect(onMockChanged).toHaveBeenCalledWith({ mockEnabled: false, mockBaseUrl: null })
+      expect(onMockChanged).toHaveBeenCalledWith({ mockEnabled: false, mockBaseUrl: null, mockPrivate: false })
     );
     expect(global.fetch).toHaveBeenCalledWith(
       '/api/versions/rev-1/mock',

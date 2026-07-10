@@ -37,6 +37,7 @@ def _version_row(*, published: bool = True, mock_enabled: bool = False) -> dict:
         "published_at": "2026-01-01T00:00:00+00:00",
         "published_immutable": True,
         "mock_enabled": mock_enabled,
+        "mock_settings": {"mode": "private"} if mock_enabled and not published else {},
         "enabled": True,
         "parent_version_id": None,
         "merge_parent_version_id": None,
@@ -77,17 +78,23 @@ def test_enable_mock_on_published_version(client: TestClient) -> None:
     assert body["mockBaseUrl"].endswith(f"/{TENANT}/petstore/1.0.0")
 
 
-def test_enable_mock_rejects_unpublished(client: TestClient) -> None:
-    with patch(
-        "app.versions_routes.db.get_version_by_id",
-        return_value=_version_row(published=False),
-    ), patch("app.versions_routes.enforce_permission"):
+def test_enable_mock_on_draft_version(client: TestClient) -> None:
+    row = _version_row(published=False, mock_enabled=True)
+    with patch("app.versions_routes.db.get_version_by_id", return_value=_version_row(published=False)), patch(
+        "app.versions_routes.db.set_version_mock_enabled",
+        return_value=row,
+    ) as toggle_mock, patch("app.versions_routes.enforce_permission"):
         resp = client.put(
             f"/v1/versions/{TENANT}/{PROJECT_ID}/{VERSION_ID}/mock",
             json={"enabled": True},
         )
-    assert resp.status_code == 400
-    assert "published" in resp.json()["detail"].lower()
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["mockEnabled"] is True
+    assert body["mockPrivate"] is True
+    assert body["mockBaseUrl"].endswith(f"/{TENANT}/petstore/1.0.0")
+    toggle_mock.assert_called_once()
+    assert toggle_mock.call_args.kwargs["published"] is False
 
 
 def test_disable_mock_persists(client: TestClient) -> None:

@@ -10,12 +10,14 @@ from fastapi import Request
 from fastapi.responses import JSONResponse, Response
 from psycopg_pool import AsyncConnectionPool
 
+from apiome_mock.api_key import ValidatedApiKey
 from apiome_mock.problems import (
     bad_request,
     method_not_allowed,
     mock_disabled,
     not_acceptable,
     not_found,
+    unauthorized,
     undefined_response_status,
     unsupported_media_type,
 )
@@ -134,12 +136,19 @@ async def resolve_compiled_spec(
     tenant: str,
     project: str,
     version: str,
+    api_key: ValidatedApiKey | None = None,
 ) -> Any:
     """Return a compiled spec from cache or Postgres."""
     cached = cache.get(tenant, project, version)
     if cached is not None:
         return cached
-    compiled = await load_compiled_spec(pool, tenant=tenant, project=project, version=version)
+    compiled = await load_compiled_spec(
+        pool,
+        tenant=tenant,
+        project=project,
+        version=version,
+        api_key=api_key,
+    )
     if compiled is not None:
         cache.put(compiled)
     return compiled
@@ -154,12 +163,25 @@ async def handle_mock_request(
     path: str,
     pool: AsyncConnectionPool,
     cache: SpecCache,
+    api_key: ValidatedApiKey | None = None,
 ) -> Response:
     """Serve a mock response for ``/{tenant}/{project}/{version}/{path}``."""
     instance = _instance_path(tenant, project, version, path)
     relative_path = "/" + path.strip("/") if path.strip("/") else "/"
+    raw_api_key = request.headers.get("X-Api-Key") or request.headers.get("x-api-key")
+    if raw_api_key and api_key is None:
+        return unauthorized(
+            "Invalid or expired API key.",
+            instance=instance,
+        )
 
-    access = await get_mock_access_status(pool, tenant=tenant, project=project, version=version)
+    access = await get_mock_access_status(
+        pool,
+        tenant=tenant,
+        project=project,
+        version=version,
+        api_key=api_key,
+    )
     if access == "disabled":
         return mock_disabled(
             f"Mock is disabled for {tenant}/{project}/{version}.",
@@ -171,7 +193,14 @@ async def handle_mock_request(
             instance=instance,
         )
 
-    compiled = await resolve_compiled_spec(pool, cache, tenant=tenant, project=project, version=version)
+    compiled = await resolve_compiled_spec(
+        pool,
+        cache,
+        tenant=tenant,
+        project=project,
+        version=version,
+        api_key=api_key,
+    )
     if compiled is None:
         return not_found(
             f"No published spec for {tenant}/{project}/{version}.",

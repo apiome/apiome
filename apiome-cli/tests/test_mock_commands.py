@@ -247,20 +247,25 @@ def test_mock_enable_json_output(httpx_mock: object) -> None:
     assert payload["mockBaseUrl"] == _MOCK_BASE_URL
 
 
-def test_mock_enable_draft_version_is_readable_usage_error(httpx_mock: object) -> None:
-    """The SIM-2.1 draft rejection surfaces verbatim with a non-zero exit."""
+def test_mock_enable_draft_version_succeeds(httpx_mock: object) -> None:
+    """Draft versions can enable a private mock (#4446, SIM-2.5)."""
     _mock_scope(httpx_mock)
     httpx_mock.add_response(
         method="PUT",
         url=_MOCK_TOGGLE_URL,
         match_json={"enabled": True},
-        status_code=400,
-        json={"code": 400, "message": "Mock can only be enabled on a published version."},
+        json={
+            **_RECORD_ENABLED,
+            "mockPrivate": True,
+            "published": False,
+        },
     )
 
-    result = runner.invoke(app, ["mock", "enable", "payments-api", "1.0.0"])
-    assert result.exit_code == EXIT_USAGE
-    assert "Mock can only be enabled on a published version." in result.stderr
+    result = runner.invoke(app, ["--json", "mock", "enable", "payments-api", "1.0.0"])
+    assert result.exit_code == EXIT_SUCCESS
+    payload = json.loads(result.stdout)
+    assert payload["mockEnabled"] is True
+    assert payload.get("mockPrivate") is True
 
 
 def test_mock_enable_insufficient_role_is_usage_error(httpx_mock: object) -> None:

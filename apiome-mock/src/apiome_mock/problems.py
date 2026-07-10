@@ -33,6 +33,16 @@ def problem_response(
     return JSONResponse(status_code=status, content=body, media_type=PROBLEM_CONTENT_TYPE)
 
 
+def unauthorized(detail: str, *, instance: str | None = None) -> JSONResponse:
+    return problem_response(
+        status=401,
+        title="Unauthorized",
+        detail=detail,
+        problem_type="unauthorized",
+        instance=instance,
+    )
+
+
 def not_found(detail: str, *, instance: str | None = None) -> JSONResponse:
     return problem_response(
         status=404,

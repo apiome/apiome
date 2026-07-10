@@ -5,7 +5,7 @@
  *
  * One compact control block shared by Dashboard → Versions and Dashboard → Published:
  * - Switch toggling the hosted mock via `PUT /api/versions/{id}/mock` (SIM-2.1, #4422);
- *   disabled with an explanatory tooltip on unpublished versions.
+ *   draft versions enable a private mock gated by API key at runtime (#4446).
  * - Stable mock base URL with a copy-to-clipboard button (confirmation toast).
  * - 30-day usage sparkline fed by the SIM-1.5 (#4420) rollups; renders the shared
  *   chart empty state when no usage was recorded.
@@ -23,6 +23,8 @@ export interface VersionMockChange {
   mockEnabled: boolean;
   /** Stable mock base URL when enabled, `null` when disabled. */
   mockBaseUrl: string | null;
+  /** When true, the mock is key-gated for an unpublished draft. */
+  mockPrivate?: boolean;
 }
 
 export interface VersionMockCellProps {
@@ -32,10 +34,12 @@ export interface VersionMockCellProps {
   projectId: string;
   /** Human version label (e.g. `1.2.0`), used in toast copy. */
   versionLabel: string;
-  /** Whether the version is published — mocks are published-only (SIM-2.1). */
+  /** Whether the version is published — public mocks require publish; drafts can use private mock. */
   published: boolean;
   /** Current persisted toggle state. */
   mockEnabled: boolean;
+  /** When true, the mock is key-gated for an unpublished draft (#4446). */
+  mockPrivate?: boolean;
   /** Stable mock base URL when enabled; `null`/absent otherwise. */
   mockBaseUrl: string | null;
   /**
@@ -60,6 +64,7 @@ export function VersionMockCell({
   published,
   mockEnabled,
   mockBaseUrl,
+  mockPrivate = false,
   usageSeries,
   onMockChanged,
 }: VersionMockCellProps) {
@@ -80,10 +85,15 @@ export function VersionMockCell({
         toast.error(payload?.error || `Failed to ${enabled ? 'enable' : 'disable'} mock for v${versionLabel}.`);
         return;
       }
-      const version = (payload.version ?? {}) as { mockEnabled?: boolean; mockBaseUrl?: string | null };
+      const version = (payload.version ?? {}) as {
+        mockEnabled?: boolean;
+        mockBaseUrl?: string | null;
+        mockPrivate?: boolean;
+      };
       onMockChanged({
         mockEnabled: Boolean(version.mockEnabled ?? enabled),
         mockBaseUrl: version.mockBaseUrl ?? null,
+        mockPrivate: Boolean(version.mockPrivate),
       });
       toast.success(
         enabled
@@ -120,7 +130,7 @@ export function VersionMockCell({
               <span className="inline-flex">
                 <Switch
                   checked={mockEnabled}
-                  disabled={!published || saving}
+                  disabled={saving}
                   onCheckedChange={(checked) => void handleToggle(checked)}
                   aria-label={`Mock for version ${versionLabel}`}
                 />
@@ -131,12 +141,27 @@ export function VersionMockCell({
                 ? mockEnabled
                   ? 'Disable the hosted mock for this version'
                   : 'Serve spec-accurate mock responses for this version'
-                : 'Publish this version to enable its mock'}
+                : mockEnabled
+                  ? 'Disable the private draft mock (requires API key at runtime)'
+                  : 'Enable a private draft mock for parallel development (requires API key)'}
             </TooltipContent>
           </Tooltip>
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {published ? (mockEnabled ? 'Mock on' : 'Mock off') : 'Publish to mock'}
+            {mockEnabled
+              ? mockPrivate
+                ? 'Private mock on'
+                : published
+                  ? 'Mock on'
+                  : 'Mock on'
+              : published
+                ? 'Mock off'
+                : 'Draft mock off'}
           </span>
+          {mockEnabled && mockPrivate && (
+            <span className="text-[10px] uppercase tracking-wide font-semibold text-violet-600 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800 px-1.5 py-0.5 rounded">
+              Private
+            </span>
+          )}
         </div>
 
         {mockEnabled && mockBaseUrl && (
