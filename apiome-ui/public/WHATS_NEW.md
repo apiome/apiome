@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Mock server: multi-protocol transports for AsyncAPI and gRPC — WebSocket/SSE event mocks emit schema-valid messages from the MFI canonical model; gRPC reflection mock answers unary and bounded streaming RPCs with synthesized protobuf payloads, with rate limiting and audit on both transports (SIM-4.4, #4456)
 - Browser Try It: copy the composed request as curl, JavaScript fetch, or Python httpx snippets that update live with the form; credentials are replaced with placeholders like `$API_KEY`, never emitted as raw secrets (SIM-3.5, #4451)
 - Browser Try It: example selector and "Generate sample" prefill request bodies from named OpenAPI examples or schema-driven synthesis via `POST /api/try-it/sample`, with source indication and content-type aware formatting (SIM-3.4, #4450)
 - Mock server: private draft-version mocks — enable `mockEnabled` on unpublished drafts (`mockPrivate` + same base URL); `apiome-mock` serves the in-design spec only when the caller presents a valid tenant `X-Api-Key`, while anonymous traffic still gets 404/401 without revealing the draft (SIM-2.5, #4446)

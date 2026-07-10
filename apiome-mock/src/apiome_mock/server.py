@@ -7,12 +7,15 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
 import structlog
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import JSONResponse, Response
 from psycopg_pool import AsyncConnectionPool
 
 from apiome_mock.api_key import validate_api_key_for_tenant
+from apiome_mock.canonical_spec_cache import CanonicalSpecCache
 from apiome_mock.database_pool import create_async_pool, ping_pool
+from apiome_mock.event_transport import handle_event_sse, handle_event_websocket
+from apiome_mock.grpc_transport import GrpcMockRuntime
 from apiome_mock.guard import (
     enforce_mock_limits,
     record_mock_request,
@@ -27,6 +30,7 @@ _log = structlog.get_logger(__name__)
 
 MOCK_DB_POOL_KEY = "db_pool"
 MOCK_SPEC_CACHE_KEY = "spec_cache"
+MOCK_CANONICAL_CACHE_KEY = "canonical_spec_cache"
 
 
 @asynccontextmanager
@@ -38,8 +42,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
         max_entries=settings.spec_cache_max_entries,
         ttl_seconds=settings.spec_cache_ttl_seconds,
     )
+    canonical_cache = CanonicalSpecCache(
+        max_entries=settings.spec_cache_max_entries,
+        ttl_seconds=settings.spec_cache_ttl_seconds,
+    )
     stop_event = asyncio.Event()
     listener_task: asyncio.Task[None] | None = None
+    grpc_runtime = GrpcMockRuntime(pool=pool, cache=canonical_cache, settings=settings)
 
     _log.info("database_pool_opening")
     await pool.open()
@@ -49,20 +58,33 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
     except Exception as exc:
         _log.warning("database_pool_probe_failed_at_startup", error=str(exc))
 
+    def _invalidate_both(tenant: str, project: str, version: str) -> None:
+        cache.invalidate(tenant, project, version)
+        canonical_cache.invalidate(tenant, project, version)
+
     listener_task = asyncio.create_task(
         run_notify_listener(
             str(settings.database_url),
             settings.spec_notify_channel,
             cache,
             stop_event=stop_event,
+            on_invalidate=_invalidate_both,
         )
     )
+    await grpc_runtime.start()
 
     app.state.db_pool = pool
     app.state.spec_cache = cache
-    yield {MOCK_DB_POOL_KEY: pool, MOCK_SPEC_CACHE_KEY: cache}
+    app.state.canonical_spec_cache = canonical_cache
+    app.state.grpc_runtime = grpc_runtime
+    yield {
+        MOCK_DB_POOL_KEY: pool,
+        MOCK_SPEC_CACHE_KEY: cache,
+        MOCK_CANONICAL_CACHE_KEY: canonical_cache,
+    }
 
     stop_event.set()
+    await grpc_runtime.stop()
     if listener_task is not None:
         listener_task.cancel()
         try:
@@ -79,6 +101,64 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health() -> JSONResponse:
         return JSONResponse({"status": "ok"})
+
+    @app.websocket("/{tenant}/{project}/{version}/events/ws/{channel_key:path}")
+    async def event_websocket(
+        websocket: WebSocket,
+        tenant: str,
+        project: str,
+        version: str,
+        channel_key: str,
+    ) -> None:
+        pool: AsyncConnectionPool = app.state.db_pool
+        cache: CanonicalSpecCache = app.state.canonical_spec_cache
+        settings = get_settings()
+        raw_api_key = websocket.headers.get("X-Api-Key") or websocket.headers.get("x-api-key")
+        validated_key = await validate_api_key_for_tenant(
+            pool,
+            api_key=raw_api_key,
+            tenant_slug=tenant,
+        )
+        await handle_event_websocket(
+            websocket,
+            tenant=tenant,
+            project=project,
+            version=version,
+            channel_key=channel_key,
+            pool=pool,
+            cache=cache,
+            api_key=validated_key,
+            settings=settings,
+        )
+
+    @app.get("/{tenant}/{project}/{version}/events/sse/{channel_key:path}")
+    async def event_sse(
+        request: Request,
+        tenant: str,
+        project: str,
+        version: str,
+        channel_key: str,
+    ) -> Response:
+        pool: AsyncConnectionPool = app.state.db_pool
+        cache: CanonicalSpecCache = app.state.canonical_spec_cache
+        settings = get_settings()
+        raw_api_key = request.headers.get("X-Api-Key") or request.headers.get("x-api-key")
+        validated_key = await validate_api_key_for_tenant(
+            pool,
+            api_key=raw_api_key,
+            tenant_slug=tenant,
+        )
+        return await handle_event_sse(
+            request,
+            tenant=tenant,
+            project=project,
+            version=version,
+            channel_key=channel_key,
+            pool=pool,
+            cache=cache,
+            api_key=validated_key,
+            settings=settings,
+        )
 
     @app.api_route(
         "/{tenant}/{project}/{version}",

@@ -1,6 +1,6 @@
 [project]
 name = "apiome-mock"
-version = "0.1.6"
+version = "0.1.7"
 description = "Objectified mock server runtime for Apiome (FastAPI)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -19,7 +19,9 @@ dependencies = [
     "apiome-mcp>=0.2.0",
     "apiome-rest>=1.0.53",
     "bcrypt==4.2.0",
-    "fastapi>=0.115.0",
+    "grpcio>=1.66.0",
+    "grpcio-reflection>=1.66.0",
+    "protobuf>=5.0.0",
     "jsonschema>=4.21.0",
     "psycopg[binary,pool]>=3.2.0",
     "pydantic>=2.9.2",
@@ -46,6 +48,8 @@ dev = [
     "httpx>=0.28.1",
     "pyyaml>=6.0.2",
     "types-jsonschema>=4.21.0",
+    "types-protobuf>=5.0.0",
+    "types-grpcio-reflection>=1.0.0",
 ]
 
 [tool.ruff]

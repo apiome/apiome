@@ -9,6 +9,14 @@ from psycopg_pool import AsyncConnectionPool
 
 
 @pytest.fixture(autouse=True)
+def disable_grpc_in_tests(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APIOME_MOCK_GRPC_ENABLED", "false")
+    from apiome_mock.settings import get_settings
+
+    get_settings.cache_clear()
+
+
+@pytest.fixture(autouse=True)
 def reset_mock_logging_state() -> None:
     from apiome_mock.logging_config import reset_logging_state_for_tests
 
