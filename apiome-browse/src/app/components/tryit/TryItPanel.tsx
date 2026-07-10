@@ -15,6 +15,16 @@ import {
   type ExtraHeader,
   type ParamSpec,
 } from '../../../../lib/tryit/operation';
+import {
+  bodyVariantHasPrefillSupport,
+  buildInitialParamValues,
+  collectBodyExamples,
+  describeBodySource,
+  formatBodyForEditor,
+  type BodySource,
+  type NamedBodyExample,
+} from '../../../../lib/tryit/examples';
+import { fetchGeneratedBodySample, SampleSynthesisError } from '../../../../lib/tryit/sample';
 import { describeSendFailure } from '../../../../lib/tryit/response';
 import {
   sendTryIt,
@@ -60,7 +70,7 @@ interface TryItPanelProps {
  * Rendered inline under an operation row: server picker (mock → spec `servers[]` → custom URL),
  * a parameter form generated from the spec, a Monaco body editor with JSON-schema validation,
  * the send pipeline (`lib/tryit/send`), and the SIM-3.3 response viewer (`ResponseViewer`).
- * Example prefill is SIM-3.4; auth helpers are SIM-3.6.
+ * Example prefill and schema synthesis are SIM-3.4 (#4450); auth helpers are SIM-3.6.
  */
 export function TryItPanel({
   spec,
@@ -80,16 +90,18 @@ export function TryItPanel({
   );
   const [customUrl, setCustomUrl] = useState('');
   const [customConfirmed, setCustomConfirmed] = useState(false);
-  const [values, setValues] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
-    for (const param of model?.params ?? []) {
-      if (param.schema.default != null) initial[paramKey(param)] = String(param.schema.default);
-    }
-    return initial;
-  });
+  const [values, setValues] = useState<Record<string, string>>(() =>
+    buildInitialParamValues(model?.params ?? [])
+  );
   const [extraHeaders, setExtraHeaders] = useState<ExtraHeader[]>([]);
   const [contentTypeIdx, setContentTypeIdx] = useState(0);
   const [bodyText, setBodyText] = useState('');
+  const [bodySource, setBodySource] = useState<BodySource>({ kind: 'empty' });
+  const [selectedExampleName, setSelectedExampleName] = useState<string | null>(null);
+  const [generateSeed, setGenerateSeed] = useState(1);
+  const [generatingSample, setGeneratingSample] = useState(false);
+  const [sampleError, setSampleError] = useState<string | null>(null);
+  const skipManualBodySourceRef = useRef(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -119,6 +131,94 @@ export function TryItPanel({
     ? model.bodyVariants[Math.min(contentTypeIdx, model.bodyVariants.length - 1)]
     : undefined;
   const bodyIsJson = bodyVariant != null && isJsonContentType(bodyVariant.contentType);
+  const bodyExamples = useMemo(
+    () => (bodyVariant ? collectBodyExamples(bodyVariant) : []),
+    [bodyVariant]
+  );
+  const canGenerateSample = bodyVariant != null && bodyVariant.schema != null;
+  const showPrefillControls = hasBody && bodyVariant != null && bodyVariantHasPrefillSupport(bodyVariant);
+  const bodySourceLabel = describeBodySource(bodySource);
+
+  const applyBodyFromExample = useCallback(
+    (example: NamedBodyExample) => {
+      if (!bodyVariant) return;
+      skipManualBodySourceRef.current = true;
+      setBodyText(formatBodyForEditor(example.value, bodyIsJson));
+      setBodySource({ kind: 'example', name: example.name });
+      setSelectedExampleName(example.name);
+      setSampleError(null);
+    },
+    [bodyVariant, bodyIsJson]
+  );
+
+  const applyBodyFromGenerated = useCallback(
+    (value: unknown, seed: number) => {
+      if (!bodyVariant) return;
+      skipManualBodySourceRef.current = true;
+      setBodyText(formatBodyForEditor(value, bodyIsJson));
+      setBodySource({ kind: 'generated', seed });
+      setSelectedExampleName(null);
+      setSampleError(null);
+    },
+    [bodyVariant, bodyIsJson]
+  );
+
+  // Prefill from the first named example when the body variant changes (content-type switch).
+  useEffect(() => {
+    if (!bodyVariant) {
+      setBodyText('');
+      setBodySource({ kind: 'empty' });
+      setSelectedExampleName(null);
+      return;
+    }
+    const examples = collectBodyExamples(bodyVariant);
+    if (examples.length > 0) {
+      applyBodyFromExample(examples[0]);
+    } else {
+      skipManualBodySourceRef.current = true;
+      setBodyText('');
+      setBodySource({ kind: 'empty' });
+      setSelectedExampleName(null);
+    }
+    setGenerateSeed(1);
+    setSampleError(null);
+  }, [bodyVariant, applyBodyFromExample]);
+
+  // Rebuild param defaults when the operation model changes.
+  useEffect(() => {
+    if (!model) return;
+    setValues(buildInitialParamValues(model.params));
+  }, [model]);
+
+  const onExampleSelect = useCallback(
+    (name: string) => {
+      const example = bodyExamples.find((entry) => entry.name === name);
+      if (!example) return;
+      applyBodyFromExample(example);
+    },
+    [bodyExamples, applyBodyFromExample]
+  );
+
+  const onGenerateSample = useCallback(async () => {
+    if (!bodyVariant?.schema) return;
+    setGeneratingSample(true);
+    setSampleError(null);
+    try {
+      const { value, seed } = await fetchGeneratedBodySample({
+        schema: bodyVariant.schema,
+        spec,
+        seed: generateSeed,
+      });
+      applyBodyFromGenerated(value, seed);
+      setGenerateSeed((prev) => prev + 1);
+    } catch (err) {
+      setSampleError(
+        err instanceof SampleSynthesisError ? err.message : 'Could not generate a sample body.'
+      );
+    } finally {
+      setGeneratingSample(false);
+    }
+  }, [bodyVariant, spec, generateSeed, applyBodyFromGenerated]);
   const monacoSchema = useMemo(
     () => (bodyVariant && bodyIsJson ? buildMonacoBodySchema(spec, bodyVariant.schema) : null),
     [spec, bodyVariant, bodyIsJson]
@@ -387,33 +487,72 @@ export function TryItPanel({
       {/* Body editor */}
       {hasBody && (
         <div>
-          <div className="mb-1 flex items-center justify-between">
-            <label
-              htmlFor={`${idBase}-body`}
-              className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
-            >
-              Request body{model.bodyRequired ? ' (required)' : ''}
-            </label>
-            {model.bodyVariants.length > 1 && (
-              <select
-                value={String(contentTypeIdx)}
-                onChange={(e) => setContentTypeIdx(Number(e.target.value))}
-                aria-label="Request body content type"
-                className="rounded-md border border-zinc-200 bg-white px-2 py-1 font-mono text-[11px] text-zinc-700 shadow-xs dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <label
+                htmlFor={`${idBase}-body`}
+                className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
               >
-                {model.bodyVariants.map((variant, i) => (
-                  <option key={variant.contentType} value={String(i)}>
-                    {variant.contentType}
-                  </option>
-                ))}
-              </select>
-            )}
-            {model.bodyVariants.length === 1 && (
-              <span className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
-                {model.bodyVariants[0].contentType}
-              </span>
-            )}
+                Request body{model.bodyRequired ? ' (required)' : ''}
+              </label>
+              {bodySourceLabel && (
+                <span className="rounded-md bg-zinc-200/80 px-2 py-0.5 font-mono text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                  {bodySourceLabel}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {showPrefillControls && bodyExamples.length > 0 && (
+                <select
+                  value={selectedExampleName ?? ''}
+                  onChange={(e) => onExampleSelect(e.target.value)}
+                  aria-label="Request body example"
+                  className="rounded-md border border-zinc-200 bg-white px-2 py-1 font-mono text-[11px] text-zinc-700 shadow-xs dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+                >
+                  {bodyExamples.map((example) => (
+                    <option key={example.name} value={example.name}>
+                      {example.name === 'example' ? 'Example' : example.name}
+                      {example.summary ? ` — ${example.summary}` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {showPrefillControls && canGenerateSample && (
+                <button
+                  type="button"
+                  onClick={onGenerateSample}
+                  disabled={generatingSample}
+                  className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                >
+                  {generatingSample ? 'Generating…' : 'Generate sample'}
+                </button>
+              )}
+              {model.bodyVariants.length > 1 && (
+                <select
+                  value={String(contentTypeIdx)}
+                  onChange={(e) => setContentTypeIdx(Number(e.target.value))}
+                  aria-label="Request body content type"
+                  className="rounded-md border border-zinc-200 bg-white px-2 py-1 font-mono text-[11px] text-zinc-700 shadow-xs dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+                >
+                  {model.bodyVariants.map((variant, i) => (
+                    <option key={variant.contentType} value={String(i)}>
+                      {variant.contentType}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {model.bodyVariants.length === 1 && (
+                <span className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
+                  {model.bodyVariants[0].contentType}
+                </span>
+              )}
+            </div>
           </div>
+          {sampleError && (
+            <p role="alert" className="mb-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+              {sampleError}
+            </p>
+          )}
           <div
             id={`${idBase}-body`}
             className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800"
@@ -423,7 +562,15 @@ export function TryItPanel({
               language={bodyIsJson ? 'json' : 'plaintext'}
               path={monacoPath}
               value={bodyText}
-              onChange={(next) => setBodyText(next ?? '')}
+              onChange={(next) => {
+                setBodyText(next ?? '');
+                if (skipManualBodySourceRef.current) {
+                  skipManualBodySourceRef.current = false;
+                  return;
+                }
+                const trimmed = (next ?? '').trim();
+                setBodySource(trimmed === '' ? { kind: 'empty' } : { kind: 'manual' });
+              }}
               beforeMount={(monaco) => {
                 monacoRef.current = monaco;
                 registerSchema(monaco);

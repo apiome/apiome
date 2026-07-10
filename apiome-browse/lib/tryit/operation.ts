@@ -19,6 +19,12 @@ function isObject(value: unknown): value is Record<string, unknown> {
  * browser controls cookies and the SIM-3.2 proxy strips them for credential hygiene. */
 export type ParamLocation = 'path' | 'query' | 'header';
 
+/** One named OpenAPI example entry on a parameter or media type. */
+export interface OpenApiExampleEntry {
+  summary?: string;
+  value: unknown;
+}
+
 /** The subset of a JSON Schema the parameter form renders controls from. */
 export interface ParamSchema {
   /** Primitive type (`string`, `integer`, `number`, `boolean`, ...); undefined when unspecified. */
@@ -29,6 +35,10 @@ export interface ParamSchema {
   enum?: (string | number | boolean)[];
   /** Declared default value, prefilled into the control. */
   default?: unknown;
+  /** Single schema-level example, used for prefill after `default`. */
+  example?: unknown;
+  /** Named schema-level examples map. */
+  examples?: Record<string, OpenApiExampleEntry>;
 }
 
 /** One path/query/header parameter of an operation, ready for form rendering. */
@@ -46,6 +56,10 @@ export interface BodyVariant {
   contentType: string;
   /** The (top-level-resolved) body schema, or null when the spec declares none. */
   schema: Record<string, unknown> | null;
+  /** Single media-level example when the spec declares `example`. */
+  example?: unknown;
+  /** Named media-level examples when the spec declares `examples`. */
+  examples?: Record<string, OpenApiExampleEntry>;
 }
 
 /** Everything the Try It panel needs to render and send one operation. */
@@ -105,6 +119,24 @@ export function resolveRef(root: unknown, node: unknown): Record<string, unknown
   return null;
 }
 
+/** Parse an OpenAPI `examples` map into normalized entries. */
+function parseExamplesMap(node: unknown): Record<string, OpenApiExampleEntry> | undefined {
+  if (!isObject(node)) return undefined;
+  const out: Record<string, OpenApiExampleEntry> = {};
+  for (const [name, entry] of Object.entries(node)) {
+    if (entry != null && typeof entry === 'object' && !Array.isArray(entry) && 'value' in entry) {
+      const wrapped = entry as { summary?: unknown; value: unknown };
+      out[name] = {
+        summary: typeof wrapped.summary === 'string' ? wrapped.summary : undefined,
+        value: wrapped.value,
+      };
+    } else {
+      out[name] = { value: entry };
+    }
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
 /** Narrow an arbitrary schema node to the subset the form renders ({@link ParamSchema}). */
 function toParamSchema(root: unknown, schemaNode: unknown): ParamSchema {
   const schema = resolveRef(root, schemaNode);
@@ -120,6 +152,9 @@ function toParamSchema(root: unknown, schemaNode: unknown): ParamSchema {
     if (values.length > 0) out.enum = values;
   }
   if ('default' in schema) out.default = schema.default;
+  if ('example' in schema) out.example = schema.example;
+  const schemaExamples = parseExamplesMap(schema.examples);
+  if (schemaExamples) out.examples = schemaExamples;
   return out;
 }
 
@@ -132,13 +167,17 @@ function toParamSpec(root: unknown, paramNode: unknown): ParamSpec | null {
   if (!name || (location !== 'path' && location !== 'query' && location !== 'header')) {
     return null;
   }
+  const schema = toParamSchema(root, param.schema);
+  if ('example' in param) schema.example = param.example;
+  const paramExamples = parseExamplesMap(param.examples);
+  if (paramExamples) schema.examples = paramExamples;
   return {
     name,
     location,
     // Path parameters are always required per the OpenAPI spec, whatever the document says.
     required: location === 'path' ? true : param.required === true,
     description: typeof param.description === 'string' ? param.description : undefined,
-    schema: toParamSchema(root, param.schema),
+    schema,
   };
 }
 
@@ -188,7 +227,13 @@ export function extractOperationModel(
     for (const [contentType, mediaNode] of Object.entries(requestBody.content)) {
       const media = resolveRef(spec, mediaNode);
       const schema = media ? resolveRef(spec, media.schema) : null;
-      bodyVariants.push({ contentType, schema });
+      const variant: BodyVariant = { contentType, schema };
+      if (media) {
+        if ('example' in media) variant.example = media.example;
+        const mediaExamples = parseExamplesMap(media.examples);
+        if (mediaExamples) variant.examples = mediaExamples;
+      }
+      bodyVariants.push(variant);
     }
   }
 
