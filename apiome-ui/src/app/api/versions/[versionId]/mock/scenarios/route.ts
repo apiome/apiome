@@ -1,0 +1,196 @@
+/**
+ * API Proxy for Version Mock Scenario Overrides (#4454, SIM-4.2)
+ *
+ * Proxies the Control Panel scenario editor to the REST API with JWT authentication:
+ * - `GET /v1/versions/{tenantSlug}/{projectId}/{versionId}/mock/scenarios`
+ * - `PUT /v1/versions/{tenantSlug}/{projectId}/{versionId}/mock/scenarios`
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import jwt from 'jsonwebtoken';
+import { authOptions } from '../../../../auth/[...nextauth]/route';
+import { getTenantById } from '@lib/db/helper';
+
+const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
+
+interface SessionUser {
+  user_id?: string;
+  email?: string | null;
+  name?: string | null;
+  current_tenant_id?: string;
+}
+
+/**
+ * Helper to create authorization headers for REST API calls
+ */
+function createAuthHeaders(user: SessionUser): Record<string, string> {
+  if (!user.user_id) {
+    return { 'Content-Type': 'application/json' };
+  }
+
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) {
+    return { 'Content-Type': 'application/json' };
+  }
+
+  const encodedToken = jwt.sign(
+    {
+      user_id: user.user_id,
+      sub: user.user_id,
+      email: user.email,
+      name: user.name,
+      current_tenant_id: user.current_tenant_id,
+    },
+    secret,
+    { algorithm: 'HS256', expiresIn: '1h' }
+  );
+
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${encodedToken}`,
+  };
+}
+
+/**
+ * Resolve the session + tenant slug shared by both handlers.
+ * Returns either the resolved context or a ready-to-return error response.
+ */
+async function resolveContext(): Promise<
+  | { ok: true; tenantSlug: string; headers: Record<string, string> }
+  | { ok: false; response: NextResponse }
+> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return {
+      ok: false,
+      response: NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 }),
+    };
+  }
+
+  const user = session.user as { current_tenant_id?: string; user_id?: string };
+  const tenantId = user.current_tenant_id;
+  if (!tenantId) {
+    return {
+      ok: false,
+      response: NextResponse.json({ success: false, error: 'No tenant selected' }, { status: 400 }),
+    };
+  }
+
+  const tenant = await getTenantById(tenantId);
+  if (!tenant || !tenant.slug) {
+    return {
+      ok: false,
+      response: NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 }),
+    };
+  }
+
+  const headers = createAuthHeaders({
+    user_id: user.user_id,
+    email: session.user.email,
+    name: session.user.name,
+    current_tenant_id: tenantId,
+  });
+
+  return { ok: true, tenantSlug: tenant.slug, headers };
+}
+
+/**
+ * GET /api/versions/[versionId]/mock/scenarios?projectId=...
+ *
+ * Returns `{ success, scenarios }` with the version's persisted scenario definitions.
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ versionId: string }> }
+) {
+  try {
+    const { versionId } = await params;
+    const projectId = request.nextUrl.searchParams.get('projectId');
+    if (!projectId) {
+      return NextResponse.json(
+        { success: false, error: 'Project ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const context = await resolveContext();
+    if (!context.ok) return context.response;
+
+    const response = await fetch(
+      `${REST_API_BASE_URL}/versions/${context.tenantSlug}/${projectId}/${versionId}/mock/scenarios`,
+      { method: 'GET', headers: context.headers }
+    );
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      const error =
+        (data && typeof data.detail === 'string' && data.detail) || 'Failed to load mock scenarios';
+      return NextResponse.json({ success: false, error }, { status: response.status });
+    }
+
+    return NextResponse.json({ success: true, scenarios: data?.scenarios ?? {} });
+  } catch (error) {
+    console.error('Error loading mock scenarios:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
+  }
+}
+
+/**
+ * PUT /api/versions/[versionId]/mock/scenarios
+ *
+ * Replace the version's scenario definitions. Body: `{ projectId, scenarios }`.
+ * Returns `{ success, scenarios }`, or `{ success: false, error, errors }` where
+ * `errors` lists the per-response validation failures reported by REST (HTTP 422).
+ */
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ versionId: string }> }
+) {
+  try {
+    const { versionId } = await params;
+    const body = await request.json();
+    const { projectId, scenarios } = body as { projectId?: string; scenarios?: unknown };
+
+    if (!projectId) {
+      return NextResponse.json(
+        { success: false, error: 'Project ID is required' },
+        { status: 400 }
+      );
+    }
+    if (!scenarios || typeof scenarios !== 'object' || Array.isArray(scenarios)) {
+      return NextResponse.json(
+        { success: false, error: '`scenarios` must be an object' },
+        { status: 400 }
+      );
+    }
+
+    const context = await resolveContext();
+    if (!context.ok) return context.response;
+
+    const response = await fetch(
+      `${REST_API_BASE_URL}/versions/${context.tenantSlug}/${projectId}/${versionId}/mock/scenarios`,
+      { method: 'PUT', headers: context.headers, body: JSON.stringify({ scenarios }) }
+    );
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      const detail = data?.detail;
+      // REST reports scenario validation failures as {message, errors} in detail.
+      if (detail && typeof detail === 'object' && Array.isArray(detail.errors)) {
+        return NextResponse.json(
+          { success: false, error: detail.message ?? 'Scenario validation failed', errors: detail.errors },
+          { status: response.status }
+        );
+      }
+      const error =
+        (typeof detail === 'string' && detail) || 'Failed to save mock scenarios';
+      return NextResponse.json({ success: false, error }, { status: response.status });
+    }
+
+    return NextResponse.json({ success: true, scenarios: data?.scenarios ?? {} });
+  } catch (error) {
+    console.error('Error saving mock scenarios:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
+  }
+}

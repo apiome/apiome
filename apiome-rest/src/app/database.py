@@ -3380,7 +3380,9 @@ class Database:
                 change_log = %s,
                 published_immutable = %s,
                 mock_settings = CASE
-                    WHEN v.mock_enabled THEN '{}'::jsonb
+                    -- Publishing clears the private-draft 'mode' gate but preserves
+                    -- every other mock knob (scenario overrides #4454 survive republish).
+                    WHEN v.mock_enabled THEN COALESCE(v.mock_settings, '{}'::jsonb) - 'mode'
                     ELSE v.mock_settings
                 END,
                 updated_at = CURRENT_TIMESTAMP
@@ -3470,7 +3472,9 @@ class Database:
         query = """
             UPDATE apiome.versions v
             SET mock_enabled = %s,
-                mock_settings = %s::jsonb,
+                -- Merge the toggle's 'mode' fragment over the existing settings so other
+                -- mock knobs (scenario overrides #4454) survive enable/disable round-trips.
+                mock_settings = (COALESCE(v.mock_settings, '{}'::jsonb) - 'mode') || %s::jsonb,
                 updated_at = CURRENT_TIMESTAMP
             FROM apiome.projects p
             WHERE v.id = %s
@@ -3493,6 +3497,66 @@ class Database:
                 cursor.execute(
                     query,
                     (enabled, mock_settings_json, version_record_id, tenant_id, user_id, user_id),
+                )
+                updated = cursor.fetchone()
+                conn.commit()
+                if not updated:
+                    return None
+                return self.get_version_by_id(version_record_id, tenant_id)
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def set_version_mock_scenarios(
+        self,
+        version_record_id: str,
+        tenant_id: str,
+        user_id: str,
+        *,
+        scenarios: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        """Replace the ``scenarios`` key of ``versions.mock_settings`` (#4454, SIM-4.2).
+
+        Only the ``scenarios`` key is rewritten; every other mock knob (e.g. the
+        private-draft ``mode``) is preserved. An empty mapping removes the key.
+        The update bumps ``updated_at`` so the mock spec-cache NOTIFY trigger
+        fires and running mocks pick up the new definitions.
+
+        Args:
+            version_record_id: The ``versions.id`` UUID.
+            tenant_id: Tenant owning the version (scope check).
+            user_id: Acting user; must be the version creator or a tenant admin.
+            scenarios: Canonical scenario definitions keyed by name.
+
+        Returns:
+            The updated version row, or ``None`` when the caller lacks ownership.
+        """
+        fragment = json.dumps({"scenarios": scenarios}) if scenarios else "{}"
+        query = """
+            UPDATE apiome.versions v
+            SET mock_settings = (COALESCE(v.mock_settings, '{}'::jsonb) - 'scenarios') || %s::jsonb,
+                updated_at = CURRENT_TIMESTAMP
+            FROM apiome.projects p
+            WHERE v.id = %s
+              AND v.project_id = p.id
+              AND p.tenant_id = %s
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+              AND (
+                v.creator_id = %s
+                OR EXISTS (
+                  SELECT 1 FROM apiome.tenant_administrators ta
+                  WHERE ta.tenant_id = p.tenant_id AND ta.user_id = %s
+                )
+              )
+            RETURNING v.id
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    query,
+                    (fragment, version_record_id, tenant_id, user_id, user_id),
                 )
                 updated = cursor.fetchone()
                 conn.commit()

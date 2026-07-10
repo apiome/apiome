@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, Mapping
 from uuid import UUID
 
 from apiome_mcp.spec_openapi_loaders import fetch_openapi_generation_inputs_async
@@ -14,6 +14,7 @@ from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
 from apiome_mock.api_key import ValidatedApiKey, is_private_mock_mode
+from apiome_mock.scenarios import Scenario, parse_scenarios
 
 MockAccessStatus = Literal["ok", "disabled", "missing"]
 
@@ -96,6 +97,8 @@ class CompiledSpec:
     updated_at: datetime
     spec: dict[str, Any]
     operations: tuple[MockOperation, ...]
+    scenarios: Mapping[str, Scenario] = field(default_factory=dict)
+    """Scenario overrides parsed from ``versions.mock_settings`` (#4454, SIM-4.2)."""
 
     @property
     def cache_key(self) -> tuple[str, str, str]:
@@ -149,6 +152,8 @@ async def get_mock_access_status(
 async def _compile_from_row(
     conn: Any,
     row: dict[str, Any],
+    *,
+    mock_settings: Any = None,
 ) -> CompiledSpec:
     revision_id = row["id"]
     inputs = await fetch_openapi_generation_inputs_async(conn, revision_id)
@@ -180,6 +185,7 @@ async def _compile_from_row(
         updated_at=updated_at,
         spec=spec,
         operations=operations,
+        scenarios=parse_scenarios(mock_settings),
     )
 
 
@@ -210,4 +216,4 @@ async def load_compiled_spec(
             row = await cur.fetchone()
             if row is None:
                 return None
-            return await _compile_from_row(conn, row)
+            return await _compile_from_row(conn, row, mock_settings=access_row.get("mock_settings"))

@@ -20,16 +20,25 @@ from .branch_push_policy import effective_require_merge_path
 from .compatibility_engine import CompatibilityCheckEngine, compat_audit_detail, openapi_for_revision
 from .config import settings
 from .database import BranchNotFoundError, StaleHeadPushError, db
+from .mock_scenario_settings import (
+    scenarios_from_storage,
+    scenarios_to_storage,
+    validate_mock_scenarios,
+)
 from .models import (
+    MockScenarioSpec,
     SunsetTimelineEntryOut,
     SunsetTimelineResponse,
     VersionCreateRequest,
     VersionForkRequest,
+    VersionMockScenariosRequest,
+    VersionMockScenariosResponse,
     VersionMockToggleRequest,
     VersionPublishRequest,
     VersionSchema,
     VersionUpdateRequest,
 )
+from .openapi_generator import generate_openapi_spec
 from .publication_change_report import (
     generate_change_report_on_publish,
     validate_manual_baseline_revision,
@@ -2072,6 +2081,113 @@ async def set_version_mock(
             detail="Only the version creator or a tenant administrator can change mock settings",
         )
     return _version_schema_response(updated, tenant_slug)
+
+
+def _generated_spec_for_version(version: Dict[str, Any], tenant_slug: str) -> Dict[str, Any]:
+    """Generate the version's OpenAPI document (same path as /v1/schema) for validation."""
+    classes = db.get_classes_for_version(version["id"])
+    all_properties: Dict[str, List[Dict[str, Any]]] = {}
+    for class_data in classes:
+        all_properties[class_data["id"]] = db.get_properties_for_class(class_data["id"])
+    return generate_openapi_spec(
+        tenant_slug,
+        str(version.get("project_slug") or version["project_id"]),
+        str(version["version_id"]),
+        classes,
+        all_properties,
+        version.get("project_description"),
+        version_db_id=version["id"],
+        revision_metadata=version.get("metadata"),
+        project_metadata=version.get("project_metadata"),
+    )
+
+
+def _get_version_for_mock_scenarios(
+    project_id: str, version_record_id: str, tenant_id: str
+) -> Dict[str, Any]:
+    """Fetch the version row for the scenario routes, 404ing on any mismatch."""
+    existing = db.get_version_by_id(version_record_id, tenant_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
+    if existing["project_id"] != project_id:
+        raise HTTPException(status_code=404, detail=f"Version not found in project: {project_id}")
+    return existing
+
+
+@router.get("/{tenant_slug}/{project_id}/{version_record_id}/mock/scenarios")
+async def get_version_mock_scenarios(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> VersionMockScenariosResponse:
+    """Return the version's mock scenario definitions (#4454 SIM-4.2)."""
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    existing = _get_version_for_mock_scenarios(project_id, version_record_id, auth_data["tenant_id"])
+
+    stored, _ = scenarios_from_storage(existing.get("mock_settings"))
+    scenarios: Dict[str, MockScenarioSpec] = {}
+    for name, raw in stored.items():
+        try:
+            scenarios[name] = MockScenarioSpec.model_validate(raw)
+        except ValueError:
+            # A malformed stored entry never breaks the editor; it is simply omitted
+            # (the runtime skips it the same way).
+            logger.warning("Skipping malformed mock scenario %r on version %s", name, version_record_id)
+    return VersionMockScenariosResponse(scenarios=scenarios)
+
+
+@router.put("/{tenant_slug}/{project_id}/{version_record_id}/mock/scenarios")
+async def set_version_mock_scenarios(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    request: VersionMockScenariosRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> VersionMockScenariosResponse:
+    """Replace the version's mock scenario definitions (#4454 SIM-4.2).
+
+    Canned responses are validated against the version's generated OpenAPI
+    document (operation exists, status defined, media type declared, body
+    matches the response schema); a response may opt out with ``offSpec``.
+    Definitions persist in ``versions.mock_settings`` alongside other mock
+    knobs and survive publish/republish and mock toggles.
+    """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
+    existing = _get_version_for_mock_scenarios(project_id, version_record_id, auth_data["tenant_id"])
+
+    user_id = get_authenticated_user_id(auth_data)
+    if not user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Mock settings require user authentication (JWT token or API key with attribution)",
+        )
+
+    spec = _generated_spec_for_version(existing, tenant_slug)
+    errors = validate_mock_scenarios(request.scenarios, spec)
+    if errors:
+        raise HTTPException(
+            status_code=422,
+            detail={"message": "Scenario definitions failed validation.", "errors": errors},
+        )
+
+    storage = scenarios_to_storage(request.scenarios)
+    updated = db.set_version_mock_scenarios(
+        version_record_id,
+        auth_data["tenant_id"],
+        user_id,
+        scenarios=storage,
+    )
+    if not updated:
+        raise HTTPException(
+            status_code=403,
+            detail="Only the version creator or a tenant administrator can change mock settings",
+        )
+
+    stored, _ = scenarios_from_storage(updated.get("mock_settings"))
+    return VersionMockScenariosResponse(
+        scenarios={name: MockScenarioSpec.model_validate(raw) for name, raw in stored.items()}
+    )
 
 
 @router.post("/{tenant_slug}/{project_id}/{version_record_id}/unpublish")
