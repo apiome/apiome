@@ -1,7 +1,7 @@
 import { getCommercialNavItems, type ExternalNavItem } from './external-links';
 import { STUDIO_APP_ROUTES, UI_STUDIO_ROUTES } from './studio-routes';
 
-const DEFAULT_MAIN_APP_URL = 'https://app.apiome.app';
+const DEFAULT_MAIN_APP_URL = 'https://main.apiome.dev';
 
 export function normalizeAppOrigin(url: string, fallback: string): string {
   const trimmed = url.trim();

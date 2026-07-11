@@ -219,7 +219,7 @@ function TopHeaderView({
 
   return (
     <header
-      className="relative z-[2000] flex h-12 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-3 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/95"
+      className="relative z-[10048] flex h-12 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-3 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/95"
     >
       {/* Left: Logo */}
       <div className="flex h-10 items-center gap-2">
@@ -314,7 +314,7 @@ function TopHeaderView({
               <div
                 role="menu"
                 aria-label="Your tenants"
-                className="absolute right-0 z-[2001] mt-2 flex max-h-[min(70vh,24rem)] min-w-[260px] flex-col overflow-hidden rounded-lg bg-white shadow-lg shadow-slate-900/15 dark:bg-slate-800 dark:shadow-gray-900/50"
+                className="absolute right-0 z-[10050] mt-2 flex max-h-[min(70vh,24rem)] min-w-[260px] flex-col overflow-hidden rounded-lg bg-white shadow-lg shadow-slate-900/15 dark:bg-slate-800 dark:shadow-gray-900/50"
               >
                 <div className="shrink-0 border-b border-gray-200 p-2 dark:border-gray-600">
                   <input
@@ -397,7 +397,7 @@ function TopHeaderView({
           <div
             role="menu"
             aria-label="Profile menu"
-            className="absolute right-0 z-[2001] mt-2 min-w-[240px] rounded-lg bg-white p-1 shadow-lg shadow-slate-900/15 dark:bg-slate-800 dark:shadow-gray-900/50"
+            className="absolute right-0 z-[10050] mt-2 min-w-[240px] rounded-lg bg-white p-1 shadow-lg shadow-slate-900/15 dark:bg-slate-800 dark:shadow-gray-900/50"
           >
             <Link href={profileHref} role="menuitem" className="block rounded px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white" style={{ textDecoration: "none" }} onClick={() => setOpen(false)}>
               View Profile
