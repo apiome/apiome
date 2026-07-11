@@ -166,7 +166,7 @@ export function CatalogSupportedFormats({
       {open ? (
         <div
           id="catalog-supported-formats-grid"
-          className="space-y-5 border-t border-gray-100 px-4 py-4 dark:border-gray-700/60"
+          className="border-t border-gray-100 px-4 py-4 dark:border-gray-700/60"
         >
           <div>
             <div className="mb-2 flex items-center gap-2">
@@ -185,7 +185,7 @@ export function CatalogSupportedFormats({
           </div>
 
           {recognizedCount > 0 ? (
-            <div>
+            <div className="border-t border-gray-100 pt-6 dark:border-gray-700/60">
               <div className="mb-2 flex items-center gap-2">
                 <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600 dark:bg-gray-700/60 dark:text-gray-300">
                   Recognized — not yet importable

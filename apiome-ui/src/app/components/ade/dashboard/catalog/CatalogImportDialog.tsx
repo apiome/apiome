@@ -28,7 +28,7 @@ import {
   CATALOG_STORABLE_SOURCES,
   type CatalogImportRoutingDecision,
 } from '../../../../utils/catalog-import-formats';
-import { resolveCatalogProtocol } from '../../../../utils/catalog-format-registry';
+import { resolveCatalogProtocol, resolveCatalogFormat } from '../../../../utils/catalog-format-registry';
 import { useCatalogImportAvailability } from './useCatalogImportAvailability';
 
 interface CatalogImportDialogProps {
@@ -110,6 +110,10 @@ function formatPercent(value: number | null | undefined): string {
   return `${Math.round(value * 100)}% confidence`;
 }
 
+function formatChoiceLabel(format: string): string {
+  return resolveCatalogFormat(format)?.label ?? format;
+}
+
 function routingTone(destination: CatalogImportRoutingDecision['destination']): string {
   switch (destination) {
     case 'catalog':
@@ -140,6 +144,7 @@ export function CatalogImportDialog({
   const [archiveRoot, setArchiveRoot] = useState<string | null>(null);
   const [metadata, setMetadata] = useState<FileMetadataPreview | null>(null);
   const [detection, setDetection] = useState<DetectionResult | null>(null);
+  const [formatOverride, setFormatOverride] = useState<string | null>(null);
   const [jsonSchemaChoice, setJsonSchemaChoice] = useState<JsonSchemaChoice>('catalog');
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -152,24 +157,39 @@ export function CatalogImportDialog({
   const sourceTiles = useMemo(() => baseIntakeTiles(sourceCards), [sourceCards]);
 
   const detectedFormat = detection?.detected?.format || metadata?.format || null;
-  const routing = useMemo(() => decideCatalogImportRouting(detectedFormat), [detectedFormat]);
+  const effectiveFormat = formatOverride ?? detectedFormat;
+  const routing = useMemo(() => decideCatalogImportRouting(effectiveFormat), [effectiveFormat]);
   // The paradigm the source's adapter emits (matches the server's routing_decision), resolved to a
   // display label via the shared protocol registry, for the "· paradigm Y" note (MFI-26.3).
   const paradigmLabel = useMemo(() => {
-    const id = paradigmForFormat(detectedFormat);
+    const id = paradigmForFormat(effectiveFormat);
     return id ? resolveCatalogProtocol(id)?.label ?? null : null;
-  }, [detectedFormat]);
+  }, [effectiveFormat]);
+  const formatChoices = useMemo(() => {
+    if (!detection?.ambiguous) return [] as DetectionCandidate[];
+    const cluster = detection.ambiguous_candidates?.length
+      ? detection.ambiguous_candidates
+      : detection.candidates ?? [];
+    const byFormat = new Map<string, DetectionCandidate>();
+    for (const candidate of cluster) {
+      const existing = byFormat.get(candidate.format);
+      if (!existing || candidate.confidence > existing.confidence) {
+        byFormat.set(candidate.format, candidate);
+      }
+    }
+    return [...byFormat.values()].sort((a, b) => b.confidence - a.confidence);
+  }, [detection]);
   // When detection is ambiguous, surface the close cluster so the user knows the top pick is an
-  // assumption; the routing still proceeds on the highest-confidence candidate.
+  // assumption; the routing still proceeds on the highest-confidence candidate until overridden.
   const ambiguousCandidates = useMemo(() => {
     if (!detection?.ambiguous) return [] as DetectionCandidate[];
     const cluster = detection.ambiguous_candidates?.length
       ? detection.ambiguous_candidates
       : detection.candidates ?? [];
-    return cluster.filter((c) => c.format !== detection.detected?.format);
-  }, [detection]);
+    return cluster.filter((c) => c.format !== effectiveFormat);
+  }, [detection, effectiveFormat]);
   const adapter = routing.destination === 'catalog'
-    ? routing.adapter ?? catalogAdapterForFormat(detectedFormat)
+    ? routing.adapter ?? catalogAdapterForFormat(effectiveFormat)
     : null;
   const adapterUnavailable = adapter !== null && !availability.isAvailable(adapter.sourceKind);
   const unavailableReason = adapter ? availability.reasonFor(adapter.sourceKind) : null;
@@ -192,6 +212,7 @@ export function CatalogImportDialog({
     setArchiveRoot(null);
     setMetadata(null);
     setDetection(null);
+    setFormatOverride(null);
     setJsonSchemaChoice('catalog');
     setError(null);
     setIsDragging(false);
@@ -223,6 +244,7 @@ export function CatalogImportDialog({
         throw new Error(data?.error || 'Could not detect that source.');
       }
       setDetection(data as DetectionResult);
+      setFormatOverride(null);
     } catch (e) {
       setDetection(null);
       setError(e instanceof Error ? e.message : 'Could not detect that source.');
@@ -252,6 +274,7 @@ export function CatalogImportDialog({
       }
       const result = data as DetectionResult;
       setDetection(result);
+      setFormatOverride(null);
       setArchiveRoot(result.archive_root ?? null);
     } catch (e) {
       setDetection(null);
@@ -590,7 +613,7 @@ export function CatalogImportDialog({
                 <span className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">{fileName}</span>
               </div>
               <div className="flex items-center gap-2">
-                <FormatPill format={detectedFormat === 'unknown' ? null : detectedFormat} />
+                <FormatPill format={effectiveFormat === 'unknown' ? null : effectiveFormat} />
                 <button
                   type="button"
                   onClick={reset}
@@ -604,26 +627,62 @@ export function CatalogImportDialog({
 
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
               <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                Auto-detected: {detected?.format || metadata?.formatDisplayName || 'Unknown'}
+                {formatOverride && formatOverride !== detectedFormat
+                  ? `Import format: ${formatChoiceLabel(effectiveFormat ?? '')}`
+                  : `Auto-detected: ${detected?.format || metadata?.formatDisplayName || 'Unknown'}`}
               </div>
+              {formatOverride && formatOverride !== detectedFormat && detectedFormat && (
+                <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Auto-detected {formatChoiceLabel(detectedFormat)} ({formatPercent(detected?.confidence)})
+                </div>
+              )}
               <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {formatPercent(detected?.confidence)}
+                {formatPercent(
+                  formatChoices.find((c) => c.format === effectiveFormat)?.confidence ?? detected?.confidence,
+                )}
                 {paradigmLabel ? ` · paradigm ${paradigmLabel}` : ''}
-                {detected?.reason ? ` · ${detected.reason}` : ''}
+                {detected?.reason && !formatOverride ? ` · ${detected.reason}` : ''}
               </div>
             </div>
+
+            {formatChoices.length > 1 && (
+              <div className="space-y-2" data-testid="format-override-select">
+                <label
+                  className="text-sm font-medium text-gray-900 dark:text-gray-100"
+                  htmlFor="catalog-import-format-override"
+                >
+                  Import as format
+                </label>
+                <select
+                  id="catalog-import-format-override"
+                  value={effectiveFormat ?? ''}
+                  onChange={(event) => setFormatOverride(event.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950"
+                >
+                  {formatChoices.map((candidate) => (
+                    <option key={candidate.format} value={candidate.format}>
+                      {formatChoiceLabel(candidate.format)} ({formatPercent(candidate.confidence)})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Detection matched more than one format. Override the assumed format if the top match
+                  is wrong.
+                </p>
+              </div>
+            )}
 
             {ambiguousCandidates.length > 0 && (
               <Alert variant="warning" data-testid="detect-ambiguous">
                 <div className="font-medium">
-                  Ambiguous source — assuming {detected?.format || 'the top match'}
+                  Ambiguous source — using {formatChoiceLabel(effectiveFormat ?? 'the selected format')}
                 </div>
                 <div className="text-sm">
                   This could also be{' '}
                   {ambiguousCandidates
-                    .map((c) => `${c.format} (${formatPercent(c.confidence)})`)
+                    .map((c) => `${formatChoiceLabel(c.format)} (${formatPercent(c.confidence)})`)
                     .join(', ')}
-                  . Detection used the highest-confidence match; choose a different source if that is wrong.
+                  .
                 </div>
               </Alert>
             )}

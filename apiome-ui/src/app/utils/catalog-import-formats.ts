@@ -5,7 +5,7 @@
  * through the REST spec-import adapter pipeline, which persists a catalog item and keeps the raw
  * bytes for later conversion. That pipeline resolves the request's `source_kind` against the
  * server-side import-source registry, so a source is storable only when a **registered adapter**
- * can parse it. Today those adapters are gRPC/Protobuf, GraphQL, AsyncAPI, Thrift and Connect RPC (OpenAPI/Swagger are
+ * can parse it. Today those adapters are gRPC/Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers and Cap'n Proto (OpenAPI/Swagger are
  * native and go to Projects, not the catalog).
  *
  * This maps the client analyzer's detected `format` token (see `openapi-analyzer.ts`) to the
@@ -56,6 +56,10 @@ const FORMAT_TO_ADAPTER: Readonly<Record<string, CatalogAdapterSource>> = {
   thrift: { sourceKind: 'thrift', label: 'Thrift' },
   connectrpc: { sourceKind: 'connectrpc', label: 'Connect RPC' },
   connect: { sourceKind: 'connectrpc', label: 'Connect RPC' },
+  flatbuffers: { sourceKind: 'flatbuffers', label: 'FlatBuffers' },
+  fbs: { sourceKind: 'flatbuffers', label: 'FlatBuffers' },
+  capnproto: { sourceKind: 'capnproto', label: "Cap'n Proto" },
+  capnp: { sourceKind: 'capnproto', label: "Cap'n Proto" },
 };
 
 /**
@@ -71,6 +75,10 @@ const FORMAT_TO_PARADIGM: Readonly<Record<string, string>> = {
   thrift: 'rpc',
   connectrpc: 'rpc',
   connect: 'rpc',
+  flatbuffers: 'dataschema',
+  fbs: 'dataschema',
+  capnproto: 'rpc',
+  capnp: 'rpc',
   openapi: 'rest',
   swagger: 'rest',
   jsonschema: 'dataschema',

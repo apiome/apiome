@@ -114,8 +114,36 @@ describe('CatalogImportDialog — detect confidence + paradigm + routing (MFI-26
 
     const notice = screen.getByTestId('detect-ambiguous');
     expect(notice).toBeInTheDocument();
-    // The top pick is named as an assumption; the *other* candidate is listed (not the top one twice).
-    expect(notice).toHaveTextContent(/assuming graphql/i);
-    expect(notice).toHaveTextContent(/protobuf/i);
+    expect(screen.getByTestId('format-override-select')).toBeInTheDocument();
+    // The selected format is named; the *other* candidate is listed (not the selected one twice).
+    expect(notice).toHaveTextContent(/using GraphQL/i);
+    expect(notice).toHaveTextContent(/Protobuf/i);
+  });
+
+  it('lets the user override an ambiguous format and updates routing', async () => {
+    global.fetch = mockFetch({
+      matched: true,
+      detected: { format: 'graphql', confidence: 0.55, reason: 'GraphQL SDL keyword', importable: true },
+      ambiguous: true,
+      ambiguous_candidates: [
+        { format: 'graphql', confidence: 0.55, importable: true },
+        { format: 'protobuf', confidence: 0.52, importable: true },
+      ],
+    }) as unknown as typeof fetch;
+
+    render(<CatalogImportDialog open onClose={jest.fn()} />);
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith('/api/import/sources', expect.anything()),
+    );
+    await pasteAndDetect();
+
+    expect(screen.getByText(/Routing decision → Catalog/i)).toBeInTheDocument();
+    expect(screen.getByText(/paradigm Graph/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/import as format/i), { target: { value: 'protobuf' } });
+
+    expect(screen.getByText(/Import format: Protobuf/i)).toBeInTheDocument();
+    expect(screen.getByText(/paradigm RPC/i)).toBeInTheDocument();
+    expect(screen.getByText(/Routing decision → Catalog/i)).toBeInTheDocument();
   });
 });

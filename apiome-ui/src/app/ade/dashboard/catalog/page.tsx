@@ -1176,9 +1176,13 @@ const Catalog = () => {
                   // Group=Protocol: one section per paradigm (header = label + live count + divider),
                   // in fixed graph→rpc→event→rest→data-schema order with empty paradigms omitted.
                   <div className="flex flex-col">
-                    {paradigmGroups.map((group) => (
-                      <section key={group.id} data-testid={`catalog-paradigm-group-${group.id}`}>
-                        <div className="mb-3 mt-5 flex items-center gap-2.5 first:mt-0">
+                    {paradigmGroups.map((group, index) => (
+                      <section
+                        key={group.id}
+                        data-testid={`catalog-paradigm-group-${group.id}`}
+                        className={index > 0 ? 'mt-10 pt-5' : undefined}
+                      >
+                        <div className="mb-3 flex items-center gap-2.5">
                           <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                             {group.label}
                           </span>

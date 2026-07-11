@@ -722,6 +722,8 @@ def load_builtin_import_sources() -> None:
     from . import sample_import_source as _sample  # noqa: F401
     from . import thrift_import_source as _thrift  # noqa: F401
     from . import connectrpc_import_source as _connectrpc  # noqa: F401
+    from . import flatbuffers_import_source as _flatbuffers  # noqa: F401
+    from . import capnproto_import_source as _capnproto  # noqa: F401
 
 
 # ===========================================================================
