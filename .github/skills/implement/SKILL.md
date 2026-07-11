@@ -123,7 +123,7 @@ gh pr create \
 - How to test
 - Risk/notes
 - Issue link: `Closes #<number>` (or `Fixes #<number>`)
-- "Work performed by <agent name> via model <model name>"
+- Notate: `Made with <agent name> using model <model name>`
 
 ## Phase 8: Explain How to Test
 
