@@ -86,10 +86,15 @@ __all__ = [
     "MAX_RULES_PER_GUIDE",
     "MAX_THEN_PER_RULE",
     "REGEX_MATCH_TIMEOUT_SECONDS",
+    "EMPTY_STYLE_GUIDE_YAML",
     "evaluate_custom_rules",
     "parse_style_guide_yaml",
+    "serialize_style_guide_yaml",
     "validate_custom_definition",
 ]
+
+#: The editor's blank slate when a guide has no custom rules yet (GOV-2.3).
+EMPTY_STYLE_GUIDE_YAML = "rules: {}\n"
 
 # --- Limits (the sandbox contract) ------------------------------------------------------------
 
@@ -577,22 +582,7 @@ def parse_style_guide_yaml(
         CustomRuleValidationError: On unparseable YAML (including duplicate mapping keys) or
             any schema violation.
     """
-    if not isinstance(text, str) or not text.strip():
-        raise CustomRuleValidationError("the style-guide document is empty")
-    if len(text.encode("utf-8", errors="replace")) > MAX_YAML_BYTES:
-        raise CustomRuleValidationError(
-            f"the style-guide document exceeds {MAX_YAML_BYTES} bytes"
-        )
-
-    try:
-        document = yaml.load(text, Loader=_StrictLoader)  # noqa: S506 - SafeLoader subclass
-    except yaml.YAMLError as exc:
-        mark = getattr(exc, "problem_mark", None)
-        where = f" (line {mark.line + 1}, column {mark.column + 1})" if mark else ""
-        problem = getattr(exc, "problem", None) or str(exc)
-        raise CustomRuleValidationError(f"invalid YAML: {problem}{where}") from exc
-
-    document = _require_mapping(document, "", "the style-guide document")
+    document = _parse_style_guide_document(text)
     _reject_unknown_keys(document, ("rules",), "")
 
     raw_rules = _require_mapping(document.get("rules"), "rules", "'rules'")
@@ -603,6 +593,64 @@ def parse_style_guide_yaml(
             f"'rules' exceeds {MAX_RULES_PER_GUIDE} rules", "rules"
         )
 
+    rules = tuple(
+        validate_custom_definition(
+            rule_id, definition, pointer=f"rules.{rule_id}", reserved_rule_ids=reserved_rule_ids
+        )
+        for rule_id, definition in raw_rules.items()
+    )
+    return CustomRuleSet(rules=rules)
+
+
+def serialize_style_guide_yaml(ruleset: CustomRuleSet) -> str:
+    """Serialize a validated rule set back to YAML for the custom-rules editor (GOV-2.3).
+
+    Round-trips through :func:`parse_style_guide_yaml` for non-empty guides. An empty set
+    becomes :data:`EMPTY_STYLE_GUIDE_YAML`.
+    """
+    if not ruleset.rules:
+        return EMPTY_STYLE_GUIDE_YAML
+    document: Dict[str, Any] = {"rules": {}}
+    for rule in ruleset.rules:
+        document["rules"][rule.rule_id] = rule.as_dict()
+    return yaml.dump(document, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
+
+def _parse_style_guide_document(text: str) -> Mapping[str, Any]:
+    """Load a style-guide YAML document with the same strict loader as validation."""
+    if not isinstance(text, str) or not text.strip():
+        raise CustomRuleValidationError("the style-guide document is empty")
+    if len(text.encode("utf-8", errors="replace")) > MAX_YAML_BYTES:
+        raise CustomRuleValidationError(
+            f"the style-guide document exceeds {MAX_YAML_BYTES} bytes"
+        )
+    try:
+        document = yaml.load(text, Loader=_StrictLoader)  # noqa: S506 - SafeLoader subclass
+    except yaml.YAMLError as exc:
+        mark = getattr(exc, "problem_mark", None)
+        where = f" (line {mark.line + 1}, column {mark.column + 1})" if mark else ""
+        problem = getattr(exc, "problem", None) or str(exc)
+        raise CustomRuleValidationError(f"invalid YAML: {problem}{where}") from exc
+    return _require_mapping(document, "", "the style-guide document")
+
+
+def parse_style_guide_yaml_for_save(
+    text: str, reserved_rule_ids: Optional[frozenset] = None
+) -> CustomRuleSet:
+    """Parse a style-guide document for persistence, allowing an empty ``rules`` map.
+
+    The editor's "clear all custom rules" save path sends ``rules: {}``; preview treats that
+    as zero rules. Every other constraint matches :func:`parse_style_guide_yaml`.
+    """
+    document = _parse_style_guide_document(text)
+    _reject_unknown_keys(document, ("rules",), "")
+    raw_rules = _require_mapping(document.get("rules"), "rules", "'rules'")
+    if not raw_rules:
+        return CustomRuleSet(rules=())
+    if len(raw_rules) > MAX_RULES_PER_GUIDE:
+        raise CustomRuleValidationError(
+            f"'rules' exceeds {MAX_RULES_PER_GUIDE} rules", "rules"
+        )
     rules = tuple(
         validate_custom_definition(
             rule_id, definition, pointer=f"rules.{rule_id}", reserved_rule_ids=reserved_rule_ids

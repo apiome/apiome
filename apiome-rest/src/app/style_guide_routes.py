@@ -18,6 +18,8 @@ drives:
 * **Rules** (GOV-2.2, #4434) — the guide editor's rule catalog tab: read every GOV-1.2
   registry rule merged with the guide's ``style_guide_rules`` state, and save the full
   built-in rule set (enable flags + severity overrides) in one transactional replace.
+* **Custom rules** (GOV-2.3, #4435) — the guide editor's custom-rules tab: read/write the
+  guide's Spectral-compatible YAML document and dry-run draft rules against a project revision.
 
 Reads require tenant authentication; every mutation requires a **tenant administrator**
 user session — governance is the buyer-admin persona's surface, and API keys cannot
@@ -25,16 +27,30 @@ administer it. The builtin guide is read-only: rename/delete return ``409
 STYLE_GUIDE_READ_ONLY`` (duplicate it instead), though it can be assigned like any guide.
 """
 
+from dataclasses import replace
 from typing import Any, Dict, List, Optional
 
 import psycopg2
 from fastapi import APIRouter, Depends, HTTPException
 
 from .auth import get_authenticated_user_id, validate_authentication
+from .compatibility_engine import openapi_for_revision
+from .custom_rule_dsl import (
+    CustomRuleValidationError,
+    EMPTY_STYLE_GUIDE_YAML,
+    evaluate_custom_rules,
+    parse_style_guide_yaml_for_save,
+    serialize_style_guide_yaml,
+    validate_custom_definition,
+)
 from .database import db
-from .lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors
+from .lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors, builtin_rule_ids
 from .models import (
     StyleGuideCreateRequest,
+    StyleGuideCustomRulesPreviewRequest,
+    StyleGuideCustomRulesPreviewResponse,
+    StyleGuideCustomRulesPutRequest,
+    StyleGuideCustomRulesResponse,
     StyleGuideListResponse,
     StyleGuideOut,
     StyleGuideProjectAssignmentOut,
@@ -42,6 +58,7 @@ from .models import (
     StyleGuideRulesPutRequest,
     StyleGuideRulesResponse,
     StyleGuideUpdateRequest,
+    LintFindingOut,
 )
 
 router = APIRouter(prefix="/v1/style-guides", tags=["style-guides"])
@@ -325,6 +342,173 @@ async def put_style_guide_rules(
     if not db.replace_style_guide_builtin_rules(str(guide["id"]), tenant_id, rows):
         raise HTTPException(status_code=404, detail="Style guide not found")
     return _rules_view(guide, db.get_style_guide_rules(str(guide["id"]), tenant_id))
+
+
+def _custom_rules_yaml(rows: List[Dict[str, Any]]) -> str:
+    """Serialize stored custom-rule rows back to editor YAML."""
+    from .custom_rule_dsl import CustomRuleSet
+
+    custom_rows = [row for row in rows if row.get("custom_def") is not None]
+    if not custom_rows:
+        return EMPTY_STYLE_GUIDE_YAML
+    reserved = frozenset(builtin_rule_ids())
+    rules = []
+    for row in custom_rows:
+        rule = validate_custom_definition(
+            row["rule_id"], row["custom_def"], reserved_rule_ids=reserved
+        )
+        if row.get("severity") and rule.severity != row["severity"]:
+            rule = replace(rule, severity=row["severity"])
+        rules.append(rule)
+    return serialize_style_guide_yaml(CustomRuleSet(rules=tuple(rules)))
+
+
+def _custom_rules_view(guide: Dict[str, Any], rows: List[Dict[str, Any]]) -> StyleGuideCustomRulesResponse:
+    """Build the custom-rules tab payload from stored rows."""
+    yaml_text = _custom_rules_yaml(rows)
+    rule_count = sum(1 for row in rows if row.get("custom_def") is not None)
+    return StyleGuideCustomRulesResponse(
+        guide_id=str(guide["id"]),
+        guide_name=guide["name"],
+        source=guide["source"],
+        yaml=yaml_text,
+        rule_count=rule_count,
+    )
+
+
+def _validation_http_error(exc: CustomRuleValidationError) -> HTTPException:
+    return HTTPException(
+        status_code=422,
+        detail={"message": exc.message, "pointer": exc.pointer},
+    )
+
+
+@router.get(
+    "/{tenant_slug}/{guide_id}/custom-rules",
+    response_model=StyleGuideCustomRulesResponse,
+)
+async def get_style_guide_custom_rules(
+    tenant_slug: str,
+    guide_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StyleGuideCustomRulesResponse:
+    """The guide's custom-rules YAML document (GOV-2.3, #4435).
+
+    Returns the Spectral-compatible YAML the custom-rules tab edits. Readable by any tenant
+    member — the tab renders read-only for non-admins and the built-in guide.
+    """
+    tenant_id = _tenant_id(auth_data)
+    guide = _load_guide_or_404(guide_id, tenant_id)
+    rows = db.get_style_guide_rules(str(guide["id"]), tenant_id)
+    return _custom_rules_view(guide, rows)
+
+
+@router.put(
+    "/{tenant_slug}/{guide_id}/custom-rules",
+    response_model=StyleGuideCustomRulesResponse,
+    responses={
+        422: {
+            "description": "Malformed guide: `detail.message` explains the problem and "
+            "`detail.pointer` points at the offending YAML node."
+        }
+    },
+)
+async def put_style_guide_custom_rules(
+    tenant_slug: str,
+    guide_id: str,
+    body: StyleGuideCustomRulesPutRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StyleGuideCustomRulesResponse:
+    """Replace the guide's custom-rule rows from YAML (GOV-2.3, #4435).
+
+    Strictly validates the document (same contract as ``POST /v1/lint/custom-rules/validate``,
+    but ``rules: {}`` clears every custom rule). Built-in rows are untouched. Malformed YAML
+    returns HTTP 422 with a pointer for inline editor markers.
+    """
+    tenant_id = _require_tenant_admin(auth_data)
+    guide = _load_guide_or_404(guide_id, tenant_id)
+    _reject_builtin(guide, "edited")
+
+    try:
+        ruleset = parse_style_guide_yaml_for_save(
+            body.yaml, reserved_rule_ids=frozenset(builtin_rule_ids())
+        )
+    except CustomRuleValidationError as exc:
+        raise _validation_http_error(exc) from exc
+
+    rows = [
+        {
+            "rule_id": rule.rule_id,
+            "enabled": True,
+            "severity": rule.severity,
+            "custom_def": rule.as_dict(),
+        }
+        for rule in ruleset.rules
+    ]
+    if not db.replace_style_guide_custom_rules(str(guide["id"]), tenant_id, rows):
+        raise HTTPException(status_code=404, detail="Style guide not found")
+    return _custom_rules_view(guide, db.get_style_guide_rules(str(guide["id"]), tenant_id))
+
+
+@router.post(
+    "/{tenant_slug}/{guide_id}/custom-rules/preview",
+    response_model=StyleGuideCustomRulesPreviewResponse,
+    responses={
+        422: {
+            "description": "Malformed draft YAML: `detail.message` + `detail.pointer`."
+        }
+    },
+)
+async def preview_style_guide_custom_rules(
+    tenant_slug: str,
+    guide_id: str,
+    body: StyleGuideCustomRulesPreviewRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StyleGuideCustomRulesPreviewResponse:
+    """Dry-run draft custom rules against a project revision (GOV-2.3, #4435).
+
+    Parses the draft YAML, reconstructs the revision's OpenAPI document, evaluates only the
+    custom rules, and returns their violations — nothing is persisted.
+    """
+    tenant_id = _tenant_id(auth_data)
+    _load_guide_or_404(guide_id, tenant_id)
+
+    try:
+        ruleset = parse_style_guide_yaml_for_save(
+            body.yaml, reserved_rule_ids=frozenset(builtin_rule_ids())
+        )
+    except CustomRuleValidationError as exc:
+        raise _validation_http_error(exc) from exc
+
+    project = db.get_project_by_id(body.project_id, tenant_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    version = db.get_version_by_id(body.version_record_id, tenant_id)
+    if not version or str(version.get("project_id")) != str(project["id"]):
+        raise HTTPException(status_code=404, detail="Version not found")
+
+    spec = openapi_for_revision(version, tenant_slug, tenant_id)
+    evaluation = evaluate_custom_rules(ruleset, spec)
+    findings = [
+        LintFindingOut(
+            id=f.id,
+            path=f.path,
+            category=f.category,
+            rule=f.rule,
+            severity=f.severity,
+            message=f.message,
+        )
+        for f in evaluation.findings
+    ]
+    return StyleGuideCustomRulesPreviewResponse(
+        project_id=str(project["id"]),
+        version_record_id=str(version["id"]),
+        version_id=str(version["version_id"]),
+        count=len(findings),
+        findings=findings,
+        rule_errors=dict(evaluation.rule_errors),
+    )
 
 
 @router.put("/{tenant_slug}/{guide_id}/default", response_model=StyleGuideOut)

@@ -58,6 +58,47 @@ export interface GuideRulesView {
   docsPage: string;
 }
 
+/** Custom-rules YAML document — `GET/PUT /api/style-guides/{id}/custom-rules` (GOV-2.3). */
+export interface GuideCustomRulesView {
+  guideId: string;
+  guideName: string;
+  source: 'builtin' | 'custom';
+  yaml: string;
+  ruleCount: number;
+}
+
+/** One violation from the custom-rules dry-run preview (GOV-2.3). */
+export interface CustomRulePreviewFinding {
+  id: string;
+  path: string;
+  category: string;
+  rule: string;
+  severity: RuleSeverity;
+  message: string;
+}
+
+/** Dry-run preview response — `POST .../custom-rules/preview` (GOV-2.3). */
+export interface CustomRulesPreviewResult {
+  projectId: string;
+  versionRecordId: string;
+  versionId: string;
+  count: number;
+  findings: CustomRulePreviewFinding[];
+  ruleErrors: Record<string, string>;
+}
+
+/** Minimal project / version pickers for the test-against pane. */
+export interface ProjectOption {
+  id: string;
+  name: string;
+}
+
+export interface VersionOption {
+  id: string;
+  versionId: string;
+  label: string;
+}
+
 /** The caller's permissions from `/api/access/permissions/me` (admin-gates mutations). */
 export interface MyPermissions {
   is_admin: boolean;
@@ -84,6 +125,53 @@ export async function styleGuidesApi<T>(path: string, init?: RequestInit): Promi
     throw new Error(message);
   }
   return json.data as T;
+}
+
+/** Like {@link styleGuidesApi} but surfaces HTTP 422 validation `detail` for inline YAML markers. */
+export async function styleGuidesApiWithValidation<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T | null> {
+  const res = await fetch(`/api/style-guides${path ? `/${path}` : ''}`, init);
+  if (res.status === 204) return null;
+  const json = await res.json();
+  if (!json.success) {
+    const err = json.error;
+    if (typeof err === 'object' && err !== null && 'message' in err) {
+      const e = new Error((err as { message?: string }).message || 'Request failed');
+      (e as Error & { detail: unknown }).detail = err;
+      throw e;
+    }
+    const message =
+      typeof err === 'object' && err !== null
+        ? (err as { message?: string }).message || 'Request failed'
+        : err || 'Request failed';
+    throw new Error(message);
+  }
+  return json.data as T;
+}
+
+/** Fetch projects for the custom-rules "Test against…" picker. */
+export async function fetchProjectOptions(): Promise<ProjectOption[]> {
+  const res = await fetch('/api/projects');
+  const json = await res.json();
+  if (!json.success || !Array.isArray(json.projects)) return [];
+  return (json.projects as { id: string; name: string }[]).map((p) => ({
+    id: p.id,
+    name: p.name,
+  }));
+}
+
+/** Fetch versions for one project (revision record id + version label). */
+export async function fetchVersionOptions(projectId: string): Promise<VersionOption[]> {
+  const res = await fetch(`/api/versions?projectId=${encodeURIComponent(projectId)}`);
+  const json = await res.json();
+  if (!json.success || !Array.isArray(json.versions)) return [];
+  return (json.versions as { id: string; version_id: string; name?: string }[]).map((v) => ({
+    id: v.id,
+    versionId: v.version_id,
+    label: v.name ? `${v.version_id} — ${v.name}` : v.version_id,
+  }));
 }
 
 /** Fetch the caller's permissions, degrading to `null` (read-only UI) on any failure. */

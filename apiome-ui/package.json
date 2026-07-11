@@ -1,6 +1,6 @@
 {
   "name": "apiome-ui",
-  "version": "0.96.0",
+  "version": "0.96.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -78,6 +78,7 @@
     "lucide-react": "^0.577.0",
     "mermaid": "^11.14.0",
     "monaco-editor": "^0.55.1",
+    "monaco-yaml": "^5.5.1",
     "mustache": "^4.2.0",
     "next": "^16.2.3",
     "next-auth": "^4.24.14",
