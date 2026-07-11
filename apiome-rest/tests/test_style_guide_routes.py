@@ -13,6 +13,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.auth import validate_authentication
+from app.lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors
 from app.main import app
 
 client = TestClient(app)
@@ -247,6 +248,147 @@ def test_delete_missing_guide_404s():
 
 
 # ---------------------------------------------------------------------------
+# Rule catalog tab — GET / PUT rules (GOV-2.2, #4434)
+# ---------------------------------------------------------------------------
+
+# The registry is real (imported by the app), so tests derive expectations from it rather
+# than hard-coding rule ids.
+DESCRIPTORS = builtin_rule_descriptors()
+
+
+def test_get_rules_merges_registry_with_guide_rows():
+    first, second = DESCRIPTORS[0], DESCRIPTORS[1]
+    overridden_severity = "info" if first.default_severity != "info" else "error"
+    rows = [
+        # An enabled row with a severity override.
+        {"rule_id": first.rule_id, "enabled": True, "severity": overridden_severity, "custom_def": None},
+        # A disabled row keeps its stored severity but reports enabled=False.
+        {"rule_id": second.rule_id, "enabled": False, "severity": second.default_severity, "custom_def": None},
+        # A custom rule row (GOV-1.3) must not leak into the built-in catalog view.
+        {"rule_id": "custom.team-rule", "enabled": True, "severity": "error", "custom_def": {"description": "x"}},
+        # A stale row for an unregistered id is ignored.
+        {"rule_id": "gone.rule", "enabled": True, "severity": "error", "custom_def": None},
+    ]
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch("app.style_guide_routes.db.get_style_guide_rules", return_value=rows):
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/rules")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["guideId"] == GUIDE_ID
+    assert body["guideName"] == "Payments Guide"
+    assert body["source"] == "custom"
+    assert body["count"] == len(DESCRIPTORS)
+    assert body["enabledCount"] == 1
+    assert body["docsPage"] == LINT_RULE_DOCS_PAGE
+
+    by_id = {rule["ruleId"]: rule for rule in body["rules"]}
+    assert "custom.team-rule" not in by_id
+    assert "gone.rule" not in by_id
+    assert by_id[first.rule_id]["enabled"] is True
+    assert by_id[first.rule_id]["severity"] == overridden_severity
+    assert by_id[first.rule_id]["defaultSeverity"] == first.default_severity
+    assert by_id[first.rule_id]["category"] == first.category
+    assert by_id[first.rule_id]["rationale"] == first.rationale
+    assert by_id[first.rule_id]["docsAnchor"] == first.docs_anchor
+    assert by_id[second.rule_id]["enabled"] is False
+    # Registry rules without a row render disabled at their default severity.
+    unlisted = next(d for d in DESCRIPTORS if d.rule_id not in (first.rule_id, second.rule_id))
+    assert by_id[unlisted.rule_id]["enabled"] is False
+    assert by_id[unlisted.rule_id]["severity"] == unlisted.default_severity
+
+
+def test_get_rules_is_readable_by_non_admin_members():
+    with patch(
+        "app.style_guide_routes.db.is_user_tenant_admin", return_value=False
+    ), patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_builtin_row()
+    ), patch("app.style_guide_routes.db.get_style_guide_rules", return_value=[]):
+        r = client.get(f"/v1/style-guides/acme/{BUILTIN_ID}/rules")
+    assert r.status_code == 200
+    assert r.json()["enabledCount"] == 0
+
+
+def test_get_rules_missing_guide_404s():
+    with patch("app.style_guide_routes.db.get_style_guide_by_id", return_value=None):
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/rules")
+    assert r.status_code == 404
+
+
+def test_put_rules_replaces_rows_and_returns_updated_view():
+    first = DESCRIPTORS[0]
+    payload = {"rules": [{"ruleId": first.rule_id, "enabled": True, "severity": "error"}]}
+    stored = [{"rule_id": first.rule_id, "enabled": True, "severity": "error", "custom_def": None}]
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.replace_style_guide_builtin_rules", return_value=True
+    ) as replace, patch(
+        "app.style_guide_routes.db.get_style_guide_rules", return_value=stored
+    ):
+        r = client.put(f"/v1/style-guides/acme/{GUIDE_ID}/rules", json=payload)
+    assert r.status_code == 200
+    replace.assert_called_once_with(
+        GUIDE_ID, "t1", [{"rule_id": first.rule_id, "enabled": True, "severity": "error"}]
+    )
+    body = r.json()
+    assert body["enabledCount"] == 1
+    by_id = {rule["ruleId"]: rule for rule in body["rules"]}
+    assert by_id[first.rule_id]["severity"] == "error"
+
+
+def test_put_rules_on_builtin_guide_is_read_only():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_builtin_row()
+    ):
+        r = client.put(f"/v1/style-guides/acme/{BUILTIN_ID}/rules", json={"rules": []})
+    assert r.status_code == 409
+    assert r.json()["detail"]["code"] == "STYLE_GUIDE_READ_ONLY"
+
+
+def test_put_rules_rejects_unknown_rule_id():
+    payload = {"rules": [{"ruleId": "not.a-registered-rule", "enabled": True, "severity": "error"}]}
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ):
+        r = client.put(f"/v1/style-guides/acme/{GUIDE_ID}/rules", json=payload)
+    assert r.status_code == 400
+    assert "not.a-registered-rule" in r.json()["detail"]
+
+
+def test_put_rules_rejects_duplicate_rule_ids():
+    first = DESCRIPTORS[0]
+    payload = {
+        "rules": [
+            {"ruleId": first.rule_id, "enabled": True, "severity": "error"},
+            {"ruleId": first.rule_id, "enabled": False, "severity": "info"},
+        ]
+    }
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ):
+        r = client.put(f"/v1/style-guides/acme/{GUIDE_ID}/rules", json=payload)
+    assert r.status_code == 400
+    assert "Duplicate" in r.json()["detail"]
+
+
+def test_put_rules_rejects_invalid_severity():
+    first = DESCRIPTORS[0]
+    payload = {"rules": [{"ruleId": first.rule_id, "enabled": True, "severity": "fatal"}]}
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ):
+        r = client.put(f"/v1/style-guides/acme/{GUIDE_ID}/rules", json=payload)
+    assert r.status_code == 422
+
+
+def test_put_rules_missing_guide_404s():
+    with patch("app.style_guide_routes.db.get_style_guide_by_id", return_value=None):
+        r = client.put(f"/v1/style-guides/acme/{GUIDE_ID}/rules", json={"rules": []})
+    assert r.status_code == 404
+
+
+# ---------------------------------------------------------------------------
 # Assignment
 # ---------------------------------------------------------------------------
 
@@ -327,6 +469,7 @@ def test_unassign_project_without_assignment_404s():
     [
         ("post", "/v1/style-guides/acme", {"name": "X"}),
         ("patch", f"/v1/style-guides/acme/{GUIDE_ID}", {"name": "X"}),
+        ("put", f"/v1/style-guides/acme/{GUIDE_ID}/rules", {"rules": []}),
         ("delete", f"/v1/style-guides/acme/{GUIDE_ID}", None),
         ("put", f"/v1/style-guides/acme/{GUIDE_ID}/default", None),
         (

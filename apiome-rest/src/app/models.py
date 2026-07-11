@@ -3231,6 +3231,110 @@ class StyleGuideUpdateRequest(BaseModel):
     )
 
 
+class StyleGuideRuleOut(BaseModel):
+    """One built-in rule as a guide sees it (GOV-2.2, #4434): registry facts + guide state.
+
+    The registry half (pack, category, default severity, rationale, docs anchor) is the same
+    for every tenant; ``enabled`` and ``severity`` are this guide's override — a rule with no
+    ``style_guide_rules`` row is disabled and shown at its default severity.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rule_id: str = Field(
+        serialization_alias="ruleId",
+        description="Stable rule identifier — exactly the string findings carry in `rule`.",
+    )
+    pack: str = Field(
+        description="Rule pack the rule belongs to (openapi, common, asyncapi, graphql, ...)."
+    )
+    category: str = Field(
+        description="Rule group (naming, documentation, structure, compatibility, ...)."
+    )
+    default_severity: str = Field(
+        serialization_alias="defaultSeverity",
+        description="Severity applied when no style guide overrides it (error/warning/info).",
+    )
+    rationale: str = Field(description="One-line explanation of why the rule exists.")
+    docs_anchor: str = Field(
+        serialization_alias="docsAnchor",
+        description="Anchor slug into the rule reference page documenting this rule.",
+    )
+    enabled: bool = Field(
+        description="Whether this guide enables the rule (no rule row means disabled)."
+    )
+    severity: str = Field(
+        description=(
+            "Severity this guide assigns the rule: error | warning | info. The stored "
+            "override when a rule row exists, else the registry default."
+        )
+    )
+
+
+class StyleGuideRulesResponse(BaseModel):
+    """A guide's full built-in rule catalog view (GOV-2.2, #4434), sorted by rule id.
+
+    Merges the GOV-1.2 registry with the guide's ``style_guide_rules`` overrides so the rule
+    catalog tab renders and saves from one payload. Custom rules (GOV-1.3 rows carrying a
+    ``custom_def``) are not part of this view.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    guide_id: str = Field(serialization_alias="guideId", description="The guide's id.")
+    guide_name: str = Field(
+        serialization_alias="guideName", description="The guide's display name."
+    )
+    source: str = Field(description="builtin (read-only, seeded) | custom (tenant-authored).")
+    rules: List[StyleGuideRuleOut] = Field(
+        description="Every registered built-in rule with this guide's state, sorted by ruleId."
+    )
+    count: int = Field(description="Number of registry rules (== len(rules)).")
+    enabled_count: int = Field(
+        serialization_alias="enabledCount",
+        description="Rules this guide currently enables.",
+    )
+    docs_page: str = Field(
+        serialization_alias="docsPage",
+        description="Repository-relative path of the rule reference page docsAnchor points into.",
+    )
+
+
+class StyleGuideRuleOverrideIn(BaseModel):
+    """One built-in rule row to store on a guide (GOV-2.2, #4434)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rule_id: str = Field(
+        min_length=1,
+        max_length=255,
+        validation_alias=AliasChoices("ruleId", "rule_id"),
+        serialization_alias="ruleId",
+        description="A registered built-in rule id (unknown ids are rejected with a 400).",
+    )
+    enabled: bool = Field(description="Whether the guide enables the rule.")
+    severity: str = Field(
+        pattern="^(error|warning|info)$",
+        description="Severity the guide assigns the rule: error | warning | info.",
+    )
+
+
+class StyleGuideRulesPutRequest(BaseModel):
+    """Replace a guide's built-in rule rows (GOV-2.2, #4434).
+
+    The request is the guide's complete desired built-in rule state: rows for registry rules
+    omitted here are deleted (leaving those rules disabled at their defaults). Custom-rule
+    rows (``custom_def`` present) are untouched — they are managed by the custom-rules tab.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rules: List[StyleGuideRuleOverrideIn] = Field(
+        max_length=4096,
+        description="The guide's built-in rule rows; at most one entry per rule id.",
+    )
+
+
 class VersionTagSchema(BaseModel):
     """Git-like tag pointing at a schema revision (versions.id)."""
 

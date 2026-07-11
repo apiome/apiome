@@ -16,6 +16,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import {
   AlertCircle,
   BadgeCheck,
@@ -37,65 +38,17 @@ import {
   DialogTitle,
 } from '@/app/components/ui/Dialog';
 import { useDialog } from '@/app/components/providers/DialogProvider';
-
-// ---------------------------------------------------------------------------
-// API types (camelCase — the REST layer's serialization aliases)
-// ---------------------------------------------------------------------------
-
-interface ProjectAssignment {
-  projectId: string;
-  projectName: string;
-}
-
-interface StyleGuide {
-  id: string;
-  name: string;
-  description: string | null;
-  source: 'builtin' | 'custom';
-  isDefault: boolean;
-  ruleCount: number;
-  enabledRuleCount: number;
-  tenantAssigned: boolean;
-  projectAssignments: ProjectAssignment[];
-  createdAt: string | null;
-  updatedAt: string | null;
-}
-
-interface StyleGuideList {
-  guides: StyleGuide[];
-  count: number;
-}
-
-interface MyPermissions {
-  is_admin: boolean;
-  permissions: string[];
-}
+import {
+  fetchMyPermissions,
+  styleGuidesApi,
+  type MyPermissions,
+  type StyleGuide,
+  type StyleGuideList,
+} from './api';
 
 interface ProjectOption {
   id: string;
   name: string;
-}
-
-/**
- * Call the style-guides proxy (`/api/style-guides/...`).
- *
- * The proxy wraps REST responses as `{success, data, error}`; FastAPI error details can be
- * a string or a `{code, message}` object (read-only / name-conflict), so both are
- * normalized into the thrown Error's message.
- */
-async function styleGuidesApi<T>(path: string, init?: RequestInit): Promise<T | null> {
-  const res = await fetch(`/api/style-guides${path ? `/${path}` : ''}`, init);
-  if (res.status === 204) return null;
-  const json = await res.json();
-  if (!json.success) {
-    const err = json.error;
-    const message =
-      typeof err === 'object' && err !== null
-        ? (err as { message?: string }).message || 'Request failed'
-        : err || 'Request failed';
-    throw new Error(message);
-  }
-  return json.data as T;
 }
 
 /** Render an ISO timestamp as a short local date, or a dash when absent. */
@@ -457,10 +410,7 @@ export default function StyleGuidesClient() {
     try {
       const [guideList, myPerms, projectsRes] = await Promise.all([
         styleGuidesApi<StyleGuideList>(''),
-        fetch('/api/access/permissions/me')
-          .then((r) => r.json())
-          .then((j) => (j.success ? (j.data as MyPermissions) : null))
-          .catch(() => null),
+        fetchMyPermissions(),
         fetch('/api/projects')
           .then((r) => r.json())
           .catch(() => null),
@@ -656,7 +606,12 @@ export default function StyleGuidesClient() {
                   <tr key={guide.id}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900 dark:text-white">{guide.name}</span>
+                        <Link
+                          href={`/ade/dashboard/style-guides/${guide.id}`}
+                          className="font-medium text-gray-900 hover:text-indigo-600 hover:underline dark:text-white dark:hover:text-indigo-400"
+                        >
+                          {guide.name}
+                        </Link>
                         {guide.source === 'builtin' && (
                           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                             Built-in
@@ -737,8 +692,8 @@ export default function StyleGuidesClient() {
         )}
 
         <p className="mt-3 text-[11px] text-gray-400">
-          The built-in “Apiome Recommended” guide is read-only — duplicate it to customize. Rule
-          editing arrives with the guide editor (GOV-2.2 / GOV-2.3).
+          The built-in “Apiome Recommended” guide is read-only — duplicate it to customize. Open a
+          guide to tailor its rule catalog; custom rules arrive with GOV-2.3.
         </p>
       </main>
 
