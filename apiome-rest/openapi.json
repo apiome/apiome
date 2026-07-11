@@ -6300,6 +6300,182 @@
         }
       }
     },
+    "/v1/style-guides/{tenant_slug}/{guide_id}/rules": {
+      "get": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "Get Style Guide Rules",
+        "description": "The guide's built-in rule catalog view (GOV-2.2, #4434).\n\nEvery GOV-1.2 registry rule with its category, default severity and rationale, merged\nwith this guide's ``style_guide_rules`` state (enabled + severity override). Readable by\nany tenant member \u2014 the rule catalog tab renders read-only for non-admins.",
+        "operationId": "get_style_guide_rules_v1_style_guides__tenant_slug___guide_id__rules_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug"
+            }
+          },
+          {
+            "name": "guide_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StyleGuideRulesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "Put Style Guide Rules",
+        "description": "Replace the guide's built-in rule rows (GOV-2.2, #4434) \u2014 the catalog tab's save.\n\nThe body is the guide's complete desired built-in rule state (at most one entry per\nregistered rule id; unknown ids are rejected). Custom-rule rows are untouched. The next\nlint run under the guide picks the new rows up via GOV-1.4's content-addressed compile.",
+        "operationId": "put_style_guide_rules_v1_style_guides__tenant_slug___guide_id__rules_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug"
+            }
+          },
+          {
+            "name": "guide_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StyleGuideRulesPutRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StyleGuideRulesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/style-guides/{tenant_slug}/{guide_id}/default": {
       "put": {
         "tags": [
@@ -45583,6 +45759,166 @@
         ],
         "title": "StyleGuideProjectAssignmentOut",
         "description": "One project-level style-guide assignment (GOV-2.1, #4433)."
+      },
+      "StyleGuideRuleOut": {
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "title": "Ruleid",
+            "description": "Stable rule identifier \u2014 exactly the string findings carry in `rule`."
+          },
+          "pack": {
+            "type": "string",
+            "title": "Pack",
+            "description": "Rule pack the rule belongs to (openapi, common, asyncapi, graphql, ...)."
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "Rule group (naming, documentation, structure, compatibility, ...)."
+          },
+          "defaultSeverity": {
+            "type": "string",
+            "title": "Defaultseverity",
+            "description": "Severity applied when no style guide overrides it (error/warning/info)."
+          },
+          "rationale": {
+            "type": "string",
+            "title": "Rationale",
+            "description": "One-line explanation of why the rule exists."
+          },
+          "docsAnchor": {
+            "type": "string",
+            "title": "Docsanchor",
+            "description": "Anchor slug into the rule reference page documenting this rule."
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether this guide enables the rule (no rule row means disabled)."
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "Severity this guide assigns the rule: error | warning | info. The stored override when a rule row exists, else the registry default."
+          }
+        },
+        "type": "object",
+        "required": [
+          "ruleId",
+          "pack",
+          "category",
+          "defaultSeverity",
+          "rationale",
+          "docsAnchor",
+          "enabled",
+          "severity"
+        ],
+        "title": "StyleGuideRuleOut",
+        "description": "One built-in rule as a guide sees it (GOV-2.2, #4434): registry facts + guide state.\n\nThe registry half (pack, category, default severity, rationale, docs anchor) is the same\nfor every tenant; ``enabled`` and ``severity`` are this guide's override \u2014 a rule with no\n``style_guide_rules`` row is disabled and shown at its default severity."
+      },
+      "StyleGuideRuleOverrideIn": {
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Ruleid",
+            "description": "A registered built-in rule id (unknown ids are rejected with a 400)."
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether the guide enables the rule."
+          },
+          "severity": {
+            "type": "string",
+            "pattern": "^(error|warning|info)$",
+            "title": "Severity",
+            "description": "Severity the guide assigns the rule: error | warning | info."
+          }
+        },
+        "type": "object",
+        "required": [
+          "ruleId",
+          "enabled",
+          "severity"
+        ],
+        "title": "StyleGuideRuleOverrideIn",
+        "description": "One built-in rule row to store on a guide (GOV-2.2, #4434)."
+      },
+      "StyleGuideRulesPutRequest": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/StyleGuideRuleOverrideIn"
+            },
+            "type": "array",
+            "maxItems": 4096,
+            "title": "Rules",
+            "description": "The guide's built-in rule rows; at most one entry per rule id."
+          }
+        },
+        "type": "object",
+        "required": [
+          "rules"
+        ],
+        "title": "StyleGuideRulesPutRequest",
+        "description": "Replace a guide's built-in rule rows (GOV-2.2, #4434).\n\nThe request is the guide's complete desired built-in rule state: rows for registry rules\nomitted here are deleted (leaving those rules disabled at their defaults). Custom-rule\nrows (``custom_def`` present) are untouched \u2014 they are managed by the custom-rules tab."
+      },
+      "StyleGuideRulesResponse": {
+        "properties": {
+          "guideId": {
+            "type": "string",
+            "title": "Guideid",
+            "description": "The guide's id."
+          },
+          "guideName": {
+            "type": "string",
+            "title": "Guidename",
+            "description": "The guide's display name."
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "builtin (read-only, seeded) | custom (tenant-authored)."
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/StyleGuideRuleOut"
+            },
+            "type": "array",
+            "title": "Rules",
+            "description": "Every registered built-in rule with this guide's state, sorted by ruleId."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of registry rules (== len(rules))."
+          },
+          "enabledCount": {
+            "type": "integer",
+            "title": "Enabledcount",
+            "description": "Rules this guide currently enables."
+          },
+          "docsPage": {
+            "type": "string",
+            "title": "Docspage",
+            "description": "Repository-relative path of the rule reference page docsAnchor points into."
+          }
+        },
+        "type": "object",
+        "required": [
+          "guideId",
+          "guideName",
+          "source",
+          "rules",
+          "count",
+          "enabledCount",
+          "docsPage"
+        ],
+        "title": "StyleGuideRulesResponse",
+        "description": "A guide's full built-in rule catalog view (GOV-2.2, #4434), sorted by rule id.\n\nMerges the GOV-1.2 registry with the guide's ``style_guide_rules`` overrides so the rule\ncatalog tab renders and saves from one payload. Custom rules (GOV-1.3 rows carrying a\n``custom_def``) are not part of this view."
       },
       "StyleGuideUpdateRequest": {
         "properties": {

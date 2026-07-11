@@ -2701,6 +2701,71 @@ class Database:
         rows = self.execute_query(query, (name.strip(), description, guide_id, tenant_id))
         return rows[0] if rows else None
 
+    def replace_style_guide_builtin_rules(
+        self,
+        guide_id: str,
+        tenant_id: str,
+        rules: List[Dict[str, Any]],
+    ) -> bool:
+        """Replace a guide's built-in rule rows with ``rules`` (GOV-2.2, #4434).
+
+        The rule catalog tab saves its whole state at once, so this is a transactional
+        delete-and-insert of the guide's built-in rows (``custom_def IS NULL``). Custom-rule
+        rows are left untouched — they belong to the custom-rules tab (GOV-2.3). The guide's
+        ``updated_at`` is bumped so the list view reflects the edit, and the next lint run
+        picks the change up via the content-addressed compile cache (GOV-1.4).
+
+        The builtin guide is excluded in the WHERE clause as defence in depth — the route
+        layer already rejects it with a 409 before calling here.
+
+        Args:
+            guide_id: The guide to write. Non-UUID values return ``False``.
+            tenant_id: The tenant that must own the guide.
+            rules: Rows to store — dicts with ``rule_id`` / ``enabled`` / ``severity`` keys.
+
+        Returns:
+            ``True`` when the guide exists and was updated, ``False`` when none matched.
+        """
+        if not guide_id or not is_uuid_string(str(guide_id)):
+            return False
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return False
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE apiome.style_guides
+                    SET updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s AND tenant_id = %s AND source <> 'builtin'
+                    RETURNING id
+                    """,
+                    (guide_id, tenant_id),
+                )
+                if cursor.fetchone() is None:
+                    conn.rollback()
+                    return False
+                cursor.execute(
+                    "DELETE FROM apiome.style_guide_rules WHERE guide_id = %s AND custom_def IS NULL",
+                    (guide_id,),
+                )
+                for rule in rules:
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.style_guide_rules (guide_id, rule_id, enabled, severity)
+                        VALUES (%s, %s, %s, %s)
+                        """,
+                        (guide_id, rule["rule_id"], bool(rule["enabled"]), rule["severity"]),
+                    )
+            conn.commit()
+            return True
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.autocommit = prev_autocommit
+
     def delete_style_guide(self, guide_id: str, tenant_id: str) -> bool:
         """Delete a custom style guide (GOV-2.1, #4433).
 

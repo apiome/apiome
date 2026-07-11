@@ -15,6 +15,9 @@ drives:
   ``style_guide_assignments`` row, keeping resolution tiers 1 and 2 agreeing) or bind it to
   a single project. The next lint run picks assignments up live — GOV-1.4 resolution
   queries the tables on every run and the compiled-guide cache is content-addressed.
+* **Rules** (GOV-2.2, #4434) — the guide editor's rule catalog tab: read every GOV-1.2
+  registry rule merged with the guide's ``style_guide_rules`` state, and save the full
+  built-in rule set (enable flags + severity overrides) in one transactional replace.
 
 Reads require tenant authentication; every mutation requires a **tenant administrator**
 user session — governance is the buyer-admin persona's surface, and API keys cannot
@@ -29,11 +32,15 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
+from .lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors
 from .models import (
     StyleGuideCreateRequest,
     StyleGuideListResponse,
     StyleGuideOut,
     StyleGuideProjectAssignmentOut,
+    StyleGuideRuleOut,
+    StyleGuideRulesPutRequest,
+    StyleGuideRulesResponse,
     StyleGuideUpdateRequest,
 )
 
@@ -224,6 +231,100 @@ async def delete_style_guide(
     if not db.delete_style_guide(str(guide["id"]), tenant_id):
         raise HTTPException(status_code=404, detail="Style guide not found")
     return {"status": "deleted", "id": str(guide["id"])}
+
+
+def _rules_view(guide: Dict[str, Any], rows: List[Dict[str, Any]]) -> StyleGuideRulesResponse:
+    """Merge the GOV-1.2 registry with a guide's rule rows into the catalog-tab view.
+
+    Every registry rule appears exactly once: ``enabled``/``severity`` come from the guide's
+    built-in row when one exists (rows carrying a ``custom_def`` are custom rules and are
+    skipped), otherwise the rule is disabled at its default severity. Rows for rule ids the
+    registry no longer knows are ignored — they cannot render a category or rationale.
+    """
+    overrides = {
+        row["rule_id"]: row for row in rows if row.get("custom_def") is None
+    }
+    rules = []
+    for d in builtin_rule_descriptors():
+        row = overrides.get(d.rule_id)
+        rules.append(
+            StyleGuideRuleOut(
+                rule_id=d.rule_id,
+                pack=d.pack,
+                category=d.category,
+                default_severity=d.default_severity,
+                rationale=d.rationale,
+                docs_anchor=d.docs_anchor,
+                enabled=bool(row and row.get("enabled")),
+                severity=(row.get("severity") if row and row.get("severity") else d.default_severity),
+            )
+        )
+    return StyleGuideRulesResponse(
+        guide_id=str(guide["id"]),
+        guide_name=guide["name"],
+        source=guide["source"],
+        rules=rules,
+        count=len(rules),
+        enabled_count=sum(1 for r in rules if r.enabled),
+        docs_page=LINT_RULE_DOCS_PAGE,
+    )
+
+
+@router.get("/{tenant_slug}/{guide_id}/rules", response_model=StyleGuideRulesResponse)
+async def get_style_guide_rules(
+    tenant_slug: str,
+    guide_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StyleGuideRulesResponse:
+    """The guide's built-in rule catalog view (GOV-2.2, #4434).
+
+    Every GOV-1.2 registry rule with its category, default severity and rationale, merged
+    with this guide's ``style_guide_rules`` state (enabled + severity override). Readable by
+    any tenant member — the rule catalog tab renders read-only for non-admins.
+    """
+    tenant_id = _tenant_id(auth_data)
+    guide = _load_guide_or_404(guide_id, tenant_id)
+    rows = db.get_style_guide_rules(str(guide["id"]), tenant_id)
+    return _rules_view(guide, rows)
+
+
+@router.put("/{tenant_slug}/{guide_id}/rules", response_model=StyleGuideRulesResponse)
+async def put_style_guide_rules(
+    tenant_slug: str,
+    guide_id: str,
+    body: StyleGuideRulesPutRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StyleGuideRulesResponse:
+    """Replace the guide's built-in rule rows (GOV-2.2, #4434) — the catalog tab's save.
+
+    The body is the guide's complete desired built-in rule state (at most one entry per
+    registered rule id; unknown ids are rejected). Custom-rule rows are untouched. The next
+    lint run under the guide picks the new rows up via GOV-1.4's content-addressed compile.
+    """
+    tenant_id = _require_tenant_admin(auth_data)
+    guide = _load_guide_or_404(guide_id, tenant_id)
+    _reject_builtin(guide, "edited")
+
+    registered = {d.rule_id for d in builtin_rule_descriptors()}
+    seen: set = set()
+    for rule in body.rules:
+        if rule.rule_id not in registered:
+            raise HTTPException(
+                status_code=400, detail=f"Unknown built-in rule id: {rule.rule_id}"
+            )
+        if rule.rule_id in seen:
+            raise HTTPException(
+                status_code=400, detail=f"Duplicate rule id in request: {rule.rule_id}"
+            )
+        seen.add(rule.rule_id)
+
+    rows = [
+        {"rule_id": r.rule_id, "enabled": r.enabled, "severity": r.severity}
+        for r in body.rules
+    ]
+    if not db.replace_style_guide_builtin_rules(str(guide["id"]), tenant_id, rows):
+        raise HTTPException(status_code=404, detail="Style guide not found")
+    return _rules_view(guide, db.get_style_guide_rules(str(guide["id"]), tenant_id))
 
 
 @router.put("/{tenant_slug}/{guide_id}/default", response_model=StyleGuideOut)
