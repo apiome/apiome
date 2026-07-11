@@ -460,6 +460,143 @@ def test_unassign_project_without_assignment_404s():
 
 
 # ---------------------------------------------------------------------------
+# Custom rules tab (GOV-2.3, #4435)
+# ---------------------------------------------------------------------------
+
+VALID_CUSTOM_YAML = """rules:
+  servers-use-https:
+    description: Every server URL uses https.
+    severity: error
+    given: "$.servers[*].url"
+    then:
+      function: pattern
+      functionOptions:
+        match: '^https://'
+"""
+
+
+def test_get_custom_rules_returns_yaml_document():
+    rows = [
+        {
+            "rule_id": "servers-use-https",
+            "enabled": True,
+            "severity": "error",
+            "custom_def": {
+                "description": "Every server URL uses https.",
+                "severity": "error",
+                "given": ["$.servers[*].url"],
+                "then": [
+                    {
+                        "function": "pattern",
+                        "functionOptions": {"match": "^https://"},
+                    }
+                ],
+            },
+        }
+    ]
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch("app.style_guide_routes.db.get_style_guide_rules", return_value=rows):
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/custom-rules")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["guideId"] == GUIDE_ID
+    assert body["ruleCount"] == 1
+    assert "servers-use-https" in body["yaml"]
+
+
+def test_put_custom_rules_validates_and_persists():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.replace_style_guide_custom_rules", return_value=True
+    ) as replace, patch(
+        "app.style_guide_routes.db.get_style_guide_rules", return_value=[]
+    ):
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/custom-rules",
+            json={"yaml": VALID_CUSTOM_YAML},
+        )
+    assert r.status_code == 200
+    replace.assert_called_once()
+    stored = replace.call_args[0][2]
+    assert stored[0]["rule_id"] == "servers-use-https"
+    assert stored[0]["custom_def"]["description"].startswith("Every server")
+
+
+def test_put_custom_rules_malformed_yaml_returns_422_with_pointer():
+    bad_yaml = """rules:
+  broken:
+    description: x
+    given: $.info
+    then:
+      function: pattern
+      functionOptions:
+        match: '('
+"""
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ):
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/custom-rules",
+            json={"yaml": bad_yaml},
+        )
+    assert r.status_code == 422
+    detail = r.json()["detail"]
+    assert "pointer" in detail
+    assert detail["pointer"].startswith("rules.broken")
+
+
+def test_put_custom_rules_rejects_builtin_guide():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_builtin_row()
+    ):
+        r = client.put(
+            f"/v1/style-guides/acme/{BUILTIN_ID}/custom-rules",
+            json={"yaml": "rules: {}\n"},
+        )
+    assert r.status_code == 409
+    assert r.json()["detail"]["code"] == "STYLE_GUIDE_READ_ONLY"
+
+
+def test_preview_custom_rules_returns_violations():
+    version = {
+        "id": "00000000-0000-0000-0000-0000000000d4",
+        "project_id": PROJECT_ID,
+        "version_id": "v1",
+    }
+    spec = {
+        "openapi": "3.1.0",
+        "info": {"title": "t", "version": "1.0.0"},
+        "servers": [{"url": "http://insecure.example.com"}],
+        "paths": {},
+    }
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.get_project_by_id",
+        return_value={"id": PROJECT_ID, "name": "Payments"},
+    ), patch(
+        "app.style_guide_routes.db.get_version_by_id", return_value=version
+    ), patch(
+        "app.style_guide_routes.openapi_for_revision", return_value=spec
+    ):
+        r = client.post(
+            f"/v1/style-guides/acme/{GUIDE_ID}/custom-rules/preview",
+            json={
+                "yaml": VALID_CUSTOM_YAML,
+                "projectId": PROJECT_ID,
+                "versionRecordId": version["id"],
+            },
+        )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["count"] >= 1
+    assert body["findings"][0]["rule"] == "servers-use-https"
+    assert body["versionId"] == "v1"
+
+
+# ---------------------------------------------------------------------------
 # Admin gating
 # ---------------------------------------------------------------------------
 
@@ -470,6 +607,7 @@ def test_unassign_project_without_assignment_404s():
         ("post", "/v1/style-guides/acme", {"name": "X"}),
         ("patch", f"/v1/style-guides/acme/{GUIDE_ID}", {"name": "X"}),
         ("put", f"/v1/style-guides/acme/{GUIDE_ID}/rules", {"rules": []}),
+        ("put", f"/v1/style-guides/acme/{GUIDE_ID}/custom-rules", {"yaml": "rules: {}\n"}),
         ("delete", f"/v1/style-guides/acme/{GUIDE_ID}", None),
         ("put", f"/v1/style-guides/acme/{GUIDE_ID}/default", None),
         (

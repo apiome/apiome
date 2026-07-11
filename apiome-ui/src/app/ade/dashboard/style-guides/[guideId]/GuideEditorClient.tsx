@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Guide editor — rule catalog tab (GOV-2.2, #4434)
+ * Guide editor — rule catalog tab (GOV-2.2, #4434) and custom rules tab (GOV-2.3, #4435)
  *
  * Lets tenant admins tailor a style guide's built-in rules — the most common governance
  * action after GOV-2.1 gave them the guides themselves:
@@ -38,6 +38,9 @@ import {
   type GuideRulesView,
   type RuleSeverity,
 } from '../api';
+import CustomRulesTab from './CustomRulesTab';
+
+type GuideEditorTab = 'catalog' | 'custom';
 
 /** The editable half of a rule row — what the save bar diffs and the PUT persists. */
 interface RuleState {
@@ -86,6 +89,7 @@ export default function GuideEditorClient({ guideId }: { guideId: string }) {
 
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
+  const [activeTab, setActiveTab] = useState<GuideEditorTab>('catalog');
 
   const readOnly = !isAdmin || view?.source === 'builtin';
 
@@ -264,19 +268,43 @@ export default function GuideEditorClient({ guideId }: { guideId: string }) {
               </span>
             )}
           </div>
-          {/* Tab strip: the rule catalog is GOV-2.2; the custom-rules tab lands with GOV-2.3. */}
+          {/* Tab strip: rule catalog (GOV-2.2) and custom rules (GOV-2.3). */}
           <nav aria-label="Guide editor tabs" className="mt-4 flex gap-6">
-            <span
-              aria-current="page"
-              className="border-b-2 border-indigo-600 pb-2 text-sm font-semibold text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'catalog'}
+              onClick={() => setActiveTab('catalog')}
+              className={
+                activeTab === 'catalog'
+                  ? 'border-b-2 border-indigo-600 pb-2 text-sm font-semibold text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                  : 'border-b-2 border-transparent pb-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              }
             >
               Rule catalog
-            </span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'custom'}
+              onClick={() => setActiveTab('custom')}
+              className={
+                activeTab === 'custom'
+                  ? 'border-b-2 border-indigo-600 pb-2 text-sm font-semibold text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                  : 'border-b-2 border-transparent pb-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              }
+            >
+              Custom rules
+            </button>
           </nav>
         </div>
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-6 dark:bg-slate-950">
+        {activeTab === 'custom' ? (
+          <CustomRulesTab guideId={guideId} />
+        ) : (
+          <>
         {error && (
           <div className="mb-6 flex items-start gap-3 rounded-lg border border-rose-300 bg-rose-50 p-4 text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-300">
             <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
@@ -422,10 +450,12 @@ export default function GuideEditorClient({ guideId }: { guideId: string }) {
             )}
           </>
         )}
+          </>
+        )}
       </main>
 
-      {/* Dirty-state save bar: fixed above the content while unsaved changes exist. */}
-      {dirty && (
+      {/* Dirty-state save bar: fixed above the content while unsaved catalog changes exist. */}
+      {activeTab === 'catalog' && dirty && (
         <div
           role="status"
           className="sticky bottom-0 flex items-center justify-between gap-4 border-t border-amber-300 bg-amber-50 px-6 py-3 dark:border-amber-700 dark:bg-amber-900/30"

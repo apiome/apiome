@@ -3335,6 +3335,74 @@ class StyleGuideRulesPutRequest(BaseModel):
     )
 
 
+class StyleGuideCustomRulesResponse(BaseModel):
+    """A guide's custom-rules YAML document (GOV-2.3, #4435)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    guide_id: str = Field(serialization_alias="guideId", description="The guide's id.")
+    guide_name: str = Field(
+        serialization_alias="guideName", description="The guide's display name."
+    )
+    source: str = Field(description="builtin (read-only, seeded) | custom (tenant-authored).")
+    yaml: str = Field(description="The Spectral-compatible custom-rules YAML document.")
+    rule_count: int = Field(
+        serialization_alias="ruleCount",
+        description="Number of custom rules in the document (0 for ``rules: {}``).",
+    )
+
+
+class StyleGuideCustomRulesPutRequest(BaseModel):
+    """Replace a guide's custom-rule rows from YAML (GOV-2.3, #4435)."""
+
+    yaml: str = Field(
+        min_length=1,
+        max_length=262_144,
+        description="The style-guide YAML document (`rules.<id>: {description, severity, given, then}`).",
+    )
+
+
+class StyleGuideCustomRulesPreviewRequest(BaseModel):
+    """Dry-run custom-rule evaluation against a project revision (GOV-2.3, #4435)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    yaml: str = Field(
+        min_length=1,
+        max_length=262_144,
+        description="Draft custom-rules YAML to evaluate (not persisted).",
+    )
+    project_id: str = Field(
+        validation_alias=AliasChoices("projectId", "project_id"),
+        serialization_alias="projectId",
+        description="The project owning the revision to lint against.",
+    )
+    version_record_id: str = Field(
+        validation_alias=AliasChoices("versionRecordId", "version_record_id"),
+        serialization_alias="versionRecordId",
+        description="The revision (``versions.id``) to lint against.",
+    )
+
+
+class StyleGuideCustomRulesPreviewResponse(BaseModel):
+    """Live violations from evaluating draft custom rules (GOV-2.3, #4435)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    project_id: str = Field(serialization_alias="projectId")
+    version_record_id: str = Field(serialization_alias="versionRecordId")
+    version_id: str = Field(serialization_alias="versionId")
+    count: int = Field(description="Number of violations returned.")
+    findings: List[LintFindingOut] = Field(
+        description="Custom-rule violations, sorted deterministically."
+    )
+    rule_errors: Dict[str, str] = Field(
+        default_factory=dict,
+        serialization_alias="ruleErrors",
+        description="Rule id -> sandbox abort reason for rules that could not be evaluated.",
+    )
+
+
 class VersionTagSchema(BaseModel):
     """Git-like tag pointing at a schema revision (versions.id)."""
 
