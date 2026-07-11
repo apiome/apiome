@@ -5827,6 +5827,72 @@
         }
       }
     },
+    "/v1/lint/rules": {
+      "get": {
+        "tags": [
+          "lint"
+        ],
+        "summary": "List Lint Rules",
+        "description": "List every registered built-in lint rule (GOV-1.2, #4428).\n\nReturns the full rule-catalog registry: each rule's stable id (the exact string lint\nfindings carry in their ``rule`` field), its pack, category, default severity, one-line\nrationale, and a docs anchor into the rule reference page. Sorted by rule id, so the\npayload is deterministic. The catalog is the same for every tenant \u2014 style guides\n(GOV-1.1/GOV-1.4) layer per-tenant enable/disable and severity overrides on top of it.",
+        "operationId": "list_lint_rules_v1_lint_rules_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LintRuleCatalogResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/versions/{tenant_slug}/{project_id}/version-branches": {
       "get": {
         "tags": [
@@ -32803,6 +32869,81 @@
         ],
         "title": "LintReportResponse",
         "description": "Server-computed quality score + itemized findings for one project version (#3609)."
+      },
+      "LintRuleCatalogResponse": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/LintRuleOut"
+            },
+            "type": "array",
+            "title": "Rules",
+            "description": "Every registered built-in rule, sorted by ruleId (deterministic)."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of registered rules (== len(rules))."
+          },
+          "docsPage": {
+            "type": "string",
+            "title": "Docspage",
+            "description": "Repository-relative path of the rule reference page docsAnchor points into."
+          }
+        },
+        "type": "object",
+        "required": [
+          "rules",
+          "count",
+          "docsPage"
+        ],
+        "title": "LintRuleCatalogResponse",
+        "description": "The full built-in lint-rule catalog (GOV-1.2, #4428), sorted by rule id."
+      },
+      "LintRuleOut": {
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "title": "Ruleid",
+            "description": "Stable rule identifier \u2014 exactly the string findings carry in `rule`."
+          },
+          "pack": {
+            "type": "string",
+            "title": "Pack",
+            "description": "Rule pack the rule belongs to (openapi, common, asyncapi, graphql, ...)."
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "Rule group (naming, documentation, structure, compatibility, ...)."
+          },
+          "defaultSeverity": {
+            "type": "string",
+            "title": "Defaultseverity",
+            "description": "Severity applied when no style guide overrides it (error/warning/info)."
+          },
+          "rationale": {
+            "type": "string",
+            "title": "Rationale",
+            "description": "One-line explanation of why the rule exists."
+          },
+          "docsAnchor": {
+            "type": "string",
+            "title": "Docsanchor",
+            "description": "Anchor slug into the rule reference page documenting this rule."
+          }
+        },
+        "type": "object",
+        "required": [
+          "ruleId",
+          "pack",
+          "category",
+          "defaultSeverity",
+          "rationale",
+          "docsAnchor"
+        ],
+        "title": "LintRuleOut",
+        "description": "One registered built-in lint rule from the rule-catalog registry (GOV-1.2, #4428).\n\n``rule_id`` is the stable identifier findings carry in their ``rule`` field, so every\nviolation is attributable to a registered rule. ``default_severity`` is the severity the\nrule applies when no style guide overrides it."
       },
       "LossItem": {
         "properties": {
