@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.114.0] - 2026-07-11
+
+### Added
+- **Custom rule DSL, Spectral-compatible subset (#4429, GOV-1.3)** — tenants can author custom
+  lint rules in YAML (`rules.<id>: {description, severity, given, then}`) with the core
+  functions `pattern`, `casing`, `enumeration`, `truthy`, `defined`, `undefined`, and `length`.
+  See `docs/guide/custom-rules.md`. JS-function rules remain out of scope (v2).
+  - New module `app.custom_rule_dsl`: strict validation with pointer-carrying errors
+    (`rules.my-rule.then.functionOptions.match`), duplicate-key rejection, and cardinality caps;
+    `validate_custom_definition` re-validates `style_guide_rules.custom_def` values (GOV-1.1).
+  - New route `POST /v1/lint/custom-rules/validate`: echoes the parsed rules on success; a
+    malformed guide returns HTTP 422 whose detail carries a `message` and a `pointer` to the
+    offending YAML node. Custom ids may not shadow built-in rule ids (GOV-1.2).
+  - Sandboxed evaluation engine for GOV-1.4: user regexes run under a hard `regex`-engine
+    timeout (no catastrophic backtracking), JSONPath evaluation spends from a bounded per-rule
+    node budget (adversarial `$..*..*..*` aborts deterministically), and `[*]` follows Spectral
+    object-property semantics so `$.paths[*][*]` selects operations with real key paths.
+
 ## [1.113.0] - 2026-07-11
 
 ### Added

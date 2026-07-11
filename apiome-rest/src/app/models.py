@@ -3059,6 +3059,60 @@ class LintRuleCatalogResponse(BaseModel):
     )
 
 
+class CustomRulesValidateRequest(BaseModel):
+    """Request body for custom-rule DSL validation (GOV-1.3, #4429): the guide YAML source."""
+
+    yaml: str = Field(
+        min_length=1,
+        max_length=262_144,
+        description="The style-guide YAML document (`rules.<id>: {description, severity, given, then}`).",
+    )
+
+
+class CustomRuleThenOut(BaseModel):
+    """One validated `then` clause of a custom rule (GOV-1.3, #4429)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    field: Optional[str] = Field(
+        default=None,
+        description="Property name the function tests ('@key' tests each object key); null tests the match itself.",
+    )
+    function: str = Field(
+        description="Core function: pattern, casing, enumeration, truthy, defined, undefined, length."
+    )
+    function_options: Dict[str, Any] = Field(
+        default_factory=dict,
+        serialization_alias="functionOptions",
+        description="The validated functionOptions for the function (empty when it takes none).",
+    )
+
+
+class CustomRuleOut(BaseModel):
+    """One validated custom rule from a style-guide document (GOV-1.3, #4429)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rule_id: str = Field(
+        serialization_alias="ruleId",
+        description="The rule's id (the key under `rules`); findings carry it in their `rule` field.",
+    )
+    description: str = Field(description="Human description; used as the base finding message.")
+    severity: str = Field(description="Severity findings carry: error | warning | info.")
+    given: List[str] = Field(description="JSONPath expressions selecting the values the rule tests.")
+    then: List[CustomRuleThenOut] = Field(description="Clauses applied to every given match.")
+
+
+class CustomRulesValidateResponse(BaseModel):
+    """Successful validation of a custom-rule guide (GOV-1.3, #4429): the parsed rules."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    valid: bool = Field(description="Always true on a 200 (malformed guides return HTTP 422).")
+    count: int = Field(description="Number of validated rules (== len(rules)).")
+    rules: List[CustomRuleOut] = Field(description="Every validated rule, in author order.")
+
+
 class VersionTagSchema(BaseModel):
     """Git-like tag pointing at a schema revision (versions.id)."""
 

@@ -48,6 +48,19 @@ Returns every registered built-in rule with its stable id, pack, category, defau
 one-line rationale, and a docs anchor into [lint-rules.md](lint-rules.md). The catalog is the
 same for every tenant; style guides layer per-tenant overrides on top of it.
 
+### Validate a custom-rule style guide
+
+```http
+POST /v1/lint/custom-rules/validate
+X-API-Key: <your-api-key>
+Content-Type: application/json
+
+{"yaml": "rules:\n  servers-use-https:\n    description: Every server URL uses https.\n    given: \"$.servers[*].url\"\n    then: {function: pattern, functionOptions: {match: \"^https://\"}}\n"}
+```
+
+Strictly validates a [Spectral-compatible custom-rule guide](custom-rules.md) and echoes the
+parsed rules; a malformed guide returns HTTP 422 with a pointer to the offending YAML node.
+
 ## Verify
 
 The grade and findings returned by the CLI match what the UI shows for the same version — that
@@ -56,5 +69,6 @@ consistency is the point of server-side scoring.
 ## Related
 
 - [lint-rules.md](lint-rules.md) — reference for every built-in lint rule (ids, severities, rationales)
+- [custom-rules.md](custom-rules.md) — author your own rules in the Spectral-compatible DSL
 - [edit-classes-and-properties.md](edit-classes-and-properties.md) — clear "missing description" findings
 - [publish-a-version.md](publish-a-version.md) — publishing enforces its own gates on top of lint

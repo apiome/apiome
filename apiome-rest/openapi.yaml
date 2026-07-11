@@ -3919,6 +3919,63 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/lint/custom-rules/validate:
+    post:
+      tags:
+      - lint
+      summary: Validate Custom Rules
+      description: 'Strictly validate a custom-rule style guide (GOV-1.3, #4429).
+
+
+        Accepts the Spectral-compatible subset DSL: a YAML document with `rules.<id>:
+
+        {description, severity, given, then}` where `then` uses the core functions
+        `pattern`,
+
+        `casing`, `enumeration`, `truthy`, `defined`, `undefined`, and `length`. On
+        success the
+
+        parsed rules are echoed back (the shape stored in `style_guide_rules.custom_def`).
+
+        A malformed guide returns HTTP 422 whose `detail` carries a `message` and
+        a `pointer`
+
+        to the offending definition. Custom rule ids may not shadow built-in rule
+        ids.'
+      operationId: validate_custom_rules_v1_lint_custom_rules_validate_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomRulesValidateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomRulesValidateResponse'
+        '422':
+          description: 'Malformed guide: `detail.message` explains the problem and
+            `detail.pointer` points at the offending YAML node (e.g. `rules.my-rule.then.functionOptions.match`).'
   /v1/versions/{tenant_slug}/{project_id}/version-branches:
     get:
       tags:
@@ -20291,6 +20348,107 @@ components:
       - class_id
       title: CopyClassToInlineSchemaRequest
       description: Request model for copying class properties to inline schema.
+    CustomRuleOut:
+      properties:
+        ruleId:
+          type: string
+          title: Ruleid
+          description: The rule's id (the key under `rules`); findings carry it in
+            their `rule` field.
+        description:
+          type: string
+          title: Description
+          description: Human description; used as the base finding message.
+        severity:
+          type: string
+          title: Severity
+          description: 'Severity findings carry: error | warning | info.'
+        given:
+          items:
+            type: string
+          type: array
+          title: Given
+          description: JSONPath expressions selecting the values the rule tests.
+        then:
+          items:
+            $ref: '#/components/schemas/CustomRuleThenOut'
+          type: array
+          title: Then
+          description: Clauses applied to every given match.
+      type: object
+      required:
+      - ruleId
+      - description
+      - severity
+      - given
+      - then
+      title: CustomRuleOut
+      description: 'One validated custom rule from a style-guide document (GOV-1.3,
+        #4429).'
+    CustomRuleThenOut:
+      properties:
+        field:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Field
+          description: Property name the function tests ('@key' tests each object
+            key); null tests the match itself.
+        function:
+          type: string
+          title: Function
+          description: 'Core function: pattern, casing, enumeration, truthy, defined,
+            undefined, length.'
+        functionOptions:
+          additionalProperties: true
+          type: object
+          title: Functionoptions
+          description: The validated functionOptions for the function (empty when
+            it takes none).
+      type: object
+      required:
+      - function
+      title: CustomRuleThenOut
+      description: 'One validated `then` clause of a custom rule (GOV-1.3, #4429).'
+    CustomRulesValidateRequest:
+      properties:
+        yaml:
+          type: string
+          maxLength: 262144
+          minLength: 1
+          title: Yaml
+          description: 'The style-guide YAML document (`rules.<id>: {description,
+            severity, given, then}`).'
+      type: object
+      required:
+      - yaml
+      title: CustomRulesValidateRequest
+      description: 'Request body for custom-rule DSL validation (GOV-1.3, #4429):
+        the guide YAML source.'
+    CustomRulesValidateResponse:
+      properties:
+        valid:
+          type: boolean
+          title: Valid
+          description: Always true on a 200 (malformed guides return HTTP 422).
+        count:
+          type: integer
+          title: Count
+          description: Number of validated rules (== len(rules)).
+        rules:
+          items:
+            $ref: '#/components/schemas/CustomRuleOut'
+          type: array
+          title: Rules
+          description: Every validated rule, in author order.
+      type: object
+      required:
+      - valid
+      - count
+      - rules
+      title: CustomRulesValidateResponse
+      description: 'Successful validation of a custom-rule guide (GOV-1.3, #4429):
+        the parsed rules.'
     DataRecordCreateBody:
       properties:
         class_schema_id:
