@@ -732,6 +732,7 @@ def load_builtin_import_sources() -> None:
     from . import xmlrpc_import_source as _xmlrpc  # noqa: F401
     from . import xsd_import_source as _xsd  # noqa: F401
     from . import postman_import_source as _postman  # noqa: F401
+    from . import cloudevents_import_source as _cloudevents  # noqa: F401
 
 
 # ===========================================================================

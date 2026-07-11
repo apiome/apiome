@@ -39,6 +39,8 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('xmlschema')?.sourceKind).toBe('xsd');
     expect(catalogAdapterForFormat('postman')?.sourceKind).toBe('postman');
     expect(catalogAdapterForFormat('postmancollection')?.sourceKind).toBe('postman');
+    expect(catalogAdapterForFormat('cloudevents')?.sourceKind).toBe('cloudevents');
+    expect(catalogAdapterForFormat('cloud-events')?.sourceKind).toBe('cloudevents');
   });
 
   test('is case/space-insensitive', () => {
@@ -55,7 +57,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['asyncapi', 'avro', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'openrpc', 'postman', 'raml', 'thrift', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
+    expect(kinds).toEqual(['asyncapi', 'avro', 'capnproto', 'cloudevents', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'openrpc', 'postman', 'raml', 'thrift', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -95,6 +97,10 @@ describe('catalog-import-formats', () => {
     expect(decideCatalogImportRouting('postman')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'postman' },
+    });
+    expect(decideCatalogImportRouting('cloudevents')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'cloudevents' },
     });
   });
 
@@ -170,6 +176,8 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('xmlrpc')).toBe('rpc');
     expect(paradigmForFormat('xsd')).toBe('dataschema');
     expect(paradigmForFormat('postman')).toBe('rest');
+    expect(paradigmForFormat('cloudevents')).toBe('event');
+    expect(paradigmForFormat('cloud-events')).toBe('event');
     expect(paradigmForFormat('avsc')).toBe('dataschema');
     expect(paradigmForFormat('openapi-3.1')).toBe('rest');
     expect(paradigmForFormat('swagger-2.0')).toBe('rest');

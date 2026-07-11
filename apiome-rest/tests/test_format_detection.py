@@ -62,6 +62,10 @@ _FIXTURES = {
         '{"info":{"name":"Tasks API","schema":"https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},'
         '"item":[{"name":"Ping","request":{"method":"GET","url":{"raw":"{{baseUrl}}/ping","path":["ping"]}}}]}'
     ),
+    "cloudevents": (
+        '{"specversion":"1.0","id":"evt-1","type":"com.example.order.created",'
+        '"source":"/orders/service","data":{"orderId":"abc"}}'
+    ),
 }
 
 
@@ -180,6 +184,14 @@ def test_postman_is_now_importable() -> None:
     assert detection.detected.format == "postman"
     assert detection.detected.importable is True
     assert detection.detected.source_key == "postman"
+
+
+def test_cloudevents_is_now_importable() -> None:
+    detection = detect_format(DetectionInput(text=_FIXTURES["cloudevents"]))
+    assert detection.detected is not None
+    assert detection.detected.format == "cloudevents"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "cloudevents"
 
 
 def test_protobuf_is_now_importable() -> None:

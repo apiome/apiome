@@ -311,6 +311,41 @@ def _sniff_xsd(payload: DetectionInput) -> DetectionResult:
     return NO_MATCH
 
 
+def _sniff_cloudevents(payload: DetectionInput) -> DetectionResult:
+    document = payload.document
+    if isinstance(document, dict):
+        specversion = document.get("specversion")
+        event_type = document.get("type")
+        source = document.get("source")
+        if (
+            isinstance(specversion, str)
+            and specversion.strip()
+            and isinstance(event_type, str)
+            and event_type.strip()
+            and isinstance(source, str)
+            and source.strip()
+            and "openapi" not in document
+            and "swagger" not in document
+            and "asyncapi" not in document
+            and not (isinstance(document.get("info"), dict) and "item" in document)
+        ):
+            return DetectionResult(
+                confidence=0.95,
+                format="cloudevents",
+                reason="CloudEvents `specversion` + `type` + `source` markers",
+            )
+    text = _text_of(payload)
+    if text and '"specversion"' in text and '"type"' in text and '"source"' in text:
+        if "openapi" not in text and "swagger" not in text and "asyncapi" not in text:
+            if '"info"' not in text or '"item"' not in text:
+                return DetectionResult(
+                    confidence=0.85,
+                    format="cloudevents",
+                    reason="CloudEvents envelope markers",
+                )
+    return NO_MATCH
+
+
 def _sniff_postman(payload: DetectionInput) -> DetectionResult:
     document = payload.document
     if isinstance(document, dict):
@@ -352,6 +387,7 @@ _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
     _sniff_xmlrpc,
     _sniff_xsd,
     _sniff_postman,
+    _sniff_cloudevents,
 )
 
 #: The format keys this module can sniff (for tests/docs); adapter formats are
@@ -375,6 +411,7 @@ SNIFFED_FORMATS = frozenset(
         "xmlrpc",
         "xsd",
         "postman",
+        "cloudevents",
     }
 )
 

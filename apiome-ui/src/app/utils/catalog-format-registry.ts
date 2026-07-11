@@ -165,7 +165,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
 
   // ---- Event ----
   { id: 'asyncapi', label: 'AsyncAPI', icon: Radio, tone: 'violet', importable: true, aliases: ['async'], description: 'Event-driven API (AsyncAPI 2.x/3.x).' },
-  { id: 'cloudevents', label: 'CloudEvents', icon: Cloud, tone: 'sky', description: 'CloudEvents event envelope schema.' },
+  { id: 'cloudevents', label: 'CloudEvents', icon: Cloud, tone: 'sky', importable: true, aliases: ['cloud-events'], description: 'CloudEvents 1.0 structured-mode event envelope.' },
 
   // ---- REST (non-OpenAPI) ----
   { id: 'raml', label: 'RAML', icon: BookMarked, tone: 'red', importable: true, description: 'RAML 1.0 REST API definition.' },

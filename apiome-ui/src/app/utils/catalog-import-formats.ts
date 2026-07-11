@@ -76,6 +76,8 @@ const FORMAT_TO_ADAPTER: Readonly<Record<string, CatalogAdapterSource>> = {
   xmlschema: { sourceKind: 'xsd', label: 'XSD' },
   postman: { sourceKind: 'postman', label: 'Postman' },
   postmancollection: { sourceKind: 'postman', label: 'Postman' },
+  cloudevents: { sourceKind: 'cloudevents', label: 'CloudEvents' },
+  'cloud-events': { sourceKind: 'cloudevents', label: 'CloudEvents' },
 };
 
 /**
@@ -110,6 +112,8 @@ const FORMAT_TO_PARADIGM: Readonly<Record<string, string>> = {
   xmlschema: 'dataschema',
   postman: 'rest',
   postmancollection: 'rest',
+  cloudevents: 'event',
+  'cloud-events': 'event',
   openapi: 'rest',
   swagger: 'rest',
   jsonschema: 'dataschema',
