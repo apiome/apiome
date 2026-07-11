@@ -157,7 +157,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'flatbuffers', label: 'FlatBuffers', icon: Boxes, tone: 'teal', importable: true, aliases: ['fbs'], description: 'FlatBuffers serialization schema (.fbs).' },
   { id: 'corbaidl', label: 'CORBA IDL', icon: Network, tone: 'red', aliases: ['corba', 'idl'], description: 'CORBA interface definition language.' },
   { id: 'oncrpc', label: 'ONC RPC', icon: Network, tone: 'slate', aliases: ['sunrpc', 'rpcgen', 'xdr'], description: 'ONC/Sun RPC (XDR) interface definition.' },
-  { id: 'xmlrpc', label: 'XML-RPC', icon: FileCode, tone: 'stone', description: 'XML-RPC method interface.' },
+  { id: 'xmlrpc', label: 'XML-RPC', icon: FileCode, tone: 'stone', importable: true, aliases: ['xml-rpc'], description: 'XML-RPC method interface.' },
   { id: 'openrpc', label: 'OpenRPC', icon: Workflow, tone: 'blue', importable: true, aliases: ['jsonrpc'], description: 'OpenRPC JSON-RPC 2.0 service description.' },
 
   // ---- Graph ----

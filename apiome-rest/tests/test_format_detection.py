@@ -48,6 +48,10 @@ _FIXTURES = {
         '{"openrpc":"1.2.6","info":{"title":"Wallet API","version":"1.0.0"},'
         '"methods":[{"name":"getBalance"}]}'
     ),
+    "xmlrpc": (
+        '<?xml version="1.0"?>\n'
+        "<methodCall><methodName>ping</methodName><params></params></methodCall>"
+    ),
 }
 
 
@@ -142,6 +146,14 @@ def test_openrpc_is_now_importable() -> None:
     assert detection.detected.format == "openrpc"
     assert detection.detected.importable is True
     assert detection.detected.source_key == "openrpc"
+
+
+def test_xmlrpc_is_now_importable() -> None:
+    detection = detect_format(DetectionInput(text=_FIXTURES["xmlrpc"]))
+    assert detection.detected is not None
+    assert detection.detected.format == "xmlrpc"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "xmlrpc"
 
 
 def test_protobuf_is_now_importable() -> None:

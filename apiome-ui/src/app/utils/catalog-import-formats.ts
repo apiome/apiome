@@ -6,7 +6,7 @@
  * bytes for later conversion. That pipeline resolves the request's `source_kind` against the
  * server-side import-source registry, so a source is storable only when a **registered adapter**
  * can parse it. Today those adapters are gRPC/Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC,
- * FlatBuffers, Cap'n Proto, WSDL, RAML, WADL, OpenRPC, and Avro (OpenAPI/Swagger are native and go to Projects, not
+ * FlatBuffers, Cap'n Proto, WSDL, RAML, WADL, OpenRPC, Avro, and XML-RPC (OpenAPI/Swagger are native and go to Projects, not
  * the catalog).
  *
  * This maps the client analyzer's detected `format` token (see `openapi-analyzer.ts`) to the
@@ -70,6 +70,8 @@ const FORMAT_TO_ADAPTER: Readonly<Record<string, CatalogAdapterSource>> = {
   jsonrpc: { sourceKind: 'openrpc', label: 'OpenRPC' },
   avro: { sourceKind: 'avro', label: 'Avro' },
   avsc: { sourceKind: 'avro', label: 'Avro' },
+  xmlrpc: { sourceKind: 'xmlrpc', label: 'XML-RPC' },
+  'xml-rpc': { sourceKind: 'xmlrpc', label: 'XML-RPC' },
 };
 
 /**
@@ -98,6 +100,8 @@ const FORMAT_TO_PARADIGM: Readonly<Record<string, string>> = {
   jsonrpc: 'rpc',
   avro: 'dataschema',
   avsc: 'dataschema',
+  xmlrpc: 'rpc',
+  'xml-rpc': 'rpc',
   openapi: 'rest',
   swagger: 'rest',
   jsonschema: 'dataschema',

@@ -33,6 +33,8 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('jsonrpc')?.sourceKind).toBe('openrpc');
     expect(catalogAdapterForFormat('avro')?.sourceKind).toBe('avro');
     expect(catalogAdapterForFormat('avsc')?.sourceKind).toBe('avro');
+    expect(catalogAdapterForFormat('xmlrpc')?.sourceKind).toBe('xmlrpc');
+    expect(catalogAdapterForFormat('xml-rpc')?.sourceKind).toBe('xmlrpc');
   });
 
   test('is case/space-insensitive', () => {
@@ -49,7 +51,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['asyncapi', 'avro', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'openrpc', 'raml', 'thrift', 'wadl', 'wsdl']);
+    expect(kinds).toEqual(['asyncapi', 'avro', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'openrpc', 'raml', 'thrift', 'wadl', 'wsdl', 'xmlrpc']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -77,6 +79,10 @@ describe('catalog-import-formats', () => {
     expect(decideCatalogImportRouting('avro')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'avro' },
+    });
+    expect(decideCatalogImportRouting('xmlrpc')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'xmlrpc' },
     });
   });
 
@@ -149,6 +155,7 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('openrpc')).toBe('rpc');
     expect(paradigmForFormat('jsonrpc')).toBe('rpc');
     expect(paradigmForFormat('avro')).toBe('dataschema');
+    expect(paradigmForFormat('xmlrpc')).toBe('rpc');
     expect(paradigmForFormat('avsc')).toBe('dataschema');
     expect(paradigmForFormat('openapi-3.1')).toBe('rest');
     expect(paradigmForFormat('swagger-2.0')).toBe('rest');

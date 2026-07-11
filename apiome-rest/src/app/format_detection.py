@@ -280,6 +280,20 @@ def _sniff_avro(payload: DetectionInput) -> DetectionResult:
     return NO_MATCH
 
 
+def _sniff_xmlrpc(payload: DetectionInput) -> DetectionResult:
+    text = _text_of(payload)
+    if not text:
+        return NO_MATCH
+    if "<methodCall" in text or "<methodResponse" in text:
+        if "<wsdl:definitions" in text or (
+            "<definitions" in text and "schemas.xmlsoap.org/wsdl" in text
+        ):
+            return NO_MATCH
+        kind = "methodCall" if "<methodCall" in text else "methodResponse"
+        return DetectionResult(confidence=0.95, format="xmlrpc", reason=f"`<{kind}>` root element")
+    return NO_MATCH
+
+
 #: Every standalone sniffer, in a stable order. Each yields a not-yet-importable
 #: format candidate (their full adapters arrive in the format epics).
 _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
@@ -296,6 +310,7 @@ _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
     _sniff_arazzo,
     _sniff_openrpc,
     _sniff_avro,
+    _sniff_xmlrpc,
 )
 
 #: The format keys this module can sniff (for tests/docs); adapter formats are
@@ -316,6 +331,7 @@ SNIFFED_FORMATS = frozenset(
         "arazzo",
         "openrpc",
         "avro",
+        "xmlrpc",
     }
 )
 
