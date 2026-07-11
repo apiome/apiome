@@ -24,6 +24,7 @@ import {
   BarChart3,
   GitCompareArrows,
   Layers,
+  BookOpenCheck,
 } from 'lucide-react';
 import { useDarkMode } from '@/app/hooks/useDarkMode';
 
@@ -80,6 +81,17 @@ const DashboardSideNav: React.FC = () => {
         { label: 'Roles', href: '/ade/dashboard/roles', icon: Shield, disabled: !hasTenant },
         { label: 'Members', href: '/ade/dashboard/members', icon: Users, disabled: !hasTenant },
         { label: 'Access Audit', href: '/ade/dashboard/audit', icon: ScrollText, disabled: !hasTenant },
+      ],
+    },
+    {
+      header: 'Governance',
+      items: [
+        {
+          label: 'Style Guides',
+          href: '/ade/dashboard/style-guides',
+          icon: BookOpenCheck,
+          disabled: !hasTenant,
+        },
       ],
     },
     {
