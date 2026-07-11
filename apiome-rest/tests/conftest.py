@@ -59,6 +59,70 @@ def _restore_dependency_overrides():
 
 
 @pytest.fixture(autouse=True)
+def _in_memory_async_job_store(monkeypatch):
+    """Back the shared async-job store (migration V158) with a per-test in-memory fake.
+
+    The spec-import and export engines mirror every job state change to ``apiome.async_job`` and
+    read polls back from it so a round-robin deployment can poll any instance (previously the
+    in-memory dict 404'd on instances that didn't create the job). Routing those five ``db``
+    methods to a fresh dict per test keeps the engine tests hermetic and deterministic — no
+    Postgres dependency, no cross-test accumulation in the table — while still exercising the
+    real mirror→read round-trip through the fake. Tests that replace the whole ``db`` singleton
+    with their own mock are unaffected (this patches the real singleton's methods only).
+    """
+    try:
+        module = __import__("app.database", fromlist=["db"])
+    except Exception:
+        yield
+        return
+
+    store: dict = {}
+
+    def _upsert(*, job_id, kind, tenant_slug, state, status, extra=None):
+        row = store.get(job_id) or {"cancel_requested": False, "extra": None}
+        row.update(
+            {
+                "job_id": job_id,
+                "kind": kind,
+                "tenant_slug": tenant_slug,
+                "state": state,
+                "status": status,
+            }
+        )
+        if extra is not None:  # COALESCE: never null out a value already recorded
+            row["extra"] = extra
+        store[job_id] = row
+
+    def _matches(row, tenant_slug, kind):
+        return row is not None and row["tenant_slug"] == tenant_slug and row["kind"] == kind
+
+    def _get(job_id, tenant_slug, kind):
+        row = store.get(job_id)
+        return dict(row) if _matches(row, tenant_slug, kind) else None
+
+    def _list(tenant_slug, kind):
+        return [dict(r) for r in store.values() if _matches(r, tenant_slug, kind)]
+
+    def _request_cancel(job_id, tenant_slug, kind):
+        row = store.get(job_id)
+        if _matches(row, tenant_slug, kind):
+            row["cancel_requested"] = True
+            return True
+        return False
+
+    def _cancel_requested(job_id):
+        row = store.get(job_id)
+        return bool(row and row.get("cancel_requested"))
+
+    monkeypatch.setattr(module.db, "upsert_async_job", _upsert)
+    monkeypatch.setattr(module.db, "get_async_job", _get)
+    monkeypatch.setattr(module.db, "list_async_jobs", _list)
+    monkeypatch.setattr(module.db, "request_async_job_cancel", _request_cancel)
+    monkeypatch.setattr(module.db, "async_job_cancel_requested", _cancel_requested)
+    yield
+
+
+@pytest.fixture(autouse=True)
 def _allow_permissions_by_default(monkeypatch):
     """
     Default the RBAC permission guard (#3611) to "allow" for route unit tests.

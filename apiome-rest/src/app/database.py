@@ -15042,6 +15042,92 @@ class Database:
         )
         return rows[0]
 
+    # ───────────────────────── async job store (shared status) ─────────────────────────
+    # Round-robin deployments run several REST instances; a job is driven by whichever
+    # instance received the POST, but status polls are load-balanced across all of them.
+    # These methods back the shared read model (see migration V158, apiome.async_job) so any
+    # instance can answer GET/list without the in-memory 404. `job_id` is text (not uuid), so
+    # a malformed id from a URL returns None here (→ 404) instead of raising a cast error.
+
+    def upsert_async_job(
+        self,
+        *,
+        job_id: str,
+        kind: str,
+        tenant_slug: str,
+        state: str,
+        status: Dict[str, Any],
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Mirror an async job's current poll payload into the shared store.
+
+        The driving instance upserts on every state change. ``cancel_requested`` is
+        deliberately not written here — it is owned by :meth:`request_async_job_cancel`
+        and read back by the driver. ``extra`` is a per-kind bag (import commit payload,
+        export list metadata) preserved with COALESCE so a later status update never nulls a
+        value already recorded (e.g. the import commit payload written at completion).
+        """
+        query = """
+            INSERT INTO apiome.async_job
+                (job_id, kind, tenant_slug, state, status, extra, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, now())
+            ON CONFLICT (job_id) DO UPDATE SET
+                state = EXCLUDED.state,
+                status = EXCLUDED.status,
+                extra = COALESCE(EXCLUDED.extra, apiome.async_job.extra),
+                updated_at = now()
+            RETURNING job_id
+        """
+        self.execute_query(
+            query,
+            (
+                job_id,
+                kind,
+                tenant_slug,
+                state,
+                Json(status),
+                Json(extra) if extra is not None else None,
+            ),
+        )
+
+    def get_async_job(
+        self, job_id: str, tenant_slug: str, kind: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return the shared-store row for a job scoped to (tenant, kind), or None."""
+        query = """
+            SELECT job_id, kind, tenant_slug, state, status, extra, cancel_requested
+            FROM apiome.async_job
+            WHERE job_id = %s AND tenant_slug = %s AND kind = %s
+        """
+        rows = self.execute_query(query, (job_id, tenant_slug, kind))
+        return rows[0] if rows else None
+
+    def list_async_jobs(self, tenant_slug: str, kind: str) -> List[Dict[str, Any]]:
+        """List shared-store rows for a tenant's jobs of one kind, oldest first."""
+        query = """
+            SELECT job_id, state, status, extra
+            FROM apiome.async_job
+            WHERE tenant_slug = %s AND kind = %s
+            ORDER BY created_at ASC
+        """
+        return self.execute_query(query, (tenant_slug, kind))
+
+    def request_async_job_cancel(self, job_id: str, tenant_slug: str, kind: str) -> bool:
+        """Set the cross-instance cancel flag; return False when no such job exists."""
+        query = """
+            UPDATE apiome.async_job
+            SET cancel_requested = TRUE, updated_at = now()
+            WHERE job_id = %s AND tenant_slug = %s AND kind = %s
+            RETURNING job_id
+        """
+        return bool(self.execute_query(query, (job_id, tenant_slug, kind)))
+
+    def async_job_cancel_requested(self, job_id: str) -> bool:
+        """Return whether cancellation has been requested (read by the driving instance)."""
+        query = "SELECT cancel_requested FROM apiome.async_job WHERE job_id = %s"
+        rows = self.execute_query(query, (job_id,))
+        return bool(rows and rows[0].get("cancel_requested"))
+
 
 # Global database instance
 db = Database()

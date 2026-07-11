@@ -68,6 +68,7 @@ We continue to improve the platform based on your feedback with improvements and
 - CLI: Adds MCP registration functionality to the system
 - DB: Optimizations made to increase speed for import processing
 - DB: Implements catalog storage and indexing
+- DB: Job status table was created for import/export jobs
 - Import: Corrected import for Swagger responses in paths to capture the schema properly for array items
 - Import: Import speed greatly improved
 - Import: Special cases with unicode characters are now properly handled
@@ -80,6 +81,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Import: Updating class creation step to increase speed using transactions and commits in groups
 - Import: Catalog import dialog accepts `.zip`/`.tar.gz` archives for multi-file gRPC/GraphQL/AsyncAPI sources (MFI-29.1)
 - Import: gRPC, GraphQL, and AsyncAPI adapters accept multi-document fileset input — split SDL, proto trees, and AsyncAPI suites resolve cross-file refs with identical fingerprints to pre-flattened imports (MFI-29.2)
+- Import: Fixed to use job table for status in cases where server could be round-robin deployed
 - REST: Swagger 2.0 documents normalize into the canonical model through the import SPI (MFI-30.1), closing the detect-without-normalize gap for cross-format diff and catalog persistence
 - Projects: Now displays quality and linting information in each project
 - UI: Fixes Published Versions viewing of OpenAPI and Arazzo URLs

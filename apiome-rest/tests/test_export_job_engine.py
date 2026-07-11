@@ -115,7 +115,7 @@ async def _wait_terminal(job_id: str, tenant_slug: str = TENANT_SLUG) -> dict:
     engine's job lock and strand every later test.
     """
     for _ in range(500):
-        status = get_export_job_status(tenant_slug, job_id)
+        status = await get_export_job_status(tenant_slug, job_id)
         if status.state in ("completed", "failed", "canceled"):
             return status.model_dump()
         await asyncio.sleep(0.01)
@@ -448,7 +448,7 @@ async def test_cancel_of_terminal_job_is_a_noop():
         await _wait_terminal(accepted.job_id)
 
     await cancel_export_job(TENANT_SLUG, accepted.job_id)
-    status = get_export_job_status(TENANT_SLUG, accepted.job_id)
+    status = await get_export_job_status(TENANT_SLUG, accepted.job_id)
     assert status.state == "completed"
     assert status.result is not None
 
@@ -482,7 +482,7 @@ async def test_status_and_emit_result_are_tenant_scoped():
         await _wait_terminal(accepted.job_id)
 
     with pytest.raises(HTTPException) as excinfo:
-        get_export_job_status("other-tenant", accepted.job_id)
+        await get_export_job_status("other-tenant", accepted.job_id)
     assert excinfo.value.status_code == 404
 
     with pytest.raises(HTTPException) as excinfo:
@@ -497,12 +497,12 @@ async def test_status_lookup_returns_a_snapshot():
         accepted = await schedule_export_job(TENANT_SLUG, TENANT_ID, request)
         await _wait_terminal(accepted.job_id)
 
-    status = get_export_job_status(TENANT_SLUG, accepted.job_id)
+    status = await get_export_job_status(TENANT_SLUG, accepted.job_id)
     status.events.clear()
     assert status.result is not None
     status.result.artifact = "mutated"
 
-    fresh = get_export_job_status(TENANT_SLUG, accepted.job_id)
+    fresh = await get_export_job_status(TENANT_SLUG, accepted.job_id)
     assert fresh.events
     assert fresh.result is not None
     assert fresh.result.artifact == "artifact-1"

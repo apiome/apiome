@@ -424,7 +424,7 @@ def _install_fake_import_engine(monkeypatch: pytest.MonkeyPatch, *, states: List
 
     seq = list(states)
 
-    def _status(tenant_slug, job_id):  # noqa: ANN001
+    async def _status(tenant_slug, job_id):  # noqa: ANN001
         state = seq.pop(0) if len(seq) > 1 else seq[0]
         events = [types.SimpleNamespace(level="error", message=error_msg)] if error_msg else []
         return types.SimpleNamespace(state=state, result=result, events=events)

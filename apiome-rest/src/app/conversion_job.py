@@ -546,7 +546,7 @@ class SpecImportCommitter:
         job_id = accepted.job_id
 
         waited = 0.0
-        status = get_spec_import_status(tenant_slug, job_id)
+        status = await get_spec_import_status(tenant_slug, job_id)
         while status.state not in _TERMINAL_IMPORT_STATES:
             if waited >= self._timeout:
                 raise ConversionError(
@@ -555,7 +555,7 @@ class SpecImportCommitter:
                 )
             await asyncio.sleep(self._poll_interval)
             waited += self._poll_interval
-            status = get_spec_import_status(tenant_slug, job_id)
+            status = await get_spec_import_status(tenant_slug, job_id)
 
         if status.state != "completed":
             detail = _first_error_message(status) or f"import job ended {status.state}"

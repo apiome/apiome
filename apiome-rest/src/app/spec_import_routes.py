@@ -151,7 +151,7 @@ async def get_spec_import_status(
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SpecImportJobStatus:
     _ = auth_data
-    return engine_get_spec_import_status(tenant_slug, job_id)
+    return await engine_get_spec_import_status(tenant_slug, job_id)
 
 
 @router.delete(
@@ -185,7 +185,7 @@ async def commit_spec_import_job(
 ) -> SpecImportCommitResponse:
     enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
     _ = auth_data
-    return engine_commit_spec_import_job(tenant_slug, job_id)
+    return await engine_commit_spec_import_job(tenant_slug, job_id)
 
 
 @router.post(

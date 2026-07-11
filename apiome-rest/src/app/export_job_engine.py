@@ -429,6 +429,68 @@ _jobs: Dict[str, _ExportJobRecord] = {}
 # would additionally bind to whichever event loop first contends on it.
 _jobs_lock = threading.Lock()
 
+# Kind discriminator for the shared async-job store (apiome.async_job, migration V158).
+# The in-memory _jobs dict above lives only on the instance that received the POST; under a
+# round-robin deployment, polls balanced to any other instance 404 without this shared mirror.
+_SHARED_JOB_KIND = "export"
+
+
+def _mirror_export_job(job_id: str) -> None:
+    """Best-effort mirror of a job's current poll payload into the shared store.
+
+    Called (off the lock) after each :func:`_publish` so any instance can answer GET/list from
+    Postgres. Synchronous — it runs inside a ``to_thread`` worker on the engine loop's blocking
+    path — and never raises: a mirror failure must not disturb the running export.
+    """
+    with _jobs_lock:
+        rec = _jobs.get(job_id)
+        if rec is None:
+            return
+        tenant_slug = rec.tenant_slug
+        state = rec.state
+        status_json = rec.status.model_dump(mode="json")
+        request_json = rec.request.model_dump(mode="json")
+    # List rows carry request metadata that isn't part of the poll payload; stash the fields
+    # the list endpoint needs so any instance can render its rows from the shared store.
+    extra = {
+        "artifact": request_json.get("artifact"),
+        "target": request_json.get("target"),
+        "dry_run": request_json.get("dry_run"),
+    }
+    try:
+        from .database import db
+
+        db.upsert_async_job(
+            job_id=job_id,
+            kind=_SHARED_JOB_KIND,
+            tenant_slug=tenant_slug,
+            state=state,
+            status=status_json,
+            extra=extra,
+        )
+    except Exception:  # noqa: BLE001 - mirroring is best-effort
+        logger.warning("Failed to mirror export job %s to shared store", job_id, exc_info=True)
+
+
+def _sync_export_cancel_flag(job_id: str) -> None:
+    """Pull a cross-instance cancel request into the in-memory record (best-effort).
+
+    A ``DELETE …/jobs/{job_id}`` may land on an instance that does not drive the job; it sets
+    ``cancel_requested`` in the shared store. The driver calls this at each :func:`_publish`
+    boundary so the flag it already honors reflects the request.
+    """
+    try:
+        from .database import db
+
+        requested = db.async_job_cancel_requested(job_id)
+    except Exception:  # noqa: BLE001 - cancel propagation is best-effort
+        return
+    if requested:
+        with _jobs_lock:
+            rec = _jobs.get(job_id)
+            if rec is not None:
+                rec.cancel_requested = True
+
 # The dedicated, process-lifetime event loop that drives job pipelines. Jobs must not run
 # on the submitting HTTP request's loop: a pipeline with real blocking stages outlives the
 # request, and under some server/test harnesses (per-request portals) that loop is torn
@@ -532,7 +594,10 @@ async def _publish(
     structured terminal failure (MFX-3.4). A job whose cancel flag is set is finalized to
     ``canceled`` here — the single stage-boundary cancel point.
     """
+    # Honor a cross-instance cancel request before applying this snapshot.
+    await asyncio.to_thread(_sync_export_cancel_flag, job_id)
     logged: Optional[ExportJobEvent] = None
+    canceled = False
     with _jobs_lock:
         rec = _jobs.get(job_id)
         if rec is None:
@@ -546,31 +611,34 @@ async def _publish(
                 events=rec.status.events,
                 progress=rec.status.progress,
             )
-            return False
-        if state is not None:
-            rec.state = state
-            rec.status.state = state  # type: ignore[assignment]
-        if percent is not None:
-            rec.status.percent = percent
-        if stage is not None:
-            rec.status.progress = ExportJobProgress(
-                phase=stage,  # type: ignore[arg-type]
-                total=len(_STAGES),
-                completed=_STAGES.index(stage),
-                current_item=rec.request.target,
-            )
-        if event is not None:
-            level, code, message, context = event
-            logged = _next_event(rec, level, code, message, context)
-            rec.status.events.append(logged)
-        if result is not None:
-            rec.status.result = result
-        if error is not None:
-            rec.status.error = error
+            canceled = True
+        else:
+            if state is not None:
+                rec.state = state
+                rec.status.state = state  # type: ignore[assignment]
+            if percent is not None:
+                rec.status.percent = percent
+            if stage is not None:
+                rec.status.progress = ExportJobProgress(
+                    phase=stage,  # type: ignore[arg-type]
+                    total=len(_STAGES),
+                    completed=_STAGES.index(stage),
+                    current_item=rec.request.target,
+                )
+            if event is not None:
+                level, code, message, context = event
+                logged = _next_event(rec, level, code, message, context)
+                rec.status.events.append(logged)
+            if result is not None:
+                rec.status.result = result
+            if error is not None:
+                rec.status.error = error
     # Log outside the lock (logging handlers can block).
     if logged is not None:
         _log_event(job_id, logged)
-    return True
+    # Mirror the new snapshot to the shared store so any instance can serve polls.
+    await asyncio.to_thread(_mirror_export_job, job_id)
+    return not canceled
 
 
 async def _fail(job_id: str, code: str, message: str,
@@ -1102,54 +1170,97 @@ async def schedule_export_job(
             status=initial,
             request=request,
         )
+    # Mirror the initial 'queued' row before returning 202 so the first poll — which
+    # round-robin may route to any instance — already finds the job in the shared store.
+    await asyncio.to_thread(_mirror_export_job, job_id)
     # Run on the engine's own loop (not the request's) so the job survives the request.
     asyncio.run_coroutine_threadsafe(_drive_export_job(job_id), _get_engine_loop())
     return ExportJobAccepted(job_id=job_id, status_path=_status_path(tenant_slug, job_id))
 
 
-def get_export_job_status(tenant_slug: str, job_id: str) -> ExportJobStatus:
-    """Return the current poll payload for a job (404 when unknown for this tenant)."""
+async def get_export_job_status(tenant_slug: str, job_id: str) -> ExportJobStatus:
+    """Return the current poll payload for a job (404 when unknown for this tenant).
+
+    Fast path: this instance drives the job, so its in-memory record is authoritative and
+    freshest. Otherwise (round-robin: another instance drives it) consult the shared store so
+    the poll still resolves instead of 404-ing.
+    """
     with _jobs_lock:
-        return _get_record_locked(tenant_slug, job_id).status.model_copy(deep=True)
+        rec = _jobs.get(job_id)
+        if rec is not None and rec.tenant_slug == tenant_slug:
+            return rec.status.model_copy(deep=True)
+    from .database import db
+
+    try:
+        row = await asyncio.to_thread(db.get_async_job, job_id, tenant_slug, _SHARED_JOB_KIND)
+    except Exception:  # noqa: BLE001 - shared store is best-effort; degrade to 404 below
+        logger.warning("Failed to read export job %s from shared store", job_id, exc_info=True)
+        row = None
+    if row is not None:
+        return ExportJobStatus.model_validate(row["status"])
+    raise HTTPException(status_code=404, detail="Export job not found")
 
 
 async def list_export_jobs(tenant_slug: str) -> ExportJobListResponse:
-    """List this process's export jobs for the tenant (summary rows, no event logs)."""
-    with _jobs_lock:
-        items: List[ExportJobListItem] = []
-        for rec in _jobs.values():
-            if rec.tenant_slug != tenant_slug:
-                continue
-            st = rec.status
-            items.append(
-                ExportJobListItem(
-                    job_id=st.job_id,
-                    state=st.state,
-                    percent=st.percent,
-                    status_path=_status_path(tenant_slug, st.job_id),
-                    artifact=rec.request.artifact,
-                    target=rec.request.target,
-                    dry_run=rec.request.dry_run,
-                    progress=st.progress,
-                )
-            )
+    """List a tenant's export jobs from the shared store (summary rows, no event logs).
+
+    Falls back to this process's in-memory jobs if the shared store is unreachable.
+    """
+    from .database import db
+
+    def _item(st: ExportJobStatus, artifact: Any, target: Any, dry_run: Any) -> ExportJobListItem:
+        return ExportJobListItem(
+            job_id=st.job_id,
+            state=st.state,
+            percent=st.percent,
+            status_path=_status_path(tenant_slug, st.job_id),
+            artifact=artifact,
+            target=target,
+            dry_run=dry_run,
+            progress=st.progress,
+        )
+
+    try:
+        rows = await asyncio.to_thread(db.list_async_jobs, tenant_slug, _SHARED_JOB_KIND)
+    except Exception:  # noqa: BLE001 - shared store is best-effort; degrade to local view
+        logger.warning("Falling back to in-memory export job list for %s", tenant_slug, exc_info=True)
+        with _jobs_lock:
+            local = [
+                (r.status, r.request.artifact, r.request.target, r.request.dry_run)
+                for r in _jobs.values()
+                if r.tenant_slug == tenant_slug
+            ]
+        return ExportJobListResponse(jobs=[_item(st, a, t, d) for (st, a, t, d) in local])
+    items: List[ExportJobListItem] = []
+    for row in rows:
+        st = ExportJobStatus.model_validate(row["status"])
+        extra = row.get("extra") or {}
+        items.append(_item(st, extra.get("artifact"), extra.get("target"), extra.get("dry_run")))
     return ExportJobListResponse(jobs=items)
 
 
 async def cancel_export_job(tenant_slug: str, job_id: str) -> None:
     """Request cancellation of a job; a no-op when it is already terminal.
 
-    The pipeline honours the flag at its next stage boundary — an in-flight blocking
-    stage (source load / emit) finishes its thread first, then the job finalizes to
-    ``canceled`` without publishing further progress or a result.
+    Sets the shared cancel flag so the driving instance (possibly a different process) honours
+    it at its next stage boundary — an in-flight blocking stage (source load / emit) finishes
+    its thread first, then the job finalizes to ``canceled`` without further progress or result.
+    If this instance owns the job, the flag is also set locally for the immediate next boundary.
     """
+    from .database import db
+
+    matched = await asyncio.to_thread(
+        db.request_async_job_cancel, job_id, tenant_slug, _SHARED_JOB_KIND
+    )
+    owned = False
     with _jobs_lock:
         rec = _jobs.get(job_id)
-        if rec is None or rec.tenant_slug != tenant_slug:
-            raise HTTPException(status_code=404, detail="Export job not found")
-        if rec.state in _TERMINAL_STATES:
-            return
-        rec.cancel_requested = True
+        if rec is not None and rec.tenant_slug == tenant_slug:
+            owned = True
+            if rec.state not in _TERMINAL_STATES:
+                rec.cancel_requested = True
+    if not matched and not owned:
+        raise HTTPException(status_code=404, detail="Export job not found")
 
 
 def get_export_job_emit_result(tenant_slug: str, job_id: str) -> Optional[EmitResult]:

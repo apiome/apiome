@@ -289,6 +289,86 @@ class _JobRecord:
 _jobs: Dict[str, _JobRecord] = {}
 _jobs_lock = asyncio.Lock()
 
+# Kind discriminator for the shared async-job store (apiome.async_job, migration V158).
+_SHARED_JOB_KIND = "spec_import"
+
+
+async def _mirror_job(job_id: str) -> None:
+    """Best-effort mirror of a job's current poll payload into the shared store.
+
+    Round-robin deployments poll across instances, but the in-memory ``_jobs`` dict only
+    exists on the instance that received the POST; without this, pollers on the other
+    instances 404. The driving instance mirrors every state change so any instance can serve
+    ``GET/list`` from Postgres. Strictly best-effort — a mirror failure never affects the run;
+    the in-memory record stays authoritative for the driver.
+    """
+    async with _jobs_lock:
+        rec = _jobs.get(job_id)
+        if rec is None:
+            return
+        tenant_slug = rec.tenant_slug
+        state = rec.state
+        status_json = rec.status.model_dump(mode="json")
+        extra = (
+            {"commit_response": rec.commit_response.model_dump(mode="json")}
+            if rec.commit_response
+            else None
+        )
+    # The DB call is made inline (not via ``asyncio.to_thread``): ``_drive_job`` runs on the
+    # request's loop, and a thread-pool await here would orphan the background task under a
+    # harness that tears the loop down between requests, stalling the job before it finalizes.
+    # The write is a single indexed upsert, so the brief loop pause is acceptable.
+    try:
+        from .database import db
+
+        db.upsert_async_job(
+            job_id=job_id,
+            kind=_SHARED_JOB_KIND,
+            tenant_slug=tenant_slug,
+            state=state,
+            status=status_json,
+            extra=extra,
+        )
+    except Exception:  # noqa: BLE001 - mirroring is best-effort
+        logger.warning("Failed to mirror import job %s to shared store", job_id, exc_info=True)
+
+
+async def _fetch_shared_job(tenant_slug: str, job_id: str) -> Optional[Dict[str, Any]]:
+    """Read a job's shared-store row, or None if it's absent or the store is unreachable.
+
+    Used only on the non-owner read path (round-robin): a store outage degrades to a 404 for
+    instances that don't hold the job locally, never to a 500.
+    """
+    from .database import db
+
+    try:
+        return await asyncio.to_thread(db.get_async_job, job_id, tenant_slug, _SHARED_JOB_KIND)
+    except Exception:  # noqa: BLE001 - shared store is best-effort
+        logger.warning("Failed to read import job %s from shared store", job_id, exc_info=True)
+        return None
+
+
+async def _sync_cancel_flag(job_id: str) -> None:
+    """Honor a cross-instance cancel: pull the shared cancel flag into the in-memory record.
+
+    A ``DELETE …/imports/{job_id}`` may land on an instance that does not drive the job; it
+    sets ``cancel_requested`` in the shared store. The driving instance calls this at stage
+    boundaries so the flag it already checks (``rec.cancel_requested``) reflects that request.
+    """
+    try:
+        from .database import db
+
+        # Inline DB read (not ``to_thread``) — this runs inside the background ``_drive_job``
+        # pipeline; see the note in ``_mirror_job`` on why a thread-pool await must be avoided.
+        requested = db.async_job_cancel_requested(job_id)
+    except Exception:  # noqa: BLE001 - cancel propagation is best-effort
+        return
+    if requested:
+        async with _jobs_lock:
+            rec = _jobs.get(job_id)
+            if rec is not None:
+                rec.cancel_requested = True
+
 
 def _build_worker_payload(
     *,
@@ -361,6 +441,7 @@ async def _apply_streaming_spec_import_status(job_id: str, status_raw: Dict[str,
     if status.job_id != job_id:
         logger.debug("Partial import status job_id mismatch (expected %s)", job_id)
         return
+    await _sync_cancel_flag(job_id)
     async with _jobs_lock:
         rec = _jobs.get(job_id)
         if rec is None or rec.cancel_requested:
@@ -370,6 +451,7 @@ async def _apply_streaming_spec_import_status(job_id: str, status_raw: Dict[str,
         fresh_events = _take_new_import_events(rec, status)
     # Log outside the lock (logging handlers can block); surfaces benchmark phases live.
     _log_import_events(fresh_events, job_id)
+    await _mirror_job(job_id)
 
 
 async def _run_subprocess_worker(payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -537,6 +619,7 @@ async def _run_inprocess_adapter_job(
             rec.status = status
             fresh = _take_new_import_events(rec, status)
         _log_import_events(fresh, job_id)
+        await _mirror_job(job_id)
 
     def _is_canceled() -> bool:
         rec = _jobs.get(job_id)
@@ -579,9 +662,14 @@ async def _drive_job(job_id: str, payload: Dict[str, Any]) -> None:
         if rec.cancel_requested:
             rec.state = "canceled"
             rec.status = SpecImportJobStatus(job_id=job_id, state="canceled", percent=0)
-            return
-        rec.state = "running"
-        rec.status = SpecImportJobStatus(job_id=job_id, state="running", percent=0)
+            canceled = True
+        else:
+            rec.state = "running"
+            rec.status = SpecImportJobStatus(job_id=job_id, state="running", percent=0)
+            canceled = False
+    await _mirror_job(job_id)
+    if canceled:
+        return
 
     # MFI-1.2: a source kind that resolves to a non-worker import-source adapter runs the
     # generalized in-process pipeline; OpenAPI/Swagger (and unknown kinds) stay on the worker.
@@ -604,6 +692,7 @@ async def _drive_job(job_id: str, payload: Dict[str, Any]) -> None:
                 return
             rec.state = "failed"
             rec.status = _default_result_status(job_id, message, code="ADAPTER_UNAVAILABLE")
+        await _mirror_job(job_id)
         return
 
     try:
@@ -616,16 +705,20 @@ async def _drive_job(job_id: str, payload: Dict[str, Any]) -> None:
                 return
             rec.state = "failed"
             rec.status = _default_result_status(job_id, str(e), code="WORKER_EXCEPTION")
+        await _mirror_job(job_id)
         return
 
     async with _jobs_lock:
         rec = _jobs.get(job_id)
         if rec is None:
             return
-        if rec.cancel_requested:
+        canceled = rec.cancel_requested
+        if canceled:
             rec.state = "canceled"
             rec.status = SpecImportJobStatus(job_id=job_id, state="canceled", percent=0)
-            return
+    if canceled:
+        await _mirror_job(job_id)
+        return
 
     if not raw.get("ok"):
         msg = str(raw.get("error") or "Import worker failed")
@@ -635,6 +728,7 @@ async def _drive_job(job_id: str, payload: Dict[str, Any]) -> None:
                 return
             rec.state = "failed"
             rec.status = _default_result_status(job_id, msg, code="WORKER_FAILED")
+        await _mirror_job(job_id)
         return
 
     status_raw = raw.get("status")
@@ -647,6 +741,7 @@ async def _drive_job(job_id: str, payload: Dict[str, Any]) -> None:
             rec.status = _default_result_status(
                 job_id, "Worker returned ok but no status object", code="BAD_WORKER_PAYLOAD"
             )
+        await _mirror_job(job_id)
         return
 
     try:
@@ -661,6 +756,7 @@ async def _drive_job(job_id: str, payload: Dict[str, Any]) -> None:
             rec.status = _default_result_status(
                 job_id, f"Invalid job status from worker: {e}", code="INVALID_STATUS"
             )
+        await _mirror_job(job_id)
         return
 
     async with _jobs_lock:
@@ -675,6 +771,7 @@ async def _drive_job(job_id: str, payload: Dict[str, Any]) -> None:
         # end-of-run BENCHMARK summary); log them so the timing breakdown lands in the logs.
         fresh_events = _take_new_import_events(rec, status)
     _log_import_events(fresh_events, job_id)
+    await _mirror_job(job_id)
 
     # Capture the quality/lint score onto the newly imported revision so the projects list can show
     # it (#3609 follow-up). Done outside the lock, off the event loop (DB-bound), and best-effort.
@@ -717,6 +814,9 @@ async def schedule_spec_import(
             state="queued",
             status=initial,
         )
+    # Mirror the initial 'queued' row before returning 202 so the very first poll — which
+    # round-robin may route to any instance — already finds the job in the shared store.
+    await _mirror_job(job_id)
     asyncio.create_task(_drive_job(job_id, payload))
     return SpecImportJobAccepted(
         job_id=job_id,
@@ -743,49 +843,89 @@ async def schedule_spec_import_multipart(
     return await schedule_spec_import(tenant_slug, tenant_id, user_id, body)
 
 
-def get_spec_import_status(tenant_slug: str, job_id: str) -> SpecImportJobStatus:
-    rec = _get_record(tenant_slug, job_id)
-    return rec.status
+async def get_spec_import_status(tenant_slug: str, job_id: str) -> SpecImportJobStatus:
+    # Fast path: this instance drives the job, so its in-memory record is authoritative and
+    # freshest. Otherwise (round-robin: another instance drives it) consult the shared store so
+    # the poll still resolves instead of 404-ing.
+    rec = _jobs.get(job_id)
+    if rec is not None and rec.tenant_slug == tenant_slug:
+        return rec.status
+    row = await _fetch_shared_job(tenant_slug, job_id)
+    if row is not None:
+        return SpecImportJobStatus.model_validate(row["status"])
+    raise HTTPException(status_code=404, detail="Import job not found")
 
 
 async def list_spec_import_jobs(tenant_slug: str) -> SpecImportJobListResponse:
-    async with _jobs_lock:
-        items: list[SpecImportJobListItem] = []
-        for rec in _jobs.values():
-            if rec.tenant_slug != tenant_slug:
-                continue
-            st = rec.status
-            items.append(
-                SpecImportJobListItem(
-                    job_id=st.job_id,
-                    state=st.state,
-                    percent=st.percent,
-                    status_path=f"/v1/tenants/{tenant_slug}/imports/{st.job_id}",
-                    progress=st.progress,
-                    result=st.result,
-                )
-            )
+    from .database import db
+
+    def _from_status(st: SpecImportJobStatus) -> SpecImportJobListItem:
+        return SpecImportJobListItem(
+            job_id=st.job_id,
+            state=st.state,
+            percent=st.percent,
+            status_path=f"/v1/tenants/{tenant_slug}/imports/{st.job_id}",
+            progress=st.progress,
+            result=st.result,
+        )
+
+    # Prefer the shared store so the list spans every instance's jobs for the tenant; fall back
+    # to this process's in-memory jobs if the store is unreachable.
+    try:
+        rows = await asyncio.to_thread(db.list_async_jobs, tenant_slug, _SHARED_JOB_KIND)
+    except Exception:  # noqa: BLE001 - shared store is best-effort; degrade to local view
+        logger.warning("Falling back to in-memory import job list for %s", tenant_slug, exc_info=True)
+        async with _jobs_lock:
+            local = [r.status for r in _jobs.values() if r.tenant_slug == tenant_slug]
+        return SpecImportJobListResponse(jobs=[_from_status(st) for st in local])
+    items = [_from_status(SpecImportJobStatus.model_validate(row["status"])) for row in rows]
     return SpecImportJobListResponse(jobs=items)
 
 
 async def cancel_spec_import_job(tenant_slug: str, job_id: str) -> None:
+    from .database import db
+
+    # Set the shared cancel flag so the driving instance (which may be a different process)
+    # honors it at its next stage boundary. Whether it matched a row tells us if the job exists.
+    try:
+        matched = await asyncio.to_thread(
+            db.request_async_job_cancel, job_id, tenant_slug, _SHARED_JOB_KIND
+        )
+    except Exception:  # noqa: BLE001 - shared store is best-effort
+        logger.warning("Failed to set shared cancel flag for import job %s", job_id, exc_info=True)
+        matched = False
+    # If this instance owns the live job, honor the cancel immediately (kill the worker proc).
     async with _jobs_lock:
         rec = _jobs.get(job_id)
-        if rec is None or rec.tenant_slug != tenant_slug:
-            raise HTTPException(status_code=404, detail="Import job not found")
-        if rec.state in ("completed", "failed", "canceled", "rolled-back"):
-            return
-        rec.cancel_requested = True
-        proc = rec.proc
+        owned = rec is not None and rec.tenant_slug == tenant_slug
+        proc = None
+        if owned:
+            if rec.state in ("completed", "failed", "canceled", "rolled-back"):
+                return
+            rec.cancel_requested = True
+            proc = rec.proc
+    if not matched and not owned:
+        raise HTTPException(status_code=404, detail="Import job not found")
     if proc is not None and proc.returncode is None:
         proc.kill()
 
 
-def commit_spec_import_job(tenant_slug: str, job_id: str) -> SpecImportCommitResponse:
-    rec = _get_record(tenant_slug, job_id)
-    if rec.commit_response is not None:
-        return rec.commit_response
-    if rec.status.state == "pending-approval":
+async def commit_spec_import_job(tenant_slug: str, job_id: str) -> SpecImportCommitResponse:
+    rec = _jobs.get(job_id)
+    if rec is not None and rec.tenant_slug == tenant_slug:
+        if rec.commit_response is not None:
+            return rec.commit_response
+        state = rec.status.state
+    else:
+        row = await _fetch_shared_job(tenant_slug, job_id)
+        if row is None:
+            raise HTTPException(status_code=404, detail="Import job not found")
+        extra = row.get("extra") or {}
+        commit_raw = extra.get("commit_response")
+        if commit_raw:
+            return SpecImportCommitResponse.model_validate(commit_raw)
+        state = row["state"]
+    if state == "pending-approval":
         raise HTTPException(
             status_code=501,
             detail=(
@@ -795,7 +935,7 @@ def commit_spec_import_job(tenant_slug: str, job_id: str) -> SpecImportCommitRes
         )
     raise HTTPException(
         status_code=409,
-        detail=f"No commit available for import job in state {rec.status.state}",
+        detail=f"No commit available for import job in state {state}",
     )
 
 

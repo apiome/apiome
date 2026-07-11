@@ -148,7 +148,7 @@ async def get_export_job_status(
         HTTPException: 404 when the job is unknown for this tenant (or the process restarted).
     """
     _ = auth_data
-    return engine_get_export_job_status(tenant_slug, job_id)
+    return await engine_get_export_job_status(tenant_slug, job_id)
 
 
 @router.get(
