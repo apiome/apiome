@@ -11,7 +11,7 @@ describe('app-urls', () => {
     });
 
     it('falls back to production default when empty', () => {
-      expect(normalizePublicAppUrl('   ')).toBe('https://browse.apiome.app/');
+      expect(normalizePublicAppUrl('   ')).toBe('https://browse.apiome.dev/');
     });
   });
 
