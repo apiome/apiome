@@ -2501,6 +2501,412 @@ class Database:
         """
         return self.execute_query(query, (guide_id, tenant_id))
 
+    def ensure_builtin_style_guide(self, tenant_id: str) -> None:
+        """Seed the read-only "Apiome Recommended" guide when the tenant lacks one (GOV-2.1).
+
+        V159 seeds the builtin guide for tenants that existed at migration time; tenants
+        created later have none until something calls ``apiome.seed_builtin_style_guide``
+        (idempotent, V118 pattern). Mirrors ``ensure_builtin_roles``: called on every list
+        so the Style Guides screen self-heals. A no-op when the guide already exists.
+
+        Args:
+            tenant_id: The tenant to seed. Non-UUID values are ignored.
+        """
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return
+        rows = self.execute_query(
+            "SELECT 1 FROM apiome.style_guides WHERE tenant_id = %s AND source = 'builtin'",
+            (tenant_id,),
+        )
+        if not rows:
+            self.execute_query("SELECT apiome.seed_builtin_style_guide(%s)", (tenant_id,))
+
+    def list_style_guides(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """List a tenant's style guides with list-view rollups (GOV-2.1, #4433).
+
+        Args:
+            tenant_id: The tenant whose guides to list.
+
+        Returns:
+            One row per guide — ``id`` / ``name`` / ``description`` / ``source`` /
+            ``is_default`` / ``created_at`` / ``updated_at`` plus ``rule_count``,
+            ``enabled_rule_count`` and ``tenant_assigned`` (an explicit tenant-wide
+            assignment row points at the guide) — builtin guide first, then by name.
+        """
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return []
+        query = """
+            SELECT g.id, g.name, g.description, g.source, g.is_default,
+                   g.created_at, g.updated_at,
+                   COUNT(r.id) AS rule_count,
+                   COUNT(r.id) FILTER (WHERE r.enabled) AS enabled_rule_count,
+                   EXISTS (
+                       SELECT 1 FROM apiome.style_guide_assignments a
+                       WHERE a.guide_id = g.id AND a.tenant_id IS NOT NULL
+                   ) AS tenant_assigned
+            FROM apiome.style_guides g
+            LEFT JOIN apiome.style_guide_rules r ON r.guide_id = g.id
+            WHERE g.tenant_id = %s
+            GROUP BY g.id
+            ORDER BY (g.source = 'builtin') DESC, g.name ASC
+        """
+        return self.execute_query(query, (tenant_id,))
+
+    def list_style_guide_project_assignments(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """List every project-level style-guide assignment of a tenant (GOV-2.1, #4433).
+
+        Args:
+            tenant_id: The tenant whose assignments to list (scoped via the owning guide).
+
+        Returns:
+            Rows with ``guide_id`` / ``project_id`` / ``project_name`` for live (undeleted)
+            projects, sorted by project name.
+        """
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return []
+        query = """
+            SELECT a.guide_id, a.project_id, p.name AS project_name
+            FROM apiome.style_guide_assignments a
+            JOIN apiome.style_guides g ON g.id = a.guide_id
+            JOIN apiome.projects p ON p.id = a.project_id
+            WHERE g.tenant_id = %s
+              AND a.project_id IS NOT NULL
+              AND p.deleted_at IS NULL
+            ORDER BY p.name ASC
+        """
+        return self.execute_query(query, (tenant_id,))
+
+    def get_style_guide_by_id(self, guide_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Read one style guide, scoped to its owning tenant (GOV-2.1, #4433).
+
+        Args:
+            guide_id: The ``style_guides.id`` to read. Non-UUID values return ``None``.
+            tenant_id: The tenant that must own the guide.
+
+        Returns:
+            The guide row (``id`` / ``name`` / ``description`` / ``source`` /
+            ``is_default`` / ``created_at`` / ``updated_at``), or ``None``.
+        """
+        if not guide_id or not is_uuid_string(str(guide_id)):
+            return None
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return None
+        query = """
+            SELECT id, name, description, source, is_default, created_at, updated_at
+            FROM apiome.style_guides
+            WHERE id = %s AND tenant_id = %s
+        """
+        rows = self.execute_query(query, (guide_id, tenant_id))
+        return rows[0] if rows else None
+
+    def create_style_guide(
+        self,
+        tenant_id: str,
+        name: str,
+        description: Optional[str],
+        source_guide_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Create a custom style guide, optionally copying another guide's rules (GOV-2.1).
+
+        Copying implements duplicate and "start from Recommended": every rule row of
+        ``source_guide_id`` (enabled state, severity, custom defs alike) is copied onto the
+        new guide in the same transaction. The new guide is always ``source='custom'`` and
+        never the default — assignment is a separate, explicit action.
+
+        Args:
+            tenant_id: The owning tenant.
+            name: Display name (unique per tenant — violations raise ``IntegrityError``).
+            description: Optional description.
+            source_guide_id: Same-tenant guide whose rules to copy, or ``None`` for empty.
+
+        Returns:
+            The created guide row.
+
+        Raises:
+            ValueError: ``source_guide_id`` is not a guide of this tenant.
+            psycopg2.IntegrityError: The name is already taken in this tenant.
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                if source_guide_id is not None:
+                    if not is_uuid_string(str(source_guide_id)):
+                        raise ValueError("Source guide not found")
+                    cursor.execute(
+                        "SELECT 1 FROM apiome.style_guides WHERE id = %s AND tenant_id = %s",
+                        (source_guide_id, tenant_id),
+                    )
+                    if cursor.fetchone() is None:
+                        raise ValueError("Source guide not found")
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.style_guides (tenant_id, name, description, source, is_default)
+                    VALUES (%s, %s, %s, 'custom', false)
+                    RETURNING id, name, description, source, is_default, created_at, updated_at
+                    """,
+                    (tenant_id, name.strip(), description),
+                )
+                guide = cursor.fetchone()
+                if source_guide_id is not None:
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.style_guide_rules (guide_id, rule_id, enabled, severity, custom_def)
+                        SELECT %s, rule_id, enabled, severity, custom_def
+                        FROM apiome.style_guide_rules
+                        WHERE guide_id = %s
+                        """,
+                        (guide["id"], source_guide_id),
+                    )
+            conn.commit()
+            return guide
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.autocommit = prev_autocommit
+
+    def update_style_guide(
+        self,
+        guide_id: str,
+        tenant_id: str,
+        name: str,
+        description: Optional[str],
+    ) -> Optional[Dict[str, Any]]:
+        """Rename / re-describe a custom style guide (GOV-2.1, #4433).
+
+        The builtin guide is excluded in the WHERE clause as defence in depth — the route
+        layer already rejects it with a 409 before calling here.
+
+        Args:
+            guide_id: The guide to update. Non-UUID values return ``None``.
+            tenant_id: The tenant that must own the guide.
+            name: The final name to store (caller resolves partial updates).
+            description: The final description to store.
+
+        Returns:
+            The updated guide row, or ``None`` when no matching custom guide exists.
+
+        Raises:
+            psycopg2.IntegrityError: The name is already taken in this tenant.
+        """
+        if not guide_id or not is_uuid_string(str(guide_id)):
+            return None
+        query = """
+            UPDATE apiome.style_guides
+            SET name = %s, description = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s AND tenant_id = %s AND source <> 'builtin'
+            RETURNING id, name, description, source, is_default, created_at, updated_at
+        """
+        rows = self.execute_query(query, (name.strip(), description, guide_id, tenant_id))
+        return rows[0] if rows else None
+
+    def delete_style_guide(self, guide_id: str, tenant_id: str) -> bool:
+        """Delete a custom style guide (GOV-2.1, #4433).
+
+        Assignment rows cascade with the guide. When the deleted guide was the tenant
+        default, the builtin "Apiome Recommended" guide is promoted back to default in the
+        same transaction, so the tenant always keeps a resolvable default. The builtin
+        guide itself is excluded in the WHERE clause (defence in depth behind the route's
+        409).
+
+        Args:
+            guide_id: The guide to delete. Non-UUID values return ``False``.
+            tenant_id: The tenant that must own the guide.
+
+        Returns:
+            ``True`` when a guide was deleted, ``False`` when none matched.
+        """
+        if not guide_id or not is_uuid_string(str(guide_id)):
+            return False
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    DELETE FROM apiome.style_guides
+                    WHERE id = %s AND tenant_id = %s AND source <> 'builtin'
+                    RETURNING is_default
+                    """,
+                    (guide_id, tenant_id),
+                )
+                deleted = cursor.fetchone()
+                if deleted and deleted["is_default"]:
+                    cursor.execute(
+                        """
+                        UPDATE apiome.style_guides
+                        SET is_default = true, updated_at = CURRENT_TIMESTAMP
+                        WHERE tenant_id = %s AND source = 'builtin'
+                        """,
+                        (tenant_id,),
+                    )
+            conn.commit()
+            return deleted is not None
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.autocommit = prev_autocommit
+
+    def set_style_guide_tenant_default(
+        self, guide_id: str, tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Make a guide the tenant default (GOV-2.1, #4433).
+
+        In one transaction: moves the ``is_default`` flag onto the guide and replaces the
+        tenant-wide ``style_guide_assignments`` row with one pointing at it. The two
+        mechanisms are tiers 1 and 2 of the GOV-1.4 resolution chain; writing both keeps
+        them agreeing, so the list view's default badge (``is_default``) is always what
+        lint actually resolves for projects without their own assignment.
+
+        Args:
+            guide_id: The guide to promote. Non-UUID values return ``None``.
+            tenant_id: The tenant that must own the guide.
+
+        Returns:
+            The promoted guide row, or ``None`` when the guide is not the tenant's.
+        """
+        if not guide_id or not is_uuid_string(str(guide_id)):
+            return None
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT 1 FROM apiome.style_guides WHERE id = %s AND tenant_id = %s",
+                    (guide_id, tenant_id),
+                )
+                if cursor.fetchone() is None:
+                    conn.rollback()
+                    return None
+                cursor.execute(
+                    """
+                    UPDATE apiome.style_guides
+                    SET is_default = false, updated_at = CURRENT_TIMESTAMP
+                    WHERE tenant_id = %s AND is_default AND id <> %s
+                    """,
+                    (tenant_id, guide_id),
+                )
+                cursor.execute(
+                    """
+                    UPDATE apiome.style_guides
+                    SET is_default = true, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s AND tenant_id = %s
+                    RETURNING id, name, description, source, is_default, created_at, updated_at
+                    """,
+                    (guide_id, tenant_id),
+                )
+                guide = cursor.fetchone()
+                cursor.execute(
+                    "DELETE FROM apiome.style_guide_assignments WHERE tenant_id = %s",
+                    (tenant_id,),
+                )
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.style_guide_assignments (guide_id, tenant_id)
+                    VALUES (%s, %s)
+                    """,
+                    (guide_id, tenant_id),
+                )
+            conn.commit()
+            return guide
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.autocommit = prev_autocommit
+
+    def assign_style_guide_to_project(
+        self, guide_id: str, tenant_id: str, project_id: str
+    ) -> bool:
+        """Assign a guide to one project (GOV-2.1, #4433) — tier 0 of the GOV-1.4 chain.
+
+        Replaces any existing assignment of the project (a project has at most one). Both
+        the guide and the project must belong to ``tenant_id``; the V159 schema leaves that
+        consistency to this service layer.
+
+        Args:
+            guide_id: The guide to assign. Non-UUID values return ``False``.
+            tenant_id: The tenant that must own both the guide and the project.
+            project_id: The project to assign. Non-UUID values return ``False``.
+
+        Returns:
+            ``True`` on success, ``False`` when guide or project is not the tenant's.
+        """
+        if not guide_id or not is_uuid_string(str(guide_id)):
+            return False
+        if not project_id or not is_uuid_string(str(project_id)):
+            return False
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT 1 FROM apiome.style_guides WHERE id = %s AND tenant_id = %s",
+                    (guide_id, tenant_id),
+                )
+                if cursor.fetchone() is None:
+                    conn.rollback()
+                    return False
+                cursor.execute(
+                    """
+                    SELECT 1 FROM apiome.projects
+                    WHERE id = %s AND tenant_id = %s AND deleted_at IS NULL
+                    """,
+                    (project_id, tenant_id),
+                )
+                if cursor.fetchone() is None:
+                    conn.rollback()
+                    return False
+                cursor.execute(
+                    "DELETE FROM apiome.style_guide_assignments WHERE project_id = %s",
+                    (project_id,),
+                )
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.style_guide_assignments (guide_id, project_id)
+                    VALUES (%s, %s)
+                    """,
+                    (guide_id, project_id),
+                )
+            conn.commit()
+            return True
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.autocommit = prev_autocommit
+
+    def unassign_style_guide_from_project(self, tenant_id: str, project_id: str) -> bool:
+        """Remove a project's style-guide assignment (GOV-2.1, #4433).
+
+        The project then falls back to the tenant-wide assignment / default guide per the
+        GOV-1.4 resolution order. Scoped through the owning guide so a caller cannot clear
+        another tenant's assignment.
+
+        Args:
+            tenant_id: The tenant that must own the assignment's guide.
+            project_id: The project whose assignment to remove. Non-UUID returns ``False``.
+
+        Returns:
+            ``True`` when an assignment row was removed, ``False`` when none existed.
+        """
+        if not project_id or not is_uuid_string(str(project_id)):
+            return False
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return False
+        query = """
+            DELETE FROM apiome.style_guide_assignments a
+            USING apiome.style_guides g
+            WHERE a.guide_id = g.id
+              AND g.tenant_id = %s
+              AND a.project_id = %s
+            RETURNING a.id
+        """
+        rows = self.execute_query(query, (tenant_id, project_id))
+        return bool(rows)
+
     def get_project_by_id(
         self, project_id: str, tenant_id: str, *, include_deleted: bool = False
     ) -> Optional[Dict[str, Any]]:

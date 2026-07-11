@@ -3131,6 +3131,106 @@ class CustomRulesValidateResponse(BaseModel):
     rules: List[CustomRuleOut] = Field(description="Every validated rule, in author order.")
 
 
+class StyleGuideProjectAssignmentOut(BaseModel):
+    """One project-level style-guide assignment (GOV-2.1, #4433)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    project_id: str = Field(
+        serialization_alias="projectId",
+        description="The assigned project's id (style_guide_assignments.project_id).",
+    )
+    project_name: str = Field(
+        serialization_alias="projectName",
+        description="The assigned project's display name, for the list/assign dialogs.",
+    )
+
+
+class StyleGuideOut(BaseModel):
+    """One tenant style guide with its list-view rollups (GOV-2.1, #4433).
+
+    ``source == 'builtin'`` marks the seeded read-only "Apiome Recommended" guide: it can be
+    duplicated and assigned but never edited or deleted. ``is_default`` is the tenant-default
+    badge; ``tenant_assigned`` reports an explicit tenant-wide assignment row (which resolves
+    ahead of the default flag in the GOV-1.4 chain — the API keeps the two in sync).
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    name: str
+    description: Optional[str] = Field(default=None)
+    source: str = Field(description="builtin (read-only, seeded) | custom (tenant-authored).")
+    is_default: bool = Field(
+        serialization_alias="isDefault",
+        description="True for the tenant's default guide (the list view's default badge).",
+    )
+    rule_count: int = Field(
+        serialization_alias="ruleCount",
+        description="Total style_guide_rules rows on the guide (enabled and disabled).",
+    )
+    enabled_rule_count: int = Field(
+        serialization_alias="enabledRuleCount",
+        description="Rules currently enabled — the list view's 'rules on' column.",
+    )
+    tenant_assigned: bool = Field(
+        serialization_alias="tenantAssigned",
+        description="True when an explicit tenant-wide assignment row points at this guide.",
+    )
+    project_assignments: List[StyleGuideProjectAssignmentOut] = Field(
+        default_factory=list,
+        serialization_alias="projectAssignments",
+        description="Projects explicitly assigned to this guide, sorted by project name.",
+    )
+    created_at: Optional[datetime] = Field(default=None, serialization_alias="createdAt")
+    updated_at: Optional[datetime] = Field(default=None, serialization_alias="updatedAt")
+
+
+class StyleGuideListResponse(BaseModel):
+    """The tenant's style guides for the Control Panel list view (GOV-2.1, #4433)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    guides: List[StyleGuideOut] = Field(
+        description="Every guide of the tenant, builtin first then by name."
+    )
+    count: int = Field(description="Number of guides (== len(guides)).")
+
+
+class StyleGuideCreateRequest(BaseModel):
+    """Create a custom style guide, optionally copying an existing guide's rules (GOV-2.1).
+
+    ``source_guide_id`` implements both duplicate flows: duplicating a custom guide and
+    "start from Recommended" (duplicating the read-only builtin guide as an editable copy).
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str = Field(min_length=1, max_length=255, description="Guide display name (unique per tenant).")
+    description: Optional[str] = Field(
+        default=None, max_length=4000, description="Optional free-text description."
+    )
+    source_guide_id: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("sourceGuideId", "source_guide_id"),
+        serialization_alias="sourceGuideId",
+        description="Guide (same tenant) whose rule rows are copied into the new guide.",
+    )
+
+
+class StyleGuideUpdateRequest(BaseModel):
+    """Rename / re-describe a custom style guide (GOV-2.1). Builtin guides are read-only."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: Optional[str] = Field(
+        default=None, min_length=1, max_length=255, description="New display name, when renaming."
+    )
+    description: Optional[str] = Field(
+        default=None, max_length=4000, description="New description; empty string clears it."
+    )
+
+
 class VersionTagSchema(BaseModel):
     """Git-like tag pointing at a schema revision (versions.id)."""
 

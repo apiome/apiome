@@ -40,6 +40,7 @@ from .version_tags_routes import router as version_tags_router
 from .compatibility_routes import router as compatibility_router
 from .lint_routes import router as lint_router
 from .lint_routes import rules_router as lint_rules_router
+from .style_guide_routes import router as style_guide_router
 from .draft_lock_routes import router as draft_lock_router
 from .push_webhook_delivery import process_due_push_webhook_deliveries
 from .push_webhook_subscriptions_routes import router as push_webhook_subscriptions_router
@@ -220,6 +221,7 @@ app.include_router(identity_router)
 app.include_router(compatibility_router)
 app.include_router(lint_router)
 app.include_router(lint_rules_router)
+app.include_router(style_guide_router)
 app.include_router(version_merge_router)
 app.include_router(workflow_audit_router)
 app.include_router(versions_router)

@@ -5962,6 +5962,613 @@
         }
       }
     },
+    "/v1/style-guides/{tenant_slug}": {
+      "get": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "List Style Guides",
+        "description": "List the tenant's style guides with list-view rollups (rules on, assignments).",
+        "operationId": "list_style_guides_v1_style_guides__tenant_slug__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StyleGuideListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "Create Style Guide",
+        "description": "Create a custom guide; ``sourceGuideId`` copies that guide's rules (duplicate).",
+        "operationId": "create_style_guide_v1_style_guides__tenant_slug__post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StyleGuideCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StyleGuideOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/style-guides/{tenant_slug}/{guide_id}": {
+      "patch": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "Update Style Guide",
+        "description": "Rename / re-describe a custom guide (the builtin guide is read-only).",
+        "operationId": "update_style_guide_v1_style_guides__tenant_slug___guide_id__patch",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug"
+            }
+          },
+          {
+            "name": "guide_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StyleGuideUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StyleGuideOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "Delete Style Guide",
+        "description": "Delete a custom guide; its assignments cascade and the affected projects fall back\nto the tenant default. Deleting the current default promotes the builtin guide.",
+        "operationId": "delete_style_guide_v1_style_guides__tenant_slug___guide_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug"
+            }
+          },
+          {
+            "name": "guide_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Delete Style Guide V1 Style Guides  Tenant Slug   Guide Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/style-guides/{tenant_slug}/{guide_id}/default": {
+      "put": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "Set Tenant Default",
+        "description": "Make a guide the tenant default \u2014 what every project without its own assignment\nlints under from the next run onward.",
+        "operationId": "set_tenant_default_v1_style_guides__tenant_slug___guide_id__default_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug"
+            }
+          },
+          {
+            "name": "guide_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StyleGuideOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/style-guides/{tenant_slug}/{guide_id}/assignments/projects/{project_id}": {
+      "put": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "Assign Project",
+        "description": "Assign a guide to one project (replaces the project's previous assignment).\n\nA project-level assignment wins over the tenant default in the GOV-1.4 resolution\norder, so the project's next lint run scores under this guide.",
+        "operationId": "assign_project_v1_style_guides__tenant_slug___guide_id__assignments_projects__project_id__put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug"
+            }
+          },
+          {
+            "name": "guide_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide Id"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Assign Project V1 Style Guides  Tenant Slug   Guide Id  Assignments Projects  Project Id  Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/style-guides/{tenant_slug}/assignments/projects/{project_id}": {
+      "delete": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "Unassign Project",
+        "description": "Remove a project's guide assignment; it falls back to the tenant default.",
+        "operationId": "unassign_project_v1_style_guides__tenant_slug__assignments_projects__project_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Unassign Project V1 Style Guides  Tenant Slug  Assignments Projects  Project Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/versions/{tenant_slug}/{project_id}/version-branches": {
       "get": {
         "tags": [
@@ -44797,6 +45404,219 @@
         ],
         "title": "StagedTypeCandidate",
         "description": "One candidate type detected in a staged import (#3460, #3461)."
+      },
+      "StyleGuideCreateRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Guide display name (unique per tenant)."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Optional free-text description."
+          },
+          "sourceGuideId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourceguideid",
+            "description": "Guide (same tenant) whose rule rows are copied into the new guide."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "StyleGuideCreateRequest",
+        "description": "Create a custom style guide, optionally copying an existing guide's rules (GOV-2.1).\n\n``source_guide_id`` implements both duplicate flows: duplicating a custom guide and\n\"start from Recommended\" (duplicating the read-only builtin guide as an editable copy)."
+      },
+      "StyleGuideListResponse": {
+        "properties": {
+          "guides": {
+            "items": {
+              "$ref": "#/components/schemas/StyleGuideOut"
+            },
+            "type": "array",
+            "title": "Guides",
+            "description": "Every guide of the tenant, builtin first then by name."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of guides (== len(guides))."
+          }
+        },
+        "type": "object",
+        "required": [
+          "guides",
+          "count"
+        ],
+        "title": "StyleGuideListResponse",
+        "description": "The tenant's style guides for the Control Panel list view (GOV-2.1, #4433)."
+      },
+      "StyleGuideOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "builtin (read-only, seeded) | custom (tenant-authored)."
+          },
+          "isDefault": {
+            "type": "boolean",
+            "title": "Isdefault",
+            "description": "True for the tenant's default guide (the list view's default badge)."
+          },
+          "ruleCount": {
+            "type": "integer",
+            "title": "Rulecount",
+            "description": "Total style_guide_rules rows on the guide (enabled and disabled)."
+          },
+          "enabledRuleCount": {
+            "type": "integer",
+            "title": "Enabledrulecount",
+            "description": "Rules currently enabled \u2014 the list view's 'rules on' column."
+          },
+          "tenantAssigned": {
+            "type": "boolean",
+            "title": "Tenantassigned",
+            "description": "True when an explicit tenant-wide assignment row points at this guide."
+          },
+          "projectAssignments": {
+            "items": {
+              "$ref": "#/components/schemas/StyleGuideProjectAssignmentOut"
+            },
+            "type": "array",
+            "title": "Projectassignments",
+            "description": "Projects explicitly assigned to this guide, sorted by project name."
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Createdat"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updatedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "source",
+          "isDefault",
+          "ruleCount",
+          "enabledRuleCount",
+          "tenantAssigned"
+        ],
+        "title": "StyleGuideOut",
+        "description": "One tenant style guide with its list-view rollups (GOV-2.1, #4433).\n\n``source == 'builtin'`` marks the seeded read-only \"Apiome Recommended\" guide: it can be\nduplicated and assigned but never edited or deleted. ``is_default`` is the tenant-default\nbadge; ``tenant_assigned`` reports an explicit tenant-wide assignment row (which resolves\nahead of the default flag in the GOV-1.4 chain \u2014 the API keeps the two in sync)."
+      },
+      "StyleGuideProjectAssignmentOut": {
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "The assigned project's id (style_guide_assignments.project_id)."
+          },
+          "projectName": {
+            "type": "string",
+            "title": "Projectname",
+            "description": "The assigned project's display name, for the list/assign dialogs."
+          }
+        },
+        "type": "object",
+        "required": [
+          "projectId",
+          "projectName"
+        ],
+        "title": "StyleGuideProjectAssignmentOut",
+        "description": "One project-level style-guide assignment (GOV-2.1, #4433)."
+      },
+      "StyleGuideUpdateRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "New display name, when renaming."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "New description; empty string clears it."
+          }
+        },
+        "type": "object",
+        "title": "StyleGuideUpdateRequest",
+        "description": "Rename / re-describe a custom style guide (GOV-2.1). Builtin guides are read-only."
       },
       "SunsetTimelineEntryOut": {
         "properties": {
