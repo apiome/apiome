@@ -8,6 +8,7 @@
  */
 import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 
 import McpEndpointInsight from '../src/app/ade/dashboard/mcp/[endpointId]/McpEndpointInsight';
@@ -127,6 +128,11 @@ function headlineMatcher(total: number) {
     (el.textContent ?? '').replace(/\s+/g, ' ').trim() === `${total} capabilities in this snapshot`;
 }
 
+/** Switch the left-nav insight view. Radix hides inactive panels, so assertions must open the target view first. */
+async function openInsightView(label: string) {
+  await userEvent.click(screen.getByRole('tab', { name: label }));
+}
+
 function jsonResponse(body: unknown, ok = true, status = 200) {
   return {
     ok,
@@ -222,8 +228,37 @@ function routeFetch(handlers: {
   reliability?: () => Response;
   lint?: (versionId: string) => Response;
   trust?: () => Response;
+  percentile?: () => Response;
 }) {
   (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
+    if (url.includes('/insight/percentile')) {
+      const gap = (key: string, label: string) => ({
+        key,
+        label,
+        percentile: null,
+        available: false,
+        detail: 'Not enough peers yet',
+        methodology: `How ${label} is ranked.`,
+      });
+      return handlers.percentile
+        ? handlers.percentile()
+        : jsonResponse({
+            success: true,
+            endpoint_id: ENDPOINT_ID,
+            category: null,
+            profile: {
+              axes: [
+                gap('grade', 'Grade'),
+                gap('safety', 'Safety'),
+                gap('documentation', 'Documentation'),
+                gap('latency', 'Latency'),
+              ],
+              available_count: 0,
+              axis_count: 4,
+              peer_count: 0,
+            },
+          });
+    }
     if (url.includes('/insight/trust')) {
       // The composite trust profile (MCAT-17.4) loads endpoint-level; default to an all-gap profile
       // so tests that don't care about it render the panel's "not enough signal yet" empty state.
@@ -415,19 +450,24 @@ describe('McpEndpointInsight — scaffold', () => {
 
     render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
 
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Capability counts' })).toBeInTheDocument(),
+    );
+    await openInsightView('Capability counts');
+
     // Baseline headline reflects the current snapshot's total (4 tools + 2 resources + 1 prompt = 7).
     await waitFor(() =>
       expect(screen.getByText(headlineMatcher(7))).toBeInTheDocument(),
     );
 
-    // The three section headers that later epics fill are present.
-    expect(screen.getByText('Capability surface')).toBeInTheDocument();
-    expect(screen.getByText('Surface evolution')).toBeInTheDocument();
-    expect(screen.getByText('Reliability & trust')).toBeInTheDocument();
+    // The left-nav exposes every insight view, grouped by the roadmap arc.
+    expect(screen.getByRole('tab', { name: 'Capability counts' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Churn timeline' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Trust profile' })).toBeInTheDocument();
 
-    // Every section is now filled with live panels — no reserved "Coming soon" placeholders remain
-    // (the reliability section's final slot became the composite trust radar, MCAT-17.4).
+    // Every section is now filled with live panels — no reserved "Coming soon" placeholders remain.
     expect(screen.queryByText('Coming soon')).not.toBeInTheDocument();
+    await openInsightView('Trust profile');
     await waitFor(() =>
       expect(screen.getByText('Composite trust profile')).toBeInTheDocument(),
     );
@@ -464,10 +504,15 @@ describe('McpEndpointInsight — scaffold', () => {
 
     render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
 
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Capability counts' })).toBeInTheDocument(),
+    );
+    await openInsightView('Capability counts');
+
     await waitFor(() => expect(screen.getByText('Insight unavailable')).toBeInTheDocument());
     expect(screen.getByText('metrics engine down')).toBeInTheDocument();
-    // The section framework still renders around the error.
-    expect(screen.getByText('Capability surface')).toBeInTheDocument();
+    // The nav framework still renders around the error.
+    expect(screen.getByRole('tab', { name: 'Capability counts' })).toBeInTheDocument();
   });
 
   it('renders the server-profile header and shows instructions only for the current snapshot', async () => {
@@ -514,6 +559,11 @@ describe('McpEndpointInsight — scaffold', () => {
     });
 
     render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
+
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Capability counts' })).toBeInTheDocument(),
+    );
+    await openInsightView('Capability counts');
 
     await waitFor(() =>
       expect(screen.getByText(headlineMatcher(7))).toBeInTheDocument(),
@@ -568,6 +618,11 @@ describe('McpEndpointInsight — scaffold', () => {
 
     render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
 
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Schema complexity' })).toBeInTheDocument(),
+    );
+    await openInsightView('Schema complexity');
+
     // The 15.3 panel heading and its per-tool cards render (most complex first).
     await waitFor(() =>
       expect(screen.getByRole('heading', { level: 5, name: 'orchestrate' })).toBeInTheDocument(),
@@ -602,6 +657,11 @@ describe('McpEndpointInsight — scaffold', () => {
     });
 
     render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
+
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Safety posture' })).toBeInTheDocument(),
+    );
+    await openInsightView('Safety posture');
 
     // The 15.4 panel heading renders, and the destructive+no-auth alert names the destructive tool.
     await waitFor(() =>
@@ -646,6 +706,11 @@ describe('McpEndpointInsight — scaffold', () => {
 
     render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
 
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Documentation' })).toBeInTheDocument(),
+    );
+    await openInsightView('Documentation');
+
     // The 15.5 panel heading renders, and the coverage gauges drill to the undocumented tool once the
     // snapshot's capability items resolve.
     await waitFor(() =>
@@ -673,6 +738,11 @@ describe('McpEndpointInsight — scaffold', () => {
         onOpenVersionDiff={onOpenVersionDiff}
       />,
     );
+
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Churn timeline' })).toBeInTheDocument(),
+    );
+    await openInsightView('Churn timeline');
 
     // The churn panel loads its own series and surfaces the busiest release (v3, 4 changes).
     await waitFor(() =>
@@ -705,6 +775,11 @@ describe('McpEndpointInsight — scaffold', () => {
         onOpenVersionDiff={onOpenVersionDiff}
       />,
     );
+
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Grade & size trend' })).toBeInTheDocument(),
+    );
+    await openInsightView('Grade & size trend');
 
     // The trend panel renders both trends once the shared evolution series loads.
     await waitFor(() =>
@@ -763,6 +838,11 @@ describe('McpEndpointInsight — scaffold', () => {
         onOpenVersionDiff={onOpenVersionDiff}
       />,
     );
+
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Lifespan & presence' })).toBeInTheDocument(),
+    );
+    await openInsightView('Lifespan & presence');
 
     // The lifespan panel renders a row per capability once every snapshot's items resolve. Scope to
     // the presence-matrix table by its caption, since the safety panel also renders tool rowheaders.
@@ -928,7 +1008,12 @@ describe('McpEndpointInsight — scaffold', () => {
 
     render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
 
-    // The reliability section renders the live discovery-health panel (not its reserved placeholder).
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Discovery health' })).toBeInTheDocument(),
+    );
+    await openInsightView('Discovery health');
+
+    // The discovery-health panel renders once the reliability fetch resolves.
     await waitFor(() =>
       expect(screen.getByText('Discovery health & availability')).toBeInTheDocument(),
     );
@@ -982,6 +1067,11 @@ describe('McpEndpointInsight — scaffold', () => {
     });
 
     render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
+
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Discovery health' })).toBeInTheDocument(),
+    );
+    await openInsightView('Discovery health');
 
     await waitFor(() =>
       expect(screen.getByText(/Quarantined — auto-excluded/i)).toBeInTheDocument(),
@@ -1049,7 +1139,12 @@ describe('McpEndpointInsight — scaffold', () => {
 
     render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
 
-    // The reliability section renders the live tool-latency panel (its reserved slot is gone).
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Tool latency' })).toBeInTheDocument(),
+    );
+    await openInsightView('Tool latency');
+
+    // The tool-latency panel renders once the reliability fetch resolves.
     await waitFor(() =>
       expect(screen.getByText('Tool latency & error rate')).toBeInTheDocument(),
     );
@@ -1094,7 +1189,12 @@ describe('McpEndpointInsight — scaffold', () => {
       />,
     );
 
-    // The reliability section renders the live score-breakdown panel from the version's lint report.
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Score breakdown' })).toBeInTheDocument(),
+    );
+    await openInsightView('Score breakdown');
+
+    // The score-breakdown panel renders from the version's lint report.
     await waitFor(() =>
       expect(screen.getByText('Score & lint breakdown')).toBeInTheDocument(),
     );
@@ -1147,7 +1247,12 @@ describe('McpEndpointInsight — scaffold', () => {
 
     render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={V3} />);
 
-    // The reliability section renders the live trust-profile panel (its reserved slot is gone).
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Trust profile' })).toBeInTheDocument(),
+    );
+    await openInsightView('Trust profile');
+
+    // The trust-profile panel renders once the insight/trust fetch resolves.
     await waitFor(() =>
       expect(screen.getByText('Composite trust profile')).toBeInTheDocument(),
     );
