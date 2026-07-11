@@ -169,7 +169,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
 
   // ---- REST (non-OpenAPI) ----
   { id: 'raml', label: 'RAML', icon: BookMarked, tone: 'red', importable: true, description: 'RAML 1.0 REST API definition.' },
-  { id: 'postman', label: 'Postman', icon: FileJson, tone: 'orange', aliases: ['postmancollection'], description: 'Postman v2.1 request collection.' },
+  { id: 'postman', label: 'Postman', icon: FileJson, tone: 'orange', importable: true, aliases: ['postmancollection'], description: 'Postman v2.1 request collection.' },
   { id: 'odata', label: 'OData', icon: Database, tone: 'orange', aliases: ['edmx'], description: 'OData EDMX / CSDL service metadata.' },
   { id: 'wsdl', label: 'WSDL', icon: FileCode, tone: 'slate', importable: true, aliases: ['soap'], description: 'SOAP web service description (WSDL).' },
   { id: 'wadl', label: 'WADL', icon: FileCode, tone: 'slate', importable: true, aliases: ['restdescription'], description: 'WADL REST resource description.' },
@@ -184,7 +184,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'jsonschema', label: 'JSON Schema', icon: Braces, tone: 'indigo', aliases: ['json'], description: 'JSON Schema type definitions.' },
   { id: 'avro', label: 'Avro', icon: Binary, tone: 'cyan', importable: true, aliases: ['avsc'], description: 'Apache Avro record schema (.avsc).' },
   { id: 'jtd', label: 'JSON Type Definition', icon: Braces, tone: 'indigo', aliases: ['jsontypedefinition', 'rfc8927'], description: 'JSON Type Definition (RFC 8927).' },
-  { id: 'xsd', label: 'XSD', icon: FileCode, tone: 'stone', aliases: ['xmlschema'], description: 'XML Schema Definition (XSD).' },
+  { id: 'xsd', label: 'XSD', icon: FileCode, tone: 'stone', importable: true, aliases: ['xmlschema'], description: 'XML Schema Definition (XSD).' },
   { id: 'asn1', label: 'ASN.1', icon: Binary, tone: 'stone', aliases: ['asn'], description: 'ASN.1 data structure definitions.' },
   { id: 'cobolcopybook', label: 'COBOL Copybook', icon: FileCode, tone: 'slate', aliases: ['copybook', 'cobol'], description: 'COBOL copybook record layout.' },
 

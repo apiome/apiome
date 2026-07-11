@@ -294,6 +294,45 @@ def _sniff_xmlrpc(payload: DetectionInput) -> DetectionResult:
     return NO_MATCH
 
 
+def _sniff_xsd(payload: DetectionInput) -> DetectionResult:
+    text = _text_of(payload)
+    if not text:
+        return NO_MATCH
+    if "<wsdl:definitions" in text or (
+        "<definitions" in text and "schemas.xmlsoap.org/wsdl" in text
+    ):
+        return NO_MATCH
+    if "<application" in text and "wadl.dev.java.net" in text:
+        return NO_MATCH
+    if "<xs:schema" in text or "<xsd:schema" in text or (
+        "http://www.w3.org/2001/XMLSchema" in text and "<schema" in text
+    ):
+        return DetectionResult(confidence=0.95, format="xsd", reason="W3C `schema` root element")
+    return NO_MATCH
+
+
+def _sniff_postman(payload: DetectionInput) -> DetectionResult:
+    document = payload.document
+    if isinstance(document, dict):
+        info = document.get("info")
+        if isinstance(info, dict):
+            schema = info.get("schema")
+            if isinstance(schema, str) and "postman.com" in schema.lower() and "collection" in schema.lower():
+                return DetectionResult(
+                    confidence=0.95,
+                    format="postman",
+                    reason="Postman collection `info.schema` marker",
+                )
+    text = _text_of(payload)
+    if text and "postman.com" in text.lower() and '"item"' in text and '"info"' in text:
+        return DetectionResult(
+            confidence=0.9,
+            format="postman",
+            reason="Postman collection markers",
+        )
+    return NO_MATCH
+
+
 #: Every standalone sniffer, in a stable order. Each yields a not-yet-importable
 #: format candidate (their full adapters arrive in the format epics).
 _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
@@ -311,6 +350,8 @@ _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
     _sniff_openrpc,
     _sniff_avro,
     _sniff_xmlrpc,
+    _sniff_xsd,
+    _sniff_postman,
 )
 
 #: The format keys this module can sniff (for tests/docs); adapter formats are
@@ -332,6 +373,8 @@ SNIFFED_FORMATS = frozenset(
         "openrpc",
         "avro",
         "xmlrpc",
+        "xsd",
+        "postman",
     }
 )
 

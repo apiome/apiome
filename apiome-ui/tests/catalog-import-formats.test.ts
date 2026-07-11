@@ -35,6 +35,10 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('avsc')?.sourceKind).toBe('avro');
     expect(catalogAdapterForFormat('xmlrpc')?.sourceKind).toBe('xmlrpc');
     expect(catalogAdapterForFormat('xml-rpc')?.sourceKind).toBe('xmlrpc');
+    expect(catalogAdapterForFormat('xsd')?.sourceKind).toBe('xsd');
+    expect(catalogAdapterForFormat('xmlschema')?.sourceKind).toBe('xsd');
+    expect(catalogAdapterForFormat('postman')?.sourceKind).toBe('postman');
+    expect(catalogAdapterForFormat('postmancollection')?.sourceKind).toBe('postman');
   });
 
   test('is case/space-insensitive', () => {
@@ -43,7 +47,7 @@ describe('catalog-import-formats', () => {
   });
 
   test('returns null for formats with no catalog importer (…)', () => {
-    for (const f of ['postman', 'jsonschema', 'arazzo', 'openapi', 'swagger', 'unknown', '', null, undefined]) {
+    for (const f of ['jsonschema', 'arazzo', 'openapi', 'swagger', 'unknown', '', null, undefined]) {
       expect(catalogAdapterForFormat(f)).toBeNull();
       expect(isCatalogStorableFormat(f)).toBe(false);
     }
@@ -51,7 +55,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['asyncapi', 'avro', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'openrpc', 'raml', 'thrift', 'wadl', 'wsdl', 'xmlrpc']);
+    expect(kinds).toEqual(['asyncapi', 'avro', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'openrpc', 'postman', 'raml', 'thrift', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -83,6 +87,14 @@ describe('catalog-import-formats', () => {
     expect(decideCatalogImportRouting('xmlrpc')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'xmlrpc' },
+    });
+    expect(decideCatalogImportRouting('xsd')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'xsd' },
+    });
+    expect(decideCatalogImportRouting('postman')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'postman' },
     });
   });
 
@@ -156,6 +168,8 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('jsonrpc')).toBe('rpc');
     expect(paradigmForFormat('avro')).toBe('dataschema');
     expect(paradigmForFormat('xmlrpc')).toBe('rpc');
+    expect(paradigmForFormat('xsd')).toBe('dataschema');
+    expect(paradigmForFormat('postman')).toBe('rest');
     expect(paradigmForFormat('avsc')).toBe('dataschema');
     expect(paradigmForFormat('openapi-3.1')).toBe('rest');
     expect(paradigmForFormat('swagger-2.0')).toBe('rest');

@@ -636,6 +636,8 @@ def load_builtin_emitters() -> None:
     from . import wadl_emitter as _wadl  # noqa: F401
     from . import openrpc_emitter as _openrpc  # noqa: F401
     from . import xmlrpc_emitter as _xmlrpc  # noqa: F401
+    from . import xsd_emitter as _xsd  # noqa: F401
+    from . import postman_emitter as _postman  # noqa: F401
 
 
 def get_emitter(format_key: str) -> Optional[type[Emitter]]:

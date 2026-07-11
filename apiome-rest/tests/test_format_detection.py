@@ -52,6 +52,16 @@ _FIXTURES = {
         '<?xml version="1.0"?>\n'
         "<methodCall><methodName>ping</methodName><params></params></methodCall>"
     ),
+    "xsd": (
+        '<?xml version="1.0"?>\n'
+        '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">'
+        '<xs:simpleType name="Code"><xs:restriction base="xs:string"/></xs:simpleType>'
+        "</xs:schema>"
+    ),
+    "postman": (
+        '{"info":{"name":"Tasks API","schema":"https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},'
+        '"item":[{"name":"Ping","request":{"method":"GET","url":{"raw":"{{baseUrl}}/ping","path":["ping"]}}}]}'
+    ),
 }
 
 
@@ -154,6 +164,22 @@ def test_xmlrpc_is_now_importable() -> None:
     assert detection.detected.format == "xmlrpc"
     assert detection.detected.importable is True
     assert detection.detected.source_key == "xmlrpc"
+
+
+def test_xsd_is_now_importable() -> None:
+    detection = detect_format(DetectionInput(text=_FIXTURES["xsd"]))
+    assert detection.detected is not None
+    assert detection.detected.format == "xsd"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "xsd"
+
+
+def test_postman_is_now_importable() -> None:
+    detection = detect_format(DetectionInput(text=_FIXTURES["postman"]))
+    assert detection.detected is not None
+    assert detection.detected.format == "postman"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "postman"
 
 
 def test_protobuf_is_now_importable() -> None:

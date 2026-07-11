@@ -139,6 +139,8 @@ class GraphQlImportSource(ImportSource, register=True):
                         )
                 except ValueError:
                     pass
+            if stripped.startswith("<"):
+                return NO_MATCH
             if any(marker in text for marker in _SDL_MARKERS):
                 return DetectionResult(
                     confidence=0.9, format="graphql", reason="GraphQL SDL definition keyword"
